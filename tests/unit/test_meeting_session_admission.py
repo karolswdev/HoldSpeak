@@ -565,6 +565,27 @@ def test_late_transcriber_construction_failure_keeps_raw_capture_record_only(tmp
     }
 
 
+def test_factoryless_transcription_records_honest_record_only_status(tmp_path, monkeypatch):
+    """Boundary: raw capture may continue without claiming a nonexistent worker."""
+    db, _broker, session = _bundle_session(tmp_path, monkeypatch)
+    session.transcriber = None
+    session._transcriber_factory = None
+
+    state = session.start()
+
+    assert state.capture_status == "recording"
+    assert session._recorder is not None and session._recorder.started
+    assert session._transcribe_thread is None
+    assert state.transcription_status == "record_only"
+    assert state.transcription_status_detail == {
+        "family": "speech-recognition-route-assignments",
+        "reason_code": "transcriber_unavailable",
+        "repair": "repair_audio_model_lifecycle",
+    }
+    durable = db.meetings.get_meeting(state.id)
+    assert durable is not None and durable.transcription_status == "record_only"
+
+
 def test_live_bundle_journal_never_contains_transcript_material(tmp_path, monkeypatch):
     """Live routed material stays private across operation, receipt, and journal rows."""
     db, broker, session = _bundle_session(tmp_path, monkeypatch)

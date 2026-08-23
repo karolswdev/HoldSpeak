@@ -286,3 +286,30 @@ def test_post_failure_alert_webhook_resolved_payload(monkeypatch) -> None:
     assert payload["event"] == "resolved"
     assert payload["resolved_at"] == now.isoformat()
     assert payload["above_since"] == above_since.isoformat()
+
+
+def test_transcript_refresh_releases_its_own_claim_without_enqueue_reset(tmp_path) -> None:
+    """A worker-owned refresh remains available after running-row protection."""
+    from holdspeak.db import Database
+    from holdspeak.meeting_session import MeetingState
+
+    db = Database(tmp_path / "intel-queue.db")
+    meeting = MeetingState(id="meeting-1", started_at=datetime.now())
+    db.meetings.save_meeting(meeting)
+    db.intel.enqueue_intel_job(meeting.id, transcript_hash="before")
+    claimed = db.intel.claim_next_intel_job()
+    assert claimed is not None and claimed.attempts == 1
+
+    assert db.intel.requeue_claimed_intel_job(
+        meeting.id,
+        transcript_hash="after",
+        reason="Transcript changed; refreshing queued intelligence job.",
+        displaced_work=("final-analysis",),
+    )
+    refreshed = db.intel.get_intel_job(meeting.id)
+    assert refreshed is not None
+    assert refreshed.status == "queued"
+    assert refreshed.transcript_hash == "after"
+    assert refreshed.attempts == 1
+    reclaimed = db.intel.claim_next_intel_job()
+    assert reclaimed is not None and reclaimed.attempts == 2

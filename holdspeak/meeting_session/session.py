@@ -568,6 +568,12 @@ class MeetingSession(
                         "repair": "repair_audio_model_lifecycle",
                     })
                     log.error("meeting transcriber construction refused: %s", type(exc).__name__)
+            if self.transcriber is None and not self._transcription_refusal:
+                self._record_only({
+                    "family": "speech-recognition-route-assignments",
+                    "reason_code": "transcriber_unavailable",
+                    "repair": "repair_audio_model_lifecycle",
+                })
             if (
                 self.transcriber is not None
                 and (resolved_backend == "mlx" or getattr(self.transcriber, "backend", "") == "mlx")

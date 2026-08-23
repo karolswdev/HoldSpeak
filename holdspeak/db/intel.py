@@ -102,6 +102,7 @@ class IntelRepository(BaseRepository):
                 updated_at = excluded.updated_at,
                 last_error = excluded.last_error,
                 displaced_work = excluded.displaced_work
+            WHERE intel_jobs.status != 'running'
             """,
             (meeting_id, transcript_hash, now, now, reason, work),
         )
@@ -115,11 +116,16 @@ class IntelRepository(BaseRepository):
                 sync_modified_at = ?,
                 updated_at = datetime('now')
             WHERE id = ?
+              AND NOT EXISTS (
+                  SELECT 1 FROM intel_jobs
+                  WHERE meeting_id = ? AND status = 'running'
+              )
             """,
             (
                 reason or "Queued for later processing.",
                 now,
                 now,
+                meeting_id,
                 meeting_id,
             ),
         )
@@ -135,6 +141,7 @@ class IntelRepository(BaseRepository):
                     JOIN meetings m ON m.id=j.meeting_id
                     WHERE j.status = 'queued'
                       AND m.capture_status IN ('finalized', 'recovered')
+                      AND m.route_fence_pending = 0
                     ORDER BY j.requested_at ASC
                     LIMIT 1
                     """
@@ -147,6 +154,7 @@ class IntelRepository(BaseRepository):
                     WHERE j.status = 'queued'
                       AND j.requested_at <= ?
                       AND m.capture_status IN ('finalized', 'recovered')
+                      AND m.route_fence_pending = 0
                     ORDER BY j.requested_at ASC
                     LIMIT 1
                     """,
@@ -193,6 +201,50 @@ class IntelRepository(BaseRepository):
                 last_error=row["last_error"],
                 displaced_work=_displaced_work(row),
             )
+
+    def requeue_claimed_intel_job(
+        self,
+        meeting_id: str,
+        *,
+        transcript_hash: str,
+        reason: str,
+        displaced_work: Sequence[str],
+    ) -> bool:
+        """Release the current worker's claim after it detects changed input."""
+        now = datetime.now().isoformat()
+        work = json.dumps(
+            [str(item) for item in displaced_work if str(item).strip()],
+            separators=(",", ":"),
+        )
+        with self._connection() as conn:
+            result = conn.execute(
+                """
+                UPDATE intel_jobs
+                SET status = 'queued',
+                    transcript_hash = ?,
+                    requested_at = ?,
+                    updated_at = ?,
+                    last_error = ?,
+                    displaced_work = ?
+                WHERE meeting_id = ? AND status = 'running'
+                """,
+                (transcript_hash, now, now, reason, work, meeting_id),
+            )
+            if result.rowcount != 1:
+                return False
+            conn.execute(
+                """
+                UPDATE meetings
+                SET intel_status = 'queued',
+                    intel_status_detail = ?,
+                    intel_completed_at = NULL,
+                    sync_modified_at = ?,
+                    updated_at = datetime('now')
+                WHERE id = ?
+                """,
+                (reason, now, meeting_id),
+            )
+        return True
 
     def retry_intel_job(
         self,

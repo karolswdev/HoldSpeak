@@ -253,3 +253,63 @@ def test_stop_persists_fence_retry_obligation_and_recovery_clears_it(tmp_path, m
         assert conn.execute("SELECT route_fence_pending FROM meetings WHERE id=?", (state.id,)).fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 1
     assert _parent_state(db, session._route_bundle["id"]) != "OPEN"
+
+
+def test_pending_fence_aftercare_is_not_claimable_until_recovery_fences(tmp_path, monkeypatch):
+    """Boundary: a durable fence retry marker blocks aftercare execution."""
+    from holdspeak.meeting_session.models import TranscriptSegment
+    from holdspeak.services.inference_parent_route_bundle_service import (
+        InferenceParentRouteBundleService,
+    )
+
+    db, _broker, session = _routed_recovery_session(tmp_path, monkeypatch)
+    state = session.start()
+    state.segments.append(TranscriptSegment("aftercare", "Me", 0.0, 1.0))
+    original = InferenceParentRouteBundleService.fence_cancel
+    monkeypatch.setattr(
+        InferenceParentRouteBundleService,
+        "fence_cancel",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("fence fault")),
+    )
+    session.stop()
+
+    assert db.intel.claim_next_intel_job() is None
+    monkeypatch.setattr(InferenceParentRouteBundleService, "fence_cancel", original)
+    assert db.meetings.recover_capture(state.id) is not None
+    assert _parent_state(db, session._route_bundle["id"]) != "OPEN"
+    first_claim = db.intel.claim_next_intel_job()
+    assert first_claim is not None and first_claim.meeting_id == state.id
+    assert first_claim.attempts == 1
+    assert db.intel.claim_next_intel_job() is None
+
+
+def test_recovery_enqueue_does_not_reclaim_running_aftercare(tmp_path, monkeypatch):
+    """Fault-injection: recovery leaves a concurrently claimed job with its owner."""
+    db, _broker, session = _routed_recovery_session(tmp_path, monkeypatch)
+    state = session.start()
+    state.segments.append(TranscriptSegment("atomic handoff", "Me", 0.0, 1.0))
+    original_handoff = session._handoff_intel_at_stop
+
+    def die_after_handoff(stop_state):
+        original_handoff(stop_state)
+        raise SystemExit("after atomic handoff")
+
+    monkeypatch.setattr(session, "_handoff_intel_at_stop", die_after_handoff)
+    with pytest.raises(SystemExit, match="after atomic handoff"):
+        session.stop()
+
+    original_save = db.meetings.save_meeting
+    first_claim = []
+
+    def save_then_claim(meeting):
+        result = original_save(meeting)
+        if meeting.id == state.id and meeting.capture_status == "recovered" and not first_claim:
+            first_claim.append(db.intel.claim_next_intel_job())
+        return result
+
+    monkeypatch.setattr(db.meetings, "save_meeting", save_then_claim)
+    assert db.meetings.recover_capture(state.id) is not None
+    job = db.intel.get_intel_job(state.id)
+    assert first_claim and first_claim[0] is not None
+    assert job is not None and job.status == "running" and job.attempts == 1
+    assert db.intel.claim_next_intel_job() is None

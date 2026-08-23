@@ -90,7 +90,7 @@ holdspeak/intel/providers.py:819|_profile_engine|configured_meeting_intel|call
 holdspeak/intel/providers.py:823|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:842|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
-holdspeak/intel_queue.py:234|process_next_intel_job|analyze|call
+holdspeak/intel_queue.py:237|process_next_intel_job|analyze|call
 holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
 holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
 holdspeak/kernel/inference_runner.py:74|InferenceRunner.__init__|build_intel_for_revision|ref
@@ -480,7 +480,7 @@ holdspeak/speech_session/provider.py:503|_RoutedSpeechAdapter.dispatch|run_promp
 holdspeak/speech_session/provider.py:632|AdmittedDictationRuntime.rewrite|rewrite|call
 """),
     _group(ProposedRoute("meeting.deferred_analysis", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/intel_queue.py:234|process_next_intel_job|analyze|call
+holdspeak/intel_queue.py:237|process_next_intel_job|analyze|call
 holdspeak/meeting_session/deferred_admission.py:229|DeferredIntelJob.analyze.call|analyze|call
 """),
     _group(ProposedRoute("meeting.bookmark_label", "meeting_session", "InferenceRunner admitted child"), """

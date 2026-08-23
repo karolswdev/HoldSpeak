@@ -11,7 +11,7 @@ from urllib.parse import urlsplit
 
 from .db import get_database
 from .kernel.external_egress import run_external_egress
-from .intel import MeetingIntel, get_intel_runtime_status
+from .intel import get_intel_runtime_status
 from .logging_config import get_logger
 from .meeting_session import IntelSnapshot
 
@@ -182,14 +182,17 @@ def process_next_intel_job(
 
     current_hash = meeting.transcript_hash()
     if current_hash != job.transcript_hash:
-        db.intel.enqueue_intel_job(
+        refreshed = db.intel.requeue_claimed_intel_job(
             job.meeting_id,
             transcript_hash=current_hash,
             reason="Transcript changed; refreshing queued intelligence job.",
             # A refresh must NOT forget what stop displaced onto this job.
             displaced_work=job.displaced_work,
         )
-        log.info(f"Deferred intel job refreshed for meeting {job.meeting_id}")
+        if refreshed:
+            log.info(f"Deferred intel job refreshed for meeting {job.meeting_id}")
+        else:
+            log.warning("Deferred intel claim disappeared before refresh: %s", job.meeting_id)
         return True
 
     # HS-131-08: the claimed job admits ONE short-lived
