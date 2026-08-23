@@ -33,6 +33,16 @@ def _sha256(value: Any) -> str:
     return "sha256:" + hashlib.sha256(_canonical(value).encode()).hexdigest()
 
 
+def remote_device_evidence(value: Any) -> str:
+    """Return content-free, registration-domain evidence for one device ID."""
+    if not isinstance(value, str) or not (device_id := value.strip()):
+        raise ValidationError(
+            "Requested remote devices are invalid.",
+            code="inference_parent_route_bundle_invalid",
+        )
+    return "sha256:" + hashlib.sha256(device_id.encode()).hexdigest()
+
+
 def _safe(value: Any, *, field: str) -> str:
     clean = str(value or "").strip()
     if not clean or len(clean) > 192 or any(
@@ -532,7 +542,27 @@ class InferenceParentRouteBundleService:
                 "Requested remote devices are invalid.",
                 code="inference_parent_route_bundle_invalid",
             )
-        normalized = sorted({_safe(value, field="requested_remote_device_id") for value in values})
+        return sorted({remote_device_evidence(value) for value in values})
+
+    @staticmethod
+    def _frozen_remote_device_evidence(values: Sequence[str]) -> list[str]:
+        if isinstance(values, (str, bytes)) or any(
+            not isinstance(value, str)
+            or len(value) != 71
+            or not value.startswith("sha256:")
+            or any(character not in "0123456789abcdef" for character in value[7:])
+            for value in values
+        ):
+            raise ValidationError(
+                "Requested remote devices are invalid.",
+                code="inference_parent_route_bundle_invalid",
+            )
+        normalized = sorted(set(values))
+        if len(normalized) != len(values):
+            raise ValidationError(
+                "Requested remote devices are invalid.",
+                code="inference_parent_route_bundle_invalid",
+            )
         return normalized
 
     @staticmethod
@@ -1466,7 +1496,7 @@ class InferenceParentRouteBundleService:
             ):
                 raise ValueError("bundle budget")
             if "requested_remote_device_ids" in material and (
-                self._requested_remote_devices(material["requested_remote_device_ids"])
+                self._frozen_remote_device_evidence(material["requested_remote_device_ids"])
                 != material["requested_remote_device_ids"]
             ):
                 raise ValueError("requested remote devices")

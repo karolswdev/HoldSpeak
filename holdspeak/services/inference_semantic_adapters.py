@@ -21,6 +21,7 @@ from ..inference_capabilities import (
     process_inference_capability_registry,
     _validate_result_value,
 )
+from ..kernel.model import KernelRefused
 from ..kernel.provider_signals import InferenceInvalidTypedOutput
 
 
@@ -108,6 +109,8 @@ class ClosedSemanticAdapter:
         try:
             result = dict(self._normalize(raw))
             self._validate(result)
+        except KernelRefused:
+            raise
         except (
             InferenceCapabilityRegistryError,
             AttributeError,

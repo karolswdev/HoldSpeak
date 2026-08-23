@@ -480,6 +480,7 @@ class _RoutedSpeechAdapter:
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> Any:
         from ..inference_capabilities import InferenceCapabilityRegistryError, process_inference_capability_registry
         from ..kernel.dispatch_context import dispatch_context_of
+        from ..kernel.model import KernelRefused
         from ..kernel.provider_signals import InferenceInvalidTypedOutput
 
         dispatch_context_of(engine)  # proves Runner built the selected revision
@@ -506,6 +507,8 @@ class _RoutedSpeechAdapter:
                     max_tokens=int(payload["max_tokens"]),
                     temperature=float(payload.get("temperature") or 0.0),
                 )
+        except KernelRefused:
+            raise
         except (AttributeError, KeyError, TypeError, ValueError, json.JSONDecodeError):
             raise InferenceInvalidTypedOutput() from None
         result = raw

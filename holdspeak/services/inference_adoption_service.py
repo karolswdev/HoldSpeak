@@ -1058,6 +1058,22 @@ class RoutedInferenceCoordinator:
             field_name=f"result for {definition['id']}",
         )
 
+    def _publish_winner_if_unstaged(
+        self,
+        publish: Callable[[Any, Mapping[str, Any]], str] | None,
+        value: Any,
+        winning: Mapping[str, Any],
+    ) -> None:
+        """Publish a durably elected winner once, including terminal replays."""
+        if publish is None:
+            return
+        stager = getattr(self._broker, "projection_stager", None)
+        stage_for = getattr(stager, "get", None)
+        child_invocation_id = str(winning["child_invocation_id"])
+        if callable(stage_for) and stage_for(child_invocation_id) is not None:
+            return
+        publish(value, winning)
+
     def execute(
         self,
         principal: Principal,
@@ -1098,9 +1114,11 @@ class RoutedInferenceCoordinator:
                 "receipt": receipt,
             }
             if receipt["outcome"] == "succeeded":
-                replay["winning_reservation"] = self._winning_reservation(
+                winning = self._winning_reservation(
                     execution_id, str(receipt.get("winning_attempt_id") or "")
                 )
+                replay["winning_reservation"] = winning
+                self._publish_winner_if_unstaged(publish, replay["result"], winning)
             return replay
         frozen_deadline = datetime.fromisoformat(
             str(route["deadline_at"]).replace("Z", "+00:00")
@@ -1124,9 +1142,11 @@ class RoutedInferenceCoordinator:
                     "receipt": receipt,
                 }
                 if receipt["outcome"] == "succeeded":
-                    replay["winning_reservation"] = self._winning_reservation(
+                    winning = self._winning_reservation(
                         execution_id, str(receipt.get("winning_attempt_id") or "")
                     )
+                    replay["winning_reservation"] = winning
+                    self._publish_winner_if_unstaged(publish, replay["result"], winning)
                 return replay
             serialized = self.evidence.serialized_request(
                 operation["admission_evidence_ref"],
@@ -1213,10 +1233,10 @@ class RoutedInferenceCoordinator:
                         "Winner result is missing.",
                         code="inference_adoption_result_integrity_invalid",
                     )
-                if publish is not None:
-                    # Publication is deliberately post-election.  A UI/materializer
-                    # failure cannot rewrite the already elected physical receipt.
-                    publish(value, winning)
+                # Publication is deliberately post-election.  A UI/materializer
+                # failure cannot rewrite the already elected physical receipt, and
+                # the terminal replay above recovers a stage that never committed.
+                self._publish_winner_if_unstaged(publish, value, winning)
                 return {
                     "outcome": "succeeded",
                     "result": value,

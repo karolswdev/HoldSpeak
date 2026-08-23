@@ -102,9 +102,9 @@ holdspeak/meeting_import.py:313|_transcribe_import_windows|transcribe|call
 holdspeak/meeting_session/deferred_admission.py:229|DeferredIntelJob.analyze.call|analyze|call
 holdspeak/meeting_session/deferred_admission.py:268|DeferredIntelJob.bookmark_label.call|generate_bookmark_label_with_context|call
 holdspeak/meeting_session/deferred_admission.py:308|DeferredIntelJob.auto_title.call|generate_title|call
-holdspeak/meeting_session/intel_admission.py:730|IntelAdmissionMixin._admitted_live_window.call|analyze|call
-holdspeak/meeting_session/intel_admission.py:775|IntelAdmissionMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/intel_admission.py:805|IntelAdmissionMixin._admitted_auto_title.call|generate_title|call
+holdspeak/meeting_session/intel_admission.py:731|IntelAdmissionMixin._admitted_live_window.call|analyze|call
+holdspeak/meeting_session/intel_admission.py:776|IntelAdmissionMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/intel_admission.py:806|IntelAdmissionMixin._admitted_auto_title.call|generate_title|call
 holdspeak/meeting_session/transcribe_loop.py:84|TranscribeLoopMixin._transcribe_audio|transcribe|call
 holdspeak/plugins/dictation/assembly.py:327|_try_build_runtime|MeshRelayRuntime|call
 holdspeak/plugins/dictation/builtin/intent_router.py:170|IntentRouter.run|classify|call
@@ -138,11 +138,11 @@ holdspeak/speech_session/provider.py:196|ProviderAdmission.target|bound_target|c
 holdspeak/speech_session/provider.py:367|ProviderAdmission.rewrite.call|rewrite|call
 holdspeak/speech_session/provider.py:408|ProviderAdmission.punctuate.call|rewrite|call
 holdspeak/speech_session/provider.py:460|_ClassifyLeg.run.call|classify|call
-holdspeak/speech_session/provider.py:489|_RoutedSpeechAdapter.dispatch|run_prompt|call
-holdspeak/speech_session/provider.py:503|_RoutedSpeechAdapter.dispatch|run_prompt|call
-holdspeak/speech_session/provider.py:576|_mesh_bound|MeshRelayRuntime|call
-holdspeak/speech_session/provider.py:625|AdmittedDictationRuntime.classify|classify|call
-holdspeak/speech_session/provider.py:632|AdmittedDictationRuntime.rewrite|rewrite|call
+holdspeak/speech_session/provider.py:490|_RoutedSpeechAdapter.dispatch|run_prompt|call
+holdspeak/speech_session/provider.py:504|_RoutedSpeechAdapter.dispatch|run_prompt|call
+holdspeak/speech_session/provider.py:579|_mesh_bound|MeshRelayRuntime|call
+holdspeak/speech_session/provider.py:628|AdmittedDictationRuntime.classify|classify|call
+holdspeak/speech_session/provider.py:635|AdmittedDictationRuntime.rewrite|rewrite|call
 holdspeak/speech_session/revision_target.py:143|rebind|OpenAICompatibleRuntime|call
 holdspeak/speech_session/revision_target.py:165|bound_target|rebind|call
 holdspeak/target_profile.py:191|apply_model_assisted_target|rewrite|ref
@@ -179,7 +179,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
-    "holdspeak/services/inference_adoption_service.py:1200|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    "holdspeak/services/inference_adoption_service.py:1220|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
     ),
     "holdspeak/services/cadence_service.py:284|CadenceService._draft_child|ref": ProposedRoute(
@@ -398,7 +398,7 @@ holdspeak/plugins/dictation/runtime_mesh_relay.py:106|MeshRelayRuntime._run|run_
 holdspeak/plugins/dictation/runtime_openai_compatible.py:69|OpenAICompatibleRuntime.load|OpenAI|ref
 holdspeak/speech_session/provider.py:158|ProviderAdmission.dispatch_through|bound_target|call
 holdspeak/speech_session/provider.py:196|ProviderAdmission.target|bound_target|call
-holdspeak/speech_session/provider.py:576|_mesh_bound|MeshRelayRuntime|call
+holdspeak/speech_session/provider.py:579|_mesh_bound|MeshRelayRuntime|call
 holdspeak/speech_session/revision_target.py:143|rebind|OpenAICompatibleRuntime|call
 holdspeak/speech_session/revision_target.py:165|bound_target|rebind|call
 holdspeak/web/routes/dictation/_helpers.py:786|_run_dictation_dry_run_text|build_pipeline|call
@@ -463,8 +463,8 @@ holdspeak/plugins/dictation/runtime_counters.py:227|CountingRuntime.classify|cla
 holdspeak/plugins/dictation/runtime_llama_cpp.py:134|LlamaCppRuntime.classify|create_completion|call
 holdspeak/plugins/dictation/runtime_openai_compatible.py:143|OpenAICompatibleRuntime.classify|chat.completions.create|call
 holdspeak/speech_session/provider.py:460|_ClassifyLeg.run.call|classify|call
-holdspeak/speech_session/provider.py:489|_RoutedSpeechAdapter.dispatch|run_prompt|call
-holdspeak/speech_session/provider.py:625|AdmittedDictationRuntime.classify|classify|call
+holdspeak/speech_session/provider.py:490|_RoutedSpeechAdapter.dispatch|run_prompt|call
+holdspeak/speech_session/provider.py:628|AdmittedDictationRuntime.classify|classify|call
 """),
     _group(ProposedRoute("speech.rewrite", "speech_session", "InferenceRunner admitted child"), """
 holdspeak/plugins/dictation/builtin/project_rewriter.py:203|ProjectRewriter.run|rewrite|ref
@@ -476,8 +476,8 @@ holdspeak/plugins/dictation/runtime_counters.py:277|CountingRuntime.rewrite|rewr
 holdspeak/plugins/dictation/runtime_llama_cpp.py:162|LlamaCppRuntime.rewrite|create_completion|call
 holdspeak/plugins/dictation/runtime_openai_compatible.py:196|OpenAICompatibleRuntime.rewrite|chat.completions.create|call
 holdspeak/speech_session/provider.py:367|ProviderAdmission.rewrite.call|rewrite|call
-holdspeak/speech_session/provider.py:503|_RoutedSpeechAdapter.dispatch|run_prompt|call
-holdspeak/speech_session/provider.py:632|AdmittedDictationRuntime.rewrite|rewrite|call
+holdspeak/speech_session/provider.py:504|_RoutedSpeechAdapter.dispatch|run_prompt|call
+holdspeak/speech_session/provider.py:635|AdmittedDictationRuntime.rewrite|rewrite|call
 """),
     _group(ProposedRoute("meeting.deferred_analysis", "meeting_session", "InferenceRunner admitted child"), """
 holdspeak/intel_queue.py:240|process_next_intel_job|analyze|call
@@ -485,14 +485,14 @@ holdspeak/meeting_session/deferred_admission.py:229|DeferredIntelJob.analyze.cal
 """),
     _group(ProposedRoute("meeting.bookmark_label", "meeting_session", "InferenceRunner admitted child"), """
 holdspeak/meeting_session/deferred_admission.py:268|DeferredIntelJob.bookmark_label.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/intel_admission.py:775|IntelAdmissionMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/intel_admission.py:776|IntelAdmissionMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
 """),
     _group(ProposedRoute("meeting.auto_title", "meeting_session", "InferenceRunner admitted child"), """
 holdspeak/meeting_session/deferred_admission.py:308|DeferredIntelJob.auto_title.call|generate_title|call
-holdspeak/meeting_session/intel_admission.py:805|IntelAdmissionMixin._admitted_auto_title.call|generate_title|call
+holdspeak/meeting_session/intel_admission.py:806|IntelAdmissionMixin._admitted_auto_title.call|generate_title|call
 """),
     _group(ProposedRoute("meeting.live_analysis", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/meeting_session/intel_admission.py:730|IntelAdmissionMixin._admitted_live_window.call|analyze|call
+holdspeak/meeting_session/intel_admission.py:731|IntelAdmissionMixin._admitted_live_window.call|analyze|call
 """),
     _group(ProposedRoute("project_doc.suggest_update", "project_doc_suggestions", "InferenceRunner admitted child"), """
 holdspeak/project_doc_suggestions.py:72|suggest_project_doc_update|rewrite|ref

@@ -98,6 +98,7 @@ class _MeetingRoutedAdapter:
             process_inference_capability_registry,
         )
         from ..kernel.dispatch_context import dispatch_context_of
+        from ..kernel.model import KernelRefused
         from ..kernel.provider_signals import (
             InferenceInvalidTypedOutput,
             ProviderPermanentNoGeneration,
@@ -115,7 +116,7 @@ class _MeetingRoutedAdapter:
             value = dict(self._encode(raw, payload))
             process_inference_capability_registry().require(self._capability).validate_result(value)
             return value
-        except ProviderPermanentNoGeneration:
+        except (KernelRefused, ProviderPermanentNoGeneration):
             raise
         except (AttributeError, KeyError, TypeError, ValueError, InferenceCapabilityRegistryError):
             raise InferenceInvalidTypedOutput() from None

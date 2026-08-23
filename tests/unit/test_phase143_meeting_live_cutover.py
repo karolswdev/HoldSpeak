@@ -845,6 +845,75 @@ def test_live_analysis_controller_owns_compatibility_retry_then_fallback(
     assert execution["winning_attempt_id"] == attempts[2]["id"]
 
 
+def test_meeting_kernel_refusal_is_terminal_without_retry_or_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from holdspeak.kernel.model import KernelRefused
+    from tests.unit.test_meeting_session_admission import _bundle_session
+
+    db, _broker, session = _bundle_session(tmp_path, monkeypatch)
+    _profile(
+        db,
+        "meeting-refusal-fallback",
+        claims=("language", "structured_output", _result_claim("meeting.live_analysis")),
+    )
+    assignment = InferenceAssignmentService(db).resolve_effective(
+        OWNER, capability_id="meeting.live_analysis"
+    )
+    InferenceAssignmentService(db).set_assignment(
+        OWNER,
+        {
+            "command_id": "meeting-refusal-fallback",
+            "expected_revision": assignment["assignment"]["revision"],
+            "scope": {"kind": "capability", "capability_id": "meeting.live_analysis"},
+            "entries": [
+                {"profile_id": "meeting-profile", "profile_revision": 1},
+                {"profile_id": "meeting-refusal-fallback", "profile_revision": 1},
+            ],
+        },
+    )
+
+    class RefusingEngine:
+        active_provider = "fixture"
+        active_model = "refusing"
+
+        @staticmethod
+        def analyze(_transcript: str, *, stream: bool = False) -> IntelResult:
+            assert stream is False
+            raise KernelRefused("meeting_provider_refused")
+
+    engine = RefusingEngine()
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kwargs: engine)
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
+    session.start()
+    session._state.segments.append(
+        TranscriptSegment(text="Refused work", speaker="Me", start_time=0.0, end_time=1.0)
+    )
+    session._run_intel_analysis()
+
+    with db._connection() as conn:
+        execution = conn.execute(
+            """SELECT e.terminal_outcome
+                 FROM inference_route_executions e
+                 JOIN inference_operation_route_request_plans o ON o.id=e.operation_plan_id
+                 JOIN inference_route_plans p ON p.id=o.route_plan_id
+                WHERE p.capability_id='meeting.live_analysis'"""
+        ).fetchone()
+        attempts = conn.execute(
+            """SELECT a.route_leg_ordinal,a.disposition
+                 FROM inference_route_attempts a
+                 JOIN inference_route_executions e ON e.id=a.execution_id
+                 JOIN inference_operation_route_request_plans o ON o.id=e.operation_plan_id
+                 JOIN inference_route_plans p ON p.id=o.route_plan_id
+                WHERE p.capability_id='meeting.live_analysis'
+                ORDER BY a.physical_attempt_ordinal"""
+        ).fetchall()
+    assert execution["terminal_outcome"] == "refused"
+    assert [(row["route_leg_ordinal"], row["disposition"]) for row in attempts] == [
+        (1, "dispatch_outcome_unknown")
+    ]
+
+
 def _admit_active_execution_for_each_bundle_member(broker: Any, session: Any) -> set[str]:
     """Start (but do not dispatch) one execution on each frozen live member."""
     assert session._route_bundle is not None

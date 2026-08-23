@@ -155,3 +155,12 @@ interleaving probe (one claim, only after fence durable + marker cleared),
 independently reran the chartered matrix (313/313), and accepted the
 implementer's OPEN-parent normal-path argument point by point. Tuesday
 judgment: "I would use this on a tired Tuesday now."
+
+## Recorded limitations
+
+- Best-effort physical cancellation after a committed fence: a failed physical
+  cancel reports success while provider work may continue; the durable fence +
+  late-output discard law bound the harm to wasted provider compute for at most
+  the in-flight attempt (no state corruption, no publication). Ruled a recorded
+  limitation per the owner minimal-ceremony bar (code-review finding 8,
+  2026-08-22).

@@ -480,7 +480,11 @@ def test_start_admits_complete_live_bundle_with_exact_aggregate_budget(
     assert state.capture_status == "recording"
     assert bundle["parent_kind"] == "meeting.session"
     assert bundle["parent_child_budget"] == parent_budget
-    assert bundle.get("requested_remote_device_ids", []) == list(requested)
+    from holdspeak.services.inference_parent_route_bundle_service import remote_device_evidence
+
+    assert bundle.get("requested_remote_device_ids", []) == sorted(
+        remote_device_evidence(device_id) for device_id in requested
+    )
     assert bundle["budget_groups"] == [
         {"id": "meeting-intelligence", "allocation": 4096, "member_keys": ["auto-title", "bookmark-label", "live-analysis"]},
         {"id": "meeting-preload", "allocation": 1, "member_keys": ["preload"]},
@@ -490,6 +494,37 @@ def test_start_admits_complete_live_bundle_with_exact_aggregate_budget(
         *_BUNDLE_CAPABILITIES,
         "speech.preload",
     }
+
+
+def test_unicode_registered_device_freezes_as_evidence_and_rejects_undeclared_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from holdspeak.device_audio import DeviceRegistry
+    from holdspeak.meeting_session.transcribe_admission import RoutedMeetingTranscriptionAdmission
+    from holdspeak.services.inference_parent_route_bundle_service import remote_device_evidence
+
+    descriptor = DeviceRegistry().register("  Réunion 東京  ", "Remote")
+    _db, _broker, session = _bundle_session(
+        tmp_path, monkeypatch, requested=(descriptor.id,)
+    )
+    session.start()
+
+    bundle = session._route_bundle
+    assert bundle is not None
+    assert bundle["requested_remote_device_ids"] == [remote_device_evidence(descriptor.id)]
+    assert bundle["budget_groups"][2]["allocation"] == 25_928
+    assert bundle["parent_child_budget"] == 30_025
+
+    undeclared = RoutedMeetingTranscriptionAdmission(
+        session, "device:unregistered", 0.0, 1.0, False
+    )
+    with pytest.raises(RuntimeError, match="meeting_transcription_source_not_frozen"):
+        undeclared._execute(
+            capability="speech.transcribe",
+            material={"audio_sha256": "sha256:" + "0" * 64},
+            call=lambda *_args: "never dispatched",
+        )
+    assert session._transcription_refusal == "meeting_transcription_source_not_frozen"
 
 
 def test_route_refusal_keeps_raw_capture_in_durable_record_only(

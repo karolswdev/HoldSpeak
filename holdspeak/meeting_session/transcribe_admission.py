@@ -114,11 +114,13 @@ class RoutedMeetingTranscriptionAdmission:
         if member is None or parent is None or getattr(self.session, "_intel_closed", False):
             raise RuntimeError(TRANSCRIPTION_NOT_ADMITTED)
         if self.source_id.startswith("device:"):
+            from ..services.inference_parent_route_bundle_service import remote_device_evidence
+
             device_id = self.source_id.removeprefix("device:")
             requested = set((getattr(self.session, "_route_bundle", None) or {}).get(
                 "requested_remote_device_ids", ()
             ))
-            if device_id not in requested:
+            if remote_device_evidence(device_id) not in requested:
                 self.session._transcription_refusal = "meeting_transcription_source_not_frozen"
                 raise RuntimeError(self.session._transcription_refusal)
         operation_id = self._operation_id(capability, material)
