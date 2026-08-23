@@ -197,8 +197,14 @@ class RoutedMeetingTranscriptionAdmission:
         """Keep MLX warmup as a derived lifecycle child, never a fallback."""
         del attempt_ordinal
 
-        def call(_engine: Any, _payload: Mapping[str, Any], _cancellation: Any) -> Mapping[str, str]:
-            return {"state": str(run() or stage)}
+        def call(_engine: Any, _payload: Mapping[str, Any], cancellation: Any) -> Mapping[str, str]:
+            # Existing lifecycle callbacks remain zero-argument; the MLX sequence
+            # opts into the cancellation argument and checks it between calls.
+            import inspect
+
+            parameters = inspect.signature(run).parameters
+            value = run(cancellation) if parameters else run()
+            return {"state": str(value or stage)}
 
         routed = self._execute(
             capability="speech.preload",

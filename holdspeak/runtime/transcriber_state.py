@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import threading
 
-import numpy as np
-
 from ..logging_config import get_logger
 from ..transcribe import Transcriber
 
@@ -63,22 +61,38 @@ class TranscriberStateMixin:
                 last_error=error,
             )
 
-    def _ensure_transcriber_loaded(self) -> Transcriber:
+    def _ensure_transcriber_loaded(
+        self,
+        *,
+        model_name: str | None = None,
+        backend: str | None = None,
+        language: str | None = None,
+    ) -> Transcriber:
+        """Construct/reuse a transcriber for explicit, immutable parameters.
+
+        Runtime warmup leaves arguments absent and uses Config.  A Meeting passes
+        its frozen deployment evidence, so Config cannot change physical model
+        selection between admission and execution.
+        """
+        selected_model = model_name if model_name is not None else self.config.model.name
+        selected_backend = backend if backend is not None else self.config.model.backend
+        selected_language = language if language is not None else getattr(self.config.model, "language", "auto")
         # HS-131-09: constructing a Transcriber loads no weights. The MLX load is
-        # a model invocation, so it happens through admitted preload children —
-        # either the authorized pre-session warm below, or the first admitted
-        # session's `transcribe()` (which runs its preload siblings first).
-        # HS-63-06: the check-and-construct is serialized — see the
-        # _transcriber_init_lock comment in web_runtime.__init__ for the
-        # process-fatal MLX consequence of letting two instances exist.
+        # a model invocation, so it happens through admitted preload children.
         with self._transcriber_init_lock:
-            if self.transcriber is None or getattr(self.transcriber, "model_name", None) != self.config.model.name:
+            if (
+                self.transcriber is None
+                or getattr(self.transcriber, "model_name", None) != selected_model
+                or getattr(self.transcriber, "backend", None) != selected_backend
+                or str(getattr(self.transcriber, "language", None) or "auto")
+                != str(selected_language or "auto")
+            ):
                 self._set_transcription_status("loading")
                 try:
                     self.transcriber = Transcriber(
-                        model_name=self.config.model.name,
-                        backend=self.config.model.backend,
-                        language=getattr(self.config.model, "language", "auto"),
+                        model_name=selected_model,
+                        backend=selected_backend,
+                        language=selected_language,
                     )
                 except Exception as exc:
                     self._set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")

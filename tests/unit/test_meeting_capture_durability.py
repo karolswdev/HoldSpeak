@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timedelta
 
 import numpy as np
+import pytest
 
 from holdspeak.db import Database
 from holdspeak.meeting_capture_journal import MeetingCaptureJournal
@@ -120,3 +121,135 @@ def test_equal_clock_conflict_keeps_losing_value_once(tmp_path):
     assert len(conflicts) == 1
     assert conflicts[0]["winner"] == "local"
     assert conflicts[0]["incoming"]["title"] == "Native"
+
+
+def _routed_recovery_session(tmp_path, monkeypatch):
+    """Create a migrated speech bundle with no physical model work."""
+    from types import SimpleNamespace
+
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.inference_adoption_service import RoutedInferenceCoordinator
+    from holdspeak.meeting_session import MeetingSession
+    from tests.unit.test_meeting_session_admission import FakeJournal, FakeRecorder
+    from tests.unit.test_phase143_meeting_live_cutover import (
+        _assign_meeting_routes_without_speech,
+        _meeting_config,
+    )
+
+    owner = Principal(PrincipalKind.OWNER, "recovery-owner")
+    db = Database(tmp_path / "recovery-route.db")
+    _assign_meeting_routes_without_speech(db)
+    broker = _configure(db)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
+    monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
+    config = _meeting_config("meeting-profile")
+    config.model = SimpleNamespace(name="base", backend="mlx", language="auto")
+    assert RoutedInferenceCoordinator(db).migrate_speech_recognition_route_assignments(
+        owner, config
+    )["status"] == "migrated"
+
+    class LoadedMlx:
+        backend = "mlx"
+        model_name = "base"
+        language = None
+        loaded = True
+
+        def transcribe(self, *_args, **_kwargs):
+            return ""
+
+    session = MeetingSession(
+        LoadedMlx(), principal=owner, intel_enabled=True,
+        transcription_backend="mlx", transcription_model_name="base",
+    )
+    return db, broker, session
+
+
+def _parent_state(db, bundle_id):
+    with db._connection() as conn:
+        return conn.execute(
+            """SELECT p.state FROM kernel_parent_runs p
+                 JOIN inference_parent_route_bundles b ON b.parent_operation_id=p.operation_id
+                WHERE b.id=?""",
+            (bundle_id,),
+        ).fetchone()[0]
+
+
+def test_recovery_converges_prefence_and_postfence_process_loss_to_one_aftercare_row(
+    tmp_path, monkeypatch
+):
+    """Fault-injection: either Stop crash window recovers queue plus non-OPEN fence."""
+    from holdspeak.meeting_session.models import TranscriptSegment
+    from holdspeak.services.inference_parent_route_bundle_service import (
+        InferenceParentRouteBundleService,
+    )
+
+    for point in ("before-fence", "inside-fence-transaction"):
+        db, _broker, session = _routed_recovery_session(tmp_path / point, monkeypatch)
+        state = session.start()
+        state.segments.append(TranscriptSegment("aftercare", "Me", 0.0, 1.0))
+        original_fence = InferenceParentRouteBundleService.fence_cancel
+        original_enqueue = db.intel.enqueue_intel_job
+        if point == "before-fence":
+            monkeypatch.setattr(
+                InferenceParentRouteBundleService,
+                "fence_cancel",
+                lambda *_args, **_kwargs: (_ for _ in ()).throw(SystemExit("before fence")),
+            )
+        else:
+            monkeypatch.setattr(
+                db.intel,
+                "enqueue_intel_job",
+                lambda *_args, **_kwargs: (_ for _ in ()).throw(SystemExit("inside fence")),
+            )
+        with pytest.raises(SystemExit):
+            session.stop()
+        # A process death rolls back the composed fence/upsert transaction; no
+        # durable half-effect may exist before recovery owns the same predicate.
+        assert _parent_state(db, session._route_bundle["id"]) == "OPEN"
+        with db._connection() as conn:
+            assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 0
+        monkeypatch.setattr(InferenceParentRouteBundleService, "fence_cancel", original_fence)
+        monkeypatch.setattr(db.intel, "enqueue_intel_job", original_enqueue)
+        recovered = db.meetings.recover_capture(state.id)
+        assert recovered is not None and recovered.capture_status == "recovered"
+        with db._connection() as conn:
+            assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 1
+        assert _parent_state(db, session._route_bundle["id"]) != "OPEN"
+
+
+def test_stop_persists_fence_retry_obligation_and_recovery_clears_it(tmp_path, monkeypatch):
+    """Fault-injection: two fence failures retain aftercare and a durable retry path."""
+    from holdspeak.meeting_session.models import TranscriptSegment
+    from holdspeak.services.inference_parent_route_bundle_service import (
+        InferenceParentRouteBundleService,
+    )
+
+    db, _broker, session = _routed_recovery_session(tmp_path, monkeypatch)
+    state = session.start()
+    state.segments.append(TranscriptSegment("aftercare", "Me", 0.0, 1.0))
+    original = InferenceParentRouteBundleService.fence_cancel
+    calls = []
+
+    def fail(*_args, **_kwargs):
+        calls.append(1)
+        raise RuntimeError("fence fault")
+
+    monkeypatch.setattr(InferenceParentRouteBundleService, "fence_cancel", fail)
+    session.stop()
+    assert len(calls) == 2
+    with db._connection() as conn:
+        marker = conn.execute(
+            "SELECT route_fence_pending,route_fence_error FROM meetings WHERE id=?", (state.id,)
+        ).fetchone()
+        assert tuple(marker)[0] == 1 and "fence fault" in tuple(marker)[1]
+        assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 1
+    assert _parent_state(db, session._route_bundle["id"]) == "OPEN"
+
+    monkeypatch.setattr(InferenceParentRouteBundleService, "fence_cancel", original)
+    assert db.meetings.recover_capture(state.id) is not None
+    with db._connection() as conn:
+        assert conn.execute("SELECT route_fence_pending FROM meetings WHERE id=?", (state.id,)).fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 1
+    assert _parent_state(db, session._route_bundle["id"]) != "OPEN"

@@ -667,20 +667,129 @@ class MeetingRepository(BaseRepository):
                 for r in conn.execute(query, params)
             ]
 
+    def mark_route_fence_pending(self, meeting_id: str, error: str) -> None:
+        """Persist the retry obligation when a Stop fence cannot commit."""
+        with self._connection() as conn:
+            conn.execute(
+                """UPDATE meetings
+                   SET route_fence_pending=1, route_fence_error=?,
+                       sync_modified_at=datetime('now'), updated_at=datetime('now')
+                 WHERE id=?""",
+                (str(error)[:512], meeting_id),
+            )
+
+    def clear_route_fence_pending(self, meeting_id: str) -> None:
+        """Clear a durable Stop-fence retry marker after an idempotent fence."""
+        with self._connection() as conn:
+            conn.execute(
+                """UPDATE meetings
+                   SET route_fence_pending=0, route_fence_error=NULL,
+                       sync_modified_at=datetime('now'), updated_at=datetime('now')
+                 WHERE id=?""",
+                (meeting_id,),
+            )
+
     def recover_capture(self, meeting_id: str) -> Optional["MeetingState"]:
-        """Finalize the last atomic checkpoint of an interrupted capture."""
+        """Finalize interrupted capture and converge its Stop fence/aftercare.
+
+        A process loss can occur before the Stop transaction begins, or after an
+        older build fenced without atomically retaining aftercare.  Recovery
+        therefore derives the same Meeting-keyed aftercare predicate and repeats
+        the idempotent fence from durable bundle evidence.
+        """
         meeting = self.get_meeting(meeting_id)
         if meeting is None:
             return None
-        if meeting.capture_status == "finalized":
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT capture_status,route_fence_pending FROM meetings WHERE id=?", (meeting_id,)
+            ).fetchone()
+        if row is None:
+            return None
+        finalized = str(row["capture_status"]) == "finalized"
+        pending_fence = bool(row["route_fence_pending"])
+        if not finalized:
+            meeting.ended_at = meeting.capture_checkpoint_at or datetime.now()
+            if meeting.ended_at < meeting.started_at:
+                meeting.ended_at = datetime.now()
+            meeting.capture_status = "recovered"
+            meeting.capture_failure = None
+            self.save_meeting(meeting)
+        elif not pending_fence:
             return meeting
-        meeting.ended_at = meeting.capture_checkpoint_at or datetime.now()
-        if meeting.ended_at < meeting.started_at:
-            meeting.ended_at = datetime.now()
-        meeting.capture_status = "recovered"
-        meeting.capture_failure = None
-        self.save_meeting(meeting)
-        return meeting
+
+        displaced: list[str] = []
+        if meeting.segments:
+            displaced.append("final-analysis")
+        if meeting.bookmarks:
+            displaced.append("bookmark-labels")
+        if not meeting.title:
+            displaced.append("auto-title")
+        detail = (
+            "Meeting saved. Live intelligence stopped with the recording; "
+            + ", ".join(
+                {
+                    "final-analysis": "final analysis",
+                    "bookmark-labels": "bookmark labels",
+                    "auto-title": "auto title",
+                }[slug] for slug in displaced
+            )
+            + " queued for deferred processing."
+        )
+        # Bundles are scoped to Meeting IDs by their command identity.  Avoid
+        # reconstructing mutable runtime state: match the admitted definition.
+        with self._connection() as conn:
+            bundle = conn.execute(
+                """SELECT b.id,o.principal_kind,o.principal_identity
+                     FROM inference_parent_route_bundles b
+                     JOIN kernel_operations o ON o.operation_id=b.parent_operation_id
+                    WHERE b.command_id=?""",
+                (f"meeting-route-bundle:{meeting_id}",),
+            ).fetchone()
+        try:
+            if bundle is not None:
+                from ..kernel.runtime import _service
+                from ..principals import Principal, PrincipalKind
+                from ..services.inference_parent_route_bundle_service import (
+                    InferenceParentRouteBundleService,
+                )
+
+                principal = Principal(
+                    PrincipalKind(str(bundle["principal_kind"])),
+                    str(bundle["principal_identity"]),
+                )
+                broker = _service()
+
+                def enqueue_aftercare(conn: Any) -> None:
+                    if displaced:
+                        self._db.intel.enqueue_intel_job(
+                            meeting_id,
+                            transcript_hash=meeting.transcript_hash(),
+                            reason=detail,
+                            displaced_work=tuple(displaced),
+                            conn=conn,
+                        )
+
+                InferenceParentRouteBundleService(
+                    broker, broker.inference_adoption_service
+                ).fence_cancel(
+                    principal,
+                    command_id=f"meeting-recovery:{meeting_id}",
+                    bundle_id=str(bundle["id"]),
+                    in_transaction_effect=enqueue_aftercare if displaced else None,
+                )
+                self.clear_route_fence_pending(meeting_id)
+            elif displaced:
+                self._db.intel.enqueue_intel_job(
+                    meeting_id,
+                    transcript_hash=meeting.transcript_hash(),
+                    reason=detail,
+                    displaced_work=tuple(displaced),
+                )
+        except Exception as exc:
+            self.mark_route_fence_pending(meeting_id, f"{type(exc).__name__}: {exc}")
+            log.error("meeting capture recovery fence failed: %s", type(exc).__name__)
+        return self.get_meeting(meeting_id)
 
     def list_facet_values(self) -> dict:
         """Distinct speakers + tags across the archive (HS-55-04 filter row)."""

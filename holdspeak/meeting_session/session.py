@@ -106,7 +106,7 @@ class MeetingSession(
         cross_meeting_recognition: bool = True,
         principal: Optional[Any] = None,
         requested_remote_device_ids: tuple[str, ...] = (),
-        transcriber_factory: Optional[Callable[[], Transcriber]] = None,
+        transcriber_factory: Optional[Callable[[dict[str, str]], Transcriber]] = None,
         transcription_backend: str = "",
         transcription_model_name: str = "",
     ) -> None:
@@ -189,6 +189,8 @@ class MeetingSession(
         # parent covers transcription too, so a session that admitted nothing
         # transcribes nothing — never an unadmitted Whisper call.
         self._transcription_refusal: str = ""
+        # Exact construction parameters copied from the admitted speech deployment.
+        self._frozen_transcription: dict[str, str] | None = None
         # Once the live parent is closed it is never revived: a later dispatch
         # attempt is refused by name, not silently re-admitted (HS-131-08).
         self._intel_closed: bool = False
@@ -530,8 +532,10 @@ class MeetingSession(
                     if resolved_backend == "faster-whisper" and self._route_bundle is not None:
                         created: dict[str, Transcriber] = {}
 
-                        def construct() -> str:
-                            created["transcriber"] = self._transcriber_factory()
+                        def construct(_cancellation: Any) -> str:
+                            if self._frozen_transcription is None:
+                                raise RuntimeError("frozen_transcription_missing")
+                            created["transcriber"] = self._transcriber_factory(self._frozen_transcription)
                             return "constructed"
 
                         admission = self._transcription_admission(
@@ -554,7 +558,9 @@ class MeetingSession(
                     else:
                         # MLX construction is weight-free; its one P=1 child below
                         # owns the entire frozen candidate/strategy warmup.
-                        self.transcriber = self._transcriber_factory()
+                        if self._frozen_transcription is None:
+                            raise RuntimeError("frozen_transcription_missing")
+                        self.transcriber = self._transcriber_factory(self._frozen_transcription)
                 except Exception as exc:
                     self._record_only({
                         "family": "speech-recognition-route-assignments",

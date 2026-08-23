@@ -62,10 +62,10 @@ adapter exception to carry into the migration.
 | `plugins/dictation/runtime_mesh_relay.py:106` | relay `run_prompt` | `internal.speech.runtime_assembly` |
 | `plugins/dictation/runtime_openai_compatible.py:141` | classify `chat.completions.create` | `speech.intent_classify` |
 | `plugins/dictation/runtime_openai_compatible.py:188` | rewrite `chat.completions.create` | `speech.rewrite` |
-| `transcribe.py:278` | MLX model preload `get_model` | `speech.preload` |
-| `transcribe.py:288` | silent-audio MLX warmup `transcribe` | `speech.transcribe` |
-| `transcribe.py:333` | MLX Whisper `transcribe` | `speech.transcribe` |
-| `transcribe.py:415` | faster-whisper `transcribe` | `speech.transcribe` |
+| `transcribe.py:284` | MLX model preload `get_model` | `speech.preload` |
+| `transcribe.py:294` | silent-audio MLX warmup `transcribe` | `speech.transcribe` |
+| `transcribe.py:339` | MLX Whisper `transcribe` | `speech.transcribe` |
+| `transcribe.py:421` | faster-whisper `transcribe` | `speech.transcribe` |
 
 The first four rows are reached through a runner-built `MeetingIntel` and its
 canonical adapter. Dictation rows are reached through the admitted dictation

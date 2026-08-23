@@ -171,53 +171,17 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
         )
         source_count = 2 + len(requested)  # mic + system + frozen requested remotes
         transcription_budget = 2 * source_count * (interval_count + 1) + 2
-        # Resolve `auto` exactly as Transcriber does: importability only, never
-        # model construction, a load, or a network call at route admission.
-        resolved_backend = self._transcription_backend
-        if resolved_backend == "auto":
-            try:
-                from ..transcribe import _resolve_backend
-
-                resolved_backend = _resolve_backend("auto")
-            except Exception:
-                resolved_backend = ""
-        self._resolved_transcription_backend = resolved_backend
-        model_name = self._transcription_model_name or "base"
-        deferred_faster_whisper = (
-            self.transcriber is None
-            and self._transcriber_factory is not None
-            and resolved_backend == "faster-whisper"
-        )
-        deferred_or_unloaded_mlx = (
-            resolved_backend == "mlx"
-            and (
-                (self.transcriber is None and self._transcriber_factory is not None)
-                or (self.transcriber is not None and not bool(getattr(self.transcriber, "loaded", False)))
-            )
-        )
-        if deferred_or_unloaded_mlx:
-            from ..transcribe import _model_repo_candidates
-
-            candidates = [
-                {"id": candidate, "revision": "mlx-candidate-v1"}
-                for candidate in _model_repo_candidates(model_name)
-            ]
-            strategies = ["model-holder", "silent-audio"]
-        elif deferred_faster_whisper:
-            candidates = [{
-                "id": f"builtin-whisper-faster-whisper-{model_name}",
-                "revision": "legacy-model-config-v1",
-            }]
-            strategies = ["constructor"]
-        else:
-            candidates = []
-            strategies = ["constructor"]
-        preload_budget = 1 if (deferred_faster_whisper or deferred_or_unloaded_mlx) else 0
+        # The caller's mutable ModelConfig may establish the migration input but
+        # is never execution authority.  Candidate/model/language material is
+        # derived inside bundle admission from the frozen speech deployment.
+        # Reserve the one bounded lifecycle child up front; a matching already
+        # warm instance simply leaves that capacity unused.
+        preload_budget = 1
         preload_declaration = {
             "key": "preload",
             "source_key": "transcription",
-            "candidate_material": candidates,
-            "strategy_sequence": strategies,
+            "candidate_material": [],
+            "strategy_sequence": ["derive-from-frozen-transcription"],
         }
         budget_groups = (
             {
@@ -280,6 +244,34 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
             return False
         self._intel_parent = started["parent"]
         self._route_bundle = started["bundle"]
+        evidence = next(iter(self._route_bundle.get("derived_preloads", ())), None)
+        if not isinstance(evidence, Mapping):
+            self._refuse_session(
+                TRANSCRIPTION_NOT_ADMITTED,
+                "Meeting intelligence refused: frozen transcription evidence is missing. Recording continues.",
+            )
+            return False
+        self._frozen_transcription = {
+            "backend": str(evidence["engine"]),
+            "model": str(evidence["model"]),
+            "language": str(evidence["language"]),
+            "deployment_revision_id": str(evidence["deployment_revision_id"]),
+        }
+        if self._frozen_transcription["backend"] in {"mlx", "faster-whisper"}:
+            current = self.transcriber
+            if current is not None and not (
+                str(getattr(current, "backend", "")) == self._frozen_transcription["backend"]
+                and str(getattr(current, "model_name", "")) == self._frozen_transcription["model"]
+                and (str(getattr(current, "language", "") or "auto")
+                     == self._frozen_transcription["language"])
+            ):
+                # A warm model is reusable only when it identifies the exact frozen
+                # deployment construction.  A mismatched instance is not physical
+                # route evidence and must not run under this receipt.
+                self.transcriber = None
+            self._resolved_transcription_backend = self._frozen_transcription["backend"]
+            self._transcription_backend = self._frozen_transcription["backend"]
+            self._transcription_model_name = self._frozen_transcription["model"]
         # A fresh bundle-backed Meeting never reconstructs a legacy speech plan.
         # The bundle's transcription member is the only execution authority;
         # `SpeechSessionPlan` remains readable solely for pre-cutover history.
@@ -479,36 +471,6 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
             self._intel_closed = True
             self._intel_live = False
 
-        bundle = self._route_bundle
-        if bundle is not None and self.intel_principal is not None:
-            try:
-                from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
-
-                broker = self._intel_broker()
-                effect = InferenceParentRouteBundleService(
-                    broker, broker.inference_adoption_service
-                ).fence_cancel(
-                    self.intel_principal,
-                    command_id=f"meeting-stop:{state.id}",
-                    bundle_id=str(bundle["id"]),
-                )
-                log.info(
-                    "live meeting bundle fenced at stop: bundle=%s routes=%s",
-                    effect["bundle_id"],
-                    len(effect["route_stops"]),
-                )
-            except Exception as exc:
-                # A fence failure is visible and must not make the durable Meeting
-                # disappear.  The Meeting-keyed aftercare upsert below remains the
-                # established recovery authority until Phase C replaces it.
-                log.error("live meeting bundle fence failed at stop: %s", type(exc).__name__)
-
-        # The old parent close/cancel path is intentionally not used for a bundle:
-        # `fence_cancel()` derives and fences the complete route set in one durable
-        # transaction, then performs best-effort physical child cancellation.
-        self._intel_parent = None
-        self._intel_closed = True
-
         # Preserve the pre-cutover product predicate independently of live route
         # admission: segments request final analysis, bookmarks request labels,
         # and an untitled Meeting requests an auto-title.  In particular, a
@@ -520,42 +482,107 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
             displaced.append(DISPLACED_BOOKMARK_LABELS)
         if not state.title:
             displaced.append(DISPLACED_AUTO_TITLE)
-        if not displaced:
-            return ()
-
-        # HS-131-17: the live session no longer infers routed intelligence from
-        # private MIR fields — it has none. The deferred job reads the current
-        # `MeetingConfig.intent_router_enabled` under its own admitted parent and
-        # owns that decision end to end.
-        # The slugs are the machine contract; the sentence is for the owner.
         self._intel_displaced_work = tuple(displaced)
         detail = (
             "Meeting saved. Live intelligence stopped with the recording; "
             + ", ".join(DISPLACED_LABELS[slug] for slug in displaced)
             + " queued for deferred processing."
-        )
-        if self._deferred_intel_reason:
+        ) if displaced else "Meeting saved. No deferred intelligence was requested."
+        if self._deferred_intel_reason and displaced:
             detail += f" Earlier deferral: {self._deferred_intel_reason}"
 
-        try:
-            from ..db import get_database
+        from ..db import get_database
 
-            get_database().intel.enqueue_intel_job(
-                state.id,
-                transcript_hash=state.transcript_hash(),
-                reason=detail,
-                displaced_work=tuple(displaced),
-            )
-        except Exception as exc:
-            # The handoff is the only route to the displaced outputs, so a failure
-            # here is an honest error, never a silent Ready.
-            log.error("deferred intel handoff enqueue failed: %s", exc)
-            self._set_intel_status(
-                "error",
-                f"Deferred intelligence could not be queued: {exc}",
-                after_handoff=True,
-            )
-            return tuple(displaced)
+        database = get_database()
+
+        def enqueue_aftercare(conn: Any) -> None:
+            if displaced:
+                database.intel.enqueue_intel_job(
+                    state.id,
+                    transcript_hash=state.transcript_hash(),
+                    reason=detail,
+                    displaced_work=tuple(displaced),
+                    conn=conn,
+                )
+
+        bundle = self._route_bundle
+        fenced = bundle is None or self.intel_principal is None
+        if bundle is not None and self.intel_principal is not None:
+            from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
+
+            broker = self._intel_broker()
+            service = InferenceParentRouteBundleService(broker, broker.inference_adoption_service)
+            fence_error: Exception | None = None
+            for attempt in (1, 2):
+                try:
+                    effect = service.fence_cancel(
+                        self.intel_principal,
+                        command_id=f"meeting-stop:{state.id}",
+                        bundle_id=str(bundle["id"]),
+                        in_transaction_effect=enqueue_aftercare if displaced else None,
+                    )
+                    log.info(
+                        "live meeting bundle fenced at stop: bundle=%s routes=%s",
+                        effect["bundle_id"],
+                        len(effect["route_stops"]),
+                    )
+                    fenced = True
+                    break
+                except Exception as exc:
+                    fence_error = exc
+                    log.warning(
+                        "live meeting bundle fence attempt %s failed: %s",
+                        attempt,
+                        type(exc).__name__,
+                    )
+            if not fenced:
+                assert fence_error is not None
+                # The meeting remains recoverable even if the controller's fence
+                # boundary is faulted: this durable marker is startup recovery's
+                # obligation to re-run the idempotent fence.
+                database.meetings.mark_route_fence_pending(
+                    state.id, f"{type(fence_error).__name__}: {fence_error}"
+                )
+                if displaced:
+                    try:
+                        database.intel.enqueue_intel_job(
+                            state.id,
+                            transcript_hash=state.transcript_hash(),
+                            reason=detail,
+                            displaced_work=tuple(displaced),
+                        )
+                    except Exception as exc:
+                        log.error("deferred intel handoff enqueue failed: %s", exc)
+                        self._set_intel_status(
+                            "error",
+                            f"Deferred intelligence could not be queued: {exc}",
+                            after_handoff=True,
+                        )
+                        return tuple(displaced)
+        elif displaced:
+            try:
+                database.intel.enqueue_intel_job(
+                    state.id,
+                    transcript_hash=state.transcript_hash(),
+                    reason=detail,
+                    displaced_work=tuple(displaced),
+                )
+            except Exception as exc:
+                log.error("deferred intel handoff enqueue failed: %s", exc)
+                self._set_intel_status(
+                    "error",
+                    f"Deferred intelligence could not be queued: {exc}",
+                    after_handoff=True,
+                )
+                return tuple(displaced)
+
+        # The old parent close/cancel path is intentionally not used for a bundle:
+        # `fence_cancel()` derives and fences the complete route set in one durable
+        # transaction, then performs best-effort physical child cancellation.
+        self._intel_parent = None
+        self._intel_closed = True
+        if not displaced:
+            return ()
         # A mid-meeting live window may have stamped `ready`; the deferred job is
         # still outstanding, so the completion stamp must go with it.
         with self._lock:

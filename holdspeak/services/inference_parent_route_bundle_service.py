@@ -580,16 +580,66 @@ class InferenceParentRouteBundleService:
     def _derived_preload_evidence(
         conn: Any, derived: Mapping[str, Any], source: Mapping[str, Any], preload: Mapping[str, Any]
     ) -> dict[str, Any]:
+        """Freeze construction material from the selected speech deployment.
+
+        Caller configuration can choose neither a preload candidate nor a model
+        after the speech route has frozen.  The closed legacy migration map makes
+        the model component recoverable from the frozen artifact identity; the
+        language claim is read from the exact frozen profile revision.
+        """
         deployment = source["entries"][0]
         deployment_row = conn.execute(
             "SELECT engine,model,artifact_id FROM deployment_revisions WHERE id=?",
             (deployment["deployment_revision_id"],),
         ).fetchone()
-        if deployment_row is None:
+        profile_row = conn.execute(
+            """SELECT capability_manifest_json FROM model_profile_revisions
+                 WHERE profile_id=? AND revision=?""",
+            (deployment["profile_id"], deployment["profile_revision"]),
+        ).fetchone()
+        if deployment_row is None or profile_row is None:
             raise ConflictError(
                 "Derived preload deployment is missing.",
                 code="inference_parent_route_bundle_integrity_invalid",
             )
+        engine = str(deployment_row["engine"])
+        model_identity = str(deployment_row["model"] or "")
+        artifact = str(deployment_row["artifact_id"] or model_identity)
+        prefix = f"builtin-whisper-{engine}-"
+        speech_deployment = (
+            engine in {"mlx", "faster-whisper"} and model_identity.startswith(prefix)
+        )
+        model = model_identity.removeprefix(prefix) if speech_deployment else model_identity
+        language = "auto"
+        if speech_deployment:
+            try:
+                claims = json.loads(str(profile_row["capability_manifest_json"]))["claims"]
+                language = next(
+                    str(item).removeprefix("speech_language:")
+                    for item in claims
+                    if str(item).startswith("speech_language:")
+                )
+            except (KeyError, TypeError, ValueError, StopIteration) as exc:
+                raise ConflictError(
+                    "Derived preload language evidence is missing.",
+                    code="inference_parent_route_bundle_integrity_invalid",
+                ) from exc
+        if engine == "mlx" and speech_deployment:
+            from ..transcribe import _model_repo_candidates
+
+            candidates = [
+                {"id": candidate, "revision": "mlx-candidate-v1"}
+                for candidate in _model_repo_candidates(model)
+            ]
+            strategies = ["model-holder", "silent-audio"]
+        elif engine == "faster-whisper" and speech_deployment:
+            candidates = [{"id": model_identity, "revision": "legacy-model-config-v1"}]
+            strategies = ["constructor"]
+        else:
+            # Historical fixture/read-only routes can reconstruct their existing
+            # non-Whisper transcriber but have no physical preload to derive.
+            candidates = []
+            strategies = ["constructor"]
         return {
             "schema": "InferenceDerivedPreloadEvidence@1",
             "preload_route_key": derived["declaration"]["key"],
@@ -599,11 +649,13 @@ class InferenceParentRouteBundleService:
             "transcription_route_plan_id": source["id"],
             "transcription_route_plan_sha256": source["sha256"],
             "deployment_revision_id": deployment["deployment_revision_id"],
-            "engine": str(deployment_row["engine"]),
-            "model_artifact": str(deployment_row["artifact_id"] or deployment_row["model"] or ""),
-            "candidate_material": derived["request"]["candidate_material"],
-            "candidate_material_sha256": _sha256(derived["request"]["candidate_material"]),
-            "strategy_sequence": derived["request"]["strategy_sequence"],
+            "engine": engine,
+            "model": model,
+            "language": language,
+            "model_artifact": artifact,
+            "candidate_material": candidates,
+            "candidate_material_sha256": _sha256(candidates),
+            "strategy_sequence": strategies,
         }
 
     def get(self, bundle_id: str) -> dict[str, Any]:
@@ -625,8 +677,15 @@ class InferenceParentRouteBundleService:
         *,
         command_id: str,
         bundle_id: str,
+        in_transaction_effect: Callable[[Any], None] | None = None,
     ) -> dict[str, Any]:
-        """Fence a live bundle without creating a handoff/adopter effect."""
+        """Fence a live bundle and commit an optional same-database effect with it.
+
+        Stop's deferred-aftercare upsert is supplied here so either the parent
+        fence and row both commit, or neither does.  The callback receives the
+        service's ``BEGIN IMMEDIATE`` connection and must issue no transaction
+        control of its own.
+        """
         command = _safe(command_id, field="command_id")
         bundle_identifier = _safe(bundle_id, field="bundle_id")
         with self._db._connection() as conn:
@@ -660,6 +719,8 @@ class InferenceParentRouteBundleService:
                 # request; it is a genuine no-op from durable bundle evidence.
                 parent_state = str(parent["state"])
                 if parent_state not in {"OPEN", "CANCELLING"}:
+                    if in_transaction_effect is not None:
+                        in_transaction_effect(conn)
                     conn.commit()
                     return {
                         "schema": "InferenceParentBundleFence@1",
@@ -710,6 +771,8 @@ class InferenceParentRouteBundleService:
                 fence = self._parents.fence_for_handoff_in_transaction(
                     conn, principal, operation_id=str(parent["operation_id"])
                 )
+                if in_transaction_effect is not None:
+                    in_transaction_effect(conn)
                 conn.commit()
             except Exception:
                 conn.rollback()
@@ -1208,13 +1271,15 @@ class InferenceParentRouteBundleService:
             "schema", "preload_route_key", "preload_route_plan_id",
             "preload_route_plan_sha256", "transcription_route_key",
             "transcription_route_plan_id", "transcription_route_plan_sha256",
-            "deployment_revision_id", "engine", "model_artifact",
+            "deployment_revision_id", "engine", "model", "language", "model_artifact",
             "candidate_material", "candidate_material_sha256", "strategy_sequence",
         }
         if (
             not isinstance(evidence, Mapping)
             or set(evidence) != fields
             or evidence["schema"] != "InferenceDerivedPreloadEvidence@1"
+            or not isinstance(evidence["model"], str) or not evidence["model"]
+            or not isinstance(evidence["language"], str) or not evidence["language"]
             or not isinstance(evidence["candidate_material"], list)
             or any(
                 not isinstance(item, Mapping)

@@ -218,15 +218,17 @@ class MeetingGlueMixin:
         # has made the Meeting and audio journal durable.  An already-held
         # transcriber is merely reused; a replacement is built by the session only
         # after recorder start, where failure degrades to record-only capture.
-        preloaded_transcriber = (
-            self.transcriber
-            if self.transcriber is not None
-            and getattr(self.transcriber, "model_name", None) == self.config.model.name
-            else None
-        )
+        # MeetingSession compares this candidate with its frozen speech deployment
+        # after admission.  Config may have changed; only an exact frozen identity
+        # can be reused.
+        preloaded_transcriber = self.transcriber
 
-        def construct_transcriber():
-            self.transcriber = self._ensure_transcriber_loaded()
+        def construct_transcriber(frozen: dict[str, str]):
+            self.transcriber = self._ensure_transcriber_loaded(
+                model_name=frozen["model"],
+                backend=frozen["backend"],
+                language=frozen["language"],
+            )
             return self.transcriber
 
         # HS-32-03: claim the shared audio floor before opening any recorder, so

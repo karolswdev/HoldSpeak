@@ -248,14 +248,20 @@ class _MlxTranscriber:
             f"(last preload {last or 'not attempted'})."
         )
 
-    def _load_candidate_sequence(self) -> str:
-        """Execute the frozen MLX candidate/strategy walk inside one child."""
+    def _load_candidate_sequence(self, cancellation: Any = None) -> str:
+        """Execute the frozen MLX candidate/strategy walk inside one child.
+
+        A cancellation can arrive while a native load is in flight.  That call
+        cannot be force-stopped, but no later candidate or strategy may begin.
+        """
         last = ""
         for repo in self._candidates:
             for stage, run in (
                 ("model-holder", lambda repo=repo: self._model_holder_get(repo)),
                 ("silent-audio", lambda repo=repo: self._silent_audio_load(repo)),
             ):
+                if cancellation is not None and cancellation.is_set():
+                    raise TranscriberError("MLX preload cancelled before next physical call")
                 try:
                     run()
                 except Exception as exc:  # candidate failure tries the next frozen leg

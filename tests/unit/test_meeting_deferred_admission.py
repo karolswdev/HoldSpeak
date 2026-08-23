@@ -373,100 +373,8 @@ def _add_segment(session: Any, text: str, start: float) -> None:
 # ------------------------------------------------- Amendment 2: the stop handoff
 
 
-def legacy_stop_cancels_the_live_plan_parent_and_durably_enqueues_the_displaced_work(tmp_path, monkeypatch):
-    engine = FakeIntel()
-    engine.stream_gate = threading.Event()
-    db, broker, session, engine, _requests = _session_rig(tmp_path, monkeypatch, engine=engine)
-    state = session.start()
-    parent_id = session.intel_session_operation_id()
-    _add_segment(session, f"Live window about {SENTINEL}", 0.0)
-    session._state.bookmarks.append(Bookmark(timestamp=2.0, label="Bookmark 1"))
-
-    # A live window is mid-stream (blocked inside the provider) when stop lands.
-    window = threading.Thread(target=session._run_intel_analysis, daemon=True)
-    window.start()
-    assert engine.entered.wait(10.0), "the live window never reached the provider"
-
-    final = session.stop()
-    window.join(15.0)
-
-    # 1. The live parent is CANCELLED, not succeeded, and closed exactly once.
-    parent = [row for row in _parents(db, "meeting.session") if row["operation_id"] == parent_id][0]
-    assert parent["state"] == "CANCELLED", parent["state"]
-    assert broker.store.receipt(parent_id)["outcome"] == "cancelled"
-
-    # 2. Provider cancellation was attempted and the child never published.
-    children = _children(db, parent_id)
-    assert len(children) == 1
-    outcome = broker.store.receipt(children[0]["operation_id"])["outcome"]
-    assert outcome in {"cancelled", "indeterminate"}, outcome
-    stage = broker.projection_stager.get(children[0]["native_id"])
-    assert stage is None or stage.state != "PUBLISHED"
-    assert session._state.intel is None
-
-    # 3. The displaced final work is durably enqueued BEFORE stop() returned.
-    job = db.intel.get_intel_job(state.id)
-    assert job is not None
-    assert job.status == "queued"
-    assert job.transcript_hash == final.transcript_hash()
-    for displaced in ("final analysis", "bookmark labels", "auto title"):
-        assert displaced in str(job.intel_status_detail or ""), job.intel_status_detail
-
-    # 4. Nothing reports readiness while the deferred job is outstanding, and no
-    #    post-close provider dispatch happened inside stop().
-    assert final.intel_status == "queued"
-    assert final.intel_completed_at is None
-    persisted = db.meetings.get_meeting(state.id)
-    assert persisted is not None
-    assert persisted.intel_status == "queued"
-    assert persisted.intel_completed_at is None
-    assert engine.titles == [] and engine.labels == []
-    engine.stream_gate.set()
 
 
-def legacy_stop_with_an_unacknowledging_live_plan_provider_leaves_the_child_indeterminate(tmp_path, monkeypatch):
-    """An adapter that never acknowledges cancellation is indeterminate, not guessed."""
-    db, broker, session, engine, _requests = _session_rig(tmp_path, monkeypatch)
-    monkeypatch.setattr(broker.inference_runner, "_cancel_timeout", 0.2, raising=False)
-
-    class _DeafAdapter:
-        connector_id = "inference-provider"
-
-        def __init__(self) -> None:
-            self.result = None
-            self.dispatching = threading.Event()
-
-        def dispatch(self, engine_: Any, payload: Any, cancellation: threading.Event) -> Any:
-            self.dispatching.set()
-            cancellation.wait(5.0)
-            return {"contract": "deaf"}
-
-        def cancel(self) -> str:
-            # Never comes back inside the cancellation timeout: disposition unknown.
-            threading.Event().wait(5.0)
-            return "cancelled"
-
-    deaf = _DeafAdapter()
-    from holdspeak.meeting_session import intel_child
-
-    monkeypatch.setattr(intel_child, "MeetingAdapter", lambda *a, **k: deaf)
-
-    session.start()
-    parent_id = session.intel_session_operation_id()
-    _add_segment(session, "A window with a deaf provider", 0.0)
-    window = threading.Thread(target=session._run_intel_analysis, daemon=True)
-    window.start()
-    assert deaf.dispatching.wait(10.0)
-
-    session.stop()
-    window.join(20.0)
-
-    children = _children(db, parent_id)
-    assert len(children) == 1
-    assert broker.store.receipt(children[0]["operation_id"])["outcome"] == "indeterminate"
-    assert session._state.intel is None
-    # The meeting is still handed off honestly, never left silently empty.
-    assert db.intel.get_intel_job(session._state.id) is not None
 
 
 def test_a_closed_live_session_is_never_revived(tmp_path, monkeypatch):
@@ -950,51 +858,6 @@ def test_a_normal_deferred_job_runs_no_title_or_bookmark_children(tmp_path, monk
 # ------------------------------------------- D4: no late ready around the stop
 
 
-def legacy_live_plan_child_finalizing_during_stop_cannot_stamp_ready(tmp_path, monkeypatch):
-    """The apply is gated on the same election: a late window is DISCARDED."""
-    db, broker, session, engine, _requests = _session_rig(tmp_path, monkeypatch)
-    session.start()
-    parent_id = session.intel_session_operation_id()
-    _add_segment(session, "A window that finalizes just before stop", 0.0)
-
-    finalized = threading.Event()
-    release = threading.Event()
-    real_finalize = broker.projection_stager.finalize
-
-    def gated_finalize(invocation_id: str):
-        projection = real_finalize(invocation_id)
-        if projection is not None and str(projection.get("capability") or "") == "live-analysis":
-            # The child WON: its receipt is durable and its projection published.
-            finalized.set()
-            release.wait(20.0)
-        return projection
-
-    monkeypatch.setattr(broker.projection_stager, "finalize", gated_finalize)
-
-    window = threading.Thread(target=session._run_intel_analysis, daemon=True)
-    window.start()
-    assert finalized.wait(15.0), "the live window never finalized its projection"
-
-    # stop() now cancels, closes and stamps `queued` while that apply is pending.
-    final = session.stop()
-    assert final.intel_status == "queued"
-    child = _children(db, parent_id)[0]
-    assert broker.store.receipt(child["operation_id"])["outcome"] == "succeeded"
-
-    # Release the lingering apply: it must be discarded by the closed-flag gate.
-    release.set()
-    window.join(15.0)
-    assert not window.is_alive()
-
-    assert session._state.intel is None, "a late window stamped meeting state"
-    assert session._state.intel_status == "queued"
-    assert session._state.intel_completed_at is None
-    persisted = db.meetings.get_meeting(final.id)
-    assert persisted.intel_status == "queued"
-    assert persisted.intel_completed_at is None
-    assert persisted.intel is None
-    # The handoff still happened, so the displaced work is durably queued.
-    assert db.intel.get_intel_job(final.id) is not None
 
 
 def test_no_transcript_material_reaches_the_kernel_journal_on_the_deferred_path(tmp_path, monkeypatch):
@@ -1028,3 +891,20 @@ def test_no_transcript_material_reaches_the_kernel_journal_on_the_deferred_path(
             assert SENTINEL not in json.dumps(row, default=str), table
     outcomes = {str(row["outcome"]) for row in _rows(db, "kernel_receipts")}
     assert {"succeeded", "failed"} <= outcomes, outcomes
+
+
+def test_stop_fences_live_bundle_before_return_and_rejects_late_ready(tmp_path, monkeypatch):
+    """Stop acknowledgement closes admission and a late live status cannot win."""
+    from holdspeak.meeting_session.models import TranscriptSegment
+    from tests.unit.test_meeting_capture_durability import _routed_recovery_session, _parent_state
+
+    db, _broker, session = _routed_recovery_session(tmp_path, monkeypatch)
+    state = session.start()
+    state.segments.append(TranscriptSegment("deferred aftercare", "Me", 0.0, 1.0))
+    final = session.stop()
+    assert _parent_state(db, session._route_bundle["id"]) != "OPEN"
+    assert session._intel_closed is True
+    assert final.intel_status == "queued"
+    session._set_intel_status("ready", "late physical result")
+    assert final.intel_status == "queued"
+    assert "queued for deferred processing" in str(final.intel_status_detail).lower()

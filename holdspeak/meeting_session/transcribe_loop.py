@@ -58,6 +58,12 @@ class TranscribeLoopMixin:
         from ..faults import trip as _fault_trip
 
         _fault_trip("meeting.transcribe")
+        if self.transcriber is None:
+            log.warning(
+                "meeting transcription interval dropped: %s",
+                self._transcription_refusal or "meeting_transcription_not_admitted",
+            )
+            return None
         try:
             admission = self._transcription_admission(
                 source_id=source_id,

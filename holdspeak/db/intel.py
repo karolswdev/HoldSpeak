@@ -46,55 +46,83 @@ class IntelRepository(BaseRepository):
         transcript_hash: str,
         reason: Optional[str] = None,
         displaced_work: Sequence[str] = (),
+        conn: Any | None = None,
     ) -> None:
         """Queue or refresh deferred intelligence processing for a meeting.
 
-        ``displaced_work`` (HS-131-08) is the STRUCTURED list of work a stop
-        handoff displaced onto this job — the queue reads it instead of parsing
-        the owner-facing status sentence. An ordinary enqueue passes nothing.
+        Passing the caller's open SQLite connection composes this Meeting-keyed
+        upsert with its Stop fence.  The public method intentionally remains the
+        one queue authority: callers must not duplicate its payload or status
+        write in a sibling transaction.
         """
+        if conn is None:
+            with self._connection() as owned_conn:
+                self._enqueue_intel_job_in_transaction(
+                    owned_conn,
+                    meeting_id,
+                    transcript_hash=transcript_hash,
+                    reason=reason,
+                    displaced_work=displaced_work,
+                )
+            return
+        self._enqueue_intel_job_in_transaction(
+            conn,
+            meeting_id,
+            transcript_hash=transcript_hash,
+            reason=reason,
+            displaced_work=displaced_work,
+        )
+
+    @staticmethod
+    def _enqueue_intel_job_in_transaction(
+        conn: Any,
+        meeting_id: str,
+        *,
+        transcript_hash: str,
+        reason: Optional[str],
+        displaced_work: Sequence[str],
+    ) -> None:
+        """Perform the idempotent queue upsert on an already-open transaction."""
         now = datetime.now().isoformat()
         work = json.dumps(
             [str(item) for item in displaced_work if str(item).strip()],
             separators=(",", ":"),
         )
-        with self._connection() as conn:
-            conn.execute(
-                """
-                INSERT INTO intel_jobs (
-                    meeting_id, status, transcript_hash, requested_at, updated_at,
-                    attempts, last_error, displaced_work
-                )
-                VALUES (?, 'queued', ?, ?, ?, 0, ?, ?)
-                ON CONFLICT(meeting_id) DO UPDATE SET
-                    status = 'queued',
-                    transcript_hash = excluded.transcript_hash,
-                    requested_at = excluded.requested_at,
-                    updated_at = excluded.updated_at,
-                    last_error = excluded.last_error,
-                    displaced_work = excluded.displaced_work
-                """,
-                (meeting_id, transcript_hash, now, now, reason, work),
+        conn.execute(
+            """
+            INSERT INTO intel_jobs (
+                meeting_id, status, transcript_hash, requested_at, updated_at,
+                attempts, last_error, displaced_work
             )
-
-            conn.execute(
-                """
-                UPDATE meetings
-                SET intel_status = 'queued',
-                    intel_status_detail = ?,
-                    intel_requested_at = COALESCE(intel_requested_at, ?),
-                    intel_completed_at = NULL,
-                    sync_modified_at = ?,
-                    updated_at = datetime('now')
-                WHERE id = ?
-                """,
-                (
-                    reason or "Queued for later processing.",
-                    now,
-                    now,
-                    meeting_id,
-                ),
-            )
+            VALUES (?, 'queued', ?, ?, ?, 0, ?, ?)
+            ON CONFLICT(meeting_id) DO UPDATE SET
+                status = 'queued',
+                transcript_hash = excluded.transcript_hash,
+                requested_at = excluded.requested_at,
+                updated_at = excluded.updated_at,
+                last_error = excluded.last_error,
+                displaced_work = excluded.displaced_work
+            """,
+            (meeting_id, transcript_hash, now, now, reason, work),
+        )
+        conn.execute(
+            """
+            UPDATE meetings
+            SET intel_status = 'queued',
+                intel_status_detail = ?,
+                intel_requested_at = COALESCE(intel_requested_at, ?),
+                intel_completed_at = NULL,
+                sync_modified_at = ?,
+                updated_at = datetime('now')
+            WHERE id = ?
+            """,
+            (
+                reason or "Queued for later processing.",
+                now,
+                now,
+                meeting_id,
+            ),
+        )
 
     def claim_next_intel_job(self, *, include_scheduled: bool = False) -> Optional[IntelJob]:
         """Claim the next queued intelligence job for processing."""
@@ -103,19 +131,23 @@ class IntelRepository(BaseRepository):
             if include_scheduled:
                 row = conn.execute(
                     """
-                    SELECT * FROM intel_jobs
-                    WHERE status = 'queued'
-                    ORDER BY requested_at ASC
+                    SELECT j.* FROM intel_jobs j
+                    JOIN meetings m ON m.id=j.meeting_id
+                    WHERE j.status = 'queued'
+                      AND m.capture_status IN ('finalized', 'recovered')
+                    ORDER BY j.requested_at ASC
                     LIMIT 1
                     """
                 ).fetchone()
             else:
                 row = conn.execute(
                     """
-                    SELECT * FROM intel_jobs
-                    WHERE status = 'queued'
-                      AND requested_at <= ?
-                    ORDER BY requested_at ASC
+                    SELECT j.* FROM intel_jobs j
+                    JOIN meetings m ON m.id=j.meeting_id
+                    WHERE j.status = 'queued'
+                      AND j.requested_at <= ?
+                      AND m.capture_status IN ('finalized', 'recovered')
+                    ORDER BY j.requested_at ASC
                     LIMIT 1
                     """,
                     (now_iso,),

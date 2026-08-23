@@ -57,6 +57,23 @@ class LiveReadinessMixin:
             self._defer_live_intelligence(_NOT_ADMITTED)
             return
 
+        # Read the frozen leg's own admission evidence.  A bundle member alone
+        # proves selection, not that its first physical leg was eligible.
+        from ..db import get_database
+
+        with get_database()._connection() as conn:
+            preflight = conn.execute(
+                """SELECT eligibility,reason_code
+                     FROM inference_route_plan_preflight_evidence
+                    WHERE plan_id=? AND route_leg_ordinal=1""",
+                (str(member["route_plan_id"]),),
+            ).fetchone()
+        if preflight is None or str(preflight["eligibility"]) == "known_preflight_unavailable":
+            self._defer_live_intelligence(
+                "" if preflight is None else str(preflight["reason_code"] or _UNAVAILABLE)
+            )
+            return
+
         # The bundle route is already frozen and preflighted.  Do not re-resolve
         # placement here: a first actual operation lets the controller interpret
         # the immutable availability evidence.

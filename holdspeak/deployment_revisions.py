@@ -228,7 +228,7 @@ def resolve_deployment_revision(db: Any, revision_id: str) -> DeploymentRevision
         return revision
     with db._connection() as conn:
         row = conn.execute(
-            """SELECT local_locator, manifest_sha256, format, state
+            """SELECT local_locator, manifest_sha256, format, state, source_kind
                  FROM inference_model_artifacts WHERE artifact_id=?""",
             (revision.artifact_id,),
         ).fetchone()
@@ -244,6 +244,7 @@ def resolve_deployment_revision(db: Any, revision_id: str) -> DeploymentRevision
         and revision.kind == "this_device"
         and revision.boundary == "same_device"
         and revision.engine in {"mlx", "faster-whisper"}
+        and str(row["source_kind"] or "") == "legacy-model-config"
         and not str(row["local_locator"] or "")
     )
     if not verified and not unloaded_local_speech:

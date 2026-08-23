@@ -491,7 +491,7 @@ def test_deferred_faster_whisper_constructor_is_one_derived_preload_child(
             return ""
 
     session.transcriber = None
-    session._transcriber_factory = lambda: constructed.append(_Transcriber()) or constructed[-1]
+    session._transcriber_factory = lambda _frozen: constructed.append(_Transcriber()) or constructed[-1]
     session._transcription_backend = "faster-whisper"
     session._transcription_model_name = "base"
 
@@ -1038,3 +1038,146 @@ def test_stop_aftercare_predicate_does_not_enqueue_empty_meeting(
         assert conn.execute(
             "SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)
         ).fetchone()[0] == 0
+
+
+def test_frozen_speech_deployment_replaces_mutable_large_instance_before_execution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A migrated base route cannot physically execute a stale large instance."""
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.meeting_session import MeetingSession
+    from holdspeak.speech_session.transcription import audio_sha256
+    from tests.unit.test_meeting_session_admission import FakeJournal, FakeRecorder
+
+    db = Database(tmp_path / "frozen-base.db")
+    _assign_meeting_routes_without_speech(db)
+    broker = _configure(db)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
+    monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
+    config = _meeting_config("meeting-profile")
+    config.model = SimpleNamespace(name="base", backend="mlx", language="auto")
+    assert broker.inference_adoption_service.migrate_speech_recognition_route_assignments(
+        OWNER, config
+    )["status"] == "migrated"
+    constructed: list[dict[str, str]] = []
+
+    class StaleLarge:
+        backend = "mlx"
+        model_name = "large"
+        language = None
+        loaded = True
+
+    class FrozenTranscriber:
+        loaded = True
+
+        def __init__(self, frozen: dict[str, str]) -> None:
+            constructed.append(dict(frozen))
+            self.backend = frozen["backend"]
+            self.model_name = frozen["model"]
+            self.language = None if frozen["language"] == "auto" else frozen["language"]
+
+        def transcribe(self, audio: np.ndarray, *, admission: Any) -> str:
+            canonical = np.ascontiguousarray(audio, dtype=np.float32)
+            outcome, result = admission.transcribe_child(
+                material={
+                    "audio_sha256": audio_sha256(canonical),
+                    "sample_count": int(canonical.size),
+                    "sample_rate": 16000,
+                    "backend": self.backend,
+                    "model": self.model_name,
+                    "language": self.language or "auto",
+                },
+                run=lambda: f"physical-{self.model_name}",
+                seed="ignored",
+            )
+            assert outcome.outcome == "succeeded"
+            return str(result)
+
+    # These mutable constructor values disagree with the previously migrated,
+    # admitted route.  The factory receives only frozen bundle evidence.
+    session = MeetingSession(
+        StaleLarge(),  # type: ignore[arg-type]
+        transcriber_factory=lambda frozen: FrozenTranscriber(frozen),
+        principal=OWNER,
+        intel_enabled=True,
+        transcription_backend="mlx",
+        transcription_model_name="large",
+    )
+    state = session.start()
+    assert state.transcription_status == "active"
+    assert constructed == [{
+        "backend": "mlx", "model": "base", "language": "auto",
+        "deployment_revision_id": constructed[0]["deployment_revision_id"],
+    }]
+    assert session.transcriber.model_name == "base"
+    assert session._transcribe_audio(
+        np.ones(16_000, dtype=np.float32), source_id="mic", interval_start=0.0, interval_end=1.0
+    ) == "physical-base"
+
+
+def test_removed_locator_free_speech_revision_requires_migration_provenance(tmp_path: Path) -> None:
+    """Only the migration's known built-in declaration may await first load."""
+    from holdspeak.deployment_revisions import resolve_deployment_revision
+    from holdspeak.services.inference_adoption_service import RoutedInferenceCoordinator
+
+    db = Database(tmp_path / "resolver-provenance.db")
+    config = _meeting_config("meeting-profile")
+    config.model = SimpleNamespace(name="base", backend="mlx", language="auto")
+    assert RoutedInferenceCoordinator(db).migrate_speech_recognition_route_assignments(
+        OWNER, config
+    )["status"] == "migrated"
+    with db._connection() as conn:
+        revision_id = conn.execute(
+            "SELECT deployment_revision_id FROM model_profile_binding_revisions"
+        ).fetchone()[0]
+        artifact_id = conn.execute(
+            "SELECT artifact_id FROM deployment_revisions WHERE id=?", (revision_id,)
+        ).fetchone()[0]
+    assert resolve_deployment_revision(db, revision_id) is not None
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE inference_model_artifacts SET source_kind='huggingface-download' WHERE artifact_id=?",
+            (artifact_id,),
+        )
+    assert resolve_deployment_revision(db, revision_id) is None
+
+
+def test_mlx_preload_sequence_stops_before_a_second_physical_call_after_cancellation() -> None:
+    """The P=1 lifecycle child observes cancellation between frozen strategies."""
+    from types import MethodType
+    from holdspeak.transcribe import _MlxTranscriber, TranscriberError
+
+    impl = object.__new__(_MlxTranscriber)
+    impl.model_name = "base"
+    impl.language = None
+    impl._path_or_hf_repo = None
+    impl._candidates = ("repo-a", "repo-b")
+    cancelled = threading.Event()
+    physical: list[tuple[str, str]] = []
+
+    def holder(_self: Any, repo: str) -> str:
+        physical.append(("model-holder", repo))
+        cancelled.set()
+        raise RuntimeError("in-flight fault")
+
+    impl._model_holder_get = MethodType(holder, impl)
+    impl._silent_audio_load = MethodType(lambda _self, repo: (_ for _ in ()).throw(AssertionError(repo)), impl)
+    with pytest.raises(TranscriberError, match="cancelled before next physical call"):
+        impl._load_candidate_sequence(cancelled)
+    assert physical == [("model-holder", "repo-a")]
+
+
+def test_unavailable_frozen_live_member_stays_queued_not_live(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Live readiness reads frozen preflight eligibility rather than member presence."""
+    from tests.unit.test_meeting_session_admission import _bundle_session
+
+    db, _broker, session = _bundle_session(tmp_path, monkeypatch)
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE model_profile_readiness_observations SET state='unavailable',reason_code='fault-injected-unavailable'"
+        )
+    state = session.start()
+    assert session._route_bundle is not None
+    assert state.intel_status == "queued"
+    assert state.intel_status_detail == "Queued for later processing: binding_not_ready"
