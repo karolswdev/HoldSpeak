@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+from dataclasses import replace
 import json
 import threading
 import time
@@ -21,9 +22,11 @@ from holdspeak.kernel.runtime import _configure
 from holdspeak.services.ask_service import _AskAnswerAdapter
 from holdspeak.services.inference_adoption_service import (
     ProductionInferenceAdoptionService,
+    ProductionRouteEvidence,
 )
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.services.errors import ConflictError
+from holdspeak.services.inference_route_plan_service import InferenceRoutePlanService
 from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
 from tests.unit.test_phase143_inference_route_plans import _ready_route
 
@@ -35,6 +38,27 @@ def _payload(text: str = "hello") -> dict[str, Any]:
         "temperature": 0.0,
         "max_tokens": 64,
     }
+
+
+def test_production_evidence_claims_meeting_and_speech_routes_without_ambiguity(
+    tmp_path: Path,
+) -> None:
+    """The shared provider owns every Phase-B route and rejects a duplicate claim."""
+    provider = ProductionRouteEvidence(Database(tmp_path / "meeting-evidence.db")).provider()
+    claimed = {capability_id for capability_id, _revision, _sha in provider.capabilities}
+    assert {
+        "meeting.live_analysis",
+        "meeting.bookmark_label",
+        "meeting.auto_title",
+        "speech.transcribe",
+        "speech.preload",
+    } <= claimed
+    duplicate = replace(provider, id="duplicate-meeting-route-evidence")
+    with pytest.raises(ValueError, match="ambiguous route admission evidence provider"):
+        InferenceRoutePlanService(
+            Database(tmp_path / "ambiguity.db"),
+            operation_evidence_providers=(provider, duplicate),
+        )
 
 
 def test_production_evidence_is_bound_to_exact_resolved_legs_and_reconstructs(

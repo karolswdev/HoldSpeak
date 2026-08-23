@@ -46,6 +46,7 @@ def _profile(
     claims: tuple[str, ...] = ("language",),
     ready: bool = True,
     context_ceiling: int = 32768,
+    modalities: tuple[str, ...] = ("language",),
 ) -> str:
     profiles = ModelProfileService(db)
     manifest = _manifest(*claims)
@@ -58,7 +59,7 @@ def _profile(
             "provider_family": "local",
             "runtime_family": "llama_cpp_prompt_v1",
             "model_or_artifact_identity": f"artifact-{profile_id}",
-            "supported_modalities": ["language"],
+            "supported_modalities": list(modalities),
             "context_support": "bounded",
             "tokenizer_template_requirements": {},
             "capability_manifest": manifest,

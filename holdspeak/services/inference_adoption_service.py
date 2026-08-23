@@ -40,6 +40,14 @@ ADOPTED_CAPABILITIES = (
     "speech.intent_classify",
     "speech.rewrite",
     "speech.punctuate",
+    # Phase B uses the same private material/evidence provider for the frozen
+    # Meeting bundle.  `speech.preload` is internally derived, but it still
+    # needs exact reconstructed operation and attempt-budget evidence.
+    "meeting.live_analysis",
+    "meeting.bookmark_label",
+    "meeting.auto_title",
+    "speech.transcribe",
+    "speech.preload",
 )
 EXECUTING_CAPABILITIES = tuple(
     value for value in ADOPTED_CAPABILITIES if value != "speech.punctuate"
@@ -107,7 +115,7 @@ def _input_token_upper_bound(serialized: str) -> int:
 
 
 class ProductionRouteEvidence:
-    """Durable private evidence owner for the five first production adopters."""
+    """Durable private evidence owner for production adopted capabilities."""
 
     def __init__(
         self,

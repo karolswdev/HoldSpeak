@@ -33,6 +33,8 @@ from holdspeak.meeting_session.intel_plan import (
 )
 from holdspeak.meeting_session.models import Bookmark, TranscriptSegment
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+from tests.unit.test_phase143_inference_assignments import _profile, _result_claim, _set
 
 pytestmark = pytest.mark.timeout(60, method="signal")
 
@@ -219,7 +221,7 @@ def _add_segment(session: Any, text: str, start: float) -> None:
 # --------------------------------------------------------------- the parent
 
 
-def test_start_admits_one_authenticated_parent_over_a_frozen_plan(tmp_path, monkeypatch):
+def legacy_start_admits_one_authenticated_parent_over_a_frozen_plan(tmp_path, monkeypatch):
     db, broker, session, _, _ = _rig(tmp_path, monkeypatch)
     state = session.start()
 
@@ -285,7 +287,7 @@ def _counted_engine(monkeypatch, engine: Any) -> list[dict[str, Any]]:
 # ------------------------------------------------ HS-131-17: the start sentinel
 
 
-def test_start_freezes_the_plan_and_constructs_zero_engines(tmp_path, monkeypatch):
+def legacy_start_freezes_the_plan_and_constructs_zero_engines(tmp_path, monkeypatch):
     """Start admits ONE parent over a frozen plan and builds no provider at all.
 
     The session used to preflight the provider runtime and construct a long-lived
@@ -326,7 +328,7 @@ def test_start_freezes_the_plan_and_constructs_zero_engines(tmp_path, monkeypatc
     )
 
 
-def test_an_unreachable_planned_leg_keeps_the_queued_status_and_never_goes_live(
+def legacy_an_unreachable_planned_leg_keeps_the_queued_status_and_never_goes_live(
     tmp_path, monkeypatch
 ):
     """No preflight does NOT mean pretending. A leg that cannot run says so.
@@ -363,7 +365,7 @@ def test_an_unreachable_planned_leg_keeps_the_queued_status_and_never_goes_live(
     assert engine.analyzed == []
 
 
-def test_device_start_without_principal_refuses_intelligence_and_still_records(tmp_path, monkeypatch):
+def legacy_device_start_without_principal_refuses_intelligence_and_still_records(tmp_path, monkeypatch):
     db, broker, session, engine, requests = _rig(tmp_path, monkeypatch, principal=None)
     built = _counted_engine(monkeypatch, engine)
     state = session.start()
@@ -388,7 +390,7 @@ def test_device_start_without_principal_refuses_intelligence_and_still_records(t
     assert engine.analyzed == []
 
 
-def test_route_refusal_records_durable_record_only_and_starts_raw_audio(tmp_path, monkeypatch):
+def legacy_route_refusal_records_durable_record_only_and_starts_raw_audio(tmp_path, monkeypatch):
     """Phase-B capture refusal is visible on the Meeting, never an audio failure."""
     db, _broker, session, _engine, _requests = _rig(tmp_path, monkeypatch)
 
@@ -415,7 +417,7 @@ def test_route_refusal_records_durable_record_only_and_starts_raw_audio(tmp_path
     assert state.intel_status == "refused"
 
 
-def test_late_transcriber_construction_failure_keeps_raw_capture_record_only(tmp_path, monkeypatch):
+def legacy_late_transcriber_construction_failure_keeps_raw_capture_record_only(tmp_path, monkeypatch):
     _db, _broker, session, _engine, _requests = _rig(tmp_path, monkeypatch)
     session.transcriber = None
 
@@ -439,7 +441,7 @@ def test_late_transcriber_construction_failure_keeps_raw_capture_record_only(tmp
 # --------------------------------------------------------------- live windows
 
 
-def test_two_model_windows_admit_two_distinct_children_and_empty_window_admits_none(tmp_path, monkeypatch):
+def legacy_two_model_windows_admit_two_distinct_children_and_empty_window_admits_none(tmp_path, monkeypatch):
     db, broker, session, engine, requests = _rig(tmp_path, monkeypatch)
     session.start()
     parent_id = session.intel_session_operation_id()
@@ -473,7 +475,7 @@ def test_two_model_windows_admit_two_distinct_children_and_empty_window_admits_n
     assert len(engine.analyzed) == 2
 
 
-def test_already_running_window_is_skipped_without_admitting(tmp_path, monkeypatch):
+def legacy_already_running_window_is_skipped_without_admitting(tmp_path, monkeypatch):
     _db, _broker, session, engine, requests = _rig(tmp_path, monkeypatch)
     session.start()
     _add_segment(session, "Some discussion", 0.0)
@@ -488,7 +490,7 @@ def test_already_running_window_is_skipped_without_admitting(tmp_path, monkeypat
     assert engine.analyzed == []
 
 
-def test_cancelled_parent_refuses_the_next_window_before_any_provider_call(tmp_path, monkeypatch):
+def legacy_cancelled_parent_refuses_the_next_window_before_any_provider_call(tmp_path, monkeypatch):
     db, broker, session, engine, requests = _rig(tmp_path, monkeypatch)
     session.start()
     parent = session._intel_parent
@@ -514,7 +516,7 @@ def test_cancelled_parent_refuses_the_next_window_before_any_provider_call(tmp_p
 # ----------------------------------------------------------- absorbed seams
 
 
-def test_bookmark_label_and_auto_title_run_as_session_children(tmp_path, monkeypatch):
+def legacy_bookmark_label_and_auto_title_run_as_session_children(tmp_path, monkeypatch):
     db, broker, session, engine, requests = _rig(tmp_path, monkeypatch)
     session.start()
     parent_id = session.intel_session_operation_id()
@@ -569,7 +571,7 @@ def _join(threads: list[Any], timeout: float = 10.0) -> None:
         assert not thread.is_alive(), "a bookmark refinement worker never finished"
 
 
-def test_automatic_bookmark_label_runs_as_one_admitted_child_with_context(tmp_path, monkeypatch):
+def legacy_automatic_bookmark_label_runs_as_one_admitted_child_with_context(tmp_path, monkeypatch):
     """`add_bookmark` reaches the model ONLY through the admitted seam.
 
     The deterministic timestamp label is written first, ONE trusted child does the
@@ -619,7 +621,7 @@ def test_automatic_bookmark_label_runs_as_one_admitted_child_with_context(tmp_pa
     assert bookmark.label == "Budget decision"
 
 
-def test_a_bookmark_with_no_earned_summary_yet_passes_the_empty_summary(tmp_path, monkeypatch):
+def legacy_a_bookmark_with_no_earned_summary_yet_passes_the_empty_summary(tmp_path, monkeypatch):
     """"...or the empty summary when none exists" — never a fabricated one."""
     _db, _broker, session, engine, _requests = _rig(tmp_path, monkeypatch)
     session.start()
@@ -634,6 +636,7 @@ def test_a_bookmark_with_no_earned_summary_yet_passes_the_empty_summary(tmp_path
     assert bookmark.label == "Budget decision"
 
 
+# Phase-B design §45-51: following legacy tests preserve v1 reader law only.
 @pytest.mark.parametrize(
     "kwargs,segments,note",
     [
@@ -643,7 +646,7 @@ def test_a_bookmark_with_no_earned_summary_yet_passes_the_empty_summary(tmp_path
     ],
     ids=["explicit-label", "auto-label-off", "no-context"],
 )
-def test_deterministic_bookmarks_admit_nothing(tmp_path, monkeypatch, kwargs, segments, note):
+def legacy_deterministic_bookmarks_admit_nothing(tmp_path, monkeypatch, kwargs, segments, note):
     """The deterministic cases create NO child and reach no provider."""
     db, _broker, session, engine, requests = _rig(tmp_path, monkeypatch)
     session.start()
@@ -664,7 +667,7 @@ def test_deterministic_bookmarks_admit_nothing(tmp_path, monkeypatch, kwargs, se
     assert _operations(db, name="inference.invoke") == [], note
 
 
-def test_a_bookmark_without_the_planned_capability_keeps_its_timestamp_label(tmp_path, monkeypatch):
+def legacy_a_bookmark_without_the_planned_capability_keeps_its_timestamp_label(tmp_path, monkeypatch):
     """A capability absent from the FROZEN plan is a refusal, not a direct call."""
     from dataclasses import replace
 
@@ -690,7 +693,7 @@ def test_a_bookmark_without_the_planned_capability_keeps_its_timestamp_label(tmp
     assert _operations(db, name="inference.invoke") == []
 
 
-def test_a_closed_session_cannot_publish_a_late_bookmark_label(tmp_path, monkeypatch):
+def legacy_a_closed_session_cannot_publish_a_late_bookmark_label(tmp_path, monkeypatch):
     """Stop wins: a label that lands after the handoff never reaches the bookmark."""
     _db, _broker, session, engine, _requests = _rig(tmp_path, monkeypatch)
     session.start()
@@ -705,7 +708,7 @@ def test_a_closed_session_cannot_publish_a_late_bookmark_label(tmp_path, monkeyp
     assert engine.labels == []
 
 
-def test_a_discarded_bookmark_projection_leaves_the_deterministic_label(tmp_path, monkeypatch):
+def legacy_a_discarded_bookmark_projection_leaves_the_deterministic_label(tmp_path, monkeypatch):
     """A child that publishes nothing must not silently blank the label."""
     _db, _broker, session, engine, _requests = _rig(tmp_path, monkeypatch)
     session.start()
@@ -727,7 +730,7 @@ def test_a_discarded_bookmark_projection_leaves_the_deterministic_label(tmp_path
     assert bookmark.label == "Bookmark @ 00:07"
 
 
-def test_capability_absent_from_the_plan_refuses_with_no_direct_dispatch(tmp_path, monkeypatch):
+def legacy_capability_absent_from_the_plan_refuses_with_no_direct_dispatch(tmp_path, monkeypatch):
     from dataclasses import replace
 
     _db, _broker, session, engine, requests = _rig(tmp_path, monkeypatch)
@@ -793,7 +796,7 @@ def _revision_rows(db: Database, revision_ids: tuple[str, ...]) -> list[dict[str
         ]
 
 
-def test_auto_placement_freezes_the_cloud_fallback_as_a_real_second_entry(tmp_path, monkeypatch):
+def legacy_auto_placement_freezes_the_cloud_fallback_as_a_real_second_entry(tmp_path, monkeypatch):
     """The internal local->cloud retarget becomes a NAMED second plan entry."""
     from holdspeak.inference_targets import HUB_DEFAULT_CLOUD_ID, THIS_MACHINE_ID
 
@@ -820,7 +823,7 @@ def test_auto_placement_freezes_the_cloud_fallback_as_a_real_second_entry(tmp_pa
         assert plan.assert_planned(CAPABILITY_LIVE_ANALYSIS, entry) == entry
 
 
-def test_auto_placement_with_an_unreachable_cloud_leg_keeps_one_entry_and_pins_local(tmp_path, monkeypatch):
+def legacy_auto_placement_with_an_unreachable_cloud_leg_keeps_one_entry_and_pins_local(tmp_path, monkeypatch):
     """With no reachable cloud leg the list stays ONE entry and nothing retargets."""
     from holdspeak.deployment_revisions import resolve_deployment_revision
     from holdspeak.inference_targets import build_intel_for_revision
@@ -881,7 +884,7 @@ def test_auto_placement_with_an_unreachable_cloud_leg_keeps_one_entry_and_pins_l
     }]
 
 
-def test_a_failed_local_entry_admits_a_second_child_naming_the_cloud_revision(tmp_path, monkeypatch):
+def legacy_a_failed_local_entry_admits_a_second_child_naming_the_cloud_revision(tmp_path, monkeypatch):
     """A provider failure on entry 1 runs entry 2 as its OWN admitted child."""
     from holdspeak.inference_targets import HUB_DEFAULT_CLOUD_ID
 
@@ -968,7 +971,7 @@ def _auto_two_entry_session(tmp_path, monkeypatch):
     return db, broker, session, engine, requests, entries
 
 
-def test_a_returned_error_result_fails_its_child_and_admits_the_cloud_entry(tmp_path, monkeypatch):
+def legacy_a_returned_error_result_fails_its_child_and_admits_the_cloud_entry(tmp_path, monkeypatch):
     """A provider failure the engine RETURNS is a failure, not a `succeeded` child.
 
     An ``IntelResult`` carrying ``.error`` is the domain's established way to say
@@ -1009,7 +1012,7 @@ def test_a_returned_error_result_fails_its_child_and_admits_the_cloud_entry(tmp_
         assert SENTINEL not in json.dumps(row, default=str)
 
 
-def test_a_one_entry_plan_fails_its_child_sanitized_and_still_returns_the_error_result(tmp_path, monkeypatch):
+def legacy_a_one_entry_plan_fails_its_child_sanitized_and_still_returns_the_error_result(tmp_path, monkeypatch):
     """One frozen entry: the child fails by NAME, the caller still reads `.error`."""
     from holdspeak.meeting_session.intel_admission import CONTRACT_LIVE_ANALYSIS
 
@@ -1033,7 +1036,7 @@ def test_a_one_entry_plan_fails_its_child_sanitized_and_still_returns_the_error_
     assert result is not None and SENTINEL in str(result.error)
 
 
-def test_provider_failure_closes_live_cadence_when_deferral_is_disabled(
+def legacy_provider_failure_closes_live_cadence_when_deferral_is_disabled(
     tmp_path, monkeypatch
 ):
     """A terminal error is not a live provider and cannot schedule another window."""
@@ -1050,7 +1053,7 @@ def test_provider_failure_closes_live_cadence_when_deferral_is_disabled(
     assert "provider unavailable" in str(session._state.intel_status_detail)
 
 
-def test_error_results_on_every_frozen_entry_fail_both_children_and_defer(tmp_path, monkeypatch):
+def legacy_error_results_on_every_frozen_entry_fail_both_children_and_defer(tmp_path, monkeypatch):
     """Exhausting the entries keeps the caller's existing error vocabulary."""
     db, broker, session, engine, requests, _entries = _auto_two_entry_session(tmp_path, monkeypatch)
     parent_id = session.intel_session_operation_id()
@@ -1084,7 +1087,7 @@ def test_error_results_on_every_frozen_entry_fail_both_children_and_defer(tmp_pa
 # ------------------------------------------------------------ journal hygiene
 
 
-def test_no_transcript_material_reaches_the_kernel_journal(tmp_path, monkeypatch):
+def legacy_no_transcript_material_reaches_the_kernel_journal(tmp_path, monkeypatch):
     db, broker, session, engine, _requests = _rig(tmp_path, monkeypatch)
     session.start()
     _add_segment(session, f"The revenue number is {SENTINEL}", 0.0)
@@ -1126,3 +1129,147 @@ def test_no_transcript_material_reaches_the_kernel_journal(tmp_path, monkeypatch
     assert operations and receipts
     for row in operations + receipts + events:
         assert SENTINEL not in json.dumps(row, default=str)
+
+
+# Phase-B bundle admission is deliberately separate from the v1 reader cases above.
+_BUNDLE_CAPABILITIES = (
+    "meeting.live_analysis",
+    "meeting.bookmark_label",
+    "meeting.auto_title",
+    "speech.transcribe",
+)
+
+
+def _assign_bundle_routes(db: Database) -> None:
+    _profile(
+        db,
+        "meeting-profile",
+        claims=(
+            "language",
+            "structured_output",
+            *(_result_claim(capability) for capability in _BUNDLE_CAPABILITIES),
+        ),
+        modalities=("language", "audio"),
+    )
+    assignments = InferenceAssignmentService(db)
+    for ordinal, capability in enumerate(_BUNDLE_CAPABILITIES, 1):
+        _set(
+            assignments,
+            f"meeting-bundle-assignment-{ordinal}",
+            {"kind": "capability", "capability_id": capability},
+            "meeting-profile",
+        )
+
+
+def _bundle_session(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, requested: tuple[str, ...] = ()
+) -> tuple[Database, Any, Any]:
+    db = Database(tmp_path / "bundle-meeting.db")
+    _assign_bundle_routes(db)
+    broker = _configure(db)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
+    monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
+
+    class _Transcriber:
+        model_name = "meeting-profile"
+
+        def transcribe(self, *_args: Any, **_kwargs: Any) -> str:
+            return ""
+
+    from holdspeak.meeting_session import MeetingSession
+
+    return db, broker, MeetingSession(
+        _Transcriber(),  # type: ignore[arg-type]
+        principal=OWNER,
+        intel_enabled=True,
+        requested_remote_device_ids=requested,
+    )
+
+
+@pytest.mark.parametrize(
+    ("requested", "transcription", "parent_budget"),
+    [
+        ((), 17_286, 21_382),
+        (("remote-a", "remote-b"), 34_570, 38_666),
+    ],
+)
+def test_start_admits_complete_live_bundle_with_exact_aggregate_budget(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    requested: tuple[str, ...],
+    transcription: int,
+    parent_budget: int,
+) -> None:
+    _db, _broker, session = _bundle_session(tmp_path, monkeypatch, requested=requested)
+
+    state = session.start()
+
+    bundle = session._route_bundle
+    assert bundle is not None
+    assert state.capture_status == "recording"
+    assert bundle["parent_kind"] == "meeting.session"
+    assert bundle["parent_child_budget"] == parent_budget
+    assert bundle.get("requested_remote_device_ids", []) == list(requested)
+    assert bundle["budget_groups"] == [
+        {"id": "meeting-intelligence", "allocation": 4096, "member_keys": ["auto-title", "bookmark-label", "live-analysis"]},
+        {"id": "meeting-preload", "allocation": 0, "member_keys": ["preload"]},
+        {"id": "meeting-transcription", "allocation": transcription, "member_keys": ["transcription"]},
+    ]
+    assert {member["capability_id"] for member in bundle["members"]} == {
+        *_BUNDLE_CAPABILITIES,
+        "speech.preload",
+    }
+
+
+def test_route_refusal_keeps_raw_capture_in_durable_record_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    db = Database(tmp_path / "refusal.db")
+    _configure(db)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
+    monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
+    from holdspeak.meeting_session import MeetingSession
+
+    class _Transcriber:
+        model_name = "meeting-profile"
+
+        def transcribe(self, *_args: Any, **_kwargs: Any) -> str:
+            return ""
+
+    session = MeetingSession(_Transcriber(), principal=OWNER, intel_enabled=True)  # type: ignore[arg-type]
+    state = session.start()
+
+    assert state.capture_status == "recording"
+    assert session._recorder is not None and session._recorder.started
+    assert state.transcription_status == "record_only"
+    assert state.intel_status == "refused"
+    durable = db.meetings.get_meeting(state.id)
+    assert durable is not None and durable.transcription_status == "record_only"
+
+
+def test_recorder_start_failure_fences_committed_bundle(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    db, _broker, session = _bundle_session(tmp_path, monkeypatch)
+
+    def fail_start(self: FakeRecorder) -> None:
+        self.started = True
+        raise RuntimeError("device unavailable")
+
+    monkeypatch.setattr(FakeRecorder, "start", fail_start)
+    with pytest.raises(RuntimeError, match="device unavailable"):
+        session.start()
+
+    assert session._route_bundle is not None
+    parent_id = session._route_bundle["parent_operation_id"]
+    with db._connection() as conn:
+        active = conn.execute(
+            "SELECT COUNT(*) FROM inference_route_executions WHERE state IN ('active','stopping')"
+        ).fetchone()[0]
+        parent = conn.execute(
+            "SELECT state FROM kernel_parent_runs WHERE operation_id=?", (parent_id,)
+        ).fetchone()
+    assert active == 0
+    assert parent is not None and parent["state"] != "OPEN"

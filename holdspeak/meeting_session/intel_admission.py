@@ -58,6 +58,12 @@ PROJECTION_LIVE_WINDOW = "meeting-live-window"
 PROJECTION_BOOKMARK_LABEL = "meeting-bookmark-label"
 PROJECTION_AUTO_TITLE = "meeting-auto-title"
 
+# Phase-B registry IDs.  The similarly named imports above are v1 plan keys,
+# retained exclusively by the historical-reader branch in `_intel_child`.
+ROUTE_LIVE_ANALYSIS = "meeting.live_analysis"
+ROUTE_BOOKMARK_LABEL = "meeting.bookmark_label"
+ROUTE_AUTO_TITLE = "meeting.auto_title"
+
 # A live meeting-intelligence lifetime is finite and explicit: no silent
 # renewal, no epoch reset. A new window past either fence needs a new
 # authenticated continuation decision (a new parent and a new plan).
@@ -70,6 +76,53 @@ LABEL_DEADLINE_SECONDS = 120.0
 CANCEL_DRAIN_SECONDS = 15.0
 
 WINDOW_SUPERSEDED = "meeting_live_window_superseded"
+
+
+class _MeetingRoutedAdapter:
+    """One selected Meeting leg, with closed output before election."""
+
+    connector_id = "inference-provider"
+
+    def __init__(
+        self,
+        capability: str,
+        call: Callable[[Any, Mapping[str, Any], threading.Event], Any],
+        encode: Callable[[Any, Mapping[str, Any]], Mapping[str, Any]],
+    ) -> None:
+        self._capability = capability
+        self._call = call
+        self._encode = encode
+
+    def dispatch(self, engine: Any, payload: Mapping[str, Any], cancellation: threading.Event) -> Mapping[str, Any]:
+        from ..inference_capabilities import (
+            InferenceCapabilityRegistryError,
+            process_inference_capability_registry,
+        )
+        from ..kernel.dispatch_context import dispatch_context_of
+        from ..kernel.provider_signals import (
+            InferenceInvalidTypedOutput,
+            ProviderPermanentNoGeneration,
+        )
+
+        dispatch_context_of(engine)  # Runner proved the frozen deployment revision.
+        if cancellation.is_set():
+            from ..kernel.model import KernelRefused
+
+            raise KernelRefused(SESSION_CLOSED)
+        try:
+            raw = self._call(engine, payload, cancellation)
+            if getattr(raw, "error", None):
+                raise ProviderPermanentNoGeneration()
+            value = dict(self._encode(raw, payload))
+            process_inference_capability_registry().require(self._capability).validate_result(value)
+            return value
+        except ProviderPermanentNoGeneration:
+            raise
+        except (AttributeError, KeyError, TypeError, ValueError, InferenceCapabilityRegistryError):
+            raise InferenceInvalidTypedOutput() from None
+
+    def cancel(self) -> str:
+        return "not_supported"
 
 
 class IntelAdmissionMixin(TranscribeAdmissionMixin):
@@ -94,22 +147,12 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
             self._state.intel_status_detail = detail
 
     def _admit_intel_session(self) -> bool:
-        """Admit ONE authenticated ``meeting.session`` parent over a frozen plan.
-
-        Called immediately after ``MeetingState`` exists and before any Intel
-        engine. A start with no authenticated principal admits NOTHING:
-        intelligence is refused by name, and (HS-131-09) so is transcription —
-        synthesizing an OWNER principal for a device/auto start would be
-        authority elevation, and an unadmitted Whisper call is not a fallback.
-
-        HS-131-09: the parent covers TRANSCRIPTION as well as intelligence, so it
-        is admitted for an intel-disabled recording too; the plan then declares
-        only the transcription capabilities.
-        """
+        """Atomically admit the OWNER Meeting parent and complete live bundle."""
         self._intel_refusal = ""
         self._transcription_refusal = ""
-        self._intel_plan = None
+        self._intel_plan = None  # v1 reader only; production sessions use the bundle.
         self._intel_parent = None
+        self._route_bundle = None
         self._intel_closed = False
         self._intel_live = False
         if self._state is None:
@@ -122,54 +165,110 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
             )
             log.warning("meeting session refused: %s", PRINCIPAL_REQUIRED)
             return False
-        budget = session_child_budget(
-            transcription=True,
-            session_seconds=SESSION_DEADLINE_SECONDS,
-            intelligence_budget=SESSION_CHILD_BUDGET,
+        requested = tuple(self._requested_remote_device_ids)
+        interval_count = int(
+            (SESSION_DEADLINE_SECONDS + TRANSCRIPTION_INTERVAL_SECONDS - 1)
+            // TRANSCRIPTION_INTERVAL_SECONDS
+        )
+        source_count = 2 + len(requested)  # mic + system + frozen requested remotes
+        transcription_budget = 2 * source_count * (interval_count + 1) + 2
+        # Slice 1 declares (and freezes) the derived member; transcription itself
+        # remains on its legacy execution path until slice 2, so it has no Phase-B
+        # lifecycle reservation to spend yet.
+        preload_budget = 0
+        budget_groups = (
+            {
+                "id": "meeting-intelligence",
+                "allocation": SESSION_CHILD_BUDGET,
+                "member_keys": ["live-analysis", "bookmark-label", "auto-title"],
+            },
+            {
+                "id": "meeting-transcription",
+                "allocation": transcription_budget,
+                "member_keys": ["transcription"],
+            },
+            {
+                "id": "meeting-preload",
+                "allocation": preload_budget,
+                "member_keys": ["preload"],
+            },
         )
         try:
-            from ..db import get_database
+            from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
 
-            database = get_database()
             broker = self._intel_broker()
-            now = time.time()
-            deadline = now + SESSION_DEADLINE_SECONDS
-            plan = freeze_meeting_intel_plan(
-                database,
-                meeting_id=self._state.id,
-                capabilities=self._intel_declared_capabilities(),
-                deadline_at=deadline,
-                child_budget=budget,
-                provenance=str(self._state.provenance or "desktop"),
-                # HS-131-17: a live session enumerates NO plugins. Routed plugin
-                # work belongs to the separately admitted deferred job, which
-                # freezes its own plan over the plugins it will actually run.
-                created_at=now,
-            )
-            parent = broker.parent_run_controller.start(
+            deadline = time.time() + SESSION_DEADLINE_SECONDS
+            started = InferenceParentRouteBundleService(
+                broker, broker.inference_adoption_service
+            ).start(
                 principal,
-                kind="meeting.session",
+                command_id=f"meeting-route-bundle:{self._state.id}",
+                parent_kind="meeting.session",
                 definition_ref=f"meeting:{self._state.id}:intel",
-                definition_revision=plan.sha256,
-                input_snapshot=plan.summary(),
+                definition_revision="meeting-live-bundle-1",
+                input_snapshot={
+                    "schema": "MeetingLiveBundleInput@1",
+                    "meeting_id": self._state.id,
+                    "provenance": str(self._state.provenance or "desktop"),
+                    "deadline_at": deadline,
+                    "budget_groups": [
+                        {"id": group["id"], "allocation": group["allocation"]}
+                        for group in budget_groups
+                    ],
+                },
                 deadline_at=deadline,
-                child_budget=budget,
-                idempotency_key=f"meeting-intel-session:{self._state.id}",
+                routes=(
+                    {"key": "live-analysis", "capability_id": ROUTE_LIVE_ANALYSIS, "invocation_id": self._state.id},
+                    {"key": "bookmark-label", "capability_id": ROUTE_BOOKMARK_LABEL, "invocation_id": self._state.id},
+                    {"key": "auto-title", "capability_id": ROUTE_AUTO_TITLE, "invocation_id": self._state.id},
+                    {"key": "transcription", "capability_id": "speech.transcribe", "invocation_id": self._state.id},
+                ),
+                budget_groups=budget_groups,
+                derived_preload={
+                    "key": "preload",
+                    "source_key": "transcription",
+                    "candidate_material": [],
+                    "strategy_sequence": ["model-holder", "silent-audio"],
+                },
+                requested_remote_device_ids=requested,
             )
         except Exception as exc:
-            reason = str(getattr(exc, "reason", "") or SESSION_NOT_ADMITTED)
+            reason = str(getattr(exc, "code", "") or getattr(exc, "reason", "") or SESSION_NOT_ADMITTED)
             self._refuse_session(
                 reason,
                 f"Meeting intelligence refused: {reason}. Recording continues.",
             )
-            log.error("meeting session admission refused: %s", reason)
+            log.error("meeting session admission refused: %s (%s)", reason, exc)
             return False
-        self._intel_plan = plan
-        # The opaque context lives ONLY on the live session object; durable rows
-        # keep the parent operation id and the content-free plan summary.
-        self._intel_parent = parent
+        self._intel_parent = started["parent"]
+        self._route_bundle = started["bundle"]
+        # Slice 1 deliberately leaves audio execution on its historical reader.
+        # This plan is not a second live-intelligence authority: it exposes only
+        # the v1 transcription/preload records to `TranscriptionAdmission` until
+        # slice 2 moves intervals onto the frozen bundle member.
+        try:
+            from ..db import get_database
+
+            self._intel_plan = freeze_meeting_intel_plan(
+                get_database(),
+                meeting_id=self._state.id,
+                capabilities=TRANSCRIPTION_CAPABILITIES,
+                deadline_at=deadline,
+                child_budget=transcription_budget,
+                provenance=str(self._state.provenance or "desktop"),
+                created_at=time.time(),
+            )
+        except Exception as exc:
+            self._record_only({
+                "family": "speech-recognition-route-assignments",
+                "reason_code": str(getattr(exc, "code", "") or TRANSCRIPTION_NOT_ADMITTED),
+                "repair": "repair_audio_model_lifecycle",
+            })
+            log.error("legacy transcription plan refused after bundle admission: %s", type(exc).__name__)
         log.info(
-            "meeting intelligence admitted: parent=%s plan=%s", parent.operation_id, plan.sha256
+            "meeting intelligence bundle admitted: parent=%s bundle=%s",
+            self._intel_parent.operation_id,
+            self._route_bundle["id"],
         )
         return True
 
@@ -432,6 +531,41 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
 
     # ---------------------------------------------------------------- children
 
+    def _bundle_member(self, capability: str) -> Mapping[str, Any] | None:
+        bundle = self._route_bundle
+        if bundle is None:
+            return None
+        return next(
+            (member for member in bundle.get("members", ()) if member["capability_id"] == capability),
+            None,
+        )
+
+    def _routed_identity(self, capability: str, material: Mapping[str, Any]) -> str:
+        """Stable logical operation identity; random UI supersession stays private."""
+        if self._state is None:
+            raise MeetingIntelRefused(SESSION_NOT_ADMITTED, capability)
+        if capability == ROUTE_LIVE_ANALYSIS:
+            suffix = ":".join((
+                str(material["transcript_sha256"]),
+                str(material["window"]["start"]),
+                str(material["window"]["end"]),
+                str(int(bool(material["final"]))),
+            ))
+        elif capability == ROUTE_BOOKMARK_LABEL:
+            suffix = ":".join((
+                str(material["bookmark_timestamp"]),
+                str(material["context_sha256"]),
+                str(material["summary_sha256"]),
+            ))
+        elif capability == ROUTE_AUTO_TITLE:
+            suffix = str(material["transcript_sha256"])
+        else:
+            raise MeetingIntelRefused(SESSION_NOT_ADMITTED, capability)
+        # Hash the complete stable tuple rather than truncating it: the durable
+        # command stays below the route API's identifier limit without weakening
+        # replay identity.
+        return f"meeting:{self._state.id}:{capability}:{_sha((capability, suffix))}"
+
     def _intel_child(
         self,
         *,
@@ -445,26 +579,68 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
         attempt_ordinal: int = 1,
         deadline_seconds: float = WINDOW_DEADLINE_SECONDS,
     ) -> tuple[Any, Optional[Mapping[str, Any]], Any]:
-        """Run ONE admitted live-session provider dispatch through the one path.
+        """Execute live Meeting work only through its frozen bundle member.
 
-        Raises :class:`MeetingIntelRefused` when the plan or the live parent
-        refuses — before any provider request exists. Once the live parent is
-        closed at ``stop()`` this refuses by construction: post-close work
-        belongs to a separately admitted ``meeting.deferred-intel-job``.
+        Operation material is private until the coordinator validates and elects a
+        result.  The legacy branch remains solely for historical-plan readers;
+        production sessions set ``_route_bundle`` at start and never call the
+        legacy planner or child runner.
         """
-        plan, parent = self._intel_plan, self._intel_parent
         if getattr(self, "_intel_closed", False):
-            # The recorded session is closing or closed. Deferred work admits its
-            # OWN `meeting.deferred-intel-job` parent; nothing revives this one.
             raise MeetingIntelRefused(SESSION_CLOSED, capability)
+        parent = self._intel_parent
+        member = self._bundle_member(capability)
+        if member is not None and parent is not None:
+            from types import SimpleNamespace
+
+            operation_id = self._routed_identity(capability, material)
+            command_id = "meeting-route-operation:" + operation_id
+            try:
+                admitted = self._intel_broker().inference_adoption_service.admit_on_frozen_route(
+                    self.intel_principal,
+                    command_id=command_id,
+                    route_plan_id=str(member["route_plan_id"]),
+                    capability_id=capability,
+                    operation_id=operation_id,
+                    payload=dict(material),
+                    reserved_output_tokens=512,
+                )
+                routed = self._intel_broker().inference_adoption_service.execute(
+                    self.intel_principal,
+                    execution_id=str(admitted["execution"]["id"]),
+                    adapter=_MeetingRoutedAdapter(capability, call, encode),
+                    parent_context=parent.context,
+                )
+            except MeetingIntelRefused:
+                raise
+            except Exception as exc:
+                # A route admission failure is a named pre-dispatch refusal to the
+                # Meeting seam; a controller result below remains its own receipt.
+                reason = str(getattr(exc, "code", "") or SESSION_NOT_ADMITTED)
+                raise MeetingIntelRefused(reason, capability) from exc
+            outcome = SimpleNamespace(
+                outcome=str(routed["outcome"]),
+                error=str(routed.get("receipt", {}).get("terminal_disposition") or ""),
+            )
+            value = routed.get("result")
+            return outcome, value if isinstance(value, Mapping) else None, value
+
+        # Historical v1 plans remain readable.  No new production session reaches
+        # this branch after the Phase-B bundle cutover (design note §45-51).
+        plan = self._intel_plan
         if plan is None or parent is None:
             raise MeetingIntelRefused(SESSION_NOT_ADMITTED, capability)
+        legacy_capability = {
+            ROUTE_LIVE_ANALYSIS: CAPABILITY_LIVE_ANALYSIS,
+            ROUTE_BOOKMARK_LABEL: CAPABILITY_BOOKMARK_LABEL,
+            ROUTE_AUTO_TITLE: CAPABILITY_AUTO_TITLE,
+        }.get(capability, capability)
         return run_admitted_capability(
             broker=self._intel_broker(),
             principal=self.intel_principal,
             plan=plan,
             parent=parent,
-            capability=capability,
+            capability=legacy_capability,
             contract=contract,
             projection_kind=projection_kind,
             material=material,
@@ -482,32 +658,35 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
         from ..kernel.model import KernelRefused
 
         def call(engine: Any, payload: Mapping[str, Any], cancellation: threading.Event) -> Any:
-            result = None
-            for chunk in engine.analyze(payload["transcript_material"], stream=True):
-                if cancellation.is_set():
-                    break
-                if self._current_analysis_id != analysis_id:
-                    # A newer window superseded this one: no output may land.
-                    raise KernelRefused(WINDOW_SUPERSEDED)
-                if isinstance(chunk, str):
-                    # Token broadcasts stay ephemeral and are never journaled.
-                    self._emit_broadcast("intel_token", chunk)
-                else:
-                    result = chunk
-            return result
+            if cancellation.is_set() or self._current_analysis_id != analysis_id:
+                # A newer window superseded this one: no output may land.
+                raise KernelRefused(WINDOW_SUPERSEDED)
+            # Phase-B has no elected-stream abstraction.  Keep all model output
+            # private until semantic validation and controller receipt election.
+            return engine.analyze(payload["transcript_material"], stream=False)
 
-        def encode(result: Any, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+        def encode(result: Any, _payload: Mapping[str, Any]) -> Mapping[str, Any]:
             return {
-                "transcript_sha256": payload["transcript_sha256"],
-                "final": bool(payload["final"]),
                 "summary": str(getattr(result, "summary", "") or ""),
                 "topics": [str(topic) for topic in (getattr(result, "topics", None) or [])],
-                "action_item_count": len(getattr(result, "action_items", None) or []),
-                "provider_error": str(getattr(result, "error", "") or ""),
+                "action_items": [
+                    {
+                        "task": str(getattr(item, "task", "") or ""),
+                        "owner": (
+                            str(getattr(item, "owner"))
+                            if getattr(item, "owner", None) is not None else None
+                        ),
+                        "due": (
+                            str(getattr(item, "due"))
+                            if getattr(item, "due", None) is not None else None
+                        ),
+                    }
+                    for item in (getattr(result, "action_items", None) or [])
+                ],
             }
 
         return self._intel_child(
-            capability=CAPABILITY_LIVE_ANALYSIS,
+            capability=ROUTE_LIVE_ANALYSIS,
             contract=CONTRACT_LIVE_ANALYSIS,
             projection_kind=PROJECTION_LIVE_WINDOW,
             material={
@@ -516,7 +695,6 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
                 "template_revision": "1",
                 "limits": {"max_tokens": None},
                 "final": bool(final),
-                "analysis_id": analysis_id,
                 "transcript_material": transcript,
             },
             call=call,
@@ -535,11 +713,11 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
                 meeting_summary=payload["summary_material"],
             )
 
-        def encode(result: Any, payload: Mapping[str, Any]) -> Mapping[str, Any]:
-            return {"label": str(result or ""), "bookmark_timestamp": float(payload["bookmark_timestamp"])}
+        def encode(result: Any, _payload: Mapping[str, Any]) -> Mapping[str, Any]:
+            return {"label": str(result or "")}
 
         return self._intel_child(
-            capability=CAPABILITY_BOOKMARK_LABEL,
+            capability=ROUTE_BOOKMARK_LABEL,
             contract=CONTRACT_BOOKMARK_LABEL,
             projection_kind=PROJECTION_BOOKMARK_LABEL,
             material={
@@ -562,11 +740,11 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
                 return None
             return engine.generate_title(payload["transcript_material"])
 
-        def encode(result: Any, payload: Mapping[str, Any]) -> Mapping[str, Any]:
-            return {"title": str(result or ""), "transcript_sha256": payload["transcript_sha256"]}
+        def encode(result: Any, _payload: Mapping[str, Any]) -> Mapping[str, Any]:
+            return {"title": str(result or "")}
 
         return self._intel_child(
-            capability=CAPABILITY_AUTO_TITLE,
+            capability=ROUTE_AUTO_TITLE,
             contract=CONTRACT_AUTO_TITLE,
             projection_kind=PROJECTION_AUTO_TITLE,
             material={

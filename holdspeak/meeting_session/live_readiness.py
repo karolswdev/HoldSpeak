@@ -16,7 +16,7 @@ queued/error path.
 from __future__ import annotations
 
 from ..logging_config import get_logger
-from .intel_plan import CAPABILITY_LIVE_ANALYSIS
+from .intel_admission import ROUTE_LIVE_ANALYSIS
 
 log = get_logger("meeting_session")
 
@@ -41,41 +41,32 @@ class LiveReadinessMixin:
         `queued` (or `error`, with deferral off) status and the same sentence the
         runtime preflight produced, with no child and no engine.
         """
-        plan = self._intel_plan
+        bundle = getattr(self, "_route_bundle", None)
         self._intel_live = False
         self._segments_since_intel = 0
         if self._state is None:
             return
-        if plan is None or not plan.has(CAPABILITY_LIVE_ANALYSIS):
+        member = next(
+            (
+                item for item in (bundle or {}).get("members", ())
+                if item.get("capability_id") == ROUTE_LIVE_ANALYSIS
+            ),
+            None,
+        )
+        if member is None:
             self._defer_live_intelligence(_NOT_ADMITTED)
             return
 
-        placement = plan.placement(CAPABILITY_LIVE_ANALYSIS)
-        planned_ready = bool(placement.get("target_ready"))
-        fallback_frozen = str(placement.get("auto_cloud_fallback") or "") == "frozen"
-        if not planned_ready and not fallback_frozen:
-            self._defer_live_intelligence(str(placement.get("target_readiness_reason") or ""))
-            return
-
-        # The leg that would actually run names the boundary the owner is told
-        # about: the planned target when it is ready, otherwise the frozen
-        # fallback entry the first child would select.
-        boundary = str(
-            (
-                placement.get("boundary")
-                if planned_ready
-                else placement.get("auto_cloud_fallback_boundary")
-            )
-            or ""
-        )
+        # The bundle route is already frozen and preflighted.  Do not re-resolve
+        # placement here: a first actual operation lets the controller interpret
+        # the immutable availability evidence.
         self._intel_live = True
         self._deferred_intel_reason = None
         self._state.intel_status = "live"
-        self._state.intel_status_detail = _BOUNDARY_DETAIL.get(boundary, _DEFAULT_DETAIL)
+        self._state.intel_status_detail = _DEFAULT_DETAIL
         log.info(
-            "live meeting intelligence ready: revision=%s boundary=%s",
-            plan.primary(CAPABILITY_LIVE_ANALYSIS),
-            boundary or "unknown",
+            "live meeting intelligence bundle ready: route=%s",
+            member["route_plan_id"],
         )
 
     def _defer_live_intelligence(self, reason: str) -> None:
