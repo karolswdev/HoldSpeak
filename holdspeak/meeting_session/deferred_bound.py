@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from ..logging_config import get_logger
 from ..principals import Principal, PrincipalKind
@@ -18,6 +18,36 @@ log = get_logger("intel_queue")
 PARENT_KIND = "meeting.deferred-intel-job"
 QUEUE_SERVICE_IDENTITY = "meeting-intel-queue"
 QUEUE_AUTHORITY_BASIS = "meeting-intel-queue:deferred"
+
+
+def bound_bookmark_label_dispatch() -> Callable[[Any, Mapping[str, Any], Any], Any]:
+    """Return the reviewed `.call` leaf for one immutable bookmark operation."""
+    def call(engine: Any, payload: Mapping[str, Any], cancellation: Any) -> Any:
+        if cancellation.is_set():
+            return None
+        return engine.generate_bookmark_label_with_context(
+            local_context=payload["context_material"],
+            meeting_summary=payload["summary_material"],
+        )
+    return call
+
+
+def bound_auto_title_dispatch() -> Callable[[Any, Mapping[str, Any], Any], Any]:
+    """Return the reviewed `.call` leaf for the displaced auto-title member."""
+    def call(engine: Any, payload: Mapping[str, Any], cancellation: Any) -> Any:
+        if cancellation.is_set():
+            return None
+        return engine.generate_title(payload["transcript_material"])
+    return call
+
+
+def bound_analysis_dispatch() -> Callable[[Any, Mapping[str, Any], Any], Any]:
+    """Return the reviewed `.call` leaf for deferred analysis."""
+    def call(engine: Any, payload: Mapping[str, Any], cancellation: Any) -> Any:
+        if cancellation.is_set():
+            return None
+        return engine.analyze(payload["transcript_material"], stream=False)
+    return call
 
 
 def queue_service_principal() -> Principal:
@@ -170,16 +200,22 @@ class BoundDeferredIntelJob:
         published = self._broker.projection_stager.finalize(invocation_id) if invocation_id else None
         return (dict(published) if isinstance(published, Mapping) else None), routed
 
-    def close(self, outcome: str) -> None:
+    def close(self, outcome: str) -> bool:
+        """Close the old owner before any reserved successor can be promoted."""
         if self._closed:
-            return
+            return self._broker.store.receipt(self.parent_operation_id) is not None
         self._closed = True
         try:
             if self._broker.store.receipt(self.parent_operation_id) is None:
                 self._broker.parent_run_controller.close(
                     self._parent.context, outcome, principal=self._principal
                 )
+            return self._broker.store.receipt(self.parent_operation_id) is not None
         except Exception as exc:
+            # The queue row remains a durable terminal-pending owner.  Its
+            # successor is deliberately still reserved; recovery can retry close
+            # but may never bind a second parent in this window.
             log.error("bound deferred intel close failed: %s", type(exc).__name__)
+            return False
 
 

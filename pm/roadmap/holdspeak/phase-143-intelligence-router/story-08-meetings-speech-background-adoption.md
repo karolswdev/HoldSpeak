@@ -42,7 +42,14 @@ pollution leak killed, `intel_token` retirement completed); final
 quiet-tree sweep 6392 passed / 71 failed with zero branch-new — every
 remaining failure reproduces on main (inherited set, recorded with the
 main-baseline diff in the verification ledger's sweep section). The C1
-counsel checkpoint is next.
+checkpoint (Sol round 1) then ruled DO-NOT-RATIFY with five findings —
+all accepted and repaired the same day (lineage-aware readers, typed
+refusal terminalization with bounded infra backoff, per-instance
+bookmark budgets, receipt-gated successor promotion, C1 census
+registration), with the fix round's own Stop-aftercare fallout caught
+by the sweep and repaired to the Phase B idempotency law. Post-round
+sweep: 6398 passed / 70 failed / zero branch-new. Round 2 of the
+checkpoint is next.
 
 ## Problem
 

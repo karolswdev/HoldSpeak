@@ -476,6 +476,9 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
     ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.analyze.call"): "L: the dispatch closure of ONE admitted deferred-analysis child",
     ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.bookmark_label.call"): "L: the dispatch closure of ONE admitted deferred bookmark-label child",
     ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.auto_title.call"): "L: the dispatch closure of ONE admitted deferred auto-title child",
+    ("holdspeak/meeting_session/deferred_bound.py", "bound_analysis_dispatch.call"): "L: C1 stored-route dispatch closure for ONE bound deferred-analysis child (HS-143-08/C1)",
+    ("holdspeak/meeting_session/deferred_bound.py", "bound_bookmark_label_dispatch.call"): "L: C1 stored-route dispatch closure for ONE frozen bookmark-label child (HS-143-08/C1)",
+    ("holdspeak/meeting_session/deferred_bound.py", "bound_auto_title_dispatch.call"): "L: C1 stored-route dispatch closure for ONE bound auto-title child (HS-143-08/C1)",
     ("holdspeak/transcribe.py", "Transcriber._timed_transcribe"): "L: the ONE transcription entrance every caller goes through",
     ("holdspeak/transcribe.py", "Transcriber._timed_transcribe._run"): "L: the timed backend call inside that entrance",
     ("holdspeak/transcribe.py", "_MlxTranscriber.transcribe._run"): "L: the MLX Whisper execution leaf",
@@ -981,6 +984,9 @@ def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
         ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.analyze.call"),
         ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.bookmark_label.call"),
         ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.auto_title.call"),
+        ("holdspeak/meeting_session/deferred_bound.py", "bound_analysis_dispatch.call"),
+        ("holdspeak/meeting_session/deferred_bound.py", "bound_bookmark_label_dispatch.call"),
+        ("holdspeak/meeting_session/deferred_bound.py", "bound_auto_title_dispatch.call"),
     }
     assert all(
         justification.startswith("L:") and scope.endswith(".call")

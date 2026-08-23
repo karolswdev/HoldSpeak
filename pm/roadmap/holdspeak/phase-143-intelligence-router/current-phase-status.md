@@ -174,9 +174,33 @@ suite-wide pollution leak killed (a fixture blanket-updating every
 readiness observation), and the streamed `intel_token` contract's
 retirement completed across Python and web. Final quiet-tree sweep:
 6392 passed, 71 failed, zero branch-new — every failure reproduces on
-main (full record in the verification ledger's sweep section). Next:
-the C1 counsel checkpoint, then C2 (plugins) and C3 (the Stop-handoff
-provider — the ratified primitive's first real adopter).
+main (full record in the verification ledger's sweep section).
+The C1 checkpoint counsel (Sol, round 1) returned **DO-NOT-RATIFY**
+with five actionable findings — two owner-visible blockers (retry
+success resurfacing the stale failure on glass and inviting re-runs of
+ready Meetings; a route-binding refusal spinning the drain forever with
+false progress), two HIGHs (bookmark budget underfunded per instance;
+retry successors claimable while the old bound parent stayed OPEN), and
+a MEDIUM ordering the three C1 execution sites registered in the
+one-path census now (the counsel rejected the "inherited" framing:
+the branch had changed the failure content under an unchanged name).
+All five accepted and repaired in one fix round: lineage-aware current-
+job readers everywhere (queue, Desk, recovery, CLI), typed refusals
+terminalize with honest visible errors while infra failures get durable
+bounded backoff, frozen per-bookmark operation sets budgeted per
+instance, a reserved→promote successor posture gated on the old
+parent's durable receipt, and named `.call` dispatch closures
+registered as reviewed census leaves. The fix round's own fallout
+(Phase B Stop-aftercare idempotency, including the recovery path) was
+caught by the suite and repaired: Stop and recovery converge on one
+Meeting-keyed legacy row, atomically replaced by the frozen V3
+descriptor only at bound-claim time. Verified sweep after the round:
+**6398 passed / 70 failed / zero branch-new** (all inherited,
+reproducing on main). Counsel record with orchestrator disposition:
+[C1 checkpoint round 1](./assets/story-08-c1-checkpoint-counsel-round1.md).
+Next: C1 checkpoint round 2 (Sol re-verifies its own findings), then
+C2 (plugins) and C3 (the Stop-handoff provider — the ratified
+primitive's first real adopter).
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

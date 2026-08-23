@@ -12,11 +12,11 @@ from typing import Any, Mapping
 
 from ..db.models import IntelJob
 from ..meeting_session.deferred_admission import (
-    DISPLACED_CAPABILITIES,
     JOB_DEADLINE_SECONDS,
     PARENT_KIND,
     queue_service_principal,
 )
+from ..meeting_session.intel_plan import DISPLACED_AUTO_TITLE, DISPLACED_BOOKMARK_LABELS
 from .inference_parent_route_bundle_service import InferenceParentRouteBundleService
 from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
 
@@ -67,8 +67,12 @@ class MeetingDeferredQueueBinder:
             }
         ]
         seen = {"meeting.deferred_analysis"}
+        displaced_capabilities = {
+            DISPLACED_BOOKMARK_LABELS: "meeting.bookmark_label",
+            DISPLACED_AUTO_TITLE: "meeting.auto_title",
+        }
         for slug in tuple(job.displaced_work or ()):
-            capability = DISPLACED_CAPABILITIES.get(str(slug))
+            capability = displaced_capabilities.get(str(slug))
             if capability is not None and capability not in seen:
                 routes.append(
                     {
@@ -96,6 +100,7 @@ class MeetingDeferredQueueBinder:
         deadline = float(self._clock()) + JOB_DEADLINE_SECONDS
         routes = self._routes(job)
         child_budget = 0
+        lifecycle_child_budget = 0
         policy_fingerprints: list[dict[str, Any]] = []
         for route in routes:
             resolved = self._bundles._plans.resolve_route_plan_for_feature(
@@ -115,7 +120,21 @@ class MeetingDeferredQueueBinder:
                     "total_physical_attempts": policy["total_physical_attempts"],
                 }
             )
-            child_budget += int(policy["total_physical_attempts"])
+            # One frozen route definition can legally serve many bookmark-label
+            # operations.  Pay the route's governed physical-attempt allowance
+            # once per immutable operation, not once per capability member.
+            instances = (
+                len(tuple(job.frozen_bookmark_operations or ()))
+                if route["capability_id"] == "meeting.bookmark_label"
+                else 1
+            )
+            allowance = int(policy["total_physical_attempts"])
+            child_budget += allowance * instances
+            # The bundle has one member per capability, so its normal declaration
+            # accounts for the first operation.  Carry each additional frozen
+            # bookmark operation as lifecycle budget; the bundle service includes
+            # it in its independently recomputed parent total.
+            lifecycle_child_budget += allowance * max(0, instances - 1)
         parent = self._broker.parent_run_controller.start(
             principal,
             kind=PARENT_KIND,
@@ -128,6 +147,11 @@ class MeetingDeferredQueueBinder:
                 "work_descriptor_sha256": str(job.work_descriptor_sha256 or ""),
                 "transcript_hash": str(job.transcript_hash),
                 "displaced_work": list(job.displaced_work or ()),
+                "frozen_bookmark_timestamps": list(job.frozen_bookmark_timestamps or ()),
+                "frozen_bookmark_operations": [
+                    {"id": bookmark_id, "timestamp": timestamp}
+                    for bookmark_id, timestamp in tuple(job.frozen_bookmark_operations or ())
+                ],
             },
             deadline_at=deadline,
             child_budget=child_budget,
@@ -138,7 +162,7 @@ class MeetingDeferredQueueBinder:
             parent=parent,
             deadline_at=deadline,
             routes=routes,
-            lifecycle_child_budget=0,
+            lifecycle_child_budget=lifecycle_child_budget,
             admitted_child_budget=child_budget,
             admitted_policy_fingerprints=tuple(policy_fingerprints),
         )

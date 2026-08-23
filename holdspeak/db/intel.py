@@ -17,17 +17,101 @@ from .models import IntelJob, IntelQueueSummary, IntelJobAttempt
 
 log = get_logger("db.intel")
 
+def _work_descriptor(
+    raw: str,
+) -> tuple[tuple[str, ...], tuple[float, ...], tuple[tuple[int, float], ...]]:
+    """Read the backward-compatible, content-free displaced-work descriptor.
+
+    C1 initially persisted a plain slug list.  Bound bookmark execution also
+    needs the operation set frozen before parent admission, so new rows use a
+    small object carrying the slugs and bookmark timestamps; old rows remain
+    readable as their original list.
+    """
+    try:
+        parsed = json.loads(raw or "[]")
+    except (TypeError, ValueError):
+        return (), (), ()
+    if isinstance(parsed, list):
+        return tuple(str(item) for item in parsed if str(item).strip()), (), ()
+    if not isinstance(parsed, dict):
+        return (), (), ()
+    slugs = parsed.get("slugs", [])
+    timestamps = parsed.get("bookmark_timestamps", [])
+    frozen: list[float] = []
+    if isinstance(timestamps, list):
+        for value in timestamps:
+            try:
+                frozen.append(float(value))
+            except (TypeError, ValueError):
+                continue
+    operations: list[tuple[int, float]] = []
+    raw_operations = parsed.get("bookmark_operations", [])
+    if isinstance(raw_operations, list):
+        for value in raw_operations:
+            if not isinstance(value, dict):
+                continue
+            try:
+                operations.append((int(value["id"]), float(value["timestamp"])))
+            except (KeyError, TypeError, ValueError):
+                continue
+    # v2 rows freeze timestamps only; retain them as unique synthetic operation
+    # identities so old descriptors remain executable without mutable discovery.
+    if not operations:
+        operations = [(index, timestamp) for index, timestamp in enumerate(frozen, 1)]
+    return (
+        tuple(str(item) for item in slugs if str(item).strip())
+        if isinstance(slugs, list) else (),
+        tuple(frozen),
+        tuple(operations),
+    )
+
+
 def _displaced_work(row: Any) -> tuple[str, ...]:
     """The structured displaced-work slugs on one intel_jobs row (HS-131-08)."""
     if "displaced_work" not in set(row.keys()):
         return ()
-    try:
-        parsed = json.loads(str(row["displaced_work"] or "[]"))
-    except ValueError:
+    return _work_descriptor(str(row["displaced_work"] or "[]"))[0]
+
+
+def _frozen_bookmark_timestamps(row: Any) -> tuple[float, ...]:
+    """Return the immutable label-operation timestamps for a bound queue job."""
+    if "displaced_work" not in set(row.keys()):
         return ()
-    if not isinstance(parsed, list):
+    return _work_descriptor(str(row["displaced_work"] or "[]"))[1]
+
+
+def _frozen_bookmark_operations(row: Any) -> tuple[tuple[int, float], ...]:
+    """Return every immutable bookmark operation identity and timestamp."""
+    if "displaced_work" not in set(row.keys()):
         return ()
-    return tuple(str(item) for item in parsed if str(item).strip())
+    return _work_descriptor(str(row["displaced_work"] or "[]"))[2]
+
+
+def _freeze_displaced_work(
+    conn: Any, meeting_id: str, displaced_work: Sequence[str],
+) -> str:
+    """Freeze content-free displaced operations before a parent can be admitted."""
+    slugs = tuple(str(item) for item in displaced_work if str(item).strip())
+    operations: tuple[tuple[int, float], ...] = ()
+    if "bookmark-labels" in slugs:
+        rows = conn.execute(
+            "SELECT id,timestamp FROM bookmarks WHERE meeting_id=? ORDER BY timestamp,id",
+            (meeting_id,),
+        ).fetchall()
+        operations = tuple((int(row["id"]), float(row["timestamp"])) for row in rows)
+    return json.dumps(
+        {
+            "schema": "MeetingDeferredIntelWorkDescriptor@3",
+            "slugs": list(slugs),
+            "bookmark_timestamps": [timestamp for _, timestamp in operations],
+            "bookmark_operations": [
+                {"id": bookmark_id, "timestamp": timestamp}
+                for bookmark_id, timestamp in operations
+            ],
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
 
 
 MANUAL_INTEL_RETRY_REASON = "Retry remaining requested."
@@ -35,6 +119,24 @@ ROUTED_INTEL_RETRY_REASON = "Retry remaining routed intelligence requested."
 
 _ACTIVE_JOB_STATUSES = ("reserved", "queued", "claimed", "running", "failed")
 _TERMINAL_JOB_STATUSES = ("succeeded", "superseded", "skipped")
+
+# Readers must select a lineage leaf before deciding whether it is unresolved.
+# Filtering terminal successors first resurrects a failed ancestor after retry
+# success, which lies to the Desk and makes an already-ready Meeting retryable.
+_CURRENT_LINEAGE_CTE = """
+WITH lineage_leaves AS (
+    SELECT j.* FROM intel_jobs j
+    WHERE NOT EXISTS (
+        SELECT 1 FROM intel_jobs successor WHERE successor.origin_job_id=j.job_id
+    )
+), current_jobs AS (
+    SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY meeting_id
+        ORDER BY requested_at DESC, updated_at DESC, job_id DESC
+    ) AS current_rank
+    FROM lineage_leaves
+)
+"""
 
 
 def _work_descriptor_sha256(
@@ -50,7 +152,7 @@ def _work_descriptor_sha256(
             "schema": "MeetingDeferredIntelWorkDescriptor@1",
             "meeting_id": meeting_id,
             "transcript_hash": transcript_hash,
-            "displaced_work": work if isinstance(work, list) else [],
+            "displaced_work": work if isinstance(work, (list, dict)) else [],
         },
         sort_keys=True,
         separators=(",", ":"),
@@ -83,6 +185,13 @@ def _bound_command_id(job_id: str, kind: str) -> str:
     return f"{kind}_{digest}"
 
 
+def _successor_posture(old: Any) -> tuple[str, str]:
+    """Reserve successors until a bound predecessor has a terminal receipt."""
+    if str(old["parent_operation_id"] or "").strip():
+        return "reserved", "awaiting_parent_terminal"
+    return "queued", "queued"
+
+
 def _durable_transcript_hash(conn: Any, meeting_id: str) -> str:
     """Recompute the queue fence from persisted segment fields only."""
     rows = conn.execute(
@@ -110,6 +219,7 @@ class IntelRepository(BaseRepository):
         reason: Optional[str] = None,
         displaced_work: Sequence[str] = (),
         conn: Any | None = None,
+        legacy_displaced_work: bool = False,
     ) -> str:
         """Queue or refresh deferred intelligence processing for a meeting.
 
@@ -126,6 +236,7 @@ class IntelRepository(BaseRepository):
                     transcript_hash=transcript_hash,
                     reason=reason,
                     displaced_work=displaced_work,
+                    legacy_displaced_work=legacy_displaced_work,
                 )
         return self._enqueue_intel_job_in_transaction(
             conn,
@@ -133,6 +244,7 @@ class IntelRepository(BaseRepository):
             transcript_hash=transcript_hash,
             reason=reason,
             displaced_work=displaced_work,
+            legacy_displaced_work=legacy_displaced_work,
         )
 
     @staticmethod
@@ -143,6 +255,7 @@ class IntelRepository(BaseRepository):
         transcript_hash: str,
         reason: Optional[str],
         displaced_work: Sequence[str],
+        legacy_displaced_work: bool,
     ) -> str:
         """Create or refresh one immutable descriptor without reclaiming an owner.
 
@@ -151,20 +264,25 @@ class IntelRepository(BaseRepository):
         owner is deliberately left untouched (the Phase-B race fence).
         """
         now = datetime.now().isoformat()
-        work = json.dumps(
-            [str(item) for item in displaced_work if str(item).strip()],
-            separators=(",", ":"),
+        # Stop's Phase-B Meeting-keyed upsert is the durable handoff boundary.
+        # It deliberately persists its historic plain slug list so retry/recovery
+        # observes the same row even before C1 replaces it with a bound descriptor.
+        work = (
+            json.dumps(list(displaced_work), separators=(",", ":"))
+            if legacy_displaced_work
+            else _freeze_displaced_work(conn, meeting_id, displaced_work)
         )
         descriptor = _work_descriptor_sha256(meeting_id, transcript_hash, work)
         current = conn.execute(
-            """SELECT * FROM intel_jobs WHERE meeting_id=?
-               AND status IN ('reserved','queued','claimed','running','failed')
-               ORDER BY CASE status WHEN 'running' THEN 0 WHEN 'claimed' THEN 1
-               WHEN 'queued' THEN 2 WHEN 'reserved' THEN 3 ELSE 4 END,
-               requested_at DESC LIMIT 1""",
+            _CURRENT_LINEAGE_CTE + """
+            SELECT * FROM current_jobs WHERE meeting_id=? AND current_rank=1 LIMIT 1
+            """,
             (meeting_id,),
         ).fetchone()
         if current is not None and str(current["status"]) in {"running", "claimed"}:
+            return str(current["job_id"])
+        if (current is not None and str(current["status"]) in {"succeeded", "skipped"}
+                and str(current["work_descriptor_sha256"]) == descriptor):
             return str(current["job_id"])
         if current is not None and str(current["work_descriptor_sha256"]) == descriptor:
             # Refreshing the same unclaimed descriptor is metadata-only; its
@@ -220,6 +338,20 @@ class IntelRepository(BaseRepository):
             ).fetchone()
         return self._job_from_row(row) if row is not None else None
 
+    def get_bound_terminal_pending_close_intel_job(self) -> Optional[IntelJob]:
+        """Recover an old terminal queue row whose bound parent lacks a receipt."""
+        with self._connection() as conn:
+            row = conn.execute(
+                """SELECT j.* FROM intel_jobs j
+                   JOIN kernel_parent_runs p ON p.operation_id=j.parent_operation_id
+                   LEFT JOIN kernel_receipts r ON r.operation_id=j.parent_operation_id
+                   WHERE j.status IN ('failed','superseded','succeeded','skipped')
+                     AND j.parent_operation_id IS NOT NULL
+                     AND p.state IN ('OPEN','CANCELLING') AND r.operation_id IS NULL
+                   ORDER BY j.updated_at ASC LIMIT 1"""
+            ).fetchone()
+        return self._job_from_row(row) if row is not None else None
+
     def get_legacy_claimed_intel_job(self) -> Optional[IntelJob]:
         """Return an in-flight pre-C1 owner for compatibility recovery only.
 
@@ -254,6 +386,14 @@ class IntelRepository(BaseRepository):
                             AND owner.work_descriptor_sha256=j.work_descriptor_sha256
                             AND owner.status IN ('claimed','running')
                       )
+                      AND NOT EXISTS (
+                          SELECT 1 FROM intel_jobs predecessor
+                          LEFT JOIN kernel_receipts receipt
+                            ON receipt.operation_id=predecessor.parent_operation_id
+                          WHERE predecessor.job_id=j.origin_job_id
+                            AND predecessor.parent_operation_id IS NOT NULL
+                            AND receipt.operation_id IS NULL
+                      )
                     ORDER BY j.requested_at ASC
                     LIMIT 1
                     """
@@ -272,6 +412,14 @@ class IntelRepository(BaseRepository):
                           WHERE owner.meeting_id=j.meeting_id
                             AND owner.work_descriptor_sha256=j.work_descriptor_sha256
                             AND owner.status IN ('claimed','running')
+                      )
+                      AND NOT EXISTS (
+                          SELECT 1 FROM intel_jobs predecessor
+                          LEFT JOIN kernel_receipts receipt
+                            ON receipt.operation_id=predecessor.parent_operation_id
+                          WHERE predecessor.job_id=j.origin_job_id
+                            AND predecessor.parent_operation_id IS NOT NULL
+                            AND receipt.operation_id IS NULL
                       )
                     ORDER BY j.requested_at ASC
                     LIMIT 1
@@ -350,6 +498,12 @@ class IntelRepository(BaseRepository):
                          WHERE owner.meeting_id=j.meeting_id
                            AND owner.work_descriptor_sha256=j.work_descriptor_sha256
                            AND owner.status IN ('claimed','running'))
+                     AND NOT EXISTS (SELECT 1 FROM intel_jobs predecessor
+                         LEFT JOIN kernel_receipts receipt
+                           ON receipt.operation_id=predecessor.parent_operation_id
+                         WHERE predecessor.job_id=j.origin_job_id
+                           AND predecessor.parent_operation_id IS NOT NULL
+                           AND receipt.operation_id IS NULL)
                    ORDER BY j.requested_at ASC LIMIT 1""",
                 params,
             ).fetchone()
@@ -385,6 +539,56 @@ class IntelRepository(BaseRepository):
                      "Transcript changed before bound claim.", now),
                 )
                 return None
+            # Phase-B Stop intentionally leaves a plain Meeting-keyed slug list
+            # as its idempotent handoff row.  Immediately before C1 parent
+            # admission, replace that legacy leaf with a linked descriptor that
+            # freezes the concrete bookmark operations.  Thus Stop keeps its
+            # one-row contract, while no bound parent is budgeted from mutable
+            # bookmarks.
+            try:
+                legacy_payload = json.loads(str(row["displaced_work"] or "[]"))
+            except (TypeError, ValueError):
+                legacy_payload = None
+            if isinstance(legacy_payload, list):
+                frozen_work = _freeze_displaced_work(
+                    conn, meeting_id, tuple(str(item) for item in legacy_payload),
+                )
+                frozen_descriptor = _work_descriptor_sha256(
+                    meeting_id, str(row["transcript_hash"]), frozen_work,
+                )
+                conn.execute(
+                    """UPDATE intel_jobs SET status='superseded',
+                       lifecycle_posture='superseded',updated_at=?,
+                       last_error='Bound descriptor frozen from legacy Stop handoff.'
+                       WHERE job_id=? AND status='queued'""",
+                    (now, job_id),
+                )
+                frozen_job_id = _job_id(
+                    meeting_id, str(row["transcript_hash"]), frozen_descriptor,
+                    now, job_id,
+                )
+                conn.execute(
+                    """INSERT INTO intel_jobs (
+                        job_id,meeting_id,origin_job_id,work_descriptor_sha256,
+                        transcript_hash,displaced_work,status,lifecycle_posture,
+                        requested_at,updated_at,attempts,last_error
+                    ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
+                    (
+                        frozen_job_id, meeting_id, job_id, frozen_descriptor,
+                        str(row["transcript_hash"]), frozen_work, now, now,
+                        "Bound descriptor frozen from legacy Stop handoff.",
+                    ),
+                )
+                # `prepare()` opens its own durable kernel-shell transaction.
+                # Publish the replacement before releasing this claim epoch so it
+                # can see the exact frozen descriptor it is about to bind.
+                conn.commit()
+                job_id = frozen_job_id
+                row = conn.execute(
+                    "SELECT * FROM intel_jobs WHERE job_id=?", (job_id,),
+                ).fetchone()
+                if row is None:
+                    return None
             job = self._job_from_row(row)
             command_ids = {
                 "claim_id": _claim_id(job_id),
@@ -401,15 +605,7 @@ class IntelRepository(BaseRepository):
                 try:
                     prepare(job, command_ids)
                 except Exception as exc:
-                    conn.execute("BEGIN IMMEDIATE")
-                    conn.execute(
-                        """INSERT INTO intel_job_attempts (
-                            meeting_id,job_id,event_kind,attempt,outcome,error,created_at
-                        ) VALUES (?,?,'refusal',?,'refused',?,?)""",
-                        (meeting_id, job_id, int(row["attempts"]),
-                         f"Bound route refusal: {type(exc).__name__}: {exc}", now),
-                    )
-                    conn.commit()
+                    setattr(exc, "_holdspeak_queue_advanced", self.settle_bound_claim_refusal(job_id, exc))
                     raise
                 conn.execute("BEGIN IMMEDIATE")
                 row = conn.execute(
@@ -420,7 +616,13 @@ class IntelRepository(BaseRepository):
                          AND NOT EXISTS (SELECT 1 FROM intel_jobs owner
                              WHERE owner.meeting_id=j.meeting_id
                                AND owner.work_descriptor_sha256=j.work_descriptor_sha256
-                               AND owner.status IN ('claimed','running'))""",
+                               AND owner.status IN ('claimed','running'))
+                         AND NOT EXISTS (SELECT 1 FROM intel_jobs predecessor
+                             LEFT JOIN kernel_receipts receipt
+                               ON receipt.operation_id=predecessor.parent_operation_id
+                             WHERE predecessor.job_id=j.origin_job_id
+                               AND predecessor.parent_operation_id IS NOT NULL
+                               AND receipt.operation_id IS NULL)""",
                     (job_id,),
                 ).fetchone()
                 if row is None:
@@ -470,19 +672,10 @@ class IntelRepository(BaseRepository):
                 # claim writer must release first so its sole discard owner can
                 # terminalize that shell, then append the visible refusal truth.
                 discard = getattr(bind, "discard", None)
-                if not callable(discard):
-                    raise
                 conn.rollback()
-                discard(job_id)
-                conn.execute("BEGIN IMMEDIATE")
-                conn.execute(
-                    """INSERT INTO intel_job_attempts (
-                        meeting_id,job_id,event_kind,attempt,outcome,error,created_at
-                    ) VALUES (?,?,'refusal',?,'refused',?,?)""",
-                    (meeting_id, job_id, int(row["attempts"]),
-                     f"Bound route refusal: {type(exc).__name__}: {exc}", now),
-                )
-                conn.commit()
+                if callable(discard):
+                    discard(job_id)
+                setattr(exc, "_holdspeak_queue_advanced", self.settle_bound_claim_refusal(job_id, exc))
                 raise
             required = {"parent_operation_id", "bundle_id", "bundle_sha256"}
             if set(binding) != required or not all(str(binding[key]).strip() for key in required):
@@ -555,13 +748,15 @@ class IntelRepository(BaseRepository):
         work = str(old["displaced_work"])
         descriptor = _work_descriptor_sha256(meeting_id, durable_hash, work)
         fresh_id = _job_id(meeting_id, durable_hash, descriptor, now, job_id)
+        successor_status, successor_posture = _successor_posture(old)
         conn.execute(
             """INSERT INTO intel_jobs (
                 job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                 transcript_hash,displaced_work,status,lifecycle_posture,
                 requested_at,updated_at,attempts,last_error
-            ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
-            (fresh_id, meeting_id, job_id, descriptor, durable_hash, work, now, now, reason),
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,0,?)""",
+            (fresh_id, meeting_id, job_id, descriptor, durable_hash, work,
+             successor_status, successor_posture, now, now, reason),
         )
         conn.execute(
             """INSERT INTO intel_job_attempts (
@@ -651,6 +846,114 @@ class IntelRepository(BaseRepository):
             conn.commit()
             return bool(changed)
 
+    def settle_bound_claim_refusal(self, job_id: str, error: Exception) -> bool:
+        """Make a refused pre-claim selection durably visible and non-spinning.
+
+        Explicit assignment/policy refusals are terminal.  Unclassified
+        infrastructure faults remain retryable, but move out of the immediate
+        due set and exhaust a small bounded admission budget.
+        """
+        from datetime import timedelta
+        from ..kernel.model import KernelRefused
+        from ..services.errors import ServiceError
+
+        now = datetime.now()
+        detail = f"Bound route refusal: {type(error).__name__}: {error}"
+        terminal = isinstance(error, (ServiceError, KernelRefused))
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT * FROM intel_jobs WHERE job_id=? AND status='queued'",
+                (job_id,),
+            ).fetchone()
+            if row is None:
+                conn.rollback()
+                return False
+            admission_attempt = int(row["attempts"]) + 1
+            if not terminal and admission_attempt >= 3:
+                terminal = True
+                detail += " Admission infrastructure retry budget exhausted."
+            if terminal:
+                changed = conn.execute(
+                    """UPDATE intel_jobs SET status='failed',lifecycle_posture='terminal',
+                       attempts=?,updated_at=?,last_error=?
+                       WHERE job_id=? AND status='queued'""",
+                    (admission_attempt, now.isoformat(), detail, job_id),
+                ).rowcount
+                if changed:
+                    conn.execute(
+                        """UPDATE meetings SET intel_status='error',intel_status_detail=?,
+                           intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now')
+                           WHERE id=?""",
+                        (detail, now.isoformat(), str(row["meeting_id"])),
+                    )
+                    outcome, retry_at = "refused", None
+                else:
+                    outcome, retry_at = "refused", None
+            else:
+                retry_at_value = now + timedelta(seconds=min(60, 5 * (2 ** (admission_attempt - 1))))
+                changed = conn.execute(
+                    """UPDATE intel_jobs SET attempts=?,requested_at=?,updated_at=?,last_error=?
+                       WHERE job_id=? AND status='queued'""",
+                    (admission_attempt, retry_at_value.isoformat(), now.isoformat(), detail, job_id),
+                ).rowcount
+                if changed:
+                    conn.execute(
+                        """UPDATE meetings SET intel_status='queued',intel_status_detail=?,
+                           sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
+                        (detail, now.isoformat(), str(row["meeting_id"])),
+                    )
+                outcome, retry_at = "scheduled_retry", retry_at_value.isoformat()
+            if changed:
+                conn.execute(
+                    """INSERT INTO intel_job_attempts (
+                        meeting_id,job_id,event_kind,attempt,outcome,error,retry_at,created_at
+                    ) VALUES (?,?, 'refusal', ?,?,?,?,?)""",
+                    (str(row["meeting_id"]), job_id, admission_attempt, outcome,
+                     detail, retry_at, now.isoformat()),
+                )
+            conn.commit()
+            return bool(changed)
+
+    def promote_successors_after_parent_terminal(self, parent_operation_id: str) -> int:
+        """Promote reserved direct successors only after a durable parent receipt.
+
+        The receipt check is repeated inside the queue writer transaction.  This
+        makes a process loss or injected close failure leave the successor safely
+        reserved rather than creating a second execution owner.
+        """
+        now = datetime.now().isoformat()
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            receipt = conn.execute(
+                "SELECT 1 FROM kernel_receipts WHERE operation_id=? LIMIT 1",
+                (parent_operation_id,),
+            ).fetchone()
+            if receipt is None:
+                conn.rollback()
+                return 0
+            rows = conn.execute(
+                """SELECT job_id,meeting_id,attempts FROM intel_jobs
+                   WHERE origin_job_id=(SELECT job_id FROM intel_jobs WHERE parent_operation_id=?)
+                     AND status='reserved' AND lifecycle_posture='awaiting_parent_terminal'""",
+                (parent_operation_id,),
+            ).fetchall()
+            for row in rows:
+                conn.execute(
+                    """UPDATE intel_jobs SET status='queued',lifecycle_posture='queued',
+                       updated_at=? WHERE job_id=? AND status='reserved'
+                       AND lifecycle_posture='awaiting_parent_terminal'""",
+                    (now, str(row["job_id"])),
+                )
+                conn.execute(
+                    """INSERT INTO intel_job_attempts (
+                        meeting_id,job_id,event_kind,attempt,outcome,error,retry_at,created_at
+                    ) VALUES (?,?,'successor_promoted',?,'queued',NULL,NULL,?)""",
+                    (str(row["meeting_id"]), str(row["job_id"]), int(row["attempts"]), now),
+                )
+            conn.commit()
+            return len(rows)
+
     def requeue_claimed_intel_job(
         self,
         meeting_id: str,
@@ -665,12 +968,9 @@ class IntelRepository(BaseRepository):
         never made queued again, so recovery cannot create a second executor.
         """
         now = datetime.now().isoformat()
-        work = json.dumps(
-            [str(item) for item in displaced_work if str(item).strip()],
-            separators=(",", ":"),
-        )
-        descriptor = _work_descriptor_sha256(meeting_id, transcript_hash, work)
         with self._connection() as conn:
+            work = _freeze_displaced_work(conn, meeting_id, displaced_work)
+            descriptor = _work_descriptor_sha256(meeting_id, transcript_hash, work)
             old = conn.execute(
                 """SELECT * FROM intel_jobs WHERE meeting_id=?
                    AND status IN ('running','claimed')
@@ -690,14 +990,16 @@ class IntelRepository(BaseRepository):
             job_id = _job_id(
                 meeting_id, transcript_hash, descriptor, now, str(old["job_id"]),
             )
+            successor_status, successor_posture = _successor_posture(old)
             conn.execute(
                 """INSERT INTO intel_jobs (
                     job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                     transcript_hash,displaced_work,status,lifecycle_posture,
                     requested_at,updated_at,attempts,last_error
-                ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,?,?)""",
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (job_id, meeting_id, str(old["job_id"]), descriptor,
-                 transcript_hash, work, now, now, int(old["attempts"]), reason),
+                 transcript_hash, work, successor_status, successor_posture,
+                 now, now, int(old["attempts"]), reason),
             )
             conn.execute(
                 """UPDATE meetings SET intel_status='queued',intel_status_detail=?,
@@ -744,15 +1046,17 @@ class IntelRepository(BaseRepository):
                 meeting_id, str(old["transcript_hash"]),
                 str(old["work_descriptor_sha256"]), retry_at_iso, str(old["job_id"]),
             )
+            successor_status, successor_posture = _successor_posture(old)
             conn.execute(
                 """INSERT INTO intel_jobs (
                     job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                     transcript_hash,displaced_work,status,lifecycle_posture,
                     requested_at,updated_at,attempts,last_error
-                ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,?,?)""",
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (job_id, meeting_id, str(old["job_id"]),
                  str(old["work_descriptor_sha256"]), str(old["transcript_hash"]),
-                 str(old["displaced_work"]), retry_at_iso, now, int(attempt), error),
+                 str(old["displaced_work"]), successor_status, successor_posture,
+                 retry_at_iso, now, int(attempt), error),
             )
             conn.execute(
                 """INSERT INTO intel_job_attempts (
@@ -804,6 +1108,8 @@ class IntelRepository(BaseRepository):
                 row["intel_status_detail"] if "intel_status_detail" in keys else None
             ),
             displaced_work=_displaced_work(row),
+            frozen_bookmark_timestamps=_frozen_bookmark_timestamps(row),
+            frozen_bookmark_operations=_frozen_bookmark_operations(row),
             job_id=(str(row["job_id"]) if "job_id" in keys else None),
             origin_job_id=(
                 str(row["origin_job_id"])
@@ -833,19 +1139,16 @@ class IntelRepository(BaseRepository):
         """Load one deferred-intelligence job with its Meeting context."""
         with self._connection() as conn:
             row = conn.execute(
-                """
+                _CURRENT_LINEAGE_CTE + """
                 SELECT
                     j.*,
                     m.title AS meeting_title,
                     m.started_at AS meeting_started_at,
                     m.intel_status_detail AS intel_status_detail
-                FROM intel_jobs j
+                FROM current_jobs j
                 JOIN meetings m ON m.id = j.meeting_id
-                WHERE j.meeting_id = ?
+                WHERE j.meeting_id = ? AND j.current_rank=1
                   AND j.status IN ('reserved','queued','claimed','running','failed')
-                ORDER BY CASE j.status WHEN 'running' THEN 0 WHEN 'claimed' THEN 1
-                    WHEN 'queued' THEN 2 WHEN 'reserved' THEN 3 ELSE 4 END,
-                    j.requested_at DESC
                 LIMIT 1
                 """,
                 (meeting_id,),
@@ -870,21 +1173,12 @@ class IntelRepository(BaseRepository):
                 """
                 params: list[Any] = [status]
             else:
-                query = """
-                    WITH current_jobs AS (
-                        SELECT j.*, ROW_NUMBER() OVER (
-                            PARTITION BY j.meeting_id
-                            ORDER BY CASE j.status WHEN 'running' THEN 0 WHEN 'claimed' THEN 1
-                                WHEN 'queued' THEN 2 WHEN 'reserved' THEN 3 ELSE 4 END,
-                                j.requested_at DESC
-                        ) AS current_rank
-                        FROM intel_jobs j
-                        WHERE j.status IN ('reserved','queued','claimed','running','failed')
-                    )
+                query = _CURRENT_LINEAGE_CTE + """
                     SELECT j.*,m.title AS meeting_title,m.started_at AS meeting_started_at,
                         m.intel_status_detail AS intel_status_detail
                     FROM current_jobs j JOIN meetings m ON m.id=j.meeting_id
                     WHERE j.current_rank=1
+                      AND j.status IN ('reserved','queued','claimed','running','failed')
                 """
                 params = []
                 if status and status != "all":
@@ -905,33 +1199,25 @@ class IntelRepository(BaseRepository):
         now_iso = datetime.now().isoformat()
         with self._connection() as conn:
             row = conn.execute(
-                """
-                WITH current_jobs AS (
-                    SELECT *, ROW_NUMBER() OVER (
-                        PARTITION BY meeting_id
-                        ORDER BY CASE status WHEN 'running' THEN 0 WHEN 'claimed' THEN 1
-                            WHEN 'queued' THEN 2 WHEN 'reserved' THEN 3 ELSE 4 END,
-                            requested_at DESC
-                    ) AS current_rank
-                    FROM intel_jobs
-                    WHERE status IN ('reserved','queued','claimed','running','failed')
-                )
+                _CURRENT_LINEAGE_CTE + """
                 SELECT COUNT(*) AS total_jobs,
                     SUM(CASE WHEN status = 'queued' THEN 1 ELSE 0 END) AS queued_jobs,
                     SUM(CASE WHEN status IN ('claimed','running') THEN 1 ELSE 0 END) AS running_jobs,
                     SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed_jobs,
                     SUM(CASE WHEN status = 'queued' AND requested_at <= ? THEN 1 ELSE 0 END) AS queued_due_jobs,
                     SUM(CASE WHEN status = 'queued' AND requested_at > ? THEN 1 ELSE 0 END) AS scheduled_retry_jobs
-                FROM current_jobs WHERE current_rank=1
+                FROM current_jobs
+                WHERE current_rank=1
+                  AND status IN ('reserved','queued','claimed','running','failed')
                 """,
                 (now_iso, now_iso),
             ).fetchone()
 
             next_row = conn.execute(
-                """
+                _CURRENT_LINEAGE_CTE + """
                 SELECT MIN(requested_at) AS next_retry_at
-                FROM intel_jobs
-                WHERE status = 'queued'
+                FROM current_jobs
+                WHERE current_rank=1 AND status = 'queued'
                   AND requested_at > ?
                   AND last_error IS NOT NULL
                 """,
@@ -965,11 +1251,10 @@ class IntelRepository(BaseRepository):
         now = datetime.now().isoformat()
         with self._connection() as conn:
             job = conn.execute(
-                """SELECT job_id FROM intel_jobs WHERE meeting_id=?
-                   AND status IN ('reserved','queued','claimed','running','failed')
-                   ORDER BY CASE status WHEN 'running' THEN 0 WHEN 'claimed' THEN 1
-                       WHEN 'queued' THEN 2 WHEN 'reserved' THEN 3 ELSE 4 END,
-                       requested_at DESC LIMIT 1""",
+                _CURRENT_LINEAGE_CTE + """
+                SELECT job_id FROM current_jobs
+                WHERE meeting_id=? AND current_rank=1 LIMIT 1
+                """,
                 (meeting_id,),
             ).fetchone()
             conn.execute(
@@ -1101,18 +1386,22 @@ class IntelRepository(BaseRepository):
             if not segment_rows:
                 return "empty"
 
+            # Select the newest lineage leaf *including terminal rows*.  A retry
+            # success must suppress its failed ancestor before Retry decides this
+            # Meeting is unfinished.
             current_job = conn.execute(
-                """SELECT * FROM intel_jobs WHERE meeting_id=?
-                   AND status IN ('reserved','queued','claimed','running','failed')
-                   ORDER BY CASE status WHEN 'running' THEN 0 WHEN 'claimed' THEN 1
-                       WHEN 'queued' THEN 2 WHEN 'reserved' THEN 3 ELSE 4 END,
-                       requested_at DESC LIMIT 1""",
+                _CURRENT_LINEAGE_CTE + """
+                SELECT * FROM current_jobs
+                WHERE meeting_id=? AND current_rank=1
+                LIMIT 1
+                """,
                 (meeting_id,),
             ).fetchone()
             if current_job is not None and current_job["status"] in {"running", "claimed"}:
                 return "running"
-            if current_job is None and meeting["intel_status"] == "ready":
-                return "ready"
+            if current_job is None or current_job["status"] in {"succeeded", "skipped"}:
+                if meeting["intel_status"] == "ready":
+                    return "ready"
 
             transcript_payload = "\n".join(
                 (
@@ -1156,14 +1445,17 @@ class IntelRepository(BaseRepository):
             job_id = _job_id(
                 meeting_id, transcript_hash, descriptor, now, origin_job_id,
             )
+            successor_status, successor_posture = (
+                _successor_posture(current_job) if current_job is not None else ("queued", "queued")
+            )
             conn.execute(
                 """INSERT INTO intel_jobs (
                     job_id,meeting_id,origin_job_id,work_descriptor_sha256,
                     transcript_hash,displaced_work,status,lifecycle_posture,
                     requested_at,updated_at,attempts,last_error
-                ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,0,?)""",
                 (job_id, meeting_id, origin_job_id, descriptor, transcript_hash,
-                 displaced_work, now, now, retry_detail),
+                 displaced_work, successor_status, successor_posture, now, now, retry_detail),
             )
             conn.execute(
                 """
@@ -1198,18 +1490,17 @@ class IntelRepository(BaseRepository):
                 return "missing"
 
             job = conn.execute(
-                """SELECT * FROM intel_jobs WHERE meeting_id=?
-                   AND status IN ('reserved','queued','claimed','running','failed')
-                   ORDER BY CASE status WHEN 'running' THEN 0 WHEN 'claimed' THEN 1
-                       WHEN 'queued' THEN 2 WHEN 'reserved' THEN 3 ELSE 4 END,
-                       requested_at DESC LIMIT 1""",
+                _CURRENT_LINEAGE_CTE + """
+                SELECT * FROM current_jobs
+                WHERE meeting_id=? AND current_rank=1 LIMIT 1
+                """,
                 (meeting_id,),
             ).fetchone()
             if job is not None and job["status"] in {"running", "claimed"}:
                 return "running"
-            if job is None and meeting["intel_status"] == "ready":
+            if (job is None or job["status"] in {"succeeded", "skipped"}) and meeting["intel_status"] == "ready":
                 return "ready"
-            if job is None and meeting["intel_status"] == "skipped":
+            if (job is None or job["status"] == "skipped") and meeting["intel_status"] == "skipped":
                 return "skipped"
 
             segment_count = int(

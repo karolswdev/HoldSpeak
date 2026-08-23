@@ -157,35 +157,33 @@ def _bound_projection_base(job, meeting) -> dict:
 
 def _run_bound_displaced_work(db, meeting, bound, job, summary: str) -> str:
     """Execute only stored label/title members after bound analysis publishes."""
+    from .meeting_session.deferred_bound import bound_auto_title_dispatch, bound_bookmark_label_dispatch
     from .meeting_session.intel_plan import DISPLACED_AUTO_TITLE, DISPLACED_BOOKMARK_LABELS
 
     displaced = tuple(job.displaced_work or ())
     if DISPLACED_BOOKMARK_LABELS in displaced:
-        for bookmark in getattr(meeting, "bookmarks", None) or []:
-            local_context = meeting.get_context_around(bookmark.timestamp, window=10.0)
+        # C1 freezes this content-free timestamp set before parent admission.
+        # Do not let a mutable post-claim bookmark list create unbudgeted work.
+        for bookmark_id, timestamp in tuple(job.frozen_bookmark_operations or ()):
+            local_context = meeting.get_context_around(timestamp, window=10.0)
             if not local_context:
                 continue
             projection, routed = bound.execute(
                 capability="meeting.bookmark_label",
-                operation_suffix=f"bookmark:{float(bookmark.timestamp)}",
+                operation_suffix=f"bookmark:{bookmark_id}",
                 material={
                     "context_sha256": _hash_private(local_context),
                     "summary_sha256": _hash_private(summary),
-                    "bookmark_timestamp": float(bookmark.timestamp),
+                    "bookmark_timestamp": timestamp,
                     "template_revision": "1",
                     "context_material": local_context,
                     "summary_material": summary,
                 },
-                call=lambda engine, payload, cancellation: (
-                    None if cancellation.is_set() else engine.generate_bookmark_label_with_context(
-                        local_context=payload["context_material"],
-                        meeting_summary=payload["summary_material"],
-                    )
-                ),
+                call=bound_bookmark_label_dispatch(),
                 projection_kind="meeting-bound-deferred-bookmark-label",
                 projection=lambda result: {
                     **_bound_projection_base(job, meeting),
-                    "bookmark_timestamp": float(bookmark.timestamp),
+                    "bookmark_timestamp": timestamp,
                     "label": str(result["label"]),
                 },
             )
@@ -205,9 +203,7 @@ def _run_bound_displaced_work(db, meeting, bound, job, summary: str) -> str:
                 "template_revision": "1",
                 "transcript_material": transcript,
             },
-            call=lambda engine, payload, cancellation: (
-                None if cancellation.is_set() else engine.generate_title(payload["transcript_material"])
-            ),
+            call=bound_auto_title_dispatch(),
             projection_kind="meeting-bound-deferred-auto-title",
             projection=lambda result: {
                 **_bound_projection_base(job, meeting), "title": str(result["title"]),
@@ -235,6 +231,7 @@ def _process_bound_intel_job(
 ) -> bool:
     """Execute a C1b-bound claim through stored parent/bundle/member IDs only."""
     from .meeting_session.deferred_admission import BoundDeferredIntelJob
+    from .meeting_session.deferred_bound import bound_analysis_dispatch
     from .kernel.model import KernelRefused
 
     outcome = "failed"
@@ -269,9 +266,7 @@ def _process_bound_intel_job(
                 "template_revision": "1",
                 "transcript_material": transcript,
             },
-            call=lambda engine, payload, cancellation: (
-                None if cancellation.is_set() else engine.analyze(payload["transcript_material"], stream=False)
-            ),
+            call=bound_analysis_dispatch(),
             projection_kind="meeting-bound-deferred-analysis",
             projection=lambda result: {
                 **_bound_projection_base(job, meeting),
@@ -343,7 +338,10 @@ def _process_bound_intel_job(
         return True
     finally:
         if bound is not None:
-            bound.close(outcome)
+            if bound.close(outcome):
+                db.intel.promote_successors_after_parent_terminal(
+                    bound.parent_operation_id
+                )
 
 
 def process_next_intel_job(
@@ -365,6 +363,23 @@ def process_next_intel_job(
     # SERVICE shell were committed with its claim, and execution must load those
     # stored IDs rather than Config, a resolver, or a fresh plan.
     db = get_database()
+    # A close may fail after the queue row became terminal.  Resume only the
+    # old parent-close/posture transition first; its reserved successor cannot
+    # bind until this durable receipt exists.
+    pending_close = db.intel.get_bound_terminal_pending_close_intel_job()
+    if pending_close is not None:
+        from .meeting_session.deferred_admission import BoundDeferredIntelJob
+
+        bound = BoundDeferredIntelJob.reconstruct(db, pending_close)
+        outcome = (
+            "succeeded" if pending_close.status == "succeeded"
+            else "cancelled" if pending_close.status in {"superseded", "skipped"}
+            else "failed"
+        )
+        if not bound.close(outcome):
+            return False
+        db.intel.promote_successors_after_parent_terminal(bound.parent_operation_id)
+        return True
     # A post-commit crash resumes the exact stored C1 owner. This is recovery,
     # not another claim: reconstruction reads the parent/bundle/member IDs only.
     recovered_bound = db.intel.get_bound_claimed_intel_job()
@@ -383,10 +398,12 @@ def process_next_intel_job(
         try:
             bound_job, broker = _bound_claim(db, include_scheduled=include_scheduled)
         except Exception as exc:
-            # A binder refusal owns a durable queue ledger event and leaves the job
-            # queued. Never downgrade that new descriptor into the legacy executor.
+            # Claim refusal is progress only when the repository durably
+            # terminalized it or moved it behind backoff.  Never tell an unbounded
+            # drain it made progress on an unchanged immediately-due job.
+            advanced = bool(getattr(exc, "_holdspeak_queue_advanced", False))
             log.warning("Bound deferred intel claim refused: %s", type(exc).__name__)
-            return True
+            return advanced
         if bound_job is not None:
             return _process_bound_intel_job(
                 db, bound_job, broker, on_meeting_ready=on_meeting_ready,

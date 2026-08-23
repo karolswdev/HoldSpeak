@@ -486,17 +486,22 @@ class ProjectionRepository(BaseRepository):
         for table, source_kind in (("intel_jobs", "intel_job"), ("plugin_run_jobs", "plugin_job")):
             query = f"SELECT * FROM {table}"
             if table == "intel_jobs":
-                # Queue history is durable; the Desk sees only the Meeting's
-                # newest active/claimable job, never a stale shadow.
-                query = """SELECT j.* FROM intel_jobs j WHERE j.status IN
-                    ('reserved','queued','claimed','running','failed')
-                    AND j.job_id=(SELECT current.job_id FROM intel_jobs current
-                        WHERE current.meeting_id=j.meeting_id
-                        AND current.status IN ('reserved','queued','claimed','running','failed')
-                        ORDER BY CASE current.status WHEN 'running' THEN 0
-                            WHEN 'claimed' THEN 1 WHEN 'queued' THEN 2
-                            WHEN 'reserved' THEN 3 ELSE 4 END,
-                            current.requested_at DESC LIMIT 1)"""
+                # Queue history is durable; select its newest lineage leaf
+                # before filtering terminality so a retry success suppresses an
+                # older failed ancestor rather than emitting false attention.
+                query = """WITH lineage_leaves AS (
+                    SELECT j.* FROM intel_jobs j WHERE NOT EXISTS (
+                        SELECT 1 FROM intel_jobs successor
+                        WHERE successor.origin_job_id=j.job_id
+                    )
+                ), current_jobs AS (
+                    SELECT *, ROW_NUMBER() OVER (
+                        PARTITION BY meeting_id
+                        ORDER BY requested_at DESC,updated_at DESC,job_id DESC
+                    ) AS current_rank FROM lineage_leaves
+                ) SELECT * FROM current_jobs
+                WHERE current_rank=1
+                  AND status IN ('reserved','queued','claimed','running','failed')"""
             for row in conn.execute(query).fetchall():
                 state = str(row["status"])
                 if state not in {"queued", "running", "failed"}:

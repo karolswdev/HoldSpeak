@@ -768,6 +768,7 @@ class MeetingRepository(BaseRepository):
                             reason=detail,
                             displaced_work=tuple(displaced),
                             conn=conn,
+                            legacy_displaced_work=True,
                         )
 
                 InferenceParentRouteBundleService(
@@ -785,6 +786,7 @@ class MeetingRepository(BaseRepository):
                     transcript_hash=meeting.transcript_hash(),
                     reason=detail,
                     displaced_work=tuple(displaced),
+                    legacy_displaced_work=True,
                 )
         except Exception as exc:
             self.mark_route_fence_pending(meeting_id, f"{type(exc).__name__}: {exc}")

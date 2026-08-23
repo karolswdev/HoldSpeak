@@ -451,6 +451,7 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
                     reason=detail,
                     displaced_work=tuple(displaced),
                     conn=conn,
+                    legacy_displaced_work=True,
                 )
 
         bundle = self._route_bundle
@@ -498,6 +499,7 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
                             transcript_hash=state.transcript_hash(),
                             reason=detail,
                             displaced_work=tuple(displaced),
+                            legacy_displaced_work=True,
                         )
                     except Exception as exc:
                         log.error("deferred intel handoff enqueue failed: %s", exc)
@@ -514,6 +516,7 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
                     transcript_hash=state.transcript_hash(),
                     reason=detail,
                     displaced_work=tuple(displaced),
+                    legacy_displaced_work=True,
                 )
             except Exception as exc:
                 log.error("deferred intel handoff enqueue failed: %s", exc)

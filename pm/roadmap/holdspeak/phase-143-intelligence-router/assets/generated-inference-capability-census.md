@@ -15,7 +15,7 @@ capability and source-owner classification.
 
 ## Current result
 
-100 Python production model-shaped sites are registered. There are 14 direct
+105 Python production model-shaped sites are registered. There are 14 direct
 Python provider/model leaves and **zero Python legacy bypasses**. The Phase 131
 findings ledger is empty. `InferenceRunner` remains the Python physical
 admission waist; all Python direct leaves are context-gated adapters or
@@ -25,17 +25,17 @@ inventoried legacy physical leaves below; it does not yet use the Python runner.
 | Proposed capability | Sites | Current source owner |
 |---|---:|---|
 | `agent.tool_turn` | 1 | `plugins.intelligence` |
-| `internal.inference.dispatch` | 38 | runner, target factories, MeetingIntel provider adapters |
-| `internal.speech.runtime_assembly` | 15 | speech-session/dictation runtime assembly |
-| `meeting.auto_title` | 2 | `meeting_session` |
-| `meeting.bookmark_label` | 2 | `meeting_session` |
-| `meeting.deferred_analysis` | 2 | `meeting_session.deferred_admission` |
+| `internal.inference.dispatch` | 37 | runner, target factories, MeetingIntel provider adapters |
+| `internal.speech.runtime_assembly` | 16 | speech-session/dictation runtime assembly |
+| `meeting.auto_title` | 3 | `meeting_session` |
+| `meeting.bookmark_label` | 3 | `meeting_session` |
+| `meeting.deferred_analysis` | 3 | `meeting_session.deferred_bound` |
 | `meeting.live_analysis` | 1 | `meeting_session` |
 | `project_doc.suggest_update` | 3 | `project_doc_suggestions` |
-| `speech.intent_classify` | 6 | `speech_session` |
+| `speech.intent_classify` | 7 | `speech_session` |
 | `speech.preload` | 1 | `speech_session.transcription` |
 | `speech.punctuate` | 1 | `speech_session` |
-| `speech.rewrite` | 10 | `speech_session` |
+| `speech.rewrite` | 11 | `speech_session` |
 | `speech.target_classify` | 3 | `target_profile` |
 | `speech.transcribe` | 15 | `speech_session.transcription` |
 
@@ -48,11 +48,15 @@ with registry definitions where a persisted capability is required.
 ### HS-143-08 current closure anchors
 
 The reviewed literal fixture records the current AST anchors for the extracted
-meeting closures: live analysis, bookmark labels, and auto-title now live in
-`meeting_session/intel_routed_children.py` under `IntelRoutedChildMixin`;
-legacy deferred closures remain in `meeting_session/deferred_admission.py`.
-The extraction changes no capability/source-owner classification or site count;
-it preserves the one reviewed row per execution-shaped expression.
+meeting closures. HS-143-08/C1 classifies the three stored-route dispatch
+closures in `meeting_session/deferred_bound.py` as `L:` execution leaves:
+`bound_analysis_dispatch.call` → `meeting.deferred_analysis`,
+`bound_bookmark_label_dispatch.call` → `meeting.bookmark_label`, and
+`bound_auto_title_dispatch.call` → `meeting.auto_title`. They are exact frozen
+bundle members reached only after child admission, not queue-orchestration
+allowlist entries. The legacy deferred closures remain in
+`meeting_session/deferred_admission.py`; this changes locations, not the three
+capabilities or their `meeting_session` source owner.
 
 ## Direct physical leaves
 

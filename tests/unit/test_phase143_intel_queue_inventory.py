@@ -112,7 +112,9 @@ def test_inventory_projection_dtos_session_import_and_persistence_writers_are_pi
     for field in ("job_id", "origin_job_id", "work_descriptor_sha256", "claim_id",
                   "parent_operation_id", "bundle_id", "bundle_sha256", "lifecycle_posture"):
         assert field in models
-    assert "newest active/claimable job" in projection
+    assert "newest lineage leaf" in projection
+    cli = _source("holdspeak/commands/intel.py")
+    assert "args.retry_failed" in cli and "list_intel_jobs(status=\"failed\"" in cli
     assert "enqueue_intel_job" in persistence
     assert "enqueue_intel_job" in admission
     assert "enqueue_intel_job" in imported
@@ -226,8 +228,8 @@ def _binding(_conn, _job, ids):  # type: ignore[no-untyped-def]
     }
 
 
-def test_bound_claim_rolls_back_binding_and_claim_event_on_refusal(tmp_path) -> None:
-    """A binder refusal leaves no claim, parent reference, bundle, or ledger event."""
+def test_bound_claim_backoffs_unclassified_refusal_without_claim_or_spin(tmp_path) -> None:
+    """An infrastructure refusal leaves no owner and durably moves out of due work."""
     db, meeting = _bound_claim_db(tmp_path)
 
     def refuse(_conn, _job, _ids):  # type: ignore[no-untyped-def]
@@ -236,11 +238,12 @@ def test_bound_claim_rolls_back_binding_and_claim_event_on_refusal(tmp_path) -> 
     with pytest.raises(RuntimeError, match="route policy refused"):
         db.intel.claim_next_intel_job_bound(refuse)
     job = db.intel.get_intel_job(meeting.id)
-    assert job is not None and job.status == "queued" and job.claim_id is None
+    assert job is not None and job.status == "queued" and job.claim_id is None and job.attempts == 1
     with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM intel_job_attempts").fetchone()[0] == 0
-        row = conn.execute("SELECT parent_operation_id,bundle_id FROM intel_jobs").fetchone()
-        assert tuple(row) == (None, None)
+        event = conn.execute("SELECT outcome,retry_at FROM intel_job_attempts").fetchone()
+        row = conn.execute("SELECT parent_operation_id,bundle_id,requested_at FROM intel_jobs").fetchone()
+        assert event is not None and event["outcome"] == "scheduled_retry" and event["retry_at"]
+        assert tuple(row[:2]) == (None, None)
 
 
 def test_bound_claim_uses_deterministic_binding_and_competing_connections_one_owner(tmp_path) -> None:
@@ -311,7 +314,7 @@ def test_staging_fence_supersedes_exact_bound_owner_and_links_fresh_job(tmp_path
         event = conn.execute("SELECT outcome FROM intel_job_attempts WHERE job_id=? AND event_kind='staging_fence_superseded'", (claimed.job_id,)).fetchone()
     assert old is not None and old["status"] == "superseded"
     assert old["parent_operation_id"] == claimed.parent_operation_id and old["bundle_id"] == claimed.bundle_id
-    assert new is not None and new["status"] == "queued" and new["origin_job_id"] == claimed.job_id
+    assert new is not None and new["status"] == "reserved" and new["origin_job_id"] == claimed.job_id
     assert event is not None and event["outcome"] == "superseded"
 
 
@@ -388,8 +391,8 @@ def test_real_service_binder_cross_binds_one_claim_parent_and_bundle(tmp_path) -
     assert db.meetings.get_meeting(meeting.id).intel_status == "running"
 
 
-def test_real_service_binder_refusal_leaves_job_queued_and_records_ledger(tmp_path) -> None:
-    """Missing exact SERVICE assignment refuses before a parent or bundle exists."""
+def test_real_service_binder_refusal_terminalizes_job_and_records_ledger(tmp_path) -> None:
+    """Missing exact SERVICE assignment visibly terminalizes with zero child."""
     from holdspeak.kernel.runtime import _configure
     from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
 
@@ -400,7 +403,8 @@ def test_real_service_binder_refusal_leaves_job_queued_and_records_ledger(tmp_pa
         db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
 
     job = db.intel.get_intel_job(meeting.id)
-    assert job is not None and job.status == "queued" and job.claim_id is None
+    assert job is not None and job.status == "failed" and job.claim_id is None
+    assert db.meetings.get_meeting(meeting.id).intel_status == "error"
     with db._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM kernel_parent_runs").fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0
@@ -488,7 +492,8 @@ def test_real_binder_policy_flip_between_prepare_and_claim_refuses_shell(tmp_pat
     assert refused.value.code == "inference_parent_route_bundle_integrity_invalid"
 
     job = db.intel.get_intel_job(meeting.id)
-    assert job is not None and job.status == "queued" and job.claim_id is None
+    assert job is not None and job.status == "failed" and job.claim_id is None
+    assert db.meetings.get_meeting(meeting.id).intel_status == "error"
     with db._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM kernel_parent_runs").fetchone()[0] == 0
         assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0

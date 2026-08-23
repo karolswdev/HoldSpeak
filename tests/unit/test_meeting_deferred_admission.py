@@ -350,6 +350,7 @@ def _queued_meeting(
     bookmarks: tuple[float, ...] = (),
     displaced_work: tuple[str, ...] = (),
     legacy_claimed: bool = True,
+    legacy_stop_handoff: bool = False,
 ) -> MeetingState:
     state = MeetingState(
         id=meeting_id,
@@ -366,6 +367,7 @@ def _queued_meeting(
         transcript_hash=state.transcript_hash(),
         reason="stop handoff",
         displaced_work=displaced_work,
+        legacy_displaced_work=legacy_stop_handoff,
     )
     # This fixture can model a process loss after the historical Meeting-keyed
     # claim. C1c keeps that owner on its legacy executor; only a C1b bound claim
@@ -459,6 +461,47 @@ def test_bound_claim_executes_stored_service_member_and_completes_ledger(tmp_pat
     assert requests
 
 
+def test_bound_claim_replaces_legacy_stop_handoff_with_frozen_descriptor(tmp_path, monkeypatch):
+    """The Phase-B handoff list persists until C1 freezes its actual operations."""
+    db, _broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(
+        db,
+        "m-bound-legacy-stop",
+        bookmarks=(0.25, 0.5),
+        displaced_work=("bookmark-labels",),
+        legacy_claimed=False,
+        legacy_stop_handoff=True,
+    )
+    from holdspeak.intel_queue import process_next_intel_job
+
+    with db._connection() as conn:
+        original = conn.execute(
+            "SELECT job_id,displaced_work,status FROM intel_jobs WHERE meeting_id=?",
+            (state.id,),
+        ).fetchone()
+    assert original is not None
+    assert original["status"] == "queued"
+    assert original["displaced_work"] == '["bookmark-labels"]'
+
+    assert process_next_intel_job() is True
+
+    with db._connection() as conn:
+        rows = conn.execute(
+            """SELECT job_id,origin_job_id,status,displaced_work,parent_operation_id
+               FROM intel_jobs WHERE meeting_id=? ORDER BY requested_at,job_id""",
+            (state.id,),
+        ).fetchall()
+    assert len(rows) == 2
+    assert rows[0]["job_id"] == original["job_id"]
+    assert rows[0]["status"] == "superseded"
+    assert rows[1]["origin_job_id"] == original["job_id"]
+    assert rows[1]["parent_operation_id"]
+    descriptor = json.loads(rows[1]["displaced_work"])
+    assert descriptor["bookmark_operations"] == [
+        {"id": 1, "timestamp": 0.25}, {"id": 2, "timestamp": 0.5},
+    ]
+
+
 def test_bound_claim_commit_recovers_exact_owner_without_second_egress(tmp_path, monkeypatch):
     """Startup recovery adopts the committed C1b IDs instead of re-resolving."""
     db, broker, _engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
@@ -527,6 +570,157 @@ def test_bound_deferred_kernel_refusal_is_terminal_with_one_attempt(tmp_path, mo
         ).fetchall()
     assert len(events) == 1
     assert len(requests) == 1
+
+
+def test_bound_retry_success_hides_failed_ancestor_from_all_ordinary_readers(tmp_path, monkeypatch):
+    """A terminal retry successor owns the lineage, never its failed ancestor."""
+    db, _broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(db, "m-bound-lineage", legacy_claimed=False)
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.services.meeting_intel_service import MeetingIntelService
+
+    engine.error = "transient provider failure"
+    assert process_next_intel_job(retry_base_seconds=1, retry_max_seconds=1) is True
+    with db._connection() as conn:
+        successor = conn.execute(
+            "SELECT job_id FROM intel_jobs WHERE meeting_id=? AND status='queued'",
+            (state.id,),
+        ).fetchone()
+        assert successor is not None
+        conn.execute(
+            "UPDATE intel_jobs SET requested_at=? WHERE job_id=?",
+            (datetime.now().isoformat(), str(successor["job_id"])),
+        )
+    engine.error = None
+    assert process_next_intel_job(retry_base_seconds=1, retry_max_seconds=1) is True
+
+    # The counsel's five ordinary-reader assertions.
+    assert db.intel.get_intel_job(state.id) is None
+    summary = db.intel.get_intel_queue_summary()
+    assert summary.failed_jobs == summary.queued_jobs == summary.running_jobs == 0
+    desk = db.projections.list(limit=200)["projections"]
+    assert not any(row["source_kind"] == "intel_job" and row["attention_state"] == "needs_attention" for row in desk)
+    recovery = MeetingIntelService(db).get_recovery(None, state.id)
+    assert recovery["state"] == "ready" and recovery["visible"] is False
+    assert db.intel.request_intel_retry(state.id) == "ready"
+
+
+def test_bound_bookmark_operations_are_frozen_and_budgeted_per_instance(tmp_path, monkeypatch):
+    """More labels than one policy allowance, plus a physical retry, stays lawful."""
+    db, _broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    timestamps = (0.25, 0.5, 1.0, 1.5, 2.0, 2.5)
+    state = _queued_meeting(
+        db, "m-bound-bookmark-budget", bookmarks=timestamps,
+        displaced_work=("bookmark-labels",), legacy_claimed=False,
+    )
+    from holdspeak.intel_queue import process_next_intel_job
+
+    frozen = db.intel.get_intel_job(state.id)
+    assert frozen is not None and len(frozen.frozen_bookmark_operations) == len(timestamps)
+    original = engine.generate_bookmark_label_with_context
+    physical_calls = 0
+
+    def retry_once(**kwargs):  # type: ignore[no-untyped-def]
+        nonlocal physical_calls
+        physical_calls += 1
+        if physical_calls == 1:
+            # Typed invalid output is retryable by the frozen route controller,
+            # so the next provider call is a second physical attempt under this
+            # same bounded parent rather than a fresh queue job.
+            return None
+        return original(**kwargs)
+
+    monkeypatch.setattr(engine, "generate_bookmark_label_with_context", retry_once)
+    # The first physical provider call fails; its frozen-route retry settles
+    # under the same parent and then every remaining frozen label executes.
+    assert process_next_intel_job() is True
+    assert physical_calls == len(timestamps) + 1
+    refreshed = db.meetings.get_meeting(state.id)
+    assert refreshed is not None and refreshed.intel_status == "ready"
+    assert [bookmark.label for bookmark in refreshed.bookmarks] == ["Budget decision"] * len(timestamps)
+    parent = _parents(db, PARENT_KIND)[0]
+    # Every label gets its own four-attempt allowance, as does base analysis.
+    assert int(parent["child_budget"]) == 4 * (1 + len(timestamps))
+    assert "parent_child_budget_exhausted" not in json.dumps(_rows(db, "kernel_receipts"))
+
+
+def test_claim_refusal_terminalizes_and_unbounded_drain_continues(tmp_path, monkeypatch):
+    """One typed refusal cannot spin or starve the next claimable Meeting."""
+    db, broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    first = _queued_meeting(db, "m-bound-refusal-drain", legacy_claimed=False)
+    second = _queued_meeting(db, "m-bound-after-refusal", legacy_claimed=False)
+    from holdspeak.intel_queue import drain_intel_queue
+    from holdspeak.services.errors import ValidationError
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+
+    class RefuseFirstBinder(MeetingDeferredQueueBinder):
+        first = True
+
+        def prepare(self, job, command_ids):  # type: ignore[no-untyped-def]
+            if RefuseFirstBinder.first:
+                RefuseFirstBinder.first = False
+                raise ValidationError("exact SERVICE assignment missing", code="no_assignment")
+            return super().prepare(job, command_ids)
+
+    monkeypatch.setattr(
+        "holdspeak.services.meeting_deferred_queue_binding.MeetingDeferredQueueBinder",
+        RefuseFirstBinder,
+    )
+    assert drain_intel_queue(max_jobs=None) == 2
+    refused = db.intel.get_intel_job(first.id)
+    assert refused is not None and refused.status == "failed"
+    assert db.meetings.get_meeting(second.id).intel_status == "ready"
+    with db._connection() as conn:
+        events = conn.execute(
+            "SELECT COUNT(*) FROM intel_job_attempts WHERE meeting_id=? AND event_kind='refusal'",
+            (first.id,),
+        ).fetchone()[0]
+    assert events == 1
+
+
+def test_reserved_successor_never_claims_before_old_parent_receipt(tmp_path, monkeypatch):
+    """Close failure and process loss leave the fresh retry reserved, never dual-owned."""
+    from holdspeak.db import Database
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+
+    db, broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(db, "m-bound-successor-race", legacy_claimed=False)
+    old = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+    assert old is not None and old.parent_operation_id
+    db.intel.retry_intel_job(
+        state.id, "transient", retry_at=datetime.now(), attempt=1, max_attempts=4,
+    )
+    with db._connection() as conn:
+        successor = conn.execute(
+            "SELECT job_id,status FROM intel_jobs WHERE origin_job_id=?", (old.job_id,)
+        ).fetchone()
+    assert successor is not None and successor["status"] == "reserved"
+
+    other = Database(db.db_path)
+    assert other.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker)) is None
+    real_close = broker.parent_run_controller.close
+    monkeypatch.setattr(
+        broker.parent_run_controller, "close",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("injected parent close failure")),
+    )
+    assert process_next_intel_job() is False
+    assert other.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker)) is None
+    with db._connection() as conn:
+        assert conn.execute(
+            "SELECT state FROM kernel_parent_runs WHERE operation_id=?", (old.parent_operation_id,)
+        ).fetchone()[0] == "OPEN"
+        assert conn.execute("SELECT status FROM intel_jobs WHERE job_id=?", (successor["job_id"],)).fetchone()[0] == "reserved"
+
+    monkeypatch.setattr(broker.parent_run_controller, "close", real_close)
+    assert process_next_intel_job() is True
+    with db._connection() as conn:
+        assert conn.execute(
+            "SELECT 1 FROM kernel_receipts WHERE operation_id=?", (old.parent_operation_id,)
+        ).fetchone() is not None
+        assert conn.execute("SELECT status FROM intel_jobs WHERE job_id=?", (successor["job_id"],)).fetchone()[0] == "queued"
+    claim = other.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+    assert claim is not None and claim.parent_operation_id != old.parent_operation_id
 
 
 def test_claim_admits_one_job_parent_with_base_and_plugin_children(tmp_path, monkeypatch):
@@ -1007,7 +1201,11 @@ def test_no_transcript_material_reaches_the_kernel_journal_on_the_deferred_path(
     from holdspeak.intel_queue import process_next_intel_job
 
     assert process_next_intel_job() is True
-    # A second job whose provider FAILS with text quoting the transcript.
+    # A changed immutable descriptor gets a second job whose provider FAILS
+    # with text quoting the transcript; a completed identical descriptor is not
+    # silently re-enqueued.
+    state.segments[0].text += " revised"
+    db.meetings.save_meeting(state)
     db.intel.enqueue_intel_job(
         state.id, transcript_hash=state.transcript_hash(), reason="second pass"
     )

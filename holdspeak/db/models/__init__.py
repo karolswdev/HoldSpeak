@@ -67,6 +67,9 @@ class IntelJob:
     # `holdspeak.meeting_session.intel_plan.DISPLACED_*`). Empty for an ordinary
     # deferred job, which runs base analysis and routed plugins only.
     displaced_work: tuple[str, ...] = ()
+    # Immutable, content-free label operations frozen with the descriptor.
+    frozen_bookmark_timestamps: tuple[float, ...] = ()
+    frozen_bookmark_operations: tuple[tuple[int, float], ...] = ()
     # Phase C durable binding references.  Existing DTO consumers retain the
     # Meeting-facing fields above; these are identifiers/hashes only.
     job_id: Optional[str] = None
