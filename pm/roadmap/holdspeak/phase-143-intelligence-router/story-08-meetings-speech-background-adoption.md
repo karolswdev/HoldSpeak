@@ -7,6 +7,24 @@
 - **Unblocks:** 143-10, 143-14
 - **Owner:** unassigned
 
+## Progress (2026-08-22)
+
+Work rides `feat/hs143-08-meeting-adoption`. Tranche A–C (primitives) is
+cold-ratified (Sol RATIFY after a three-fix audit round; ruled specs and the
+verification ledger live in `assets/story-08-*`). Phase B slice 1 is complete:
+live Meeting analysis, bookmark labels, and auto-title execute as routed
+controller-owned children on the atomic five-member session bundle
+(aggregate budget groups, deterministic identities, election-gated cards,
+`record_only` degradation, recorder-failure unwind). Slice 2 (routed
+transcription + exact-local Whisper migration + readiness bootstrap +
+minimal MLX warmup) is implemented, held at the commit gate for day-one
+end-to-end proof. Remaining for this story: slice 3 (live Stop = bundle
+fence + preserved legacy deferred aftercare), then Phases C–F of the
+handover sequence (deferred queue + plugins, speech lifecycle, background
+adopters, migration cleanup). Design canon for the Meeting/speech legs:
+`assets/story-08-phase-b-cutover-design.md` (counsel amendments and the
+owner's minimal-migration scope ruling are binding).
+
 ## Problem
 
 MeetingIntelPlan and SpeechPlan are the proven ordered-revision pattern but

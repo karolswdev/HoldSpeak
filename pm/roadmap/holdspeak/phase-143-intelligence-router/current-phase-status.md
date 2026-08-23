@@ -97,6 +97,34 @@ is explicitly future/non-assignable until a model-backed stage exists.
 Stories 11–13 ship parity and the two owner jobs: Model Library and Assignments.
 Story 14 is the cross-product chaos/glass gate.
 
+Story 08 is in progress on `feat/hs143-08-meeting-adoption` (2026-08-22).
+Tranche A–C (semantic adapters, SERVICE route policy, atomic parent/route
+bundles, reserve-inert Stop handoff with settlement-gated activation) is
+**cold-ratified and committed**: two-round counsel (Terra design
+DO-NOT-RATIFY → adopted; Sol cold audit DO-NOT-RATIFY → three fixes → Sol
+RATIFY, all seventeen checkpoint items PASS). Key ruled law: unknown-dispatch
+terminals never auto-activate displaced work; a bundle seal at the single
+execution insert point refuses admission once the parent leaves OPEN.
+Phase B (live Meeting + transcription cutover) is riding a Sol-ruled design
+(`assets/story-08-phase-b-cutover-design.md`, RATIFY-WITH-AMENDMENTS + the
+owner's minimal-migration scope ruling): slice 1 is COMPLETE — live
+analysis/bookmark/title execute as routed controller-owned children on an
+atomic five-member bundle with aggregate budget groups, deterministic
+identities, election-gated cards, honest retry/fallback ordinals,
+`record_only` degradation (raw capture never depends on model authority),
+and recorder-failure unwind. Slice 2 (routed transcription, exact-local
+Whisper migration incl. deterministic `auto` resolution, readiness
+bootstrap, minimal MLX warmup) is implemented and held at the commit gate
+pending day-one end-to-end proof; slice 3 (Stop = fence + preserve legacy
+deferred aftercare) follows. Verification ledger:
+[tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
+counsel record:
+[counsel round 1](./assets/story-08-displaced-work-counsel-round1.md);
+ruled specs: [inertness spec](./assets/story-08-displaced-work-inertness-spec.md),
+[Phase B cutover design](./assets/story-08-phase-b-cutover-design.md).
+GitHub Actions minutes are out by owner order: all Story 08 verification is
+local; CI is not consulted.
+
 Normative assets: [architecture contract](./assets/architecture-contract.md),
 [owner experience](./assets/owner-experience.md), [repository census](./assets/repository-census.md),
 and [delivery map](./assets/delivery-map.md).

@@ -187,3 +187,5 @@ any ceremony-expanding reading of the counsel amendments above:
   remote selectors simply don't migrate.
 - record_only capture stays but stays small: one durable state, recording
   never dies because of model config. No repair UI machinery in this phase.
+
+### Orchestrator amendment (2026-08-22): day-one continuity — auto resolves deterministically in migration; readiness bootstraps from the first successful load; MLX warmup ships as one bounded preload child with frozen candidate evidence (P=1, ceremony trimmed per the owner scope ruling). Owner may overrule at the sitting.
