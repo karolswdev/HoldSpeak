@@ -17,6 +17,7 @@ from holdspeak.meeting_session.models import Bookmark, TranscriptSegment
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.inference_adoption_service import (
     MEETING_MIGRATION_FAMILY,
+    MEETING_DEFERRED_MIGRATION_FAMILY,
     SPEECH_RECOGNITION_MIGRATION_FAMILY,
     RoutedInferenceCoordinator,
 )
@@ -97,6 +98,44 @@ def test_meeting_assignment_migration_copies_exact_saved_profile_and_replays(
     replay = service.migrate_meeting_route_assignments(OWNER, object())
     assert replay["status"] == "migrated"
     assert replay["legacy_config_read"] is False
+
+
+def test_deferred_meeting_migration_is_narrow_marker_driven_and_replays(tmp_path: Path) -> None:
+    db = Database(tmp_path / "deferred-meeting-migration.db")
+    _profile(
+        db,
+        "saved-deferred-profile",
+        claims=("language", _result_claim("meeting.deferred_analysis")),
+    )
+    service = RoutedInferenceCoordinator(db)
+
+    migrated = service.migrate_meeting_deferred_route_assignments(
+        OWNER, _meeting_config("saved-deferred-profile")
+    )
+
+    assert migrated["family"] == MEETING_DEFERRED_MIGRATION_FAMILY
+    assert migrated["status"] == "migrated" and migrated["legacy_config_read"] is True
+    assignment = InferenceAssignmentService(db).get_assignment(
+        OWNER, {"kind": "capability", "capability_id": "meeting.deferred_analysis"}
+    )
+    assert [(entry["profile_id"], entry["profile_revision"]) for entry in assignment["entries"]] == [
+        ("saved-deferred-profile", 1)
+    ]
+    replay = service.migrate_meeting_deferred_route_assignments(OWNER, object())
+    assert replay["legacy_config_read"] is False
+
+
+def test_deferred_meeting_migration_refuses_blank_saved_profile_without_marker(tmp_path: Path) -> None:
+    db = Database(tmp_path / "deferred-meeting-refusal.db")
+    service = RoutedInferenceCoordinator(db)
+
+    issue = service.migrate_meeting_deferred_route_assignments(OWNER, _meeting_config(""))
+
+    assert issue["family"] == MEETING_DEFERRED_MIGRATION_FAMILY
+    assert issue["reason_code"] == "builtin_profile_required"
+    assert InferenceAssignmentService(db).migration_marker(
+        OWNER, family=MEETING_DEFERRED_MIGRATION_FAMILY
+    ) is None
 
 
 def test_blank_or_cloud_legacy_meeting_values_never_guess_an_assignment(tmp_path: Path) -> None:

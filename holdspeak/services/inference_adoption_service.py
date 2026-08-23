@@ -60,6 +60,7 @@ EVIDENCE_PROVIDER_REVISION = 1
 TOKEN_ACCOUNTING_REVISION = "utf8-byte-upper-bound@1"
 MIGRATION_FAMILY = "thoughts-writing-route-assignments"
 MEETING_MIGRATION_FAMILY = "meeting-route-assignments"
+MEETING_DEFERRED_MIGRATION_FAMILY = "meeting-deferred-route-assignments"
 SPEECH_RECOGNITION_MIGRATION_FAMILY = "speech-recognition-route-assignments"
 MEETING_ASSIGNMENT_CAPABILITIES = (
     "meeting.live_analysis",
@@ -1571,6 +1572,70 @@ class RoutedInferenceCoordinator:
             )
         return {**marker, "status": "migrated", "legacy_config_read": True}
 
+    def migrate_meeting_deferred_route_assignments(
+        self, principal: Principal, config: Any
+    ) -> dict[str, Any]:
+        """Copy the saved Meeting profile into the deferred queue's exact scope.
+
+        This intentionally remains a separate marker family: databases that
+        already completed the live Meeting migration must acquire this newly
+        adopted deferred capability without re-reading or rewriting that family.
+        It follows the same no-guess/refusal law as the live family.
+        """
+        assignments = InferenceAssignmentService(self._db, registry=self._registry)
+        existing = assignments.migration_marker(
+            principal, family=MEETING_DEFERRED_MIGRATION_FAMILY
+        )
+        if existing is not None:
+            return {**existing, "status": "migrated", "legacy_config_read": False}
+        meeting = getattr(config, "meeting", None)
+        profile_id = str(getattr(meeting, "intel_profile_id", "") or "").strip()
+        provider = str(getattr(meeting, "intel_provider", "") or "").strip()
+        source = {"intel_profile_id": profile_id, "intel_provider": provider}
+        source_sha256 = _sha256(source)
+        if not profile_id:
+            return self._migration_issue(
+                MEETING_DEFERRED_MIGRATION_FAMILY,
+                "builtin_profile_required",
+                "choose_meeting_model_profile",
+                source_sha256,
+            )
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT MAX(revision) AS revision FROM model_profile_revisions WHERE profile_id=?",
+                (profile_id,),
+            ).fetchone()
+        revision = int(row["revision"] or 0) if row is not None else 0
+        if revision < 1:
+            return self._migration_issue(
+                MEETING_DEFERRED_MIGRATION_FAMILY,
+                "legacy_profile_requires_upgrade",
+                "upgrade_model_profile",
+                source_sha256,
+            )
+        try:
+            marker = assignments.migrate_capability_assignments_atomically(
+                principal,
+                family=MEETING_DEFERRED_MIGRATION_FAMILY,
+                source_sha256=source_sha256,
+                capability_entries={
+                    "meeting.deferred_analysis": {
+                        "profile_id": profile_id,
+                        "profile_revision": revision,
+                    }
+                },
+            )
+        except ValidationError as exc:
+            if exc.code != "inference_assignment_incompatible":
+                raise
+            return self._migration_issue(
+                MEETING_DEFERRED_MIGRATION_FAMILY,
+                "legacy_profile_incompatible",
+                "choose_compatible_meeting_model_profile",
+                source_sha256,
+            )
+        return {**marker, "status": "migrated", "legacy_config_read": True}
+
     def migrate_speech_recognition_route_assignments(
         self, principal: Principal, config: Any
     ) -> dict[str, Any]:
@@ -1890,6 +1955,7 @@ class RoutedInferenceCoordinator:
             for family in (
                 MIGRATION_FAMILY,
                 MEETING_MIGRATION_FAMILY,
+                MEETING_DEFERRED_MIGRATION_FAMILY,
                 SPEECH_RECOGNITION_MIGRATION_FAMILY,
             )
         }
@@ -1903,6 +1969,9 @@ class RoutedInferenceCoordinator:
         return {
             MIGRATION_FAMILY: self.migrate_legacy_config(principal, config),
             MEETING_MIGRATION_FAMILY: self.migrate_meeting_route_assignments(
+                principal, config
+            ),
+            MEETING_DEFERRED_MIGRATION_FAMILY: self.migrate_meeting_deferred_route_assignments(
                 principal, config
             ),
             SPEECH_RECOGNITION_MIGRATION_FAMILY: self.migrate_speech_recognition_route_assignments(
@@ -1986,6 +2055,7 @@ ProductionInferenceAdoptionService = RoutedInferenceCoordinator
 __all__ = [
     "ADOPTED_CAPABILITIES",
     "MEETING_MIGRATION_FAMILY",
+    "MEETING_DEFERRED_MIGRATION_FAMILY",
     "SPEECH_RECOGNITION_MIGRATION_FAMILY",
     "ProductionInferenceAdoptionService",
     "ProductionRouteEvidence",

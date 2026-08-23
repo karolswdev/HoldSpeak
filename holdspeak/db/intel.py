@@ -366,7 +366,99 @@ class IntelRepository(BaseRepository):
                 "parent_command_id": _bound_command_id(job_id, "parent"),
                 "bundle_command_id": _bound_command_id(job_id, "bundle"),
             }
-            binding = dict(bind(conn, job, command_ids))
+            prepare = getattr(bind, "prepare", None)
+            if callable(prepare):
+                # Kernel shell admission has its own journal transaction.  Release
+                # this selection epoch before that admission, then reacquire the
+                # exact queued row before any binding write.  A losing racer gets
+                # no parent-run/bundle/member rows and cannot become an executor.
+                conn.rollback()
+                try:
+                    prepare(job, command_ids)
+                except Exception as exc:
+                    conn.execute("BEGIN IMMEDIATE")
+                    conn.execute(
+                        """INSERT INTO intel_job_attempts (
+                            meeting_id,job_id,event_kind,attempt,outcome,error,created_at
+                        ) VALUES (?,?,'refusal',?,'refused',?,?)""",
+                        (meeting_id, job_id, int(row["attempts"]),
+                         f"Bound route refusal: {type(exc).__name__}: {exc}", now),
+                    )
+                    conn.commit()
+                    raise
+                conn.execute("BEGIN IMMEDIATE")
+                row = conn.execute(
+                    """SELECT j.* FROM intel_jobs j JOIN meetings m ON m.id=j.meeting_id
+                       WHERE j.job_id=? AND j.status='queued'
+                         AND m.capture_status IN ('finalized','recovered')
+                         AND m.route_fence_pending=0
+                         AND NOT EXISTS (SELECT 1 FROM intel_jobs owner
+                             WHERE owner.meeting_id=j.meeting_id
+                               AND owner.work_descriptor_sha256=j.work_descriptor_sha256
+                               AND owner.status IN ('claimed','running'))""",
+                    (job_id,),
+                ).fetchone()
+                if row is None:
+                    discard = getattr(bind, "discard", None)
+                    if callable(discard):
+                        conn.rollback()
+                        discard(job_id)
+                    return None
+                job = self._job_from_row(row)
+                refreshed_hash = _durable_transcript_hash(conn, meeting_id)
+                if refreshed_hash != str(row["transcript_hash"]):
+                    work = str(row["displaced_work"])
+                    descriptor = _work_descriptor_sha256(meeting_id, refreshed_hash, work)
+                    conn.execute(
+                        """UPDATE intel_jobs SET status='superseded',
+                            lifecycle_posture='superseded',updated_at=?,
+                            last_error='Transcript changed before bound claim.'
+                            WHERE job_id=? AND status='queued'""",
+                        (now, job_id),
+                    )
+                    fresh_id = _job_id(meeting_id, refreshed_hash, descriptor, now, job_id)
+                    conn.execute(
+                        """INSERT INTO intel_jobs (
+                            job_id,meeting_id,origin_job_id,work_descriptor_sha256,
+                            transcript_hash,displaced_work,status,lifecycle_posture,
+                            requested_at,updated_at,attempts,last_error
+                        ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
+                        (fresh_id, meeting_id, job_id, descriptor, refreshed_hash, work,
+                         now, now, "Transcript changed; queued fresh immutable job."),
+                    )
+                    conn.execute(
+                        """INSERT INTO intel_job_attempts (
+                            meeting_id,job_id,event_kind,attempt,outcome,error,created_at
+                        ) VALUES (?,?,'superseded',?,'superseded',?,?)""",
+                        (meeting_id, job_id, int(row["attempts"]),
+                         "Transcript changed before route binding.", now),
+                    )
+                    conn.commit()
+                    discard = getattr(bind, "discard", None)
+                    if callable(discard):
+                        discard(job_id)
+                    return None
+            try:
+                binding = dict(bind(conn, job, command_ids))
+            except Exception as exc:
+                # The real binder restores its pending shell before raising.  The
+                # claim writer must release first so its sole discard owner can
+                # terminalize that shell, then append the visible refusal truth.
+                discard = getattr(bind, "discard", None)
+                if not callable(discard):
+                    raise
+                conn.rollback()
+                discard(job_id)
+                conn.execute("BEGIN IMMEDIATE")
+                conn.execute(
+                    """INSERT INTO intel_job_attempts (
+                        meeting_id,job_id,event_kind,attempt,outcome,error,created_at
+                    ) VALUES (?,?,'refusal',?,'refused',?,?)""",
+                    (meeting_id, job_id, int(row["attempts"]),
+                     f"Bound route refusal: {type(exc).__name__}: {exc}", now),
+                )
+                conn.commit()
+                raise
             required = {"parent_operation_id", "bundle_id", "bundle_sha256"}
             if set(binding) != required or not all(str(binding[key]).strip() for key in required):
                 raise ValueError("bound queue claim returned invalid parent/bundle references")

@@ -48,6 +48,8 @@ from holdspeak.meeting_session.intel_plan import (
 from holdspeak.meeting_session.models import Bookmark
 from holdspeak.plugins.host import PluginRunResult, build_idempotency_key
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
 
 pytestmark = pytest.mark.timeout(90, method="signal")
 
@@ -202,6 +204,31 @@ class _Route:
 # ----------------------------------------------------------------------- rigs
 
 
+def _assign_deferred_queue_routes(db: Database) -> None:
+    """Give the SERVICE queue its exact saved assignments, never ambient fallback."""
+    capabilities = (
+        "meeting.deferred_analysis",
+        "meeting.bookmark_label",
+        "meeting.auto_title",
+    )
+    _profile(
+        db,
+        "deferred-queue-model",
+        claims=("language", "structured_output", *(_result_claim(item) for item in capabilities)),
+    )
+    assignments = InferenceAssignmentService(db)
+    for ordinal, capability in enumerate(capabilities, 1):
+        assignments.set_assignment(
+            OWNER,
+            {
+                "command_id": f"deferred-queue-assignment-{ordinal}",
+                "expected_revision": 0,
+                "scope": {"kind": "capability", "capability_id": capability},
+                "entries": [{"profile_id": "deferred-queue-model", "profile_revision": 1}],
+            },
+        )
+
+
 def _observe(broker: Any, monkeypatch) -> list[Any]:
     requests: list[Any] = []
     real_invoke = broker.inference_runner.invoke
@@ -261,6 +288,7 @@ def _queue_rig(tmp_path: Path, monkeypatch, *, plugins: tuple[str, ...] = (), ch
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
     monkeypatch.setattr("holdspeak.intel_queue.get_database", lambda *a, **k: db)
+    _assign_deferred_queue_routes(db)
     broker = _configure(db)
     engine = FakeIntel()
     host = FakeHost(plugins)

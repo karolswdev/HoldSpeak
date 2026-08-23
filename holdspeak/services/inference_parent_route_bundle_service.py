@@ -137,13 +137,65 @@ class InferenceParentRouteBundleService:
         budget_groups: Sequence[Mapping[str, Any]] | None = None,
         derived_preload: Mapping[str, Any] | None = None,
         requested_remote_device_ids: Sequence[str] = (),
+        parent_command_id: str | None = None,
     ) -> dict[str, Any]:
+        """Start a route bundle in this service's owning transaction.
+
+        The in-transaction form below is the sole election/validation/manifest
+        implementation.  This wrapper deliberately adds only transaction
+        ownership, preserving the pre-C1 public contract.
+        """
+        with self._db._connection() as conn:
+            try:
+                result = self.start_in_transaction(
+                    conn, principal, command_id=command_id, parent_kind=parent_kind,
+                    definition_ref=definition_ref, definition_revision=definition_revision,
+                    input_snapshot=input_snapshot, deadline_at=deadline_at, routes=routes,
+                    lifecycle_child_budget=lifecycle_child_budget, budget_groups=budget_groups,
+                    derived_preload=derived_preload,
+                    requested_remote_device_ids=requested_remote_device_ids,
+                    parent_command_id=parent_command_id,
+                )
+                conn.commit()
+                return result
+            except Exception:
+                conn.rollback()
+                raise
+
+    def start_in_transaction(
+        self,
+        conn: Any,
+        principal: Principal,
+        *,
+        command_id: str,
+        parent_kind: str,
+        definition_ref: str,
+        definition_revision: str,
+        input_snapshot: Mapping[str, Any],
+        deadline_at: float,
+        routes: Sequence[Mapping[str, Any]],
+        lifecycle_child_budget: int = 0,
+        budget_groups: Sequence[Mapping[str, Any]] | None = None,
+        derived_preload: Mapping[str, Any] | None = None,
+        requested_remote_device_ids: Sequence[str] = (),
+        parent_command_id: str | None = None,
+        parent: ParentRun | None = None,
+        admitted_child_budget: int | None = None,
+        admitted_policy_fingerprints: Sequence[Mapping[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """Persist one parent and complete frozen bundle on ``conn``.
+
+        Callers own the transaction and must commit or roll it back.  The parent
+        operation has its existing kernel admission lifecycle; every route,
+        bundle member, parent-run row, and caller-owned binding shares ``conn``.
+        """
         if principal.kind not in {PrincipalKind.OWNER, PrincipalKind.SERVICE}:
             raise ValidationError(
                 "Parent route bundle principal is invalid.",
                 code="inference_parent_route_bundle_invalid",
             )
         command = _safe(command_id, field="command_id")
+        parent_command = _safe(parent_command_id or command, field="parent_command_id")
         if not routes or type(lifecycle_child_budget) is not int or lifecycle_child_budget < 0:
             raise ValidationError(
                 "Parent route declaration is invalid.",
@@ -239,180 +291,209 @@ class InferenceParentRouteBundleService:
                 for policy in resolved_policy_fingerprints
             )
         )
-        parent = self._parents.start(
-            principal,
-            kind=str(parent_kind),
-            definition_ref=str(definition_ref),
-            definition_revision=str(definition_revision),
-            input_snapshot=dict(input_snapshot),
-            deadline_at=deadline,
-            child_budget=declared_child_budget,
-            idempotency_key=command,
-            _defer_persist=True,
-        )
+        if parent is not None:
+            # A queue parent may have been admitted before the composite writer
+            # epoch. It is usable only when the later frozen route election is
+            # byte-for-byte the same budget/policy envelope it was admitted for.
+            # This also catches equal-total policy swaps.
+            if type(admitted_child_budget) is not int or admitted_child_budget != declared_child_budget:
+                raise ConflictError(
+                    "Parent route budget changed during admission.",
+                    code="inference_parent_route_bundle_integrity_invalid",
+                )
+            if (
+                admitted_policy_fingerprints is None
+                or [dict(item) for item in admitted_policy_fingerprints]
+                != resolved_policy_fingerprints
+            ):
+                raise ConflictError(
+                    "Parent route policy changed during admission.",
+                    code="inference_parent_route_bundle_integrity_invalid",
+                )
+        started_local_transaction = False
+        if parent is None:
+            # Kernel admission still owns its own durable operation transaction.
+            # The public wrapper reaches this branch before it begins the bundle
+            # transaction, exactly as it did before this extraction.  Composite
+            # callers that already own a writer transaction supply the pending
+            # shell they admitted before their transaction began.
+            if bool(getattr(conn, "in_transaction", False)):
+                raise ValidationError(
+                    "A caller-owned bundle transaction requires its admitted parent.",
+                    code="inference_parent_route_bundle_parent_required",
+                )
+            parent = self._parents.start(
+                principal,
+                kind=str(parent_kind),
+                definition_ref=str(definition_ref),
+                definition_revision=str(definition_revision),
+                input_snapshot=dict(input_snapshot),
+                deadline_at=deadline,
+                child_budget=declared_child_budget,
+                idempotency_key=parent_command,
+                _defer_persist=True,
+            )
+            conn.execute("BEGIN IMMEDIATE")
+            started_local_transaction = True
         shell_only = parent.context is None
         try:
-            with self._db._connection() as conn:
-                conn.execute("BEGIN IMMEDIATE")
-                replay = conn.execute(
-                    "SELECT * FROM inference_parent_route_bundles WHERE command_id=?",
-                    (command,),
-                ).fetchone()
-                if replay is not None:
-                    if str(replay["request_sha256"]) != request_hash:
-                        raise ConflictError(
-                            "Parent route bundle command changed.",
-                            code="inference_parent_route_bundle_conflict",
-                        )
-                    bundle = self._bundle_from_row(conn, replay)
-                    conn.commit()
-                    row = conn.execute(
-                        "SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?",
-                        (bundle["parent_operation_id"],),
-                    ).fetchone()
-                    return {
-                        "parent": ParentRun(
-                            str(row["operation_id"]),
-                            str(row["native_id"]),
-                            self._parents._context(row),
-                            replayed=True,
-                        ),
-                        "bundle": bundle,
-                    }
-                members: list[dict[str, Any]] = []
-                derived_preloads: list[dict[str, Any]] = []
-                child_budget = 0 if groups else lifecycle_child_budget
-                routes_by_key: dict[str, dict[str, Any]] = {}
-                for ordinal, declaration in enumerate(declarations, 1):
-                    if derived is not None and declaration["key"] == derived["declaration"]["key"]:
-                        source = routes_by_key[derived["source_key"]]
-                        route = self._plans.freeze_derived_preload_for_transcription_in_transaction(
-                            ROUTE_PLANNING_AUTHORITY,
-                            conn,
-                            command_id=f"{command}-route-{ordinal}",
-                            feature_principal=principal,
-                            parent_kind=str(parent_kind),
-                            transcription_route_plan_id=str(source["id"]),
-                        )
-                    else:
-                        route = self._plans.freeze_route_plan_for_feature_in_transaction(
-                            ROUTE_PLANNING_AUTHORITY,
-                            conn,
-                            command_id=f"{command}-route-{ordinal}",
-                            feature_principal=principal,
-                            parent_kind=str(parent_kind),
-                            capability_id=declaration["capability_id"],
-                            invocation_id=declaration["invocation_id"],
-                            deadline_at=deadline,
-                        )
-                    routes_by_key[declaration["key"]] = route
-                    evidence = conn.execute(
-                        "SELECT sha256 FROM inference_route_plan_principal_evidence WHERE plan_id=?",
-                        (route["id"],),
-                    ).fetchone()
-                    if evidence is None:
-                        raise ConflictError(
-                            "Route principal evidence is missing.",
-                            code="inference_parent_route_bundle_integrity_invalid",
-                        )
-                    frozen_policy = {
-                        "id": route["retry_policy"]["id"],
-                        "revision": route["retry_policy"]["revision"],
-                        "sha256": route["retry_policy"]["sha256"],
-                        "total_physical_attempts": route["retry_policy"]["total_physical_attempts"],
-                    }
-                    if frozen_policy != resolved_policy_fingerprints[ordinal - 1]:
-                        raise ConflictError(
-                            "Parent route policy changed during admission.",
-                            code="inference_parent_route_bundle_integrity_invalid",
-                        )
-                    attempts = int(route["retry_policy"]["total_physical_attempts"])
-                    if not groups:
-                        child_budget += attempts
-                    member = {
-                        "ordinal": ordinal,
-                        "key": declaration["key"],
-                        "capability_id": declaration["capability_id"],
-                        "route_plan_id": route["id"],
-                        "route_plan_sha256": route["sha256"],
-                        "principal_policy_sha256": str(evidence["sha256"]),
-                        "maximum_physical_attempts": attempts,
-                    }
-                    if derived is not None and declaration["key"] == derived["declaration"]["key"]:
-                        source = routes_by_key[derived["source_key"]]
-                        derived_preloads.append(
-                            self._derived_preload_evidence(conn, derived, source, route)
-                        )
-                    members.append(member)
-                child_budget = declared_child_budget if groups else child_budget
-                if child_budget != declared_child_budget:
+            replay = conn.execute(
+                "SELECT * FROM inference_parent_route_bundles WHERE command_id=?",
+                (command,),
+            ).fetchone()
+            if replay is not None:
+                if str(replay["request_sha256"]) != request_hash:
                     raise ConflictError(
-                        "Parent route budget changed during admission.",
+                        "Parent route bundle command changed.",
+                        code="inference_parent_route_bundle_conflict",
+                    )
+                bundle = self._bundle_from_row(conn, replay)
+                row = conn.execute(
+                    "SELECT p.*,o.principal_kind,o.principal_identity FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?",
+                    (bundle["parent_operation_id"],),
+                ).fetchone()
+                return {
+                    "parent": ParentRun(
+                        str(row["operation_id"]),
+                        str(row["native_id"]),
+                        self._parents._context(row),
+                        replayed=True,
+                    ),
+                    "bundle": bundle,
+                }
+            members: list[dict[str, Any]] = []
+            derived_preloads: list[dict[str, Any]] = []
+            child_budget = 0 if groups else lifecycle_child_budget
+            routes_by_key: dict[str, dict[str, Any]] = {}
+            for ordinal, declaration in enumerate(declarations, 1):
+                if derived is not None and declaration["key"] == derived["declaration"]["key"]:
+                    source = routes_by_key[derived["source_key"]]
+                    route = self._plans.freeze_derived_preload_for_transcription_in_transaction(
+                        ROUTE_PLANNING_AUTHORITY,
+                        conn,
+                        command_id=f"{command}-route-{ordinal}",
+                        feature_principal=principal,
+                        parent_kind=str(parent_kind),
+                        transcription_route_plan_id=str(source["id"]),
+                    )
+                else:
+                    route = self._plans.freeze_route_plan_for_feature_in_transaction(
+                        ROUTE_PLANNING_AUTHORITY,
+                        conn,
+                        command_id=f"{command}-route-{ordinal}",
+                        feature_principal=principal,
+                        parent_kind=str(parent_kind),
+                        capability_id=declaration["capability_id"],
+                        invocation_id=declaration["invocation_id"],
+                        deadline_at=deadline,
+                    )
+                routes_by_key[declaration["key"]] = route
+                evidence = conn.execute(
+                    "SELECT sha256 FROM inference_route_plan_principal_evidence WHERE plan_id=?",
+                    (route["id"],),
+                ).fetchone()
+                if evidence is None:
+                    raise ConflictError(
+                        "Route principal evidence is missing.",
                         code="inference_parent_route_bundle_integrity_invalid",
                     )
-                now = self._parents._clock()
-                row = self._parents._persist_parent(
-                    conn,
-                    operation_id=parent.operation_id,
-                    native_id=parent.native_id,
-                    kind=str(parent_kind),
-                    definition_ref=str(definition_ref),
-                    definition_revision=str(definition_revision),
-                    input_snapshot=dict(input_snapshot),
-                    deadline_at=deadline,
-                    child_budget=child_budget,
-                    now=now,
-                )
-                bundle_id = "iprb_" + hashlib.sha256(
-                    f"{command}:{request_hash}".encode()
-                ).hexdigest()
-                material = {
-                    "schema": "InferenceParentRouteBundle@1",
-                    "id": bundle_id,
-                    "parent_operation_id": parent.operation_id,
-                    "parent_kind": str(parent_kind),
-                    "parent_deadline_at": deadline,
-                    "parent_child_budget": child_budget,
-                    "lifecycle_child_budget": lifecycle_child_budget,
-                    "feature_principal_sha256": request["feature_principal_sha256"],
-                    "members": members,
-                    **({"budget_groups": groups} if groups else {}),
-                    **({"requested_remote_device_ids": remote_devices} if remote_devices else {}),
-                    **({"derived_preloads": derived_preloads} if derived_preloads else {}),
+                frozen_policy = {
+                    "id": route["retry_policy"]["id"],
+                    "revision": route["retry_policy"]["revision"],
+                    "sha256": route["retry_policy"]["sha256"],
+                    "total_physical_attempts": route["retry_policy"]["total_physical_attempts"],
                 }
-                digest = _sha256(material)
+                if frozen_policy != resolved_policy_fingerprints[ordinal - 1]:
+                    raise ConflictError(
+                        "Parent route policy changed during admission.",
+                        code="inference_parent_route_bundle_integrity_invalid",
+                    )
+                attempts = int(route["retry_policy"]["total_physical_attempts"])
+                if not groups:
+                    child_budget += attempts
+                member = {
+                    "ordinal": ordinal,
+                    "key": declaration["key"],
+                    "capability_id": declaration["capability_id"],
+                    "route_plan_id": route["id"],
+                    "route_plan_sha256": route["sha256"],
+                    "principal_policy_sha256": str(evidence["sha256"]),
+                    "maximum_physical_attempts": attempts,
+                }
+                if derived is not None and declaration["key"] == derived["declaration"]["key"]:
+                    source = routes_by_key[derived["source_key"]]
+                    derived_preloads.append(
+                        self._derived_preload_evidence(conn, derived, source, route)
+                    )
+                members.append(member)
+            child_budget = declared_child_budget if groups else child_budget
+            if child_budget != declared_child_budget:
+                raise ConflictError(
+                    "Parent route budget changed during admission.",
+                    code="inference_parent_route_bundle_integrity_invalid",
+                )
+            now = self._parents._clock()
+            row = self._parents._persist_parent(
+                conn,
+                operation_id=parent.operation_id,
+                native_id=parent.native_id,
+                kind=str(parent_kind),
+                definition_ref=str(definition_ref),
+                definition_revision=str(definition_revision),
+                input_snapshot=dict(input_snapshot),
+                deadline_at=deadline,
+                child_budget=child_budget,
+                now=now,
+            )
+            bundle_id = "iprb_" + hashlib.sha256(
+                f"{command}:{request_hash}".encode()
+            ).hexdigest()
+            material = {
+                "schema": "InferenceParentRouteBundle@1",
+                "id": bundle_id,
+                "parent_operation_id": parent.operation_id,
+                "parent_kind": str(parent_kind),
+                "parent_deadline_at": deadline,
+                "parent_child_budget": child_budget,
+                "lifecycle_child_budget": lifecycle_child_budget,
+                "feature_principal_sha256": request["feature_principal_sha256"],
+                "members": members,
+                **({"budget_groups": groups} if groups else {}),
+                **({"requested_remote_device_ids": remote_devices} if remote_devices else {}),
+                **({"derived_preloads": derived_preloads} if derived_preloads else {}),
+            }
+            digest = _sha256(material)
+            conn.execute(
+                "INSERT INTO inference_parent_route_bundles VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    bundle_id,
+                    command,
+                    request_hash,
+                    parent.operation_id,
+                    deadline,
+                    child_budget,
+                    lifecycle_child_budget,
+                    request["feature_principal_sha256"],
+                    _canonical(material),
+                    digest,
+                    now,
+                ),
+            )
+            for member in members:
                 conn.execute(
-                    "INSERT INTO inference_parent_route_bundles VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                    "INSERT INTO inference_parent_route_bundle_members VALUES (?,?,?,?,?,?,?,?,?)",
                     (
+                        f"{bundle_id}:{member['ordinal']}",
                         bundle_id,
-                        command,
-                        request_hash,
-                        parent.operation_id,
-                        deadline,
-                        child_budget,
-                        lifecycle_child_budget,
-                        request["feature_principal_sha256"],
-                        _canonical(material),
-                        digest,
-                        now,
+                        member["ordinal"],
+                        member["key"],
+                        member["capability_id"],
+                        member["route_plan_id"],
+                        member["route_plan_sha256"],
+                        member["principal_policy_sha256"],
+                        member["maximum_physical_attempts"],
                     ),
                 )
-                for member in members:
-                    conn.execute(
-                        "INSERT INTO inference_parent_route_bundle_members VALUES (?,?,?,?,?,?,?,?,?)",
-                        (
-                            f"{bundle_id}:{member['ordinal']}",
-                            bundle_id,
-                            member["ordinal"],
-                            member["key"],
-                            member["capability_id"],
-                            member["route_plan_id"],
-                            member["route_plan_sha256"],
-                            member["principal_policy_sha256"],
-                            member["maximum_physical_attempts"],
-                        ),
-                    )
-                conn.commit()
             if row is None:
                 raise ConflictError(
                     "Parent route bundle has no parent context.",
@@ -427,16 +508,21 @@ class InferenceParentRouteBundleService:
                 "bundle": {**material, "sha256": digest},
             }
         except Exception:
-            if shell_only:
-                try:
-                    self._broker.receipt(
-                        parent.operation_id,
-                        "refused",
-                        "parent-route-bundle:admission-failed",
-                        self._parents._node,
-                    )
-                except KernelRefused:
-                    pass
+            # A standalone start owns its route transaction and must release the
+            # SQLite writer before the kernel records the shell refusal.  A
+            # composite caller owns both rollback and its parent disposition.
+            if started_local_transaction:
+                conn.rollback()
+                if shell_only:
+                    try:
+                        self._broker.receipt(
+                            parent.operation_id,
+                            "refused",
+                            "parent-route-bundle:admission-failed",
+                            self._parents._node,
+                        )
+                    except KernelRefused:
+                        pass
             raise
 
     @staticmethod

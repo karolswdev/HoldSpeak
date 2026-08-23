@@ -70,7 +70,7 @@ def test_inventory_repository_claim_enqueue_retry_release_and_ledger_are_job_key
     """Pin all IntelRepository mutation/read entry points and job-keyed SQL."""
     source = _source("holdspeak/db/intel.py")
     for symbol in (
-        "enqueue_intel_job", "claim_next_intel_job", "requeue_claimed_intel_job",
+        "enqueue_intel_job", "claim_next_intel_job", "claim_next_intel_job_bound", "requeue_claimed_intel_job",
         "retry_intel_job", "complete_intel_job", "fail_intel_job",
         "mark_intel_job_partial", "request_intel_retry", "skip_remaining_intel",
         "record_intel_job_attempt", "get_intel_job", "list_intel_jobs",
@@ -288,3 +288,182 @@ def test_bound_claim_transcript_fence_supersedes_and_links_fresh_job(tmp_path) -
         assert rows[0]["status"] == "superseded"
         assert rows[0]["parent_operation_id"] is None and rows[0]["bundle_id"] is None
         assert rows[1]["status"] == "queued" and rows[1]["origin_job_id"]
+
+
+def test_real_service_binder_cross_binds_one_claim_parent_and_bundle(tmp_path) -> None:
+    """The queue's real SERVICE binder commits its stored route set with claim."""
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+    from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
+
+    db, meeting = _bound_claim_db(tmp_path, "real-bound-claim.db")
+    capabilities = (
+        "meeting.deferred_analysis",
+        "meeting.bookmark_label",
+        "meeting.auto_title",
+    )
+    _profile(
+        db,
+        "queue-service-model",
+        claims=("language", "structured_output", *(_result_claim(item) for item in capabilities)),
+    )
+    assignments = InferenceAssignmentService(db)
+    for ordinal, capability in enumerate(capabilities, 1):
+        assignments.set_assignment(
+            OWNER,
+            {
+                "command_id": f"queue-service-assignment-{ordinal}",
+                "expected_revision": 0,
+                "scope": {"kind": "capability", "capability_id": capability},
+                "entries": [{"profile_id": "queue-service-model", "profile_revision": 1}],
+            },
+        )
+    broker = _configure(db)
+
+    claimed = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+
+    assert claimed is not None and claimed.status == "claimed"
+    assert claimed.parent_operation_id and claimed.bundle_id and claimed.bundle_sha256
+    with db._connection() as conn:
+        parent = conn.execute(
+            "SELECT * FROM kernel_parent_runs WHERE operation_id=?", (claimed.parent_operation_id,)
+        ).fetchone()
+        bundle = conn.execute(
+            "SELECT * FROM inference_parent_route_bundles WHERE id=?", (claimed.bundle_id,)
+        ).fetchone()
+        members = conn.execute(
+            "SELECT * FROM inference_parent_route_bundle_members WHERE bundle_id=?", (claimed.bundle_id,)
+        ).fetchall()
+        event = conn.execute(
+            "SELECT * FROM intel_job_attempts WHERE job_id=? AND event_kind='claim'",
+            (claimed.job_id,),
+        ).fetchone()
+    assert parent is not None and str(parent["kind"]) == "meeting.deferred-intel-job"
+    assert bundle is not None and str(bundle["parent_operation_id"]) == claimed.parent_operation_id
+    assert len(members) == 1 and str(members[0]["capability_id"]) == "meeting.deferred_analysis"
+    assert event is not None and str(event["bundle_id"]) == claimed.bundle_id
+    assert db.meetings.get_meeting(meeting.id).intel_status == "running"
+
+
+def test_real_service_binder_refusal_leaves_job_queued_and_records_ledger(tmp_path) -> None:
+    """Missing exact SERVICE assignment refuses before a parent or bundle exists."""
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+
+    db, meeting = _bound_claim_db(tmp_path, "real-bound-refusal.db")
+    broker = _configure(db)
+
+    with pytest.raises(Exception):
+        db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+
+    job = db.intel.get_intel_job(meeting.id)
+    assert job is not None and job.status == "queued" and job.claim_id is None
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM kernel_parent_runs").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0
+        event = conn.execute(
+            "SELECT outcome FROM intel_job_attempts WHERE job_id=? AND event_kind='refusal'",
+            (job.job_id,),
+        ).fetchone()
+    assert event is not None and event["outcome"] == "refused"
+
+
+def test_real_binder_policy_flip_between_prepare_and_claim_refuses_shell(tmp_path) -> None:
+    """A changed route policy cannot repurpose the pre-admitted parent budget."""
+    from dataclasses import replace
+
+    from holdspeak.inference_capabilities import (
+        InferenceCapabilityRegistry,
+        process_inference_capability_registry,
+    )
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.services.errors import ConflictError
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from holdspeak.services.inference_parent_route_bundle_service import (
+        InferenceParentRouteBundleService,
+    )
+    from holdspeak.services.inference_route_plan_service import InferenceRoutePlanService
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+    from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
+
+    db, meeting = _bound_claim_db(tmp_path, "bound-policy-race.db")
+    current = process_inference_capability_registry()
+    original = current.require("meeting.deferred_analysis")
+    default = current.retry_policy(original.default_retry_policy_id)
+    alternate = replace(
+        default,
+        id="retry.meeting-deferred.race",
+        permitted_capability_ids=("meeting.deferred_analysis",),
+        total_physical_attempts=int(default.total_physical_attempts) + 1,
+        sha256="",
+    )
+    capability = replace(
+        original,
+        permitted_retry_policy_ids=(original.default_retry_policy_id, alternate.id),
+        schema_sha256="",
+    )
+    registry = InferenceCapabilityRegistry.compose(
+        capabilities=tuple(
+            capability if item.id == capability.id else item
+            for item in current._capabilities.values()
+        ),
+        retry_policies=(*current._retry_policies.values(), alternate),
+    )
+    _profile(
+        db,
+        "policy-race-model",
+        claims=("language", "structured_output", _result_claim("meeting.deferred_analysis")),
+    )
+    assignments = InferenceAssignmentService(db, registry=registry)
+    body = {
+        "scope": {"kind": "capability", "capability_id": "meeting.deferred_analysis"},
+        "entries": [{"profile_id": "policy-race-model", "profile_revision": 1}],
+    }
+    assignments.set_assignment(
+        OWNER,
+        {"command_id": "policy-race-default", "expected_revision": 0, **body},
+    )
+    broker = _configure(db)
+    bundles = InferenceParentRouteBundleService(broker, broker.inference_adoption_service)
+    bundles._plans = InferenceRoutePlanService(db, registry=registry)
+
+    class PolicyFlipBinder(MeetingDeferredQueueBinder):
+        def prepare(self, job, command_ids):  # type: ignore[no-untyped-def]
+            super().prepare(job, command_ids)
+            assignments.set_assignment(
+                OWNER,
+                {
+                    "command_id": "policy-race-flipped",
+                    "expected_revision": 1,
+                    **body,
+                    "retry_policy_id": alternate.id,
+                },
+            )
+
+    with pytest.raises(ConflictError) as refused:
+        db.intel.claim_next_intel_job_bound(PolicyFlipBinder(broker, bundles=bundles))
+    assert refused.value.code == "inference_parent_route_bundle_integrity_invalid"
+
+    job = db.intel.get_intel_job(meeting.id)
+    assert job is not None and job.status == "queued" and job.claim_id is None
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM kernel_parent_runs").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundle_members").fetchone()[0] == 0
+        assert conn.execute(
+            "SELECT COUNT(*) FROM intel_job_attempts WHERE job_id=? AND event_kind='claim'",
+            (job.job_id,),
+        ).fetchone()[0] == 0
+        refusal_event = conn.execute(
+            "SELECT outcome FROM intel_job_attempts WHERE job_id=? AND event_kind='refusal'",
+            (job.job_id,),
+        ).fetchone()
+        shell = conn.execute(
+            """SELECT o.operation_id,o.state,r.outcome FROM kernel_operations o
+               LEFT JOIN kernel_receipts r ON r.operation_id=o.operation_id
+               WHERE o.principal_identity='meeting-intel-queue'
+                 AND o.name='meeting.deferred-intel-job'"""
+        ).fetchone()
+    assert refusal_event is not None and refusal_event["outcome"] == "refused"
+    assert shell is not None and shell["state"] == "refused" and shell["outcome"] == "refused"
