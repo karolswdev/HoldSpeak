@@ -25,9 +25,11 @@ fence/cancel + late-output discard + unconditional legacy aftercare) —
 this on a tired Tuesday now"). Phase C is underway: queue inventory +
 table evolution + real SERVICE binder + deferred-assignment migration
 committed (C1a/C1b), the outside code-review's four surviving findings
-fixed (incl. a systemic refusal-law repair across three adapters); the
-C1 worker cutover is next, then plugins (C2) and the Stop-handoff
-provider (C3). Remaining after that: Phases D–F of the
+fixed (incl. a systemic refusal-law repair across three adapters); slice
+C1 is COMPLETE (bound worker cutover: three hash fences, stored-id
+recovery, retry lineage); the C1 checkpoint, plugins (C2), and the
+Stop-handoff provider (C3) remain. Phase D (speech) is design-ruled and
+queued. Remaining after that: Phases D–F of the
 handover sequence (deferred queue + plugins, speech lifecycle, background
 adopters, migration cleanup). Design canon for the Meeting/speech legs:
 `assets/story-08-phase-b-cutover-design.md` (counsel amendments and the

@@ -155,11 +155,17 @@ errors — all now terminal), device-ID evidence as content-free hash
 tokens (unicode device names no longer refuse bundles), and sync
 round-tripping `record_only` (with hostile-sync guards). Best-effort
 physical cancellation is a recorded limitation with a named
-wasted-compute bound. Remaining in C1: the worker cutover (bound
-execution, staging/publication hash fences, stored-id recovery, the
-kernel-shell crash proof), then the C1 counsel checkpoint, then C2
-(plugins) and C3 (the Stop-handoff provider — the ratified primitive's
-first real adopter). Verification ledger:
+wasted-compute bound. Slice C1 is COMPLETE: the queue worker
+executes bound-claimed jobs on stored parent/bundle ids only (no Config
+reads), with all three transcript-hash fences (claim, staging,
+publication) plus a completion guard, stored-id crash recovery with zero
+duplicate egress, retry lineage and completion ledger events, a
+typed-refusal terminal proof, and the legacy executor preserved for
+pre-C1 claims. Phase D (speech lifecycle) is design-ruled with six
+binding counsel amendments and queued behind Phase C. Next: the C1
+counsel checkpoint (with the owed full-suite sweep), then C2 (plugins)
+and C3 (the Stop-handoff provider — the ratified primitive's first real
+adopter). Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:
 [counsel round 1](./assets/story-08-displaced-work-counsel-round1.md);
