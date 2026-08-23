@@ -21,7 +21,13 @@ complete: routed transcription with day-one same-Meeting bootstrap proven
 routed transcript), timeout = unknown, MLX warmup as one bounded preload
 child. Slice 3 is complete (Stop = admission close + final pass + bundle
 fence/cancel + late-output discard + unconditional legacy aftercare) —
-**Phase B is done**. Remaining for this story: Phases C–F of the
+**Phase B is RATIFIED** (three-round Sol checkpoint; "I would use
+this on a tired Tuesday now"). Phase C is underway: queue inventory +
+table evolution + real SERVICE binder + deferred-assignment migration
+committed (C1a/C1b), the outside code-review's four surviving findings
+fixed (incl. a systemic refusal-law repair across three adapters); the
+C1 worker cutover is next, then plugins (C2) and the Stop-handoff
+provider (C3). Remaining after that: Phases D–F of the
 handover sequence (deferred queue + plugins, speech lifecycle, background
 adopters, migration cleanup). Design canon for the Meeting/speech legs:
 `assets/story-08-phase-b-cutover-design.md` (counsel amendments and the

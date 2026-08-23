@@ -132,7 +132,34 @@ the unchanged legacy deferred aftercare for every stopping meeting
 (bundle-backed and `record_only` alike; Meeting-keyed upsert = idempotency
 boundary), so meeting summaries survive until Phase C replaces the queue.
 Remaining for Story 08: handover Phases C–F (deferred queue + plugins,
-speech lifecycle, background adopters, migration cleanup). Verification ledger:
+speech lifecycle, background adopters, migration cleanup).
+
+Phase C (deferred queue + installed plugins) is underway against a
+Sol-ruled design (`assets/story-08-phase-c-deferred-design.md`,
+RATIFY-WITH-AMENDMENTS, six binding amendments). Slice C1a: an 11-test
+executable inventory of every queue reader/writer, and the `intel_jobs`
+evolution — deterministic `job_id` primary keys, immutable work
+descriptors, an atomic fail-back migration — with Phase B's claim-gating
+invariants preserved unmodified. Slice C1b: `start_in_transaction`
+extracted from the bundle service (wrapper pinned by the primitives), the
+real `meeting-intel-queue` SERVICE binder, the narrow
+`meeting-deferred-route-assignments` startup family (slice 1a never
+covered deferred analysis), and — via an outside code review — the
+pre-admitted-parent seam sealed: prepare-time budget/fingerprints compared
+in-transaction, orphan shells terminalized, race-tested inside the
+released-writer window. A four-fix round then closed the review's
+surviving findings: crash-recoverable post-election publication (Ask can
+no longer strand at projection_not_published), a SYSTEMIC failure-law
+repair (three adapters were remapping model refusals into retryable
+errors — all now terminal), device-ID evidence as content-free hash
+tokens (unicode device names no longer refuse bundles), and sync
+round-tripping `record_only` (with hostile-sync guards). Best-effort
+physical cancellation is a recorded limitation with a named
+wasted-compute bound. Remaining in C1: the worker cutover (bound
+execution, staging/publication hash fences, stored-id recovery, the
+kernel-shell crash proof), then the C1 counsel checkpoint, then C2
+(plugins) and C3 (the Stop-handoff provider — the ratified primitive's
+first real adopter). Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:
 [counsel round 1](./assets/story-08-displaced-work-counsel-round1.md);
