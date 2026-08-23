@@ -461,47 +461,68 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
             log.error("meeting intelligence stage discard failed: %s", type(exc).__name__)
             return 0
 
-    # ----------------------------------------------------- the stop handoff
+    # ----------------------------------------------------- the Stop fence
 
     def _handoff_intel_at_stop(self, state: Any) -> tuple[str, ...]:
-        """Cancel the live parent, then durably enqueue the work stop displaced.
+        """Fence live bundle work, then enqueue existing deferred aftercare.
 
-        Returns the names of the displaced work items, empty when nothing was
-        admitted (recording without intelligence keeps its existing behavior).
-
-        Order is load-bearing (Sol Amendment 2): cancel FIRST so no late live
-        output can reach meeting state, resolve the staged snapshots so a
-        cancelled parent discards them, close the parent with its honest terminal
-        outcome, and only then enqueue — before ``stop()`` returns. The queue's
-        own `queued` status is what keeps the meeting honestly in progress; it is
-        never `ready` while the deferred job is outstanding.
+        The final transcription pass has already completed when this method is
+        entered.  It needs the still-open frozen transcription route, so this is
+        the first point at which the shared live-admission fence can close it.
+        A record-only Meeting has no bundle, but its pre-cutover deferred-work
+        predicate and Meeting-keyed legacy queue upsert remain exactly available.
         """
-        if self._intel_parent is None:
-            return ()
-        # Sol Amendment 2 + the late-ready fence (HS-131-08 D4): the closed flag
-        # is raised UNDER THE LOCK before anything else, so a child that finalized
-        # a moment ago can no longer stamp meeting state, and no new live child can
-        # be admitted, while stop is stamping `queued`.
+        # The in-memory gate closes publication and fresh Meeting-side admission
+        # before the durable parent fence.  `_apply_live_window()` rechecks this
+        # under the same lock, so a late elected result cannot reach a callback.
         with self._lock:
             self._intel_closed = True
-        disposition = self._cancel_intel_session()
-        discarded = self._discard_intel_stages()
-        self._finish_cancelled_intel_session()
-        with self._lock:
             self._intel_live = False
-        log.info(
-            "live meeting intelligence cancelled at stop: disposition=%s discarded=%s",
-            disposition or "cancelled",
-            discarded,
-        )
-        if not state.segments:
-            return ()
 
-        displaced = [DISPLACED_FINAL_ANALYSIS]
+        bundle = self._route_bundle
+        if bundle is not None and self.intel_principal is not None:
+            try:
+                from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
+
+                broker = self._intel_broker()
+                effect = InferenceParentRouteBundleService(
+                    broker, broker.inference_adoption_service
+                ).fence_cancel(
+                    self.intel_principal,
+                    command_id=f"meeting-stop:{state.id}",
+                    bundle_id=str(bundle["id"]),
+                )
+                log.info(
+                    "live meeting bundle fenced at stop: bundle=%s routes=%s",
+                    effect["bundle_id"],
+                    len(effect["route_stops"]),
+                )
+            except Exception as exc:
+                # A fence failure is visible and must not make the durable Meeting
+                # disappear.  The Meeting-keyed aftercare upsert below remains the
+                # established recovery authority until Phase C replaces it.
+                log.error("live meeting bundle fence failed at stop: %s", type(exc).__name__)
+
+        # The old parent close/cancel path is intentionally not used for a bundle:
+        # `fence_cancel()` derives and fences the complete route set in one durable
+        # transaction, then performs best-effort physical child cancellation.
+        self._intel_parent = None
+        self._intel_closed = True
+
+        # Preserve the pre-cutover product predicate independently of live route
+        # admission: segments request final analysis, bookmarks request labels,
+        # and an untitled Meeting requests an auto-title.  In particular, a
+        # record-only Meeting has no bundle yet still owns aftercare.
+        displaced: list[str] = []
+        if state.segments:
+            displaced.append(DISPLACED_FINAL_ANALYSIS)
         if state.bookmarks:
             displaced.append(DISPLACED_BOOKMARK_LABELS)
         if not state.title:
             displaced.append(DISPLACED_AUTO_TITLE)
+        if not displaced:
+            return ()
+
         # HS-131-17: the live session no longer infers routed intelligence from
         # private MIR fields — it has none. The deferred job reads the current
         # `MeetingConfig.intent_router_enabled` under its own admitted parent and
@@ -515,8 +536,6 @@ class IntelAdmissionMixin(TranscribeAdmissionMixin):
         )
         if self._deferred_intel_reason:
             detail += f" Earlier deferral: {self._deferred_intel_reason}"
-        # The handoff's OWN stamps are the only meeting-state writes allowed once
-        # the closed flag is up.
 
         try:
             from ..db import get_database

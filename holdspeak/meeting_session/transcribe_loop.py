@@ -19,6 +19,22 @@ log = get_logger("meeting_session")
 
 
 class TranscribeLoopMixin:
+    def _publish_transcript_segment(
+        self, segment: TranscriptSegment, new_segments: list[TranscriptSegment]
+    ) -> None:
+        """Publish a completed interval only while the live bundle remains open."""
+        with self._lock:
+            if self._state is None or getattr(self, "_intel_closed", False):
+                log.info("Discarding late transcription: the live Meeting bundle is fenced")
+                return
+            self._state.segments.append(segment)
+        new_segments.append(segment)
+        if self.on_segment:
+            try:
+                self.on_segment(segment)
+            except Exception as e:
+                log.error(f"on_segment callback error: {e}")
+
     def _transcribe_audio(
         self,
         audio: "np.ndarray",
@@ -159,15 +175,7 @@ class TranscribeLoopMixin:
                             start_time=start_time,
                             end_time=end_time,
                         )
-                        with self._lock:
-                            if self._state:
-                                self._state.segments.append(segment)
-                        new_segments.append(segment)
-                        if self.on_segment:
-                            try:
-                                self.on_segment(segment)
-                            except Exception as e:
-                                log.error(f"on_segment callback error: {e}")
+                        self._publish_transcript_segment(segment, new_segments)
                         log.debug(f"Mic segment: {segment}")
                 except Exception as e:
                     log.error(f"Mic transcription error: {e}")
@@ -207,15 +215,7 @@ class TranscribeLoopMixin:
                             start_time=start_time,
                             end_time=end_time,
                         )
-                        with self._lock:
-                            if self._state:
-                                self._state.segments.append(segment)
-                        new_segments.append(segment)
-                        if self.on_segment:
-                            try:
-                                self.on_segment(segment)
-                            except Exception as e:
-                                log.error(f"on_segment callback error: {e}")
+                        self._publish_transcript_segment(segment, new_segments)
                         log.debug(f"System segment: {segment}")
                 except Exception as e:
                     log.error(f"System transcription error: {e}")
@@ -261,15 +261,7 @@ class TranscribeLoopMixin:
                     end_time=end_time,
                     device_id=device_id,
                 )
-                with self._lock:
-                    if self._state:
-                        self._state.segments.append(segment)
-                new_segments.append(segment)
-                if self.on_segment:
-                    try:
-                        self.on_segment(segment)
-                    except Exception as e:
-                        log.error(f"on_segment callback error: {e}")
+                self._publish_transcript_segment(segment, new_segments)
                 log.debug(f"Device segment ({device_id}): {segment}")
 
         # Emit new segments to the observer's broadcast channel

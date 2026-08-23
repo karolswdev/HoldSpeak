@@ -655,36 +655,91 @@ class InferenceParentRouteBundleService:
                         "Parent Stop authority is required.",
                         code="inference_parent_stop_handoff_denied",
                     )
+                # A prior Stop can leave the parent fenced or terminal.  Replaying
+                # Stop then makes no new reservation, transition, or cancellation
+                # request; it is a genuine no-op from durable bundle evidence.
+                parent_state = str(parent["state"])
+                if parent_state not in {"OPEN", "CANCELLING"}:
+                    conn.commit()
+                    return {
+                        "schema": "InferenceParentBundleFence@1",
+                        "bundle_id": bundle_identifier,
+                        "parent_operation_id": str(parent["operation_id"]),
+                        "parent_fence": {
+                            "schema": "ParentHandoffFence@1",
+                            "operation_id": str(parent["operation_id"]),
+                            "prior_epoch": int(parent["execution_epoch"]),
+                            "post_epoch": int(parent["execution_epoch"]),
+                            "state": parent_state,
+                        },
+                        "route_stops": [],
+                        "child_signals": [],
+                    }
                 stopped: list[dict[str, Any]] = []
+                # The first fence owns every still-active execution.  `stopping`
+                # rows were already given their exact Stop command, so a replay
+                # must not mint another durable command merely to signal them again.
                 executions = conn.execute(
                     """SELECT e.id FROM inference_route_executions e
                          JOIN inference_parent_route_bundle_members m
                            ON m.route_plan_id=e.route_plan_id
-                        WHERE m.bundle_id=? AND e.state IN ('active','stopping')
+                        WHERE m.bundle_id=? AND e.state='active'
                         ORDER BY m.ordinal,e.started_at,e.id""",
                     (bundle_identifier,),
                 ).fetchall()
+                child_invocations: list[tuple[str, str]] = []
                 for ordinal, execution in enumerate(executions, 1):
-                    stopped.append(self._controller.request_stop_in_transaction(
+                    stopped_result = self._controller.request_stop_in_transaction(
                         INFERENCE_FALLBACK_AUTHORITY,
                         conn,
                         command_id=f"{command}-route-{ordinal}",
                         execution_id=str(execution["id"]),
-                    )["effect"])
+                    )
+                    stopped.append(stopped_result["effect"])
+                    if str(stopped_result["execution"]["state"]) == "stopping":
+                        child = conn.execute(
+                            """SELECT child_invocation_id FROM inference_route_attempts
+                               WHERE execution_id=? AND state='dispatch_intent'
+                               ORDER BY physical_attempt_ordinal DESC LIMIT 1""",
+                            (str(execution["id"]),),
+                        ).fetchone()
+                        if child is not None and str(child["child_invocation_id"] or ""):
+                            child_invocations.append(
+                                (str(execution["id"]), str(child["child_invocation_id"]))
+                            )
                 fence = self._parents.fence_for_handoff_in_transaction(
                     conn, principal, operation_id=str(parent["operation_id"])
                 )
                 conn.commit()
-                return {
-                    "schema": "InferenceParentBundleFence@1",
-                    "bundle_id": bundle_identifier,
-                    "parent_operation_id": str(parent["operation_id"]),
-                    "parent_fence": dict(fence),
-                    "route_stops": stopped,
-                }
             except Exception:
                 conn.rollback()
                 raise
+
+        # Durable Stop/fence commits before this best-effort physical signal.  The
+        # controller has already sealed every affected execution, so a cancellation
+        # failure cannot reopen admission or permit a late winner to publish.
+        child_signals: list[dict[str, str]] = []
+        for execution_id, child_invocation_id in child_invocations:
+            try:
+                from ..kernel.runtime import _as_principal
+
+                with _as_principal(principal):
+                    signal = self._broker.inference_runner.cancel(child_invocation_id)
+            except Exception as exc:
+                signal = f"error:{type(exc).__name__}"
+            child_signals.append({
+                "execution_id": execution_id,
+                "child_invocation_id": child_invocation_id,
+                "signal": str(signal),
+            })
+        return {
+            "schema": "InferenceParentBundleFence@1",
+            "bundle_id": bundle_identifier,
+            "parent_operation_id": str(parent["operation_id"]),
+            "parent_fence": dict(fence),
+            "route_stops": stopped,
+            "child_signals": child_signals,
+        }
 
     def request_stop_handoff(
         self,

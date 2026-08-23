@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 from pathlib import Path
+import threading
 from typing import Any
 
 import numpy as np
@@ -11,6 +12,7 @@ import pytest
 
 from holdspeak.db import Database
 from holdspeak.intel import ActionItem, IntelResult
+from holdspeak.services.errors import ConflictError
 from holdspeak.meeting_session.models import Bookmark, TranscriptSegment
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.inference_adoption_service import (
@@ -802,3 +804,237 @@ def test_live_analysis_controller_owns_compatibility_retry_then_fallback(
     ]
     assert execution["terminal_outcome"] == "succeeded"
     assert execution["winning_attempt_id"] == attempts[2]["id"]
+
+
+def _admit_active_execution_for_each_bundle_member(broker: Any, session: Any) -> set[str]:
+    """Start (but do not dispatch) one execution on each frozen live member."""
+    assert session._route_bundle is not None
+    execution_ids: set[str] = set()
+    for member in session._route_bundle["members"]:
+        capability = str(member["capability_id"])
+        admitted = broker.inference_adoption_service.admit_on_frozen_route(
+            OWNER,
+            command_id=f"phase-b-stop-active-{capability}",
+            route_plan_id=str(member["route_plan_id"]),
+            capability_id=capability,
+            operation_id=f"phase-b-stop-active-{capability}",
+            payload={},
+            reserved_output_tokens=16,
+        )
+        execution_ids.add(str(admitted["execution"]["id"]))
+    return execution_ids
+
+
+def test_stop_fences_every_bundle_member_refuses_reservation_and_survives_restart(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Stop owns the complete live bundle, rather than a legacy live-plan child."""
+    from holdspeak.kernel.runtime import _configure
+    from tests.unit.test_meeting_session_admission import _bundle_session
+
+    db, broker, session = _bundle_session(tmp_path, monkeypatch)
+    state = session.start()
+    execution_ids = _admit_active_execution_for_each_bundle_member(broker, session)
+    state.segments.append(
+        TranscriptSegment(text="Stop aftercare transcript", speaker="Me", start_time=0.0, end_time=1.0)
+    )
+    state.bookmarks.append(Bookmark(timestamp=0.5, label="Bookmark"))
+
+    session.stop()
+
+    with db._connection() as conn:
+        executions = conn.execute(
+            "SELECT id,state FROM inference_route_executions WHERE id IN ({})".format(
+                ",".join("?" for _ in execution_ids)
+            ),
+            tuple(sorted(execution_ids)),
+        ).fetchall()
+        parent = conn.execute(
+            "SELECT state FROM kernel_parent_runs WHERE operation_id=?",
+            (session._route_bundle["parent_operation_id"],),
+        ).fetchone()
+        queued = conn.execute(
+            "SELECT status,displaced_work FROM intel_jobs WHERE meeting_id=?", (state.id,)
+        ).fetchall()
+
+    assert {str(row["id"]) for row in executions} == execution_ids
+    assert {str(row["state"]) for row in executions} == {"stopped"}
+    assert parent is not None and parent["state"] == "CANCELLING"
+    assert len(queued) == 1 and queued[0]["status"] == "queued"
+    assert queued[0]["displaced_work"] == (
+        '["final-analysis","bookmark-labels","auto-title"]'
+    )
+
+    member = session._route_bundle["members"][0]
+    with pytest.raises(ConflictError) as sealed:
+        broker.inference_adoption_service.admit_on_frozen_route(
+            OWNER,
+            command_id="phase-b-stop-late-reservation",
+            route_plan_id=str(member["route_plan_id"]),
+            capability_id=str(member["capability_id"]),
+            operation_id="phase-b-stop-late-reservation",
+            payload={},
+            reserved_output_tokens=16,
+        )
+    assert sealed.value.code == "inference_route_execution_parent_sealed"
+
+    # A fresh process receives the same durable seal; it cannot resume these live
+    # executions or open a new one on their frozen bundle route.
+    fresh = _configure(db)
+    with db._connection() as conn:
+        resumed = conn.execute(
+            "SELECT state FROM inference_route_executions WHERE id IN ({})".format(
+                ",".join("?" for _ in execution_ids)
+            ),
+            tuple(sorted(execution_ids)),
+        ).fetchall()
+    assert {str(row["state"]) for row in resumed} == {"stopped"}
+    with pytest.raises(ConflictError) as restarted:
+        fresh.inference_adoption_service.admit_on_frozen_route(
+            OWNER,
+            command_id="phase-b-stop-restart-reservation",
+            route_plan_id=str(member["route_plan_id"]),
+            capability_id=str(member["capability_id"]),
+            operation_id="phase-b-stop-restart-reservation",
+            payload={},
+            reserved_output_tokens=16,
+        )
+    assert restarted.value.code == "inference_route_execution_parent_sealed"
+    with db._connection() as conn:
+        assert conn.execute(
+            "SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)
+        ).fetchone()[0] == 1
+
+
+def test_stop_discards_a_late_routed_live_result_and_signals_its_child(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A result settling after the durable Stop fence reaches no Meeting callback."""
+    from tests.unit.test_meeting_session_admission import _bundle_session
+
+    _db, broker, session = _bundle_session(tmp_path, monkeypatch)
+    entered = threading.Event()
+    release = threading.Event()
+    child_cancellations: list[str] = []
+
+    class _BlockingEngine:
+        active_provider = "fixture"
+        active_model = "meeting-profile"
+
+        @staticmethod
+        def analyze(_transcript: str, *, stream: bool = False) -> IntelResult:
+            assert stream is False
+            entered.set()
+            assert release.wait(timeout=2.0)
+            return IntelResult(
+                topics=["late"],
+                action_items=[ActionItem(task="must not publish")],
+                summary="late routed result",
+                raw_response="private",
+            )
+
+    engine = _BlockingEngine()
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kwargs: engine)
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
+    real_cancel = broker.inference_runner.cancel
+
+    def observe_cancel(child_invocation_id: str) -> str:
+        child_cancellations.append(child_invocation_id)
+        return real_cancel(child_invocation_id)
+
+    monkeypatch.setattr(broker.inference_runner, "cancel", observe_cancel)
+    published: list[str] = []
+    session.on_intel = lambda snapshot: published.append(snapshot.summary)
+    session.start()
+    session._state.segments.append(
+        TranscriptSegment(text="Route this before Stop", speaker="Me", start_time=0.0, end_time=1.0)
+    )
+
+    worker = threading.Thread(target=session._run_intel_analysis, daemon=True)
+    worker.start()
+    assert entered.wait(timeout=2.0)
+
+    # This is the exact Stop fence after the final transcription slot: it closes
+    # live admission before the in-flight route can settle.
+    session._handoff_intel_at_stop(session._state)
+    release.set()
+    worker.join(timeout=2.0)
+
+    assert not worker.is_alive()
+    assert child_cancellations
+    assert published == []
+    assert session._state.intel is None
+
+    # The same fence gates transcript projection: a child result that reaches the
+    # segment publisher after Stop is not appended or sent to the UI callback.
+    transcript_callbacks: list[str] = []
+    session.on_segment = lambda segment: transcript_callbacks.append(segment.text)
+    late_segments: list[TranscriptSegment] = []
+    session._publish_transcript_segment(
+        TranscriptSegment(text="late routed transcript", speaker="Me", start_time=1.0, end_time=2.0),
+        late_segments,
+    )
+    assert transcript_callbacks == []
+    assert late_segments == []
+    assert "late routed transcript" not in [segment.text for segment in session._state.segments]
+
+
+@pytest.mark.parametrize("bundle_backed", [True, False])
+def test_stop_aftercare_upserts_one_legacy_deferred_row_for_bundle_and_record_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, bundle_backed: bool
+) -> None:
+    """Aftercare remains the legacy Meeting-keyed queue authority in Phase B."""
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.meeting_session import MeetingSession
+    from tests.unit.test_meeting_session_admission import FakeJournal, FakeRecorder, _bundle_session
+
+    if bundle_backed:
+        db, _broker, session = _bundle_session(tmp_path, monkeypatch)
+    else:
+        db = Database(tmp_path / "record-only-stop.db")
+        _configure(db)
+        monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+        monkeypatch.setattr("holdspeak.meeting_session.session.MeetingRecorder", FakeRecorder)
+        monkeypatch.setattr("holdspeak.meeting_capture_journal.MeetingCaptureJournal", FakeJournal)
+
+        class _Transcriber:
+            model_name = "meeting-profile"
+
+            def transcribe(self, *_args: Any, **_kwargs: Any) -> str:
+                return ""
+
+        session = MeetingSession(_Transcriber(), principal=OWNER, intel_enabled=True)  # type: ignore[arg-type]
+
+    state = session.start()
+    state.segments.append(
+        TranscriptSegment(text="Deferred aftercare", speaker="Me", start_time=0.0, end_time=1.0)
+    )
+    state.bookmarks.append(Bookmark(timestamp=0.5, label="Bookmark"))
+    session.stop()
+    # A Stop retry/recovery uses the existing Meeting-keyed ON CONFLICT upsert.
+    session._handoff_intel_at_stop(state)
+
+    with db._connection() as conn:
+        rows = conn.execute(
+            "SELECT status,displaced_work FROM intel_jobs WHERE meeting_id=?", (state.id,)
+        ).fetchall()
+    assert [(row["status"], row["displaced_work"]) for row in rows] == [(
+        "queued", '["final-analysis","bookmark-labels","auto-title"]'
+    )]
+
+
+def test_stop_aftercare_predicate_does_not_enqueue_empty_meeting(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No transcript, bookmarks, or title need means no legacy deferred row."""
+    from tests.unit.test_meeting_session_admission import _bundle_session
+
+    db, _broker, session = _bundle_session(tmp_path, monkeypatch)
+    state = session.start()
+    state.title = "Already titled"
+    session.stop()
+
+    with db._connection() as conn:
+        assert conn.execute(
+            "SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)
+        ).fetchone()[0] == 0

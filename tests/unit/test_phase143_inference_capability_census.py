@@ -102,10 +102,10 @@ holdspeak/meeting_import.py:313|_transcribe_import_windows|transcribe|call
 holdspeak/meeting_session/deferred_admission.py:229|DeferredIntelJob.analyze.call|analyze|call
 holdspeak/meeting_session/deferred_admission.py:268|DeferredIntelJob.bookmark_label.call|generate_bookmark_label_with_context|call
 holdspeak/meeting_session/deferred_admission.py:308|DeferredIntelJob.auto_title.call|generate_title|call
-holdspeak/meeting_session/intel_admission.py:684|IntelAdmissionMixin._admitted_live_window.call|analyze|call
-holdspeak/meeting_session/intel_admission.py:729|IntelAdmissionMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/intel_admission.py:759|IntelAdmissionMixin._admitted_auto_title.call|generate_title|call
-holdspeak/meeting_session/transcribe_loop.py:62|TranscribeLoopMixin._transcribe_audio|transcribe|call
+holdspeak/meeting_session/intel_admission.py:703|IntelAdmissionMixin._admitted_live_window.call|analyze|call
+holdspeak/meeting_session/intel_admission.py:748|IntelAdmissionMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/intel_admission.py:778|IntelAdmissionMixin._admitted_auto_title.call|generate_title|call
+holdspeak/meeting_session/transcribe_loop.py:78|TranscribeLoopMixin._transcribe_audio|transcribe|call
 holdspeak/plugins/dictation/assembly.py:327|_try_build_runtime|MeshRelayRuntime|call
 holdspeak/plugins/dictation/builtin/intent_router.py:170|IntentRouter.run|classify|call
 holdspeak/plugins/dictation/builtin/project_rewriter.py:203|ProjectRewriter.run|rewrite|ref
@@ -444,7 +444,7 @@ holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
 holdspeak/main.py:765|_run_meeting_mode|transcribe|call
 holdspeak/main.py:774|_run_meeting_mode|transcribe|call
 holdspeak/meeting_import.py:313|_transcribe_import_windows|transcribe|call
-holdspeak/meeting_session/transcribe_loop.py:62|TranscribeLoopMixin._transcribe_audio|transcribe|call
+holdspeak/meeting_session/transcribe_loop.py:78|TranscribeLoopMixin._transcribe_audio|transcribe|call
 holdspeak/runtime/dictation_capture.py:103|DictationCaptureMixin._transcribe_and_type|transcribe|call
 holdspeak/runtime/dictation_capture.py:390|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
 holdspeak/runtime/dictation_capture.py:401|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
@@ -485,14 +485,14 @@ holdspeak/meeting_session/deferred_admission.py:229|DeferredIntelJob.analyze.cal
 """),
     _group(ProposedRoute("meeting.bookmark_label", "meeting_session", "InferenceRunner admitted child"), """
 holdspeak/meeting_session/deferred_admission.py:268|DeferredIntelJob.bookmark_label.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/intel_admission.py:729|IntelAdmissionMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/intel_admission.py:748|IntelAdmissionMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
 """),
     _group(ProposedRoute("meeting.auto_title", "meeting_session", "InferenceRunner admitted child"), """
 holdspeak/meeting_session/deferred_admission.py:308|DeferredIntelJob.auto_title.call|generate_title|call
-holdspeak/meeting_session/intel_admission.py:759|IntelAdmissionMixin._admitted_auto_title.call|generate_title|call
+holdspeak/meeting_session/intel_admission.py:778|IntelAdmissionMixin._admitted_auto_title.call|generate_title|call
 """),
     _group(ProposedRoute("meeting.live_analysis", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/meeting_session/intel_admission.py:684|IntelAdmissionMixin._admitted_live_window.call|analyze|call
+holdspeak/meeting_session/intel_admission.py:703|IntelAdmissionMixin._admitted_live_window.call|analyze|call
 """),
     _group(ProposedRoute("project_doc.suggest_update", "project_doc_suggestions", "InferenceRunner admitted child"), """
 holdspeak/project_doc_suggestions.py:72|suggest_project_doc_update|rewrite|ref

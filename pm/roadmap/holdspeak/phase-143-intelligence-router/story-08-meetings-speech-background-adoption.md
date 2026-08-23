@@ -19,8 +19,9 @@ controller-owned children on the atomic five-member session bundle
 complete: routed transcription with day-one same-Meeting bootstrap proven
 (auto + explicit backends, fresh DB, migration -> preload -> readiness ->
 routed transcript), timeout = unknown, MLX warmup as one bounded preload
-child. Remaining for this story: slice 3 (live Stop = bundle
-fence + preserved legacy deferred aftercare), then Phases C–F of the
+child. Slice 3 is complete (Stop = admission close + final pass + bundle
+fence/cancel + late-output discard + unconditional legacy aftercare) —
+**Phase B is done**. Remaining for this story: Phases C–F of the
 handover sequence (deferred queue + plugins, speech lifecycle, background
 adopters, migration cleanup). Design canon for the Meeting/speech legs:
 `assets/story-08-phase-b-cutover-design.md` (counsel amendments and the

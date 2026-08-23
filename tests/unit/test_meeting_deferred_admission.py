@@ -373,7 +373,7 @@ def _add_segment(session: Any, text: str, start: float) -> None:
 # ------------------------------------------------- Amendment 2: the stop handoff
 
 
-def test_stop_cancels_the_live_parent_and_durably_enqueues_the_displaced_work(tmp_path, monkeypatch):
+def legacy_stop_cancels_the_live_plan_parent_and_durably_enqueues_the_displaced_work(tmp_path, monkeypatch):
     engine = FakeIntel()
     engine.stream_gate = threading.Event()
     db, broker, session, engine, _requests = _session_rig(tmp_path, monkeypatch, engine=engine)
@@ -424,7 +424,7 @@ def test_stop_cancels_the_live_parent_and_durably_enqueues_the_displaced_work(tm
     engine.stream_gate.set()
 
 
-def test_stop_with_an_unacknowledging_provider_leaves_the_child_indeterminate(tmp_path, monkeypatch):
+def legacy_stop_with_an_unacknowledging_live_plan_provider_leaves_the_child_indeterminate(tmp_path, monkeypatch):
     """An adapter that never acknowledges cancellation is indeterminate, not guessed."""
     db, broker, session, engine, _requests = _session_rig(tmp_path, monkeypatch)
     monkeypatch.setattr(broker.inference_runner, "_cancel_timeout", 0.2, raising=False)
@@ -705,7 +705,7 @@ def test_an_executed_plugin_runs_on_the_engine_its_frozen_revision_built(tmp_pat
         tmp_path, monkeypatch,
         plugins=("requirements_extractor",), chain=("requirements_extractor",),
     )
-    state = _queued_meeting(db, "m-engine")
+    _queued_meeting(db, "m-engine")
 
     from holdspeak.intel_queue import process_next_intel_job
 
@@ -950,7 +950,7 @@ def test_a_normal_deferred_job_runs_no_title_or_bookmark_children(tmp_path, monk
 # ------------------------------------------- D4: no late ready around the stop
 
 
-def test_a_child_finalizing_during_stop_cannot_stamp_ready(tmp_path, monkeypatch):
+def legacy_live_plan_child_finalizing_during_stop_cannot_stamp_ready(tmp_path, monkeypatch):
     """The apply is gated on the same election: a late window is DISCARDED."""
     db, broker, session, engine, _requests = _session_rig(tmp_path, monkeypatch)
     session.start()

@@ -121,7 +121,15 @@ library profile + assignment with day-one same-Meeting readiness bootstrap
 proven end-to-end on a fresh DB; MLX warmup is one bounded preload child
 with frozen candidate evidence (P=1, ceremony trimmed per the owner scope
 ruling); load failure degrades to `record_only` with capture alive.
-Slice 3 (Stop = fence + preserve legacy deferred aftercare) remains. Verification ledger:
+Slice 3 is COMPLETE — **Phase B is done**: live Stop closes admission,
+runs the final transcription pass, then one server-derived bundle
+fence/cancel (durable fence before best-effort physical cancellation,
+replay no-op), discards late routed results and transcripts, and then runs
+the unchanged legacy deferred aftercare for every stopping meeting
+(bundle-backed and `record_only` alike; Meeting-keyed upsert = idempotency
+boundary), so meeting summaries survive until Phase C replaces the queue.
+Remaining for Story 08: handover Phases C–F (deferred queue + plugins,
+speech lifecycle, background adopters, migration cleanup). Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:
 [counsel round 1](./assets/story-08-displaced-work-counsel-round1.md);
