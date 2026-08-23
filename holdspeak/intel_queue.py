@@ -174,6 +174,7 @@ def _run_bound_displaced_work(db, meeting, bound, job, summary: str) -> str:
                 material={
                     "context_sha256": _hash_private(local_context),
                     "summary_sha256": _hash_private(summary),
+                    "bookmark_id": bookmark_id,
                     "bookmark_timestamp": timestamp,
                     "template_revision": "1",
                     "context_material": local_context,
@@ -183,6 +184,7 @@ def _run_bound_displaced_work(db, meeting, bound, job, summary: str) -> str:
                 projection_kind="meeting-bound-deferred-bookmark-label",
                 projection=lambda result: {
                     **_bound_projection_base(job, meeting),
+                    "bookmark_id": bookmark_id,
                     "bookmark_timestamp": timestamp,
                     "label": str(result["label"]),
                 },
@@ -363,6 +365,11 @@ def process_next_intel_job(
     # SERVICE shell were committed with its claim, and execution must load those
     # stored IDs rather than Config, a resolver, or a fresh plan.
     db = get_database()
+    # Close receipt and successor promotion are separate durable writes. Recover
+    # the receipt→promotion crash interval before looking for a close still owed;
+    # the scan is idempotent and lets the next drain iteration claim the survivor.
+    if db.intel.promote_receipted_bound_successors():
+        return True
     # A close may fail after the queue row became terminal.  Resume only the
     # old parent-close/posture transition first; its reserved successor cannot
     # bind until this durable receipt exists.

@@ -502,6 +502,55 @@ def test_bound_claim_replaces_legacy_stop_handoff_with_frozen_descriptor(tmp_pat
     ]
 
 
+def test_stop_and_recovery_replays_preserve_v3_handoff_leaf(tmp_path, monkeypatch):
+    """Legacy Stop/recovery descriptors cannot reopen their V3 descendant."""
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+
+    db, broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(
+        db, "m-v3-handoff-replay", bookmarks=(0.5,),
+        displaced_work=("bookmark-labels",), legacy_claimed=False,
+        legacy_stop_handoff=True,
+    )
+    claimed = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+    assert claimed is not None and claimed.parent_operation_id
+
+    def replay(reason: str) -> str:
+        return db.intel.enqueue_intel_job(
+            state.id,
+            transcript_hash=state.transcript_hash(),
+            reason=reason,
+            displaced_work=("bookmark-labels",),
+            legacy_displaced_work=True,
+        )
+
+    # The separate Stop and recovery entry paths both replay the historical list
+    # while the converted V3 job is claimed; neither may create another leaf.
+    assert replay("repeated Stop") == claimed.job_id
+    assert replay("repeated recovery") == claimed.job_id
+    with db._connection() as conn:
+        assert conn.execute(
+            "SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)
+        ).fetchone()[0] == 2
+
+    assert process_next_intel_job() is True
+    ready = db.meetings.get_meeting(state.id)
+    assert ready is not None and ready.intel_status == "ready"
+    # Replaying Stop/recovery after V3 completion preserves the terminal leaf,
+    # ready glass, and its single physical analysis.
+    assert replay("Stop after ready") == claimed.job_id
+    assert replay("recovery after ready") == claimed.job_id
+    with db._connection() as conn:
+        rows = conn.execute(
+            "SELECT status FROM intel_jobs WHERE meeting_id=? ORDER BY requested_at,job_id",
+            (state.id,),
+        ).fetchall()
+    assert [row["status"] for row in rows] == ["superseded", "succeeded"]
+    assert db.meetings.get_meeting(state.id).intel_status == "ready"
+    assert len(engine.analyzed) == 1
+
+
 def test_bound_claim_commit_recovers_exact_owner_without_second_egress(tmp_path, monkeypatch):
     """Startup recovery adopts the committed C1b IDs instead of re-resolving."""
     db, broker, _engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
@@ -644,6 +693,74 @@ def test_bound_bookmark_operations_are_frozen_and_budgeted_per_instance(tmp_path
     assert "parent_child_budget_exhausted" not in json.dumps(_rows(db, "kernel_receipts"))
 
 
+def test_bound_bookmark_labels_preserve_duplicate_timestamp_identities(tmp_path, monkeypatch):
+    """Two frozen rows at one timestamp receive their own earned labels."""
+    db, _broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(
+        db, "m-bound-duplicate-bookmarks", bookmarks=(0.5, 0.5),
+        displaced_work=("bookmark-labels",), legacy_claimed=False,
+    )
+    from holdspeak.intel_queue import process_next_intel_job
+
+    labels = iter(("First decision", "Second decision"))
+    monkeypatch.setattr(
+        engine, "generate_bookmark_label_with_context",
+        lambda **_kwargs: next(labels),
+    )
+    assert process_next_intel_job() is True
+    with db._connection() as conn:
+        rows = conn.execute(
+            "SELECT id,label FROM bookmarks WHERE meeting_id=? ORDER BY id", (state.id,)
+        ).fetchall()
+    assert [row["label"] for row in rows] == ["First decision", "Second decision"]
+
+
+def test_bound_bookmark_publication_skips_deleted_frozen_identity(tmp_path, monkeypatch):
+    """A replacement at the same timestamp cannot inherit deleted work output."""
+    db, broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(
+        db, "m-bound-replaced-bookmark", bookmarks=(0.5,),
+        displaced_work=("bookmark-labels",), legacy_claimed=False,
+    )
+    from holdspeak.intel_queue import process_next_intel_job
+
+    with db._connection() as conn:
+        original_id = conn.execute(
+            "SELECT id FROM bookmarks WHERE meeting_id=?", (state.id,)
+        ).fetchone()[0]
+    finalize = broker.projection_stager.finalize
+    finalizations = 0
+
+    def delete_then_finalize(invocation_id):  # type: ignore[no-untyped-def]
+        nonlocal finalizations
+        finalizations += 1
+        # Analysis finalizes first; delete the concrete frozen target immediately
+        # before the bookmark child's staged publication commits.
+        if finalizations == 2:
+            with db._connection() as conn:
+                conn.execute("DELETE FROM bookmarks WHERE id=?", (original_id,))
+                conn.execute(
+                    "INSERT INTO bookmarks (meeting_id,timestamp,label) VALUES (?,?,?)",
+                    (state.id, 0.5, "Replacement"),
+                )
+        return finalize(invocation_id)
+
+    monkeypatch.setattr(broker.projection_stager, "finalize", delete_then_finalize)
+    assert process_next_intel_job() is True
+    assert len(engine.labels) == 1
+    with db._connection() as conn:
+        replacement = conn.execute(
+            "SELECT id,label FROM bookmarks WHERE meeting_id=?", (state.id,)
+        ).fetchone()
+        published = conn.execute(
+            """SELECT final_result_json FROM kernel_projection_stages
+               WHERE kind='meeting-bound-deferred-bookmark-label'"""
+        ).fetchone()
+    assert replacement is not None and replacement["id"] != original_id
+    assert replacement["label"] == "Replacement"
+    assert published is not None and json.loads(published["final_result_json"])["publication"] == "skipped"
+
+
 def test_claim_refusal_terminalizes_and_unbounded_drain_continues(tmp_path, monkeypatch):
     """One typed refusal cannot spin or starve the next claimable Meeting."""
     db, broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
@@ -721,6 +838,53 @@ def test_reserved_successor_never_claims_before_old_parent_receipt(tmp_path, mon
         assert conn.execute("SELECT status FROM intel_jobs WHERE job_id=?", (successor["job_id"],)).fetchone()[0] == "queued"
     claim = other.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
     assert claim is not None and claim.parent_operation_id != old.parent_operation_id
+
+
+def test_receipted_successor_is_promoted_once_after_process_loss(tmp_path, monkeypatch):
+    """A crash after close but before promotion cannot strand or double-run retry work."""
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.meeting_session.deferred_admission import BoundDeferredIntelJob
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+
+    db, broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(db, "m-receipted-successor", legacy_claimed=False)
+    old = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+    assert old is not None and old.parent_operation_id
+    db.intel.retry_intel_job(
+        state.id, "transient", retry_at=datetime.now(), attempt=1, max_attempts=4,
+    )
+    with db._connection() as conn:
+        successor = conn.execute(
+            "SELECT job_id,status FROM intel_jobs WHERE origin_job_id=?", (old.job_id,)
+        ).fetchone()
+    assert successor is not None and successor["status"] == "reserved"
+
+    # Simulate process loss exactly after close writes its durable receipt.
+    assert BoundDeferredIntelJob.reconstruct(db, old, broker=broker).close("failed")
+    with db._connection() as conn:
+        assert conn.execute(
+            "SELECT 1 FROM kernel_receipts WHERE operation_id=?", (old.parent_operation_id,)
+        ).fetchone() is not None
+        assert conn.execute(
+            "SELECT status FROM intel_jobs WHERE job_id=?", (successor["job_id"],)
+        ).fetchone()[0] == "reserved"
+
+    # Fresh queue recovery promotes exactly once, then the next iteration claims
+    # and executes exactly one successor parent/analysis.
+    assert process_next_intel_job() is True
+    assert db.intel.promote_receipted_bound_successors() == 0
+    with db._connection() as conn:
+        assert conn.execute(
+            "SELECT status FROM intel_jobs WHERE job_id=?", (successor["job_id"],)
+        ).fetchone()[0] == "queued"
+        assert conn.execute(
+            "SELECT COUNT(*) FROM intel_job_attempts WHERE job_id=? AND event_kind='successor_promoted'",
+            (successor["job_id"],),
+        ).fetchone()[0] == 1
+    assert process_next_intel_job() is True
+    assert len(_parents(db, PARENT_KIND)) == 2
+    assert len(engine.analyzed) == 1
+    assert process_next_intel_job() is False
 
 
 def test_claim_admits_one_job_parent_with_base_and_plugin_children(tmp_path, monkeypatch):

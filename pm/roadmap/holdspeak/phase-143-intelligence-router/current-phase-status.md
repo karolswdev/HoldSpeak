@@ -198,9 +198,17 @@ descriptor only at bound-claim time. Verified sweep after the round:
 **6398 passed / 70 failed / zero branch-new** (all inherited,
 reproducing on main). Counsel record with orchestrator disposition:
 [C1 checkpoint round 1](./assets/story-08-c1-checkpoint-counsel-round1.md).
-Next: C1 checkpoint round 2 (Sol re-verifies its own findings), then
-C2 (plugins) and C3 (the Stop-handoff provider — the ratified
-primitive's first real adopter).
+Checkpoint round 2 (Sol, at `88d9e52c`) verified all five round-1
+remediations PASS and found three defects in the fix seams — a
+receipt→promotion crash gap stranding reserved successors, legacy
+replay after V3 completion superseding finished work, and bookmark
+publication dropping the frozen bookmark id — all three repaired with
+the counsel's named proofs plus a same-class sweep across every
+receipt→transition boundary and frozen-identity publication site
+(dispositions in the round-2 record). Sweep after: **6401 passed /
+70 failed / zero branch-new**. Next: C1 checkpoint round 3
+(verification pass), then C2 (plugins) and C3 (the Stop-handoff
+provider — the ratified primitive's first real adopter).
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

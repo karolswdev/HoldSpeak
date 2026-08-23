@@ -279,6 +279,19 @@ class IntelRepository(BaseRepository):
             """,
             (meeting_id,),
         ).fetchone()
+        # Stop/recovery persist the historic plain list as their idempotency
+        # boundary.  C1 may later replace that leaf with a V3 descriptor to freeze
+        # bookmark IDs, but both encodings name the same Meeting handoff.  Never
+        # let replay of the plain form supersede an unchanged V3 leaf (especially
+        # a completed one) and reopen an already-ready Meeting.
+        if (
+            legacy_displaced_work
+            and current is not None
+            and str(current["transcript_hash"]) == transcript_hash
+            and _work_descriptor(str(current["displaced_work"] or "[]"))[0]
+            == _work_descriptor(work)[0]
+        ):
+            return str(current["job_id"])
         if current is not None and str(current["status"]) in {"running", "claimed"}:
             return str(current["job_id"])
         if (current is not None and str(current["status"]) in {"succeeded", "skipped"}
@@ -953,6 +966,49 @@ class IntelRepository(BaseRepository):
                 )
             conn.commit()
             return len(rows)
+
+    def promote_receipted_bound_successors(self) -> int:
+        """Recover successors stranded after their old parent receipt committed.
+
+        Parent close and queue promotion use separate durable stores.  A process
+        can die in the small interval between them, so ordinary queue recovery
+        scans every reserved direct successor whose predecessor has already
+        earned its receipt.  The one writer transaction makes this idempotent:
+        only the winning reserved→queued transition receives an event.
+        """
+        now = datetime.now().isoformat()
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            rows = conn.execute(
+                """SELECT successor.job_id,successor.meeting_id,successor.attempts
+                   FROM intel_jobs successor
+                   JOIN intel_jobs predecessor
+                     ON predecessor.job_id=successor.origin_job_id
+                   JOIN kernel_receipts receipt
+                     ON receipt.operation_id=predecessor.parent_operation_id
+                   WHERE successor.status='reserved'
+                     AND successor.lifecycle_posture='awaiting_parent_terminal'
+                     AND predecessor.parent_operation_id IS NOT NULL"""
+            ).fetchall()
+            promoted = 0
+            for row in rows:
+                result = conn.execute(
+                    """UPDATE intel_jobs SET status='queued',lifecycle_posture='queued',
+                       updated_at=? WHERE job_id=? AND status='reserved'
+                       AND lifecycle_posture='awaiting_parent_terminal'""",
+                    (now, str(row["job_id"])),
+                )
+                if result.rowcount != 1:
+                    continue
+                promoted += 1
+                conn.execute(
+                    """INSERT INTO intel_job_attempts (
+                        meeting_id,job_id,event_kind,attempt,outcome,error,retry_at,created_at
+                    ) VALUES (?,?,'successor_promoted',?,'queued',NULL,NULL,?)""",
+                    (str(row["meeting_id"]), str(row["job_id"]), int(row["attempts"]), now),
+                )
+            conn.commit()
+            return promoted
 
     def requeue_claimed_intel_job(
         self,

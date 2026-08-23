@@ -168,21 +168,48 @@ def _write_bookmark_label(conn: Any, projection: dict[str, Any]) -> dict[str, An
     """Write one earned bookmark label onto its bookmark row (HS-131-08 D3)."""
     meeting_id = str(projection.get("meeting_id") or "").strip()
     label = str(projection.get("label") or "").strip()
+    bookmark_id = projection.get("bookmark_id")
     if not meeting_id or projection.get("bookmark_timestamp") is None:
         raise KernelRefused("meeting_bookmark_projection_incomplete")
+    if bookmark_id is not None:
+        try:
+            bookmark_id = int(bookmark_id)
+        except (TypeError, ValueError) as exc:
+            raise KernelRefused("meeting_bookmark_projection_incomplete") from exc
     if not label:
         # No better label was produced: keep the owner's existing one untouched.
         return {**projection, "labels_written": 0}
     timestamp = float(projection["bookmark_timestamp"])
-    cursor = conn.execute(
-        "UPDATE bookmarks SET label=? WHERE meeting_id=? AND timestamp=?",
-        (label, meeting_id, timestamp),
-    )
-    conn.execute(
-        "UPDATE meetings SET sync_modified_at=?, updated_at=datetime('now') WHERE id=?",
-        (time.strftime("%Y-%m-%dT%H:%M:%S"), meeting_id),
-    )
-    return {**projection, "labels_written": int(cursor.rowcount or 0)}
+    if bookmark_id is None:
+        # Pre-C1 claimed jobs have only the historical timestamp projection.
+        # They retain their compatibility materializer; every C1 frozen
+        # descriptor carries an ID and therefore takes the strict path below.
+        cursor = conn.execute(
+            "UPDATE bookmarks SET label=? WHERE meeting_id=? AND timestamp=?",
+            (label, meeting_id, timestamp),
+        )
+    else:
+        cursor = conn.execute(
+            """UPDATE bookmarks SET label=?
+               WHERE id=? AND meeting_id=? AND timestamp=?""",
+            (label, bookmark_id, meeting_id, timestamp),
+        )
+    written = int(cursor.rowcount or 0)
+    if written:
+        conn.execute(
+            "UPDATE meetings SET sync_modified_at=?, updated_at=datetime('now') WHERE id=?",
+            (time.strftime("%Y-%m-%dT%H:%M:%S"), meeting_id),
+        )
+        return {**projection, "labels_written": written}
+    # The frozen identity no longer resolves (or its timestamp changed).  This
+    # is a truthful skipped publication, never permission to label a replacement
+    # bookmark sharing the same timestamp.
+    return {
+        **projection,
+        "labels_written": 0,
+        "publication": "skipped",
+        "bookmark_skip_reason": "frozen_bookmark_missing_or_changed",
+    }
 
 
 def _bound_transcript_fence(conn: Any, projection: dict[str, Any]) -> dict[str, Any] | None:

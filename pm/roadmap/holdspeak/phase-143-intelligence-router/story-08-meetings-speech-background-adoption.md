@@ -48,8 +48,12 @@ refusal terminalization with bounded infra backoff, per-instance
 bookmark budgets, receipt-gated successor promotion, C1 census
 registration), with the fix round's own Stop-aftercare fallout caught
 by the sweep and repaired to the Phase B idempotency law. Post-round
-sweep: 6398 passed / 70 failed / zero branch-new. Round 2 of the
-checkpoint is next.
+sweep: 6398 passed / 70 failed / zero branch-new. Checkpoint round 2
+verified all five PASS and found three seam defects (successor-strand
+crash gap, legacy-replay supersession of finished V3 work, bookmark
+identity dropped at publication) — repaired with counsel-named proofs
+and a same-class sweep; post-round sweep 6401 passed / 70 failed /
+zero branch-new. Round 3 (verification pass) is next.
 
 ## Problem
 

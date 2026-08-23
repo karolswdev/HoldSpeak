@@ -215,3 +215,61 @@ finding 6 requires no action. Finding 5 reverses the orchestrator's earlier
 CONTENT under an unchanged failure name; the three C1 sites register in this
 round, and the three speech-provider sites keep their Phase D home. Checkpoint
 round 2 follows the fix round and its full-suite sweep.
+
+---
+
+# Round 2 (Sol, same counsel session, reviewed at `88d9e52c`) — DO-NOT-RATIFY
+
+Round-one disposition: findings 1 (lineage readers), 2 (refusal progress),
+and 5 (census registration) PASS under the counsel's own probes; 3 (budget)
+and 4 (live successor race) PASS with the two new findings below. The
+legacy→V3 conversion seam is sound for conversion/restart, transcript drift,
+immediate double Stop, and record_only; NOT sound for replay after
+conversion/completion. Three remaining defects:
+
+1. **BLOCKER — receipt→promotion crash gap.** Process loss after
+   `close()` durably writes the old parent receipt but before
+   `promote_successors_after_parent_terminal()` strands the
+   reserved/awaiting_parent_terminal successor forever: pending-close
+   recovery excludes receipted parents, ordinary claims scan only
+   `queued`. Remediation: an idempotent recovery scan promoting every
+   reserved successor whose predecessor already has a durable terminal
+   receipt (before or composed into claim selection), proven with process
+   loss exactly on that boundary (one promotion, one claim, zero
+   duplicate parent/egress). Evidence: intel_queue.py:339-344, 366-382;
+   deferred_bound.py:203-219; db/intel.py:341-353, 493-507.
+2. **BLOCKER — replay after V3 supersedes finished work.** Repeated
+   Stop/`recover_capture` after V3 conversion/completion resubmits the
+   legacy plain-list descriptor, which hashes differently from the V3
+   object → the successful leaf is superseded, the ready Meeting reopens,
+   duplicate egress permitted. Remediation: one stable Meeting-handoff
+   identity across legacy and V3 descendants (or legacy enqueue
+   recognizing a current V3 descendant with same Meeting/transcript/
+   slugs as the same handoff); replay returns the existing descendant.
+   Proofs for bundle-backed AND record_only: double Stop after conversion
+   pre-admission; repeated recover_capture after V3 claim; repeated
+   Stop/recovery after V3 success — one lineage, ready preserved, zero
+   duplicate egress. Evidence: db/meetings.py:692-728,763-790;
+   intel_admission.py:446-455,495-520; db/intel.py:90-114,267-315.
+3. **HIGH — frozen bookmark identity dropped at publication.**
+   Publication updates by meeting_id+timestamp (timestamps not unique);
+   duplicate-timestamp bookmarks collide and delete-and-replace retargets
+   the replacement while the job reports ready. Remediation: carry
+   `bookmark_id` through material and projection; publish
+   `WHERE id=? AND meeting_id=? AND timestamp=?`; missing/changed row =
+   truthful stale/skipped outcome. Proofs: same-timestamp independence;
+   delete-and-replace cannot inherit the deleted operation's result.
+   Evidence: intel_queue.py:167-188; kernel/meeting_plugin_projection.py:167-185;
+   db/schema.py:87-93.
+
+Tired-Tuesday: still no — a crash can leave a retry visibly queued but
+permanently unclaimable; repeated recovery can reopen a completed summary;
+duplicate-timestamp bookmarks can be mislabeled under a ready status.
+
+## Orchestrator disposition (round 2)
+
+All three findings accepted without dissent. One fix round briefed with the
+counsel's remediations as acceptance criteria plus a same-class sweep duty
+(other receipt→transition crash boundaries; other publication sites dropping
+frozen identity fields) so the class closes, not just the instances. Round 3
+follows the fix round and its full sweep.
