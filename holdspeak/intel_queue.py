@@ -399,7 +399,10 @@ def _process_bound_intel_job(
             return True
         if not lease.held():
             return False
-        detail = _run_bound_displaced_work(db, meeting, bound, job, str(projection.get("summary") or ""))
+        detail = _run_bound_displaced_work(
+            db, meeting, bound, job, str(projection.get("summary") or ""),
+            executor_held=lease.held,
+        )
         if detail:
             if detail.startswith("transcript superseded"):
                 outcome = "cancelled"

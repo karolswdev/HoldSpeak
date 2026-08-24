@@ -205,7 +205,10 @@ class BoundDeferredIntelJob:
         # durable child intent first; it must not reserve a second provider call
         # while the old dispatch has unknown settlement.
         if int(executor_lease["epoch"]) > 1:
-            adoption.recover_route_executions()
+            adoption.recover_route_executions(
+                execution_id=str(admitted["execution"]["id"]),
+                parent_operation_id=self.parent_operation_id,
+            )
         routed = adoption.execute(
             self._principal,
             execution_id=str(admitted["execution"]["id"]),

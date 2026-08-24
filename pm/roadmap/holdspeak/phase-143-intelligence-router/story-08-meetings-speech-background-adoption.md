@@ -65,8 +65,13 @@ remaining gap — token/epoch not enforced at effect boundaries — closed
 by fencing every durable effect (publication, completion, settlement,
 parent close, promotion) on the exact bearer, with fail-closed
 heartbeat and reconcile-not-reexecute takeover; sweep 6408 passed /
-69 failed / zero branch-new. Round 5 (fence verification, yolo bar
-stated in the brief) is next.
+69 failed / zero branch-new. Round 5 verified the fence and caught the
+last normal-action bug (global takeover recovery terminalizing
+unrelated healthy work — now scoped to the adopted execution); the
+checkpoint then CLOSED at round 5 by owner authority with all ten
+findings fixed and residuals ledgered as sitting notes; closing sweep
+6409 passed / 69 failed / zero branch-new. C2 (installed plugins) is
+next.
 
 ## Problem
 

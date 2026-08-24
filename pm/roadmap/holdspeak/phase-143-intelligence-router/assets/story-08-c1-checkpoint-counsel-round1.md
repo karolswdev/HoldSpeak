@@ -401,3 +401,81 @@ round's findings confined to the previous round's new code. Round 5 is
 the counsel's verification of this completion; per ORCHESTRATION §2b the
 round count and the remaining bar are surfaced to the owner alongside
 this record, with the overrule explicitly offered.
+
+---
+
+# Round 5 (Sol, same counsel session, reviewed at `32b730e1`) — DO-NOT-RATIFY
+
+The round-4 fence VERIFIED: both round-4 probes replayed PASS — stale
+publication fully fenced (durable DISCARDED with executor_lease_lost,
+zero snapshots, epoch-2 bearer authoritative) and takeover-during-
+dispatch produces no concurrent re-execution or stale effect (epoch 2
+truthfully elects indeterminate pre-receipt; the committed earned-
+receipt replay test proves the no-second-physical-call restage). One
+finding, which meets the owner's round-5 yolo blocker bar (normal
+product action, no exotica):
+
+1. **BLOCKER — live takeover recovery terminalizes unrelated healthy
+   work.** Recovering stale Meeting B via normal Process/CLI drain calls
+   an UNSCOPED `recover_route_executions()` that marks every receipt-
+   less dispatch_intent attempt indeterminate — including healthy
+   Meeting A's in-flight execution. Probe: A active → B processed → A's
+   route terminal/indeterminate; A's provider later succeeded and its
+   kernel child succeeded, yet A published zero snapshots, job failed,
+   successor + scheduled_retry minted. Remediation: scope the live
+   takeover's recovery to the adopted deterministic execution id
+   (admitted["execution"]["id"]), preferably also verifying the parent
+   is the current job's parent_operation_id; keep any global startup
+   scan separate, run only where no live executor can coexist.
+   Regression proof: A blocked healthy in dispatch + B recovered via
+   process_next_intel_job() → A stays active to its own receipt,
+   publishes exactly one snapshot, succeeds, no retry/successor; B
+   reconciles only B's execution. Evidence: deferred_bound.py:207-208;
+   inference_adoption_service.py:1310-1335; intel_queue.py:518-531.
+
+Amendment 2 FAIL solely on this cross-job scope; amendments 1/3 PASS;
+4–6 and plugins stay deferred. Census correctly registered. Physical-
+cancellation bound adequate per-job; system-wide claim restored by the
+scoping fix. Tired-Tuesday: no — one Process click for a stale meeting
+can cost a different healthy summary a successful result.
+
+**Sitting-list note (not a finding, per the yolo bar):** the production
+caller of `_run_bound_displaced_work()` omits `executor_held=lease.held`
+(intel_queue.py:176-232, :402) — admission/publication stay bearer-
+fenced; passing it closes a narrow pre-dispatch wasted-compute window
+for title/bookmark children.
+
+## Orchestrator disposition (round 5)
+
+Finding accepted without dissent — a normal-action cross-job bug,
+exactly what the bar exists to catch; the remediation is a scoping
+change, briefed surgically with the counsel's regression proof. The
+sitting note's one-line `executor_held` pass-through rides the same
+round as a labeled note-closure (trivial, same file). Round 6 verifies.
+The owner's standing "keep going + always YOLO" ruling covers
+continuing the loop; the finding count across rounds is 5→3→2→1→1,
+every round's findings confined to newly written code, the fence itself
+now proven.
+
+---
+
+# Checkpoint CLOSED by owner authority (2026-08-24, at the round-5 fix)
+
+The owner ended the loop at round 5 ("stop spinning wheels on edge
+cases"), overruling further counsel rounds. The round-5 scoping fix and
+the sitting-note closure landed and were verified (A/B regression proof:
+healthy Meeting A survives Meeting B's stale recovery untouched; lease
+ownership matrix re-proven; sweep 6409 passed / 69 failed / zero
+branch-new). Disposition of the record:
+
+- All ten findings across rounds 1–5 are FIXED with committed proofs.
+- Sol's residual posture (it had not yet re-verified the round-5 fix)
+  is recorded here as a sitting note, not carried as open work; the
+  orchestrator verified the fix against Sol's own regression spec.
+- Standing correction adopted from the owner's overrule: crash-window /
+  sleep-resume / takeover-race scenarios are ledger notes by default
+  going forward, and checkpoint counsel loops hard-cap at one ruling
+  round plus at most one fix round, then RATIFY-WITH-NOTES.
+
+Slice C1 is CLOSED for Story 08 purposes. C2 (installed plugins) is
+unblocked.

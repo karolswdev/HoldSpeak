@@ -240,13 +240,24 @@ with no second model call), transcript supersession, completion/ready,
 retry/failure/refusal settlement, parent close, and live-owner
 successor promotion — with a fail-closed heartbeat and takeover that
 reconciles (never re-executes) a dispatched child lacking a terminal
-receipt. Sol's two round-4 probes are committed tests. Sweep after:
-**6408 passed / 69 failed / zero branch-new**. The owner reaffirmed the
-yolo bar mid-loop ("I will always be using it in YOLO mode"): round 5
-verifies the fence with the bar stated in the brief — new
-adversarial-only observations become recorded notes, not rounds. Next:
-round 5, then C2 (plugins) and C3 (the Stop-handoff provider — the
-ratified primitive's first real adopter).
+receipt. Sol's two round-4 probes are committed tests. Round 5 verified the
+fence whole (both round-4 probes replayed PASS) and found one last
+normal-action bug — the live takeover's reconciliation ran a GLOBAL
+recovery scan, so recovering one stale Meeting via Process/CLI could
+terminalize an unrelated healthy Meeting's in-flight run — fixed by
+scoping recovery to the adopted execution id with parent verification
+(the startup-only global scan untouched), proven with the counsel's A/B
+regression spec, plus the sitting-note one-liner (executor_held
+pass-through for displaced title/bookmark children). **The checkpoint
+is CLOSED at round 5 by owner authority** ("stop spinning wheels on
+edge cases"): all ten findings across five rounds are fixed with
+committed proofs; Sol's residual posture is a sitting note in the
+counsel record, and the owner's standing correction (crash-window /
+sleep-resume scenarios = ledger notes; counsel loops hard-cap at one
+ruling + one fix round, then ratify-with-notes) is recorded there and
+in the orchestrator's memory. Closing sweep: **6409 passed / 69 failed
+/ zero branch-new**. Next: C2 (installed plugins), then C3 (the
+Stop-handoff provider — the ratified primitive's first real adopter).
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

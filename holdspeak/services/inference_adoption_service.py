@@ -1307,13 +1307,31 @@ class RoutedInferenceCoordinator:
                 return {"outcome": receipt["outcome"], "result": None, "receipt": receipt}
             execution = self.controller._execution(None, execution_id)
 
-    def recover_route_executions(self) -> dict[str, int]:
-        """Settle durable child receipts before projection-stage recovery."""
+    def recover_route_executions(
+        self, *, execution_id: str | None = None, parent_operation_id: str | None = None,
+    ) -> dict[str, int]:
+        """Settle durable child receipts before projection-stage recovery.
+
+        Startup reconciliation deliberately scans globally. A live C1 lease
+        adopter instead supplies its one deterministic execution and parent, so
+        recovering a stale Meeting can never terminalize another live Meeting's
+        provider dispatch.
+        """
         if self._broker is None:
             return {"settled": 0, "indeterminate": 0}
+        if (execution_id is None) != (parent_operation_id is None):
+            raise ValueError("scoped route recovery requires execution and parent identity")
         with self._db._connection() as conn:
             rows = conn.execute(
-                "SELECT id,child_operation_id FROM inference_route_attempts WHERE state='dispatch_intent' ORDER BY reserved_at,id"
+                """SELECT attempt.id,attempt.child_operation_id
+                   FROM inference_route_attempts attempt
+                   JOIN inference_route_executions execution ON execution.id=attempt.execution_id
+                   JOIN kernel_operations child ON child.operation_id=attempt.child_operation_id
+                   WHERE attempt.state='dispatch_intent'
+                     AND (? IS NULL OR attempt.execution_id=?)
+                     AND (? IS NULL OR child.parent_operation_id=?)
+                   ORDER BY attempt.reserved_at,attempt.id""",
+                (execution_id, execution_id, parent_operation_id, parent_operation_id),
             ).fetchall()
         settled = indeterminate = 0
         for row in rows:
