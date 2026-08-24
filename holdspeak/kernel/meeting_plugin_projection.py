@@ -326,7 +326,13 @@ def materialize(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
         if fenced is not None and fenced.get("publication") == "lease_lost":
             raise ProjectionDiscarded("executor_lease_lost")
         return fenced if fenced is not None else _write_bookmark_label(conn, projection)
-    if stage.kind != "meeting-plugin-result":
+    if stage.kind == "meeting-bound-plugin-result":
+        fenced = _bound_transcript_fence(conn, projection)
+        if fenced is not None and fenced.get("publication") == "lease_lost":
+            raise ProjectionDiscarded("executor_lease_lost")
+        if fenced is not None:
+            return fenced
+    elif stage.kind != "meeting-plugin-result":
         return projection
     from ..plugins.synthesis import synthesize_meeting_artifacts
 
@@ -348,6 +354,7 @@ def register(stager: Any) -> None:
         "meeting-deferred-analysis",
         "meeting-bound-deferred-analysis",
         "meeting-plugin-result",
+        "meeting-bound-plugin-result",
         "meeting-deferred-bookmark-label",
         "meeting-bound-deferred-bookmark-label",
         "meeting-deferred-auto-title",

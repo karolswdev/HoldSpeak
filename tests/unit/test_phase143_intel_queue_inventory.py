@@ -337,6 +337,7 @@ def test_retry_terminalizes_old_owner_and_records_linked_fresh_job(tmp_path) -> 
 
 def test_real_service_binder_cross_binds_one_claim_parent_and_bundle(tmp_path) -> None:
     """The queue's real SERVICE binder commits its stored route set with claim."""
+    from holdspeak.inference_capabilities import process_inference_capability_registry
     from holdspeak.kernel.runtime import _configure
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
     from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
@@ -347,11 +348,22 @@ def test_real_service_binder_cross_binds_one_claim_parent_and_bundle(tmp_path) -
         "meeting.deferred_analysis",
         "meeting.bookmark_label",
         "meeting.auto_title",
+        *(
+            capability_id
+            for capability_id in process_inference_capability_registry().capability_ids
+            if capability_id.startswith("meeting.plugin.")
+        ),
     )
     _profile(
         db,
         "queue-service-model",
-        claims=("language", "structured_output", *(_result_claim(item) for item in capabilities)),
+        claims=(
+            "language",
+            "structured_output",
+            "meeting_plugin",
+            *(_result_claim(item) for item in capabilities),
+        ),
+        modalities=("language", "text"),
     )
     assignments = InferenceAssignmentService(db)
     for ordinal, capability in enumerate(capabilities, 1):
@@ -386,7 +398,13 @@ def test_real_service_binder_cross_binds_one_claim_parent_and_bundle(tmp_path) -
         ).fetchone()
     assert parent is not None and str(parent["kind"]) == "meeting.deferred-intel-job"
     assert bundle is not None and str(bundle["parent_operation_id"]) == claimed.parent_operation_id
-    assert len(members) == 1 and str(members[0]["capability_id"]) == "meeting.deferred_analysis"
+    assert {
+        str(member["capability_id"])
+        for member in members
+    } == {
+        "meeting.deferred_analysis",
+        *(str(member["capability_id"]) for member in claimed.frozen_plugin_members),
+    }
     assert event is not None and str(event["bundle_id"]) == claimed.bundle_id
     assert db.meetings.get_meeting(meeting.id).intel_status == "running"
 
@@ -456,10 +474,24 @@ def test_real_binder_policy_flip_between_prepare_and_claim_refuses_shell(tmp_pat
         ),
         retry_policies=(*current._retry_policies.values(), alternate),
     )
+    capabilities = (
+        "meeting.deferred_analysis",
+        *(
+            capability_id
+            for capability_id in current.capability_ids
+            if capability_id.startswith("meeting.plugin.")
+        ),
+    )
     _profile(
         db,
         "policy-race-model",
-        claims=("language", "structured_output", _result_claim("meeting.deferred_analysis")),
+        claims=(
+            "language",
+            "structured_output",
+            "meeting_plugin",
+            *(_result_claim(item) for item in capabilities),
+        ),
+        modalities=("language", "text"),
     )
     assignments = InferenceAssignmentService(db, registry=registry)
     body = {
@@ -470,6 +502,16 @@ def test_real_binder_policy_flip_between_prepare_and_claim_refuses_shell(tmp_pat
         OWNER,
         {"command_id": "policy-race-default", "expected_revision": 0, **body},
     )
+    for ordinal, plugin_capability in enumerate(capabilities[1:], 1):
+        assignments.set_assignment(
+            OWNER,
+            {
+                "command_id": f"policy-race-plugin-{ordinal}",
+                "expected_revision": 0,
+                "scope": {"kind": "capability", "capability_id": plugin_capability},
+                "entries": [{"profile_id": "policy-race-model", "profile_revision": 1}],
+            },
+        )
     broker = _configure(db)
     bundles = InferenceParentRouteBundleService(broker, broker.inference_adoption_service)
     bundles._plans = InferenceRoutePlanService(db, registry=registry)

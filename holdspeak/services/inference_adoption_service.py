@@ -53,6 +53,14 @@ ADOPTED_CAPABILITIES = (
     "meeting.auto_title",
     "speech.transcribe",
     "speech.preload",
+    # C2 plugin membership comes only from the composed registry.  The closed
+    # evidence provider must nevertheless list every installed exact capability
+    # before a frozen bundle child may stage its private material.
+    *tuple(
+        capability_id
+        for capability_id in process_inference_capability_registry().capability_ids
+        if capability_id.startswith("meeting.plugin.")
+    ),
 )
 EXECUTING_CAPABILITIES = tuple(
     value for value in ADOPTED_CAPABILITIES if value != "speech.punctuate"

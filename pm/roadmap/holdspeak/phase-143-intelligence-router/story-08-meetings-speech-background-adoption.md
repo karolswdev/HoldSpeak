@@ -71,7 +71,11 @@ unrelated healthy work — now scoped to the adopted execution); the
 checkpoint then CLOSED at round 5 by owner authority with all ten
 findings fixed and residuals ledgered as sitting notes; closing sweep
 6409 passed / 69 failed / zero branch-new. C2 (installed plugins) is
-next.
+COMPLETE: frozen registry-bound plugin members on the routed queue,
+runtime-string planning dead for new jobs, non-model gates pre-child,
+inner-output semantics with receipt-gated projection metadata, all on
+C1's lease/fence/budget machinery; sweep 6416 passed / 68 failed /
+zero branch-new. One capped counsel pass, then C3.
 
 ## Problem
 

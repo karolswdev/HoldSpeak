@@ -133,6 +133,35 @@ class BoundDeferredIntelJob:
     def parent_operation_id(self) -> str:
         return str(self._parent.operation_id)
 
+    def require_frozen_plugin_member(self, frozen: Mapping[str, Any]) -> Mapping[str, Any]:
+        """Prove descriptor, bundle, and frozen capability say the same plugin.
+
+        This is deliberately before ``execute``/child admission.  A host or
+        registry drift is a queue refusal, never an opportunity to create a
+        model child under an almost-matching capability.
+        """
+        capability = str(frozen.get("capability_id") or "").strip()
+        plugin_id = str(frozen.get("plugin_id") or "").strip()
+        revision = str(frozen.get("plugin_definition_revision") or "").strip()
+        if capability != f"meeting.plugin.{plugin_id}" or not plugin_id or not revision:
+            raise MeetingIntelRefused("frozen_plugin_descriptor_invalid", capability)
+        member = self._members.get(capability)
+        if member is None:
+            raise MeetingIntelRefused("frozen_plugin_bundle_member_missing", capability)
+        definition = self._broker.inference_adoption_service._frozen_capability_definition(
+            str(member["route_plan_id"])
+        )
+        if (
+            str(definition.get("id") or "") != capability
+            or int(definition.get("revision") or 0) != int(frozen.get("capability_revision") or 0)
+            or str(definition.get("schema_sha256") or "") != str(frozen.get("schema_sha256") or "")
+            or str(definition.get("plugin_id") or "") != plugin_id
+            or str(definition.get("plugin_definition_revision") or "") != revision
+            or dict(definition.get("output_schema") or {}) != dict(frozen.get("output_schema") or {})
+        ):
+            raise MeetingIntelRefused("frozen_plugin_capability_drift", capability)
+        return definition
+
     def execute(
         self,
         *,

@@ -256,8 +256,24 @@ counsel record, and the owner's standing correction (crash-window /
 sleep-resume scenarios = ledger notes; counsel loops hard-cap at one
 ruling + one fix round, then ratify-with-notes) is recorded there and
 in the orchestrator's memory. Closing sweep: **6409 passed / 69 failed
-/ zero branch-new**. Next: C2 (installed plugins), then C3 (the
-Stop-handoff provider — the ratified primitive's first real adopter).
+/ zero branch-new**. Slice C2 (installed plugins) is COMPLETE: claim
+planning freezes composed-registry plugin authority (exact
+`meeting.plugin.<id>` capability + plugin-definition revision + schema
+hash + closed output schema) into the immutable descriptor and one
+exact bundle member per plugin; runtime-string plugin planning is dead
+for new jobs (the legacy executor remains for pre-C1 claims); before
+any child the frozen descriptor, capability, host ID/version, and
+bundle member must all agree — drift/unknown refuses with ledger truth
+and zero model children; the non-model gates (persisted-key dedup,
+fault injection, disabled/skipped) run before admission and mint no
+children; the child semantic result is the plugin's exact inner
+output, with plugin metadata carried as receipt-gated projection
+evidence under C1's transcript and executor-epoch fences; plugin
+members ride the same per-instance budget model. No new executor,
+retry, or preflight machinery. Sweep: **6416 passed / 68 failed / zero
+branch-new**. Next: one counsel pass on C2 (capped: one ruling + at
+most one fix round per the owner's protocol), then C3 (the Stop-handoff
+provider — the ratified primitive's first real adopter).
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

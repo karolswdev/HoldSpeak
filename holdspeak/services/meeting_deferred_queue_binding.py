@@ -91,6 +91,25 @@ class MeetingDeferredQueueBinder:
                     }
                 )
                 seen.add(capability)
+        # C2 membership is immutable descriptor evidence.  Never construct a
+        # capability from a runtime plugin string: invalid descriptor entries are
+        # refused before the bundle exists, and every valid entry is an exact
+        # registry capability member with its own frozen route plan.
+        for frozen in tuple(job.frozen_plugin_members or ()):
+            capability = str(frozen.get("capability_id") or "").strip()
+            plugin_id = str(frozen.get("plugin_id") or "").strip()
+            if capability != f"meeting.plugin.{plugin_id}" or not plugin_id:
+                raise ValueError("frozen plugin descriptor is not exact")
+            if capability in seen:
+                raise ValueError("duplicate frozen plugin capability")
+            routes.append(
+                {
+                    "key": f"plugin:{plugin_id}",
+                    "capability_id": capability,
+                    "invocation_id": str(job.job_id),
+                }
+            )
+            seen.add(capability)
         return tuple(routes)
 
     def prepare(self, job: IntelJob, command_ids: Mapping[str, str]) -> None:
@@ -161,6 +180,7 @@ class MeetingDeferredQueueBinder:
                     {"id": bookmark_id, "timestamp": timestamp}
                     for bookmark_id, timestamp in tuple(job.frozen_bookmark_operations or ())
                 ],
+                "frozen_plugin_members": [dict(member) for member in tuple(job.frozen_plugin_members or ())],
             },
             deadline_at=deadline,
             child_budget=child_budget,
@@ -216,6 +236,7 @@ class MeetingDeferredQueueBinder:
                     "work_descriptor_sha256": str(job.work_descriptor_sha256 or ""),
                     "transcript_hash": str(job.transcript_hash),
                     "displaced_work": list(job.displaced_work or ()),
+                    "frozen_plugin_members": [dict(member) for member in tuple(job.frozen_plugin_members or ())],
                 },
                 deadline_at=pending.deadline_at,
                 routes=pending.routes,

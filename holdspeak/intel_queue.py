@@ -416,6 +416,43 @@ def _process_bound_intel_job(
             return changed
         if not lease.held():
             return False
+        # C2 executes the descriptor's revision-bound installed-plugin members
+        # through the same stored parent/bundle and bearer fence.  The old C1
+        # descriptor has no members and remains a readable/recoverable history;
+        # new claims never reach the legacy admission/Config path below.
+        if tuple(getattr(job, "frozen_plugin_members", ()) or ()):
+            from .meeting_plugins import run_bound_meeting_plugin_chain
+
+            chain = run_bound_meeting_plugin_chain(
+                db, meeting, bound=bound, job=job,
+            )
+            incomplete = sorted(
+                f"{plugin_id} ({status})"
+                for plugin_id, status in dict(chain.get("plugin_statuses") or {}).items()
+                if str(status).strip().lower() not in RESOLVED_PLUGIN_STATUSES
+            )
+            if incomplete:
+                detail = "Remaining routed intelligence did not finish: " + ", ".join(incomplete)
+                log.warning("Bound deferred plugin chain partial for meeting %s: %s", job.meeting_id, detail)
+                # Revision/host/bundle drift is an explicit refusal, not a
+                # controller retry.  Other model-reaching failures retain C1's
+                # bounded retry lineage and its frozen per-member budget.
+                refused = any("(refused)" in item for item in incomplete)
+                if refused:
+                    changed = db.intel.settle_bound_execution(
+                        job, error=detail, terminal_outcome="refused",
+                    )
+                else:
+                    changed = _retry_or_fail_job(
+                        db, job, detail, max_attempts=retry_max_attempts,
+                        base_delay_seconds=retry_base_seconds,
+                        max_delay_seconds=retry_max_seconds,
+                    )
+                if not changed:
+                    lease.mark_lost()
+                return changed
+        if not lease.held():
+            return False
         if not db.intel.complete_bound_intel_job(job):
             lease.mark_lost()
             return False

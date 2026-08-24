@@ -131,6 +131,16 @@ class FakeHost:
     def list_plugins(self) -> list[str]:
         return list(self._plugins)
 
+    def get_plugin(self, plugin_id: str) -> Any:
+        if plugin_id not in self._plugins:
+            return None
+        from holdspeak.inference_capabilities import process_inference_capability_registry
+
+        version = process_inference_capability_registry().require(
+            f"meeting.plugin.{plugin_id}"
+        ).plugin_definition_revision
+        return type("FrozenFakePlugin", (), {"id": plugin_id, "version": version})()
+
     @contextmanager
     def issued_dispatch(self, engine: Any, cancellation: Any = None) -> Any:
         """The admitted seam: ONE handle per plugin child, released on exit.
@@ -169,14 +179,18 @@ class FakeHost:
                 self.on_execute(plugin_id)
             results.append(PluginRunResult(
                 plugin_id=plugin_id,
-                plugin_version="1.0.0",
+                plugin_version=str(self.get_plugin(plugin_id).version),
                 status="success",
                 idempotency_key=build_idempotency_key(
                     meeting_id=meeting_id, window_id=window_id,
                     plugin_id=plugin_id, transcript_hash=transcript_hash,
                 ),
                 duration_ms=3.0,
-                output={"summary": f"{plugin_id} said something", "confidence_hint": 0.9},
+                output={
+                    "summary": f"{plugin_id} said something",
+                    "confidence_hint": 0.9,
+                    "active_intents": [],
+                },
             ))
         return results
 
@@ -206,15 +220,23 @@ class _Route:
 
 def _assign_deferred_queue_routes(db: Database) -> None:
     """Give the SERVICE queue its exact saved assignments, never ambient fallback."""
+    from holdspeak.inference_capabilities import process_inference_capability_registry
+
     capabilities = (
         "meeting.deferred_analysis",
         "meeting.bookmark_label",
         "meeting.auto_title",
+        *(
+            capability_id
+            for capability_id in process_inference_capability_registry().capability_ids
+            if capability_id.startswith("meeting.plugin.")
+        ),
     )
     _profile(
         db,
         "deferred-queue-model",
-        claims=("language", "structured_output", *(_result_claim(item) for item in capabilities)),
+        claims=("language", "structured_output", "meeting_plugin", *(_result_claim(item) for item in capabilities)),
+        modalities=("language", "text"),
     )
     assignments = InferenceAssignmentService(db)
     for ordinal, capability in enumerate(capabilities, 1):
@@ -302,6 +324,7 @@ def _queue_rig(tmp_path: Path, monkeypatch, *, plugins: tuple[str, ...] = (), ch
         "holdspeak.intel_queue.get_intel_runtime_status", lambda *a, **k: (True, "ready")
     )
     monkeypatch.setattr("holdspeak.intel_queue._routed_plugin_host", lambda enabled: host if enabled else None)
+    monkeypatch.setattr("holdspeak.meeting_plugins.build_bound_meeting_plugin_host", lambda: host)
     monkeypatch.setattr(
         "holdspeak.plugins.router.preview_route_from_transcript",
         lambda **kwargs: _Route(chain),
@@ -462,8 +485,11 @@ def test_bound_claim_executes_stored_service_member_and_completes_ledger(tmp_pat
 
 
 def test_bound_claim_replaces_legacy_stop_handoff_with_frozen_descriptor(tmp_path, monkeypatch):
-    """The Phase-B handoff list persists until C1 freezes its actual operations."""
-    db, _broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    """C2 adds immutable installed-plugin authority to C1's frozen handoff."""
+    db, _broker, _engine, _host, _requests = _queue_rig(
+        tmp_path, monkeypatch,
+        plugins=("requirements_extractor",), chain=("requirements_extractor",),
+    )
     state = _queued_meeting(
         db,
         "m-bound-legacy-stop",
@@ -491,15 +517,20 @@ def test_bound_claim_replaces_legacy_stop_handoff_with_frozen_descriptor(tmp_pat
                FROM intel_jobs WHERE meeting_id=? ORDER BY requested_at,job_id""",
             (state.id,),
         ).fetchall()
-    assert len(rows) == 2
-    assert rows[0]["job_id"] == original["job_id"]
-    assert rows[0]["status"] == "superseded"
-    assert rows[1]["origin_job_id"] == original["job_id"]
-    assert rows[1]["parent_operation_id"]
-    descriptor = json.loads(rows[1]["displaced_work"])
+    assert len(rows) == 3
+    by_id = {row["job_id"]: row for row in rows}
+    legacy = by_id[original["job_id"]]
+    c1 = next(row for row in rows if row["origin_job_id"] == legacy["job_id"])
+    c2 = next(row for row in rows if row["origin_job_id"] == c1["job_id"])
+    assert legacy["status"] == "superseded"
+    assert c1["status"] == "superseded"
+    assert c2["parent_operation_id"]
+    descriptor = json.loads(c2["displaced_work"])
     assert descriptor["bookmark_operations"] == [
         {"id": 1, "timestamp": 0.25}, {"id": 2, "timestamp": 0.5},
     ]
+    assert descriptor["plugin_members"]
+    assert all(member["capability_id"].startswith("meeting.plugin.") for member in descriptor["plugin_members"])
 
 
 def test_stop_and_recovery_replays_preserve_v3_handoff_leaf(tmp_path, monkeypatch):
@@ -526,13 +557,13 @@ def test_stop_and_recovery_replays_preserve_v3_handoff_leaf(tmp_path, monkeypatc
         )
 
     # The separate Stop and recovery entry paths both replay the historical list
-    # while the converted V3 job is claimed; neither may create another leaf.
+    # while the converted C2 job is claimed; neither may create another leaf.
     assert replay("repeated Stop") == claimed.job_id
     assert replay("repeated recovery") == claimed.job_id
     with db._connection() as conn:
         assert conn.execute(
             "SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)
-        ).fetchone()[0] == 2
+        ).fetchone()[0] == 3
         # This test models a process loss after conversion/claim; a live lease
         # must not be adopted, while a stale one preserves stored-ID recovery.
         conn.execute(
@@ -543,7 +574,7 @@ def test_stop_and_recovery_replays_preserve_v3_handoff_leaf(tmp_path, monkeypatc
     assert process_next_intel_job() is True
     ready = db.meetings.get_meeting(state.id)
     assert ready is not None and ready.intel_status == "ready"
-    # Replaying Stop/recovery after V3 completion preserves the terminal leaf,
+    # Replaying Stop/recovery after C2 completion preserves the terminal leaf,
     # ready glass, and its single physical analysis.
     assert replay("Stop after ready") == claimed.job_id
     assert replay("recovery after ready") == claimed.job_id
@@ -552,7 +583,7 @@ def test_stop_and_recovery_replays_preserve_v3_handoff_leaf(tmp_path, monkeypatc
             "SELECT status FROM intel_jobs WHERE meeting_id=? ORDER BY requested_at,job_id",
             (state.id,),
         ).fetchall()
-    assert [row["status"] for row in rows] == ["superseded", "succeeded"]
+    assert sorted(row["status"] for row in rows) == ["succeeded", "superseded", "superseded"]
     assert db.meetings.get_meeting(state.id).intel_status == "ready"
     assert len(engine.analyzed) == 1
 
@@ -652,7 +683,9 @@ def test_live_bound_executor_lease_excludes_background_http_and_cli_competitors(
             "SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=? AND origin_job_id IS NOT NULL",
             (state.id,),
         ).fetchone()[0]
-    assert job["status"] == "succeeded" and retries == successors == 0
+    # C2's claim-planning descriptor replacement is one historical predecessor,
+    # not a retry successor; no retry event or second executor was created.
+    assert job["status"] == "succeeded" and retries == 0 and successors == 1
 
 
 def test_stale_takeover_reconciles_only_its_own_execution(tmp_path, monkeypatch):
@@ -719,7 +752,7 @@ def test_stale_takeover_reconciles_only_its_own_execution(tmp_path, monkeypatch)
             (state_a.id,),
         ).fetchone()[0]
     assert a_job["status"] == "succeeded"
-    assert snapshots == 1 and retries == successors == 0
+    assert snapshots == 1 and retries == 0 and successors == 1
 
 
 def test_bound_executor_heartbeat_exception_fails_closed(tmp_path, monkeypatch):
@@ -1532,6 +1565,114 @@ def test_the_plugin_provider_call_runs_inside_the_admitted_child_dispatch(tmp_pa
     assert db.plugins.list_artifacts(state.id) == []
     refreshed = db.meetings.get_meeting(state.id)
     assert refreshed.intel_status != "ready"
+
+
+def test_c2_plugin_child_uses_frozen_member_and_inner_output(tmp_path, monkeypatch):
+    """C2 executes one installed plugin as a bound routed child, not a run wrapper."""
+    db, _broker, _engine, host, _requests = _queue_rig(
+        tmp_path, monkeypatch,
+        plugins=("requirements_extractor",), chain=("requirements_extractor",),
+    )
+    state = _queued_meeting(db, "m-c2-inner", legacy_claimed=False)
+    from holdspeak.intel_queue import process_next_intel_job
+
+    assert process_next_intel_job() is True
+    parent = _parents(db, PARENT_KIND)[0]
+    assert len(_children(db, parent["operation_id"])) == 2
+    assert host.executed == ["requirements_extractor"]
+    run = db.plugins.list_plugin_runs(state.id, limit=10)[0]
+    assert run.plugin_id == "requirements_extractor"
+    assert run.output == {
+        "summary": "requirements_extractor said something",
+        "confidence_hint": 0.9,
+        "active_intents": [],
+    }
+    with db._connection() as conn:
+        member = conn.execute(
+            """SELECT capability_id FROM inference_parent_route_bundle_members
+               WHERE bundle_id=(SELECT bundle_id FROM intel_jobs WHERE meeting_id=?
+                                ORDER BY updated_at DESC LIMIT 1)
+                 AND capability_id='meeting.plugin.requirements_extractor'""",
+            (state.id,),
+        ).fetchone()
+    assert member is not None
+
+
+def test_c2_plugin_revision_drift_refuses_without_plugin_child(tmp_path, monkeypatch):
+    db, _broker, _engine, host, _requests = _queue_rig(
+        tmp_path, monkeypatch,
+        plugins=("requirements_extractor",), chain=("requirements_extractor",),
+    )
+    state = _queued_meeting(db, "m-c2-drift", legacy_claimed=False)
+    host.get_plugin = lambda _plugin_id: None  # type: ignore[method-assign]
+    from holdspeak.intel_queue import process_next_intel_job
+
+    assert process_next_intel_job() is True
+    parent = _parents(db, PARENT_KIND)[0]
+    assert len(_children(db, parent["operation_id"])) == 1
+    run = db.plugins.list_plugin_runs(state.id, limit=10)[0]
+    assert run.status == "error" and "revision_drift" in str(run.error)
+    with db._connection() as conn:
+        outcome = conn.execute(
+            "SELECT outcome FROM intel_job_attempts WHERE meeting_id=? ORDER BY id DESC LIMIT 1",
+            (state.id,),
+        ).fetchone()[0]
+    assert outcome == "refused"
+
+
+def test_c2_unknown_plugin_id_refuses_claim_without_any_child(tmp_path, monkeypatch):
+    db, _broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(db, "m-c2-unknown", legacy_claimed=False)
+    monkeypatch.setattr(
+        "holdspeak.plugins.router.preview_route_from_transcript",
+        lambda **_kwargs: _Route(("not_installed",)),
+    )
+    from holdspeak.intel_queue import process_next_intel_job
+
+    assert process_next_intel_job() is True
+    assert _parents(db, PARENT_KIND) == []
+    assert _rows(db, "kernel_operations") == []
+    with db._connection() as conn:
+        event = conn.execute(
+            "SELECT outcome,error FROM intel_job_attempts WHERE meeting_id=? ORDER BY id DESC LIMIT 1",
+            (state.id,),
+        ).fetchone()
+    assert event is not None and event["outcome"] == "refused"
+    assert "plugin" in str(event["error"]).lower()
+
+
+@pytest.mark.parametrize("gate", ["deduped", "disabled", "fault"])
+def test_c2_non_executed_plugin_gates_mint_no_child(tmp_path, monkeypatch, gate):
+    db, _broker, _engine, host, _requests = _queue_rig(
+        tmp_path, monkeypatch,
+        plugins=("requirements_extractor",), chain=("requirements_extractor",),
+    )
+    state = _queued_meeting(db, f"m-c2-gate-{gate}", legacy_claimed=False)
+    transcript_hash = __import__("hashlib").sha256(
+        f"Me: {state.segments[0].text}".encode()
+    ).hexdigest()
+    key = build_idempotency_key(
+        meeting_id=state.id, window_id=f"{state.id}:full",
+        plugin_id="requirements_extractor", transcript_hash=transcript_hash,
+    )
+    if gate == "deduped":
+        db.plugins.record_plugin_run(
+            meeting_id=state.id, window_id=f"{state.id}:full",
+            plugin_id="requirements_extractor", plugin_version="0.1.0",
+            status="success", idempotency_key=key, duration_ms=0.0,
+            output={"summary": "already", "confidence_hint": 0.0, "active_intents": []},
+        )
+    elif gate == "disabled":
+        host.disabled_plugins = ("requirements_extractor",)
+    else:
+        monkeypatch.setenv("HOLDSPEAK_FAULT", "intel.plugin:requirements_extractor")
+
+    from holdspeak.intel_queue import process_next_intel_job
+
+    assert process_next_intel_job() is True
+    parent = _parents(db, PARENT_KIND)[0]
+    assert len(_children(db, parent["operation_id"])) == 1
+    assert host.executed == []
 
 
 # ------------------------------------- D3: the displaced work actually executes

@@ -70,6 +70,11 @@ class IntelJob:
     # Immutable, content-free label operations frozen with the descriptor.
     frozen_bookmark_timestamps: tuple[float, ...] = ()
     frozen_bookmark_operations: tuple[tuple[int, float], ...] = ()
+    # C2 freezes each routed installed plugin's exact capability/revision/schema
+    # alongside the content-free descriptor.  These are authority evidence, not
+    # mutable host discovery inputs.
+    frozen_plugin_members: tuple[dict[str, Any], ...] = ()
+    frozen_plugin_route: dict[str, Any] = field(default_factory=dict)
     # Phase C durable binding references.  Existing DTO consumers retain the
     # Meeting-facing fields above; these are identifiers/hashes only.
     job_id: Optional[str] = None

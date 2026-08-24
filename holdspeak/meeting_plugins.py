@@ -25,7 +25,7 @@ Design (the phase's load-bearing call):
 from __future__ import annotations
 
 import hashlib
-from typing import Any, Optional
+from typing import Any, Mapping, Optional
 
 from .logging_config import get_logger
 
@@ -453,3 +453,299 @@ def _run_admitted_chain(
         ))
         artifacts_saved = int(dict(projection).get("artifacts_saved") or artifacts_saved)
     return results, artifacts_saved
+
+
+def build_bound_meeting_plugin_host() -> Any:
+    """Build the C2 installed host without a Config-time capability decision.
+
+    A bound child already owns the selected model route.  The host only needs a
+    per-invocation dispatch handle over that child engine, so consulting mutable
+    meeting runtime settings here would create a second authority.
+    """
+    from .plugins.builtin import register_builtin_plugins
+    from .plugins.host import PluginHost
+    from .plugins.project_detector import ProjectDetectorPlugin
+
+    host = PluginHost(
+        default_timeout_seconds=30.0,
+        enabled_capabilities={"llm"},
+        allow_actuators=False,
+    )
+    register_builtin_plugins(host)
+    detector = ProjectDetectorPlugin()
+    try:
+        from .db import get_database
+
+        detector.reload_projects(get_database().projects.get_all_projects_for_detector())
+    except Exception as exc:  # optional detector context is never routing authority
+        log.warning("meeting_plugins: could not load projects for bound host: %s", exc)
+    host.register(detector)
+    return host
+
+
+def _bound_plugin_error(
+    db: Any,
+    *,
+    meeting_id: str,
+    window_id: str,
+    plugin_id: str,
+    plugin_version: str,
+    idempotency_key: str,
+    error: str,
+    status: str = "error",
+) -> None:
+    """Persist a non-model plugin disposition before any child may exist."""
+    db.plugins.record_plugin_run(
+        meeting_id=meeting_id,
+        window_id=window_id,
+        plugin_id=plugin_id,
+        plugin_version=plugin_version or "unknown",
+        status=status,
+        idempotency_key=idempotency_key or None,
+        duration_ms=0.0,
+        output=None,
+        error=error,
+        deduped=False,
+    )
+
+
+def run_bound_meeting_plugin_chain(
+    db: Any,
+    meeting: Any,
+    *,
+    bound: Any,
+    job: Any,
+    host: Any = None,
+) -> dict[str, Any]:
+    """Run only C2 descriptor members as receipt-gated routed children.
+
+    The descriptor's frozen route controls the chain.  Dedup, explicit disable,
+    and fault injection settle before a child admission.  For an executed child,
+    only the plugin's inner ``output`` crosses the semantic adapter; run metadata
+    is projection evidence and never a capability result.
+    """
+    from .faults import FAULT_ENV, PLUGIN_FAULT_PREFIX, faulted_plugin_keys
+    from .plugins.host import PluginRunResult, build_idempotency_key
+
+    meeting_id = str(getattr(meeting, "id", "") or "").strip()
+    transcript = _meeting_transcript(meeting)
+    if not meeting_id or not transcript:
+        raise ValueError("meeting has no id or no transcript to route")
+    route = dict(getattr(job, "frozen_plugin_route", {}) or {})
+    chain = [str(item).strip() for item in route.get("plugin_chain") or [] if str(item).strip()]
+    frozen_by_id = {
+        str(item.get("plugin_id") or ""): dict(item)
+        for item in tuple(getattr(job, "frozen_plugin_members", ()) or ())
+        if isinstance(item, Mapping)
+    }
+    window_id = f"{meeting_id}:{FULL_WINDOW_SUFFIX}"
+    transcript_hash = hashlib.sha256(transcript.encode("utf-8")).hexdigest()
+    tags = _meeting_tags(meeting)
+    db.plugins.record_intent_window(
+        meeting_id=meeting_id,
+        window_id=window_id,
+        start_seconds=0.0,
+        end_seconds=float(getattr(meeting, "duration", 0.0) or 0.0),
+        transcript_hash=transcript_hash,
+        transcript_excerpt=transcript[:400],
+        profile=str(route.get("profile") or "balanced"),
+        threshold=float(route.get("threshold") or 0.0),
+        active_intents=[str(item) for item in route.get("active_intents") or []],
+        intent_scores={str(key): float(value) for key, value in dict(route.get("intent_scores") or {}).items()},
+        override_intents=[],
+        tags=tags,
+        metadata={"source": "meeting_plugins_bound", "window": FULL_WINDOW_SUFFIX},
+    )
+    keys = {
+        plugin_id: build_idempotency_key(
+            meeting_id=meeting_id,
+            window_id=window_id,
+            plugin_id=plugin_id,
+            transcript_hash=transcript_hash,
+        )
+        for plugin_id in chain
+    }
+    complete = {
+        str(run.idempotency_key)
+        for run in db.plugins.list_plugin_runs(meeting_id, limit=5000)
+        if str(getattr(run, "window_id", "")) == window_id
+        and str(getattr(run, "status", "")).strip().lower() in COMPLETED_PLUGIN_STATUSES
+        and getattr(run, "idempotency_key", None)
+    }
+    statuses: dict[str, str] = {
+        plugin_id: "deduped" for plugin_id in chain if keys[plugin_id] in complete
+    }
+    remaining = [plugin_id for plugin_id in chain if plugin_id not in statuses]
+
+    # Fault injection is an explicit non-model disposition.  It must precede host
+    # validation and child admission, so faulted work cannot mint a model child.
+    faults = set(faulted_plugin_keys()).intersection(remaining)
+    for plugin_id in sorted(faults):
+        frozen = frozen_by_id.get(plugin_id, {})
+        _bound_plugin_error(
+            db,
+            meeting_id=meeting_id,
+            window_id=window_id,
+            plugin_id=plugin_id,
+            plugin_version=str(frozen.get("plugin_definition_revision") or "unknown"),
+            idempotency_key=keys[plugin_id],
+            error=f"{FAULT_ENV}={PLUGIN_FAULT_PREFIX}{plugin_id} injected failure",
+        )
+        statuses[plugin_id] = "error"
+    remaining = [plugin_id for plugin_id in remaining if plugin_id not in faults]
+
+    if host is None:
+        host = build_bound_meeting_plugin_host()
+    disabled = {
+        str(item).strip()
+        for item in (getattr(host, "disabled_plugins", ()) or ())
+        if str(item).strip()
+    }
+    context = {
+        "transcript": transcript,
+        "transcript_segments": [
+            {
+                "text": str(getattr(segment, "text", "") or ""),
+                "speaker": str(getattr(segment, "speaker", "") or ""),
+                "start_time": float(getattr(segment, "start_time", 0.0)),
+                "end_time": float(getattr(segment, "end_time", 0.0)),
+            }
+            for segment in (getattr(meeting, "segments", []) or [])
+        ],
+        "tags": tags,
+        "active_intents": list(route.get("active_intents") or []),
+        "intent_scores": dict(route.get("intent_scores") or {}),
+        "profile": route.get("profile"),
+        "threshold": route.get("threshold"),
+    }
+    artifacts_saved = 0
+    for plugin_id in remaining:
+        frozen = frozen_by_id.get(plugin_id)
+        key = keys[plugin_id]
+        if frozen is None:
+            _bound_plugin_error(
+                db, meeting_id=meeting_id, window_id=window_id, plugin_id=plugin_id,
+                plugin_version="unknown", idempotency_key=key,
+                error="frozen_plugin_descriptor_member_missing",
+            )
+            statuses[plugin_id] = "refused"
+            continue
+        expected_version = str(frozen["plugin_definition_revision"])
+        if plugin_id in disabled:
+            _bound_plugin_error(
+                db, meeting_id=meeting_id, window_id=window_id, plugin_id=plugin_id,
+                plugin_version=expected_version, idempotency_key=key,
+                error="disabled for this project", status="skipped",
+            )
+            statuses[plugin_id] = "skipped"
+            continue
+        plugin = getattr(host, "get_plugin", lambda _plugin_id: None)(plugin_id)
+        if (
+            plugin is None
+            or str(getattr(plugin, "id", "") or "") != plugin_id
+            or str(getattr(plugin, "version", "") or "") != expected_version
+        ):
+            _bound_plugin_error(
+                db, meeting_id=meeting_id, window_id=window_id, plugin_id=plugin_id,
+                plugin_version=expected_version, idempotency_key=key,
+                error="installed_plugin_host_revision_drift",
+            )
+            statuses[plugin_id] = "refused"
+            continue
+        try:
+            # All descriptor/bundle/frozen-capability checks complete before the
+            # child exists.  This is the no-child line for unknown/drift work.
+            bound.require_frozen_plugin_member(frozen)
+        except Exception as exc:
+            _bound_plugin_error(
+                db, meeting_id=meeting_id, window_id=window_id, plugin_id=plugin_id,
+                plugin_version=expected_version, idempotency_key=key,
+                error=str(getattr(exc, "reason", "") or "frozen_plugin_bundle_drift"),
+            )
+            statuses[plugin_id] = "refused"
+            continue
+
+        record_box: dict[str, Any] = {}
+
+        def call(engine: Any, _payload: Mapping[str, Any], cancellation: Any, *, _plugin_id: str = plugin_id) -> Mapping[str, Any]:
+            issuer = getattr(host, "issued_dispatch", None)
+            if issuer is None:
+                raise RuntimeError("plugin_host_dispatch_unavailable")
+            with issuer(engine, cancellation) as dispatch:
+                runs = host.execute_chain(
+                    [_plugin_id], context=dict(context), meeting_id=meeting_id,
+                    window_id=window_id, transcript_hash=transcript_hash,
+                    defer_heavy=False, dispatch=dispatch,
+                )
+            record = (runs or [PluginRunResult(
+                plugin_id=_plugin_id, plugin_version=expected_version, status="error",
+                idempotency_key=key, duration_ms=0.0, error="plugin returned no record",
+            )])[0].to_dict()
+            record_box.update(record)
+            output = record.get("output")
+            if not isinstance(output, dict):
+                raise ValueError("plugin did not return an inner output mapping")
+            return output
+
+        try:
+            projection, routed = bound.execute(
+                capability=str(frozen["capability_id"]),
+                operation_suffix=f"plugin:{plugin_id}:{key}",
+                material={
+                    "plugin_id": plugin_id,
+                    "plugin_definition_revision": expected_version,
+                    "window_id": window_id,
+                    "idempotency_key": key,
+                    "transcript_sha256": "sha256:" + transcript_hash,
+                    "template_revision": "1",
+                    "transcript_material": transcript,
+                },
+                call=call,
+                projection_kind="meeting-bound-plugin-result",
+                projection=lambda output, _frozen=frozen, _plugin_id=plugin_id: {
+                    "job_id": str(job.job_id),
+                    "meeting_id": meeting_id,
+                    "transcript_hash": str(job.transcript_hash),
+                    "work_descriptor_sha256": str(job.work_descriptor_sha256 or ""),
+                    "executor_lease_token": str(job.executor_lease_token or ""),
+                    "executor_lease_epoch": int(job.executor_lease_epoch or 0),
+                    "window_id": window_id,
+                    "plugin_id": _plugin_id,
+                    "plugin_version": str(_frozen["plugin_definition_revision"]),
+                    "plugin_definition_revision": str(_frozen["plugin_definition_revision"]),
+                    "capability_id": str(_frozen["capability_id"]),
+                    "capability_revision": int(_frozen["capability_revision"]),
+                    "capability_schema_sha256": str(_frozen["schema_sha256"]),
+                    "status": str(record_box.get("status") or "success"),
+                    "idempotency_key": str(record_box.get("idempotency_key") or key),
+                    "duration_ms": float(record_box.get("duration_ms") or 0.0),
+                    "output": dict(output),
+                    "error": "",
+                    "deduped": False,
+                },
+            )
+        except Exception as exc:
+            reason = str(getattr(exc, "reason", "") or f"{type(exc).__name__}: {exc}")
+            log.warning("meeting_plugins: bound %s failed before publication: %s", plugin_id, reason)
+            _bound_plugin_error(
+                db, meeting_id=meeting_id, window_id=window_id, plugin_id=plugin_id,
+                plugin_version=expected_version, idempotency_key=key,
+                error=reason,
+            )
+            statuses[plugin_id] = "error"
+            continue
+        if projection is None:
+            statuses[plugin_id] = "error"
+            continue
+        statuses[plugin_id] = str(record_box.get("status") or "success")
+        artifacts_saved = int(dict(projection).get("artifacts_saved") or artifacts_saved)
+
+    return {
+        "meeting_id": meeting_id,
+        "window_id": window_id,
+        "profile": route.get("profile"),
+        "active_intents": list(route.get("active_intents") or []),
+        "plugin_chain": chain,
+        "plugin_statuses": statuses,
+        "artifacts_saved": artifacts_saved,
+    }

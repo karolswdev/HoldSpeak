@@ -257,13 +257,30 @@ class _FakeIntel:
         return _FakeIntelResult()
 
 
-def _queued_meeting(db, meeting_id):
-    # New queued work is C1-bound before the worker receives it. Pin the
-    # deferred assignment family in this legacy observer fixture.
+def _queued_meeting(db, meeting_id, monkeypatch):
+    # New queued work is C2-bound before the worker receives it. Pin the exact
+    # deferred assignment family and freeze one routed member, so this observer
+    # fixture reaches the same bound-queue completion boundary.
     from holdspeak.kernel.runtime import _configure
-    from tests.unit.test_meeting_deferred_admission import _assign_deferred_queue_routes
+    from tests.unit.test_meeting_deferred_admission import _Route, _assign_deferred_queue_routes
 
     _assign_deferred_queue_routes(db)
+    monkeypatch.setattr(
+        "holdspeak.plugins.router.preview_route_from_transcript",
+        lambda **_kwargs: _Route(("requirements_extractor",)),
+    )
+    # This file proves the observer boundary, not plugin execution. It still
+    # claims a C2-frozen routed member; settle that independently proved child
+    # seam so an observer assertion cannot depend on plugin model semantics.
+    monkeypatch.setattr(
+        "holdspeak.meeting_plugins.run_bound_meeting_plugin_chain",
+        lambda _db, _meeting, *, job, **_kwargs: {
+            "plugin_statuses": {
+                str(member["plugin_id"]): "success"
+                for member in job.frozen_plugin_members
+            }
+        },
+    )
     _configure(db)
     state = MeetingState(
         id=meeting_id,
@@ -298,7 +315,7 @@ def test_process_next_intel_job_notifies_on_meeting_ready(db, monkeypatch):
     monkeypatch.setattr(
         "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
-    _queued_meeting(db, "m-intel")
+    _queued_meeting(db, "m-intel", monkeypatch)
 
     ready: list[str] = []
     assert process_next_intel_job(on_meeting_ready=ready.append) is True
@@ -321,7 +338,7 @@ def test_exploding_on_meeting_ready_never_breaks_the_job(db, monkeypatch):
     monkeypatch.setattr(
         "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
-    _queued_meeting(db, "m-boom")
+    _queued_meeting(db, "m-boom", monkeypatch)
 
     def _boom(_meeting_id):
         raise RuntimeError("observer boom")

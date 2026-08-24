@@ -261,10 +261,16 @@ def test_deferred_intel_runs_the_chain_when_router_enabled(env, monkeypatch, tmp
     refreshed = db.meetings.get_meeting("m84")
     assert refreshed.intel_status == "ready"
     assert "Meeting intelligence ready" in (refreshed.intel_status_detail or "")
-    # C1 binds and publishes only base deferred analysis. Installed plugins are
-    # a later revision-bound C2 member family; do not revive the old Config-time
-    # chain from a bound descriptor.
-    assert db.plugins.list_artifacts("m84") == []
+    # C2 freezes the routed installed set in the bound bundle, then each plugin
+    # executes as its own routed child and publishes an artifact from the exact
+    # inner output.  Config-time host planning is not consulted by this path.
+    assert db.plugins.list_artifacts("m84")
+    with db._connection() as conn:
+        members = conn.execute(
+            """SELECT capability_id FROM inference_parent_route_bundle_members
+               WHERE capability_id LIKE 'meeting.plugin.%'"""
+        ).fetchall()
+    assert members
 
 
 def test_deferred_intel_retains_base_analysis_when_routed_work_fails(
@@ -300,7 +306,7 @@ def test_deferred_intel_retains_base_analysis_when_routed_work_fails(
         lambda *a, **k: (True, "ready"),
     )
     monkeypatch.setattr(
-        "holdspeak.meeting_plugins.run_meeting_plugin_chain",
+        "holdspeak.meeting_plugins.run_bound_meeting_plugin_chain",
         lambda *a, **k: {
             "plugin_statuses": {
                 "requirements_extractor": "success",
@@ -319,12 +325,14 @@ def test_deferred_intel_retains_base_analysis_when_routed_work_fails(
     assert retained is not None
     assert retained.intel is not None
     assert retained.intel.summary == "Base analysis retained."
-    # C1 does not call the legacy plugin chain at all. Plugin timeout/retry
-    # assertions move to the later frozen-member C2 execution tests.
-    assert retained.intel_status == "ready"
-    assert retained.intel_completed_at is not None
-    assert db.intel.get_intel_job(meeting.id) is None
-    assert ready == [meeting.id]
+    # C2 executes the frozen member family after base publication.  A timed-out
+    # child keeps the earned base analysis but takes the normal bounded queue
+    # retry lineage; it cannot advertise Ready or call the observer.
+    assert retained.intel_status == "queued"
+    assert retained.intel_completed_at is None
+    outstanding = db.intel.get_intel_job(meeting.id)
+    assert outstanding is not None and outstanding.status == "queued"
+    assert ready == []
 
 
 def test_deferred_intel_skips_the_chain_when_router_disabled(env, monkeypatch) -> None:
@@ -360,4 +368,6 @@ def test_deferred_intel_skips_the_chain_when_router_disabled(env, monkeypatch) -
     from holdspeak.intel_queue import process_next_intel_job
 
     assert process_next_intel_job(db) is True
-    assert not db.plugins.list_artifacts("m85"), "router off ⇒ byte-identical import"
+    # C2 has no queue Config/runtime preflight: the exact registry-backed route
+    # frozen at claim remains runnable even when the historical toggle is off.
+    assert db.plugins.list_artifacts("m85")

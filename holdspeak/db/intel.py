@@ -21,7 +21,13 @@ log = get_logger("db.intel")
 
 def _work_descriptor(
     raw: str,
-) -> tuple[tuple[str, ...], tuple[float, ...], tuple[tuple[int, float], ...]]:
+) -> tuple[
+    tuple[str, ...],
+    tuple[float, ...],
+    tuple[tuple[int, float], ...],
+    tuple[dict[str, Any], ...],
+    dict[str, Any],
+]:
     """Read the backward-compatible, content-free displaced-work descriptor.
 
     C1 initially persisted a plain slug list.  Bound bookmark execution also
@@ -32,11 +38,11 @@ def _work_descriptor(
     try:
         parsed = json.loads(raw or "[]")
     except (TypeError, ValueError):
-        return (), (), ()
+        return (), (), (), (), {}
     if isinstance(parsed, list):
-        return tuple(str(item) for item in parsed if str(item).strip()), (), ()
+        return tuple(str(item) for item in parsed if str(item).strip()), (), (), (), {}
     if not isinstance(parsed, dict):
-        return (), (), ()
+        return (), (), (), (), {}
     slugs = parsed.get("slugs", [])
     timestamps = parsed.get("bookmark_timestamps", [])
     frozen: list[float] = []
@@ -60,11 +66,49 @@ def _work_descriptor(
     # identities so old descriptors remain executable without mutable discovery.
     if not operations:
         operations = [(index, timestamp) for index, timestamp in enumerate(frozen, 1)]
+    plugin_members: list[dict[str, Any]] = []
+    raw_plugins = parsed.get("plugin_members", [])
+    if isinstance(raw_plugins, list):
+        for value in raw_plugins:
+            if not isinstance(value, dict):
+                continue
+            capability_id = str(value.get("capability_id") or "").strip()
+            plugin_id = str(value.get("plugin_id") or "").strip()
+            revision = str(value.get("plugin_definition_revision") or "").strip()
+            schema_sha256 = str(value.get("schema_sha256") or "").strip()
+            output_schema = value.get("output_schema")
+            if (
+                capability_id != f"meeting.plugin.{plugin_id}"
+                or not plugin_id
+                or not revision
+                or not schema_sha256
+                or not isinstance(output_schema, dict)
+            ):
+                continue
+            try:
+                capability_revision = int(value.get("capability_revision") or 0)
+            except (TypeError, ValueError):
+                continue
+            if capability_revision <= 0:
+                continue
+            plugin_members.append(
+                {
+                    "capability_id": capability_id,
+                    "capability_revision": capability_revision,
+                    "plugin_id": plugin_id,
+                    "plugin_definition_revision": revision,
+                    "schema_sha256": schema_sha256,
+                    "output_schema": dict(output_schema),
+                }
+            )
+    route = parsed.get("plugin_route")
     return (
         tuple(str(item) for item in slugs if str(item).strip())
         if isinstance(slugs, list) else (),
         tuple(frozen),
         tuple(operations),
+        tuple(plugin_members),
+        dict(route) if isinstance(route, dict) else {},
     )
 
 
@@ -89,8 +133,27 @@ def _frozen_bookmark_operations(row: Any) -> tuple[tuple[int, float], ...]:
     return _work_descriptor(str(row["displaced_work"] or "[]"))[2]
 
 
+def _frozen_plugin_members(row: Any) -> tuple[dict[str, Any], ...]:
+    """Return exact installed-plugin authority frozen with a C2 descriptor."""
+    if "displaced_work" not in set(row.keys()):
+        return ()
+    return _work_descriptor(str(row["displaced_work"] or "[]"))[3]
+
+
+def _frozen_plugin_route(row: Any) -> dict[str, Any]:
+    """Return the content-free router decision frozen at bound claim planning."""
+    if "displaced_work" not in set(row.keys()):
+        return {}
+    return _work_descriptor(str(row["displaced_work"] or "[]"))[4]
+
+
 def _freeze_displaced_work(
-    conn: Any, meeting_id: str, displaced_work: Sequence[str],
+    conn: Any,
+    meeting_id: str,
+    displaced_work: Sequence[str],
+    *,
+    plugin_members: Sequence[Mapping[str, Any]] = (),
+    plugin_route: Mapping[str, Any] | None = None,
 ) -> str:
     """Freeze content-free displaced operations before a parent can be admitted."""
     slugs = tuple(str(item) for item in displaced_work if str(item).strip())
@@ -103,13 +166,18 @@ def _freeze_displaced_work(
         operations = tuple((int(row["id"]), float(row["timestamp"])) for row in rows)
     return json.dumps(
         {
-            "schema": "MeetingDeferredIntelWorkDescriptor@3",
+            "schema": "MeetingDeferredIntelWorkDescriptor@4",
             "slugs": list(slugs),
             "bookmark_timestamps": [timestamp for _, timestamp in operations],
             "bookmark_operations": [
                 {"id": bookmark_id, "timestamp": timestamp}
                 for bookmark_id, timestamp in operations
             ],
+            # Exact capability authority for every planned plugin, never a host
+            # string or mutable runtime lookup.  The output schema is retained so
+            # a revision change after claim cannot reinterpret a queued child.
+            "plugin_members": [dict(member) for member in plugin_members],
+            "plugin_route": dict(plugin_route or {}),
         },
         sort_keys=True,
         separators=(",", ":"),
@@ -211,6 +279,67 @@ def _durable_transcript_hash(conn: Any, meeting_id: str) -> str:
         f"{row['speaker']}|{row['text']}" for row in rows
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _plan_installed_plugin_members(
+    conn: Any, meeting_id: str,
+) -> tuple[tuple[dict[str, Any], ...], dict[str, Any]]:
+    """Freeze the routed installed-plugin set from the composed registry.
+
+    This is claim planning, not execution: it reads durable Meeting text only to
+    derive the deterministic MIR route, then stores IDs/revisions/schemas and
+    route metadata without retaining transcript bytes.  Config and a live host
+    are intentionally absent from this boundary.
+    """
+    from ..inference_capabilities import process_inference_capability_registry
+    from ..plugins.router import preview_route_from_transcript
+
+    rows = conn.execute(
+        "SELECT text,speaker FROM segments WHERE meeting_id=? ORDER BY start_time,id",
+        (meeting_id,),
+    ).fetchall()
+    transcript = "\n".join(
+        f"{str(row['speaker'] or '').strip()}: {str(row['text'] or '').strip()}".strip(": ")
+        for row in rows
+        if str(row["text"] or "").strip()
+    )
+    decision = preview_route_from_transcript(
+        profile=None, transcript=transcript, tags=None,
+    ).to_dict()
+    registry = process_inference_capability_registry()
+    members: list[dict[str, Any]] = []
+    for plugin_id in decision.get("plugin_chain") or []:
+        plugin_id = str(plugin_id).strip()
+        capability_id = f"meeting.plugin.{plugin_id}"
+        definition = registry.require(capability_id)
+        if (
+            definition.plugin_id != plugin_id
+            or not definition.plugin_definition_revision
+            or definition.id != capability_id
+        ):
+            raise ValueError(f"installed plugin capability is not exact: {plugin_id}")
+        canonical = definition.canonical_dict()
+        members.append(
+            {
+                "capability_id": definition.id,
+                "capability_revision": definition.revision,
+                "plugin_id": definition.plugin_id,
+                "plugin_definition_revision": definition.plugin_definition_revision,
+                "schema_sha256": definition.schema_sha256,
+                "output_schema": dict(canonical["output_schema"]),
+            }
+        )
+    route = {
+        "profile": str(decision.get("profile") or "balanced"),
+        "threshold": float(decision.get("threshold") or 0.0),
+        "active_intents": [str(item) for item in decision.get("active_intents") or []],
+        "intent_scores": {
+            str(key): float(value)
+            for key, value in dict(decision.get("intent_scores") or {}).items()
+        },
+        "plugin_chain": [str(item) for item in decision.get("plugin_chain") or []],
+    }
+    return tuple(members), route
 
 
 class IntelRepository(BaseRepository):
@@ -665,6 +794,72 @@ class IntelRepository(BaseRepository):
                 # can see the exact frozen descriptor it is about to bind.
                 conn.commit()
                 job_id = frozen_job_id
+                row = conn.execute(
+                    "SELECT * FROM intel_jobs WHERE job_id=?", (job_id,),
+                ).fetchone()
+                if row is None:
+                    return None
+            # C2 adds no mutable host/config planning at execution time.  Before
+            # the bundle is prepared, replace a pre-C2 queued descriptor with one
+            # that names every routed installed plugin's exact registry revision
+            # and closed result schema.  A claimed legacy row never reaches here.
+            if not _frozen_plugin_members(row):
+                try:
+                    plugin_members, plugin_route = _plan_installed_plugin_members(
+                        conn, meeting_id,
+                    )
+                except Exception as exc:
+                    # An unknown/non-exact plugin can never be smuggled through
+                    # as a runtime string.  Make the queued admission refusal
+                    # terminal and ledgered before the worker reports progress.
+                    from ..services.errors import ServiceError
+
+                    conn.rollback()
+                    refusal = ServiceError(
+                        "meeting_deferred_plugin_plan_invalid",
+                        f"Installed plugin planning refused: {type(exc).__name__}",
+                    )
+                    setattr(
+                        refusal,
+                        "_holdspeak_queue_advanced",
+                        self.settle_bound_claim_refusal(job_id, refusal),
+                    )
+                    raise refusal from None
+                frozen_work = _freeze_displaced_work(
+                    conn,
+                    meeting_id,
+                    _displaced_work(row),
+                    plugin_members=plugin_members,
+                    plugin_route=plugin_route,
+                )
+                frozen_descriptor = _work_descriptor_sha256(
+                    meeting_id, str(row["transcript_hash"]), frozen_work,
+                )
+                conn.execute(
+                    """UPDATE intel_jobs SET status='superseded',
+                       lifecycle_posture='superseded',updated_at=?,
+                       last_error='Installed plugin membership frozen for bound claim.'
+                       WHERE job_id=? AND status='queued'""",
+                    (now, job_id),
+                )
+                planned_job_id = _job_id(
+                    meeting_id, str(row["transcript_hash"]), frozen_descriptor,
+                    now, job_id,
+                )
+                conn.execute(
+                    """INSERT INTO intel_jobs (
+                        job_id,meeting_id,origin_job_id,work_descriptor_sha256,
+                        transcript_hash,displaced_work,status,lifecycle_posture,
+                        requested_at,updated_at,attempts,last_error
+                    ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
+                    (
+                        planned_job_id, meeting_id, job_id, frozen_descriptor,
+                        str(row["transcript_hash"]), frozen_work, now, now,
+                        "Installed plugin membership frozen for bound claim.",
+                    ),
+                )
+                conn.commit()
+                job_id = planned_job_id
                 row = conn.execute(
                     "SELECT * FROM intel_jobs WHERE job_id=?", (job_id,),
                 ).fetchone()
@@ -1405,6 +1600,8 @@ class IntelRepository(BaseRepository):
             displaced_work=_displaced_work(row),
             frozen_bookmark_timestamps=_frozen_bookmark_timestamps(row),
             frozen_bookmark_operations=_frozen_bookmark_operations(row),
+            frozen_plugin_members=_frozen_plugin_members(row),
+            frozen_plugin_route=_frozen_plugin_route(row),
             job_id=(str(row["job_id"]) if "job_id" in keys else None),
             origin_job_id=(
                 str(row["origin_job_id"])
