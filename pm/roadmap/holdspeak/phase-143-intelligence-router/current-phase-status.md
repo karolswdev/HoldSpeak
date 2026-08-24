@@ -445,6 +445,28 @@ law and diff-hash replay. Successful draft receipts retain the
 resulting artifact ID. Confirming sweep: **6464 passed / zero
 branch-new.** Next: the capped Phase E counsel pass, then Phase F
 (legacy authority removal and census closure).
+**The Phase E counsel pass is closed: RATIFIED-WITH-NOTES
+(2026-08-24) — Phase E is complete.** Sol's capped pass found four
+receipt-truth defects on ordinary paths, all fixed in the one
+permitted round with production-object proofs: the migrated Rails
+sentinel could never execute (its artifact was persisted `removed`
+with an empty locator) — the conversion now preserves the exact
+locator with first-use execution and readiness bootstrapping on the
+first successful load; pre-route refusal receipts reused the
+executable request identity, sealing valid retries and even returning
+an old success receipt as a "refusal" — refusals now mint distinct
+reason-bound identities, proven through the decision service and the
+delivery HTTP route; the durable Rails journal lost its egress badge —
+one badge equal to the widest frozen boundary now persists; and known
+route failures were ledgered as `indeterminate` — true outcomes
+persist. The orchestrator's sweep caught the first Rails-migration fix
+leaking into generic deployment resolution (it briefly became the
+current Thought deployment on a fresh rig) — the migration now gates
+on an enabled observer and its deployment is capability-owned,
+invisible to the generic setup projection, with a marker-replay
+repair. Confirming sweep: **6470 passed / zero branch-new** (48
+inherited plus three known xdist flakes, each serial-green twice).
+Next: Phase F, then the story close.
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

@@ -1361,7 +1361,22 @@ class InferenceRoutePlanService:
                 and deployment.engine in {"mlx", "faster-whisper"}
                 and getattr(capability, "id", "") in {"speech.transcribe", "speech.preload"}
             )
-            executable = enabled and (readiness in {"ready", "unknown"} or unloaded_local_speech)
+            # Rails' exact saved same-device deployment is likewise allowed one
+            # first frozen execution without a migration-time load/probe.  Its
+            # private artifact locator is already fixed; the successful physical
+            # load records readiness for later freezes.
+            unloaded_local_rails = (
+                int(value.get("profile_schema_version", 2)) == 2
+                and readiness == "unavailable"
+                and deployment.kind == "this_device"
+                and deployment.boundary == "same_device"
+                and deployment.engine == "configured_local_engine"
+                and deployment.runtime_revision == "rails-observer-this-machine-v1"
+                and getattr(capability, "id", "") == "background.rails_summary"
+            )
+            executable = enabled and (
+                readiness in {"ready", "unknown"} or unloaded_local_speech or unloaded_local_rails
+            )
             preflight.append({
                 "route_leg_ordinal": expected,
                 "eligibility": "executable" if executable else "known_preflight_unavailable",

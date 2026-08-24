@@ -154,6 +154,16 @@ class InferenceParentRouteBundleService:
         """
         command = _safe(command_id, field="command_id")
         refusal = _safe(reason, field="refusal_reason")
+        # A pre-route refusal is a different terminal action from the later
+        # executable bundle.  Its identity is deterministic for an identical
+        # refusal, content-free, and reason-bound, but it deliberately never
+        # reuses the executable command identity: a repair (for example an
+        # assignment created after a refusal) must be able to freeze its route.
+        refusal_identity = "pre-route-refusal:" + _sha256({
+            "schema": "InferencePreRouteRefusalIdentity@1",
+            "command_id": command,
+            "reason": refusal,
+        }).removeprefix("sha256:")
         parent = self._parents.start(
             principal,
             kind=str(parent_kind),
@@ -162,7 +172,7 @@ class InferenceParentRouteBundleService:
             input_snapshot=dict(input_snapshot),
             deadline_at=float(deadline_at),
             child_budget=0,
-            idempotency_key=command,
+            idempotency_key=refusal_identity,
         )
         existing = self._broker.store.receipt(parent.operation_id)
         if existing is None:
@@ -171,6 +181,13 @@ class InferenceParentRouteBundleService:
                 "refused",
                 f"parent-route-bundle:{refusal}",
                 principal=principal,
+            )
+        if str(existing.get("outcome") or "") != "refused":
+            # Never reinterpret an executable (or any other) terminal receipt
+            # as a refusal merely because an identity store returned it.
+            raise ConflictError(
+                "Pre-route refusal identity resolved to a non-refusal receipt.",
+                code="inference_pre_route_refusal_identity_conflict",
             )
         return {"parent": parent, "receipt": dict(existing)}
 

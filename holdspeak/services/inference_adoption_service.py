@@ -2058,17 +2058,38 @@ class RoutedInferenceCoordinator:
     def record_local_speech_readiness_after_load(
         self, principal: Principal, *, deployment_revision_id: str
     ) -> dict[str, Any]:
-        """Record the first successful same-device speech load without probing.
-
-        The lifecycle child already performed the only truthful observation: it
-        returned successfully after loading the exact frozen deployment. This
-        advances the binding head so later route freezes see the durable fact;
-        the current frozen Meeting route remains independent of that mutation.
-        """
+        """Record the first successful same-device speech load without probing."""
         if principal.kind is not PrincipalKind.OWNER:
             raise ValidationError(
                 "Owner authority is required.", code="inference_adoption_owner_required"
             )
+        return self._record_local_readiness_after_load(
+            deployment_revision_id=deployment_revision_id,
+            reason_code="loaded_under_speech_preload",
+        )
+
+    def record_local_rails_readiness_after_load(
+        self, principal: Principal, *, deployment_revision_id: str
+    ) -> dict[str, Any]:
+        """Record Rails' first successful frozen local load, never a probe."""
+        if not (
+            principal.kind is PrincipalKind.SERVICE
+            and principal.identity == "rails-observer"
+            and principal.authority_basis == "rails-observer:journal-only"
+        ):
+            raise ValidationError(
+                "Rails observer authority is required.",
+                code="inference_adoption_rails_service_required",
+            )
+        return self._record_local_readiness_after_load(
+            deployment_revision_id=deployment_revision_id,
+            reason_code="loaded_under_rails_observer",
+        )
+
+    def _record_local_readiness_after_load(
+        self, *, deployment_revision_id: str, reason_code: str
+    ) -> dict[str, Any]:
+        """Advance only after a successful physical leaf proved the frozen locator."""
         revision_id = _safe(deployment_revision_id, field="deployment_revision_id")
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
@@ -2107,7 +2128,7 @@ class RoutedInferenceCoordinator:
                         int(row["deployment_configuration_revision"]),
                         revision_id,
                         "ready",
-                        "loaded_under_speech_preload",
+                        reason_code,
                         now,
                     ),
                 )
@@ -2169,8 +2190,38 @@ class RoutedInferenceCoordinator:
         assignments = InferenceAssignmentService(self._db, registry=self._registry)
         existing = assignments.migration_marker(principal, family=RAILS_OBSERVER_MIGRATION_FAMILY)
         if existing is not None:
+            # A pre-fix marker may have materialized this Rails-only artifact as
+            # active. Repair that older footprint without re-reading Config or
+            # re-running migration selection: Rails execution is assignment-led,
+            # so it must never participate in the generic local-artifact lookup.
+            with self._db._connection() as conn:
+                try:
+                    conn.execute(
+                        """UPDATE inference_deployments SET active=0
+                           WHERE active=1 AND artifact_id IN (
+                               SELECT artifact_id FROM inference_model_artifacts
+                               WHERE source_kind='legacy-rails-observer'
+                           )"""
+                    )
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+                    raise
             return {**existing, "status": "migrated", "legacy_config_read": False}
         rails = getattr(config, "rails_observer", None)
+        # Rails is off by default.  A default-constructed blank selector is not
+        # saved observer intent, so it must not mint an otherwise generic local
+        # deployment merely because the meeting default happens to name a path.
+        # The historic ``this_machine`` sentinel is meaningful only for an
+        # enabled observer: that is the installed feature which would have read
+        # the saved selector.
+        if not bool(getattr(rails, "enabled", False)):
+            return {
+                "family": RAILS_OBSERVER_MIGRATION_FAMILY,
+                "status": "not_applicable",
+                "reason_code": "rails_observer_disabled",
+                "legacy_config_read": True,
+            }
         configured = str(getattr(rails, "profile_id", "") or "").strip()
         source_selector = configured or "this_machine"
         source: dict[str, Any] = {"profile_id": source_selector}
@@ -2302,9 +2353,13 @@ class RoutedInferenceCoordinator:
                    (artifact_id,format,source_kind,source_repository,source_revision,manifest_json,
                     manifest_sha256,installed_bytes,state,local_locator,created_at,verified_at)
                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                # The saved selector is the exact historical local locator.  It
+                # is a truthful private artifact declaration, not a migration
+                # probe: readiness remains unavailable until first execution
+                # successfully loads this frozen deployment.
                 (artifact_id, "gguf", "legacy-rails-observer", "this_machine",
                  "rails-observer-this-machine-v1", _canonical({"same_device_deployment_sha256": source["same_device_deployment_sha256"]}),
-                 deployment.manifest_sha256, 1, "removed", "", now, now),
+                 deployment.manifest_sha256, 1, "verified", local_path, now, now),
             )
             conn.execute(
                 """INSERT INTO deployment_revisions
@@ -2322,8 +2377,13 @@ class RoutedInferenceCoordinator:
                    (deployment_id,destination_id,runtime_id,runtime_revision,artifact_id,model_identity,
                     context_ceiling,recommended_context,capability_json,capability_sha256,execution_revision_id,
                     configuration_revision,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                # This is capability-owned route material, not the owner's
+                # generic current Thought deployment.  Keep it inactive so
+                # locator-based Thought resolution cannot adopt the Rails
+                # artifact; the explicit background.rails_summary assignment
+                # below is its only execution authority.
                 (deployment_id, "this_machine", deployment.runtime_id, deployment.runtime_revision, artifact_id,
-                 model, 16384, 16384, _canonical(manifest), str(manifest["sha256"]), deployment.id, 1, 1, now, now),
+                 model, 16384, 16384, _canonical(manifest), str(manifest["sha256"]), deployment.id, 1, 0, now, now),
             )
             observation_id = "ready-" + profile_id
             # No probe occurred.  This is deliberately unavailable until the

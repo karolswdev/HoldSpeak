@@ -559,6 +559,120 @@ def _drive_delivery_review(tmp_path, monkeypatch) -> SurfaceRun:
     )
 
 
+def test_delivery_http_refusal_identity_keeps_valid_pr_retries_executable(tmp_path, monkeypatch) -> None:
+    """E-F2 through the real delivery route and product bundle/controller path."""
+    import holdspeak.db as hsdb
+    from fastapi import FastAPI, Request
+    from fastapi.testclient import TestClient
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes.delivery_prs import build_delivery_prs_router
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+
+    reset_database()
+    db = Database(tmp_path / "delivery-refusal-identity.db")
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    _ready_this_machine(tmp_path, monkeypatch)
+    _profile(db, "delivery-refusal-route")
+    assignments = InferenceAssignmentService(db)
+    assignments.set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-delivery-refusal-route", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "delivery.pr_review_draft"},
+        "entries": [{"profile_id": "delivery-refusal-route", "profile_revision": 1}],
+    })
+    physical: list[str] = []
+
+    class Engine:
+        def run_prompt(self, **_):
+            physical.append("physical")
+            return "A bounded review draft."
+
+    monkeypatch.setitem(
+        InferenceRunner.__init__.__kwdefaults__, "engine_factory", lambda _revision, **_: Engine()
+    )
+    _configure(db)
+
+    class DeliveryMaterial:
+        def action_context(self, _source_id, _number):
+            return {"status": "ok", "row": {"verbs": {"draft_review": {"available": True}}}}
+
+        def review_material(self, source_id, number):
+            return {
+                "status": "ok",
+                "diff": f"diff --git a/{source_id} b/{source_id}\\n+{number}",
+                "revision": "revision-identity",
+                "linked": [],
+            }
+
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def principal(request: Request, call_next):
+        request.state.principal = OWNER
+        return await call_next(request)
+
+    app.include_router(build_delivery_prs_router(
+        WebContext(get_state=lambda: {}, delivery_service=object()), service=DeliveryMaterial()
+    ))
+    with TestClient(app) as client:
+        # Override first cannot poison the valid request identity.
+        override_first = client.post(
+            "/api/delivery/prs/source-a/1/draft-review",
+            json={"inference_target_id": "retired-target"},
+        )
+        repaired = client.post("/api/delivery/prs/source-a/1/draft-review", json={})
+        assert override_first.status_code == 409
+        assert override_first.json()["error"] == "inference_request_target_override_retired"
+        assert override_first.json()["parent_receipt"]["outcome"] == "refused"
+        assert repaired.status_code == 200, repaired.text
+        assert repaired.json()["parent_receipt"]["outcome"] == "succeeded"
+        assert repaired.json()["parent_receipt"]["receipt_id"] != override_first.json()["parent_receipt"]["receipt_id"]
+
+        # Success first likewise gets a separate stale-override refusal rather
+        # than re-labeling its succeeded receipt or falling through to 500.
+        succeeded = client.post("/api/delivery/prs/source-b/2/draft-review", json={})
+        stale = client.post(
+            "/api/delivery/prs/source-b/2/draft-review",
+            json={"inference_target_id": "retired-target"},
+        )
+        assert succeeded.status_code == 200, succeeded.text
+        assert stale.status_code == 409, stale.text
+        assert stale.json()["error"] == "inference_request_target_override_retired"
+        assert stale.json()["parent_receipt"]["outcome"] == "refused"
+        assert stale.json()["parent_receipt"]["receipt_id"] != succeeded.json()["parent_receipt"]["receipt_id"]
+
+        # Removing then restoring the exact assignment repairs a fresh request.
+        current = assignments.get_assignment(
+            ASSIGNMENT_OWNER, {"kind": "capability", "capability_id": "delivery.pr_review_draft"}
+        )
+        cleared = assignments.clear_assignment(ASSIGNMENT_OWNER, {
+            "command_id": "clear-delivery-assignment", "expected_revision": current["revision"],
+            "scope": {"kind": "capability", "capability_id": "delivery.pr_review_draft"},
+            "capability_id": "delivery.pr_review_draft",
+        })
+        missing = client.post("/api/delivery/prs/source-c/3/draft-review", json={})
+        assert missing.status_code == 409 and missing.json()["parent_receipt"]["outcome"] == "refused"
+        assignments.set_assignment(ASSIGNMENT_OWNER, {
+            "command_id": "restore-delivery-assignment", "expected_revision": cleared["revision"],
+            "scope": {"kind": "capability", "capability_id": "delivery.pr_review_draft"},
+            "entries": [{"profile_id": "delivery-refusal-route", "profile_revision": 1}],
+        })
+        recovered = client.post("/api/delivery/prs/source-c/3/draft-review", json={})
+        assert recovered.status_code == 200, recovered.text
+
+        # Same PR material is a replay, so no second physical call/artifact.
+        replay = client.post("/api/delivery/prs/source-a/1/draft-review", json={})
+        assert replay.status_code == 200
+        assert replay.json()["artifact_id"] == repaired.json()["artifact_id"]
+
+    assert physical == ["physical", "physical", "physical"]
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 3
+        assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == 3
+        assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 3
+        assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 3
+
+
 def _drive_voice(tmp_path, monkeypatch) -> SurfaceRun:
     from tests.unit.test_voice_resolve import OWNER as VOICE_OWNER
     from tests.unit.test_voice_resolve import _admitted_voice_rig

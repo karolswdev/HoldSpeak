@@ -182,8 +182,13 @@ def run_owner_draft(
         and published is not None
         and (result_is_usable is None or result_is_usable(published))
     )
+    # The route controller distinguishes a known terminal failure from dispatch
+    # uncertainty.  Preserve that durable truth at the adopter parent: only the
+    # controller's actual ``indeterminate`` result may become indeterminate.
     parent_outcome = "succeeded" if usable else (
-        "refused" if outcome == "refused" else "failed" if outcome == "succeeded" else "indeterminate"
+        "failed" if outcome == "succeeded" else outcome
+        if outcome in {"refused", "failed", "cancelled", "indeterminate"}
+        else "indeterminate"
     )
     result_ref = f"{route_key}:" + str(
         (routed.get("receipt") or {}).get("receipt_id") or outcome

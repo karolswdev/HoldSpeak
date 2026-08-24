@@ -223,6 +223,32 @@ Confirming sweep: **6464 passed / zero branch-new** (48 inherited + 2
 known xdist flakes serial-green ×2). **All four Phase E adopters are
 routed.** Next: the capped Phase E counsel pass, then Phase F.
 
+**Phase E counsel pass (2026-08-24): RATIFIED-WITH-NOTES — Phase E is
+CLOSED.** Sol's capped implementation pass found four ordinary-path
+receipt-truth defects, all fixed in the single permitted round
+(record: `assets/story-08-phase-e-counsel.md`): the migrated Rails
+sentinel was permanently non-executable (artifact persisted `removed`
+with an empty locator + hard-unavailable readiness) — the conversion
+now keeps the exact locator, first use may try it, and readiness
+bootstraps on the first successful admitted load; refusal identities
+aliased the executable bundle identity (a refusal sealed the request
+so clean retries failed, and a stale-override "refusal" could return
+the old succeeded receipt) — refusals now mint their own reason-bound
+namespace identity proven through both product surfaces in five
+sequences; the persisted Rails journal dropped the egress badge — one
+`[egress: <boundary>]` badge now persists, equal to the widest frozen
+boundary; and known route failures were relabeled `indeterminate` —
+true outcomes persist, only genuine dispatch uncertainty stays
+indeterminate. The orchestrator's sweep additionally caught the E-F1
+fix polluting generic deployment resolution (the Rails artifact
+became the current THOUGHT deployment in a fresh rig, and the
+migration fired on a default-constructed disabled config) — the
+migration now gates on an enabled observer, the Rails deployment is
+capability-owned and invisible to the generic setup projection, and a
+marker replay repairs any pre-fix footprint. Confirming sweep:
+**6470 passed / zero branch-new.** Next: Phase F (legacy authority
+removal, census closure), then story close.
+
 ## Problem
 
 MeetingIntelPlan and SpeechPlan are the proven ordered-revision pattern but

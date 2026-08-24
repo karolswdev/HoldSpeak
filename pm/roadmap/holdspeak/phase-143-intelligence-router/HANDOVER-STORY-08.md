@@ -56,7 +56,7 @@ this whole file before touching anything.
   completed runs are trustworthy. Census/snapshot regens are the LAST
   act of any worker round (anchors move with every edit).
 
-## 2. What is DONE and COMMITTED (seventeen gate commits)
+## 2. What is DONE and COMMITTED (eighteen gate commits)
 
 Branch `feat/hs143-08-meeting-adoption`, all on top of main `89d232f3`.
 
@@ -160,7 +160,22 @@ Branch `feat/hs143-08-meeting-adoption`, all on top of main `89d232f3`.
     (inference_request_target_override_retired, receipt-backed).
     Successful draft parent receipts retain the artifact ID. One
     stale rig migrated to assignment authority. **ALL FOUR PHASE E
-    ADOPTERS ARE ROUTED.**
+    ADOPTERS ARE ROUTED.** Committed `abe4bb63`.
+16. **Phase E counsel fix round** (the commit carrying this handover
+    revision) — Sol's capped pass found four receipt-truth defects,
+    all fixed (record: assets/story-08-phase-e-counsel.md): E-F1
+    migrated Rails sentinel executable (locator preserved, first-use
+    exception for the exact migrated revision, readiness bootstraps
+    on first load; sweep catch folded in: migration gates on an
+    ENABLED observer, deployment capability-owned active=0 + excluded
+    from generic setup projection + marker-replay repair — it briefly
+    hijacked current_thought_deployment); E-F2 refusal identities in
+    their own namespace (pre-route-refusal: + sha256 of
+    schema/command/reason; never returns a non-refusal receipt);
+    E-F3 durable Rails journal carries one [egress: <boundary>]
+    badge = widest frozen boundary; E-F4 known terminal outcomes
+    persist (failed stays failed; only dispatch uncertainty is
+    indeterminate). **PHASE E RATIFIED-WITH-NOTES — CLOSED.**
 
 Counsel records (verbatim, with orchestrator dispositions):
 `assets/story-08-c1-checkpoint-counsel-round1.md` (5 rounds + owner
@@ -172,8 +187,8 @@ with verified file:line evidence in
 findings + dispositions). Verification ledger sweep section:
 `assets/story-08-tranche-ac-verification-ledger.md`.
 
-Last clean sweep (Phase E complete tree): **6464 passed / 50 failed /
-zero branch-new** — 48 inherited + 2 known xdist flakes serial-green
+Last clean sweep (Phase E ratified tree): **6470 passed / 51 failed /
+zero branch-new** — 48 inherited + 3 known xdist flakes serial-green
 ×2; the branch now FIXES a dozen-odd inherited failures. From 6314
 passing at the restart-session start.
 
@@ -201,18 +216,16 @@ sigkill process-input, github-enrichment preview.
 
 ## 4. What REMAINS for Story 08
 
-1. Capped Sol counsel pass on Phase E (all four adopters) — one
-   ruling + one fix round max, bar stated.
-2. Phase F — migration cleanup (legacy authority removal; the design's
+1. Phase F — migration cleanup (legacy authority removal; the design's
    compatibility cutover; the deferred lexical-punctuation stance
    stays future/non-assignable).
-3. Story 08 close: full-suite sweep, `dw evidence capture` of the real
+2. Story 08 close: full-suite sweep, `dw evidence capture` of the real
    verification, story flip to done WITH evidence in the same commit,
    phase-status/README cadence updates.
-4. Then Stories 09–14 remain for the phase (tools, agents/workbenches,
+3. Then Stories 09–14 remain for the phase (tools, agents/workbenches,
    HTTP/MCP sync, Model Library UI, Assignments UI, chaos glass) — not
    this handover's scope.
-5. Push + PR ONLY when the owner says so.
+4. Push + PR ONLY when the owner says so.
 
 ## 5. The final outcome (what "done" means)
 

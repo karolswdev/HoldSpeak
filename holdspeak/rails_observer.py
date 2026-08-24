@@ -22,6 +22,7 @@ import time
 from typing import Any, Callable, Optional
 
 JOURNAL_TAG = "rails-journal"
+_EGRESS_BOUNDARY_RANK = {"local": 0, "mesh": 1, "private_network": 2, "cloud": 3}
 
 # HS-88-04: a remote node whose last envelope is older than this reads
 # stale — its buffered stream stops, never fabricated (the Phase-85
@@ -148,11 +149,15 @@ def journal_body(batch: dict[str, Any]) -> str:
     listing = "\n".join(f"- {line}" for line in format_events_for_model(events).splitlines())
     receipt = str(batch.get("route_receipt_id") or "").strip()
     reference = f"\n\n_(route receipt: {receipt})_" if receipt else ""
+    egress = str(batch.get("egress") or "").strip()
+    # One frozen route batch has one widest boundary.  Carry it as one compact,
+    # visible badge rather than narrating privacy policy into the journal.
+    badge = f"\n\n[egress: {egress}]" if egress in _EGRESS_BOUNDARY_RANK else ""
     if batch.get("degraded"):
         tail = "_(summary unavailable — the local model did not answer; events recorded verbatim)_"
     else:
         tail = str(batch.get("summary") or "")
-    return f"{header}\n\n{listing}\n\n{tail}{reference}".rstrip()
+    return f"{header}{badge}\n\n{listing}\n\n{tail}{reference}".rstrip()
 
 
 def record_journal_entry(db: Any, batch: dict[str, Any], *, title: str) -> Any:
@@ -412,8 +417,13 @@ def build_profile_summarizer(profile_id: Optional[str] = None, *, db: Any = None
             )
             raise RailsSummaryUnavailable("rails_summary_unavailable", str(receipt.get("receipt_id") or "")) from exc
         outcome = str(routed.get("outcome") or "indeterminate")
-        parent_outcome = "succeeded" if outcome == "succeeded" else (
-            "refused" if outcome == "refused" else "indeterminate"
+        # A known route failure is not dispatch uncertainty.  Keep every known
+        # controller terminal outcome at the SERVICE parent; only a genuinely
+        # indeterminate route remains indeterminate here.
+        parent_outcome = (
+            outcome
+            if outcome in {"succeeded", "refused", "failed", "cancelled", "indeterminate"}
+            else "indeterminate"
         )
         receipt = broker.parent_run_controller.close(
             parent.context,
@@ -421,6 +431,14 @@ def build_profile_summarizer(profile_id: Optional[str] = None, *, db: Any = None
             "rails-summary:" + str((routed.get("receipt") or {}).get("receipt_id") or outcome),
             principal=principal,
         )
+        entry = route["entries"][0]
+        if outcome == "succeeded" and int(entry.get("profile_schema_version", 1)) == 2:
+            # The child has completed and the parent receipt is now durable;
+            # this is the first truthful observation of a migrated local path.
+            adoption.record_local_rails_readiness_after_load(
+                principal,
+                deployment_revision_id=str(entry["deployment_revision_id"]),
+            )
         summarize.last_receipt_id = str(receipt.get("receipt_id") or "")
         summarize.last_egress = frozen_egress if outcome == "succeeded" else ""
         if outcome != "succeeded" or not isinstance(routed.get("result"), dict):
