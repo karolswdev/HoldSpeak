@@ -73,6 +73,15 @@ class MeetingDeferredQueueBinder:
         }
         for slug in tuple(job.displaced_work or ()):
             capability = displaced_capabilities.get(str(slug))
+            # The V3 descriptor freezes concrete label operations. A historical
+            # bookmark slug with zero surviving operations is no work at all;
+            # declaring its route would make bundle budgeting disagree with the
+            # parent declaration and wrongly block the base summary.
+            if (
+                capability == "meeting.bookmark_label"
+                and not tuple(job.frozen_bookmark_operations or ())
+            ):
+                continue
             if capability is not None and capability not in seen:
                 routes.append(
                     {

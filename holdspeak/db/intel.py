@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
+import uuid
 from datetime import datetime
 from typing import Optional, Any, Callable, Mapping, Sequence
 
@@ -119,6 +121,11 @@ ROUTED_INTEL_RETRY_REASON = "Retry remaining routed intelligence requested."
 
 _ACTIVE_JOB_STATUSES = ("reserved", "queued", "claimed", "running", "failed")
 _TERMINAL_JOB_STATUSES = ("succeeded", "superseded", "skipped")
+
+# A C1 bound queue row may have exactly one live executor across worker, HTTP,
+# and CLI processes. The bearer is renewed by the runner; a crashed runner leaves
+# a finite stale window that stored-ID recovery may take over with a new epoch.
+BOUND_EXECUTOR_LEASE_SECONDS = 15.0
 
 # Readers must select a lineage leaf before deciding whether it is unresolved.
 # Filtering terminal successors first resurrects a failed ancestor after retry
@@ -341,15 +348,76 @@ class IntelRepository(BaseRepository):
         return job_id
 
     def get_bound_claimed_intel_job(self) -> Optional[IntelJob]:
-        """Recover one committed C1 bound owner without granting a new claim."""
+        """Return only a stale bound owner eligible for stored-ID recovery.
+
+        A live lease means another worker, HTTP Process request, or CLI owns the
+        executor.  Recovering it would be a second runner, not crash recovery.
+        Historical C1 rows without a lease are treated as stale so upgrades retain
+        their stored-ID recovery path.
+        """
+        now = time.time()
         with self._connection() as conn:
             row = conn.execute(
                 """SELECT * FROM intel_jobs WHERE status IN ('claimed','running')
                    AND parent_operation_id IS NOT NULL AND bundle_id IS NOT NULL
                    AND bundle_sha256 IS NOT NULL AND claim_id IS NOT NULL
-                   ORDER BY requested_at ASC LIMIT 1"""
+                   AND (executor_lease_expires_at IS NULL OR executor_lease_expires_at<=?)
+                   ORDER BY requested_at ASC LIMIT 1""",
+                (now,),
             ).fetchone()
         return self._job_from_row(row) if row is not None else None
+
+    def take_over_stale_bound_executor(self, job_id: str) -> Optional[IntelJob]:
+        """Atomically fence a stale C1 executor and return its new lease bearer."""
+        now = time.time()
+        token = "intel_executor_" + uuid.uuid4().hex
+        expires_at = now + BOUND_EXECUTOR_LEASE_SECONDS
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            result = conn.execute(
+                """UPDATE intel_jobs SET executor_lease_token=?,
+                       executor_lease_epoch=executor_lease_epoch+1,
+                       executor_lease_expires_at=?,updated_at=?
+                   WHERE job_id=? AND status IN ('claimed','running')
+                     AND parent_operation_id IS NOT NULL AND bundle_id IS NOT NULL
+                     AND bundle_sha256 IS NOT NULL AND claim_id IS NOT NULL
+                     AND (executor_lease_expires_at IS NULL OR executor_lease_expires_at<=?)""",
+                (token, expires_at, datetime.now().isoformat(), job_id, now),
+            )
+            if result.rowcount != 1:
+                conn.rollback()
+                return None
+            row = conn.execute("SELECT * FROM intel_jobs WHERE job_id=?", (job_id,)).fetchone()
+            conn.commit()
+        return self._job_from_row(row) if row is not None else None
+
+    def renew_bound_executor_lease(self, job: IntelJob) -> bool:
+        """Extend this exact bearer lease; false means takeover/terminality won."""
+        if not job.job_id or not job.executor_lease_token or not job.executor_lease_epoch:
+            return False
+        now = time.time()
+        with self._connection() as conn:
+            result = conn.execute(
+                """UPDATE intel_jobs SET executor_lease_expires_at=?,updated_at=?
+                   WHERE job_id=? AND executor_lease_token=? AND executor_lease_epoch=?
+                     AND status IN ('claimed','running')""",
+                (
+                    now + BOUND_EXECUTOR_LEASE_SECONDS, datetime.now().isoformat(),
+                    job.job_id, job.executor_lease_token, int(job.executor_lease_epoch),
+                ),
+            )
+            return result.rowcount == 1
+
+    def release_bound_executor_lease(self, job: IntelJob) -> None:
+        """Expire an exact executor bearer after its worker returns."""
+        if not job.job_id or not job.executor_lease_token or not job.executor_lease_epoch:
+            return
+        with self._connection() as conn:
+            conn.execute(
+                """UPDATE intel_jobs SET executor_lease_expires_at=?
+                   WHERE job_id=? AND executor_lease_token=? AND executor_lease_epoch=?""",
+                (time.time(), job.job_id, job.executor_lease_token, int(job.executor_lease_epoch)),
+            )
 
     def get_bound_terminal_pending_close_intel_job(self) -> Optional[IntelJob]:
         """Recover an old terminal queue row whose bound parent lacks a receipt."""
@@ -693,13 +761,17 @@ class IntelRepository(BaseRepository):
             required = {"parent_operation_id", "bundle_id", "bundle_sha256"}
             if set(binding) != required or not all(str(binding[key]).strip() for key in required):
                 raise ValueError("bound queue claim returned invalid parent/bundle references")
+            lease_token = "intel_executor_" + uuid.uuid4().hex
+            lease_expires_at = time.time() + BOUND_EXECUTOR_LEASE_SECONDS
             result = conn.execute(
                 """UPDATE intel_jobs SET status='claimed',lifecycle_posture='claimed',
                     claim_id=?,parent_operation_id=?,bundle_id=?,bundle_sha256=?,
-                    attempts=attempts+1,updated_at=?,last_error=NULL
+                    executor_lease_token=?,executor_lease_epoch=1,
+                    executor_lease_expires_at=?,attempts=attempts+1,updated_at=?,last_error=NULL
                     WHERE job_id=? AND status='queued'""",
                 (command_ids["claim_id"], str(binding["parent_operation_id"]),
-                 str(binding["bundle_id"]), str(binding["bundle_sha256"]), now, job_id),
+                 str(binding["bundle_id"]), str(binding["bundle_sha256"]), lease_token,
+                 lease_expires_at, now, job_id),
             )
             if result.rowcount != 1:
                 return None
@@ -1184,6 +1256,18 @@ class IntelRepository(BaseRepository):
             bundle_sha256=(
                 str(row["bundle_sha256"])
                 if "bundle_sha256" in keys and row["bundle_sha256"] else None
+            ),
+            executor_lease_token=(
+                str(row["executor_lease_token"])
+                if "executor_lease_token" in keys and row["executor_lease_token"] else None
+            ),
+            executor_lease_epoch=(
+                int(row["executor_lease_epoch"])
+                if "executor_lease_epoch" in keys and row["executor_lease_epoch"] else 0
+            ),
+            executor_lease_expires_at=(
+                float(row["executor_lease_expires_at"])
+                if "executor_lease_expires_at" in keys and row["executor_lease_expires_at"] is not None else None
             ),
             lifecycle_posture=(
                 str(row["lifecycle_posture"])

@@ -273,3 +273,72 @@ counsel's remediations as acceptance criteria plus a same-class sweep duty
 (other receipt→transition crash boundaries; other publication sites dropping
 frozen identity fields) so the class closes, not just the instances. Round 3
 follows the fix round and its full sweep.
+
+---
+
+# Round 3 (Sol, same counsel session, reviewed at `c8296959`) — DO-NOT-RATIFY
+
+All three round-2 remediations PASS under the counsel's own probes: the
+promotion scan is concurrency-safe (simultaneous repositories → one
+transition, one event), the legacy/V3 recognition predicate behaves
+correctly under transcript drift in both windows (while-claimed → staging
+fence supersedes; after-terminal → lawful changed-hash successor), and
+strict bookmark publication holds for duplicate-timestamp and
+delete-and-replace. C1 census registration confirmed correct. Amendments
+1 and 3 PASS; 4–6 and plugins stay correctly deferred. Two findings:
+
+1. **BLOCKER — no exclusive executor ownership (amendment 2 FAIL).**
+   `process_next_intel_job()` treats any bound claimed/running row as
+   crash recovery without checking for a live executor; reconstruction
+   takes no lease. Reachable interleaving: background drain vs
+   HTTP/service Process. Executed probe: worker B "recovered" worker A's
+   in-flight job → `physical_calls=1, runner_invokes=2`, the successful
+   provider return became an indeterminate child receipt, parent FAILED,
+   job failed, an extra successor queued, two scheduled_retry events —
+   one successful attempt discarded, one extra physical attempt
+   permitted. Remediation (structural, class-level): a durable exclusive
+   queue-executor lease/takeover CAS — fresh claim grants one executor;
+   recovery adopts only a provably stale executor; must cover
+   same-process (background vs HTTP) AND cross-process (CLI) competition
+   (neither a process-local lock nor a process-ID-only lease suffices
+   alone). Proof matrix: worker A blocked inside analysis + worker B
+   through the competing drain → one runner invocation, one physical
+   call, one succeeded child/parent/job, no retry event or successor;
+   AND genuine process loss still recovers by stored IDs. Evidence:
+   db/intel.py:343-352; intel_queue.py:390-400,1014-1029;
+   deferred_bound.py:87-130; meeting_intel_service.py:30-38; design
+   §one-owner (story-08-phase-c-deferred-design.md:90).
+2. **HIGH — zero-frozen-bookmark route terminally kills the summary.**
+   Deleting the last bookmark between legacy Stop and the delayed bound
+   claim freezes `bookmark_operations: []`, but the binder still
+   declares the bookmark route from the historical slug and budgets it
+   at zero; the bundle service counts one allowance per declared route →
+   `ConflictError: Parent route budget changed during admission`, V3 job
+   terminal failed, Meeting glass error, zero physical calls — the base
+   summary never runs. Remediation: omit/normalize the zero-operation
+   route out of the bound declaration before budgeting; preserve base
+   analysis. Proof: delete final bookmark between Stop and claim → no
+   bookmark member/child, consistent budget, one successful analysis,
+   Meeting ready, no route-integrity refusal. Evidence:
+   intel_admission.py:422-433; db/intel.py:90-114;
+   meeting_deferred_queue_binding.py:60-85,123-137;
+   inference_parent_route_bundle_service.py:275-313.
+
+Same-class sweep dispositions: only the claimed-owner concurrency and
+zero-frozen-bookmark cases overturned; analysis/title publication, strict
+bookmark publication, record_only, pending-close, and unbound-shell
+dispositions stand. Physical-cancellation limitation remains adequate for
+a correctly single-owned parent but must not be restated system-wide
+until finding 1 closes. Tired-Tuesday: no — Process during background
+activity can discard a successful result; a deleted last bookmark can
+terminally prevent the summary.
+
+## Orchestrator disposition (round 3)
+
+Both findings accepted without dissent. Finding 1 is recognized as the
+ORCHESTRATION §2b escalation case — a defect class (execution ownership),
+not an isolated defect — so the round-4 brief mandates the structural
+lease with the counsel's full concurrency matrix, not a spot patch. The
+ruled design itself stays closed (the counsel: "Fix execution ownership;
+do not reopen cancellation architecture"). Round 4 verification follows
+the fix round and its sweep.

@@ -79,6 +79,11 @@ class IntelJob:
     parent_operation_id: Optional[str] = None
     bundle_id: Optional[str] = None
     bundle_sha256: Optional[str] = None
+    # Durable bearer lease for the one C1 queue executor. It is opaque evidence,
+    # not a Meeting-facing field.
+    executor_lease_token: Optional[str] = None
+    executor_lease_epoch: int = 0
+    executor_lease_expires_at: Optional[float] = None
     lifecycle_posture: Optional[str] = None
 
 

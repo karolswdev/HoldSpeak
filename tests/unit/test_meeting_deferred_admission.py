@@ -533,6 +533,12 @@ def test_stop_and_recovery_replays_preserve_v3_handoff_leaf(tmp_path, monkeypatc
         assert conn.execute(
             "SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)
         ).fetchone()[0] == 2
+        # This test models a process loss after conversion/claim; a live lease
+        # must not be adopted, while a stale one preserves stored-ID recovery.
+        conn.execute(
+            "UPDATE intel_jobs SET executor_lease_expires_at=0 WHERE job_id=?",
+            (claimed.job_id,),
+        )
 
     assert process_next_intel_job() is True
     ready = db.meetings.get_meeting(state.id)
@@ -551,6 +557,130 @@ def test_stop_and_recovery_replays_preserve_v3_handoff_leaf(tmp_path, monkeypatc
     assert len(engine.analyzed) == 1
 
 
+def test_zero_frozen_bookmarks_omit_label_route_and_preserve_analysis(tmp_path, monkeypatch):
+    """A deleted final bookmark cannot make C1's base summary route-integrity fail."""
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+
+    db, broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(
+        db, "m-zero-frozen-bookmarks", bookmarks=(0.5,),
+        displaced_work=("bookmark-labels",), legacy_claimed=False,
+        legacy_stop_handoff=True,
+    )
+    with db._connection() as conn:
+        conn.execute("DELETE FROM bookmarks WHERE meeting_id=?", (state.id,))
+    claimed = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+    assert claimed is not None and claimed.parent_operation_id and claimed.bundle_id
+    with db._connection() as conn:
+        members = conn.execute(
+            "SELECT capability_id FROM inference_parent_route_bundle_members WHERE bundle_id=?",
+            (claimed.bundle_id,),
+        ).fetchall()
+        budget = conn.execute(
+            "SELECT child_budget FROM kernel_parent_runs WHERE operation_id=?",
+            (claimed.parent_operation_id,),
+        ).fetchone()[0]
+        # Simulate process loss after the durable C1 claim; recovery must retain
+        # stored-ID execution while the zero-operation route stays omitted.
+        conn.execute(
+            "UPDATE intel_jobs SET executor_lease_expires_at=0 WHERE job_id=?",
+            (claimed.job_id,),
+        )
+    assert [member["capability_id"] for member in members] == ["meeting.deferred_analysis"]
+    assert budget == 4
+    assert process_next_intel_job() is True
+    ready = db.meetings.get_meeting(state.id)
+    assert ready is not None and ready.intel_status == "ready"
+    assert len(engine.analyzed) == 1 and engine.labels == []
+    assert "route_integrity" not in str(db.intel.get_intel_job(state.id))
+
+
+def test_live_bound_executor_lease_excludes_background_http_and_cli_competitors(tmp_path, monkeypatch):
+    """One live lease owns blocked egress across drain and independent connections."""
+    from holdspeak.intel_queue import drain_intel_queue, process_next_intel_job
+
+    db, _broker, engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(db, "m-live-executor-lease", legacy_claimed=False)
+    entered = threading.Event()
+    release = threading.Event()
+    physical_calls = 0
+
+    def blocked_analysis(transcript: str, *, stream: bool = False):
+        nonlocal physical_calls
+        assert stream is False
+        physical_calls += 1
+        entered.set()
+        assert release.wait(timeout=3.0)
+        return engine._result()
+
+    monkeypatch.setattr(engine, "analyze", blocked_analysis)
+    outcome: list[bool] = []
+    worker = threading.Thread(target=lambda: outcome.append(process_next_intel_job()))
+    worker.start()
+    assert entered.wait(timeout=2.0)
+
+    # HTTP/service drain in the same process and a CLI-shaped independent DB
+    # connection both see the durable live bearer, not recoverable work.
+    assert drain_intel_queue(max_jobs=1) == 0
+    other = Database(db.db_path)
+    with other._connection() as conn:
+        live = conn.execute(
+            "SELECT job_id FROM intel_jobs WHERE meeting_id=?", (state.id,)
+        ).fetchone()
+    assert live is not None
+    assert other.intel.get_bound_claimed_intel_job() is None
+    assert other.intel.take_over_stale_bound_executor(str(live["job_id"])) is None
+
+    release.set()
+    worker.join(timeout=3.0)
+    assert not worker.is_alive() and outcome == [True]
+    assert physical_calls == len(requests) == 1
+    parents = _parents(db, PARENT_KIND)
+    assert len(parents) == 1 and parents[0]["state"] == "SUCCEEDED"
+    children = _children(db, parents[0]["operation_id"])
+    assert len(children) == 1
+    assert _broker.store.receipt(children[0]["operation_id"])["outcome"] == "succeeded"
+    with db._connection() as conn:
+        job = conn.execute("SELECT status FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()
+        retries = conn.execute(
+            """SELECT COUNT(*) FROM intel_job_attempts WHERE meeting_id=?
+               AND event_kind IN ('scheduled_retry','retry')""",
+            (state.id,),
+        ).fetchone()[0]
+        successors = conn.execute(
+            "SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=? AND origin_job_id IS NOT NULL",
+            (state.id,),
+        ).fetchone()[0]
+    assert job["status"] == "succeeded" and retries == successors == 0
+
+
+def test_stale_bound_executor_takeover_cas_allows_one_cross_connection_owner(tmp_path, monkeypatch):
+    """Two independent repositories can adopt one stale owner exactly once."""
+    from concurrent.futures import ThreadPoolExecutor
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+
+    db, broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(db, "m-cross-process-lease", legacy_claimed=False)
+    claimed = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+    assert claimed is not None and claimed.job_id
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE intel_jobs SET executor_lease_expires_at=0 WHERE job_id=?",
+            (claimed.job_id,),
+        )
+    other = Database(db.db_path)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        adopted = list(workers.map(
+            lambda repo: repo.intel.take_over_stale_bound_executor(str(claimed.job_id)),
+            (db, other),
+        ))
+    winners = [job for job in adopted if job is not None]
+    assert len(winners) == 1
+    assert winners[0].executor_lease_epoch == 2
+    assert other.intel.get_bound_claimed_intel_job() is None
+
+
 def test_bound_claim_commit_recovers_exact_owner_without_second_egress(tmp_path, monkeypatch):
     """Startup recovery adopts the committed C1b IDs instead of re-resolving."""
     db, broker, _engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
@@ -560,6 +690,13 @@ def test_bound_claim_commit_recovers_exact_owner_without_second_egress(tmp_path,
 
     claimed = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
     assert claimed is not None and claimed.parent_operation_id and claimed.bundle_id
+    # Process loss leaves the first bearer unrenewed. Only a stale durable lease
+    # may be adopted for stored-ID recovery.
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE intel_jobs SET executor_lease_expires_at=0 WHERE job_id=?",
+            (claimed.job_id,),
+        )
     assert process_next_intel_job() is True
     assert process_next_intel_job() is False
     with db._connection() as conn:
