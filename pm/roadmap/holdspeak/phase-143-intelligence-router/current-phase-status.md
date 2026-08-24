@@ -1,6 +1,6 @@
 # Phase 143 - The Intelligence Router
 
-**Last updated:** 2026-08-22.
+**Last updated:** 2026-08-24.
 
 ## Goal
 
@@ -400,6 +400,35 @@ the faster-whisper constructor seam, and the continuity test's
 branch-new** (68 inherited plus four known xdist load flakes, each
 serial-green twice). **Phase D is closed.** Next: Phase E, then
 Phase F.
+**Phase E is open: the design is ruled and slice 1 (Rails observer) is
+SHIPPED (2026-08-24).** The design corrected the charter against the
+code — only the Rails observer is genuine background SERVICE work,
+while Cadence's sole model call, decision promotion, and delivery PR
+review are owner request-time drafts — and Sol ratified it with three
+amendments: the blank Rails profile selector is the documented
+`this_machine` sentinel and converts exactly once into a visible local
+assignment (never guessed; unmappable degrades event-only with no
+partial rows); every pre-route refusal must record one terminal
+refusal receipt through a new refusal-recording seam (Sol probed the
+old path leaving zero receipts); and the legacy per-request target
+overrides retire with a named refusal. Slice 1 put the Rails observer
+on the router: a sealed `rails-observer@1` SERVICE policy and new
+`rails.observer-batch` parent kind, an atomic one-member bundle keyed
+by batch hash so restart replays instead of duplicating a journal note
+or egress, late-staged frozen prompts, the `{summary}` adapter,
+event-only degradation carrying the terminal receipt reference, and
+frozen-route egress. Orchestrator probes and the one-path guards
+caught three real defects, fixed in-round: an existing database's
+parent-kind CHECK refuses any newly added kind (reconcile is
+additive-only) — reconcile now rebuilds `kernel_parent_runs` on
+kind-vocabulary drift, proven against an old-shape database with row
+survival and idempotency; trusted routed children overwrote a SERVICE
+principal's declared narrow authority basis with the generic basis —
+a declared basis now persists; and the shared one-path spine rig had
+gone stale against the real local-target resolver. Confirming sweep:
+**6453 passed / ZERO branch-new — eleven inherited baseline failures
+now pass on this branch.** Next: slices 2–4 (the three owner drafts),
+then Phase F.
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

@@ -56,7 +56,7 @@ this whole file before touching anything.
   completed runs are trustworthy. Census/snapshot regens are the LAST
   act of any worker round (anchors move with every edit).
 
-## 2. What is DONE and COMMITTED (fifteen gate commits)
+## 2. What is DONE and COMMITTED (sixteen gate commits)
 
 Branch `feat/hs143-08-meeting-adoption`, all on top of main `89d232f3`.
 
@@ -133,7 +133,23 @@ Branch `feat/hs143-08-meeting-adoption`, all on top of main `89d232f3`.
     ordinary cold wake with default pipeline ON to the configured wake
     output; D2 deferred faster-whisper warm lied forever as "warming"
     → deferral settles to not_loaded, proven on the production runtime.
-    **PHASE D RATIFIED-WITH-NOTES — CLOSED.**
+    **PHASE D RATIFIED-WITH-NOTES — CLOSED.** Committed `0fdd2d44`.
+14. **Phase E design + slice 1 Rails** (the commit carrying this
+    handover revision) — design ruled (Sol RATIFY-WITH-AMENDMENTS,
+    E1-E3 in-file: sentinel conversion, refusal-recording seam,
+    override retirement; only Rails is true background SERVICE work,
+    cadence/decision/delivery are OWNER request-time drafts). Slice 1:
+    sealed rails-observer@1 policy, rails.observer-batch parent kind,
+    batch-hash one-member bundle (replay-safe journal/egress), E2 seam
+    record_pre_route_refusal on the bundle service, E1 sentinel
+    migration (rails-observer-route-assignments family). Three real
+    defects caught by orchestrator probes/guards, fixed in-round:
+    reconcile now REBUILDS kernel_parent_runs on kind-vocabulary drift
+    (existing DBs refused new parent kinds; proof vs old-shape DB);
+    trusted_child persists a declared non-generic SERVICE authority
+    basis (was overwritten by the generic basis); stale one-path spine
+    rig repaired. Sweep 6453/zero branch-new — ELEVEN inherited
+    baseline failures now pass on this branch.
 
 Counsel records (verbatim, with orchestrator dispositions):
 `assets/story-08-c1-checkpoint-counsel-round1.md` (5 rounds + owner
@@ -145,11 +161,10 @@ with verified file:line evidence in
 findings + dispositions). Verification ledger sweep section:
 `assets/story-08-tranche-ac-verification-ledger.md`.
 
-Last clean sweep (Phase D ratified tree): **6432 passed / zero
-branch-new** (68 inherited-baseline failures + 4 known xdist load
-flakes — glass e2e, delivery-campaign ×2, device-recording-tick —
-each serial-green ×2; from 6314 passing at the restart-session
-start).
+Last clean sweep (Phase E slice-1 tree): **6453 passed / 57 failed /
+zero branch-new** — ALL 57 in the inherited baseline; the branch now
+FIXES eleven inherited failures (trusted_child basis + spine-rig
+repairs). From 6314 passing at the restart-session start.
 
 ## 3. Rulings RESOLVED (2026-08-24) and open ledger
 
@@ -175,8 +190,10 @@ sigkill process-input, github-enrichment preview.
 
 ## 4. What REMAINS for Story 08
 
-1. Phase E — background adopters (Rails observer → Cadence → Decision
-   promotion → Delivery PR review) onto the router.
+1. Phase E slices 2-4 — the three OWNER request-time drafts (Cadence,
+   Decision promotion, Delivery PR review) onto the router per the
+   ruled design (one-member owner bundles, E2 refusal seam, E3
+   override retirement).
 2. Phase F — migration cleanup (legacy authority removal; the design's
    compatibility cutover; the deferred lexical-punctuation stance
    stays future/non-assignable).

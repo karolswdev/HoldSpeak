@@ -90,8 +90,6 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/meeting_session/intel_plan.py:186:import:resolve_meeting_placement",
     "holdspeak/meeting_session/intel_plan.py:192:ref:resolve_meeting_placement",
     "holdspeak/meeting_session/intel_plan.py:194:ref:resolve_placement",
-    "holdspeak/rails_observer.py:249:import:resolve_placement",
-    "holdspeak/rails_observer.py:255:ref:resolve_placement",
     "holdspeak/services/ask_service.py:307:import:resolve_placement",
     "holdspeak/services/ask_service.py:308:ref:resolve_placement",
     "holdspeak/services/cadence_service.py:222:import:resolve_placement",
@@ -179,7 +177,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/sequence_workflow_service.py:129:profile_id", "holdspeak/services/settings_service.py:735:profile_id",
         "holdspeak/services/settings_service.py:807:profile_id", "holdspeak/services/workbench_runner.py:31:profile_id",
         "holdspeak/services/workbench_service.py:172:profile_id", "holdspeak/services/workbench_service.py:470:profile_id",
-        "holdspeak/web_server.py:1138:profile_id", "holdspeak/services/sync_service.py:682:profile_id",
+        "holdspeak/web_server.py:1150:profile_id", "holdspeak/web_server.py:1155:profile_id", "holdspeak/services/sync_service.py:682:profile_id",
         "holdspeak/services/sync_service.py:697:profile_id",
         "holdspeak/db/models/__init__.py:1121:profile_id",
     }},
@@ -303,8 +301,8 @@ def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() 
     assert pointers == ROUTING_POINTER_ATTRIBUTES
     assert profile_ids == set(PROFILE_ID_CLASSIFICATIONS)
     assert set(PROFILE_ID_CLASSIFICATIONS.values()) <= CLASSES
-    assert len(PROFILE_ID_CLASSIFICATIONS) == 43
-    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 23
+    assert len(PROFILE_ID_CLASSIFICATIONS) == 44
+    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 24
     assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 13
     assert sum(value == "credential/provider identity" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 5
     assert sum(value == "immutable evidence" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 2

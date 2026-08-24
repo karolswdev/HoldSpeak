@@ -225,6 +225,22 @@ def builtin_service_route_policy_registry(
                 allowed_boundaries=("local", "mesh", "private_network", "cloud"),
             ),
             ServiceRoutePolicyDefinition(
+                id="rails-observer@1",
+                revision=1,
+                service_identity="rails-observer",
+                authority_basis="rails-observer:journal-only",
+                parent_kind="rails.observer-batch",
+                allowed_operations=frozenset(
+                    {
+                        ("rails.observer-batch", 1),
+                        ("inference.invoke", 1),
+                        ("inference.cancel", 1),
+                    }
+                ),
+                capability_ids=("background.rails_summary",),
+                allowed_boundaries=("local", "mesh", "private_network", "cloud"),
+            ),
+            ServiceRoutePolicyDefinition(
                 id="local-model-preload@1",
                 revision=1,
                 service_identity="local-model-preload",

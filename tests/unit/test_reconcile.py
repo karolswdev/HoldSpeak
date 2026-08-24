@@ -193,6 +193,72 @@ def test_reconcile_no_alter_on_current_db(fresh_conn: sqlite3.Connection) -> Non
     assert alters == [], f"Expected no ALTERs on current DB, got {alters}"
 
 
+def test_reconcile_widens_historical_parent_kind_check_without_row_loss(tmp_path: Path) -> None:
+    """A widened parent vocabulary heals an owner-era DB, not only fresh schema."""
+    old_schema = SCHEMA_SQL.replace(",'rails.observer-batch'", "")
+    assert old_schema != SCHEMA_SQL
+    conn = sqlite3.connect(str(tmp_path / "old-parent-kind.db"))
+    conn.row_factory = sqlite3.Row
+    try:
+        # Derive the exact preceding schema from canonical bytes rather than a
+        # hand-written table divergence, matching the owner-DB reproducer.
+        conn.executescript(old_schema)
+
+        def operation(operation_id: str, native_id: str, name: str) -> None:
+            conn.execute(
+                """INSERT INTO kernel_operations
+                   (operation_id,request_id,idempotency_key,name,version,principal_kind,
+                    principal_identity,target_ref,placement,envelope_sha256,policy_version,
+                    authority_basis,state,native_id,created_at,updated_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    operation_id, operation_id + "-request", operation_id + "-key", name, 1,
+                    "service", "migration-proof", "", "", "sha256:proof", "1",
+                    "migration-proof", "claimed", native_id, 1000.0, 1000.0,
+                ),
+            )
+
+        operation("old-parent", "dictation-native", "dictation.session")
+        conn.execute(
+            """INSERT INTO kernel_parent_runs
+               (operation_id,native_id,kind,definition_ref,definition_revision,input_json,
+                deadline_at,execution_epoch,planned_node,active_child_invocation_id,child_budget,
+                children_json,state,lease_process_id,lease_heartbeat_at,created_at,updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                "old-parent", "dictation-native", "dictation.session", "dictation:legacy", "1",
+                '{"source":"pre-slice"}', 9999.0, 1, "", "", 0, "[]", "OPEN", "", None,
+                1000.0, 1000.0,
+            ),
+        )
+        before = tuple(conn.execute(
+            "SELECT * FROM kernel_parent_runs WHERE operation_id='old-parent'"
+        ).fetchone())
+
+        assert reconcile_schema(conn) is True
+        after = tuple(conn.execute(
+            "SELECT * FROM kernel_parent_runs WHERE operation_id='old-parent'"
+        ).fetchone())
+        assert after == before
+
+        operation("rails-parent", "rails-native", "rails.observer-batch")
+        conn.execute(
+            """INSERT INTO kernel_parent_runs
+               (operation_id,native_id,kind,definition_ref,definition_revision,input_json,
+                deadline_at,execution_epoch,planned_node,active_child_invocation_id,child_budget,
+                children_json,state,lease_process_id,lease_heartbeat_at,created_at,updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                "rails-parent", "rails-native", "rails.observer-batch", "rails:batch", "2",
+                '{"event_batch_sha256":"sha256:proof"}', 9999.0, 1, "", "", 1, "[]", "OPEN", "", None,
+                1000.0, 1000.0,
+            ),
+        )
+        assert reconcile_schema(conn) is False
+    finally:
+        conn.close()
+
+
 # ── A1: additive only (orphan tables survive) ──────────────────────────
 
 

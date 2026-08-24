@@ -78,6 +78,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     decision_draft = ParentRunCodec("decision.promotion-draft", operation_name="decision.promotion-draft", **({"clock": clock} if clock else {}))
     delivery_draft = ParentRunCodec("delivery.pr-review-draft", operation_name="delivery.pr-review-draft", **({"clock": clock} if clock else {}))
     cadence_draft = ParentRunCodec("cadence.next-action-draft", operation_name="cadence.next-action-draft", **({"clock": clock} if clock else {}))
+    rails_observer_batch = ParentRunCodec("rails.observer-batch", operation_name="rails.observer-batch", **({"clock": clock} if clock else {}))
     meeting_session = ParentRunCodec("meeting.session", operation_name="meeting.session", **({"clock": clock} if clock else {}))
     meeting_deferred = ParentRunCodec("meeting.deferred-intel-job", operation_name="meeting.deferred-intel-job", **({"clock": clock} if clock else {}))
     dictation_session = ParentRunCodec("dictation.session", operation_name="dictation.session", **({"clock": clock} if clock else {}))
@@ -109,6 +110,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(decision_draft.name, decision_draft.version, decision_draft, "agent.submit", "propose"),
         OperationSpec(delivery_draft.name, delivery_draft.version, delivery_draft, "agent.submit", "propose"),
         OperationSpec(cadence_draft.name, cadence_draft.version, cadence_draft, "agent.submit", "propose"),
+        OperationSpec(rails_observer_batch.name, rails_observer_batch.version, rails_observer_batch, "agent.submit", "propose"),
         OperationSpec(meeting_session.name, meeting_session.version, meeting_session, "agent.submit", "propose"),
         OperationSpec(meeting_deferred.name, meeting_deferred.version, meeting_deferred, "agent.submit", "propose"),
         OperationSpec(dictation_session.name, dictation_session.version, dictation_session, "agent.submit", "propose"),
@@ -130,7 +132,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     # another database singleton; invoke admission validates revisions there.
     broker.database = database
     broker.parent_run_controller = ParentRunController(broker, database,
-        operation_names={"sequence":"sequence.run", "workflow":"workflow.run", "workbench":"workbench.run", "decision.promotion-draft":"decision.promotion-draft", "delivery.pr-review-draft":"delivery.pr-review-draft", "cadence.next-action-draft":"cadence.next-action-draft", "voice_reference_resolve":"voice_reference_resolve", "meeting.session":"meeting.session", "meeting.deferred-intel-job":"meeting.deferred-intel-job", "dictation.session":"dictation.session", "wake.session":"wake.session"}, **({"clock": clock} if clock else {}))
+        operation_names={"sequence":"sequence.run", "workflow":"workflow.run", "workbench":"workbench.run", "decision.promotion-draft":"decision.promotion-draft", "delivery.pr-review-draft":"delivery.pr-review-draft", "cadence.next-action-draft":"cadence.next-action-draft", "rails.observer-batch":"rails.observer-batch", "voice_reference_resolve":"voice_reference_resolve", "meeting.session":"meeting.session", "meeting.deferred-intel-job":"meeting.deferred-intel-job", "dictation.session":"dictation.session", "wake.session":"wake.session"}, **({"clock": clock} if clock else {}))
     # The liveness reaper runs before stage recovery: an expired claimed
     # invocation first receives its authoritative indeterminate receipt.
     from .projection_stager import ProjectionStager

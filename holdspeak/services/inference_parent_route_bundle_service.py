@@ -133,6 +133,47 @@ class InferenceParentRouteBundleService:
             ):
                 raise ValueError("invalid handoff evidence provider")
 
+    def record_pre_route_refusal(
+        self,
+        principal: Principal,
+        *,
+        command_id: str,
+        parent_kind: str,
+        definition_ref: str,
+        definition_revision: str,
+        input_snapshot: Mapping[str, Any],
+        deadline_at: float,
+        reason: str,
+    ) -> dict[str, Any]:
+        """Durably terminalize a deterministic parent when route freeze cannot start.
+
+        This deliberately happens outside the route transaction: no bundle, route,
+        execution, or model child exists on this path.  Adopters call it only for
+        pre-route ``ValidationError`` outcomes; controller-owned attempt outcomes
+        retain their real child receipts instead.
+        """
+        command = _safe(command_id, field="command_id")
+        refusal = _safe(reason, field="refusal_reason")
+        parent = self._parents.start(
+            principal,
+            kind=str(parent_kind),
+            definition_ref=str(definition_ref),
+            definition_revision=str(definition_revision),
+            input_snapshot=dict(input_snapshot),
+            deadline_at=float(deadline_at),
+            child_budget=0,
+            idempotency_key=command,
+        )
+        existing = self._broker.store.receipt(parent.operation_id)
+        if existing is None:
+            existing = self._parents.close(
+                parent.context,
+                "refused",
+                f"parent-route-bundle:{refusal}",
+                principal=principal,
+            )
+        return {"parent": parent, "receipt": dict(existing)}
+
     def start(
         self,
         principal: Principal,

@@ -13,6 +13,7 @@ import hashlib
 import json
 import time
 import uuid
+from pathlib import Path
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping, Sequence
 
@@ -53,6 +54,7 @@ ADOPTED_CAPABILITIES = (
     "meeting.auto_title",
     "speech.transcribe",
     "speech.preload",
+    "background.rails_summary",
     # C2 plugin membership comes only from the composed registry.  The closed
     # evidence provider must nevertheless list every installed exact capability
     # before a frozen bundle child may stage its private material.
@@ -72,6 +74,7 @@ MIGRATION_FAMILY = "thoughts-writing-route-assignments"
 MEETING_MIGRATION_FAMILY = "meeting-route-assignments"
 MEETING_DEFERRED_MIGRATION_FAMILY = "meeting-deferred-route-assignments"
 SPEECH_RECOGNITION_MIGRATION_FAMILY = "speech-recognition-route-assignments"
+RAILS_OBSERVER_MIGRATION_FAMILY = "rails-observer-route-assignments"
 MEETING_ASSIGNMENT_CAPABILITIES = (
     "meeting.live_analysis",
     "meeting.bookmark_label",
@@ -1016,18 +1019,25 @@ class RoutedInferenceCoordinator:
                         )
                     else:
                         member = conn.execute(
-                            """SELECT 1
+                            """SELECT p.state
                                FROM inference_parent_route_bundle_members m
                                JOIN inference_parent_route_bundles b ON b.id=m.bundle_id
                                JOIN kernel_parent_runs p ON p.operation_id=b.parent_operation_id
                                JOIN kernel_operations o ON o.operation_id=p.operation_id
                               WHERE m.route_plan_id=? AND m.capability_id=?
                                 AND b.parent_operation_id=?
-                                AND p.state='OPEN'
                                 AND o.principal_kind=? AND o.principal_identity=?""",
                             (route_id, capability.id, bound_parent, principal.name, principal.identity),
                         ).fetchone()
-                        if member is None:
+                        # A closed parent may only replay the exact previously
+                        # frozen operation.  It can never admit new material or
+                        # use terminal membership as ambient SERVICE authority.
+                        replay = None if member is None else conn.execute(
+                            """SELECT 1 FROM inference_operation_route_request_plan_commands
+                               WHERE command_id=? AND route_plan_id=?""",
+                            (command, route_id),
+                        ).fetchone()
+                        if member is None or (str(member["state"]) != "OPEN" and replay is None):
                             raise ValidationError(
                                 "Service route membership is required.",
                                 code="inference_adoption_service_membership_required",
@@ -2141,6 +2151,215 @@ class RoutedInferenceCoordinator:
             "source_sha256": source_sha256,
         }
 
+    def migrate_rails_observer_route_assignments(
+        self, principal: Principal, config: Any
+    ) -> dict[str, Any]:
+        """Convert Rails' one historical local selector without guessing.
+
+        A blank selector is the documented ``this_machine`` deployment.  The
+        migration records a minimum local v2 profile/binding from that exact
+        saved deployment identity in the same assignment/marker transaction;
+        it never tests the path, loads a model, or discovers another target.
+        """
+        assignments = InferenceAssignmentService(self._db, registry=self._registry)
+        existing = assignments.migration_marker(principal, family=RAILS_OBSERVER_MIGRATION_FAMILY)
+        if existing is not None:
+            return {**existing, "status": "migrated", "legacy_config_read": False}
+        rails = getattr(config, "rails_observer", None)
+        configured = str(getattr(rails, "profile_id", "") or "").strip()
+        source_selector = configured or "this_machine"
+        source: dict[str, Any] = {"profile_id": source_selector}
+        profile_id = configured
+        profile_revision = 0
+        local_path = ""
+        if configured:
+            with self._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT MAX(revision) AS revision FROM model_profile_revisions WHERE profile_id=?",
+                    (configured,),
+                ).fetchone()
+            profile_revision = int(row["revision"] or 0) if row is not None else 0
+            if profile_revision < 1:
+                legacy = self._db.profiles.get(configured)
+                if legacy is None or str(getattr(legacy, "kind", "")) != "onDevice":
+                    return self._migration_issue(
+                        RAILS_OBSERVER_MIGRATION_FAMILY,
+                        "legacy_profile_requires_upgrade",
+                        "choose_rails_observer_model_profile",
+                        _sha256(source),
+                    )
+                local_path = str(getattr(legacy, "model_file", "") or "").strip()
+        else:
+            # This function reads the loaded configuration object rather than
+            # Config again.  It does no filesystem readiness probe.
+            meeting = getattr(config, "meeting", None)
+            local_path = str(getattr(meeting, "intel_realtime_model", "") or "").strip()
+            if not local_path:
+                from ..intel.providers import DEFAULT_INTEL_MODEL_PATH
+                local_path = str(DEFAULT_INTEL_MODEL_PATH or "").strip()
+        source["same_device_deployment_sha256"] = _sha256({"model_path": local_path})
+        source_sha256 = _sha256(source)
+        if profile_revision >= 1:
+            try:
+                marker = assignments.migrate_capability_assignments_atomically(
+                    principal,
+                    family=RAILS_OBSERVER_MIGRATION_FAMILY,
+                    source_sha256=source_sha256,
+                    capability_entries={
+                        "background.rails_summary": {
+                            "profile_id": profile_id,
+                            "profile_revision": profile_revision,
+                        }
+                    },
+                )
+            except ValidationError as exc:
+                if exc.code != "inference_assignment_incompatible":
+                    raise
+                return self._migration_issue(
+                    RAILS_OBSERVER_MIGRATION_FAMILY,
+                    "legacy_profile_incompatible",
+                    "choose_rails_observer_model_profile",
+                    source_sha256,
+                )
+            return {**marker, "status": "migrated", "legacy_config_read": True}
+        if not local_path:
+            return self._migration_issue(
+                RAILS_OBSERVER_MIGRATION_FAMILY,
+                "same_device_deployment_unnamed",
+                "choose_rails_observer_model_profile",
+                source_sha256,
+            )
+
+        # The stored id is a stable public handle; the exact local locator stays
+        # only in the private deployment revision, as it did for the legacy path.
+        suffix = source_sha256.removeprefix("sha256:")[:24]
+        profile_id = "rails-observer-local-" + suffix
+        artifact_id = "artifact-" + profile_id
+        deployment_id = "deployment-" + profile_id
+        binding_id = "binding-" + profile_id
+        model = Path(local_path).expanduser().stem
+        if not model:
+            return self._migration_issue(
+                RAILS_OBSERVER_MIGRATION_FAMILY,
+                "same_device_deployment_unnamed",
+                "choose_rails_observer_model_profile",
+                source_sha256,
+            )
+        capability = self._registry.require("background.rails_summary")
+        manifest_evidence = {"revision": "rails-observer-this-machine-v1", "claims": ["language"]}
+        manifest = {**manifest_evidence, "sha256": _sha256(manifest_evidence)}
+        profile_payload = ModelProfileService(self._db)._profile_payload({
+            "profile_id": profile_id,
+            "expected_revision": 0,
+            "label": f"Rails observer local {model}",
+            "provider_family": "local",
+            "runtime_family": "configured_local_engine",
+            "model_or_artifact_identity": artifact_id,
+            "supported_modalities": ["language"],
+            "context_support": "bounded",
+            "tokenizer_template_requirements": {},
+            "capability_manifest": manifest,
+            "safe_presentation": {"summary": "Migrated Rails observer local deployment", "badge": "rails-observer"},
+        })
+        deployment = DeploymentRevision.from_artifact(
+            destination_id="this_machine",
+            engine="configured_local_engine",
+            model=model,
+            runtime_id="configured_local_engine",
+            runtime_revision="rails-observer-this-machine-v1",
+            artifact_id=artifact_id,
+            manifest_sha256=_sha256({"same_device_deployment_sha256": source["same_device_deployment_sha256"]}),
+            format="gguf",
+            architecture="unknown",
+            context_ceiling=16384,
+            capability_sha256=str(manifest["sha256"]),
+            resolved_model_path=local_path,
+        )
+
+        def prelude(conn: Any) -> None:
+            now = _now()
+            profile_material = {"schema_version": 2, "profile_id": profile_id, "revision": 1,
+                                **{key: value for key, value in profile_payload.items() if key != "expected_revision"}}
+            conn.execute(
+                """INSERT INTO model_profile_revisions
+                   (profile_id,revision,sha256,label,provider_family,runtime_family,model_or_artifact_identity,
+                    supported_modalities_json,context_support,tokenizer_template_requirements_json,
+                    capability_manifest_json,safe_presentation_json,created_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (profile_id, 1, _sha256(profile_material), profile_payload["label"],
+                 profile_payload["provider_family"], profile_payload["runtime_family"], artifact_id,
+                 _canonical(profile_payload["supported_modalities"]), profile_payload["context_support"],
+                 _canonical(profile_payload["tokenizer_template_requirements"]), _canonical(manifest),
+                 _canonical(profile_payload["safe_presentation"]), now),
+            )
+            conn.execute(
+                """INSERT INTO inference_model_artifacts
+                   (artifact_id,format,source_kind,source_repository,source_revision,manifest_json,
+                    manifest_sha256,installed_bytes,state,local_locator,created_at,verified_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (artifact_id, "gguf", "legacy-rails-observer", "this_machine",
+                 "rails-observer-this-machine-v1", _canonical({"same_device_deployment_sha256": source["same_device_deployment_sha256"]}),
+                 deployment.manifest_sha256, 1, "removed", "", now, now),
+            )
+            conn.execute(
+                """INSERT INTO deployment_revisions
+                   (id,schema_version,destination_id,kind,engine,model,node,boundary,endpoint,model_path,
+                    secret_slot,runtime_id,runtime_revision,artifact_id,manifest_sha256,format,architecture,
+                    context_ceiling,capability_sha256) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (deployment.id, deployment.schema_version, deployment.destination_id, deployment.kind,
+                 deployment.engine, deployment.model, deployment.node, deployment.boundary, deployment.endpoint,
+                 None, deployment.secret_slot, deployment.runtime_id, deployment.runtime_revision,
+                 deployment.artifact_id, deployment.manifest_sha256, deployment.format, deployment.architecture,
+                 deployment.context_ceiling, deployment.capability_sha256),
+            )
+            conn.execute(
+                """INSERT INTO inference_deployments
+                   (deployment_id,destination_id,runtime_id,runtime_revision,artifact_id,model_identity,
+                    context_ceiling,recommended_context,capability_json,capability_sha256,execution_revision_id,
+                    configuration_revision,active,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (deployment_id, "this_machine", deployment.runtime_id, deployment.runtime_revision, artifact_id,
+                 model, 16384, 16384, _canonical(manifest), str(manifest["sha256"]), deployment.id, 1, 1, now, now),
+            )
+            observation_id = "ready-" + profile_id
+            # No probe occurred.  This is deliberately unavailable until the
+            # actual frozen execution observes readiness.
+            conn.execute(
+                """INSERT INTO model_profile_readiness_observations
+                   (observation_id,deployment_head_id,deployment_configuration_revision,deployment_revision_id,
+                    state,reason_code,observed_at) VALUES (?,?,?,?,?,?,?)""",
+                (observation_id, deployment_id, 1, deployment.id, "unavailable", "unobserved_legacy_local", now),
+            )
+            conn.execute(
+                """INSERT INTO model_profile_binding_revisions
+                   (binding_id,revision,profile_id,profile_revision,deployment_head_id,
+                    deployment_configuration_revision,deployment_revision_id,secret_slot,enabled,
+                    readiness_observation_id,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                (binding_id, 1, profile_id, 1, deployment_id, 1, deployment.id, "", 1, observation_id, now),
+            )
+            conn.execute(
+                "INSERT INTO model_profile_binding_heads(binding_id,profile_id,revision,updated_at) VALUES (?,?,?,?)",
+                (binding_id, profile_id, 1, now),
+            )
+
+        try:
+            marker = assignments.migrate_capability_assignments_atomically(
+                principal,
+                family=RAILS_OBSERVER_MIGRATION_FAMILY,
+                source_sha256=source_sha256,
+                capability_entries={"background.rails_summary": {"profile_id": profile_id, "profile_revision": 1}},
+                _prelude=prelude,
+            )
+        except ValidationError as exc:
+            if exc.code != "inference_assignment_incompatible":
+                raise
+            return self._migration_issue(
+                RAILS_OBSERVER_MIGRATION_FAMILY,
+                "same_device_deployment_incompatible",
+                "choose_rails_observer_model_profile",
+                source_sha256,
+            )
+        return {**marker, "status": "migrated", "legacy_config_read": True}
+
     def migrate_startup_legacy_assignments(
         self, principal: Principal, config_loader: Callable[[], Any]
     ) -> dict[str, dict[str, Any]]:
@@ -2153,6 +2372,7 @@ class RoutedInferenceCoordinator:
                 MEETING_MIGRATION_FAMILY,
                 MEETING_DEFERRED_MIGRATION_FAMILY,
                 SPEECH_RECOGNITION_MIGRATION_FAMILY,
+                RAILS_OBSERVER_MIGRATION_FAMILY,
             )
         }
         if all(markers.values()):
@@ -2171,6 +2391,9 @@ class RoutedInferenceCoordinator:
                 principal, config
             ),
             SPEECH_RECOGNITION_MIGRATION_FAMILY: self.migrate_speech_recognition_route_assignments(
+                principal, config
+            ),
+            RAILS_OBSERVER_MIGRATION_FAMILY: self.migrate_rails_observer_route_assignments(
                 principal, config
             ),
         }
@@ -2253,6 +2476,7 @@ __all__ = [
     "MEETING_MIGRATION_FAMILY",
     "MEETING_DEFERRED_MIGRATION_FAMILY",
     "SPEECH_RECOGNITION_MIGRATION_FAMILY",
+    "RAILS_OBSERVER_MIGRATION_FAMILY",
     "ProductionInferenceAdoptionService",
     "ProductionRouteEvidence",
     "RoutedInferenceCoordinator",

@@ -346,9 +346,9 @@ def test_settings_put_strips_legacy_endpoint_fields() -> None:
 
 def test_feature_legs_resolve_through_the_one_resolver() -> None:
     resolver_legs = {
-        # HS-131-07: the admitted rails path captures an immutable revision
-        # from the placement authority, rather than resolving a mutable target.
-        "holdspeak/rails_observer.py": "resolve_placement",
+        # HS-143-08: Rails freezes its exact capability assignment through the
+        # parent+route bundle authority; it never resolves a mutable target itself.
+        "holdspeak/rails_observer.py": "InferenceParentRouteBundleService",
         # HS-130-06: Ask resolves through the HS-130-01 placement authority
         # (resolve_placement composes the one resolve_inference_target seam),
         # so the id selects placement and Ask never model-name-hops.

@@ -13,6 +13,11 @@ from .model import KernelRefused
 from .parent_run import OuterRunContext
 
 
+_GENERIC_AUTHORITY_BASIS = (
+    "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy"
+)
+
+
 def submit(broker: Any, raw: Any, principal: Any, context: Any, *, planned_node: str) -> dict[str, Any]:
     """Admit a child and validate its parent capability in one write transaction.
 
@@ -77,8 +82,16 @@ def submit(broker: Any, raw: Any, principal: Any, context: Any, *, planned_node:
                 raise KernelRefused("delegation_stale_work")
             if str(request.arguments.get("deployment_revision") or "") != str(delegation["deployment_revision_id"]):
                 raise KernelRefused("delegation_target_changed")
-        basis = (f"schedule-delegation:{parent_input.get('delegation_id')}:{parent_input.get('terms_sha256')}"
-                 if principal.name == 'scheduler' else "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy")
+        declared_basis = str(getattr(principal, "authority_basis", "") or "")
+        basis = (
+            f"schedule-delegation:{parent_input.get('delegation_id')}:{parent_input.get('terms_sha256')}"
+            if principal.name == "scheduler"
+            else (
+                declared_basis
+                if declared_basis and declared_basis != _GENERIC_AUTHORITY_BASIS
+                else _GENERIC_AUTHORITY_BASIS
+            )
+        )
         conn.execute("""INSERT INTO kernel_operations(operation_id,request_id,idempotency_key,name,version,principal_kind,principal_identity,target_ref,placement,envelope_sha256,policy_version,authority_basis,state,revision,native_id,parent_operation_id,correlation_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (operation_id, request.request_id, request.idempotency_key, request.name, request.version, principal.name, principal.identity, admission.target_ref, admission.placement, admission.payload_hash, POLICY_VERSION, basis, "admitting", 1, admission.native_id, str(row["operation_id"]), str(row["correlation_id"] or row["operation_id"]), now, now))
         if principal.name == 'scheduler':
             conn.execute("UPDATE kernel_operations SET delegator_kind=?,delegator_identity=? WHERE operation_id=?", (str(row['delegator_kind']), str(row['delegator_identity']), operation_id))

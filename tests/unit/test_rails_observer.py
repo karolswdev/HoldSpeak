@@ -26,6 +26,21 @@ def _event(ts: str, event: str, story: str = "", **detail):
     return e
 
 
+def _rails_principal() -> Principal:
+    return Principal(
+        PrincipalKind.SERVICE,
+        "rails-observer",
+        frozenset(
+            {
+                ("rails.observer-batch", 1),
+                ("inference.invoke", 1),
+                ("inference.cancel", 1),
+            }
+        ),
+        "rails-observer:journal-only",
+    )
+
+
 # --- config: off by default ------------------------------------------------
 
 
@@ -119,13 +134,29 @@ def test_degraded_journal_body_is_honest() -> None:
 
 
 def test_admitted_summary_stamps_journal_observer_provenance_and_degrades_honestly(db) -> None:
-    profile = db.profiles.upsert(
-        profile_id="rails", name="Rails", kind="openAICompatible",
-        base_url="http://rails", model="rails-model",
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER, _profile
+
+    profile = _profile(db, "rails")
+    InferenceAssignmentService(db).set_assignment(
+        OWNER,
+        {
+            "command_id": "rails-assignment",
+            "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "background.rails_summary"},
+            "entries": [{"profile_id": "rails", "profile_revision": 1}],
+        },
     )
     principal = Principal(
         PrincipalKind.SERVICE, "rails-observer",
-        frozenset({("inference.invoke", 1)}), "rails-observer:journal-only",
+        frozenset(
+            {
+                ("rails.observer-batch", 1),
+                ("inference.invoke", 1),
+                ("inference.cancel", 1),
+            }
+        ),
+        "rails-observer:journal-only",
     )
     from holdspeak.kernel.runtime import _configure
     broker = _configure(db)
@@ -136,16 +167,19 @@ def test_admitted_summary_stamps_journal_observer_provenance_and_degrades_honest
 
     broker.inference_runner._engine_factory = lambda _revision, **_kw: FakeIntel()
     summarizer = rails_observer.build_profile_summarizer(
-        profile.id, db=db, broker=broker, principal=principal,
+        "rails", db=db, broker=broker, principal=principal,
     )
     batch = rails_observer.summarize_batch([_event("t1", "gate_pass")], summarize_fn=summarizer)
+    assert not batch["degraded"], batch
     note = rails_observer.record_journal_entry(db, batch, title="Rails journal")
     with db._connection() as conn:
         operation_id = conn.execute(
             "SELECT operation_id FROM kernel_operations WHERE native_id LIKE 'rails_%'"
         ).fetchone()[0]
     receipt = broker.store.receipt(operation_id)
-    assert batch == {"events": [_event("t1", "gate_pass")], "summary": "Only the observed facts.", "degraded": False}
+    assert batch["events"] == [_event("t1", "gate_pass")]
+    assert batch["summary"] == "Only the observed facts."
+    assert batch["degraded"] is False and batch["route_receipt_id"]
     assert "Only the observed facts." in note.body_markdown
     assert (receipt["actor_kind"], receipt["actor_identity"], receipt["authority_basis"]) == (
         "service", "rails-observer", "rails-observer:journal-only",
@@ -154,9 +188,157 @@ def test_admitted_summary_stamps_journal_observer_provenance_and_degrades_honest
     broker.inference_runner._engine_factory = lambda _revision, **_kw: (_ for _ in ()).throw(RuntimeError("model down"))
     degraded = rails_observer.summarize_batch([_event("t2", "gate_refusal")], summarize_fn=summarizer)
     degraded_note = rails_observer.record_journal_entry(db, degraded, title="Rails journal")
-    assert degraded == {"events": [_event("t2", "gate_refusal")], "summary": "", "degraded": True}
+    assert degraded["events"] == [_event("t2", "gate_refusal")]
+    assert degraded["summary"] == "" and degraded["degraded"] is True
+    assert degraded["route_receipt_id"]
     assert "Only the observed facts." not in degraded_note.body_markdown
     assert "summary unavailable" in degraded_note.body_markdown
+
+
+def test_routed_rails_replay_freezes_assignment_and_dedupes_journal(db) -> None:
+    """One frozen batch survives assignment edits and process-style replay."""
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER, _profile
+
+    _profile(db, "rails-one")
+    _profile(db, "rails-two")
+    assignments = InferenceAssignmentService(db)
+    assignments.set_assignment(
+        OWNER,
+        {
+            "command_id": "rails-one",
+            "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "background.rails_summary"},
+            "entries": [{"profile_id": "rails-one", "profile_revision": 1}],
+        },
+    )
+    broker = _configure(db)
+    calls: list[str] = []
+
+    class Engine:
+        def run_prompt(self, **_):
+            calls.append("physical")
+            # This edit is deliberately after route freeze and before the model
+            # returns; the running batch must retain rails-one.
+            assignments.set_assignment(
+                OWNER,
+                {
+                    "command_id": "rails-retarget",
+                    "expected_revision": 1,
+                    "scope": {"kind": "capability", "capability_id": "background.rails_summary"},
+                    "entries": [{"profile_id": "rails-two", "profile_revision": 1}],
+                },
+            )
+            return "Frozen route answer."
+
+    broker.inference_runner._engine_factory = lambda _revision, **_kw: Engine()
+    summarizer = rails_observer.build_profile_summarizer(
+        db=db, broker=broker, principal=_rails_principal()
+    )
+    events = [_event("t3", "story_status", "HS-143", to="done")]
+    first = rails_observer.summarize_batch(events, summarize_fn=summarizer)
+    first_note = rails_observer.record_journal_entry(db, first, title="Rails journal")
+    # Same deterministic batch identity performs no second physical dispatch and
+    # reuses the same materialized note.
+    replay = rails_observer.summarize_batch(events, summarize_fn=summarizer)
+    replay_note = rails_observer.record_journal_entry(db, replay, title="Rails journal")
+    assert first["summary"] == replay["summary"] == "Frozen route answer."
+    assert first["egress"] == "local"
+    assert calls == ["physical"]
+    assert replay_note.id == first_note.id
+    with db._connection() as conn:
+        plan = conn.execute(
+            """SELECT e.profile_id FROM inference_route_plan_entries e
+                 JOIN inference_parent_route_bundle_members m ON m.route_plan_id=e.plan_id
+                WHERE m.capability_id='background.rails_summary'"""
+        ).fetchone()
+        assert plan["profile_id"] == "rails-one"
+        assert conn.execute("SELECT COUNT(*) FROM kernel_receipts").fetchone()[0] >= 2
+
+
+def test_routed_rails_missing_assignment_records_one_parent_refusal(db) -> None:
+    """E2: pre-route failure is event-only with no route/model child."""
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER
+
+    broker = _configure(db)
+    assignments = InferenceAssignmentService(db)
+    # Startup's one-time sentinel conversion may have installed an unavailable
+    # local capability row. Clearing it models the owner removing exact authority.
+    current = assignments.get_assignment(
+        OWNER, {"kind": "capability", "capability_id": "background.rails_summary"}
+    )
+    assignments.clear_assignment(
+        OWNER,
+        {
+            "command_id": "clear-rails",
+            "expected_revision": current["revision"],
+            "scope": {"kind": "capability", "capability_id": "background.rails_summary"},
+            "capability_id": "background.rails_summary",
+        },
+    )
+    summarizer = rails_observer.build_profile_summarizer(
+        db=db, broker=broker, principal=_rails_principal()
+    )
+    batch = rails_observer.summarize_batch([_event("t4", "gate_refusal")], summarize_fn=summarizer)
+    note = rails_observer.record_journal_entry(db, batch, title="Rails journal")
+    assert batch["degraded"] is True and batch["route_receipt_id"]
+    assert "summary unavailable" in note.body_markdown
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_route_executions").fetchone()[0] == 0
+        receipts = conn.execute("SELECT outcome FROM kernel_receipts").fetchall()
+    assert [row["outcome"] for row in receipts] == ["refused"]
+
+
+def test_rails_blank_sentinel_migrates_one_visible_local_assignment(db) -> None:
+    """E1 converts documented this_machine exactly once in one transaction."""
+    from holdspeak.services.inference_adoption_service import (
+        RAILS_OBSERVER_MIGRATION_FAMILY,
+        RoutedInferenceCoordinator,
+    )
+    from tests.unit.test_phase143_inference_assignments import OWNER
+
+    config = Config()
+    config.rails_observer.profile_id = None
+    config.meeting.intel_realtime_model = "/exactly/saved/rails-observer.gguf"
+    result = RoutedInferenceCoordinator(db).migrate_rails_observer_route_assignments(OWNER, config)
+    assert result["family"] == RAILS_OBSERVER_MIGRATION_FAMILY
+    assert result["status"] == "migrated"
+    assert len(result["assignments"]) == 1
+    with db._connection() as conn:
+        assignment = conn.execute(
+            "SELECT profile_id FROM inference_assignments"
+        ).fetchone()
+        assert assignment is not None and str(assignment["profile_id"]).startswith("rails-observer-local-")
+        assert conn.execute("SELECT COUNT(*) FROM model_profile_binding_heads").fetchone()[0] == 1
+        assert conn.execute(
+            "SELECT COUNT(*) FROM inference_assignment_migrations WHERE family=?",
+            (RAILS_OBSERVER_MIGRATION_FAMILY,),
+        ).fetchone()[0] == 1
+
+
+def test_rails_unmappable_sentinel_writes_no_partial_migration(db, monkeypatch) -> None:
+    """E1 refuses an unnamed this_machine selector without orphan rows."""
+    from holdspeak.services.inference_adoption_service import RoutedInferenceCoordinator
+    from tests.unit.test_phase143_inference_assignments import OWNER
+    import holdspeak.intel.providers as providers
+
+    monkeypatch.setattr(providers, "DEFAULT_INTEL_MODEL_PATH", "")
+    config = Config()
+    config.rails_observer.profile_id = None
+    config.meeting.intel_realtime_model = ""
+    result = RoutedInferenceCoordinator(db).migrate_rails_observer_route_assignments(OWNER, config)
+    assert result["status"] == "needs_attention"
+    assert result["reason_code"] == "same_device_deployment_unnamed"
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM model_profile_revisions").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM model_profile_binding_heads").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_assignments").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_assignment_migrations").fetchone()[0] == 0
 
 
 # --- the journal write (a real note) ---------------------------------------

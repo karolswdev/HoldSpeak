@@ -164,6 +164,39 @@ zero branch-new** (68 inherited + 4 known xdist load flakes, each
 serial-green ×2). **Phase D is closed.** Next: Phase E (background
 adopters), then Phase F.
 
+**Phase E opened (2026-08-24): design RULED, slice 1 (Rails) SHIPPED.**
+The Phase E design (`assets/story-08-phase-e-background-design.md`)
+corrected the charter against the code — only the Rails observer is
+true background SERVICE work; Cadence's sole model call, decision
+promotion, and delivery PR review are OWNER request-time drafts — and
+Sol ratified it with three amendments: E1 blank Rails `profile_id` is
+the documented `this_machine` sentinel, converted exactly once (never
+guessed); E2 pre-route refusals must record one terminal refusal
+receipt (Sol probed today's ValidationError leaving zero receipts —
+a new refusal-recording seam is required); E3 legacy per-request
+target overrides retire with the named refusal
+`inference_request_target_override_retired`. Slice 1 shipped: sealed
+`rails-observer@1` SERVICE policy + `rails.observer-batch` parent
+kind, atomic one-member bundle with batch-hash identity (restart
+replays instead of duplicating a journal note or egress), frozen
+late-staged prompts, `{summary}` adapter, event-only degradation with
+the terminal receipt reference, frozen-route egress; the E2 seam
+(`record_pre_route_refusal`); the E1 sentinel migration
+(one transaction, minimum visible local profile/binding/assignment,
+unmappable = no partial rows). The orchestrator's probes and guards
+caught three real defects, all fixed in-round: an existing database's
+`kernel_parent_runs` CHECK refuses any newly added parent kind
+(reconcile is additive-only) — reconcile now rebuilds the table on
+kind-vocabulary drift, proven against an old-shape DB with row
+survival and idempotency; trusted routed children were overwriting a
+SERVICE principal's declared narrow authority basis with the generic
+basis — a declared non-generic basis now persists; and the shared
+one-path spine rig had gone stale against the real local-target
+resolver. Confirming sweep: **6453 passed / 57 failed / ZERO
+branch-new — eleven INHERITED baseline failures now pass on this
+branch** (the basis fix and rig repairs healed them). Next: Phase E
+slices 2–4 (the three owner drafts), then Phase F.
+
 ## Problem
 
 MeetingIntelPlan and SpeechPlan are the proven ordered-revision pattern but

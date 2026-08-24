@@ -176,13 +176,10 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/meeting_session/intel_child.py:193|run_admitted_child|call": ProposedRoute(
         "dynamic:MeetingIntelPlan capability", "meeting_session.intel_child", "InferenceRunner admitted child",
     ),
-    "holdspeak/rails_observer.py:268|build_profile_summarizer.summarize|call": ProposedRoute(
-        "background.rails_summary", "rails_observer", "InferenceRunner service child",
-    ),
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
-    "holdspeak/services/inference_adoption_service.py:1378|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    "holdspeak/services/inference_adoption_service.py:1388|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
     ),
     "holdspeak/services/cadence_service.py:284|CadenceService._draft_child|ref": ProposedRoute(

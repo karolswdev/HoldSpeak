@@ -1099,7 +1099,18 @@ class MeetingWebServer:
 
         # An ambient observer is not an owner. Its single kernel capability is
         # admission of the receipt-gated journal summary invocation.
-        observer_principal = Principal(PrincipalKind.SERVICE, "rails-observer", frozenset({("inference.invoke", 1)}), "rails-observer:journal-only")
+        observer_principal = Principal(
+            PrincipalKind.SERVICE,
+            "rails-observer",
+            frozenset(
+                {
+                    ("rails.observer-batch", 1),
+                    ("inference.invoke", 1),
+                    ("inference.cancel", 1),
+                }
+            ),
+            "rails-observer:journal-only",
+        )
         seen: set[str] = set()
         primed = False
         while True:
@@ -1135,7 +1146,15 @@ class MeetingWebServer:
                     continue
                 from .db import get_database
                 from .kernel.runtime import _service
-                summarizer = rails_observer.build_profile_summarizer(cfg.profile_id, db=get_database(), broker=_service(), principal=observer_principal)
+                summarizer = rails_observer.build_profile_summarizer(
+                    cfg.profile_id,
+                    db=get_database(),
+                    broker=_service(),
+                    principal=observer_principal,
+                    observer_config_source_sha256=rails_observer._canonical_sha256(
+                        {"profile_id": cfg.profile_id or "this_machine"}
+                    ),
+                )
                 batch = await asyncio.to_thread(
                     rails_observer.summarize_batch, fresh, summarize_fn=summarizer
                 )

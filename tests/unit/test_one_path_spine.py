@@ -227,12 +227,27 @@ def _drive_ask(tmp_path, monkeypatch) -> SurfaceRun:
     return SurfaceRun(db, OWNER, None, profile.id)
 
 
+def _ready_this_machine(tmp_path, monkeypatch) -> None:
+    """Bind the production local-target resolver to a harmless readable artifact.
+
+    ``this_machine_target`` reads ``configured_local_meeting_model_path`` directly;
+    patching the retired private readiness helper does not make the real placement
+    ready. The engine factory remains the sole external physical-boundary fake.
+    """
+    model_path = tmp_path / "spine-local.gguf"
+    model_path.touch()
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.configured_local_meeting_model_path",
+        lambda: str(model_path),
+    )
+
+
 def _recipe_rig(tmp_path, monkeypatch, name: str):
     from holdspeak.services.recipe_service import RecipeService
 
     db = Database(tmp_path / f"{name}.db")
     db.recipes.upsert(recipe_id="r1", name="Recipe", system_prompt="system")
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
+    _ready_this_machine(tmp_path, monkeypatch)
 
     class Engine:
         active_provider = "test"
@@ -274,7 +289,7 @@ def _http_engine_rig(tmp_path, monkeypatch, name: str):
     reset_database()
     db = Database(tmp_path / f"{name}.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
+    _ready_this_machine(tmp_path, monkeypatch)
 
     class _Engine:
         active_provider = "local"
@@ -384,17 +399,38 @@ def _drive_workbench_scheduled(tmp_path, monkeypatch) -> SurfaceRun:
 
 
 def _drive_rails(tmp_path, monkeypatch) -> SurfaceRun:
+    """Run Rails through the real SERVICE bundle, route, and controller path."""
     from holdspeak import rails_observer
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
 
     reset_database()
     db = Database(tmp_path / "rails.db")
-    profile = db.profiles.upsert(
-        profile_id="rails", name="Rails", kind="openAICompatible",
-        base_url="http://rails", model="rails-model",
+    # This makes a fully versioned production-shaped profile, binding, readiness
+    # observation, deployment revision, and artifact. The service then elects its
+    # route from the exact capability assignment below rather than from a legacy
+    # profile pointer or a decorated router fake.
+    _profile(db, "rails")
+    InferenceAssignmentService(db).set_assignment(
+        ASSIGNMENT_OWNER,
+        {
+            "command_id": "rails-spine-assignment",
+            "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "background.rails_summary"},
+            "entries": [{"profile_id": "rails", "profile_revision": 1}],
+        },
     )
     principal = Principal(
-        PrincipalKind.SERVICE, "rails-observer",
-        frozenset({("inference.invoke", 1)}), "rails-observer:journal-only",
+        PrincipalKind.SERVICE,
+        "rails-observer",
+        frozenset(
+            {
+                ("rails.observer-batch", 1),
+                ("inference.invoke", 1),
+                ("inference.cancel", 1),
+            }
+        ),
+        "rails-observer:journal-only",
     )
     broker = _configure(db)
 
@@ -403,11 +439,18 @@ def _drive_rails(tmp_path, monkeypatch) -> SurfaceRun:
             return "Only the observed facts."
 
     broker.inference_runner._engine_factory = lambda _revision, **_: FakeIntel()
-    summarizer = rails_observer.build_profile_summarizer(profile.id, db=db, broker=broker, principal=principal)
-    rails_observer.summarize_batch(
+    summarizer = rails_observer.build_profile_summarizer(db=db, broker=broker, principal=principal)
+    batch = rails_observer.summarize_batch(
         [{"ts": "t1", "event": "gate_pass", "story": "", "repo": "code"}], summarize_fn=summarizer,
     )
-    return SurfaceRun(db, principal, None, profile.id)
+    assert not batch["degraded"], batch
+    return SurfaceRun(
+        db,
+        principal,
+        _parent_run_operation_id(db, "rails.observer-batch"),
+        THIS_MACHINE_ID,
+        parent_kind="rails.observer-batch",
+    )
 
 
 def _drive_decision(tmp_path, monkeypatch) -> SurfaceRun:
@@ -452,7 +495,7 @@ def _drive_delivery_review(tmp_path, monkeypatch) -> SurfaceRun:
     reset_database()
     db = Database(tmp_path / "delivery.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
+    _ready_this_machine(tmp_path, monkeypatch)
     profile = db.profiles.upsert(
         profile_id="delivery-profile", name="Delivery", kind="openAICompatible",
         base_url="http://delivery", model="delivery-model",
@@ -547,10 +590,12 @@ def _drive_meeting_deferred(tmp_path, monkeypatch) -> SurfaceRun:
     db, _broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
     _queued_meeting(db, "m-spine")
     assert process_next_intel_job() is True
-    # The queue runs as its own service principal, never as the owner who
-    # recorded the meeting — that distinction is exactly what the child row's
-    # authenticated principal has to preserve.
-    queue_principal = Principal(PrincipalKind.SERVICE, "meeting-intel-queue")
+    # The queue runs as its own sealed service principal, never as the owner
+    # who recorded the meeting. Reuse the production factory so provenance
+    # checks its actual narrow authority basis rather than a guessed identity.
+    from holdspeak.meeting_session.deferred_bound import queue_service_principal
+
+    queue_principal = queue_service_principal()
     return SurfaceRun(
         db, queue_principal, _parent_run_operation_id(db, "meeting.deferred-intel-job"),
         THIS_MACHINE_ID, parent_kind="meeting.deferred-intel-job",
@@ -587,7 +632,7 @@ def _drive_cadence(tmp_path, monkeypatch) -> SurfaceRun:
 
     reset_database()
     db = Database(tmp_path / "cadence.db")
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
+    _ready_this_machine(tmp_path, monkeypatch)
     loop = db.cadence.upsert_loop(
         OpenLoop(source_type="meeting_action", source_id="a1", title="Ship the watchdog", owner="Karol")
     )
@@ -638,10 +683,10 @@ assert len(SURFACE_DRIVERS) == 16, "every named surface form is proven here; non
 #: the sanity test below) because ``test_one_path_provenance.py`` imports these
 #: to cross-check the DECLARED shape against the shape the stored row actually
 #: shows — the two files cannot drift apart without one of them failing.
-ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Recipe chat", "Rails"})
+ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Recipe chat"})
 CHILD_SHAPED_SURFACES = frozenset({
     "Sequence", "Workflow", "manual Workbench", "scheduled Workbench",
-    "memory writeback", "Decision promotion", "Delivery review", "voice",
+    "memory writeback", "Rails", "Decision promotion", "Delivery review", "voice",
     "meeting live", "meeting deferred", "dictation pipeline", "cadence next action",
 })
 

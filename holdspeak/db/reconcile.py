@@ -202,6 +202,127 @@ def _rebuild_legacy_intel_queue_tables(conn: sqlite3.Connection) -> bool:
     return True
 
 
+def _parent_kind_set(sql: str) -> set[str]:
+    """Extract the closed parent-kind vocabulary from one table DDL string."""
+    match = re.search(
+        r"\bkind\s+TEXT\s+NOT\s+NULL\s+CHECK\s*\(\s*kind\s+IN\s*\(([^)]*)\)",
+        sql,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if match is None:
+        raise RuntimeError("kernel_parent_runs kind constraint is missing")
+    return set(re.findall(r"'([^']+)'", match.group(1)))
+
+
+def _canonical_parent_runs_ddl() -> tuple[str, set[str], list[str]]:
+    """Return canonical parent DDL and its ordered columns from SCHEMA_SQL."""
+    reference = sqlite3.connect(":memory:")
+    try:
+        reference.executescript(SCHEMA_SQL)
+        row = reference.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='kernel_parent_runs'"
+        ).fetchone()
+        if row is None or not isinstance(row[0], str):
+            raise RuntimeError("canonical kernel_parent_runs table is missing")
+        ddl = str(row[0])
+        columns = [
+            str(item[1])
+            for item in reference.execute("PRAGMA table_info('kernel_parent_runs')")
+        ]
+        return ddl, _parent_kind_set(ddl), columns
+    finally:
+        reference.close()
+
+
+def _quoted(identifier: str) -> str:
+    return '"' + identifier.replace('"', '""') + '"'
+
+
+def _rebuild_kernel_parent_runs_for_kind_drift(conn: sqlite3.Connection) -> bool:
+    """Widen a historical parent-kind CHECK without dropping durable rows.
+
+    SQLite cannot ALTER a CHECK constraint.  We copy the canonical table shape
+    into a replacement under a savepoint, swap it in, and recreate every stored
+    index/trigger owned by the table.  The trigger condition is semantic: any
+    future canonical parent kind absent from the stored DDL heals in this same
+    path, while a current database is a strict no-op.
+    """
+    live = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='kernel_parent_runs'"
+    ).fetchone()
+    if live is None or not isinstance(live[0], str):
+        return False
+    canonical_ddl, canonical_kinds, canonical_columns = _canonical_parent_runs_ddl()
+    if canonical_kinds <= _parent_kind_set(str(live[0])):
+        return False
+
+    # A trigger owned by another table can still name this parent table in its
+    # body. SQLite reparses those during RENAME, so preserve and temporarily
+    # remove them too; otherwise the short DROP→RENAME swap is rejected.
+    dependents = conn.execute(
+        """SELECT type,name,sql FROM sqlite_master
+             WHERE (
+                    (tbl_name='kernel_parent_runs' AND type IN ('index','trigger'))
+                 OR (type='trigger' AND sql LIKE '%kernel_parent_runs%')
+             ) AND sql IS NOT NULL
+             ORDER BY CASE type WHEN 'index' THEN 0 ELSE 1 END, name"""
+    ).fetchall()
+    live_columns = {
+        str(row[1]) for row in conn.execute("PRAGMA table_info('kernel_parent_runs')")
+    }
+    columns = [column for column in canonical_columns if column in live_columns]
+    if not columns:
+        raise RuntimeError("kernel_parent_runs has no copyable columns")
+    replacement = "kernel_parent_runs__reconcile_replacement"
+    if conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (replacement,)
+    ).fetchone() is not None:
+        raise RuntimeError("kernel_parent_runs replacement table already exists")
+    replacement_ddl, substitutions = re.subn(
+        r"^CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:\"kernel_parent_runs\"|kernel_parent_runs)",
+        f"CREATE TABLE {_quoted(replacement)}",
+        canonical_ddl,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    if substitutions != 1:
+        raise RuntimeError("canonical kernel_parent_runs DDL cannot be renamed")
+
+    nested = conn.in_transaction
+    foreign_keys = int(conn.execute("PRAGMA foreign_keys").fetchone()[0])
+    # FK enforcement cannot be toggled under a surrounding transaction.  The
+    # normal reconciler entry is top-level; a nested caller still receives the
+    # SAVEPOINT + deferred-constraint form rather than an implicit commit.
+    if not nested and foreign_keys:
+        conn.execute("PRAGMA foreign_keys=OFF")
+    conn.execute("SAVEPOINT kernel_parent_runs_kind_rebuild")
+    try:
+        conn.execute(replacement_ddl)
+        copied = ", ".join(_quoted(column) for column in columns)
+        conn.execute(
+            f"INSERT INTO {_quoted(replacement)} ({copied}) "
+            f"SELECT {copied} FROM {_quoted('kernel_parent_runs')}"
+        )
+        for kind, name, _sql in dependents:
+            if str(kind) == "trigger":
+                conn.execute(f"DROP TRIGGER {_quoted(str(name))}")
+        conn.execute("DROP TABLE kernel_parent_runs")
+        conn.execute(
+            f"ALTER TABLE {_quoted(replacement)} RENAME TO kernel_parent_runs"
+        )
+        for _kind, _name, sql in dependents:
+            conn.execute(str(sql))
+        conn.execute("RELEASE SAVEPOINT kernel_parent_runs_kind_rebuild")
+    except Exception:
+        conn.execute("ROLLBACK TO SAVEPOINT kernel_parent_runs_kind_rebuild")
+        conn.execute("RELEASE SAVEPOINT kernel_parent_runs_kind_rebuild")
+        raise
+    finally:
+        if not nested and foreign_keys:
+            conn.execute("PRAGMA foreign_keys=ON")
+    return True
+
+
 def reconcile_schema(
     conn: sqlite3.Connection,
     *,
@@ -241,9 +362,11 @@ def reconcile_schema(
         )
     }
 
-    # The Phase-C queue primary-key change cannot be expressed as ALTER TABLE.
-    # Rebuild before SCHEMA_SQL creates its job-keyed indexes and triggers.
+    # These two immutable vocabulary/primary-key shape changes cannot be
+    # expressed as ALTER TABLE. Rebuild before SCHEMA_SQL recreates canonical
+    # indexes and triggers around their replacement tables.
     intel_queue_rebuilt = _rebuild_legacy_intel_queue_tables(conn)
+    parent_kind_rebuilt = _rebuild_kernel_parent_runs_for_kind_drift(conn)
 
     # ── 2. Create any missing tables / indexes / triggers ──────────────
     conn.executescript(SCHEMA_SQL)
@@ -255,7 +378,7 @@ def reconcile_schema(
         )
     }
     tables_created = post_tables - pre_tables
-    shape_changed = bool(tables_created) or intel_queue_rebuilt
+    shape_changed = bool(tables_created) or intel_queue_rebuilt or parent_kind_rebuilt
     if tables_created:
         log.info("Reconcile: created tables %s", sorted(tables_created))
 

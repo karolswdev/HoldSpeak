@@ -2970,7 +2970,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_inference_one_local_lease
 CREATE TABLE IF NOT EXISTS kernel_parent_runs (
     operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),
     native_id TEXT NOT NULL UNIQUE,
-    kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve','meeting.session','meeting.deferred-intel-job','dictation.session','wake.session','cadence.next-action-draft')),
+    kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve','meeting.session','meeting.deferred-intel-job','dictation.session','wake.session','cadence.next-action-draft','rails.observer-batch')),
     definition_ref TEXT NOT NULL,
     definition_revision TEXT NOT NULL,
     input_json TEXT NOT NULL,

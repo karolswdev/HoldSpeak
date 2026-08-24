@@ -212,9 +212,14 @@ def normalize_plugin_result(raw: Any) -> Mapping[str, Any]:
 
 def normalize_named_text(field: str) -> Callable[[Any], Mapping[str, Any]]:
     def normalize(raw: Any) -> Mapping[str, Any]:
-        if not isinstance(raw, str):
-            raise ValueError(field)
-        return {field: raw}
+        if isinstance(raw, str):
+            return {field: raw}
+        # The canonical prompt adapter's closed v1 carrier is admissible only
+        # as this exact one-field source; provider/model evidence remains in its
+        # kernel receipt and is not a semantic result field.
+        if isinstance(raw, Mapping) and set(raw) == {"output", "provider", "model"} and isinstance(raw["output"], str):
+            return {field: raw["output"]}
+        raise ValueError(field)
 
     return normalize
 
