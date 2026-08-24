@@ -106,14 +106,24 @@ def meeting_placement_summary(config: Config) -> dict[str, Any]:
     }
 
 
-def redacted_settings(config: Config) -> dict[str, Any]:
+def redacted_settings(
+    config: Config, *, include_meeting_placement: bool = True
+) -> dict[str, Any]:
+    """Return settings safe for transport.
+
+    ``include_meeting_placement`` is intentionally decided by the settings
+    service's per-family migration marker.  Once Meeting routes are assigned,
+    recalculating this legacy placement projection would be a fresh mutable
+    selector hidden inside a harmless-looking GET.
+    """
     from holdspeak.config import LEGACY_ENDPOINT_FIELDS
 
     payload = deepcopy(config.to_dict())
     payload[REVISION_KEY] = settings_revision(config)
-    # The provenance rides both the read and the write's echo, so a surface that
-    # changes the dial sees the new placement without a reload.
-    payload[PLACEMENT_KEY] = {"meeting": meeting_placement_summary(config)}
+    if include_meeting_placement:
+        # The provenance rides both the read and the write's echo, so a surface
+        # that changes the dial sees the new placement without a reload.
+        payload[PLACEMENT_KEY] = {"meeting": meeting_placement_summary(config)}
     for path, fields in LEGACY_ENDPOINT_FIELDS.items():
         node: Any = payload
         for part in path.split("."):
@@ -186,17 +196,42 @@ class SettingsService:
         return self.get_redacted(principal)
 
     def get_redacted(self, principal: Principal) -> dict[str, Any]:
-        result = redacted_settings(Config.load())
-        if self._routed_assignments_active():
+        thought_routes = self._assignment_migration_active(
+            "thoughts-writing-route-assignments"
+        )
+        meeting_routes = self._assignment_migration_active("meeting-route-assignments")
+        rails_routes = self._assignment_migration_active(
+            "rails-observer-route-assignments"
+        )
+        result = redacted_settings(
+            Config.load(), include_meeting_placement=not meeting_routes
+        )
+        if thought_routes:
             result.get("thoughts", {}).pop("inference_target_id", None)
             result.get("dictation", {}).get("runtime", {}).pop("profile_id", None)
+        if meeting_routes:
+            meeting = result.get("meeting", {})
+            if isinstance(meeting, dict):
+                # These retained Config bytes are migration evidence only.  A
+                # post-marker Settings response must not expose a second Meeting
+                # selection surface or recalculate its old placement.
+                meeting.pop("intel_profile_id", None)
+                meeting.pop("intel_provider", None)
+        if rails_routes:
+            rails = result.get("rails_observer", {})
+            if isinstance(rails, dict):
+                rails.pop("profile_id", None)
         return result
 
-    def _routed_assignments_active(self) -> bool:
+    def _assignment_migration_active(self, family: str) -> bool:
         with self._db._connection() as conn:
             return conn.execute(
-                "SELECT 1 FROM inference_assignment_migrations WHERE family='thoughts-writing-route-assignments'"
+                "SELECT 1 FROM inference_assignment_migrations WHERE family=?", (family,)
             ).fetchone() is not None
+
+    def _routed_assignments_active(self) -> bool:
+        """Compatibility name for the pre-existing Thought/writing gate."""
+        return self._assignment_migration_active("thoughts-writing-route-assignments")
 
     def update_settings(
         self, principal: Principal, patch: dict[str, Any]
@@ -210,6 +245,22 @@ class SettingsService:
             raise ValidationError(
                 "Legacy inference selectors are unavailable after assignment migration.",
                 code="inference_legacy_selector_retired",
+            )
+        meeting_patch = dict(patch.get("meeting") or {})
+        if self._assignment_migration_active("meeting-route-assignments") and (
+            {"intel_profile_id", "intel_provider"} & set(meeting_patch)
+        ):
+            raise ValidationError(
+                "Legacy Meeting routing selectors are unavailable after assignment migration.",
+                code="meeting_legacy_selector_retired",
+            )
+        rails_patch = dict(patch.get("rails_observer") or {})
+        if self._assignment_migration_active("rails-observer-route-assignments") and (
+            "profile_id" in rails_patch
+        ):
+            raise ValidationError(
+                "The Rails observer profile selector is unavailable after assignment migration.",
+                code="rails_observer_legacy_selector_retired",
             )
         # HS-130-07: optimistic concurrency. A client that read a revision must
         # echo it; if the on-disk config has moved since, the partial-tree write

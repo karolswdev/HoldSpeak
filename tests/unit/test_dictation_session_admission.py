@@ -1040,6 +1040,14 @@ def test_phase_d_couples_speech_and_writing_markers_for_one_complete_pipeline(
 
     # The same normal pipeline after both production migrations freezes all of
     # its configured routes in one parent bundle and never emits a plain child.
+    # The retained v1 resolver is forbidden here: if it ran, this production
+    # object probe would fail before a bundle could be admitted.
+    from holdspeak.speech_session.plan import DictationSessionPlanResolver
+
+    def legacy_resolver_called(*_args: Any, **_kwargs: Any) -> Any:
+        raise AssertionError("fully routed speech invoked the legacy resolver")
+
+    monkeypatch.setattr(DictationSessionPlanResolver, "resolve", legacy_resolver_called)
     routed_tmp = tmp_path / "routed"
     routed_tmp.mkdir()
     db, _broker, host, _unused = _build_host(routed_tmp, monkeypatch, legacy=False)
@@ -1049,6 +1057,10 @@ def test_phase_d_couples_speech_and_writing_markers_for_one_complete_pipeline(
         principal=hold_gesture_principal(), config_snapshot=host.config
     )
     assert routed._route_bundle is not None
+    # This carrier remains only for entry validation/history.  It contains no
+    # legacy deployment choice; every executable member is the atomic bundle.
+    assert routed.plan.capabilities == {}
+    assert "punctuate" not in routed.plan.capabilities
     assert _transcriber(FakeImpl()).transcribe(
         np.full(8000, AUDIO_SENTINEL, dtype=np.float32), admission=routed.transcription()
     ) == TEXT_SENTINEL
@@ -1371,6 +1383,12 @@ def test_paired_device_capture_admits_its_own_narrow_session(tmp_path, monkeypat
     row = _parents(db, "dictation.session")[0]
     assert (row["principal_kind"], row["principal_identity"]) == ("service", "device-capture")
     assert str(row["authority_basis"]) == "paired-device:aipi-1"
+    # Paired capture intentionally remains outside owner/wake route adoption:
+    # it keeps the complete legacy transcription path even with both markers.
+    assert session._route_bundle is None
+    assert _transcriber(FakeImpl()).transcribe(
+        np.full(8000, AUDIO_SENTINEL, dtype=np.float32), admission=session.transcription()
+    ) == TEXT_SENTINEL
     session.close("succeeded")
 
 
@@ -2439,6 +2457,45 @@ def test_the_egress_label_follows_the_frozen_revision_off_this_machine(
     session = admit_one_shot_session(
         principal=_browser_principal(), config_snapshot=host.config
     )
+    assert session.provider().egress_boundary == "private_network"
+    session.close("succeeded")
+
+
+def test_phase_f_routed_text_entry_uses_provider_route_egress_without_transcription(
+    tmp_path, monkeypatch
+):
+    """K7: provider-only text entries disclose their frozen widest boundary."""
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from holdspeak.speech_session import AIM_CLI_DRY_RUN, admit_text_entry_session
+
+    db, _broker, host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
+    db.profiles.upsert(
+        profile_id="routed-entry-lan",
+        name="Routed entry LAN",
+        kind="openAICompatible",
+        base_url="http://192.168.1.43:8080/v1",
+        model="qwen-entry-lan",
+    )
+    InferenceAssignmentService(db).set_assignment(
+        hold_gesture_principal(),
+        {
+            "command_id": "retarget-routed-entry-lan",
+            "expected_revision": 1,
+            "scope": {"kind": "capability", "capability_id": "speech.rewrite"},
+            "entries": [{"profile_id": "legacy-routed-entry-lan", "profile_revision": 1}],
+        },
+    )
+    host.config.dictation.pipeline.enabled = True
+    host.config.dictation.pipeline.stages = ["project-rewriter"]
+
+    session = admit_text_entry_session(
+        principal=_browser_principal(),
+        insertion_aim=AIM_CLI_DRY_RUN,
+        config_snapshot=host.config,
+    )
+    members = [item["capability_id"] for item in session._route_bundle["members"]]
+    assert members == ["speech.rewrite"]
+    assert session.provider().transcription_route is None
     assert session.provider().egress_boundary == "private_network"
     session.close("succeeded")
 

@@ -96,8 +96,9 @@ def _cmd_dry_run(
       derived in `main.py`; missing it is a NAMED refusal before any runtime is
       constructed. A configuration that selects none stays lexical, constructs no
       runtime, mints no inference child, and needs no credential.
-    * **Egress is disclosed from the frozen plan, before construction** — not from
-      whatever the settings say afterwards, and not after a model has been warmed.
+    * **Egress is disclosed from frozen route evidence, before construction** —
+      not from whatever the settings say afterwards, and not after a model has
+      been warmed.
     * **The result body is buffered** and printed only if it wins the session's
       publication election, so `Ctrl-C` (or an expiry, or a revocation) cannot be
       followed by a late wall of stage output for work that was cancelled.
@@ -156,9 +157,9 @@ def _cmd_dry_run(
             # Live admission + every required capability, BEFORE construction.
             entry.validate()
             # Article III.2: say where this work goes before anything is built or
-            # warmed, and say it from the frozen plan.
+            # warmed, from the same frozen route members every provider child uses.
             print(
-                f"egress: {entry.plan.egress_boundary()} "
+                f"egress: {entry.provider.egress_boundary} "
                 f"(plan {entry.plan.sha256[:19]}, session {entry.session.operation_id})",
                 file=out,
             )

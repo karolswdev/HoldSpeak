@@ -112,7 +112,12 @@ class ProviderAdmission:
     # ------------------------------------------------------------------ plan
 
     def declares(self, capability: str) -> bool:
-        return bool(self.plan is not None and self.plan.has(capability))
+        # A routed parent carries an inert compatibility plan.  Its bundle is
+        # therefore authoritative even for stage discovery; consult the v1 plan
+        # only on the complete legacy/paired-device path.
+        return capability in self.routed_routes or bool(
+            self.plan is not None and self.plan.has(capability)
+        )
 
     def revision(self, capability: str) -> str:
         """Return the deployment revision frozen for this provider capability.
@@ -157,11 +162,18 @@ class ProviderAdmission:
         private-network transcription route can therefore never disappear behind
         the legacy plan's empty-provider ``local`` default.
         """
-        if self.transcription_route is None:
+        # Route members are frozen execution evidence.  Text-entry sessions
+        # deliberately have no transcription member, so testing that member
+        # first used to mislabel a routed provider stage as the legacy plan's
+        # default ``local``.  Any routed member is sufficient to select this
+        # authoritative path.
+        if not self.routed_routes and self.transcription_route is None:
             return str(self.plan.egress_boundary())
         from ..intel.providers import EGRESS_BOUNDARIES, EGRESS_LOCAL
 
-        route_ids = [str(self.transcription_route.get("id") or "")]
+        route_ids: list[str] = []
+        if self.transcription_route is not None:
+            route_ids.append(str(self.transcription_route.get("id") or ""))
         route_ids.extend(str(route.get("id") or "") for route in self.routed_routes.values())
         widest = EGRESS_LOCAL
         with self.broker.database._connection() as conn:
@@ -338,11 +350,11 @@ class ProviderAdmission:
                     str(result["receipt"].get("terminal_disposition") or state), capability
                 )
             raise SpeechProviderFailure(contract, reason=state)
-        if self.transcription_route is not None:
-            # Bundle authority is all-or-nothing.  Falling through here would
-            # create a plain legacy provider child under a parent that already
-            # froze speech authority, which is neither budgeted nor receipted as
-            # a member of that bundle.
+        if self.routed_routes or self.transcription_route is not None:
+            # Bundle authority is all-or-nothing.  This includes routed
+            # synthetic-text parents, which have provider members but no
+            # transcription member.  Falling through would create a plain legacy
+            # provider child under a parent that already froze speech authority.
             raise SpeechSessionRefused(ROUTED_PROVIDER_ROUTE_MISSING, capability)
         outcome, result = run_admitted_speech_child(
             broker=self.broker,

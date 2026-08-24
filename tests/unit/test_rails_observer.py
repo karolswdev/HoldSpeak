@@ -167,7 +167,7 @@ def test_admitted_summary_stamps_journal_observer_provenance_and_degrades_honest
 
     broker.inference_runner._engine_factory = lambda _revision, **_kw: FakeIntel()
     summarizer = rails_observer.build_profile_summarizer(
-        "rails", db=db, broker=broker, principal=principal,
+        db=db, broker=broker, principal=principal,
     )
     batch = rails_observer.summarize_batch([_event("t1", "gate_pass")], summarize_fn=summarizer)
     assert not batch["degraded"], batch
@@ -184,6 +184,13 @@ def test_admitted_summary_stamps_journal_observer_provenance_and_degrades_honest
     assert (receipt["actor_kind"], receipt["actor_identity"], receipt["authority_basis"]) == (
         "service", "rails-observer", "rails-observer:journal-only",
     )
+    with db._connection() as conn:
+        parent_input = conn.execute(
+            "SELECT input_json FROM kernel_parent_runs WHERE operation_id=?",
+            (operation_id,),
+        ).fetchone()["input_json"]
+    assert "observer_config_source_sha256" not in parent_input
+    assert "profile_id" not in parent_input
 
     broker.inference_runner._engine_factory = lambda _revision, **_kw: (_ for _ in ()).throw(RuntimeError("model down"))
     degraded = rails_observer.summarize_batch([_event("t2", "gate_refusal")], summarize_fn=summarizer)
@@ -581,6 +588,90 @@ def test_rails_unmappable_sentinel_writes_no_partial_migration(db, monkeypatch) 
         assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == 0
         receipts = conn.execute("SELECT outcome FROM kernel_receipts").fetchall()
     assert [row["outcome"] for row in receipts] == ["refused"]
+
+
+def test_marker_gated_settings_retire_only_meeting_and_rails_selectors(
+    db, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D6/D7: saved selectors migrate once, then cannot re-enter routing."""
+    from holdspeak.services.errors import ValidationError
+    from holdspeak.services.inference_adoption_service import RoutedInferenceCoordinator
+    from holdspeak.services.settings_service import SettingsService
+    from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
+
+    _profile(
+        db,
+        "meeting-before",
+        claims=(
+            "language",
+            *(
+                _result_claim(capability)
+                for capability in (
+                    "meeting.live_analysis",
+                    "meeting.bookmark_label",
+                    "meeting.auto_title",
+                )
+            ),
+        ),
+    )
+    _profile(db, "rails-before", claims=("language", _result_claim("background.rails_summary")))
+    config = Config()
+    config.meeting.intel_profile_id = "meeting-before"
+    config.meeting.intel_provider = "cloud"
+    config.rails_observer.enabled = True
+    config.rails_observer.profile_id = "rails-before"
+    monkeypatch.setattr(Config, "load", classmethod(lambda cls, *_args, **_kwargs: config))
+    settings = SettingsService(db)
+
+    # Before each family marker the exact saved value supplies its one migration
+    # and still appears only for that unmarked family.
+    before = settings.get_settings(OWNER)
+    assert before["meeting"]["intel_profile_id"] == "meeting-before"
+    assert before["meeting"]["intel_provider"] == "cloud"
+    assert before["rails_observer"]["profile_id"] == "rails-before"
+    coordinator = RoutedInferenceCoordinator(db)
+    assert coordinator.migrate_meeting_route_assignments(OWNER, config)["legacy_config_read"]
+    assert coordinator.migrate_rails_observer_route_assignments(OWNER, config)["legacy_config_read"]
+
+    after = settings.get_settings(OWNER)
+    assert "_placement" not in after
+    assert "intel_profile_id" not in after["meeting"]
+    assert "intel_provider" not in after["meeting"]
+    assert "profile_id" not in after["rails_observer"]
+    with pytest.raises(ValidationError, match="Meeting routing") as meeting_refusal:
+        settings.update_settings(OWNER, {"meeting": {"intel_profile_id": "mutated"}})
+    assert meeting_refusal.value.code == "meeting_legacy_selector_retired"
+    with pytest.raises(ValidationError, match="Rails observer") as rails_refusal:
+        settings.update_settings(OWNER, {"rails_observer": {"profile_id": "mutated"}})
+    assert rails_refusal.value.code == "rails_observer_legacy_selector_retired"
+
+    # A process-style service reconstruction sees the same markers.  Mutating
+    # retained migration evidence cannot retarget the already saved assignments.
+    config.meeting.intel_profile_id = "mutated"
+    config.rails_observer.profile_id = "mutated"
+    restarted = SettingsService(db).get_settings(OWNER)
+    assert "intel_profile_id" not in restarted["meeting"]
+    assert "profile_id" not in restarted["rails_observer"]
+    with db._connection() as conn:
+        meeting_profiles = {
+            row["profile_id"]
+            for row in conn.execute(
+                "SELECT a.profile_id FROM inference_assignments a "
+                "JOIN inference_assignment_revisions r "
+                "ON r.assignment_id=a.assignment_id "
+                "AND r.revision=a.assignment_revision "
+                "WHERE r.capability_id LIKE 'meeting.%'"
+            ).fetchall()
+        }
+        rails_profile = conn.execute(
+            "SELECT a.profile_id FROM inference_assignments a "
+            "JOIN inference_assignment_revisions r "
+            "ON r.assignment_id=a.assignment_id "
+            "AND r.revision=a.assignment_revision "
+            "WHERE r.capability_id='background.rails_summary'"
+        ).fetchone()["profile_id"]
+    assert meeting_profiles == {"meeting-before"}
+    assert rails_profile == "rails-before"
 
 
 # --- the journal write (a real note) ---------------------------------------

@@ -1146,14 +1146,14 @@ class MeetingWebServer:
                     continue
                 from .db import get_database
                 from .kernel.runtime import _service
+                # The enabled/tail controls are observer mechanics.  Its route
+                # and provenance are frozen from the Rails assignment bundle;
+                # never feed the retained migration-era profile pointer into a
+                # recurring execution tick.
                 summarizer = rails_observer.build_profile_summarizer(
-                    cfg.profile_id,
                     db=get_database(),
                     broker=_service(),
                     principal=observer_principal,
-                    observer_config_source_sha256=rails_observer._canonical_sha256(
-                        {"profile_id": cfg.profile_id or "this_machine"}
-                    ),
                 )
                 batch = await asyncio.to_thread(
                     rails_observer.summarize_batch, fresh, summarize_fn=summarizer

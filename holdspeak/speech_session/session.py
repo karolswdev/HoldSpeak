@@ -37,6 +37,7 @@ from .plan import (
     SpeechSessionRefused,
     pipeline_provider_capabilities,
     sha,
+    text_sha,
 )
 
 log = get_logger("speech_session")
@@ -546,6 +547,64 @@ def _broker() -> Any:
     return _service()
 
 
+def _routed_session_validation_plan(
+    *,
+    principal: Any,
+    insertion_aim: str,
+    session_id: str,
+    deadline_at: float,
+    child_budget: int,
+    plan_kind: str,
+    insertion_context: str,
+    provider_capabilities: Sequence[str],
+    created_at: float,
+) -> SpeechSessionPlan:
+    """Make the non-authoritative compatibility carrier for a routed parent.
+
+    A fully adopted owner/wake session still needs a stable parent definition
+    revision and the entry fence validates that carrier.  It must not contain
+    deployment legs, though: the parent route bundle alone freezes and chooses
+    transcription/preload/provider work.  Keeping this deliberately empty plan
+    also makes an accidental legacy child refuse rather than discover a target.
+    """
+    route_shape = tuple(sorted(str(item) for item in provider_capabilities))
+    config_revision = sha({"routed_provider_capabilities": route_shape})
+    registry_revision = sha({"route_bundle_authority": True})
+    body = {
+        "schema": 1,
+        "plan_kind": str(plan_kind),
+        "session_id": str(session_id),
+        "actor": f"{principal.name}:{principal.identity}",
+        "authority_basis": str(getattr(principal, "authority_basis", "") or ""),
+        "insertion_aim": str(insertion_aim or ""),
+        "insertion_context_sha256": text_sha(insertion_context),
+        "config_revision": config_revision,
+        "registry_revision": registry_revision,
+        "deadline_at": float(deadline_at),
+        "child_budget": int(child_budget),
+        "capabilities": {},
+        "unresolved": [],
+    }
+    return SpeechSessionPlan(
+        schema=1,
+        plan_kind=str(plan_kind),
+        session_id=str(session_id),
+        actor=str(body["actor"]),
+        authority_basis=str(body["authority_basis"]),
+        insertion_aim=str(insertion_aim or ""),
+        insertion_context_sha256=str(body["insertion_context_sha256"]),
+        config_revision=config_revision,
+        registry_revision=registry_revision,
+        created_at=float(created_at),
+        deadline_at=float(deadline_at),
+        child_budget=int(child_budget),
+        capabilities={},
+        unresolved=(),
+        sha256=sha(body),
+        deployments={},
+    )
+
+
 def admit_speech_session(
     *,
     kind: str,
@@ -599,33 +658,45 @@ def admit_speech_session(
     new_speech_route = (
         speech_routing
         and provider_routing
-        and plan_defaults
         and principal.identity != DEVICE_SERVICE_IDENTITY
     )
-    # The plan DTO survives only for a wholly legacy parent (and paired-device
-    # capture, which remains outside Phase D).  A bundled parent never treats its
-    # default Whisper entries as authority.
-    retained_capabilities = capabilities
-    retained_defaults = plan_defaults
+    # A fully adopted owner/wake parent does not invoke the legacy resolver at
+    # all.  It may retain a plan-shaped validation carrier for entry fencing, but
+    # that carrier contains no deployment leg: the atomic bundle below is the
+    # sole authority for transcription, derived preload, and provider work.
+    routed_provider_capabilities: tuple[str, ...] = ()
     if new_speech_route:
-        retained_capabilities = tuple(
-            dict.fromkeys((*capabilities, *pipeline_provider_capabilities(config_snapshot)))
+        routed_provider_capabilities = pipeline_provider_capabilities(config_snapshot)
+        plan = _routed_session_validation_plan(
+            principal=principal,
+            insertion_aim=insertion_aim,
+            session_id=identifier,
+            deadline_at=deadline,
+            child_budget=int(child_budget),
+            plan_kind=plan_kind
+            or (PLAN_WAKE if kind == PARENT_WAKE_SESSION else PLAN_DICTATION),
+            insertion_context=insertion_context,
+            provider_capabilities=routed_provider_capabilities,
+            created_at=started,
         )
-        retained_defaults = False
-    plan = DictationSessionPlanResolver().resolve(
-        config_snapshot,
-        registry_snapshot,
-        principal,
-        insertion_aim,
-        session_id=identifier,
-        deadline_at=deadline,
-        child_budget=int(child_budget),
-        plan_kind=plan_kind or (PLAN_WAKE if kind == PARENT_WAKE_SESSION else PLAN_DICTATION),
-        capabilities=retained_capabilities,
-        plan_defaults=retained_defaults,
-        insertion_context=insertion_context,
-        created_at=started,
-    )
+    else:
+        # The resolver remains lawful only for a wholly legacy parent and the
+        # deliberately unadopted paired-device capture path.
+        plan = DictationSessionPlanResolver().resolve(
+            config_snapshot,
+            registry_snapshot,
+            principal,
+            insertion_aim,
+            session_id=identifier,
+            deadline_at=deadline,
+            child_budget=int(child_budget),
+            plan_kind=plan_kind
+            or (PLAN_WAKE if kind == PARENT_WAKE_SESSION else PLAN_DICTATION),
+            capabilities=capabilities,
+            plan_defaults=plan_defaults,
+            insertion_context=insertion_context,
+            created_at=started,
+        )
     parent_snapshot = plan.summary()
     if kind == PARENT_WAKE_SESSION:
         # The policy lookup is intentionally fixed.  The configured wake revision
@@ -645,13 +716,18 @@ def admit_speech_session(
             CAPABILITY_INTENT_CLASSIFY: "speech.intent_classify",
             "rewrite": "speech.rewrite",
         }
-        routes: list[dict[str, str]] = [
-            {
-                "key": "transcription",
-                "capability_id": "speech.transcribe",
-                "invocation_id": plan.session_id,
-            }
-        ]
+        routes: list[dict[str, str]] = []
+        # Synthetic text has no audio.  Do not mint a transcription member merely
+        # because the parent is fully routed; a provider-only bundle is its own
+        # complete execution authority.
+        if plan_defaults:
+            routes.append(
+                {
+                    "key": "transcription",
+                    "capability_id": "speech.transcribe",
+                    "invocation_id": plan.session_id,
+                }
+            )
         routes.extend(
             {
                 "key": legacy,
@@ -659,7 +735,7 @@ def admit_speech_session(
                 "invocation_id": plan.session_id,
             }
             for legacy, canonical in aliases.items()
-            if provider_routing and plan.has(legacy)
+            if legacy in routed_provider_capabilities
         )
         # The lifecycle is derived from the frozen transcription member, not an
         # assignable preload row.  OWNER capture and the closed wake SERVICE
@@ -672,8 +748,11 @@ def admit_speech_session(
                 "strategy_sequence": ["derive-from-frozen-transcription"],
             }
             if (
-                principal.kind is PrincipalKind.OWNER
-                or principal.identity == WAKE_SERVICE_IDENTITY
+                plan_defaults
+                and (
+                    principal.kind is PrincipalKind.OWNER
+                    or principal.identity == WAKE_SERVICE_IDENTITY
+                )
             )
             else None
         )

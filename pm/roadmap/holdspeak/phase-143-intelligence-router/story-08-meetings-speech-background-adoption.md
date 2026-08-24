@@ -266,6 +266,26 @@ from the deletion round — repaired with behavior coverage preserved
 on the C1 bound path, no v1 executor revived. Sweep: **6473 passed /
 zero branch-new.** Next: slices 2–3, one final sweep, story close.
 
+**Phase F slices 2–3 (2026-08-24): SHIPPED — PHASE F CONSTRUCTION
+COMPLETE.** Slice 2: settings gates are family-specific — after the
+Meeting marker, GET omits and PATCH refuses the legacy Meeting
+routing selectors (`meeting_legacy_selector_retired`); after the
+Rails marker, `rails_observer.profile_id` is hidden/refused and the
+per-tick runtime no longer receives any profile/config-hash input
+(provenance is frozen-route evidence only); the routing-authority
+census closes with an explicit ledger distinguishing eliminated
+doors, retained fences, and other-story rows. Slice 3: fully-adopted
+non-device sessions carry an INERT validation plan (no deployment
+legs, resolver never invoked — the bundle is the sole execution
+authority) while partial-marker and paired-device sessions keep the
+complete legacy path; one routes-first egress accessor now feeds CLI
+and web (provider-only text entries report the widest frozen
+boundary instead of a false `local`); punctuation stays lexical.
+Sweep: **6475 passed / zero branch-new** (the one catch — the new
+inert-plan helper unclassified in the surface-fallback census — was
+a two-line classification fix, serially verified). Next: story
+close.
+
 ## Problem
 
 MeetingIntelPlan and SpeechPlan are the proven ordered-revision pattern but

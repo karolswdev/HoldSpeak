@@ -280,23 +280,14 @@ class RailsSummaryUnavailable(RuntimeError):
         self.receipt_id = receipt_id
 
 
-def _canonical_sha256(value: Any) -> str:
-    import json
-
-    return "sha256:" + hashlib.sha256(
-        json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
-    ).hexdigest()
-
-
-def build_profile_summarizer(profile_id: Optional[str] = None, *, db: Any = None,
-                             broker: Any = None, principal: Any = None,
-                             observer_config_source_sha256: str | None = None) -> SummarizeFn:
+def build_profile_summarizer(
+    *, db: Any = None, broker: Any = None, principal: Any = None
+) -> SummarizeFn:
     """Return the routed, frozen Rails batch summarizer.
 
-    ``profile_id`` is migration-era source evidence only.  It is deliberately
-    never resolved by this call: a SERVICE route can use only its exact
-    capability assignment.  The event rendering is hashed before admission;
-    prompts are staged only below the frozen route member.
+    Rails' retained Config selector is startup-migration evidence, never a
+    runtime input.  The SERVICE parent is admitted from its exact capability
+    assignment; the event rendering is the only replay identity carried here.
     """
     from .kernel.runtime import _service
     from .principals import PrincipalKind
@@ -312,9 +303,6 @@ def build_profile_summarizer(profile_id: Optional[str] = None, *, db: Any = None
     broker = broker or _service()
     adoption = broker.inference_adoption_service
     bundles = InferenceParentRouteBundleService(broker, adoption)
-    config_sha = observer_config_source_sha256 or _canonical_sha256(
-        {"profile_id": str(profile_id or "this_machine")}
-    )
 
     def summarize(system_prompt: str, user_prompt: str) -> str:
         # ``user_prompt`` is exactly ``format_events_for_model``.  Its digest is
@@ -324,7 +312,6 @@ def build_profile_summarizer(profile_id: Optional[str] = None, *, db: Any = None
         input_snapshot = {
             "event_batch_sha256": batch_sha,
             "event_count": len(user_prompt.splitlines()) if user_prompt else 0,
-            "observer_config_source_sha256": config_sha,
         }
         # The batch identity is replayable across process restarts; a wall-clock
         # admission deadline would make the same batch command conflict. The

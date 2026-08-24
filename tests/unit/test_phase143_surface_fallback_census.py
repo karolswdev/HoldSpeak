@@ -44,6 +44,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/inference_acquisition_service.py", "_route_revision"): ("setup preview revision; not assignment authority", "143-12"),
     ("holdspeak/services/inference_assignment_service.py", "_resolve"): ("canonical sparse assignment resolver", "143-04"),
     ("holdspeak/services/inference_adoption_service.py", "_validate_parentless_local_preload_route"): ("closed parentless speech preload cross-bind", "143-08"),
+    ("holdspeak/speech_session/session.py", "_routed_session_validation_plan"): ("inert validation/history carrier for fully-adopted sessions; no route selection", "143-08"),
     ("holdspeak/services/inference_route_plan_service.py", "_insert_route"): ("canonical immutable route-plan persistence", "143-05"),
     ("holdspeak/services/inference_route_plan_service.py", "_resolve_entries"): ("canonical frozen route-leg resolver", "143-05"),
     ("holdspeak/services/inference_route_plan_service.py", "_route_from_row"): ("canonical route-plan evidence reconstruction", "143-05"),
