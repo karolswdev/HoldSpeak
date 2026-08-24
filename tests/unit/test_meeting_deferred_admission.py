@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -470,7 +471,13 @@ def _saved_stop_meeting(db: Database, meeting_id: str) -> MeetingState:
     return state
 
 
-def _live_stop_bundle(broker: Any, state: MeetingState, provider: Any):
+def _live_stop_bundle(
+    broker: Any,
+    state: MeetingState,
+    provider: Any,
+    *,
+    route_specs: tuple[dict[str, str], ...] | None = None,
+):
     bundles = InferenceParentRouteBundleService(
         broker,
         broker.inference_adoption_service,
@@ -484,13 +491,101 @@ def _live_stop_bundle(broker: Any, state: MeetingState, provider: Any):
         definition_revision="c3-test",
         input_snapshot={"meeting_id": state.id},
         deadline_at=2_000_000_000.0,
-        routes=({
+        routes=route_specs or ({
             "key": "deferred-analysis",
             "capability_id": "meeting.deferred_analysis",
             "invocation_id": state.id,
         },),
     )
     return bundles, started
+
+
+def test_stop_handoff_post_commit_cancels_do_not_serially_delay_stop(tmp_path, monkeypatch):
+    """Four slow provider cancels cannot hold the already-fenced Stop response."""
+    db, broker, _engine, _host, _requests = _queue_rig(
+        tmp_path,
+        monkeypatch,
+        plugins=("requirements_extractor",),
+        chain=("requirements_extractor",),
+    )
+    state = _saved_stop_meeting(db, "m-c3-stop-latency")
+    provider = db.intel.stop_handoff_provider(
+        meeting_id=state.id,
+        transcript_hash=state.transcript_hash(),
+        displaced_work=("final-analysis",),
+        reason="stop_handoff",
+    )
+    route_specs = (
+        {"key": "analysis", "capability_id": "meeting.deferred_analysis", "invocation_id": state.id},
+        {"key": "bookmark", "capability_id": "meeting.bookmark_label", "invocation_id": state.id},
+        {"key": "title", "capability_id": "meeting.auto_title", "invocation_id": state.id},
+        {"key": "plugin", "capability_id": "meeting.plugin.requirements_extractor", "invocation_id": state.id},
+    )
+    bundles, started = _live_stop_bundle(
+        broker, state, provider, route_specs=route_specs,
+    )
+    controller = broker.inference_adoption_service.controller
+    for member in started["bundle"]["members"]:
+        capability = member["capability_id"]
+        admitted = broker.inference_adoption_service.admit_on_frozen_route(
+            OWNER,
+            command_id=f"c3-latency-admit:{member['key']}",
+            route_plan_id=member["route_plan_id"],
+            capability_id=capability,
+            operation_id=f"c3-latency-operation:{member['key']}",
+            payload={"transcript": "we shipped the fix"},
+            reserved_output_tokens=16,
+        )
+        reservation = controller.reserve_next_attempt(
+            INFERENCE_FALLBACK_AUTHORITY,
+            command_id=f"c3-latency-reserve:{member['key']}",
+            execution_id=admitted["execution"]["id"],
+        )["reservation"]
+        controller.claim_reservation(
+            INFERENCE_FALLBACK_AUTHORITY,
+            command_id=f"claim-{reservation['attempt_id']}",
+            reservation=reservation,
+        )
+        child_id = _broker_child(broker, reservation, suffix=f"c3-latency-{member['key']}")
+        controller.bind_admitted_child(
+            INFERENCE_FALLBACK_AUTHORITY,
+            command_id=f"bind-{reservation['attempt_id']}",
+            attempt_id=reservation["attempt_id"],
+            child_operation_id=child_id,
+        )
+        controller.mark_dispatch_intent(
+            INFERENCE_FALLBACK_AUTHORITY,
+            command_id=f"dispatch-{reservation['attempt_id']}",
+            attempt_id=reservation["attempt_id"],
+        )
+
+    completed: list[str] = []
+    all_cancelled = threading.Event()
+
+    def slow_cancel(invocation_id: str) -> str:
+        time.sleep(0.2)
+        completed.append(invocation_id)
+        if len(completed) == 4:
+            all_cancelled.set()
+        return "delayed"
+
+    monkeypatch.setattr(broker.inference_runner, "cancel", slow_cancel)
+    began = time.monotonic()
+    effect = bundles.request_stop_handoff(
+        OWNER,
+        command_id=f"meeting-stop:{state.id}",
+        bundle_id=started["bundle"]["id"],
+        evidence_provider_id=provider.id,
+        planning_reference=db.intel.stop_handoff_planning_reference(state.id),
+    )
+    elapsed = time.monotonic() - began
+
+    assert effect["state"] == "pending_physical_settlement"
+    # Serial cancellation would be roughly 800ms; the Stop response is only the
+    # durable fence/reservation transaction and stays below the hero-action bar.
+    assert elapsed < 0.5
+    assert all_cancelled.wait(timeout=2.0)
+    assert len(completed) == 4
 
 
 def test_stop_provider_known_settlement_activates_normal_bound_queue_claim(tmp_path, monkeypatch):
@@ -540,6 +635,40 @@ def test_stop_provider_known_settlement_activates_normal_bound_queue_claim(tmp_p
             (state.id,),
         ).fetchone()
     assert claim is not None and claim["parent_operation_id"] and claim["bundle_id"]
+
+
+def test_settled_stop_handoff_skipped_by_owner_never_unknown_recovers(tmp_path, monkeypatch):
+    """A valid post-settlement Skip remains terminal queue truth."""
+    db, broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _saved_stop_meeting(db, "m-c3-settled-skip")
+    provider = db.intel.stop_handoff_provider(
+        meeting_id=state.id,
+        transcript_hash=state.transcript_hash(),
+        displaced_work=("final-analysis",),
+        reason="stop_handoff",
+    )
+    bundles, started = _live_stop_bundle(broker, state, provider)
+    effect = bundles.request_stop_handoff(
+        OWNER,
+        command_id=f"meeting-stop:{state.id}",
+        bundle_id=started["bundle"]["id"],
+        evidence_provider_id=provider.id,
+        planning_reference=db.intel.stop_handoff_planning_reference(state.id),
+    )
+    assert effect["state"] == "committed"
+    assert db.intel.skip_remaining_intel(state.id) == "skipped"
+    assert db.intel.admit_unknown_stop_handoff_recoveries() == 0
+    with db._connection() as conn:
+        skipped = conn.execute(
+            "SELECT status,lifecycle_posture FROM intel_jobs WHERE job_id=?",
+            (effect["evidence_ref"],),
+        ).fetchone()
+        descendants = conn.execute(
+            "SELECT COUNT(*) FROM intel_jobs WHERE origin_job_id=?",
+            (effect["evidence_ref"],),
+        ).fetchone()[0]
+    assert skipped is not None and tuple(skipped) == ("skipped", "terminal")
+    assert descendants == 0
 
 
 def test_stop_provider_unknown_dispatch_keeps_reservation_and_fresh_admits(tmp_path, monkeypatch):
@@ -594,6 +723,40 @@ def test_stop_provider_unknown_dispatch_keeps_reservation_and_fresh_admits(tmp_p
         planning_reference=db.intel.stop_handoff_planning_reference(state.id),
     )
     assert effect["state"] == "pending_physical_settlement"
+
+    # A provider-owned reserve is not ordinary queue work: neither generic
+    # recovery verb may rewrite it while the live route can still egress, and the
+    # existing recovery glass must not advertise those verbs.
+    from holdspeak.services.meeting_intel_service import MeetingIntelService
+
+    recovery_service = MeetingIntelService(db)
+    recovery_before_settlement = recovery_service.get_recovery(None, state.id)
+    assert recovery_before_settlement["actions"] == {"retry": False, "skip": False}
+    assert db.intel.request_intel_retry(state.id) == "reserved"
+    assert db.intel.skip_remaining_intel(state.id) == "reserved"
+    from holdspeak.services.errors import ConflictError
+
+    with pytest.raises(ConflictError, match="awaiting Stop settlement") as retry_refused:
+        recovery_service.retry_recovery(OWNER, state.id)
+    with pytest.raises(ConflictError, match="awaiting Stop settlement") as skip_refused:
+        recovery_service.skip_recovery(OWNER, state.id)
+    assert retry_refused.value.code == skip_refused.value.code == "reserved"
+    with db._connection() as conn:
+        reserved = conn.execute(
+            "SELECT status,lifecycle_posture FROM intel_jobs WHERE job_id=?",
+            (effect["evidence_ref"],),
+        ).fetchone()
+        assert reserved is not None and tuple(reserved) == ("reserved", "reserved")
+        assert conn.execute(
+            "SELECT COUNT(*) FROM intel_jobs WHERE origin_job_id=?",
+            (effect["evidence_ref"],),
+        ).fetchone()[0] == 0
+
+    from holdspeak.intel_queue import process_next_intel_job
+
+    assert process_next_intel_job() is False
+    assert requests == []
+
     controller.reconcile_dispatch_intent(
         INFERENCE_FALLBACK_AUTHORITY,
         command_id=f"c3-live-reconcile:{state.id}",

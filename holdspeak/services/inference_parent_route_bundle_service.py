@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
 import time
 from datetime import datetime
 from dataclasses import dataclass
@@ -1119,7 +1120,7 @@ class InferenceParentRouteBundleService:
                 self._settle_and_activate(conn, command, effect, provider)
             conn.commit()
 
-        for _execution_id, child_invocation_id in child_invocations:
+        def signal_cancel(child_invocation_id: str) -> None:
             try:
                 from ..kernel.runtime import _as_principal
 
@@ -1129,7 +1130,18 @@ class InferenceParentRouteBundleService:
                 # The durable route Stop election is already authoritative. A
                 # provider cancellation failure is observable in its own runtime
                 # receipt but can never reopen this handoff or activate its reserve.
-                continue
+                return
+
+        # The receipt/fence is committed before this best-effort work. Do not make
+        # the hero Stop action wait once per in-flight child (each provider cancel
+        # may legally consume its own bounded timeout).
+        for _execution_id, child_invocation_id in child_invocations:
+            threading.Thread(
+                target=signal_cancel,
+                args=(child_invocation_id,),
+                name="holdspeak-stop-cancel",
+                daemon=True,
+            ).start()
         return effect
 
     def reconcile_stop_handoff(self, *, command_id: str) -> dict[str, Any]:

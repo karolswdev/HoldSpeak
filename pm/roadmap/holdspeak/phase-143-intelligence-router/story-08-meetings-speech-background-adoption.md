@@ -85,7 +85,13 @@ production adopter — freeze = reserved row + ledger event; activation
 unknown terminals stay reserved forever while a linked fresh local job
 auto-admits per the owner ruling (dual ledger events, no UI); Stop and
 recovery both ride the primitive. Sweep 6417 passed / zero branch-new.
-Capped counsel pass on C3 is next.
+The capped counsel pass caught one control-trust blocker (generic
+Retry/Skip on reserved handoffs — Skip meant "run it anyway") — fixed
+same round with the counsel's four production-object proofs, plus the
+audit-stream ride-alongs (Stop cancel signals backgrounded, 800ms→16ms;
+unsettled-handoff index). C3 CLOSED at 6418 passed / zero branch-new —
+**Phase C is structurally complete.** Phase D (speech lifecycle) is
+next.
 
 ## Problem
 

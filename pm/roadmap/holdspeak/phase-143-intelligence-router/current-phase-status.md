@@ -298,9 +298,27 @@ fresh local job (origin lineage, immutable recovery descriptor, dual
 owner's auto-re-run ruling — ledger truth, no new UI. The primitive's
 post-commit best-effort cancellation signal is restored. C1/C2's
 existing slug→V3 conversion and bundle seal were honestly reused, not
-redone. Confirming sweep: **6417 passed / zero branch-new**. Next: the
-capped counsel pass on C3, then Phase D (speech, design already
-ruled).
+redone. Confirming sweep: **6417 passed / zero branch-new**. The capped
+counsel pass (fresh Sol, C3-scoped; an independent owner-side
+code-review stream audited the same diff in parallel) found one
+ordinary-path blocker — reserved Stop handoffs were exposed to the
+recovery glass's generic Retry/Skip, and Skip was ignored by automatic
+recovery ("Skip currently means run it anyway") — fixed in the single
+permitted round: intact reservations suppress and refuse both controls
+(typed `reserved` conflict), and automatic unknown recovery requires
+the intact reserved original, proven with the counsel's four
+production-object tests. Two audit-stream items rode along: the
+serial post-commit cancel loop on Stop (measured 800ms worst-case
+serial on the hero action) moved to background threads under the
+durable-fence-before-best-effort-cancel law (`stop_wall_ms=16.31`),
+and the missing unsettled-handoff index added via reconcile-on-open.
+Two fault-only observations are recorded sitting notes in the record.
+Full record: [C3 counsel](./assets/story-08-c3-counsel.md).
+**C3 is CLOSED — Phase C (deferred queue, plugins, Stop handoff) is
+structurally complete.** Closing sweep: **6418 passed / zero
+branch-new**. Next: Phase D (speech lifecycle, design already ruled
+with six in-file amendments), then Phase E (background adopters) and
+Phase F (migration cleanup).
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

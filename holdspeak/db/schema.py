@@ -3055,6 +3055,10 @@ CREATE TABLE IF NOT EXISTS inference_parent_stop_handoffs (
     effect_sha256 TEXT NOT NULL,
     created_at REAL NOT NULL
 );
+-- Queue recovery scans unsettled adopter handoffs by provider/revision in
+-- durable creation order; the settlement anti-join remains the authority.
+CREATE INDEX IF NOT EXISTS idx_stop_handoffs_unsettled_provider
+ON inference_parent_stop_handoffs(evidence_provider_id, evidence_provider_revision, created_at, command_id);
 CREATE TABLE IF NOT EXISTS inference_parent_stop_handoff_executions (
     command_id TEXT NOT NULL REFERENCES inference_parent_stop_handoffs(command_id),
     ordinal INTEGER NOT NULL CHECK (ordinal > 0),
