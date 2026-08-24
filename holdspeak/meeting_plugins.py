@@ -109,9 +109,8 @@ def run_meeting_plugin_chain(
     count. Never raises for plugin failures (the host isolates those into
     per-run `error` records); raises only on a truly empty meeting.
 
-    ``admission`` (HS-131-08) is a
-    :class:`~holdspeak.meeting_session.deferred_admission.DeferredIntelJob`. When
-    supplied, each EXECUTED plugin runs as one trusted child of that job parent
+    ``admission`` is a caller-provided child-admission interface. When supplied,
+    each EXECUTED plugin runs as one trusted child of that job parent
     and its run record + synthesized artifacts are staged projections written
     only from the winning receipt. Route order, the exact
     ``build_idempotency_key`` dedup, injected faults, and every persisted field

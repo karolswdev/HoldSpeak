@@ -11,6 +11,11 @@ only the controller-reserved immutable `DeploymentRevision` named by the issued
 dispatch context (`speech_session/provider.py`); that lookup is execution
 evidence, not mutable placement authority.
 
+**Story 143-08 Phase-F delta (2026-08-24):** Meeting v1 plan resolution,
+legacy deferred admission, and direct-runner recovery are deleted. Persisted v1
+plan bytes are display-only history; deferred execution reconstructs only a C1
+parent and frozen route bundle.
+
 ## Classification vocabulary
 
 | Classification | Meaning |
@@ -30,7 +35,7 @@ evidence, not mutable placement authority.
 | Deployment head selected by a future profile binding | `holdspeak/services/inference_acquisition_service.py:_activate`; `holdspeak/deployment_revisions.py:_artifact_revision_for_identity` | mutable assignment pointer | 143-03 |
 | Thoughts and Ask default/request pointer | `holdspeak/config/integrations.py:ThoughtsConfig.inference_target_id`; `holdspeak/inference_targets.py:resolve_thought_placement`; `holdspeak/services/refinement_coordinator.py:_admission_claim`; `holdspeak/services/refinement_application_service.py:get_workbench`; `holdspeak/services/refinement_thought_service.py:_validate_current_admission_under_write_fence`; `holdspeak/services/ask_service.py:AskService.ask` | mutable assignment pointer | 143-07 |
 | Writing and dictation runtime pointer | `holdspeak/config/model.py:LLMRuntimeConfig.profile_id`; `holdspeak/intel/providers.py:effective_dictation_llm`; `holdspeak/speech_session/plan.py:DictationSessionPlanResolver` | mutable assignment pointer | 143-07 |
-| Meeting intelligence pointer and provider placement | `holdspeak/config/meeting.py:MeetingConfig.intel_profile_id`; `holdspeak/intel/providers.py:effective_intel_cloud`; `holdspeak/intel/providers.py:resolve_meeting_placement`; `holdspeak/meeting_session/intel_plan.py:freeze_meeting_intel_plan` | mutable assignment pointer | 143-08 |
+| Meeting intelligence pointer and provider placement | Historical compatibility input remains visible at `holdspeak/config/meeting.py:MeetingConfig.intel_profile_id` and `holdspeak/intel/providers.py:effective_intel_cloud`; execution uses only `holdspeak/services/meeting_deferred_queue_binding.py:MeetingDeferredQueueBinder` and `holdspeak/meeting_session/deferred_bound.py:BoundDeferredIntelJob` | mutable assignment pointer | 143-08 |
 | Recipe and agent default pointer | `holdspeak/db/models/__init__.py:RecipeRecord.profile_id`; `holdspeak/services/recipe_service.py:RecipeService._target`; `holdspeak/services/schedule_delegation.py:_terms`; `holdspeak/inference_targets.py:resolve_placement` | mutable assignment pointer | 143-10 |
 | Workbench execution pointer | `holdspeak/db/models/workbench.py:WorkbenchRecord.profile_id`; `holdspeak/services/workbench_runner.py:WorkbenchRunner`; `holdspeak/services/workbench_service.py`; `holdspeak/deployment_revisions.py:resolve_workbench_deployment_revision` (raw SQLite snapshot) | mutable assignment pointer | 143-10 |
 | Workbench voice-resolver pointer | `holdspeak/db/models/workbench.py:WorkbenchRecord.resolver_profile_id`; `holdspeak/services/workbench_service.py:resolve_voice_references` | mutable assignment pointer | 143-10 |
@@ -44,7 +49,7 @@ evidence, not mutable placement authority.
 | Settings Thoughts and writing legacy pointer writers | `holdspeak/services/settings_service.py:SettingsService.update_settings`; dictation/thoughts pointer normalization | mutable assignment pointer | 143-07 |
 | Settings meeting and background legacy pointer writers | `holdspeak/services/settings_service.py:SettingsService.update_settings`; meeting/rails pointer normalization | mutable assignment pointer | 143-08 |
 | DeploymentRevision ID in runner, lease, and receipts | `holdspeak/deployment_revisions.py:resolve_deployment_revision`; `holdspeak/kernel/inference_runner.py`; `holdspeak/kernel/local_runtime_lease.py` | immutable evidence | — |
-| Frozen meeting and speech plan entries | `holdspeak/meeting_session/intel_plan.py:MeetingIntelPlan`; `holdspeak/speech_session/plan.py` | immutable evidence | — |
+| Frozen meeting and speech plan entries | `holdspeak/meeting_session/intel_plan.py:decode_meeting_intel_plan_v1` is a display-only history decoder; `holdspeak/meeting_session/deferred_bound.py:BoundDeferredIntelJob` and `holdspeak/speech_session/plan.py` reconstruct immutable execution evidence | immutable evidence | — |
 | InferenceTarget and placement response DTOs | `holdspeak/inference_targets.py:InferenceTarget.to_dict`; `holdspeak/services/ask_service.py:_ask_projection`; `holdspeak/services/recipe_service.py:_chat_projection` | display | — |
 | Doctor, desk, and MCP destination views | `holdspeak/commands/doctor.py`; `holdspeak/services/desk_service.py`; `holdspeak/mcp/resources.py` | display | — |
 | Endpoint/profile key slot and key custody | `holdspeak/intel/providers.py:profile_key_env`; `holdspeak/services/profile_key_service.py:ProfileKeyService`; `holdspeak/profile_key_store.py` | credential/provider identity | 143-03 |
@@ -54,7 +59,7 @@ evidence, not mutable placement authority.
 | Delivery agent launch profile | `holdspeak/delivery/factory_launch.py`; `holdspeak/kernel/process_spawn.py` | unrelated | — |
 | Legacy config endpoint migration | `holdspeak/config/core.py:migrate_legacy_endpoints`; legacy `intel_cloud_*` and `openai_compatible_*` fields | legacy-delete | 143-03 |
 | Old dictation auto-placement fallback labels | `holdspeak/plugins/dictation/assembly.py` | legacy-delete | 143-07 |
-| Old meeting auto-placement fallback labels | `holdspeak/intel/providers.py:resolve_meeting_placement`; `holdspeak/meeting_session/intel_plan.py` | legacy-delete | 143-08 |
+| Old meeting auto-placement fallback labels | Legacy placement resolution and v1 plan construction are deleted; `holdspeak/meeting_session/intel_plan.py:decode_meeting_intel_plan_v1` is history-only | legacy-delete | 143-08 |
 
 The migration-story column is deliberately singular for every mutable family.
 Story 143-04 owns the common assignment store/resolver and seed migration.
@@ -74,7 +79,7 @@ evidence, never as a mutable selector.
 | Source family | Exact observed production sites | Classification |
 | --- | --- | --- |
 | Public routing resolver definitions | `deployment_revisions.py:202,224`; `inference_targets.py:497,551,591`; `intel/providers.py:666` | resolver authority |
-| Placement / deployment resolver imports and uses | `deployment_revisions.py:205,214`; `inference_targets.py:585,602`; `intel/__init__.py:60`; `intel/providers.py:193,235,337,864`; `kernel/inference.py:9,103`; `kernel/inference_invoke.py:10,92`; `kernel/inference_runner.py:7,317`; `kernel/projection_stager.py:133,134`; `meeting_session/intel_plan.py:185,186,192,194`; `rails_observer.py:249,255`; `services/ask_service.py:146,147`; `services/cadence_service.py:222,226`; `services/decision_lifecycle_service.py:67,71`; `services/inference_setup_service.py:23,184`; `services/model_profile_service.py:682,689`; `services/profile_service.py:131,132`; `services/recipe_service.py:130,131,173,174`; `services/schedule_delegation.py:9,18`; `services/sequence_workflow_service.py:31,33`; `services/settings_service.py:68,76`; `services/workbench_runner.py:30,31`; `services/workbench_service.py:167,171,378,379`; `speech_session/plan.py:452,461,611,620`; `web/routes/delivery_prs.py:234,241` | resolver authority |
+| Placement / deployment resolver imports and uses | `deployment_revisions.py:205,214`; `inference_targets.py:585,602`; `intel/__init__.py:60`; `intel/providers.py:193,235,337,864`; `kernel/inference.py:9,103`; `kernel/inference_invoke.py:10,92`; `kernel/inference_runner.py:7,317`; `kernel/projection_stager.py:133,134`; `rails_observer.py:249,255`; `services/ask_service.py:146,147`; `services/cadence_service.py:222,226`; `services/decision_lifecycle_service.py:67,71`; `services/inference_setup_service.py:23,184`; `services/model_profile_service.py:682,689`; `services/profile_service.py:131,132`; `services/recipe_service.py:130,131,173,174`; `services/schedule_delegation.py:9,18`; `services/sequence_workflow_service.py:31,33`; `services/settings_service.py:68,76`; `services/workbench_runner.py:30,31`; `services/workbench_service.py:167,171,378,379`; `speech_session/plan.py:452,461,611,620`; `web/routes/delivery_prs.py:234,241` | resolver authority |
 | Thought direct resolver callers | `services/refinement_application_service.py:63,64,70,71`; `services/refinement_coordinator.py:222,223`; `services/refinement_thought_service.py:609,615` | mutable Thoughts pointer, 143-07 |
 | Config/record mutable pointer attributes | `config/core.py:135,158`; `config/integrations.py:22,23`; `config/meeting.py:143,144`; `db/models/__init__.py:1095`; `db/models/workbench.py:139`; `services/inference_setup_service.py:181,603,604,608`; `services/settings_service.py:567,816`; `services/workbench_service.py:376,379,401,422,471` | mutable assignment pointer |
 | Every `profile_id` attribute read | Exact AST baseline: 43 sites classified as 23 mutable assignment pointers, 13 display reads, 2 immutable profile/assignment proofs, and 5 credential/provider identity reads; no unclassified `profile_id` read is permitted. Routing reads include Config runtime, Recipe/Workbench/sequence, sync, plan, and Rails; DTO/doctor reads remain display; v2 profile hash reconstruction and assignment compatibility evidence are immutable; provider readiness remains identity. | semantic classification, fail-closed |
@@ -93,7 +98,7 @@ Phase 143 routing waist is adopted.
 | --- | --- | --- |
 | `resolve_placement` | invocation → workbench → recipe/agent → `this_machine` | 143-04 supplies canonical infrastructure only; 143-07/08/10 remove each consumer's selector and 143-05 freezes its result. |
 | `resolve_thought_placement` | `Config.thoughts.inference_target_id` becomes the workbench tier | 143-07 migrates today's single `thought.interview` operation, whose result is a question-or-synthesis union; any independently assignable synthesis operation requires a distinct admitted call. |
-| `effective_intel_cloud` / `resolve_meeting_placement` | `intel_profile_id` competes with local/auto/cloud fields | 143-08 migrates the meeting family; 143-05 consumes a frozen ordered plan. |
+| Meeting compatibility intake / bound deferred reconstruction | the saved `intel_profile_id` is consumed only by one-time assignment migration; the claimed queue row is reconstructed from a durable parent and route bundle | 143-08 deletes mutable placement resolution and retains a v1 display decoder only. |
 | `effective_dictation_llm` / speech plan resolver | one runtime profile controls classify/rewrite/punctuate | 143-07 migrates typed writing/dictation capability assignments. |
 | `RecipeService._target` | request override → Workbench → Recipe profile → global | 143-10 replaces the subject selector for agents/workbenches/recipes. |
 | `resolve_workbench_deployment_revision` | re-reads workbench and recipe profile fields from one SQLite snapshot | 143-10 retires dual subject reads; 143-05 freezes the chosen deployment revision. |

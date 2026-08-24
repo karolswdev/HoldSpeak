@@ -18,12 +18,12 @@ import time
 from typing import Any, Callable, Mapping, Optional
 
 from ..logging_config import get_logger
-from .intel_child import (
-    MeetingProviderFailure,
-    discard_staged_children,
-    run_admitted_capability,
-    sha as _sha,
-)
+import hashlib
+
+
+def _sha(value: Any) -> str:
+    return "sha256:" + hashlib.sha256(str(value).encode("utf-8", "replace")).hexdigest()
+
 from .intel_plan import (
     CAPABILITY_AUTO_TITLE,
     CAPABILITY_BOOKMARK_LABEL,
@@ -403,10 +403,8 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
         if parent is None:
             return 0
         try:
-            from ..db import get_database
-
-            return discard_staged_children(
-                self._intel_broker(), get_database(), parent.operation_id
+            return self._intel_broker().projection_stager.finalize_parent_stages(
+                parent.operation_id
             )
         except Exception as exc:
             log.error("meeting intelligence stage discard failed: %s", type(exc).__name__)
@@ -553,7 +551,6 @@ __all__ = [
     "CONTRACT_BOOKMARK_LABEL",
     "CONTRACT_LIVE_ANALYSIS",
     "IntelAdmissionMixin",
-    "MeetingProviderFailure",
     "PROJECTION_AUTO_TITLE",
     "PROJECTION_BOOKMARK_LABEL",
     "PROJECTION_LIVE_WINDOW",

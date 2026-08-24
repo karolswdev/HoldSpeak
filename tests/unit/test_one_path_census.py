@@ -475,9 +475,6 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
     ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_live_window.call"): "L: the dispatch closure of ONE admitted live-analysis child",
     ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_bookmark_label.call"): "L: the dispatch closure of ONE admitted bookmark-label child",
     ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_auto_title.call"): "L: the dispatch closure of ONE admitted auto-title child",
-    ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.analyze.call"): "L: the dispatch closure of ONE admitted deferred-analysis child",
-    ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.bookmark_label.call"): "L: the dispatch closure of ONE admitted deferred bookmark-label child",
-    ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.auto_title.call"): "L: the dispatch closure of ONE admitted deferred auto-title child",
     ("holdspeak/meeting_session/deferred_bound.py", "bound_analysis_dispatch.call"): "L: C1 stored-route dispatch closure for ONE bound deferred-analysis child (HS-143-08/C1)",
     ("holdspeak/meeting_session/deferred_bound.py", "bound_bookmark_label_dispatch.call"): "L: C1 stored-route dispatch closure for ONE frozen bookmark-label child (HS-143-08/C1)",
     ("holdspeak/meeting_session/deferred_bound.py", "bound_auto_title_dispatch.call"): "L: C1 stored-route dispatch closure for ONE bound auto-title child (HS-143-08/C1)",
@@ -512,7 +509,6 @@ ADMITTED_SEAM_CALLERS: dict[tuple[str, str], str] = {
     ("holdspeak/dictation_runner.py", "run_pipeline_corrections_only"): "build_pipeline(admission=…) wraps the runtime in the admitted seam",
     ("holdspeak/web/routes/dictation/_helpers.py", "_run_dictation_dry_run_text"): "requires a caller-owned live text-entry admission before construction",
     ("holdspeak/commands/dictation.py", "_cmd_dry_run"): "requires the top-level CLI's derived owner and live text-entry admission before construction",
-    ("holdspeak/intel_queue.py", "process_next_intel_job"): "DeferredIntelJob.analyze (an admitted deferred child)",
     # HS-131-14. The plugin dispatch handle is a CONSUMER of an admitted child, not
     # an adapter: it constructs nothing, resolves no placement, and holds no
     # configuration. It is handed the engine `InferenceRunner._attempt` already
@@ -702,9 +698,10 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # 600 ms, on the hotkey's own lock, producing a "partial" no client
     # consumed). The socket's final, whole-utterance pass remains, so the
     # `ws_dictation_stream` seam registration above still names a live site.
-    # Phase 143 adds six audited routed provider/transcription entrances to the
-    # historic 99-site census; every one is classified above rather than hidden.
-    assert len(sites) == 105
+    # Phase 143's C1 stored-route closures retain the three lawful deferred
+    # execution leaves.  Phase F removes the four legacy direct-runner entrances
+    # (the queue worker plus its three DeferredIntelJob closures).
+    assert len(sites) == 101
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
     assert counts["finding"] == 0
@@ -972,10 +969,10 @@ def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
         f"a meeting-session or command scope on the adapter allowlist: {forbidden} "
         "— that is not an available remedy for a blocking family"
     )
-    # The meeting entries that DO exist are exactly the admitted dispatch
-    # closures HS-131-08 built: one per capability, live and deferred, each an
-    # `L:` closure inside one claimed child. Nothing was added here to close a
-    # family, and nothing here is a factory.
+    # The meeting entries that DO exist are the admitted live closures and C1
+    # stored-route deferred closures: one per capability inside a claimed child.
+    # Phase F deleted the parallel v1 deferred-admission closures; nothing here
+    # is a factory.
     meeting_entries = {
         (path, scope): justification
         for (path, scope), justification in ADAPTER_ALLOWLIST.items()
@@ -985,9 +982,6 @@ def test_the_findings_ledger_is_the_complete_blocking_package() -> None:
         ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_live_window.call"),
         ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_bookmark_label.call"),
         ("holdspeak/meeting_session/intel_routed_children.py", "IntelRoutedChildMixin._admitted_auto_title.call"),
-        ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.analyze.call"),
-        ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.bookmark_label.call"),
-        ("holdspeak/meeting_session/deferred_admission.py", "DeferredIntelJob.auto_title.call"),
         ("holdspeak/meeting_session/deferred_bound.py", "bound_analysis_dispatch.call"),
         ("holdspeak/meeting_session/deferred_bound.py", "bound_bookmark_label_dispatch.call"),
         ("holdspeak/meeting_session/deferred_bound.py", "bound_auto_title_dispatch.call"),

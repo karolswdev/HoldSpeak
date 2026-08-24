@@ -25,7 +25,6 @@ from fastapi.testclient import TestClient
 
 pytestmark = [pytest.mark.requires_meeting]
 
-import holdspeak.intel_queue as intel_queue_module
 from holdspeak.db import get_database, reset_database
 from holdspeak.intel_queue import process_next_intel_job
 from holdspeak.meeting_session import (
@@ -301,9 +300,6 @@ def _queued_meeting(db, meeting_id, monkeypatch):
 
 
 def test_process_next_intel_job_notifies_on_meeting_ready(db, monkeypatch):
-    monkeypatch.setattr(
-        intel_queue_module, "get_intel_runtime_status", lambda *a, **k: (True, "ok")
-    )
     # HS-131-08: the deferred base analysis runs as an admitted child whose
     # engine is built from the job plan's frozen deployment revision, so the fake
     # belongs on that one admitted engine seam.
@@ -324,9 +320,6 @@ def test_process_next_intel_job_notifies_on_meeting_ready(db, monkeypatch):
 
 
 def test_exploding_on_meeting_ready_never_breaks_the_job(db, monkeypatch):
-    monkeypatch.setattr(
-        intel_queue_module, "get_intel_runtime_status", lambda *a, **k: (True, "ok")
-    )
     # HS-131-08: the deferred base analysis runs as an admitted child whose
     # engine is built from the job plan's frozen deployment revision, so the fake
     # belongs on that one admitted engine seam.

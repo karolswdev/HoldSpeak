@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any, Callable, Mapping
 
 from ..logging_config import get_logger
 from ..principals import Principal, PrincipalKind
-from .intel_child import sha
+
+
+def sha(value: Any) -> str:
+    return "sha256:" + hashlib.sha256(str(value).encode("utf-8", "replace")).hexdigest()
+
 from .intel_plan import (
     CAPABILITY_DEFERRED_ANALYSIS,
     MeetingIntelRefused,
@@ -14,6 +19,66 @@ from .intel_plan import (
 )
 
 log = get_logger("intel_queue")
+
+
+# A direct runner helper is retired, but the bound executor still owns the
+# provider-content boundary.  Never allow a provider exception or a returned
+# error result to become a journal error string.
+PROVIDER_ERROR_RESULT = "provider_error_result"
+
+
+class BoundMeetingProviderFailure(RuntimeError):
+    """Content-free provider failure emitted only by the C1 bound executor."""
+
+    def __init__(
+        self, contract: str, exc: BaseException | None = None, *, reason: str = ""
+    ) -> None:
+        short = reason or (type(exc).__name__ if exc is not None else PROVIDER_ERROR_RESULT)
+        super().__init__(f"{contract}:{short}")
+        self.contract = contract
+        self.reason = short
+
+
+def _provider_error_of(result: Any) -> str:
+    if result is None or isinstance(result, (str, bytes, Mapping)):
+        return ""
+    return str(getattr(result, "error", "") or "")
+
+
+class BoundMeetingAdapter:
+    """Sanitize one bound Meeting provider call without swallowing kernel control."""
+
+    connector_id = "inference-provider"
+
+    def __init__(
+        self, contract: str, call: Callable[[Any, Mapping[str, Any], Any], Any]
+    ) -> None:
+        self._contract = contract
+        self._call = call
+
+    def dispatch(
+        self, engine: Any, payload: Mapping[str, Any], cancellation: Any
+    ) -> Any:
+        from ..kernel.model import KernelRefused
+        from ..kernel.provider_signals import CONTROL_SIGNALS
+
+        try:
+            result = self._call(engine, payload, cancellation)
+        except CONTROL_SIGNALS:
+            raise
+        except (KernelRefused, MeetingIntelRefused):
+            raise
+        except BaseException as exc:
+            raise BoundMeetingProviderFailure(self._contract, exc) from None
+        if _provider_error_of(result):
+            raise BoundMeetingProviderFailure(
+                self._contract, reason=PROVIDER_ERROR_RESULT
+            )
+        return result
+
+    def cancel(self) -> str:
+        return "cancelled"
+
 
 PARENT_KIND = "meeting.deferred-intel-job"
 QUEUE_SERVICE_IDENTITY = "meeting-intel-queue"
@@ -63,8 +128,8 @@ def queue_service_principal() -> Principal:
 class BoundDeferredIntelJob:
     """Exact stored-route executor for a C1b-bound queue claim.
 
-    This is intentionally separate from :class:`DeferredIntelJob`: constructing
-    it only reconstructs the persisted parent and bundle members.  It has no
+    Constructing it only reconstructs the persisted parent and bundle members.
+    It has no
     Config, planner, host, or legacy-plan entrance, so restart cannot retarget a
     claimed descriptor.
     """
@@ -206,7 +271,8 @@ class BoundDeferredIntelJob:
             executor_lease=executor_lease,
         )
         definition = adoption._frozen_capability_definition(str(member["route_plan_id"]))
-        adapter = adapter_for_frozen_definition(definition, call)
+        provider_adapter = BoundMeetingAdapter(capability, call)
+        adapter = adapter_for_frozen_definition(definition, provider_adapter.dispatch)
         if executor_held is not None and not executor_held():
             return None, {"outcome": "lease_lost"}
 

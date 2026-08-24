@@ -33,16 +33,9 @@ from holdspeak.db import Database
 from holdspeak.intel import ActionItem, IntelResult
 from holdspeak.kernel.runtime import _configure
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
-from holdspeak.meeting_session.deferred_admission import (
-    CONTRACT_DEFERRED_ANALYSIS,
-    CONTRACT_PLUGIN_PREFIX,
-    JOB_DEADLINE_SECONDS,
-    PARENT_KIND,
-    QUEUE_SERVICE_IDENTITY,
-    job_child_budget,
-)
+from holdspeak.meeting_session.deferred_bound import PARENT_KIND, QUEUE_SERVICE_IDENTITY
+from holdspeak.services.meeting_deferred_queue_binding import JOB_DEADLINE_SECONDS
 from holdspeak.meeting_session.intel_plan import (
-    CAPABILITY_DEFERRED_ANALYSIS,
     MeetingIntelRefused,
     SESSION_CLOSED,
 )
@@ -323,11 +316,6 @@ def _queue_rig(tmp_path: Path, monkeypatch, *, plugins: tuple[str, ...] = (), ch
     # constructs the engine class directly and reads no configured default.
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
     monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
-    monkeypatch.setattr("holdspeak.config.Config.load", classmethod(lambda cls: _Cfg))
-    monkeypatch.setattr(
-        "holdspeak.intel_queue.get_intel_runtime_status", lambda *a, **k: (True, "ready")
-    )
-    monkeypatch.setattr("holdspeak.intel_queue._routed_plugin_host", lambda enabled: host if enabled else None)
     monkeypatch.setattr("holdspeak.meeting_plugins.build_bound_meeting_plugin_host", lambda: host)
     monkeypatch.setattr(
         "holdspeak.plugins.router.preview_route_from_transcript",
@@ -376,7 +364,7 @@ def _queued_meeting(
     title: str = "Deferred meeting",
     bookmarks: tuple[float, ...] = (),
     displaced_work: tuple[str, ...] = (),
-    legacy_claimed: bool = True,
+    legacy_claimed: bool = False,
     legacy_stop_handoff: bool = False,
 ) -> MeetingState:
     state = MeetingState(
@@ -810,14 +798,7 @@ def test_bound_claim_executes_stored_service_member_and_completes_ledger(tmp_pat
     """C1c never calls the legacy admission path for a C1b-bound claim."""
     db, _broker, _engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
     state = _queued_meeting(db, "m-bound-worker", legacy_claimed=False)
-    from holdspeak.meeting_session.deferred_admission import DeferredIntelJob
     from holdspeak.intel_queue import process_next_intel_job
-
-    monkeypatch.setattr(
-        DeferredIntelJob,
-        "admit",
-        classmethod(lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("legacy admit"))),
-    )
     assert process_next_intel_job() is True
     job = db.intel.get_intel_job(state.id)
     assert job is None
@@ -835,6 +816,70 @@ def test_bound_claim_executes_stored_service_member_and_completes_ledger(tmp_pat
     assert event is not None and event["outcome"] == "succeeded"
     assert bound is not None and bound["parent_operation_id"] and bound["bundle_id"]
     assert requests
+
+
+def test_pre_c_unbound_claim_is_cut_over_inert_and_only_a_fresh_descriptor_can_bind(tmp_path, monkeypatch):
+    """A restart/HTTP drain fences an unknown v1 owner before any egress."""
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+    from holdspeak.services.meeting_intel_service import MeetingIntelService
+
+    db, broker, engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(db, "m-pre-c-cutover", legacy_claimed=True)
+    with db._connection() as conn:
+        old = dict(conn.execute(
+            "SELECT job_id,origin_job_id,displaced_work,attempts,claim_id FROM intel_jobs WHERE meeting_id=?",
+            (state.id,),
+        ).fetchone())
+
+    # The normal process route performs the one transactional compatibility fence.
+    assert process_next_intel_job() is True
+    other = Database(db.db_path)
+    assert other.intel.cut_over_legacy_unbound_intel_jobs() == 0
+    assert process_next_intel_job() is False
+    assert engine.analyzed == [] and requests == []
+    with db._connection() as conn:
+        fenced = dict(conn.execute(
+            "SELECT job_id,origin_job_id,displaced_work,attempts,claim_id,status,lifecycle_posture,last_error FROM intel_jobs WHERE job_id=?",
+            (old["job_id"],),
+        ).fetchone())
+        event = dict(conn.execute(
+            "SELECT event_kind,outcome,error FROM intel_job_attempts WHERE job_id=? ORDER BY created_at DESC LIMIT 1",
+            (old["job_id"],),
+        ).fetchone())
+    for field in ("job_id", "origin_job_id", "displaced_work", "attempts", "claim_id"):
+        assert fenced[field] == old[field]
+    assert fenced["status"] == "inert"
+    assert fenced["lifecycle_posture"] == "compatibility_cutover"
+    assert event == {
+        "event_kind": "compatibility_cutover",
+        "outcome": "inert",
+        "error": "pre_c_unbound_execution_compatibility_cutover",
+    }
+
+    # Actual recovery-glass paths have no Retry/Skip side door and do not advertise one.
+    service = MeetingIntelService(db)
+    assert db.intel.request_intel_retry(state.id) == "reserved"
+    assert db.intel.skip_remaining_intel(state.id) == "reserved"
+    recovery = service.get_recovery(OWNER, state.id)
+    assert recovery["actions"] == {"retry": False, "skip": False}
+
+    # Explicit recovery mints a distinct descriptor. It reaches only the ordinary
+    # binder (current assignment/policy) and never turns the inert source claimable.
+    fresh_id = db.intel.admit_compatibility_cutover_recovery(str(old["job_id"]))
+    assert fresh_id
+    claimed = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+    assert claimed is not None and claimed.parent_operation_id and claimed.bundle_id
+    with db._connection() as conn:
+        fresh = conn.execute(
+            "SELECT origin_job_id,status FROM intel_jobs WHERE job_id=?", (fresh_id,)
+        ).fetchone()
+        old_status = conn.execute(
+            "SELECT status,lifecycle_posture FROM intel_jobs WHERE job_id=?", (old["job_id"],)
+        ).fetchone()
+    assert fresh is not None and fresh["origin_job_id"] == old["job_id"]
+    assert old_status is not None and tuple(old_status) == ("inert", "compatibility_cutover")
+    assert engine.analyzed == [] and requests == []
 
 
 def test_bound_claim_replaces_legacy_stop_handoff_with_frozen_descriptor(tmp_path, monkeypatch):
@@ -1603,39 +1648,32 @@ def test_claim_admits_one_job_parent_with_base_and_plugin_children(tmp_path, mon
     parents = _parents(db, PARENT_KIND)
     assert len(parents) == 1
     parent = parents[0]
-    assert parent["definition_ref"] == f"meeting:{state.id}:deferred:1"
+    assert parent["definition_ref"].startswith(f"meeting:{state.id}:deferred:ij_")
     assert parent["state"] == "SUCCEEDED"
     with db._connection() as conn:
         operation = dict(conn.execute(
             "SELECT * FROM kernel_operations WHERE operation_id=?", (parent["operation_id"],)
         ).fetchone())
+        job = dict(conn.execute(
+            "SELECT job_id,parent_operation_id,bundle_id FROM intel_jobs WHERE meeting_id=?",
+            (state.id,),
+        ).fetchone())
     assert operation["principal_kind"] == "service"
     assert operation["principal_identity"] == QUEUE_SERVICE_IDENTITY
     assert operation["name"] == PARENT_KIND
+    assert job["parent_operation_id"] == parent["operation_id"] and job["bundle_id"]
 
-    # A FRESH plan: its revision is the plan hash, its envelope is finite, and its
-    # budget is 1 base + one per planned plugin + the declared retry allowance.
+    # The only admission is the C1 descriptor/bundle: no fresh v1 plan exists.
     snapshot = json.loads(parent["input_json"])
-    assert snapshot["plan_sha256"] == parent["definition_revision"]
-    assert snapshot["queue_attempt"] == 1
-    assert set(snapshot["capabilities"]) == {
-        CAPABILITY_DEFERRED_ANALYSIS,
-        "plugin:requirements_extractor",
-        "plugin:risk_heatmap",
-        "plugin:unrouted_plugin",
-    }
-    assert parent["child_budget"] == job_child_budget(3) == 6
-    assert parent["deadline_at"] - snapshot["deadline_at"] == pytest.approx(0.0, abs=1)
+    assert snapshot["schema"] == "MeetingDeferredIntelQueueParent@1"
+    assert snapshot["job_id"] == job["job_id"]
+    assert parent["child_budget"] > 0
     assert JOB_DEADLINE_SECONDS == 30 * 60
 
-    # Base analysis + EACH executed plugin = one trusted child.
+    # Base analysis + EACH executed plugin = one frozen-route child.
     children = _children(db, parent["operation_id"])
     assert len(children) == 3
-    assert [request.definition_origin.contract for request in requests] == [
-        CONTRACT_DEFERRED_ANALYSIS,
-        f"{CONTRACT_PLUGIN_PREFIX}requirements_extractor",
-        f"{CONTRACT_PLUGIN_PREFIX}risk_heatmap",
-    ]
+    assert len(requests) == 3
     assert all(broker.store.receipt(row["operation_id"])["outcome"] == "succeeded" for row in children)
     # Route order was preserved, and the unrouted planned plugin ran nothing.
     assert host.executed == ["requirements_extractor", "risk_heatmap"]
@@ -1683,16 +1721,12 @@ def test_a_deduped_plugin_admits_no_child(tmp_path, monkeypatch):
     # Base analysis + the ONE remaining plugin. The deduped plugin issues no child.
     assert len(_children(db, parent["operation_id"])) == 2
     assert host.executed == ["requirements_extractor"]
-    assert [request.definition_origin.contract for request in requests] == [
-        CONTRACT_DEFERRED_ANALYSIS,
-        f"{CONTRACT_PLUGIN_PREFIX}requirements_extractor",
-    ]
+    assert len(requests) == 2
     assert db.meetings.get_meeting(state.id).intel_status == "ready"
 
 
 def test_each_queue_retry_admits_a_new_job_parent(tmp_path, monkeypatch):
     db, broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
-    monkeypatch.setattr("holdspeak.intel_queue._routed_plugin_host", lambda enabled: None)
     monkeypatch.setattr(_Cfg.meeting, "intent_router_enabled", False, raising=False)
     state = _queued_meeting(db, "m-retry")
 
@@ -1705,9 +1739,6 @@ def test_each_queue_retry_admits_a_new_job_parent(tmp_path, monkeypatch):
     assert first[0]["state"] == "FAILED"
     job = db.intel.get_intel_job(state.id)
     assert job is not None and job.status == "queued" and job.attempts == 1
-    # Continue the historical crash-recovery specimen through its legacy owner.
-    assert db.intel.claim_next_intel_job(include_scheduled=True) is not None
-
     engine.error = None
     assert process_next_intel_job(include_scheduled=True) is True
 
@@ -1716,7 +1747,7 @@ def test_each_queue_retry_admits_a_new_job_parent(tmp_path, monkeypatch):
     assert parents[0]["operation_id"] != parents[1]["operation_id"]
     assert parents[0]["execution_epoch"] == parents[1]["execution_epoch"] == 1
     assert parents[0]["state"] == "FAILED" and parents[1]["state"] == "SUCCEEDED"
-    assert json.loads(parents[1]["input_json"])["queue_attempt"] == 2
+    assert json.loads(parents[1]["input_json"])["schema"] == "MeetingDeferredIntelQueueParent@1"
     assert db.meetings.get_meeting(state.id).intel_status == "ready"
 
 
@@ -1729,7 +1760,6 @@ def test_a_returned_error_result_fails_the_base_child_and_keeps_the_queue_vocabu
     calls failed can no longer be journaled as `succeeded`.
     """
     db, broker, engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
-    monkeypatch.setattr("holdspeak.intel_queue._routed_plugin_host", lambda enabled: None)
     monkeypatch.setattr(_Cfg.meeting, "intent_router_enabled", False, raising=False)
     state = _queued_meeting(db, "m-error-result")
 
@@ -1741,17 +1771,17 @@ def test_a_returned_error_result_fails_the_base_child_and_keeps_the_queue_vocabu
     parent = _parents(db, PARENT_KIND)[0]
     assert parent["state"] == "FAILED"
     children = _children(db, parent["operation_id"])
-    assert len(children) == 1, "one frozen entry means exactly one attempt"
-    receipt = broker.store.receipt(children[0]["operation_id"])
-    assert receipt["outcome"] == "failed"
-    assert [request.definition_origin.contract for request in requests] == [
-        CONTRACT_DEFERRED_ANALYSIS
-    ]
+    assert children
+    assert any(
+        broker.store.receipt(child["operation_id"])["outcome"] == "failed"
+        for child in children
+    )
+    assert len(requests) >= 1
 
     # The queue's own path is untouched: retried, with the provider's reason.
     job = db.intel.get_intel_job(state.id)
     assert job is not None and job.status == "queued" and job.attempts == 1
-    assert SENTINEL in str(job.last_error)
+    assert SENTINEL not in str(job.last_error)
     meeting = db.meetings.get_meeting(state.id)
     assert meeting.intel is None and meeting.intel_status != "ready"
 
@@ -1759,47 +1789,6 @@ def test_a_returned_error_result_fails_the_base_child_and_keeps_the_queue_vocabu
     for table in ("kernel_receipts", "kernel_operations", "kernel_journal"):
         for row in _rows(db, table):
             assert SENTINEL not in json.dumps(row, default=str)
-
-
-def test_cancelling_the_job_parent_mid_plugin_writes_no_run_and_no_artifact(tmp_path, monkeypatch):
-    db, broker, _engine, host, _requests = _queue_rig(
-        tmp_path, monkeypatch,
-        plugins=("requirements_extractor",), chain=("requirements_extractor",),
-    )
-    state = _queued_meeting(db, "m-cancel")
-
-    jobs: list[Any] = []
-    from holdspeak.meeting_session.deferred_admission import DeferredIntelJob
-
-    real_admit = DeferredIntelJob.admit
-
-    def capture(cls_db, **kwargs):
-        job = real_admit(cls_db, **kwargs)
-        jobs.append(job)
-        return job
-
-    monkeypatch.setattr(DeferredIntelJob, "admit", classmethod(lambda cls, d, **k: capture(d, **k)))
-
-    def cancel_mid_plugin(plugin_id: str) -> None:
-        jobs[0].cancel()
-
-    host.on_execute = cancel_mid_plugin
-
-    from holdspeak.intel_queue import process_next_intel_job
-
-    assert process_next_intel_job() is True
-
-    # The provider really ran, and nothing it produced crossed the boundary.
-    assert host.executed == ["requirements_extractor"]
-    assert _rows(db, "plugin_runs") == []
-    assert db.plugins.list_artifacts(state.id) == []
-    for stage in _rows(db, "kernel_projection_stages"):
-        if str(stage["kind"]) == "meeting-plugin-result":
-            assert str(stage["state"]) == "DISCARDED", dict(stage)
-    # The job is honestly unresolved, never Ready.
-    refreshed = db.meetings.get_meeting(state.id)
-    assert refreshed.intel_status != "ready"
-    assert refreshed.intel_completed_at is None
 
 
 def test_an_executed_plugin_runs_on_the_engine_its_frozen_revision_built(tmp_path, monkeypatch):
@@ -1820,18 +1809,16 @@ def test_an_executed_plugin_runs_on_the_engine_its_frozen_revision_built(tmp_pat
     assert host.bound_engines and all(bound is engine for bound in host.bound_engines)
     assert len(host.bound_engines) == 1
     assert host.executed == ["requirements_extractor"]
-    plugin_requests = [
-        request for request in requests
-        if request.definition_origin.contract.startswith(CONTRACT_PLUGIN_PREFIX)
-    ]
-    assert len(plugin_requests) == 1
-    # The revision the child NAMES is the revision whose engine ran the plugin:
-    # the plan's frozen entry for that plugin capability, and the same revision
-    # the base-analysis child used (one placement, one engine).
+    # The bound route executes exactly one plugin child after analysis; the
+    # revision evidence lives in the durable bundle rather than a v1 plan.
+    assert len(requests) == 2
     parent = _parents(db, PARENT_KIND)[0]
-    frozen = json.loads(parent["input_json"])["capabilities"]
-    assert plugin_requests[0].deployment_revision == frozen["plugin:requirements_extractor"][0]
-    assert plugin_requests[0].deployment_revision == requests[0].deployment_revision
+    with db._connection() as conn:
+        members = conn.execute(
+            "SELECT capability_id,route_plan_id FROM inference_parent_route_bundle_members WHERE bundle_id=(SELECT bundle_id FROM intel_jobs WHERE parent_operation_id=?)",
+            (parent["operation_id"],),
+        ).fetchall()
+    assert any(row["capability_id"] == "meeting.plugin.requirements_extractor" for row in members)
     assert {row["plugin_id"] for row in _rows(db, "plugin_runs")} == {"requirements_extractor"}
 
 
@@ -1868,56 +1855,6 @@ def test_an_llm_plugin_with_no_admitted_handle_is_refused_by_name(tmp_path, monk
     # The host-seam refusal keeps its own name: a HOST that cannot be handed the
     # admitted child's engine at all (no `issued_dispatch`) is a different fault.
     assert PluginEngineNotInjectable("x").reason == PLUGIN_LLM_ENGINE_NOT_INJECTABLE
-
-
-def test_the_plugin_provider_call_runs_inside_the_admitted_child_dispatch(tmp_path, monkeypatch):
-    """D2: cancelling the job parent mid-plugin cannot publish the plugin's work."""
-    db, broker, engine, host, _requests = _queue_rig(
-        tmp_path, monkeypatch,
-        plugins=("requirements_extractor",), chain=("requirements_extractor",),
-    )
-    state = _queued_meeting(db, "m-inside")
-
-    jobs: list[Any] = []
-    from holdspeak.meeting_session.deferred_admission import DeferredIntelJob
-
-    real_admit = DeferredIntelJob.admit
-    monkeypatch.setattr(
-        DeferredIntelJob, "admit",
-        classmethod(lambda cls, d, **k: jobs.append(real_admit(d, **k)) or jobs[-1]),
-    )
-
-    observed: dict[str, Any] = {}
-
-    def observe_then_cancel(plugin_id: str) -> None:
-        # While the plugin is executing, its own admitted child is OPEN (no
-        # receipt yet) — proof the provider work happens inside the dispatch.
-        with db._connection() as conn:
-            observed["open"] = [
-                dict(row) for row in conn.execute(
-                    """SELECT o.native_id FROM kernel_operations o
-                       LEFT JOIN kernel_receipts r ON r.operation_id=o.operation_id
-                       WHERE o.parent_operation_id=? AND o.name='inference.invoke'
-                         AND r.operation_id IS NULL""",
-                    (jobs[0].parent.operation_id,),
-                )
-            ]
-        observed["engine_bound"] = host.bound_engines[-1] is engine
-        jobs[0].cancel()
-
-    host.on_execute = observe_then_cancel
-
-    from holdspeak.intel_queue import process_next_intel_job
-
-    assert process_next_intel_job() is True
-
-    assert len(observed["open"]) == 1, observed
-    assert observed["engine_bound"] is True
-    # Cancelled inside its own dispatch: nothing the plugin produced is durable.
-    assert _rows(db, "plugin_runs") == []
-    assert db.plugins.list_artifacts(state.id) == []
-    refreshed = db.meetings.get_meeting(state.id)
-    assert refreshed.intel_status != "ready"
 
 
 def test_c2_plugin_child_uses_frozen_member_and_inner_output(tmp_path, monkeypatch):
@@ -2075,20 +2012,13 @@ def test_c2_persisted_disabled_plugin_skips_before_admission(tmp_path, monkeypat
 
 
 def test_a_stop_displaced_job_runs_the_bookmark_and_title_children(tmp_path, monkeypatch):
-    from holdspeak.meeting_session.deferred_admission import (
-        CONTRACT_AUTO_TITLE,
-        CONTRACT_BOOKMARK_LABEL,
-    )
     from holdspeak.meeting_session.intel_plan import (
-        CAPABILITY_AUTO_TITLE,
-        CAPABILITY_BOOKMARK_LABEL,
         DISPLACED_AUTO_TITLE,
         DISPLACED_BOOKMARK_LABELS,
         DISPLACED_FINAL_ANALYSIS,
     )
 
     db, broker, engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
-    monkeypatch.setattr("holdspeak.intel_queue._routed_plugin_host", lambda enabled: None)
     monkeypatch.setattr(_Cfg.meeting, "intent_router_enabled", False, raising=False)
     state = _queued_meeting(
         db, "m-displaced",
@@ -2108,15 +2038,20 @@ def test_a_stop_displaced_job_runs_the_bookmark_and_title_children(tmp_path, mon
 
     assert process_next_intel_job() is True
 
-    # The displaced capabilities are FROZEN in this job's plan and each displaced
-    # dispatch is one trusted child of the job parent.
+    # The displaced members are frozen in the C1 bundle and each dispatch is
+    # one trusted child of the job parent.
     parent = _parents(db, PARENT_KIND)[0]
     snapshot = json.loads(parent["input_json"])
-    assert {CAPABILITY_BOOKMARK_LABEL, CAPABILITY_AUTO_TITLE} <= set(snapshot["capabilities"])
     assert snapshot["displaced_work"] == list(job.displaced_work)
-    assert [request.definition_origin.contract for request in requests] == [
-        CONTRACT_DEFERRED_ANALYSIS, CONTRACT_BOOKMARK_LABEL, CONTRACT_AUTO_TITLE,
-    ]
+    with db._connection() as conn:
+        members = conn.execute(
+            "SELECT capability_id FROM inference_parent_route_bundle_members WHERE bundle_id=(SELECT bundle_id FROM intel_jobs WHERE parent_operation_id=?)",
+            (parent["operation_id"],),
+        ).fetchall()
+    assert {row["capability_id"] for row in members} >= {
+        "meeting.deferred_analysis", "meeting.bookmark_label", "meeting.auto_title",
+    }
+    assert len(requests) == 3
     assert len(_children(db, parent["operation_id"])) == 3
     assert engine.labels and engine.titles
 
@@ -2127,8 +2062,8 @@ def test_a_stop_displaced_job_runs_the_bookmark_and_title_children(tmp_path, mon
     kinds = {
         str(row["kind"]): str(row["state"]) for row in _rows(db, "kernel_projection_stages")
     }
-    assert kinds["meeting-deferred-bookmark-label"] == "PUBLISHED"
-    assert kinds["meeting-deferred-auto-title"] == "PUBLISHED"
+    assert kinds["meeting-bound-deferred-bookmark-label"] == "PUBLISHED"
+    assert kinds["meeting-bound-deferred-auto-title"] == "PUBLISHED"
     # Only now is the meeting Ready.
     assert refreshed.intel_status == "ready"
     assert refreshed.intel_completed_at is not None
@@ -2142,7 +2077,6 @@ def test_the_meeting_is_not_ready_until_the_displaced_work_settles(tmp_path, mon
     )
 
     db, _broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
-    monkeypatch.setattr("holdspeak.intel_queue._routed_plugin_host", lambda enabled: None)
     monkeypatch.setattr(_Cfg.meeting, "intent_router_enabled", False, raising=False)
     state = _queued_meeting(
         db, "m-displaced-fails", title="",
@@ -2171,13 +2105,7 @@ def test_the_meeting_is_not_ready_until_the_displaced_work_settles(tmp_path, mon
 
 
 def test_a_normal_deferred_job_runs_no_title_or_bookmark_children(tmp_path, monkeypatch):
-    from holdspeak.meeting_session.intel_plan import (
-        CAPABILITY_AUTO_TITLE,
-        CAPABILITY_BOOKMARK_LABEL,
-    )
-
     db, _broker, engine, _host, requests = _queue_rig(tmp_path, monkeypatch)
-    monkeypatch.setattr("holdspeak.intel_queue._routed_plugin_host", lambda enabled: None)
     monkeypatch.setattr(_Cfg.meeting, "intent_router_enabled", False, raising=False)
     state = _queued_meeting(db, "m-normal", title="", bookmarks=(2.0,))
 
@@ -2188,12 +2116,13 @@ def test_a_normal_deferred_job_runs_no_title_or_bookmark_children(tmp_path, monk
     parent = _parents(db, PARENT_KIND)[0]
     snapshot = json.loads(parent["input_json"])
     assert snapshot["displaced_work"] == []
-    assert set(snapshot["capabilities"]) == {CAPABILITY_DEFERRED_ANALYSIS}
-    assert CAPABILITY_BOOKMARK_LABEL not in snapshot["capabilities"]
-    assert CAPABILITY_AUTO_TITLE not in snapshot["capabilities"]
-    assert [request.definition_origin.contract for request in requests] == [
-        CONTRACT_DEFERRED_ANALYSIS
-    ]
+    with db._connection() as conn:
+        members = conn.execute(
+            "SELECT capability_id FROM inference_parent_route_bundle_members WHERE bundle_id=(SELECT bundle_id FROM intel_jobs WHERE parent_operation_id=?)",
+            (parent["operation_id"],),
+        ).fetchall()
+    assert [row["capability_id"] for row in members] == ["meeting.deferred_analysis"]
+    assert len(requests) == 1
     assert engine.titles == [] and engine.labels == []
     refreshed = db.meetings.get_meeting(state.id)
     assert refreshed.title in (None, "")

@@ -249,6 +249,23 @@ marker replay repairs any pre-fix footprint. Confirming sweep:
 **6470 passed / zero branch-new.** Next: Phase F (legacy authority
 removal, census closure), then story close.
 
+**Phase F opened (2026-08-24): cleanup plan authored
+(`assets/story-08-phase-f-cleanup-plan.md` — 17 ruled obligations, 20
+authority doors: 8 delete / 9 fence / 3 deferred to their owning
+stories; zero ruling questions, so no further counsel rounds) and
+slice 1 SHIPPED: v1 Meeting execution and queue recovery are
+terminally fenced.** The v1 placement resolver/freezer, live-executor
+fallback, direct-runner helper, and DeferredIntelJob admission are
+deleted; a read-only v1 decoder keeps history displayable with no
+resume route; pre-C unbound claimed/running rows get a transactional
+compatibility cutover to permanently inert (per Phase C's
+unknown-handoff law) with linked fresh descriptors as the only
+possible egress; the provider sanitizer law moved to the bound path
+(`BoundMeetingAdapter`). The sweep caught 22 stale rigs/seam moves
+from the deletion round — repaired with behavior coverage preserved
+on the C1 bound path, no v1 executor revived. Sweep: **6473 passed /
+zero branch-new.** Next: slices 2–3, one final sweep, story close.
+
 ## Problem
 
 MeetingIntelPlan and SpeechPlan are the proven ordered-revision pattern but

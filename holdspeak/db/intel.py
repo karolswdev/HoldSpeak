@@ -197,6 +197,13 @@ ROUTED_INTEL_RETRY_REASON = "Retry remaining routed intelligence requested."
 _ACTIVE_JOB_STATUSES = ("reserved", "queued", "claimed", "running", "failed")
 _TERMINAL_JOB_STATUSES = ("succeeded", "superseded", "skipped")
 
+# Pre-C claimed/running rows do not carry a parent/bundle proof. Their physical
+# disposition is unknowable after restart, so they are historical evidence, not
+# recoverable execution owners. Keep the row and its original bytes intact while
+# making the lifecycle unmistakably inert to every queue mutation path.
+COMPATIBILITY_CUTOVER_POSTURE = "compatibility_cutover"
+COMPATIBILITY_CUTOVER_REASON = "pre_c_unbound_execution_compatibility_cutover"
+
 # A C1 bound queue row may have exactly one live executor across worker, HTTP,
 # and CLI processes. The bearer is renewed by the runner; a crashed runner leaves
 # a finite stale window that stored-ID recovery may take over with a new epoch.
@@ -687,6 +694,17 @@ class IntelRepository(BaseRepository):
             ).fetchone()
             return self._is_unsettled_stop_reservation_in_transaction(conn, job)
 
+    def has_compatibility_cutover_reservation(self, meeting_id: str) -> bool:
+        """Return whether the current leaf is inert pre-C execution evidence."""
+        with self._connection() as conn:
+            job = conn.execute(
+                _CURRENT_LINEAGE_CTE + """
+                SELECT * FROM current_jobs WHERE meeting_id=? AND current_rank=1 LIMIT 1
+                """,
+                (meeting_id,),
+            ).fetchone()
+            return self._is_compatibility_cutover_in_transaction(conn, job)
+
     def pending_stop_handoff_commands(self) -> list[str]:
         """Return this adopter's unsettled handoffs for normal queue recovery."""
         with self._connection() as conn:
@@ -909,19 +927,130 @@ class IntelRepository(BaseRepository):
             ).fetchone()
         return self._job_from_row(row) if row is not None else None
 
-    def get_legacy_claimed_intel_job(self) -> Optional[IntelJob]:
-        """Return an in-flight pre-C1 owner for compatibility recovery only.
+    @staticmethod
+    def _is_compatibility_cutover_in_transaction(conn: Any, job: Any | None) -> bool:
+        """Whether a row is permanently inert pre-C execution evidence."""
+        return bool(
+            job is not None
+            and str(job["status"] or "") == "inert"
+            and str(job["lifecycle_posture"] or "") == COMPATIBILITY_CUTOVER_POSTURE
+        )
 
-        New descriptors are never selected here: a C1 bound claim always writes
-        both parent and bundle references in the same ownership transaction.
+    def cut_over_legacy_unbound_intel_jobs(self) -> int:
+        """Atomically fence pre-C unbound claimed/running rows without replay.
+
+        Those rows can describe a provider request that already escaped before a
+        crash.  Preserve their plan bytes, attempt count, lineage and claim data,
+        append one durable ledger witness, and move them to a reserved posture no
+        normal claim, retry, skip, sweep, or executor recognizes as work.
         """
+        now = datetime.now().isoformat()
         with self._connection() as conn:
-            row = conn.execute(
-                """SELECT * FROM intel_jobs WHERE status IN ('claimed','running')
-                   AND (parent_operation_id IS NULL OR bundle_id IS NULL)
-                   ORDER BY requested_at ASC LIMIT 1"""
-            ).fetchone()
-        return self._job_from_row(row) if row is not None else None
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                rows = conn.execute(
+                    """SELECT * FROM intel_jobs
+                       WHERE status IN ('claimed','running')
+                         AND (parent_operation_id IS NULL OR bundle_id IS NULL
+                              OR bundle_sha256 IS NULL)"""
+                ).fetchall()
+                for row in rows:
+                    job_id = str(row["job_id"])
+                    changed = conn.execute(
+                        """UPDATE intel_jobs
+                           SET status='inert',lifecycle_posture=?,updated_at=?,last_error=?
+                         WHERE job_id=? AND status IN ('claimed','running')
+                           AND (parent_operation_id IS NULL OR bundle_id IS NULL
+                                OR bundle_sha256 IS NULL)""",
+                        (
+                            COMPATIBILITY_CUTOVER_POSTURE,
+                            now,
+                            COMPATIBILITY_CUTOVER_REASON,
+                            job_id,
+                        ),
+                    ).rowcount
+                    if changed != 1:
+                        continue
+                    conn.execute(
+                        """INSERT INTO intel_job_attempts (
+                            meeting_id,job_id,origin_job_id,claim_id,parent_operation_id,bundle_id,
+                            event_kind,attempt,outcome,error,retry_at,created_at
+                        ) VALUES (?,?,?,?,?,?, 'compatibility_cutover',?,'inert',?,NULL,?)""",
+                        (
+                            str(row["meeting_id"]),
+                            job_id,
+                            str(row["origin_job_id"] or "") or None,
+                            str(row["claim_id"] or "") or None,
+                            str(row["parent_operation_id"] or "") or None,
+                            str(row["bundle_id"] or "") or None,
+                            int(row["attempts"]),
+                            COMPATIBILITY_CUTOVER_REASON,
+                            now,
+                        ),
+                    )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+        return len(rows)
+
+    def admit_compatibility_cutover_recovery(self, job_id: str) -> str | None:
+        """Mint one linked fresh descriptor for explicitly requested recovery.
+
+        This never changes the inert source row and deliberately does not bind,
+        resolve, readiness-check, or execute anything.  The returned queued row
+        still has to pass the ordinary C1 binder and current route policy.
+        """
+        now = datetime.now().isoformat()
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                old = conn.execute(
+                    "SELECT * FROM intel_jobs WHERE job_id=?", (str(job_id),)
+                ).fetchone()
+                if not self._is_compatibility_cutover_in_transaction(conn, old):
+                    conn.rollback()
+                    return None
+                existing = conn.execute(
+                    "SELECT job_id FROM intel_jobs WHERE origin_job_id=? LIMIT 1",
+                    (str(job_id),),
+                ).fetchone()
+                if existing is not None:
+                    conn.commit()
+                    return str(existing["job_id"])
+                meeting_id = str(old["meeting_id"])
+                transcript_hash = str(old["transcript_hash"])
+                work = str(old["displaced_work"])
+                descriptor = _work_descriptor_sha256(meeting_id, transcript_hash, work)
+                fresh_id = _job_id(
+                    meeting_id, transcript_hash, descriptor,
+                    f"compatibility-recovery:{now}", str(job_id),
+                )
+                conn.execute(
+                    """INSERT INTO intel_jobs (
+                        job_id,meeting_id,origin_job_id,work_descriptor_sha256,
+                        transcript_hash,displaced_work,status,lifecycle_posture,
+                        requested_at,updated_at,attempts,last_error
+                    ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
+                    (
+                        fresh_id, meeting_id, str(job_id), descriptor, transcript_hash,
+                        work, now, now, "compatibility_cutover_fresh_recovery",
+                    ),
+                )
+                conn.execute(
+                    """INSERT INTO intel_job_attempts (
+                        meeting_id,job_id,origin_job_id,event_kind,attempt,outcome,error,retry_at,created_at
+                    ) VALUES (?,?,?,'compatibility_cutover_recovery',0,'queued',?,NULL,?)""",
+                    (
+                        meeting_id, fresh_id, str(job_id),
+                        "compatibility_cutover_fresh_recovery", now,
+                    ),
+                )
+                conn.commit()
+                return fresh_id
+            except Exception:
+                conn.rollback()
+                raise
 
     def claim_next_intel_job(self, *, include_scheduled: bool = False) -> Optional[IntelJob]:
         """Claim the next queued intelligence job for processing."""
@@ -2248,7 +2377,10 @@ class IntelRepository(BaseRepository):
                 """,
                 (meeting_id,),
             ).fetchone()
-            if self._is_unsettled_stop_reservation_in_transaction(conn, current_job):
+            if (
+                self._is_unsettled_stop_reservation_in_transaction(conn, current_job)
+                or self._is_compatibility_cutover_in_transaction(conn, current_job)
+            ):
                 return "reserved"
             if current_job is not None and current_job["status"] in {"running", "claimed"}:
                 return "running"
@@ -2349,7 +2481,10 @@ class IntelRepository(BaseRepository):
                 """,
                 (meeting_id,),
             ).fetchone()
-            if self._is_unsettled_stop_reservation_in_transaction(conn, job):
+            if (
+                self._is_unsettled_stop_reservation_in_transaction(conn, job)
+                or self._is_compatibility_cutover_in_transaction(conn, job)
+            ):
                 return "reserved"
             if job is not None and job["status"] in {"running", "claimed"}:
                 return "running"
@@ -2394,8 +2529,9 @@ class IntelRepository(BaseRepository):
             conn.execute(
                 """UPDATE intel_jobs SET status='skipped',lifecycle_posture='terminal',
                     updated_at=? WHERE meeting_id=?
-                    AND status NOT IN ('running','claimed','succeeded','superseded','skipped')""",
-                (now, meeting_id),
+                    AND status NOT IN ('running','claimed','succeeded','superseded','skipped')
+                    AND COALESCE(lifecycle_posture,'') != ?""",
+                (now, meeting_id, COMPATIBILITY_CUTOVER_POSTURE),
             )
             conn.execute(
                 """

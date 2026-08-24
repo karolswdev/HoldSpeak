@@ -16,12 +16,6 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any, Callable, Mapping
 
-from .intel_plan import (
-    CAPABILITY_NOT_PLANNED,
-    CAPABILITY_WHISPER_PRELOAD,
-    CAPABILITY_WHISPER_TRANSCRIBE,
-)
-
 # Sol Amendment 6: a transcription-bearing session spends ONE child per
 # transcription interval, so the advertised 12-hour session would
 # deterministically exhaust a 4096 allocation (4320 intervals) before any intel
@@ -245,7 +239,7 @@ class TranscribeAdmissionMixin:
         interval_end: float = 0.0,
         final_pass: bool = False,
     ) -> Any:
-        """Return the bundle route for fresh Meetings; retain v1 readers only."""
+        """Return the sole bundle-backed transcription execution authority."""
         parent = self._intel_parent
         if parent is None or getattr(self, "_intel_closed", False):
             self._transcription_refusal = (
@@ -256,25 +250,10 @@ class TranscribeAdmissionMixin:
             return RoutedMeetingTranscriptionAdmission(
                 self, source_id, float(interval_start), float(interval_end), bool(final_pass)
             )
-        # Historical persisted sessions still reconstruct their v1 speech plan;
-        # no new bundle-backed Meeting is permitted to enter this branch.
-        plan = self._intel_plan
-        if plan is None:
-            self._transcription_refusal = TRANSCRIPTION_NOT_ADMITTED
-            return None
-        if not plan.has(CAPABILITY_WHISPER_TRANSCRIBE):
-            self._transcription_refusal = CAPABILITY_NOT_PLANNED
-            return None
-        from ..speech_session.transcription import TranscriptionAdmission
-
-        return TranscriptionAdmission(
-            broker=self._intel_broker(),
-            principal=self.intel_principal,
-            plan=plan,
-            parent=parent,
-            capability=CAPABILITY_WHISPER_TRANSCRIBE,
-            preload_capability=CAPABILITY_WHISPER_PRELOAD,
-        )
+        # A persisted v1 plan remains historical display data only. It cannot
+        # reconstruct a speech admission after the Meeting cutover.
+        self._transcription_refusal = TRANSCRIPTION_NOT_ADMITTED
+        return None
 
 
 __all__ = [

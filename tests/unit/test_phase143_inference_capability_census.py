@@ -90,7 +90,6 @@ holdspeak/intel/providers.py:819|_profile_engine|configured_meeting_intel|call
 holdspeak/intel/providers.py:823|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:842|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
-holdspeak/intel_queue.py:714|process_next_intel_job|analyze|call
 holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
 holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
 holdspeak/kernel/inference_runner.py:261|InferenceRunner._attempt|_issue_dispatch_context|call
@@ -99,15 +98,12 @@ holdspeak/kernel/prompt_adapter.py:14|CanonicalPromptAdapter.dispatch|run_prompt
 holdspeak/main.py:765|_run_meeting_mode|transcribe|call
 holdspeak/main.py:774|_run_meeting_mode|transcribe|call
 holdspeak/meeting_import.py:313|_transcribe_import_windows|transcribe|call
-holdspeak/meeting_session/deferred_admission.py:216|DeferredIntelJob.analyze.call|analyze|call
-holdspeak/meeting_session/deferred_admission.py:255|DeferredIntelJob.bookmark_label.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/deferred_admission.py:295|DeferredIntelJob.auto_title.call|generate_title|call
-holdspeak/meeting_session/deferred_bound.py:28|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/deferred_bound.py:40|bound_auto_title_dispatch.call|generate_title|call
-holdspeak/meeting_session/deferred_bound.py:49|bound_analysis_dispatch.call|analyze|call
-holdspeak/meeting_session/intel_routed_children.py:222|IntelRoutedChildMixin._admitted_live_window.call|analyze|call
-holdspeak/meeting_session/intel_routed_children.py:267|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/intel_routed_children.py:297|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
+holdspeak/meeting_session/deferred_bound.py:93|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/deferred_bound.py:105|bound_auto_title_dispatch.call|generate_title|call
+holdspeak/meeting_session/deferred_bound.py:114|bound_analysis_dispatch.call|analyze|call
+holdspeak/meeting_session/intel_routed_children.py:199|IntelRoutedChildMixin._admitted_live_window.call|analyze|call
+holdspeak/meeting_session/intel_routed_children.py:244|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/intel_routed_children.py:274|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
 holdspeak/meeting_session/transcribe_loop.py:84|TranscribeLoopMixin._transcribe_audio|transcribe|call
 holdspeak/plugins/dictation/assembly.py:330|_try_build_runtime|MeshRelayRuntime|call
 holdspeak/plugins/dictation/builtin/intent_router.py:170|IntentRouter.run|classify|call
@@ -172,9 +168,6 @@ holdspeak/web/routes/system/voice_stream.py:245|build_voice_stream_router.ws_dic
 PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/kernel/mesh_local_runner.py:232|MeshLocalRunner.execute|call": ProposedRoute(
         "dynamic:mesh dispatch offer capability", "kernel.mesh_local_runner", "InferenceRunner worker-local admission",
-    ),
-    "holdspeak/meeting_session/intel_child.py:193|run_admitted_child|call": ProposedRoute(
-        "dynamic:MeetingIntelPlan capability", "meeting_session.intel_child", "InferenceRunner admitted child",
     ),
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
@@ -449,22 +442,18 @@ holdspeak/speech_session/revision_target.py:165|bound_target|rebind|call
 holdspeak/web/routes/dictation/_helpers.py:786|_run_dictation_dry_run_text|build_pipeline|call
 """),
     _group(ProposedRoute("meeting.auto_title", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/meeting_session/deferred_admission.py:295|DeferredIntelJob.auto_title.call|generate_title|call
-holdspeak/meeting_session/deferred_bound.py:40|bound_auto_title_dispatch.call|generate_title|call
-holdspeak/meeting_session/intel_routed_children.py:297|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
+holdspeak/meeting_session/deferred_bound.py:105|bound_auto_title_dispatch.call|generate_title|call
+holdspeak/meeting_session/intel_routed_children.py:274|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
 """),
     _group(ProposedRoute("meeting.bookmark_label", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/meeting_session/deferred_admission.py:255|DeferredIntelJob.bookmark_label.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/deferred_bound.py:28|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/intel_routed_children.py:267|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/deferred_bound.py:93|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/intel_routed_children.py:244|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
 """),
     _group(ProposedRoute("meeting.deferred_analysis", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/intel_queue.py:714|process_next_intel_job|analyze|call
-holdspeak/meeting_session/deferred_admission.py:216|DeferredIntelJob.analyze.call|analyze|call
-holdspeak/meeting_session/deferred_bound.py:49|bound_analysis_dispatch.call|analyze|call
+holdspeak/meeting_session/deferred_bound.py:114|bound_analysis_dispatch.call|analyze|call
 """),
     _group(ProposedRoute("meeting.live_analysis", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/meeting_session/intel_routed_children.py:222|IntelRoutedChildMixin._admitted_live_window.call|analyze|call
+holdspeak/meeting_session/intel_routed_children.py:199|IntelRoutedChildMixin._admitted_live_window.call|analyze|call
 """),
     _group(ProposedRoute("project_doc.suggest_update", "project_doc_suggestions", "InferenceRunner admitted child"), """
 holdspeak/project_doc_suggestions.py:72|suggest_project_doc_update|rewrite|ref
@@ -550,7 +539,7 @@ def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
         f"unregistered={sorted(live - EXPECTED_CALL_SITES)}\n"
         f"stale={sorted(EXPECTED_CALL_SITES - live)}"
     )
-    assert len(live) == 105
+    assert len(live) == 101
 
 
 def test_phase143_every_product_runner_entrance_has_one_owner() -> None:

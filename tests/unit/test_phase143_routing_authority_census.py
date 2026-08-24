@@ -86,10 +86,6 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/kernel/inference_runner.py:491:ref:resolve_deployment_revision",
     "holdspeak/kernel/projection_stager.py:194:import:resolve_workbench_deployment_revision",
     "holdspeak/kernel/projection_stager.py:195:ref:resolve_workbench_deployment_revision",
-    "holdspeak/meeting_session/intel_plan.py:185:import:resolve_placement",
-    "holdspeak/meeting_session/intel_plan.py:186:import:resolve_meeting_placement",
-    "holdspeak/meeting_session/intel_plan.py:192:ref:resolve_meeting_placement",
-    "holdspeak/meeting_session/intel_plan.py:194:ref:resolve_placement",
     "holdspeak/services/ask_service.py:307:import:resolve_placement",
     "holdspeak/services/ask_service.py:308:ref:resolve_placement",
     "holdspeak/services/inference_setup_service.py:184:ref:resolve_inference_target",
@@ -164,7 +160,7 @@ PROFILE_ID_CLASSIFICATIONS = {
     **{site: "mutable assignment pointer" for site in {
         "holdspeak/config/core.py:138:profile_id", "holdspeak/config/core.py:169:profile_id",
         "holdspeak/config/integrations.py:101:profile_id", "holdspeak/config/model.py:80:profile_id", "holdspeak/db/models/workbench.py:138:profile_id",
-        "holdspeak/meeting_session/intel_plan.py:193:profile_id", "holdspeak/plugins/dictation/assembly.py:321:profile_id",
+        "holdspeak/plugins/dictation/assembly.py:321:profile_id",
         "holdspeak/services/recipe_service.py:131:profile_id", "holdspeak/services/recipe_service.py:141:profile_id",
         "holdspeak/services/recipe_service.py:146:profile_id", "holdspeak/services/recipe_service.py:174:profile_id",
         "holdspeak/services/recipe_service.py:178:profile_id", "holdspeak/services/schedule_delegation.py:18:profile_id",
@@ -271,7 +267,7 @@ def test_census_anchors_current_routing_resolvers_and_legacy_assignment_writers(
         "holdspeak/inference_targets.py:resolve_thought_placement": "holdspeak/inference_targets.py",
         "holdspeak/intel/providers.py:effective_intel_cloud": "holdspeak/intel/providers.py",
         "holdspeak/intel/providers.py:effective_dictation_llm": "holdspeak/intel/providers.py",
-        "holdspeak/meeting_session/intel_plan.py:freeze_meeting_intel_plan": "holdspeak/meeting_session/intel_plan.py",
+        "holdspeak/meeting_session/intel_plan.py:decode_meeting_intel_plan_v1": "holdspeak/meeting_session/intel_plan.py",
         "holdspeak/speech_session/plan.py:DictationSessionPlanResolver": "holdspeak/speech_session/plan.py",
         "holdspeak/deployment_revisions.py:resolve_workbench_deployment_revision": "holdspeak/deployment_revisions.py",
         "holdspeak/services/schedule_delegation.py:_terms": "holdspeak/services/schedule_delegation.py",
@@ -295,8 +291,8 @@ def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() 
     assert pointers == ROUTING_POINTER_ATTRIBUTES
     assert profile_ids == set(PROFILE_ID_CLASSIFICATIONS)
     assert set(PROFILE_ID_CLASSIFICATIONS.values()) <= CLASSES
-    assert len(PROFILE_ID_CLASSIFICATIONS) == 44
-    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 24
+    assert len(PROFILE_ID_CLASSIFICATIONS) == 43
+    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 23
     assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 13
     assert sum(value == "credential/provider identity" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 5
     assert sum(value == "immutable evidence" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 2
@@ -348,6 +344,36 @@ def test_path_bearing_profile_sync_seam_is_a_named_blocker_not_an_exception() ->
     assert "model_file" in profile_merge.group(0)
     assert "base_url" in profile_merge.group(0)
     assert 'SyncKindSpec("profile", "profiles", "profile.schema.json", True)' in source
+
+
+def test_phase_f_meeting_execution_surface_has_no_v1_resolver_or_direct_runner() -> None:
+    """Phase F leaves C1 bundle reconstruction as the sole Meeting queue executor."""
+    sources = {
+        path: _text(path)
+        for path in (
+            "holdspeak/intel_queue.py",
+            "holdspeak/meeting_session/intel_plan.py",
+            "holdspeak/meeting_session/deferred_admission.py",
+            "holdspeak/meeting_session/intel_routed_children.py",
+            "holdspeak/meeting_session/transcribe_admission.py",
+            "holdspeak/meeting_session/intel_admission.py",
+            "holdspeak/services/meeting_deferred_queue_binding.py",
+        )
+    }
+    retired = (
+        "InferenceRunner.invoke",
+        "inference_runner.invoke",
+        "resolve_placement",
+        "resolve_meeting_placement",
+        "freeze_meeting_intel_plan",
+        "class DeferredIntelJob",
+        "run_admitted_capability",
+        "run_admitted_child",
+    )
+    for path, source in sources.items():
+        assert not any(name in source for name in retired), path
+    assert "claim_next_intel_job_bound" in sources["holdspeak/intel_queue.py"]
+    assert "BoundDeferredIntelJob.reconstruct" in sources["holdspeak/intel_queue.py"]
 
 
 def test_legacy_assignment_writers_are_delete_work_and_acquisition_is_availability_only() -> None:

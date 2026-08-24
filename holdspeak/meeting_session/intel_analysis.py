@@ -106,10 +106,11 @@ class IntelAnalysisMixin:
                 # `failed` too (its receipt carries only the sanitized reason), so
                 # the owner-facing deferral reason still comes from the in-memory
                 # result — exactly the text this path reported before.
-                from .intel_child import provider_error_of
-
+                provider_error = "" if result is None else str(
+                    getattr(result, "error", "") or ""
+                )
                 self._defer_or_error_intel(
-                    provider_error_of(result) or outcome.error or "live analysis failed"
+                    provider_error or outcome.error or "live analysis failed"
                 )
             else:
                 log.info(

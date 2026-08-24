@@ -325,6 +325,28 @@ class ProjectionStager:
             raise KernelRefused("projection_publication_permit_invalid")
         permit._used = True
 
+    def finalize_parent_stages(self, parent_operation_id: str) -> int:
+        """Finalize unresolved stages beneath one parent through kernel ownership."""
+        if not parent_operation_id:
+            return 0
+        with self._database._connection() as conn:
+            rows = conn.execute(
+                """SELECT s.invocation_id FROM kernel_projection_stages s
+                   JOIN kernel_operations o ON o.operation_id=s.operation_id
+                   WHERE o.parent_operation_id=? AND s.state IN ('STAGED','FINALIZING')""",
+                (parent_operation_id,),
+            ).fetchall()
+        finalized = 0
+        for row in rows:
+            try:
+                self.finalize(str(row["invocation_id"]))
+                finalized += 1
+            except KernelRefused:
+                # A receipt still in flight stays recoverable; an invalid stage is
+                # never a reason for a Meeting-specific executor to reappear.
+                continue
+        return finalized
+
     def recover(self) -> Mapping[str, Any]:
         """Reap first, then reconcile durable stages without inventing truth."""
         reaped = self._broker.reap_expired()

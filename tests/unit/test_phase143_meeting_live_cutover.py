@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 from pathlib import Path
 import threading
@@ -1306,3 +1307,74 @@ def test_unavailable_frozen_live_member_stays_queued_not_live(tmp_path: Path, mo
     assert session._route_bundle is not None
     assert state.intel_status == "queued"
     assert state.intel_status_detail == "Queued for later processing: binding_not_ready"
+
+
+def test_persisted_v1_plan_is_displayable_history_without_a_resume_route() -> None:
+    """A historical v1 plan can render, but cannot regain routing authority."""
+    from holdspeak.meeting_session.intel_plan import (
+        MeetingIntelPlan,
+        decode_meeting_intel_plan_v1,
+    )
+
+    persisted = json.dumps(
+        {
+            "schema": 1,
+            "meeting_id": "legacy-plan-meeting",
+            "provenance": "meeting-stop",
+            "config_revision": "config-v1",
+            "routing_hash": "sha256:stored-routing",
+            "plugin_registry_hash": "sha256:stored-plugins",
+            "created_at": 1_700_000_000.0,
+            "deadline_at": 1_700_001_800.0,
+            "child_budget": 4,
+            "capabilities": {
+                "deferred-base-analysis": ["analysis-v1"],
+                "plugin:follow-through": ["plugin-v1"],
+            },
+            "placements": {
+                "deferred-base-analysis": {
+                    "provider": "local",
+                    "model": "historical-model",
+                }
+            },
+            "sha256": "sha256:persisted-v1-plan",
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+
+    plan = decode_meeting_intel_plan_v1(persisted)
+
+    assert isinstance(plan, MeetingIntelPlan)
+    assert plan.summary() == {
+        "plan_schema": 1,
+        "meeting_id": "legacy-plan-meeting",
+        "provenance": "meeting-stop",
+        "plan_sha256": "sha256:persisted-v1-plan",
+        "config_revision": "config-v1",
+        "routing_hash": "sha256:stored-routing",
+        "plugin_registry_hash": "sha256:stored-plugins",
+        "deadline_at": 1_700_001_800.0,
+        "child_budget": 4,
+        "capabilities": {
+            "deferred-base-analysis": ["analysis-v1"],
+            "plugin:follow-through": ["plugin-v1"],
+        },
+        "placements": {
+            "deferred-base-analysis": {
+                "provider": "local",
+                "model": "historical-model",
+            }
+        },
+    }
+    for retired_execution_entrance in (
+        "freeze_meeting_intel_plan",
+        "resolve_placement",
+        "resolve_meeting_placement",
+        "admit",
+        "execute",
+        "resume",
+        "replay",
+        "assert_planned",
+    ):
+        assert not hasattr(plan, retired_execution_entrance)

@@ -884,7 +884,7 @@ def test_each_driver_reports_the_run_it_actually_performed(tmp_path, monkeypatch
 #: domain failure, and therefore sits between an engine and `InferenceRunner`.
 #: Adding a sanitizer without adding it here is what this list exists to catch.
 SANITIZING_ADAPTERS: tuple[tuple[str, str], ...] = (
-    ("holdspeak/meeting_session/intel_child.py", "MeetingAdapter.dispatch"),
+    ("holdspeak/meeting_session/deferred_bound.py", "BoundMeetingAdapter.dispatch"),
     ("holdspeak/speech_session/child.py", "SpeechAdapter.dispatch"),
     # HS-131-14: a routed plugin's completion goes through the dispatch handle,
     # which wraps the provider exception so a plugin's `except Exception` cannot
@@ -953,7 +953,10 @@ def test_both_sanitizing_adapters_let_a_typed_signal_through_at_runtime(signal_n
         ProviderCompatibilityRetry,
         ProviderIndeterminate,
     )
-    from holdspeak.meeting_session.intel_child import MeetingAdapter, MeetingProviderFailure
+    from holdspeak.meeting_session.deferred_bound import (
+        BoundMeetingAdapter,
+        BoundMeetingProviderFailure,
+    )
     from holdspeak.speech_session.child import SpeechAdapter, SpeechProviderFailure
 
     signal: BaseException = (
@@ -966,7 +969,7 @@ def test_both_sanitizing_adapters_let_a_typed_signal_through_at_runtime(signal_n
         raise signal
 
     for adapter, sanitized in (
-        (MeetingAdapter("meeting-contract", raising), MeetingProviderFailure),
+        (BoundMeetingAdapter("meeting-contract", raising), BoundMeetingProviderFailure),
         (SpeechAdapter("speech-contract", raising), SpeechProviderFailure),
     ):
         with pytest.raises(type(signal)) as raised:
@@ -980,8 +983,8 @@ def test_both_sanitizing_adapters_let_a_typed_signal_through_at_runtime(signal_n
     def leaking(_engine: Any, _payload: Any, _cancellation: Any) -> Any:
         raise RuntimeError(leaky)
 
-    with pytest.raises(MeetingProviderFailure) as meeting:
-        MeetingAdapter("meeting-contract", leaking).dispatch(object(), {}, threading.Event())
+    with pytest.raises(BoundMeetingProviderFailure) as meeting:
+        BoundMeetingAdapter("meeting-contract", leaking).dispatch(object(), {}, threading.Event())
     assert leaky not in str(meeting.value)
     with pytest.raises(SpeechProviderFailure) as speech:
         SpeechAdapter("speech-contract", leaking).dispatch(object(), {}, threading.Event())

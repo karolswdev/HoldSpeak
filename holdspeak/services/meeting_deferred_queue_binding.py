@@ -11,14 +11,13 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from ..db.models import IntelJob
-from ..meeting_session.deferred_admission import (
-    JOB_DEADLINE_SECONDS,
-    PARENT_KIND,
-    queue_service_principal,
-)
+from ..meeting_session.deferred_bound import PARENT_KIND, queue_service_principal
 from ..meeting_session.intel_plan import DISPLACED_AUTO_TITLE, DISPLACED_BOOKMARK_LABELS
 from .inference_parent_route_bundle_service import InferenceParentRouteBundleService
 from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+
+# The lawful bound queue owner is the only remaining consumer of this envelope.
+JOB_DEADLINE_SECONDS = 30 * 60
 
 
 @dataclass(frozen=True)

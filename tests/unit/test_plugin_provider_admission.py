@@ -896,9 +896,13 @@ def _meeting(db: Any, meeting_id: str) -> MeetingState:
 
 
 def _admitted_rig(tmp_path: Path, monkeypatch, chain: tuple[str, ...], engine: Any):
+    """Construct real C1 queue/bundle authority for the plugin-child proof."""
+    from tests.unit.test_meeting_deferred_admission import _assign_deferred_queue_routes
+
     db = Database(tmp_path / "admitted.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
+    _assign_deferred_queue_routes(db)
     broker = _configure(db)
     monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
     monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
@@ -909,20 +913,55 @@ def _admitted_rig(tmp_path: Path, monkeypatch, chain: tuple[str, ...], engine: A
     )
     host = PluginHost(default_timeout_seconds=10.0, enabled_capabilities={"llm"})
     register_builtin_plugins(host)
+    monkeypatch.setattr("holdspeak.meeting_plugins.build_bound_meeting_plugin_host", lambda: host)
     return db, broker, host
 
 
-def _job(db: Any, broker: Any, meeting_id: str, plugins: tuple[str, ...]) -> Any:
-    from holdspeak.meeting_session.deferred_admission import DeferredIntelJob
+class _BoundPluginJob:
+    """Test handle for the real C1 claim and its durable parent/bundle."""
 
-    return DeferredIntelJob.admit(
-        db,
-        meeting_id=meeting_id,
-        attempt=1,
-        transcript_hash="h-1",
-        plugin_ids=plugins,
-        meeting_config=_Cfg.meeting,
-        broker=broker,
+    def __init__(self, queue_job: Any, bound: Any) -> None:
+        self.queue_job = queue_job
+        self.bound = bound
+
+    @property
+    def parent_operation_id(self) -> str:
+        return self.bound.parent_operation_id
+
+    def close(self, outcome: str = "succeeded") -> bool:
+        return self.bound.close(
+            outcome,
+            executor_lease={
+                "job_id": str(self.queue_job.job_id),
+                "token": str(self.queue_job.executor_lease_token),
+                "epoch": int(self.queue_job.executor_lease_epoch),
+            },
+        )
+
+
+def _job(db: Any, broker: Any, meeting_id: str, _plugins: tuple[str, ...]) -> _BoundPluginJob:
+    """Bind fresh work through the actual queue binder; never revive v1 admission."""
+    from holdspeak.meeting_session.deferred_bound import BoundDeferredIntelJob
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+
+    meeting = db.meetings.get_meeting(meeting_id)
+    assert meeting is not None
+    db.intel.enqueue_intel_job(
+        meeting_id,
+        transcript_hash=meeting.transcript_hash(),
+        reason="plugin-provider-admission-proof",
+    )
+    queue_job = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+    assert queue_job is not None
+    bound = BoundDeferredIntelJob.reconstruct(db, queue_job, broker=broker)
+    return _BoundPluginJob(queue_job, bound)
+
+
+def _run_bound_chain(db: Any, state: Any, host: Any, job: _BoundPluginJob) -> dict[str, Any]:
+    from holdspeak.meeting_plugins import run_bound_meeting_plugin_chain
+
+    return run_bound_meeting_plugin_chain(
+        db, state, bound=job.bound, job=job.queue_job, host=host
     )
 
 
@@ -951,14 +990,12 @@ def test_two_admitted_plugins_are_two_children_two_contexts_two_receipts(
     tmp_path: Path, monkeypatch, chain: tuple[str, ...]
 ) -> None:
     """Cardinality and provenance, end to end under one deferred job parent."""
-    from holdspeak.meeting_plugins import run_meeting_plugin_chain
-
     engine = _AdmittedEngine()
     db, broker, host = _admitted_rig(tmp_path, monkeypatch, chain, engine)
     state = _meeting(db, "m-two")
     job = _job(db, broker, state.id, chain)
 
-    summary = run_meeting_plugin_chain(db, state, host=host, admission=job)
+    summary = _run_bound_chain(db, state, host, job)
     job.close()
 
     assert set(summary["plugin_statuses"]) == set(chain)
@@ -969,14 +1006,25 @@ def test_two_admitted_plugins_are_two_children_two_contexts_two_receipts(
     assert engine.contexts[0] is not engine.contexts[1]
     assert engine.contexts[0].operation_id != engine.contexts[1].operation_id
 
-    children = _children(db, job.parent.operation_id)
+    children = _children(db, job.parent_operation_id)
     assert len(children) == 2, children
     assert {child["outcome"] for child in children} == {"succeeded"}
     assert len({child["operation_id"] for child in children}) == 2
-    # Every child dispatched on the plan's frozen revision for its own capability.
-    assert {context.revision_id for context in engine.contexts} == {
-        job.plan.primary(f"plugin:{plugin_id}") for plugin_id in chain
-    }
+    # Every child dispatched on the C1 bundle's frozen revision for its capability.
+    with db._connection() as conn:
+        frozen_revisions = {
+            row["deployment_revision_id"]
+            for row in conn.execute(
+                """SELECT entries.deployment_revision_id
+                   FROM inference_parent_route_bundle_members members
+                   JOIN inference_route_plan_entries entries
+                     ON entries.plan_id=members.route_plan_id
+                  WHERE members.bundle_id=?
+                    AND members.capability_id LIKE 'meeting.plugin.%'""",
+                (job.queue_job.bundle_id,),
+            )
+        }
+    assert {context.revision_id for context in engine.contexts} == frozen_revisions
     # ...and the staged projections became the real rows.
     runs = {row["plugin_id"] for row in _rows(db, "plugin_runs")}
     assert runs == set(chain)
@@ -985,11 +1033,15 @@ def test_two_admitted_plugins_are_two_children_two_contexts_two_receipts(
 class _LegacyHost:
     """A host from before the handle: it has no way to be given the child's engine."""
 
-    def __init__(self) -> None:
+    def __init__(self, plugin: Any) -> None:
+        self._plugin = plugin
         self.executed: list[str] = []
 
     def list_plugins(self) -> list[str]:
         return ["decision_capture"]
+
+    def get_plugin(self, plugin_id: str) -> Any:
+        return self._plugin if plugin_id == "decision_capture" else None
 
     def execute_chain(self, chain: list[str], **_kwargs: Any) -> list[Any]:  # pragma: no cover
         self.executed.extend(chain)
@@ -1005,16 +1057,14 @@ def test_a_host_that_cannot_be_given_the_handle_is_refused_by_name(
     that child's engine would run plugins against something else entirely, so the
     chain refuses by name and the plugin stays honestly unresolved.
     """
-    from holdspeak.meeting_plugins import run_meeting_plugin_chain
-
     chain = ("decision_capture",)
     engine = _AdmittedEngine()
-    db, broker, _host = _admitted_rig(tmp_path, monkeypatch, chain, engine)
-    legacy = _LegacyHost()
+    db, broker, host = _admitted_rig(tmp_path, monkeypatch, chain, engine)
+    legacy = _LegacyHost(host.get_plugin("decision_capture"))
     state = _meeting(db, "m-legacy")
     job = _job(db, broker, state.id, chain)
 
-    summary = run_meeting_plugin_chain(db, state, host=legacy, admission=job)
+    summary = _run_bound_chain(db, state, legacy, job)
     job.close()
 
     assert summary["plugin_statuses"]["decision_capture"] == "error"
@@ -1022,7 +1072,7 @@ def test_a_host_that_cannot_be_given_the_handle_is_refused_by_name(
     assert engine.completions == []
     # The refusal happens INSIDE the child's dispatch, so the child closes
     # `failed` and nothing it might have produced becomes durable.
-    children = _children(db, job.parent.operation_id)
+    children = _children(db, job.parent_operation_id)
     assert [child["outcome"] for child in children] == ["failed"], children
     assert _rows(db, "plugin_runs") == []
     assert db.plugins.list_artifacts(state.id) == []
@@ -1036,8 +1086,6 @@ def test_a_plugin_provider_failure_earns_a_failed_receipt_and_materializes_nothi
     tmp_path: Path, monkeypatch
 ) -> None:
     """The dishonest case: a plugin's `{status: error}` must not close `succeeded`."""
-    from holdspeak.meeting_plugins import run_meeting_plugin_chain
-
     def boom(_messages: Any, **_kwargs: Any) -> str:
         raise RuntimeError("endpoint down")
 
@@ -1047,11 +1095,11 @@ def test_a_plugin_provider_failure_earns_a_failed_receipt_and_materializes_nothi
     state = _meeting(db, "m-fail")
     job = _job(db, broker, state.id, chain)
 
-    summary = run_meeting_plugin_chain(db, state, host=host, admission=job)
+    summary = _run_bound_chain(db, state, host, job)
     job.close()
 
     assert summary["plugin_statuses"]["decision_capture"] == "error"
-    children = _children(db, job.parent.operation_id)
+    children = _children(db, job.parent_operation_id)
     assert [child["outcome"] for child in children] == ["failed"], children
     assert _rows(db, "plugin_runs") == []
     assert db.plugins.list_artifacts(state.id) == []
@@ -1063,8 +1111,6 @@ def test_a_dialect_retry_is_a_second_child_and_only_the_winner_materializes(
     tmp_path: Path, monkeypatch
 ) -> None:
     """failed r1 + succeeded r2, one physical attempt each, one surviving row."""
-    from holdspeak.meeting_plugins import run_meeting_plugin_chain
-
     attempts: list[int] = []
 
     def dialect_once(_messages: Any, **_kwargs: Any) -> str:
@@ -1094,7 +1140,7 @@ def test_a_dialect_retry_is_a_second_child_and_only_the_winner_materializes(
 
     monkeypatch.setattr(host, "issued_dispatch", spy)
 
-    summary = run_meeting_plugin_chain(db, state, host=host, admission=job)
+    summary = _run_bound_chain(db, state, host, job)
     job.close()
 
     assert attempts == [1, 2], "the retry must be a SECOND physical attempt"
@@ -1104,10 +1150,12 @@ def test_a_dialect_retry_is_a_second_child_and_only_the_winner_materializes(
     assert issued[0] is not issued[1]
     assert [handle.calls for handle in issued] == [1, 1]
     assert all(handle.released for handle in issued)
-    children = _children(db, job.parent.operation_id)
+    children = _children(db, job.parent_operation_id)
     assert sorted(child["outcome"] for child in children) == ["failed", "succeeded"]
-    retry = [child for child in children if str(child["native_id"]).endswith("_r2")]
-    assert len(retry) == 1 and retry[0]["outcome"] == "succeeded"
+    # C1 uses opaque frozen-route child IDs rather than the v1 `_r2` spelling;
+    # the two terminal receipts and their independently minted contexts remain
+    # the physical-attempt proof.
+    assert len({child["native_id"] for child in children}) == 2
     # Two distinct contexts, two distinct attempt ordinals: no hidden second call.
     assert len(engine.contexts) == 2
     assert engine.contexts[0] is not engine.contexts[1]
@@ -1121,8 +1169,11 @@ def test_a_dialect_retry_is_a_second_child_and_only_the_winner_materializes(
 class _DoubleCaller(IntelligenceConsumer):
     """A plugin that asks twice — the shape that proves the signal is IN the handle."""
 
-    id = "double_caller"
-    version = "1.0.0"
+    # Replaces the installed builtin at the same frozen registry capability.
+    # An arbitrary plugin id has no C2 route member and must refuse before child
+    # admission, so this exercise uses the lawful decision-capture member.
+    id = "decision_capture"
+    version = "0.2.0"
     kind = "synthesizer"
     execution_mode = "deferred"
     required_capabilities = ["llm"]
@@ -1153,8 +1204,6 @@ def test_the_childs_cancellation_signal_is_inside_the_plugins_handle(
     acknowledging a cancel — the plugin cannot start further physical work, and
     nothing it produced is published.
     """
-    from holdspeak.meeting_plugins import run_meeting_plugin_chain
-
     seen: dict[str, Any] = {}
 
     def cancel_after_first(_messages: Any, **_kwargs: Any) -> str:
@@ -1162,7 +1211,7 @@ def test_the_childs_cancellation_signal_is_inside_the_plugins_handle(
         seen["cancellation"].set()
         return CANNED
 
-    chain = ("double_caller",)
+    chain = ("decision_capture",)
     engine = _AdmittedEngine(cancel_after_first)
     db, broker, host = _admitted_rig(tmp_path, monkeypatch, chain, engine)
     plugin = _DoubleCaller()
@@ -1178,7 +1227,7 @@ def test_the_childs_cancellation_signal_is_inside_the_plugins_handle(
 
     state = _meeting(db, "m-cancel")
     job = _job(db, broker, state.id, chain)
-    run_meeting_plugin_chain(db, state, host=host, admission=job)
+    _run_bound_chain(db, state, host, job)
     job.close("cancelled")
 
     assert isinstance(seen.get("cancellation"), threading.Event)

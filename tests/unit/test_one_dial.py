@@ -224,7 +224,7 @@ def test_dangling_pointer_degrades_to_hub_default_with_reason() -> None:
 # ── C1 queue work never re-resolves mutable endpoint state ───────────────
 
 
-def test_intel_queue_resolves_endpoint_through_the_resolver(tmp_path, monkeypatch) -> None:
+def test_intel_queue_has_no_runtime_endpoint_resolver_preflight(tmp_path, monkeypatch) -> None:
     import holdspeak.intel_queue as iq
     from holdspeak.kernel.runtime import _configure
 
@@ -237,13 +237,7 @@ def test_intel_queue_resolves_endpoint_through_the_resolver(tmp_path, monkeypatc
     monkeypatch.setattr(
         Config, "load", classmethod(lambda *_args, **_kwargs: pytest.fail("C1 queue read Config"))
     )
-    seen: dict = {}
-    monkeypatch.setattr(
-        iq, "get_intel_runtime_status", lambda *args, **kwargs: seen.update(kwargs)
-    )
-
     assert iq.process_next_intel_job(provider="cloud") is False
-    assert seen == {}
 
 
 def test_intel_queue_signatures_carry_no_endpoint_triple() -> None:
@@ -361,7 +355,6 @@ def test_feature_legs_resolve_through_the_one_resolver() -> None:
         "holdspeak/services/recipe_service.py": "resolve_placement",
         "holdspeak/plugins/dictation/assembly.py": "effective_dictation_llm",
         "holdspeak/runtime/meeting_glue.py": "effective_intel_cloud",
-        "holdspeak/intel_queue.py": "effective_intel_cloud",
         "holdspeak/setup_runtime.py": "effective_dictation_llm",
     }
     for rel, seam in resolver_legs.items():

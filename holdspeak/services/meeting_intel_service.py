@@ -49,7 +49,10 @@ class MeetingIntelService:
         if meeting is None: raise NotFound("meeting", meeting_id)
         job = self._db.intel.get_intel_job(meeting_id); artifacts = self._db.plugins.list_artifacts(meeting_id, limit=2000)
         meeting_state = str(meeting.intel_status or "disabled").strip().lower(); job_state = str(job.status).strip().lower() if job else None
-        reserved_handoff = self._db.intel.has_unsettled_stop_reservation(meeting_id)
+        reserved_handoff = (
+            self._db.intel.has_unsettled_stop_reservation(meeting_id)
+            or self._db.intel.has_compatibility_cutover_reservation(meeting_id)
+        )
         state = meeting_state if meeting_state in {"partial", "skipped"} else job_state or meeting_state; visible = bool(job) or meeting_state in {"queued","running","error","failed","partial","skipped"}
         headline = "Meeting saved · intelligence running" if state == "running" else "Meeting saved · intelligence queued" if state == "queued" else "Meeting saved · intelligence skipped" if meeting_state == "skipped" else "Meeting saved · intelligence incomplete"
         completed = [{"label":"Meeting","detail":"Saved"},{"label":"Transcript","detail":f"{len(meeting.segments)} saved {'segment' if len(meeting.segments)==1 else 'segments'}"}]

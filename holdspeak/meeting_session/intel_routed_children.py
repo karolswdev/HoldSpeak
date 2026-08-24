@@ -2,19 +2,17 @@
 
 from __future__ import annotations
 
+import hashlib
 import threading
 from typing import Any, Callable, Mapping, Optional
 
 from ..logging_config import get_logger
-from .intel_child import MeetingProviderFailure, run_admitted_capability, sha as _sha
-from .intel_plan import (
-    CAPABILITY_AUTO_TITLE,
-    CAPABILITY_BOOKMARK_LABEL,
-    CAPABILITY_LIVE_ANALYSIS,
-    MeetingIntelRefused,
-    SESSION_CLOSED,
-    SESSION_NOT_ADMITTED,
-)
+
+
+def _sha(value: Any) -> str:
+    return "sha256:" + hashlib.sha256(str(value).encode("utf-8", "replace")).hexdigest()
+
+from .intel_plan import MeetingIntelRefused, SESSION_CLOSED, SESSION_NOT_ADMITTED
 
 log = get_logger("meeting_session")
 
@@ -181,31 +179,10 @@ class IntelRoutedChildMixin:
             value = routed.get("result")
             return outcome, value if isinstance(value, Mapping) else None, value
 
-        # Historical v1 plans remain readable.  No new production session reaches
-        # this branch after the Phase-B bundle cutover (design note §45-51).
-        plan = self._intel_plan
-        if plan is None or parent is None:
-            raise MeetingIntelRefused(SESSION_NOT_ADMITTED, capability)
-        legacy_capability = {
-            ROUTE_LIVE_ANALYSIS: CAPABILITY_LIVE_ANALYSIS,
-            ROUTE_BOOKMARK_LABEL: CAPABILITY_BOOKMARK_LABEL,
-            ROUTE_AUTO_TITLE: CAPABILITY_AUTO_TITLE,
-        }.get(capability, capability)
-        return run_admitted_capability(
-            broker=self._intel_broker(),
-            principal=self.intel_principal,
-            plan=plan,
-            parent=parent,
-            capability=legacy_capability,
-            contract=contract,
-            projection_kind=projection_kind,
-            material=material,
-            call=call,
-            encode=encode,
-            seed=seed,
-            attempt_ordinal=attempt_ordinal,
-            deadline_seconds=deadline_seconds,
-        )
+        # Stored v1 plans are display-only history after the Phase-F cutover.
+        # A missing C1 bundle is never permission to reconstruct or replay a
+        # provider child, even when an old in-memory plan object survives.
+        raise MeetingIntelRefused(SESSION_NOT_ADMITTED, capability)
 
     # ----------------------------------------------------------- live window
 

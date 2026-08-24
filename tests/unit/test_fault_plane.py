@@ -276,9 +276,6 @@ def test_intel_model_unavailable_fault_schedules_bounded_retry(
     db.intel.enqueue_intel_job(
         "m-model-gone", transcript_hash=meeting.transcript_hash(), reason="test"
     )
-    monkeypatch.setattr(
-        "holdspeak.intel_queue.get_intel_runtime_status", lambda *a, **k: (True, "ready")
-    )
     monkeypatch.setenv(FAULT_ENV, "intel.model_unavailable")
 
     from holdspeak.intel_queue import process_next_intel_job

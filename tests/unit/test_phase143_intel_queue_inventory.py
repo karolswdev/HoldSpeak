@@ -72,7 +72,8 @@ def test_inventory_repository_claim_enqueue_retry_release_and_ledger_are_job_key
     for symbol in (
         "enqueue_intel_job", "claim_next_intel_job", "claim_next_intel_job_bound", "requeue_claimed_intel_job",
         "retry_intel_job", "complete_intel_job", "complete_bound_intel_job", "fail_intel_job",
-        "get_bound_claimed_intel_job", "get_legacy_claimed_intel_job",
+        "get_bound_claimed_intel_job", "cut_over_legacy_unbound_intel_jobs",
+        "admit_compatibility_cutover_recovery",
         "supersede_bound_intel_job", "supersede_bound_intel_job_in_transaction",
         "mark_intel_job_partial", "request_intel_retry", "skip_remaining_intel",
         "record_intel_job_attempt", "get_intel_job", "list_intel_jobs",
@@ -92,7 +93,7 @@ def test_inventory_worker_and_http_recovery_use_repository_contracts() -> None:
     service = _source("holdspeak/services/meeting_intel_service.py")
     routes = _source("holdspeak/web/routes/meetings/intel.py")
     for symbol in ("process_next_intel_job", "drain_intel_queue", "IntelQueueWorker",
-                   "claim_next_intel_job", "retry_intel_job", "fail_intel_job"):
+                   "claim_next_intel_job_bound", "cut_over_legacy_unbound_intel_jobs"):
         assert symbol in worker
     for symbol in ("list_jobs", "queue_summary", "process_jobs", "retry_job",
                    "get_recovery", "retry_recovery", "skip_recovery"):
@@ -323,15 +324,15 @@ def test_retry_terminalizes_old_owner_and_records_linked_fresh_job(tmp_path) -> 
     from holdspeak.intel_queue import _retry_or_fail_job
 
     db, meeting = _bound_claim_db(tmp_path, "retry-linkage.db")
-    claimed = db.intel.claim_next_intel_job()
-    assert claimed is not None and claimed.status == "running"
+    claimed = db.intel.claim_next_intel_job_bound(_binding)
+    assert claimed is not None and claimed.status == "claimed"
     _retry_or_fail_job(db, claimed, "test failure", max_attempts=6, base_delay_seconds=1)
     with db._connection() as conn:
         old = conn.execute("SELECT status FROM intel_jobs WHERE job_id=?", (claimed.job_id,)).fetchone()
         new = conn.execute("SELECT job_id,origin_job_id,status FROM intel_jobs WHERE origin_job_id=?", (claimed.job_id,)).fetchone()
         link = conn.execute("SELECT outcome FROM intel_job_attempts WHERE job_id=? AND event_kind='retry_linkage'", (new["job_id"],)).fetchone()
     assert old is not None and old["status"] == "failed"
-    assert new is not None and new["origin_job_id"] == claimed.job_id and new["status"] == "queued"
+    assert new is not None and new["origin_job_id"] == claimed.job_id and new["status"] == "reserved"
     assert link is not None and link["outcome"] == "queued"
 
 

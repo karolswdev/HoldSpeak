@@ -249,9 +249,6 @@ def test_deferred_intel_runs_the_chain_when_router_enabled(env, monkeypatch, tmp
     monkeypatch.setattr(
         fake, "analyze", lambda transcript, stream=False: _Analyze(), raising=False
     )
-    monkeypatch.setattr(
-        "holdspeak.intel_queue.get_intel_runtime_status", lambda *a, **k: (True, "ready")
-    )
     monkeypatch.setattr("holdspeak.intel.resolve_llm_capability", lambda cfg: True)
 
     from holdspeak.intel_queue import process_next_intel_job
@@ -300,10 +297,6 @@ def test_deferred_intel_retains_base_analysis_when_routed_work_fails(
     # HS-131-08: stub the one admitted engine seam (see the test above).
     monkeypatch.setattr(
         fake, "analyze", lambda transcript, stream=False: _Analyze(), raising=False
-    )
-    monkeypatch.setattr(
-        "holdspeak.intel_queue.get_intel_runtime_status",
-        lambda *a, **k: (True, "ready"),
     )
     monkeypatch.setattr(
         "holdspeak.meeting_plugins.run_bound_meeting_plugin_chain",
@@ -360,9 +353,6 @@ def test_deferred_intel_skips_the_chain_when_router_disabled(env, monkeypatch) -
     # queue-constructed `MeetingIntel`, so the stub goes there.
     monkeypatch.setattr(
         fake, "analyze", lambda transcript, stream=False: _Analyze(), raising=False
-    )
-    monkeypatch.setattr(
-        "holdspeak.intel_queue.get_intel_runtime_status", lambda *a, **k: (True, "ready")
     )
 
     from holdspeak.intel_queue import process_next_intel_job

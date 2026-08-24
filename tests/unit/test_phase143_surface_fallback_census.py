@@ -37,7 +37,6 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/intel_queue.py", "_retry_or_fail_job"): ("deferred scheduling retry; new job, not route fallback", "143-08"),
     ("holdspeak/kernel/inference_runner.py", "_cancelled_before_retry"): ("same-leg physical-attempt cancellation fence", "143-06"),
     ("holdspeak/kernel/projection_stager.py", "_retry_stage"): ("projection adoption for dialect child", "143-06"),
-    ("holdspeak/meeting_session/intel_plan.py", "_placement_legs"): ("frozen real route legs", "143-08"),
     ("holdspeak/plugins/dictation/assembly.py", "_frozen_local_target"): ("frozen dictation target", "143-07"),
     ("holdspeak/plugins/dictation/builtin/project_rewriter.py", "_selected_activity_context"): ("non-route input selection", "143-01"),
     ("holdspeak/plugins/dictation/builtin/project_rewriter.py", "_target_directive"): ("deterministic dictation directive", "143-07"),
