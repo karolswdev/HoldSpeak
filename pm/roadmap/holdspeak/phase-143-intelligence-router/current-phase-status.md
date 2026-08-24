@@ -429,6 +429,22 @@ gone stale against the real local-target resolver. Confirming sweep:
 **6453 passed / ZERO branch-new — eleven inherited baseline failures
 now pass on this branch.** Next: slices 2–4 (the three owner drafts),
 then Phase F.
+**Phase E slices 2–4 are SHIPPED (2026-08-24) — all four adopters are
+routed.** A shared owner-draft admission module gives Cadence's
+next-action draft, decision promotion, and delivery PR review one
+shape: a one-member OWNER parent-route bundle that freezes the exact
+capability assignment at admission, controller-owned execution, the
+frozen `{draft}` adapter, and frozen-route egress. Every pre-route
+refusal records one terminal receipt through the slice-1 seam, then
+each adopter degrades honestly — the deterministic next action, the
+untouched decision with no artifact, the unchanged PR with no review.
+The legacy per-request `inference_target_id` override is retired on
+the routed branch with the named receipt-backed refusal; blank uses
+the exact owner assignment. Delivery keeps its strictly non-posting
+law and diff-hash replay. Successful draft receipts retain the
+resulting artifact ID. Confirming sweep: **6464 passed / zero
+branch-new.** Next: the capped Phase E counsel pass, then Phase F
+(legacy authority removal and census closure).
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

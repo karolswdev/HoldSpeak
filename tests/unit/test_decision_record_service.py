@@ -409,10 +409,14 @@ def test_search_finds_kafka_in_decision_text_and_linked_work(tmp_path):
 def test_promotion_cancellation_after_provider_return_never_publishes_artifact(tmp_path):
     db = Database(tmp_path / "promotion.db")
     _accepted_meeting_decision(db, "dec-fence")
-    profile = db.profiles.upsert(
-        profile_id="promotion", name="Promotion", kind="openAICompatible",
-        base_url="http://promotion", model="promotion-model",
-    )
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+    _profile(db, "promotion")
+    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-promotion", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
+        "entries": [{"profile_id": "promotion", "profile_revision": 1}],
+    })
     from holdspeak.kernel.runtime import _configure
     broker = _configure(db)
     owner = Principal(PrincipalKind.OWNER, "promotion-owner")
@@ -434,9 +438,7 @@ def test_promotion_cancellation_after_provider_return_never_publishes_artifact(t
     # (succeeded); the cancellation election fences PUBLICATION instead —
     # the finalize discard refuses the artifact by name.
     with pytest.raises(ConflictError, match="decision_promotion_cancelled"):
-        asyncio.run(service.draft_promoted_with_model(
-            owner, "dec-fence", "note", {"inference_target_id": profile.id},
-        ))
+        asyncio.run(service.draft_promoted_with_model(owner, "dec-fence", "note", {}))
 
     with db._connection() as conn:
         parent_id = conn.execute(
@@ -457,7 +459,14 @@ def test_promotion_cancellation_after_provider_return_never_publishes_artifact(t
 def test_promotion_cancelled_after_child_is_eligible_discards_artifact(tmp_path):
     db = Database(tmp_path / "promotion-late.db")
     _accepted_meeting_decision(db, "dec-late")
-    profile = db.profiles.upsert(profile_id="promotion-late", name="Promotion", kind="openAICompatible", base_url="http://promotion", model="promotion-model")
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+    _profile(db, "promotion-late")
+    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-promotion-late", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
+        "entries": [{"profile_id": "promotion-late", "profile_revision": 1}],
+    })
     from holdspeak.kernel.runtime import _configure
     broker = _configure(db); owner = Principal(PrincipalKind.OWNER, "promotion-owner")
     broker.inference_runner._engine_factory = lambda _revision, **_kw: type("Intel", (), {"run_prompt": lambda self, **_: "eligible draft"})()
@@ -468,6 +477,97 @@ def test_promotion_cancelled_after_child_is_eligible_discards_artifact(tmp_path)
         return finalize(invocation_id)
     broker.projection_stager.finalize = cancel_before_finalize
     with pytest.raises(ConflictError, match="decision_promotion_cancelled"):
-        asyncio.run(DecisionLifecycleService(db, kernel=broker).draft_promoted_with_model(owner, "dec-late", "note", {"inference_target_id": profile.id}))
+        asyncio.run(DecisionLifecycleService(db, kernel=broker).draft_promoted_with_model(owner, "dec-late", "note", {}))
     with db._connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 0
+
+
+def test_promotion_missing_assignment_records_one_refusal_and_no_artifact(tmp_path):
+    """E2: no exact OWNER assignment still leaves a terminal parent receipt."""
+    db = Database(tmp_path / "promotion-missing-assignment.db")
+    _accepted_meeting_decision(db, "dec-missing")
+    from holdspeak.kernel.runtime import _configure
+    broker = _configure(db)
+    owner = Principal(PrincipalKind.OWNER, "promotion-owner")
+
+    with pytest.raises(ConflictError) as refused:
+        asyncio.run(DecisionLifecycleService(db, kernel=broker).draft_promoted_with_model(
+            owner, "dec-missing", "note", {}
+        ))
+
+    assert refused.value.code == "decision_promotion_draft_refused"
+    assert refused.value.context["parent_receipt"]["outcome"] == "refused"
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM kernel_parent_runs").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 0
+
+
+def test_promotion_request_target_override_is_named_terminal_refusal(tmp_path):
+    """E3: the body target neither retargets nor vanishes silently."""
+    db = Database(tmp_path / "promotion-retired-override.db")
+    _accepted_meeting_decision(db, "dec-override")
+    from holdspeak.kernel.runtime import _configure
+    broker = _configure(db)
+    owner = Principal(PrincipalKind.OWNER, "promotion-owner")
+
+    with pytest.raises(ConflictError) as refused:
+        asyncio.run(DecisionLifecycleService(db, kernel=broker).draft_promoted_with_model(
+            owner, "dec-override", "note", {"inference_target_id": "legacy-target"}
+        ))
+
+    assert refused.value.code == "inference_request_target_override_retired"
+    assert refused.value.context["parent_receipt"]["outcome"] == "refused"
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 0
+
+
+def test_promotion_assignment_freeze_uses_elected_draft_only(tmp_path, monkeypatch):
+    db = Database(tmp_path / "promotion-frozen-assignment.db")
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO meetings (id, started_at, title) VALUES (?, ?, ?)",
+            ("meeting-127", "2026-08-07T00:00:00+00:00", "Frozen assignment"),
+        )
+    _accepted_meeting_decision(db, "dec-frozen")
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+    _profile(db, "promotion-initial")
+    _profile(db, "promotion-edited")
+    assignments = InferenceAssignmentService(db)
+    assignments.set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-promotion-initial", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
+        "entries": [{"profile_id": "promotion-initial", "profile_revision": 1}],
+    })
+    from holdspeak.kernel.runtime import _configure
+    broker = _configure(db)
+    broker.inference_runner._engine_factory = lambda _revision, **_kw: type(
+        "Intel", (), {"run_prompt": lambda self, **_: "only elected draft"}
+    )()
+    owner = Principal(PrincipalKind.OWNER, "promotion-owner")
+    real_admit = broker.inference_adoption_service.admit_on_frozen_route
+
+    def admit_after_edit(*args, **kwargs):
+        assignments.set_assignment(ASSIGNMENT_OWNER, {
+            "command_id": "replace-promotion-route", "expected_revision": 1,
+            "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
+            "entries": [{"profile_id": "promotion-edited", "profile_revision": 1}],
+        })
+        return real_admit(*args, **kwargs)
+
+    monkeypatch.setattr(broker.inference_adoption_service, "admit_on_frozen_route", admit_after_edit)
+    result = asyncio.run(DecisionLifecycleService(db, kernel=broker).draft_promoted_with_model(
+        owner, "dec-frozen", "note", {}
+    ))
+
+    assert result["artifact"]["body_markdown"] == "only elected draft"
+    assert result["placement"]["egress"] == {"scope": "local"}
+    with db._connection() as conn:
+        assert [row[0] for row in conn.execute(
+            "SELECT profile_id FROM inference_route_plan_entries"
+        ).fetchall()] == ["promotion-initial"]

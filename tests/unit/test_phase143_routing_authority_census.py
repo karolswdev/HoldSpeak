@@ -92,10 +92,6 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/meeting_session/intel_plan.py:194:ref:resolve_placement",
     "holdspeak/services/ask_service.py:307:import:resolve_placement",
     "holdspeak/services/ask_service.py:308:ref:resolve_placement",
-    "holdspeak/services/cadence_service.py:222:import:resolve_placement",
-    "holdspeak/services/cadence_service.py:226:ref:resolve_placement",
-    "holdspeak/services/decision_lifecycle_service.py:67:import:resolve_placement",
-    "holdspeak/services/decision_lifecycle_service.py:71:ref:resolve_placement",
     "holdspeak/services/inference_setup_service.py:184:ref:resolve_inference_target",
     "holdspeak/services/inference_setup_service.py:23:import:resolve_inference_target",
     "holdspeak/services/model_profile_service.py:682:import:resolve_inference_target",
@@ -134,8 +130,6 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/speech_session/provider.py:146:ref:resolve_deployment_revision",
     "holdspeak/speech_session/provider.py:214:import:resolve_deployment_revision",
     "holdspeak/speech_session/provider.py:218:ref:resolve_deployment_revision",
-    "holdspeak/web/routes/delivery_prs.py:234:import:resolve_placement",
-    "holdspeak/web/routes/delivery_prs.py:241:ref:resolve_placement",
 }
 
 ROUTING_POINTER_ATTRIBUTES = {

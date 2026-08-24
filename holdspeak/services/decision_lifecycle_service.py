@@ -2,7 +2,6 @@
 from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 import asyncio
-import time
 import uuid
 from typing import Any
 from ..db.core import Database
@@ -59,42 +58,144 @@ class DecisionLifecycleService:
         except Exception as exc: raise self._promotion_error(exc, decision_id) from exc
         return self._promotion_payload(decision_id, receipt)
     async def draft_promoted_with_model(self, principal: Principal, decision_id: str, artifact_type: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
-        self._require(principal, PrincipalRight.OWNER); payload=payload or {}
+        """Draft an accepted decision through its exact frozen OWNER assignment."""
+        self._require(principal, PrincipalRight.OWNER)
+        payload = payload or {}
         from ..db.decisions import derive_promoted_artifact_id
-        try: decision=self._db.decisions.assert_promotable(decision_id); derive_promoted_artifact_id(decision_id,artifact_type)
-        except Exception as exc: raise self._promotion_error(exc, decision_id) from exc
-        from ..deployment_revisions import capture_deployment_revision
-        from ..inference_targets import resolve_placement, target_refusal
-        from ..kernel.inference_runner import InvocationRequest, ServiceContract
-        from ..kernel.prompt_adapter import CanonicalPromptAdapter
-        from ..kernel.runtime import _as_principal, _service
-        broker=self._kernel or _service(); requested=str(payload.get("inference_target_id") or "this_machine").strip(); target=resolve_placement(self._db, invocation=requested).target
-        if not target.ready: raise ServiceError("target_unavailable",target.readiness_reason,context={**target_refusal(target),"status":409})
-        revision=capture_deployment_revision(self._db,target); normalized=str(artifact_type).strip().lower()
-        prompt=f"Artifact type: {normalized}\nDecision: {decision.text}\nRationale: {decision.rationale or 'Not recorded'}\nDecided at: {decision.decided_at}\nMeeting: {decision.source_meeting_id}"
-        parent=broker.parent_run_controller.start(principal,kind="decision.promotion-draft",definition_ref=f"decision:{decision.id}",definition_revision=str(decision.updated_at),input_snapshot={"decision_id":decision.id,"meeting_revision":decision.decided_at,"artifact_type":normalized},deadline_at=time.time()+300,child_budget=1)
-        invocation_id="decision_draft_"+uuid.uuid4().hex
-        material={"system_prompt":"Draft one concise artifact from the accepted decision. Preserve the decision's meaning. Return Markdown only and do not invent approval.","user_prompt":prompt,"max_tokens":1200,"temperature":None,"decision_revision":decision.updated_at,"meeting_revision":decision.decided_at,"artifact_type":normalized}
-        request=InvocationRequest(revision.id,ServiceContract.for_payload("holdspeak.decision-promotion-draft","1",material),time.time()+300,material,invocation_id,parent.operation_id)
-        def projection_payload(value: Any) -> dict[str, Any]:
-            return {"output":str(dict(value).get("output") or ""),"decision_id":decision.id,"artifact_type":normalized,"actor":principal.identity}
-        with _as_principal(principal): outcome=await asyncio.to_thread(broker.inference_runner.invoke,request,CanonicalPromptAdapter(),publish=broker.projection_stager.publisher(invocation_id,"decision-promotion-draft",projection_payload),parent_context=parent.context)
-        if outcome.outcome != "succeeded":
-            if broker.store.receipt(parent.operation_id) is None:
-                broker.parent_run_controller.close(parent.context,outcome.outcome,principal=principal)
-            raise ConflictError(f"inference_{outcome.outcome}",code=f"inference_{outcome.outcome}")
-        projection=broker.projection_stager.finalize(invocation_id)
-        if projection is None:
-            if broker.store.receipt(parent.operation_id) is None:
-                broker.parent_run_controller.close(parent.context,"cancelled",principal=principal)
-            raise ConflictError("decision_promotion_cancelled",code="decision_promotion_cancelled")
-        output=str(projection.get("output") or "").strip(); artifact_id=str(projection.get("artifact_id") or "")
-        if not output or not artifact_id:
-            broker.parent_run_controller.close(parent.context,"failed",principal=principal); raise ConflictError("model_returned_empty_output",code="model_returned_empty_output")
-        parent_receipt=broker.parent_run_controller.close(parent.context,"succeeded",artifact_id,principal=principal)
-        artifact=self._db.plugins.get_artifact(artifact_id); current=self._db.decisions.get(decision_id)
-        receipt={"actor":principal.identity,"operation":"decision.promote","subject":f"decision:{decision_id}","outcome":"applied","artifact_id":artifact_id,"artifact_type":normalized,"review_status":"draft"}
-        return {"decision":current.to_dict() if current else None,"artifact":artifact.to_dict() if artifact else None,"receipt":receipt,"operation_id":parent.operation_id,"invocation_id":invocation_id,"invocation":{"operation_id":outcome.operation_id,"deployment_revision":revision.id,"outcome":outcome.outcome,"receipt":dict(outcome.receipt)},"parent_receipt":dict(parent_receipt),"inference_target":target.to_dict()}
+        try:
+            decision = self._db.decisions.assert_promotable(decision_id)
+            derive_promoted_artifact_id(decision_id, artifact_type)
+        except Exception as exc:
+            raise self._promotion_error(exc, decision_id) from exc
+        from ..kernel.runtime import _service
+        from .inference_owner_draft import run_owner_draft
+        from .inference_parent_route_bundle_service import InferenceParentRouteBundleService
+
+        normalized = str(artifact_type).strip().lower()
+        definition_revision = str(decision.updated_at)
+        identity = f"{decision.id}:{definition_revision}:{normalized}"
+        import hashlib
+        command_id = "decision-promotion:" + hashlib.sha256(identity.encode()).hexdigest()
+        input_snapshot = {
+            "decision_id": decision.id,
+            "meeting_revision": decision.decided_at,
+            "artifact_type": normalized,
+        }
+        broker = self._kernel or _service()
+        # E3: the v1 override is not a second routing plane.  It gets the same
+        # durable, content-free E2 refusal accounting as a missing assignment.
+        requested = str(payload.get("inference_target_id") or "").strip()
+        if requested:
+            refusal = InferenceParentRouteBundleService(
+                broker, broker.inference_adoption_service
+            ).record_pre_route_refusal(
+                principal,
+                command_id=command_id,
+                parent_kind="decision.promotion-draft",
+                definition_ref=f"decision:{decision.id}",
+                definition_revision=definition_revision,
+                input_snapshot=input_snapshot,
+                deadline_at=4_102_444_800.0,
+                reason="inference_request_target_override_retired",
+            )
+            raise ConflictError(
+                "inference_request_target_override_retired",
+                code="inference_request_target_override_retired",
+                context={
+                    "operation_id": refusal["parent"].operation_id,
+                    "parent_receipt": refusal["receipt"],
+                },
+            )
+
+        def prompt_payload() -> dict[str, Any]:
+            prompt = (
+                f"Artifact type: {normalized}\nDecision: {decision.text}\n"
+                f"Rationale: {decision.rationale or 'Not recorded'}\n"
+                f"Decided at: {decision.decided_at}\nMeeting: {decision.source_meeting_id}"
+            )
+            return {
+                "system_prompt": "Draft one concise artifact from the accepted decision. Preserve the decision's meaning. Return Markdown only and do not invent approval.",
+                "user_prompt": prompt,
+                "max_tokens": 1200,
+                "temperature": None,
+                "decision_revision": decision.updated_at,
+                "meeting_revision": decision.decided_at,
+                "artifact_type": normalized,
+            }
+
+        routed = await asyncio.to_thread(
+            run_owner_draft,
+            broker,
+            principal,
+            command_id=command_id,
+            parent_kind="decision.promotion-draft",
+            definition_ref=f"decision:{decision.id}",
+            definition_revision=definition_revision,
+            input_snapshot=input_snapshot,
+            capability_id="decision.promotion_draft",
+            route_key="decision-promotion-draft",
+            operation_id="decision-draft:" + hashlib.sha256(identity.encode()).hexdigest(),
+            reserved_output_tokens=1200,
+            payload_factory=prompt_payload,
+            projection_kind="decision-promotion-draft",
+            projection_factory=lambda value: {
+                "output": str(value.get("draft") or ""),
+                "decision_id": decision.id,
+                "artifact_type": normalized,
+                "actor": principal.identity,
+            },
+            result_is_usable=lambda value: bool(
+                str(value.get("output") or "").strip()
+                and str(value.get("artifact_id") or "")
+            ),
+            parent_result_ref=lambda value: str(value["artifact_id"]),
+        )
+        if routed.get("outcome") != "succeeded" or not isinstance(routed.get("published"), dict):
+            parent_outcome = str(routed["parent_receipt"].get("outcome") or "")
+            code = (
+                "decision_promotion_cancelled"
+                if parent_outcome == "cancelled"
+                else "decision_promotion_draft_refused"
+            )
+            raise ConflictError(
+                code,
+                code=code,
+                context={
+                    "reason": routed.get("reason") or "inference_draft_unavailable",
+                    "operation_id": routed["parent"].operation_id,
+                    "parent_receipt": routed["parent_receipt"],
+                },
+            )
+        published = routed["published"]
+        artifact_id = str(published.get("artifact_id") or "")
+        output = str(published.get("output") or "").strip()
+        if not artifact_id or not output:
+            raise ConflictError("model_returned_empty_output", code="model_returned_empty_output")
+        artifact = self._db.plugins.get_artifact(artifact_id)
+        current = self._db.decisions.get(decision_id)
+        receipt = {
+            "actor": principal.identity,
+            "operation": "decision.promote",
+            "subject": f"decision:{decision_id}",
+            "outcome": "applied",
+            "artifact_id": artifact_id,
+            "artifact_type": normalized,
+            "review_status": "draft",
+        }
+        return {
+            "decision": current.to_dict() if current else None,
+            "artifact": artifact.to_dict() if artifact else None,
+            "receipt": receipt,
+            "operation_id": routed["parent"].operation_id,
+            "invocation_id": str((routed.get("routed") or {}).get("winning_reservation", {}).get("child_invocation_id") or ""),
+            "invocation": {
+                "operation_id": str((routed.get("routed") or {}).get("winning_reservation", {}).get("child_operation_id") or ""),
+                "outcome": "succeeded",
+                "receipt": dict((routed.get("routed") or {}).get("receipt") or {}),
+            },
+            "parent_receipt": dict(routed["parent_receipt"]),
+            "placement": {"source": "frozen_owner_assignment", "egress": routed["egress"]},
+        }
     def _require(self, principal: Principal, right: PrincipalRight) -> None:
         if not principal.permits(right):
             status=401 if principal.kind is PrincipalKind.NONE else 403

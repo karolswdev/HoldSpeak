@@ -56,7 +56,7 @@ this whole file before touching anything.
   completed runs are trustworthy. Census/snapshot regens are the LAST
   act of any worker round (anchors move with every edit).
 
-## 2. What is DONE and COMMITTED (sixteen gate commits)
+## 2. What is DONE and COMMITTED (seventeen gate commits)
 
 Branch `feat/hs143-08-meeting-adoption`, all on top of main `89d232f3`.
 
@@ -149,7 +149,18 @@ Branch `feat/hs143-08-meeting-adoption`, all on top of main `89d232f3`.
     trusted_child persists a declared non-generic SERVICE authority
     basis (was overwritten by the generic basis); stale one-path spine
     rig repaired. Sweep 6453/zero branch-new — ELEVEN inherited
-    baseline failures now pass on this branch.
+    baseline failures now pass on this branch. Committed `dd1ef120`.
+15. **Phase E slices 2-4** (the commit carrying this handover
+    revision) — the three OWNER drafts routed via the shared
+    services/inference_owner_draft.py one-member-bundle module:
+    cadence next-action (deterministic fallback on refusal), decision
+    promotion (no artifact on refusal), delivery PR review
+    (non-posting, diff-hash replay). E2 terminal refusal receipts on
+    every pre-route refusal; E3 override retirement
+    (inference_request_target_override_retired, receipt-backed).
+    Successful draft parent receipts retain the artifact ID. One
+    stale rig migrated to assignment authority. **ALL FOUR PHASE E
+    ADOPTERS ARE ROUTED.**
 
 Counsel records (verbatim, with orchestrator dispositions):
 `assets/story-08-c1-checkpoint-counsel-round1.md` (5 rounds + owner
@@ -161,10 +172,10 @@ with verified file:line evidence in
 findings + dispositions). Verification ledger sweep section:
 `assets/story-08-tranche-ac-verification-ledger.md`.
 
-Last clean sweep (Phase E slice-1 tree): **6453 passed / 57 failed /
-zero branch-new** — ALL 57 in the inherited baseline; the branch now
-FIXES eleven inherited failures (trusted_child basis + spine-rig
-repairs). From 6314 passing at the restart-session start.
+Last clean sweep (Phase E complete tree): **6464 passed / 50 failed /
+zero branch-new** — 48 inherited + 2 known xdist flakes serial-green
+×2; the branch now FIXES a dozen-odd inherited failures. From 6314
+passing at the restart-session start.
 
 ## 3. Rulings RESOLVED (2026-08-24) and open ledger
 
@@ -190,10 +201,8 @@ sigkill process-input, github-enrichment preview.
 
 ## 4. What REMAINS for Story 08
 
-1. Phase E slices 2-4 — the three OWNER request-time drafts (Cadence,
-   Decision promotion, Delivery PR review) onto the router per the
-   ruled design (one-member owner bundles, E2 refusal seam, E3
-   override retirement).
+1. Capped Sol counsel pass on Phase E (all four adopters) — one
+   ruling + one fix round max, bar stated.
 2. Phase F — migration cleanup (legacy authority removal; the design's
    compatibility cutover; the deferred lexical-punctuation stance
    stays future/non-assignable).

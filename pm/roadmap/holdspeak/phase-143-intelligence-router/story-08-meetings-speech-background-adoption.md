@@ -197,6 +197,32 @@ branch-new — eleven INHERITED baseline failures now pass on this
 branch** (the basis fix and rig repairs healed them). Next: Phase E
 slices 2–4 (the three owner drafts), then Phase F.
 
+**Phase E slices 2–4 (2026-08-24): SHIPPED — the three owner drafts
+ride the router.** A shared owner-draft admission module
+(`services/inference_owner_draft.py`) gives Cadence's next-action
+draft, decision promotion, and delivery PR review the same shape: a
+one-member OWNER parent-route bundle freezing the exact capability
+assignment at admission, controller-owned execution, the frozen
+`{draft}` adapter, post-election materialization, and frozen-route
+egress. The E2 seam records one terminal refusal receipt on every
+pre-route refusal, after which each adopter degrades honestly —
+Cadence returns its deterministic next action, decision promotion
+keeps the decision and creates no artifact, delivery keeps the PR
+unchanged with no review. Per amendment E3 the legacy
+`inference_target_id` request override is retired on the routed
+branch: nonblank returns the named receipt-backed refusal
+`inference_request_target_override_retired`; absent/blank uses the
+exact owner assignment. Delivery keeps its strictly non-posting law
+and diff-hash replay (same diff = no duplicate egress); no migration
+markers exist for these three by ruling. Successful draft parent
+receipts retain the resulting artifact ID. The sweep caught one stale
+rig — the decision-promotion integration test selected its model via
+the retired override and correctly received the E3 refusal — migrated
+to assignment authority with its admit-before-generate proof intact.
+Confirming sweep: **6464 passed / zero branch-new** (48 inherited + 2
+known xdist flakes serial-green ×2). **All four Phase E adopters are
+routed.** Next: the capped Phase E counsel pass, then Phase F.
+
 ## Problem
 
 MeetingIntelPlan and SpeechPlan are the proven ordered-revision pattern but

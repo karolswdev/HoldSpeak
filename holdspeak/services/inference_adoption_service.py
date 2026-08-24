@@ -55,6 +55,11 @@ ADOPTED_CAPABILITIES = (
     "speech.transcribe",
     "speech.preload",
     "background.rails_summary",
+    # Phase E OWNER request-time drafts share the frozen route/controller waist.
+    # They are deliberately not SERVICE policies or scheduler work.
+    "background.cadence_draft",
+    "decision.promotion_draft",
+    "delivery.pr_review_draft",
     # C2 plugin membership comes only from the composed registry.  The closed
     # evidence provider must nevertheless list every installed exact capability
     # before a frozen bundle child may stage its private material.

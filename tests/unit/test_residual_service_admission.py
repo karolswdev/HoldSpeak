@@ -70,8 +70,21 @@ def _rig(tmp_path, monkeypatch, *, use_llm: bool = True):
     """A real cadence loop, a real broker, and a counted fake provider."""
     reset_database()
     db = Database(tmp_path / "cadence-admission.db")
-    monkeypatch.setattr(
-        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+    # Production router ingredients: one ready visible Model Library profile and
+    # the exact OWNER capability assignment.  The engine construction leaf below
+    # is the only fake.
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+
+    _profile(db, "cadence-route")
+    InferenceAssignmentService(db).set_assignment(
+        ASSIGNMENT_OWNER,
+        {
+            "command_id": "assign-cadence-route",
+            "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "background.cadence_draft"},
+            "entries": [{"profile_id": "cadence-route", "profile_revision": 1}],
+        },
     )
     loop = db.cadence.upsert_loop(
         OpenLoop(
@@ -173,6 +186,30 @@ def test_cadence_refuses_an_unauthenticated_read_without_reaching_a_provider(
     assert _children(db) == []
 
 
+def test_cadence_missing_assignment_returns_deterministic_action_with_one_refusal(
+    tmp_path, monkeypatch
+) -> None:
+    """E2: a useful CAD-7 answer never means missing route accounting."""
+    db, _broker, service, loop, leaf, _revisions = _rig(tmp_path, monkeypatch)
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER
+    InferenceAssignmentService(db).clear_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "clear-cadence-route", "expected_revision": 1,
+        "scope": {"kind": "capability", "capability_id": "background.cadence_draft"},
+        "capability_id": "background.cadence_draft",
+    })
+
+    detail = asyncio.run(service.get_loop(CALLER, loop.id))
+
+    assert detail["next_action"]["generated_by"] == "deterministic"
+    assert leaf.attempts == 0
+    assert len(_parents(db)) == 1
+    assert _receipt(db, _parents(db)[0]["operation_id"])["outcome"] == "refused"
+    assert _rows(db, "SELECT * FROM inference_parent_route_bundles") == []
+    assert _rows(db, "SELECT * FROM inference_route_plans") == []
+    assert _children(db) == []
+
+
 def test_cadence_does_not_admit_anything_when_the_capability_is_off(
     tmp_path, monkeypatch
 ) -> None:
@@ -190,89 +227,44 @@ def test_cadence_does_not_admit_anything_when_the_capability_is_off(
 # ================================================ 2. Cadence: frozen revision
 
 
-def test_a_config_edit_after_capture_cannot_change_the_model_cadence_loads(
+def test_assignment_edit_after_bundle_freeze_cannot_retarget_cadence(
     tmp_path, monkeypatch
 ) -> None:
-    """The HS-131-13 hostile finding, as a production regression.
-
-    Cadence froze deployment ``A`` and its child row named ``A`` — but the
-    ``this_machine`` factory reached ``configured_meeting_intel``, whose body
-    re-reads ``Config.load().meeting`` and hands ``MeetingIntel`` the CURRENT
-    ``intel_realtime_model``. An owner who changed the meeting model between
-    capture and dispatch therefore got model ``B`` executed under a receipt, a
-    child row, and a durable revision that all said ``A``. Article XI.3 makes the
-    target immutable after admission; this is that, executably.
-
-    Nothing here fakes the factory: the real
-    ``build_intel_for_revision -> local_pinned_meeting_intel -> _local_pinned_engine``
-    chain runs, and only the final engine CLASS is a recorder. The saved config is
-    mutated the moment the parent opens — after the revision is captured, before a
-    single provider object exists.
-    """
+    """The exact OWNER assignment is frozen before the provider can run."""
     db, broker, service, loop, leaf, _revisions = _rig(tmp_path, monkeypatch)
-    model_a = str(tmp_path / "cadence-captured-A.gguf")
-    model_b = str(tmp_path / "cadence-retargeted-B.gguf")
-    saved = {"model": model_a}
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
 
-    # The rig's convenience factory is REMOVED for this one: the whole point is to
-    # run the production revision -> engine chain, not to skip it.
-    from holdspeak.inference_targets import build_intel_for_revision
+    _profile(db, "cadence-edited")
+    real_admit = broker.inference_adoption_service.admit_on_frozen_route
 
-    broker.inference_runner._engine_factory = build_intel_for_revision
+    def admit_after_assignment_edit(*args: Any, **kwargs: Any):
+        InferenceAssignmentService(db).set_assignment(
+            ASSIGNMENT_OWNER,
+            {
+                "command_id": "replace-cadence-route",
+                "expected_revision": 1,
+                "scope": {"kind": "capability", "capability_id": "background.cadence_draft"},
+                "entries": [{"profile_id": "cadence-edited", "profile_revision": 1}],
+            },
+        )
+        return real_admit(*args, **kwargs)
 
-    built: list[dict[str, Any]] = []
-
-    class _Recorder:
-        active_provider = "local"
-
-        def __init__(self, **kwargs: Any) -> None:
-            built.append(kwargs)
-            self.provider = kwargs.get("provider")
-            self.model_path = kwargs.get("model_path")
-
-        def run_prompt(self, **_: Any) -> str:
-            leaf.hit()
-            return DRAFT
-
-    # The ONE mutable source both the frozen revision and the legacy configured
-    # constructor read. Freezing reads it first; the edit below moves it to B.
     monkeypatch.setattr(
-        "holdspeak.intel.providers.configured_local_meeting_model_path",
-        lambda: saved["model"],
+        broker.inference_adoption_service, "admit_on_frozen_route", admit_after_assignment_edit
     )
-    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", _Recorder)
-    # Stands in for the legacy body this branch used to call. If the fix regresses
-    # and `configured_meeting_intel` is reached again, THIS is what answers — with
-    # whatever the config says at that moment, which is the defect.
-    monkeypatch.setattr(
-        "holdspeak.intel.providers._configured_engine",
-        lambda: _Recorder(provider="local", model_path=saved["model"]),
-    )
-
-    # The owner edits the saved meeting model while the request is in flight:
-    # after `capture_deployment_revision`, before the engine is constructed.
-    real_start = broker.parent_run_controller.start
-
-    def start_then_edit(*args: Any, **kwargs: Any):
-        parent = real_start(*args, **kwargs)
-        saved["model"] = model_b
-        return parent
-
-    monkeypatch.setattr(broker.parent_run_controller, "start", start_then_edit)
-
     detail = asyncio.run(service.get_loop(CALLER, loop.id))
 
     assert detail["next_action"]["generated_by"] == "llm"
     assert leaf.attempts == 1
-    # The engine actually loaded A -- the model the revision named, not the edit.
-    assert built == [{"provider": "local", "model_path": model_a}], built
-    # ...and the immutable revision the child names still says A, so the receipt
-    # and the execution agree. Pre-fix this asserted A while B had run.
-    children = _children(db)
-    assert len(children) == 1
-    frozen = resolve_deployment_revision(db, children[0]["target_ref"].split(":", 1)[1])
-    assert frozen is not None and frozen.model_path == model_a
-    assert saved["model"] == model_b, "the test never actually moved the config"
+    with db._connection() as conn:
+        profile_ids = [row[0] for row in conn.execute(
+            "SELECT profile_id FROM inference_route_plan_entries ORDER BY route_leg_ordinal"
+        ).fetchall()]
+    assert profile_ids == ["cadence-route"]
+    assert InferenceAssignmentService(db).get_assignment(
+        ASSIGNMENT_OWNER, {"kind": "capability", "capability_id": "background.cadence_draft"}
+    )["entries"][0]["profile_id"] == "cadence-edited"
 
 
 def test_cadence_dispatches_the_exact_revision_it_froze_before_admission(
@@ -300,7 +292,7 @@ def test_cadence_dispatches_the_exact_revision_it_froze_before_admission(
 
     asyncio.run(service.get_loop(CALLER, loop.id))
 
-    assert resolutions == [0], "placement was resolved after the provider ran, or twice"
+    assert resolutions == [], "Cadence must not consult legacy placement authority"
     children = _children(db)
     assert len(children) == 1
     target_ref = children[0]["target_ref"]

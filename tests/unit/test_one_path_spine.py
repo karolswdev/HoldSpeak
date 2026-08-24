@@ -464,10 +464,14 @@ def _drive_decision(tmp_path, monkeypatch) -> SurfaceRun:
             ("meeting-127", "2026-08-07T00:00:00+00:00", "Spine meeting"),
         )
     _accepted_meeting_decision(db, "dec-spine")
-    profile = db.profiles.upsert(
-        profile_id="decision-profile", name="Decision", kind="openAICompatible",
-        base_url="http://decision", model="decision-model",
-    )
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+    _profile(db, "decision-profile")
+    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-spine-decision", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
+        "entries": [{"profile_id": "decision-profile", "profile_revision": 1}],
+    })
     broker = _configure(db)
 
     class Intel:
@@ -477,10 +481,10 @@ def _drive_decision(tmp_path, monkeypatch) -> SurfaceRun:
     broker.inference_runner._engine_factory = lambda _revision, **_: Intel()
     service = DecisionLifecycleService(db, kernel=broker)
     asyncio.run(
-        service.draft_promoted_with_model(OWNER, "dec-spine", "note", {"inference_target_id": profile.id})
+        service.draft_promoted_with_model(OWNER, "dec-spine", "note", {})
     )
     return SurfaceRun(
-        db, OWNER, _parent_run_operation_id(db, "decision.promotion-draft"), profile.id,
+        db, OWNER, _parent_run_operation_id(db, "decision.promotion-draft"), THIS_MACHINE_ID,
         parent_kind="decision.promotion-draft",
     )
 
@@ -496,10 +500,14 @@ def _drive_delivery_review(tmp_path, monkeypatch) -> SurfaceRun:
     db = Database(tmp_path / "delivery.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     _ready_this_machine(tmp_path, monkeypatch)
-    profile = db.profiles.upsert(
-        profile_id="delivery-profile", name="Delivery", kind="openAICompatible",
-        base_url="http://delivery", model="delivery-model",
-    )
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+    _profile(db, "delivery-profile")
+    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-spine-delivery", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "delivery.pr_review_draft"},
+        "entries": [{"profile_id": "delivery-profile", "profile_revision": 1}],
+    })
 
     class FakeEngine:
         active_provider = "test"
@@ -534,11 +542,19 @@ def _drive_delivery_review(tmp_path, monkeypatch) -> SurfaceRun:
     with TestClient(app) as client:
         response = client.post(
             "/api/delivery/prs/spine-source/1/draft-review",
-            json={"inference_target_id": profile.id},
+            json={},
         )
-        assert response.status_code == 200, response.text
+        replay = client.post(
+            "/api/delivery/prs/spine-source/1/draft-review",
+            json={},
+        )
+        assert response.status_code == replay.status_code == 200, (response.text, replay.text)
+        assert response.json()["artifact_id"] == replay.json()["artifact_id"]
+        assert response.json()["placement"]["egress"] == {"scope": "local"}
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 1
     return SurfaceRun(
-        db, OWNER, _parent_run_operation_id(db, "delivery.pr-review-draft"), profile.id,
+        db, OWNER, _parent_run_operation_id(db, "delivery.pr-review-draft"), THIS_MACHINE_ID,
         parent_kind="delivery.pr-review-draft",
     )
 
@@ -636,6 +652,14 @@ def _drive_cadence(tmp_path, monkeypatch) -> SurfaceRun:
     loop = db.cadence.upsert_loop(
         OpenLoop(source_type="meeting_action", source_id="a1", title="Ship the watchdog", owner="Karol")
     )
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+    _profile(db, "cadence-profile")
+    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-spine-cadence", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "background.cadence_draft"},
+        "entries": [{"profile_id": "cadence-profile", "profile_revision": 1}],
+    })
     broker = _configure(db)
 
     class FakeIntel:

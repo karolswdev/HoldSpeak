@@ -179,14 +179,8 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
-    "holdspeak/services/inference_adoption_service.py:1388|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    "holdspeak/services/inference_adoption_service.py:1393|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
-    ),
-    "holdspeak/services/cadence_service.py:284|CadenceService._draft_child|ref": ProposedRoute(
-        "background.cadence_draft", "services.cadence_service", "InferenceRunner service child",
-    ),
-    "holdspeak/services/decision_lifecycle_service.py:81|DecisionLifecycleService.draft_promoted_with_model|ref": ProposedRoute(
-        "decision.promotion_draft", "services.decision_lifecycle_service", "InferenceRunner service child",
     ),
     "holdspeak/services/recipe_service.py:52|RecipeService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.recipe_service", "InferenceRunner service child; capability supplied by semantic caller",
@@ -202,9 +196,6 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     ),
     "holdspeak/speech_session/child.py:181|run_admitted_speech_child|call": ProposedRoute(
         "dynamic:SpeechSessionPlan capability", "speech_session.child", "InferenceRunner admitted child",
-    ),
-    "holdspeak/web/routes/delivery_prs.py:252|build_delivery_prs_router.api_delivery_pr_draft_review|ref": ProposedRoute(
-        "delivery.pr_review_draft", "web.routes.delivery_prs", "InferenceRunner service child",
     ),
 }
 
