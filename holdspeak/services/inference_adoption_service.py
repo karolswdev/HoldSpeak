@@ -1008,7 +1008,6 @@ class RoutedInferenceCoordinator:
                            JOIN kernel_operations o ON o.operation_id=p.operation_id
                           WHERE m.route_plan_id=? AND m.capability_id=?
                             AND b.parent_operation_id=?
-                            AND p.kind='meeting.deferred-intel-job'
                             AND p.state='OPEN'
                             AND o.principal_kind=? AND o.principal_identity=?""",
                         (route_id, capability.id, bound_parent, principal.name, principal.identity),

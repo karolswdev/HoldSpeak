@@ -93,6 +93,33 @@ unsettled-handoff index). C3 CLOSED at 6418 passed / zero branch-new —
 **Phase C is structurally complete.** Phase D (speech lifecycle) is
 next.
 
+**Phase D slice 1 (2026-08-24): SHIPPED.** Speech capture rides the
+router: atomic routed capture admission for migrated owner + wake
+sessions (paired-device stays legacy), routed transcription on frozen
+members with actual-audio identity and indeterminate timeouts, one
+bounded P=1 preload member, and the egress badge derived from ALL
+frozen route legs (a missing route refuses instead of claiming local).
+Three blocked items + two review-stream findings went to Sol in ONE
+capped ruling round (verified brief; record
+`assets/story-08-phase-d-counsel.md`; binding texts = design
+amendments 7–11): speech is LOCAL-ONLY with admission-time refusal of
+mesh/private-network legs (remote transport ledgered);
+`wake-capture@1` gains the nonassignable derived `speech.preload@1`
+member so cold-MLX wake works (proven with a real unloaded
+`_MlxTranscriber`, replacing the `loaded=True` fake); the configured
+wake revision binds in the immutable parent snapshot only (generic
+principal-evidence schema untouched); the two migration markers COUPLE
+into one cutover switch (a parent never mixes bundled speech with
+plain legacy provider children — the fallthrough refuses);
+faster-whisper's constructor-inseparable load is a ratified local-only
+exception (ledgered). One fix round implemented all five with
+production-object proofs; a density-guard breach from the round was
+closed by moving `_frozen_session_transcriber` to
+`transcriber_state.py`. Sweep **6430 passed / zero branch-new** (67
+inherited + 1 github-enrichment xdist load flake, serial-green ×2).
+Next: Phase D slice 2, then Phase E (background adopters), Phase F
+(migration cleanup).
+
 ## Problem
 
 MeetingIntelPlan and SpeechPlan are the proven ordered-revision pattern but

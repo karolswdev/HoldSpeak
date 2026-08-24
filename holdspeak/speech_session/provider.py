@@ -53,6 +53,13 @@ PROVIDER_FENCED = "speech_provider_fenced"
 #: The mesh transport was selected but the runner's admitted engine cannot carry
 #: the HS-131-07 envelope. A fresh target is never built to paper over this.
 MESH_ENGINE_REQUIRED = "speech_mesh_admitted_engine_required"
+#: A Phase-D bundle is corrupted or incomplete.  Egress must not quietly call
+#: an absent frozen transcription route "local".
+ROUTED_EGRESS_ROUTE_MISSING = "speech_routed_egress_route_missing"
+#: A Phase-D parent that has frozen a speech route may not quietly drop back to
+#: the v1 provider-child path. Every configured provider member must exist in
+#: its same parent bundle.
+ROUTED_PROVIDER_ROUTE_MISSING = "speech_routed_provider_route_missing"
 
 
 def _safe_refusal_reason(outcome: Any) -> str:
@@ -97,6 +104,9 @@ class ProviderAdmission:
     #: per session, never once per call.
     _targets: dict[str, Any] = field(default_factory=dict)
     routed_routes: dict[str, dict[str, Any]] = field(default_factory=dict)
+    #: Phase-D's frozen transcription member.  It is separate from the
+    #: dictation LLM stages because transcription can be the widest egress.
+    transcription_route: dict[str, Any] | None = None
     _active_routed_revision_id: str = ""
 
     # ------------------------------------------------------------------ plan
@@ -109,8 +119,34 @@ class ProviderAdmission:
 
     @property
     def egress_boundary(self) -> str:
-        """Where this admission's model work goes, read from the frozen plan."""
-        return str(self.plan.egress_boundary())
+        """Report the widest boundary across this frozen speech session.
+
+        New Phase-D capture parents derive the badge from their bundled
+        transcription member as well as any bundled provider stages.  A mesh or
+        private-network transcription route can therefore never disappear behind
+        the legacy plan's empty-provider ``local`` default.
+        """
+        if self.transcription_route is None:
+            return str(self.plan.egress_boundary())
+        from ..intel.providers import EGRESS_BOUNDARIES, EGRESS_LOCAL
+
+        route_ids = [str(self.transcription_route.get("id") or "")]
+        route_ids.extend(str(route.get("id") or "") for route in self.routed_routes.values())
+        widest = EGRESS_LOCAL
+        with self.broker.database._connection() as conn:
+            for route_id in route_ids:
+                rows = conn.execute(
+                    "SELECT boundary FROM inference_route_plan_entries "
+                    "WHERE plan_id=? ORDER BY route_leg_ordinal",
+                    (route_id,),
+                ).fetchall()
+                if not rows:
+                    raise SpeechSessionRefused(ROUTED_EGRESS_ROUTE_MISSING, route_id)
+                for row in rows:
+                    boundary = str(row["boundary"])
+                    if EGRESS_BOUNDARIES.index(boundary) > EGRESS_BOUNDARIES.index(widest):
+                        widest = boundary
+        return widest
 
     def _next_ordinal(self) -> int:
         with self._lock:
@@ -271,6 +307,12 @@ class ProviderAdmission:
                     str(result["receipt"].get("terminal_disposition") or state), capability
                 )
             raise SpeechProviderFailure(contract, reason=state)
+        if self.transcription_route is not None:
+            # Bundle authority is all-or-nothing.  Falling through here would
+            # create a plain legacy provider child under a parent that already
+            # froze speech authority, which is neither budgeted nor receipted as
+            # a member of that bundle.
+            raise SpeechSessionRefused(ROUTED_PROVIDER_ROUTE_MISSING, capability)
         outcome, result = run_admitted_speech_child(
             broker=self.broker,
             principal=self.principal,

@@ -37,6 +37,7 @@ from holdspeak.speech_session import (
     SpeechSessionRefused,
     admit_hold_session,
     admit_wake_session,
+    hold_gesture_principal,
     model_config_revision,
     preload_service_admission,
     wake_config_revision,
@@ -138,7 +139,8 @@ class _Host:
     def _set_voice_state(self, state: str, **kwargs: Any) -> None:
         self.states.append(state)
 
-    def _ensure_transcriber_loaded(self) -> Any:
+    def _ensure_transcriber_loaded(self, **kwargs: Any) -> Any:
+        self.transcriber_arguments = dict(kwargs)
         return self.transcriber
 
     def _mark_first_dictation(self) -> None:
@@ -148,7 +150,14 @@ class _Host:
         return text
 
 
-def _build_host(tmp_path: Path, monkeypatch, **floor_kwargs: Any):
+def _build_host(
+    tmp_path: Path,
+    monkeypatch,
+    *,
+    legacy: bool | None = True,
+    backend: str = "auto",
+    **floor_kwargs: Any,
+):
     from holdspeak.runtime.dictation_capture import DictationCaptureMixin
     from holdspeak.runtime.wake_glue import WakeWordGlueMixin
 
@@ -156,9 +165,44 @@ def _build_host(tmp_path: Path, monkeypatch, **floor_kwargs: Any):
         pass
 
     db = Database(tmp_path / "speech.db")
+    config = Config()
+    config.model.backend = backend
+    # Startup owns the real speech migration.  The test supplies its saved
+    # configuration before startup rather than repairing the resulting route.
+    monkeypatch.setattr("holdspeak.config.Config.load", lambda: config)
     monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
     broker = _configure(db)
-    config = Config()
+    # These inherited HS-131 proofs reconstruct v1 parents.  Phase-D tests use
+    # the production migration API to activate BOTH coupled markers; no test
+    # writes a marker directly.
+    if legacy is True:
+        with db._connection() as conn:
+            conn.execute(
+                "DELETE FROM inference_assignment_migrations "
+                "WHERE family='speech-recognition-route-assignments'"
+            )
+            conn.commit()
+    elif legacy is False:
+        from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+
+        provider_capabilities = (
+            "thought.interview", "ask.answer", "speech.intent_classify", "speech.rewrite"
+        )
+        _profile(
+            db,
+            "phase-d-coupled-profile",
+            claims=(
+                "language",
+                "structured_output",
+                *(_result_claim(capability) for capability in provider_capabilities),
+            ),
+        )
+        config.thoughts.inference_target_id = "phase-d-coupled-profile"
+        config.dictation.runtime.profile_id = "phase-d-coupled-profile"
+        migrated = broker.inference_adoption_service.migrate_legacy_config(
+            hold_gesture_principal(), config
+        )
+        assert migrated["status"] == "migrated"
     impl = FakeImpl()
     host = Host(config, FakeFloor(**floor_kwargs), _transcriber(impl))
     return db, broker, host, impl
@@ -175,6 +219,107 @@ def _transcriber(impl: Any, *, timeout: float = 0.0) -> Transcriber:
     transcriber.device = impl.device
     transcriber.compute_type = impl.compute_type
     return transcriber
+
+
+def _install_historical_nonlocal_speech_assignment(db: Database, boundary: str) -> None:
+    """Persist one pre-Amendment legacy assignment, never a route plan.
+
+    V1 profile rows are retained migration history. They are the only truthful
+    way to present an already-saved nonlocal speech selection to the current
+    local-only planner: creating it through today's assignment API would (and
+    should) reject it before route admission. The current planner must still
+    reject the old row before it can mint a parent or construct a transcriber.
+    """
+    from holdspeak.services.inference_assignment_service import (
+        ASSIGNMENT_SCHEMA,
+        InferenceAssignmentService,
+        _canonical,
+        _sha256,
+    )
+
+    if boundary == "mesh":
+        profile_id = "historical-mesh-speech"
+        db.profiles.upsert(
+            profile_id=profile_id,
+            name="Historical mesh speech",
+            kind="meshNode",
+            node="historical-mesh-node",
+            model="speech-mesh-model",
+        )
+    elif boundary == "private_network":
+        profile_id = "historical-private-speech"
+        db.profiles.upsert(
+            profile_id=profile_id,
+            name="Historical private speech",
+            kind="openAICompatible",
+            base_url="http://192.168.1.70:8080/v1",
+            model="speech-private-model",
+        )
+    else:  # pragma: no cover - fixed parametrization below
+        raise AssertionError(boundary)
+
+    assignments = InferenceAssignmentService(db)
+    scope = assignments._scope({"kind": "capability", "capability_id": "speech.transcribe"})
+    created_at = "2026-08-24T00:00:00Z"
+    assignment_id = f"ia_historical_{boundary}_speech"
+    entry = {
+        "ordinal": 1,
+        "profile_id": f"legacy-{profile_id}",
+        "profile_revision": 1,
+        "profile_schema_version": 1,
+    }
+    with db._connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            head = conn.execute(
+                "SELECT revision FROM inference_assignment_heads WHERE assignment_key=?",
+                (scope["assignment_key"],),
+            ).fetchone()
+            revision = 1 if head is None else int(head["revision"]) + 1
+            material = {
+                "schema": ASSIGNMENT_SCHEMA,
+                "id": assignment_id,
+                "scope": assignments._public_scope(scope),
+                "entries": [entry],
+                "retry_policy_id": None,
+                "revision": revision,
+                "created_at": created_at,
+            }
+            conn.execute(
+                """INSERT INTO inference_assignment_revisions
+                   (assignment_id,revision,assignment_key,scope_kind,scope_id,
+                    subject_kind,selector_kind,capability_id,group_id,retry_policy_id,
+                    payload_json,sha256,created_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    assignment_id, revision, scope["assignment_key"], "global", "", "",
+                    "capability", "speech.transcribe", "", None,
+                    _canonical(material), _sha256(material), created_at,
+                ),
+            )
+            conn.execute(
+                """INSERT INTO inference_assignment_heads
+                   (assignment_key,assignment_id,revision,cleared,updated_at)
+                   VALUES (?,?,?,?,?)
+                   ON CONFLICT(assignment_key) DO UPDATE SET
+                     assignment_id=excluded.assignment_id,revision=excluded.revision,
+                     cleared=excluded.cleared,updated_at=excluded.updated_at""",
+                (scope["assignment_key"], assignment_id, revision, 0, created_at),
+            )
+            conn.execute(
+                """INSERT INTO inference_assignments
+                   (id,assignment_id,assignment_revision,profile_id,profile_revision,
+                    profile_schema_version,ordinal)
+                   VALUES (?,?,?,?,?,?,?)""",
+                (
+                    f"{assignment_id}:{revision}:1", assignment_id, revision,
+                    entry["profile_id"], 1, 1, 1,
+                ),
+            )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
 
 
 # ----------------------------------------------------------------- queries
@@ -315,9 +460,7 @@ def test_wake_capture_admits_one_bounded_wake_session(tmp_path, monkeypatch):
     assert [row["kind"] for row in parents] == ["wake.session"]
     row = parents[0]
     assert (row["principal_kind"], row["principal_identity"]) == ("service", "wake-capture")
-    assert str(row["authority_basis"]) == (
-        f"configured-wake:{wake_config_revision(host.config.wake_word)}"
-    )
+    assert str(row["authority_basis"]) == "wake-capture:configured-capture"
     assert int(row["child_budget"]) == WAKE_CHILD_BUDGET == 12
     assert (
         WAKE_DEADLINE_SECONDS - 5
@@ -331,6 +474,162 @@ def test_wake_capture_admits_one_bounded_wake_session(tmp_path, monkeypatch):
     assert _operations(db, name="desktop.type_text") == []
     assert impl.calls == [16000]
     assert row["state"] == "SUCCEEDED"
+
+
+def _production_cold_mlx_transcriber(monkeypatch):
+    """Construct HoldSpeak's real MLX transcriber; bound calls are external only."""
+    from mlx_whisper.transcribe import ModelHolder
+
+    physical_loads: list[tuple[Any, ...]] = []
+
+    def external_model_holder(*args: Any, **kwargs: Any) -> object:
+        physical_loads.append(tuple(args))
+        return object()
+
+    # These two monkeypatches are the mlx-whisper library physical boundary, not
+    # a HoldSpeak object or admission/controller substitute.
+    monkeypatch.setattr(ModelHolder, "get_model", external_model_holder)
+    transcriber = Transcriber(model_name="base", backend="mlx", language="auto")
+    assert isinstance(transcriber._impl, _MlxTranscriber)
+    monkeypatch.setattr(
+        transcriber._impl._mlx_whisper,
+        "transcribe",
+        lambda *_args, **_kwargs: {"text": TEXT_SENTINEL},
+    )
+    assert transcriber.loaded is False
+    return transcriber, physical_loads
+
+
+def test_phase_d_cold_wake_derives_one_preload_from_its_frozen_service_route(
+    tmp_path, monkeypatch
+):
+    """R2: a cold normal wake owns one local preload, then one transcript."""
+    db, _broker, host, _unused = _build_host(tmp_path, monkeypatch, legacy=False)
+    host.config.wake_word.enabled = True
+    # This ordinary wake configuration has no configured provider-backed tail:
+    # wake-capture@1 is intentionally closed to its two speech capabilities.
+    host.config.dictation.pipeline.enabled = False
+    transcriber, physical_loads = _production_cold_mlx_transcriber(monkeypatch)
+    host.transcriber = transcriber
+
+    host._transcribe_wake(np.full(16000, AUDIO_SENTINEL, dtype=np.float32))
+
+    parent = _parents(db, "wake.session")[0]
+    assert (parent["principal_kind"], parent["principal_identity"]) == (
+        "service", "wake-capture"
+    )
+    assert parent["authority_basis"] == "wake-capture:configured-capture"
+    assert "wake_capture_revision" in str(parent["input_json"])
+    assert transcriber.loaded is True
+    assert len(physical_loads) == 1
+    with db._connection() as conn:
+        members = list(conn.execute(
+            "SELECT capability_id FROM inference_parent_route_bundle_members "
+            "WHERE bundle_id=(SELECT id FROM inference_parent_route_bundles "
+            "WHERE parent_operation_id=?) ORDER BY ordinal",
+            (parent["operation_id"],),
+        ))
+        executions = list(conn.execute(
+            """SELECT p.capability_id,e.terminal_outcome
+                 FROM inference_route_executions e
+                 JOIN inference_route_plans p ON p.id=e.route_plan_id
+                 JOIN inference_route_attempts a ON a.execution_id=e.id
+                 JOIN kernel_operations o ON o.operation_id=a.child_operation_id
+                 WHERE o.parent_operation_id=? ORDER BY e.rowid""",
+            (parent["operation_id"],),
+        ))
+        preload_assignments = conn.execute(
+            "SELECT COUNT(*) FROM inference_assignment_heads WHERE assignment_key=?",
+            ("capability:speech.preload",),
+        ).fetchone()[0]
+    assert [row["capability_id"] for row in members] == [
+        "speech.transcribe", "speech.preload"
+    ]
+    assert [tuple(row) for row in executions] == [
+        ("speech.preload", "succeeded"), ("speech.transcribe", "succeeded")
+    ]
+    assert preload_assignments == 0
+    assert not [row for row in _parents(db) if row["principal_kind"] == "owner"]
+    children = _operations(db, name="inference.invoke")
+    assert len(children) == 2
+    assert {row["parent_operation_id"] for row in children} == {parent["operation_id"]}
+    assert all((_receipt(db, row["operation_id"]) or {})["outcome"] == "succeeded" for row in children)
+
+
+def test_phase_d_faster_whisper_constructs_after_frozen_local_route_then_transcribes(
+    tmp_path, monkeypatch
+):
+    """R5: construction is the ratified library boundary, not an execution."""
+    import sys
+    from types import ModuleType, SimpleNamespace
+
+    from holdspeak.runtime.transcriber_state import TranscriberStateMixin
+    from holdspeak.speech_session import admit_one_shot_session
+
+    constructed: list[tuple[str, str, str]] = []
+    audio_calls: list[int] = []
+    external = ModuleType("faster_whisper")
+
+    class WhisperModel:
+        def __init__(self, model_name: str, *, device: str, compute_type: str) -> None:
+            constructed.append((model_name, device, compute_type))
+
+        def transcribe(self, audio: Any, **_kwargs: Any) -> tuple[list[Any], Any]:
+            audio_calls.append(int(np.asarray(audio).size))
+            return [SimpleNamespace(text=TEXT_SENTINEL)], SimpleNamespace()
+
+    external.WhisperModel = WhisperModel
+    monkeypatch.setitem(sys.modules, "faster_whisper", external)
+    real_available = __import__("holdspeak.transcribe", fromlist=["_module_available"])._module_available
+    monkeypatch.setattr(
+        "holdspeak.transcribe._module_available",
+        lambda module: True if module == "faster_whisper" else real_available(module),
+    )
+
+    db, _broker, host, _impl = _build_host(
+        tmp_path, monkeypatch, legacy=False, backend="faster-whisper"
+    )
+    session = admit_one_shot_session(
+        principal=hold_gesture_principal(), config_snapshot=host.config
+    )
+    frozen = session.frozen_transcriber_arguments()
+    assert frozen == {"model_name": "base", "backend": "faster-whisper", "language": "auto"}
+    assert constructed == []
+    assert _operations(db, name="inference.invoke") == []
+
+    class Runtime(TranscriberStateMixin):
+        def __init__(self) -> None:
+            self.config = host.config
+            self.state_lock = threading.RLock()
+            self.runtime_status: dict[str, Any] = {}
+            self._transcriber_init_lock = threading.RLock()
+            self.transcriber = None
+
+        def _set_runtime_activity(self, *_args: Any, **_kwargs: Any) -> None:
+            return None
+
+    runtime = Runtime()
+    transcriber = runtime._ensure_transcriber_loaded(**frozen)
+    assert constructed == [("base", "cpu", "int8")]
+    assert _operations(db, name="inference.invoke") == []
+
+    assert transcriber.transcribe(
+        np.full(8000, AUDIO_SENTINEL, dtype=np.float32), admission=session.transcription()
+    ) == TEXT_SENTINEL
+    assert audio_calls == [8000]
+    children = _operations(db, name="inference.invoke")
+    assert len(children) == 1
+    assert children[0]["parent_operation_id"] == session.operation_id
+    assert (_receipt(db, children[0]["operation_id"]) or {})["outcome"] == "succeeded"
+    with db._connection() as conn:
+        boundary = conn.execute(
+            """SELECT a.boundary FROM inference_route_attempts a
+                 JOIN kernel_operations o ON o.operation_id=a.child_operation_id
+                 WHERE o.operation_id=?""",
+            (children[0]["operation_id"],),
+        ).fetchone()[0]
+    assert boundary == "local"
+    session.close("succeeded")
 
 
 def test_disabled_wake_configuration_admits_nothing(tmp_path, monkeypatch):
@@ -356,6 +655,70 @@ def test_wake_authority_revision_tracks_the_configured_fields():
     window = Config().wake_word
     window.armed_window_seconds = 12.0
     assert wake_config_revision(window) != first
+
+
+def test_phase_d_wake_revision_is_parent_evidence_not_principal_schema_drift(
+    tmp_path, monkeypatch
+):
+    """R3: two configured wake admissions retain distinct immutable revisions."""
+    import json
+
+    db, broker, host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
+    host.config.wake_word.enabled = True
+    host.config.dictation.pipeline.enabled = False
+
+    first_revision = wake_config_revision(host.config.wake_word)
+    first = admit_wake_session(wake_config=host.config.wake_word, config_snapshot=host.config)
+    first_parent = _parents(db, "wake.session")[0]
+    host.config.wake_word.action = "type"
+    second_revision = wake_config_revision(host.config.wake_word)
+    second = admit_wake_session(wake_config=host.config.wake_word, config_snapshot=host.config)
+    parents = _parents(db, "wake.session")
+    second_parent = parents[1]
+
+    first_snapshot = json.loads(first_parent["input_json"])
+    second_snapshot = json.loads(second_parent["input_json"])
+    assert first_snapshot["wake_capture_revision"] == first_revision
+    assert second_snapshot["wake_capture_revision"] == second_revision
+    assert first_snapshot["wake_capture_revision"] != second_snapshot["wake_capture_revision"]
+
+    with db._connection() as conn:
+        route_ids = [
+            row["route_plan_id"]
+            for parent in (first_parent, second_parent)
+            for row in conn.execute(
+                """SELECT route_plan_id FROM inference_parent_route_bundle_members
+                     WHERE bundle_id=(SELECT id FROM inference_parent_route_bundles
+                                      WHERE parent_operation_id=?)
+                       AND capability_id='speech.transcribe'""",
+                (parent["operation_id"],),
+            )
+        ]
+        reconstructed = [
+            broker.inference_adoption_service.plans._route_from_row(
+                conn,
+                conn.execute("SELECT * FROM inference_route_plans WHERE id=?", (route_id,)).fetchone(),
+            )
+            for route_id in route_ids
+        ]
+        evidence = [
+            json.loads(conn.execute(
+                "SELECT payload_json FROM inference_route_plan_principal_evidence WHERE plan_id=?",
+                (route_id,),
+            ).fetchone()[0])
+            for route_id in route_ids
+        ]
+    assert all(route["capability"]["id"] == "speech.transcribe" for route in reconstructed)
+    for policy in evidence:
+        assert policy["schema"] == "InferenceFeaturePrincipalPolicyEvidence@1"
+        assert policy["policy_id"] == "wake-capture@1"
+        assert policy["policy_revision"] == 1
+        assert policy["principal_identity"] == "wake-capture"
+        assert policy["authority_basis"] == "wake-capture:configured-capture"
+        assert policy["parent_kind"] == "wake.session"
+        assert "wake_capture_revision" not in policy
+    first.close("succeeded")
+    second.close("succeeded")
 
 
 # ------------------------------------------------------------ transcriber
@@ -442,6 +805,169 @@ class _Mlx(_MlxTranscriber):
     def transcribe(self, audio_array: Any) -> str:  # type: ignore[override]
         self.transcribes += 1
         return TEXT_SENTINEL
+
+
+def test_phase_d_day_one_standalone_speak_to_fill_uses_the_migrated_route(
+    tmp_path, monkeypatch
+):
+    """Amendment 5: fresh startup needs no profile/assignment/readiness repair.
+
+    This drives the real startup migration, one real short ``dictation.session``,
+    its atomic bundle, the controller-owned P=1 preload, and the routed semantic
+    transcript adapter.  Only the MLX physical floor is faked.
+    """
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from holdspeak.transcribe import _resolve_backend
+
+    db, broker, host, _unused = _build_host(tmp_path, monkeypatch, legacy=False)
+    assert host.config.model.backend == "auto"
+    assignments = InferenceAssignmentService(db).list_assignments(
+        hold_gesture_principal()
+    )["assignments"]
+    scopes = [item["scope"].get("capability_id") for item in assignments]
+    assert scopes.count("speech.transcribe") == 1
+    assert "speech.preload" not in scopes
+
+    impl = _Mlx(holder_ok=True)
+    impl._candidates = (
+        "mlx-community/whisper-base-mlx", "mlx-community/whisper-base"
+    )
+    host.transcriber = _transcriber(impl)
+    text = host.transcribe_audio(np.full(8000, AUDIO_SENTINEL, dtype=np.float32))
+
+    assert text == TEXT_SENTINEL
+    assert host.transcriber_arguments == {
+        "model_name": "base",
+        "backend": _resolve_backend("auto"),
+        "language": "auto",
+    }
+    parent = _parents(db, "dictation.session")[0]
+    assert parent["state"] == "SUCCEEDED"
+    with db._connection() as conn:
+        members = list(conn.execute(
+            "SELECT capability_id FROM inference_parent_route_bundle_members "
+            "WHERE bundle_id=(SELECT id FROM inference_parent_route_bundles "
+            "WHERE parent_operation_id=?) ORDER BY ordinal",
+            (parent["operation_id"],),
+        ))
+        outcomes = list(conn.execute(
+            """SELECT p.capability_id,e.terminal_outcome
+                 FROM inference_route_executions e
+                 JOIN inference_route_plans p ON p.id=e.route_plan_id
+                ORDER BY e.rowid"""
+        ))
+        readiness = conn.execute(
+            """SELECT o.state,o.reason_code
+                 FROM model_profile_binding_heads h
+                 JOIN model_profile_binding_revisions b
+                   ON b.binding_id=h.binding_id AND b.revision=h.revision
+                 JOIN model_profile_readiness_observations o
+                   ON o.observation_id=b.readiness_observation_id
+                WHERE b.profile_id LIKE 'speech-migrated-%'"""
+        ).fetchone()
+    assert [row["capability_id"] for row in members] == [
+        "speech.transcribe", "speech.intent_classify", "speech.preload"
+    ]
+    assert [tuple(row) for row in outcomes] == [
+        ("speech.preload", "succeeded"), ("speech.transcribe", "succeeded")
+    ]
+    assert tuple(readiness) == ("ready", "loaded_under_speech_preload")
+
+
+def test_phase_d_couples_speech_and_writing_markers_for_one_complete_pipeline(
+    tmp_path, monkeypatch
+):
+    """R4: partial migration stays v1; both markers produce one all-routed parent."""
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from holdspeak.speech_session import admit_one_shot_session
+    from holdspeak.speech_session.plan import pipeline_provider_capabilities
+
+    def configured_rewrite(session: Any) -> str:
+        runtime = _PipelineBackend()
+        # The test backend is the physical provider boundary. Legacy resolution
+        # freezes the configured 127.0.0.1 profile; the migrated assignment
+        # freezes the production on-device profile created by ``_build_host``.
+        if session._route_bundle is None:
+            runtime.base_url = "http://127.0.0.1:1234/v1"
+            runtime.model = "qwen-local"
+        else:
+            runtime.backend = "local"
+            runtime.model = ""
+        return session.provider().rewrite(runtime, "rewrite this", max_tokens=32, temperature=0.0)
+
+    # Startup's real speech migration with no writing marker remains wholly
+    # legacy. ``legacy=None`` retains that production startup state unchanged.
+    db, _broker, host, _unused = _build_host(tmp_path, monkeypatch, legacy=None)
+    db.profiles.upsert(
+        profile_id="phase-d-legacy-pipeline",
+        name="Phase D legacy pipeline",
+        kind="openAICompatible",
+        base_url="http://127.0.0.1:1234/v1",
+        model="qwen-local",
+    )
+    host.config.dictation.pipeline.enabled = True
+    host.config.dictation.pipeline.stages = ["project-rewriter"]
+    host.config.dictation.runtime.profile_id = "phase-d-legacy-pipeline"
+    assert InferenceAssignmentService(db).migration_marker(
+        hold_gesture_principal(), family="thoughts-writing-route-assignments"
+    ) is None
+    assert pipeline_provider_capabilities(host.config) == ("rewrite",)
+    legacy = admit_one_shot_session(
+        principal=hold_gesture_principal(), config_snapshot=host.config
+    )
+    assert legacy._route_bundle is None
+    assert legacy.plan.has("rewrite"), legacy.plan.summary()
+    assert _transcriber(FakeImpl()).transcribe(
+        np.full(8000, AUDIO_SENTINEL, dtype=np.float32), admission=legacy.transcription()
+    ) == TEXT_SENTINEL
+    assert configured_rewrite(legacy) == "REWRITTEN"
+    legacy_children = _operations(db, name="inference.invoke")
+    assert len(legacy_children) == 2
+    assert {row["parent_operation_id"] for row in legacy_children} == {legacy.operation_id}
+    legacy.close("succeeded")
+
+    # The same normal pipeline after both production migrations freezes all of
+    # its configured routes in one parent bundle and never emits a plain child.
+    routed_tmp = tmp_path / "routed"
+    routed_tmp.mkdir()
+    db, _broker, host, _unused = _build_host(routed_tmp, monkeypatch, legacy=False)
+    host.config.dictation.pipeline.enabled = True
+    host.config.dictation.pipeline.stages = ["project-rewriter"]
+    routed = admit_one_shot_session(
+        principal=hold_gesture_principal(), config_snapshot=host.config
+    )
+    assert routed._route_bundle is not None
+    assert _transcriber(FakeImpl()).transcribe(
+        np.full(8000, AUDIO_SENTINEL, dtype=np.float32), admission=routed.transcription()
+    ) == TEXT_SENTINEL
+
+    class RoutedEngine:
+        active_provider = "fixture"
+        active_model = "phase-d-coupled-profile"
+
+        @staticmethod
+        def run_prompt(**_kwargs: Any) -> str:
+            return "REWRITTEN"
+
+    # Only the physical configured-model edge is bounded. The production route
+    # admission, controller, bundle, attempt, and receipt still execute intact.
+    _broker.inference_runner._engine_factory = lambda _revision, **_kwargs: RoutedEngine()
+    assert configured_rewrite(routed) == "REWRITTEN"
+    members = [item["capability_id"] for item in routed._route_bundle["members"]]
+    assert members == ["speech.transcribe", "speech.rewrite", "speech.preload"]
+    routed_children = _operations(db, name="inference.invoke")
+    assert len(routed_children) == 2
+    with db._connection() as conn:
+        routed_child_ids = {row["operation_id"] for row in routed_children}
+        route_child_ids = {
+            row["child_operation_id"]
+            for row in conn.execute(
+                "SELECT child_operation_id FROM inference_route_attempts "
+                "WHERE child_operation_id IS NOT NULL"
+            )
+        }
+    assert routed_child_ids == route_child_ids
+    routed.close("succeeded")
 
 
 def _child_created_at(db: Database, native_id: str) -> float:
@@ -729,7 +1255,7 @@ def test_paired_device_capture_admits_its_own_narrow_session(tmp_path, monkeypat
     """A remote device press is admitted — but never as a synthesized OWNER."""
     from holdspeak.speech_session import admit_device_session
 
-    db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch)
+    db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
     session = admit_device_session(device_id="aipi-1", config_snapshot=Config())
 
     row = _parents(db, "dictation.session")[0]
@@ -780,6 +1306,25 @@ def test_browser_open_admits_one_parent_for_every_utterance(tmp_path, monkeypatc
     assert len(children) == 3
     assert {child["parent_operation_id"] for child in children} == {row["operation_id"]}
     assert impl.calls == [16000, 16000, 16000]
+    registry.reset()
+
+
+def test_phase_d_browser_interval_keeps_its_full_capture_budget(tmp_path, monkeypatch):
+    """A routed browser parent must not be limited to its one route declaration."""
+    from holdspeak.speech_session import BROWSER_CHILD_BUDGET
+
+    db, _broker, host, impl = _build_host(tmp_path, monkeypatch, legacy=False)
+    registry = _sessions()
+    principal = _browser_principal()
+    interval = registry.open(principal, config_snapshot=host.config)
+    audio = np.full(16000, AUDIO_SENTINEL, dtype=np.float32)
+
+    for _ in range(4):
+        assert host.transcribe_audio(audio, principal=principal, mic_handle=interval.handle) == TEXT_SENTINEL
+
+    parent = _parents(db, "dictation.session")[0]
+    assert int(parent["child_budget"]) == BROWSER_CHILD_BUDGET
+    assert impl.calls == [16000] * 4
     registry.reset()
 
 
@@ -1800,6 +2345,85 @@ def test_the_egress_label_follows_the_frozen_revision_off_this_machine(
         principal=_browser_principal(), config_snapshot=host.config
     )
     assert session.provider().egress_boundary == "private_network"
+    session.close("succeeded")
+
+
+def test_phase_d_local_transcription_route_reports_local_egress(tmp_path, monkeypatch):
+    """Amendment 7: the ordinary migrated speech route remains local."""
+    from holdspeak.speech_session import admit_one_shot_session
+
+    _db, _broker, host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
+    session = admit_one_shot_session(
+        principal=_browser_principal(), config_snapshot=host.config
+    )
+    assert session._route_bundle is not None
+    assert session.provider().egress_boundary == "local"
+    session.close("succeeded")
+
+
+@pytest.mark.parametrize("boundary", ["mesh", "private_network"])
+def test_phase_d_nonlocal_historical_speech_refuses_before_construction_or_dispatch(
+    tmp_path, monkeypatch, boundary
+):
+    """Amendment 7: current route admission refuses old nonlocal speech authority."""
+    from holdspeak.speech_session import admit_one_shot_session
+
+    db, _broker, host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
+    _install_historical_nonlocal_speech_assignment(db, boundary)
+    constructions: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
+    original_init = Transcriber.__init__
+
+    def observed_init(self, *args: Any, **kwargs: Any) -> None:
+        constructions.append((args, kwargs))
+        original_init(self, *args, **kwargs)
+
+    monkeypatch.setattr(Transcriber, "__init__", observed_init)
+    with pytest.raises(SpeechSessionRefused) as raised:
+        admit_one_shot_session(
+            principal=hold_gesture_principal(), config_snapshot=host.config
+        )
+
+    # The planner read the persisted historical assignment under the current
+    # capability registry and refused its nonlocal boundary. No parent, frozen
+    # plan, controller dispatch, construction, or receipt was possible first.
+    assert raised.value.reason in {
+        "inference_route_assignment_unavailable",
+        "inference_route_boundary_unsupported",
+        "no_compatible_assignment",
+    }
+    assert constructions == []
+    assert _parents(db) == []
+    assert _operations(db, name="inference.invoke") == []
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM inference_route_plans").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM kernel_receipts").fetchone()[0] == 0
+
+
+def test_phase_d_egress_refuses_a_missing_frozen_transcription_entry(
+    tmp_path, monkeypatch
+):
+    """A broken bundle cannot relabel an unknown transcription route ``local``."""
+    from holdspeak.speech_session import admit_one_shot_session
+    from holdspeak.speech_session.provider import ROUTED_EGRESS_ROUTE_MISSING
+
+    db, _broker, host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
+    session = admit_one_shot_session(
+        principal=_browser_principal(), config_snapshot=host.config
+    )
+    assert session._route_bundle is not None
+    route_id = next(
+        str(item["route_plan_id"])
+        for item in session._route_bundle["members"]
+        if item["capability_id"] == "speech.transcribe"
+    )
+    with db._connection() as conn:
+        conn.execute("DELETE FROM inference_route_plan_entries WHERE plan_id=?", (route_id,))
+        conn.commit()
+
+    with pytest.raises(SpeechSessionRefused) as excinfo:
+        _ = session.provider().egress_boundary
+    assert excinfo.value.reason == ROUTED_EGRESS_ROUTE_MISSING
     session.close("succeeded")
 
 

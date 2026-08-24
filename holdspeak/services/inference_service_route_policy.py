@@ -181,6 +181,32 @@ def builtin_service_route_policy_registry(
                 capability_ids=tuple(meeting_capabilities),
                 allowed_boundaries=("local", "mesh", "private_network", "cloud"),
             ),
+            ServiceRoutePolicyDefinition(
+                id="wake-capture@1",
+                revision=1,
+                service_identity="wake-capture",
+                authority_basis="wake-capture:configured-capture",
+                parent_kind="wake.session",
+                allowed_operations=frozenset(
+                    {
+                        ("wake.session", 1),
+                        ("inference.invoke", 1),
+                        ("inference.cancel", 1),
+                    }
+                ),
+                capability_ids=("speech.transcribe", "speech.preload"),
+                allowed_boundaries=("local",),
+            ),
+            ServiceRoutePolicyDefinition(
+                id="local-model-preload@1",
+                revision=1,
+                service_identity="local-model-preload",
+                authority_basis="local-model-preload:assigned-speech-route",
+                parent_kind="local-model-preload",
+                allowed_operations=frozenset({("inference.invoke", 1)}),
+                capability_ids=("speech.preload",),
+                allowed_boundaries=("local",),
+            ),
         ),
         capability_registry=registry,
     )

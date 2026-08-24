@@ -132,8 +132,8 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/speech_session/plan.py:461:ref:resolve_placement",
     "holdspeak/speech_session/plan.py:629:import:resolve_placement",
     "holdspeak/speech_session/plan.py:638:ref:resolve_placement",
-    "holdspeak/speech_session/provider.py:147:import:resolve_deployment_revision",
-    "holdspeak/speech_session/provider.py:151:ref:resolve_deployment_revision",
+    "holdspeak/speech_session/provider.py:183:import:resolve_deployment_revision",
+    "holdspeak/speech_session/provider.py:187:ref:resolve_deployment_revision",
     "holdspeak/web/routes/delivery_prs.py:234:import:resolve_placement",
     "holdspeak/web/routes/delivery_prs.py:241:ref:resolve_placement",
 }

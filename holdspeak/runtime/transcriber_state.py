@@ -6,12 +6,29 @@ WebRuntime.
 
 from __future__ import annotations
 
+import inspect
 import threading
+from typing import Any
 
 from ..logging_config import get_logger
 from ..transcribe import Transcriber
 
 log = get_logger("web_runtime")
+
+
+def _frozen_session_transcriber(runtime: Any, session: Any) -> Any:
+    """Construct through frozen session evidence when the runtime owns that seam.
+
+    Small embedders may provide a no-argument injected transcriber factory; that
+    is a construction seam, not a permission to read Config after admission.
+    """
+    frozen = session.frozen_transcriber_arguments() or {}
+    factory = runtime._ensure_transcriber_loaded
+    parameters = inspect.signature(factory).parameters.values()
+    accepts_keywords = any(item.kind is inspect.Parameter.VAR_KEYWORD for item in parameters)
+    accepted = {item.name for item in parameters}
+    return factory(**frozen) if accepts_keywords or set(frozen).issubset(accepted) else factory()
+
 
 # HS-32-03: the owner string a meeting uses to hold the shared
 # ``VoiceTypingSession`` audio floor. One arbiter for hotkey / device /

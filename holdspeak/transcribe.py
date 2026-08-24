@@ -396,9 +396,12 @@ class _FasterWhisperTranscriber:
         return True
 
     def ensure_loaded(self, admission: Any) -> None:
-        """faster-whisper loads its weights in its own constructor: nothing to
-        dispatch here. Only the MLX boundary has the separable explicit load
-        Sol Amendment 7 ruled on."""
+        """Faster-whisper loads in its constructor (Phase-D Amendment 11).
+
+        That ratified local-only, constructor-inseparable exception occurs after
+        the parent and frozen speech route exist, but it neither dispatches nor
+        receipts lifecycle work here. Only MLX has the separable admitted load.
+        """
         return None
 
     def transcribe(self, audio_array: np.ndarray) -> str:

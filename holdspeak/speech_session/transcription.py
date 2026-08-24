@@ -9,7 +9,10 @@ the child's journal row carries the SHA-256 and safe counts, never samples.
 from __future__ import annotations
 
 import hashlib
+import inspect
+import json
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any, Callable, Mapping, Optional
 
 from .child import (
@@ -181,8 +184,208 @@ class TranscriptionAdmission:
         return outcome, result
 
 
+@dataclass
+class RoutedSpeechTranscriptionAdmission:
+    """One Phase-D speech child on its parent's immutable bundle member.
+
+    This is deliberately the same controller-owned waist as Phase-B Meeting
+    transcription.  It carries no v1 plan and does not resolve a route after the
+    parent exists: the bundle's transcription member is its complete authority.
+    """
+
+    broker: Any
+    principal: Any
+    parent: Any
+    bundle: Mapping[str, Any]
+    fence: Any = None
+    utterance_ref: str = ""
+    on_claim: Any = None
+    single_preload_sequence: bool = True
+
+    def _member(self, capability_id: str) -> Mapping[str, Any] | None:
+        return next(
+            (
+                item for item in self.bundle.get("members", ())
+                if item.get("capability_id") == capability_id
+            ),
+            None,
+        )
+
+    def _operation_id(self, capability_id: str, material: Mapping[str, Any]) -> str:
+        identity = {
+            "parent_operation_id": str(self.parent.operation_id),
+            "utterance_ref": self.utterance_ref,
+            "capability": capability_id,
+            "audio_sha256": str(material.get("audio_sha256") or ""),
+            "lifecycle_material_sha256": hashlib.sha256(
+                json.dumps(dict(material), sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest(),
+        }
+        digest = hashlib.sha256(
+            json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        return f"speech-route:{self.parent.operation_id}:{capability_id}:{digest}"
+
+    def _refuse_if_fenced(self) -> None:
+        if self.fence is not None and (reason := self.fence.reason()):
+            raise SpeechSessionRefused(reason)
+
+    def _execute(
+        self,
+        *,
+        capability_id: str,
+        material: Mapping[str, Any],
+        call: Callable[[Any, Mapping[str, Any], Any], Any],
+        reserved_output_tokens: int,
+    ) -> Mapping[str, Any]:
+        self._refuse_if_fenced()
+        member = self._member(capability_id)
+        if member is None:
+            raise SpeechSessionRefused("speech_route_member_missing", capability_id)
+        operation_id = self._operation_id(capability_id, material)
+        coordinator = self.broker.inference_adoption_service
+        admitted = coordinator.admit_on_frozen_route(
+            self.principal,
+            command_id="speech-route-operation:" + operation_id,
+            route_plan_id=str(member["route_plan_id"]),
+            capability_id=capability_id,
+            operation_id=operation_id,
+            payload=dict(material),
+            reserved_output_tokens=int(reserved_output_tokens),
+            parent_operation_id=(
+                str(self.parent.operation_id)
+                if str(getattr(getattr(self.principal, "kind", ""), "value", self.principal.kind))
+                == "service"
+                else None
+            ),
+        )
+        from ..services.inference_semantic_adapters import adapter_for
+
+        return coordinator.execute(
+            self.principal,
+            execution_id=str(admitted["execution"]["id"]),
+            adapter=adapter_for(capability_id, call),
+            parent_context=self.parent.context,
+        )
+
+    def transcribe_child(
+        self,
+        *,
+        material: Mapping[str, Any],
+        run: Callable[[], str],
+        seed: Any,
+        **_kwargs: Any,
+    ) -> tuple[Any, Any]:
+        """Run one actual-byte transcription with controller-owned outcomes."""
+        del seed
+        from ..kernel.model import KernelRefused
+        from ..kernel.provider_signals import ProviderIndeterminate
+        from ..transcribe import TranscriberTimeoutError
+
+        def call(_engine: Any, _payload: Mapping[str, Any], cancellation: Any) -> str:
+            if cancellation.is_set():
+                raise KernelRefused("speech_transcription_not_admitted")
+            if self.on_claim is not None:
+                try:
+                    self.on_claim()
+                except SpeechSessionRefused as refusal:
+                    raise KernelRefused(refusal.reason) from None
+            try:
+                return run()
+            except TranscriberTimeoutError as exc:
+                # A timed native worker can survive the caller.  Its physical
+                # disposition is unknown, so the controller must terminalize and
+                # never advance to another route leg.
+                raise ProviderIndeterminate() from exc
+
+        routed = self._execute(
+            capability_id="speech.transcribe",
+            material=material,
+            call=call,
+            reserved_output_tokens=64,
+        )
+        state = str(routed["outcome"])
+        if state == "refused":
+            raise SpeechSessionRefused(
+                str(routed["receipt"].get("terminal_disposition") or state),
+                "speech.transcribe",
+            )
+        result = routed.get("result")
+        return SimpleNamespace(outcome=state, receipt=routed.get("receipt")), (
+            None if not isinstance(result, Mapping) else result.get("text")
+        )
+
+    def preload_child(self, **_kwargs: Any) -> tuple[Any, Any]:
+        """Refuse an unbound legacy preload leg before it can dispatch."""
+        raise SpeechSessionRefused("speech_preload_not_admitted", "speech.preload")
+
+    def _preload_evidence(self) -> Mapping[str, Any]:
+        transcription = self._member("speech.transcribe")
+        preload = self._member("speech.preload")
+        evidence = next(
+            (
+                item for item in self.bundle.get("derived_preloads", ())
+                if transcription is not None
+                and preload is not None
+                and item.get("transcription_route_plan_id") == transcription.get("route_plan_id")
+                and item.get("preload_route_plan_id") == preload.get("route_plan_id")
+            ),
+            None,
+        )
+        if not isinstance(evidence, Mapping):
+            raise SpeechSessionRefused("speech_preload_evidence_missing", "speech.preload")
+        return evidence
+
+    def preload_sequence(
+        self, *, material: Mapping[str, Any], run: Callable[..., Any]
+    ) -> tuple[Any, Any]:
+        """Execute the one P=1 frozen MLX lifecycle sequence.
+
+        Candidate/stage discovery is prohibited after admission.  The physical
+        walker receives cancellation and may advance only within the immutable
+        evidence sequence it was constructed from.
+        """
+        evidence = self._preload_evidence()
+        candidates = [str(item["id"]) for item in evidence["candidate_material"]]
+        strategies = [str(item) for item in evidence["strategy_sequence"]]
+        if (
+            list(material.get("candidate_ids") or ()) != candidates
+            or list(material.get("strategy_sequence") or ()) != strategies
+            or str(material.get("engine") or "") != str(evidence["engine"])
+            or str(material.get("model") or "") != str(evidence["model"])
+            or str(material.get("language") or "") != str(evidence["language"])
+        ):
+            raise SpeechSessionRefused("speech_preload_sequence_mismatched", "speech.preload")
+
+        def call(_engine: Any, _payload: Mapping[str, Any], cancellation: Any) -> Mapping[str, str]:
+            if cancellation.is_set():
+                from ..kernel.model import KernelRefused
+
+                raise KernelRefused("speech_preload_cancelled")
+            value = run(cancellation) if inspect.signature(run).parameters else run()
+            return {"state": str(value or "loaded")}
+
+        routed = self._execute(
+            capability_id="speech.preload",
+            material={"stage": "frozen-sequence", **dict(material)},
+            call=call,
+            reserved_output_tokens=16,
+        )
+        state = str(routed["outcome"])
+        principal_name = str(
+            getattr(getattr(self.principal, "name", ""), "value", getattr(self.principal, "name", ""))
+        )
+        if state == "succeeded" and principal_name == "owner":
+            self.broker.inference_adoption_service.record_local_speech_readiness_after_load(
+                self.principal,
+                deployment_revision_id=str(evidence["deployment_revision_id"]),
+            )
+        return SimpleNamespace(outcome=state, receipt=routed.get("receipt")), routed.get("result")
+
+
 __all__ = [
     "PRELOAD_DEADLINE_SECONDS",
+    "RoutedSpeechTranscriptionAdmission",
     "SpeechProviderFailure",
     "TRANSCRIBE_DEADLINE_SECONDS",
     "TranscriptionAdmission",

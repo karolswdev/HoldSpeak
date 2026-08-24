@@ -147,7 +147,7 @@ def wake_service_principal(wake_config: Any) -> Principal:
         PrincipalKind.SERVICE,
         WAKE_SERVICE_IDENTITY,
         frozenset({(PARENT_WAKE_SESSION, 1), ("inference.invoke", 1), ("inference.cancel", 1)}),
-        f"configured-wake:{wake_config_revision(wake_config)}",
+        "wake-capture:configured-capture",
     )
 
 
@@ -281,6 +281,9 @@ class SpeechSession:
     #: state.
     _fence: Any = None
     _routed_routes: dict[str, dict[str, Any]] = None
+    #: A Phase-D atomic parent/route bundle.  Historical parents deliberately
+    #: retain only their v1 ``SpeechSessionPlan`` reader.
+    _route_bundle: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         # Eager construction is part of admission. Lazy first access let two threads
@@ -348,7 +351,20 @@ class SpeechSession:
             parent=self.parent,
             fence=self.fence,
             routed_routes=dict(self._routed_routes),
+            transcription_route=self._routed_route("speech.transcribe"),
         )
+
+    def _routed_route(self, capability_id: str) -> dict[str, Any] | None:
+        if self._route_bundle is None:
+            return None
+        member = next(
+            (
+                item for item in self._route_bundle.get("members", ())
+                if item.get("capability_id") == capability_id
+            ),
+            None,
+        )
+        return None if member is None else {"id": str(member["route_plan_id"])}
 
     def seal(self, deadline_at: float) -> float:
         """Seal the admitted ceiling down to the now-known real end (Amendment 2).
@@ -430,9 +446,27 @@ class SpeechSession:
     ) -> Any:
         """The admission handle ``Transcriber`` dispatches one child under.
 
-        ``on_claim`` runs inside the FIRST transcription child claim of this
-        utterance (Sol Amendment 8 — the browser inactivity lease refresh).
+        A Phase-D bundle is the new-work authority; the v1 plan remains only for
+        persisted historical sessions that predate the speech migration marker.
+        ``on_claim`` runs inside the first claimed transcription child (the
+        browser interval's lease refresh).
         """
+        if self._route_bundle is not None:
+            from .transcription import RoutedSpeechTranscriptionAdmission
+
+            return RoutedSpeechTranscriptionAdmission(
+                broker=self.broker,
+                principal=self.principal,
+                parent=self.parent,
+                bundle=self._route_bundle,
+                fence=self.fence,
+                utterance_ref=str(utterance_ref),
+                on_claim=on_claim,
+                single_preload_sequence=any(
+                    item.get("capability_id") == "speech.preload"
+                    for item in self._route_bundle.get("members", ())
+                ),
+            )
         from .transcription import TranscriptionAdmission
 
         return TranscriptionAdmission(
@@ -445,6 +479,63 @@ class SpeechSession:
             on_claim=on_claim,
             utterance_ref=str(utterance_ref),
         )
+
+    def frozen_transcriber_arguments(self) -> dict[str, str] | None:
+        """Return construction fields derived from this bundle's speech route.
+
+        The derived-preload evidence is cross-bound to the source transcription
+        route and deployment revision by the bundle service.  It is therefore the
+        only lawful source for a new-session transcriber's backend/model/language.
+        """
+        if self._route_bundle is None:
+            return None
+        transcription = next(
+            (
+                item for item in self._route_bundle.get("members", ())
+                if item.get("capability_id") == "speech.transcribe"
+            ),
+            None,
+        )
+        for evidence in self._route_bundle.get("derived_preloads", ()):
+            if (
+                transcription is not None
+                and evidence.get("transcription_route_plan_id")
+                == transcription.get("route_plan_id")
+            ):
+                return {
+                    "model_name": str(evidence["model"]),
+                    "backend": str(evidence["engine"]),
+                    "language": str(evidence["language"]),
+                }
+        # A frozen transcription member remains the sole construction source if a
+        # historical bundle lacks derived lifecycle evidence; never read mutable
+        # Config after admission.
+        if transcription is None:
+            raise SpeechSessionRefused("speech_route_construction_missing")
+        with self.broker.database._connection() as conn:
+            row = conn.execute(
+                """SELECT d.engine,d.model,p.capability_manifest_json
+                     FROM inference_route_plan_entries e
+                     JOIN deployment_revisions d ON d.id=e.deployment_revision_id
+                     JOIN model_profile_revisions p
+                       ON p.profile_id=e.profile_id AND p.revision=e.profile_revision
+                    WHERE e.plan_id=? ORDER BY e.route_leg_ordinal LIMIT 1""",
+                (str(transcription["route_plan_id"]),),
+            ).fetchone()
+        if row is None:
+            raise SpeechSessionRefused("speech_route_construction_missing")
+        engine, model = str(row["engine"]), str(row["model"])
+        prefix = f"builtin-whisper-{engine}-"
+        model = model.removeprefix(prefix)
+        try:
+            claims = json.loads(str(row["capability_manifest_json"]))["claims"]
+            language = next(
+                str(item).removeprefix("speech_language:")
+                for item in claims if str(item).startswith("speech_language:")
+            )
+        except (KeyError, TypeError, ValueError, StopIteration) as exc:
+            raise SpeechSessionRefused("speech_route_construction_missing") from exc
+        return {"model_name": model, "backend": engine, "language": language}
 
 
 # ---------------------------------------------------------------- admission
@@ -491,6 +582,37 @@ def admit_speech_session(
     identifier = session_id or uuid.uuid4().hex[:12]
     started = time.time() if now is None else float(now)
     deadline = started + float(deadline_seconds)
+    broker = _broker()
+    with broker.database._connection() as conn:
+        provider_routing = conn.execute(
+            "SELECT 1 FROM inference_assignment_migrations "
+            "WHERE family='thoughts-writing-route-assignments'"
+        ).fetchone() is not None
+        speech_routing = conn.execute(
+            "SELECT 1 FROM inference_assignment_migrations "
+            "WHERE family='speech-recognition-route-assignments'"
+        ).fetchone() is not None
+    # Phase-D is one coupled parent authority: speech cannot enter a bundle until
+    # every configured dictation provider member can enter that same bundle.  A
+    # partial migration keeps the entire established session shape; otherwise a
+    # parent could mix a frozen speech child with an unbundled legacy provider
+    # child and spend capacity outside its declared route authority.
+    new_speech_route = (
+        speech_routing
+        and provider_routing
+        and plan_defaults
+        and principal.identity != DEVICE_SERVICE_IDENTITY
+    )
+    # The plan DTO survives only for a wholly legacy parent (and paired-device
+    # capture, which remains outside Phase D).  A bundled parent never treats its
+    # default Whisper entries as authority.
+    retained_capabilities = capabilities
+    retained_defaults = plan_defaults
+    if new_speech_route:
+        retained_capabilities = tuple(
+            dict.fromkeys((*capabilities, *pipeline_provider_capabilities(config_snapshot)))
+        )
+        retained_defaults = False
     plan = DictationSessionPlanResolver().resolve(
         config_snapshot,
         registry_snapshot,
@@ -500,32 +622,135 @@ def admit_speech_session(
         deadline_at=deadline,
         child_budget=int(child_budget),
         plan_kind=plan_kind or (PLAN_WAKE if kind == PARENT_WAKE_SESSION else PLAN_DICTATION),
-        capabilities=capabilities,
-        plan_defaults=plan_defaults,
+        capabilities=retained_capabilities,
+        plan_defaults=retained_defaults,
         insertion_context=insertion_context,
         created_at=started,
     )
-    broker = _broker()
-    with broker.database._connection() as conn:
-        routed_assignments = conn.execute(
-            "SELECT 1 FROM inference_assignment_migrations WHERE family='thoughts-writing-route-assignments'"
-        ).fetchone() is not None
+    parent_snapshot = plan.summary()
+    if kind == PARENT_WAKE_SESSION:
+        # The policy lookup is intentionally fixed.  The configured wake revision
+        # rides immutable parent evidence instead of becoming a permissive
+        # registry-key suffix.
+        parent_snapshot["wake_capture_revision"] = wake_config_revision(
+            getattr(config_snapshot, "wake_word", None)
+        )
+
+    # Phase D new work persists the capture parent and every route it can use in
+    # one bundle transaction.  The old session plan remains an execution reader
+    # only for parents admitted before the speech migration marker.
+    if new_speech_route:
+        from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
+
+        aliases = {
+            CAPABILITY_INTENT_CLASSIFY: "speech.intent_classify",
+            "rewrite": "speech.rewrite",
+        }
+        routes: list[dict[str, str]] = [
+            {
+                "key": "transcription",
+                "capability_id": "speech.transcribe",
+                "invocation_id": plan.session_id,
+            }
+        ]
+        routes.extend(
+            {
+                "key": legacy,
+                "capability_id": canonical,
+                "invocation_id": plan.session_id,
+            }
+            for legacy, canonical in aliases.items()
+            if provider_routing and plan.has(legacy)
+        )
+        # The lifecycle is derived from the frozen transcription member, not an
+        # assignable preload row.  OWNER capture and the closed wake SERVICE
+        # policy are both lawful parents for that one P=1 member.
+        derived_preload = (
+            {
+                "key": "preload",
+                "source_key": "transcription",
+                "candidate_material": [],
+                "strategy_sequence": ["derive-from-frozen-transcription"],
+            }
+            if (
+                principal.kind is PrincipalKind.OWNER
+                or principal.identity == WAKE_SERVICE_IDENTITY
+            )
+            else None
+        )
+        # A capture parent is reusable: browser intervals can carry many
+        # utterances, and each may consume its route policy's physical attempts.
+        # Preserve the caller's full parent budget instead of treating the bundle
+        # declaration's one route as a one-utterance budget.  The P=1 lifecycle
+        # receives its own reserved slot; every actual capture/pipeline route
+        # shares the remaining parent capacity.
+        work_allocation = int(child_budget) - (1 if derived_preload is not None else 0)
+        budget_groups: list[dict[str, Any]] = [
+            {
+                "id": "speech-capture-work",
+                "allocation": work_allocation,
+                "member_keys": [str(route["key"]) for route in routes],
+            }
+        ]
+        if derived_preload is not None:
+            budget_groups.append(
+                {"id": "speech-capture-preload", "allocation": 1, "member_keys": ["preload"]}
+            )
+        try:
+            started_bundle = InferenceParentRouteBundleService(
+                broker, broker.inference_adoption_service
+            ).start(
+                principal,
+                command_id=f"speech-route-bundle:{plan.session_id}",
+                parent_kind=kind,
+                definition_ref=f"speech:{identifier}:{insertion_aim or 'capture'}",
+                definition_revision=plan.sha256,
+                input_snapshot=parent_snapshot,
+                deadline_at=deadline,
+                routes=routes,
+                budget_groups=budget_groups,
+                derived_preload=derived_preload,
+            )
+        except Exception as exc:
+            reason = str(
+                getattr(exc, "code", "") or getattr(exc, "reason", "") or SESSION_NOT_ADMITTED
+            )
+            raise SpeechSessionRefused(reason) from None
+        parent = started_bundle["parent"]
+        bundle = started_bundle["bundle"]
+        session = SpeechSession(broker, principal, plan, parent, kind, _route_bundle=bundle)
+        for legacy, canonical in aliases.items():
+            member = next(
+                (item for item in bundle["members"] if item["capability_id"] == canonical),
+                None,
+            )
+            if member is not None:
+                session._routed_routes[legacy] = {"id": str(member["route_plan_id"])}
+        log.info(
+            "speech route bundle admitted: kind=%s parent=%s bundle=%s",
+            kind, parent.operation_id, bundle["id"],
+        )
+        return session
+
+    # Compatibility reader for historical parents (and the explicitly excluded
+    # paired-device capture surface).  Do not make a device route policy while
+    # migrating owner and wake speech.
     try:
         parent = broker.parent_run_controller.start(
             principal,
             kind=kind,
             definition_ref=f"speech:{identifier}:{insertion_aim or 'capture'}",
             definition_revision=plan.sha256,
-            input_snapshot=plan.summary(),
+            input_snapshot=parent_snapshot,
             deadline_at=deadline,
             child_budget=int(child_budget),
-            _defer_persist=routed_assignments,
+            _defer_persist=provider_routing,
         )
     except Exception as exc:
         reason = str(getattr(exc, "reason", "") or SESSION_NOT_ADMITTED)
         raise SpeechSessionRefused(reason) from None
     frozen_routes: dict[str, dict[str, Any]] = {}
-    if routed_assignments:
+    if provider_routing:
         from ..kernel.parent_run import ParentRun
         from ..services.inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
 
@@ -536,7 +761,7 @@ def admit_speech_session(
                 row = broker.parent_run_controller._persist_parent(
                     conn, operation_id=parent.operation_id, native_id=parent.native_id,
                     kind=kind, definition_ref=f"speech:{identifier}:{insertion_aim or 'capture'}",
-                    definition_revision=plan.sha256, input_snapshot=plan.summary(),
+                    definition_revision=plan.sha256, input_snapshot=parent_snapshot,
                     deadline_at=deadline, child_budget=int(child_budget), now=started,
                 )
                 for ordinal, (legacy, canonical) in enumerate(aliases.items(), 1):
@@ -550,9 +775,6 @@ def admit_speech_session(
                 conn.commit()
             except Exception:
                 conn.rollback()
-                # The kernel operation was admitted before this cross-service
-                # transaction.  Route refusal must never leave it live without
-                # a parent context; terminalize the exact claimed operation.
                 try:
                     broker.receipt(
                         parent.operation_id,
@@ -574,7 +796,7 @@ def admit_speech_session(
         "speech session admitted: kind=%s parent=%s plan=%s", kind, parent.operation_id, plan.sha256
     )
     session = SpeechSession(broker, principal, plan, parent, kind)
-    if routed_assignments:
+    if provider_routing:
         session._routed_routes.update(frozen_routes)
     else:
         session.freeze_assigned_provider_routes()

@@ -438,6 +438,8 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
     ("holdspeak/speech_session/revision_target.py", "rebind"): "F: rebuilds a dictation backend onto the frozen revision; context-requiring",
     ("holdspeak/speech_session/revision_target.py", "bound_target"): "F: agrees-or-rebind decision; forwards the child's context to rebind",
     ("holdspeak/speech_session/provider.py", "ProviderAdmission.target"): "F: reads the context off the runner-built engine and binds the dispatch target",
+    ("holdspeak/speech_session/provider.py", "ProviderAdmission.dispatch_through"): "L: dispatches the target only after the provider child's admission",
+    ("holdspeak/speech_session/provider.py", "_RoutedSpeechAdapter.dispatch"): "L: executes the runner-built engine for the controller-owned provider route",
     ("holdspeak/speech_session/provider.py", "_mesh_bound"): "F: binds the mesh backend to the runner's admitted envelope; constructs no relay of its own",
     ("holdspeak/plugins/dictation/assembly.py", "_try_build_runtime"): "F: dictation runtime assembly; the pipeline it yields is wrapped by the admitted seam",
     ("holdspeak/plugins/dictation/runtime.py", "_default_factories._llama_factory"): "F: the llama.cpp runtime factory seam",
@@ -700,7 +702,9 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # 600 ms, on the hotkey's own lock, producing a "partial" no client
     # consumed). The socket's final, whole-utterance pass remains, so the
     # `ws_dictation_stream` seam registration above still names a live site.
-    assert len(sites) == 99
+    # Phase 143 adds six audited routed provider/transcription entrances to the
+    # historic 99-site census; every one is classified above rather than hidden.
+    assert len(sites) == 105
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
     assert counts["finding"] == 0

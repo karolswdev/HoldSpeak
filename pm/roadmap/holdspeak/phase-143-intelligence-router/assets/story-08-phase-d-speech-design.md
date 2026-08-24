@@ -253,3 +253,79 @@ dictation stages, report the widest boundary across the frozen
 transcription and provider routes. Focused tests must cover local, mesh,
 and private-network transcription and prove that none is mislabeled
 `local`.
+
+---
+
+# Counsel ruling round 2 (Sol, 2026-08-24): five blocked-item rulings
+
+Full record with required proofs: `story-08-phase-d-counsel.md`
+(brief: `story-08-phase-d-rulings-brief.md`). The amendment texts below
+are counsel's exact words and are binding over any conflicting
+statement above, including amendments 1–6 where explicitly superseded.
+
+### 7. Local-only speech execution (rules R1)
+
+In Slice 1, `speech.transcribe@1` and its derived `speech.preload@1`
+lifecycle are same-device capabilities with
+`allowed_boundaries=("local",)`. Every SERVICE policy that authorizes
+either capability repeats that boundary. A `speech.transcribe`
+assignment containing a `mesh` or `private_network` leg is refused
+during route admission before transcriber construction or audio/model
+dispatch; it is never executed locally under the remote deployment
+identity.
+
+Amendment 6's final sentence is replaced with: "Focused tests must
+prove that successful transcription is badged `local`, and that mesh
+and private-network transcription routes are refused at admission with
+no dispatch and no false `local` receipt. Remote speech execution
+remains future work until an explicit audio transport and semantic
+adapter exist."
+
+### 8. Cold wake lifecycle (rules R2)
+
+`wake-capture@1` authorizes exactly `speech.transcribe@1` and the
+nonassignable derived `speech.preload@1` lifecycle member, with
+capability-only assignment lookup and `allowed_boundaries=("local",)`.
+In the same transaction that admits the `wake.session` parent and
+freezes its transcription route, derive exactly one P=1 preload member
+from that frozen route using the existing derived-preload contract. Its
+deployment revision, candidate sequence, stage sequence, and stop rules
+come only from the frozen transcription evidence. No `speech.preload`
+assignment is read or created, and no OWNER principal is synthesized.
+
+### 9. Configured wake revision binding (rules R3; supersedes part of amendment 2)
+
+Cross-bind `wake_capture_revision` in the immutable `wake.session`
+parent input snapshot. Do not add that value to
+`InferenceFeaturePrincipalPolicyEvidence@1`. Principal evidence instead
+binds the exact `wake-capture@1` policy identity, policy revision and
+SHA, `wake-capture` SERVICE identity,
+`wake-capture:configured-capture` authority basis, and `wake.session`
+parent kind. This supersedes Amendment 2's requirement to duplicate the
+configured wake revision in principal evidence.
+
+### 10. Coupled non-Meeting speech cutover (rules R4)
+
+Activate the Phase-D speech parent-route bundle only when both
+`speech-recognition-route-assignments` and
+`thoughts-writing-route-assignments` migration markers are present. If
+either marker is absent, retain the complete legacy session path for
+that parent. Once both markers are present, `SpeechSessionPlan` no
+longer authorizes transcription or preload, and every configured routed
+classify/rewrite capability is frozen as a member of the same bundle as
+`speech.transcribe`. A single parent may not combine a bundled speech
+member with a plain legacy provider child.
+
+### 11. Faster-whisper constructor exception (rules R5)
+
+Amendment 3 governs separable MLX lifecycle loading. Faster-whisper is
+a local-only, constructor-inseparable exception: `WhisperModel(...)`
+may construct and load from the frozen backend, model, and language
+after the capture parent and complete frozen speech route have been
+admitted but before the `speech.transcribe` child is claimed.
+Constructor work may not select or advance a route leg, dispatch audio,
+or mint a preload or transcription receipt. The subsequent audio
+invocation remains authorized only inside the routed
+`speech.transcribe` child. Slice 1 does not wrap faster-whisper
+construction in `speech.preload@1`; the constructor seam is retained as
+a ledger note.

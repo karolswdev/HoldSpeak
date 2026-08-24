@@ -319,6 +319,38 @@ structurally complete.** Closing sweep: **6418 passed / zero
 branch-new**. Next: Phase D (speech lifecycle, design already ruled
 with six in-file amendments), then Phase E (background adopters) and
 Phase F (migration cleanup).
+**Phase D slice 1 is SHIPPED (2026-08-24).** Speech capture rides the
+router: atomic routed capture admission for migrated owner and wake
+sessions on the parent-route-bundle service (paired-device stays
+legacy), a routed transcription adapter on frozen members with
+actual-audio identity and indeterminate timeouts, one bounded P=1
+preload member, and transcription egress badges derived from every
+frozen route leg — a missing route now refuses instead of silently
+saying local. The slice's three blocked rulings and two overlapping
+code-review-stream findings were verified against the tree and taken
+to Sol in the single capped ruling round
+([Phase D counsel](./assets/story-08-phase-d-counsel.md), brief with
+file-level evidence in
+[the rulings brief](./assets/story-08-phase-d-rulings-brief.md); the
+five binding texts are design amendments 7–11): speech execution is
+local-only with admission-time refusal of mesh/private-network legs
+(remote transport is a ledgered future capability); `wake-capture@1`
+gains the nonassignable derived `speech.preload@1` member so an
+ordinary cold-MLX wake capture works — proven with a real unloaded
+production transcriber, retiring the faked-loaded wake test; the
+configured wake revision cross-binds in the immutable parent snapshot
+only, leaving the closed generic principal-evidence schema untouched;
+the speech and thoughts-writing migration markers couple into one
+cutover switch so a parent never mixes bundled speech with plain
+legacy provider children (the legacy fallthrough under a bundled
+parent refuses); and faster-whisper's constructor-inseparable model
+load is a ratified local-only exception, ledgered. The one permitted
+fix round implemented all five amendments with production-object
+proofs; its density-guard breach was closed by moving the frozen
+session-transcriber helper into `transcriber_state.py`. Confirming
+sweep: **6430 passed / zero branch-new** (67 inherited-baseline
+failures plus one github-enrichment xdist load flake, serial-green
+twice). Next: Phase D slice 2, then Phase E and Phase F.
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:
