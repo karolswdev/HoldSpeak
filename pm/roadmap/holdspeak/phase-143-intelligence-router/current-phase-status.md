@@ -271,9 +271,21 @@ output, with plugin metadata carried as receipt-gated projection
 evidence under C1's transcript and executor-epoch fences; plugin
 members ride the same per-instance budget model. No new executor,
 retry, or preflight machinery. Sweep: **6416 passed / 68 failed / zero
-branch-new**. Next: one counsel pass on C2 (capped: one ruling + at
-most one fix round per the owner's protocol), then C3 (the Stop-handoff
-provider — the ratified primitive's first real adopter).
+branch-new**. The capped counsel pass (fresh Sol, C2-scoped) found one
+ordinary-path blocker — the owner's **Disabled plugins** setting was
+ignored in production (the gate read an attribute the real PluginHost
+never defined, and the test had masked it with a synthetic fake-host
+attribute) — fixed in the single permitted round: the production bound
+host loads the persisted `MeetingConfig.disabled_plugins` authority,
+`PluginHost` formally owns the disposition, disabled plugins stay
+frozen members but resolve `skipped` pre-admission (zero children,
+zero artifacts, allowance unused), proven production-shaped with real
+`Config.load()`. All other C2 claims passed the counsel's live probes,
+including honest drift refusal. Record with disposition:
+[C2 counsel](./assets/story-08-c2-counsel.md). **C2 is CLOSED.**
+Confirming sweep: **6414 passed / zero branch-new**. Next: C3 (the
+Stop-handoff provider — the ratified primitive's first real adopter),
+then Phase D (speech, design already ruled).
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

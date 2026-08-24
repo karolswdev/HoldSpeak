@@ -458,11 +458,13 @@ def _run_admitted_chain(
 def build_bound_meeting_plugin_host() -> Any:
     """Build the C2 installed host without a Config-time capability decision.
 
-    A bound child already owns the selected model route.  The host only needs a
-    per-invocation dispatch handle over that child engine, so consulting mutable
-    meeting runtime settings here would create a second authority.
+    A bound child already owns the selected model route. The one Config read is
+    the persisted project disabled-plugin disposition, matching ordinary plugin
+    dispatch: it narrows execution but does not rewrite the frozen built chain.
     """
+    from .config import Config
     from .plugins.builtin import register_builtin_plugins
+    from .plugins.dispatch import normalize_disabled_plugins
     from .plugins.host import PluginHost
     from .plugins.project_detector import ProjectDetectorPlugin
 
@@ -470,6 +472,9 @@ def build_bound_meeting_plugin_host() -> Any:
         default_timeout_seconds=30.0,
         enabled_capabilities={"llm"},
         allow_actuators=False,
+        disabled_plugins=normalize_disabled_plugins(
+            getattr(Config.load().meeting, "disabled_plugins", ())
+        ),
     )
     register_builtin_plugins(host)
     detector = ProjectDetectorPlugin()

@@ -1641,7 +1641,7 @@ def test_c2_unknown_plugin_id_refuses_claim_without_any_child(tmp_path, monkeypa
     assert "plugin" in str(event["error"]).lower()
 
 
-@pytest.mark.parametrize("gate", ["deduped", "disabled", "fault"])
+@pytest.mark.parametrize("gate", ["deduped", "fault"])
 def test_c2_non_executed_plugin_gates_mint_no_child(tmp_path, monkeypatch, gate):
     db, _broker, _engine, host, _requests = _queue_rig(
         tmp_path, monkeypatch,
@@ -1662,8 +1662,6 @@ def test_c2_non_executed_plugin_gates_mint_no_child(tmp_path, monkeypatch, gate)
             status="success", idempotency_key=key, duration_ms=0.0,
             output={"summary": "already", "confidence_hint": 0.0, "active_intents": []},
         )
-    elif gate == "disabled":
-        host.disabled_plugins = ("requirements_extractor",)
     else:
         monkeypatch.setenv("HOLDSPEAK_FAULT", "intel.plugin:requirements_extractor")
 
@@ -1673,6 +1671,51 @@ def test_c2_non_executed_plugin_gates_mint_no_child(tmp_path, monkeypatch, gate)
     parent = _parents(db, PARENT_KIND)[0]
     assert len(_children(db, parent["operation_id"])) == 1
     assert host.executed == []
+
+
+def test_c2_persisted_disabled_plugin_skips_before_admission(tmp_path, monkeypatch):
+    """The real bound host reads the saved setting before it can mint a child."""
+    from holdspeak.config import Config, MeetingConfig
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.meeting_plugins import build_bound_meeting_plugin_host
+
+    # Preserve the unpatched loader; `_queue_rig` deliberately substitutes a
+    # lightweight Config facade for most queue tests.
+    production_load = Config.load.__func__
+    db, _broker, _engine, _host, _requests = _queue_rig(
+        tmp_path,
+        monkeypatch,
+        plugins=(),
+        chain=("requirements_extractor", "project_detector"),
+    )
+    config_path = tmp_path / "holdspeak.json"
+    Config(meeting=MeetingConfig(disabled_plugins=["requirements_extractor"])).save(config_path)
+    monkeypatch.setattr("holdspeak.config.core._active_config_file", lambda: config_path)
+    monkeypatch.setattr(Config, "load", classmethod(production_load))
+    # Restore the actual bound-host factory: it loads the persisted MeetingConfig
+    # and builds registered production plugins rather than a synthetic host.
+    monkeypatch.setattr(
+        "holdspeak.meeting_plugins.build_bound_meeting_plugin_host",
+        build_bound_meeting_plugin_host,
+    )
+    state = _queued_meeting(db, "m-c2-persisted-disabled", legacy_claimed=False)
+
+    assert process_next_intel_job() is True
+    parent = _parents(db, PARENT_KIND)[0]
+    children = _children(db, parent["operation_id"])
+    # Base analysis + the unaffected project detector. The disabled member has
+    # no admitted child, so its frozen route allowance remains unused.
+    assert len(children) == 2
+    runs = {run.plugin_id: run for run in db.plugins.list_plugin_runs(state.id, limit=20)}
+    assert runs["requirements_extractor"].status == "skipped"
+    assert runs["requirements_extractor"].error == "disabled for this project"
+    assert runs["requirements_extractor"].output is None
+    assert runs["project_detector"].status == "success"
+    assert all(
+        artifact.plugin_id != "requirements_extractor"
+        for artifact in db.plugins.list_artifacts(state.id)
+    )
+    assert db.meetings.get_meeting(state.id).intel_status == "ready"
 
 
 # ------------------------------------- D3: the displaced work actually executes

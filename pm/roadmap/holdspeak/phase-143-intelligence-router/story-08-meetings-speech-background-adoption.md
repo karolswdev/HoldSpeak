@@ -75,7 +75,11 @@ COMPLETE: frozen registry-bound plugin members on the routed queue,
 runtime-string planning dead for new jobs, non-model gates pre-child,
 inner-output semantics with receipt-gated projection metadata, all on
 C1's lease/fence/budget machinery; sweep 6416 passed / 68 failed /
-zero branch-new. One capped counsel pass, then C3.
+zero branch-new. The capped counsel pass caught one ordinary-path
+blocker (the Disabled-plugins setting ignored in production behind a
+fake-host-masked test) — fixed same round with a production-shaped
+proof; C2 CLOSED at 6414 passed / zero branch-new. C3 (Stop-handoff
+provider) is next.
 
 ## Problem
 

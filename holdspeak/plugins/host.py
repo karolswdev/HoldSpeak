@@ -11,7 +11,7 @@ import hashlib
 import json
 import time
 from threading import Lock
-from typing import Any, Protocol
+from typing import Any, Iterable, Protocol
 
 from ..kernel.provider_signals import CONTROL_SIGNALS, ProviderIndeterminate
 from ..logging_config import get_logger
@@ -145,8 +145,17 @@ class PluginHost:
         enabled_capabilities: set[str] | None = None,
         allow_actuators: bool = False,
         context_providers: list[Callable[[dict[str, Any]], dict[str, Any]]] | None = None,
+        disabled_plugins: Iterable[str] | None = None,
     ) -> None:
         self._plugins: dict[str, HostPlugin] = {}
+        # The host carries the persisted project dispatch disposition. Callers
+        # decide where in their execution lifecycle to honor it; C2 checks this
+        # set before admitting any child.
+        self.disabled_plugins = frozenset(
+            str(plugin_id).strip()
+            for plugin_id in (disabled_plugins or ())
+            if str(plugin_id).strip()
+        )
         self._default_timeout_seconds = max(0.01, float(default_timeout_seconds))
         self._idempotency_cache: dict[str, PluginRunResult] = {}
         # Reserved for HS-37-04: gates *execution* of an approved actuator
