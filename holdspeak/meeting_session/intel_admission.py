@@ -404,7 +404,7 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
     # ----------------------------------------------------- the Stop fence
 
     def _handoff_intel_at_stop(self, state: Any) -> tuple[str, ...]:
-        """Fence live bundle work, then enqueue existing deferred aftercare.
+        """Fence live bundle work and reserve its deferred handoff atomically.
 
         The final transcription pass has already completed when this method is
         entered.  It needs the still-open frozen transcription route, so this is
@@ -443,35 +443,42 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
 
         database = get_database()
 
-        def enqueue_aftercare(conn: Any) -> None:
-            if displaced:
-                database.intel.enqueue_intel_job(
-                    state.id,
-                    transcript_hash=state.transcript_hash(),
-                    reason=detail,
-                    displaced_work=tuple(displaced),
-                    conn=conn,
-                    legacy_displaced_work=True,
-                )
-
         bundle = self._route_bundle
         fenced = bundle is None or self.intel_principal is None
         if bundle is not None and self.intel_principal is not None:
             from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
 
             broker = self._intel_broker()
-            service = InferenceParentRouteBundleService(broker, broker.inference_adoption_service)
+            provider = database.intel.stop_handoff_provider(
+                meeting_id=state.id,
+                transcript_hash=state.transcript_hash(),
+                displaced_work=tuple(displaced),
+                reason=detail,
+            ) if displaced else None
+            service = InferenceParentRouteBundleService(
+                broker,
+                broker.inference_adoption_service,
+                handoff_evidence_providers=(provider,) if provider is not None else (),
+            )
             fence_error: Exception | None = None
             for attempt in (1, 2):
                 try:
-                    effect = service.fence_cancel(
-                        self.intel_principal,
-                        command_id=f"meeting-stop:{state.id}",
-                        bundle_id=str(bundle["id"]),
-                        in_transaction_effect=enqueue_aftercare if displaced else None,
-                    )
+                    if provider is None:
+                        effect = service.fence_cancel(
+                            self.intel_principal,
+                            command_id=f"meeting-stop:{state.id}",
+                            bundle_id=str(bundle["id"]),
+                        )
+                    else:
+                        effect = service.request_stop_handoff(
+                            self.intel_principal,
+                            command_id=f"meeting-stop:{state.id}",
+                            bundle_id=str(bundle["id"]),
+                            evidence_provider_id=provider.id,
+                            planning_reference=database.intel.stop_handoff_planning_reference(state.id),
+                        )
                     log.info(
-                        "live meeting bundle fenced at stop: bundle=%s routes=%s",
+                        "live meeting bundle stop handed off: bundle=%s routes=%s",
                         effect["bundle_id"],
                         len(effect["route_stops"]),
                     )
@@ -480,35 +487,19 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
                 except Exception as exc:
                     fence_error = exc
                     log.warning(
-                        "live meeting bundle fence attempt %s failed: %s",
+                        "live meeting bundle handoff attempt %s failed: %s",
                         attempt,
                         type(exc).__name__,
                     )
             if not fenced:
                 assert fence_error is not None
-                # The meeting remains recoverable even if the controller's fence
-                # boundary is faulted: this durable marker is startup recovery's
-                # obligation to re-run the idempotent fence.
+                # Unlike the B-era fallback, a failed C3 handoff must not write a
+                # separately runnable legacy row.  Recovery repeats this exact
+                # atomic request, which either creates the inert reservation with
+                # the fence or leaves neither durable effect behind.
                 database.meetings.mark_route_fence_pending(
                     state.id, f"{type(fence_error).__name__}: {fence_error}"
                 )
-                if displaced:
-                    try:
-                        database.intel.enqueue_intel_job(
-                            state.id,
-                            transcript_hash=state.transcript_hash(),
-                            reason=detail,
-                            displaced_work=tuple(displaced),
-                            legacy_displaced_work=True,
-                        )
-                    except Exception as exc:
-                        log.error("deferred intel handoff enqueue failed: %s", exc)
-                        self._set_intel_status(
-                            "error",
-                            f"Deferred intelligence could not be queued: {exc}",
-                            after_handoff=True,
-                        )
-                        return tuple(displaced)
         elif displaced:
             try:
                 database.intel.enqueue_intel_job(
@@ -528,8 +519,8 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
                 return tuple(displaced)
 
         # The old parent close/cancel path is intentionally not used for a bundle:
-        # `fence_cancel()` derives and fences the complete route set in one durable
-        # transaction, then performs best-effort physical child cancellation.
+        # the handoff primitive derives and fences the complete route set in one
+        # durable transaction, then performs best-effort physical child cancellation.
         self._intel_parent = None
         self._intel_closed = True
         if not displaced:

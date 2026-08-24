@@ -159,6 +159,31 @@ def _bound_claim(db, *, include_scheduled: bool):
     return job, broker
 
 
+def _reconcile_stop_handoffs(db, broker) -> bool:
+    """Settle known-safe Stop handoffs and fresh-admit only unknown outcomes.
+
+    The bundle primitive remains the sole settlement/activation authority.  This
+    queue boundary merely revisits its durable records after restart and asks the
+    adopter to append a fresh normal job for an unknown terminal; it never makes
+    the old reservation claimable.
+    """
+    from .services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
+
+    service = InferenceParentRouteBundleService(
+        broker,
+        broker.inference_adoption_service,
+        handoff_evidence_providers=(db.intel.stop_handoff_provider(),),
+    )
+    for command_id in db.intel.pending_stop_handoff_commands():
+        try:
+            service.reconcile_stop_handoff(command_id=command_id)
+        except Exception as exc:
+            # An unsettled handoff remains durable and inert; an integrity refusal
+            # is not queue progress and must not open a second execution path.
+            log.warning("Deferred Stop handoff reconciliation deferred: %s", type(exc).__name__)
+    return bool(db.intel.admit_unknown_stop_handoff_recoveries())
+
+
 def _bound_projection_base(job, meeting) -> dict:
     """Content-free identity carried by every bound publication stage."""
     return {
@@ -530,6 +555,13 @@ def process_next_intel_job(
     # SERVICE shell were committed with its claim, and execution must load those
     # stored IDs rather than Config, a resolver, or a fresh plan.
     db = get_database()
+    # Pending Stop settlements are revisited before any claim. A known-safe
+    # activation falls through into this same normal C1 claim turn; an unknown
+    # terminal reports durable recovery progress and is claimed on the next turn.
+    from .kernel.runtime import _service
+
+    if _reconcile_stop_handoffs(db, _service()):
+        return True
     # Close receipt and successor promotion are separate durable writes. Recover
     # the receipt→promotion crash interval before looking for a close still owed;
     # the scan is idempotent and lets the next drain iteration claim the survivor.

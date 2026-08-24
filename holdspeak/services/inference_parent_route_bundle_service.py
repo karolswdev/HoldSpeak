@@ -949,6 +949,11 @@ class InferenceParentRouteBundleService:
             ),
         }
         request_hash = _sha256(request)
+        # Physical cancellation stays deliberately outside the atomic reservation
+        # transaction, exactly as ``fence_cancel`` does. The durable controller
+        # fence prevents a late result from publishing before this best-effort
+        # signal is attempted.
+        child_invocations: list[tuple[str, str]] = []
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             replay = conn.execute(
@@ -1027,6 +1032,17 @@ class InferenceParentRouteBundleService:
                     execution_id=execution_id,
                 )
                 effects.append(stopped["effect"])
+                if stopped["effect"]["elected_state"] == "stopping":
+                    child = conn.execute(
+                        """SELECT child_invocation_id FROM inference_route_attempts
+                           WHERE execution_id=? AND state='dispatch_intent'
+                           ORDER BY physical_attempt_ordinal DESC LIMIT 1""",
+                        (execution_id,),
+                    ).fetchone()
+                    if child is not None and str(child["child_invocation_id"] or ""):
+                        child_invocations.append(
+                            (execution_id, str(child["child_invocation_id"]))
+                        )
             fence = self._parents.fence_for_handoff_in_transaction(
                 conn, principal, operation_id=str(parent["operation_id"])
             )
@@ -1102,7 +1118,19 @@ class InferenceParentRouteBundleService:
             if state == "committed":
                 self._settle_and_activate(conn, command, effect, provider)
             conn.commit()
-            return effect
+
+        for _execution_id, child_invocation_id in child_invocations:
+            try:
+                from ..kernel.runtime import _as_principal
+
+                with _as_principal(principal):
+                    self._broker.inference_runner.cancel(child_invocation_id)
+            except Exception:
+                # The durable route Stop election is already authoritative. A
+                # provider cancellation failure is observable in its own runtime
+                # receipt but can never reopen this handoff or activate its reserve.
+                continue
+        return effect
 
     def reconcile_stop_handoff(self, *, command_id: str) -> dict[str, Any]:
         command = _safe(command_id, field="command_id")

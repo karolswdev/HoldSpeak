@@ -236,6 +236,10 @@ CREATE INDEX IF NOT EXISTS idx_intel_jobs_status ON intel_jobs(status, requested
 CREATE INDEX IF NOT EXISTS idx_intel_jobs_meeting_current ON intel_jobs(meeting_id, status, requested_at DESC);
 CREATE INDEX IF NOT EXISTS idx_intel_job_attempts_meeting ON intel_job_attempts(meeting_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_intel_job_attempts_job ON intel_job_attempts(job_id, created_at DESC);
+-- The queue-owned activation marker is the reserve-inert handoff provider's
+-- independent lifecycle witness: one append-only marker per reservation.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_intel_job_handoff_activation
+ON intel_job_attempts(job_id, event_kind) WHERE event_kind='handoff_activated';
 -- A work descriptor can have one execution owner. Terminal history may coexist.
 CREATE UNIQUE INDEX IF NOT EXISTS uq_intel_jobs_active_descriptor
 ON intel_jobs(meeting_id, work_descriptor_sha256)

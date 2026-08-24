@@ -79,7 +79,13 @@ zero branch-new. The capped counsel pass caught one ordinary-path
 blocker (the Disabled-plugins setting ignored in production behind a
 fake-host-masked test) — fixed same round with a production-shaped
 proof; C2 CLOSED at 6414 passed / zero branch-new. C3 (Stop-handoff
-provider) is next.
+provider) is IMPLEMENTED: the reserve-inert primitive's first
+production adopter — freeze = reserved row + ledger event; activation
+= settlement-gated conversion into the ordinary C1/C2 claim path;
+unknown terminals stay reserved forever while a linked fresh local job
+auto-admits per the owner ruling (dual ledger events, no UI); Stop and
+recovery both ride the primitive. Sweep 6417 passed / zero branch-new.
+Capped counsel pass on C3 is next.
 
 ## Problem
 

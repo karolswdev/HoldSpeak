@@ -760,25 +760,31 @@ class MeetingRepository(BaseRepository):
                 )
                 broker = _service()
 
-                def enqueue_aftercare(conn: Any) -> None:
-                    if displaced:
-                        self._db.intel.enqueue_intel_job(
-                            meeting_id,
-                            transcript_hash=meeting.transcript_hash(),
-                            reason=detail,
-                            displaced_work=tuple(displaced),
-                            conn=conn,
-                            legacy_displaced_work=True,
-                        )
-
-                InferenceParentRouteBundleService(
-                    broker, broker.inference_adoption_service
-                ).fence_cancel(
-                    principal,
-                    command_id=f"meeting-recovery:{meeting_id}",
-                    bundle_id=str(bundle["id"]),
-                    in_transaction_effect=enqueue_aftercare if displaced else None,
+                provider = self._db.intel.stop_handoff_provider(
+                    meeting_id=meeting_id,
+                    transcript_hash=meeting.transcript_hash(),
+                    displaced_work=tuple(displaced),
+                    reason=detail,
+                ) if displaced else None
+                service = InferenceParentRouteBundleService(
+                    broker,
+                    broker.inference_adoption_service,
+                    handoff_evidence_providers=(provider,) if provider is not None else (),
                 )
+                if provider is None:
+                    service.fence_cancel(
+                        principal,
+                        command_id=f"meeting-recovery:{meeting_id}",
+                        bundle_id=str(bundle["id"]),
+                    )
+                else:
+                    service.request_stop_handoff(
+                        principal,
+                        command_id=f"meeting-recovery:{meeting_id}",
+                        bundle_id=str(bundle["id"]),
+                        evidence_provider_id=provider.id,
+                        planning_reference=self._db.intel.stop_handoff_planning_reference(meeting_id),
+                    )
                 self.clear_route_fence_pending(meeting_id)
             elif displaced:
                 self._db.intel.enqueue_intel_job(

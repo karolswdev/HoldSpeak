@@ -283,9 +283,24 @@ zero artifacts, allowance unused), proven production-shaped with real
 `Config.load()`. All other C2 claims passed the counsel's live probes,
 including honest drift refusal. Record with disposition:
 [C2 counsel](./assets/story-08-c2-counsel.md). **C2 is CLOSED.**
-Confirming sweep: **6414 passed / zero branch-new**. Next: C3 (the
-Stop-handoff provider — the ratified primitive's first real adopter),
-then Phase D (speech, design already ruled).
+Confirming sweep: **6414 passed / zero branch-new**. Slice C3 (the
+Stop-handoff provider) is IMPLEMENTED: the ratified reserve-inert
+primitive has its first production adopter — a real
+`meeting-deferred-queue@1` provider whose freeze writes only a
+`reserved` row + ledger event and whose settlement-gated activation
+(unique provider-owned witness) converts displaced work into ordinary
+`queued` lifecycle claimed by the existing C1/C2 machinery, never a
+bespoke executor. Live Stop and capture recovery both ride
+`request_stop_handoff`; unknown-disposition terminals leave the
+original reserved forever while queue reconciliation admits a linked
+fresh local job (origin lineage, immutable recovery descriptor, dual
+`handoff_outcome_unknown`/`handoff_unknown_recovery` events) per the
+owner's auto-re-run ruling — ledger truth, no new UI. The primitive's
+post-commit best-effort cancellation signal is restored. C1/C2's
+existing slug→V3 conversion and bundle seal were honestly reused, not
+redone. Confirming sweep: **6417 passed / zero branch-new**. Next: the
+capped counsel pass on C3, then Phase D (speech, design already
+ruled).
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

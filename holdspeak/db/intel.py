@@ -154,6 +154,7 @@ def _freeze_displaced_work(
     *,
     plugin_members: Sequence[Mapping[str, Any]] = (),
     plugin_route: Mapping[str, Any] | None = None,
+    recovery_origin_job_id: str | None = None,
 ) -> str:
     """Freeze content-free displaced operations before a parent can be admitted."""
     slugs = tuple(str(item) for item in displaced_work if str(item).strip())
@@ -178,6 +179,12 @@ def _freeze_displaced_work(
             # a revision change after claim cannot reinterpret a queued child.
             "plugin_members": [dict(member) for member in plugin_members],
             "plugin_route": dict(plugin_route or {}),
+            # Unknown Stop recovery has a new immutable descriptor as well as an
+            # origin link.  That keeps the forever-reserved original and the
+            # fresh normal admission simultaneously live without weakening the
+            # one-live-owner descriptor index.
+            **({"recovery_origin_job_id": recovery_origin_job_id}
+               if recovery_origin_job_id else {}),
         },
         sort_keys=True,
         separators=(",", ":"),
@@ -475,6 +482,307 @@ class IntelRepository(BaseRepository):
             (reason or "Queued for later processing.", now, now, meeting_id, meeting_id),
         )
         return job_id
+
+    @staticmethod
+    def stop_handoff_planning_reference(meeting_id: str) -> str:
+        """Return the content-free planning reference for one live Meeting Stop."""
+        return f"meeting-deferred:{meeting_id}"
+
+    def stop_handoff_provider(
+        self,
+        *,
+        meeting_id: str | None = None,
+        transcript_hash: str | None = None,
+        displaced_work: Sequence[str] = (),
+        reason: str | None = None,
+    ) -> Any:
+        """Build the real queue-owned reserve-inert Stop provider.
+
+        A live Stop supplies its already-frozen Meeting predicate to ``freeze``.
+        Restart reconciliation needs only ``reconstruct`` and ``activate``, so it
+        deliberately creates this same provider without a freeze plan.  All three
+        callbacks use only the connection supplied by the bundle primitive.
+        """
+        from ..services.inference_parent_route_bundle_service import HandoffEvidenceProvider
+
+        plan = None
+        if meeting_id is not None or transcript_hash is not None or displaced_work:
+            if not meeting_id or not transcript_hash:
+                raise ValueError("Stop handoff requires meeting and transcript evidence")
+            plan = {
+                "meeting_id": str(meeting_id),
+                "transcript_hash": str(transcript_hash),
+                "displaced_work": tuple(str(item) for item in displaced_work if str(item).strip()),
+                "reason": str(reason or "Queued deferred meeting intelligence."),
+            }
+
+        def freeze(conn: Any, planning_reference: str, context: Mapping[str, Any]) -> Mapping[str, Any]:
+            if plan is None or planning_reference != self.stop_handoff_planning_reference(plan["meeting_id"]):
+                raise ValueError("Stop handoff freeze plan is unavailable")
+            return self._reserve_stop_handoff_in_transaction(
+                conn,
+                planning_reference=planning_reference,
+                command_id=str(context["command_id"]),
+                parent_operation_id=str(context["parent_operation_id"]),
+                bundle_id=str(context["bundle"]["id"]),
+                meeting_id=plan["meeting_id"],
+                transcript_hash=plan["transcript_hash"],
+                displaced_work=plan["displaced_work"],
+                reason=plan["reason"],
+            )
+
+        return HandoffEvidenceProvider(
+            "meeting-deferred-queue",
+            1,
+            freeze,
+            self._reconstruct_stop_handoff_evidence,
+            self._activate_stop_handoff_in_transaction,
+        )
+
+    @staticmethod
+    def _reconstruct_stop_handoff_evidence(conn: Any, evidence_ref: str) -> Mapping[str, Any]:
+        """Read the queue-owned reservation and activation marker only.
+
+        This deliberately does not inspect the handoff settlement table.  The
+        append-only activation event is the queue's independent lifecycle witness.
+        """
+        row = conn.execute(
+            "SELECT * FROM intel_jobs WHERE job_id=?", (str(evidence_ref),)
+        ).fetchone()
+        if row is None:
+            raise ValueError("Stop handoff reservation is missing")
+        marker = conn.execute(
+            """SELECT 1 FROM intel_job_attempts
+                 WHERE job_id=? AND event_kind='handoff_activated' LIMIT 1""",
+            (str(evidence_ref),),
+        ).fetchone()
+        status = str(row["status"])
+        active = marker is not None
+        if (active and status == "reserved") or (not active and status != "reserved"):
+            raise ValueError("Stop handoff queue lifecycle is inconsistent")
+        return {
+            "schema": "InferenceParentHandoffEvidence@1",
+            "planning_reference": IntelRepository.stop_handoff_planning_reference(
+                str(row["meeting_id"])
+            ),
+            "evidence_ref": str(row["job_id"]),
+            "evidence_sha256": str(row["work_descriptor_sha256"]),
+            "state": "active" if active else "reserved",
+        }
+
+    @staticmethod
+    def _activate_stop_handoff_in_transaction(conn: Any, evidence_ref: str) -> None:
+        """Mark a reserved handoff job active and make it normally claimable."""
+        row = conn.execute(
+            "SELECT * FROM intel_jobs WHERE job_id=?", (str(evidence_ref),)
+        ).fetchone()
+        if row is None or str(row["status"]) != "reserved":
+            raise ValueError("Stop handoff reservation cannot activate")
+        now = datetime.now().isoformat()
+        changed = conn.execute(
+            """UPDATE intel_jobs SET status='queued',lifecycle_posture='queued',
+                   updated_at=?,last_error=NULL WHERE job_id=? AND status='reserved'""",
+            (now, str(evidence_ref)),
+        )
+        if changed.rowcount != 1:
+            raise ValueError("Stop handoff activation lost its reservation")
+        conn.execute(
+            """INSERT INTO intel_job_attempts (
+                meeting_id,job_id,origin_job_id,claim_id,parent_operation_id,bundle_id,
+                event_kind,attempt,outcome,error,retry_at,created_at
+            ) VALUES (?,?,NULL,NULL,NULL,NULL,'handoff_activated',0,'activated',NULL,NULL,?)""",
+            (str(row["meeting_id"]), str(evidence_ref), now),
+        )
+
+    @staticmethod
+    def _reserve_stop_handoff_in_transaction(
+        conn: Any,
+        *,
+        planning_reference: str,
+        command_id: str,
+        parent_operation_id: str,
+        bundle_id: str,
+        meeting_id: str,
+        transcript_hash: str,
+        displaced_work: Sequence[str],
+        reason: str,
+    ) -> Mapping[str, Any]:
+        """Persist only an inert queue reservation inside the Stop transaction."""
+        now = datetime.now().isoformat()
+        # A live Stop runs before the final Meeting checkpoint.  Retain the
+        # immutable displaced slug set now; C1's existing normal claim converts
+        # it to the V3 bookmark-operation descriptor only after the checkpoint,
+        # rather than freezing a partial pre-save bookmark list.
+        work = json.dumps(list(displaced_work), separators=(",", ":"))
+        descriptor = _work_descriptor_sha256(meeting_id, transcript_hash, work)
+        # The command is already a durable Stop idempotency key.  Deriving the
+        # reservation identity from it prevents a fresh identity on callback
+        # replay while retaining no transcript bytes in the identity material.
+        job_id = _job_id(
+            meeting_id, transcript_hash, descriptor, f"handoff:{command_id}", None
+        )
+        conn.execute(
+            """INSERT INTO intel_jobs (
+                job_id,meeting_id,origin_job_id,work_descriptor_sha256,
+                transcript_hash,displaced_work,status,lifecycle_posture,
+                requested_at,updated_at,attempts,last_error
+            ) VALUES (?,?,?,?,?,?,'reserved','reserved',?,?,0,?)""",
+            (job_id, meeting_id, None, descriptor, transcript_hash, work, now, now, reason),
+        )
+        conn.execute(
+            """INSERT INTO intel_job_attempts (
+                meeting_id,job_id,origin_job_id,claim_id,parent_operation_id,bundle_id,
+                event_kind,attempt,outcome,error,retry_at,created_at
+            ) VALUES (?,?,NULL,NULL,?,?,'handoff_reserved',0,'reserved',NULL,NULL,?)""",
+            (meeting_id, job_id, parent_operation_id, bundle_id, now),
+        )
+        conn.execute(
+            """UPDATE meetings SET intel_status='queued',intel_status_detail=?,
+                   intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now')
+                 WHERE id=?""",
+            (reason, now, meeting_id),
+        )
+        return {
+            "schema": "InferenceParentHandoffEvidence@1",
+            "planning_reference": planning_reference,
+            "evidence_ref": job_id,
+            "evidence_sha256": descriptor,
+            "state": "reserved",
+        }
+
+    def pending_stop_handoff_commands(self) -> list[str]:
+        """Return this adopter's unsettled handoffs for normal queue recovery."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT h.command_id FROM inference_parent_stop_handoffs h
+                     LEFT JOIN inference_parent_stop_handoff_settlements s
+                       ON s.command_id=h.command_id
+                    WHERE h.evidence_provider_id='meeting-deferred-queue'
+                      AND h.evidence_provider_revision=1
+                      AND s.command_id IS NULL
+                    ORDER BY h.created_at,h.command_id"""
+            ).fetchall()
+        return [str(row["command_id"]) for row in rows]
+
+    def admit_unknown_stop_handoff_recoveries(self) -> int:
+        """Fresh-admit unknown Stop work without ever touching its reservation.
+
+        The original queue row remains ``reserved`` forever.  A distinct
+        descriptor and origin link make the local re-run ordinary queue work;
+        normal SERVICE route binding later enforces exact saved assignments for
+        any cross-boundary placement.
+        """
+        unknown = (
+            "dispatch_outcome_unknown", "physical_outcome_unknown", "effect_indeterminate"
+        )
+        now = datetime.now().isoformat()
+        created = 0
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                rows = conn.execute(
+                    """SELECT h.command_id,h.parent_operation_id,h.bundle_id,h.evidence_ref,
+                              j.meeting_id,j.transcript_hash,j.displaced_work,
+                              j.work_descriptor_sha256,j.attempts
+                         FROM inference_parent_stop_handoffs h
+                         JOIN intel_jobs j ON j.job_id=h.evidence_ref
+                         LEFT JOIN inference_parent_stop_handoff_settlements s
+                           ON s.command_id=h.command_id
+                        WHERE h.evidence_provider_id='meeting-deferred-queue'
+                          AND h.evidence_provider_revision=1
+                          AND s.command_id IS NULL
+                          AND NOT EXISTS (
+                              SELECT 1
+                                FROM inference_parent_stop_handoff_executions x
+                                JOIN inference_route_executions e ON e.id=x.execution_id
+                               WHERE x.command_id=h.command_id
+                                 AND e.state IN ('active','stopping')
+                          )
+                          AND EXISTS (
+                              SELECT 1
+                                FROM inference_parent_stop_handoff_executions x
+                                JOIN inference_route_executions e ON e.id=x.execution_id
+                               WHERE x.command_id=h.command_id
+                                 AND e.terminal_disposition IN (?,?,?)
+                          )
+                        ORDER BY h.created_at,h.command_id""",
+                    unknown,
+                ).fetchall()
+                for row in rows:
+                    old_job_id = str(row["evidence_ref"])
+                    existing = conn.execute(
+                        "SELECT job_id FROM intel_jobs WHERE origin_job_id=? LIMIT 1",
+                        (old_job_id,),
+                    ).fetchone()
+                    if existing is not None:
+                        continue
+                    try:
+                        raw = json.loads(str(row["displaced_work"] or "{}"))
+                    except (TypeError, ValueError):
+                        raw = {}
+                    if isinstance(raw, list):
+                        # The reservation deliberately keeps B-era slugs until
+                        # after Stop's final checkpoint. Unknown recovery occurs
+                        # later, so freeze concrete bookmark operations through
+                        # C1's established descriptor builder before fresh claim.
+                        recovery_work = _freeze_displaced_work(
+                            conn,
+                            str(row["meeting_id"]),
+                            tuple(str(item) for item in raw),
+                            recovery_origin_job_id=old_job_id,
+                        )
+                    else:
+                        if not isinstance(raw, dict):
+                            raw = {"schema": "MeetingDeferredIntelWorkDescriptor@4", "slugs": []}
+                        recovery_work = json.dumps(
+                            {**raw, "recovery_origin_job_id": old_job_id},
+                            sort_keys=True, separators=(",", ":"),
+                        )
+                    descriptor = _work_descriptor_sha256(
+                        str(row["meeting_id"]), str(row["transcript_hash"]), recovery_work,
+                    )
+                    fresh_job_id = _job_id(
+                        str(row["meeting_id"]), str(row["transcript_hash"]), descriptor,
+                        f"unknown-recovery:{row['command_id']}", old_job_id,
+                    )
+                    conn.execute(
+                        """INSERT INTO intel_jobs (
+                            job_id,meeting_id,origin_job_id,work_descriptor_sha256,
+                            transcript_hash,displaced_work,status,lifecycle_posture,
+                            requested_at,updated_at,attempts,last_error
+                        ) VALUES (?,?,?,?,?,?,'queued','queued',?,?,0,?)""",
+                        (fresh_job_id, str(row["meeting_id"]), old_job_id, descriptor,
+                         str(row["transcript_hash"]), recovery_work, now, now,
+                         "stop_handoff_outcome_unknown"),
+                    )
+                    conn.execute(
+                        """INSERT INTO intel_job_attempts (
+                            meeting_id,job_id,origin_job_id,claim_id,parent_operation_id,bundle_id,
+                            event_kind,attempt,outcome,error,retry_at,created_at
+                        ) VALUES (?,?,NULL,NULL,?,?,'handoff_outcome_unknown',?,'reserved',NULL,NULL,?)""",
+                        (str(row["meeting_id"]), old_job_id, str(row["parent_operation_id"]),
+                         str(row["bundle_id"]), int(row["attempts"]), now),
+                    )
+                    conn.execute(
+                        """INSERT INTO intel_job_attempts (
+                            meeting_id,job_id,origin_job_id,claim_id,parent_operation_id,bundle_id,
+                            event_kind,attempt,outcome,error,retry_at,created_at
+                        ) VALUES (?,?,?,NULL,NULL,NULL,'handoff_unknown_recovery',0,'queued',NULL,NULL,?)""",
+                        (str(row["meeting_id"]), fresh_job_id, old_job_id, now),
+                    )
+                    conn.execute(
+                        """UPDATE meetings SET intel_status='queued',
+                               intel_status_detail='stop_handoff_outcome_unknown',
+                               intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now')
+                             WHERE id=?""",
+                        (now, str(row["meeting_id"])),
+                    )
+                    created += 1
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+        return created
 
     def get_bound_claimed_intel_job(self) -> Optional[IntelJob]:
         """Return only a stale bound owner eligible for stored-ID recovery.

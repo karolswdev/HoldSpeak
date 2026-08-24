@@ -93,9 +93,12 @@ class PersistenceMixin:
                     state.id,
                     transcript_hash=state.transcript_hash(),
                     reason=state.intel_status_detail,
-                    # HS-131-08: a save that follows the stop handoff must not
-                    # erase the structured work that handoff displaced.
+                    # C3's reserve-inert provider intentionally retains Stop's
+                    # legacy slug payload until this final checkpoint. Replaying
+                    # it as the historic handoff form preserves that active
+                    # evidence row for C1's ordinary bound-claim conversion.
                     displaced_work=getattr(self, "_intel_displaced_work", ()) or (),
+                    legacy_displaced_work=bool(getattr(self, "_intel_displaced_work", ())),
                 )
                 intel_job_enqueued = True
             log.info(f"Meeting saved to database: {state.id}")

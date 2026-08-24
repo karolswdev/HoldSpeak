@@ -189,19 +189,19 @@ def test_recovery_converges_prefence_and_postfence_process_loss_to_one_aftercare
         db, _broker, session = _routed_recovery_session(tmp_path / point, monkeypatch)
         state = session.start()
         state.segments.append(TranscriptSegment("aftercare", "Me", 0.0, 1.0))
-        original_fence = InferenceParentRouteBundleService.fence_cancel
-        original_enqueue = db.intel.enqueue_intel_job
+        original_handoff = InferenceParentRouteBundleService.request_stop_handoff
+        original_reserve = db.intel._reserve_stop_handoff_in_transaction
         if point == "before-fence":
             monkeypatch.setattr(
                 InferenceParentRouteBundleService,
-                "fence_cancel",
+                "request_stop_handoff",
                 lambda *_args, **_kwargs: (_ for _ in ()).throw(SystemExit("before fence")),
             )
         else:
             monkeypatch.setattr(
                 db.intel,
-                "enqueue_intel_job",
-                lambda *_args, **_kwargs: (_ for _ in ()).throw(SystemExit("inside fence")),
+                "_reserve_stop_handoff_in_transaction",
+                lambda *_args, **_kwargs: (_ for _ in ()).throw(SystemExit("inside handoff")),
             )
         with pytest.raises(SystemExit):
             session.stop()
@@ -210,8 +210,8 @@ def test_recovery_converges_prefence_and_postfence_process_loss_to_one_aftercare
         assert _parent_state(db, session._route_bundle["id"]) == "OPEN"
         with db._connection() as conn:
             assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 0
-        monkeypatch.setattr(InferenceParentRouteBundleService, "fence_cancel", original_fence)
-        monkeypatch.setattr(db.intel, "enqueue_intel_job", original_enqueue)
+        monkeypatch.setattr(InferenceParentRouteBundleService, "request_stop_handoff", original_handoff)
+        monkeypatch.setattr(db.intel, "_reserve_stop_handoff_in_transaction", original_reserve)
         recovered = db.meetings.recover_capture(state.id)
         assert recovered is not None and recovered.capture_status == "recovered"
         with db._connection() as conn:
@@ -229,25 +229,26 @@ def test_stop_persists_fence_retry_obligation_and_recovery_clears_it(tmp_path, m
     db, _broker, session = _routed_recovery_session(tmp_path, monkeypatch)
     state = session.start()
     state.segments.append(TranscriptSegment("aftercare", "Me", 0.0, 1.0))
-    original = InferenceParentRouteBundleService.fence_cancel
+    original = InferenceParentRouteBundleService.request_stop_handoff
     calls = []
 
     def fail(*_args, **_kwargs):
         calls.append(1)
-        raise RuntimeError("fence fault")
+        raise RuntimeError("handoff fault")
 
-    monkeypatch.setattr(InferenceParentRouteBundleService, "fence_cancel", fail)
+    monkeypatch.setattr(InferenceParentRouteBundleService, "request_stop_handoff", fail)
     session.stop()
     assert len(calls) == 2
     with db._connection() as conn:
         marker = conn.execute(
             "SELECT route_fence_pending,route_fence_error FROM meetings WHERE id=?", (state.id,)
         ).fetchone()
-        assert tuple(marker)[0] == 1 and "fence fault" in tuple(marker)[1]
-        assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 1
+        assert tuple(marker)[0] == 1 and "handoff fault" in tuple(marker)[1]
+        # C3 writes no runnable legacy aftercare when the atomic handoff fails.
+        assert conn.execute("SELECT COUNT(*) FROM intel_jobs WHERE meeting_id=?", (state.id,)).fetchone()[0] == 0
     assert _parent_state(db, session._route_bundle["id"]) == "OPEN"
 
-    monkeypatch.setattr(InferenceParentRouteBundleService, "fence_cancel", original)
+    monkeypatch.setattr(InferenceParentRouteBundleService, "request_stop_handoff", original)
     assert db.meetings.recover_capture(state.id) is not None
     with db._connection() as conn:
         assert conn.execute("SELECT route_fence_pending FROM meetings WHERE id=?", (state.id,)).fetchone()[0] == 0
@@ -265,16 +266,16 @@ def test_pending_fence_aftercare_is_not_claimable_until_recovery_fences(tmp_path
     db, _broker, session = _routed_recovery_session(tmp_path, monkeypatch)
     state = session.start()
     state.segments.append(TranscriptSegment("aftercare", "Me", 0.0, 1.0))
-    original = InferenceParentRouteBundleService.fence_cancel
+    original = InferenceParentRouteBundleService.request_stop_handoff
     monkeypatch.setattr(
         InferenceParentRouteBundleService,
-        "fence_cancel",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("fence fault")),
+        "request_stop_handoff",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("handoff fault")),
     )
     session.stop()
 
     assert db.intel.claim_next_intel_job() is None
-    monkeypatch.setattr(InferenceParentRouteBundleService, "fence_cancel", original)
+    monkeypatch.setattr(InferenceParentRouteBundleService, "request_stop_handoff", original)
     assert db.meetings.recover_capture(state.id) is not None
     assert _parent_state(db, session._route_bundle["id"]) != "OPEN"
     first_claim = db.intel.claim_next_intel_job()
