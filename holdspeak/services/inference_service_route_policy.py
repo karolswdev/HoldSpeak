@@ -120,10 +120,24 @@ class ServiceRoutePolicyRegistry:
                 "Service operation authority does not match its route policy.",
                 code="inference_service_route_policy_denied",
             )
-        material = definition.material(self._capabilities)
+        declared_material = definition.material(self._capabilities)
         capability = next(
-            item for item in material["capabilities"] if item["id"] == capability_id
+            item for item in declared_material["capabilities"] if item["id"] == capability_id
         )
+        # Evidence names exactly the member being frozen.  A wake parent can
+        # therefore carry provider stages at their own capability boundaries
+        # without widening its local-only transcribe/preload members.
+        capability_definition = self._capabilities.require(capability_id)
+        allowed_boundaries = [
+            boundary
+            for boundary in declared_material["allowed_boundaries"]
+            if boundary in capability_definition.allowed_boundaries
+        ]
+        material = {
+            **declared_material,
+            "capabilities": [capability],
+            "allowed_boundaries": allowed_boundaries,
+        }
         return {
             "schema": "InferenceFeaturePrincipalPolicyEvidence@1",
             "principal_kind": "service",
@@ -136,7 +150,7 @@ class ServiceRoutePolicyRegistry:
             "allowed_operations": material["allowed_operations"],
             "parent_kind": definition.parent_kind,
             "capability": capability,
-            "allowed_boundaries": list(definition.allowed_boundaries),
+            "allowed_boundaries": list(allowed_boundaries),
             "assignment_sources": list(definition.assignment_sources),
         }
 
@@ -194,8 +208,21 @@ def builtin_service_route_policy_registry(
                         ("inference.cancel", 1),
                     }
                 ),
-                capability_ids=("speech.transcribe", "speech.preload"),
-                allowed_boundaries=("local",),
+                # Wake freezes the same provider-backed stages that its normal
+                # dictation tail can dispatch.  The bundle still includes only
+                # the stages selected by this exact Config snapshot; this closed
+                # policy is the SERVICE-side authority for those routed members.
+                capability_ids=(
+                    "speech.transcribe",
+                    "speech.preload",
+                    "speech.intent_classify",
+                    "speech.rewrite",
+                ),
+                # The policy may carry the boundaries its provider members
+                # permit.  speech.transcribe and speech.preload remain local-only
+                # because their capability definitions independently refuse every
+                # other boundary during the same route admission.
+                allowed_boundaries=("local", "mesh", "private_network", "cloud"),
             ),
             ServiceRoutePolicyDefinition(
                 id="local-model-preload@1",

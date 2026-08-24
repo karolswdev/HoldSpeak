@@ -56,7 +56,7 @@ this whole file before touching anything.
   completed runs are trustworthy. Census/snapshot regens are the LAST
   act of any worker round (anchors move with every edit).
 
-## 2. What is DONE and COMMITTED (fourteen gate commits)
+## 2. What is DONE and COMMITTED (fifteen gate commits)
 
 Branch `feat/hs143-08-meeting-adoption`, all on top of main `89d232f3`.
 
@@ -122,8 +122,18 @@ Branch `feat/hs143-08-meeting-adoption`, all on top of main `89d232f3`.
     admission seam; warm-on-start test moved onto a real production
     admission path). New proof file
     tests/unit/test_phase143_speech_lifecycle_adoption.py (8 lifecycle
-    cases). **PHASE D STRUCTURALLY COMPLETE** — capped counsel pass on
-    the whole phase pending.
+    cases). Committed `5aadd02a`.
+13. **Phase D counsel fix round** (the commit carrying this handover
+    revision) — Sol's capped post-commit pass (record in the counsel
+    file) found two ordinary-path defects, both fixed: D1 default cold
+    wake was DEAD (pinned-on default pipeline vs closed wake policy;
+    old proof masked it by disabling the pipeline) → wake-capture@1
+    authorizes the routed wake pipeline tail (amendment 8-bis), routed
+    provider execution resolves its frozen deployment, new proof runs
+    ordinary cold wake with default pipeline ON to the configured wake
+    output; D2 deferred faster-whisper warm lied forever as "warming"
+    → deferral settles to not_loaded, proven on the production runtime.
+    **PHASE D RATIFIED-WITH-NOTES — CLOSED.**
 
 Counsel records (verbatim, with orchestrator dispositions):
 `assets/story-08-c1-checkpoint-counsel-round1.md` (5 rounds + owner
@@ -135,10 +145,11 @@ with verified file:line evidence in
 findings + dispositions). Verification ledger sweep section:
 `assets/story-08-tranche-ac-verification-ledger.md`.
 
-Last clean sweep (slice-2 tree): **6435 passed / zero branch-new**
-(66 inherited-baseline failures + sigkill process-input and
-refinement-recovers-owner xdist load flakes, each serial-green ×2;
-from 6314 passing at the restart-session start).
+Last clean sweep (Phase D ratified tree): **6432 passed / zero
+branch-new** (68 inherited-baseline failures + 4 known xdist load
+flakes — glass e2e, delivery-campaign ×2, device-recording-tick —
+each serial-green ×2; from 6314 passing at the restart-session
+start).
 
 ## 3. Rulings RESOLVED (2026-08-24) and open ledger
 
@@ -164,20 +175,18 @@ sigkill process-input, github-enrichment preview.
 
 ## 4. What REMAINS for Story 08
 
-1. Capped Sol counsel pass on Phase D (both slices) — one ruling +
-   one fix round max, bar stated.
-2. Phase E — background adopters (Rails observer → Cadence → Decision
+1. Phase E — background adopters (Rails observer → Cadence → Decision
    promotion → Delivery PR review) onto the router.
-3. Phase F — migration cleanup (legacy authority removal; the design's
+2. Phase F — migration cleanup (legacy authority removal; the design's
    compatibility cutover; the deferred lexical-punctuation stance
    stays future/non-assignable).
-4. Story 08 close: full-suite sweep, `dw evidence capture` of the real
+3. Story 08 close: full-suite sweep, `dw evidence capture` of the real
    verification, story flip to done WITH evidence in the same commit,
    phase-status/README cadence updates.
-5. Then Stories 09–14 remain for the phase (tools, agents/workbenches,
+4. Then Stories 09–14 remain for the phase (tools, agents/workbenches,
    HTTP/MCP sync, Model Library UI, Assignments UI, chaos glass) — not
    this handover's scope.
-6. Push + PR ONLY when the owner says so.
+5. Push + PR ONLY when the owner says so.
 
 ## 5. The final outcome (what "done" means)
 

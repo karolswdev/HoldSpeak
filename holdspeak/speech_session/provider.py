@@ -115,7 +115,38 @@ class ProviderAdmission:
         return bool(self.plan is not None and self.plan.has(capability))
 
     def revision(self, capability: str) -> str:
-        return str(self.plan.primary(capability))
+        """Return the deployment revision frozen for this provider capability.
+
+        Phase-D bundle members are the authority for routed provider work.  Their
+        route plans deliberately replace the historical session-plan sentinel, so
+        provider construction must read the member's frozen deployment rather than
+        attempting to resolve ``routed:<capability>`` as though it were a legacy
+        deployment ID.
+        """
+        routed = self.routed_routes.get(capability)
+        if routed is None:
+            return str(self.plan.primary(capability))
+        with self.broker.database._connection() as conn:
+            row = conn.execute(
+                "SELECT deployment_revision_id FROM inference_route_plan_entries "
+                "WHERE plan_id=? ORDER BY route_leg_ordinal LIMIT 1",
+                (str(routed["id"]),),
+            ).fetchone()
+        if row is None:
+            raise SpeechSessionRefused(ROUTED_PROVIDER_ROUTE_MISSING, capability)
+        return str(row["deployment_revision_id"])
+
+    def deployment(self, capability: str) -> Any:
+        """Resolve the immutable deployment object for one frozen provider leg."""
+        routed = self.routed_routes.get(capability)
+        if routed is None:
+            return self.plan.deployment(self.revision(capability))
+        from ..deployment_revisions import resolve_deployment_revision
+
+        revision = resolve_deployment_revision(self.broker.database, self.revision(capability))
+        if revision is None:
+            raise SpeechSessionRefused("deployment_revision_unknown", capability)
+        return revision
 
     @property
     def egress_boundary(self) -> str:
@@ -167,7 +198,7 @@ class ProviderAdmission:
         """
         if str(getattr(runtime, "backend", "")) == "mesh_relay":
             return None
-        revision = self.plan.deployment(self.revision(capability))
+        revision = self.deployment(capability)
         if revision is None:
             return runtime
         from .revision_target import agrees, ensure_rebindable
@@ -215,7 +246,7 @@ class ProviderAdmission:
         from ..kernel.dispatch_context import dispatch_context_of, require_dispatch_context
         from .revision_target import bound_target
 
-        revision = self.plan.deployment(revision_id)
+        revision = self.deployment(capability)
         with self._lock:
             cached = self._targets.get(key)
         if cached is not None:

@@ -143,10 +143,6 @@ class _Host:
     def _mark_first_dictation(self) -> None:
         return None
 
-    def _maybe_run_dictation_pipeline(self, text: str, **kwargs: Any) -> str:
-        return text
-
-
 def _build_host(
     tmp_path: Path,
     monkeypatch,
@@ -497,19 +493,42 @@ def _production_cold_mlx_transcriber(monkeypatch):
     return transcriber, physical_loads
 
 
-def test_phase_d_cold_wake_derives_one_preload_from_its_frozen_service_route(
+def test_phase_d_default_cold_wake_runs_its_complete_routed_bundle(
     tmp_path, monkeypatch
 ):
-    """R2: a cold normal wake owns one local preload, then one transcript."""
+    """D1/R2: default Config wake owns its cold lifecycle and routed tail."""
     db, _broker, host, _unused = _build_host(tmp_path, monkeypatch, legacy=False)
     host.config.wake_word.enabled = True
-    # This ordinary wake configuration has no configured provider-backed tail:
-    # wake-capture@1 is intentionally closed to its two speech capabilities.
-    host.config.dictation.pipeline.enabled = False
+    # Keep the normal Config state intact: the pinned-on dictation pipeline
+    # selects intent-router.  _build_host now composes the production pipeline
+    # mixin rather than a test-only no-op, so wake reaches the same tail seam as
+    # the product action.
+    assert host.config.dictation.pipeline.enabled is True
+    assert host.config.dictation.pipeline.stages == ["intent-router", "kb-enricher"]
+    # Use the production pipeline's real server collaborator too. It is not
+    # started (wake needs no HTTP listener), but its production stores make the
+    # configured tail run instead of short-circuiting on ``server is None``.
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    host.server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=lambda _text: None,
+            on_stop=lambda: None,
+            get_state=lambda: {},
+        )
+    )
     transcriber, physical_loads = _production_cold_mlx_transcriber(monkeypatch)
     host.transcriber = transcriber
 
     host._transcribe_wake(np.full(16000, AUDIO_SENTINEL, dtype=np.float32))
+
+    # The normal wake tail publishes its configured preview output after the
+    # production dictation-pipeline seam, rather than a test host returning the
+    # transcript directly.
+    assert len(host.wake_previews) == 1
+    preview = next(iter(host.wake_previews.values()))
+    assert preview["transcript"] == TEXT_SENTINEL
+    assert preview["text"] == TEXT_SENTINEL
 
     parent = _parents(db, "wake.session")[0]
     assert (parent["principal_kind"], parent["principal_identity"]) == (
@@ -540,7 +559,7 @@ def test_phase_d_cold_wake_derives_one_preload_from_its_frozen_service_route(
             ("capability:speech.preload",),
         ).fetchone()[0]
     assert [row["capability_id"] for row in members] == [
-        "speech.transcribe", "speech.preload"
+        "speech.transcribe", "speech.intent_classify", "speech.preload"
     ]
     assert [tuple(row) for row in executions] == [
         ("speech.preload", "succeeded"), ("speech.transcribe", "succeeded")
@@ -630,6 +649,98 @@ def test_phase_d_faster_whisper_constructs_after_frozen_local_route_then_transcr
         ).fetchone()[0]
     assert boundary == "local"
     session.close("succeeded")
+
+
+def test_phase_d_faster_whisper_deferred_warm_settles_before_first_speak_to_fill(
+    tmp_path, monkeypatch
+):
+    """D2: a constructor-inseparable warm defers honestly, then capture owns it."""
+    import sys
+    from types import ModuleType, SimpleNamespace
+
+    import holdspeak.web_runtime as web_runtime
+
+    db, _broker, host, _impl = _build_host(
+        tmp_path, monkeypatch, legacy=False, backend="faster-whisper"
+    )
+    host.config.model.warm_on_start = True
+    constructed: list[dict[str, Any]] = []
+    audio_calls: list[int] = []
+    external = ModuleType("faster_whisper")
+
+    class WhisperModel:
+        def __init__(self, model_name: str, *, device: str, compute_type: str) -> None:
+            parents = _parents(db, "dictation.session")
+            with db._connection() as conn:
+                bundled = conn.execute(
+                    "SELECT count(*) FROM inference_parent_route_bundle_members"
+                ).fetchone()[0]
+            constructed.append(
+                {
+                    "model_name": model_name,
+                    "device": device,
+                    "compute_type": compute_type,
+                    "parents_before_construction": len(parents),
+                    "bundle_members_before_construction": bundled,
+                }
+            )
+
+        def transcribe(self, audio: Any, **_kwargs: Any) -> tuple[list[Any], Any]:
+            audio_calls.append(int(np.asarray(audio).size))
+            return [SimpleNamespace(text=TEXT_SENTINEL)], SimpleNamespace()
+
+    external.WhisperModel = WhisperModel
+    monkeypatch.setitem(sys.modules, "faster_whisper", external)
+    real_available = __import__("holdspeak.transcribe", fromlist=["_module_available"])._module_available
+    monkeypatch.setattr(
+        "holdspeak.transcribe._module_available",
+        lambda module: True if module == "faster_whisper" else real_available(module),
+    )
+
+    # This is the real WebRuntime against the migrated production Database. Its
+    # background warm has no parent and must defer before the external library
+    # constructor, route execution, or receipt can exist.
+    runtime = web_runtime.WebRuntime(no_open=True, register_signal_handlers=False)
+    runtime._warm_transcriber_in_background()
+    until = time.monotonic() + 5.0
+    while runtime.runtime_status["transcription_status"] == "warming" and time.monotonic() < until:
+        time.sleep(0.01)
+    assert runtime.runtime_status["transcription_status"] == "not_loaded"
+    assert constructed == []
+    assert _parents(db) == []
+    assert _operations(db, name="inference.invoke") == []
+    with db._connection() as conn:
+        assert conn.execute("SELECT count(*) FROM inference_route_executions").fetchone()[0] == 0
+        assert conn.execute("SELECT count(*) FROM kernel_receipts").fetchone()[0] == 0
+
+    # The ordinary browser speak-to-fill admits the parent and complete frozen
+    # local route first. Only then may faster-whisper's inseparable constructor
+    # run; its audio call remains one routed speech.transcribe child.
+    assert runtime.transcribe_audio(np.full(8000, AUDIO_SENTINEL, dtype=np.float32)) == TEXT_SENTINEL
+    assert constructed == [
+        {
+            "model_name": "base",
+            "device": "cpu",
+            "compute_type": "int8",
+            "parents_before_construction": 1,
+            "bundle_members_before_construction": 3,
+        }
+    ]
+    assert audio_calls == [8000]
+    children = _operations(db, name="inference.invoke")
+    assert len(children) == 1
+    with db._connection() as conn:
+        execution = conn.execute(
+            """SELECT p.capability_id,e.terminal_outcome,a.boundary
+                 FROM inference_route_executions e
+                 JOIN inference_route_plans p ON p.id=e.route_plan_id
+                 JOIN inference_route_attempts a ON a.execution_id=e.id
+                 JOIN kernel_operations o ON o.operation_id=a.child_operation_id
+                 WHERE o.operation_id=?""",
+            (children[0]["operation_id"],),
+        ).fetchone()
+    assert tuple(execution) == ("speech.transcribe", "succeeded", "local")
+    assert (_receipt(db, children[0]["operation_id"]) or {})["outcome"] == "succeeded"
 
 
 def test_disabled_wake_configuration_admits_nothing(tmp_path, monkeypatch):

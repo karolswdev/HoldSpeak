@@ -329,3 +329,32 @@ invocation remains authorized only inside the routed
 `speech.transcribe` child. Slice 1 does not wrap faster-whisper
 construction in `speech.preload@1`; the constructor seam is retained as
 a ledger note.
+
+---
+
+# Phase D capped pass fix round (2026-08-24): amendment 8 amended
+
+Sol's post-commit capped pass on Phase D found the default cold-wake
+action dead (the pinned-on default Dictation Pipeline made wake
+admission freeze `speech.intent_classify`, which amendment 8's exact
+operation set refused). Orchestrator disposition (visible amendment,
+owner may overrule; full record in `story-08-phase-d-counsel.md`):
+
+### 8-bis. Wake authorizes its routed pipeline tail
+
+`wake-capture@1` authorizes `speech.transcribe@1`, the nonassignable
+derived `speech.preload@1` lifecycle member, AND the routed
+dictation-pipeline capabilities the wake flow dispatches
+(`speech.intent_classify`, `speech.rewrite`), capability-only
+assignment lookup. `speech.transcribe`/`speech.preload` remain
+local-only through their capability definitions (amendment 7);
+provider stages keep the boundaries their capabilities permit, as on
+the owner dictation path. The bundle includes only the stages selected
+by the exact Config snapshot; a wake parent never mixes a bundled
+member with a plain legacy provider child (amendment 10 holds). The
+rest of amendment 8 (same-transaction derived P=1 preload, no
+`speech.preload` assignment, no OWNER synthesis) is unchanged.
+
+Also from the pass: a lawfully deferred parentless warm settles
+transcription status truthfully (`not_loaded`), never a permanent
+`warming`.

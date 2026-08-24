@@ -109,7 +109,7 @@ holdspeak/meeting_session/intel_routed_children.py:222|IntelRoutedChildMixin._ad
 holdspeak/meeting_session/intel_routed_children.py:267|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
 holdspeak/meeting_session/intel_routed_children.py:297|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
 holdspeak/meeting_session/transcribe_loop.py:84|TranscribeLoopMixin._transcribe_audio|transcribe|call
-holdspeak/plugins/dictation/assembly.py:327|_try_build_runtime|MeshRelayRuntime|call
+holdspeak/plugins/dictation/assembly.py:330|_try_build_runtime|MeshRelayRuntime|call
 holdspeak/plugins/dictation/builtin/intent_router.py:170|IntentRouter.run|classify|call
 holdspeak/plugins/dictation/builtin/project_rewriter.py:203|ProjectRewriter.run|rewrite|ref
 holdspeak/plugins/dictation/builtin/project_rewriter.py:204|ProjectRewriter.run|rewrite|ref
@@ -136,16 +136,16 @@ holdspeak/runtime/dictation_capture.py:108|DictationCaptureMixin._transcribe_and
 holdspeak/runtime/dictation_capture.py:395|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
 holdspeak/runtime/dictation_capture.py:406|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
 holdspeak/runtime/wake_glue.py:368|WakeWordGlueMixin._transcribe_wake_admitted|transcribe|call
-holdspeak/speech_session/provider.py:194|ProviderAdmission.dispatch_through|bound_target|call
-holdspeak/speech_session/provider.py:232|ProviderAdmission.target|bound_target|call
-holdspeak/speech_session/provider.py:409|ProviderAdmission.rewrite.call|rewrite|call
-holdspeak/speech_session/provider.py:450|ProviderAdmission.punctuate.call|rewrite|call
-holdspeak/speech_session/provider.py:502|_ClassifyLeg.run.call|classify|call
-holdspeak/speech_session/provider.py:532|_RoutedSpeechAdapter.dispatch|run_prompt|call
-holdspeak/speech_session/provider.py:546|_RoutedSpeechAdapter.dispatch|run_prompt|call
-holdspeak/speech_session/provider.py:621|_mesh_bound|MeshRelayRuntime|call
-holdspeak/speech_session/provider.py:670|AdmittedDictationRuntime.classify|classify|call
-holdspeak/speech_session/provider.py:677|AdmittedDictationRuntime.rewrite|rewrite|call
+holdspeak/speech_session/provider.py:225|ProviderAdmission.dispatch_through|bound_target|call
+holdspeak/speech_session/provider.py:263|ProviderAdmission.target|bound_target|call
+holdspeak/speech_session/provider.py:440|ProviderAdmission.rewrite.call|rewrite|call
+holdspeak/speech_session/provider.py:481|ProviderAdmission.punctuate.call|rewrite|call
+holdspeak/speech_session/provider.py:533|_ClassifyLeg.run.call|classify|call
+holdspeak/speech_session/provider.py:563|_RoutedSpeechAdapter.dispatch|run_prompt|call
+holdspeak/speech_session/provider.py:577|_RoutedSpeechAdapter.dispatch|run_prompt|call
+holdspeak/speech_session/provider.py:652|_mesh_bound|MeshRelayRuntime|call
+holdspeak/speech_session/provider.py:701|AdmittedDictationRuntime.classify|classify|call
+holdspeak/speech_session/provider.py:708|AdmittedDictationRuntime.rewrite|rewrite|call
 holdspeak/speech_session/revision_target.py:143|rebind|OpenAICompatibleRuntime|call
 holdspeak/speech_session/revision_target.py:165|bound_target|rebind|call
 holdspeak/target_profile.py:191|apply_model_assisted_target|rewrite|ref
@@ -446,16 +446,16 @@ holdspeak/kernel/prompt_adapter.py:14|CanonicalPromptAdapter.dispatch|run_prompt
 holdspeak/commands/dictation.py:165|_cmd_dry_run|build_pipeline|call
 holdspeak/dictation_runner.py:342|run_pipeline_corrections_only|build_pipeline|call
 holdspeak/dictation_runner.py:534|run_dictation_pipeline|build_pipeline|call
-holdspeak/plugins/dictation/assembly.py:327|_try_build_runtime|MeshRelayRuntime|call
+holdspeak/plugins/dictation/assembly.py:330|_try_build_runtime|MeshRelayRuntime|call
 holdspeak/plugins/dictation/runtime.py:215|_default_factories._llama_factory|LlamaCppRuntime|call
 holdspeak/plugins/dictation/runtime.py:222|_default_factories._openai_factory|OpenAICompatibleRuntime|call
 holdspeak/plugins/dictation/runtime_llama_cpp.py:74|LlamaCppRuntime._resolve_factories|Llama|ref
 holdspeak/plugins/dictation/runtime_mesh_relay.py:106|MeshRelayRuntime._run|run_prompt|call
 holdspeak/plugins/dictation/runtime_mesh_relay.py:52|MeshRelayRuntime.load|MeshRelayIntel|call
 holdspeak/plugins/dictation/runtime_openai_compatible.py:69|OpenAICompatibleRuntime.load|OpenAI|ref
-holdspeak/speech_session/provider.py:194|ProviderAdmission.dispatch_through|bound_target|call
-holdspeak/speech_session/provider.py:232|ProviderAdmission.target|bound_target|call
-holdspeak/speech_session/provider.py:621|_mesh_bound|MeshRelayRuntime|call
+holdspeak/speech_session/provider.py:225|ProviderAdmission.dispatch_through|bound_target|call
+holdspeak/speech_session/provider.py:263|ProviderAdmission.target|bound_target|call
+holdspeak/speech_session/provider.py:652|_mesh_bound|MeshRelayRuntime|call
 holdspeak/speech_session/revision_target.py:143|rebind|OpenAICompatibleRuntime|call
 holdspeak/speech_session/revision_target.py:165|bound_target|rebind|call
 holdspeak/web/routes/dictation/_helpers.py:786|_run_dictation_dry_run_text|build_pipeline|call
@@ -488,15 +488,15 @@ holdspeak/plugins/dictation/builtin/intent_router.py:170|IntentRouter.run|classi
 holdspeak/plugins/dictation/runtime_counters.py:227|CountingRuntime.classify|classify|call
 holdspeak/plugins/dictation/runtime_llama_cpp.py:134|LlamaCppRuntime.classify|create_completion|call
 holdspeak/plugins/dictation/runtime_openai_compatible.py:143|OpenAICompatibleRuntime.classify|chat.completions.create|call
-holdspeak/speech_session/provider.py:502|_ClassifyLeg.run.call|classify|call
-holdspeak/speech_session/provider.py:532|_RoutedSpeechAdapter.dispatch|run_prompt|call
-holdspeak/speech_session/provider.py:670|AdmittedDictationRuntime.classify|classify|call
+holdspeak/speech_session/provider.py:533|_ClassifyLeg.run.call|classify|call
+holdspeak/speech_session/provider.py:563|_RoutedSpeechAdapter.dispatch|run_prompt|call
+holdspeak/speech_session/provider.py:701|AdmittedDictationRuntime.classify|classify|call
 """),
     _group(ProposedRoute("speech.preload", "speech_session.transcription", "InferenceRunner via TranscriptionAdmission"), """
 holdspeak/transcribe.py:321|_MlxTranscriber._model_holder_get._run|get_model|call
 """),
     _group(ProposedRoute("speech.punctuate", "speech_session", "InferenceRunner admitted child"), """
-holdspeak/speech_session/provider.py:450|ProviderAdmission.punctuate.call|rewrite|call
+holdspeak/speech_session/provider.py:481|ProviderAdmission.punctuate.call|rewrite|call
 """),
     _group(ProposedRoute("speech.rewrite", "speech_session", "InferenceRunner admitted child"), """
 holdspeak/plugins/dictation/builtin/project_rewriter.py:203|ProjectRewriter.run|rewrite|ref
@@ -507,9 +507,9 @@ holdspeak/plugins/dictation/runtime_counters.py:272|CountingRuntime.rewrite|rewr
 holdspeak/plugins/dictation/runtime_counters.py:277|CountingRuntime.rewrite|rewrite|call
 holdspeak/plugins/dictation/runtime_llama_cpp.py:162|LlamaCppRuntime.rewrite|create_completion|call
 holdspeak/plugins/dictation/runtime_openai_compatible.py:196|OpenAICompatibleRuntime.rewrite|chat.completions.create|call
-holdspeak/speech_session/provider.py:409|ProviderAdmission.rewrite.call|rewrite|call
-holdspeak/speech_session/provider.py:546|_RoutedSpeechAdapter.dispatch|run_prompt|call
-holdspeak/speech_session/provider.py:677|AdmittedDictationRuntime.rewrite|rewrite|call
+holdspeak/speech_session/provider.py:440|ProviderAdmission.rewrite.call|rewrite|call
+holdspeak/speech_session/provider.py:577|_RoutedSpeechAdapter.dispatch|run_prompt|call
+holdspeak/speech_session/provider.py:708|AdmittedDictationRuntime.rewrite|rewrite|call
 """),
     _group(ProposedRoute("speech.target_classify", "target_profile", "InferenceRunner admitted child"), """
 holdspeak/target_profile.py:191|apply_model_assisted_target|rewrite|ref

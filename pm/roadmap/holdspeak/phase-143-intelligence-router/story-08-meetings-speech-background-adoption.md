@@ -145,6 +145,25 @@ covers the design's eight lifecycle cases. Sweep **6435 passed / zero
 branch-new** (66 inherited + sigkill and refinement-recovers-owner
 xdist load flakes, each serial-green ×2). Next: Phase E, then Phase F.
 
+**Phase D counsel pass (2026-08-24): RATIFIED-WITH-NOTES.** Sol's
+capped post-commit pass on both slices verified amendments 1–11 and
+found two ordinary-path defects, fixed in the single permitted round:
+the default cold-wake action was DEAD on a migrated install (the
+pinned-on default Dictation Pipeline made wake admission freeze
+`speech.intent_classify`, which `wake-capture@1` refused — the old
+proof had masked it by disabling the pipeline) — ruled direction: wake
+keeps its product behavior, the policy now authorizes the routed wake
+pipeline tail (amendment 8-bis), and the new proof runs the ordinary
+cold wake with the default pipeline ON through to the configured wake
+output with zero legacy provider children; and a lawfully deferred
+faster-whisper warm lied forever as "warming" — deferral now settles
+to `not_loaded`, proven with the production runtime on a migrated DB.
+Ledger: remote speech transport; faster-whisper constructor seam;
+continuity-test `__new__` proof debt. Confirming sweep **6432 passed /
+zero branch-new** (68 inherited + 4 known xdist load flakes, each
+serial-green ×2). **Phase D is closed.** Next: Phase E (background
+adopters), then Phase F.
+
 ## Problem
 
 MeetingIntelPlan and SpeechPlan are the proven ordered-revision pattern but

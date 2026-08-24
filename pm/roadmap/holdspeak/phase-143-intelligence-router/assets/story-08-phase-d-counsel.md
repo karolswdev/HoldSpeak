@@ -231,3 +231,109 @@ counsel round—ship.
   local-only exception, seam recorded.
 - ONE fix round dispatched to a Terra worker; orchestrator owns the
   full-suite sweep afterward. No further counsel round.
+
+---
+
+# Phase D capped counsel pass (Sol, 2026-08-24, post-commit — both slices)
+
+Fresh Sol session scoped to Phase D at `5aadd02a`. Verified amendments
+1–11 in the committed code with its own probes and the four proof
+files (79 passed, isolated HOME). Verdict: **ONE FIX ROUND REQUIRED —
+two ordinary-path findings; then RATIFY-WITH-NOTES and ship.**
+
+## Finding D1 — The default cold-wake action is dead after migration
+
+Ordinary action: fresh migrated install, default Dictation Pipeline
+unchanged (`enabled=True`, stages `intent-router`/`kb-enricher`,
+pinned on at config/meeting.py:341-348), wake enabled, speak after the
+wake phrase. Reproduced: wake admission refuses
+`inference_service_route_policy_denied` — bundled speech admission
+adds every configured provider capability for all routed non-Meeting
+sessions including wake (speech_session/session.py:599-677), but
+`wake-capture@1` authorizes only transcribe+preload
+(inference_service_route_policy.py:184-199), so freezing the default
+`speech.intent_classify` member refuses. No parent, no transcript, no
+wake action. The R2 proof concealed the state by pinning the pipeline
+false (test_dictation_session_admission.py:508) and no-op'ing the
+production pipeline in its host (146-147). If routed wake provider
+work is authorized, SERVICE execution also needs the bound parent
+(provider.py:276-284). Required proof: the ordinary cold wake action
+through normal Config (default pipeline ON), production Database +
+startup migration + broker + SpeechSession + atomic bundle +
+controller + routed admission + normally constructed unloaded
+MLX transcriber (only the external MLX library bounded) reaching a
+successful transcript AND configured wake output, one SERVICE
+wake.session, no OWNER/preload assignment, no plain legacy provider
+child, every reached model stage in one lawful bundle.
+
+## Finding D2 — A lawfully deferred faster-whisper warm lies forever as "warming"
+
+Ordinary action: select faster-whisper, Warm on Start enabled,
+restart. Reproduced: parentless preload correctly defers
+(constructor-inseparable) but runtime status stays `warming`
+indefinitely — status set to warming before the thread starts
+(transcriber_state.py:194-199), the deferral catch returns without
+settling (161-178), exposed via activity.py:195-196. Capture stays
+available; the glass lies. Required proof: production runtime against
+a real migrated DB, backend=faster-whisper, warm-on-start on —
+deferral with no construction/dispatch/execution/receipt, status
+settling truthfully to a non-active state, and the first ordinary
+speak-to-fill still admitting parent + frozen local route before
+production faster-whisper construction with exactly one routed
+transcription execution and successful local receipt (only the
+external faster-whisper library bounded).
+
+## Ledger notes (Sol)
+
+- Remote speech transport: correctly refused at admission; future work.
+- Faster-whisper constructor exception: honored; R5 proof is
+  production-shaped.
+- Cold-MLX R2 proof honors the anti-fake constraint (real unloaded
+  transcriber) but its disabled pipeline hid Finding D1.
+- The standalone continuity test still uses `Transcriber.__new__` + an
+  internal `_MlxTranscriber` subclass — proof debt (migration/bundle/
+  controller continuity proven; production constructor continuity
+  not). No ordinary failure reproduced; stays ledgered.
+- Actual-byte hashing verified: audio canonicalized to contiguous
+  float32 before digest; callers cannot supply a competing digest
+  (transcribe.py:549-588).
+
+## Orchestrator disposition (2026-08-24)
+
+- **D1 ACCEPTED — direction ruled: authorize routed wake provider
+  work.** Wake's product behavior (wake → transcribe → configured
+  pipeline action) is the tired-Tuesday expectation; making wake
+  transcription-only would break it. Amendment 8 is narrowly amended
+  (visible amendment, owner may overrule): `wake-capture@1` authorizes
+  `speech.transcribe@1`, the derived `speech.preload@1`, AND the
+  routed dictation-pipeline capabilities the wake flow dispatches
+  (capability-only lookup; transcribe/preload stay local-only per
+  amendment 7; provider stages keep the boundaries their capabilities
+  permit, as on the owner dictation path). A wake parent never mixes a
+  bundled member with a plain legacy provider child (amendment 10
+  holds).
+- **D2 ACCEPTED** — settle warm status truthfully on deferral.
+- Both proofs as Sol specified. ONE Terra fix round dispatched; after
+  it, Phase D is RATIFIED-WITH-NOTES per the cap.
+
+## Fix round landed — PHASE D RATIFIED-WITH-NOTES (2026-08-24)
+
+The single fix round implemented both findings per Sol's proof specs:
+D1 — `wake-capture@1` extended to the routed wake pipeline tail
+(amendment 8-bis in the design doc); routed provider execution
+resolves its immutable deployment from the frozen route-plan member;
+the new production proof
+`test_phase_d_default_cold_wake_runs_its_complete_routed_bundle` runs
+the ordinary cold wake with the DEFAULT pipeline ON (transcript +
+configured wake output, one SERVICE parent, no legacy provider child),
+and the R2 mask (no-op'd pipeline / pinned-false default) is removed.
+D2 — admission deferral settles status to `not_loaded`
+(`test_phase_d_faster_whisper_deferred_warm_settles_before_first_speak_to_fill`
+proves deferral without construction/receipt, truthful status, and the
+first speak-to-fill admitting parent + frozen route before
+faster-whisper construction). Orchestrator verified independently
+(focused 284 passed; confirming sweep 6432 passed / zero branch-new —
+68 inherited + 4 known xdist load flakes each serial-green ×2). Per
+the cap there is no further counsel round: **Phase D is
+RATIFIED-WITH-NOTES.** Ledger carried: remote speech transport;
+faster-whisper constructor seam; continuity-test `__new__` proof debt.

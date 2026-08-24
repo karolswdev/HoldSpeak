@@ -174,6 +174,10 @@ class TranscriberStateMixin:
                 # Capture remains available; its first lawful routed transcription
                 # owns the actual lifecycle and can surface an in-flow failure.
                 reason = str(getattr(exc, "reason", "") or getattr(exc, "code", "") or exc)
+                # Admission did not start a physical warm.  Leaving the optimistic
+                # pre-thread state as ``warming`` would tell the Desk work exists
+                # when it lawfully deferred to the first routed transcription.
+                self._set_transcription_status("not_loaded")
                 log.info("local model preload deferred to first transcription: %s", reason)
                 return
             with self.transcription_lock:

@@ -260,7 +260,10 @@ def _try_build_runtime(
         )
         if not capability:
             return None, "disabled", "no provider-backed dictation stage is admitted"
-        revision = admission.plan.deployment(admission.revision(capability))
+        deployment = getattr(admission, "deployment", None)
+        revision = deployment(capability) if callable(deployment) else admission.plan.deployment(
+            admission.revision(capability)
+        )
         if revision is None:
             raise SpeechSessionRefused(REVISION_NOT_PLANNED, capability)
         engine = str(getattr(revision, "engine", "") or "")

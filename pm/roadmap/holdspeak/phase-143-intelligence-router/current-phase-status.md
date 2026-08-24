@@ -377,6 +377,29 @@ zero branch-new** (66 inherited plus two known xdist load flakes,
 each serial-green twice). **Phase D is structurally complete**; a
 capped counsel pass on the whole phase is next, then Phase E
 (background adopters) and Phase F (migration cleanup).
+**The Phase D counsel pass is closed: RATIFIED-WITH-NOTES
+(2026-08-24).** Sol's capped post-commit pass verified all eleven
+amendments in the committed code and found two ordinary-path defects,
+both fixed in the single permitted round with Sol's exact
+production-object proofs: the default cold-wake action was dead on a
+migrated install — the pinned-on default Dictation Pipeline made wake
+admission freeze `speech.intent_classify`, which the closed wake
+policy refused, and the old cold-wake proof had masked the state by
+disabling the pipeline — resolved by ruling that wake keeps its
+product behavior: `wake-capture@1` now authorizes the routed wake
+pipeline tail (amendment 8-bis), and the new proof drives the
+ordinary cold wake with the default pipeline ON through migration,
+bundle, controller, a real unloaded MLX transcriber, and the
+configured wake output with zero legacy provider children; and a
+lawfully deferred faster-whisper warm reported `warming` forever —
+deferral now settles truthfully to `not_loaded`, proven on the
+production runtime against a migrated database. Ledgered: remote
+speech transport (refused honestly until an audio transport exists),
+the faster-whisper constructor seam, and the continuity test's
+`__new__` proof debt. Confirming sweep: **6432 passed / zero
+branch-new** (68 inherited plus four known xdist load flakes, each
+serial-green twice). **Phase D is closed.** Next: Phase E, then
+Phase F.
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:
