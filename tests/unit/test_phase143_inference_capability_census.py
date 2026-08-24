@@ -90,7 +90,7 @@ holdspeak/intel/providers.py:819|_profile_engine|configured_meeting_intel|call
 holdspeak/intel/providers.py:823|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:842|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
-holdspeak/intel_queue.py:587|process_next_intel_job|analyze|call
+holdspeak/intel_queue.py:642|process_next_intel_job|analyze|call
 holdspeak/meeting_session/deferred_bound.py:28|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
 holdspeak/meeting_session/deferred_bound.py:40|bound_auto_title_dispatch.call|generate_title|call
 holdspeak/meeting_session/deferred_bound.py:49|bound_analysis_dispatch.call|analyze|call
@@ -182,7 +182,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
-    "holdspeak/services/inference_adoption_service.py:1255|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    "holdspeak/services/inference_adoption_service.py:1280|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
     ),
     "holdspeak/services/cadence_service.py:284|CadenceService._draft_child|ref": ProposedRoute(
@@ -483,7 +483,7 @@ holdspeak/speech_session/provider.py:504|_RoutedSpeechAdapter.dispatch|run_promp
 holdspeak/speech_session/provider.py:635|AdmittedDictationRuntime.rewrite|rewrite|call
 """),
     _group(ProposedRoute("meeting.deferred_analysis", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/intel_queue.py:587|process_next_intel_job|analyze|call
+holdspeak/intel_queue.py:642|process_next_intel_job|analyze|call
 holdspeak/meeting_session/deferred_admission.py:216|DeferredIntelJob.analyze.call|analyze|call
 holdspeak/meeting_session/deferred_bound.py:49|bound_analysis_dispatch.call|analyze|call
 """),

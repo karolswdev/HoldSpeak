@@ -79,8 +79,32 @@ def _retry_or_fail_job(
     max_attempts: int = RETRY_MAX_ATTEMPTS,
     base_delay_seconds: int = RETRY_BASE_SECONDS,
     max_delay_seconds: int = RETRY_MAX_SECONDS,
-) -> None:
-    """Requeue a failed job with backoff, or mark it terminal after max attempts."""
+) -> bool:
+    """Settle failure, with C1 bearer fencing or preserved legacy behavior."""
+    is_bound = bool(
+        getattr(job, "parent_operation_id", None)
+        and getattr(job, "executor_lease_token", None)
+        and getattr(job, "executor_lease_epoch", 0)
+    )
+    if is_bound:
+        retry_at = None
+        if int(job.attempts) < int(max_attempts):
+            delay = _compute_retry_delay_seconds(
+                int(job.attempts), base_seconds=base_delay_seconds,
+                max_seconds=max_delay_seconds,
+            )
+            retry_at = datetime.now() + timedelta(seconds=delay)
+        changed = db.intel.settle_bound_execution(
+            job, error=error, retry_at=retry_at, max_attempts=int(max_attempts),
+        )
+        if changed and retry_at is not None:
+            log.warning(
+                "Deferred intel failed for meeting %s (attempt %s/%s): retrying in %ss",
+                job.meeting_id, job.attempts, max_attempts,
+                _compute_retry_delay_seconds(int(job.attempts), base_seconds=base_delay_seconds,
+                                             max_seconds=max_delay_seconds),
+            )
+        return changed
     if int(job.attempts) >= int(max_attempts):
         db.intel.record_intel_job_attempt(
             job.meeting_id,
@@ -93,38 +117,26 @@ def _retry_or_fail_job(
             job.meeting_id,
             f"Deferred intel failed after {job.attempts} attempt(s): {error}",
         )
-        return
+        return True
 
     delay = _compute_retry_delay_seconds(
-        int(job.attempts),
-        base_seconds=base_delay_seconds,
+        int(job.attempts), base_seconds=base_delay_seconds,
         max_seconds=max_delay_seconds,
     )
     retry_at = datetime.now() + timedelta(seconds=delay)
-    # The ledger event belongs to the old running owner.  Persist it before
-    # creating the linked retry job, so compatibility callers that address a
-    # Meeting still resolve the correct historical row.
     db.intel.record_intel_job_attempt(
-        job.meeting_id,
-        attempt=int(job.attempts),
-        outcome="scheduled_retry",
-        error=error,
-        retry_at=retry_at,
+        job.meeting_id, attempt=int(job.attempts), outcome="scheduled_retry",
+        error=error, retry_at=retry_at,
     )
     db.intel.retry_intel_job(
-        job.meeting_id,
-        error,
-        retry_at=retry_at,
-        attempt=int(job.attempts),
+        job.meeting_id, error, retry_at=retry_at, attempt=int(job.attempts),
         max_attempts=int(max_attempts),
     )
     log.warning(
         "Deferred intel failed for meeting %s (attempt %s/%s): retrying in %ss",
-        job.meeting_id,
-        job.attempts,
-        max_attempts,
-        delay,
+        job.meeting_id, job.attempts, max_attempts, delay,
     )
+    return True
 
 
 def _compute_failure_rate_percent(*, total_jobs: int, failed_jobs: int) -> float:
@@ -154,10 +166,14 @@ def _bound_projection_base(job, meeting) -> dict:
         "meeting_id": str(job.meeting_id),
         "transcript_hash": str(job.transcript_hash),
         "work_descriptor_sha256": str(job.work_descriptor_sha256 or ""),
+        # Opaque executor proof must arrive in the materializer transaction,
+        # where it fences Meeting writes from a superseded queue worker.
+        "executor_lease_token": str(job.executor_lease_token or ""),
+        "executor_lease_epoch": int(job.executor_lease_epoch or 0),
     }
 
 
-def _run_bound_displaced_work(db, meeting, bound, job, summary: str) -> str:
+def _run_bound_displaced_work(db, meeting, bound, job, summary: str, *, executor_held=None) -> str:
     """Execute only stored label/title members after bound analysis publishes."""
     from .meeting_session.deferred_bound import bound_auto_title_dispatch, bound_bookmark_label_dispatch
     from .meeting_session.intel_plan import DISPLACED_AUTO_TITLE, DISPLACED_BOOKMARK_LABELS
@@ -190,6 +206,7 @@ def _run_bound_displaced_work(db, meeting, bound, job, summary: str) -> str:
                     "bookmark_timestamp": timestamp,
                     "label": str(result["label"]),
                 },
+                executor_held=executor_held,
             )
             if str(routed.get("outcome")) == "refused":
                 return "displaced bookmark labels refused"
@@ -212,6 +229,7 @@ def _run_bound_displaced_work(db, meeting, bound, job, summary: str) -> str:
             projection=lambda result: {
                 **_bound_projection_base(job, meeting), "title": str(result["title"]),
             },
+            executor_held=executor_held,
         )
         if str(routed.get("outcome")) == "refused":
             return "the displaced auto title was refused"
@@ -251,19 +269,30 @@ class _BoundExecutorLease:
     def _heartbeat(self) -> None:
         # Renew well inside the durable expiry window. A stopped process has no
         # heartbeat; a competing worker can only take over once this expires.
-        while not self._stop.wait(BOUND_EXECUTOR_HEARTBEAT_SECONDS):
-            if not self._db.intel.renew_bound_executor_lease(self._job):
-                self._lost.set()
-                return
+        try:
+            while not self._stop.wait(BOUND_EXECUTOR_HEARTBEAT_SECONDS):
+                if not self._db.intel.renew_bound_executor_lease(self._job):
+                    self._lost.set()
+                    return
+        except BaseException:  # a dead heartbeat is an ownership loss, never optimism
+            self._lost.set()
 
     @property
     def lost(self) -> bool:
         return self._lost.is_set()
 
+    def mark_lost(self) -> None:
+        """Record a transaction-level fencing loss observed during publication."""
+        self._lost.set()
+
     def held(self) -> bool:
         if self._lost.is_set():
             return False
-        if not self._db.intel.renew_bound_executor_lease(self._job):
+        try:
+            if not self._db.intel.renew_bound_executor_lease(self._job):
+                self._lost.set()
+                return False
+        except BaseException:
             self._lost.set()
             return False
         return True
@@ -292,8 +321,11 @@ def _process_bound_intel_job(
     try:
         meeting = db.meetings.get_meeting(job.meeting_id)
         if meeting is None or not meeting.segments:
-            db.intel.fail_intel_job(job.meeting_id, "Meeting has no transcript to analyze.")
-            return True
+            changed = db.intel.settle_bound_execution(
+                job, error="Meeting has no transcript to analyze.",
+                terminal_outcome="terminal_failure",
+            )
+            return changed
         # Preserve the deterministic fault-plane seam on the C1 bound executor:
         # this occurs before any semantic payload reaches a provider child.
         from .faults import trip as _fault_trip
@@ -305,8 +337,7 @@ def _process_bound_intel_job(
         if not lease.held():
             return False
         fresh = db.intel.supersede_bound_intel_job(
-            str(job.job_id),
-            reason="Transcript changed before bound material staging.",
+            job, reason="Transcript changed before bound material staging.",
             event_kind="staging_fence_superseded",
         )
         if fresh is not None:
@@ -331,29 +362,38 @@ def _process_bound_intel_job(
                 "topics": list(result["topics"]),
                 "action_items": list(result["action_items"]),
             },
+            executor_held=lease.held,
         )
         # Publication's transcript fence can terminalize this job during
-        # finalize; that lawful cancellation precedes lease renewal.
+        # finalize. A token/epoch mismatch is stronger: this executor was fenced
+        # and must perform no subsequent queue, Meeting, or parent effect.
+        if projection is not None and projection.get("publication") == "lease_lost":
+            lease.mark_lost()
+            return False
         if projection is not None and projection.get("publication") == "superseded":
             outcome = "cancelled"
             return True
         if not lease.held():
             return False
         if str(routed.get("outcome")) == "refused":
-            db.intel.record_intel_job_attempt(
-                job.meeting_id, attempt=int(job.attempts), outcome="refused",
-                error="Deferred provider refused bound execution.", retry_at=None,
+            changed = db.intel.settle_bound_execution(
+                job, error="Deferred provider refused bound execution.",
+                terminal_outcome="refused",
             )
-            db.intel.fail_intel_job(job.meeting_id, "Deferred provider refused bound execution.")
-            outcome = "refused"
-            return True
+            if changed:
+                outcome = "refused"
+            else:
+                lease.mark_lost()
+            return changed
         if projection is None:
-            _retry_or_fail_job(
+            changed = _retry_or_fail_job(
                 db, job, "Deferred intel failed: bound analysis did not publish",
                 max_attempts=retry_max_attempts, base_delay_seconds=retry_base_seconds,
                 max_delay_seconds=retry_max_seconds,
             )
-            return True
+            if not changed:
+                lease.mark_lost()
+            return changed
         if projection.get("publication") == "superseded":
             outcome = "cancelled"
             return True
@@ -364,16 +404,18 @@ def _process_bound_intel_job(
             if detail.startswith("transcript superseded"):
                 outcome = "cancelled"
                 return True
-            _retry_or_fail_job(
+            changed = _retry_or_fail_job(
                 db, job, f"Deferred intel failed: {detail}", max_attempts=retry_max_attempts,
                 base_delay_seconds=retry_base_seconds, max_delay_seconds=retry_max_seconds,
             )
-            return True
+            if not changed:
+                lease.mark_lost()
+            return changed
         if not lease.held():
             return False
-        if not db.intel.complete_bound_intel_job(str(job.job_id)):
-            outcome = "cancelled"
-            return True
+        if not db.intel.complete_bound_intel_job(job):
+            lease.mark_lost()
+            return False
         outcome = "succeeded"
         if on_meeting_ready is not None:
             try:
@@ -384,24 +426,33 @@ def _process_bound_intel_job(
     except KernelRefused as exc:
         # The provider's typed refusal is terminal, not a fallback/retry signal.
         log.warning("Bound deferred kernel refusal for meeting %s: %s", job.meeting_id, exc.reason)
-        db.intel.record_intel_job_attempt(
-            job.meeting_id, attempt=int(job.attempts), outcome="refused",
-            error="Deferred provider refused bound execution.", retry_at=None,
+        if lease.lost:
+            return False
+        changed = db.intel.settle_bound_execution(
+            job, error="Deferred provider refused bound execution.",
+            terminal_outcome="refused",
         )
-        db.intel.fail_intel_job(job.meeting_id, "Deferred provider refused bound execution.")
-        outcome = "refused"
-        return True
+        if changed:
+            outcome = "refused"
+        else:
+            lease.mark_lost()
+        return changed
     except Exception as exc:
         # FaultInjected carries the named deterministic point; retain it in the
         # durable retry evidence instead of reducing it to its exception class.
         from .faults import FaultInjected
 
+        if lease.lost:
+            return False
         reason = str(exc) if isinstance(exc, FaultInjected) else type(exc).__name__
-        _retry_or_fail_job(
+        changed = _retry_or_fail_job(
             db, job, f"Deferred intel failed: {reason}",
             max_attempts=retry_max_attempts, base_delay_seconds=retry_base_seconds,
             max_delay_seconds=retry_max_seconds,
         )
+        if not changed:
+            lease.mark_lost()
+            return False
         log.error("Bound deferred intel failed for meeting %s: %s: %s", job.meeting_id, type(exc).__name__, getattr(exc, "code", str(exc)))
         return True
     finally:
@@ -409,9 +460,13 @@ def _process_bound_intel_job(
         # newer bearer adopted it. A normal terminal job still closes its parent
         # even though completion has already made lease renewal inapplicable.
         if bound is not None and not lease.lost:
-            if bound.close(outcome):
+            executor_lease = {
+                "job_id": str(job.job_id), "token": str(job.executor_lease_token),
+                "epoch": int(job.executor_lease_epoch),
+            }
+            if bound.close(outcome, executor_lease=executor_lease):
                 db.intel.promote_successors_after_parent_terminal(
-                    bound.parent_operation_id
+                    bound.parent_operation_id, executor_job=job
                 )
         lease.close()
 

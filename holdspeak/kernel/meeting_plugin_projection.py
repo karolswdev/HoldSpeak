@@ -24,7 +24,7 @@ import time
 from typing import Any
 
 from .model import KernelRefused
-from .projection_stager import _PublicationPermit
+from .projection_stager import _PublicationPermit, ProjectionDiscarded
 
 
 
@@ -213,16 +213,35 @@ def _write_bookmark_label(conn: Any, projection: dict[str, Any]) -> dict[str, An
 
 
 def _bound_transcript_fence(conn: Any, projection: dict[str, Any]) -> dict[str, Any] | None:
-    """Fence a bound queue result inside its projection-publication epoch."""
+    """Fence C1 publication by both executor epoch and durable transcript truth.
+
+    This executes inside the materializer's publication transaction.  An old
+    executor may have a real provider result, but after takeover it has no right
+    to publish that result, advance queue lifecycle, or mutate the Meeting.
+    """
     job_id = str(projection.get("job_id") or "").strip()
     expected_hash = str(projection.get("transcript_hash") or "").strip()
-    if not job_id or not expected_hash:
+    token = str(projection.get("executor_lease_token") or "").strip()
+    try:
+        epoch = int(projection.get("executor_lease_epoch") or 0)
+    except (TypeError, ValueError) as exc:
+        raise KernelRefused("meeting_bound_projection_incomplete") from exc
+    if not job_id or not expected_hash or not token or epoch <= 0:
         raise KernelRefused("meeting_bound_projection_incomplete")
     from ..db.intel import IntelRepository, _durable_transcript_hash
 
-    row = conn.execute("SELECT meeting_id,transcript_hash,status FROM intel_jobs WHERE job_id=?", (job_id,)).fetchone()
+    # The exact bearer and a still-live expiry are part of the projection fence,
+    # not merely the runner heartbeat.  Check this before any transcript action:
+    # a stale executor must not supersede, queue a successor, or touch the glass.
+    row = conn.execute(
+        """SELECT meeting_id,transcript_hash,status FROM intel_jobs
+           WHERE job_id=? AND executor_lease_token=? AND executor_lease_epoch=?
+             AND status IN ('claimed','running')
+             AND executor_lease_expires_at>?""",
+        (job_id, token, epoch, time.time()),
+    ).fetchone()
     if row is None:
-        raise KernelRefused("meeting_bound_job_missing")
+        return {**projection, "publication": "lease_lost"}
     meeting_id = str(row["meeting_id"])
     if meeting_id != str(projection.get("meeting_id") or ""):
         raise KernelRefused("meeting_bound_projection_mismatch")
@@ -232,6 +251,8 @@ def _bound_transcript_fence(conn: Any, projection: dict[str, Any]) -> dict[str, 
     fresh = IntelRepository.supersede_bound_intel_job_in_transaction(
         conn,
         job_id=job_id,
+        executor_lease_token=token,
+        executor_lease_epoch=epoch,
         reason="Transcript changed before bound projection publication.",
         event_kind="publication_fence_superseded",
     )
@@ -242,6 +263,8 @@ def _write_bound_analysis(conn: Any, projection: dict[str, Any]) -> dict[str, An
     """Publish the analysis only after the third durable transcript fence."""
     fenced = _bound_transcript_fence(conn, projection)
     if fenced is not None:
+        if fenced.get("publication") == "lease_lost":
+            raise ProjectionDiscarded("executor_lease_lost")
         return fenced
     meeting_id = str(projection["meeting_id"])
     summary = str(projection.get("summary") or "")
@@ -295,9 +318,13 @@ def materialize(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
         return _write_bound_analysis(conn, projection)
     if stage.kind in {"meeting-deferred-auto-title", "meeting-bound-deferred-auto-title"}:
         fenced = _bound_transcript_fence(conn, projection) if stage.kind.startswith("meeting-bound-") else None
+        if fenced is not None and fenced.get("publication") == "lease_lost":
+            raise ProjectionDiscarded("executor_lease_lost")
         return fenced if fenced is not None else _write_title(conn, projection)
     if stage.kind in {"meeting-deferred-bookmark-label", "meeting-bound-deferred-bookmark-label"}:
         fenced = _bound_transcript_fence(conn, projection) if stage.kind.startswith("meeting-bound-") else None
+        if fenced is not None and fenced.get("publication") == "lease_lost":
+            raise ProjectionDiscarded("executor_lease_lost")
         return fenced if fenced is not None else _write_bookmark_label(conn, projection)
     if stage.kind != "meeting-plugin-result":
         return projection

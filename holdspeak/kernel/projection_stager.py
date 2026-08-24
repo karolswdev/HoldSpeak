@@ -58,6 +58,14 @@ class _PublicationPermit:
 Materializer = Callable[[sqlite3.Connection, ProjectionStage, _PublicationPermit], Mapping[str, Any]]
 
 
+class ProjectionDiscarded(Exception):
+    """A materializer's lawful no-publication result, committed as DISCARDED."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
 class ProjectionStager:
     """Kernel-owned stage store and atomic finalization registry."""
 
@@ -126,13 +134,31 @@ class ProjectionStager:
                 (invocation_id, kind),
             ).fetchone()
             if existing is not None:
+                same_result = (
+                    receipt_result_ref is None
+                    or str(existing["result_ref"]) == receipt_result_ref
+                )
+                # A C1 executor fence deliberately discards a stale owner's stage.
+                # The winning lease epoch may restage the *same earned child result*
+                # with its own bearer, but no unrelated discarded stage is mutable.
+                prior_discard = str(existing["final_result_json"] or "")
                 if (
-                    str(existing["projection_sha256"]) != digest
-                    or (
-                        receipt_result_ref is not None
-                        and str(existing["result_ref"]) != receipt_result_ref
-                    )
+                    str(existing["state"]) == "DISCARDED"
+                    and same_result
+                    and '"discarded":"executor_lease_lost"' in prior_discard
                 ):
+                    conn.execute(
+                        """UPDATE kernel_projection_stages SET projection_json=?,projection_sha256=?,
+                           state='STAGED',final_result_json='{}',updated_at=? WHERE stage_id=?
+                           AND state='DISCARDED'""",
+                        (material, digest, now, str(existing["stage_id"])),
+                    )
+                    existing = conn.execute(
+                        "SELECT * FROM kernel_projection_stages WHERE stage_id=?",
+                        (str(existing["stage_id"]),),
+                    ).fetchone()
+                    return self._row(existing)
+                if str(existing["projection_sha256"]) != digest or not same_result:
                     raise KernelRefused("projection_stage_payload_conflict")
                 return self._row(existing)
             stage_id = "pstg_" + uuid.uuid4().hex
@@ -271,7 +297,18 @@ class ProjectionStager:
                 if materializer is None:
                     raise KernelRefused("projection_materializer_unknown")
                 permit = _PublicationPermit(self, conn)
-                projection = materializer(conn, stage, permit)
+                try:
+                    projection = materializer(conn, stage, permit)
+                except ProjectionDiscarded as discarded:
+                    if not permit._used:
+                        raise KernelRefused("projection_publication_permit_invalid")
+                    conn.execute(
+                        """UPDATE kernel_projection_stages SET state='DISCARDED',
+                           final_result_json=?,updated_at=? WHERE stage_id=?
+                           AND state='FINALIZING'""",
+                        (_canonical({"discarded": discarded.reason}), self._clock(), stage.stage_id),
+                    )
+                    return None
                 if not permit._used:
                     raise KernelRefused("projection_permit_not_used")
                 final_json = _canonical(dict(projection))

@@ -303,7 +303,7 @@ def test_staging_fence_supersedes_exact_bound_owner_and_links_fresh_job(tmp_path
     with db._connection() as conn:
         conn.execute("UPDATE segments SET text='changed after claim' WHERE meeting_id=?", (meeting.id,))
     fresh = db.intel.supersede_bound_intel_job(
-        str(claimed.job_id),
+        claimed,
         reason="Transcript changed before bound material staging.",
         event_kind="staging_fence_superseded",
     )

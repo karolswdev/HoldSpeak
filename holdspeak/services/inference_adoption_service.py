@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping, Sequence
@@ -964,6 +965,7 @@ class RoutedInferenceCoordinator:
         payload: Mapping[str, Any],
         reserved_output_tokens: int,
         parent_operation_id: str | None = None,
+        executor_lease: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Atomically attach late operation material to a session-frozen route.
 
@@ -1007,6 +1009,25 @@ class RoutedInferenceCoordinator:
                         raise ValidationError(
                             "Service route membership is required.",
                             code="inference_adoption_service_membership_required",
+                        )
+                if executor_lease is not None:
+                    job_id = str(executor_lease.get("job_id") or "")
+                    token = str(executor_lease.get("token") or "")
+                    try:
+                        epoch = int(executor_lease.get("epoch") or 0)
+                    except (TypeError, ValueError):
+                        epoch = 0
+                    owner = conn.execute(
+                        """SELECT 1 FROM intel_jobs WHERE job_id=? AND parent_operation_id=?
+                           AND executor_lease_token=? AND executor_lease_epoch=?
+                           AND status IN ('claimed','running')
+                           AND executor_lease_expires_at>?""",
+                        (job_id, bound_parent, token, epoch, time.time()),
+                    ).fetchone()
+                    if owner is None:
+                        raise ValidationError(
+                            "Bound queue executor lease is no longer current.",
+                            code="inference_adoption_executor_lease_lost",
                         )
                 self.evidence.stage(
                     planning_reference=reference,
@@ -1101,7 +1122,11 @@ class RoutedInferenceCoordinator:
         stager = getattr(self._broker, "projection_stager", None)
         stage_for = getattr(stager, "get", None)
         child_invocation_id = str(winning["child_invocation_id"])
-        if callable(stage_for) and stage_for(child_invocation_id) is not None:
+        existing = stage_for(child_invocation_id) if callable(stage_for) else None
+        # A stale C1 lease creates a deliberate DISCARDED stage. The successor
+        # bearer may restage the already-earned child result; every other stage
+        # remains immutable/idempotent as before.
+        if existing is not None and str(getattr(existing, "state", "")) != "DISCARDED":
             return
         publish(value, winning)
 

@@ -794,30 +794,33 @@ class IntelRepository(BaseRepository):
             return self._job_from_row(bound_row) if bound_row is not None else None
 
     @staticmethod
+    def _bound_executor_row_in_transaction(
+        conn: Any, *, job_id: str, executor_lease_token: str, executor_lease_epoch: int
+    ) -> Any | None:
+        """Return the one currently authoritative C1 executor inside a writer epoch."""
+        return conn.execute(
+            """SELECT * FROM intel_jobs WHERE job_id=? AND executor_lease_token=?
+               AND executor_lease_epoch=? AND status IN ('claimed','running')
+               AND executor_lease_expires_at>?""",
+            (job_id, executor_lease_token, int(executor_lease_epoch), time.time()),
+        ).fetchone()
+
+    @staticmethod
     def supersede_bound_intel_job_in_transaction(
         conn: Any,
         *,
         job_id: str,
+        executor_lease_token: str,
+        executor_lease_epoch: int,
         reason: str,
         event_kind: str,
     ) -> str | None:
-        """Fence one bound owner and queue a linked immutable successor.
-
-        The caller already owns the publication/claim transaction.  A historical
-        result remains durable evidence, but an old descriptor is never retargeted
-        and is never made runnable again.
-        """
-        old = conn.execute("SELECT * FROM intel_jobs WHERE job_id=?", (job_id,)).fetchone()
+        """Fence one currently owned bound job and queue its immutable successor."""
+        old = IntelRepository._bound_executor_row_in_transaction(
+            conn, job_id=job_id, executor_lease_token=executor_lease_token,
+            executor_lease_epoch=executor_lease_epoch,
+        )
         if old is None:
-            return None
-        status = str(old["status"])
-        if status == "superseded":
-            successor = conn.execute(
-                "SELECT job_id FROM intel_jobs WHERE origin_job_id=? ORDER BY requested_at DESC LIMIT 1",
-                (job_id,),
-            ).fetchone()
-            return str(successor["job_id"]) if successor is not None else None
-        if status not in {"queued", "claimed", "running"}:
             return None
         meeting_id = str(old["meeting_id"])
         durable_hash = _durable_transcript_hash(conn, meeting_id)
@@ -826,8 +829,10 @@ class IntelRepository(BaseRepository):
         now = datetime.now().isoformat()
         if conn.execute(
             """UPDATE intel_jobs SET status='superseded',lifecycle_posture='superseded',
-               updated_at=?,last_error=? WHERE job_id=? AND status IN ('queued','claimed','running')""",
-            (now, reason, job_id),
+               updated_at=?,last_error=? WHERE job_id=? AND executor_lease_token=?
+               AND executor_lease_epoch=? AND status IN ('claimed','running')
+               AND executor_lease_expires_at>?""",
+            (now, reason, job_id, executor_lease_token, int(executor_lease_epoch), time.time()),
         ).rowcount != 1:
             return None
         work = str(old["displaced_work"])
@@ -869,15 +874,29 @@ class IntelRepository(BaseRepository):
         )
         return fresh_id
 
+    def bound_executor_held(self, job: IntelJob) -> bool:
+        """Read the exact durable bearer; false is a fencing-loss signal."""
+        if not job.job_id or not job.executor_lease_token or not job.executor_lease_epoch:
+            return False
+        with self._connection() as conn:
+            return self._bound_executor_row_in_transaction(
+                conn, job_id=str(job.job_id), executor_lease_token=str(job.executor_lease_token),
+                executor_lease_epoch=int(job.executor_lease_epoch),
+            ) is not None
+
     def supersede_bound_intel_job(
-        self, job_id: str, *, reason: str, event_kind: str
+        self, job: IntelJob, *, reason: str, event_kind: str
     ) -> str | None:
-        """Run a staging fence for one bound job in its own transaction."""
+        """Run a bearer-fenced staging transition in one writer transaction."""
+        if not job.job_id or not job.executor_lease_token or not job.executor_lease_epoch:
+            return None
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             try:
                 fresh = self.supersede_bound_intel_job_in_transaction(
-                    conn, job_id=job_id, reason=reason, event_kind=event_kind,
+                    conn, job_id=str(job.job_id), executor_lease_token=str(job.executor_lease_token),
+                    executor_lease_epoch=int(job.executor_lease_epoch), reason=reason,
+                    event_kind=event_kind,
                 )
                 conn.commit()
                 return fresh
@@ -885,19 +904,24 @@ class IntelRepository(BaseRepository):
                 conn.rollback()
                 raise
 
-    def complete_bound_intel_job(self, job_id: str) -> bool:
-        """Terminalize exactly the bound owner and append completion truth."""
+    def complete_bound_intel_job(self, job: IntelJob) -> bool:
+        """Terminalize only the exact current C1 bearer and append completion truth."""
+        if not job.job_id or not job.executor_lease_token or not job.executor_lease_epoch:
+            return False
         now = datetime.now().isoformat()
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
-            row = conn.execute("SELECT * FROM intel_jobs WHERE job_id=?", (job_id,)).fetchone()
+            row = self._bound_executor_row_in_transaction(
+                conn, job_id=str(job.job_id), executor_lease_token=str(job.executor_lease_token),
+                executor_lease_epoch=int(job.executor_lease_epoch),
+            )
             if row is None:
                 conn.rollback()
                 return False
             if _durable_transcript_hash(conn, str(row["meeting_id"])) != str(row["transcript_hash"]):
                 self.supersede_bound_intel_job_in_transaction(
-                    conn,
-                    job_id=job_id,
+                    conn, job_id=str(job.job_id), executor_lease_token=str(job.executor_lease_token),
+                    executor_lease_epoch=int(job.executor_lease_epoch),
                     reason="Transcript changed before bound completion publication.",
                     event_kind="completion_fence_superseded",
                 )
@@ -905,8 +929,10 @@ class IntelRepository(BaseRepository):
                 return False
             changed = conn.execute(
                 """UPDATE intel_jobs SET status='succeeded',lifecycle_posture='terminal',updated_at=?
-                   WHERE job_id=? AND status IN ('claimed','running')""",
-                (now, job_id),
+                   WHERE job_id=? AND executor_lease_token=? AND executor_lease_epoch=?
+                     AND status IN ('claimed','running') AND executor_lease_expires_at>?""",
+                (now, str(job.job_id), str(job.executor_lease_token),
+                 int(job.executor_lease_epoch), time.time()),
             ).rowcount
             if changed:
                 conn.execute(
@@ -920,7 +946,7 @@ class IntelRepository(BaseRepository):
                         event_kind,attempt,outcome,error,retry_at,created_at
                     ) VALUES (?,?,?,?,?,?, 'completion',?,'succeeded',NULL,NULL,?)""",
                     (
-                        str(row["meeting_id"]), job_id,
+                        str(row["meeting_id"]), str(job.job_id),
                         str(row["origin_job_id"] or "") or None,
                         str(row["claim_id"] or "") or None,
                         str(row["parent_operation_id"] or "") or None,
@@ -930,6 +956,126 @@ class IntelRepository(BaseRepository):
                 )
             conn.commit()
             return bool(changed)
+
+    def settle_bound_execution(
+        self,
+        job: IntelJob,
+        *,
+        error: str,
+        terminal_outcome: str | None = None,
+        retry_at: datetime | None = None,
+        max_attempts: int = 0,
+    ) -> bool:
+        """Settle a C1 execution failure only while its exact bearer is current.
+
+        This owns the queue row, Meeting glass, and attempt ledger in the same
+        writer transaction.  A stale worker therefore cannot mint a retry,
+        terminalize the replacement owner, or leave misleading receipt history.
+        """
+        if not job.job_id or not job.executor_lease_token or not job.executor_lease_epoch:
+            return False
+        now = datetime.now()
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            old = self._bound_executor_row_in_transaction(
+                conn, job_id=str(job.job_id), executor_lease_token=str(job.executor_lease_token),
+                executor_lease_epoch=int(job.executor_lease_epoch),
+            )
+            if old is None:
+                conn.rollback()
+                return False
+            meeting_id = str(old["meeting_id"])
+            attempt = int(old["attempts"])
+            terminal = terminal_outcome is not None or (max_attempts > 0 and attempt >= max_attempts)
+            if terminal:
+                outcome = str(terminal_outcome or "terminal_failure")
+                detail = error if terminal_outcome else (
+                    f"Deferred intel failed after {attempt} attempt(s): {error}"
+                )
+                changed = conn.execute(
+                    """UPDATE intel_jobs SET status='failed',lifecycle_posture='terminal',
+                       updated_at=?,last_error=? WHERE job_id=? AND executor_lease_token=?
+                       AND executor_lease_epoch=? AND status IN ('claimed','running')
+                       AND executor_lease_expires_at>?""",
+                    (now.isoformat(), detail, str(job.job_id), str(job.executor_lease_token),
+                     int(job.executor_lease_epoch), time.time()),
+                ).rowcount
+                if changed:
+                    conn.execute(
+                        """UPDATE meetings SET intel_status='error',intel_status_detail=?,
+                           intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now')
+                           WHERE id=?""",
+                        (detail, now.isoformat(), meeting_id),
+                    )
+                    conn.execute(
+                        """INSERT INTO intel_job_attempts (
+                            meeting_id,job_id,event_kind,attempt,outcome,error,retry_at,created_at
+                        ) VALUES (?,?,'attempt',?,?,?,NULL,?)""",
+                        (meeting_id, str(job.job_id), attempt, outcome, detail, now.isoformat()),
+                    )
+                conn.commit()
+                return bool(changed)
+
+            if retry_at is None:
+                conn.rollback()
+                return False
+            retry_at_iso = retry_at.isoformat()
+            retry_label = retry_at.replace(microsecond=0).isoformat()
+            detail = (
+                f"Deferred intel attempt {attempt}/{max_attempts} failed: {error} "
+                f"Retrying at {retry_label}."
+            )
+            changed = conn.execute(
+                """UPDATE intel_jobs SET status='failed',lifecycle_posture='terminal',
+                    updated_at=?,last_error=? WHERE job_id=? AND executor_lease_token=?
+                    AND executor_lease_epoch=? AND status IN ('claimed','running')
+                    AND executor_lease_expires_at>?""",
+                (now.isoformat(), error, str(job.job_id), str(job.executor_lease_token),
+                 int(job.executor_lease_epoch), time.time()),
+            ).rowcount
+            if changed != 1:
+                conn.rollback()
+                return False
+            successor_id = _job_id(
+                meeting_id, str(old["transcript_hash"]), str(old["work_descriptor_sha256"]),
+                retry_at_iso, str(job.job_id),
+            )
+            successor_status, successor_posture = _successor_posture(old)
+            conn.execute(
+                """INSERT INTO intel_jobs (
+                    job_id,meeting_id,origin_job_id,work_descriptor_sha256,
+                    transcript_hash,displaced_work,status,lifecycle_posture,
+                    requested_at,updated_at,attempts,last_error
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (successor_id, meeting_id, str(job.job_id), str(old["work_descriptor_sha256"]),
+                 str(old["transcript_hash"]), str(old["displaced_work"]),
+                 successor_status, successor_posture, retry_at_iso, now.isoformat(), attempt, error),
+            )
+            conn.execute(
+                """INSERT INTO intel_job_attempts (
+                    meeting_id,job_id,origin_job_id,claim_id,parent_operation_id,bundle_id,
+                    event_kind,attempt,outcome,error,retry_at,created_at
+                ) VALUES (?,?,?,?,?,?, 'attempt',?,'scheduled_retry',?,?,?)""",
+                (meeting_id, str(job.job_id), str(old["origin_job_id"] or "") or None,
+                 str(old["claim_id"] or "") or None, str(old["parent_operation_id"] or "") or None,
+                 str(old["bundle_id"] or "") or None, attempt, error, retry_at_iso, now.isoformat()),
+            )
+            conn.execute(
+                """INSERT INTO intel_job_attempts (
+                    meeting_id,job_id,origin_job_id,claim_id,parent_operation_id,bundle_id,
+                    event_kind,attempt,outcome,error,retry_at,created_at
+                ) VALUES (?,?,?,?,?,?, 'retry_linkage',?,'queued',?,?,?)""",
+                (meeting_id, successor_id, str(job.job_id), str(old["claim_id"] or "") or None,
+                 str(old["parent_operation_id"] or "") or None, str(old["bundle_id"] or "") or None,
+                 attempt, error, retry_at_iso, now.isoformat()),
+            )
+            conn.execute(
+                """UPDATE meetings SET intel_status='queued',intel_status_detail=?,
+                    intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
+                (detail, now.isoformat(), meeting_id),
+            )
+            conn.commit()
+            return True
 
     def settle_bound_claim_refusal(self, job_id: str, error: Exception) -> bool:
         """Make a refused pre-claim selection durably visible and non-spinning.
@@ -1000,7 +1146,9 @@ class IntelRepository(BaseRepository):
             conn.commit()
             return bool(changed)
 
-    def promote_successors_after_parent_terminal(self, parent_operation_id: str) -> int:
+    def promote_successors_after_parent_terminal(
+        self, parent_operation_id: str, *, executor_job: IntelJob | None = None
+    ) -> int:
         """Promote reserved direct successors only after a durable parent receipt.
 
         The receipt check is repeated inside the queue writer transaction.  This
@@ -1010,6 +1158,25 @@ class IntelRepository(BaseRepository):
         now = datetime.now().isoformat()
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
+            if executor_job is not None:
+                if not (
+                    executor_job.job_id and executor_job.executor_lease_token
+                    and executor_job.executor_lease_epoch
+                ):
+                    conn.rollback()
+                    return 0
+                owner = conn.execute(
+                    """SELECT 1 FROM intel_jobs WHERE job_id=? AND parent_operation_id=?
+                       AND executor_lease_token=? AND executor_lease_epoch=?
+                       AND status IN ('claimed','running','succeeded','superseded','failed')
+                       AND executor_lease_expires_at>?""",
+                    (str(executor_job.job_id), parent_operation_id,
+                     str(executor_job.executor_lease_token),
+                     int(executor_job.executor_lease_epoch), time.time()),
+                ).fetchone()
+                if owner is None:
+                    conn.rollback()
+                    return 0
             receipt = conn.execute(
                 "SELECT 1 FROM kernel_receipts WHERE operation_id=? LIMIT 1",
                 (parent_operation_id,),

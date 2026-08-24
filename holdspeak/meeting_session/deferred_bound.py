@@ -142,6 +142,7 @@ class BoundDeferredIntelJob:
         call: Callable[[Any, Mapping[str, Any], Any], Any],
         projection_kind: str,
         projection: Callable[[Mapping[str, Any]], Mapping[str, Any]],
+        executor_held: Callable[[], bool] | None = None,
     ) -> tuple[Mapping[str, Any] | None, Mapping[str, Any]]:
         """Stage private material and execute one exact frozen bundle member."""
         if self._closed:
@@ -150,7 +151,15 @@ class BoundDeferredIntelJob:
         if member is None:
             raise MeetingIntelRefused(SESSION_NOT_ADMITTED, capability)
         from ..services.inference_semantic_adapters import adapter_for_frozen_definition
+        from ..kernel.model import KernelRefused
 
+        if executor_held is not None and not executor_held():
+            return None, {"outcome": "lease_lost"}
+        executor_lease = {
+            "job_id": str(self._job.job_id),
+            "token": str(getattr(self._job, "executor_lease_token", "") or ""),
+            "epoch": int(getattr(self._job, "executor_lease_epoch", 0) or 0),
+        }
         operation_id = "meeting:deferred:" + sha(
             (str(self._job.job_id), capability, operation_suffix)
         ).split(":", 1)[1]
@@ -165,9 +174,16 @@ class BoundDeferredIntelJob:
             payload=dict(material),
             reserved_output_tokens=512,
             parent_operation_id=self.parent_operation_id,
+            executor_lease=executor_lease,
         )
         definition = adoption._frozen_capability_definition(str(member["route_plan_id"]))
         adapter = adapter_for_frozen_definition(definition, call)
+        if executor_held is not None and not executor_held():
+            return None, {"outcome": "lease_lost"}
+
+        def require_current_executor(_deployment: str, _child: str, _attempt: int) -> None:
+            if executor_held is not None and not executor_held():
+                raise KernelRefused("bound_executor_lease_lost")
 
         def publish(value: Any, winning: Mapping[str, Any]) -> str:
             # The controller has already elected this child and retained its exact
@@ -185,11 +201,17 @@ class BoundDeferredIntelJob:
             )
             return stage.result_ref
 
+        # A lease adopter inherits possible in-flight physical work. Reconcile the
+        # durable child intent first; it must not reserve a second provider call
+        # while the old dispatch has unknown settlement.
+        if int(executor_lease["epoch"]) > 1:
+            adoption.recover_route_executions()
         routed = adoption.execute(
             self._principal,
             execution_id=str(admitted["execution"]["id"]),
             adapter=adapter,
             publish=publish,
+            before_physical_dispatch=require_current_executor,
             parent_context=self._parent.context,
         )
         result = routed.get("result")
@@ -200,15 +222,21 @@ class BoundDeferredIntelJob:
         published = self._broker.projection_stager.finalize(invocation_id) if invocation_id else None
         return (dict(published) if isinstance(published, Mapping) else None), routed
 
-    def close(self, outcome: str) -> bool:
-        """Close the old owner before any reserved successor can be promoted."""
+    def close(self, outcome: str, *, executor_lease: Mapping[str, Any] | None = None) -> bool:
+        """Close the old owner before any reserved successor can be promoted.
+
+        A live queue worker supplies its opaque executor bearer.  Parent receipt
+        election then verifies it in the same SQLite writer transaction; orphan
+        recovery deliberately has no bearer because its job is already terminal.
+        """
         if self._closed:
             return self._broker.store.receipt(self.parent_operation_id) is not None
         self._closed = True
         try:
             if self._broker.store.receipt(self.parent_operation_id) is None:
                 self._broker.parent_run_controller.close(
-                    self._parent.context, outcome, principal=self._principal
+                    self._parent.context, outcome, principal=self._principal,
+                    executor_lease=executor_lease,
                 )
             return self._broker.store.receipt(self.parent_operation_id) is not None
         except Exception as exc:

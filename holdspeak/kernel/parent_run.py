@@ -292,18 +292,19 @@ class ParentRunController:
 
         return cancel_parent(self, context, principal)
 
-    def close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None, publication_claim_id: str = "") -> Mapping[str, Any]:
+    def close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None, publication_claim_id: str = "", executor_lease: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
         receipt, _ = self._close(
             context,
             outcome,
             result_ref,
             principal=principal,
             publication_claim_id=publication_claim_id,
+            executor_lease=executor_lease,
         )
         if receipt is None: raise KernelRefused("parent_operation_not_running")
         return receipt
 
-    def _close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None, stale_before: float | None = None, stale_process_id: str | None = None, publication_claim_id: str = "") -> tuple[Mapping[str, Any] | None, bool]:
+    def _close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None, stale_before: float | None = None, stale_process_id: str | None = None, publication_claim_id: str = "", executor_lease: Mapping[str, Any] | None = None) -> tuple[Mapping[str, Any] | None, bool]:
         from .parent_terminal import close_parent
 
         return close_parent(
@@ -315,6 +316,7 @@ class ParentRunController:
             stale_before=stale_before,
             stale_process_id=stale_process_id,
             publication_claim_id=publication_claim_id,
+            executor_lease=executor_lease,
         )
 
     def reconcile_abandoned(self) -> int:

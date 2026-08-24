@@ -655,6 +655,116 @@ def test_live_bound_executor_lease_excludes_background_http_and_cli_competitors(
     assert job["status"] == "succeeded" and retries == successors == 0
 
 
+def test_bound_executor_heartbeat_exception_fails_closed(tmp_path, monkeypatch):
+    """A renewal exception is an ownership loss, not a dead silent thread."""
+    from holdspeak.intel_queue import _BoundExecutorLease
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+
+    db, broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    _queued_meeting(db, "m-heartbeat-renewal-exception", legacy_claimed=False)
+    claimed = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+    assert claimed is not None
+    failed = threading.Event()
+    calls = 0
+
+    def renewal(job):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return True
+        failed.set()
+        raise RuntimeError("simulated SQLite renewal failure")
+
+    monkeypatch.setattr(db.intel, "renew_bound_executor_lease", renewal)
+    monkeypatch.setattr("holdspeak.intel_queue.BOUND_EXECUTOR_HEARTBEAT_SECONDS", 0.01)
+    lease = _BoundExecutorLease(db, claimed)
+    assert lease.start() is True
+    assert failed.wait(timeout=2.0)
+    assert lease.lost is True
+    assert lease.held() is False
+    lease.close()
+
+
+def test_stale_executor_cannot_publish_or_settle_after_epoch_takeover(tmp_path, monkeypatch):
+    """Epoch one may return from model work, but epoch two alone owns effects."""
+    from holdspeak.intel_queue import _process_bound_intel_job
+    from holdspeak.services.meeting_deferred_queue_binding import MeetingDeferredQueueBinder
+
+    db, broker, engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
+    state = _queued_meeting(db, "m-stale-effect-fence", legacy_claimed=False)
+    claimed = db.intel.claim_next_intel_job_bound(MeetingDeferredQueueBinder(broker))
+    assert claimed is not None
+    entered, release = threading.Event(), threading.Event()
+    physical_calls = 0
+
+    def blocked_analysis(transcript: str, *, stream: bool = False):
+        nonlocal physical_calls
+        assert stream is False
+        physical_calls += 1
+        entered.set()
+        assert release.wait(timeout=5.0)
+        return engine._result()
+
+    monkeypatch.setattr(engine, "analyze", blocked_analysis)
+    first_result: list[bool] = []
+    first = threading.Thread(target=lambda: first_result.append(_process_bound_intel_job(
+        db, claimed, broker, on_meeting_ready=None, retry_base_seconds=1,
+        retry_max_seconds=1, retry_max_attempts=4,
+    )))
+    first.start()
+    assert entered.wait(timeout=2.0)
+
+    # Simulate laptop suspension: the still-blocked epoch-one worker loses its
+    # bearer, while another process wins the durable epoch-two takeover.
+    with db._connection() as conn:
+        conn.execute("UPDATE intel_jobs SET executor_lease_expires_at=0 WHERE job_id=?", (claimed.job_id,))
+    adopted = Database(db.db_path).intel.take_over_stale_bound_executor(str(claimed.job_id))
+    assert adopted is not None and adopted.executor_lease_epoch == 2
+    release.set()
+    first.join(timeout=5.0)
+    assert not first.is_alive() and first_result == [False]
+
+    # The stale result has a real child receipt, but no projection, Meeting
+    # mutation, queue transition, parent close, successor, or retry evidence.
+    with db._connection() as conn:
+        stale_stage = conn.execute(
+            "SELECT state,final_result_json FROM kernel_projection_stages"
+        ).fetchone()
+        job = conn.execute(
+            "SELECT status,executor_lease_epoch FROM intel_jobs WHERE job_id=?", (claimed.job_id,)
+        ).fetchone()
+        snapshot_count = conn.execute(
+            "SELECT COUNT(*) FROM intel_snapshots WHERE meeting_id=?", (state.id,)
+        ).fetchone()[0]
+        successors = conn.execute(
+            "SELECT COUNT(*) FROM intel_jobs WHERE origin_job_id=?", (claimed.job_id,)
+        ).fetchone()[0]
+        retries = conn.execute(
+            "SELECT COUNT(*) FROM intel_job_attempts WHERE job_id=? AND outcome='scheduled_retry'",
+            (claimed.job_id,),
+        ).fetchone()[0]
+    assert stale_stage is not None and stale_stage["state"] == "DISCARDED"
+    assert "executor_lease_lost" in str(stale_stage["final_result_json"])
+    assert job["status"] in {"claimed", "running"} and job["executor_lease_epoch"] == 2
+    assert snapshot_count == successors == retries == 0
+    parent = _parents(db, PARENT_KIND)[0]
+    assert parent["state"] == "OPEN" and not broker.store.receipt(parent["operation_id"])
+
+    # Epoch two replays the earned child result through its new fencing token;
+    # it does not issue a second physical call, and it alone settles the parent.
+    assert _process_bound_intel_job(
+        db, adopted, broker, on_meeting_ready=None, retry_base_seconds=1,
+        retry_max_seconds=1, retry_max_attempts=4,
+    ) is True
+    assert physical_calls == 1
+    parent = _parents(db, PARENT_KIND)[0]
+    assert parent["state"] == "SUCCEEDED" and broker.store.receipt(parent["operation_id"])
+    with db._connection() as conn:
+        final = conn.execute("SELECT status FROM intel_jobs WHERE job_id=?", (claimed.job_id,)).fetchone()
+        assert conn.execute("SELECT COUNT(*) FROM intel_snapshots WHERE meeting_id=?", (state.id,)).fetchone()[0] == 1
+    assert final["status"] == "succeeded"
+
+
 def test_stale_bound_executor_takeover_cas_allows_one_cross_connection_owner(tmp_path, monkeypatch):
     """Two independent repositories can adopt one stale owner exactly once."""
     from concurrent.futures import ThreadPoolExecutor

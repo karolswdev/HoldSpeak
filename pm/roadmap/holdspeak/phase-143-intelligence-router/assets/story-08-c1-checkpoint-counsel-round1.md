@@ -342,3 +342,62 @@ lease with the counsel's full concurrency matrix, not a spot patch. The
 ruled design itself stays closed (the counsel: "Fix execution ownership;
 do not reopen cancellation architecture"). Round 4 verification follows
 the fix round and its sweep.
+
+---
+
+# Round 4 (Sol, same counsel session, reviewed at `63bf3d88`) — DO-NOT-RATIFY
+
+One finding. The lease's healthy-path behavior PASSES the counsel's probes:
+a slow-but-alive executor (16.5s blocked call, 3s heartbeat) is never
+robbed; takeover CAS vs concurrent stale release is correct; zero-frozen-
+bookmark normalization PASSES with no residual slug influence.
+
+1. **BLOCKER — the lease epoch is not a fencing token for effects.**
+   Token+epoch guard only lease renewal/release. After lawful takeover
+   (heartbeat missed: process suspension, renewal exception — the
+   heartbeat thread does not catch renewal exceptions or reliably set
+   `_lost`), the stale executor can still: commit a PUBLISHED analysis
+   stage (projection-publication transaction verifies job/Meeting/
+   transcript but not executor ownership), complete the job, schedule a
+   retry, close the shared parent, and promote a successor. Two executed
+   probes: (a) stale epoch-1 committed a PUBLISHED stage + intel_snapshot
+   under an epoch-2-held row; (b) takeover during active dispatch →
+   runner_invokes=2, successful provider return discarded, child
+   indeterminate, parent failed, successor queued — the ownership
+   corruption reproduced through the new takeover path. Remediation:
+   carry token+epoch into every bound projection stage and require
+   exact-match + still-held inside the same publication transaction
+   (mismatch discards the stale stage with NO publication/retry/
+   supersession/Meeting mutation); require exact token+epoch on every
+   bound-owner lifecycle mutation (completion, transcript supersession,
+   retry/failure/refusal settlement, parent close, successor promotion
+   authorization); heartbeat fails closed (`_lost` reliably set on
+   renewal exception/death; generic exception handling must not mutate
+   the job after ownership loss); a takeover that finds a dispatched
+   child with no terminal receipt must reconcile/await its durable
+   disposition, never re-execute it as fresh work. Proofs: the stale-
+   release probe as a test (stale epoch publishes/mutates/closes/
+   promotes nothing; epoch 2 alone settles; no corrupted child; no
+   stale-minted retry) + a heartbeat-renewal-exception or suspend/resume
+   proof. Evidence: intel_queue.py:150-157,232-275,316-341,384-416,
+   74-120; db/intel.py:350-420,888-932;
+   kernel/meeting_plugin_projection.py:215-238.
+
+Amendment 2 still FAIL (takeover does not fence the superseded
+executor's effects); amendments 1/3 PASS as scoped; 4–6 and plugins stay
+correctly deferred. Tired-Tuesday: not yet — ordinary long local
+inference is now safe while the heartbeat is healthy (named progress),
+but sleep/resume followed by Process/recovery can still discard a
+successful result.
+
+## Orchestrator disposition (round 4)
+
+Finding accepted without dissent — it is the unfinished half of the
+round-3 structural remedy (lease built, fence not wired to effects), and
+the triggering scenario (laptop sleep during a long local model call) is
+squarely inside the yolo rigor bar's "realistic bug" test, so it is
+fixed, not ledgered. Finding trajectory across rounds: 5→3→2→1, each
+round's findings confined to the previous round's new code. Round 5 is
+the counsel's verification of this completion; per ORCHESTRATION §2b the
+round count and the remaining bar are surfaced to the owner alongside
+this record, with the overrule explicitly offered.
