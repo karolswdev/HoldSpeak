@@ -207,16 +207,27 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
         }
         if self._frozen_transcription["backend"] in {"mlx", "faster-whisper"}:
             current = self.transcriber
-            if current is not None and not (
-                str(getattr(current, "backend", "")) == self._frozen_transcription["backend"]
-                and str(getattr(current, "model_name", "")) == self._frozen_transcription["model"]
-                and (str(getattr(current, "language", "") or "auto")
-                     == self._frozen_transcription["language"])
-            ):
-                # A warm model is reusable only when it identifies the exact frozen
-                # deployment construction.  A mismatched instance is not physical
-                # route evidence and must not run under this receipt.
-                self.transcriber = None
+            # An unloaded instance has not yet been reused: it is the candidate
+            # that this newly admitted Meeting will warm under its own P=1 route.
+            # Only an already loaded artifact needs receipt-gated reuse proof.
+            if current is not None and bool(getattr(current, "loaded", False)):
+                from ..speech_session.transcription import _durable_preload_provenance_matches
+
+                reusable = _durable_preload_provenance_matches(
+                    broker,
+                    getattr(getattr(current, "_impl", None), "_holdspeak_preload_provenance", {}),
+                    deployment_revision_id=self._frozen_transcription["deployment_revision_id"],
+                    engine=self._frozen_transcription["backend"],
+                    model=self._frozen_transcription["model"],
+                    language=self._frozen_transcription["language"],
+                )
+                if not reusable:
+                    # Construction strings alone are not reuse authority.  A
+                    # matching deployment revision and durable successful
+                    # preload/load receipt are both required; faster-whisper has
+                    # no such separable receipt, so it reconstructs after route
+                    # admission.
+                    self.transcriber = None
             self._resolved_transcription_backend = self._frozen_transcription["backend"]
             self._transcription_backend = self._frozen_transcription["backend"]
             self._transcription_model_name = self._frozen_transcription["model"]

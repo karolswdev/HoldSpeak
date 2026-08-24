@@ -56,7 +56,7 @@ this whole file before touching anything.
   completed runs are trustworthy. Census/snapshot regens are the LAST
   act of any worker round (anchors move with every edit).
 
-## 2. What is DONE and COMMITTED (thirteen gate commits)
+## 2. What is DONE and COMMITTED (fourteen gate commits)
 
 Branch `feat/hs143-08-meeting-adoption`, all on top of main `89d232f3`.
 
@@ -105,7 +105,25 @@ Branch `feat/hs143-08-meeting-adoption`, all on top of main `89d232f3`.
     provider fallthrough refuses); faster-whisper constructor load =
     ratified local-only exception (LEDGERED). Density-guard breach
     closed by moving `_frozen_session_transcriber` to
-    `transcriber_state.py` (census anchors regenerated).
+    `transcriber_state.py` (census anchors regenerated). Committed
+    `9489ec96`.
+12. **Phase D slice 2** (the commit carrying this handover revision) —
+    the pre-session warm rides the router: the sole parentless
+    startup/background warm entrance freezes the exact capability-only
+    owner `speech.transcribe` assignment + derives the SERVICE
+    `speech.preload` route in ONE transaction (fixed basis
+    `local-model-preload:assigned-speech-route`, amendment 2) before
+    any construction; frozen stop rules + frozen-only MLX
+    candidate/stage walk (amendment 3); warm reuse gated on
+    deployment-revision + durable successful preload receipt
+    (amendment 4; Meeting reuse aligned); denied/failed warm DEFERS to
+    first lawful transcription (the sweep-caught escaping
+    admission-error regression fixed by bounding deferral at the
+    admission seam; warm-on-start test moved onto a real production
+    admission path). New proof file
+    tests/unit/test_phase143_speech_lifecycle_adoption.py (8 lifecycle
+    cases). **PHASE D STRUCTURALLY COMPLETE** — capped counsel pass on
+    the whole phase pending.
 
 Counsel records (verbatim, with orchestrator dispositions):
 `assets/story-08-c1-checkpoint-counsel-round1.md` (5 rounds + owner
@@ -117,11 +135,10 @@ with verified file:line evidence in
 findings + dispositions). Verification ledger sweep section:
 `assets/story-08-tranche-ac-verification-ledger.md`.
 
-Last clean sweep (slice-1 tree): **6430 passed / zero branch-new**
-(67 inherited-baseline failures + 1 github-enrichment xdist load
-flake, serial-green ×2; from 6314 passing at the restart-session
-start). The sigkill process-input test also flaked once under load,
-serial-green ×2.
+Last clean sweep (slice-2 tree): **6435 passed / zero branch-new**
+(66 inherited-baseline failures + sigkill process-input and
+refinement-recovers-owner xdist load flakes, each serial-green ×2;
+from 6314 passing at the restart-session start).
 
 ## 3. Rulings RESOLVED (2026-08-24) and open ledger
 
@@ -147,7 +164,8 @@ sigkill process-input, github-enrichment preview.
 
 ## 4. What REMAINS for Story 08
 
-1. Phase D slice 2 (per the design's "Two slices and focused proof").
+1. Capped Sol counsel pass on Phase D (both slices) — one ruling +
+   one fix round max, bar stated.
 2. Phase E — background adopters (Rails observer → Cadence → Decision
    promotion → Delivery PR review) onto the router.
 3. Phase F — migration cleanup (legacy authority removal; the design's

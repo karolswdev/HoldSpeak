@@ -151,12 +151,12 @@ holdspeak/speech_session/revision_target.py:165|bound_target|rebind|call
 holdspeak/target_profile.py:191|apply_model_assisted_target|rewrite|ref
 holdspeak/target_profile.py:192|apply_model_assisted_target|rewrite|ref
 holdspeak/target_profile.py:195|apply_model_assisted_target|rewrite|call
-holdspeak/transcribe.py:284|_MlxTranscriber._model_holder_get._run|get_model|call
-holdspeak/transcribe.py:294|_MlxTranscriber._silent_audio_load._run|transcribe|call
-holdspeak/transcribe.py:339|_MlxTranscriber.transcribe._run|transcribe|call
-holdspeak/transcribe.py:424|_FasterWhisperTranscriber.transcribe|transcribe|call
-holdspeak/transcribe.py:557|Transcriber._timed_transcribe|transcribe|call
-holdspeak/transcribe.py:567|Transcriber._timed_transcribe._run|transcribe|call
+holdspeak/transcribe.py:321|_MlxTranscriber._model_holder_get._run|get_model|call
+holdspeak/transcribe.py:331|_MlxTranscriber._silent_audio_load._run|transcribe|call
+holdspeak/transcribe.py:376|_MlxTranscriber.transcribe._run|transcribe|call
+holdspeak/transcribe.py:461|_FasterWhisperTranscriber.transcribe|transcribe|call
+holdspeak/transcribe.py:598|Transcriber._timed_transcribe|transcribe|call
+holdspeak/transcribe.py:608|Transcriber._timed_transcribe._run|transcribe|call
 holdspeak/web/routes/dictation/_helpers.py:786|_run_dictation_dry_run_text|build_pipeline|call
 holdspeak/web/routes/system/voice.py:193|build_voice_router.api_transcribe|transcribe|call
 holdspeak/web/routes/system/voice_stream.py:245|build_voice_stream_router.ws_dictation_stream|transcribe|call
@@ -182,7 +182,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
-    "holdspeak/services/inference_adoption_service.py:1287|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    "holdspeak/services/inference_adoption_service.py:1378|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
     ),
     "holdspeak/services/cadence_service.py:284|CadenceService._draft_child|ref": ProposedRoute(
@@ -493,7 +493,7 @@ holdspeak/speech_session/provider.py:532|_RoutedSpeechAdapter.dispatch|run_promp
 holdspeak/speech_session/provider.py:670|AdmittedDictationRuntime.classify|classify|call
 """),
     _group(ProposedRoute("speech.preload", "speech_session.transcription", "InferenceRunner via TranscriptionAdmission"), """
-holdspeak/transcribe.py:284|_MlxTranscriber._model_holder_get._run|get_model|call
+holdspeak/transcribe.py:321|_MlxTranscriber._model_holder_get._run|get_model|call
 """),
     _group(ProposedRoute("speech.punctuate", "speech_session", "InferenceRunner admitted child"), """
 holdspeak/speech_session/provider.py:450|ProviderAdmission.punctuate.call|rewrite|call
@@ -525,11 +525,11 @@ holdspeak/runtime/dictation_capture.py:108|DictationCaptureMixin._transcribe_and
 holdspeak/runtime/dictation_capture.py:395|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
 holdspeak/runtime/dictation_capture.py:406|DictationCaptureMixin.transcribe_audio_admitted|transcribe|call
 holdspeak/runtime/wake_glue.py:368|WakeWordGlueMixin._transcribe_wake_admitted|transcribe|call
-holdspeak/transcribe.py:294|_MlxTranscriber._silent_audio_load._run|transcribe|call
-holdspeak/transcribe.py:339|_MlxTranscriber.transcribe._run|transcribe|call
-holdspeak/transcribe.py:424|_FasterWhisperTranscriber.transcribe|transcribe|call
-holdspeak/transcribe.py:557|Transcriber._timed_transcribe|transcribe|call
-holdspeak/transcribe.py:567|Transcriber._timed_transcribe._run|transcribe|call
+holdspeak/transcribe.py:331|_MlxTranscriber._silent_audio_load._run|transcribe|call
+holdspeak/transcribe.py:376|_MlxTranscriber.transcribe._run|transcribe|call
+holdspeak/transcribe.py:461|_FasterWhisperTranscriber.transcribe|transcribe|call
+holdspeak/transcribe.py:598|Transcriber._timed_transcribe|transcribe|call
+holdspeak/transcribe.py:608|Transcriber._timed_transcribe._run|transcribe|call
 holdspeak/web/routes/system/voice.py:193|build_voice_router.api_transcribe|transcribe|call
 holdspeak/web/routes/system/voice_stream.py:245|build_voice_stream_router.ws_dictation_stream|transcribe|call
 """),

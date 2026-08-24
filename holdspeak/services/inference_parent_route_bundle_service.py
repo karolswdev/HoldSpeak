@@ -773,6 +773,16 @@ class InferenceParentRouteBundleService:
             "candidate_material": candidates,
             "candidate_material_sha256": _sha256(candidates),
             "strategy_sequence": strategies,
+            # The lifecycle adapter may only walk this frozen sequence.  These
+            # terminal conditions are evidence, not a mutable runtime policy.
+            "stop_rules": [
+                "success",
+                "cancellation",
+                "refusal",
+                "deadline",
+                "indeterminate",
+                "exhaustion",
+            ],
         }
 
     def get(self, bundle_id: str) -> dict[str, Any]:
@@ -1428,7 +1438,7 @@ class InferenceParentRouteBundleService:
             "preload_route_plan_sha256", "transcription_route_key",
             "transcription_route_plan_id", "transcription_route_plan_sha256",
             "deployment_revision_id", "engine", "model", "language", "model_artifact",
-            "candidate_material", "candidate_material_sha256", "strategy_sequence",
+            "candidate_material", "candidate_material_sha256", "strategy_sequence", "stop_rules",
         }
         if (
             not isinstance(evidence, Mapping)
@@ -1453,6 +1463,9 @@ class InferenceParentRouteBundleService:
                 for item in evidence["strategy_sequence"]
             )
             or len(evidence["strategy_sequence"]) != len(set(evidence["strategy_sequence"]))
+            or evidence["stop_rules"] != [
+                "success", "cancellation", "refusal", "deadline", "indeterminate", "exhaustion"
+            ]
         ):
             raise ValueError("derived preload")
         by_key = {str(item["key"]): item for item in members}

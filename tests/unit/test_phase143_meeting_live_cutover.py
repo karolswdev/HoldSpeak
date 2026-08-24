@@ -262,6 +262,7 @@ def test_migrated_local_whisper_bootstraps_ready_and_transcribes_first_meeting(
                     "language": "auto",
                     "candidate_ids": ["mlx-community/whisper-base-mlx", "mlx-community/whisper-base"],
                     "strategy_sequence": ["model-holder", "silent-audio"],
+                    "stop_rules": ["success", "cancellation", "refusal", "deadline", "indeterminate", "exhaustion"],
                 },
                 run=lambda: "model-holder",
             )
@@ -355,9 +356,19 @@ def test_mlx_candidate_walk_runs_inside_one_meeting_preload_sequence(
         def __init__(self) -> None:
             self.calls: list[dict[str, Any]] = []
 
+        def frozen_preload_material(self) -> dict[str, Any]:
+            return {
+                "engine": "mlx",
+                "model": "base",
+                "language": "auto",
+                "candidate_ids": ["mlx-community/whisper-base-mlx", "mlx-community/whisper-base"],
+                "strategy_sequence": ["model-holder", "silent-audio"],
+                "stop_rules": ["success", "cancellation", "refusal", "deadline", "indeterminate", "exhaustion"],
+            }
+
         def preload_sequence(self, *, material: dict[str, Any], run: Any) -> tuple[Any, Any]:
             self.calls.append(material)
-            return SimpleNamespace(outcome="succeeded"), run()
+            return SimpleNamespace(outcome="succeeded"), run(None)
 
     admission = _Admission()
     impl.ensure_loaded(admission)
@@ -403,6 +414,7 @@ def test_migrated_mlx_preload_failure_keeps_raw_capture_durably_record_only(
                     "engine": "mlx", "model": "base", "language": "auto",
                     "candidate_ids": ["mlx-community/whisper-base-mlx", "mlx-community/whisper-base"],
                     "strategy_sequence": ["model-holder", "silent-audio"],
+                    "stop_rules": ["success", "cancellation", "refusal", "deadline", "indeterminate", "exhaustion"],
                 },
                 run=lambda: (_ for _ in ()).throw(RuntimeError("load failed")),
             )
@@ -1254,7 +1266,8 @@ def test_removed_locator_free_speech_revision_requires_migration_provenance(tmp_
 def test_mlx_preload_sequence_stops_before_a_second_physical_call_after_cancellation() -> None:
     """The P=1 lifecycle child observes cancellation between frozen strategies."""
     from types import MethodType
-    from holdspeak.transcribe import _MlxTranscriber, TranscriberError
+    from holdspeak.kernel.model import KernelRefused
+    from holdspeak.transcribe import _MlxTranscriber
 
     impl = object.__new__(_MlxTranscriber)
     impl.model_name = "base"
@@ -1271,8 +1284,12 @@ def test_mlx_preload_sequence_stops_before_a_second_physical_call_after_cancella
 
     impl._model_holder_get = MethodType(holder, impl)
     impl._silent_audio_load = MethodType(lambda _self, repo: (_ for _ in ()).throw(AssertionError(repo)), impl)
-    with pytest.raises(TranscriberError, match="cancelled before next physical call"):
-        impl._load_candidate_sequence(cancelled)
+    with pytest.raises(KernelRefused, match="speech_preload_cancelled"):
+        impl._load_candidate_sequence(
+            candidates=("repo-a", "repo-b"),
+            strategies=("model-holder", "silent-audio"),
+            cancellation=cancelled,
+        )
     assert physical == [("model-holder", "repo-a")]
 
 

@@ -973,6 +973,7 @@ class RoutedInferenceCoordinator:
         payload: Mapping[str, Any],
         reserved_output_tokens: int,
         parent_operation_id: str | None = None,
+        parentless_source_route_plan_id: str | None = None,
         executor_lease: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Atomically attach late operation material to a session-frozen route.
@@ -986,11 +987,16 @@ class RoutedInferenceCoordinator:
         operation = _safe(operation_id, field="operation_id")
         route_id = _safe(route_plan_id, field="route_plan_id")
         bound_parent = _safe(parent_operation_id, field="parent_operation_id") if parent_operation_id else ""
+        source_route = (
+            _safe(parentless_source_route_plan_id, field="parentless_source_route_plan_id")
+            if parentless_source_route_plan_id
+            else ""
+        )
         if principal.kind is not PrincipalKind.OWNER and (
-            principal.kind is not PrincipalKind.SERVICE or not bound_parent
+            principal.kind is not PrincipalKind.SERVICE or (not bound_parent and not source_route)
         ):
             raise ValidationError(
-                "Frozen-route admission requires owner or bound service authority.",
+                "Frozen-route admission requires owner, bound service, or derived parentless preload authority.",
                 code="inference_adoption_owner_required",
             )
         reference = "iam_" + hashlib.sha256(
@@ -1000,23 +1006,32 @@ class RoutedInferenceCoordinator:
             conn.execute("BEGIN IMMEDIATE")
             try:
                 if principal.kind is PrincipalKind.SERVICE:
-                    member = conn.execute(
-                        """SELECT 1
-                           FROM inference_parent_route_bundle_members m
-                           JOIN inference_parent_route_bundles b ON b.id=m.bundle_id
-                           JOIN kernel_parent_runs p ON p.operation_id=b.parent_operation_id
-                           JOIN kernel_operations o ON o.operation_id=p.operation_id
-                          WHERE m.route_plan_id=? AND m.capability_id=?
-                            AND b.parent_operation_id=?
-                            AND p.state='OPEN'
-                            AND o.principal_kind=? AND o.principal_identity=?""",
-                        (route_id, capability.id, bound_parent, principal.name, principal.identity),
-                    ).fetchone()
-                    if member is None:
-                        raise ValidationError(
-                            "Service route membership is required.",
-                            code="inference_adoption_service_membership_required",
+                    if source_route:
+                        self._validate_parentless_local_preload_route(
+                            conn,
+                            principal=principal,
+                            route_plan_id=route_id,
+                            source_route_plan_id=source_route,
+                            capability_id=capability.id,
                         )
+                    else:
+                        member = conn.execute(
+                            """SELECT 1
+                               FROM inference_parent_route_bundle_members m
+                               JOIN inference_parent_route_bundles b ON b.id=m.bundle_id
+                               JOIN kernel_parent_runs p ON p.operation_id=b.parent_operation_id
+                               JOIN kernel_operations o ON o.operation_id=p.operation_id
+                              WHERE m.route_plan_id=? AND m.capability_id=?
+                                AND b.parent_operation_id=?
+                                AND p.state='OPEN'
+                                AND o.principal_kind=? AND o.principal_identity=?""",
+                            (route_id, capability.id, bound_parent, principal.name, principal.identity),
+                        ).fetchone()
+                        if member is None:
+                            raise ValidationError(
+                                "Service route membership is required.",
+                                code="inference_adoption_service_membership_required",
+                            )
                 if executor_lease is not None:
                     job_id = str(executor_lease.get("job_id") or "")
                     token = str(executor_lease.get("token") or "")
@@ -1065,6 +1080,82 @@ class RoutedInferenceCoordinator:
                 conn.rollback()
                 raise
         return {**operation_plan, "execution": execution}
+
+    @staticmethod
+    def _validate_parentless_local_preload_route(
+        conn: Any,
+        *,
+        principal: Principal,
+        route_plan_id: str,
+        source_route_plan_id: str,
+        capability_id: str,
+    ) -> None:
+        """Validate the one closed SERVICE exception to parent membership.
+
+        Parentless execution is deliberately unavailable to every other service.
+        The derived preload route must copy exactly one capability-only owner
+        transcription selection and preserve its deployment revision.
+        """
+        if (
+            principal.identity != "local-model-preload"
+            or principal.authority_basis != "local-model-preload:assigned-speech-route"
+            or capability_id != "speech.preload"
+        ):
+            raise ValidationError(
+                "Parentless local preload authority is invalid.",
+                code="inference_adoption_service_membership_required",
+            )
+        route = conn.execute(
+            """SELECT p.capability_id,p.assignment_id,p.assignment_revision,p.inherited_from,
+                      e.deployment_revision_id,pe.payload_json
+                   FROM inference_route_plans p
+                   JOIN inference_route_plan_entries e ON e.plan_id=p.id
+                   JOIN inference_route_plan_principal_evidence pe ON pe.plan_id=p.id
+                  WHERE p.id=? AND e.route_leg_ordinal=1""",
+            (route_plan_id,),
+        ).fetchone()
+        source = conn.execute(
+            """SELECT p.capability_id,p.assignment_id,p.assignment_revision,p.inherited_from,
+                      p.sha256,e.deployment_revision_id,pe.payload_json
+                   FROM inference_route_plans p
+                   JOIN inference_route_plan_entries e ON e.plan_id=p.id
+                   JOIN inference_route_plan_principal_evidence pe ON pe.plan_id=p.id
+                  WHERE p.id=? AND e.route_leg_ordinal=1""",
+            (source_route_plan_id,),
+        ).fetchone()
+        if route is None or source is None:
+            raise ValidationError(
+                "Parentless preload evidence is invalid.",
+                code="inference_adoption_service_membership_required",
+            )
+        try:
+            preload_policy = json.loads(str(route["payload_json"]))
+            source_policy = json.loads(str(source["payload_json"]))
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise ValidationError(
+                "Parentless preload evidence is invalid.",
+                code="inference_adoption_service_membership_required",
+            ) from exc
+        if (
+            str(route["capability_id"]) != "speech.preload"
+            or str(source["capability_id"]) != "speech.transcribe"
+            or str(route["assignment_id"]) != str(source["assignment_id"])
+            or int(route["assignment_revision"]) != int(source["assignment_revision"])
+            or str(source["inherited_from"]) != "capability"
+            or str(route["deployment_revision_id"]) != str(source["deployment_revision_id"])
+            or preload_policy.get("policy_id") != "local-model-preload@1"
+            or preload_policy.get("principal_identity") != "local-model-preload"
+            or preload_policy.get("authority_basis") != "local-model-preload:assigned-speech-route"
+            or preload_policy.get("parent_kind") != "local-model-preload"
+            or preload_policy.get("allowed_boundaries") != ["local"]
+            or preload_policy.get("assignment_sources") != ["capability"]
+            or source_policy.get("principal_kind") != "owner"
+            or source_policy.get("assignment_sources") != ["capability"]
+        ):
+            raise ValidationError(
+                "Parentless preload route is not derived from its speech assignment.",
+                code="inference_adoption_service_membership_required",
+            )
 
     def freeze_route_set(
         self,

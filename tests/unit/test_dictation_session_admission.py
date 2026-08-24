@@ -38,15 +38,12 @@ from holdspeak.speech_session import (
     admit_hold_session,
     admit_wake_session,
     hold_gesture_principal,
-    model_config_revision,
     preload_service_admission,
     wake_config_revision,
     whisper_deployment_identity,
 )
 from holdspeak.speech_session.child import invocation_id
 from holdspeak.speech_session.plan import (
-    PRELOAD_AUTHORITY_MISMATCHED,
-    PRELOAD_AUTHORITY_REQUIRED,
     TRANSCRIPTION_CONTEXT_REQUIRED,
 )
 from holdspeak.transcribe import Transcriber, TranscriberError, _MlxTranscriber
@@ -593,7 +590,10 @@ def test_phase_d_faster_whisper_constructs_after_frozen_local_route_then_transcr
         principal=hold_gesture_principal(), config_snapshot=host.config
     )
     frozen = session.frozen_transcriber_arguments()
-    assert frozen == {"model_name": "base", "backend": "faster-whisper", "language": "auto"}
+    assert {key: frozen[key] for key in ("model_name", "backend", "language")} == {
+        "model_name": "base", "backend": "faster-whisper", "language": "auto"
+    }
+    assert str(frozen["deployment_revision_id"]).startswith("dep2_")
     assert constructed == []
     assert _operations(db, name="inference.invoke") == []
 
@@ -836,11 +836,12 @@ def test_phase_d_day_one_standalone_speak_to_fill_uses_the_migrated_route(
     text = host.transcribe_audio(np.full(8000, AUDIO_SENTINEL, dtype=np.float32))
 
     assert text == TEXT_SENTINEL
-    assert host.transcriber_arguments == {
+    assert {key: host.transcriber_arguments[key] for key in ("model_name", "backend", "language")} == {
         "model_name": "base",
         "backend": _resolve_backend("auto"),
         "language": "auto",
     }
+    assert str(host.transcriber_arguments["deployment_revision_id"]).startswith("dep2_")
     parent = _parents(db, "dictation.session")[0]
     assert parent["state"] == "SUCCEEDED"
     with db._connection() as conn:
@@ -1043,25 +1044,23 @@ def test_every_preload_candidate_failing_refuses_without_transcribing(tmp_path, 
     ]
 
 
-def test_pre_session_warm_without_the_authority_knob_defers(tmp_path, monkeypatch):
-    db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch)
+def test_pre_session_warm_uses_the_assigned_speech_route_not_the_legacy_knob(tmp_path, monkeypatch):
+    db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
     config = Config()
     assert config.model.local_model_preload_authority == ""
 
-    with pytest.raises(SpeechSessionRefused) as excinfo:
-        preload_service_admission(config_snapshot=config)
+    admission = preload_service_admission(config_snapshot=config)
 
-    assert excinfo.value.reason == PRELOAD_AUTHORITY_REQUIRED
+    assert admission.principal.authority_basis == "local-model-preload:assigned-speech-route"
+    assert admission.source_route["source"]["inherited_from"] == "capability"
+    assert admission.preload_route["capability"]["id"] == "speech.preload"
     assert _operations(db, name="inference.invoke") == []
     assert _parents(db) == []
 
 
 def test_authorized_pre_session_warm_runs_as_the_preload_service(tmp_path, monkeypatch):
-    db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch)
+    db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
     config = Config()
-    # Sol: the knob must NAME this model configuration's revision, not merely be
-    # nonblank — an unbound authority string authorized anything forever.
-    config.model.local_model_preload_authority = model_config_revision(config.model)
     impl = _Mlx(holder_ok=True)
 
     _transcriber(impl).warm(preload_service_admission(config_snapshot=config))
@@ -2079,41 +2078,26 @@ def test_the_ws_final_pass_sends_an_error_not_raw_text_for_a_fatal_signal(
     )
 
 
-# --------------------------------------------- 6. the preload knob is bound
+# ----------------------------------- 6. legacy preload knobs have no authority
 
 
-def test_an_unbound_preload_knob_refuses_and_names_the_revision(tmp_path, monkeypatch):
-    """Sol defect 6: any nonblank string used to authorize any warm forever."""
-    from holdspeak.speech_session import model_config_revision, preload_service_admission
-
-    db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch)
+def test_mutable_preload_knobs_cannot_change_the_frozen_parentless_source(tmp_path, monkeypatch):
+    """Warm authority is the persisted capability row, never ModelConfig bytes."""
+    db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch, legacy=False)
     config = Config()
     config.model.local_model_preload_authority = "yes-please"
+    first = preload_service_admission(config_snapshot=config)
+    config.model.name = "large"
+    config.model.local_model_preload_authority = "another-unrelated-config-hash"
+    second = preload_service_admission(config_snapshot=config)
 
-    with pytest.raises(SpeechSessionRefused) as raised:
-        preload_service_admission(config_snapshot=config)
-
-    assert raised.value.reason == PRELOAD_AUTHORITY_MISMATCHED
-    # The refusal carries what the owner must set — content-free, actionable.
-    assert raised.value.detail == model_config_revision(config.model)
+    assert first.principal.authority_basis == second.principal.authority_basis == (
+        "local-model-preload:assigned-speech-route"
+    )
+    assert first.source_route["source"] == second.source_route["source"]
+    assert first.evidence["deployment_revision_id"] == second.evidence["deployment_revision_id"]
     assert _operations(db, name="inference.invoke") == []
     assert _parents(db) == []
-
-
-def test_a_preload_knob_for_another_model_configuration_refuses(tmp_path, monkeypatch):
-    """The authority is for ONE configuration; changing the model revokes it."""
-    from holdspeak.speech_session import model_config_revision, preload_service_admission
-
-    _db, _broker, _host, _impl = _build_host(tmp_path, monkeypatch)
-    config = Config()
-    config.model.local_model_preload_authority = model_config_revision(config.model)
-    # Authorized for THIS configuration...
-    assert preload_service_admission(config_snapshot=config) is not None
-    # ...and not for a different model.
-    config.model.name = "large"
-    with pytest.raises(SpeechSessionRefused) as raised:
-        preload_service_admission(config_snapshot=config)
-    assert raised.value.reason == PRELOAD_AUTHORITY_MISMATCHED
 
 
 # ------------------------------------------------ 7. wake stop cancels in-flight

@@ -217,6 +217,7 @@ class MeetingGlueMixin:
                 model_name=frozen["model"],
                 backend=frozen["backend"],
                 language=frozen["language"],
+                deployment_revision_id=frozen.get("deployment_revision_id"),
             )
             return self.transcriber
 

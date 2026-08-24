@@ -120,6 +120,31 @@ inherited + 1 github-enrichment xdist load flake, serial-green ×2).
 Next: Phase D slice 2, then Phase E (background adopters), Phase F
 (migration cleanup).
 
+**Phase D slice 2 (2026-08-24): SHIPPED — the pre-session warm rides
+the router.** The sole parentless startup/background warm entrance
+(`transcriber_state.py`) now freezes, in one transaction, the exact
+capability-only owner `speech.transcribe` assignment and derives the
+nonassignable SERVICE `speech.preload` route (fixed authority basis
+`local-model-preload:assigned-speech-route`, amendment 2) before any
+construction — mutable ModelConfig bytes no longer select or authorize
+warm work. Frozen preload evidence now carries explicit stop rules;
+the MLX walker executes only the frozen candidate/stage sequence with
+cancellation checked before every physical call (amendment 3). Warm
+reuse is deployment-revision + durable-receipt gated (amendment 4):
+matching display strings alone never let a loaded artifact run under a
+new route; Meeting's reuse check aligned. A denied or failed prewarm
+defers to the first lawful transcription — capture never becomes
+unavailable because warming was denied; the orchestrator's sweep
+caught the one regression there (an admission-layer ConflictError
+escaping the warm daemon thread) and the fix round bounded deferral at
+the admission seam while the warm-on-start test was reworked onto a
+real production admission path (real DB, broker, frozen route,
+controller, durable receipt; only the external MLX hook bounded). New
+proof file `tests/unit/test_phase143_speech_lifecycle_adoption.py`
+covers the design's eight lifecycle cases. Sweep **6435 passed / zero
+branch-new** (66 inherited + sigkill and refinement-recovers-owner
+xdist load flakes, each serial-green ×2). Next: Phase E, then Phase F.
+
 ## Problem
 
 MeetingIntelPlan and SpeechPlan are the proven ordered-revision pattern but

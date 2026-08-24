@@ -336,6 +336,45 @@ class RoutedSpeechTranscriptionAdmission:
             raise SpeechSessionRefused("speech_preload_evidence_missing", "speech.preload")
         return evidence
 
+    def frozen_preload_material(self) -> Mapping[str, Any]:
+        evidence = self._preload_evidence()
+        return {
+            "engine": str(evidence["engine"]),
+            "model": str(evidence["model"]),
+            "language": str(evidence["language"]),
+            "candidate_ids": [str(item["id"]) for item in evidence["candidate_material"]],
+            "strategy_sequence": [str(item) for item in evidence["strategy_sequence"]],
+            "stop_rules": [str(item) for item in evidence["stop_rules"]],
+        }
+
+    def loaded_artifact_reusable(self, impl: Any) -> bool:
+        evidence = self._preload_evidence()
+        material = self.frozen_preload_material()
+        return _durable_preload_provenance_matches(
+            self.broker,
+            getattr(impl, "_holdspeak_preload_provenance", {}),
+            deployment_revision_id=str(evidence["deployment_revision_id"]),
+            engine=material["engine"],
+            model=material["model"],
+            language=material["language"],
+        )
+
+    def record_loaded_artifact(self, impl: Any, receipt: Mapping[str, Any]) -> None:
+        if str(receipt.get("outcome") or "") != "succeeded":
+            return
+        evidence = self._preload_evidence()
+        preload = self._member("speech.preload")
+        if preload is None:
+            return
+        impl._holdspeak_preload_provenance = {
+            "deployment_revision_id": str(evidence["deployment_revision_id"]),
+            "engine": str(evidence["engine"]),
+            "model": str(evidence["model"]),
+            "language": str(evidence["language"]),
+            "execution_id": str(receipt.get("execution_id") or ""),
+            "route_plan_id": str(preload["route_plan_id"]),
+        }
+
     def preload_sequence(
         self, *, material: Mapping[str, Any], run: Callable[..., Any]
     ) -> tuple[Any, Any]:
@@ -346,15 +385,8 @@ class RoutedSpeechTranscriptionAdmission:
         evidence sequence it was constructed from.
         """
         evidence = self._preload_evidence()
-        candidates = [str(item["id"]) for item in evidence["candidate_material"]]
-        strategies = [str(item) for item in evidence["strategy_sequence"]]
-        if (
-            list(material.get("candidate_ids") or ()) != candidates
-            or list(material.get("strategy_sequence") or ()) != strategies
-            or str(material.get("engine") or "") != str(evidence["engine"])
-            or str(material.get("model") or "") != str(evidence["model"])
-            or str(material.get("language") or "") != str(evidence["language"])
-        ):
+        expected = self.frozen_preload_material()
+        if dict(material) != expected:
             raise SpeechSessionRefused("speech_preload_sequence_mismatched", "speech.preload")
 
         def call(_engine: Any, _payload: Mapping[str, Any], cancellation: Any) -> Mapping[str, str]:
@@ -380,11 +412,158 @@ class RoutedSpeechTranscriptionAdmission:
                 self.principal,
                 deployment_revision_id=str(evidence["deployment_revision_id"]),
             )
+        self.last_preload_receipt = routed.get("receipt")
         return SimpleNamespace(outcome=state, receipt=routed.get("receipt")), routed.get("result")
+
+
+@dataclass
+class ParentlessPreloadAdmission:
+    """One derived, parentless MLX lifecycle route.
+
+    A pre-session warm has no capture parent, but it is not ambient process
+    authority: ``source_route`` is the exact frozen owner-visible transcription
+    assignment and ``preload_route`` is the closed SERVICE-derived member.
+    """
+
+    broker: Any
+    principal: Any
+    source_route: Mapping[str, Any]
+    preload_route: Mapping[str, Any]
+    evidence: Mapping[str, Any]
+    single_preload_sequence: bool = True
+
+    def frozen_preload_material(self) -> Mapping[str, Any]:
+        return {
+            "engine": str(self.evidence["engine"]),
+            "model": str(self.evidence["model"]),
+            "language": str(self.evidence["language"]),
+            "candidate_ids": [str(item["id"]) for item in self.evidence["candidate_material"]],
+            "strategy_sequence": [str(item) for item in self.evidence["strategy_sequence"]],
+            "stop_rules": [str(item) for item in self.evidence["stop_rules"]],
+        }
+
+    def loaded_artifact_reusable(self, impl: Any) -> bool:
+        provenance = getattr(impl, "_holdspeak_preload_provenance", None)
+        if not isinstance(provenance, Mapping):
+            return False
+        expected = self.frozen_preload_material()
+        return _durable_preload_provenance_matches(
+            self.broker,
+            provenance,
+            deployment_revision_id=str(self.evidence["deployment_revision_id"]),
+            engine=expected["engine"],
+            model=expected["model"],
+            language=expected["language"],
+        )
+
+    def record_loaded_artifact(self, impl: Any, receipt: Mapping[str, Any]) -> None:
+        if str(receipt.get("outcome") or "") != "succeeded":
+            return
+        impl._holdspeak_preload_provenance = {
+            "deployment_revision_id": str(self.evidence["deployment_revision_id"]),
+            "engine": str(self.evidence["engine"]),
+            "model": str(self.evidence["model"]),
+            "language": str(self.evidence["language"]),
+            "execution_id": str(receipt.get("execution_id") or ""),
+            "route_plan_id": str(self.preload_route["id"]),
+        }
+
+    def preload_sequence(
+        self, *, material: Mapping[str, Any], run: Callable[..., Any]
+    ) -> tuple[Any, Any]:
+        expected = self.frozen_preload_material()
+        if dict(material) != expected:
+            raise SpeechSessionRefused("speech_preload_sequence_mismatched", "speech.preload")
+
+        def call(_engine: Any, _payload: Mapping[str, Any], cancellation: Any) -> Mapping[str, str]:
+            if cancellation.is_set():
+                from ..kernel.model import KernelRefused
+
+                raise KernelRefused("speech_preload_cancelled")
+            value = run(cancellation) if inspect.signature(run).parameters else run()
+            return {"state": str(value or "loaded")}
+
+        operation_id = "speech-preload:" + hashlib.sha256(
+            json.dumps(
+                {
+                    "source_route_plan_id": self.source_route["id"],
+                    "source_route_plan_sha256": self.source_route["sha256"],
+                    "preload_route_plan_id": self.preload_route["id"],
+                    "material": dict(material),
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ).hexdigest()
+        coordinator = self.broker.inference_adoption_service
+        admitted = coordinator.admit_on_frozen_route(
+            self.principal,
+            command_id="speech-preload-operation:" + operation_id,
+            route_plan_id=str(self.preload_route["id"]),
+            capability_id="speech.preload",
+            operation_id=operation_id,
+            payload={"stage": "frozen-sequence", **dict(material)},
+            reserved_output_tokens=16,
+            parentless_source_route_plan_id=str(self.source_route["id"]),
+        )
+        from ..services.inference_semantic_adapters import adapter_for
+
+        routed = coordinator.execute(
+            self.principal,
+            execution_id=str(admitted["execution"]["id"]),
+            adapter=adapter_for("speech.preload", call),
+        )
+        receipt = routed.get("receipt")
+        if not isinstance(receipt, Mapping):
+            receipt = {}
+        self.last_preload_receipt = receipt
+        return SimpleNamespace(outcome=str(routed["outcome"]), receipt=receipt), routed.get("result")
+
+
+def _durable_preload_provenance_matches(
+    broker: Any,
+    provenance: Mapping[str, Any],
+    *,
+    deployment_revision_id: str,
+    engine: str,
+    model: str,
+    language: str,
+) -> bool:
+    """Require both exact construction identity and a durable successful receipt."""
+    if (
+        str(provenance.get("deployment_revision_id") or "") != deployment_revision_id
+        or str(provenance.get("engine") or "") != engine
+        or str(provenance.get("model") or "") != model
+        or str(provenance.get("language") or "auto") != str(language or "auto")
+    ):
+        return False
+    execution_id = str(provenance.get("execution_id") or "")
+    route_plan_id = str(provenance.get("route_plan_id") or "")
+    if not execution_id or not route_plan_id:
+        return False
+    with broker.database._connection() as conn:
+        row = conn.execute(
+            """SELECT e.terminal_outcome,e.winning_attempt_id,p.capability_id,
+                      r.deployment_revision_id
+                   FROM inference_route_executions e
+                   JOIN inference_operation_route_request_plans o ON o.id=e.operation_plan_id
+                   JOIN inference_route_plans p ON p.id=o.route_plan_id
+                   JOIN inference_route_plan_entries r ON r.plan_id=p.id
+                  WHERE e.id=? AND p.id=? AND r.route_leg_ordinal=1""",
+            (execution_id, route_plan_id),
+        ).fetchone()
+    return bool(
+        row is not None
+        and str(row["terminal_outcome"] or "") == "succeeded"
+        and str(row["winning_attempt_id"] or "")
+        and str(row["capability_id"] or "") == "speech.preload"
+        and str(row["deployment_revision_id"] or "") == deployment_revision_id
+    )
 
 
 __all__ = [
     "PRELOAD_DEADLINE_SECONDS",
+    "ParentlessPreloadAdmission",
     "RoutedSpeechTranscriptionAdmission",
     "SpeechProviderFailure",
     "TRANSCRIBE_DEADLINE_SECONDS",

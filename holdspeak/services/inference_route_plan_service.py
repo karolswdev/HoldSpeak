@@ -401,6 +401,50 @@ class InferenceRoutePlanService:
             **request,
         )
 
+    def freeze_capability_only_owner_route_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        command_id: str,
+        feature_principal: Principal,
+        parent_kind: str,
+        **request: Any,
+    ) -> dict[str, Any]:
+        """Freeze the exact owner-visible capability row, never ambient fallback.
+
+        Parentless local-model warming is deliberately narrower than ordinary
+        owner work: it derives its warrant from the one selected
+        ``speech.transcribe`` capability assignment.  Group/global rows are not
+        an alternate source of authority for a process-wide service warm.
+        """
+        if feature_principal.kind is not PrincipalKind.OWNER:
+            raise ValidationError(
+                "Capability-only preload source requires owner authority.",
+                code="inference_route_plan_invalid",
+            )
+        capability = self._registry.require(str(request.get("capability_id") or ""))
+        policy = self._feature_principal_policy(
+            feature_principal, parent_kind=parent_kind, capability=capability
+        )
+        material = dict(policy["policy_material"])
+        material.update(
+            {
+                "id": "owner-capability-only-preload-source@1",
+                "assignment_sources": ["capability"],
+            }
+        )
+        policy = {
+            **policy,
+            "policy_id": "owner-capability-only-preload-source@1",
+            "policy_material": material,
+            "policy_sha256": _sha256(material),
+            "assignment_sources": ["capability"],
+        }
+        return self._freeze_route_plan_in_transaction(
+            authority, conn, command_id=command_id, principal_policy=policy, **request
+        )
+
     def freeze_derived_preload_for_transcription_in_transaction(
         self,
         authority: Principal,

@@ -351,6 +351,32 @@ session-transcriber helper into `transcriber_state.py`. Confirming
 sweep: **6430 passed / zero branch-new** (67 inherited-baseline
 failures plus one github-enrichment xdist load flake, serial-green
 twice). Next: Phase D slice 2, then Phase E and Phase F.
+**Phase D slice 2 is SHIPPED (2026-08-24) — the pre-session warm rides
+the router.** The one parentless startup/background warm entrance now
+freezes the exact capability-only owner `speech.transcribe` assignment
+and derives the nonassignable SERVICE `speech.preload` route (fixed
+authority basis `local-model-preload:assigned-speech-route`) in one
+transaction before any construction; mutable ModelConfig bytes no
+longer select or authorize warm work. Frozen preload evidence carries
+explicit stop rules and the MLX walker executes only the frozen
+candidate/stage sequence, checking cancellation before every physical
+call. A loaded artifact is reusable only on a full
+deployment-revision + backend/model/language match backed by a durable
+successful preload receipt — matching display strings alone never let
+an artifact run under a new route (Meeting's reuse check aligned). A
+denied or failed prewarm defers to the first lawful transcription;
+capture never becomes unavailable because warming was denied — the
+orchestrator's sweep caught the single regression on that boundary
+(an admission-layer error escaping the warm daemon thread) and the
+fix bounded deferral at the admission seam while the warm-on-start
+test moved onto a real production admission path with only the
+external MLX hook bounded. New proof file
+`tests/unit/test_phase143_speech_lifecycle_adoption.py` covers the
+design's eight lifecycle cases. Confirming sweep: **6435 passed /
+zero branch-new** (66 inherited plus two known xdist load flakes,
+each serial-green twice). **Phase D is structurally complete**; a
+capped counsel pass on the whole phase is next, then Phase E
+(background adopters) and Phase F (migration cleanup).
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

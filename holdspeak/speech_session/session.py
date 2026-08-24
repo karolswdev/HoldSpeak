@@ -209,26 +209,19 @@ def model_config_revision(model_config: Any) -> str:
     return sha({"model_config": _model_terms(model_config)})
 
 
-def preload_service_principal(model_config: Any) -> Principal:
-    """The narrow pre-session preload identity, or a refusal (Sol Amendment 4).
+def preload_service_principal(_model_config: Any = None) -> Principal:
+    """Return the closed parentless local-model preload identity.
 
-    A pre-session warm has no session to parent it, so it may run ONLY under the
-    owner's explicit ``model.local_model_preload_authority`` — and that knob must
-    NAME this model configuration's revision (:func:`model_config_revision`).
-    Blank/absent and MISMATCHED both refuse here, before any MLX dispatch, and
-    the refusal carries the revision the owner has to set.
+    The legacy mutable-config knob is deliberately not consulted.  A warm is
+    lawful only when :func:`preload_service_admission` atomically freezes a
+    capability-only owner ``speech.transcribe`` route and derives this service's
+    internal ``speech.preload`` member from it.
     """
-    value = str(getattr(model_config, "local_model_preload_authority", "") or "").strip()
-    expected = model_config_revision(model_config)
-    if not value:
-        raise SpeechSessionRefused(PRELOAD_AUTHORITY_REQUIRED, detail=expected)
-    if value != expected:
-        raise SpeechSessionRefused(PRELOAD_AUTHORITY_MISMATCHED, detail=expected)
     return Principal(
         PrincipalKind.SERVICE,
         PRELOAD_SERVICE_IDENTITY,
         frozenset({("inference.invoke", 1)}),
-        f"configured-local-model-preload:{value}",
+        "local-model-preload:assigned-speech-route",
     )
 
 
@@ -506,6 +499,7 @@ class SpeechSession:
                     "model_name": str(evidence["model"]),
                     "backend": str(evidence["engine"]),
                     "language": str(evidence["language"]),
+                    "deployment_revision_id": str(evidence["deployment_revision_id"]),
                 }
         # A frozen transcription member remains the sole construction source if a
         # historical bundle lacks derived lifecycle evidence; never read mutable
@@ -514,7 +508,7 @@ class SpeechSession:
             raise SpeechSessionRefused("speech_route_construction_missing")
         with self.broker.database._connection() as conn:
             row = conn.execute(
-                """SELECT d.engine,d.model,p.capability_manifest_json
+                """SELECT d.id,d.engine,d.model,p.capability_manifest_json
                      FROM inference_route_plan_entries e
                      JOIN deployment_revisions d ON d.id=e.deployment_revision_id
                      JOIN model_profile_revisions p
@@ -535,7 +529,12 @@ class SpeechSession:
             )
         except (KeyError, TypeError, ValueError, StopIteration) as exc:
             raise SpeechSessionRefused("speech_route_construction_missing") from exc
-        return {"model_name": model, "backend": engine, "language": language}
+        return {
+            "model_name": model,
+            "backend": engine,
+            "language": language,
+            "deployment_revision_id": str(row["id"]),
+        }
 
 
 # ---------------------------------------------------------------- admission
@@ -1152,40 +1151,71 @@ class SpeechEntry:
 def preload_service_admission(
     *, model_config: Any = None, config_snapshot: Any = None, registry_snapshot: Any = None,
 ) -> Any:
-    """The authorized PRE-session warm admission, or a named refusal.
+    """Freeze one parentless MLX preload from the exact speech assignment.
 
-    Returns a parentless :class:`~holdspeak.speech_session.transcription.TranscriptionAdmission`:
-    the warm has no session to parent it, so each preload dispatch is one
-    top-level ``inference.invoke@1`` under the narrow ``local-model-preload``
-    service identity.
+    ``model_config``/``config_snapshot`` remain compatibility-shaped inputs but
+    are intentionally not execution authority.  The sole selector is the
+    owner-visible capability assignment frozen in this transaction; its derived
+    SERVICE preload route carries the exact fixed policy basis.
     """
-    from .transcription import TranscriptionAdmission
+    del model_config, config_snapshot, registry_snapshot
+    from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
+    from ..services.inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+    from .transcription import ParentlessPreloadAdmission
 
-    if config_snapshot is None:
-        from ..config import Config
-
-        config_snapshot = Config.load()
-    if registry_snapshot is None:
-        from ..db import get_database
-
-        registry_snapshot = get_database()
-    principal = preload_service_principal(
-        model_config if model_config is not None else getattr(config_snapshot, "model", None)
-    )
-    plan = DictationSessionPlanResolver().resolve(
-        config_snapshot,
-        registry_snapshot,
-        principal,
-        "local-model-preload",
-        session_id="preload_" + uuid.uuid4().hex[:8],
-        deadline_at=time.time() + ONE_SHOT_DEADLINE_SECONDS,
-        child_budget=HOLD_CHILD_BUDGET,
-        plan_kind=PLAN_LOCAL_MODEL_PRELOAD,
-        capabilities=(CAPABILITY_WHISPER_PRELOAD,),
-    )
-    return TranscriptionAdmission(
-        broker=_broker(), principal=principal, plan=plan, parent=None,
-        capability=CAPABILITY_WHISPER_PRELOAD,
+    broker = _broker()
+    principal = preload_service_principal()
+    owner = hold_gesture_principal()
+    command = "parentless-speech-preload-" + uuid.uuid4().hex
+    deadline = time.time() + ONE_SHOT_DEADLINE_SECONDS
+    with broker.database._connection() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            source = broker.inference_adoption_service.plans.freeze_capability_only_owner_route_in_transaction(
+                ROUTE_PLANNING_AUTHORITY,
+                conn,
+                command_id=command + "-source",
+                feature_principal=owner,
+                parent_kind="local-model-preload",
+                capability_id="speech.transcribe",
+                invocation_id=command,
+                deadline_at=deadline,
+            )
+            if len(source["entries"]) != 1:
+                raise SpeechSessionRefused("speech_preload_source_ambiguous")
+            preload = broker.inference_adoption_service.plans.freeze_derived_preload_for_transcription_in_transaction(
+                ROUTE_PLANNING_AUTHORITY,
+                conn,
+                command_id=command + "-derived",
+                feature_principal=principal,
+                parent_kind="local-model-preload",
+                transcription_route_plan_id=str(source["id"]),
+            )
+            evidence = InferenceParentRouteBundleService._derived_preload_evidence(
+                conn,
+                {"declaration": {"key": "preload"}, "source_key": "transcription"},
+                source,
+                preload,
+            )
+            if str(evidence["engine"]) != "mlx":
+                # Faster-whisper loads only in its constructor.  It is not a
+                # fictional lifecycle operation and therefore receives no warm.
+                raise SpeechSessionRefused("speech_preload_constructor_inseparable")
+            conn.commit()
+        except SpeechSessionRefused:
+            conn.rollback()
+            raise
+        except Exception as exc:
+            conn.rollback()
+            raise SpeechSessionRefused(
+                str(getattr(exc, "code", "") or getattr(exc, "reason", "") or "speech_preload_not_admitted")
+            ) from None
+    return ParentlessPreloadAdmission(
+        broker=broker,
+        principal=principal,
+        source_route=source,
+        preload_route=preload,
+        evidence=evidence,
     )
 
 
