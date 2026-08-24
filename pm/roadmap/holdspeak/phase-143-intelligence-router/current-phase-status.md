@@ -51,7 +51,7 @@ Assignments.
 | HSEGHS001HS104-143-05 | Frozen Route Plans | done | [story-05-frozen-route-plans](./story-05-frozen-route-plans.md) | [evidence](./evidence-story-05.md) |
 | HSEGHS001HS104-143-06 | Fallback Controller and Failure Law | done | [story-06-fallback-controller-failure-law](./story-06-fallback-controller-failure-law.md) | [evidence](./evidence-story-06.md) |
 | HSEGHS001HS104-143-07 | Thoughts Ask and Writing Adoption | done | [story-07-thoughts-ask-writing-adoption](./story-07-thoughts-ask-writing-adoption.md) | [evidence](./evidence-story-07.md) |
-| HSEGHS001HS104-143-08 | Meetings Speech and Background Adoption | in-progress | [story-08-meetings-speech-background-adoption](./story-08-meetings-speech-background-adoption.md) | - |
+| HSEGHS001HS104-143-08 | Meetings Speech and Background Adoption | done | [story-08-meetings-speech-background-adoption](./story-08-meetings-speech-background-adoption.md) | [evidence-story-08](./evidence-story-08.md) |
 | HSEGHS001HS104-143-09 | Tool Capability Foundation and Safe Routing | backlog | [story-09-tool-turn-routing-safe-fallback](./story-09-tool-turn-routing-safe-fallback.md) | - |
 | HSEGHS001HS104-143-10 | Agents Workbenches and Recipes Adoption | backlog | [story-10-agents-workbenches-recipes-adoption](./story-10-agents-workbenches-recipes-adoption.md) | - |
 | HSEGHS001HS104-143-11 | HTTP MCP Sync and Compatibility | backlog | [story-11-http-mcp-sync-compatibility](./story-11-http-mcp-sync-compatibility.md) | - |
@@ -467,6 +467,24 @@ invisible to the generic setup projection, with a marker-replay
 repair. Confirming sweep: **6470 passed / zero branch-new** (48
 inherited plus three known xdist flakes, each serial-green twice).
 Next: Phase F, then the story close.
+**Story 08 is DONE (2026-08-24).** Phase F executed the ruled cleanup
+plan in three slices with no further counsel rounds (zero open ruling
+questions): v1 Meeting execution and pre-C queue recovery are
+terminally fenced (inert compatibility cutover per the unknown-handoff
+law; history displays, nothing resumes), settings selectors are
+marker-gated family by family, Rails runtime provenance derives from
+frozen route evidence only, fully-adopted speech sessions carry an
+inert validation plan while the partial-marker and paired-device
+paths lawfully survive, and one routes-first egress accessor feeds
+CLI and web. Every model invocation in Meetings, speech, and the
+background adopters now flows through the sealed router. Closing
+evidence: the full CI-style suite captured through the DW harness —
+**6475 passed / 49 failed / zero branch-new** (48 inherited-baseline
+failures + one serial-proven load flake; the suite grew 6314 → 6475
+across the arc and the branch fixes roughly a dozen inherited
+failures). Twenty-one gate commits; counsel records for every phase
+are in `assets/`. Next actionable: Story 09 (tool routing). Push/PR
+awaits the owner's word.
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

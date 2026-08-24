@@ -1,12 +1,13 @@
-# HANDOVER — Story HS-143-08 (updated 2026-08-24, Phase D slice 1 shipped)
+# HANDOVER — Story HS-143-08 (FINAL, 2026-08-24: STORY DONE)
 
-Supersedes the mid-stream 2026-08-24 handover. Phase D slice 1 is
-COMMITTED: the three blocked rulings + two review-stream findings were
-verified against the tree and resolved by Sol in ONE capped ruling
-round (record: `assets/story-08-phase-d-counsel.md`; binding texts =
-design amendments 7–11 in `assets/story-08-phase-d-speech-design.md`),
-and the single fix round landed with production-object proofs. Read
-this whole file before touching anything.
+FINAL revision. Story 08 is DONE: all six phases (A-F) complete and
+ratified, the story flipped with captured full-suite evidence
+(evidence-story-08.md: 6475 passed / zero branch-new). Twenty-one
+gate commits on `feat/hs143-08-meeting-adoption`. NOT PUSHED — push +
+PR only on the owner's word. Next actionable story: 09 (tool
+routing). This file remains as the arc's historical index; the
+per-phase counsel records and the Phase F cleanup plan in `assets/`
+are the canon.
 
 ## 1. Way of working (the standing law for this arc)
 
