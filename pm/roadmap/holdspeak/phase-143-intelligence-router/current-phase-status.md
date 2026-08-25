@@ -52,7 +52,7 @@ Assignments.
 | HSEGHS001HS104-143-06 | Fallback Controller and Failure Law | done | [story-06-fallback-controller-failure-law](./story-06-fallback-controller-failure-law.md) | [evidence](./evidence-story-06.md) |
 | HSEGHS001HS104-143-07 | Thoughts Ask and Writing Adoption | done | [story-07-thoughts-ask-writing-adoption](./story-07-thoughts-ask-writing-adoption.md) | [evidence](./evidence-story-07.md) |
 | HSEGHS001HS104-143-08 | Meetings Speech and Background Adoption | done | [story-08-meetings-speech-background-adoption](./story-08-meetings-speech-background-adoption.md) | [evidence-story-08](./evidence-story-08.md) |
-| HSEGHS001HS104-143-09 | Tool Capability Foundation and Safe Routing | backlog | [story-09-tool-turn-routing-safe-fallback](./story-09-tool-turn-routing-safe-fallback.md) | - |
+| HSEGHS001HS104-143-09 | Tool Capability Foundation and Safe Routing | done | [story-09-tool-turn-routing-safe-fallback](./story-09-tool-turn-routing-safe-fallback.md) | [evidence-story-09](./evidence-story-09.md) |
 | HSEGHS001HS104-143-10 | Agents Workbenches and Recipes Adoption | backlog | [story-10-agents-workbenches-recipes-adoption](./story-10-agents-workbenches-recipes-adoption.md) | - |
 | HSEGHS001HS104-143-11 | HTTP MCP Sync and Compatibility | backlog | [story-11-http-mcp-sync-compatibility](./story-11-http-mcp-sync-compatibility.md) | - |
 | HSEGHS001HS104-143-12 | Model Library and Providers | backlog | [story-12-model-library-providers](./story-12-model-library-providers.md) | - |
@@ -485,6 +485,28 @@ across the arc and the branch fixes roughly a dozen inherited
 failures). Twenty-one gate commits; counsel records for every phase
 are in `assets/`. Next actionable: Story 09 (tool routing). Push/PR
 awaits the owner's word.
+**Story 09 is DONE (2026-08-25) — opened and closed in one arc.** The
+Tool Capability Foundation is executable and the ruled tool-bearing
+fallback law is implemented and proven: a closed MODEL_TURN capability
+projection, versioned tool-qualified manifests (legacy manifests never
+backfilled as qualified), the durable `TurnCapabilityLease@1` and
+`ToolTurnController` on the new `tool.turn` parent kind with a
+five-table private ledger, the provider-neutral `ToolModelAdapter`
+(render once / parse exactly one candidate), qualified-only routing
+with pre-dispatch refusal when no qualified profile exists, and the
+complete correction/fallback table — corrective steps bounded,
+advancement only to tool-qualified legs, receipted effects adopted
+never repeated, the terminal set never falling back, parallel results
+keeping ordinal identity, and `ToolTurnReceipt@1` disclosing exact
+tools, proposed vs executed effects, and every fallback leg. Every
+model step and tool call is separately admitted and receipted. The
+design was already ruled canon, so no counsel rounds were spent: ten
+implementation choices were decided by the orchestrator as
+tie-breaker, Terra built all nine slices, and paired opus audits
+closed both gates ("PART A SOUND" / "PART B SOUND — story may
+close") with zero findings. Six gate commits; six zero-branch-new
+sweeps; closing evidence 6532 passed. No production surface uses the
+foundation yet — Story 10 owns adoption. Next actionable: Story 10.
 Verification ledger:
 [tranche A–C ledger](./assets/story-08-tranche-ac-verification-ledger.md);
 counsel record:

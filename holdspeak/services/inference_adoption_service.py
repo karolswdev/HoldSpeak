@@ -153,19 +153,33 @@ class ProductionRouteEvidence:
         db: Any,
         *,
         registry: InferenceCapabilityRegistry | None = None,
+        capability_ids: Sequence[str] = EXECUTING_CAPABILITIES,
+        provider_id: str = EVIDENCE_PROVIDER_ID,
+        provider_revision: int = EVIDENCE_PROVIDER_REVISION,
     ) -> None:
         self._db = db
         self._registry = registry or process_inference_capability_registry()
+        self._capability_ids = tuple(capability_ids)
+        if not self._capability_ids or len(self._capability_ids) != len(set(self._capability_ids)):
+            raise ValueError("production evidence capability selection is invalid")
+        # Resolve now, during trusted process composition, rather than permitting
+        # a later caller to name a capability/evidence owner.
+        for capability_id in self._capability_ids:
+            self._registry.require(capability_id)
+        self._provider_id = _safe(provider_id, field="evidence_provider_id")
+        if type(provider_revision) is not int or provider_revision < 1:
+            raise ValueError("production evidence provider revision is invalid")
+        self._provider_revision = provider_revision
         self._plans: InferenceRoutePlanService | None = None
 
     def bind_route_plan_service(self, plans: InferenceRoutePlanService) -> None:
         self._plans = plans
 
     def provider(self) -> RouteAdmissionEvidenceProvider:
-        definitions = tuple(self._registry.require(value) for value in EXECUTING_CAPABILITIES)
+        definitions = tuple(self._registry.require(value) for value in self._capability_ids)
         return RouteAdmissionEvidenceProvider(
-            id=EVIDENCE_PROVIDER_ID,
-            revision=EVIDENCE_PROVIDER_REVISION,
+            id=self._provider_id,
+            revision=self._provider_revision,
             capabilities=tuple(
                 (item.id, item.revision, item.schema_sha256) for item in definitions
             ),
@@ -204,7 +218,7 @@ class ProductionRouteEvidence:
         reference = _safe(planning_reference, field="planning_reference")
         operation = _safe(operation_id, field="operation_id")
         capability = self._registry.require(capability_id)
-        if capability.id not in EXECUTING_CAPABILITIES:
+        if capability.id not in self._capability_ids:
             raise ValidationError(
                 "Capability has no selected provider-backed execution stage.",
                 code="inference_adoption_capability_non_executing",

@@ -83,6 +83,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     meeting_deferred = ParentRunCodec("meeting.deferred-intel-job", operation_name="meeting.deferred-intel-job", **({"clock": clock} if clock else {}))
     dictation_session = ParentRunCodec("dictation.session", operation_name="dictation.session", **({"clock": clock} if clock else {}))
     wake_session = ParentRunCodec("wake.session", operation_name="wake.session", **({"clock": clock} if clock else {}))
+    tool_turn = ParentRunCodec("tool.turn", operation_name="tool.turn", **({"clock": clock} if clock else {}))
     specs = (
         OperationSpec(tool_calls.name, tool_calls.version, tool_calls, "agent.submit", "propose"),
         OperationSpec(process_input.name, process_input.version, process_input, "agent.submit", "propose"),
@@ -115,6 +116,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
         OperationSpec(meeting_deferred.name, meeting_deferred.version, meeting_deferred, "agent.submit", "propose"),
         OperationSpec(dictation_session.name, dictation_session.version, dictation_session, "agent.submit", "propose"),
         OperationSpec(wake_session.name, wake_session.version, wake_session, "agent.submit", "propose"),
+        OperationSpec(tool_turn.name, tool_turn.version, tool_turn, "agent.submit", "propose"),
     )
     broker = Broker(store, specs, **({"clock": clock} if clock else {}))
     # Phase 143's capability/retry law is pure composition truth.  Building it
@@ -132,7 +134,7 @@ def _build(database: Any, *, clock: Any = None) -> Broker:
     # another database singleton; invoke admission validates revisions there.
     broker.database = database
     broker.parent_run_controller = ParentRunController(broker, database,
-        operation_names={"sequence":"sequence.run", "workflow":"workflow.run", "workbench":"workbench.run", "decision.promotion-draft":"decision.promotion-draft", "delivery.pr-review-draft":"delivery.pr-review-draft", "cadence.next-action-draft":"cadence.next-action-draft", "rails.observer-batch":"rails.observer-batch", "voice_reference_resolve":"voice_reference_resolve", "meeting.session":"meeting.session", "meeting.deferred-intel-job":"meeting.deferred-intel-job", "dictation.session":"dictation.session", "wake.session":"wake.session"}, **({"clock": clock} if clock else {}))
+        operation_names={"sequence":"sequence.run", "workflow":"workflow.run", "workbench":"workbench.run", "decision.promotion-draft":"decision.promotion-draft", "delivery.pr-review-draft":"delivery.pr-review-draft", "cadence.next-action-draft":"cadence.next-action-draft", "rails.observer-batch":"rails.observer-batch", "voice_reference_resolve":"voice_reference_resolve", "meeting.session":"meeting.session", "meeting.deferred-intel-job":"meeting.deferred-intel-job", "dictation.session":"dictation.session", "wake.session":"wake.session", "tool.turn":"tool.turn"}, **({"clock": clock} if clock else {}))
     # The liveness reaper runs before stage recovery: an expired claimed
     # invocation first receives its authoritative indeterminate receipt.
     from .projection_stager import ProjectionStager
