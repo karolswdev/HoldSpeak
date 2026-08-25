@@ -354,13 +354,19 @@ class PluginDispatch:
         claim and the physical call cannot be separated by a scheduler: two threads
         sharing one handle produce exactly one attempt and one refusal.
         """
-        engine = self._validated_engine(plugin_id)
-        # THE gate. Everything above is early, well-named diagnosis; this is the
-        # decision, and it is the last thing that happens before the leaf.
+        # The elected product adopter lives behind one narrow application façade.
+        # PluginDispatch stays a one-shot authority handle; it does not own the
+        # ToolTurn ledger, a lease, route selection, or a provider transport.
+        from ..services.agent_turn_service import AgentTurnService
+        # Refusal/claim are an authority decision, not a provider result.  Keep
+        # them outside the sanitizing boundary so a zero-dispatch refusal cannot
+        # be laundered into PluginProviderFailure.
+        self._validated_engine(plugin_id)
         self._claim_the_one_completion(plugin_id)
         try:
-            result = engine._chat_completion_text(
-                list(messages), temperature=float(temperature), max_tokens=int(max_tokens)
+            return AgentTurnService.dispatch_plugin(
+                self, messages, temperature=temperature, max_tokens=max_tokens,
+                plugin_id=plugin_id,
             )
         except CONTROL_SIGNALS:
             raise
@@ -370,7 +376,6 @@ class PluginDispatch:
             raise PluginProviderFailure(plugin_id, exc) from None
         finally:
             self._settle_the_completion()
-        return result if isinstance(result, str) else str(result or "")
 
     # --------------------------------------------------------------- fence
 

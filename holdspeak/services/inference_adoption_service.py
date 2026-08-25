@@ -60,6 +60,15 @@ ADOPTED_CAPABILITIES = (
     "background.cadence_draft",
     "decision.promotion_draft",
     "delivery.pr_review_draft",
+    # HS-143-10 placement adopters. Tool turns retain their separate qualified
+    # evidence provider in ToolTurnFoundationService, so they are deliberately
+    # absent here.
+    "recipe.run",
+    "recipe.chat",
+    "workbench.item",
+    "voice.reference_resolve",
+    "sequence.step",
+    "workflow.node",
     # C2 plugin membership comes only from the composed registry.  The closed
     # evidence provider must nevertheless list every installed exact capability
     # before a frozen bundle child may stage its private material.
@@ -80,6 +89,7 @@ MEETING_MIGRATION_FAMILY = "meeting-route-assignments"
 MEETING_DEFERRED_MIGRATION_FAMILY = "meeting-deferred-route-assignments"
 SPEECH_RECOGNITION_MIGRATION_FAMILY = "speech-recognition-route-assignments"
 RAILS_OBSERVER_MIGRATION_FAMILY = "rails-observer-route-assignments"
+RECIPE_WORKBENCH_MIGRATION_FAMILY = "recipe-workbench-subject-route-assignments"
 MEETING_ASSIGNMENT_CAPABILITIES = (
     "meeting.live_analysis",
     "meeting.bookmark_label",
@@ -2439,6 +2449,81 @@ class RoutedInferenceCoordinator:
             )
         return {**marker, "status": "migrated", "legacy_config_read": True}
 
+    def migrate_recipe_workbench_subject_assignments(
+        self, principal: Principal
+    ) -> dict[str, Any]:
+        """Consume Recipe/Workbench pointers once into exact subject assignments.
+
+        The durable primitive id is the assignment subject.  The old profile id
+        is only the one transaction's input and is retained in the marker's
+        source-record map for audit; neither blank nor stale pointers become a
+        post-marker execution selector.
+        """
+        family = RECIPE_WORKBENCH_MIGRATION_FAMILY
+        assignments = InferenceAssignmentService(self._db, registry=self._registry)
+        existing = assignments.migration_marker(principal, family=family)
+        if existing is not None:
+            return {**existing, "status": "migrated", "legacy_config_read": False}
+
+        def entry_for(profile_id: str) -> dict[str, Any]:
+            with self._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT MAX(revision) AS revision FROM model_profile_revisions WHERE profile_id=?",
+                    (profile_id,),
+                ).fetchone()
+                revision = int(row["revision"] or 0) if row is not None else 0
+                legacy = conn.execute(
+                    "SELECT 1 FROM profiles WHERE id=? AND deleted=0", (profile_id,)
+                ).fetchone()
+            if revision >= 1:
+                return {"profile_id": profile_id, "profile_revision": revision}
+            if legacy is not None:
+                return {"profile_id": f"legacy-{profile_id}", "profile_revision": 1}
+            # Deliberately fail the whole transaction: making a marker around a
+            # dangling pointer would hide the repair and make its old intent
+            # execution-dead without an explicit refusal.
+            raise ValidationError(
+                "Legacy subject pointer names a missing model profile.",
+                code="inference_assignment_profile_missing",
+            )
+
+        subject_entries: list[dict[str, Any]] = []
+        source_records: list[dict[str, Any]] = []
+        for recipe in self._db.recipes.list():
+            value = str(getattr(recipe, "profile_id", "") or "").strip()
+            source_records.append({
+                "record_kind": "recipe", "record_id": str(recipe.id), "field": "profile_id",
+                "legacy_value": value, "legacy_read": bool(value),
+            })
+            if value:
+                profile = entry_for(value)
+                for capability_id in ("recipe.run", "recipe.chat"):
+                    subject_entries.append({
+                        "subject_kind": "recipe", "subject_id": str(recipe.id),
+                        "capability_id": capability_id, "entry": profile,
+                    })
+        for workbench in self._db.workbenches.list():
+            for field, capability_id in (
+                ("profile_id", "workbench.item"),
+                ("resolver_profile_id", "voice.reference_resolve"),
+            ):
+                value = str(getattr(workbench, field, "") or "").strip()
+                source_records.append({
+                    "record_kind": "workbench", "record_id": str(workbench.id), "field": field,
+                    "legacy_value": value, "legacy_read": bool(value),
+                })
+                if value:
+                    subject_entries.append({
+                        "subject_kind": "workbench", "subject_id": str(workbench.id),
+                        "capability_id": capability_id, "entry": entry_for(value),
+                    })
+        source_sha256 = _sha256({"records": sorted(source_records, key=lambda item: (item["record_kind"], item["record_id"], item["field"]))})
+        marker = assignments.migrate_subject_assignments_atomically(
+            principal, family=family, source_sha256=source_sha256,
+            subject_entries=subject_entries, source_records=source_records,
+        )
+        return {**marker, "status": "migrated", "legacy_config_read": True}
+
     def migrate_startup_legacy_assignments(
         self, principal: Principal, config_loader: Callable[[], Any]
     ) -> dict[str, dict[str, Any]]:
@@ -2452,6 +2537,7 @@ class RoutedInferenceCoordinator:
                 MEETING_DEFERRED_MIGRATION_FAMILY,
                 SPEECH_RECOGNITION_MIGRATION_FAMILY,
                 RAILS_OBSERVER_MIGRATION_FAMILY,
+                RECIPE_WORKBENCH_MIGRATION_FAMILY,
             )
         }
         if all(markers.values()):
@@ -2474,6 +2560,9 @@ class RoutedInferenceCoordinator:
             ),
             RAILS_OBSERVER_MIGRATION_FAMILY: self.migrate_rails_observer_route_assignments(
                 principal, config
+            ),
+            RECIPE_WORKBENCH_MIGRATION_FAMILY: self.migrate_recipe_workbench_subject_assignments(
+                principal
             ),
         }
 
@@ -2556,6 +2645,7 @@ __all__ = [
     "MEETING_DEFERRED_MIGRATION_FAMILY",
     "SPEECH_RECOGNITION_MIGRATION_FAMILY",
     "RAILS_OBSERVER_MIGRATION_FAMILY",
+    "RECIPE_WORKBENCH_MIGRATION_FAMILY",
     "ProductionInferenceAdoptionService",
     "ProductionRouteEvidence",
     "RoutedInferenceCoordinator",

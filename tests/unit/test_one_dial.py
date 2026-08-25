@@ -350,9 +350,9 @@ def test_feature_legs_resolve_through_the_one_resolver() -> None:
         # HS-131-04: Sequence and Workflow now share the admitted service;
         # _target resolves placement for every eligible child.
         "holdspeak/services/sequence_workflow_service.py": "resolve_placement",
-        # HS-134-01: Recipe execution migrated to the HS-130-01 placement
-        # authority; workbench-tier overrides now reach execution.
-        "holdspeak/services/recipe_service.py": "resolve_placement",
+        # HS-143-10: Recipe execution admits an exact recipe subject route through
+        # the canonical coordinator; it no longer resolves a mutable target.
+        "holdspeak/services/recipe_service.py": "inference_adoption_service.admit",
         "holdspeak/plugins/dictation/assembly.py": "effective_dictation_llm",
         "holdspeak/runtime/meeting_glue.py": "effective_intel_cloud",
         "holdspeak/setup_runtime.py": "effective_dictation_llm",

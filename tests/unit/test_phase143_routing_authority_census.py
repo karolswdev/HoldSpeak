@@ -92,10 +92,6 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/services/model_profile_service.py:690:ref:resolve_inference_target",
     "holdspeak/services/profile_service.py:131:import:resolve_inference_target",
     "holdspeak/services/profile_service.py:132:ref:resolve_inference_target",
-    "holdspeak/services/recipe_service.py:130:import:resolve_placement",
-    "holdspeak/services/recipe_service.py:131:ref:resolve_placement",
-    "holdspeak/services/recipe_service.py:173:import:resolve_placement",
-    "holdspeak/services/recipe_service.py:174:ref:resolve_placement",
     "holdspeak/services/refinement_application_service.py:63:import:resolve_placement",
     "holdspeak/services/refinement_application_service.py:64:ref:resolve_placement",
     "holdspeak/services/refinement_application_service.py:70:import:resolve_thought_placement",
@@ -112,10 +108,10 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/services/settings_service.py:76:ref:resolve_meeting_placement",
     "holdspeak/services/workbench_runner.py:30:import:resolve_placement",
     "holdspeak/services/workbench_runner.py:31:ref:resolve_placement",
-    "holdspeak/services/workbench_service.py:167:import:resolve_placement",
-    "holdspeak/services/workbench_service.py:171:ref:resolve_placement",
-    "holdspeak/services/workbench_service.py:378:import:resolve_placement",
-    "holdspeak/services/workbench_service.py:379:ref:resolve_placement",
+    "holdspeak/services/workbench_service.py:183:import:resolve_placement",
+    "holdspeak/services/workbench_service.py:187:ref:resolve_placement",
+    "holdspeak/services/workbench_service.py:399:import:resolve_placement",
+    "holdspeak/services/workbench_service.py:400:ref:resolve_placement",
     "holdspeak/speech_session/plan.py:452:import:resolve_placement",
     "holdspeak/speech_session/plan.py:461:ref:resolve_placement",
     "holdspeak/speech_session/plan.py:629:import:resolve_placement",
@@ -142,11 +138,11 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/services/inference_setup_service.py:181:inference_target_id",
     "holdspeak/services/settings_service.py:636:intel_profile_id",
     "holdspeak/services/settings_service.py:885:inference_target_id",
-    "holdspeak/services/workbench_service.py:376:resolver_profile_id",
-    "holdspeak/services/workbench_service.py:379:resolver_profile_id",
-    "holdspeak/services/workbench_service.py:401:resolver_profile_id",
+    "holdspeak/services/workbench_service.py:397:resolver_profile_id",
+    "holdspeak/services/workbench_service.py:400:resolver_profile_id",
     "holdspeak/services/workbench_service.py:422:resolver_profile_id",
-    "holdspeak/services/workbench_service.py:471:resolver_profile_id",
+    "holdspeak/services/workbench_service.py:443:resolver_profile_id",
+    "holdspeak/services/workbench_service.py:492:resolver_profile_id",
     "holdspeak/kernel/inference.py:103:requested_target_id",
     "holdspeak/kernel/inference.py:147:requested_target_id",
 }
@@ -159,12 +155,10 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/config/core.py:138:profile_id", "holdspeak/config/core.py:169:profile_id",
         "holdspeak/config/integrations.py:101:profile_id", "holdspeak/config/model.py:80:profile_id", "holdspeak/db/models/workbench.py:138:profile_id",
         "holdspeak/plugins/dictation/assembly.py:321:profile_id",
-        "holdspeak/services/recipe_service.py:131:profile_id", "holdspeak/services/recipe_service.py:141:profile_id",
-        "holdspeak/services/recipe_service.py:146:profile_id", "holdspeak/services/recipe_service.py:174:profile_id",
-        "holdspeak/services/recipe_service.py:178:profile_id", "holdspeak/services/schedule_delegation.py:18:profile_id",
+        "holdspeak/services/schedule_delegation.py:18:profile_id",
         "holdspeak/services/sequence_workflow_service.py:129:profile_id", "holdspeak/services/settings_service.py:786:profile_id",
         "holdspeak/services/settings_service.py:858:profile_id", "holdspeak/services/workbench_runner.py:31:profile_id",
-        "holdspeak/services/workbench_service.py:172:profile_id", "holdspeak/services/workbench_service.py:470:profile_id",
+        "holdspeak/services/workbench_service.py:188:profile_id", "holdspeak/services/workbench_service.py:491:profile_id",
         "holdspeak/services/sync_service.py:682:profile_id",
         "holdspeak/services/sync_service.py:697:profile_id",
         "holdspeak/db/models/__init__.py:1121:profile_id",
@@ -182,7 +176,10 @@ PROFILE_ID_CLASSIFICATIONS = {
     }},
     **{site: "immutable evidence" for site in {
         "holdspeak/services/model_profile_service.py:1196:profile_id",
-        "holdspeak/services/inference_assignment_service.py:1553:profile_id",
+        "holdspeak/services/inference_assignment_service.py:1656:profile_id",
+    }},
+    **{site: "migration source" for site in {
+        "holdspeak/services/recipe_service.py:287:profile_id",
     }},
     **{site: "credential/provider identity" for site in {
         "holdspeak/intel/providers.py:687:profile_id", "holdspeak/intel/providers.py:694:profile_id",
@@ -289,8 +286,8 @@ def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() 
     assert pointers == ROUTING_POINTER_ATTRIBUTES
     assert profile_ids == set(PROFILE_ID_CLASSIFICATIONS)
     assert set(PROFILE_ID_CLASSIFICATIONS.values()) <= CLASSES
-    assert len(PROFILE_ID_CLASSIFICATIONS) == 41
-    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 21
+    assert len(PROFILE_ID_CLASSIFICATIONS) == 37
+    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 16
     assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 13
     assert sum(value == "credential/provider identity" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 5
     assert sum(value == "immutable evidence" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 2

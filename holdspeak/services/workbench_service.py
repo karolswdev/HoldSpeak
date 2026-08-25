@@ -28,6 +28,20 @@ class WorkbenchService:
         self._db = db
         self._observer = observer or NullObserver()
 
+    def _refuse_post_marker_pointer_write(self, principal: Principal, fields: dict[str, Any]) -> None:
+        """Do not silently persist a selector once assignment owns execution."""
+        if not ({"profile_id", "resolver_profile_id"} & set(fields)):
+            return
+        from .inference_adoption_service import RECIPE_WORKBENCH_MIGRATION_FAMILY
+        from .inference_assignment_service import InferenceAssignmentService
+        if InferenceAssignmentService(self._db).migration_marker(
+            principal, family=RECIPE_WORKBENCH_MIGRATION_FAMILY
+        ) is not None:
+            raise ValidationError(
+                "Workbench legacy placement fields are retired; edit the canonical assignment.",
+                code="inference_legacy_selector_retired",
+            )
+
     # ── Workbenches ──────────────────────────────────────────────────────
 
     def list_workbenches(self, principal: Principal) -> list[dict[str, Any]]:
@@ -40,6 +54,7 @@ class WorkbenchService:
     def create_workbench(self, principal: Principal, *, name: str, **fields: Any) -> dict[str, Any]:
         if not name.strip():
             raise ValidationError("Workbench name is required")
+        self._refuse_post_marker_pointer_write(principal, fields)
         body = {"name": name, **fields}
         fields = self._wb_fields(body)
         if fields["schedule_enabled"] and principal.kind is not PrincipalKind.OWNER:
@@ -61,6 +76,7 @@ class WorkbenchService:
         self, principal: Principal, workbench_id: str, **fields: Any
     ) -> dict[str, Any]:
         existing = self._require_workbench(workbench_id)
+        self._refuse_post_marker_pointer_write(principal, fields)
         proposed = self._wb_fields(fields, existing)
         bound_changed = any(proposed[key] != getattr(existing, key) for key in ("schedule", "schedule_enabled", "recipe_id", "profile_id"))
         enabling = not existing.schedule_enabled and proposed["schedule_enabled"]
@@ -253,6 +269,11 @@ class WorkbenchService:
         self, principal: Principal, template_id: str, profile_id: str | None = None
     ) -> dict[str, Any]:
         from holdspeak.workbench_templates import get_template
+        # A selected legacy profile would otherwise write two post-marker
+        # execution-dead pointers.  The compatibility route is deliberately an
+        # explicit refusal until the shared assignment editor owns this flow.
+        if profile_id is not None:
+            self._refuse_post_marker_pointer_write(principal, {"profile_id": profile_id})
         template = get_template(template_id)
         if template is None:
             raise NotFound("template", template_id)

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 143
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** 143-06, 143-07
 - **Unblocks:** 143-14
 - **Owner:** unassigned
@@ -42,3 +42,23 @@ and reference-resolution code currently reconstruct placement independently.
 ## Notes / open questions
 
 The shared UI must replace, not sit beside, private target selectors.
+
+## Progress
+
+- 2026-08-25 — Round 1 (Slices 1+2 of
+  `assets/story-10-placement-adoption-plan.md`): one-way Recipe/Workbench
+  pointer migration into exact canonical subject assignments
+  (`recipe.run`/`recipe.chat`/`workbench.item`/`voice.reference_resolve`,
+  marker-first, atomic, idempotent); Recipe run/chat migrated onto routed
+  admission, frozen plans, controller execution, and Runner receipts with
+  `_target`/`_invoke`/display re-resolution retired; post-marker legacy-field
+  writes translate to canonical mutations or refuse explicitly; narrow
+  `AgentTurnService` façade added as the only product seam over
+  `ToolTurnFoundationService`. Orchestrator-verified: Slice 1 set 67 passed,
+  Slice 2 set 50 passed, one-path guards 166 passed. Two design findings
+  triaged and ruled in the plan's Round-1 triage section: `PluginDispatch.chat`
+  reclassified ALREADY-DONE (admitted leaf, identity-fenced to its runner
+  reservation) and the first ToolTurn adopter amended to `RecipeService.chat`
+  on a tool-qualified route; dead workbench tier on the standalone recipe
+  entry ledgered (no production transport passes it). Story 15 (repo-wide
+  router docs) chartered by owner ruling; Story 14 now depends on it.

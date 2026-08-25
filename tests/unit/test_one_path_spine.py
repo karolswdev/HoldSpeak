@@ -245,9 +245,11 @@ def _ready_this_machine(tmp_path, monkeypatch) -> None:
 def _recipe_rig(tmp_path, monkeypatch, name: str):
     from holdspeak.services.recipe_service import RecipeService
 
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+
     db = Database(tmp_path / f"{name}.db")
-    db.recipes.upsert(recipe_id="r1", name="Recipe", system_prompt="system")
-    _ready_this_machine(tmp_path, monkeypatch)
+    _profile(db, "spine-recipe", claims=(_result_claim("recipe.run"),))
+    db.recipes.upsert(recipe_id="r1", name="Recipe", system_prompt="system", profile_id="spine-recipe")
 
     class Engine:
         active_provider = "test"

@@ -11,6 +11,7 @@ Sequence, Workflow, Cadence get_loop (LLM-drafted path).
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -19,6 +20,8 @@ from holdspeak.db import Database, reset_database
 from holdspeak.inference_targets import PLACEMENT_SOURCES, THIS_MACHINE_ID
 from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.errors import ValidationError
+from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
 
 OWNER = Principal(PrincipalKind.OWNER, "provenance-owner")
 
@@ -31,6 +34,17 @@ class _FakeEngine:
         return "output"
 
 
+def _ready_local_model(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Give legacy placement surfaces a real ready local deployment identity."""
+    path = tmp_path / "fixture.gguf"
+    path.write_bytes(b"fixture-model")
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.configured_local_meeting_model_path",
+        lambda: str(path),
+    )
+    return path
+
+
 # ---------------------------------------------------------------------------
 # Ask
 # ---------------------------------------------------------------------------
@@ -41,9 +55,7 @@ def ask_rig(tmp_path, monkeypatch):
     from holdspeak.services.ask_service import AskService
 
     db = Database(tmp_path / "ask_prov.db")
-    monkeypatch.setattr(
-        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
-    )
+    _ready_local_model(tmp_path, monkeypatch)
     db.profiles.upsert(
         profile_id="ask_profile",
         name="Ask Profile",
@@ -82,31 +94,14 @@ def test_ask_invocation_placement(ask_rig):
 
 
 @pytest.fixture
-def recipe_rig(tmp_path, monkeypatch):
+def recipe_rig(tmp_path):
     from holdspeak.services.recipe_service import RecipeService
 
     db = Database(tmp_path / "recipe_prov.db")
-    db.profiles.upsert(
-        profile_id="agent_target",
-        name="Agent Target",
-        kind="openAICompatible",
-        base_url="http://agent:8080/v1",
-        model="agent-model",
-    )
-    db.profiles.upsert(
-        profile_id="wb_target",
-        name="Workbench Target",
-        kind="openAICompatible",
-        base_url="http://workbench:8080/v1",
-        model="wb-model",
-    )
-    db.profiles.upsert(
-        profile_id="invocation_target",
-        name="Invocation Target",
-        kind="openAICompatible",
-        base_url="http://invocation:8080/v1",
-        model="invocation-model",
-    )
+    # recipe.run and recipe.chat share this result-schema claim.
+    claims = (_result_claim("recipe.run"),)
+    _profile(db, "agent_target", claims=claims)
+    _profile(db, "wb_target", claims=claims)
     db.recipes.upsert(
         recipe_id="r1",
         name="Provenance Test",
@@ -118,70 +113,45 @@ def recipe_rig(tmp_path, monkeypatch):
     return db, RecipeService(db, broker=broker)
 
 
-def test_recipe_run_agent_default(recipe_rig):
-    """Recipe run with no override -> agent tier wins."""
+def test_recipe_run_canonical_subject_assignment(recipe_rig):
+    """Recipe projection names the frozen route selected for its subject."""
     _db, service = recipe_rig
     result = asyncio.run(service.run(OWNER, "r1", input="hello"))
-    assert "placement" in result, f"placement missing from recipe run: {sorted(result)}"
-    assert result["placement"]["source"] == "agent"
-    assert result["placement"]["effective_target_id"] == "agent_target"
+    assert result["profile_id"] == "agent_target"
+    assert result["inference_target"]["profile_id"] == "agent_target"
+    assert set(result["placement"]) == {"route_plan_id", "route_plan_sha256"}
+    assert result["route_execution_receipt"]["outcome"] == "succeeded"
 
 
-def test_recipe_run_workbench_override(recipe_rig):
-    """Recipe run with workbench override -> source 'workbench'."""
+def test_recipe_run_workbench_context_cannot_reroute_canonical_subject(recipe_rig):
+    """The old workbench placement selector is not an execution authority."""
     _db, service = recipe_rig
-    result = asyncio.run(
-        service.run(OWNER, "r1", input="hello", workbench_id="wb_target")
-    )
-    assert result["placement"]["source"] == "workbench"
-    assert result["placement"]["effective_target_id"] == "wb_target"
+    result = asyncio.run(service.run(OWNER, "r1", input="hello", workbench_id="wb_target"))
+    assert result["profile_id"] == "agent_target"
+    assert result["route_execution_receipt"]["outcome"] == "succeeded"
 
 
-def test_recipe_run_invocation_override(recipe_rig):
-    """Recipe run with invocation -> source 'invocation'."""
+def test_recipe_run_rejects_legacy_invocation_selector(recipe_rig):
     _db, service = recipe_rig
-    result = asyncio.run(
-        service.run(
-            OWNER, "r1", input="hello",
-            inference_target_id="invocation_target",
-            workbench_id="wb_target",
-        )
-    )
-    assert result["placement"]["source"] == "invocation"
-    assert result["placement"]["effective_target_id"] == "invocation_target"
+    with pytest.raises(ValidationError, match="Legacy model selectors") as raised:
+        asyncio.run(service.run(OWNER, "r1", input="hello", inference_target_id="wb_target"))
+    assert raised.value.code == "inference_legacy_selector_retired"
 
 
-def test_recipe_chat_agent_default(recipe_rig):
-    """Chat with no override -> agent tier wins."""
+def test_recipe_chat_canonical_subject_assignment(recipe_rig):
     _db, service = recipe_rig
-    result = asyncio.run(service.chat(OWNER, "r1", question="hello"))
-    assert "placement" in result
-    assert result["placement"]["source"] == "agent"
-    assert result["placement"]["effective_target_id"] == "agent_target"
+    result = asyncio.run(service.chat(OWNER, "r1", question="hello", workbench_id="wb_target"))
+    assert result["profile_id"] == "agent_target"
+    assert result["inference_target"]["profile_id"] == "agent_target"
+    assert set(result["placement"]) == {"route_plan_id", "route_plan_sha256"}
+    assert result["route_execution_receipt"]["outcome"] == "succeeded"
 
 
-def test_recipe_chat_workbench_override(recipe_rig):
-    """Chat with workbench override -> source 'workbench'."""
+def test_recipe_chat_rejects_legacy_invocation_selector(recipe_rig):
     _db, service = recipe_rig
-    result = asyncio.run(
-        service.chat(OWNER, "r1", question="hello", workbench_id="wb_target")
-    )
-    assert result["placement"]["source"] == "workbench"
-    assert result["placement"]["effective_target_id"] == "wb_target"
-
-
-def test_recipe_chat_invocation_override(recipe_rig):
-    """Chat with invocation -> source 'invocation'."""
-    _db, service = recipe_rig
-    result = asyncio.run(
-        service.chat(
-            OWNER, "r1", question="hello",
-            inference_target_id="invocation_target",
-            workbench_id="wb_target",
-        )
-    )
-    assert result["placement"]["source"] == "invocation"
-    assert result["placement"]["effective_target_id"] == "invocation_target"
+    with pytest.raises(ValidationError, match="Legacy model selectors") as raised:
+        asyncio.run(service.chat(OWNER, "r1", question="hello", inference_target_id="wb_target"))
+    assert raised.value.code == "inference_legacy_selector_retired"
 
 
 # ---------------------------------------------------------------------------
@@ -258,9 +228,7 @@ def test_sequence_run_placement(tmp_path, monkeypatch):
     reset_database()
     db = Database(tmp_path / "seq_prov.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
-    monkeypatch.setattr(
-        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
-    )
+    _ready_local_model(tmp_path, monkeypatch)
 
     class _Engine:
         active_provider = "local"
@@ -314,9 +282,7 @@ def test_workflow_run_placement(tmp_path, monkeypatch):
     reset_database()
     db = Database(tmp_path / "wf_prov.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
-    monkeypatch.setattr(
-        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
-    )
+    _ready_local_model(tmp_path, monkeypatch)
 
     class _Engine:
         active_provider = "local"
@@ -374,8 +340,18 @@ def test_cadence_get_loop_llm_placement(tmp_path, monkeypatch):
 
     reset_database()
     db = Database(tmp_path / "cadence_prov.db")
-    monkeypatch.setattr(
-        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+    _ready_local_model(tmp_path, monkeypatch)
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+    _profile(db, "cadence-route")
+    InferenceAssignmentService(db).set_assignment(
+        OWNER,
+        {
+            "command_id": "assign-cadence-route",
+            "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "background.cadence_draft"},
+            "entries": [{"profile_id": "cadence-route", "profile_revision": 1}],
+        },
     )
     loop = db.cadence.upsert_loop(
         OpenLoop(
@@ -398,8 +374,8 @@ def test_cadence_get_loop_llm_placement(tmp_path, monkeypatch):
     detail = asyncio.run(service.get_loop(OWNER, loop.id))
     assert detail["next_action"]["generated_by"] == "llm"
     assert "placement" in detail, f"placement missing from cadence: {sorted(detail)}"
-    assert detail["placement"]["source"] == "global"
-    assert detail["placement"]["effective_target_id"] == THIS_MACHINE_ID
+    assert detail["placement"]["source"] == "frozen_owner_assignment"
+    assert detail["placement"]["egress"]["scope"] == "local"
 
 
 def test_cadence_get_loop_deterministic_no_placement(tmp_path, monkeypatch):

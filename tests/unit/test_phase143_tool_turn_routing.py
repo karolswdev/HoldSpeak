@@ -430,9 +430,12 @@ def test_frozen_qualified_manifest_cannot_retarget_after_profile_manifest_revisi
     assert reconstructed["entries"][0]["tool_qualification"]["sha256"] != revised["tool_qualification"]["sha256"]
 
 
-def test_internal_tool_turn_foundation_has_no_public_adopter_imports() -> None:
-    """B2/ORCH-CALL 6: Story 10 still owns every real user-facing adopter."""
+def test_tool_turn_foundation_has_one_precise_product_facade_allowlist() -> None:
+    """HS-143-10 permits exactly AgentTurnService, never a broad public carve-out."""
     root = Path(__file__).resolve().parents[2]
+    facade = root / "holdspeak" / "services" / "agent_turn_service.py"
+    facade_text = facade.read_text(encoding="utf-8")
+    assert facade_text.count("ToolTurnFoundationService") >= 2
     public_roots = [
         root / "holdspeak" / "services" / "ask_service.py",
         root / "holdspeak" / "services" / "recipe_service.py",

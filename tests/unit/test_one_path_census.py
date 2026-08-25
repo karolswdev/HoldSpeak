@@ -509,14 +509,10 @@ ADMITTED_SEAM_CALLERS: dict[tuple[str, str], str] = {
     ("holdspeak/dictation_runner.py", "run_pipeline_corrections_only"): "build_pipeline(admission=…) wraps the runtime in the admitted seam",
     ("holdspeak/web/routes/dictation/_helpers.py", "_run_dictation_dry_run_text"): "requires a caller-owned live text-entry admission before construction",
     ("holdspeak/commands/dictation.py", "_cmd_dry_run"): "requires the top-level CLI's derived owner and live text-entry admission before construction",
-    # HS-131-14. The plugin dispatch handle is a CONSUMER of an admitted child, not
-    # an adapter: it constructs nothing, resolves no placement, and holds no
-    # configuration. It is handed the engine `InferenceRunner._attempt` already
-    # built for the claimed child, and it re-proves that child's context — by
-    # identity — plus its own liveness and cancellation signal before every
-    # completion. Charter §Scope forbids a plugin scope on the ADAPTER_ALLOWLIST,
-    # and this is the seam list, which is where a migrated caller belongs.
-    ("holdspeak/plugins/intelligence.py", "PluginDispatch.chat"): "the runner-built engine of ONE admitted `inference.invoke` child; refuses by name before the leaf when the handle is released, cancelled, or no longer that child's",
+    # HS-143-10 admits the old issued-handle compatibility leaf only through
+    # this one façade; the elected qualified agent turn uses AgentTurnService.run
+    # and ToolTurnFoundationService's separate controller path.
+    ("holdspeak/services/agent_turn_service.py", "AgentTurnService.dispatch_plugin"): "one already-admitted PluginDispatch child only; qualified tool turns use ToolTurnFoundationService",
 }
 
 # ------------------------------------------------------- bucket 4: the findings
@@ -701,6 +697,8 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # Phase 143's C1 stored-route closures retain the three lawful deferred
     # execution leaves.  Phase F removes the four legacy direct-runner entrances
     # (the queue worker plus its three DeferredIntelJob closures).
+    # HS-143-10 moves the legacy issued-handle leaf behind its one precise
+    # product façade; qualified ToolTurn execution remains foundation-owned.
     assert len(sites) == 101
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
