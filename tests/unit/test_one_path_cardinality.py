@@ -450,10 +450,14 @@ def test_cancellation_after_provider_return_is_one_child_one_receipt_one_physica
 
     db = Database(tmp_path / "promotion-cardinality.db")
     _accepted_meeting_decision(db, "dec-cardinality")
-    profile = db.profiles.upsert(
-        profile_id="promotion-cardinality", name="Promotion", kind="openAICompatible",
-        base_url="http://promotion-cardinality", model="promotion-model",
-    )
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+    _profile(db, "promotion-cardinality")
+    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-cardinality-promotion", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
+        "entries": [{"profile_id": "promotion-cardinality", "profile_revision": 1}],
+    })
     broker = _configure(db)
     owner = Principal(PrincipalKind.OWNER, "promotion-cardinality-owner")
 
@@ -474,9 +478,7 @@ def test_cancellation_after_provider_return_is_one_child_one_receipt_one_physica
     service = DecisionLifecycleService(db, kernel=broker)
 
     with pytest.raises(ConflictError, match="decision_promotion_cancelled"):
-        asyncio.run(service.draft_promoted_with_model(
-            owner, "dec-cardinality", "note", {"inference_target_id": profile.id},
-        ))
+        asyncio.run(service.draft_promoted_with_model(owner, "dec-cardinality", "note", {}))
 
     with db._connection() as conn:
         parent_id = conn.execute(
@@ -1164,10 +1166,10 @@ def _stream_openai(leaf: _Leaf, calls: list[dict[str, Any]], *, reject_max_token
 
 
 @pytest.mark.parametrize("form", ["text", "stream"])
-def test_the_meeting_adapter_lets_the_dialect_signal_reach_the_runner(form, tmp_path, monkeypatch):
+def test_the_bound_meeting_adapter_lets_the_dialect_signal_reach_the_runner(form, tmp_path, monkeypatch):
     """Terra blocker 1: the sanitizer swallowed a KERNEL signal, not provider text.
 
-    `MeetingAdapter.dispatch` wraps its provider call in
+    `BoundMeetingAdapter.dispatch` wraps its provider call in
     ``except BaseException -> MeetingProviderFailure`` so no transcript fragment,
     echoed prompt, or endpoint body can reach a journal field. That is right about
     CONTENT and was wrong about CONTROL: it also caught
@@ -1180,7 +1182,7 @@ def test_the_meeting_adapter_lets_the_dialect_signal_reach_the_runner(form, tmp_
     """
     import holdspeak.intel as intel_pkg
     from holdspeak.intel.engine import MeetingIntel, forget_endpoint_dialects
-    from holdspeak.meeting_session.intel_child import MeetingAdapter
+    from holdspeak.meeting_session.deferred_bound import BoundMeetingAdapter
 
     forget_endpoint_dialects()
     db, broker, _revision = _bare_rig(tmp_path)
@@ -1217,7 +1219,7 @@ def test_the_meeting_adapter_lets_the_dialect_signal_reach_the_runner(form, tmp_
     try:
         outcome = runner.invoke(
             _prompt_request(revision, f"meeting-{form}", f"meeting_{form}"),
-            MeetingAdapter(f"meeting-adapter-{form}", call),
+            BoundMeetingAdapter(f"meeting-adapter-{form}", call),
         )
 
         assert outcome.outcome == "succeeded"

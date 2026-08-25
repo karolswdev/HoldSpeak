@@ -26,6 +26,10 @@ from ..inference_capabilities import (
 )
 from .errors import ConflictError, NotFound, ServiceError, ValidationError
 from .inference_assignment_service import InferenceAssignmentService
+from .inference_service_route_policy import (
+    ServiceRoutePolicyRegistry,
+    builtin_service_route_policy_registry,
+)
 from .model_profile_service import (
     ModelProfileService,
     adapt_v1_profile,
@@ -120,12 +124,17 @@ class InferenceRoutePlanService:
         registry: InferenceCapabilityRegistry | None = None,
         clock: Any = _now,
         operation_evidence_providers: Sequence[RouteAdmissionEvidenceProvider] = (),
+        service_route_policies: ServiceRoutePolicyRegistry | None = None,
     ) -> None:
         self._db = db
         self._registry = registry or process_inference_capability_registry()
         self._assignments = InferenceAssignmentService(db, registry=self._registry)
         self._profiles = ModelProfileService(db)
         self._clock = clock
+        self._service_route_policies = (
+            service_route_policies
+            or builtin_service_route_policy_registry(capability_registry=self._registry)
+        )
         self._operation_evidence_providers = {
             provider.id: provider for provider in operation_evidence_providers
         }
@@ -178,6 +187,47 @@ class InferenceRoutePlanService:
                 conn.rollback()
                 raise
 
+    def resolve_route_plan_for_feature(
+        self,
+        authority: Principal,
+        *,
+        feature_principal: Principal,
+        parent_kind: str,
+        capability_id: str,
+        operation_policy_revision: str | None = None,
+        invocation_id: str | None = None,
+        subject_kind: str | None = None,
+        subject_id: str | None = None,
+        deadline_at: float | None = None,
+    ) -> dict[str, Any]:
+        """Pure feature-principal resolution using the freeze policy election."""
+        self._require_planner(authority)
+        capability = self._registry.require(capability_id)
+        policy_revision = self._operation_policy(capability, operation_policy_revision)
+        principal_policy = self._feature_principal_policy(
+            feature_principal, parent_kind=parent_kind, capability=capability
+        )
+        with self._db._connection() as conn:
+            conn.execute("BEGIN")
+            try:
+                result, _revisions, _preflight = self._resolve_in_conn(
+                    conn,
+                    capability=capability,
+                    operation_policy_revision=policy_revision,
+                    invocation_id=invocation_id,
+                    subject_kind=subject_kind,
+                    subject_id=subject_id,
+                    plan_id=None,
+                    deadline_at=deadline_at,
+                    assignment_sources=principal_policy["assignment_sources"],
+                    allowed_boundaries=principal_policy["allowed_boundaries"],
+                )
+                conn.rollback()
+                return result
+            except Exception:
+                conn.rollback()
+                raise
+
     def _resolve_in_conn(
         self,
         conn: Any,
@@ -189,6 +239,8 @@ class InferenceRoutePlanService:
         subject_id: str | None,
         plan_id: str | None,
         deadline_at: float | None = None,
+        assignment_sources: Sequence[str] | None = None,
+        allowed_boundaries: Sequence[str] | None = None,
     ) -> tuple[dict[str, Any], list[DeploymentRevision], list[dict[str, Any]]]:
         assignment, inherited_from = self._assignment_snapshot(
             conn,
@@ -196,10 +248,22 @@ class InferenceRoutePlanService:
             invocation_id=invocation_id,
             subject_kind=subject_kind,
             subject_id=subject_id,
+            assignment_sources=assignment_sources,
         )
         entries, private_revisions, preflight = self._resolve_entries(
             conn, capability, assignment["entries"]
         )
+        if allowed_boundaries is not None:
+            denied = [
+                entry["boundary"]
+                for entry in entries
+                if entry["boundary"] not in set(allowed_boundaries)
+            ]
+            if denied:
+                raise ValidationError(
+                    "Feature principal policy does not permit this route boundary.",
+                    code="inference_service_route_policy_denied",
+                )
         retry_policy = self._registry.retry_policy(
             assignment["retry_policy_id"] or capability.default_retry_policy_id
         )
@@ -258,6 +322,7 @@ class InferenceRoutePlanService:
         invocation_id: str | None,
         subject_kind: str | None,
         subject_id: str | None,
+        assignment_sources: Sequence[str] | None = None,
     ) -> tuple[dict[str, Any], str]:
         keys: list[tuple[str, str]] = []
         if invocation_id:
@@ -267,7 +332,10 @@ class InferenceRoutePlanService:
                 raise ValidationError("subject is invalid", code="inference_route_plan_invalid")
             keys.append((f"subject:{subject_kind}:{_safe_id(subject_id, field='subject_id')}:capability:{capability.id}", "subject"))
         keys.extend(((f"capability:{capability.id}", "capability"), (f"group:{capability.group_id}", "group"), ("global", "global")))
+        permitted = None if assignment_sources is None else set(assignment_sources)
         for key, inherited in keys:
+            if permitted is not None and inherited not in permitted:
+                continue
             row = self._assignments._head(conn, key)
             if row is None:
                 continue
@@ -301,12 +369,223 @@ class InferenceRoutePlanService:
         self, authority: Principal, conn: Any, *, command_id: str, **request: Any
     ) -> dict[str, Any]:
         """Freeze one route inside an adopter-owned composite transaction."""
+        return self._freeze_route_plan_in_transaction(
+            authority, conn, command_id=command_id, principal_policy=None, **request
+        )
+
+    def freeze_route_plan_for_feature_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        command_id: str,
+        feature_principal: Principal,
+        parent_kind: str,
+        **request: Any,
+    ) -> dict[str, Any]:
+        """Freeze with the feature principal's explicit inheritance policy.
+
+        This is the only lawful route-freeze primitive for SERVICE work.  It
+        records a private policy proof and never consults ambient OWNER group
+        or global assignments for a service principal.
+        """
+        capability = self._registry.require(str(request.get("capability_id") or ""))
+        principal_policy = self._feature_principal_policy(
+            feature_principal, parent_kind=parent_kind, capability=capability
+        )
+        return self._freeze_route_plan_in_transaction(
+            authority,
+            conn,
+            command_id=command_id,
+            principal_policy=principal_policy,
+            **request,
+        )
+
+    def freeze_capability_only_owner_route_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        command_id: str,
+        feature_principal: Principal,
+        parent_kind: str,
+        **request: Any,
+    ) -> dict[str, Any]:
+        """Freeze the exact owner-visible capability row, never ambient fallback.
+
+        Parentless local-model warming is deliberately narrower than ordinary
+        owner work: it derives its warrant from the one selected
+        ``speech.transcribe`` capability assignment.  Group/global rows are not
+        an alternate source of authority for a process-wide service warm.
+        """
+        if feature_principal.kind is not PrincipalKind.OWNER:
+            raise ValidationError(
+                "Capability-only preload source requires owner authority.",
+                code="inference_route_plan_invalid",
+            )
+        capability = self._registry.require(str(request.get("capability_id") or ""))
+        policy = self._feature_principal_policy(
+            feature_principal, parent_kind=parent_kind, capability=capability
+        )
+        material = dict(policy["policy_material"])
+        material.update(
+            {
+                "id": "owner-capability-only-preload-source@1",
+                "assignment_sources": ["capability"],
+            }
+        )
+        policy = {
+            **policy,
+            "policy_id": "owner-capability-only-preload-source@1",
+            "policy_material": material,
+            "policy_sha256": _sha256(material),
+            "assignment_sources": ["capability"],
+        }
+        return self._freeze_route_plan_in_transaction(
+            authority, conn, command_id=command_id, principal_policy=policy, **request
+        )
+
+    def freeze_derived_preload_for_transcription_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        command_id: str,
+        feature_principal: Principal,
+        parent_kind: str,
+        transcription_route_plan_id: str,
+    ) -> dict[str, Any]:
+        """Derive internal preload from one frozen transcription deployment.
+
+        This copies already-frozen assignment/deployment facts and therefore never
+        performs a second assignment lookup for ``speech.preload``.  The normal
+        route-row validator still reconstructs the copied transcription selection.
+        """
+        self._require_planner(authority)
+        command = _safe_id(command_id, field="command_id")
+        source_id = _safe_id(transcription_route_plan_id, field="transcription_route_plan_id")
+        source_row = conn.execute(
+            "SELECT * FROM inference_route_plans WHERE id=?", (source_id,)
+        ).fetchone()
+        if source_row is None:
+            raise ValidationError(
+                "Transcription route is missing.", code="inference_route_plan_invalid"
+            )
+        source = self._route_from_row(conn, source_row)
+        if source["capability"]["id"] != "speech.transcribe":
+            raise ValidationError(
+                "Derived preload requires a transcription route.",
+                code="inference_route_plan_invalid",
+            )
+        capability = self._registry.require("speech.preload")
+        policy = self._registry.retry_policy(capability.default_retry_policy_id)
+        principal_policy = self._feature_principal_policy(
+            feature_principal, parent_kind=parent_kind, capability=capability
+        )
+        request_hash = _sha256(
+            {
+                "command_id": command,
+                "transcription_route_plan_id": source["id"],
+                "transcription_route_plan_sha256": source["sha256"],
+                "capability": capability.canonical_dict(),
+                "retry_policy": policy.canonical_dict(),
+                "principal_policy_sha256": _sha256(principal_policy),
+            }
+        )
+        expected_plan_id = self._deterministic_id("derived-preload", command, request_hash)
+        replay = conn.execute(
+            "SELECT * FROM inference_route_plan_commands WHERE command_id=?", (command,)
+        ).fetchone()
+        if replay is not None:
+            if str(replay["request_sha256"]) != request_hash:
+                raise ConflictError(
+                    "Derived preload command changed.",
+                    code="inference_route_plan_command_conflict",
+                )
+            result = self._route_from_row(
+                conn,
+                conn.execute(
+                    "SELECT * FROM inference_route_plans WHERE id=?", (replay["plan_id"],)
+                ).fetchone(),
+            )
+            if str(replay["plan_sha256"]) != result["sha256"] or result["id"] != expected_plan_id:
+                raise ConflictError(
+                    "Stored derived preload effect is invalid.",
+                    code="inference_route_plan_command_integrity_invalid",
+                )
+            return result
+        self._refuse_route_identity_collision(conn, expected_plan_id)
+        material = {
+            **{key: value for key, value in source.items() if key != "sha256"},
+            "id": expected_plan_id,
+            "capability": {
+                "id": capability.id,
+                "revision": capability.revision,
+                "schema_sha256": capability.schema_sha256,
+            },
+            "retry_policy": {
+                "id": policy.id,
+                "revision": policy.revision,
+                "sha256": policy.sha256,
+                "per_entry_attempts": policy.per_entry_attempts,
+                "total_physical_attempts": policy.total_physical_attempts,
+                "deadline_ms": policy.deadline_ms,
+                "token_budget": policy.token_budget,
+                "cost_budget": policy.cost_budget,
+                "tool_call_budget": policy.tool_call_budget,
+                "fallback_dispositions": list(policy.fallback_dispositions),
+                "retryable_dispositions": list(policy.retryable_dispositions),
+            },
+            "operation_policy_revision": self._operation_policy(capability, None),
+        }
+        digest = _sha256(material)
+        revisions = [
+            self._profiles._deployment_from_row(
+                conn.execute(
+                    "SELECT * FROM deployment_revisions WHERE id=?",
+                    (entry["deployment_revision_id"],),
+                ).fetchone()
+            )
+            for entry in material["entries"]
+        ]
+        self._insert_route(
+            conn,
+            material,
+            digest,
+            revisions,
+            capability_definition=capability.canonical_dict(),
+            retry_policy_definition=policy.canonical_dict(),
+            principal_policy_evidence=principal_policy,
+        )
+        conn.execute(
+            "INSERT INTO inference_route_plan_commands VALUES (?,?,?,?,?)",
+            (command, request_hash, material["id"], digest, material["created_at"]),
+        )
+        return {**material, "sha256": digest}
+
+    def _freeze_route_plan_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        command_id: str,
+        principal_policy: Mapping[str, Any] | None,
+        **request: Any,
+    ) -> dict[str, Any]:
         self._require_planner(authority)
         allowed = {"capability_id", "operation_policy_revision", "invocation_id", "subject_kind", "subject_id", "deadline_at"}
         if set(request) - allowed or "capability_id" not in request:
             raise ValidationError("Route freeze request has an invalid shape.", code="inference_route_plan_invalid")
         command = _safe_id(command_id, field="command_id")
-        request_hash = _sha256({"command_id": command, **request})
+        request_hash = _sha256(
+            {
+                "command_id": command,
+                **request,
+                "principal_policy_sha256": None
+                if principal_policy is None
+                else _sha256(principal_policy),
+            }
+        )
         expected_plan_id = self._deterministic_id("route", command, request_hash)
         replay = conn.execute(
             "SELECT * FROM inference_route_plan_commands WHERE command_id=?", (command,)
@@ -328,6 +607,12 @@ class InferenceRoutePlanService:
             invocation_id=request.get("invocation_id"), subject_kind=request.get("subject_kind"),
             subject_id=request.get("subject_id"), plan_id=expected_plan_id,
             deadline_at=request.get("deadline_at"),
+            assignment_sources=None
+            if principal_policy is None
+            else principal_policy["assignment_sources"],
+            allowed_boundaries=None
+            if principal_policy is None
+            else principal_policy["allowed_boundaries"],
         )
         material = {key: value for key, value in resolved.items() if key != "sha256"}
         self._insert_route(
@@ -335,12 +620,59 @@ class InferenceRoutePlanService:
             capability_definition=capability.canonical_dict(),
             retry_policy_definition=self._registry.retry_policy(material["retry_policy"]["id"]).canonical_dict(),
             frozen_preflight=preflight,
+            principal_policy_evidence=principal_policy,
         )
         conn.execute(
             "INSERT INTO inference_route_plan_commands VALUES (?,?,?,?,?)",
             (command, request_hash, material["id"], resolved["sha256"], material["created_at"]),
         )
         return resolved
+
+    def _feature_principal_policy(
+        self, principal: Principal, *, parent_kind: str, capability: Any
+    ) -> dict[str, Any]:
+        if principal.kind is PrincipalKind.OWNER:
+            policy_material = {
+                "schema": "InferenceOwnerRoutePolicy@1",
+                "id": "owner-route-inheritance@1",
+                "revision": 1,
+                "assignment_sources": [
+                    "invocation",
+                    "subject",
+                    "capability",
+                    "group",
+                    "global",
+                ],
+                "allowed_boundaries": list(capability.allowed_boundaries),
+            }
+            return {
+                "schema": "InferenceFeaturePrincipalPolicyEvidence@1",
+                "principal_kind": "owner",
+                "policy_id": "owner-route-inheritance@1",
+                "policy_revision": 1,
+                "policy_sha256": _sha256(policy_material),
+                "policy_material": policy_material,
+                "principal_identity": "",
+                "authority_basis": "owner-authenticated",
+                "allowed_operations": [],
+                "parent_kind": str(parent_kind),
+                "capability": {
+                    "id": capability.id,
+                    "revision": capability.revision,
+                    "schema_sha256": capability.schema_sha256,
+                },
+                "allowed_boundaries": list(capability.allowed_boundaries),
+                "assignment_sources": [
+                    "invocation",
+                    "subject",
+                    "capability",
+                    "group",
+                    "global",
+                ],
+            }
+        return self._service_route_policies.authorize(
+            principal, parent_kind=parent_kind, capability_id=capability.id
+        )
 
     def freeze_legacy_one_leg_plan(
         self,
@@ -653,11 +985,20 @@ class InferenceRoutePlanService:
         self._refuse_operation_identity_collision(
             conn, operation_plan_id=expected_operation_id, operation_id=operation_key
         )
-        capability = self._registry.require(str(route["capability"]["id"]))
-        if (capability.revision, capability.schema_sha256) != (
-            int(route["capability"]["revision"]), str(route["capability"]["schema_sha256"])
-        ):
-            raise ConflictError("Frozen capability revision is unavailable.", code="inference_route_plan_integrity_invalid")
+        try:
+            frozen_definition, _retry = self._frozen_authority_definitions_from_route(
+                conn, route
+            )
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise ConflictError(
+                "Frozen capability authority is unavailable.",
+                code="inference_route_plan_integrity_invalid",
+            ) from exc
+        capability = SimpleNamespace(
+            id=frozen_definition["id"],
+            revision=int(frozen_definition["revision"]),
+            schema_sha256=frozen_definition["schema_sha256"],
+        )
         rows = conn.execute(
             "SELECT * FROM inference_route_plan_preflight_evidence WHERE plan_id=? ORDER BY route_leg_ordinal",
             (route_id,),
@@ -722,6 +1063,29 @@ class InferenceRoutePlanService:
             if row is None:
                 raise NotFound("operation route request plan", plan_id)
             return self._operation_from_row(conn, row)
+
+    def frozen_capability_definition_in_transaction(
+        self, authority: Principal, conn: Any, *, route_plan_id: str
+    ) -> dict[str, Any]:
+        """Reconstruct the immutable capability definition for one frozen route."""
+        self._require_planner(authority)
+        route_id = _safe_id(route_plan_id, field="route_plan_id")
+        route = self._route_from_row(
+            conn,
+            conn.execute(
+                "SELECT * FROM inference_route_plans WHERE id=?", (route_id,)
+            ).fetchone(),
+        )
+        try:
+            definition, _retry = self._frozen_authority_definitions_from_route(
+                conn, route
+            )
+            return definition
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise ConflictError(
+                "Frozen capability authority is unavailable.",
+                code="inference_route_plan_integrity_invalid",
+            ) from exc
 
     def reconstruct_frozen_pair_in_transaction(
         self,
@@ -984,10 +1348,39 @@ class InferenceRoutePlanService:
                 "context_support": self._context_support(context),
             })
             revisions.append(deployment)
+            # A migrated built-in Whisper runtime has no verified artifact file
+            # to observe before it is first loaded. For its two speech
+            # operations only, an enabled unavailable binding is capacity that
+            # the derived preload observes at operation time; no other
+            # unavailable profile gains executable status.
+            unloaded_local_speech = (
+                int(value.get("profile_schema_version", 2)) == 2
+                and readiness == "unavailable"
+                and deployment.kind == "this_device"
+                and deployment.boundary == "same_device"
+                and deployment.engine in {"mlx", "faster-whisper"}
+                and getattr(capability, "id", "") in {"speech.transcribe", "speech.preload"}
+            )
+            # Rails' exact saved same-device deployment is likewise allowed one
+            # first frozen execution without a migration-time load/probe.  Its
+            # private artifact locator is already fixed; the successful physical
+            # load records readiness for later freezes.
+            unloaded_local_rails = (
+                int(value.get("profile_schema_version", 2)) == 2
+                and readiness == "unavailable"
+                and deployment.kind == "this_device"
+                and deployment.boundary == "same_device"
+                and deployment.engine == "configured_local_engine"
+                and deployment.runtime_revision == "rails-observer-this-machine-v1"
+                and getattr(capability, "id", "") == "background.rails_summary"
+            )
+            executable = enabled and (
+                readiness in {"ready", "unknown"} or unloaded_local_speech or unloaded_local_rails
+            )
             preflight.append({
                 "route_leg_ordinal": expected,
-                "eligibility": "executable" if enabled and readiness in {"ready", "unknown"} else "known_preflight_unavailable",
-                "reason_code": None if enabled and readiness in {"ready", "unknown"} else ("binding_disabled" if not enabled else "binding_not_ready"),
+                "eligibility": "executable" if executable else "known_preflight_unavailable",
+                "reason_code": None if executable else ("binding_disabled" if not enabled else "binding_not_ready"),
             })
         return entries, revisions, preflight
 
@@ -1202,7 +1595,7 @@ class InferenceRoutePlanService:
             raise ValidationError("Preflight reason is invalid.", code="inference_operation_route_plan_invalid")
         return reason
 
-    def _insert_route(self, conn: Any, material: Mapping[str, Any], digest: str, revisions: Sequence[DeploymentRevision], *, capability_definition: Mapping[str, Any], retry_policy_definition: Mapping[str, Any], frozen_preflight: Sequence[Mapping[str, Any]] = ()) -> None:
+    def _insert_route(self, conn: Any, material: Mapping[str, Any], digest: str, revisions: Sequence[DeploymentRevision], *, capability_definition: Mapping[str, Any], retry_policy_definition: Mapping[str, Any], frozen_preflight: Sequence[Mapping[str, Any]] = (), principal_policy_evidence: Mapping[str, Any] | None = None) -> None:
         for revision in revisions:
             conn.execute(
                 """INSERT OR IGNORE INTO deployment_revisions
@@ -1216,9 +1609,9 @@ class InferenceRoutePlanService:
         source, capability, policy = material["source"], material["capability"], material["retry_policy"]
         conn.execute(
             """INSERT INTO inference_route_plans
-               (id,sha256,capability_id,capability_revision,capability_schema_sha256,assignment_id,assignment_revision,assignment_sha256,inherited_from,retry_policy_id,retry_policy_revision,operation_policy_revision,payload_json,state,deadline_at,created_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (material["id"], digest, capability["id"], capability["revision"], capability["schema_sha256"], source["assignment_id"], source["assignment_revision"], source["assignment_sha256"], source["inherited_from"], policy["id"], policy["revision"], material["operation_policy_revision"], _canonical(material), "frozen", material["deadline_at"], material["created_at"]),
+               (id,sha256,capability_id,capability_revision,capability_schema_sha256,assignment_id,assignment_revision,assignment_sha256,inherited_from,retry_policy_id,retry_policy_revision,operation_policy_revision,principal_policy_sha256,payload_json,state,deadline_at,created_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (material["id"], digest, capability["id"], capability["revision"], capability["schema_sha256"], source["assignment_id"], source["assignment_revision"], source["assignment_sha256"], source["inherited_from"], policy["id"], policy["revision"], material["operation_policy_revision"], _sha256(principal_policy_evidence) if principal_policy_evidence is not None else None, _canonical(material), "frozen", material["deadline_at"], material["created_at"]),
         )
         for entry in material["entries"]:
             conn.execute(
@@ -1231,6 +1624,15 @@ class InferenceRoutePlanService:
             "INSERT INTO inference_route_plan_authority_evidence VALUES (?,?,?,?,?)",
             (material["id"], _canonical(capability_definition), capability_definition["schema_sha256"], _canonical(retry_policy_definition), retry_policy_definition["sha256"]),
         )
+        if principal_policy_evidence is not None:
+            conn.execute(
+                "INSERT INTO inference_route_plan_principal_evidence VALUES (?,?,?)",
+                (
+                    material["id"],
+                    _canonical(principal_policy_evidence),
+                    _sha256(principal_policy_evidence),
+                ),
+            )
         values = tuple(frozen_preflight) or tuple(
             {"route_leg_ordinal": entry["ordinal"], "eligibility": "executable", "reason_code": None}
             for entry in material["entries"]
@@ -1259,6 +1661,63 @@ class InferenceRoutePlanService:
                 (f"{material['id']}:{entry['route_leg_ordinal']}", material["id"], entry["route_leg_ordinal"], entry["eligibility"], entry["reason_code"], entry["admitted_request_id"], entry["admitted_request_sha256"], entry["context_plan_sha256"], entry["serialized_request_sha256"]),
             )
 
+    def _frozen_authority_definitions_from_route(
+        self, conn: Any, route: Mapping[str, Any]
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        authority = conn.execute(
+            "SELECT * FROM inference_route_plan_authority_evidence WHERE plan_id=?",
+            (route["id"],),
+        ).fetchone()
+        if authority is None:
+            raise ValueError("authority evidence")
+        capability_definition = json.loads(str(authority["capability_definition_json"]))
+        retry_definition = json.loads(str(authority["retry_policy_definition_json"]))
+        if (
+            not isinstance(capability_definition, dict)
+            or not isinstance(retry_definition, dict)
+            or capability_definition.get("schema_sha256")
+            != str(authority["capability_definition_sha256"])
+            or _sha256(
+                {
+                    key: value
+                    for key, value in capability_definition.items()
+                    if key != "schema_sha256"
+                }
+            )
+            != capability_definition["schema_sha256"]
+            or retry_definition.get("sha256")
+            != str(authority["retry_policy_definition_sha256"])
+            or _sha256(
+                {key: value for key, value in retry_definition.items() if key != "sha256"}
+            )
+            != retry_definition["sha256"]
+        ):
+            raise ValueError("authority hash")
+        expected_retry = {
+            "id": retry_definition["id"],
+            "revision": retry_definition["revision"],
+            "sha256": retry_definition["sha256"],
+            "per_entry_attempts": retry_definition["per_entry_attempts"],
+            "total_physical_attempts": retry_definition["total_physical_attempts"],
+            "deadline_ms": retry_definition["deadline_ms"],
+            "token_budget": retry_definition["token_budget"],
+            "cost_budget": retry_definition["cost_budget"],
+            "tool_call_budget": retry_definition["tool_call_budget"],
+            "fallback_dispositions": retry_definition["fallback_dispositions"],
+            "retryable_dispositions": retry_definition["retryable_dispositions"],
+        }
+        if (
+            route["retry_policy"] != expected_retry
+            or route["capability"]
+            != {
+                "id": capability_definition["id"],
+                "revision": capability_definition["revision"],
+                "schema_sha256": capability_definition["schema_sha256"],
+            }
+        ):
+            raise ValueError("authority cross bind")
+        return capability_definition, retry_definition
+
     def _route_from_row(self, conn: Any, row: Any) -> dict[str, Any]:
         try:
             material = json.loads(str(row["payload_json"]))
@@ -1266,28 +1725,22 @@ class InferenceRoutePlanService:
                 raise ValueError("shape")
             digest = _sha256(material)
             self._validate_route_material(material)
-            authority = conn.execute("SELECT * FROM inference_route_plan_authority_evidence WHERE plan_id=?", (material["id"],)).fetchone()
-            if authority is None:
-                raise ValueError("authority evidence")
-            capability_definition = json.loads(str(authority["capability_definition_json"]))
-            retry_definition = json.loads(str(authority["retry_policy_definition_json"]))
-            if (
-                set(capability_definition) == set()
-                or capability_definition.get("schema_sha256") != str(authority["capability_definition_sha256"])
-                or _sha256({key: value for key, value in capability_definition.items() if key != "schema_sha256"}) != capability_definition["schema_sha256"]
-                or retry_definition.get("sha256") != str(authority["retry_policy_definition_sha256"])
-                or _sha256({key: value for key, value in retry_definition.items() if key != "sha256"}) != retry_definition["sha256"]
-            ):
-                raise ValueError("authority hash")
-            expected_retry = {
-                "id": retry_definition["id"], "revision": retry_definition["revision"], "sha256": retry_definition["sha256"],
-                "per_entry_attempts": retry_definition["per_entry_attempts"], "total_physical_attempts": retry_definition["total_physical_attempts"],
-                "deadline_ms": retry_definition["deadline_ms"], "token_budget": retry_definition["token_budget"], "cost_budget": retry_definition["cost_budget"],
-                "tool_call_budget": retry_definition["tool_call_budget"], "fallback_dispositions": retry_definition["fallback_dispositions"],
-                "retryable_dispositions": retry_definition["retryable_dispositions"],
-            }
-            if material["retry_policy"] != expected_retry or material["capability"] != {"id": capability_definition["id"], "revision": capability_definition["revision"], "schema_sha256": capability_definition["schema_sha256"]}:
-                raise ValueError("authority cross bind")
+            self._frozen_authority_definitions_from_route(conn, material)
+            principal_evidence = conn.execute(
+                "SELECT * FROM inference_route_plan_principal_evidence WHERE plan_id=?",
+                (material["id"],),
+            ).fetchone()
+            required_principal_sha = str(row["principal_policy_sha256"] or "")
+            if bool(required_principal_sha) != (principal_evidence is not None):
+                raise ValueError("principal policy presence")
+            if principal_evidence is not None:
+                policy = json.loads(str(principal_evidence["payload_json"]))
+                if (
+                    str(principal_evidence["sha256"]) != required_principal_sha
+                    or str(principal_evidence["sha256"]) != _sha256(policy)
+                    or not self._valid_principal_policy_evidence(policy, material)
+                ):
+                    raise ValueError("principal policy evidence")
             normalized = [dict(item) for item in conn.execute("SELECT route_leg_ordinal,profile_id,profile_revision,profile_schema_version,binding_id,binding_revision,deployment_head_id,deployment_configuration_revision,deployment_revision_id,capability_manifest_sha256,boundary,context_support_json FROM inference_route_plan_entries WHERE plan_id=? ORDER BY route_leg_ordinal", (material["id"],)).fetchall()]
             expected = [{"route_leg_ordinal": e["ordinal"], "profile_id": e["profile_id"], "profile_revision": e["profile_revision"], "profile_schema_version": e["profile_schema_version"], "binding_id": e["binding_id"], "binding_revision": e["binding_revision"], "deployment_head_id": e["deployment_head_id"], "deployment_configuration_revision": e["deployment_configuration_revision"], "deployment_revision_id": e["deployment_revision_id"], "capability_manifest_sha256": e["capability_manifest_sha256"], "boundary": e["boundary"], "context_support_json": _canonical(e["context_support"])} for e in material["entries"]]
             if digest != str(row["sha256"]) or normalized != expected or material["id"] != str(row["id"]) or str(row["state"]) != "frozen":
@@ -1325,6 +1778,104 @@ class InferenceRoutePlanService:
             return {**material, "sha256": digest}
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise ConflictError("Stored route plan integrity could not be verified.", code="inference_route_plan_integrity_invalid") from exc
+
+    @staticmethod
+    def _valid_principal_policy_evidence(
+        policy: Any, route: Mapping[str, Any]
+    ) -> bool:
+        fields = {
+            "schema",
+            "principal_kind",
+            "policy_id",
+            "policy_revision",
+            "policy_sha256",
+            "policy_material",
+            "principal_identity",
+            "authority_basis",
+            "allowed_operations",
+            "parent_kind",
+            "capability",
+            "allowed_boundaries",
+            "assignment_sources",
+        }
+        if (
+            not isinstance(policy, Mapping)
+            or set(policy) != fields
+            or policy["schema"] != "InferenceFeaturePrincipalPolicyEvidence@1"
+            or policy["principal_kind"] not in {"owner", "service"}
+            or type(policy["policy_revision"]) is not int
+            or policy["policy_revision"] < 1
+            or not isinstance(policy["policy_material"], Mapping)
+            or policy["policy_sha256"] != _sha256(policy["policy_material"])
+            or policy["capability"] != route["capability"]
+            or not isinstance(policy["allowed_boundaries"], list)
+            or len(policy["allowed_boundaries"]) != len(set(policy["allowed_boundaries"]))
+            or not isinstance(policy["assignment_sources"], list)
+            or len(policy["assignment_sources"]) != len(set(policy["assignment_sources"]))
+            or route["source"]["inherited_from"] not in policy["assignment_sources"]
+            or any(
+                entry["boundary"] not in policy["allowed_boundaries"]
+                for entry in route["entries"]
+            )
+        ):
+            return False
+        operations = policy["allowed_operations"]
+        if not isinstance(operations, list) or any(
+            not isinstance(item, Mapping)
+            or set(item) != {"name", "version"}
+            or not isinstance(item["name"], str)
+            or type(item["version"]) is not int
+            for item in operations
+        ) or operations != sorted(operations, key=lambda item: (item["name"], item["version"])):
+            return False
+        if policy["principal_kind"] == "owner":
+            expected = {
+                "schema": "InferenceOwnerRoutePolicy@1",
+                "id": policy["policy_id"],
+                "revision": policy["policy_revision"],
+                "assignment_sources": policy["assignment_sources"],
+                "allowed_boundaries": policy["allowed_boundaries"],
+            }
+            return (
+                policy["principal_identity"] == ""
+                and policy["authority_basis"] == "owner-authenticated"
+                and operations == []
+                and policy["policy_material"] == expected
+            )
+        material = policy["policy_material"]
+        if set(material) != {
+            "schema",
+            "id",
+            "revision",
+            "service_identity",
+            "authority_basis",
+            "parent_kind",
+            "allowed_operations",
+            "capabilities",
+            "allowed_boundaries",
+            "assignment_sources",
+        }:
+            return False
+        capabilities = material["capabilities"]
+        if not isinstance(capabilities, list) or any(
+            not isinstance(item, Mapping)
+            or set(item) != {"id", "revision", "schema_sha256"}
+            for item in capabilities
+        ) or len(capabilities) != len({item["id"] for item in capabilities}):
+            return False
+        return (
+            material["schema"] == "InferenceServiceRoutePolicy@1"
+            and material["id"] == policy["policy_id"]
+            and material["revision"] == policy["policy_revision"]
+            and material["service_identity"] == policy["principal_identity"]
+            and material["authority_basis"] == policy["authority_basis"]
+            and material["parent_kind"] == policy["parent_kind"]
+            and material["allowed_operations"] == operations
+            and material["allowed_boundaries"] == policy["allowed_boundaries"]
+            and material["assignment_sources"] == policy["assignment_sources"]
+            and route["capability"] in capabilities
+            and policy["assignment_sources"] == ["capability"]
+        )
 
     def _operation_from_row(self, conn: Any, row: Any) -> dict[str, Any]:
         try:

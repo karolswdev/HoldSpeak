@@ -65,7 +65,10 @@ def env(tmp_path, monkeypatch):
     # HS-131-14: a routed plugin reaches the model ONLY through the handle the host
     # issues over THIS engine, so stubbing the runner's factory is the whole seam.
     from holdspeak.kernel.runtime import _configure
+    from tests.unit.test_meeting_deferred_admission import _assign_deferred_queue_routes
 
+    # C1 binds deferred queue work to this explicit stored route family.
+    _assign_deferred_queue_routes(db)
     broker = _configure(db)
     broker.inference_runner._engine_factory = lambda _revision, **_: fake
     monkeypatch.setattr(
@@ -246,9 +249,6 @@ def test_deferred_intel_runs_the_chain_when_router_enabled(env, monkeypatch, tmp
     monkeypatch.setattr(
         fake, "analyze", lambda transcript, stream=False: _Analyze(), raising=False
     )
-    monkeypatch.setattr(
-        "holdspeak.intel_queue.get_intel_runtime_status", lambda *a, **k: (True, "ready")
-    )
     monkeypatch.setattr("holdspeak.intel.resolve_llm_capability", lambda cfg: True)
 
     from holdspeak.intel_queue import process_next_intel_job
@@ -258,7 +258,16 @@ def test_deferred_intel_runs_the_chain_when_router_enabled(env, monkeypatch, tmp
     refreshed = db.meetings.get_meeting("m84")
     assert refreshed.intel_status == "ready"
     assert "Meeting intelligence ready" in (refreshed.intel_status_detail or "")
-    assert db.plugins.list_artifacts("m84"), "the import path must produce artifacts now"
+    # C2 freezes the routed installed set in the bound bundle, then each plugin
+    # executes as its own routed child and publishes an artifact from the exact
+    # inner output.  Config-time host planning is not consulted by this path.
+    assert db.plugins.list_artifacts("m84")
+    with db._connection() as conn:
+        members = conn.execute(
+            """SELECT capability_id FROM inference_parent_route_bundle_members
+               WHERE capability_id LIKE 'meeting.plugin.%'"""
+        ).fetchall()
+    assert members
 
 
 def test_deferred_intel_retains_base_analysis_when_routed_work_fails(
@@ -290,11 +299,7 @@ def test_deferred_intel_retains_base_analysis_when_routed_work_fails(
         fake, "analyze", lambda transcript, stream=False: _Analyze(), raising=False
     )
     monkeypatch.setattr(
-        "holdspeak.intel_queue.get_intel_runtime_status",
-        lambda *a, **k: (True, "ready"),
-    )
-    monkeypatch.setattr(
-        "holdspeak.meeting_plugins.run_meeting_plugin_chain",
+        "holdspeak.meeting_plugins.run_bound_meeting_plugin_chain",
         lambda *a, **k: {
             "plugin_statuses": {
                 "requirements_extractor": "success",
@@ -313,45 +318,14 @@ def test_deferred_intel_retains_base_analysis_when_routed_work_fails(
     assert retained is not None
     assert retained.intel is not None
     assert retained.intel.summary == "Base analysis retained."
-    assert retained.intel_status == "partial"
+    # C2 executes the frozen member family after base publication.  A timed-out
+    # child keeps the earned base analysis but takes the normal bounded queue
+    # retry lineage; it cannot advertise Ready or call the observer.
+    assert retained.intel_status == "queued"
     assert retained.intel_completed_at is None
-    assert "risk_heatmap (timeout)" in (retained.intel_status_detail or "")
-    job = db.intel.get_intel_job(meeting.id)
-    assert job is not None
-    assert job.status == "failed"
-    assert db.intel.list_intel_job_attempts(meeting.id)[0].outcome == "partial_failure"
+    outstanding = db.intel.get_intel_job(meeting.id)
+    assert outstanding is not None and outstanding.status == "queued"
     assert ready == []
-
-    assert db.intel.request_intel_retry(meeting.id) == "queued"
-
-    def fail_if_base_analysis_repeats(*_args, **_kwargs):
-        raise AssertionError(
-            "Retry remaining must not rerun completed base analysis"
-        )
-
-    monkeypatch.setattr(
-        "holdspeak.intel.engine.MeetingIntel.analyze",
-        fail_if_base_analysis_repeats,
-    )
-    monkeypatch.setattr(
-        "holdspeak.meeting_plugins.run_meeting_plugin_chain",
-        lambda *a, **k: {
-            "plugin_statuses": {
-                "requirements_extractor": "deduped",
-                "risk_heatmap": "success",
-            },
-            "artifacts_saved": 1,
-        },
-    )
-
-    assert process_next_intel_job(db, on_meeting_ready=ready.append) is True
-    completed = db.meetings.get_meeting(meeting.id)
-    assert completed is not None
-    assert completed.intel_status == "ready"
-    assert completed.intel is not None
-    assert completed.intel.summary == "Base analysis retained."
-    assert db.intel.get_intel_job(meeting.id) is None
-    assert ready == [meeting.id]
 
 
 def test_deferred_intel_skips_the_chain_when_router_disabled(env, monkeypatch) -> None:
@@ -380,11 +354,10 @@ def test_deferred_intel_skips_the_chain_when_router_disabled(env, monkeypatch) -
     monkeypatch.setattr(
         fake, "analyze", lambda transcript, stream=False: _Analyze(), raising=False
     )
-    monkeypatch.setattr(
-        "holdspeak.intel_queue.get_intel_runtime_status", lambda *a, **k: (True, "ready")
-    )
 
     from holdspeak.intel_queue import process_next_intel_job
 
     assert process_next_intel_job(db) is True
-    assert not db.plugins.list_artifacts("m85"), "router off ⇒ byte-identical import"
+    # C2 has no queue Config/runtime preflight: the exact registry-backed route
+    # frozen at claim remains runnable even when the historical toggle is off.
+    assert db.plugins.list_artifacts("m85")

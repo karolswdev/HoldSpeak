@@ -7,22 +7,11 @@ moved verbatim out of MeetingSession; `self` is the session.
 from __future__ import annotations
 
 import threading
-import time
 import uuid
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Callable, Optional, TYPE_CHECKING
-import json
+from typing import Any
 
-import numpy as np
-
-from ..meeting_recorder import MeetingRecorder, concatenate_chunks, AudioChunk
-from ..transcribe import Transcriber
 from ..logging_config import get_logger
-
-if TYPE_CHECKING:
-    from ..audio import AudioSource
-    from ..device_audio import DeviceDescriptor
 
 # Optional imports for intel (the same guarded pattern as session.py).
 try:
@@ -43,13 +32,7 @@ try:
 except ImportError:
     SpeakerDiarizer = None  # type: ignore
 
-from .models import (
-    Bookmark,
-    IntelSnapshot,
-    MeetingSaveResult,
-    MeetingState,
-    TranscriptSegment,
-)
+from .models import IntelSnapshot
 
 log = get_logger("meeting_session")
 
@@ -123,10 +106,11 @@ class IntelAnalysisMixin:
                 # `failed` too (its receipt carries only the sanitized reason), so
                 # the owner-facing deferral reason still comes from the in-memory
                 # result — exactly the text this path reported before.
-                from .intel_child import provider_error_of
-
+                provider_error = "" if result is None else str(
+                    getattr(result, "error", "") or ""
+                )
                 self._defer_or_error_intel(
-                    provider_error_of(result) or outcome.error or "live analysis failed"
+                    provider_error or outcome.error or "live analysis failed"
                 )
             else:
                 log.info(
@@ -168,12 +152,30 @@ class IntelAnalysisMixin:
         finalized just before ``stop()`` cancelled the parent can no longer stamp
         `ready` behind the handoff's `queued`. Returns whether the window landed.
         """
-        # Create snapshot - preserve ActionItem objects for status tracking
+        # The routed path returns only the closed, elected result shape.  Rebuild
+        # the domain objects here, after election, rather than letting an attempt
+        # publish a provider object or token stream.
+        if isinstance(result, dict):
+            action_items = [
+                ActionItem(
+                    task=str(item.get("task") or ""),
+                    owner=item.get("owner"),
+                    due=item.get("due"),
+                )
+                for item in result.get("action_items", [])
+                if isinstance(item, dict)
+            ]
+            topics = [str(topic) for topic in result.get("topics", [])]
+            summary = str(result.get("summary") or "")
+        else:
+            action_items = result.action_items
+            topics = result.topics
+            summary = result.summary
         snapshot = IntelSnapshot(
             timestamp=self.duration,
-            topics=result.topics,
-            action_items=result.action_items,  # Keep ActionItem objects
-            summary=result.summary,
+            topics=topics,
+            action_items=action_items,
+            summary=summary,
         )
 
         # Update state

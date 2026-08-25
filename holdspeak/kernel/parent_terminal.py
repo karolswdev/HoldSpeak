@@ -79,6 +79,7 @@ def close_parent(
     stale_before: float | None = None,
     stale_process_id: str | None = None,
     publication_claim_id: str = "",
+    executor_lease: Mapping[str, Any] | None = None,
 ) -> tuple[Mapping[str, Any] | None, bool]:
     if outcome not in _OUTCOME_STATES:
         raise KernelRefused("receipt_outcome_unknown")
@@ -94,6 +95,24 @@ def close_parent(
         if row is None:
             raise KernelRefused("parent_operation_unknown")
         controller._valid_context(context, row, principal)
+        if executor_lease is not None:
+            job_id = str(executor_lease.get("job_id") or "")
+            token = str(executor_lease.get("token") or "")
+            try:
+                epoch = int(executor_lease.get("epoch") or 0)
+            except (TypeError, ValueError):
+                return None, False
+            owner = conn.execute(
+                """SELECT 1 FROM intel_jobs WHERE job_id=? AND parent_operation_id=?
+                   AND executor_lease_token=? AND executor_lease_epoch=?
+                   AND status IN ('claimed','running','succeeded','superseded','failed')
+                   AND executor_lease_expires_at>?""",
+                (job_id, context.operation_id, token, epoch, time.time()),
+            ).fetchone()
+            if owner is None:
+                # This is the actual parent-receipt fence: the same IMMEDIATE
+                # transaction cannot race a lease takeover between check and close.
+                return None, False
         existing = conn.execute(
             "SELECT * FROM kernel_receipts WHERE operation_id=?",
             (context.operation_id,),

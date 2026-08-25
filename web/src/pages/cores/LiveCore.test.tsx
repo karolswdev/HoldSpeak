@@ -1,10 +1,7 @@
 // HS-132-03 — the desk hears intelligence live.
 //
-// Four frames the hub had broadcast to nobody now land on the live surface:
-// `intel_token` (progressive text), `intel_complete` (the window that
-// landed), `bookmark` (the dropped moment's confirmation), and
-// `capture_recovery`. Article XI.5 rides along: a token is display material
-// and must never reach the wire.
+// Complete meeting intelligence, bookmarks, and capture recovery land on the
+// live surface. Phase 143 C1 deliberately does not expose provider token frames.
 import { render, screen, waitFor, act } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -53,32 +50,13 @@ describe("LiveCore hears the live meeting frames", () => {
 
   async function mount() {
     const view = render(<LiveCore />);
-    // let the four useResource fetches settle before frames arrive
+    // Let the resource fetches settle before frames arrive.
     await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalled());
     return view;
   }
 
-  it("renders intelligence arriving token by token", async () => {
+  it("renders an elected complete intelligence result", async () => {
     await mount();
-    emit("intel_token", "The team ");
-    emit("intel_token", "agreed to ");
-    emit("intel_token", "ship Friday.");
-    // The burst is coalesced into one paint, so the whole run appears at once.
-    expect(
-      await screen.findByText(/The team agreed to ship Friday\./),
-    ).toBeInTheDocument();
-  });
-
-  it("accepts a token frame carried as an object", async () => {
-    await mount();
-    emit("intel_token", { token: "chunked" });
-    expect(await screen.findByText(/chunked/)).toBeInTheDocument();
-  });
-
-  it("replaces the stream with the window that landed", async () => {
-    await mount();
-    emit("intel_token", "partial thought");
-    expect(await screen.findByText(/partial thought/)).toBeInTheDocument();
     emit("intel_complete", {
       summary: "Shipping is on for Friday.",
       topics: ["release", "staffing"],
@@ -89,17 +67,7 @@ describe("LiveCore hears the live meeting frames", () => {
       await screen.findByText("Shipping is on for Friday."),
     ).toBeInTheDocument();
     expect(screen.getByText("release")).toBeInTheDocument();
-    expect(screen.queryByText(/partial thought/)).not.toBeInTheDocument();
     expect(screen.getByText(/1 action item · final/)).toBeInTheDocument();
-  });
-
-  it("never puts a token on the wire (Article XI.5)", async () => {
-    await mount();
-    const before = mocks.apiFetch.mock.calls.length;
-    emit("intel_token", "secret words nobody may journal");
-    await screen.findByText(/secret words nobody may journal/);
-    expect(mocks.apiFetch.mock.calls.length).toBe(before);
-    expect(JSON.stringify(mocks.apiFetch.mock.calls)).not.toContain("secret");
   });
 
   it("confirms a dropped bookmark", async () => {

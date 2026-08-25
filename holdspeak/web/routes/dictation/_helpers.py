@@ -683,10 +683,11 @@ def _run_dictation_dry_run_text(
             raise SpeechSessionRefused(ENTRY_SESSION_REQUIRED)
         egress_boundary = "local"
     else:
-        frozen_plan = require_entry_admission(admission, fence)
-        # Execution proof comes only from the same immutable revisions every child
-        # dispatches under. Mutable config is not consulted for the result badge.
-        egress_boundary = str(frozen_plan.egress_boundary())
+        require_entry_admission(admission, fence)
+        # Execution proof comes only from the same frozen route members every
+        # child dispatches under.  A text entry has no transcription route, so
+        # the ProviderAdmission accessor must still see its provider members.
+        egress_boundary = str(admission.egress_boundary)
         if terminal_entry is not None and (
             getattr(terminal_entry, "provider", None) is not admission
             or getattr(terminal_entry, "fence", None) is not fence

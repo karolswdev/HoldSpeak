@@ -10,7 +10,6 @@ without discovering availability by provoking a run.
 from __future__ import annotations
 
 import ipaddress
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from datetime import datetime
@@ -719,7 +718,7 @@ def _engine_for_revision(
     from .intel.providers import build_meeting_intel_for_profile  # NOT configured_*: see paired, below
     from .speech_session.plan import WHISPER_KIND, LocalWhisperDeployment
 
-    if revision.kind == WHISPER_KIND:
+    if revision.kind == WHISPER_KIND or str(getattr(revision, "engine", "")) in {"mlx", "faster-whisper"}:
         # On-device speech-to-text (HS-131-09). The loaded Whisper backend lives
         # in the caller's `Transcriber`, so construction here loads nothing and
         # reads no mutable config — it only carries the frozen revision.

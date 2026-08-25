@@ -18,11 +18,10 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // gadget grammar, every text input gains its mic, the loose egress
 // prose becomes the ONE EgressChip, and the readiness foot is the
 // footer receipt bar. Wire calls unchanged.
-// HS-132-03 — the desk hears intelligence live. Seven frames the hub had
-// been broadcasting to nobody land here: `intel_token` (progressive text,
-// Article XI.5 — display only, never journaled), `intel_complete`, the
-// `bookmark` confirmation, `capture_recovery`, `intent_controls_updated`,
-// `device_health`, and `plugin_jobs_processed`.
+// HS-132-03 — the desk hears elected intelligence live: `intel_complete`,
+// the `bookmark` confirmation, `capture_recovery`, `intent_controls_updated`,
+// `device_health`, and `plugin_jobs_processed`. C1 publishes complete semantic
+// results, not provider token streams.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { openPrimitive } from "../../desk/shell";
 import type {
@@ -84,11 +83,9 @@ export function LiveCore({ hero }: CoreProps) {
   const [previewResult, setPreviewResult] = useState<Record<string, unknown> | null>(null);
   const [retainedMeetingId, setRetainedMeetingId] = useState("");
   const [doorOpen, setDoorOpen] = useState(false);
-  // The live intelligence stream. `intelStream` is the window being written
-  // right now; `intelResult` is the last window that landed. Both live in
-  // component state and die with the surface — Article XI.5 forbids a token
-  // stream from being journaled, so no token here ever reaches an apiFetch.
-  const [intelStream, setIntelStream] = useState("");
+  // Routed analysis publishes one elected semantic result. The provider token
+  // stream retired with the C1 controller boundary; no private partial output
+  // reaches this surface or a journal.
   const [intelResult, setIntelResult] = useState<Record<string, unknown> | null>(
     null,
   );
@@ -97,7 +94,6 @@ export function LiveCore({ hero }: CoreProps) {
     seq: number;
   } | null>(null);
   const [captureAlert, setCaptureAlert] = useState("");
-  const tokenBuffer = useRef("");
   const bookmarkSeq = useRef(0);
   const deviceReloadAt = useRef(0);
   useWindowWings(
@@ -151,38 +147,9 @@ export function LiveCore({ hero }: CoreProps) {
     [subscribe],
   );
 
-  // ── the intelligence stream ────────────────────────────────────────
-  // Tokens arrive faster than React should paint, so a burst is coalesced
-  // into ONE flush. The buffer is a ref: it never survives this component.
-  useEffect(() => {
-    let flush = 0;
-    const unsubscribe = subscribe("intel_token", (frame) => {
-      const data = frame.data as Record<string, unknown> | string | undefined;
-      const chunk =
-        typeof data === "string"
-          ? data
-          : String(data?.token ?? data?.text ?? data?.chunk ?? "");
-      if (!chunk) return;
-      tokenBuffer.current += chunk;
-      if (flush) return;
-      flush = window.setTimeout(() => {
-        flush = 0;
-        const pending = tokenBuffer.current;
-        tokenBuffer.current = "";
-        if (pending) setIntelStream((current) => current + pending);
-      }, 120);
-    });
-    return () => {
-      unsubscribe();
-      if (flush) window.clearTimeout(flush);
-    };
-  }, [subscribe]);
-
   useEffect(
     () =>
       subscribe("intel_complete", (frame) => {
-        tokenBuffer.current = "";
-        setIntelStream("");
         setIntelResult(
           frame.data && typeof frame.data === "object"
             ? (frame.data as Record<string, unknown>)
@@ -276,9 +243,7 @@ export function LiveCore({ hero }: CoreProps) {
       if (path.endsWith("start")) {
         setRetainedMeetingId("");
         setCaptureAlert("");
-        setIntelStream("");
         setIntelResult(null);
-        tokenBuffer.current = "";
         setState((current) => ({
           ...current,
           ...((value.meeting as Record<string, unknown>) ?? {}),
@@ -370,22 +335,11 @@ export function LiveCore({ hero }: CoreProps) {
     ? (intelResult.action_items as unknown[]).length
     : Number(intelResult?.action_item_count ?? 0);
   const intelFace =
-    intelStream || intelResult ? (
+    intelResult ? (
       <SurfaceSection
         label="Intelligence"
-        actions={
-          <LampGadget
-            on
-            tone={intelStream ? "warn" : "ok"}
-            label={intelStream ? "ARRIVING" : "READY"}
-          />
-        }
+        actions={<LampGadget on tone="ok" label="READY" />}
       >
-        {intelStream ? (
-          <p className="live-intel-stream" role="status" aria-live="polite">
-            {intelStream}
-          </p>
-        ) : null}
         {intelResult ? (
           <div className="live-intel-result">
             {intelSummary ? <p>{intelSummary}</p> : null}

@@ -46,6 +46,7 @@ def _profile(
     claims: tuple[str, ...] = ("language",),
     ready: bool = True,
     context_ceiling: int = 32768,
+    modalities: tuple[str, ...] = ("language",),
 ) -> str:
     profiles = ModelProfileService(db)
     manifest = _manifest(*claims)
@@ -58,7 +59,7 @@ def _profile(
             "provider_family": "local",
             "runtime_family": "llama_cpp_prompt_v1",
             "model_or_artifact_identity": f"artifact-{profile_id}",
-            "supported_modalities": ["language"],
+            "supported_modalities": list(modalities),
             "context_support": "bounded",
             "tokenizer_template_requirements": {},
             "capability_manifest": manifest,
@@ -132,6 +133,17 @@ def _profile(
             "expected_deployment_revision_id": deployment.id,
         },
     )
+    # This shared fixture supplies a ready fake deployment to the route tests.
+    # Do not let the host's optional llama.cpp installation decide whether its
+    # synthetic binding is executable; tests that need unavailable readiness use
+    # ``ready=False`` below and pin that state explicitly.
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE model_profile_readiness_observations "
+            "SET state=?,reason_code=? WHERE observation_id=?",
+            ("ready" if ready else "unavailable", "fixture_ready" if ready else "busy", observation["observation_id"]),
+        )
+    observation = {**observation, "state": "ready" if ready else "unavailable"}
     profiles.bind_profile(
         OWNER,
         {
@@ -146,18 +158,34 @@ def _profile(
             "readiness_observation_id": observation["observation_id"],
         },
     )
-    if not ready:
-        with db._connection() as conn:
-            conn.execute(
-                "UPDATE model_profile_readiness_observations SET state='unavailable',reason_code='busy'"
-            )
-        return "unavailable"
     return str(observation["state"])
 
 
 @pytest.fixture
 def db(tmp_path: Path) -> Database:
     return Database(tmp_path / "assignments.db")
+
+
+def test_profile_fixture_pins_unavailable_readiness_to_its_own_binding(
+    db: Database,
+) -> None:
+    """A deliberately unavailable fake cannot poison another fake profile."""
+    assert _profile(db, "fixture-ready", ready=True) == "ready"
+    assert _profile(db, "fixture-unavailable", ready=False) == "unavailable"
+    with db._connection() as conn:
+        rows = conn.execute(
+            """SELECT b.profile_id,o.state,o.reason_code
+               FROM model_profile_binding_heads h
+               JOIN model_profile_binding_revisions b
+                 ON b.binding_id=h.binding_id AND b.revision=h.revision
+               JOIN model_profile_readiness_observations o
+                 ON o.observation_id=b.readiness_observation_id
+               ORDER BY b.profile_id"""
+        ).fetchall()
+    assert [tuple(row) for row in rows] == [
+        ("fixture-ready", "ready", "fixture_ready"),
+        ("fixture-unavailable", "unavailable", "busy"),
+    ]
 
 
 def _set(

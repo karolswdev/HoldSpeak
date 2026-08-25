@@ -473,9 +473,12 @@ def test_two_real_processes_keep_two_separate_kernels(tmp_path) -> None:
     # ── the worker ran its DERIVED revision, not the hub's relay revision ──
     kinds = {r["id"]: r for r in worker_result["revisions"]}
     assert hub_result["relay_revision_id"] not in kinds
-    executed = [r for r in worker_result["revisions"] if r["kind"] != "mesh_node"]
-    assert executed and all(r["kind"] != "mesh_node" for r in worker_result["revisions"])
-    assert local["target_ref"] == f"deployment-revision:{executed[0]['id']}"
+    # Startup can lawfully create its own local speech deployment first. Assert
+    # the actual operation target, rather than assuming the first non-mesh row
+    # is the derived revision used for this offer.
+    executed_id = str(local["target_ref"]).removeprefix("deployment-revision:")
+    assert executed_id in kinds
+    assert kinds[executed_id]["kind"] != "mesh_node"
 
     # ── the reservation is spent, and settled ──
     assert len(worker_result["reservations"]) == 1

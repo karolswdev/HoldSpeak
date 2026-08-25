@@ -138,6 +138,11 @@ def session_env(tmp_path, monkeypatch):
     import holdspeak.meeting_session.session as session_module
 
     db = Database(tmp_path / "meetings.db")
+    # Phase B starts a live parent only over the explicit frozen
+    # live+speech bundle; these capture-fault tests exercise that real path.
+    from tests.unit.test_meeting_session_admission import _assign_bundle_routes
+
+    _assign_bundle_routes(db)
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setattr(session_module, "MeetingRecorder", _Recorder)
@@ -251,6 +256,12 @@ def _saved_meeting(db, meeting_id="m-fault"):
 def intel_env(tmp_path, monkeypatch):
     reset_database()
     db = Database(tmp_path / "holdspeak.db")
+    # C1 queue work claims only an explicitly frozen deferred route family.
+    from holdspeak.kernel.runtime import _configure
+    from tests.unit.test_meeting_deferred_admission import _assign_deferred_queue_routes
+
+    _assign_deferred_queue_routes(db)
+    _configure(db)
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     monkeypatch.setattr("holdspeak.intel_queue.get_database", lambda *a, **k: db)
     yield db
@@ -265,9 +276,6 @@ def test_intel_model_unavailable_fault_schedules_bounded_retry(
     db.intel.enqueue_intel_job(
         "m-model-gone", transcript_hash=meeting.transcript_hash(), reason="test"
     )
-    monkeypatch.setattr(
-        "holdspeak.intel_queue.get_intel_runtime_status", lambda *a, **k: (True, "ready")
-    )
     monkeypatch.setenv(FAULT_ENV, "intel.model_unavailable")
 
     from holdspeak.intel_queue import process_next_intel_job
@@ -279,7 +287,9 @@ def test_intel_model_unavailable_fault_schedules_bounded_retry(
     assert "intel.model_unavailable" in (job.last_error or "")
     assert int(job.attempts) == 1
     attempts = db.intel.list_intel_job_attempts("m-model-gone")
-    assert attempts and attempts[0].outcome == "scheduled_retry"
+    # C1 records the immutable claim before the retry successor, so the newest
+    # event need not be the retry. The durable history must still include it.
+    assert any(attempt.outcome == "scheduled_retry" for attempt in attempts)
     # No false Ready: the meeting never gained a completion stamp.
     refreshed = db.meetings.get_meeting("m-model-gone")
     assert refreshed.intel_status != "ready"

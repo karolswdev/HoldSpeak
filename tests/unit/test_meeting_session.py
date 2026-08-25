@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 import threading
 from pathlib import Path
+from typing import Any, Sequence
 
 import numpy as np
 import holdspeak.db as db_module
@@ -246,7 +247,7 @@ def test_save_enqueues_deferred_intel_job_when_meeting_status_is_queued(tmp_path
         meetings = property(lambda self: self)
         def __init__(self) -> None:
             self.saved: list[str] = []
-            self.enqueued: list[tuple[str, str, str | None]] = []
+            self.enqueued: list[tuple[str, str, str | None, Sequence[str], Any | None, bool]] = []
 
         def save_meeting(self, state: MeetingState) -> None:
             self.saved.append(state.id)
@@ -257,9 +258,14 @@ def test_save_enqueues_deferred_intel_job_when_meeting_status_is_queued(tmp_path
             *,
             transcript_hash: str,
             reason: str | None = None,
-            displaced_work: tuple[str, ...] = (),
-        ) -> None:
-            self.enqueued.append((meeting_id, transcript_hash, reason))
+            displaced_work: Sequence[str] = (),
+            conn: Any | None = None,
+            legacy_displaced_work: bool = False,
+        ) -> str:
+            self.enqueued.append(
+                (meeting_id, transcript_hash, reason, displaced_work, conn, legacy_displaced_work)
+            )
+            return "ij_fake"
 
     fake_db = _FakeDatabase()
     original_get_database = db_module.get_database
@@ -273,7 +279,8 @@ def test_save_enqueues_deferred_intel_job_when_meeting_status_is_queued(tmp_path
     assert result.intel_job_enqueued is True
     assert fake_db.saved == ["meeting-4"]
     assert len(fake_db.enqueued) == 1
-    meeting_id, transcript_hash, reason = fake_db.enqueued[0]
+    meeting_id, transcript_hash, reason, displaced_work, conn, legacy = fake_db.enqueued[0]
     assert meeting_id == "meeting-4"
     assert transcript_hash == session._state.transcript_hash()
     assert reason == "Queued for later processing."
+    assert displaced_work == () and conn is None and legacy is False

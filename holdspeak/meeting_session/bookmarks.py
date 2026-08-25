@@ -5,7 +5,7 @@ import threading
 from typing import Optional
 
 from ..logging_config import get_logger
-from .intel_plan import CAPABILITY_BOOKMARK_LABEL, MeetingIntelRefused
+from .intel_admission import ROUTE_BOOKMARK_LABEL, MeetingIntelRefused
 from .models import Bookmark, TranscriptSegment
 
 log = get_logger("meeting_session")
@@ -59,13 +59,15 @@ class BookmarkViewsMixin:
         Liveness is the explicit session state and the capability comes from the
         FROZEN plan — never from the presence of an engine object.
         """
-        plan = self._intel_plan
+        bundle = getattr(self, "_route_bundle", None)
         return bool(
             self._intel_live
             and not self._intel_closed
             and self._intel_parent is not None
-            and plan is not None
-            and plan.has(CAPABILITY_BOOKMARK_LABEL)
+            and any(
+                item.get("capability_id") == ROUTE_BOOKMARK_LABEL
+                for item in (bundle or {}).get("members", ())
+            )
         )
 
     def _generate_bookmark_label(

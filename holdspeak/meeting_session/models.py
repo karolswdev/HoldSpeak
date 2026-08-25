@@ -140,6 +140,10 @@ class MeetingState:
     # remain visible and recoverable instead of masquerading as completed work.
     capture_status: str = "finalized"
     capture_failure: Optional[str] = None
+    # Route/admission refusal is distinct from audio capture failure: raw audio
+    # continues while transcription is durably in record-only repair posture.
+    transcription_status: str = "active"
+    transcription_status_detail: Optional[dict[str, str]] = None
     capture_checkpoint_at: Optional[datetime] = None
     capture_checkpoint_seconds: float = 0.0
     provenance: str = "desktop"
@@ -219,6 +223,8 @@ class MeetingState:
             "web_url": self.web_url,
             "capture_status": self.capture_status,
             "capture_failure": self.capture_failure,
+            "transcription_status": self.transcription_status,
+            "transcription_status_detail": self.transcription_status_detail,
             "capture_checkpoint_at": (
                 self.capture_checkpoint_at.isoformat()
                 if self.capture_checkpoint_at else None

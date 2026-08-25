@@ -78,52 +78,60 @@ def test_compute_retry_delay_seconds_uses_exponential_backoff() -> None:
     assert intel_queue_module._compute_retry_delay_seconds(20) == 900
 
 
-def test_retry_or_fail_job_requeues_before_max_attempts() -> None:
-    calls = {"retry": [], "fail": [], "history": []}
+def test_retry_or_fail_job_requeues_bound_owner_before_max_attempts() -> None:
+    calls: list[tuple[object, str, object, int]] = []
 
     class _FakeDb:
         intel = property(lambda self: self)
-        def retry_intel_job(self, meeting_id, error, *, retry_at, attempt, max_attempts):
-            calls["retry"].append((meeting_id, error, retry_at, attempt, max_attempts))
 
-        def fail_intel_job(self, meeting_id, error):
-            calls["fail"].append((meeting_id, error))
+        def settle_bound_execution(self, job, *, error, retry_at=None, max_attempts):
+            calls.append((job, error, retry_at, max_attempts))
+            return True
 
-        def record_intel_job_attempt(self, meeting_id, *, attempt, outcome, error=None, retry_at=None):
-            calls["history"].append((meeting_id, attempt, outcome, error, retry_at))
+    job = SimpleNamespace(
+        meeting_id="meeting-1",
+        attempts=2,
+        parent_operation_id="parent-1",
+        executor_lease_token="lease-1",
+        executor_lease_epoch=1,
+    )
+    assert intel_queue_module._retry_or_fail_job(
+        _FakeDb(), job, "Deferred intel failed: timeout"
+    ) is True
 
-    job = SimpleNamespace(meeting_id="meeting-1", attempts=2)
-    intel_queue_module._retry_or_fail_job(_FakeDb(), job, "Deferred intel failed: timeout")
-
-    assert len(calls["retry"]) == 1
-    assert calls["retry"][0][0] == "meeting-1"
-    assert calls["retry"][0][3] == 2
-    assert calls["retry"][0][4] == intel_queue_module.RETRY_MAX_ATTEMPTS
-    assert calls["fail"] == []
-    assert calls["history"][0][2] == "scheduled_retry"
+    assert len(calls) == 1
+    settled, error, retry_at, max_attempts = calls[0]
+    assert settled is job and error == "Deferred intel failed: timeout"
+    assert retry_at is not None
+    assert max_attempts == intel_queue_module.RETRY_MAX_ATTEMPTS
 
 
-def test_retry_or_fail_job_marks_failed_after_max_attempts() -> None:
-    calls = {"retry": [], "fail": [], "history": []}
+def test_retry_or_fail_job_terminalizes_bound_owner_after_max_attempts() -> None:
+    calls: list[tuple[object, str, object, int]] = []
 
     class _FakeDb:
         intel = property(lambda self: self)
-        def retry_intel_job(self, meeting_id, error, *, retry_at, attempt, max_attempts):
-            calls["retry"].append((meeting_id, error, retry_at, attempt, max_attempts))
 
-        def fail_intel_job(self, meeting_id, error):
-            calls["fail"].append((meeting_id, error))
+        def settle_bound_execution(self, job, *, error, retry_at=None, max_attempts):
+            calls.append((job, error, retry_at, max_attempts))
+            return True
 
-        def record_intel_job_attempt(self, meeting_id, *, attempt, outcome, error=None, retry_at=None):
-            calls["history"].append((meeting_id, attempt, outcome, error, retry_at))
+    job = SimpleNamespace(
+        meeting_id="meeting-1",
+        attempts=intel_queue_module.RETRY_MAX_ATTEMPTS,
+        parent_operation_id="parent-1",
+        executor_lease_token="lease-1",
+        executor_lease_epoch=1,
+    )
+    assert intel_queue_module._retry_or_fail_job(
+        _FakeDb(), job, "Deferred intel failed: timeout"
+    ) is True
 
-    job = SimpleNamespace(meeting_id="meeting-1", attempts=intel_queue_module.RETRY_MAX_ATTEMPTS)
-    intel_queue_module._retry_or_fail_job(_FakeDb(), job, "Deferred intel failed: timeout")
-
-    assert calls["retry"] == []
-    assert len(calls["fail"]) == 1
-    assert "after" in calls["fail"][0][1]
-    assert calls["history"][0][2] == "terminal_failure"
+    assert len(calls) == 1
+    _settled, error, retry_at, max_attempts = calls[0]
+    assert error == "Deferred intel failed: timeout"
+    assert retry_at is None
+    assert max_attempts == intel_queue_module.RETRY_MAX_ATTEMPTS
 
 
 def test_compute_failure_rate_percent() -> None:
@@ -286,3 +294,30 @@ def test_post_failure_alert_webhook_resolved_payload(monkeypatch) -> None:
     assert payload["event"] == "resolved"
     assert payload["resolved_at"] == now.isoformat()
     assert payload["above_since"] == above_since.isoformat()
+
+
+def test_transcript_refresh_releases_its_own_claim_without_enqueue_reset(tmp_path) -> None:
+    """A worker-owned refresh remains available after running-row protection."""
+    from holdspeak.db import Database
+    from holdspeak.meeting_session import MeetingState
+
+    db = Database(tmp_path / "intel-queue.db")
+    meeting = MeetingState(id="meeting-1", started_at=datetime.now())
+    db.meetings.save_meeting(meeting)
+    db.intel.enqueue_intel_job(meeting.id, transcript_hash="before")
+    claimed = db.intel.claim_next_intel_job()
+    assert claimed is not None and claimed.attempts == 1
+
+    assert db.intel.requeue_claimed_intel_job(
+        meeting.id,
+        transcript_hash="after",
+        reason="Transcript changed; refreshing queued intelligence job.",
+        displaced_work=("final-analysis",),
+    )
+    refreshed = db.intel.get_intel_job(meeting.id)
+    assert refreshed is not None
+    assert refreshed.status == "queued"
+    assert refreshed.transcript_hash == "after"
+    assert refreshed.attempts == 1
+    reclaimed = db.intel.claim_next_intel_job()
+    assert reclaimed is not None and reclaimed.attempts == 2

@@ -1,7 +1,14 @@
 from __future__ import annotations
 
+import importlib
 import threading
+import time
 from types import SimpleNamespace
+
+from holdspeak.config import Config
+from holdspeak.db import Database
+from holdspeak.kernel.runtime import _configure
+from holdspeak.transcribe import _MlxTranscriber
 
 import numpy as np
 import pytest
@@ -253,8 +260,18 @@ def test_configured_web_port_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert web_runtime._configured_web_port_from_env() is None
 
 
-def test_run_web_runtime_warms_transcriber_on_start(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(web_runtime.Config, "load", lambda: _config(auto_open=False, warm_on_start=True))
+def test_run_web_runtime_warms_transcriber_on_start(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Startup warm executes a real routed MLX lifecycle, not just construction."""
+    config = Config()
+    config.model.warm_on_start = True
+    db = Database(tmp_path / "web-runtime-warm.db")
+    # The runtime and its parentless warm admission share this production
+    # database/broker. Only the external MLX library boundary is bounded.
+    monkeypatch.setattr(web_runtime.Config, "load", lambda: config)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    _configure(db)
 
     loaded = threading.Event()
     server_instances: list[object] = []
@@ -290,18 +307,26 @@ def test_run_web_runtime_warms_transcriber_on_start(monkeypatch: pytest.MonkeyPa
         def stop(self) -> None:
             return None
 
-    class FakeTranscriber:
-        def __init__(self, model_name: str, backend: str = "auto", language: str = "auto"):
-            self.model_name = model_name
-            loaded.set()
+    real_import = importlib.import_module
+    mlx_core = SimpleNamespace(float16="float16")
 
-        def transcribe(self, _audio, **kwargs):
-            return "hello world"
+    def imported(name: str, package: str | None = None):
+        if name == "mlx.core":
+            return mlx_core
+        if name == "mlx_whisper":
+            return SimpleNamespace()
+        return real_import(name, package)
+
+    def model_holder(_self: _MlxTranscriber, _candidate: str) -> str:
+        loaded.set()
+        return "model-holder"
 
     monkeypatch.setattr(web_runtime, "MeetingWebServer", FakeServer)
     monkeypatch.setattr(web_runtime, "AudioRecorder", FakeAudioRecorder)
     monkeypatch.setattr(web_runtime, "HotkeyListener", FakeHotkeyListener)
-    monkeypatch.setattr(transcriber_state, "Transcriber", FakeTranscriber)
+    monkeypatch.setattr("holdspeak.transcribe._resolve_backend", lambda _backend: "mlx")
+    monkeypatch.setattr("holdspeak.transcribe.importlib.import_module", imported)
+    monkeypatch.setattr(_MlxTranscriber, "_model_holder_get", model_holder)
 
     stop_event = threading.Event()
     stop_event.set()
@@ -320,6 +345,22 @@ def test_run_web_runtime_warms_transcriber_on_start(monkeypatch: pytest.MonkeyPa
         "status": "loaded",
         "error": "",
     }
+    deadline = time.monotonic() + 1.0
+    outcomes: list[object] = []
+    while time.monotonic() < deadline:
+        with db._connection() as conn:
+            outcomes = list(
+                conn.execute(
+                    """SELECT e.terminal_outcome
+                         FROM inference_route_executions e
+                         JOIN inference_route_plans p ON p.id=e.route_plan_id
+                        WHERE p.capability_id='speech.preload'"""
+                )
+            )
+        if [row[0] for row in outcomes] == ["succeeded"]:
+            break
+        time.sleep(0.01)
+    assert [row[0] for row in outcomes] == ["succeeded"]
 
 
 def test_run_web_runtime_fails_with_actionable_exit(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1074,11 +1115,8 @@ def test_meeting_broadcasts_map_to_runtime_activity(monkeypatch: pytest.MonkeyPa
         {"target": "github", "title": "File follow-up issue"},
     )
 
-    runtime._on_meeting_broadcast("intel_token", "hello")
-
-    activity = runtime._get_runtime_status()["activity"]
-    assert activity["state"] == "processing"
-    assert activity["label"] == "Intel streaming"
+    # Phase 143 C1 retires provider-token broadcasts. The live runtime activity
+    # contract remains the semantic meeting events that still have a frame.
 
 
 def test_runtime_activity_forwards_to_desktop_presence(monkeypatch: pytest.MonkeyPatch) -> None:

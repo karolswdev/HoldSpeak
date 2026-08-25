@@ -13,7 +13,7 @@ import re
 import uuid
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from typing import Any, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 from ..inference_capabilities import (
     InferenceCapabilityDefinition,
@@ -832,6 +832,7 @@ class InferenceAssignmentService:
         family: str,
         source_sha256: str,
         capability_entries: Mapping[str, Mapping[str, Any]],
+        _prelude: Callable[[Any], None] | None = None,
     ) -> dict[str, Any]:
         """Install missing capability defaults and the cutover marker together.
 
@@ -866,6 +867,8 @@ class InferenceAssignmentService:
                     conn.commit()
                     return {**stored, "committed_at": str(existing["committed_at"])}
 
+                if _prelude is not None:
+                    _prelude(conn)
                 proofs: dict[str, dict[str, Any]] = {}
                 for capability_id, raw_entry in sorted(capability_entries.items()):
                     capability = self._require_assignable(capability_id)

@@ -64,12 +64,12 @@ def test_projection_stage_precedes_success_receipt_and_finalizes_once(rig):
     callback = stager.publisher("projection_test", "test-result", encode)
     original = broker.receipt
 
-    def receipt(operation_id, outcome, result_ref, node):
+    def receipt(operation_id, outcome, result_ref, node, **_kwargs):
         stage = stager.get("projection_test")
         assert stage is not None and stage.state == "STAGED"
         assert result_ref == stage.result_ref
         seen.append(result_ref)
-        return original(operation_id, outcome, result_ref, node)
+        return original(operation_id, outcome, result_ref, node, **_kwargs)
 
     broker.receipt = receipt
     outcome = runner.invoke(_request(revision), Adapter(), publish=callback)
@@ -179,8 +179,8 @@ def test_schedule_drift_discards_the_projection_without_touching_the_receipt(tmp
         snapshots: list[str] = []
         persist = broker.inference_runner._persist_receipt
 
-        def capture(active, operation_id, outcome, result_ref):
-            receipt = persist(active, operation_id, outcome, result_ref)
+        def capture(active, operation_id, outcome, result_ref, **kwargs):
+            receipt = persist(active, operation_id, outcome, result_ref, **kwargs)
             operation = broker.store.operation(operation_id)
             if operation and operation["name"] == "inference.invoke":
                 snapshots.append(json.dumps(dict(receipt), sort_keys=True))

@@ -23,7 +23,7 @@ class MeetingIntelService:
         history_limit = max(1, min(int(filters.get("history_limit", 5)), 20))
         retry_max = max(1, int(Config.load().meeting.intel_retry_max_attempts)); now = datetime.now()
         jobs = self._db.intel.list_intel_jobs(status=status, limit=limit)
-        return {"jobs": [{"meeting_id": j.meeting_id, "status": j.status, "transcript_hash": j.transcript_hash, "requested_at": j.requested_at.isoformat(), "updated_at": j.updated_at.isoformat(), "attempts": j.attempts, "last_error": j.last_error, "meeting_title": j.meeting_title, "started_at": j.started_at.isoformat() if j.started_at else None, "intel_status_detail": j.intel_status_detail, "retry_scheduled": j.status == "queued" and bool(j.last_error) and j.requested_at > now, "next_retry_at": j.requested_at.isoformat() if j.status == "queued" and bool(j.last_error) and j.requested_at > now else None, "retries_remaining": max(0, retry_max - int(j.attempts)), "retry_max_attempts": retry_max, "retry_history": [{"attempt": e.attempt, "outcome": e.outcome, "error": e.error, "retry_at": e.retry_at.isoformat() if e.retry_at else None, "created_at": e.created_at.isoformat()} for e in self._db.intel.list_intel_job_attempts(j.meeting_id, limit=history_limit)]} for j in jobs]}
+        return {"jobs": [{"job_id": j.job_id, "origin_job_id": j.origin_job_id, "work_descriptor_sha256": j.work_descriptor_sha256, "claim_id": j.claim_id, "parent_operation_id": j.parent_operation_id, "bundle_id": j.bundle_id, "bundle_sha256": j.bundle_sha256, "lifecycle_posture": j.lifecycle_posture, "meeting_id": j.meeting_id, "status": j.status, "transcript_hash": j.transcript_hash, "requested_at": j.requested_at.isoformat(), "updated_at": j.updated_at.isoformat(), "attempts": j.attempts, "last_error": j.last_error, "meeting_title": j.meeting_title, "started_at": j.started_at.isoformat() if j.started_at else None, "intel_status_detail": j.intel_status_detail, "retry_scheduled": j.status == "queued" and bool(j.last_error) and j.requested_at > now, "next_retry_at": j.requested_at.isoformat() if j.status == "queued" and bool(j.last_error) and j.requested_at > now else None, "retries_remaining": max(0, retry_max - int(j.attempts)), "retry_max_attempts": retry_max, "retry_history": [{"job_id": e.job_id, "event_kind": e.event_kind, "attempt": e.attempt, "outcome": e.outcome, "error": e.error, "retry_at": e.retry_at.isoformat() if e.retry_at else None, "created_at": e.created_at.isoformat()} for e in self._db.intel.list_intel_job_attempts(j.meeting_id, limit=history_limit)]} for j in jobs]}
     def queue_summary(self, principal: Principal) -> dict[str, Any]:
         s = self._db.intel.get_intel_queue_summary()
         return {"total_jobs": s.total_jobs, "queued_jobs": s.queued_jobs, "running_jobs": s.running_jobs, "failed_jobs": s.failed_jobs, "queued_due_jobs": s.queued_due_jobs, "scheduled_retry_jobs": s.scheduled_retry_jobs, "next_retry_at": s.next_retry_at.isoformat() if s.next_retry_at else None}
@@ -38,7 +38,7 @@ class MeetingIntelService:
         self._broadcast_queue(); return {"success": True, "processed": processed, "mode": mode}
     def _retry(self, meeting_id: str, *, recovery: bool) -> dict[str, Any]:
         outcome = self._db.intel.request_intel_retry(meeting_id, reason=MANUAL_INTEL_RETRY_REASON)
-        errors = {"missing": "Meeting not found", "empty": "Meeting transcript is empty; no intelligence can run" if recovery else "Meeting transcript is empty", "running": "Meeting intelligence is already running", "ready": "Meeting intelligence is already ready"}
+        errors = {"missing": "Meeting not found", "empty": "Meeting transcript is empty; no intelligence can run" if recovery else "Meeting transcript is empty", "reserved": "Meeting intelligence is awaiting Stop settlement", "running": "Meeting intelligence is already running", "ready": "Meeting intelligence is already ready"}
         if outcome in errors:
             if outcome == "missing": raise NotFound("meeting", meeting_id)
             raise ConflictError(errors[outcome], code=outcome)
@@ -49,6 +49,10 @@ class MeetingIntelService:
         if meeting is None: raise NotFound("meeting", meeting_id)
         job = self._db.intel.get_intel_job(meeting_id); artifacts = self._db.plugins.list_artifacts(meeting_id, limit=2000)
         meeting_state = str(meeting.intel_status or "disabled").strip().lower(); job_state = str(job.status).strip().lower() if job else None
+        reserved_handoff = (
+            self._db.intel.has_unsettled_stop_reservation(meeting_id)
+            or self._db.intel.has_compatibility_cutover_reservation(meeting_id)
+        )
         state = meeting_state if meeting_state in {"partial", "skipped"} else job_state or meeting_state; visible = bool(job) or meeting_state in {"queued","running","error","failed","partial","skipped"}
         headline = "Meeting saved · intelligence running" if state == "running" else "Meeting saved · intelligence queued" if state == "queued" else "Meeting saved · intelligence skipped" if meeting_state == "skipped" else "Meeting saved · intelligence incomplete"
         completed = [{"label":"Meeting","detail":"Saved"},{"label":"Transcript","detail":f"{len(meeting.segments)} saved {'segment' if len(meeting.segments)==1 else 'segments'}"}]
@@ -56,11 +60,11 @@ class MeetingIntelService:
         if artifacts: completed.append({"label":"Artifacts","detail":f"{len(artifacts)} saved {'artifact' if len(artifacts)==1 else 'artifacts'}"})
         detail = (job.last_error if job else None) or meeting.intel_status_detail or "Meeting intelligence did not finish."
         retry_requested = state == "queued" and detail in {MANUAL_INTEL_RETRY_REASON, ROUTED_INTEL_RETRY_REASON}
-        return {"meeting_id":meeting_id,"visible":visible,"state":state,"headline":headline,"completed":completed,"remaining":{"label":"Routed meeting intelligence" if meeting.intel is not None and meeting_state in {"partial","skipped"} else "Remaining meeting intelligence" if meeting.intel is not None else "Summary, topics, action items, and routed artifacts","detail":str(detail)},"job":{"status":job.status,"attempts":job.attempts,"requested_at":job.requested_at.isoformat(),"updated_at":job.updated_at.isoformat()} if job else None,"actions":{"retry":visible and state != "running" and not (meeting_state == "ready" and job is None) and not retry_requested,"skip":visible and state != "running" and not (meeting_state == "ready" and job is None) and meeting_state != "skipped"}}
+        return {"meeting_id":meeting_id,"visible":visible,"state":state,"headline":headline,"completed":completed,"remaining":{"label":"Routed meeting intelligence" if meeting.intel is not None and meeting_state in {"partial","skipped"} else "Remaining meeting intelligence" if meeting.intel is not None else "Summary, topics, action items, and routed artifacts","detail":str(detail)},"job":{"status":job.status,"attempts":job.attempts,"requested_at":job.requested_at.isoformat(),"updated_at":job.updated_at.isoformat()} if job else None,"actions":{"retry":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and not retry_requested,"skip":not reserved_handoff and visible and state != "running" and not (meeting_state == "ready" and job is None) and meeting_state != "skipped"}}
     def retry_recovery(self, principal: Principal, meeting_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]: return self._retry(meeting_id, recovery=True)
     def skip_recovery(self, principal: Principal, meeting_id: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         outcome = self._db.intel.skip_remaining_intel(meeting_id)
-        errors = {"missing":"Meeting not found", "running":"Meeting intelligence is running; wait for it to finish before skipping", "ready":"Meeting intelligence is already ready"}
+        errors = {"missing":"Meeting not found", "reserved":"Meeting intelligence is awaiting Stop settlement", "running":"Meeting intelligence is running; wait for it to finish before skipping", "ready":"Meeting intelligence is already ready"}
         if outcome in errors:
             if outcome == "missing": raise NotFound("meeting", meeting_id)
             raise ConflictError(errors[outcome], code=outcome)

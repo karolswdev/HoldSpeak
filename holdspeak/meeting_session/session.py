@@ -6,19 +6,14 @@ and session persistence.
 
 from __future__ import annotations
 
-import hashlib
 import threading
-import time
 import uuid
-from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Callable, Optional, TYPE_CHECKING
-import json
 
 import numpy as np
 
-from ..meeting_recorder import MeetingRecorder, concatenate_chunks, AudioChunk
+from ..meeting_recorder import MeetingRecorder
 from ..transcribe import Transcriber
 from ..logging_config import get_logger
 
@@ -47,13 +42,9 @@ except ImportError:
 log = get_logger("meeting_session")
 
 from .models import (
-    Bookmark,
     IntelSnapshot,
-    MeetingSaveResult,
     MeetingState,
     TranscriptSegment,
-    _device_descriptor_to_dict,
-    _iso_or_none,
 )
 
 from .intel_admission import IntelAdmissionMixin
@@ -89,7 +80,7 @@ class MeetingSession(
 
     def __init__(
         self,
-        transcriber: Transcriber,
+        transcriber: Optional[Transcriber] = None,
         *,
         mic_label: str = "Me",
         remote_label: str = "Remote",
@@ -114,6 +105,10 @@ class MeetingSession(
         diarize_mic: bool = False,
         cross_meeting_recognition: bool = True,
         principal: Optional[Any] = None,
+        requested_remote_device_ids: tuple[str, ...] = (),
+        transcriber_factory: Optional[Callable[[dict[str, str]], Transcriber]] = None,
+        transcription_backend: str = "",
+        transcription_model_name: str = "",
     ) -> None:
         """Initialize meeting session.
 
@@ -146,6 +141,13 @@ class MeetingSession(
             cross_meeting_recognition: Recognize speakers across meetings.
         """
         self.transcriber = transcriber
+        self._transcriber_factory = transcriber_factory
+        self._transcription_backend = str(
+            transcription_backend or getattr(transcriber, "backend", "") or ""
+        ).strip().lower()
+        self._transcription_model_name = str(
+            transcription_model_name or getattr(transcriber, "model_name", "") or ""
+        ).strip().lower()
         self.mic_label = mic_label
         self.remote_label = remote_label
         self.mic_device = mic_device
@@ -170,6 +172,10 @@ class MeetingSession(
         # keeps recording available and refuses intelligence by name — an OWNER
         # principal is NEVER synthesized here.
         self.intel_principal = principal
+        self._requested_remote_device_ids = tuple(str(value) for value in requested_remote_device_ids)
+        # The immutable parent-route bundle is the Phase-B live authority.  The
+        # legacy plan field remains only as a v1 reader for deferred/history code.
+        self._route_bundle: Optional[dict[str, Any]] = None
         self._intel_plan: Optional[Any] = None
         self._intel_parent: Optional[Any] = None
         self._intel_refusal: str = ""
@@ -183,6 +189,8 @@ class MeetingSession(
         # parent covers transcription too, so a session that admitted nothing
         # transcribes nothing — never an unadmitted Whisper call.
         self._transcription_refusal: str = ""
+        # Exact construction parameters copied from the admitted speech deployment.
+        self._frozen_transcription: dict[str, str] | None = None
         # Once the live parent is closed it is never revived: a later dispatch
         # attempt is refused by name, not silently re-admitted (HS-131-08).
         self._intel_closed: bool = False
@@ -478,6 +486,7 @@ class MeetingSession(
             except Exception as exc:
                 self._state.capture_status = "capture_failed"
                 self._state.capture_failure = f"Could not create the Meeting: {exc}"
+                self._unwind_started_bundle("meeting-save")
                 raise RuntimeError(self._state.capture_failure) from exc
 
             # Create recorder
@@ -489,6 +498,7 @@ class MeetingSession(
                 self._state.capture_status = "capture_failed"
                 self._state.capture_failure = f"Audio journal unavailable: {exc}"
                 get_database().meetings.save_meeting(self._state)
+                self._unwind_started_bundle("journal-open")
                 raise RuntimeError(self._state.capture_failure) from exc
 
             self._recorder = MeetingRecorder(
@@ -509,7 +519,80 @@ class MeetingSession(
                 self._state.capture_failure = str(exc)
                 self._state.capture_checkpoint_at = datetime.now()
                 get_database().meetings.save_meeting(self._state)
+                self._unwind_started_bundle("recorder-start")
                 raise
+            # Construction happens only after the durable Meeting and audio journal.
+            # Any lifecycle failure becomes visible record-only posture while the
+            # recorder remains live.
+            resolved_backend = str(
+                getattr(self, "_resolved_transcription_backend", self._transcription_backend)
+            )
+            if self.transcriber is None and self._transcriber_factory is not None:
+                try:
+                    if resolved_backend == "faster-whisper" and self._route_bundle is not None:
+                        created: dict[str, Transcriber] = {}
+
+                        def construct(_cancellation: Any) -> str:
+                            if self._frozen_transcription is None:
+                                raise RuntimeError("frozen_transcription_missing")
+                            created["transcriber"] = self._transcriber_factory(self._frozen_transcription)
+                            return "constructed"
+
+                        admission = self._transcription_admission(
+                            source_id="lifecycle", interval_start=0.0, interval_end=0.0
+                        )
+                        if admission is None:
+                            raise RuntimeError("meeting_transcription_not_admitted")
+                        outcome, _result = admission.preload_child(
+                            stage="constructor",
+                            material={
+                                "backend": "faster-whisper",
+                                "model": self._transcription_model_name or "base",
+                            },
+                            run=construct,
+                            attempt_ordinal=1,
+                        )
+                        if outcome.outcome != "succeeded":
+                            raise RuntimeError(f"transcriber_construction_{outcome.outcome}")
+                        self.transcriber = created["transcriber"]
+                    else:
+                        # MLX construction is weight-free; its one P=1 child below
+                        # owns the entire frozen candidate/strategy warmup.
+                        if self._frozen_transcription is None:
+                            raise RuntimeError("frozen_transcription_missing")
+                        self.transcriber = self._transcriber_factory(self._frozen_transcription)
+                except Exception as exc:
+                    self._record_only({
+                        "family": "speech-recognition-route-assignments",
+                        "reason_code": "transcriber_construction_failed",
+                        "repair": "repair_audio_model_lifecycle",
+                    })
+                    log.error("meeting transcriber construction refused: %s", type(exc).__name__)
+            if self.transcriber is None and not self._transcription_refusal:
+                self._record_only({
+                    "family": "speech-recognition-route-assignments",
+                    "reason_code": "transcriber_unavailable",
+                    "repair": "repair_audio_model_lifecycle",
+                })
+            if (
+                self.transcriber is not None
+                and (resolved_backend == "mlx" or getattr(self.transcriber, "backend", "") == "mlx")
+                and not bool(getattr(self.transcriber, "loaded", False))
+            ):
+                try:
+                    admission = self._transcription_admission(
+                        source_id="lifecycle", interval_start=0.0, interval_end=0.0
+                    )
+                    if admission is None:
+                        raise RuntimeError("meeting_transcription_not_admitted")
+                    self.transcriber.warm(admission)
+                except Exception as exc:
+                    self._record_only({
+                        "family": "speech-recognition-route-assignments",
+                        "reason_code": "transcriber_preload_failed",
+                        "repair": "repair_audio_model_lifecycle",
+                    })
+                    log.error("meeting transcriber preload refused: %s", type(exc).__name__)
             self._state.capture_status = "recording"
             self._state.capture_failure = None
             self._state.capture_checkpoint_at = datetime.now()
@@ -517,12 +600,14 @@ class MeetingSession(
             self._stop_event.clear()
             self._last_transcribe_time = 0.0
 
-            # Start transcription thread
-            self._transcribe_thread = threading.Thread(
-                target=self._transcribe_loop,
-                daemon=True,
-            )
-            self._transcribe_thread.start()
+            # Start transcription only when a lawful backend exists.  Raw audio
+            # remains active in record-only posture for repair/recovery.
+            if self.transcriber is not None and self._state.transcription_status != "record_only":
+                self._transcribe_thread = threading.Thread(
+                    target=self._transcribe_loop,
+                    daemon=True,
+                )
+                self._transcribe_thread.start()
 
             log.info(f"Meeting started: {self._state.id}")
             return self._state

@@ -58,6 +58,14 @@ class _PublicationPermit:
 Materializer = Callable[[sqlite3.Connection, ProjectionStage, _PublicationPermit], Mapping[str, Any]]
 
 
+class ProjectionDiscarded(Exception):
+    """A materializer's lawful no-publication result, committed as DISCARDED."""
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)
+        self.reason = reason
+
+
 class ProjectionStager:
     """Kernel-owned stage store and atomic finalization registry."""
 
@@ -91,6 +99,7 @@ class ProjectionStager:
         projection: Mapping[str, Any],
         *,
         result_sha256: str | None = None,
+        receipt_result_ref: str | None = None,
     ) -> ProjectionStage:
         material = _canonical(dict(projection))
         digest = "sha256:" + hashlib.sha256(material.encode()).hexdigest()
@@ -102,19 +111,59 @@ class ProjectionStager:
             ).fetchone()
             if operation is None:
                 raise KernelRefused("projection_invocation_unknown")
+            if result_sha256 is not None and not re.fullmatch(
+                r"sha256:[0-9a-f]{64}", result_sha256
+            ):
+                raise KernelRefused("projection_result_digest_invalid")
+            if receipt_result_ref is not None:
+                expected_ref = f"inference-result:{invocation_id}/{result_sha256}"
+                receipt = conn.execute(
+                    "SELECT outcome,result_ref FROM kernel_receipts WHERE operation_id=?",
+                    (str(operation["operation_id"]),),
+                ).fetchone()
+                if (
+                    result_sha256 is None
+                    or receipt_result_ref != expected_ref
+                    or receipt is None
+                    or str(receipt["outcome"]) != "succeeded"
+                    or str(receipt["result_ref"]) != receipt_result_ref
+                ):
+                    raise KernelRefused("projection_receipt_result_ref_mismatch")
             existing = conn.execute(
                 "SELECT * FROM kernel_projection_stages WHERE invocation_id=? AND kind=?",
                 (invocation_id, kind),
             ).fetchone()
             if existing is not None:
-                if str(existing["projection_sha256"]) != digest:
+                same_result = (
+                    receipt_result_ref is None
+                    or str(existing["result_ref"]) == receipt_result_ref
+                )
+                # A C1 executor fence deliberately discards a stale owner's stage.
+                # The winning lease epoch may restage the *same earned child result*
+                # with its own bearer, but no unrelated discarded stage is mutable.
+                prior_discard = str(existing["final_result_json"] or "")
+                if (
+                    str(existing["state"]) == "DISCARDED"
+                    and same_result
+                    and '"discarded":"executor_lease_lost"' in prior_discard
+                ):
+                    conn.execute(
+                        """UPDATE kernel_projection_stages SET projection_json=?,projection_sha256=?,
+                           state='STAGED',final_result_json='{}',updated_at=? WHERE stage_id=?
+                           AND state='DISCARDED'""",
+                        (material, digest, now, str(existing["stage_id"])),
+                    )
+                    existing = conn.execute(
+                        "SELECT * FROM kernel_projection_stages WHERE stage_id=?",
+                        (str(existing["stage_id"]),),
+                    ).fetchone()
+                    return self._row(existing)
+                if str(existing["projection_sha256"]) != digest or not same_result:
                     raise KernelRefused("projection_stage_payload_conflict")
                 return self._row(existing)
             stage_id = "pstg_" + uuid.uuid4().hex
-            result_ref = f"projection-stage:{stage_id}"
-            if result_sha256 is not None:
-                if not re.fullmatch(r"sha256:[0-9a-f]{64}", result_sha256):
-                    raise KernelRefused("projection_result_digest_invalid")
+            result_ref = receipt_result_ref or f"projection-stage:{stage_id}"
+            if result_sha256 is not None and receipt_result_ref is None:
                 result_ref += f"/{result_sha256}"
             conn.execute(
                 """INSERT INTO kernel_projection_stages(
@@ -248,7 +297,18 @@ class ProjectionStager:
                 if materializer is None:
                     raise KernelRefused("projection_materializer_unknown")
                 permit = _PublicationPermit(self, conn)
-                projection = materializer(conn, stage, permit)
+                try:
+                    projection = materializer(conn, stage, permit)
+                except ProjectionDiscarded as discarded:
+                    if not permit._used:
+                        raise KernelRefused("projection_publication_permit_invalid")
+                    conn.execute(
+                        """UPDATE kernel_projection_stages SET state='DISCARDED',
+                           final_result_json=?,updated_at=? WHERE stage_id=?
+                           AND state='FINALIZING'""",
+                        (_canonical({"discarded": discarded.reason}), self._clock(), stage.stage_id),
+                    )
+                    return None
                 if not permit._used:
                     raise KernelRefused("projection_permit_not_used")
                 final_json = _canonical(dict(projection))
@@ -264,6 +324,28 @@ class ProjectionStager:
         if not isinstance(permit, _PublicationPermit) or permit._stager is not self or permit._connection is not conn or permit._used:
             raise KernelRefused("projection_publication_permit_invalid")
         permit._used = True
+
+    def finalize_parent_stages(self, parent_operation_id: str) -> int:
+        """Finalize unresolved stages beneath one parent through kernel ownership."""
+        if not parent_operation_id:
+            return 0
+        with self._database._connection() as conn:
+            rows = conn.execute(
+                """SELECT s.invocation_id FROM kernel_projection_stages s
+                   JOIN kernel_operations o ON o.operation_id=s.operation_id
+                   WHERE o.parent_operation_id=? AND s.state IN ('STAGED','FINALIZING')""",
+                (parent_operation_id,),
+            ).fetchall()
+        finalized = 0
+        for row in rows:
+            try:
+                self.finalize(str(row["invocation_id"]))
+                finalized += 1
+            except KernelRefused:
+                # A receipt still in flight stays recoverable; an invalid stage is
+                # never a reason for a Meeting-specific executor to reappear.
+                continue
+        return finalized
 
     def recover(self) -> Mapping[str, Any]:
         """Reap first, then reconcile durable stages without inventing truth."""

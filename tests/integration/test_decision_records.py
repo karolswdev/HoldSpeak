@@ -320,16 +320,17 @@ def test_model_promotion_admits_before_generation_and_leaves_receipt(
     _artifact(db, "artifact-1", "meeting-1", "Use the bounded inference spine")
     decision = db.decisions.list()[0]
     db.decisions.accept(decision.id, actor="owner-session")
-    # A ready target: "this_machine" needs a local gguf on disk, so the
-    # promotion aims at a configured endpoint profile instead (the same
-    # rig the service-level promotion tests use).
-    profile = db.profiles.upsert(
-        profile_id="promotion",
-        name="Promotion",
-        kind="openAICompatible",
-        base_url="http://promotion",
-        model="promotion-model",
-    )
+    # The routed branch obtains its sole model authority from an exact OWNER
+    # capability assignment, not a request target override.
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+
+    _profile(db, "promotion")
+    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-integration-promotion", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
+        "entries": [{"profile_id": "promotion", "profile_revision": 1}],
+    })
     broker = _configure(db)
     events: list[str] = []
     original_submit = broker.submit
@@ -365,7 +366,7 @@ def test_model_promotion_admits_before_generation_and_leaves_receipt(
 
     response = owner.post(
         f"/api/decisions/{decision.id}/promote/adr/draft-with-model",
-        json={"inference_target_id": profile.id},
+        json={},
     )
     assert response.status_code == 200, response.text
     payload = response.json()
@@ -373,7 +374,9 @@ def test_model_promotion_admits_before_generation_and_leaves_receipt(
     assert events[-1] == "generate"
     assert payload["artifact"]["status"] == "draft"
     assert payload["artifact"]["body_markdown"].startswith("# Draft ADR")
-    assert payload["inference_target"]["id"] == profile.id
+    assert payload["placement"] == {
+        "source": "frozen_owner_assignment", "egress": {"scope": "local"}
+    }
     # The promotion's own (parent) operation carries the run's receipt …
     parent = broker.store.operation(payload["operation_id"])
     parent_receipt = broker.store.receipt(payload["operation_id"])
@@ -441,7 +444,7 @@ def test_superseded_promotion_route_refuses_without_a_model_call(
     owner = _promotion_client(db, monkeypatch)
     response = owner.post(
         f"/api/decisions/{old.id}/promote/adr/draft-with-model",
-        json={"inference_target_id": "this_machine"},
+        json={},
     )
     assert response.status_code == 409
     body = response.json()
@@ -469,7 +472,7 @@ def test_superseded_promotion_route_names_successor(
     owner = _promotion_client(db, monkeypatch)
     response = owner.post(
         f"/api/decisions/{old.id}/promote/adr/draft-with-model",
-        json={"inference_target_id": "this_machine"},
+        json={},
     )
     assert response.status_code == 409
     assert successor.id in response.text

@@ -18,12 +18,13 @@ rows inside the permitted transaction, and nowhere else.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from typing import Any
 
 from .model import KernelRefused
-from .projection_stager import _PublicationPermit
+from .projection_stager import _PublicationPermit, ProjectionDiscarded
 
 
 
@@ -167,21 +168,144 @@ def _write_bookmark_label(conn: Any, projection: dict[str, Any]) -> dict[str, An
     """Write one earned bookmark label onto its bookmark row (HS-131-08 D3)."""
     meeting_id = str(projection.get("meeting_id") or "").strip()
     label = str(projection.get("label") or "").strip()
+    bookmark_id = projection.get("bookmark_id")
     if not meeting_id or projection.get("bookmark_timestamp") is None:
         raise KernelRefused("meeting_bookmark_projection_incomplete")
+    if bookmark_id is not None:
+        try:
+            bookmark_id = int(bookmark_id)
+        except (TypeError, ValueError) as exc:
+            raise KernelRefused("meeting_bookmark_projection_incomplete") from exc
     if not label:
         # No better label was produced: keep the owner's existing one untouched.
         return {**projection, "labels_written": 0}
     timestamp = float(projection["bookmark_timestamp"])
-    cursor = conn.execute(
-        "UPDATE bookmarks SET label=? WHERE meeting_id=? AND timestamp=?",
-        (label, meeting_id, timestamp),
+    if bookmark_id is None:
+        # Pre-C1 claimed jobs have only the historical timestamp projection.
+        # They retain their compatibility materializer; every C1 frozen
+        # descriptor carries an ID and therefore takes the strict path below.
+        cursor = conn.execute(
+            "UPDATE bookmarks SET label=? WHERE meeting_id=? AND timestamp=?",
+            (label, meeting_id, timestamp),
+        )
+    else:
+        cursor = conn.execute(
+            """UPDATE bookmarks SET label=?
+               WHERE id=? AND meeting_id=? AND timestamp=?""",
+            (label, bookmark_id, meeting_id, timestamp),
+        )
+    written = int(cursor.rowcount or 0)
+    if written:
+        conn.execute(
+            "UPDATE meetings SET sync_modified_at=?, updated_at=datetime('now') WHERE id=?",
+            (time.strftime("%Y-%m-%dT%H:%M:%S"), meeting_id),
+        )
+        return {**projection, "labels_written": written}
+    # The frozen identity no longer resolves (or its timestamp changed).  This
+    # is a truthful skipped publication, never permission to label a replacement
+    # bookmark sharing the same timestamp.
+    return {
+        **projection,
+        "labels_written": 0,
+        "publication": "skipped",
+        "bookmark_skip_reason": "frozen_bookmark_missing_or_changed",
+    }
+
+
+def _bound_transcript_fence(conn: Any, projection: dict[str, Any]) -> dict[str, Any] | None:
+    """Fence C1 publication by both executor epoch and durable transcript truth.
+
+    This executes inside the materializer's publication transaction.  An old
+    executor may have a real provider result, but after takeover it has no right
+    to publish that result, advance queue lifecycle, or mutate the Meeting.
+    """
+    job_id = str(projection.get("job_id") or "").strip()
+    expected_hash = str(projection.get("transcript_hash") or "").strip()
+    token = str(projection.get("executor_lease_token") or "").strip()
+    try:
+        epoch = int(projection.get("executor_lease_epoch") or 0)
+    except (TypeError, ValueError) as exc:
+        raise KernelRefused("meeting_bound_projection_incomplete") from exc
+    if not job_id or not expected_hash or not token or epoch <= 0:
+        raise KernelRefused("meeting_bound_projection_incomplete")
+    from ..db.intel import IntelRepository, _durable_transcript_hash
+
+    # The exact bearer and a still-live expiry are part of the projection fence,
+    # not merely the runner heartbeat.  Check this before any transcript action:
+    # a stale executor must not supersede, queue a successor, or touch the glass.
+    row = conn.execute(
+        """SELECT meeting_id,transcript_hash,status FROM intel_jobs
+           WHERE job_id=? AND executor_lease_token=? AND executor_lease_epoch=?
+             AND status IN ('claimed','running')
+             AND executor_lease_expires_at>?""",
+        (job_id, token, epoch, time.time()),
+    ).fetchone()
+    if row is None:
+        return {**projection, "publication": "lease_lost"}
+    meeting_id = str(row["meeting_id"])
+    if meeting_id != str(projection.get("meeting_id") or ""):
+        raise KernelRefused("meeting_bound_projection_mismatch")
+    durable_hash = _durable_transcript_hash(conn, meeting_id)
+    if durable_hash == expected_hash and str(row["transcript_hash"]) == expected_hash:
+        return None
+    fresh = IntelRepository.supersede_bound_intel_job_in_transaction(
+        conn,
+        job_id=job_id,
+        executor_lease_token=token,
+        executor_lease_epoch=epoch,
+        reason="Transcript changed before bound projection publication.",
+        event_kind="publication_fence_superseded",
     )
+    return {**projection, "publication": "superseded", "fresh_job_id": fresh}
+
+
+def _write_bound_analysis(conn: Any, projection: dict[str, Any]) -> dict[str, Any]:
+    """Publish the analysis only after the third durable transcript fence."""
+    fenced = _bound_transcript_fence(conn, projection)
+    if fenced is not None:
+        if fenced.get("publication") == "lease_lost":
+            raise ProjectionDiscarded("executor_lease_lost")
+        return fenced
+    meeting_id = str(projection["meeting_id"])
+    summary = str(projection.get("summary") or "")
+    topics = list(projection.get("topics") or [])
+    action_items = list(projection.get("action_items") or [])
+    timestamp_row = conn.execute("SELECT duration_seconds FROM meetings WHERE id=?", (meeting_id,)).fetchone()
+    timestamp = float(timestamp_row["duration_seconds"] or 0.0) if timestamp_row is not None else 0.0
     conn.execute(
-        "UPDATE meetings SET sync_modified_at=?, updated_at=datetime('now') WHERE id=?",
-        (time.strftime("%Y-%m-%dT%H:%M:%S"), meeting_id),
+        "INSERT INTO intel_snapshots (meeting_id,timestamp,summary) VALUES (?,?,?)",
+        (meeting_id, timestamp, summary),
     )
-    return {**projection, "labels_written": int(cursor.rowcount or 0)}
+    conn.execute("DELETE FROM topics WHERE meeting_id=?", (meeting_id,))
+    for topic in topics:
+        conn.execute(
+            "INSERT INTO topics (meeting_id,topic,extracted_at) VALUES (?,?,?)",
+            (meeting_id, str(topic), timestamp),
+        )
+    # The closed semantic result omits persistence IDs. Derive one from the
+    # immutable job descriptor and ordinal, so replay writes the same action item
+    # without putting transcript/prompt material in queue evidence.
+    for ordinal, item in enumerate(action_items, 1):
+        if not isinstance(item, dict):
+            continue
+        item_id = str(item.get("id") or "").strip() or "action_" + hashlib.sha256(
+            f"{projection['job_id']}:{ordinal}".encode()
+        ).hexdigest()[:24]
+        conn.execute(
+            """INSERT INTO action_items (id,meeting_id,task,owner,due,status,review_state,created_at)
+               VALUES (?,?,?,?,?,'pending','pending',?)
+               ON CONFLICT(id) DO UPDATE SET task=excluded.task,owner=excluded.owner,due=excluded.due""",
+            (item_id, meeting_id, str(item.get("task") or ""), item.get("owner"),
+             item.get("due"), time.strftime("%Y-%m-%dT%H:%M:%S")),
+        )
+    now = time.strftime("%Y-%m-%dT%H:%M:%S")
+    conn.execute(
+        """UPDATE meetings SET intel_status='running',
+           intel_status_detail='Meeting saved. Summary, topics, and action items saved. Routed intelligence running.',
+           intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
+        (now, meeting_id),
+    )
+    return {**projection, "snapshot_written": 1}
 
 
 def materialize(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
@@ -190,11 +314,25 @@ def materialize(conn: Any, stage: Any, permit: Any) -> dict[str, Any]:
         raise KernelRefused("projection_publication_permit_invalid")
     permit.use(conn)
     projection = dict(stage.projection)
-    if stage.kind == "meeting-deferred-auto-title":
-        return _write_title(conn, projection)
-    if stage.kind == "meeting-deferred-bookmark-label":
-        return _write_bookmark_label(conn, projection)
-    if stage.kind != "meeting-plugin-result":
+    if stage.kind == "meeting-bound-deferred-analysis":
+        return _write_bound_analysis(conn, projection)
+    if stage.kind in {"meeting-deferred-auto-title", "meeting-bound-deferred-auto-title"}:
+        fenced = _bound_transcript_fence(conn, projection) if stage.kind.startswith("meeting-bound-") else None
+        if fenced is not None and fenced.get("publication") == "lease_lost":
+            raise ProjectionDiscarded("executor_lease_lost")
+        return fenced if fenced is not None else _write_title(conn, projection)
+    if stage.kind in {"meeting-deferred-bookmark-label", "meeting-bound-deferred-bookmark-label"}:
+        fenced = _bound_transcript_fence(conn, projection) if stage.kind.startswith("meeting-bound-") else None
+        if fenced is not None and fenced.get("publication") == "lease_lost":
+            raise ProjectionDiscarded("executor_lease_lost")
+        return fenced if fenced is not None else _write_bookmark_label(conn, projection)
+    if stage.kind == "meeting-bound-plugin-result":
+        fenced = _bound_transcript_fence(conn, projection)
+        if fenced is not None and fenced.get("publication") == "lease_lost":
+            raise ProjectionDiscarded("executor_lease_lost")
+        if fenced is not None:
+            return fenced
+    elif stage.kind != "meeting-plugin-result":
         return projection
     from ..plugins.synthesis import synthesize_meeting_artifacts
 
@@ -214,9 +352,13 @@ def register(stager: Any) -> None:
     # plugin run, no artifact, no title, no bookmark label.
     for kind in (
         "meeting-deferred-analysis",
+        "meeting-bound-deferred-analysis",
         "meeting-plugin-result",
+        "meeting-bound-plugin-result",
         "meeting-deferred-bookmark-label",
+        "meeting-bound-deferred-bookmark-label",
         "meeting-deferred-auto-title",
+        "meeting-bound-deferred-auto-title",
     ):
         try:
             stager.register(kind, materialize, discard_on_parent_cancel=True)

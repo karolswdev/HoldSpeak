@@ -10,7 +10,6 @@ Phase-85 rule); assembly is lazy (the delivery-router precedent).
 from __future__ import annotations
 
 import asyncio
-import time
 import uuid
 from pathlib import Path
 from typing import Any, Optional
@@ -228,48 +227,128 @@ def build_delivery_prs_router(
                 {"error": "diff_unavailable", "reason": material.get("detail") or material.get("status")},
                 status_code=409,
             )
-        lifecycle = None
         try:
-            from ...deployment_revisions import capture_deployment_revision
-            from ...inference_targets import resolve_placement
-            from ...kernel.inference_runner import InvocationRequest, ServiceContract
-            from ...kernel.prompt_adapter import CanonicalPromptAdapter
-            from ...kernel.runtime import _as_principal, _service as kernel_service
-            from ...db import get_database
-            broker = kernel_service(); principal = request.state.principal; db = get_database()
-            requested_target_id = str(body.get("inference_target_id") or "this_machine").strip()
-            target = resolve_placement(db, invocation=requested_target_id).target
-            if not target.ready: return JSONResponse({"error": target.readiness_reason}, status_code=409)
-            revision = capture_deployment_revision(db, target); invocation_id = "pr_review_" + uuid.uuid4().hex
-            diff_sha256 = __import__("hashlib").sha256(str(material.get("diff") or "").encode()).hexdigest()
-            linked_text = "\n\n".join(str(item.get("text") or "") for item in material.get("linked") or [])
-            prompt = f"Review PR #{number}. Return a concise GitHub review draft with concrete findings. Do not claim to have posted, approved, merged, or run checks.\n\nLinked story and evidence:\n{linked_text[:48000]}\n\nDiff:\n{str(material.get('diff') or '')[:120000]}"
-            parent = broker.parent_run_controller.start(principal, kind="delivery.pr-review-draft", definition_ref=f"pr:{source_id}:{number}", definition_revision=str(material.get("revision") or "unversioned"), input_snapshot={"source_id":source_id,"number":number,"diff_sha256":diff_sha256}, deadline_at=time.time()+300, child_budget=1)
-            payload = {"system_prompt":"You are a precise code reviewer. Findings first; cite files and lines when possible.","user_prompt":prompt,"max_tokens":1800,"temperature":None,"source_id":source_id,"number":number,"material_revision":str(material.get("revision") or "unversioned"),"diff_sha256":diff_sha256,"linked_revisions":[str(item.get("revision") or "") for item in material.get("linked") or []]}
-            invoke = InvocationRequest(revision.id,ServiceContract.for_payload("holdspeak.delivery-pr-review","1",payload),time.time()+300,payload,invocation_id,parent.operation_id)
-            def projection_payload(value: Any) -> dict[str, Any]:
-                return {"output":str(dict(value).get("output") or ""),"source_id":source_id,"number":number}
-            with _as_principal(principal): outcome = await asyncio.to_thread(broker.inference_runner.invoke,invoke,CanonicalPromptAdapter(),publish=broker.projection_stager.publisher(invocation_id,"delivery-pr-review",projection_payload),parent_context=parent.context)
-            if outcome.outcome != "succeeded": broker.parent_run_controller.close(parent.context,outcome.outcome,principal=principal); return JSONResponse({"error":f"inference_{outcome.outcome}"},status_code=409)
-            projection=broker.projection_stager.finalize(invocation_id)
-            if projection is None:
-                if broker.store.receipt(parent.operation_id) is None:
-                    broker.parent_run_controller.close(parent.context, "cancelled", principal=principal)
-                return JSONResponse({"error": "delivery_pr_review_cancelled"}, status_code=409)
-            output=str(projection.get("output") or "")
-            lifecycle = None
-            artifact_id = str(projection.get("artifact_id") or "")
-            if not artifact_id:
-                broker.parent_run_controller.close(parent.context, "failed", principal=principal)
-                return JSONResponse({"error": "artifact_persistence_failed"}, status_code=500)
-            parent_receipt = broker.parent_run_controller.close(parent.context, "succeeded", artifact_id, principal=principal)
-            return JSONResponse({"output": output, "artifact_id": artifact_id, "result_ref": f"artifact:{artifact_id}", "invocation_id": invocation_id, "operation_id": parent.operation_id, "invocation": {"operation_id": outcome.operation_id, "deployment_revision": revision.id, "outcome": outcome.outcome, "receipt": dict(outcome.receipt)}, "parent_receipt": dict(parent_receipt)})
+            from ...kernel.runtime import _service as kernel_service
+            from ...principals import PrincipalKind, PrincipalRight
+            from ...services.inference_owner_draft import run_owner_draft
+            from ...services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
+
+            broker = kernel_service()
+            principal = request.state.principal
+            if principal.kind is not PrincipalKind.OWNER or not principal.permits(PrincipalRight.OWNER):
+                return JSONResponse({"error": "delivery_pr_review_owner_required"}, status_code=403)
+            material_revision = str(material.get("revision") or "unversioned")
+            diff_sha256 = __import__("hashlib").sha256(
+                str(material.get("diff") or "").encode()
+            ).hexdigest()
+            identity = f"{source_id}:{number}:{material_revision}:{diff_sha256}"
+            command_id = "delivery-pr-review:" + __import__("hashlib").sha256(identity.encode()).hexdigest()
+            input_snapshot = {
+                "source_id": source_id,
+                "number": number,
+                "material_revision": material_revision,
+                "diff_sha256": diff_sha256,
+            }
+            # E3: a request target can no longer compete with the exact OWNER
+            # assignment.  The named refusal is durable, content-free, and sends
+            # no PR material to a provider.
+            if str(body.get("inference_target_id") or "").strip():
+                refusal = InferenceParentRouteBundleService(
+                    broker, broker.inference_adoption_service
+                ).record_pre_route_refusal(
+                    principal,
+                    command_id=command_id,
+                    parent_kind="delivery.pr-review-draft",
+                    definition_ref=f"pr:{source_id}:{number}",
+                    definition_revision=material_revision,
+                    input_snapshot=input_snapshot,
+                    deadline_at=4_102_444_800.0,
+                    reason="inference_request_target_override_retired",
+                )
+                return JSONResponse({
+                    "error": "inference_request_target_override_retired",
+                    "operation_id": refusal["parent"].operation_id,
+                    "parent_receipt": refusal["receipt"],
+                }, status_code=409)
+
+            def prompt_payload() -> dict[str, Any]:
+                linked_text = "\n\n".join(
+                    str(item.get("text") or "") for item in material.get("linked") or []
+                )
+                prompt = (
+                    f"Review PR #{number}. Return a concise GitHub review draft with concrete findings. "
+                    "Do not claim to have posted, approved, merged, or run checks.\n\n"
+                    f"Linked story and evidence:\n{linked_text[:48000]}\n\n"
+                    f"Diff:\n{str(material.get('diff') or '')[:120000]}"
+                )
+                return {
+                    "system_prompt": "You are a precise code reviewer. Findings first; cite files and lines when possible.",
+                    "user_prompt": prompt,
+                    "max_tokens": 1800,
+                    "temperature": None,
+                    "source_id": source_id,
+                    "number": number,
+                    "material_revision": material_revision,
+                    "diff_sha256": diff_sha256,
+                    "linked_revisions": [
+                        str(item.get("revision") or "") for item in material.get("linked") or []
+                    ],
+                }
+
+            routed = await asyncio.to_thread(
+                run_owner_draft,
+                broker,
+                principal,
+                command_id=command_id,
+                parent_kind="delivery.pr-review-draft",
+                definition_ref=f"pr:{source_id}:{number}",
+                definition_revision=material_revision,
+                input_snapshot=input_snapshot,
+                capability_id="delivery.pr_review_draft",
+                route_key="delivery-pr-review-draft",
+                operation_id="delivery-pr-review:" + __import__("hashlib").sha256(identity.encode()).hexdigest(),
+                reserved_output_tokens=1800,
+                payload_factory=prompt_payload,
+                projection_kind="delivery-pr-review",
+                projection_factory=lambda value: {
+                    "output": str(value.get("draft") or ""),
+                    "source_id": source_id,
+                    "number": number,
+                },
+                result_is_usable=lambda value: bool(
+                    str(value.get("output") or "").strip()
+                    and str(value.get("artifact_id") or "")
+                ),
+                parent_result_ref=lambda value: str(value["artifact_id"]),
+            )
+            if routed.get("outcome") != "succeeded" or not isinstance(routed.get("published"), dict):
+                return JSONResponse({
+                    "error": "delivery_pr_review_draft_refused",
+                    "reason": routed.get("reason") or "inference_draft_unavailable",
+                    "operation_id": routed["parent"].operation_id,
+                    "parent_receipt": routed["parent_receipt"],
+                }, status_code=409)
+            published = routed["published"]
+            output = str(published.get("output") or "")
+            artifact_id = str(published.get("artifact_id") or "")
+            if not artifact_id or not output.strip():
+                return JSONResponse({"error": "delivery_pr_review_draft_refused"}, status_code=409)
+            winner = (routed.get("routed") or {}).get("winning_reservation") or {}
+            return JSONResponse({
+                "output": output,
+                "artifact_id": artifact_id,
+                "result_ref": f"artifact:{artifact_id}",
+                "invocation_id": str(winner.get("child_invocation_id") or ""),
+                "operation_id": routed["parent"].operation_id,
+                "invocation": {
+                    "operation_id": str(winner.get("child_operation_id") or ""),
+                    "outcome": "succeeded",
+                    "receipt": dict((routed.get("routed") or {}).get("receipt") or {}),
+                },
+                "parent_receipt": dict(routed["parent_receipt"]),
+                "placement": {"source": "frozen_owner_assignment", "egress": routed["egress"]},
+            })
         except Exception as exc:
-            if lifecycle is not None:
-                try:
-                    lifecycle.fail(str(exc), state="failed")
-                except Exception:
-                    pass
             return _classified_500(exc, "pr review draft failed")
 
     @router.post("/api/delivery/prs/{source_id}/{number}/propose")

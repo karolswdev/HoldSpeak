@@ -37,7 +37,10 @@ def _config() -> SimpleNamespace:
 
 
 class _FakeTranscriber:
+    # Frozen transcription reuses an exact model/backend/language triple.
     model_name = "base"
+    backend = "auto"
+    language = "auto"
 
     def transcribe(self, _audio, **_admission) -> str:
         # HS-131-09: the real `Transcriber.transcribe` takes the live session's
@@ -95,7 +98,8 @@ def test_no_speech_does_not_set_the_milestone(monkeypatch, tmp_path):
     typed: list[str] = []
     rt, db = _runtime(monkeypatch, tmp_path, typed)
     rt.transcriber = SimpleNamespace(
-        model_name="base", transcribe=lambda _a, **_admission: ""
+        model_name="base", backend="auto", language="auto",
+        transcribe=lambda _a, **_admission: ""
     )
 
     session = _admitted_hold(rt)

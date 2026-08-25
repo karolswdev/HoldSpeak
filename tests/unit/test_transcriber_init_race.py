@@ -26,7 +26,11 @@ def test_concurrent_ensure_builds_exactly_one_transcriber(monkeypatch):
         def __init__(self, *, model_name, backend, language):
             time.sleep(0.05)  # widen the race window
             built.append(self)
+            # Phase B reuses only an exact frozen model/backend/language
+            # triple, so the test double must expose all three fields.
             self.model_name = model_name
+            self.backend = backend
+            self.language = language
 
     monkeypatch.setattr(transcriber_state, "Transcriber", SlowFakeTranscriber)
 

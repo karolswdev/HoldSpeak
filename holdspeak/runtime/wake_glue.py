@@ -363,7 +363,9 @@ class WakeWordGlueMixin:
                     last_event="wake_transcribing",
                     last_error="",
                 )
-                text = self._ensure_transcriber_loaded().transcribe(audio, admission=admission)
+                from .transcriber_state import _frozen_session_transcriber
+
+                text = _frozen_session_transcriber(self, session).transcribe(audio, admission=admission)
                 if not text:
                     self._set_runtime_activity(
                         "complete",

@@ -122,7 +122,25 @@ def _fixture(tmp_path: Path):
     return db, service, config, preset
 
 
-def test_download_verify_adopt_activate_and_replay(tmp_path: Path):
+def _llama_runtime_ready(monkeypatch) -> None:
+    """Pin the optional local runtime for acquisition-state tests.
+
+    The product must report a genuine absent runtime as an activation failure.
+    These tests instead exercise the successful durable activation transition,
+    independent of what happens to be installed on the test host.
+    """
+    monkeypatch.setattr(
+        "holdspeak.services.inference_acquisition_service.importlib.metadata.version",
+        lambda _package: "0.3.34",
+    )
+    monkeypatch.setattr(
+        "holdspeak.services.inference_setup_service._package_available",
+        lambda package: package == "llama_cpp",
+    )
+
+
+def test_download_verify_adopt_activate_and_replay(tmp_path: Path, monkeypatch):
+    _llama_runtime_ready(monkeypatch)
     db, service, config, preset = _fixture(tmp_path)
     original_local_model = config.meeting.intel_realtime_model
     original_thought_target = config.thoughts.inference_target_id
@@ -197,10 +215,7 @@ def test_detected_gguf_can_be_verified_selected_and_replayed(tmp_path: Path, mon
         auto_recover=False,
     )
     service._submit = lambda _job_id: None
-    monkeypatch.setattr(
-        "holdspeak.services.inference_acquisition_service.importlib.metadata.version",
-        lambda _package: "0.3.34",
-    )
+    _llama_runtime_ready(monkeypatch)
     projected = setup.get_inference_setup(OWNER)
     detected = next(row for row in projected["detected_local_artifacts"] if row["label"] == model.name)
     assert detected["activation"]["action"] == "use_existing"
@@ -253,7 +268,10 @@ def test_detected_gguf_can_be_verified_selected_and_replayed(tmp_path: Path, mon
     assert getattr(changed.value, "code", "") == "request_payload_mismatch"
 
 
-def test_changed_request_refuses_and_route_change_still_leaves_available_model_unassigned(tmp_path: Path):
+def test_changed_request_refuses_and_route_change_still_leaves_available_model_unassigned(
+    tmp_path: Path, monkeypatch
+):
+    _llama_runtime_ready(monkeypatch)
     _db, service, config, preset = _fixture(tmp_path)
     body = {
         "request_id": "request-two",
@@ -417,7 +435,10 @@ def test_v2_context_ceiling_reaches_the_existing_local_engine_adapter(monkeypatc
     }
 
 
-def test_one_active_claim_and_range_resume_converge_on_one_artifact(tmp_path: Path):
+def test_one_active_claim_and_range_resume_converge_on_one_artifact(
+    tmp_path: Path, monkeypatch
+):
+    _llama_runtime_ready(monkeypatch)
     db, service, config, preset = _fixture(tmp_path)
     body = b"GGUF" + b"tiny-safe-model"
     first_body = {

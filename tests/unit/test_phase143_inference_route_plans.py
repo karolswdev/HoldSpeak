@@ -15,7 +15,7 @@ import pytest
 
 from holdspeak.db import Database
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services.errors import ConflictError, ServiceError
+from holdspeak.services.errors import ConflictError, ServiceError, ValidationError
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.services.inference_route_plan_service import (
     InferenceRoutePlanService,
@@ -586,4 +586,50 @@ def test_authority_and_hub_local_sync_are_fail_closed(db: Database) -> None:
         SyncService(db).push(
             OWNER,
             {"inference_route_plans": [{"id": "forged"}]},
+        )
+
+
+def test_rails_service_policy_is_sealed_and_capability_only() -> None:
+    """Rails SERVICE has no group/global inheritance escape hatch."""
+    from holdspeak.services.inference_service_route_policy import (
+        builtin_service_route_policy_registry,
+    )
+
+    registry = builtin_service_route_policy_registry()
+    principal = Principal(
+        PrincipalKind.SERVICE,
+        "rails-observer",
+        frozenset(
+            {
+                ("rails.observer-batch", 1),
+                ("inference.invoke", 1),
+                ("inference.cancel", 1),
+            }
+        ),
+        "rails-observer:journal-only",
+    )
+    evidence = registry.authorize(
+        principal,
+        parent_kind="rails.observer-batch",
+        capability_id="background.rails_summary",
+    )
+    assert evidence["assignment_sources"] == ["capability"]
+    assert evidence["allowed_boundaries"]
+    with pytest.raises(ValidationError) as denied_global_shape:
+        registry.authorize(
+            Principal(
+                PrincipalKind.SERVICE,
+                "rails-observer",
+                frozenset({("inference.invoke", 1)}),
+                "rails-observer:journal-only",
+            ),
+            parent_kind="rails.observer-batch",
+            capability_id="background.rails_summary",
+        )
+    assert denied_global_shape.value.code == "inference_service_route_policy_denied"
+    with pytest.raises(ValidationError):
+        registry.authorize(
+            principal,
+            parent_kind="rails.observer-batch",
+            capability_id="ask.answer",
         )

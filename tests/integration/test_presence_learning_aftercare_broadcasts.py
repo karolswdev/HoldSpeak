@@ -25,7 +25,6 @@ from fastapi.testclient import TestClient
 
 pytestmark = [pytest.mark.requires_meeting]
 
-import holdspeak.intel_queue as intel_queue_module
 from holdspeak.db import get_database, reset_database
 from holdspeak.intel_queue import process_next_intel_job
 from holdspeak.meeting_session import (
@@ -242,18 +241,9 @@ def test_meeting_save_is_quiet_for_an_unfinished_meeting(db, tmp_path):
 class _FakeIntelResult:
     error = None
     topics: list = []
-    action_items = [
-        {
-            "id": "a1",
-            "task": "Ship the fix",
-            "owner": "Me",
-            "due": None,
-            "status": "pending",
-            "review_state": "pending",
-            "source_timestamp": None,
-            "created_at": datetime(2026, 6, 10, 10, 30, 0).isoformat(),
-        }
-    ]
+    # C1 admits semantic provider output only. Repository-owned receipt fields
+    # (`id`, status, timestamps) are materialized after the winning route child.
+    action_items = [{"task": "Ship the fix", "owner": "Me", "due": None}]
     summary = "A meeting."
 
 
@@ -266,7 +256,31 @@ class _FakeIntel:
         return _FakeIntelResult()
 
 
-def _queued_meeting(db, meeting_id):
+def _queued_meeting(db, meeting_id, monkeypatch):
+    # New queued work is C2-bound before the worker receives it. Pin the exact
+    # deferred assignment family and freeze one routed member, so this observer
+    # fixture reaches the same bound-queue completion boundary.
+    from holdspeak.kernel.runtime import _configure
+    from tests.unit.test_meeting_deferred_admission import _Route, _assign_deferred_queue_routes
+
+    _assign_deferred_queue_routes(db)
+    monkeypatch.setattr(
+        "holdspeak.plugins.router.preview_route_from_transcript",
+        lambda **_kwargs: _Route(("requirements_extractor",)),
+    )
+    # This file proves the observer boundary, not plugin execution. It still
+    # claims a C2-frozen routed member; settle that independently proved child
+    # seam so an observer assertion cannot depend on plugin model semantics.
+    monkeypatch.setattr(
+        "holdspeak.meeting_plugins.run_bound_meeting_plugin_chain",
+        lambda _db, _meeting, *, job, **_kwargs: {
+            "plugin_statuses": {
+                str(member["plugin_id"]): "success"
+                for member in job.frozen_plugin_members
+            }
+        },
+    )
+    _configure(db)
     state = MeetingState(
         id=meeting_id,
         started_at=datetime(2026, 6, 10, 10, 0, 0),
@@ -286,9 +300,6 @@ def _queued_meeting(db, meeting_id):
 
 
 def test_process_next_intel_job_notifies_on_meeting_ready(db, monkeypatch):
-    monkeypatch.setattr(
-        intel_queue_module, "get_intel_runtime_status", lambda *a, **k: (True, "ok")
-    )
     # HS-131-08: the deferred base analysis runs as an admitted child whose
     # engine is built from the job plan's frozen deployment revision, so the fake
     # belongs on that one admitted engine seam.
@@ -300,7 +311,7 @@ def test_process_next_intel_job_notifies_on_meeting_ready(db, monkeypatch):
     monkeypatch.setattr(
         "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
-    _queued_meeting(db, "m-intel")
+    _queued_meeting(db, "m-intel", monkeypatch)
 
     ready: list[str] = []
     assert process_next_intel_job(on_meeting_ready=ready.append) is True
@@ -309,9 +320,6 @@ def test_process_next_intel_job_notifies_on_meeting_ready(db, monkeypatch):
 
 
 def test_exploding_on_meeting_ready_never_breaks_the_job(db, monkeypatch):
-    monkeypatch.setattr(
-        intel_queue_module, "get_intel_runtime_status", lambda *a, **k: (True, "ok")
-    )
     # HS-131-08: the deferred base analysis runs as an admitted child whose
     # engine is built from the job plan's frozen deployment revision, so the fake
     # belongs on that one admitted engine seam.
@@ -323,7 +331,7 @@ def test_exploding_on_meeting_ready_never_breaks_the_job(db, monkeypatch):
     monkeypatch.setattr(
         "holdspeak.intel.providers._configured_engine", lambda: _FakeIntel()
     )
-    _queued_meeting(db, "m-boom")
+    _queued_meeting(db, "m-boom", monkeypatch)
 
     def _boom(_meeting_id):
         raise RuntimeError("observer boom")

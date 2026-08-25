@@ -20,7 +20,7 @@ import platform
 import sys
 import threading
 from pathlib import Path
-from typing import Any, Optional, Protocol
+from typing import Any, Mapping, Optional, Protocol
 
 import numpy as np
 
@@ -195,17 +195,46 @@ class _MlxTranscriber:
         return self._path_or_hf_repo is not None
 
     def ensure_loaded(self, admission: Any) -> None:
-        """Load the weights through admitted SIBLING preload children.
+        """Load the weights through admitted sibling preload work.
 
-        Sol Amendment 7: each explicit ``ModelHolder.get_model`` attempt and each
-        silent-audio fallback dispatch is its OWN
-        ``holdspeak.whisper-preload@1`` child with a terminal receipt, completed
-        before the ordinary transcription child. No lock is taken here (the
-        caller's transcription lock is already held), so a preload can never
-        deadlock against the invocation it precedes.
+        Historic speech sessions receipt each physical candidate attempt. A
+        bundle-backed Meeting deliberately collapses that private candidate walk
+        into one frozen, P=1 lifecycle child; its candidates and strategies were
+        already frozen at Meeting admission.
         """
+        reusable = getattr(admission, "loaded_artifact_reusable", None)
         if self._path_or_hf_repo is not None:
-            return
+            # A loaded MLX instance is not ambient proof.  It can serve another
+            # frozen route only when that route's exact deployment revision and
+            # durable successful preload receipt both cross-bind it.
+            if callable(reusable) and reusable(self):
+                return
+            self._path_or_hf_repo = None
+        if bool(getattr(admission, "single_preload_sequence", False)):
+            frozen = getattr(admission, "frozen_preload_material", lambda: {})()
+            material = dict(frozen)
+            if (
+                material.get("engine") != "mlx"
+                or str(material.get("model") or "") != self.model_name
+                or str(material.get("language") or "auto") != str(self.language or "auto")
+            ):
+                raise TranscriberError("frozen MLX preload construction is missing")
+            candidates = tuple(str(item) for item in material["candidate_ids"])
+            strategies = tuple(str(item) for item in material["strategy_sequence"])
+            outcome, _ = admission.preload_sequence(
+                material=material,
+                run=lambda cancellation: self._load_candidate_sequence(
+                    candidates=candidates,
+                    strategies=strategies,
+                    cancellation=cancellation,
+                ),
+            )
+            if outcome.outcome == "succeeded":
+                return
+            raise TranscriberError(
+                f"Failed to load Whisper model '{self.model_name}' via mlx-whisper "
+                f"(preload {outcome.outcome})."
+            )
         attempt, last = 0, ""
         for repo in self._candidates:
             material = {
@@ -228,6 +257,57 @@ class _MlxTranscriber:
                     return
                 last = f"{stage}:{outcome.outcome}"
                 log.warning(f"MLX preload {stage} for {repo} ended {outcome.outcome}")
+        raise TranscriberError(
+            f"Failed to load Whisper model '{self.model_name}' via mlx-whisper "
+            f"(last preload {last or 'not attempted'})."
+        )
+
+    def _load_candidate_sequence(
+        self,
+        *,
+        candidates: tuple[str, ...],
+        strategies: tuple[str, ...],
+        cancellation: Any = None,
+    ) -> str:
+        """Walk exactly the admitted MLX lifecycle sequence, once.
+
+        The candidates, stages, and terminal stop rules were frozen before the
+        lifecycle operation was admitted.  This adapter neither re-reads its
+        mutable candidate field nor invents a fallback stage.
+        """
+        from .kernel.model import KernelRefused
+        from .kernel.provider_signals import ProviderIndeterminate
+
+        physical = {
+            "model-holder": self._model_holder_get,
+            "silent-audio": self._silent_audio_load,
+        }
+        last = ""
+        for repo in candidates:
+            for stage in strategies:
+                if cancellation is not None and cancellation.is_set():
+                    raise KernelRefused("speech_preload_cancelled")
+                run = physical.get(stage)
+                if run is None:
+                    raise TranscriberError("frozen MLX preload stage is invalid")
+                try:
+                    run(repo)
+                except (KernelRefused, ProviderIndeterminate):
+                    # These dispositions are terminal.  In particular an unknown
+                    # native physical result may never advance to another stage.
+                    raise
+                except Exception as exc:
+                    if cancellation is not None and cancellation.is_set():
+                        raise KernelRefused("speech_preload_cancelled") from exc
+                    last = f"{stage}:{type(exc).__name__}"
+                    log.warning("MLX preload %s for %s failed: %s", stage, repo, type(exc).__name__)
+                    # Only a known caught no-generation failure advances.
+                    continue
+                if cancellation is not None and cancellation.is_set():
+                    raise KernelRefused("speech_preload_cancelled")
+                self._path_or_hf_repo = repo
+                log.info("MLX model loaded from %s via %s", repo, stage)
+                return stage
         raise TranscriberError(
             f"Failed to load Whisper model '{self.model_name}' via mlx-whisper "
             f"(last preload {last or 'not attempted'})."
@@ -353,9 +433,12 @@ class _FasterWhisperTranscriber:
         return True
 
     def ensure_loaded(self, admission: Any) -> None:
-        """faster-whisper loads its weights in its own constructor: nothing to
-        dispatch here. Only the MLX boundary has the separable explicit load
-        Sol Amendment 7 ruled on."""
+        """Faster-whisper loads in its constructor (Phase-D Amendment 11).
+
+        That ratified local-only, constructor-inseparable exception occurs after
+        the parent and frozen speech route exist, but it neither dispatches nor
+        receipts lifecycle work here. Only MLX has the separable admitted load.
+        """
         return None
 
     def transcribe(self, audio_array: np.ndarray) -> str:
@@ -430,8 +513,12 @@ class Transcriber:
         self.compute_type = self._impl.compute_type
 
     def warm(self, admission: Any) -> None:
-        """Load the local weights through admitted preload children."""
+        """Load the local weights through one admitted frozen lifecycle route."""
         self._impl.ensure_loaded(admission)
+        recorder = getattr(admission, "record_loaded_artifact", None)
+        receipt = getattr(admission, "last_preload_receipt", None)
+        if callable(recorder) and isinstance(receipt, Mapping):
+            recorder(self._impl, receipt)
 
     @property
     def loaded(self) -> bool:
@@ -474,8 +561,8 @@ class Transcriber:
 
         audio = np.ascontiguousarray(audio, dtype=np.float32)
         digest = audio_sha256(audio)
-        # The preload children are SIBLINGS completed BEFORE the transcribe child.
-        self._impl.ensure_loaded(admission)
+        # The preload lifecycle completes before the routed transcription child.
+        self.warm(admission)
         errors: list[BaseException] = []
 
         def _dispatch() -> str:

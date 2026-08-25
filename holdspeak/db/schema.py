@@ -37,6 +37,10 @@ CREATE TABLE IF NOT EXISTS meetings (
     web_url TEXT,
     capture_status TEXT NOT NULL DEFAULT 'finalized',
     capture_failure TEXT,
+    route_fence_pending INTEGER NOT NULL DEFAULT 0,
+    route_fence_error TEXT,
+    transcription_status TEXT NOT NULL DEFAULT 'active',
+    transcription_status_detail_json TEXT,
     capture_checkpoint_at TEXT,
     capture_checkpoint_seconds REAL NOT NULL DEFAULT 0,
     provenance TEXT NOT NULL DEFAULT 'desktop',
@@ -123,25 +127,42 @@ CREATE TABLE IF NOT EXISTS intel_snapshots (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Deferred intel jobs for meetings that need later processing.
--- `displaced_work` (HS-131-08) is the STRUCTURED list of work stop() displaced
--- onto this job (a JSON array of slugs); empty for an ordinary deferred job,
--- which runs base analysis and routed plugins only.
+-- Deferred intel jobs for meetings that need later processing.  One Meeting may
+-- retain historical jobs while a fresh immutable descriptor is queued.  Queue
+-- state carries references and hashes only; never transcript bytes.
 CREATE TABLE IF NOT EXISTS intel_jobs (
-    meeting_id TEXT PRIMARY KEY REFERENCES meetings(id) ON DELETE CASCADE,
-    status TEXT NOT NULL DEFAULT 'queued',
+    job_id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    origin_job_id TEXT REFERENCES intel_jobs(job_id),
+    work_descriptor_sha256 TEXT NOT NULL,
     transcript_hash TEXT NOT NULL,
+    displaced_work TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'queued',
+    lifecycle_posture TEXT NOT NULL DEFAULT 'queued',
+    claim_id TEXT,
+    parent_operation_id TEXT,
+    bundle_id TEXT,
+    bundle_sha256 TEXT,
+    executor_lease_token TEXT,
+    executor_lease_epoch INTEGER NOT NULL DEFAULT 0,
+    executor_lease_expires_at REAL,
     requested_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     attempts INTEGER NOT NULL DEFAULT 0,
-    last_error TEXT,
-    displaced_work TEXT NOT NULL DEFAULT '[]'
+    last_error TEXT
 );
 
--- Deferred-intel attempt history (retry and terminal outcomes)
+-- Append-only deferred-intel ledger.  meeting_id keeps pre-C rows readable;
+-- job_id keys every new event to the immutable job that caused it.
 CREATE TABLE IF NOT EXISTS intel_job_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    job_id TEXT REFERENCES intel_jobs(job_id),
+    origin_job_id TEXT REFERENCES intel_jobs(job_id),
+    claim_id TEXT,
+    parent_operation_id TEXT,
+    bundle_id TEXT,
+    event_kind TEXT NOT NULL DEFAULT 'attempt',
     attempt INTEGER NOT NULL,
     outcome TEXT NOT NULL, -- scheduled_retry | terminal_failure | success
     error TEXT,
@@ -212,7 +233,28 @@ CREATE INDEX IF NOT EXISTS idx_decision_commitments_status ON decision_commitmen
 CREATE INDEX IF NOT EXISTS idx_topics_meeting ON topics(meeting_id);
 CREATE INDEX IF NOT EXISTS idx_meetings_date ON meetings(started_at);
 CREATE INDEX IF NOT EXISTS idx_intel_jobs_status ON intel_jobs(status, requested_at);
+CREATE INDEX IF NOT EXISTS idx_intel_jobs_meeting_current ON intel_jobs(meeting_id, status, requested_at DESC);
 CREATE INDEX IF NOT EXISTS idx_intel_job_attempts_meeting ON intel_job_attempts(meeting_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_intel_job_attempts_job ON intel_job_attempts(job_id, created_at DESC);
+-- The queue-owned activation marker is the reserve-inert handoff provider's
+-- independent lifecycle witness: one append-only marker per reservation.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_intel_job_handoff_activation
+ON intel_job_attempts(job_id, event_kind) WHERE event_kind='handoff_activated';
+-- A work descriptor can have one execution owner. Terminal history may coexist.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_intel_jobs_active_descriptor
+ON intel_jobs(meeting_id, work_descriptor_sha256)
+WHERE status IN ('reserved', 'queued', 'claimed', 'running');
+CREATE UNIQUE INDEX IF NOT EXISTS uq_intel_job_claim
+ON intel_jobs(claim_id) WHERE claim_id IS NOT NULL;
+CREATE TRIGGER IF NOT EXISTS intel_jobs_immutable_descriptor
+BEFORE UPDATE OF job_id, meeting_id, transcript_hash, displaced_work, work_descriptor_sha256 ON intel_jobs
+WHEN OLD.work_descriptor_sha256 != ''
+BEGIN SELECT RAISE(ABORT, 'intel job descriptor is immutable'); END;
+CREATE TRIGGER IF NOT EXISTS intel_job_attempts_append_only_update
+BEFORE UPDATE ON intel_job_attempts
+BEGIN SELECT RAISE(ABORT, 'intel job attempts are append-only'); END;
+-- Meeting deletion remains the existing foreign-key retention boundary; queue
+-- code never deletes individual ledger events.
 CREATE INDEX IF NOT EXISTS idx_segments_speaker_id ON segments(speaker_id);
 CREATE INDEX IF NOT EXISTS idx_speakers_name ON speakers(name);
 
@@ -2495,6 +2537,7 @@ CREATE TABLE IF NOT EXISTS inference_route_plans (
     retry_policy_id TEXT NOT NULL,
     retry_policy_revision INTEGER NOT NULL CHECK (retry_policy_revision > 0),
     operation_policy_revision TEXT NOT NULL,
+    principal_policy_sha256 TEXT,
     payload_json TEXT NOT NULL,
     state TEXT NOT NULL DEFAULT 'frozen' CHECK (state='frozen'),
     deadline_at TEXT NOT NULL,
@@ -2548,6 +2591,19 @@ END;
 CREATE TRIGGER IF NOT EXISTS inference_route_plan_authority_no_delete
 BEFORE DELETE ON inference_route_plan_authority_evidence BEGIN
     SELECT RAISE(ABORT, 'immutable inference route authority evidence');
+END;
+CREATE TABLE IF NOT EXISTS inference_route_plan_principal_evidence (
+    plan_id TEXT PRIMARY KEY REFERENCES inference_route_plans(id),
+    payload_json TEXT NOT NULL,
+    sha256 TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_route_plan_principal_evidence_no_update
+BEFORE UPDATE ON inference_route_plan_principal_evidence BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route principal evidence');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_route_plan_principal_evidence_no_delete
+BEFORE DELETE ON inference_route_plan_principal_evidence BEGIN
+    SELECT RAISE(ABORT, 'immutable inference route principal evidence');
 END;
 CREATE TABLE IF NOT EXISTS inference_route_plan_preflight_evidence (
     plan_id TEXT NOT NULL REFERENCES inference_route_plans(id),
@@ -2914,7 +2970,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_inference_one_local_lease
 CREATE TABLE IF NOT EXISTS kernel_parent_runs (
     operation_id TEXT PRIMARY KEY REFERENCES kernel_operations(operation_id),
     native_id TEXT NOT NULL UNIQUE,
-    kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve','meeting.session','meeting.deferred-intel-job','dictation.session','wake.session','cadence.next-action-draft')),
+    kind TEXT NOT NULL CHECK (kind IN ('sequence','workflow','workbench','decision.promotion-draft','delivery.pr-review-draft','voice_reference_resolve','meeting.session','meeting.deferred-intel-job','dictation.session','wake.session','cadence.next-action-draft','rails.observer-batch')),
     definition_ref TEXT NOT NULL,
     definition_revision TEXT NOT NULL,
     input_json TEXT NOT NULL,
@@ -2933,6 +2989,115 @@ CREATE TABLE IF NOT EXISTS kernel_parent_runs (
     updated_at REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_kernel_parent_runs_state ON kernel_parent_runs(state, updated_at);
+
+-- HS-143-08: one parent and its declared inference route set.  The manifest is
+-- content-free and immutable; child operation material is frozen only when a
+-- real window/stage exists.
+CREATE TABLE IF NOT EXISTS inference_parent_route_bundles (
+    id TEXT PRIMARY KEY,
+    command_id TEXT NOT NULL UNIQUE,
+    request_sha256 TEXT NOT NULL,
+    parent_operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_parent_runs(operation_id),
+    parent_deadline_at REAL NOT NULL,
+    parent_child_budget INTEGER NOT NULL CHECK (parent_child_budget > 0),
+    lifecycle_child_budget INTEGER NOT NULL CHECK (lifecycle_child_budget >= 0),
+    feature_principal_sha256 TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    sha256 TEXT NOT NULL UNIQUE,
+    created_at REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS inference_parent_route_bundle_members (
+    id TEXT PRIMARY KEY,
+    bundle_id TEXT NOT NULL REFERENCES inference_parent_route_bundles(id),
+    ordinal INTEGER NOT NULL CHECK (ordinal > 0),
+    route_key TEXT NOT NULL,
+    capability_id TEXT NOT NULL,
+    route_plan_id TEXT NOT NULL UNIQUE REFERENCES inference_route_plans(id),
+    route_plan_sha256 TEXT NOT NULL,
+    principal_policy_sha256 TEXT NOT NULL,
+    maximum_physical_attempts INTEGER NOT NULL CHECK (maximum_physical_attempts > 0),
+    UNIQUE(bundle_id, ordinal),
+    UNIQUE(bundle_id, route_key),
+    UNIQUE(bundle_id, capability_id)
+);
+CREATE TRIGGER IF NOT EXISTS inference_parent_route_bundles_no_update
+BEFORE UPDATE ON inference_parent_route_bundles BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent route bundle');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_route_bundles_no_delete
+BEFORE DELETE ON inference_parent_route_bundles BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent route bundle');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_route_bundle_members_no_update
+BEFORE UPDATE ON inference_parent_route_bundle_members BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent route bundle member');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_route_bundle_members_no_delete
+BEFORE DELETE ON inference_parent_route_bundle_members BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent route bundle member');
+END;
+
+-- A durable Stop election can fence every exact active route before Meeting
+-- enqueues displaced work.  Story 08's entrance cutover will attach the queue
+-- effect; this tranche establishes the replay-safe authority and membership.
+CREATE TABLE IF NOT EXISTS inference_parent_stop_handoffs (
+    command_id TEXT PRIMARY KEY,
+    request_sha256 TEXT NOT NULL,
+    bundle_id TEXT NOT NULL REFERENCES inference_parent_route_bundles(id),
+    parent_operation_id TEXT NOT NULL UNIQUE REFERENCES kernel_parent_runs(operation_id),
+    evidence_provider_id TEXT NOT NULL,
+    evidence_provider_revision INTEGER NOT NULL CHECK (evidence_provider_revision > 0),
+    planning_reference TEXT NOT NULL,
+    evidence_ref TEXT NOT NULL,
+    evidence_sha256 TEXT NOT NULL,
+    state TEXT NOT NULL CHECK (state IN ('committed','pending_physical_settlement')),
+    effect_json TEXT NOT NULL,
+    effect_sha256 TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
+-- Queue recovery scans unsettled adopter handoffs by provider/revision in
+-- durable creation order; the settlement anti-join remains the authority.
+CREATE INDEX IF NOT EXISTS idx_stop_handoffs_unsettled_provider
+ON inference_parent_stop_handoffs(evidence_provider_id, evidence_provider_revision, created_at, command_id);
+CREATE TABLE IF NOT EXISTS inference_parent_stop_handoff_executions (
+    command_id TEXT NOT NULL REFERENCES inference_parent_stop_handoffs(command_id),
+    ordinal INTEGER NOT NULL CHECK (ordinal > 0),
+    execution_id TEXT NOT NULL REFERENCES inference_route_executions(id),
+    stop_command_id TEXT NOT NULL UNIQUE REFERENCES inference_route_execution_commands(command_id),
+    elected_state TEXT NOT NULL CHECK (elected_state IN ('stopping','stopped','terminal')),
+    PRIMARY KEY(command_id, ordinal),
+    UNIQUE(command_id, execution_id)
+);
+CREATE TABLE IF NOT EXISTS inference_parent_stop_handoff_settlements (
+    command_id TEXT PRIMARY KEY REFERENCES inference_parent_stop_handoffs(command_id),
+    effect_json TEXT NOT NULL,
+    effect_sha256 TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoffs_no_update
+BEFORE UPDATE ON inference_parent_stop_handoffs BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent stop handoff');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoffs_no_delete
+BEFORE DELETE ON inference_parent_stop_handoffs BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent stop handoff');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoff_executions_no_update
+BEFORE UPDATE ON inference_parent_stop_handoff_executions BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent stop handoff execution');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoff_executions_no_delete
+BEFORE DELETE ON inference_parent_stop_handoff_executions BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent stop handoff execution');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoff_settlements_no_update
+BEFORE UPDATE ON inference_parent_stop_handoff_settlements BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent stop handoff settlement');
+END;
+CREATE TRIGGER IF NOT EXISTS inference_parent_stop_handoff_settlements_no_delete
+BEFORE DELETE ON inference_parent_stop_handoff_settlements BEGIN
+    SELECT RAISE(ABORT, 'immutable inference parent stop handoff settlement');
+END;
 
 -- Publication-guard triggers (HS-137-01: moved from migrations.py).
 -- A publication callback may terminalize its own parent only by clearing

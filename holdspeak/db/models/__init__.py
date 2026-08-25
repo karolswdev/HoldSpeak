@@ -43,6 +43,8 @@ class MeetingSummary:
     intel_status_detail: Optional[str] = None
     capture_status: str = "finalized"
     capture_failure: Optional[str] = None
+    transcription_status: str = "active"
+    transcription_status_detail: Optional[dict[str, str]] = None
     capture_checkpoint_seconds: float = 0.0
     provenance: str = "desktop"
 
@@ -65,6 +67,29 @@ class IntelJob:
     # `holdspeak.meeting_session.intel_plan.DISPLACED_*`). Empty for an ordinary
     # deferred job, which runs base analysis and routed plugins only.
     displaced_work: tuple[str, ...] = ()
+    # Immutable, content-free label operations frozen with the descriptor.
+    frozen_bookmark_timestamps: tuple[float, ...] = ()
+    frozen_bookmark_operations: tuple[tuple[int, float], ...] = ()
+    # C2 freezes each routed installed plugin's exact capability/revision/schema
+    # alongside the content-free descriptor.  These are authority evidence, not
+    # mutable host discovery inputs.
+    frozen_plugin_members: tuple[dict[str, Any], ...] = ()
+    frozen_plugin_route: dict[str, Any] = field(default_factory=dict)
+    # Phase C durable binding references.  Existing DTO consumers retain the
+    # Meeting-facing fields above; these are identifiers/hashes only.
+    job_id: Optional[str] = None
+    origin_job_id: Optional[str] = None
+    work_descriptor_sha256: Optional[str] = None
+    claim_id: Optional[str] = None
+    parent_operation_id: Optional[str] = None
+    bundle_id: Optional[str] = None
+    bundle_sha256: Optional[str] = None
+    # Durable bearer lease for the one C1 queue executor. It is opaque evidence,
+    # not a Meeting-facing field.
+    executor_lease_token: Optional[str] = None
+    executor_lease_epoch: int = 0
+    executor_lease_expires_at: Optional[float] = None
+    lifecycle_posture: Optional[str] = None
 
 
 @dataclass
@@ -90,6 +115,8 @@ class IntelJobAttempt:
     error: Optional[str]
     retry_at: Optional[datetime]
     created_at: datetime
+    job_id: Optional[str] = None
+    event_kind: Optional[str] = None
 
 
 @dataclass

@@ -24,6 +24,8 @@ CLASSES = frozenset({
     "credential/provider identity",
     "unrelated",
     "legacy-delete",
+    "migration source",
+    "refusal fence",
 })
 
 # One owner per mutable family.  The value is deliberately a story, not a
@@ -33,18 +35,14 @@ MUTABLE_FAMILY_OWNERS = {
     "Deployment head selected by a future profile binding": "143-03",
     "Thoughts and Ask default/request pointer": "143-07",
     "Writing and dictation runtime pointer": "143-07",
-    "Meeting intelligence pointer and provider placement": "143-08",
     "Recipe and agent default pointer": "143-10",
     "Workbench execution pointer": "143-10",
     "Workbench voice-resolver pointer": "143-10",
     "Recipe, Sequence, and Workflow request placement override": "143-10",
     "Kernel `inference.run` requested target selector": "143-10",
-    "Decision and delivery request placement override": "143-08",
-    "Rails observer background pointer": "143-08",
     "Cadence background global resolver": "143-08",
     "V1 profile and workbench sync payload": "143-11",
     "Settings Thoughts and writing legacy pointer writers": "143-07",
-    "Settings meeting and background legacy pointer writers": "143-08",
 }
 
 ROUTING_RESOLVER_NAMES = frozenset({
@@ -62,48 +60,38 @@ ROUTING_RESOLVER_NAMES = frozenset({
 ROUTING_RESOLVER_DEFINITIONS = {
     "holdspeak/deployment_revisions.py:202:resolve_workbench_deployment_revision",
     "holdspeak/deployment_revisions.py:224:resolve_deployment_revision",
-    "holdspeak/inference_targets.py:551:resolve_placement",
-    "holdspeak/inference_targets.py:497:resolve_inference_target",
-    "holdspeak/inference_targets.py:591:resolve_thought_placement",
+    "holdspeak/inference_targets.py:550:resolve_placement",
+    "holdspeak/inference_targets.py:496:resolve_inference_target",
+    "holdspeak/inference_targets.py:590:resolve_thought_placement",
     "holdspeak/intel/providers.py:666:resolve_meeting_placement",
 }
 
 ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/deployment_revisions.py:205:import:resolve_inference_target",
     "holdspeak/deployment_revisions.py:214:ref:resolve_inference_target",
-    "holdspeak/inference_targets.py:602:ref:resolve_placement",
-    "holdspeak/inference_targets.py:585:ref:resolve_inference_target",
-    "holdspeak/kernel/inference.py:9:import:resolve_inference_target",
-    "holdspeak/kernel/inference.py:103:ref:resolve_inference_target",
-    "holdspeak/services/inference_setup_service.py:23:import:resolve_inference_target",
-    "holdspeak/services/inference_setup_service.py:184:ref:resolve_inference_target",
-    "holdspeak/services/profile_service.py:131:import:resolve_inference_target",
-    "holdspeak/services/profile_service.py:132:ref:resolve_inference_target",
-    "holdspeak/services/model_profile_service.py:682:import:resolve_inference_target",
-    "holdspeak/services/model_profile_service.py:689:ref:resolve_inference_target",
+    "holdspeak/inference_targets.py:584:ref:resolve_inference_target",
+    "holdspeak/inference_targets.py:601:ref:resolve_placement",
     "holdspeak/intel/__init__.py:60:import:resolve_meeting_placement",
     "holdspeak/intel/providers.py:193:ref:resolve_meeting_placement",
     "holdspeak/intel/providers.py:235:ref:resolve_meeting_placement",
     "holdspeak/intel/providers.py:337:ref:resolve_meeting_placement",
     "holdspeak/intel/providers.py:864:ref:resolve_meeting_placement",
+    "holdspeak/kernel/inference.py:103:ref:resolve_inference_target",
+    "holdspeak/kernel/inference.py:9:import:resolve_inference_target",
     "holdspeak/kernel/inference_invoke.py:10:import:resolve_deployment_revision",
     "holdspeak/kernel/inference_invoke.py:92:ref:resolve_deployment_revision",
     "holdspeak/kernel/inference_runner.py:13:import:resolve_deployment_revision",
     "holdspeak/kernel/inference_runner.py:491:ref:resolve_deployment_revision",
-    "holdspeak/kernel/projection_stager.py:145:import:resolve_workbench_deployment_revision",
-    "holdspeak/kernel/projection_stager.py:146:ref:resolve_workbench_deployment_revision",
-    "holdspeak/meeting_session/intel_plan.py:185:import:resolve_placement",
-    "holdspeak/meeting_session/intel_plan.py:186:import:resolve_meeting_placement",
-    "holdspeak/meeting_session/intel_plan.py:192:ref:resolve_meeting_placement",
-    "holdspeak/meeting_session/intel_plan.py:194:ref:resolve_placement",
-    "holdspeak/rails_observer.py:249:import:resolve_placement",
-    "holdspeak/rails_observer.py:255:ref:resolve_placement",
-    "holdspeak/services/ask_service.py:302:import:resolve_placement",
-    "holdspeak/services/ask_service.py:303:ref:resolve_placement",
-    "holdspeak/services/cadence_service.py:222:import:resolve_placement",
-    "holdspeak/services/cadence_service.py:226:ref:resolve_placement",
-    "holdspeak/services/decision_lifecycle_service.py:67:import:resolve_placement",
-    "holdspeak/services/decision_lifecycle_service.py:71:ref:resolve_placement",
+    "holdspeak/kernel/projection_stager.py:194:import:resolve_workbench_deployment_revision",
+    "holdspeak/kernel/projection_stager.py:195:ref:resolve_workbench_deployment_revision",
+    "holdspeak/services/ask_service.py:307:import:resolve_placement",
+    "holdspeak/services/ask_service.py:308:ref:resolve_placement",
+    "holdspeak/services/inference_setup_service.py:184:ref:resolve_inference_target",
+    "holdspeak/services/inference_setup_service.py:23:import:resolve_inference_target",
+    "holdspeak/services/model_profile_service.py:682:import:resolve_inference_target",
+    "holdspeak/services/model_profile_service.py:689:ref:resolve_inference_target",
+    "holdspeak/services/profile_service.py:131:import:resolve_inference_target",
+    "holdspeak/services/profile_service.py:132:ref:resolve_inference_target",
     "holdspeak/services/recipe_service.py:130:import:resolve_placement",
     "holdspeak/services/recipe_service.py:131:ref:resolve_placement",
     "holdspeak/services/recipe_service.py:173:import:resolve_placement",
@@ -116,8 +104,8 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/services/refinement_coordinator.py:310:ref:resolve_thought_placement",
     "holdspeak/services/refinement_thought_service.py:640:import:resolve_thought_placement",
     "holdspeak/services/refinement_thought_service.py:681:ref:resolve_thought_placement",
-    "holdspeak/services/schedule_delegation.py:9:import:resolve_placement",
     "holdspeak/services/schedule_delegation.py:18:ref:resolve_placement",
+    "holdspeak/services/schedule_delegation.py:9:import:resolve_placement",
     "holdspeak/services/sequence_workflow_service.py:31:import:resolve_placement",
     "holdspeak/services/sequence_workflow_service.py:33:ref:resolve_placement",
     "holdspeak/services/settings_service.py:68:import:resolve_meeting_placement",
@@ -132,10 +120,10 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/speech_session/plan.py:461:ref:resolve_placement",
     "holdspeak/speech_session/plan.py:629:import:resolve_placement",
     "holdspeak/speech_session/plan.py:638:ref:resolve_placement",
-    "holdspeak/speech_session/provider.py:147:import:resolve_deployment_revision",
+    "holdspeak/speech_session/provider.py:149:import:resolve_deployment_revision",
     "holdspeak/speech_session/provider.py:151:ref:resolve_deployment_revision",
-    "holdspeak/web/routes/delivery_prs.py:234:import:resolve_placement",
-    "holdspeak/web/routes/delivery_prs.py:241:ref:resolve_placement",
+    "holdspeak/speech_session/provider.py:226:import:resolve_deployment_revision",
+    "holdspeak/speech_session/provider.py:230:ref:resolve_deployment_revision",
 }
 
 ROUTING_POINTER_ATTRIBUTES = {
@@ -145,15 +133,15 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/config/integrations.py:23:inference_target_id",
     "holdspeak/config/meeting.py:143:intel_profile_id",
     "holdspeak/config/meeting.py:144:intel_profile_id",
-    "holdspeak/db/models/__init__.py:1095:resolver_profile_id",
+    "holdspeak/db/models/__init__.py:1122:resolver_profile_id",
     "holdspeak/db/models/workbench.py:139:resolver_profile_id",
-    "holdspeak/services/inference_setup_service.py:604:intel_profile_id",
-    "holdspeak/services/inference_setup_service.py:609:inference_target_id",
+    "holdspeak/services/inference_setup_service.py:605:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:610:inference_target_id",
-    "holdspeak/services/inference_setup_service.py:614:intel_profile_id",
+    "holdspeak/services/inference_setup_service.py:611:inference_target_id",
+    "holdspeak/services/inference_setup_service.py:615:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:181:inference_target_id",
-    "holdspeak/services/settings_service.py:585:intel_profile_id",
-    "holdspeak/services/settings_service.py:834:inference_target_id",
+    "holdspeak/services/settings_service.py:636:intel_profile_id",
+    "holdspeak/services/settings_service.py:885:inference_target_id",
     "holdspeak/services/workbench_service.py:376:resolver_profile_id",
     "holdspeak/services/workbench_service.py:379:resolver_profile_id",
     "holdspeak/services/workbench_service.py:401:resolver_profile_id",
@@ -169,32 +157,32 @@ ROUTING_POINTER_ATTRIBUTES = {
 PROFILE_ID_CLASSIFICATIONS = {
     **{site: "mutable assignment pointer" for site in {
         "holdspeak/config/core.py:138:profile_id", "holdspeak/config/core.py:169:profile_id",
-        "holdspeak/config/integrations.py:101:profile_id", "holdspeak/config/model.py:80:profile_id",
-        "holdspeak/db/models/__init__.py:1094:profile_id", "holdspeak/db/models/workbench.py:138:profile_id",
-        "holdspeak/meeting_session/intel_plan.py:193:profile_id", "holdspeak/plugins/dictation/assembly.py:318:profile_id",
+        "holdspeak/config/integrations.py:101:profile_id", "holdspeak/config/model.py:80:profile_id", "holdspeak/db/models/workbench.py:138:profile_id",
+        "holdspeak/plugins/dictation/assembly.py:321:profile_id",
         "holdspeak/services/recipe_service.py:131:profile_id", "holdspeak/services/recipe_service.py:141:profile_id",
         "holdspeak/services/recipe_service.py:146:profile_id", "holdspeak/services/recipe_service.py:174:profile_id",
         "holdspeak/services/recipe_service.py:178:profile_id", "holdspeak/services/schedule_delegation.py:18:profile_id",
-        "holdspeak/services/sequence_workflow_service.py:129:profile_id", "holdspeak/services/settings_service.py:735:profile_id",
-        "holdspeak/services/settings_service.py:807:profile_id", "holdspeak/services/workbench_runner.py:31:profile_id",
+        "holdspeak/services/sequence_workflow_service.py:129:profile_id", "holdspeak/services/settings_service.py:786:profile_id",
+        "holdspeak/services/settings_service.py:858:profile_id", "holdspeak/services/workbench_runner.py:31:profile_id",
         "holdspeak/services/workbench_service.py:172:profile_id", "holdspeak/services/workbench_service.py:470:profile_id",
-        "holdspeak/web_server.py:1138:profile_id", "holdspeak/services/sync_service.py:652:profile_id",
-        "holdspeak/services/sync_service.py:667:profile_id",
+        "holdspeak/services/sync_service.py:682:profile_id",
+        "holdspeak/services/sync_service.py:697:profile_id",
+        "holdspeak/db/models/__init__.py:1121:profile_id",
     }},
     **{site: "display" for site in {
         "holdspeak/commands/doctor.py:488:profile_id", "holdspeak/commands/doctor.py:787:profile_id",
         "holdspeak/commands/doctor.py:795:profile_id", "holdspeak/commands/doctor.py:809:profile_id",
         "holdspeak/commands/doctor.py:934:profile_id",
-        "holdspeak/db/models/__init__.py:656:profile_id", "holdspeak/inference_targets.py:162:profile_id",
-        "holdspeak/services/ask_service.py:313:profile_id",
-        "holdspeak/services/inference_setup_service.py:613:profile_id", "holdspeak/services/settings_service.py:99:profile_id",
+        "holdspeak/db/models/__init__.py:683:profile_id", "holdspeak/inference_targets.py:161:profile_id",
+        "holdspeak/services/ask_service.py:318:profile_id",
+        "holdspeak/services/inference_setup_service.py:614:profile_id", "holdspeak/services/settings_service.py:99:profile_id",
         "holdspeak/setup_status.py:151:profile_id",
         "holdspeak/services/model_profile_service.py:224:profile_id",
         "holdspeak/services/model_profile_service.py:263:profile_id",
     }},
     **{site: "immutable evidence" for site in {
         "holdspeak/services/model_profile_service.py:1191:profile_id",
-        "holdspeak/services/inference_assignment_service.py:1522:profile_id",
+        "holdspeak/services/inference_assignment_service.py:1525:profile_id",
     }},
     **{site: "credential/provider identity" for site in {
         "holdspeak/intel/providers.py:687:profile_id", "holdspeak/intel/providers.py:694:profile_id",
@@ -277,7 +265,7 @@ def test_census_anchors_current_routing_resolvers_and_legacy_assignment_writers(
         "holdspeak/inference_targets.py:resolve_thought_placement": "holdspeak/inference_targets.py",
         "holdspeak/intel/providers.py:effective_intel_cloud": "holdspeak/intel/providers.py",
         "holdspeak/intel/providers.py:effective_dictation_llm": "holdspeak/intel/providers.py",
-        "holdspeak/meeting_session/intel_plan.py:freeze_meeting_intel_plan": "holdspeak/meeting_session/intel_plan.py",
+        "holdspeak/meeting_session/intel_plan.py:decode_meeting_intel_plan_v1": "holdspeak/meeting_session/intel_plan.py",
         "holdspeak/speech_session/plan.py:DictationSessionPlanResolver": "holdspeak/speech_session/plan.py",
         "holdspeak/deployment_revisions.py:resolve_workbench_deployment_revision": "holdspeak/deployment_revisions.py",
         "holdspeak/services/schedule_delegation.py:_terms": "holdspeak/services/schedule_delegation.py",
@@ -301,8 +289,8 @@ def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() 
     assert pointers == ROUTING_POINTER_ATTRIBUTES
     assert profile_ids == set(PROFILE_ID_CLASSIFICATIONS)
     assert set(PROFILE_ID_CLASSIFICATIONS.values()) <= CLASSES
-    assert len(PROFILE_ID_CLASSIFICATIONS) == 43
-    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 23
+    assert len(PROFILE_ID_CLASSIFICATIONS) == 41
+    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 21
     assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 13
     assert sum(value == "credential/provider identity" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 5
     assert sum(value == "immutable evidence" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 2
@@ -356,12 +344,42 @@ def test_path_bearing_profile_sync_seam_is_a_named_blocker_not_an_exception() ->
     assert 'SyncKindSpec("profile", "profiles", "profile.schema.json", True)' in source
 
 
+def test_phase_f_meeting_execution_surface_has_no_v1_resolver_or_direct_runner() -> None:
+    """Phase F leaves C1 bundle reconstruction as the sole Meeting queue executor."""
+    sources = {
+        path: _text(path)
+        for path in (
+            "holdspeak/intel_queue.py",
+            "holdspeak/meeting_session/intel_plan.py",
+            "holdspeak/meeting_session/deferred_admission.py",
+            "holdspeak/meeting_session/intel_routed_children.py",
+            "holdspeak/meeting_session/transcribe_admission.py",
+            "holdspeak/meeting_session/intel_admission.py",
+            "holdspeak/services/meeting_deferred_queue_binding.py",
+        )
+    }
+    retired = (
+        "InferenceRunner.invoke",
+        "inference_runner.invoke",
+        "resolve_placement",
+        "resolve_meeting_placement",
+        "freeze_meeting_intel_plan",
+        "class DeferredIntelJob",
+        "run_admitted_capability",
+        "run_admitted_child",
+    )
+    for path, source in sources.items():
+        assert not any(name in source for name in retired), path
+    assert "claim_next_intel_job_bound" in sources["holdspeak/intel_queue.py"]
+    assert "BoundDeferredIntelJob.reconstruct" in sources["holdspeak/intel_queue.py"]
+
+
 def test_legacy_assignment_writers_are_delete_work_and_acquisition_is_availability_only() -> None:
     census = _text(CENSUS)
     rows = _inventory_rows(census)
     assert rows["Legacy config endpoint migration"] == ("legacy-delete", "143-03")
     assert rows["Old dictation auto-placement fallback labels"] == ("legacy-delete", "143-07")
-    assert rows["Old meeting auto-placement fallback labels"] == ("legacy-delete", "143-08")
+    assert rows["Old meeting auto-placement fallback labels"] == ("immutable evidence", "143-08")
     acquisition = _text("holdspeak/services/inference_acquisition_service.py")
     assert "config.thoughts.inference_target_id = None" not in acquisition
     assert "config.meeting.intel_realtime_model =" not in acquisition

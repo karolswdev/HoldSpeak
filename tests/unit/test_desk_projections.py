@@ -47,12 +47,10 @@ def _seed(db: Database) -> str:
         artifact_id="a1", meeting_id="m1", artifact_type="summary",
         title="Review summary", body_markdown="PRIVATE ARTIFACT BODY", status="draft",
     )
-    with db._connection() as conn:
-        conn.execute(
-            """INSERT INTO intel_jobs
-               (meeting_id,status,transcript_hash,attempts,last_error)
-               VALUES ('m1','failed','hash',3,'PRIVATE JOB ERROR')"""
-        )
+    # C1 queue descriptors carry deterministic job/work identities; create the
+    # projection fixture through the repository rather than an obsolete raw row.
+    db.intel.enqueue_intel_job("m1", transcript_hash="hash")
+    db.intel.fail_intel_job("m1", "PRIVATE JOB ERROR")
     db.cadence.upsert_loop(OpenLoop(
         source_type="proposal", source_id=proposal.id,
         title="Approve architecture follow-up", status="open",

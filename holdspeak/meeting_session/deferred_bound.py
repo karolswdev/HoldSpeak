@@ -1,0 +1,347 @@
+"""Stored-route C1 deferred queue owner reconstruction."""
+
+from __future__ import annotations
+
+import hashlib
+from typing import Any, Callable, Mapping
+
+from ..logging_config import get_logger
+from ..principals import Principal, PrincipalKind
+
+
+def sha(value: Any) -> str:
+    return "sha256:" + hashlib.sha256(str(value).encode("utf-8", "replace")).hexdigest()
+
+from .intel_plan import (
+    CAPABILITY_DEFERRED_ANALYSIS,
+    MeetingIntelRefused,
+    SESSION_NOT_ADMITTED,
+)
+
+log = get_logger("intel_queue")
+
+
+# A direct runner helper is retired, but the bound executor still owns the
+# provider-content boundary.  Never allow a provider exception or a returned
+# error result to become a journal error string.
+PROVIDER_ERROR_RESULT = "provider_error_result"
+
+
+class BoundMeetingProviderFailure(RuntimeError):
+    """Content-free provider failure emitted only by the C1 bound executor."""
+
+    def __init__(
+        self, contract: str, exc: BaseException | None = None, *, reason: str = ""
+    ) -> None:
+        short = reason or (type(exc).__name__ if exc is not None else PROVIDER_ERROR_RESULT)
+        super().__init__(f"{contract}:{short}")
+        self.contract = contract
+        self.reason = short
+
+
+def _provider_error_of(result: Any) -> str:
+    if result is None or isinstance(result, (str, bytes, Mapping)):
+        return ""
+    return str(getattr(result, "error", "") or "")
+
+
+class BoundMeetingAdapter:
+    """Sanitize one bound Meeting provider call without swallowing kernel control."""
+
+    connector_id = "inference-provider"
+
+    def __init__(
+        self, contract: str, call: Callable[[Any, Mapping[str, Any], Any], Any]
+    ) -> None:
+        self._contract = contract
+        self._call = call
+
+    def dispatch(
+        self, engine: Any, payload: Mapping[str, Any], cancellation: Any
+    ) -> Any:
+        from ..kernel.model import KernelRefused
+        from ..kernel.provider_signals import CONTROL_SIGNALS
+
+        try:
+            result = self._call(engine, payload, cancellation)
+        except CONTROL_SIGNALS:
+            raise
+        except (KernelRefused, MeetingIntelRefused):
+            raise
+        except BaseException as exc:
+            raise BoundMeetingProviderFailure(self._contract, exc) from None
+        if _provider_error_of(result):
+            raise BoundMeetingProviderFailure(
+                self._contract, reason=PROVIDER_ERROR_RESULT
+            )
+        return result
+
+    def cancel(self) -> str:
+        return "cancelled"
+
+
+PARENT_KIND = "meeting.deferred-intel-job"
+QUEUE_SERVICE_IDENTITY = "meeting-intel-queue"
+QUEUE_AUTHORITY_BASIS = "meeting-intel-queue:deferred"
+
+
+def bound_bookmark_label_dispatch() -> Callable[[Any, Mapping[str, Any], Any], Any]:
+    """Return the reviewed `.call` leaf for one immutable bookmark operation."""
+    def call(engine: Any, payload: Mapping[str, Any], cancellation: Any) -> Any:
+        if cancellation.is_set():
+            return None
+        return engine.generate_bookmark_label_with_context(
+            local_context=payload["context_material"],
+            meeting_summary=payload["summary_material"],
+        )
+    return call
+
+
+def bound_auto_title_dispatch() -> Callable[[Any, Mapping[str, Any], Any], Any]:
+    """Return the reviewed `.call` leaf for the displaced auto-title member."""
+    def call(engine: Any, payload: Mapping[str, Any], cancellation: Any) -> Any:
+        if cancellation.is_set():
+            return None
+        return engine.generate_title(payload["transcript_material"])
+    return call
+
+
+def bound_analysis_dispatch() -> Callable[[Any, Mapping[str, Any], Any], Any]:
+    """Return the reviewed `.call` leaf for deferred analysis."""
+    def call(engine: Any, payload: Mapping[str, Any], cancellation: Any) -> Any:
+        if cancellation.is_set():
+            return None
+        return engine.analyze(payload["transcript_material"], stream=False)
+    return call
+
+
+def queue_service_principal() -> Principal:
+    """Return the narrow service identity for one bound queue owner."""
+    return Principal(
+        PrincipalKind.SERVICE,
+        QUEUE_SERVICE_IDENTITY,
+        frozenset({(PARENT_KIND, 1), ("inference.invoke", 1), ("inference.cancel", 1)}),
+        QUEUE_AUTHORITY_BASIS,
+    )
+
+
+class BoundDeferredIntelJob:
+    """Exact stored-route executor for a C1b-bound queue claim.
+
+    Constructing it only reconstructs the persisted parent and bundle members.
+    It has no
+    Config, planner, host, or legacy-plan entrance, so restart cannot retarget a
+    claimed descriptor.
+    """
+
+    def __init__(
+        self,
+        broker: Any,
+        *,
+        job: Any,
+        parent: Any,
+        members: Mapping[str, Mapping[str, Any]],
+    ) -> None:
+        self._broker = broker
+        self._job = job
+        self._parent = parent
+        self._members = {str(key): dict(value) for key, value in members.items()}
+        self._principal = queue_service_principal()
+        self._closed = False
+
+    @classmethod
+    def reconstruct(cls, db: Any, job: Any, *, broker: Any = None) -> "BoundDeferredIntelJob":
+        """Rebuild a claimed job from its stored IDs only."""
+        from ..kernel.parent_run import ParentRun
+        from ..kernel.runtime import _service
+
+        if not all(
+            str(getattr(job, field, "") or "").strip()
+            for field in ("job_id", "parent_operation_id", "bundle_id", "bundle_sha256")
+        ):
+            raise MeetingIntelRefused(SESSION_NOT_ADMITTED, CAPABILITY_DEFERRED_ANALYSIS)
+        broker = broker if broker is not None else _service()
+        with db._connection() as conn:
+            parent_row = conn.execute(
+                """SELECT p.*,o.principal_kind,o.principal_identity
+                   FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id
+                  WHERE p.operation_id=? AND p.kind=? AND p.state='OPEN'
+                    AND o.principal_kind='service' AND o.principal_identity=?""",
+                (str(job.parent_operation_id), PARENT_KIND, QUEUE_SERVICE_IDENTITY),
+            ).fetchone()
+            bundle = conn.execute(
+                """SELECT * FROM inference_parent_route_bundles
+                   WHERE id=? AND parent_operation_id=? AND sha256=?""",
+                (str(job.bundle_id), str(job.parent_operation_id), str(job.bundle_sha256)),
+            ).fetchone()
+            members = conn.execute(
+                """SELECT * FROM inference_parent_route_bundle_members
+                   WHERE bundle_id=? ORDER BY ordinal""",
+                (str(job.bundle_id),),
+            ).fetchall()
+        if parent_row is None or bundle is None or not members:
+            raise MeetingIntelRefused(SESSION_NOT_ADMITTED, CAPABILITY_DEFERRED_ANALYSIS)
+        parent = ParentRun(
+            str(parent_row["operation_id"]),
+            str(parent_row["native_id"]),
+            broker.parent_run_controller._context(parent_row),
+            replayed=True,
+        )
+        return cls(
+            broker,
+            job=job,
+            parent=parent,
+            members={str(row["capability_id"]): dict(row) for row in members},
+        )
+
+    @property
+    def parent_operation_id(self) -> str:
+        return str(self._parent.operation_id)
+
+    def require_frozen_plugin_member(self, frozen: Mapping[str, Any]) -> Mapping[str, Any]:
+        """Prove descriptor, bundle, and frozen capability say the same plugin.
+
+        This is deliberately before ``execute``/child admission.  A host or
+        registry drift is a queue refusal, never an opportunity to create a
+        model child under an almost-matching capability.
+        """
+        capability = str(frozen.get("capability_id") or "").strip()
+        plugin_id = str(frozen.get("plugin_id") or "").strip()
+        revision = str(frozen.get("plugin_definition_revision") or "").strip()
+        if capability != f"meeting.plugin.{plugin_id}" or not plugin_id or not revision:
+            raise MeetingIntelRefused("frozen_plugin_descriptor_invalid", capability)
+        member = self._members.get(capability)
+        if member is None:
+            raise MeetingIntelRefused("frozen_plugin_bundle_member_missing", capability)
+        definition = self._broker.inference_adoption_service._frozen_capability_definition(
+            str(member["route_plan_id"])
+        )
+        if (
+            str(definition.get("id") or "") != capability
+            or int(definition.get("revision") or 0) != int(frozen.get("capability_revision") or 0)
+            or str(definition.get("schema_sha256") or "") != str(frozen.get("schema_sha256") or "")
+            or str(definition.get("plugin_id") or "") != plugin_id
+            or str(definition.get("plugin_definition_revision") or "") != revision
+            or dict(definition.get("output_schema") or {}) != dict(frozen.get("output_schema") or {})
+        ):
+            raise MeetingIntelRefused("frozen_plugin_capability_drift", capability)
+        return definition
+
+    def execute(
+        self,
+        *,
+        capability: str,
+        operation_suffix: str,
+        material: Mapping[str, Any],
+        call: Callable[[Any, Mapping[str, Any], Any], Any],
+        projection_kind: str,
+        projection: Callable[[Mapping[str, Any]], Mapping[str, Any]],
+        executor_held: Callable[[], bool] | None = None,
+    ) -> tuple[Mapping[str, Any] | None, Mapping[str, Any]]:
+        """Stage private material and execute one exact frozen bundle member."""
+        if self._closed:
+            raise MeetingIntelRefused(SESSION_CLOSED, capability)
+        member = self._members.get(capability)
+        if member is None:
+            raise MeetingIntelRefused(SESSION_NOT_ADMITTED, capability)
+        from ..services.inference_semantic_adapters import adapter_for_frozen_definition
+        from ..kernel.model import KernelRefused
+
+        if executor_held is not None and not executor_held():
+            return None, {"outcome": "lease_lost"}
+        executor_lease = {
+            "job_id": str(self._job.job_id),
+            "token": str(getattr(self._job, "executor_lease_token", "") or ""),
+            "epoch": int(getattr(self._job, "executor_lease_epoch", 0) or 0),
+        }
+        operation_id = "meeting:deferred:" + sha(
+            (str(self._job.job_id), capability, operation_suffix)
+        ).split(":", 1)[1]
+        command_id = "meeting-bound-route:" + operation_id
+        adoption = self._broker.inference_adoption_service
+        admitted = adoption.admit_on_frozen_route(
+            self._principal,
+            command_id=command_id,
+            route_plan_id=str(member["route_plan_id"]),
+            capability_id=capability,
+            operation_id=operation_id,
+            payload=dict(material),
+            reserved_output_tokens=512,
+            parent_operation_id=self.parent_operation_id,
+            executor_lease=executor_lease,
+        )
+        definition = adoption._frozen_capability_definition(str(member["route_plan_id"]))
+        provider_adapter = BoundMeetingAdapter(capability, call)
+        adapter = adapter_for_frozen_definition(definition, provider_adapter.dispatch)
+        if executor_held is not None and not executor_held():
+            return None, {"outcome": "lease_lost"}
+
+        def require_current_executor(_deployment: str, _child: str, _attempt: int) -> None:
+            if executor_held is not None and not executor_held():
+                raise KernelRefused("bound_executor_lease_lost")
+
+        def publish(value: Any, winning: Mapping[str, Any]) -> str:
+            # The controller has already elected this child and retained its exact
+            # private result reference. Stage against that reference rather than a
+            # fresh projection-stage ref, so finalization can verify the receipt.
+            from ..services.inference_adoption_service import _sha256
+
+            invocation_id = str(winning["child_invocation_id"])
+            stage = self._broker.projection_stager.stage(
+                invocation_id,
+                projection_kind,
+                dict(projection(dict(value))),
+                result_sha256=_sha256(value),
+                receipt_result_ref=str(winning["result_ref"]),
+            )
+            return stage.result_ref
+
+        # A lease adopter inherits possible in-flight physical work. Reconcile the
+        # durable child intent first; it must not reserve a second provider call
+        # while the old dispatch has unknown settlement.
+        if int(executor_lease["epoch"]) > 1:
+            adoption.recover_route_executions(
+                execution_id=str(admitted["execution"]["id"]),
+                parent_operation_id=self.parent_operation_id,
+            )
+        routed = adoption.execute(
+            self._principal,
+            execution_id=str(admitted["execution"]["id"]),
+            adapter=adapter,
+            publish=publish,
+            before_physical_dispatch=require_current_executor,
+            parent_context=self._parent.context,
+        )
+        result = routed.get("result")
+        if str(routed.get("outcome")) != "succeeded" or not isinstance(result, Mapping):
+            return None, routed
+        winning = routed.get("winning_reservation") or {}
+        invocation_id = str(winning.get("child_invocation_id") or "")
+        published = self._broker.projection_stager.finalize(invocation_id) if invocation_id else None
+        return (dict(published) if isinstance(published, Mapping) else None), routed
+
+    def close(self, outcome: str, *, executor_lease: Mapping[str, Any] | None = None) -> bool:
+        """Close the old owner before any reserved successor can be promoted.
+
+        A live queue worker supplies its opaque executor bearer.  Parent receipt
+        election then verifies it in the same SQLite writer transaction; orphan
+        recovery deliberately has no bearer because its job is already terminal.
+        """
+        if self._closed:
+            return self._broker.store.receipt(self.parent_operation_id) is not None
+        self._closed = True
+        try:
+            if self._broker.store.receipt(self.parent_operation_id) is None:
+                self._broker.parent_run_controller.close(
+                    self._parent.context, outcome, principal=self._principal,
+                    executor_lease=executor_lease,
+                )
+            return self._broker.store.receipt(self.parent_operation_id) is not None
+        except Exception as exc:
+            # The queue row remains a durable terminal-pending owner.  Its
+            # successor is deliberately still reserved; recovery can retry close
+            # but may never bind a second parent in this window.
+            log.error("bound deferred intel close failed: %s", type(exc).__name__)
+            return False
+
+

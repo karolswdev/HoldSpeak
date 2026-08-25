@@ -138,10 +138,9 @@ class MeetingGlueMixin:
         The session no longer reaches into a web server; it emits, and the
         runtime forwards to its broadcast channel. ``segment`` /
         ``intel_complete`` / ``intel_status`` already flow via the dedicated
-        ``on_segment`` / ``on_intel`` handlers, so only ``intel_token`` and
-        ``meeting_updated`` — previously delivered solely to the now-removed
-        embedded per-meeting server, and dead in the flagship runtime — are
-        forwarded here.
+        ``on_segment`` / ``on_intel`` handlers, so ``meeting_updated`` —
+        previously delivered solely to the now-removed embedded per-meeting
+        server, and dead in the flagship runtime — is forwarded here.
         """
         if message_type in self._BROADCAST_VIA_DEDICATED_HANDLER:
             return
@@ -154,16 +153,6 @@ class MeetingGlueMixin:
             log.debug(f"Failed to forward meeting broadcast {message_type!r}: {exc}")
 
     def _map_meeting_broadcast_activity(self, message_type: str, data: object) -> None:
-        if message_type == "intel_token":
-            self._set_runtime_activity(
-                "processing",
-                source="meeting",
-                label="Intel streaming",
-                detail="Meeting intelligence is streaming.",
-                last_event="meeting_intel_streaming",
-                last_error="",
-            )
-            return
         if message_type == "actuator_proposed":
             label = "Action proposed"
             detail = "An actuator proposed an external action."
@@ -214,8 +203,23 @@ class MeetingGlueMixin:
                     raise _UnknownDeviceError(device_id)
                 device_pairs.append((descriptor, source))
 
-        if self.transcriber is None or getattr(self.transcriber, "model_name", None) != self.config.model.name:
-            self.transcriber = self._ensure_transcriber_loaded()
+        # Do not construct a model-loading backend before MeetingSession.start()
+        # has made the Meeting and audio journal durable.  An already-held
+        # transcriber is merely reused; a replacement is built by the session only
+        # after recorder start, where failure degrades to record-only capture.
+        # MeetingSession compares this candidate with its frozen speech deployment
+        # after admission.  Config may have changed; only an exact frozen identity
+        # can be reused.
+        preloaded_transcriber = self.transcriber
+
+        def construct_transcriber(frozen: dict[str, str]):
+            self.transcriber = self._ensure_transcriber_loaded(
+                model_name=frozen["model"],
+                backend=frozen["backend"],
+                language=frozen["language"],
+                deployment_revision_id=frozen.get("deployment_revision_id"),
+            )
+            return self.transcriber
 
         # HS-32-03: claim the shared audio floor before opening any recorder, so
         # a hotkey/device voice-typing session can't already hold the mic (and so
@@ -250,7 +254,13 @@ class MeetingGlueMixin:
 
         try:
             session = MeetingSession(
-                transcriber=self.transcriber,
+                transcriber=preloaded_transcriber,
+                transcriber_factory=construct_transcriber,
+                transcription_backend=str(self.config.model.backend or ""),
+                transcription_model_name=str(self.config.model.name or ""),
+                requested_remote_device_ids=tuple(
+                    str(getattr(descriptor, "id", "")) for descriptor, _source in device_pairs
+                ),
                 mic_label=self.config.meeting.mic_label,
                 remote_label=self.config.meeting.remote_label,
                 mic_device=self.config.meeting.mic_device,

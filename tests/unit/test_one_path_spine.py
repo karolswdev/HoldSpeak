@@ -227,12 +227,27 @@ def _drive_ask(tmp_path, monkeypatch) -> SurfaceRun:
     return SurfaceRun(db, OWNER, None, profile.id)
 
 
+def _ready_this_machine(tmp_path, monkeypatch) -> None:
+    """Bind the production local-target resolver to a harmless readable artifact.
+
+    ``this_machine_target`` reads ``configured_local_meeting_model_path`` directly;
+    patching the retired private readiness helper does not make the real placement
+    ready. The engine factory remains the sole external physical-boundary fake.
+    """
+    model_path = tmp_path / "spine-local.gguf"
+    model_path.touch()
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.configured_local_meeting_model_path",
+        lambda: str(model_path),
+    )
+
+
 def _recipe_rig(tmp_path, monkeypatch, name: str):
     from holdspeak.services.recipe_service import RecipeService
 
     db = Database(tmp_path / f"{name}.db")
     db.recipes.upsert(recipe_id="r1", name="Recipe", system_prompt="system")
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
+    _ready_this_machine(tmp_path, monkeypatch)
 
     class Engine:
         active_provider = "test"
@@ -274,7 +289,7 @@ def _http_engine_rig(tmp_path, monkeypatch, name: str):
     reset_database()
     db = Database(tmp_path / f"{name}.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
+    _ready_this_machine(tmp_path, monkeypatch)
 
     class _Engine:
         active_provider = "local"
@@ -384,17 +399,38 @@ def _drive_workbench_scheduled(tmp_path, monkeypatch) -> SurfaceRun:
 
 
 def _drive_rails(tmp_path, monkeypatch) -> SurfaceRun:
+    """Run Rails through the real SERVICE bundle, route, and controller path."""
     from holdspeak import rails_observer
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
 
     reset_database()
     db = Database(tmp_path / "rails.db")
-    profile = db.profiles.upsert(
-        profile_id="rails", name="Rails", kind="openAICompatible",
-        base_url="http://rails", model="rails-model",
+    # This makes a fully versioned production-shaped profile, binding, readiness
+    # observation, deployment revision, and artifact. The service then elects its
+    # route from the exact capability assignment below rather than from a legacy
+    # profile pointer or a decorated router fake.
+    _profile(db, "rails")
+    InferenceAssignmentService(db).set_assignment(
+        ASSIGNMENT_OWNER,
+        {
+            "command_id": "rails-spine-assignment",
+            "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "background.rails_summary"},
+            "entries": [{"profile_id": "rails", "profile_revision": 1}],
+        },
     )
     principal = Principal(
-        PrincipalKind.SERVICE, "rails-observer",
-        frozenset({("inference.invoke", 1)}), "rails-observer:journal-only",
+        PrincipalKind.SERVICE,
+        "rails-observer",
+        frozenset(
+            {
+                ("rails.observer-batch", 1),
+                ("inference.invoke", 1),
+                ("inference.cancel", 1),
+            }
+        ),
+        "rails-observer:journal-only",
     )
     broker = _configure(db)
 
@@ -403,11 +439,18 @@ def _drive_rails(tmp_path, monkeypatch) -> SurfaceRun:
             return "Only the observed facts."
 
     broker.inference_runner._engine_factory = lambda _revision, **_: FakeIntel()
-    summarizer = rails_observer.build_profile_summarizer(profile.id, db=db, broker=broker, principal=principal)
-    rails_observer.summarize_batch(
+    summarizer = rails_observer.build_profile_summarizer(db=db, broker=broker, principal=principal)
+    batch = rails_observer.summarize_batch(
         [{"ts": "t1", "event": "gate_pass", "story": "", "repo": "code"}], summarize_fn=summarizer,
     )
-    return SurfaceRun(db, principal, None, profile.id)
+    assert not batch["degraded"], batch
+    return SurfaceRun(
+        db,
+        principal,
+        _parent_run_operation_id(db, "rails.observer-batch"),
+        THIS_MACHINE_ID,
+        parent_kind="rails.observer-batch",
+    )
 
 
 def _drive_decision(tmp_path, monkeypatch) -> SurfaceRun:
@@ -421,10 +464,14 @@ def _drive_decision(tmp_path, monkeypatch) -> SurfaceRun:
             ("meeting-127", "2026-08-07T00:00:00+00:00", "Spine meeting"),
         )
     _accepted_meeting_decision(db, "dec-spine")
-    profile = db.profiles.upsert(
-        profile_id="decision-profile", name="Decision", kind="openAICompatible",
-        base_url="http://decision", model="decision-model",
-    )
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+    _profile(db, "decision-profile")
+    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-spine-decision", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "decision.promotion_draft"},
+        "entries": [{"profile_id": "decision-profile", "profile_revision": 1}],
+    })
     broker = _configure(db)
 
     class Intel:
@@ -434,10 +481,10 @@ def _drive_decision(tmp_path, monkeypatch) -> SurfaceRun:
     broker.inference_runner._engine_factory = lambda _revision, **_: Intel()
     service = DecisionLifecycleService(db, kernel=broker)
     asyncio.run(
-        service.draft_promoted_with_model(OWNER, "dec-spine", "note", {"inference_target_id": profile.id})
+        service.draft_promoted_with_model(OWNER, "dec-spine", "note", {})
     )
     return SurfaceRun(
-        db, OWNER, _parent_run_operation_id(db, "decision.promotion-draft"), profile.id,
+        db, OWNER, _parent_run_operation_id(db, "decision.promotion-draft"), THIS_MACHINE_ID,
         parent_kind="decision.promotion-draft",
     )
 
@@ -452,11 +499,15 @@ def _drive_delivery_review(tmp_path, monkeypatch) -> SurfaceRun:
     reset_database()
     db = Database(tmp_path / "delivery.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
-    profile = db.profiles.upsert(
-        profile_id="delivery-profile", name="Delivery", kind="openAICompatible",
-        base_url="http://delivery", model="delivery-model",
-    )
+    _ready_this_machine(tmp_path, monkeypatch)
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+    _profile(db, "delivery-profile")
+    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-spine-delivery", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "delivery.pr_review_draft"},
+        "entries": [{"profile_id": "delivery-profile", "profile_revision": 1}],
+    })
 
     class FakeEngine:
         active_provider = "test"
@@ -491,13 +542,135 @@ def _drive_delivery_review(tmp_path, monkeypatch) -> SurfaceRun:
     with TestClient(app) as client:
         response = client.post(
             "/api/delivery/prs/spine-source/1/draft-review",
-            json={"inference_target_id": profile.id},
+            json={},
         )
-        assert response.status_code == 200, response.text
+        replay = client.post(
+            "/api/delivery/prs/spine-source/1/draft-review",
+            json={},
+        )
+        assert response.status_code == replay.status_code == 200, (response.text, replay.text)
+        assert response.json()["artifact_id"] == replay.json()["artifact_id"]
+        assert response.json()["placement"]["egress"] == {"scope": "local"}
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 1
     return SurfaceRun(
-        db, OWNER, _parent_run_operation_id(db, "delivery.pr-review-draft"), profile.id,
+        db, OWNER, _parent_run_operation_id(db, "delivery.pr-review-draft"), THIS_MACHINE_ID,
         parent_kind="delivery.pr-review-draft",
     )
+
+
+def test_delivery_http_refusal_identity_keeps_valid_pr_retries_executable(tmp_path, monkeypatch) -> None:
+    """E-F2 through the real delivery route and product bundle/controller path."""
+    import holdspeak.db as hsdb
+    from fastapi import FastAPI, Request
+    from fastapi.testclient import TestClient
+    from holdspeak.web.context import WebContext
+    from holdspeak.web.routes.delivery_prs import build_delivery_prs_router
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+
+    reset_database()
+    db = Database(tmp_path / "delivery-refusal-identity.db")
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    _ready_this_machine(tmp_path, monkeypatch)
+    _profile(db, "delivery-refusal-route")
+    assignments = InferenceAssignmentService(db)
+    assignments.set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-delivery-refusal-route", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "delivery.pr_review_draft"},
+        "entries": [{"profile_id": "delivery-refusal-route", "profile_revision": 1}],
+    })
+    physical: list[str] = []
+
+    class Engine:
+        def run_prompt(self, **_):
+            physical.append("physical")
+            return "A bounded review draft."
+
+    monkeypatch.setitem(
+        InferenceRunner.__init__.__kwdefaults__, "engine_factory", lambda _revision, **_: Engine()
+    )
+    _configure(db)
+
+    class DeliveryMaterial:
+        def action_context(self, _source_id, _number):
+            return {"status": "ok", "row": {"verbs": {"draft_review": {"available": True}}}}
+
+        def review_material(self, source_id, number):
+            return {
+                "status": "ok",
+                "diff": f"diff --git a/{source_id} b/{source_id}\\n+{number}",
+                "revision": "revision-identity",
+                "linked": [],
+            }
+
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def principal(request: Request, call_next):
+        request.state.principal = OWNER
+        return await call_next(request)
+
+    app.include_router(build_delivery_prs_router(
+        WebContext(get_state=lambda: {}, delivery_service=object()), service=DeliveryMaterial()
+    ))
+    with TestClient(app) as client:
+        # Override first cannot poison the valid request identity.
+        override_first = client.post(
+            "/api/delivery/prs/source-a/1/draft-review",
+            json={"inference_target_id": "retired-target"},
+        )
+        repaired = client.post("/api/delivery/prs/source-a/1/draft-review", json={})
+        assert override_first.status_code == 409
+        assert override_first.json()["error"] == "inference_request_target_override_retired"
+        assert override_first.json()["parent_receipt"]["outcome"] == "refused"
+        assert repaired.status_code == 200, repaired.text
+        assert repaired.json()["parent_receipt"]["outcome"] == "succeeded"
+        assert repaired.json()["parent_receipt"]["receipt_id"] != override_first.json()["parent_receipt"]["receipt_id"]
+
+        # Success first likewise gets a separate stale-override refusal rather
+        # than re-labeling its succeeded receipt or falling through to 500.
+        succeeded = client.post("/api/delivery/prs/source-b/2/draft-review", json={})
+        stale = client.post(
+            "/api/delivery/prs/source-b/2/draft-review",
+            json={"inference_target_id": "retired-target"},
+        )
+        assert succeeded.status_code == 200, succeeded.text
+        assert stale.status_code == 409, stale.text
+        assert stale.json()["error"] == "inference_request_target_override_retired"
+        assert stale.json()["parent_receipt"]["outcome"] == "refused"
+        assert stale.json()["parent_receipt"]["receipt_id"] != succeeded.json()["parent_receipt"]["receipt_id"]
+
+        # Removing then restoring the exact assignment repairs a fresh request.
+        current = assignments.get_assignment(
+            ASSIGNMENT_OWNER, {"kind": "capability", "capability_id": "delivery.pr_review_draft"}
+        )
+        cleared = assignments.clear_assignment(ASSIGNMENT_OWNER, {
+            "command_id": "clear-delivery-assignment", "expected_revision": current["revision"],
+            "scope": {"kind": "capability", "capability_id": "delivery.pr_review_draft"},
+            "capability_id": "delivery.pr_review_draft",
+        })
+        missing = client.post("/api/delivery/prs/source-c/3/draft-review", json={})
+        assert missing.status_code == 409 and missing.json()["parent_receipt"]["outcome"] == "refused"
+        assignments.set_assignment(ASSIGNMENT_OWNER, {
+            "command_id": "restore-delivery-assignment", "expected_revision": cleared["revision"],
+            "scope": {"kind": "capability", "capability_id": "delivery.pr_review_draft"},
+            "entries": [{"profile_id": "delivery-refusal-route", "profile_revision": 1}],
+        })
+        recovered = client.post("/api/delivery/prs/source-c/3/draft-review", json={})
+        assert recovered.status_code == 200, recovered.text
+
+        # Same PR material is a replay, so no second physical call/artifact.
+        replay = client.post("/api/delivery/prs/source-a/1/draft-review", json={})
+        assert replay.status_code == 200
+        assert replay.json()["artifact_id"] == repaired.json()["artifact_id"]
+
+    assert physical == ["physical", "physical", "physical"]
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM inference_parent_route_bundles").fetchone()[0] == 3
+        assert conn.execute("SELECT COUNT(*) FROM inference_route_attempts").fetchone()[0] == 3
+        assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 3
+        assert conn.execute("SELECT COUNT(*) FROM artifacts").fetchone()[0] == 3
 
 
 def _drive_voice(tmp_path, monkeypatch) -> SurfaceRun:
@@ -520,11 +693,15 @@ def _drive_voice(tmp_path, monkeypatch) -> SurfaceRun:
 
 
 def _drive_meeting_live(tmp_path, monkeypatch) -> SurfaceRun:
-    from tests.unit.test_meeting_session_admission import OWNER as MEETING_OWNER
-    from tests.unit.test_meeting_session_admission import _rig as _meeting_live_rig
+    from tests.unit.test_meeting_session_admission import (
+        OWNER as MEETING_OWNER,
+        _assign_bundle_routes,
+        _rig as _meeting_live_rig,
+    )
     from holdspeak.meeting_session.models import TranscriptSegment
 
     db, _broker, session, _engine, _requests = _meeting_live_rig(tmp_path, monkeypatch)
+    _assign_bundle_routes(db)
     session.start()
     session._state.segments.append(
         TranscriptSegment(text="spine window", speaker="Me", start_time=0.0, end_time=5.0)
@@ -543,10 +720,12 @@ def _drive_meeting_deferred(tmp_path, monkeypatch) -> SurfaceRun:
     db, _broker, _engine, _host, _requests = _queue_rig(tmp_path, monkeypatch)
     _queued_meeting(db, "m-spine")
     assert process_next_intel_job() is True
-    # The queue runs as its own service principal, never as the owner who
-    # recorded the meeting — that distinction is exactly what the child row's
-    # authenticated principal has to preserve.
-    queue_principal = Principal(PrincipalKind.SERVICE, "meeting-intel-queue")
+    # The queue runs as its own sealed service principal, never as the owner
+    # who recorded the meeting. Reuse the production factory so provenance
+    # checks its actual narrow authority basis rather than a guessed identity.
+    from holdspeak.meeting_session.deferred_bound import queue_service_principal
+
+    queue_principal = queue_service_principal()
     return SurfaceRun(
         db, queue_principal, _parent_run_operation_id(db, "meeting.deferred-intel-job"),
         THIS_MACHINE_ID, parent_kind="meeting.deferred-intel-job",
@@ -583,10 +762,18 @@ def _drive_cadence(tmp_path, monkeypatch) -> SurfaceRun:
 
     reset_database()
     db = Database(tmp_path / "cadence.db")
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", ""))
+    _ready_this_machine(tmp_path, monkeypatch)
     loop = db.cadence.upsert_loop(
         OpenLoop(source_type="meeting_action", source_id="a1", title="Ship the watchdog", owner="Karol")
     )
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import OWNER as ASSIGNMENT_OWNER, _profile
+    _profile(db, "cadence-profile")
+    InferenceAssignmentService(db).set_assignment(ASSIGNMENT_OWNER, {
+        "command_id": "assign-spine-cadence", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "background.cadence_draft"},
+        "entries": [{"profile_id": "cadence-profile", "profile_revision": 1}],
+    })
     broker = _configure(db)
 
     class FakeIntel:
@@ -634,10 +821,10 @@ assert len(SURFACE_DRIVERS) == 16, "every named surface form is proven here; non
 #: the sanity test below) because ``test_one_path_provenance.py`` imports these
 #: to cross-check the DECLARED shape against the shape the stored row actually
 #: shows — the two files cannot drift apart without one of them failing.
-ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Recipe chat", "Rails"})
+ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Recipe chat"})
 CHILD_SHAPED_SURFACES = frozenset({
     "Sequence", "Workflow", "manual Workbench", "scheduled Workbench",
-    "memory writeback", "Decision promotion", "Delivery review", "voice",
+    "memory writeback", "Rails", "Decision promotion", "Delivery review", "voice",
     "meeting live", "meeting deferred", "dictation pipeline", "cadence next action",
 })
 
@@ -697,7 +884,7 @@ def test_each_driver_reports_the_run_it_actually_performed(tmp_path, monkeypatch
 #: domain failure, and therefore sits between an engine and `InferenceRunner`.
 #: Adding a sanitizer without adding it here is what this list exists to catch.
 SANITIZING_ADAPTERS: tuple[tuple[str, str], ...] = (
-    ("holdspeak/meeting_session/intel_child.py", "MeetingAdapter.dispatch"),
+    ("holdspeak/meeting_session/deferred_bound.py", "BoundMeetingAdapter.dispatch"),
     ("holdspeak/speech_session/child.py", "SpeechAdapter.dispatch"),
     # HS-131-14: a routed plugin's completion goes through the dispatch handle,
     # which wraps the provider exception so a plugin's `except Exception` cannot
@@ -766,7 +953,10 @@ def test_both_sanitizing_adapters_let_a_typed_signal_through_at_runtime(signal_n
         ProviderCompatibilityRetry,
         ProviderIndeterminate,
     )
-    from holdspeak.meeting_session.intel_child import MeetingAdapter, MeetingProviderFailure
+    from holdspeak.meeting_session.deferred_bound import (
+        BoundMeetingAdapter,
+        BoundMeetingProviderFailure,
+    )
     from holdspeak.speech_session.child import SpeechAdapter, SpeechProviderFailure
 
     signal: BaseException = (
@@ -779,7 +969,7 @@ def test_both_sanitizing_adapters_let_a_typed_signal_through_at_runtime(signal_n
         raise signal
 
     for adapter, sanitized in (
-        (MeetingAdapter("meeting-contract", raising), MeetingProviderFailure),
+        (BoundMeetingAdapter("meeting-contract", raising), BoundMeetingProviderFailure),
         (SpeechAdapter("speech-contract", raising), SpeechProviderFailure),
     ):
         with pytest.raises(type(signal)) as raised:
@@ -793,8 +983,8 @@ def test_both_sanitizing_adapters_let_a_typed_signal_through_at_runtime(signal_n
     def leaking(_engine: Any, _payload: Any, _cancellation: Any) -> Any:
         raise RuntimeError(leaky)
 
-    with pytest.raises(MeetingProviderFailure) as meeting:
-        MeetingAdapter("meeting-contract", leaking).dispatch(object(), {}, threading.Event())
+    with pytest.raises(BoundMeetingProviderFailure) as meeting:
+        BoundMeetingAdapter("meeting-contract", leaking).dispatch(object(), {}, threading.Event())
     assert leaky not in str(meeting.value)
     with pytest.raises(SpeechProviderFailure) as speech:
         SpeechAdapter("speech-contract", leaking).dispatch(object(), {}, threading.Event())

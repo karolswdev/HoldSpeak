@@ -228,16 +228,26 @@ def resolve_deployment_revision(db: Any, revision_id: str) -> DeploymentRevision
         return revision
     with db._connection() as conn:
         row = conn.execute(
-            """SELECT local_locator, manifest_sha256, format, state
+            """SELECT local_locator, manifest_sha256, format, state, source_kind
                  FROM inference_model_artifacts WHERE artifact_id=?""",
             (revision.artifact_id,),
         ).fetchone()
-    if (
-        row is None
-        or str(row["state"]) != "verified"
-        or str(row["manifest_sha256"]) != revision.manifest_sha256
-        or str(row["format"]) != revision.format
-    ):
+    if row is None or str(row["manifest_sha256"]) != revision.manifest_sha256 or str(row["format"]) != revision.format:
+        return None
+    verified = str(row["state"]) == "verified"
+    # A migrated local Whisper declaration names a known built-in runtime, not
+    # a downloaded locator. The first derived preload is the operation-time
+    # observation that makes it ready; every other v2 artifact stays verified
+    # before a frozen revision can resolve.
+    unloaded_local_speech = (
+        str(row["state"]) == "removed"
+        and revision.kind == "this_device"
+        and revision.boundary == "same_device"
+        and revision.engine in {"mlx", "faster-whisper"}
+        and str(row["source_kind"] or "") == "legacy-model-config"
+        and not str(row["local_locator"] or "")
+    )
+    if not verified and not unloaded_local_speech:
         return None
     return DeploymentRevision(
         **{

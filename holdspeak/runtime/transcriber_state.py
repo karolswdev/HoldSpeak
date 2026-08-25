@@ -6,14 +6,29 @@ WebRuntime.
 
 from __future__ import annotations
 
+import inspect
 import threading
-
-import numpy as np
+from typing import Any
 
 from ..logging_config import get_logger
 from ..transcribe import Transcriber
 
 log = get_logger("web_runtime")
+
+
+def _frozen_session_transcriber(runtime: Any, session: Any) -> Any:
+    """Construct through frozen session evidence when the runtime owns that seam.
+
+    Small embedders may provide a no-argument injected transcriber factory; that
+    is a construction seam, not a permission to read Config after admission.
+    """
+    frozen = session.frozen_transcriber_arguments() or {}
+    factory = runtime._ensure_transcriber_loaded
+    parameters = inspect.signature(factory).parameters.values()
+    accepts_keywords = any(item.kind is inspect.Parameter.VAR_KEYWORD for item in parameters)
+    accepted = {item.name for item in parameters}
+    return factory(**frozen) if accepts_keywords or set(frozen).issubset(accepted) else factory()
+
 
 # HS-32-03: the owner string a meeting uses to hold the shared
 # ``VoiceTypingSession`` audio floor. One arbiter for hotkey / device /
@@ -63,22 +78,41 @@ class TranscriberStateMixin:
                 last_error=error,
             )
 
-    def _ensure_transcriber_loaded(self) -> Transcriber:
+    def _ensure_transcriber_loaded(
+        self,
+        *,
+        model_name: str | None = None,
+        backend: str | None = None,
+        language: str | None = None,
+        deployment_revision_id: str | None = None,
+    ) -> Transcriber:
+        """Construct/reuse a transcriber for immutable routed construction.
+
+        Legacy callers may still omit all arguments.  Every routed caller passes
+        the exact deployment revision as well as backend/model/language; a loaded
+        artifact without a matching durable preload receipt is replaced rather
+        than silently borrowed under the new route.
+        """
+        selected_model = model_name if model_name is not None else self.config.model.name
+        selected_backend = backend if backend is not None else self.config.model.backend
+        selected_language = language if language is not None else getattr(self.config.model, "language", "auto")
         # HS-131-09: constructing a Transcriber loads no weights. The MLX load is
-        # a model invocation, so it happens through admitted preload children —
-        # either the authorized pre-session warm below, or the first admitted
-        # session's `transcribe()` (which runs its preload siblings first).
-        # HS-63-06: the check-and-construct is serialized — see the
-        # _transcriber_init_lock comment in web_runtime.__init__ for the
-        # process-fatal MLX consequence of letting two instances exist.
+        # a model invocation, so it happens through admitted preload children.
         with self._transcriber_init_lock:
-            if self.transcriber is None or getattr(self.transcriber, "model_name", None) != self.config.model.name:
+            reusable = self._loaded_transcriber_reusable(
+                self.transcriber,
+                deployment_revision_id=deployment_revision_id,
+                backend=selected_backend,
+                model_name=selected_model,
+                language=selected_language,
+            )
+            if not reusable:
                 self._set_transcription_status("loading")
                 try:
                     self.transcriber = Transcriber(
-                        model_name=self.config.model.name,
-                        backend=self.config.model.backend,
-                        language=getattr(self.config.model, "language", "auto"),
+                        model_name=selected_model,
+                        backend=selected_backend,
+                        language=selected_language,
                     )
                 except Exception as exc:
                     self._set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
@@ -86,41 +120,74 @@ class TranscriberStateMixin:
         self._set_transcription_status("loaded")
         return self.transcriber
 
+    def _loaded_transcriber_reusable(
+        self,
+        transcriber: Any,
+        *,
+        deployment_revision_id: str | None,
+        backend: str,
+        model_name: str,
+        language: str | None,
+    ) -> bool:
+        if (
+            transcriber is None
+            or getattr(transcriber, "model_name", None) != model_name
+            or getattr(transcriber, "backend", None) != backend
+            or str(getattr(transcriber, "language", None) or "auto")
+            != str(language or "auto")
+        ):
+            return False
+        if not deployment_revision_id:
+            return True
+        # Route construction identity alone is insufficient: an MLX model loaded
+        # for another deployment (or without a durable lifecycle receipt) must
+        # not run under this route just because its display strings match.
+        from ..kernel.runtime import _service
+        from ..speech_session.transcription import _durable_preload_provenance_matches
+
+        return _durable_preload_provenance_matches(
+            _service(),
+            getattr(getattr(transcriber, "_impl", None), "_holdspeak_preload_provenance", {}),
+            deployment_revision_id=str(deployment_revision_id),
+            engine=str(backend),
+            model=str(model_name),
+            language=str(language or "auto"),
+        )
+
     def _warm_transcriber_in_background(self) -> None:
         if not self._transcription_warm_on_start_enabled():
             return
 
         def _warm() -> None:
+            # Freeze SERVICE lifecycle authority before construction. The warm
+            # never selects a model from mutable ModelConfig bytes. Admission is
+            # an accelerator boundary: a kernel/bootstrap/planning failure must
+            # defer to the first lawful transcription, never escape this thread.
+            try:
+                from ..speech_session import preload_service_admission
+
+                admission = preload_service_admission()
+                material = admission.frozen_preload_material()
+                deployment_revision_id = str(admission.evidence["deployment_revision_id"])
+            except Exception as exc:
+                # Do not extend this catch into the admitted physical load below.
+                # Capture remains available; its first lawful routed transcription
+                # owns the actual lifecycle and can surface an in-flow failure.
+                reason = str(getattr(exc, "reason", "") or getattr(exc, "code", "") or exc)
+                # Admission did not start a physical warm.  Leaving the optimistic
+                # pre-thread state as ``warming`` would tell the Desk work exists
+                # when it lawfully deferred to the first routed transcription.
+                self._set_transcription_status("not_loaded")
+                log.info("local model preload deferred to first transcription: %s", reason)
+                return
             with self.transcription_lock:
                 try:
-                    transcriber = self._ensure_transcriber_loaded()
-                except Exception as exc:
-                    self._set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")
-                    with self.state_lock:
-                        self.runtime_status["last_error"] = f"Transcription warmup failed: {exc}"
-                    log.error(f"Transcription warmup failed: {exc}", exc_info=True)
-                    return
-                # HS-131-09 (Sol Amendment 4): a PRE-session warm has no session
-                # to parent it, so it runs only under the owner's explicit
-                # `model.local_model_preload_authority`. Blank/absent DEFERS the
-                # load to the first admitted session — it never dispatches MLX
-                # on authority inferred from this process.
-                from ..speech_session import SpeechSessionRefused, preload_service_admission
-
-                try:
-                    admission = preload_service_admission(config_snapshot=self.config)
-                except SpeechSessionRefused as exc:
-                    # The refusal carries the revision the owner must set in
-                    # `model.local_model_preload_authority` to authorize a warm for
-                    # THIS model configuration; it is a hash, never secret material.
-                    log.info(
-                        "local model preload deferred to the first admitted session: "
-                        "%s (set model.local_model_preload_authority=%s to authorize)",
-                        exc.reason,
-                        getattr(exc, "detail", "") or "<unknown>",
+                    transcriber = self._ensure_transcriber_loaded(
+                        model_name=str(material["model"]),
+                        backend=str(material["engine"]),
+                        language=str(material["language"]),
+                        deployment_revision_id=deployment_revision_id,
                     )
-                    return
-                try:
                     transcriber.warm(admission)
                 except Exception as exc:
                     self._set_transcription_status("error", error=f"{type(exc).__name__}: {exc}")

@@ -112,6 +112,18 @@ class InferenceFallbackController:
             if str(replay["execution_id"]) != execution_id or str(replay["effect_sha256"]) != _sha256(effect) or effect != {"execution_id": execution_id}:
                 raise ConflictError("Stored route execution command is invalid.", code="inference_route_execution_command_integrity_invalid")
             return self._execution(conn, execution_id)
+        parent_rows = conn.execute(
+            """SELECT p.state FROM inference_parent_route_bundle_members m
+                   JOIN inference_parent_route_bundles b ON b.id=m.bundle_id
+                   LEFT JOIN kernel_parent_runs p ON p.operation_id=b.parent_operation_id
+                  WHERE m.route_plan_id=?""",
+            (route["id"],),
+        ).fetchall()
+        if parent_rows and any(str(row["state"] or "") != "OPEN" for row in parent_rows):
+            raise ConflictError(
+                "Route execution parent is sealed.",
+                code="inference_route_execution_parent_sealed",
+            )
         collision = conn.execute(
             "SELECT 1 FROM inference_route_executions WHERE id=? OR operation_plan_id=?",
             (execution_id, operation_id),
@@ -312,6 +324,21 @@ class InferenceFallbackController:
                     raise ConflictError("Physical attempt budget is exhausted.", code="inference_route_attempt_budget_exhausted")
                 if row["token_budget"] is not None and int(row["tokens_reserved"]) + tokens > int(row["token_budget"]):
                     raise ConflictError("Token budget is exhausted.", code="inference_route_token_budget_exhausted")
+                aggregate = self._bundle_aggregate_budget_in_transaction(conn, str(route["id"]))
+                if aggregate is not None:
+                    route_ids, allocation = aggregate
+                    placeholders = ",".join("?" for _ in route_ids)
+                    used = conn.execute(
+                        f"SELECT COUNT(*) FROM inference_route_attempts a "
+                        f"JOIN inference_route_executions e ON e.id=a.execution_id "
+                        f"WHERE e.route_plan_id IN ({placeholders})",
+                        tuple(route_ids),
+                    ).fetchone()[0]
+                    if int(used) + 1 > allocation:
+                        raise ConflictError(
+                            "Aggregate physical attempt budget is exhausted.",
+                            code="inference_route_group_budget_exhausted",
+                        )
                 nonce = secrets.token_urlsafe(32)
                 physical = int(row["attempts_reserved"]) + 1
                 attempt_id = f"ira_{hashlib.sha256(f'{execution}:{physical}'.encode()).hexdigest()[:32]}"
@@ -975,60 +1002,100 @@ class InferenceFallbackController:
 
     def request_stop(self, authority: Principal, *, command_id: str, execution_id: str) -> dict[str, Any]:
         self._require_controller(authority)
-        command = self._safe_id(command_id, "command_id")
-        execution = self._safe_id(execution_id, "execution_id")
-        request_hash = _sha256({"action": "stop", "command_id": command, "execution_id": execution})
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             try:
-                replay = self._replay_command(conn, command, "stop", request_hash, execution)
-                if replay is not None:
-                    current = self._execution(conn, execution)
-                    self._verify_stop_effect(conn, replay, execution, command, current)
-                    conn.commit()
-                    return {"schema": "InferenceRouteStopResult@1", "effect": replay, "execution": current}
-                current = self._execution(conn, execution)
-                row = conn.execute("SELECT * FROM inference_route_executions WHERE id=?", (execution,)).fetchone()
-                now_text = self._now_text()
-                prior_state = str(row["state"])
-                if prior_state == "active":
-                    dispatched = conn.execute(
-                        "SELECT 1 FROM inference_route_attempts WHERE execution_id=? AND state='dispatch_intent'",
-                        (execution,),
-                    ).fetchone() is not None
-                    if dispatched:
-                        conn.execute(
-                            "UPDATE inference_route_executions SET stop_requested=1,stop_command_id=?,state='stopping',revision=revision+1 WHERE id=? AND state='active'",
-                            (command, execution),
-                        )
-                        elected = "stopping"
-                    else:
-                        conn.execute(
-                            """UPDATE inference_route_executions
-                               SET stop_requested=1,stop_command_id=?,state='stopped',revision=revision+1,
-                                   terminal_disposition='owner_cancelled',terminal_outcome='cancelled',terminal_at=?
-                               WHERE id=? AND state='active'""",
-                            (command, now_text, execution),
-                        )
-                        elected = "stopped"
-                else:
-                    # A terminal winner or an earlier Stop is immutable truth.
-                    elected = prior_state
-                effect = {
-                    "schema": "InferenceRouteStopEffect@1",
-                    "execution_id": execution,
-                    "observed_state": prior_state,
-                    "observed_revision": int(row["revision"]),
-                    "elected_state": elected,
-                }
-                self._insert_command(conn, command, "stop", request_hash, execution, effect, now_text)
-                if prior_state == "active":
-                    self._insert_transition(conn, execution, action="stop", command_id=command, prior_revision=int(row["revision"]), post_revision=int(row["revision"])+1, prior_state="active", post_state=elected, effect=effect)
-                current = self._execution(conn, execution)
+                result = self.request_stop_in_transaction(
+                    authority,
+                    conn,
+                    command_id=command_id,
+                    execution_id=execution_id,
+                )
                 conn.commit()
-                return {"schema": "InferenceRouteStopResult@1", "effect": effect, "execution": current}
+                return result
             except Exception:
                 conn.rollback(); raise
+
+    def request_stop_in_transaction(
+        self,
+        authority: Principal,
+        conn: Any,
+        *,
+        command_id: str,
+        execution_id: str,
+    ) -> dict[str, Any]:
+        """Fence one execution inside an adopter-owned durable handoff."""
+        self._require_controller(authority)
+        command = self._safe_id(command_id, "command_id")
+        execution = self._safe_id(execution_id, "execution_id")
+        request_hash = _sha256(
+            {"action": "stop", "command_id": command, "execution_id": execution}
+        )
+        replay = self._replay_command(conn, command, "stop", request_hash, execution)
+        if replay is not None:
+            current = self._execution(conn, execution)
+            self._verify_stop_effect(conn, replay, execution, command, current)
+            return {
+                "schema": "InferenceRouteStopResult@1",
+                "effect": replay,
+                "execution": current,
+            }
+        current = self._execution(conn, execution)
+        row = conn.execute(
+            "SELECT * FROM inference_route_executions WHERE id=?", (execution,)
+        ).fetchone()
+        now_text = self._now_text()
+        prior_state = str(row["state"])
+        if prior_state == "active":
+            dispatched = conn.execute(
+                "SELECT 1 FROM inference_route_attempts WHERE execution_id=? AND state='dispatch_intent'",
+                (execution,),
+            ).fetchone() is not None
+            if dispatched:
+                conn.execute(
+                    "UPDATE inference_route_executions SET stop_requested=1,stop_command_id=?,state='stopping',revision=revision+1 WHERE id=? AND state='active'",
+                    (command, execution),
+                )
+                elected = "stopping"
+            else:
+                conn.execute(
+                    """UPDATE inference_route_executions
+                       SET stop_requested=1,stop_command_id=?,state='stopped',revision=revision+1,
+                           terminal_disposition='owner_cancelled',terminal_outcome='cancelled',terminal_at=?
+                       WHERE id=? AND state='active'""",
+                    (command, now_text, execution),
+                )
+                elected = "stopped"
+        else:
+            elected = prior_state
+        effect = {
+            "schema": "InferenceRouteStopEffect@1",
+            "execution_id": execution,
+            "observed_state": prior_state,
+            "observed_revision": int(row["revision"]),
+            "elected_state": elected,
+        }
+        self._insert_command(
+            conn, command, "stop", request_hash, execution, effect, now_text
+        )
+        if prior_state == "active":
+            self._insert_transition(
+                conn,
+                execution,
+                action="stop",
+                command_id=command,
+                prior_revision=int(row["revision"]),
+                post_revision=int(row["revision"]) + 1,
+                prior_state="active",
+                post_state=elected,
+                effect=effect,
+            )
+        current = self._execution(conn, execution)
+        return {
+            "schema": "InferenceRouteStopResult@1",
+            "effect": effect,
+            "execution": current,
+        }
 
     @staticmethod
     def _verify_stop_effect(conn: Any, effect: Any, execution_id: str, command_id: str, current: dict[str, Any]) -> None:
@@ -1873,6 +1940,69 @@ class InferenceFallbackController:
             and str(attempt["send_phase"]) == classified_phase
             and (str(receipt.get("result_ref") or "") if receipt["state"] == "succeeded" else "") == str(attempt["result_ref"] or "")
         )
+
+    def _bundle_aggregate_budget_in_transaction(
+        self, conn: Any, route_plan_id: str
+    ) -> tuple[list[str], int] | None:
+        """Return the immutable aggregate group binding this route, if any.
+
+        Group-less historical bundles deliberately return ``None``: their
+        execution-local retry budget remains the complete budget law.
+        """
+        rows = conn.execute(
+            """SELECT b.* FROM inference_parent_route_bundles b
+                 JOIN inference_parent_route_bundle_members m ON m.bundle_id=b.id
+                WHERE m.route_plan_id=?""",
+            (route_plan_id,),
+        ).fetchall()
+        if not rows:
+            return None
+        if len(rows) != 1:
+            raise ConflictError(
+                "Route bundle membership is ambiguous.",
+                code="inference_parent_route_bundle_integrity_invalid",
+            )
+        # Import lazily: the bundle authority imports this controller's public
+        # authority constant, while this execution-only path needs its exact
+        # manifest reconstruction rather than a second validator.
+        from .inference_parent_route_bundle_service import InferenceParentRouteBundleService
+
+        reader = object.__new__(InferenceParentRouteBundleService)
+        reader._plans = self._plans
+        bundle = reader._bundle_from_row(conn, rows[0])
+        groups = bundle.get("budget_groups")
+        if groups is None:
+            return None
+        member = next(
+            (item for item in bundle["members"] if item["route_plan_id"] == route_plan_id),
+            None,
+        )
+        if member is None:
+            raise ConflictError(
+                "Route bundle member is missing.",
+                code="inference_parent_route_bundle_integrity_invalid",
+            )
+        group = next(
+            (item for item in groups if member["key"] in item["member_keys"]),
+            None,
+        )
+        if group is None:
+            raise ConflictError(
+                "Route aggregate budget binding is missing.",
+                code="inference_parent_route_bundle_integrity_invalid",
+            )
+        keys = set(group["member_keys"])
+        route_ids = [
+            str(item["route_plan_id"])
+            for item in bundle["members"]
+            if item["key"] in keys
+        ]
+        if len(route_ids) != len(keys):
+            raise ConflictError(
+                "Route aggregate budget members are missing.",
+                code="inference_parent_route_bundle_integrity_invalid",
+            )
+        return route_ids, int(group["allocation"])
 
     @staticmethod
     def _safe_id(value: Any, field: str) -> str:

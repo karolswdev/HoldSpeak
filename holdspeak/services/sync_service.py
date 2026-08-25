@@ -80,6 +80,7 @@ _HUB_LOCAL_FORBIDDEN_BUCKETS = frozenset(
         "inference_route_plan_entries",
         "inference_route_plan_commands",
         "inference_route_plan_authority_evidence",
+        "inference_route_plan_principal_evidence",
         "inference_route_plan_preflight_evidence",
         "inference_operation_route_request_plans",
         "inference_operation_route_request_plan_entries",
@@ -89,6 +90,11 @@ _HUB_LOCAL_FORBIDDEN_BUCKETS = frozenset(
         "inference_adoption_attempt_results",
         "inference_adoption_route_evidence",
         "inference_adoption_composites",
+        "inference_parent_route_bundles",
+        "inference_parent_route_bundle_members",
+        "inference_parent_stop_handoffs",
+        "inference_parent_stop_handoff_executions",
+        "inference_parent_stop_handoff_settlements",
         "inference_route_executions",
         "inference_route_attempts",
         "inference_route_execution_skips",
@@ -333,6 +339,19 @@ def meeting_state_from_sync_value(value: dict[str, Any]) -> Any:
         intel_requested_at = None
         intel_completed_at = None
 
+    if value.get("transcription_status") == "record_only":
+        raw_detail = value.get("transcription_status_detail")
+        transcription_status = "record_only"
+        transcription_status_detail = (
+            dict(raw_detail)
+            if isinstance(raw_detail, dict)
+            and all(isinstance(key, str) and isinstance(item, str) for key, item in raw_detail.items())
+            else None
+        )
+    else:
+        transcription_status = "active"
+        transcription_status_detail = None
+
     started = _parse_dt(value.get("started_at"))
     if started is None:
         from datetime import datetime
@@ -359,6 +378,8 @@ def meeting_state_from_sync_value(value: dict[str, Any]) -> Any:
             "finalized" if value.get("ended_at") else "recoverable"
         )),
         capture_failure=value.get("capture_failure"),
+        transcription_status=transcription_status,
+        transcription_status_detail=transcription_status_detail,
         capture_checkpoint_at=_parse_dt(value.get("capture_checkpoint_at")),
         capture_checkpoint_seconds=float(value.get("capture_checkpoint_seconds") or 0.0),
         provenance=str(value.get("provenance") or "native"),
@@ -411,6 +432,15 @@ def _merge_meetings(db: Any, records: list[dict[str, Any]]) -> int:
         if not isinstance(value, dict):
             continue
         state = meeting_state_from_sync_value({**value, "id": rec_id})
+        if (
+            existing is not None
+            and existing.transcription_status == "record_only"
+            and state.transcription_status != "record_only"
+        ):
+            # Admission refusal is safety state: a peer can report record-only,
+            # but cannot resurrect transcription on a hub that durably refused it.
+            state.transcription_status = existing.transcription_status
+            state.transcription_status_detail = existing.transcription_status_detail
         state.sync_modified_at = incoming_lm
         if not state.id:
             continue

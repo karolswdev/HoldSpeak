@@ -69,6 +69,8 @@ def test_ask_uses_versioned_contract_hash_runner_and_staged_projection(rig):
 
 def test_profile_ask_persists_revision_before_claim_without_preseed(rig, monkeypatch):
     db, broker, engine = rig
+    with db._connection() as conn:
+        before_revisions = conn.execute("SELECT COUNT(*) FROM deployment_revisions").fetchone()[0]
     db.profiles.upsert(profile_id="profile", name="Profile", kind="openAICompatible", base_url="http://profile", model="model")
     # Admission, codec authorization, claim, and runner revision lookup all use
     # real database reads; only the final provider adapter is fake.
@@ -83,7 +85,9 @@ def test_profile_ask_persists_revision_before_claim_without_preseed(rig, monkeyp
     result = asyncio.run(AskService(db, broker=broker).ask(OWNER, "profile", inference_target_id="profile"))
     assert result["output"] == "runner answer"
     with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM deployment_revisions").fetchone()[0] == 1
+        # Startup may lawfully create the migrated local speech deployment;
+        # this Ask still creates exactly its own frozen profile revision.
+        assert conn.execute("SELECT COUNT(*) FROM deployment_revisions").fetchone()[0] == before_revisions + 1
         assert conn.execute("SELECT outcome FROM kernel_receipts WHERE operation_id=?", (result["operation_id"],)).fetchone()[0] == "succeeded"
 
 

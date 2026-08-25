@@ -63,6 +63,12 @@ def _admit_meeting_session(session, tmp_path, monkeypatch) -> None:
     touches the owner's real kernel journal.
     """
     db = Database(tmp_path / "device-meeting.db")
+    # Phase B freezes the live+speech bundle before a segment can transcribe.
+    # Supply the explicit test assignment family instead of relying on the
+    # retired unassigned local-transcriber posture.
+    from tests.unit.test_meeting_session_admission import _assign_bundle_routes
+
+    _assign_bundle_routes(db)
     monkeypatch.setattr("holdspeak.db.get_database", lambda *_a, **_k: db)
     _configure(db)
     assert session._admit_intel_session() is True, session._transcription_refusal
@@ -198,7 +204,12 @@ class TestDeviceMeetingSession:
 
     def test_device_chunks_become_labeled_segments(self, tmp_path, monkeypatch) -> None:
         transcriber = _FakeTranscriber()
-        session = MeetingSession(transcriber=transcriber, principal=OWNER)
+        # Phase-B bundle evidence declares remote sources before transcription.
+        session = MeetingSession(
+            transcriber=transcriber,
+            principal=OWNER,
+            requested_remote_device_ids=("aipi-1",),
+        )
         session._state = MeetingState(id="m1", started_at=datetime.now())
         session._recorder = _StubMeetingRecorder()  # type: ignore[assignment]
         _admit_meeting_session(session, tmp_path, monkeypatch)

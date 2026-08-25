@@ -241,23 +241,70 @@ class ParentRunController:
         receipt = self._broker.store.receipt(operation_id)
         return str(receipt["outcome"]) if receipt else disposition
 
+    def fence_for_handoff_in_transaction(
+        self, conn: Any, principal: Any, *, operation_id: str
+    ) -> Mapping[str, Any]:
+        """Durably fence publication/children before an adopter records handoff.
+
+        Signalling physical children and terminal receipt election happen after
+        this database fence.  A CANCELLING parent cannot publish a late stage or
+        admit another child, and recovery can finish the same exact operation.
+        """
+        row = conn.execute(
+            "SELECT p.*,o.principal_kind,o.principal_identity,o.warrant_revoked FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE p.operation_id=?",
+            (operation_id,),
+        ).fetchone()
+        if row is None:
+            raise KernelRefused("parent_operation_unknown")
+        if (principal.name, principal.identity) != (
+            str(row["principal_kind"]),
+            str(row["principal_identity"]),
+        ):
+            raise KernelRefused("parent_operation_scope_required")
+        state = str(row["state"])
+        if state not in {"OPEN", "CANCELLING"}:
+            raise KernelRefused("parent_operation_not_running")
+        if str(row["publication_claim_id"] or ""):
+            raise KernelRefused("parent_publication_in_progress")
+        prior_epoch = int(row["execution_epoch"])
+        if state == "OPEN":
+            now = self._clock()
+            if conn.execute(
+                "UPDATE kernel_parent_runs SET state='CANCELLING',execution_epoch=execution_epoch+1,active_child_invocation_id='',planned_node='',lease_heartbeat_at=?,updated_at=? WHERE operation_id=? AND state='OPEN' AND execution_epoch=? AND publication_claim_id=''",
+                (now, now, operation_id, prior_epoch),
+            ).rowcount != 1:
+                raise KernelRefused("parent_operation_not_running")
+            conn.execute(
+                "UPDATE kernel_operations SET warrant_revoked=1,revision=revision+1,updated_at=? WHERE operation_id=? AND warrant_revoked=0",
+                (now, operation_id),
+            )
+            state = "CANCELLING"
+        return {
+            "schema": "ParentHandoffFence@1",
+            "operation_id": operation_id,
+            "prior_epoch": prior_epoch,
+            "post_epoch": prior_epoch + 1 if int(row["execution_epoch"]) == prior_epoch and str(row["state"]) == "OPEN" else prior_epoch,
+            "state": state,
+        }
+
     def _cancel(self, context: OuterRunContext, principal: Any) -> str:
         from .parent_terminal import cancel_parent
 
         return cancel_parent(self, context, principal)
 
-    def close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None, publication_claim_id: str = "") -> Mapping[str, Any]:
+    def close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None, publication_claim_id: str = "", executor_lease: Mapping[str, Any] | None = None) -> Mapping[str, Any]:
         receipt, _ = self._close(
             context,
             outcome,
             result_ref,
             principal=principal,
             publication_claim_id=publication_claim_id,
+            executor_lease=executor_lease,
         )
         if receipt is None: raise KernelRefused("parent_operation_not_running")
         return receipt
 
-    def _close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None, stale_before: float | None = None, stale_process_id: str | None = None, publication_claim_id: str = "") -> tuple[Mapping[str, Any] | None, bool]:
+    def _close(self, context: OuterRunContext, outcome: str, result_ref: str = "", *, principal: Any | None = None, stale_before: float | None = None, stale_process_id: str | None = None, publication_claim_id: str = "", executor_lease: Mapping[str, Any] | None = None) -> tuple[Mapping[str, Any] | None, bool]:
         from .parent_terminal import close_parent
 
         return close_parent(
@@ -269,6 +316,7 @@ class ParentRunController:
             stale_before=stale_before,
             stale_process_id=stale_process_id,
             publication_claim_id=publication_claim_id,
+            executor_lease=executor_lease,
         )
 
     def reconcile_abandoned(self) -> int:

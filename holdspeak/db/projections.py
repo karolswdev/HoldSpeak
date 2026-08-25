@@ -484,13 +484,34 @@ class ProjectionRepository(BaseRepository):
     def _jobs(self, conn: Any, meetings: dict[str, str]) -> list[DeskProjection]:
         result = []
         for table, source_kind in (("intel_jobs", "intel_job"), ("plugin_run_jobs", "plugin_job")):
-            for row in conn.execute(f"SELECT * FROM {table}").fetchall():
+            query = f"SELECT * FROM {table}"
+            if table == "intel_jobs":
+                # Queue history is durable; select its newest lineage leaf
+                # before filtering terminality so a retry success suppresses an
+                # older failed ancestor rather than emitting false attention.
+                query = """WITH lineage_leaves AS (
+                    SELECT j.* FROM intel_jobs j WHERE NOT EXISTS (
+                        SELECT 1 FROM intel_jobs successor
+                        WHERE successor.origin_job_id=j.job_id
+                    )
+                ), current_jobs AS (
+                    SELECT *, ROW_NUMBER() OVER (
+                        PARTITION BY meeting_id
+                        ORDER BY requested_at DESC,updated_at DESC,job_id DESC
+                    ) AS current_rank FROM lineage_leaves
+                ) SELECT * FROM current_jobs
+                WHERE current_rank=1
+                  AND status IN ('reserved','queued','claimed','running','failed')"""
+            for row in conn.execute(query).fetchall():
                 state = str(row["status"])
                 if state not in {"queued", "running", "failed"}:
                     continue
                 mid = str(row["meeting_id"])
                 failed = state == "failed"
-                source_id = mid if table == "intel_jobs" else str(row["id"])
+                source_id = (
+                    str(row["job_id"]) if table == "intel_jobs" and "job_id" in row.keys()
+                    else (mid if table == "intel_jobs" else str(row["id"]))
+                )
                 label = "Meeting intelligence" if table == "intel_jobs" else str(row["plugin_id"])
                 result.append(DeskProjection(
                     id=f"{source_kind}:{source_id}:{state}", projection_kind="attention",

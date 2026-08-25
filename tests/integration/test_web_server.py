@@ -2199,16 +2199,11 @@ class TestIntelQueueApiEndpoints:
         _meeting("m-002", 5, "Design review")
         _meeting("m-003", 10, "Retro")
 
-        isolated_db.intel.enqueue_intel_job("m-001", transcript_hash="abc123", reason="transient issue")
-        isolated_db.intel.record_intel_job_attempt(
-            "m-001",
-            attempt=2,
-            outcome="scheduled_retry",
-            error="transient issue",
-            retry_at=datetime(2025, 1, 11, 10, 35, 0),
-        )
-
+        # C1 retries and failures mutate an owned immutable descriptor, then
+        # create a successor where appropriate. Arrange claims before their
+        # lifecycle transitions instead of using the retired queued-row verbs.
         isolated_db.intel.enqueue_intel_job("m-002", transcript_hash="def456")
+        assert isolated_db.intel.claim_next_intel_job() is not None
         isolated_db.intel.retry_intel_job(
             "m-002",
             "transient issue",
@@ -2218,7 +2213,17 @@ class TestIntelQueueApiEndpoints:
         )
 
         isolated_db.intel.enqueue_intel_job("m-003", transcript_hash="ghi789")
+        assert isolated_db.intel.claim_next_intel_job() is not None
         isolated_db.intel.fail_intel_job("m-003", "permanent failure")
+
+        isolated_db.intel.enqueue_intel_job("m-001", transcript_hash="abc123", reason="transient issue")
+        isolated_db.intel.record_intel_job_attempt(
+            "m-001",
+            attempt=2,
+            outcome="scheduled_retry",
+            error="transient issue",
+            retry_at=datetime(2025, 1, 11, 10, 35, 0),
+        )
 
         # The drain seam is bound INTO the service at import
         # (`meeting_intel_service.py:9`), so that is the name to replace —

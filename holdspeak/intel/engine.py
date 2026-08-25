@@ -529,10 +529,9 @@ class MeetingIntel:
         """Stream analysis token-by-token, then a final parsed IntelResult.
 
         Both providers stream now: the local GGUF and the cloud/endpoint path
-        (the latter forwards the endpoint's SSE deltas via
-        `_chat_completion_stream`). So the live meeting intel broadcasts
-        `intel_token` for endpoint users too — lighting the generation theater's
-        "thinking" pulse and the Queue HUD heartbeat, not only for local models.
+        (the latter forwards endpoint SSE deltas via `_chat_completion_stream`).
+        Routed C1 meeting work calls ``analyze(..., stream=False)`` and keeps
+        provider output private until semantic validation and receipt election.
         """
         raw_parts: list[str] = []
         messages = _json_only_messages(transcript)
