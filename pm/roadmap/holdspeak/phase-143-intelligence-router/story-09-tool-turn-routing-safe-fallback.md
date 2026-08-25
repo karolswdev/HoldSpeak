@@ -106,6 +106,33 @@ bundle first, then the turn, at both model and tool boundaries).
 Sweep: **6518 passed / zero branch-new.** Next: B3 (the ruled
 tool-qualified correction/fallback table), then B4.
 
+**B3+B4 SHIPPED — PART B CONSTRUCTION COMPLETE (2026-08-25).** B3
+implements the ruled tool-bearing fallback table exactly: a closed
+disposition bridge (unknown events raise, never launder); malformed
+native calls consume ONE bounded corrective model step with zero tool
+dispatch, then advance only to TOOL-QUALIFIED legs (every fallback leg
+re-checked for qualification, palette sufficiency, and permissible
+egress); a read-only typed `unavailable` feeds forward only within the
+frozen lease/budgets and only when the frozen operation schema permits
+naming the limitation; tool outage is never auto-mapped to model
+failure; a receipted effect is adopted and a repeat attempt refuses
+`receipted_effect_adopted`; the terminal set (unknown effect
+completion, permission denial, approval refusal, Stop, lease expiry)
+never advances; parallel results keep provider-call ordinal identity
+under replanning. `ToolTurnReceipt@1` discloses exact tools used,
+proposed vs executed effects, and every model-fallback leg — with
+nonce/terms/private material proven absent. B4 proves all five
+acceptance criteria end-to-end on the real broker path across two
+qualified legs (correction + effect adoption + outage + fallback in
+one turn; required-tool refusal with zero children; crash-at-boundary
+restarts truthful at the model, tool, and effect boundaries; Stop
+races fenced at both boundaries). The paired **opus audit verified the
+fallback table clause by clause: "PART B SOUND — story may close"** (3
+safe ledger notes: byte-length over-reservation; any-effect replay
+guard equivalent under the P=1 effect ceiling; dispatch-unknown
+correctly owned by the generic controller). Sweep: **6533 passed /
+zero branch-new** — third consecutive pure-baseline sweep.
+
 ## Problem
 
 The ruled Tool Capability Foundation is design-only. This story makes its

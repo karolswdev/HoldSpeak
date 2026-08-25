@@ -29,6 +29,8 @@ from holdspeak.services.tool_model_adapter import (
 from holdspeak.services.tool_turn_controller import (
     MODEL_TURN_TOOL_PRINCIPAL,
     TOOL_TURN_AUTHORITY,
+    ToolTurnRefused,
+    classify_tool_turn_disposition,
 )
 from holdspeak.services.tool_turn_service import ToolTurnFoundationService
 from tests.unit.test_phase143_inference_assignments import OWNER, _profile, _result_claim
@@ -80,6 +82,108 @@ def test_reference_adapter_renders_once_dispatches_once_and_parses_one_candidate
         pass
     else:  # pragma: no cover - an exact closed candidate must fail above
         raise AssertionError("adapter accepted more than one candidate")
+
+
+@pytest.mark.parametrize(
+    ("disposition", "limitation_allowed", "terminal", "correction", "continuation", "qualified"),
+    [
+        ("invalid_tool_call", False, False, True, False, True),
+        ("available", False, False, False, True, True),
+        # A service/network outage is typed tool evidence, not a provider error.
+        ("tool_unavailable_or_stale", False, False, False, False, False),
+        ("tool_unavailable_or_stale", True, False, False, True, True),
+        ("permission_denied", False, True, False, False, False),
+        ("policy_refused", False, True, False, False, False),
+        ("approval_refused", False, True, False, False, False),
+        ("owner_cancelled", False, True, False, False, False),
+        ("lease_expired", False, True, False, False, False),
+        ("effect_indeterminate", False, True, False, False, False),
+        ("provider_permanent", False, False, False, True, True),
+    ],
+)
+def test_ruled_tool_fallback_table_is_closed_and_never_launders_tool_events(
+    disposition: str,
+    limitation_allowed: bool,
+    terminal: bool,
+    correction: bool,
+    continuation: bool,
+    qualified: bool,
+) -> None:
+    """B3: each admissible tool-bearing disposition has one ruled outcome."""
+    decision = classify_tool_turn_disposition(
+        disposition, final_answer_may_name_limitation=limitation_allowed,
+    )
+    assert decision.terminal is terminal
+    assert decision.allow_corrective_model_step is correction
+    assert decision.allow_model_continuation is continuation
+    assert decision.requires_tool_qualified_fallback is qualified
+    with pytest.raises(ToolTurnRefused, match="tool_turn_disposition_unknown"):
+        classify_tool_turn_disposition("unclassified_tool_failure")
+
+
+def _qualified_started_turn(
+    db: Database, *, now: list[float], turn_id: str, max_provider_steps: int = 4,
+) -> ToolTurnFoundationService:
+    foundation = _tool_foundation(db, now)
+    _profile(
+        db, "qualified-correction-model",
+        claims=("language", _result_claim("agent.tool_turn"), "tool_turn"),
+        capability_manifest=_qualified_manifest(
+            "language", _result_claim("agent.tool_turn"), "tool_turn"
+        ),
+    )
+    _set_global_chain(
+        db, command_id=f"qualified-correction-chain-{turn_id}",
+        profiles=["qualified-correction-model"], foundation=foundation,
+    )
+    lease = _lease(_descriptor(), turn=turn_id, now=now[0])
+    lease["max_provider_steps"] = max_provider_steps
+    started = foundation.start(
+        OWNER, command_id=f"qualified-correction-start-{turn_id}", turn_id=turn_id,
+        lease_terms=lease, input_snapshot={"schema": "ToolTurnFoundationInput@1"},
+        deadline_at=now[0] + 20,
+    )
+    assert started["status"] == "started"
+    _configure(db).inference_runner._engine_factory = lambda _revision, **_kwargs: object()
+    return foundation
+
+
+def test_malformed_native_call_consumes_one_correction_without_tool_dispatch(tmp_path: Path) -> None:
+    """B3: malformed candidates use one bounded correction; Broker sees zero calls."""
+    now = [time.time()]
+    db = Database(tmp_path / "malformed-native-correction.db")
+    service = _qualified_started_turn(db, now=now, turn_id="correction-turn")
+
+    def malformed_step(command: str, reference: str) -> dict[str, object]:
+        step = service.stage_and_plan_model_step(
+            command_id=command, turn_id="correction-turn", planning_reference=reference,
+            payload={"question": "Validate native candidate", "tool_results": []},
+        )
+        return service.execute_model_step(
+            command_id=command, turn_id="correction-turn", model_step_id=step["id"],
+            model_adapter=DeterministicToolModelAdapter(),
+            provider_transport=DeterministicToolModelTransport({
+                "schema": "DeterministicToolModelResponse@1",
+                "candidate": {"kind": "tool_call", "provider_tool_call_id": f"{command}-call",
+                              "provider_call_ordinal": 1, "capability_id": "evidence.unknown_lookup",
+                              "arguments": {"note_id": "note-1"}},
+            }),
+        )
+
+    first = malformed_step("malformed-first", "malformed-first-material")
+    assert first["tool_call"] is None
+    assert first["tool_disposition"]["corrective_model_step_allowed"] is True
+    assert service.controller.reconstruct(TOOL_TURN_AUTHORITY, turn_id="correction-turn")["state"] == "tool_receipted"
+
+    # The correction itself is another separately receipted model child. A
+    # second malformed native call elects the terminal winner rather than looping.
+    second = malformed_step("malformed-second", "malformed-second-material")
+    assert second["tool_disposition"]["corrective_model_step_allowed"] is False
+    terminal = service.controller.reconstruct(TOOL_TURN_AUTHORITY, turn_id="correction-turn")
+    assert terminal["terminal_code"] == "invalid_tool_call_correction_exhausted"
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='tool.call'").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'").fetchone()[0] == 2
 
 
 def _close_tool_child(db: Database, tool_call_id: str) -> str:

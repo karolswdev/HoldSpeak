@@ -63,6 +63,64 @@ _MAX_WALL_SECONDS = 30
 _SAFE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$")
 _SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
 _TERMINAL = frozenset({"result_ready", "stopped", "failed", "indeterminate"})
+_TOOL_TERMINAL_DISPOSITIONS = frozenset({
+    "effect_indeterminate", "permission_denied", "policy_refused",
+    "approval_refused", "owner_cancelled", "deadline_exhausted", "lease_expired",
+})
+
+
+@dataclass(frozen=True)
+class ToolTurnFallbackDecision:
+    """Closed bridge from a tool-turn event to the ruled fallback disposition.
+
+    The generic fallback controller remains the authority for model-attempt
+    receipts.  This bridge owns the narrower facts that occur *after* a native
+    tool candidate or tool child result: it cannot turn a tool outage into a
+    provider failure, and it makes every terminal tool disposition explicit.
+    """
+
+    disposition: str
+    terminal: bool
+    allow_corrective_model_step: bool = False
+    allow_model_continuation: bool = False
+    requires_tool_qualified_fallback: bool = False
+
+
+def classify_tool_turn_disposition(
+    disposition: str,
+    *,
+    final_answer_may_name_limitation: bool = False,
+) -> ToolTurnFallbackDecision:
+    """Classify only the architecture's closed tool-bearing fallback table."""
+    if disposition == "invalid_tool_call":
+        return ToolTurnFallbackDecision(
+            disposition, terminal=False, allow_corrective_model_step=True,
+            requires_tool_qualified_fallback=True,
+        )
+    if disposition == "available":
+        return ToolTurnFallbackDecision(
+            disposition, terminal=False, allow_model_continuation=True,
+            requires_tool_qualified_fallback=True,
+        )
+    if disposition == "tool_unavailable_or_stale":
+        # A typed unavailable result is continuation material only where the
+        # frozen result schema explicitly authorizes the named limitation.  It
+        # is never itself a generic provider failure or automatic fallback.
+        return ToolTurnFallbackDecision(
+            disposition, terminal=False,
+            allow_model_continuation=final_answer_may_name_limitation,
+            requires_tool_qualified_fallback=final_answer_may_name_limitation,
+        )
+    if disposition in _TOOL_TERMINAL_DISPOSITIONS | {"tool_result_oversize", "tool_indeterminate"}:
+        return ToolTurnFallbackDecision(disposition, terminal=True)
+    if disposition in {"provider_permanent", "known_no_generation_transient", "invalid_typed_output", "local_capacity_unavailable", "context_overflow"}:
+        # These are closed *model* dispositions.  The generic controller may
+        # advance only through a route that this ToolTurn separately verifies.
+        return ToolTurnFallbackDecision(
+            disposition, terminal=False, allow_model_continuation=True,
+            requires_tool_qualified_fallback=True,
+        )
+    raise ToolTurnRefused("tool_turn_disposition_unknown")
 
 
 class ToolTurnError(RuntimeError):
@@ -544,6 +602,16 @@ class ToolTurnController:
                     conn.commit()
                     return {**result, "replayed": True}
                 term = lease.capability(capability)
+                if term["class"] == "effect_proposal":
+                    adopted = conn.execute(
+                        """SELECT 1 FROM tool_turn_effect_children
+                              WHERE turn_id=? AND state='adopted' LIMIT 1""",
+                        (turn,),
+                    ).fetchone()
+                    if adopted is not None:
+                        # A durable effect receipt is authority to adopt, never a
+                        # prompt for a correction/fallback model to execute again.
+                        raise ToolTurnRefused("receipted_effect_adopted")
                 try:
                     descriptor = self._projection.require(capability)
                     normalized_arguments = validate_closed_arguments(descriptor.argument_schema, args)
@@ -628,7 +696,7 @@ class ToolTurnController:
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             try:
-                row, _lease = self._live_turn(conn, turn, now)
+                row, lease = self._live_turn(conn, turn, now)
                 request_hash = sha256({"schema": "ToolTurnPlanModelStep@1", "turn_id": turn, "planning_reference": reference})
                 replay = conn.execute("SELECT * FROM tool_turn_commands WHERE command_id=?", (command,)).fetchone()
                 if replay is not None:
@@ -662,6 +730,11 @@ class ToolTurnController:
                     # reservation: persist it before returning the typed refusal.
                     conn.commit()
                     raise ToolTurnRefused("model_step_budget_exhausted")
+                # A new model step is the sole continuation seam. It re-checks
+                # durable result evidence and the complete frozen qualified route
+                # only after the terminal model-step budget election above.
+                self._validate_model_continuation(conn, row=row, lease=lease)
+                self._require_tool_qualified_route(conn, row=row, lease=lease)
                 step_id = "tms_" + uuid.uuid4().hex
                 conn.execute(
                     """INSERT INTO tool_turn_model_steps
@@ -748,14 +821,34 @@ class ToolTurnController:
         except ToolModelAdapterError as exc:
             raise ToolTurnRefused("tool_model_candidate_receipt_integrity_invalid") from exc
         # Candidate parsing is local, deterministic interpretation of the already
-        # elected child result.  Settle the child into the *actual next turn
-        # state*, rather than briefly lying that a tool-call continuation is
-        # merely ``reserved`` (the A5 audit ledger note).
+        # elected child result.  A malformed native candidate is explicitly a
+        # *tool* disposition: no Broker child is admitted, and it may consume one
+        # bounded correction step.  It must not be laundered into a model/provider
+        # failure merely because the physical model child succeeded.
+        invalid_reason = ""
+        if isinstance(candidate, ToolModelToolCallCandidate):
+            try:
+                self._validate_tool_candidate(lease, candidate.tool_call)
+            except ToolTurnRefused as exc:
+                invalid_reason = exc.code
         next_state = "tool_requested" if isinstance(candidate, ToolModelToolCallCandidate) else "result_ready"
         settled = self.settle_model_step(
             principal, command_id=f"settle-{hashlib.sha256(command.encode()).hexdigest()[:24]}",
             turn_id=turn, model_step_id=step_id, next_state=next_state,
         )
+        if invalid_reason:
+            disposition = self.record_invalid_tool_call(
+                principal,
+                command_id=f"invalid-{hashlib.sha256(command.encode()).hexdigest()[:24]}",
+                turn_id=turn,
+                model_step_id=step_id,
+                reason_code=invalid_reason,
+            )
+            return {
+                "schema": "ToolTurnModelStepOutcome@1", "model_step": settled,
+                "outcome": "succeeded", "candidate": candidate.to_dict(), "tool_call": None,
+                "tool_disposition": disposition,
+            }
         admitted = None
         if isinstance(candidate, ToolModelToolCallCandidate):
             admitted = self.admit_tool_call(
@@ -768,6 +861,75 @@ class ToolTurnController:
             "schema": "ToolTurnModelStepOutcome@1", "model_step": settled,
             "outcome": "succeeded", "candidate": candidate.to_dict(), "tool_call": admitted,
         }
+
+    def record_invalid_tool_call(
+        self,
+        principal: Principal,
+        *,
+        command_id: str,
+        turn_id: str,
+        model_step_id: str,
+        reason_code: str,
+    ) -> dict[str, Any]:
+        """Record one malformed native candidate without creating a tool child.
+
+        Exactly one corrective model step may follow a malformed call.  Its route
+        is re-verified when that step is planned, so any model fallback remains
+        inside the same frozen tool-qualified deployment chain and lease ceiling.
+        """
+        self._require_authority(principal)
+        command, turn, step_id, reason = (
+            _safe(command_id, field="command_id"), _safe(turn_id, field="turn_id"),
+            _safe(model_step_id, field="model_step_id"), _safe(reason_code, field="reason_code"),
+        )
+        decision = classify_tool_turn_disposition("invalid_tool_call")
+        request = {
+            "schema": "ToolTurnInvalidToolCall@1", "turn_id": turn,
+            "model_step_id": step_id, "reason_code": reason,
+        }
+        request_hash, now = sha256(request), float(self._clock())
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                replay = conn.execute("SELECT * FROM tool_turn_commands WHERE command_id=?", (command,)).fetchone()
+                if replay is not None:
+                    if str(replay["kind"]) != "reconcile" or str(replay["request_sha256"]) != request_hash:
+                        raise ToolTurnConflict("invalid tool call command changed")
+                    result = self._turn_projection(conn, turn)
+                    conn.commit()
+                    return {**result, "disposition": "invalid_tool_call", "replayed": True}
+                row, _lease = self._live_turn(conn, turn, now)
+                step = conn.execute(
+                    "SELECT * FROM tool_turn_model_steps WHERE id=? AND turn_id=?", (step_id, turn)
+                ).fetchone()
+                if step is None or str(step["state"]) != "receipted":
+                    raise ToolTurnRefused("invalid_tool_call_step_not_receipted")
+                corrections = int(conn.execute(
+                    "SELECT COUNT(*) FROM tool_turn_transitions WHERE turn_id=? AND code='invalid_tool_call'", (turn,)
+                ).fetchone()[0])
+                evidence = {"model_step_id": step_id, "reason_code": reason}
+                if corrections >= 1:
+                    self._terminalize(conn, row, "failed", "invalid_tool_call_correction_exhausted", "", now)
+                    result = {**self._turn_projection(conn, turn), "disposition": "invalid_tool_call", "corrective_model_step_allowed": False}
+                else:
+                    conn.execute(
+                        "UPDATE tool_turns SET state='tool_receipted',revision=revision+1,updated_at=? WHERE turn_id=?",
+                        (now, turn),
+                    )
+                    self._transition(
+                        conn, turn, str(row["state"]), "tool_receipted", "invalid_tool_call", evidence, now,
+                    )
+                    result = {
+                        **self._turn_projection(conn, turn), "disposition": decision.disposition,
+                        "corrective_model_step_allowed": decision.allow_corrective_model_step,
+                        "requires_tool_qualified_fallback": decision.requires_tool_qualified_fallback,
+                    }
+                self._command(conn, command, turn, "reconcile", request_hash, result, now)
+                conn.commit()
+                return result
+            except Exception:
+                conn.rollback()
+                raise
 
     def settle_model_step(
         self,
@@ -890,6 +1052,11 @@ class ToolTurnController:
             capability_revision=descriptor.revision, arguments=candidate.arguments,
             provider_call_ordinal=candidate.provider_call_ordinal,
         )
+        if reservation.get("replayed"):
+            # Stable native IDs adopt their immutable reservation/receipt.  In
+            # particular, a fallback model repeating an already receipted effect
+            # cannot even re-enter Broker admission under the old idempotency key.
+            return reservation
         admitted = self._tool_broker.admit(
             turn_id=turn, tool_call_id=str(reservation["id"]), descriptor=descriptor, candidate=candidate,
         )
@@ -1000,12 +1167,22 @@ class ToolTurnController:
                            WHERE id=? AND state='reserved'""",
                         (effect_state, receipt if effect_state == "adopted" else "", result_hash, disposition, effect["id"]),
                     )
-                terminal = envelope.status == "indeterminate"
-                if terminal:
-                    self._terminalize(conn, row, "indeterminate", "effect_indeterminate" if effect is not None else "tool_indeterminate", "", now)
+                classified_disposition = {
+                    "unavailable": "tool_unavailable_or_stale",
+                    "denied": "permission_denied",
+                    "oversize": "tool_result_oversize",
+                    "indeterminate": "effect_indeterminate" if effect is not None else "tool_indeterminate",
+                }.get(envelope.status, disposition)
+                decision = classify_tool_turn_disposition(
+                    classified_disposition,
+                    final_answer_may_name_limitation=envelope.final_answer_may_name_limitation,
+                )
+                if decision.terminal:
+                    terminal_state = "indeterminate" if classified_disposition in {"effect_indeterminate", "tool_indeterminate"} else "failed"
+                    self._terminalize(conn, row, terminal_state, classified_disposition, "", now)
                 else:
                     conn.execute("UPDATE tool_turns SET state='tool_receipted',revision=revision+1,updated_at=? WHERE turn_id=?", (now, turn))
-                    self._transition(conn, turn, str(row["state"]), "tool_receipted", disposition, {"tool_call_id": call_id, "receipt_id": receipt, "envelope": envelope.__dict__}, now)
+                    self._transition(conn, turn, str(row["state"]), "tool_receipted", classified_disposition, {"tool_call_id": call_id, "receipt_id": receipt, "envelope": envelope.__dict__}, now)
                 call = conn.execute("SELECT * FROM tool_turn_tool_calls WHERE id=?", (call_id,)).fetchone()
                 result = self._tool_call_projection(call)
                 self._command(conn, command, turn, "reconcile", request_hash, result, now)
@@ -1183,6 +1360,53 @@ class ToolTurnController:
                     WHERE c.turn_id=? ORDER BY c.tool_ordinal""",
                 (turn,),
             ).fetchall()
+            model_attempts = conn.execute(
+                """SELECT s.id AS model_step_id,a.id AS attempt_id,a.route_leg_ordinal,
+                          a.purpose,a.boundary,a.child_operation_id,a.disposition,a.outcome,
+                          a.child_receipt_sha256,p.profile_id,p.profile_revision
+                     FROM tool_turn_model_steps s
+                     LEFT JOIN inference_route_executions e ON e.id=s.route_execution_id
+                     LEFT JOIN inference_route_attempts a ON a.execution_id=e.id
+                     LEFT JOIN inference_route_plan_entries p
+                       ON p.plan_id=e.route_plan_id AND p.route_leg_ordinal=a.route_leg_ordinal
+                    WHERE s.turn_id=?
+                    ORDER BY s.ordinal,a.physical_attempt_ordinal""",
+                (turn,),
+            ).fetchall()
+        attempts_by_step: dict[str, list[dict[str, Any]]] = {}
+        for item in model_attempts:
+            if item["attempt_id"] is None:
+                continue
+            step_attempts = attempts_by_step.setdefault(str(item["model_step_id"]), [])
+            fallback_reason = "" if str(item["purpose"]) != "fallback" or not step_attempts else str(step_attempts[-1]["disposition"] or "")
+            step_attempts.append({
+                "attempt_id": str(item["attempt_id"]),
+                "route_leg_ordinal": int(item["route_leg_ordinal"]),
+                "profile_id": str(item["profile_id"]),
+                "profile_revision": int(item["profile_revision"]),
+                "boundary": str(item["boundary"]), "purpose": str(item["purpose"]),
+                "fallback_reason": fallback_reason,
+                "child_operation_id": str(item["child_operation_id"] or ""),
+                "receipt_sha256": str(item["child_receipt_sha256"] or ""),
+                "disposition": str(item["disposition"] or ""),
+                "outcome": str(item["outcome"] or ""),
+            })
+        tool_calls = [{
+            "tool_ordinal": int(item["tool_ordinal"]),
+            "provider_tool_ordinal": int(item["provider_tool_ordinal"]),
+            "capability_id": str(item["capability_id"]),
+            "exact_tool_used": str(item["capability_id"]), "state": str(item["state"]),
+            "broker_child_id": str(item["broker_child_id"]),
+            "receipt_id": str(item["receipt_id"]),
+            "source_result_receipt_id": str(item["receipt_id"]),
+            "disposition": str(item["disposition"]),
+            "effect": None if item["effect_state"] is None else {
+                "proposed": True, "executed": str(item["effect_state"]) == "adopted",
+                "state": str(item["effect_state"]),
+                "receipt_id": str(item["effect_receipt_id"]),
+                "disposition": str(item["effect_disposition"]),
+            },
+        } for item in calls]
         return {
             "schema": "ToolTurnReceipt@1",
             "turn_id": turn,
@@ -1196,19 +1420,15 @@ class ToolTurnController:
                 "route_execution_id": str(item["route_execution_id"]),
                 "state": str(item["state"]), "receipt_id": str(item["child_receipt_id"]),
                 "result_sha256": str(item["result_sha256"]),
+                # This is the owner-safe fallback disclosure: exact frozen model
+                # legs, actual boundary/egress, and why a later leg was used.
+                "model_attempts": attempts_by_step.get(str(item["id"]), []),
             } for item in steps],
-            "tool_calls": [{
-                "tool_ordinal": int(item["tool_ordinal"]),
-                "provider_tool_ordinal": int(item["provider_tool_ordinal"]),
-                "capability_id": str(item["capability_id"]), "state": str(item["state"]),
-                "broker_child_id": str(item["broker_child_id"]),
-                "receipt_id": str(item["receipt_id"]), "disposition": str(item["disposition"]),
-                "effect": None if item["effect_state"] is None else {
-                    "state": str(item["effect_state"]),
-                    "receipt_id": str(item["effect_receipt_id"]),
-                    "disposition": str(item["effect_disposition"]),
-                },
-            } for item in calls],
+            "tool_calls": tool_calls,
+            "tools_used": [{
+                "exact_tool_used": item["exact_tool_used"],
+                "source_result_receipt_id": item["source_result_receipt_id"],
+            } for item in tool_calls],
         }
 
     def reconstruct(self, principal: Principal, *, turn_id: str) -> dict[str, Any]:
@@ -1303,6 +1523,87 @@ class ToolTurnController:
         if sha256(normalized) != candidate.canonical_args_sha256:
             raise ToolTurnRefused("tool_call_argument_hash_invalid")
         return descriptor, term
+
+    def _validate_model_continuation(self, conn: Any, *, row: Any, lease: TurnCapabilityLease) -> None:
+        """Allow a later model child only from settled, expressly continuable tools."""
+        calls = conn.execute(
+            """SELECT c.id,c.state,c.disposition,r.envelope_json
+                 FROM tool_turn_tool_calls c
+                 LEFT JOIN tool_turn_tool_call_results r ON r.tool_call_id=c.id
+                WHERE c.turn_id=? ORDER BY c.provider_tool_ordinal""",
+            (str(row["turn_id"]),),
+        ).fetchall()
+        if not calls:
+            return
+        if str(row["state"]) not in {"tool_receipted", "reserved"}:
+            raise ToolTurnRefused("tool_turn_continuation_not_ready")
+        for call in calls:
+            if str(call["state"]) in {"reserved", "admitted"} or call["envelope_json"] is None:
+                raise ToolTurnRefused("tool_result_continuation_pending")
+            try:
+                raw = json.loads(str(call["envelope_json"]))
+                envelope = ToolResultEnvelope(
+                    status=raw["status"], result_sha256=raw["result_sha256"],
+                    result_bytes=raw["result_bytes"], result_tokens=raw["result_tokens"],
+                    final_answer_may_name_limitation=raw["final_answer_may_name_limitation"],
+                )
+            except (KeyError, TypeError, ValueError, ToolCapabilityError, json.JSONDecodeError) as exc:
+                self._terminalize(conn, row, "indeterminate", "tool_result_continuation_integrity_invalid", "", float(self._clock()))
+                raise ToolTurnRefused("tool_result_continuation_integrity_invalid") from exc
+            classified = {
+                "unavailable": "tool_unavailable_or_stale",
+                "denied": "permission_denied",
+                "oversize": "tool_result_oversize",
+                "indeterminate": "effect_indeterminate" if str(call["disposition"]) == "effect_indeterminate" else "tool_indeterminate",
+            }.get(envelope.status, envelope.status)
+            decision = classify_tool_turn_disposition(
+                classified,
+                final_answer_may_name_limitation=envelope.final_answer_may_name_limitation,
+            )
+            if decision.terminal:
+                state = "indeterminate" if classified in {"effect_indeterminate", "tool_indeterminate"} else "failed"
+                self._terminalize(conn, row, state, classified, "", float(self._clock()))
+                raise ToolTurnRefused(classified)
+            if classified == "tool_unavailable_or_stale" and not decision.allow_model_continuation:
+                raise ToolTurnRefused("tool_unavailable_or_stale")
+
+    def _require_tool_qualified_route(self, conn: Any, *, row: Any, lease: TurnCapabilityLease) -> None:
+        """Reconstruct a frozen tool route and reject every unqualified fallback leg.
+
+        Test-only lower-level controller fixtures can compose a non-tool route to
+        exercise ledger mechanics.  The production ``agent.tool_turn`` route is
+        the one that may dispatch a native dialect, and it is fail-closed here on
+        every initial/correction/fallback planning boundary.
+        """
+        if self._plans is None:
+            return
+        route_row = conn.execute(
+            "SELECT * FROM inference_route_plans WHERE id=?", (str(row["route_plan_id"]),)
+        ).fetchone()
+        if route_row is None:
+            raise ToolTurnRefused("tool_turn_route_integrity_invalid")
+        try:
+            route = self._plans._route_from_row(conn, route_row)
+        except Exception as exc:
+            raise ToolTurnRefused("tool_turn_route_integrity_invalid") from exc
+        if str(route["capability"]["id"]) != "agent.tool_turn":
+            return
+        palette_required = len(lease.terms["capabilities"])
+        boundaries = {str(item["boundary"]) for item in route["entries"]}
+        permitted_egress = set.intersection(*(
+            set(item["egress"]) for item in lease.terms["capabilities"]
+        ))
+        if not boundaries.issubset(permitted_egress):
+            raise ToolTurnRefused("tool_turn_fallback_egress_expansion")
+        for entry in route["entries"]:
+            qualification = entry.get("tool_qualification")
+            if not isinstance(qualification, Mapping) or (
+                qualification.get("structured_tool_use") != "qualified"
+                or type(qualification.get("qualified_palette")) is not int
+                or int(qualification["qualified_palette"]) < palette_required
+                or qualification.get("native_tool_dialect") in {None, "none"}
+            ):
+                raise ToolTurnRefused("tool_turn_fallback_not_qualified")
 
     @staticmethod
     def _budgets(lease: TurnCapabilityLease) -> dict[str, Any]:
@@ -1438,5 +1739,6 @@ class ToolTurnController:
 __all__ = [
     "BrokerToolCallPort", "MODEL_TURN_TOOL_PRINCIPAL", "TOOL_TURN_AUTHORITY",
     "ToolCallBrokerPort", "ToolTurnConflict", "ToolTurnController", "ToolTurnError",
-    "ToolTurnRefused", "TurnCapabilityLease",
+    "ToolTurnFallbackDecision", "ToolTurnRefused", "TurnCapabilityLease",
+    "classify_tool_turn_disposition",
 ]
