@@ -27,6 +27,11 @@ from .model_profile_service import (
     adapt_v1_profile,
     resolve_v1_profile_execution,
 )
+from .tool_capability_service import (
+    ToolCapabilityError,
+    ToolCapabilityFoundation,
+    parse_capability_manifest,
+)
 
 
 ASSIGNMENT_SCHEMA = "InferenceAssignment@1"
@@ -90,10 +95,14 @@ class InferenceAssignmentService:
         db: Any,
         *,
         registry: InferenceCapabilityRegistry | None = None,
+        tool_capability_foundation: ToolCapabilityFoundation | None = None,
     ) -> None:
         self._db = db
         self._registry = registry or process_inference_capability_registry()
         self._profiles = ModelProfileService(db)
+        # This is composition, not a caller flag: absent registration means a
+        # qualified offline manifest remains non-executable by design.
+        self._tool_capability_foundation = tool_capability_foundation
 
     @staticmethod
     def _require_owner(principal: Principal | None) -> None:
@@ -1573,8 +1582,8 @@ class InferenceAssignmentService:
             "profile_revision": entry["profile_revision"],
         }
 
-    @staticmethod
     def _incompatibility(
+        self,
         profile: Any,
         deployment: Any,
         claims: set[str],
@@ -1590,10 +1599,26 @@ class InferenceAssignmentService:
         typed_result_claims = {f"result_schema:{capability.output_schema_sha256}"}
         if req.structured_output and not (typed_result_claims & claims):
             return "structured_output_unsupported"
-        # Tool execution is intentionally fail-closed until Story 09 supplies
-        # the executable Tool Capability Foundation qualification manifest.
         if req.structured_tools:
-            return "structured_tools_unsupported"
+            # Legacy manifests deliberately parse as palette-zero unavailable;
+            # loading this release can never upgrade historic evidence.
+            try:
+                manifest, qualification = parse_capability_manifest(profile.capability_manifest)
+            except ToolCapabilityError:
+                return "tool_manifest_invalid"
+            deployment_manifest = str(getattr(deployment, "capability_sha256", "") or "")
+            if not deployment_manifest or manifest["sha256"] != deployment_manifest:
+                return "tool_manifest_deployment_mismatch"
+            foundation = self._tool_capability_foundation
+            if not isinstance(foundation, ToolCapabilityFoundation):
+                return "tool_capability_foundation_unavailable"
+            if qualification.structured_tool_use != "qualified":
+                return "structured_tools_unqualified"
+            if not foundation.ready_for(
+                palette=qualification.qualified_palette,
+                dialect=qualification.native_tool_dialect,
+            ):
+                return "tool_capability_foundation_unavailable"
         if req.vision and "vision" not in claims:
             return "vision_unsupported"
         if req.audio and "audio" not in claims and "audio" not in modalities:

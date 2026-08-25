@@ -52,7 +52,7 @@ Assignments.
 | HSEGHS001HS104-143-06 | Fallback Controller and Failure Law | done | [story-06-fallback-controller-failure-law](./story-06-fallback-controller-failure-law.md) | [evidence](./evidence-story-06.md) |
 | HSEGHS001HS104-143-07 | Thoughts Ask and Writing Adoption | done | [story-07-thoughts-ask-writing-adoption](./story-07-thoughts-ask-writing-adoption.md) | [evidence](./evidence-story-07.md) |
 | HSEGHS001HS104-143-08 | Meetings Speech and Background Adoption | done | [story-08-meetings-speech-background-adoption](./story-08-meetings-speech-background-adoption.md) | [evidence-story-08](./evidence-story-08.md) |
-| HSEGHS001HS104-143-09 | Tool Capability Foundation and Safe Routing | backlog | [story-09-tool-turn-routing-safe-fallback](./story-09-tool-turn-routing-safe-fallback.md) | - |
+| HSEGHS001HS104-143-09 | Tool Capability Foundation and Safe Routing | in-progress | [story-09-tool-turn-routing-safe-fallback](./story-09-tool-turn-routing-safe-fallback.md) | - |
 | HSEGHS001HS104-143-10 | Agents Workbenches and Recipes Adoption | backlog | [story-10-agents-workbenches-recipes-adoption](./story-10-agents-workbenches-recipes-adoption.md) | - |
 | HSEGHS001HS104-143-11 | HTTP MCP Sync and Compatibility | backlog | [story-11-http-mcp-sync-compatibility](./story-11-http-mcp-sync-compatibility.md) | - |
 | HSEGHS001HS104-143-12 | Model Library and Providers | backlog | [story-12-model-library-providers](./story-12-model-library-providers.md) | - |

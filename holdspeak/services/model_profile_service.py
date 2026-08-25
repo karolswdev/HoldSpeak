@@ -21,6 +21,7 @@ from typing import Any, Callable, Mapping
 from ..deployment_revisions import DeploymentIdentity, DeploymentRevision
 from ..principals import Principal, PrincipalKind
 from .errors import ConflictError, NotFound, ServiceError, ValidationError
+from .tool_capability_service import ToolCapabilityError, parse_capability_manifest
 
 
 _PROFILE_ID = re.compile(r"^[a-z][a-z0-9_-]{0,95}$")
@@ -1014,11 +1015,15 @@ class ModelProfileService:
             allowed=_TOKENIZER_REQUIREMENT_FIELDS,
         )
         manifest = _require_json(body["capability_manifest"], field="capability_manifest", kind=dict)
-        if set(manifest) != {"revision", "sha256", "claims"}:
-            raise ValidationError("capability_manifest has an invalid shape", code="model_profile_invalid")
-        if not isinstance(manifest["revision"], (str, int)) or not _SHA256.fullmatch(str(manifest["sha256"])):
-            raise ValidationError("capability_manifest is invalid", code="model_profile_invalid")
-        _require_json(manifest["claims"], field="capability_manifest.claims", kind=list)
+        try:
+            manifest, _qualification = parse_capability_manifest(manifest)
+        except ToolCapabilityError as exc:
+            code = (
+                "model_profile_manifest_hash_invalid"
+                if "hash" in str(exc)
+                else "model_profile_invalid"
+            )
+            raise ValidationError("capability_manifest is invalid", code=code) from exc
         presentation = _closed_object(
             body["safe_presentation"],
             field="safe_presentation",
@@ -1053,7 +1058,7 @@ class ModelProfileService:
             (presentation, "safe_presentation"),
         ):
             _bounded_json(value, field=field)
-        manifest_evidence = {"revision": manifest["revision"], "claims": manifest["claims"]}
+        manifest_evidence = {key: value for key, value in manifest.items() if key != "sha256"}
         if str(manifest["sha256"]) != _sha256(manifest_evidence):
             raise ValidationError(
                 "capability_manifest hash does not match its evidence",

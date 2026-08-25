@@ -34,6 +34,7 @@ from .model_profile_service import (
     ModelProfileService,
     adapt_v1_profile,
 )
+from .tool_capability_service import ToolCapabilityFoundation
 
 
 ROUTE_PLAN_SCHEMA = "InferenceRoutePlan@1"
@@ -125,10 +126,15 @@ class InferenceRoutePlanService:
         clock: Any = _now,
         operation_evidence_providers: Sequence[RouteAdmissionEvidenceProvider] = (),
         service_route_policies: ServiceRoutePolicyRegistry | None = None,
+        tool_capability_foundation: ToolCapabilityFoundation | None = None,
     ) -> None:
         self._db = db
         self._registry = registry or process_inference_capability_registry()
-        self._assignments = InferenceAssignmentService(db, registry=self._registry)
+        self._assignments = InferenceAssignmentService(
+            db,
+            registry=self._registry,
+            tool_capability_foundation=tool_capability_foundation,
+        )
         self._profiles = ModelProfileService(db)
         self._clock = clock
         self._service_route_policies = (
@@ -1332,6 +1338,12 @@ class InferenceRoutePlanService:
                     capability,
                 )
                 if reason:
+                    if capability.requires.structured_tools:
+                        raise ValidationError(
+                            "This operation requires an AI with tool use.",
+                            code="tool_required_unavailable",
+                            context={"reason_code": reason, "repair": "Use an AI with tool use"},
+                        )
                     raise ValidationError("Model profile is no longer compatible.", code="no_compatible_assignment", context={"reason_code": reason})
             entries.append({
                 "ordinal": expected,

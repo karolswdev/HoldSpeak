@@ -195,7 +195,7 @@ def test_reconcile_no_alter_on_current_db(fresh_conn: sqlite3.Connection) -> Non
 
 def test_reconcile_widens_historical_parent_kind_check_without_row_loss(tmp_path: Path) -> None:
     """A widened parent vocabulary heals an owner-era DB, not only fresh schema."""
-    old_schema = SCHEMA_SQL.replace(",'rails.observer-batch'", "")
+    old_schema = SCHEMA_SQL.replace(",'rails.observer-batch','tool.turn'", "")
     assert old_schema != SCHEMA_SQL
     conn = sqlite3.connect(str(tmp_path / "old-parent-kind.db"))
     conn.row_factory = sqlite3.Row
@@ -251,6 +251,19 @@ def test_reconcile_widens_historical_parent_kind_check_without_row_loss(tmp_path
             (
                 "rails-parent", "rails-native", "rails.observer-batch", "rails:batch", "2",
                 '{"event_batch_sha256":"sha256:proof"}', 9999.0, 1, "", "", 1, "[]", "OPEN", "", None,
+                1000.0, 1000.0,
+            ),
+        )
+        operation("tool-parent", "tool-native", "tool.turn")
+        conn.execute(
+            """INSERT INTO kernel_parent_runs
+               (operation_id,native_id,kind,definition_ref,definition_revision,input_json,
+                deadline_at,execution_epoch,planned_node,active_child_invocation_id,child_budget,
+                children_json,state,lease_process_id,lease_heartbeat_at,created_at,updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                "tool-parent", "tool-native", "tool.turn", "tool.turn:foundation", "1",
+                '{"schema":"ToolTurnParentInput@1"}', 9999.0, 1, "", "", 1, "[]", "OPEN", "", None,
                 1000.0, 1000.0,
             ),
         )
