@@ -47,9 +47,10 @@ def _profile(
     ready: bool = True,
     context_ceiling: int = 32768,
     modalities: tuple[str, ...] = ("language",),
+    capability_manifest: dict[str, object] | None = None,
 ) -> str:
     profiles = ModelProfileService(db)
-    manifest = _manifest(*claims)
+    manifest = capability_manifest or _manifest(*claims)
     profiles.create_profile(
         OWNER,
         {

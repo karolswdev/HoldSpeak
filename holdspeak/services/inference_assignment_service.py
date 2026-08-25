@@ -104,6 +104,25 @@ class InferenceAssignmentService:
         # qualified offline manifest remains non-executable by design.
         self._tool_capability_foundation = tool_capability_foundation
 
+    def bind_tool_capability_foundation(
+        self, foundation: ToolCapabilityFoundation
+    ) -> None:
+        """Install the one process-owned executable foundation.
+
+        Route/assignment callers cannot provide this as request data.  Startup
+        composition binds the concrete ToolTurn controller exactly once; an
+        attempted replacement would make a previously saved qualification mean
+        something different and is therefore refused.
+        """
+        if not isinstance(foundation, ToolCapabilityFoundation):
+            raise ValueError("tool capability foundation is invalid")
+        if (
+            self._tool_capability_foundation is not None
+            and self._tool_capability_foundation is not foundation
+        ):
+            raise ValueError("tool capability foundation is already bound")
+        self._tool_capability_foundation = foundation
+
     @staticmethod
     def _require_owner(principal: Principal | None) -> None:
         if principal is None or principal.kind is not PrincipalKind.OWNER:

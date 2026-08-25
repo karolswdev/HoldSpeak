@@ -80,6 +80,32 @@ transition to refine when B adds multi-step loops. Sweep: **6511
 passed / 48 failed / ZERO branch-new — not one non-baseline name.**
 Part B (tool-qualified routing and safe fallback, B1–B4) may begin.
 
+**B1+B2 SHIPPED (2026-08-25).** B1: required-tool routes include ONLY
+deployments with exact executable tool qualification (qualified
+structured tools, positive palette, native dialect, matching frozen
+manifest + deployment capability hashes, composed foundation);
+unqualified deployments stay lawful for ordinary work but are
+invisible to tool routes; no qualified candidate refuses
+`tool_required_unavailable` before ANY dispatch; frozen qualified
+routes reconstruct their captured revision — a later manifest edit
+cannot retarget (acceptance criterion 4 at routing depth). The
+fallback controller proves a model route is bound to a live exact
+ToolTurn lease before nonzero tool policy is permitted. B2: the
+internal service-owned `ToolTurnFoundationService` (ORCH-CALL 6 —
+no production surface imports it, grep-proven as a test) composes a
+complete real multi-step turn — model step → tool call → continuation
+model step → final answer — with two separately admitted
+`inference.invoke` children, a separately admitted `tool.call` child,
+individual receipts, and a safe `ToolTurnReceipt@1` projection
+(acceptance criterion 5 end-to-end). The opus ledger note is
+resolved: the turn state machine is now truthful across the loop
+(model_running → tool_requested on a tool candidate, → result_ready
+on a final answer; budget exhaustion durably terminalizes
+`model_step_budget_exhausted` BEFORE raising; Stop fences the parent
+bundle first, then the turn, at both model and tool boundaries).
+Sweep: **6518 passed / zero branch-new.** Next: B3 (the ruled
+tool-qualified correction/fallback table), then B4.
+
 ## Problem
 
 The ruled Tool Capability Foundation is design-only. This story makes its

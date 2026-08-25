@@ -172,7 +172,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
-    "holdspeak/services/inference_adoption_service.py:1393|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    "holdspeak/services/inference_adoption_service.py:1407|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
     ),
     "holdspeak/services/recipe_service.py:52|RecipeService._invoke|call": ProposedRoute(

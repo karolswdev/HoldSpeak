@@ -182,7 +182,7 @@ PROFILE_ID_CLASSIFICATIONS = {
     }},
     **{site: "immutable evidence" for site in {
         "holdspeak/services/model_profile_service.py:1196:profile_id",
-        "holdspeak/services/inference_assignment_service.py:1534:profile_id",
+        "holdspeak/services/inference_assignment_service.py:1553:profile_id",
     }},
     **{site: "credential/provider identity" for site in {
         "holdspeak/intel/providers.py:687:profile_id", "holdspeak/intel/providers.py:694:profile_id",

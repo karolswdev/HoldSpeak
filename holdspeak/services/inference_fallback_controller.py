@@ -317,7 +317,29 @@ class InferenceFallbackController:
                 if int(budget["reserved_cost_units"]) != 0:
                     raise ValidationError("Cost reservation is unsupported.", code="inference_route_cost_budget_unit_unsupported")
                 if route["retry_policy"]["tool_call_budget"] is not None or int(budget["reserved_tool_calls"]) != 0:
-                    raise ValidationError("Tool lease budget evidence is required.", code="inference_route_tool_budget_evidence_missing")
+                    # The generic controller deliberately has no tool authority.
+                    # A ToolTurn model step is the one narrow exception: its
+                    # independently frozen lease/reservation ledger owns tool
+                    # calls, while this controller still owns only the physical
+                    # model attempt.  The durable exact step/execution binding is
+                    # evidence; a caller cannot assert a boolean or borrow a
+                    # lease from a different turn.
+                    tool_turn = conn.execute(
+                        """SELECT t.turn_id,t.state,l.state AS lease_state
+                             FROM tool_turn_model_steps s
+                             JOIN tool_turns t ON t.turn_id=s.turn_id
+                             JOIN turn_capability_leases l ON l.lease_id=t.lease_id
+                            WHERE s.route_execution_id=?
+                              AND s.lease_sha256=t.lease_sha256
+                              AND l.terms_sha256=t.lease_sha256""",
+                        (execution,),
+                    ).fetchone()
+                    if (
+                        tool_turn is None
+                        or str(tool_turn["state"]) in {"result_ready", "stopped", "failed", "indeterminate"}
+                        or str(tool_turn["lease_state"]) != "active"
+                    ):
+                        raise ValidationError("Tool lease budget evidence is required.", code="inference_route_tool_budget_evidence_missing")
                 tokens = int(budget["total_tokens"])
                 total_limit = int(row["total_attempt_limit"])
                 if int(row["attempts_reserved"]) + 1 > total_limit:

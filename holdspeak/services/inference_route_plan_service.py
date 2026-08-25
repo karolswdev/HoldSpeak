@@ -34,7 +34,11 @@ from .model_profile_service import (
     ModelProfileService,
     adapt_v1_profile,
 )
-from .tool_capability_service import ToolCapabilityFoundation
+from .tool_capability_service import (
+    ToolCapabilityError,
+    ToolCapabilityFoundation,
+    parse_capability_manifest,
+)
 
 
 ROUTE_PLAN_SCHEMA = "InferenceRoutePlan@1"
@@ -159,6 +163,48 @@ class InferenceRoutePlanService:
             if owned & claims:
                 raise ValueError("ambiguous route admission evidence provider")
             owned.update(claims)
+
+    def bind_tool_capability_foundation(
+        self, foundation: ToolCapabilityFoundation
+    ) -> None:
+        """Bind the executable ToolTurn foundation through startup composition."""
+        self._assignments.bind_tool_capability_foundation(foundation)
+
+    def register_operation_evidence_provider(
+        self, provider: RouteAdmissionEvidenceProvider
+    ) -> None:
+        """Register one internal evidence owner before any route is frozen.
+
+        This remains a composition seam, not a feature request surface.  A
+        ToolTurn parent needs its own evidence owner so no Ask/Recipe/Workbench
+        adopter can accidentally become the first tool-bearing executor.
+        """
+        _safe_id(provider.id, field="evidence_provider_id")
+        if (
+            type(provider.revision) is not int
+            or provider.revision < 1
+            or not callable(provider.freeze)
+            or not callable(provider.reconstruct)
+            or (provider.reconstruct_attempt_budgets is not None and not callable(provider.reconstruct_attempt_budgets))
+            or (provider.freeze_resolved is not None and not callable(provider.freeze_resolved))
+        ):
+            raise ValueError("invalid route admission evidence provider")
+        if provider.id in self._operation_evidence_providers:
+            raise ValueError("duplicate route admission evidence provider")
+        claims = {
+            (capability, policy)
+            for capability in provider.capabilities
+            for policy in provider.operation_policy_revisions
+        }
+        existing = {
+            (capability, policy)
+            for registered in self._operation_evidence_providers.values()
+            for capability in registered.capabilities
+            for policy in registered.operation_policy_revisions
+        }
+        if claims & existing:
+            raise ValueError("ambiguous route admission evidence provider")
+        self._operation_evidence_providers[provider.id] = provider
 
     def resolve_route_plan(
         self,
@@ -1261,8 +1307,9 @@ class InferenceRoutePlanService:
         entries: list[dict[str, Any]] = []
         revisions: list[DeploymentRevision] = []
         preflight: list[dict[str, Any]] = []
-        for expected, value in enumerate(values, 1):
-            if int(value["ordinal"]) != expected:
+        skipped_tool_reasons: list[str] = []
+        for source_ordinal, value in enumerate(values, 1):
+            if int(value["ordinal"]) != source_ordinal:
                 raise ConflictError("Assignment leg order is invalid.", code="inference_route_plan_integrity_invalid")
             if int(value.get("profile_schema_version", 2)) == 1:
                 source_id = str(value["profile_id"]).removeprefix("legacy-")
@@ -1321,14 +1368,16 @@ class InferenceRoutePlanService:
                 deployment = self._profiles._deployment_from_row(deployment_row)
                 context = {"mode": profile["context_support"], "maximum_tokens": int(deployment.context_ceiling or 0)}
             boundary = _BOUNDARIES.get(str(deployment.boundary))
-            if boundary not in capability.allowed_boundaries:
-                raise ValidationError("Model boundary is incompatible.", code="inference_route_boundary_unsupported")
             manifest = profile["capability_manifest"]
-            if int(value.get("profile_schema_version", 2)) == 1:
+            reason: str | None = None
+            qualification = None
+            if boundary not in capability.allowed_boundaries:
+                reason = "boundary_unsupported"
+            elif int(value.get("profile_schema_version", 2)) == 1:
                 if capability.requires.structured_output or capability.requires.structured_tools:
-                    raise ValidationError("Legacy model lacks governed structured capability evidence.", code="no_compatible_assignment")
-                if int(context["maximum_tokens"]) < capability.requires.minimum_context_tokens:
-                    raise ValidationError("Legacy model context is incompatible.", code="no_compatible_assignment")
+                    reason = "structured_tools_unsupported" if capability.requires.structured_tools else "structured_output_unsupported"
+                elif int(context["maximum_tokens"]) < capability.requires.minimum_context_tokens:
+                    reason = "context_unsupported"
             else:
                 reason = self._assignments._incompatibility(
                     profile_obj,
@@ -1337,16 +1386,38 @@ class InferenceRoutePlanService:
                     set(profile_obj.supported_modalities),
                     capability,
                 )
-                if reason:
-                    if capability.requires.structured_tools:
-                        raise ValidationError(
-                            "This operation requires an AI with tool use.",
-                            code="tool_required_unavailable",
-                            context={"reason_code": reason, "repair": "Use an AI with tool use"},
-                        )
-                    raise ValidationError("Model profile is no longer compatible.", code="no_compatible_assignment", context={"reason_code": reason})
-            entries.append({
-                "ordinal": expected,
+                if capability.requires.structured_tools and reason is None:
+                    # The assignment predicate proves compatibility, but route
+                    # resolution carries the exact manifest qualification as
+                    # frozen evidence.  It is reconstructed from the immutable
+                    # profile revision, never a current deployment head.
+                    try:
+                        parsed_manifest, qualification = parse_capability_manifest(manifest)
+                    except ToolCapabilityError:
+                        reason = "tool_manifest_invalid"
+                    else:
+                        if (
+                            parsed_manifest["sha256"] != str(deployment.capability_sha256)
+                            or qualification.structured_tool_use != "qualified"
+                            or qualification.qualified_palette < 1
+                            or qualification.native_tool_dialect == "none"
+                        ):
+                            reason = "structured_tools_unqualified"
+            if reason:
+                if capability.requires.structured_tools:
+                    # A saved chain can become invalid after its original save
+                    # (or predate Foundation composition).  Tool routes select
+                    # only exact qualified revisions, never retarget or dispatch
+                    # an unqualified leg; its presence remains lawful for
+                    # ordinary no-tool capabilities.
+                    skipped_tool_reasons.append(reason)
+                    continue
+                if reason == "boundary_unsupported":
+                    raise ValidationError("Model boundary is incompatible.", code="inference_route_boundary_unsupported")
+                raise ValidationError("Model profile is no longer compatible.", code="no_compatible_assignment", context={"reason_code": reason})
+            route_ordinal = len(entries) + 1
+            route_entry = {
+                "ordinal": route_ordinal,
                 "profile_id": str(value["profile_id"]),
                 "profile_revision": int(value["profile_revision"]),
                 "profile_schema_version": int(value.get("profile_schema_version", 2)),
@@ -1358,7 +1429,15 @@ class InferenceRoutePlanService:
                 "capability_manifest_sha256": _hash(manifest["sha256"], field="capability_manifest_sha256"),
                 "boundary": boundary,
                 "context_support": self._context_support(context),
-            })
+            }
+            if capability.requires.structured_tools:
+                if qualification is None:  # pragma: no cover - branch is guarded above
+                    raise ValidationError("Tool qualification is missing.", code="tool_required_unavailable")
+                route_entry.update({
+                    "source_assignment_ordinal": source_ordinal,
+                    "tool_qualification": qualification.to_dict(),
+                })
+            entries.append(route_entry)
             revisions.append(deployment)
             # A migrated built-in Whisper runtime has no verified artifact file
             # to observe before it is first loaded. For its two speech
@@ -1390,10 +1469,19 @@ class InferenceRoutePlanService:
                 readiness in {"ready", "unknown"} or unloaded_local_speech or unloaded_local_rails
             )
             preflight.append({
-                "route_leg_ordinal": expected,
+                "route_leg_ordinal": route_ordinal,
                 "eligibility": "executable" if executable else "known_preflight_unavailable",
                 "reason_code": None if executable else ("binding_disabled" if not enabled else "binding_not_ready"),
             })
+        if capability.requires.structured_tools and not entries:
+            raise ValidationError(
+                "This operation requires an AI with tool use.",
+                code="tool_required_unavailable",
+                context={
+                    "reason_code": skipped_tool_reasons[0] if skipped_tool_reasons else "structured_tools_unqualified",
+                    "repair": "Use an AI with tool use",
+                },
+            )
         return entries, revisions, preflight
 
     @staticmethod
@@ -1768,9 +1856,28 @@ class InferenceRoutePlanService:
                 if source_row is None or str(source_row["sha256"]) != material["source"]["assignment_sha256"]:
                     raise ValueError("assignment")
                 source_material = self._assignments._assignment_material(conn, source_row)
-                assignment_entries = [{key: entry[key] for key in ("ordinal", "profile_id", "profile_revision", "profile_schema_version")} for entry in material["entries"]]
-                if source_material["entries"] != assignment_entries:
-                    raise ValueError("assignment chain")
+                if all("source_assignment_ordinal" in entry for entry in material["entries"]):
+                    source_entries = source_material["entries"]
+                    prior = 0
+                    for entry in material["entries"]:
+                        source_ordinal = int(entry["source_assignment_ordinal"])
+                        if source_ordinal <= prior or source_ordinal > len(source_entries):
+                            raise ValueError("tool assignment selection")
+                        expected_source = source_entries[source_ordinal - 1]
+                        selected = {
+                            key: entry[key]
+                            for key in ("profile_id", "profile_revision", "profile_schema_version")
+                        }
+                        if selected != {
+                            key: expected_source[key]
+                            for key in ("profile_id", "profile_revision", "profile_schema_version")
+                        }:
+                            raise ValueError("tool assignment selection")
+                        prior = source_ordinal
+                else:
+                    assignment_entries = [{key: entry[key] for key in ("ordinal", "profile_id", "profile_revision", "profile_schema_version")} for entry in material["entries"]]
+                    if source_material["entries"] != assignment_entries:
+                        raise ValueError("assignment chain")
             for entry in material["entries"]:
                 if entry["profile_schema_version"] == 1:
                     continue
@@ -1787,6 +1894,18 @@ class InferenceRoutePlanService:
                 deployment = self._profiles._deployment_from_row(deployment_row)
                 if _BOUNDARIES.get(deployment.boundary) != entry["boundary"] or entry["context_support"] != {"mode": profile.context_support, "maximum_tokens": int(deployment.context_ceiling or 0)}:
                     raise ValueError("deployment facts")
+                if "tool_qualification" in entry:
+                    frozen_manifest, frozen_qualification = parse_capability_manifest(
+                        profile.capability_manifest
+                    )
+                    if (
+                        frozen_manifest["sha256"] != str(deployment.capability_sha256)
+                        or frozen_qualification.to_dict() != entry["tool_qualification"]
+                        or frozen_qualification.structured_tool_use != "qualified"
+                        or frozen_qualification.qualified_palette < 1
+                        or frozen_qualification.native_tool_dialect == "none"
+                    ):
+                        raise ValueError("tool qualification facts")
             return {**material, "sha256": digest}
         except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             raise ConflictError("Stored route plan integrity could not be verified.", code="inference_route_plan_integrity_invalid") from exc
@@ -1917,11 +2036,52 @@ class InferenceRoutePlanService:
         retry_keys = {"id", "revision", "sha256", "per_entry_attempts", "total_physical_attempts", "deadline_ms", "token_budget", "cost_budget", "tool_call_budget", "fallback_dispositions", "retryable_dispositions"}
         if set(material["retry_policy"]) != retry_keys or not 1 <= len(material["entries"]) <= 4:
             raise ValueError("retry shape")
+        base_entry_keys = {
+            "ordinal", "profile_id", "profile_revision", "profile_schema_version",
+            "binding_id", "binding_revision", "deployment_head_id",
+            "deployment_configuration_revision", "deployment_revision_id",
+            "capability_manifest_sha256", "boundary", "context_support",
+        }
+        qualified_entry_keys = base_entry_keys | {
+            "source_assignment_ordinal", "tool_qualification",
+        }
+        saw_qualified = False
         for ordinal, entry in enumerate(material["entries"], 1):
-            if set(entry) != {"ordinal", "profile_id", "profile_revision", "profile_schema_version", "binding_id", "binding_revision", "deployment_head_id", "deployment_configuration_revision", "deployment_revision_id", "capability_manifest_sha256", "boundary", "context_support"} or entry["ordinal"] != ordinal:
+            keys = set(entry)
+            if (keys != base_entry_keys and keys != qualified_entry_keys) or entry["ordinal"] != ordinal:
                 raise ValueError("entry shape")
+            if keys == qualified_entry_keys:
+                saw_qualified = True
+                if (
+                    type(entry["source_assignment_ordinal"]) is not int
+                    or entry["source_assignment_ordinal"] < 1
+                ):
+                    raise ValueError("source assignment ordinal")
+                qualification = entry["tool_qualification"]
+                if not isinstance(qualification, Mapping):
+                    raise ValueError("tool qualification")
+                # Parses the nested digest and rejects legacy/palette-zero or
+                # post-hoc shape changes without consulting current config.
+                _manifest, parsed = parse_capability_manifest({
+                    "revision": "route-frozen-tool-qualification",
+                    "claims": [],
+                    "tool_qualification": qualification,
+                    "sha256": _sha256({
+                        "revision": "route-frozen-tool-qualification",
+                        "claims": [],
+                        "tool_qualification": qualification,
+                    }),
+                })
+                if (
+                    parsed.structured_tool_use != "qualified"
+                    or parsed.qualified_palette < 1
+                    or parsed.native_tool_dialect == "none"
+                ):
+                    raise ValueError("tool qualification")
             self._context_support(entry["context_support"])
             _hash(entry["capability_manifest_sha256"], field="capability_manifest_sha256")
+        if saw_qualified and any(set(entry) != qualified_entry_keys for entry in material["entries"]):
+            raise ValueError("mixed tool qualification route")
 
 
 __all__ = [

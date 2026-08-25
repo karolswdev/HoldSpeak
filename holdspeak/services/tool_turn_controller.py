@@ -456,6 +456,10 @@ class ToolTurnController:
                 row, lease = self._live_turn(conn, turn, now)
                 ordinal = int(conn.execute("SELECT COALESCE(MAX(ordinal),0)+1 FROM tool_turn_model_steps WHERE turn_id=?", (turn,)).fetchone()[0])
                 if ordinal > int(lease.terms["max_provider_steps"]):
+                    self._terminalize(conn, row, "failed", "model_step_budget_exhausted", "", now)
+                    # This is a terminal election, not a failed prospective
+                    # reservation: persist it before returning the typed refusal.
+                    conn.commit()
                     raise ToolTurnRefused("model_step_budget_exhausted")
                 step_id = "tms_" + uuid.uuid4().hex
                 conn.execute(
@@ -589,8 +593,9 @@ class ToolTurnController:
                 )
                 result = self._tool_call_projection(conn.execute("SELECT * FROM tool_turn_tool_calls WHERE id=?", (call_id,)).fetchone())
                 self._command(conn, command, turn, "reserve_tool_call", request_hash, result, now)
-                self._transition(conn, turn, str(turn_row["state"]), "tool_requested", "tool_call_reserved", result, now)
-                conn.execute("UPDATE tool_turns SET state='tool_requested',revision=revision+1,updated_at=? WHERE turn_id=?", (now, turn))
+                if str(turn_row["state"]) != "tool_requested":
+                    self._transition(conn, turn, str(turn_row["state"]), "tool_requested", "tool_call_reserved", result, now)
+                    conn.execute("UPDATE tool_turns SET state='tool_requested',revision=revision+1,updated_at=? WHERE turn_id=?", (now, turn))
                 conn.commit()
                 return result
             except Exception:
@@ -652,6 +657,10 @@ class ToolTurnController:
                 ).fetchone()[0])
                 lease = self._load_lease(conn, row)
                 if ordinal > int(lease.terms["max_provider_steps"]):
+                    self._terminalize(conn, row, "failed", "model_step_budget_exhausted", "", now)
+                    # This is a terminal election, not a failed prospective
+                    # reservation: persist it before returning the typed refusal.
+                    conn.commit()
                     raise ToolTurnRefused("model_step_budget_exhausted")
                 step_id = "tms_" + uuid.uuid4().hex
                 conn.execute(
@@ -734,14 +743,19 @@ class ToolTurnController:
                 "schema": "ToolTurnModelStepOutcome@1", "model_step": self._model_step_projection(step),
                 "outcome": str(outcome.get("outcome") or "failed"), "candidate": None,
             }
-        settled = self.settle_model_step(
-            principal, command_id=f"settle-{hashlib.sha256(command.encode()).hexdigest()[:24]}",
-            turn_id=turn, model_step_id=step_id,
-        )
         try:
             candidate = bridge.candidate_for_result(outcome["result"])
         except ToolModelAdapterError as exc:
             raise ToolTurnRefused("tool_model_candidate_receipt_integrity_invalid") from exc
+        # Candidate parsing is local, deterministic interpretation of the already
+        # elected child result.  Settle the child into the *actual next turn
+        # state*, rather than briefly lying that a tool-call continuation is
+        # merely ``reserved`` (the A5 audit ledger note).
+        next_state = "tool_requested" if isinstance(candidate, ToolModelToolCallCandidate) else "result_ready"
+        settled = self.settle_model_step(
+            principal, command_id=f"settle-{hashlib.sha256(command.encode()).hexdigest()[:24]}",
+            turn_id=turn, model_step_id=step_id, next_state=next_state,
+        )
         admitted = None
         if isinstance(candidate, ToolModelToolCallCandidate):
             admitted = self.admit_tool_call(
@@ -762,13 +776,16 @@ class ToolTurnController:
         command_id: str,
         turn_id: str,
         model_step_id: str,
+        next_state: str,
     ) -> dict[str, Any]:
-        """Adopt only the fallback controller's durable winning child receipt."""
+        """Adopt a model child into its lawful model-answer or tool-call state."""
         self._require_authority(principal)
         command, turn, step_id = (
             _safe(command_id, field="command_id"), _safe(turn_id, field="turn_id"),
             _safe(model_step_id, field="model_step_id"),
         )
+        if next_state not in {"tool_requested", "result_ready"}:
+            raise ToolTurnRefused("model_step_next_state_invalid")
         now = float(self._clock())
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
@@ -776,7 +793,10 @@ class ToolTurnController:
                 step = conn.execute("SELECT * FROM tool_turn_model_steps WHERE id=? AND turn_id=?", (step_id, turn)).fetchone()
                 if step is None:
                     raise ToolTurnRefused("model_step_not_found")
-                request_hash = sha256({"schema": "ToolTurnSettleModelStep@1", "turn_id": turn, "model_step_id": step_id})
+                request_hash = sha256({
+                    "schema": "ToolTurnSettleModelStep@1", "turn_id": turn,
+                    "model_step_id": step_id, "next_state": next_state,
+                })
                 replay = conn.execute("SELECT * FROM tool_turn_commands WHERE command_id=?", (command,)).fetchone()
                 if replay is not None:
                     if str(replay["kind"]) != "reconcile" or str(replay["request_sha256"]) != request_hash:
@@ -811,11 +831,26 @@ class ToolTurnController:
                        WHERE id=? AND state='running'""",
                     (receipt_id, result_hash, now, step_id),
                 )
-                conn.execute("UPDATE tool_turns SET state='reserved',revision=revision+1,updated_at=? WHERE turn_id=?", (now, turn))
                 step = conn.execute("SELECT * FROM tool_turn_model_steps WHERE id=?", (step_id,)).fetchone()
                 result = self._model_step_projection(step)
+                if next_state == "result_ready":
+                    # A final answer is terminal only after its physical child
+                    # receipt is durable.  It cannot later be mistaken for an
+                    # idle/reserved tool turn and resumed with new egress.
+                    self._terminalize(
+                        conn, row, "result_ready", "model_answer_ready", "",
+                        now, final_result_ref=step_id,
+                    )
+                else:
+                    conn.execute(
+                        "UPDATE tool_turns SET state='tool_requested',revision=revision+1,updated_at=? WHERE turn_id=?",
+                        (now, turn),
+                    )
+                    self._transition(
+                        conn, turn, str(row["state"]), "tool_requested",
+                        "model_step_tool_requested", result, now,
+                    )
                 self._command(conn, command, turn, "reconcile", request_hash, result, now)
-                self._transition(conn, turn, str(row["state"]), "reserved", "model_step_receipted", result, now)
                 conn.commit()
                 return result
             except Exception:
@@ -1122,6 +1157,60 @@ class ToolTurnController:
                 conn.rollback()
                 raise
 
+    def receipt(self, principal: Principal, *, turn_id: str) -> dict[str, Any]:
+        """Return the owner-safe private receipt graph without lease authority.
+
+        This is intentionally an internal service result: it names separately
+        admitted model/tool/effect children and their receipts, but never exposes
+        nonce, lease terms, provider dialect payloads, MCP fields, or owner
+        transport credentials.
+        """
+        self._require_authority(principal)
+        turn = _safe(turn_id, field="turn_id")
+        with self._db._connection() as conn:
+            row = self._turn_row(conn, turn)
+            steps = conn.execute(
+                """SELECT ordinal,id,route_execution_id,state,child_receipt_id,result_sha256
+                     FROM tool_turn_model_steps WHERE turn_id=? ORDER BY ordinal""",
+                (turn,),
+            ).fetchall()
+            calls = conn.execute(
+                """SELECT c.tool_ordinal,c.provider_tool_ordinal,c.capability_id,c.state,
+                          c.broker_child_id,c.receipt_id,c.disposition,e.state AS effect_state,
+                          e.adopted_receipt_id AS effect_receipt_id,e.disposition AS effect_disposition
+                     FROM tool_turn_tool_calls c
+                     LEFT JOIN tool_turn_effect_children e ON e.tool_call_id=c.id
+                    WHERE c.turn_id=? ORDER BY c.tool_ordinal""",
+                (turn,),
+            ).fetchall()
+        return {
+            "schema": "ToolTurnReceipt@1",
+            "turn_id": turn,
+            "state": str(row["state"]),
+            "terminal_code": str(row["terminal_code"]),
+            "final_result_ref": str(row["final_result_ref"]),
+            "route_plan_id": str(row["route_plan_id"]),
+            "route_plan_sha256": str(row["route_plan_sha256"]),
+            "model_steps": [{
+                "ordinal": int(item["ordinal"]), "model_step_id": str(item["id"]),
+                "route_execution_id": str(item["route_execution_id"]),
+                "state": str(item["state"]), "receipt_id": str(item["child_receipt_id"]),
+                "result_sha256": str(item["result_sha256"]),
+            } for item in steps],
+            "tool_calls": [{
+                "tool_ordinal": int(item["tool_ordinal"]),
+                "provider_tool_ordinal": int(item["provider_tool_ordinal"]),
+                "capability_id": str(item["capability_id"]), "state": str(item["state"]),
+                "broker_child_id": str(item["broker_child_id"]),
+                "receipt_id": str(item["receipt_id"]), "disposition": str(item["disposition"]),
+                "effect": None if item["effect_state"] is None else {
+                    "state": str(item["effect_state"]),
+                    "receipt_id": str(item["effect_receipt_id"]),
+                    "disposition": str(item["effect_disposition"]),
+                },
+            } for item in calls],
+        }
+
     def reconstruct(self, principal: Principal, *, turn_id: str) -> dict[str, Any]:
         """Verify persisted terms only; never rebuild authority from mutable state."""
         self._require_authority(principal)
@@ -1282,14 +1371,17 @@ class ToolTurnController:
         conn.execute("UPDATE turn_capability_leases SET state='expired' WHERE lease_id=? AND state='active'", (row["lease_id"],))
         self._terminalize(conn, row, "failed", "lease_expired", "", now)
 
-    def _terminalize(self, conn: Any, row: Any, state: str, code: str, provenance: str, now: float) -> None:
+    def _terminalize(
+        self, conn: Any, row: Any, state: str, code: str, provenance: str,
+        now: float, *, final_result_ref: str = "",
+    ) -> None:
         current = str(row["state"])
         if current in _TERMINAL:
             return
         changed = conn.execute(
-            """UPDATE tool_turns SET state=?,terminal_code=?,stop_provenance_ref=?,revision=revision+1,updated_at=?
+            """UPDATE tool_turns SET state=?,terminal_code=?,final_result_ref=?,stop_provenance_ref=?,revision=revision+1,updated_at=?
                  WHERE turn_id=? AND state=?""",
-            (state, code, provenance, now, row["turn_id"], current),
+            (state, code, final_result_ref, provenance, now, row["turn_id"], current),
         ).rowcount
         if changed == 1:
             self._transition(conn, str(row["turn_id"]), current, state, code, {"provenance": provenance}, now)
