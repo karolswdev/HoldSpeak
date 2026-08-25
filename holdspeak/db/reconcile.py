@@ -323,6 +323,39 @@ def _rebuild_kernel_parent_runs_for_kind_drift(conn: sqlite3.Connection) -> bool
     return True
 
 
+def _refresh_tool_turn_lifecycle_guards(conn: sqlite3.Connection) -> bool:
+    """Upgrade A2's blanket immutability guards to the fenced A3/A4 lifecycle.
+
+    SQLite's ``CREATE TRIGGER IF NOT EXISTS`` cannot revise a historical trigger.
+    Compare the canonical trigger SQL generated from this source, then replace
+    only the two guards whose frozen identity must now receive one durable
+    receipt/adoption transition.
+    """
+    names = ("tool_turn_model_steps_no_update", "tool_turn_effect_children_no_update")
+    reference = sqlite3.connect(":memory:")
+    try:
+        reference.executescript(SCHEMA_SQL)
+        expected = {
+            str(name): str(row[0])
+            for name in names
+            if (row := reference.execute(
+                "SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?", (name,)
+            ).fetchone()) is not None
+        }
+    finally:
+        reference.close()
+    changed = False
+    for name, sql in expected.items():
+        row = conn.execute("SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?", (name,)).fetchone()
+        if row is not None and str(row[0]) == sql:
+            continue
+        if row is not None:
+            conn.execute(f"DROP TRIGGER {_quoted(name)}")
+        conn.execute(sql)
+        changed = True
+    return changed
+
+
 def reconcile_schema(
     conn: sqlite3.Connection,
     *,
@@ -370,6 +403,7 @@ def reconcile_schema(
 
     # ── 2. Create any missing tables / indexes / triggers ──────────────
     conn.executescript(SCHEMA_SQL)
+    tool_turn_guards_refreshed = _refresh_tool_turn_lifecycle_guards(conn)
 
     post_tables = {
         row[0]
@@ -378,7 +412,7 @@ def reconcile_schema(
         )
     }
     tables_created = post_tables - pre_tables
-    shape_changed = bool(tables_created) or intel_queue_rebuilt or parent_kind_rebuilt
+    shape_changed = bool(tables_created) or intel_queue_rebuilt or parent_kind_rebuilt or tool_turn_guards_refreshed
     if tables_created:
         log.info("Reconcile: created tables %s", sorted(tables_created))
 

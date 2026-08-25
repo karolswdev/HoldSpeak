@@ -152,6 +152,66 @@ def validate_closed_schema(schema: Any, *, root: bool = True, field: str = "sche
     return result
 
 
+def validate_closed_arguments(schema: Mapping[str, Any], arguments: Any, *, field: str = "arguments") -> dict[str, Any]:
+    """Validate native-call data against the same recursively closed dialect.
+
+    The schema is normalized first, so callers cannot use a syntactically
+    equivalent but differently shaped schema to smuggle an open argument into a
+    frozen capability.  The returned JSON value is canonical-ready and contains
+    no Python objects.
+    """
+    closed = validate_closed_schema(schema)
+
+    def walk(node: Mapping[str, Any], value: Any, path: str) -> Any:
+        if "oneOf" in node:
+            matches: list[Any] = []
+            for branch in node["oneOf"]:
+                try:
+                    matches.append(walk(branch, value, path))
+                except ToolCapabilityError:
+                    pass
+            if len(matches) != 1:
+                raise ToolCapabilityError(f"{path} does not match one closed schema branch")
+            return matches[0]
+        if value is None and node.get("nullable") is True:
+            return None
+        kind = node["type"]
+        if kind == "object":
+            if (
+                not isinstance(value, Mapping)
+                or set(value) - set(node["properties"])
+                or set(node["required"]) - set(value)
+            ):
+                raise ToolCapabilityError(f"{path} must satisfy the closed properties")
+            return {
+                name: walk(node["properties"][name], value[name], f"{path}.{name}")
+                for name in sorted(value)
+            }
+        if kind == "array":
+            if not isinstance(value, list):
+                raise ToolCapabilityError(f"{path} must be an array")
+            return [walk(node["items"], item, f"{path}[]") for item in value]
+        type_matches = {
+            "string": isinstance(value, str),
+            "number": type(value) in {int, float} and not isinstance(value, bool),
+            "integer": type(value) is int,
+            "boolean": type(value) is bool,
+        }
+        if not type_matches[kind]:
+            raise ToolCapabilityError(f"{path} has the wrong JSON type")
+        plain = _json_plain(value)
+        if "const" in node and plain != node["const"]:
+            raise ToolCapabilityError(f"{path} does not match the closed constant")
+        if "enum" in node and plain not in node["enum"]:
+            raise ToolCapabilityError(f"{path} is outside the closed enum")
+        return plain
+
+    result = walk(closed, arguments, field)
+    if not isinstance(result, dict):  # The projection contract always has an object root.
+        raise ToolCapabilityError(f"{field} must be an object")
+    return result
+
+
 @dataclass(frozen=True)
 class CanonicalApplicationOperationDescriptor:
     """Canonical operation semantics, stripped of all owner transport fields.
@@ -440,6 +500,24 @@ class ToolResultEnvelope:
         object.__setattr__(self, "result_tokens", _require_positive(self.result_tokens, field="result_tokens", allow_zero=True, maximum=8 * 1024))
         if type(self.final_answer_may_name_limitation) is not bool:
             raise ToolCapabilityError("final_answer_may_name_limitation must be boolean")
+        if self.status == "available":
+            if self.result_sha256 is None:
+                raise ToolCapabilityError("available tool result requires a digest")
+        elif self.result_sha256 is not None or self.result_bytes != 0 or self.result_tokens != 0:
+            raise ToolCapabilityError("non-available tool result cannot carry result material")
+
+    @classmethod
+    def available(cls, result: Any, *, final_answer_may_name_limitation: bool = False) -> "ToolResultEnvelope":
+        """Construct the sole continuation envelope for capped untrusted data."""
+        encoded = canonical_json(result).encode("utf-8")
+        return cls(
+            "available", sha256(result), len(encoded), len(encoded),
+            final_answer_may_name_limitation,
+        )
+
+    @classmethod
+    def limitation(cls, status: str, *, final_answer_may_name_limitation: bool = False) -> "ToolResultEnvelope":
+        return cls(status, None, 0, 0, final_answer_may_name_limitation)
 
 
 __all__ = [
@@ -453,5 +531,6 @@ __all__ = [
     "canonical_json",
     "parse_capability_manifest",
     "sha256",
+    "validate_closed_arguments",
     "validate_closed_schema",
 ]

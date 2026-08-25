@@ -3219,16 +3219,45 @@ CREATE TRIGGER IF NOT EXISTS turn_capability_leases_no_delete
 BEFORE DELETE ON turn_capability_leases BEGIN
     SELECT RAISE(ABORT, 'immutable turn capability lease');
 END;
+-- Step identity and frozen plan/lease material are immutable.  Receipt linkage is
+-- deliberately a fenced lifecycle fact: it is filled once by the controller
+-- after the separately owned route execution has durable evidence.
 CREATE TRIGGER IF NOT EXISTS tool_turn_model_steps_no_update
-BEFORE UPDATE ON tool_turn_model_steps BEGIN
+BEFORE UPDATE ON tool_turn_model_steps
+WHEN NEW.id IS NOT OLD.id
+  OR NEW.turn_id IS NOT OLD.turn_id
+  OR NEW.ordinal IS NOT OLD.ordinal
+  OR NEW.operation_request_plan_id IS NOT OLD.operation_request_plan_id
+  OR NEW.operation_request_plan_sha256 IS NOT OLD.operation_request_plan_sha256
+  OR NEW.lease_sha256 IS NOT OLD.lease_sha256
+  OR NEW.request_material_ref IS NOT OLD.request_material_ref
+  OR (OLD.route_execution_id != '' AND NEW.route_execution_id IS NOT OLD.route_execution_id)
+  OR (OLD.child_receipt_id != '' AND NEW.child_receipt_id IS NOT OLD.child_receipt_id)
+  OR (OLD.result_sha256 != '' AND NEW.result_sha256 IS NOT OLD.result_sha256)
+  OR OLD.state NOT IN ('reserved','running')
+  OR (OLD.state='reserved' AND NEW.state NOT IN ('running','indeterminate'))
+  OR (OLD.state='running' AND NEW.state NOT IN ('receipted','failed','indeterminate'))
+BEGIN
     SELECT RAISE(ABORT, 'immutable tool turn model step');
 END;
 CREATE TRIGGER IF NOT EXISTS tool_turn_model_steps_no_delete
 BEFORE DELETE ON tool_turn_model_steps BEGIN
     SELECT RAISE(ABORT, 'immutable tool turn model step');
 END;
+-- The effect-child identity binds a pre-dispatch reservation.  Its one terminal
+-- adoption/refusal/indeterminate transition is the durable restart truth.
 CREATE TRIGGER IF NOT EXISTS tool_turn_effect_children_no_update
-BEFORE UPDATE ON tool_turn_effect_children BEGIN
+BEFORE UPDATE ON tool_turn_effect_children
+WHEN NEW.id IS NOT OLD.id
+  OR NEW.turn_id IS NOT OLD.turn_id
+  OR NEW.tool_call_id IS NOT OLD.tool_call_id
+  OR NEW.broker_child_id IS NOT OLD.broker_child_id
+  OR NEW.owner_intent_receipt_ref IS NOT OLD.owner_intent_receipt_ref
+  OR NEW.policy_receipt_ref IS NOT OLD.policy_receipt_ref
+  OR OLD.state != 'reserved'
+  OR NEW.state NOT IN ('adopted','indeterminate','refused')
+  OR (NEW.state != 'adopted' AND (NEW.adopted_receipt_id != '' OR NEW.result_sha256 != ''))
+BEGIN
     SELECT RAISE(ABORT, 'immutable tool turn effect child');
 END;
 CREATE TRIGGER IF NOT EXISTS tool_turn_effect_children_no_delete

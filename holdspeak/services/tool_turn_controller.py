@@ -7,18 +7,32 @@ Broker's separately admitted children.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import uuid
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping, Sequence
+from datetime import datetime, timezone
+from typing import Any, Callable, Mapping, Protocol, Sequence
 
 from ..principals import Principal, PrincipalKind
+from .inference_fallback_controller import (
+    INFERENCE_FALLBACK_AUTHORITY,
+    InferenceFallbackController,
+)
+from .inference_route_plan_service import (
+    ROUTE_PLANNING_AUTHORITY,
+    InferenceRoutePlanService,
+)
 from .tool_capability_service import (
+    CanonicalApplicationOperationDescriptor,
     ModelTurnCapabilityProjection,
+    ToolCallCandidate,
     ToolCapabilityError,
+    ToolResultEnvelope,
     canonical_json,
     sha256,
+    validate_closed_arguments,
 )
 
 
@@ -53,6 +67,74 @@ class ToolTurnRefused(ToolTurnError):
 
 class ToolTurnConflict(ToolTurnError):
     code = "tool_turn_conflict"
+
+
+MODEL_TURN_TOOL_PRINCIPAL = Principal(
+    PrincipalKind.SERVICE,
+    "model-turn-tool-service",
+    allowed_operations=frozenset({("tool.call", 1)}),
+    authority_basis="kernel:model-turn-tool@1",
+)
+
+
+class ToolCallBrokerPort(Protocol):
+    """The canonical Broker boundary for exactly one reserved tool child."""
+
+    def admit(
+        self,
+        *,
+        turn_id: str,
+        tool_call_id: str,
+        descriptor: CanonicalApplicationOperationDescriptor,
+        candidate: ToolCallCandidate,
+    ) -> Mapping[str, Any]: ...
+
+    def receipt(self, child_operation_id: str) -> Mapping[str, Any] | None: ...
+
+
+class BrokerToolCallPort:
+    """Production adapter through the existing Broker ``tool.call@1`` seam.
+
+    This is intentionally narrow: it carries only a canonical argument digest to
+    the kernel proposal record.  The application capability and private argument
+    body remain under the frozen lease; there is no generic model ``call_tool``
+    capability or owner transport surface here.
+    """
+
+    def __init__(self, broker: Any) -> None:
+        if not hasattr(broker, "submit") or not hasattr(broker, "store"):
+            raise ToolTurnError("tool Broker composition is invalid")
+        self._broker = broker
+
+    def admit(
+        self,
+        *,
+        turn_id: str,
+        tool_call_id: str,
+        descriptor: CanonicalApplicationOperationDescriptor,
+        candidate: ToolCallCandidate,
+    ) -> Mapping[str, Any]:
+        raw = {
+            "request_schema": 1,
+            "request_id": f"model-turn-{turn_id}-{tool_call_id}",
+            "idempotency_key": f"model-turn-{turn_id}-{tool_call_id}",
+            "operation": {"name": "tool.call", "version": 1},
+            "subject_refs": [f"tool-turn:{turn_id}"],
+            "target": {"ref": f"model-turn:{tool_call_id}"},
+            "arguments": {
+                "proposal_id": tool_call_id,
+                "tool": descriptor.service_operation,
+                "args_sha256": candidate.canonical_args_sha256.removeprefix("sha256:"),
+                "args_head": f"MODEL_TURN {descriptor.capability_id}",
+                "cwd": "model-turn",
+                "ttl_seconds": 30,
+            },
+            "placement": "node:model-turn",
+        }
+        return self._broker.submit(raw, MODEL_TURN_TOOL_PRINCIPAL)
+
+    def receipt(self, child_operation_id: str) -> Mapping[str, Any] | None:
+        return self._broker.store.receipt(child_operation_id)
 
 
 def _safe(value: Any, *, field: str) -> str:
@@ -158,7 +240,7 @@ class TurnCapabilityLease:
             raise ToolTurnError("lease tool call maximum exceeds capability limits")
         if normalized["max_parallel_reads"] and not any(item["commutative_read"] for item in normalized_capabilities):
             raise ToolTurnError("parallel reads require commutative read capabilities")
-        if normalized["max_effect_proposals"] and not any(item["capability_class"] == "effect_proposal" for item in normalized_capabilities):
+        if normalized["max_effect_proposals"] and not any(item["class"] == "effect_proposal" for item in normalized_capabilities):
             raise ToolTurnError("effect quota requires an effect proposal capability")
         normalized["capabilities"] = normalized_capabilities
         return cls(terms=normalized, terms_sha256=sha256(normalized))
@@ -223,12 +305,20 @@ class ToolTurnController:
         *,
         projection: ModelTurnCapabilityProjection,
         clock: Callable[[], float],
+        route_plan_service: InferenceRoutePlanService | None = None,
+        fallback_controller: InferenceFallbackController | None = None,
+        tool_broker: ToolCallBrokerPort | None = None,
     ) -> None:
         if not isinstance(projection, ModelTurnCapabilityProjection):
             raise ToolTurnError("MODEL_TURN projection is required")
+        if (route_plan_service is None) != (fallback_controller is None):
+            raise ToolTurnError("model-step route and fallback composition must arrive together")
         self._db = db
         self._projection = projection
         self._clock = clock
+        self._plans = route_plan_service
+        self._fallback = fallback_controller
+        self._tool_broker = tool_broker
 
     @staticmethod
     def _require_authority(principal: Principal | None) -> None:
@@ -419,6 +509,20 @@ class ToolTurnController:
                     conn.commit()
                     return {**result, "replayed": True}
                 term = lease.capability(capability)
+                try:
+                    descriptor = self._projection.require(capability)
+                    normalized_arguments = validate_closed_arguments(descriptor.argument_schema, args)
+                except ToolCapabilityError as exc:
+                    raise ToolTurnRefused("tool_call_arguments_schema_invalid") from exc
+                if sha256(normalized_arguments) != args_hash:
+                    raise ToolTurnRefused("tool_call_argument_hash_invalid")
+                if (
+                    descriptor.revision != int(term["capability_revision"])
+                    or descriptor.descriptor_sha256 != str(term["descriptor_sha256"])
+                    or descriptor.schema_sha256 != str(term["schema_sha256"])
+                    or descriptor.service_operation != str(term["service_operation"])
+                ):
+                    raise ToolTurnRefused("capability_schema_or_descriptor_drift")
                 if int(term["capability_revision"]) != revision:
                     raise ToolTurnRefused("capability_revision_mismatch")
                 usage = conn.execute(
@@ -457,6 +561,341 @@ class ToolTurnController:
                 conn.execute("UPDATE tool_turns SET state='tool_requested',revision=revision+1,updated_at=? WHERE turn_id=?", (now, turn))
                 conn.commit()
                 return result
+            except Exception:
+                conn.rollback()
+                raise
+
+    def plan_model_step(
+        self,
+        principal: Principal,
+        *,
+        command_id: str,
+        turn_id: str,
+        planning_reference: str,
+    ) -> dict[str, Any]:
+        """Freeze one new private request plan and start one route execution.
+
+        The caller can name neither deployment nor physical attempt.  The frozen
+        parent route remains the sole source of those facts; the existing fallback
+        controller remains the only authority that can later reserve a Runner
+        child.
+        """
+        self._require_authority(principal)
+        if self._plans is None or self._fallback is None:
+            raise ToolTurnRefused("tool_turn_model_step_composition_missing")
+        command, turn, reference = (
+            _safe(command_id, field="command_id"), _safe(turn_id, field="turn_id"),
+            _safe(planning_reference, field="planning_reference"),
+        )
+        now = float(self._clock())
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                row, _lease = self._live_turn(conn, turn, now)
+                request_hash = sha256({"schema": "ToolTurnPlanModelStep@1", "turn_id": turn, "planning_reference": reference})
+                replay = conn.execute("SELECT * FROM tool_turn_commands WHERE command_id=?", (command,)).fetchone()
+                if replay is not None:
+                    if str(replay["kind"]) != "reserve_model_step" or str(replay["request_sha256"]) != request_hash:
+                        raise ToolTurnConflict("model step command changed")
+                    step = conn.execute(
+                        "SELECT * FROM tool_turn_model_steps WHERE turn_id=? AND request_material_ref=?",
+                        (turn, reference),
+                    ).fetchone()
+                    if step is None:
+                        raise ToolTurnConflict("model step command has no effect")
+                    conn.commit()
+                    return {**self._model_step_projection(step), "replayed": True}
+                material_id = hashlib.sha256(f"{turn}:{command}".encode("utf-8")).hexdigest()[:32]
+                frozen = self._plans.freeze_operation_for_route_in_transaction(
+                    ROUTE_PLANNING_AUTHORITY, conn,
+                    command_id=f"tool-step-freeze-{material_id}", route_plan_id=str(row["route_plan_id"]),
+                    operation_id=f"tool-step-{material_id}", planning_reference=reference,
+                )
+                route = frozen["route_plan"]
+                operation = frozen["operation_request_plan"]
+                if str(route["sha256"]) != str(row["route_plan_sha256"]) or str(operation["route_plan_id"]) != str(row["route_plan_id"]):
+                    raise ToolTurnRefused("tool_turn_step_route_integrity_invalid")
+                ordinal = int(conn.execute(
+                    "SELECT COALESCE(MAX(ordinal),0)+1 FROM tool_turn_model_steps WHERE turn_id=?", (turn,)
+                ).fetchone()[0])
+                lease = self._load_lease(conn, row)
+                if ordinal > int(lease.terms["max_provider_steps"]):
+                    raise ToolTurnRefused("model_step_budget_exhausted")
+                step_id = "tms_" + uuid.uuid4().hex
+                conn.execute(
+                    """INSERT INTO tool_turn_model_steps
+                       (id,turn_id,ordinal,operation_request_plan_id,operation_request_plan_sha256,
+                        lease_sha256,state,request_material_ref,created_at,updated_at)
+                       VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                    (step_id, turn, ordinal, operation["id"], operation["sha256"], row["lease_sha256"],
+                     "reserved", reference, now, now),
+                )
+                execution = self._fallback.start_execution_in_transaction(
+                    INFERENCE_FALLBACK_AUTHORITY, conn,
+                    command_id=f"tool-step-execution-{material_id}", operation_plan_id=str(operation["id"]),
+                )
+                conn.execute(
+                    """UPDATE tool_turn_model_steps SET route_execution_id=?,state='running',updated_at=?
+                       WHERE id=? AND state='reserved'""",
+                    (execution["id"], now, step_id),
+                )
+                step = conn.execute("SELECT * FROM tool_turn_model_steps WHERE id=?", (step_id,)).fetchone()
+                result = self._model_step_projection(step)
+                self._command(conn, command, turn, "reserve_model_step", request_hash, result, now)
+                self._transition(conn, turn, str(row["state"]), "model_running", "model_step_execution_started", result, now)
+                conn.execute("UPDATE tool_turns SET state='model_running',revision=revision+1,updated_at=? WHERE turn_id=?", (now, turn))
+                conn.commit()
+                return result
+            except Exception:
+                conn.rollback()
+                raise
+
+    def settle_model_step(
+        self,
+        principal: Principal,
+        *,
+        command_id: str,
+        turn_id: str,
+        model_step_id: str,
+    ) -> dict[str, Any]:
+        """Adopt only the fallback controller's durable winning child receipt."""
+        self._require_authority(principal)
+        command, turn, step_id = (
+            _safe(command_id, field="command_id"), _safe(turn_id, field="turn_id"),
+            _safe(model_step_id, field="model_step_id"),
+        )
+        now = float(self._clock())
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                step = conn.execute("SELECT * FROM tool_turn_model_steps WHERE id=? AND turn_id=?", (step_id, turn)).fetchone()
+                if step is None:
+                    raise ToolTurnRefused("model_step_not_found")
+                request_hash = sha256({"schema": "ToolTurnSettleModelStep@1", "turn_id": turn, "model_step_id": step_id})
+                replay = conn.execute("SELECT * FROM tool_turn_commands WHERE command_id=?", (command,)).fetchone()
+                if replay is not None:
+                    if str(replay["kind"]) != "reconcile" or str(replay["request_sha256"]) != request_hash:
+                        raise ToolTurnConflict("model step settlement command changed")
+                    conn.commit()
+                    return {**self._model_step_projection(step), "replayed": True}
+                if str(step["state"]) != "running" or not str(step["route_execution_id"]):
+                    raise ToolTurnRefused("model_step_not_running")
+                execution = conn.execute(
+                    "SELECT * FROM inference_route_executions WHERE id=?", (step["route_execution_id"],)
+                ).fetchone()
+                attempt = None if execution is None or not execution["winning_attempt_id"] else conn.execute(
+                    "SELECT * FROM inference_route_attempts WHERE id=?", (execution["winning_attempt_id"],)
+                ).fetchone()
+                if (
+                    execution is None or str(execution["state"]) != "terminal" or attempt is None
+                    or not str(attempt["child_receipt_sha256"])
+                ):
+                    raise ToolTurnRefused("model_step_receipt_missing")
+                try:
+                    evidence = json.loads(str(attempt["disposition_evidence_json"] or "{}"))
+                    receipt_id = _safe(evidence["child_receipt_id"], field="child_receipt_id")
+                except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+                    raise ToolTurnRefused("model_step_receipt_integrity_invalid") from exc
+                result_hash = sha256({
+                    "route_execution_id": str(step["route_execution_id"]), "receipt_id": receipt_id,
+                    "result_ref": str(attempt["result_ref"] or ""),
+                })
+                row = self._live_turn(conn, turn, now)[0]
+                conn.execute(
+                    """UPDATE tool_turn_model_steps SET state='receipted',child_receipt_id=?,result_sha256=?,updated_at=?
+                       WHERE id=? AND state='running'""",
+                    (receipt_id, result_hash, now, step_id),
+                )
+                conn.execute("UPDATE tool_turns SET state='reserved',revision=revision+1,updated_at=? WHERE turn_id=?", (now, turn))
+                step = conn.execute("SELECT * FROM tool_turn_model_steps WHERE id=?", (step_id,)).fetchone()
+                result = self._model_step_projection(step)
+                self._command(conn, command, turn, "reconcile", request_hash, result, now)
+                self._transition(conn, turn, str(row["state"]), "reserved", "model_step_receipted", result, now)
+                conn.commit()
+                return result
+            except Exception:
+                conn.rollback()
+                raise
+
+    def admit_tool_call(
+        self,
+        principal: Principal,
+        *,
+        command_id: str,
+        turn_id: str,
+        candidate: ToolCallCandidate,
+    ) -> dict[str, Any]:
+        """Validate a single native candidate, reserve it, then admit one Broker child."""
+        self._require_authority(principal)
+        if self._tool_broker is None:
+            raise ToolTurnRefused("tool_turn_broker_composition_missing")
+        if not isinstance(candidate, ToolCallCandidate):
+            raise ToolTurnRefused("tool_call_candidate_invalid")
+        turn = _safe(turn_id, field="turn_id")
+        with self._db._connection() as conn:
+            now = float(self._clock())
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                row, lease = self._live_turn(conn, turn, now)
+                descriptor, term = self._validate_tool_candidate(lease, candidate)
+                if str(row["lease_sha256"]) != sha256(lease.terms):
+                    raise ToolTurnRefused("tool_turn_lease_integrity_invalid")
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+        reservation = self.reserve_tool_call(
+            principal, command_id=command_id, turn_id=turn,
+            provider_tool_call_id=candidate.provider_tool_call_id, capability_id=candidate.capability_id,
+            capability_revision=descriptor.revision, arguments=candidate.arguments,
+        )
+        admitted = self._tool_broker.admit(
+            turn_id=turn, tool_call_id=str(reservation["id"]), descriptor=descriptor, candidate=candidate,
+        )
+        child_id = _safe(admitted.get("operation_id"), field="broker_child_id")
+        now = float(self._clock())
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                row, lease = self._live_turn(conn, turn, now)
+                call = conn.execute("SELECT * FROM tool_turn_tool_calls WHERE id=? AND turn_id=?", (reservation["id"], turn)).fetchone()
+                if call is None:
+                    raise ToolTurnRefused("tool_call_reservation_missing")
+                if str(call["state"]) == "reserved":
+                    conn.execute("UPDATE tool_turn_tool_calls SET state='admitted',broker_child_id=?,updated_at=? WHERE id=?", (child_id, now, call["id"]))
+                    if term["class"] == "effect_proposal":
+                        conn.execute(
+                            """INSERT INTO tool_turn_effect_children
+                               (id,turn_id,tool_call_id,broker_child_id,owner_intent_receipt_ref,
+                                policy_receipt_ref,disposition,state,created_at)
+                               VALUES (?,?,?,?,?,?,?,?,?)""",
+                            ("tte_" + uuid.uuid4().hex, turn, call["id"], child_id,
+                             str(lease.terms["owner_intent_receipt_id"] or ""),
+                             str(lease.terms["policy_revision"]), "effect_pending", "reserved", now),
+                        )
+                    conn.execute("UPDATE tool_turns SET state='tool_admitted',revision=revision+1,updated_at=? WHERE turn_id=?", (now, turn))
+                elif str(call["broker_child_id"]) != child_id:
+                    raise ToolTurnConflict("tool call child changed")
+                call = conn.execute("SELECT * FROM tool_turn_tool_calls WHERE id=?", (reservation["id"],)).fetchone()
+                conn.commit()
+                return self._tool_call_projection(call)
+            except Exception:
+                conn.rollback()
+                raise
+
+    def settle_tool_call(
+        self,
+        principal: Principal,
+        *,
+        command_id: str,
+        turn_id: str,
+        tool_call_id: str,
+        receipt_id: str,
+        envelope: ToolResultEnvelope,
+        result_material: Any | None = None,
+    ) -> dict[str, Any]:
+        """Adopt one immutable child receipt into the closed result envelope only."""
+        self._require_authority(principal)
+        if not isinstance(envelope, ToolResultEnvelope):
+            raise ToolTurnRefused("tool_result_envelope_required")
+        command, turn, call_id, receipt = (
+            _safe(command_id, field="command_id"), _safe(turn_id, field="turn_id"),
+            _safe(tool_call_id, field="tool_call_id"), _safe(receipt_id, field="receipt_id"),
+        )
+        request_hash, now = sha256({"schema": "ToolTurnSettleToolCall@1", "turn_id": turn, "tool_call_id": call_id, "receipt_id": receipt, "envelope": envelope.__dict__}), float(self._clock())
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                replay = conn.execute("SELECT * FROM tool_turn_commands WHERE command_id=?", (command,)).fetchone()
+                if replay is not None:
+                    if str(replay["kind"]) != "reconcile" or str(replay["request_sha256"]) != request_hash:
+                        raise ToolTurnConflict("tool settlement command changed")
+                    call = conn.execute("SELECT * FROM tool_turn_tool_calls WHERE id=?", (call_id,)).fetchone()
+                    if call is None:
+                        raise ToolTurnConflict("tool settlement command has no effect")
+                    conn.commit()
+                    return {**self._tool_call_projection(call), "replayed": True}
+                row, _lease = self._live_turn(conn, turn, now)
+                call = conn.execute("SELECT * FROM tool_turn_tool_calls WHERE id=? AND turn_id=?", (call_id, turn)).fetchone()
+                if call is None or str(call["state"]) != "admitted" or not str(call["broker_child_id"]):
+                    raise ToolTurnRefused("tool_call_not_admitted")
+                if self._tool_broker is not None:
+                    durable = self._tool_broker.receipt(str(call["broker_child_id"]))
+                    if durable is not None and str(durable.get("receipt_id") or "") != receipt:
+                        raise ToolTurnRefused("tool_call_receipt_binding_invalid")
+                if envelope.status == "available":
+                    material = _json(result_material, field="result_material")
+                    if sha256(material) != envelope.result_sha256 or envelope.result_bytes > int(call["reserved_result_bytes"]) or envelope.result_tokens > int(call["reserved_result_tokens"]):
+                        raise ToolTurnRefused("tool_result_budget_or_hash_invalid")
+                    result_hash = str(envelope.result_sha256)
+                    state, disposition = "receipted", "available"
+                else:
+                    if result_material is not None:
+                        raise ToolTurnRefused("tool_result_limitation_carries_material")
+                    result_hash = ""
+                    state, disposition = envelope.status, envelope.status
+                conn.execute(
+                    """UPDATE tool_turn_tool_calls SET state=?,receipt_id=?,result_sha256=?,disposition=?,updated_at=?
+                       WHERE id=? AND state='admitted'""",
+                    (state, receipt, result_hash, disposition, now, call_id),
+                )
+                effect = conn.execute("SELECT * FROM tool_turn_effect_children WHERE tool_call_id=?", (call_id,)).fetchone()
+                if effect is not None:
+                    effect_state = "adopted" if envelope.status == "available" else "refused"
+                    conn.execute(
+                        """UPDATE tool_turn_effect_children SET state=?,adopted_receipt_id=?,result_sha256=?,disposition=?
+                           WHERE id=? AND state='reserved'""",
+                        (effect_state, receipt if effect_state == "adopted" else "", result_hash, disposition, effect["id"]),
+                    )
+                terminal = envelope.status == "indeterminate"
+                if terminal:
+                    self._terminalize(conn, row, "indeterminate", "effect_indeterminate" if effect is not None else "tool_indeterminate", "", now)
+                else:
+                    conn.execute("UPDATE tool_turns SET state='tool_receipted',revision=revision+1,updated_at=? WHERE turn_id=?", (now, turn))
+                    self._transition(conn, turn, str(row["state"]), "tool_receipted", disposition, {"tool_call_id": call_id, "receipt_id": receipt, "envelope": envelope.__dict__}, now)
+                call = conn.execute("SELECT * FROM tool_turn_tool_calls WHERE id=?", (call_id,)).fetchone()
+                result = self._tool_call_projection(call)
+                self._command(conn, command, turn, "reconcile", request_hash, result, now)
+                conn.commit()
+                return result
+            except Exception:
+                conn.rollback()
+                raise
+
+    def reconcile_effect_child(self, principal: Principal, *, turn_id: str, tool_call_id: str) -> dict[str, Any]:
+        """Restart truth: adopt a known effect receipt once, otherwise terminalize."""
+        self._require_authority(principal)
+        if self._tool_broker is None:
+            raise ToolTurnRefused("tool_turn_broker_composition_missing")
+        turn, call_id = _safe(turn_id, field="turn_id"), _safe(tool_call_id, field="tool_call_id")
+        with self._db._connection() as conn:
+            effect = conn.execute(
+                "SELECT e.*,c.broker_child_id FROM tool_turn_effect_children e JOIN tool_turn_tool_calls c ON c.id=e.tool_call_id WHERE e.turn_id=? AND e.tool_call_id=?",
+                (turn, call_id),
+            ).fetchone()
+            if effect is None:
+                raise ToolTurnRefused("effect_child_not_found")
+            if str(effect["state"]) == "adopted":
+                return {"schema": "ToolTurnEffectReconciliation@1", "turn_id": turn, "tool_call_id": call_id, "state": "adopted", "replayed": True}
+            child_id = str(effect["broker_child_id"])
+        receipt = self._tool_broker.receipt(child_id)
+        if receipt is not None:
+            receipt_id = _safe(receipt.get("receipt_id"), field="receipt_id")
+            result = {"receipt_ref": receipt_id}
+            settled = self.settle_tool_call(
+                principal, command_id=f"reconcile-effect-{call_id}", turn_id=turn, tool_call_id=call_id,
+                receipt_id=receipt_id, envelope=ToolResultEnvelope.available(result), result_material=result,
+            )
+            return {"schema": "ToolTurnEffectReconciliation@1", "turn_id": turn, "tool_call_id": call_id, "state": "adopted", "tool_call": settled}
+        now = float(self._clock())
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                row = self._turn_row(conn, turn)
+                conn.execute("UPDATE tool_turn_effect_children SET state='indeterminate',disposition='effect_indeterminate' WHERE tool_call_id=? AND state='reserved'", (call_id,))
+                self._terminalize(conn, row, "indeterminate", "effect_indeterminate", "", now)
+                conn.commit()
+                return {"schema": "ToolTurnEffectReconciliation@1", "turn_id": turn, "tool_call_id": call_id, "state": "indeterminate"}
             except Exception:
                 conn.rollback()
                 raise
@@ -539,8 +978,22 @@ class ToolTurnController:
                         self._expire(conn, row, now)
                     conn.commit()
                     raise ToolTurnRefused("lease_expired")
+                pending_effect = None
+                if self._tool_broker is not None and str(row["state"]) not in _TERMINAL:
+                    pending_effect = conn.execute(
+                        "SELECT tool_call_id FROM tool_turn_effect_children WHERE turn_id=? AND state='reserved' ORDER BY created_at LIMIT 1",
+                        (turn,),
+                    ).fetchone()
                 result = self._turn_projection(conn, turn)
                 conn.commit()
+                if pending_effect is not None:
+                    # Restart never guesses whether a dispatched effect ran: known
+                    # kernel receipt adopts exactly once; absence elects the turn's
+                    # terminal indeterminate winner before any later model step.
+                    self.reconcile_effect_child(
+                        principal, turn_id=turn, tool_call_id=str(pending_effect["tool_call_id"])
+                    )
+                    return self.reconstruct(principal, turn_id=turn)
                 return result
             except Exception:
                 if conn.in_transaction:
@@ -572,6 +1025,30 @@ class ToolTurnController:
                 raise ToolTurnRefused("capability_budget_expansion")
             if item["effect_mode"] == "execute_if_policy_admits" and lease.terms["owner_intent_receipt_id"] is None:
                 raise ToolTurnRefused("owner_intent_receipt_required")
+
+    def _validate_tool_candidate(
+        self, lease: TurnCapabilityLease, candidate: ToolCallCandidate
+    ) -> tuple[CanonicalApplicationOperationDescriptor, Mapping[str, Any]]:
+        """Fail closed on confusables, descriptor drift, and non-closed arguments."""
+        try:
+            descriptor = self._projection.require(candidate.capability_id)
+        except ToolCapabilityError as exc:
+            raise ToolTurnRefused("capability_not_leased") from exc
+        term = lease.capability(candidate.capability_id)
+        if (
+            descriptor.revision != int(term["capability_revision"])
+            or descriptor.descriptor_sha256 != str(term["descriptor_sha256"])
+            or descriptor.schema_sha256 != str(term["schema_sha256"])
+            or descriptor.service_operation != str(term["service_operation"])
+        ):
+            raise ToolTurnRefused("capability_schema_or_descriptor_drift")
+        try:
+            normalized = validate_closed_arguments(descriptor.argument_schema, candidate.arguments)
+        except ToolCapabilityError as exc:
+            raise ToolTurnRefused("tool_call_arguments_schema_invalid") from exc
+        if sha256(normalized) != candidate.canonical_args_sha256:
+            raise ToolTurnRefused("tool_call_argument_hash_invalid")
+        return descriptor, term
 
     @staticmethod
     def _budgets(lease: TurnCapabilityLease) -> dict[str, Any]:
@@ -684,7 +1161,10 @@ class ToolTurnController:
             "schema": "ToolTurnModelStepReservation@1", "id": str(row["id"]), "turn_id": str(row["turn_id"]),
             "ordinal": int(row["ordinal"]), "operation_request_plan_id": str(row["operation_request_plan_id"]),
             "operation_request_plan_sha256": str(row["operation_request_plan_sha256"]),
+            "route_execution_id": str(row["route_execution_id"]),
             "lease_sha256": str(row["lease_sha256"]), "state": str(row["state"]),
+            "child_receipt_id": str(row["child_receipt_id"]),
+            "result_sha256": str(row["result_sha256"]),
         }
 
     @staticmethod
@@ -699,6 +1179,7 @@ class ToolTurnController:
 
 
 __all__ = [
-    "TOOL_TURN_AUTHORITY", "ToolTurnConflict", "ToolTurnController", "ToolTurnError",
+    "BrokerToolCallPort", "MODEL_TURN_TOOL_PRINCIPAL", "TOOL_TURN_AUTHORITY",
+    "ToolCallBrokerPort", "ToolTurnConflict", "ToolTurnController", "ToolTurnError",
     "ToolTurnRefused", "TurnCapabilityLease",
 ]

@@ -33,6 +33,25 @@ proof. Sweep: **6496 passed / zero branch-new**. Next: A3+A4 (model
 steps + tool-call admission/effect adoption), then the A5 gate with an
 opus verification leg before Part B.
 
+**A3+A4 SHIPPED (2026-08-25).** A3: each reserved model step freezes
+its own private operation request plan under the turn's frozen
+assignment and runs as exactly one `InferenceFallbackController`
+execution — separately admitted and receipted, replay-idempotent, with
+lifecycle guards preserving frozen step identity. A4: tool calls are
+separately admitted as real kernel `tool.call@1` children under the
+`model-turn-tool-service` principal with schema-drift and
+confusable-capability refusal; results enter only as the closed typed
+envelope (a typed `unavailable` is never a model failure and carries
+no material); effect receipts adopt exactly once on replay/restart
+while an absent post-dispatch receipt terminalizes
+`effect_indeterminate`; restart reconstruction reconciles effect truth
+before returning a usable turn (real-DB boundary proofs). One
+DECLARED proof gap, ruled by the orchestrator: the 1/N physical-child
+cardinality and parallel-result-ordering proofs require the
+provider-neutral `ToolModelAdapter` (ORCH-CALL 9) — it is Part-A seam
+material and lands in the A5 gate round with those proofs, alongside
+the opus verification leg. Sweep: **6503 passed / zero branch-new**.
+
 ## Problem
 
 The ruled Tool Capability Foundation is design-only. This story makes its
