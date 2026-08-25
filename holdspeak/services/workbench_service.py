@@ -3,6 +3,7 @@ from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import hashlib
+import json
 import time
 import uuid
 from typing import Any
@@ -19,6 +20,23 @@ def _new_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
+class _VoiceResolutionAdapter:
+    """Keep raw resolver text inside the frozen typed route contract."""
+
+    connector_id = "inference-provider"
+
+    def __init__(self) -> None:
+        from holdspeak.kernel.prompt_adapter import CanonicalPromptAdapter
+        self._inner = CanonicalPromptAdapter()
+
+    def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, Any]:
+        result = self._inner.dispatch(engine, payload, cancellation)
+        return {"reference": str(result.get("output") or ""), "confidence": 1.0}
+
+    def cancel(self) -> str:
+        return self._inner.cancel()
+
+
 @observe_service
 class WorkbenchService:
     # Route adapters create a short-lived service per request; limiter state is shared.
@@ -29,18 +47,35 @@ class WorkbenchService:
         self._observer = observer or NullObserver()
 
     def _refuse_post_marker_pointer_write(self, principal: Principal, fields: dict[str, Any]) -> None:
-        """Do not silently persist a selector once assignment owns execution."""
-        if not ({"profile_id", "resolver_profile_id"} & set(fields)):
-            return
+        """Compatibility selectors are write-through inputs, never execution truth."""
+        # Kept as the existing call-site seam for browser/MCP compatibility. The
+        # actual canonical mutation happens after the durable Workbench write.
+        return None
+
+    def _write_legacy_pointer_compatibility(self, principal: Principal, workbench_id: str, fields: dict[str, Any]) -> None:
         from .inference_adoption_service import RECIPE_WORKBENCH_MIGRATION_FAMILY
         from .inference_assignment_service import InferenceAssignmentService
-        if InferenceAssignmentService(self._db).migration_marker(
-            principal, family=RECIPE_WORKBENCH_MIGRATION_FAMILY
-        ) is not None:
-            raise ValidationError(
-                "Workbench legacy placement fields are retired; edit the canonical assignment.",
-                code="inference_legacy_selector_retired",
-            )
+        assignments = InferenceAssignmentService(self._db)
+        if assignments.migration_marker(principal, family=RECIPE_WORKBENCH_MIGRATION_FAMILY) is None:
+            return
+        for field, capability_id in (("profile_id", "workbench.item"), ("resolver_profile_id", "voice.reference_resolve")):
+            if field not in fields:
+                continue
+            scope = {"kind": "subject", "subject_kind": "workbench", "subject_id": workbench_id, "capability_id": capability_id}
+            try:
+                current = assignments.get_assignment(principal, scope)
+            except NotFound:
+                current = None
+            profile_id = str(fields[field] or "").strip()
+            if not profile_id:
+                if current is not None:
+                    assignments.clear_assignment(principal, {"command_id": f"workbench-pointer-clear-{workbench_id}-{capability_id}", "expected_revision": current["revision"], "scope": scope, "capability_id": capability_id, "subject_kind": "workbench", "subject_id": workbench_id})
+                continue
+            with self._db._connection() as conn:
+                row = conn.execute("SELECT MAX(revision) FROM model_profile_revisions WHERE profile_id=?", (profile_id,)).fetchone()
+                legacy = conn.execute("SELECT 1 FROM profiles WHERE id=? AND deleted=0", (profile_id,)).fetchone()
+            entry = profile_id if int(row[0] or 0) else (f"legacy-{profile_id}" if legacy is not None else profile_id)
+            assignments.set_assignment(principal, {"command_id": f"workbench-pointer-write-{workbench_id}-{capability_id}", "expected_revision": 0 if current is None else current["revision"], "scope": scope, "entries": [{"profile_id": entry}]})
 
     # ── Workbenches ──────────────────────────────────────────────────────
 
@@ -62,20 +97,27 @@ class WorkbenchService:
         workbench_id = str(body.pop("id", "") or _new_id("workbench"))
         if not fields["schedule_enabled"]:
             wb = self._db.workbenches.upsert(workbench_id=workbench_id, **fields)
+            self._write_legacy_pointer_compatibility(principal, wb.id, body)
             return self._wb_payload(wb)
         # The owner's single enable gesture commits its configuration, captured
         # deployment revision, and local delegation as one crash-consistent unit.
+        from holdspeak.kernel.runtime import _configure
+        _configure(self._db)
         from .schedule_delegation import ScheduleDelegationService
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             wb = self._db.workbenches.upsert_in_transaction(conn, workbench_id=workbench_id, **fields)
             ScheduleDelegationService(self._db).enable_from_owner_in_transaction(principal, wb, conn)
+        self._write_legacy_pointer_compatibility(principal, wb.id, body)
         return self._wb_payload(wb)
 
     def update_workbench(
         self, principal: Principal, workbench_id: str, **fields: Any
     ) -> dict[str, Any]:
         existing = self._require_workbench(workbench_id)
+        if principal.kind is PrincipalKind.OWNER:
+            from holdspeak.kernel.runtime import _configure
+            _configure(self._db).inference_adoption_service.migrate_recipe_workbench_subject_assignments(principal)
         self._refuse_post_marker_pointer_write(principal, fields)
         proposed = self._wb_fields(fields, existing)
         bound_changed = any(proposed[key] != getattr(existing, key) for key in ("schedule", "schedule_enabled", "recipe_id", "profile_id"))
@@ -88,6 +130,7 @@ class WorkbenchService:
             proposed["schedule_revision"] = existing.schedule_revision
         if not bound_changed:
             wb = self._db.workbenches.upsert(workbench_id=workbench_id, **proposed)
+            self._write_legacy_pointer_compatibility(principal, wb.id, fields)
             return self._wb_payload(wb)
         # Bound configuration and the authority it invalidates share one lock.
         # A provider is only signalled after the epoch fence has committed.
@@ -103,6 +146,7 @@ class WorkbenchService:
             if enabling:
                 service.enable_from_owner_in_transaction(principal, wb, conn)
         service.complete_fenced(fenced)
+        self._write_legacy_pointer_compatibility(principal, wb.id, fields)
         return self._wb_payload(wb)
 
     def delete_workbench(self, principal: Principal, workbench_id: str) -> bool:
@@ -180,13 +224,31 @@ class WorkbenchService:
         recipe = self._db.recipes.get(wb.recipe_id) if wb.recipe_id else None
         if recipe is None:
             raise ValidationError("No recipe assigned")
-        from holdspeak.inference_targets import resolve_placement
-        # One placement authority (HS-130-01): Workbench override → Agent
-        # default (recipe.profile_id) → named global default. Retry inherits
-        # the same precedence the run used; no invocation override here.
-        target = resolve_placement(
-            self._db, workbench=wb.profile_id, agent=recipe.profile_id
-        ).target
+        # Retry is historical projection work: recover the completed item's
+        # frozen route evidence instead of resolving today's placement.
+        from types import SimpleNamespace
+        with self._db._connection() as conn:
+            row = conn.execute(
+                """SELECT attempt.deployment_revision_id,attempt.boundary,plan.profile_id
+                   FROM inference_route_attempts attempt
+                   JOIN inference_route_executions execution ON execution.id=attempt.execution_id
+                   JOIN inference_operation_route_request_plans operation ON operation.id=execution.operation_plan_id
+                   JOIN inference_adoption_route_evidence evidence ON evidence.evidence_ref=operation.admission_evidence_ref
+                   JOIN inference_adoption_material_snapshots material ON material.planning_reference=evidence.planning_reference
+                   JOIN inference_route_plan_entries plan ON plan.plan_id=operation.route_plan_id
+                    AND plan.route_leg_ordinal=attempt.route_leg_ordinal
+                   JOIN kernel_operations child ON child.operation_id=attempt.child_operation_id
+                  WHERE child.parent_operation_id IN (
+                    SELECT parent_operation_id FROM workbench_runs WHERE workbench_id=?
+                  )
+                    AND json_extract(material.payload_json, '$.item_id')=?
+                    AND json_extract(material.payload_json, '$.source_item_operation_id') IS NULL
+                  ORDER BY attempt.terminal_at DESC LIMIT 1""",
+                (workbench_id, item_id),
+            ).fetchone()
+        if row is None:
+            raise ValidationError("No frozen route evidence found for this Workbench item")
+        target = SimpleNamespace(boundary=str(row["boundary"]), model=str(row["profile_id"]).removeprefix("legacy-"))
 
         run_id = None
         with self._db._connection() as conn:
@@ -269,11 +331,6 @@ class WorkbenchService:
         self, principal: Principal, template_id: str, profile_id: str | None = None
     ) -> dict[str, Any]:
         from holdspeak.workbench_templates import get_template
-        # A selected legacy profile would otherwise write two post-marker
-        # execution-dead pointers.  The compatibility route is deliberately an
-        # explicit refusal until the shared assignment editor owns this flow.
-        if profile_id is not None:
-            self._refuse_post_marker_pointer_write(principal, {"profile_id": profile_id})
         template = get_template(template_id)
         if template is None:
             raise NotFound("template", template_id)
@@ -307,6 +364,13 @@ class WorkbenchService:
                             source=skill.source, status=skill.status, recipe_ids=recipe_ids,
                             created_by=skill.created_by,
                         )
+        # Template profile selection is a compatibility input until Story 13's
+        # shared assignment glass exists. Once the one-way marker is present it
+        # must update the same exact subject assignments as the legacy editors.
+        if profile_id is not None:
+            from .recipe_service import RecipeService
+            RecipeService(self._db)._write_legacy_profile_compatibility(principal, recipe.id, profile_id)
+            self._write_legacy_pointer_compatibility(principal, wb.id, {"profile_id": profile_id})
         return {"workbench": self._wb_payload(wb), "recipe": recipe.to_dict()}
 
     def list_skills(
@@ -393,69 +457,78 @@ class WorkbenchService:
         self._resolve_timestamps[workbench_id] = now
         if not text.strip():
             raise ValidationError("transcript is required")
-        wb = self._require_workbench(workbench_id)
-        if not wb.resolver_profile_id:
-            raise ServiceError("resolver_not_configured", "No resolver profile set on this workbench", context={"error": "resolver_not_configured", "detail": "No resolver profile set on this workbench"})
-        from holdspeak.inference_targets import resolve_placement
-        target = resolve_placement(self._db, invocation=wb.resolver_profile_id).target
-        if not target.ready:
-            raise ServiceError("resolver_unavailable", target.readiness_reason, context={"error": "resolver_unavailable", "detail": target.readiness_reason})
-        from holdspeak.voice_resolver import ZoneCatalogEntry, resolve_voice_references
-        zones = [
-            ZoneCatalogEntry(id=z.id, name=z.name, items=0)
-            for z in self._db.directories.list() if not getattr(z, "deleted", False)
-        ]
-        egress = {"boundary": target.boundary, "model": target.model}
-        if not zones:
-            return {"refs": [], "egress": egress, "request_id": request_id}
-
         if principal is None or principal.kind is PrincipalKind.NONE:
             raise ServiceError("resolver_principal_required", "Authenticated principal required", context={"error": "resolver_principal_required"})
-        from holdspeak.deployment_revisions import capture_deployment_revision
-        from holdspeak.kernel.inference_runner import InvocationRequest, ServiceContract
-        from holdspeak.kernel.model import KernelRefused
-        from holdspeak.kernel.prompt_adapter import CanonicalPromptAdapter
-        from holdspeak.kernel.runtime import _as_principal, _service
-        broker = _service() if getattr(self, "_kernel", None) is None else self._kernel
-        revision = capture_deployment_revision(self._db, target)
+        wb = self._require_workbench(workbench_id)
+        from holdspeak.voice_resolver import ZoneCatalogEntry, _extract_json_from_response, _validate_response, build_resolver_prompt
+        zones = [ZoneCatalogEntry(id=z.id, name=z.name, items=0) for z in self._db.directories.list() if not getattr(z, "deleted", False)]
+        if not zones:
+            return {"refs": [], "egress": {}, "request_id": request_id, "attempts": 0}
+        from holdspeak.kernel.runtime import _configure
+        from holdspeak.services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
+        broker = _configure(self._db) if getattr(self, "_kernel", None) is None else self._kernel
+        if principal.kind is PrincipalKind.OWNER:
+            broker.inference_adoption_service.migrate_recipe_workbench_subject_assignments(principal)
+        deadline = time.time() + 30
+        bundle = InferenceParentRouteBundleService(broker, broker.inference_adoption_service).start(
+            principal, command_id=f"voice-route-{request_id or uuid.uuid4().hex}", parent_kind="voice_reference_resolve",
+            definition_ref=f"workbench:{workbench_id}", definition_revision=str(getattr(wb, "last_modified", "1")),
+            input_snapshot={"workbench_id": workbench_id, "transcript_hash": hashlib.sha256(text.encode()).hexdigest()},
+            deadline_at=deadline, lifecycle_child_budget=0,
+            routes=[{"key": "resolve", "capability_id": "voice.reference_resolve", "invocation_id": f"voice:{request_id or uuid.uuid4().hex}", "subject_kind": "workbench", "subject_id": workbench_id}],
+            parent_command_id=request_id or None,
+        )
+        parent, member = bundle["parent"], bundle["bundle"]["members"][0]
+        if parent.replayed:
+            receipt = broker.store.receipt(parent.operation_id) or {}
+            return {"refs": [], "error": str(receipt.get("outcome") or "resolver_replayed"), "egress": {}, "request_id": request_id, "attempts": 0}
+        from holdspeak.services.inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+        route = broker.inference_adoption_service.plans.get_route_plan(ROUTE_PLANNING_AUTHORITY, str(member["route_plan_id"]))
+        entry = dict(route["entries"][0])
+        egress = {"boundary": str(entry["boundary"]), "model": str(entry["profile_id"]).removeprefix("legacy-")}
+        prompt = build_resolver_prompt(zones, text)
+        payload = {"system_prompt": "", "user_prompt": prompt, "temperature": 0.1, "max_tokens": 128,
+                   "transcript_hash": hashlib.sha256(text.encode()).hexdigest(),
+                   "catalog_hash": hashlib.sha256("|".join(f"{z.id}:{z.name}" for z in zones).encode()).hexdigest()}
+        operation_id = "voice_reference_" + uuid.uuid4().hex
+
+        def publish(value: Any, reservation: dict[str, Any]) -> str:
+            digest = "sha256:" + hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()).hexdigest()
+            return broker.projection_stager.stage(str(reservation["child_invocation_id"]), "voice-resolver-attempt", {"output": str(dict(value).get("reference") or "")}, result_sha256=digest, receipt_result_ref=f"inference-result:{reservation['child_invocation_id']}/{digest}").result_ref
+
+        admitted = broker.inference_adoption_service.admit_on_frozen_route(
+            principal, command_id=f"{operation_id}:admit", route_plan_id=str(route["id"]), capability_id="voice.reference_resolve",
+            operation_id=operation_id, payload=payload, reserved_output_tokens=128, parent_operation_id=parent.operation_id,
+        )
+        routed = broker.inference_adoption_service.execute(
+            principal, execution_id=admitted["execution"]["id"], adapter=_VoiceResolutionAdapter(), publish=publish,
+            parent_context=parent.context, planned_node="voice.reference_resolve",
+        )
         try:
-            parent = broker.parent_run_controller.start(principal, kind="voice_reference_resolve", definition_ref=f"workbench:{workbench_id}", definition_revision=str(getattr(wb, "last_modified", "1")), input_snapshot={"workbench_id": workbench_id, "profile_id": wb.resolver_profile_id, "transcript_hash": hashlib.sha256(text.encode()).hexdigest()}, deadline_at=time.time() + 30, child_budget=3, idempotency_key=request_id or None)
-        except KernelRefused as exc:
-            raise ServiceError("resolver_refused", exc.reason, context={"error": "resolver_refused", "detail": exc.reason}) from exc
-        attempts = 0
-        def run_prompt_fn(*, prompt: str, profile_id: str, max_tokens: int, timeout: float) -> str:
-            nonlocal attempts
-            parent_receipt = broker.store.receipt(parent.operation_id)
-            if parent_receipt is not None and parent_receipt["outcome"] in {"cancelled", "indeterminate"}:
-                raise TimeoutError("voice_resolver_parent_deadline_cancelled")
-            attempts += 1
-            payload = {"system_prompt": "", "user_prompt": prompt, "temperature": 0.1, "max_tokens": max_tokens, "transcript_hash": hashlib.sha256(text.encode()).hexdigest(), "catalog_hash": hashlib.sha256("|".join(f"{z.id}:{z.name}" for z in zones).encode()).hexdigest(), "selected_target": profile_id, "timeout": timeout, "retry_index": attempts}
-            request = InvocationRequest(revision.id, ServiceContract.for_payload("holdspeak.voice-reference-resolve", "1", payload), time.time() + timeout, payload, "voice_" + uuid.uuid4().hex, parent.operation_id, attempts)
-            with _as_principal(principal):
-                outcome = broker.inference_runner.invoke(request, CanonicalPromptAdapter(), parent_context=parent.context, publish=broker.projection_stager.publisher(request.invocation_id, "voice-resolver-attempt", lambda output: {"output": str(dict(output).get("output") or "")}))
-            if outcome.outcome == "succeeded":
-                projection = broker.projection_stager.finalize(request.invocation_id)
-                if projection is None: raise RuntimeError("voice_resolution_projection_not_published")
-                return str(projection["output"])
-            if outcome.outcome == "cancelled":
-                raise TimeoutError("voice_resolver_deadline_cancelled")
-            raise RuntimeError(f"voice_resolver_{outcome.outcome}")
-        result = resolve_voice_references(zones=zones, transcript=text, run_prompt_fn=run_prompt_fn, profile_id=wb.resolver_profile_id, request_id=request_id)
-        outcome = "succeeded" if result.terminal_state == "success" else ("cancelled" if result.terminal_state == "timeout" else "failed")
-        parent_receipt = broker.store.receipt(parent.operation_id)
-        if parent_receipt is None:
-            parent_receipt = broker.parent_run_controller.close(parent.context, outcome, f"workbench:{workbench_id}", principal=principal)
-        if parent_receipt["outcome"] in {"cancelled", "indeterminate"}:
-            return {"refs": [], "error": "resolver_cancelled", "egress": egress,
-                    "request_id": request_id, "attempts": result.attempts}
-        if result.terminal_state == "timeout":
-            return {"refs": [], "error": "resolver_timeout", "egress": egress,
-                    "request_id": request_id, "attempts": result.attempts}
-        if result.terminal_state in ("parse_failure", "error"):
-            return {"refs": [], "error": f"resolver_{result.terminal_state}", "egress": egress,
-                    "request_id": request_id, "attempts": result.attempts}
-        return {"refs": [{"name": r.name, "id": r.id, "ref": r.ref, "kind": r.kind} for r in result.refs],
-                "egress": egress, "request_id": request_id, "attempts": result.attempts}
+            receipt = broker.parent_run_controller.close(
+                parent.context, "succeeded" if routed["outcome"] == "succeeded" else "failed",
+                f"workbench:{workbench_id}", principal=principal,
+            )
+        except Exception as exc:
+            # Cancellation can elect the parent terminal receipt while the
+            # controller-owned model attempt is returning. Adopt that durable
+            # winner rather than trying to overwrite it with a local close.
+            from holdspeak.kernel.model import KernelRefused
+            if not isinstance(exc, KernelRefused) or exc.reason != "parent_context_invalid":
+                raise
+            receipt = broker.store.receipt(parent.operation_id)
+            if receipt is None:
+                raise
+        if routed["outcome"] != "succeeded" or receipt["outcome"] != "succeeded":
+            disposition = str(receipt["outcome"]) if receipt["outcome"] != "succeeded" else str(routed["outcome"])
+            return {"refs": [], "error": f"resolver_{disposition}", "egress": egress, "request_id": request_id, "attempts": len(routed["receipt"]["attempts"]), "route_execution_receipt": routed["receipt"]}
+        raw = str(routed["result"]["reference"])
+        parsed = _extract_json_from_response(raw)
+        ids = None if parsed is None else _validate_response(parsed, {zone.id for zone in zones})
+        if ids is None:
+            return {"refs": [], "error": "resolver_parse_failure", "egress": egress, "request_id": request_id, "attempts": len(routed["receipt"]["attempts"]), "route_execution_receipt": routed["receipt"]}
+        by_id = {zone.id: zone for zone in zones}
+        return {"refs": [{"name": by_id[item].name, "id": item, "ref": f"zone:{item}", "kind": "zone"} for item in ids], "egress": egress, "request_id": request_id, "attempts": len(routed["receipt"]["attempts"]), "route_execution_receipt": routed["receipt"]}
 
     # ── Internal ─────────────────────────────────────────────────────────
 

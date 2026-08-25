@@ -177,7 +177,7 @@ class ProjectionStager:
         return self._row(row)
 
     def _scheduler_delegation_drift(self, conn: sqlite3.Connection, stage: ProjectionStage) -> tuple[str, str]:
-        """Re-derive frozen scheduler terms immediately before publication."""
+        """Fence publication only when the frozen delegation was revoked."""
         row = conn.execute("""SELECT p.input_json,o.principal_kind FROM kernel_operations child
             JOIN kernel_parent_runs p ON p.operation_id=child.parent_operation_id
             JOIN kernel_operations o ON o.operation_id=p.operation_id
@@ -188,13 +188,6 @@ class ProjectionStager:
         delegation = conn.execute("SELECT * FROM kernel_schedule_delegations WHERE id=?", (str(parent_input.get("delegation_id") or ""),)).fetchone()
         if delegation is None or str(delegation["state"]) != "LIVE" or str(delegation["terms_sha256"]) != str(parent_input.get("terms_sha256") or ""):
             return "delegation_revoked", str(parent_input.get("workbench_id") or "")
-        recipe = conn.execute("SELECT last_modified FROM recipes WHERE id=? AND deleted=0", (str(delegation["recipe_id"]),)).fetchone()
-        if recipe is None or str(recipe["last_modified"]) != str(delegation["recipe_revision"]):
-            return "delegation_stale_work", str(delegation["workbench_id"])
-        from ..deployment_revisions import resolve_workbench_deployment_revision
-        current = resolve_workbench_deployment_revision(conn, str(delegation["workbench_id"]))
-        if current is None or current.id != str(delegation["deployment_revision_id"]):
-            return "delegation_target_changed", str(delegation["workbench_id"])
         return "", ""
 
     @staticmethod

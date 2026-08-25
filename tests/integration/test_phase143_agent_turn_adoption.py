@@ -1,52 +1,99 @@
-"""HS-143-10 elected agent-turn production façade proof."""
+"""HS-143-10 — Recipe.chat is the first real production ToolTurn adopter."""
 from __future__ import annotations
 
-import time
+import asyncio
 from pathlib import Path
 
 from holdspeak.db import Database
+from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.agent_turn_service import AgentTurnService
-from holdspeak.services.tool_model_adapter import DeterministicToolModelAdapter, DeterministicToolModelTransport
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+from holdspeak.services.recipe_service import RecipeService
 from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
-from tests.unit.test_phase143_tool_turn_controller import _lease
-from tests.unit.test_phase143_tool_turn_routing import _descriptor, _qualified_manifest, _set_global_chain, _tool_foundation
-
+from tests.unit.test_phase143_tool_turn_routing import _qualified_manifest
 
 OWNER = Principal(PrincipalKind.OWNER, "owner")
 
 
-def test_agent_turn_facade_uses_foundation_route_lease_attempt_and_receipt(tmp_path: Path) -> None:
-    now = [time.time()]
-    db = Database(tmp_path / "agent-turn.db")
-    foundation = _tool_foundation(db, now)
+class _Engine:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def run_prompt(self, *, system_prompt: str, user_prompt: str, temperature: float, max_tokens: int) -> str:
+        self.calls += 1
+        assert system_prompt and user_prompt
+        return "one admitted answer"
+
+
+def _qualified_recipe(db: Database, *, tools: list[str] | None = None) -> tuple[RecipeService, _Engine, str]:
+    broker = _configure(db)
+    AgentTurnService.compose(broker)
     _profile(
-        db, "tool-model", claims=("language", _result_claim("agent.tool_turn"), "tool_turn"),
+        db, "tool-model",
+        claims=("language", _result_claim("agent.tool_turn"), "tool_turn"),
         capability_manifest=_qualified_manifest("language", _result_claim("agent.tool_turn"), "tool_turn"),
     )
-    _set_global_chain(db, command_id="agent-turn-route", profiles=["tool-model"], foundation=foundation)
-    broker = foundation._broker
-    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: object()
-    transport = DeterministicToolModelTransport({
-        "schema": "DeterministicToolModelResponse@1",
-        "candidate": {"kind": "answer", "answer": {"summary": "one admitted answer", "tool_calls": []}},
+    recipe = db.recipes.upsert(recipe_id="recipe-tool", name="Tool Agent", system_prompt="Be exact.", tools=tools or [])
+    InferenceAssignmentService(db, tool_capability_foundation=broker.tool_turn_foundation._foundation).set_assignment(OWNER, {
+        "command_id": "qualified-recipe-turn", "expected_revision": 0,
+        "scope": {"kind": "subject", "subject_kind": "recipe", "subject_id": recipe.id, "capability_id": "agent.tool_turn"},
+        "entries": [{"profile_id": "tool-model", "profile_revision": 1}],
     })
+    engine = _Engine()
+    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: engine
+    return RecipeService(db, broker=broker), engine, recipe.id
 
-    result = AgentTurnService(foundation).run(
-        OWNER, command_id="agent-turn-one", turn_id="agent-turn-one",
-        lease_terms=_lease(_descriptor(), turn="agent-turn-one", now=now[0]),
-        messages=[{"role": "user", "content": "Answer with the known result."}],
-        deadline_at=now[0] + 20, model_adapter=DeterministicToolModelAdapter(),
-        provider_transport=transport,
-    )
 
-    assert result["status"] == "completed"
-    assert result["model_step"]["outcome"] == "succeeded"
-    assert transport.dispatch_count == 1
+def test_recipe_chat_qualified_route_drives_foundation_controller_and_runner(tmp_path: Path) -> None:
+    db = Database(tmp_path / "recipe-tool.db")
+    recipes, engine, recipe_id = _qualified_recipe(db)
+
+    result = asyncio.run(recipes.chat(OWNER, recipe_id, question="What is frozen?"))
+
+    assert result["output"] == "one admitted answer"
+    assert engine.calls == 1
+    receipt = result["route_execution_receipt"]
+    assert receipt["outcome"] == "succeeded"
     with db._connection() as conn:
         parent = conn.execute("SELECT operation_id FROM kernel_parent_runs WHERE kind='tool.turn'").fetchone()
+        lease = conn.execute("SELECT turn_id,terms_sha256 FROM turn_capability_leases").fetchone()
+        step = conn.execute("SELECT route_execution_id,child_receipt_id FROM tool_turn_model_steps").fetchone()
         attempt = conn.execute("SELECT child_operation_id,child_receipt_sha256 FROM inference_route_attempts").fetchone()
-        receipt = conn.execute("SELECT outcome FROM kernel_receipts WHERE operation_id=?", (attempt["child_operation_id"],)).fetchone()
-    assert parent is not None
+    assert parent is not None and lease is not None and step is not None
+    assert step["route_execution_id"] == receipt["execution_id"]
     assert attempt["child_operation_id"] and attempt["child_receipt_sha256"]
-    assert receipt["outcome"] == "succeeded"
+
+
+def test_recipe_chat_unqualified_uses_ruled_plain_fallback_and_no_toolturn_rows(tmp_path: Path) -> None:
+    db = Database(tmp_path / "recipe-plain.db")
+    broker = _configure(db)
+    _profile(db, "plain-model", claims=("language", _result_claim("recipe.chat")))
+    recipe = db.recipes.upsert(recipe_id="recipe-plain", name="Plain", system_prompt="Answer.")
+    InferenceAssignmentService(db).set_assignment(OWNER, {
+        "command_id": "plain-recipe-chat", "expected_revision": 0,
+        "scope": {"kind": "subject", "subject_kind": "recipe", "subject_id": recipe.id, "capability_id": "recipe.chat"},
+        "entries": [{"profile_id": "plain-model", "profile_revision": 1}],
+    })
+    engine = _Engine()
+    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: engine
+
+    result = asyncio.run(RecipeService(db, broker=broker).chat(OWNER, recipe.id, question="Plain route?"))
+
+    assert result["output"] == "one admitted answer"
+    with db._connection() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM tool_turns").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM turn_capability_leases").fetchone()[0] == 0
+
+
+def test_recipe_tools_remain_inert_on_the_qualified_production_turn(tmp_path: Path) -> None:
+    db = Database(tmp_path / "recipe-tools-inert.db")
+    recipes, engine, recipe_id = _qualified_recipe(db, tools=["delete_everything", "ambient_tool"])
+
+    result = asyncio.run(recipes.chat(OWNER, recipe_id, question="Does the stored list matter?"))
+
+    assert result["output"] == "one admitted answer"
+    assert engine.calls == 1
+    with db._connection() as conn:
+        terms = str(conn.execute("SELECT terms_json FROM turn_capability_leases").fetchone()[0])
+    assert "delete_everything" not in terms and "ambient_tool" not in terms

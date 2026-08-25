@@ -283,11 +283,13 @@ class InferenceParentRouteBundleService:
         seen_keys: set[str] = set()
         seen_capabilities: set[str] = set()
         for raw in routes:
-            if not isinstance(raw, Mapping) or set(raw) != {
-                "key",
-                "capability_id",
-                "invocation_id",
-            }:
+            required = {"key", "capability_id", "invocation_id"}
+            optional_subject = {"subject_kind", "subject_id"}
+            if (
+                not isinstance(raw, Mapping) or not required.issubset(raw)
+                or set(raw) - (required | optional_subject)
+                or (("subject_kind" in raw) != ("subject_id" in raw))
+            ):
                 raise ValidationError(
                     "Parent route declaration is invalid.",
                     code="inference_parent_route_bundle_invalid",
@@ -297,6 +299,9 @@ class InferenceParentRouteBundleService:
                 "capability_id": _safe(raw["capability_id"], field="capability_id"),
                 "invocation_id": _safe(raw["invocation_id"], field="invocation_id"),
             }
+            if "subject_kind" in raw:
+                item["subject_kind"] = _safe(raw["subject_kind"], field="subject_kind")
+                item["subject_id"] = _safe(raw["subject_id"], field="subject_id")
             if item["key"] in seen_keys or item["capability_id"] in seen_capabilities:
                 raise ValidationError(
                     "Parent route declarations must be unique.",
@@ -342,6 +347,7 @@ class InferenceParentRouteBundleService:
                     parent_kind=str(parent_kind),
                     capability_id=declaration["capability_id"],
                     invocation_id=declaration["invocation_id"],
+                    **({"subject_kind": declaration["subject_kind"], "subject_id": declaration["subject_id"]} if "subject_kind" in declaration else {}),
                     deadline_at=deadline,
                 )["retry_policy"]
             resolved_policy_fingerprints.append(
@@ -454,6 +460,7 @@ class InferenceParentRouteBundleService:
                         parent_kind=str(parent_kind),
                         capability_id=declaration["capability_id"],
                         invocation_id=declaration["invocation_id"],
+                        **({"subject_kind": declaration["subject_kind"], "subject_id": declaration["subject_id"]} if "subject_kind" in declaration else {}),
                         deadline_at=deadline,
                     )
                 routes_by_key[declaration["key"]] = route

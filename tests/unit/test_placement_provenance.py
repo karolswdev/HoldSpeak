@@ -160,7 +160,7 @@ def test_recipe_chat_rejects_legacy_invocation_selector(recipe_rig):
 
 
 def test_workbench_run_placement(tmp_path, monkeypatch):
-    """Workbench run carries placement block with workbench source."""
+    """Workbench run projects egress only from its frozen parent route."""
     from holdspeak.services.workbench_runner import WorkbenchRunner
 
     db = Database(tmp_path / "wb_prov.db")
@@ -206,9 +206,25 @@ def test_workbench_run_placement(tmp_path, monkeypatch):
         WorkbenchRunner(db, broker).run(OWNER, workbench.id, memory_enabled=False)
     )
     assert "placement" in result, f"placement missing from workbench run: {sorted(result)}"
-    # Workbench profile_id is set -> source is "workbench"
-    assert result["placement"]["source"] == "workbench"
-    assert result["placement"]["effective_target_id"] == profile.id
+    # No service-local source/target decision survives the cutover. The public
+    # projection comes from the route frozen with the parent bundle.
+    assert result["placement"]["model"] == profile.id
+    assert result["placement"]["deployment_revision_id"]
+    assert "source" not in result["placement"] and "effective_target_id" not in result["placement"]
+    with db._connection() as conn:
+        member = conn.execute(
+            "SELECT member.route_plan_id FROM inference_parent_route_bundle_members member "
+            "JOIN inference_parent_route_bundles bundle ON bundle.id=member.bundle_id "
+            "WHERE bundle.parent_operation_id=?", (result["parent_operation_id"],)
+        ).fetchone()
+        entry = conn.execute(
+            "SELECT profile_id,deployment_revision_id FROM inference_route_plan_entries WHERE plan_id=?",
+            (member["route_plan_id"],),
+        ).fetchone()
+    assert member is not None and entry is not None
+    assert (entry["profile_id"], entry["deployment_revision_id"]) == (
+        f"legacy-{profile.id}", result["placement"]["deployment_revision_id"],
+    )
 
 
 # ---------------------------------------------------------------------------

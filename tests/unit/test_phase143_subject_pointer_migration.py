@@ -134,8 +134,8 @@ def test_atomic_helper_rolls_back_rows_when_later_subject_is_invalid(tmp_path: P
     )["status"] == "no_assignment"
 
 
-def test_post_marker_recipe_write_updates_assignment_and_workbench_write_refuses(tmp_path: Path) -> None:
-    """Legacy field controls cannot silently become execution-dead after cutover."""
+def test_post_marker_legacy_selector_writes_update_exact_assignments(tmp_path: Path) -> None:
+    """Compatibility selectors stay behaviorally honest after the marker."""
     from holdspeak.kernel.runtime import _configure
     from holdspeak.services.recipe_service import RecipeService
     from holdspeak.services.workbench_service import WorkbenchService
@@ -164,13 +164,21 @@ def test_post_marker_recipe_write_updates_assignment_and_workbench_write_refuses
     assert assignments.get_assignment(OWNER, {"kind": "global"}) == global_assignment
 
     workbenches = WorkbenchService(db)
-    with pytest.raises(ValidationError) as refused:
-        workbenches.update_workbench(OWNER, "workbench", profile_id="after")
-    assert refused.value.code == "inference_legacy_selector_retired"
-    assert db.workbenches.get("workbench").profile_id == "before"
+    workbenches.update_workbench(OWNER, "workbench", profile_id="after")
+    workbench_assignment = assignments.resolve_effective(
+        OWNER, capability_id="workbench.item", subject_kind="workbench", subject_id="workbench"
+    )
+    assert workbench_assignment["assignment"]["entries"][0]["profile_id"] == "after"
+    assert db.workbenches.get("workbench").profile_id == "after"
 
     template_id = str(workbenches.list_templates(OWNER)[0]["id"])
-    with pytest.raises(ValidationError) as template_refused:
-        workbenches.instantiate_template(OWNER, template_id, profile_id="after")
-    assert template_refused.value.code == "inference_legacy_selector_retired"
-    assert len(db.recipes.list()) == 1 and len(db.workbenches.list()) == 1
+    instantiated = workbenches.instantiate_template(OWNER, template_id, profile_id="after")
+    template_recipe = str(instantiated["recipe"]["id"])
+    template_workbench = str(instantiated["workbench"]["id"])
+    assert assignments.resolve_effective(
+        OWNER, capability_id="recipe.run", subject_kind="recipe", subject_id=template_recipe
+    )["assignment"]["entries"][0]["profile_id"] == "after"
+    assert assignments.resolve_effective(
+        OWNER, capability_id="workbench.item", subject_kind="workbench", subject_id=template_workbench
+    )["assignment"]["entries"][0]["profile_id"] == "after"
+    assert assignments.get_assignment(OWNER, {"kind": "global"}) == global_assignment

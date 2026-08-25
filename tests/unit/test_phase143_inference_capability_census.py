@@ -124,7 +124,8 @@ holdspeak/plugins/dictation/runtime_mesh_relay.py:52|MeshRelayRuntime.load|MeshR
 holdspeak/plugins/dictation/runtime_openai_compatible.py:143|OpenAICompatibleRuntime.classify|chat.completions.create|call
 holdspeak/plugins/dictation/runtime_openai_compatible.py:196|OpenAICompatibleRuntime.rewrite|chat.completions.create|call
 holdspeak/plugins/dictation/runtime_openai_compatible.py:69|OpenAICompatibleRuntime.load|OpenAI|ref
-holdspeak/services/agent_turn_service.py:94|AgentTurnService.dispatch_plugin|_chat_completion_text|call
+holdspeak/services/agent_turn_service.py:44|_PromptToolProviderTransport.dispatch|run_prompt|call
+holdspeak/services/agent_turn_service.py:202|AgentTurnService.dispatch_plugin|_chat_completion_text|call
 holdspeak/project_doc_suggestions.py:72|suggest_project_doc_update|rewrite|ref
 holdspeak/project_doc_suggestions.py:73|suggest_project_doc_update|rewrite|ref
 holdspeak/project_doc_suggestions.py:84|suggest_project_doc_update|rewrite|call
@@ -172,17 +173,11 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
-    "holdspeak/services/inference_adoption_service.py:1417|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    "holdspeak/services/inference_adoption_service.py:1471|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
     ),
     "holdspeak/services/sequence_workflow_service.py:44|SequenceWorkflowService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.sequence_workflow_service", "InferenceRunner service child; capability supplied by semantic caller",
-    ),
-    "holdspeak/services/workbench_runner.py:41|WorkbenchRunner._invoke|call": ProposedRoute(
-        "workbench.item", "services.workbench_runner", "InferenceRunner service child",
-    ),
-    "holdspeak/services/workbench_service.py:435|WorkbenchService.resolve_voice.run_prompt_fn|call": ProposedRoute(
-        "voice.reference_resolve", "services.workbench_service", "InferenceRunner service child",
     ),
     "holdspeak/speech_session/child.py:181|run_admitted_speech_child|call": ProposedRoute(
         "dynamic:SpeechSessionPlan capability", "speech_session.child", "InferenceRunner admitted child",
@@ -366,8 +361,9 @@ def _group(route: ProposedRoute, keys: str) -> tuple[ProposedRoute, tuple[str, .
 # occurs in exactly one literal group. The set-equality test below makes an
 # unreviewed site (including one in a familiar module) a failure.
 EXPLICIT_ROUTE_GROUPS = (
-    _group(ProposedRoute("agent.tool_turn", "plugins.intelligence", "InferenceRunner admitted child"), """
-holdspeak/services/agent_turn_service.py:94|AgentTurnService.dispatch_plugin|_chat_completion_text|call
+    _group(ProposedRoute("agent.tool_turn", "services.agent_turn_service", "InferenceRunner ToolTurn transport or admitted compatibility leaf"), """
+holdspeak/services/agent_turn_service.py:44|_PromptToolProviderTransport.dispatch|run_prompt|call
+holdspeak/services/agent_turn_service.py:202|AgentTurnService.dispatch_plugin|_chat_completion_text|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "inference_targets", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/inference_targets.py:655|local_pinned_meeting_intel|_local_pinned_engine|call
@@ -536,7 +532,7 @@ def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
         f"unregistered={sorted(live - EXPECTED_CALL_SITES)}\n"
         f"stale={sorted(EXPECTED_CALL_SITES - live)}"
     )
-    assert len(live) == 101
+    assert len(live) == 102
 
 
 def test_phase143_every_product_runner_entrance_has_one_owner() -> None:

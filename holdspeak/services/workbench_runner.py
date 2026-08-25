@@ -3,11 +3,11 @@ from __future__ import annotations
 import asyncio, hashlib, json, time, uuid
 from datetime import datetime
 from typing import Any
-from ..deployment_revisions import capture_deployment_revision
-from ..kernel.inference_runner import InvocationRequest, SavedDefinition, ServiceContract
 from ..kernel.prompt_adapter import CanonicalPromptAdapter
-from ..principals import Principal
+from ..principals import Principal, PrincipalKind
 from .errors import ServiceError
+from .inference_parent_route_bundle_service import InferenceParentRouteBundleService
+from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
 
 
 def _sha(value: Any) -> str:
@@ -22,25 +22,73 @@ def _children(db: Any, broker: Any, parent_id: str) -> list[dict[str,str]]:
 
 class WorkbenchRunner:
     def __init__(self, db: Any, broker: Any) -> None:
-        self.db,self.broker,self.runner=db,broker,broker.inference_runner
+        self.db,self.broker=db,broker
         from ..kernel.workbench_projection import register
         register(broker.projection_stager)
 
-    def _target(self, wb: Any, recipe: Any):
-        from ..inference_targets import resolve_placement
-        resolution=resolve_placement(self.db,invocation=None,workbench=wb.profile_id,agent=recipe.profile_id)
-        target=resolution.target
-        if not target.ready: raise ServiceError("target_unavailable",target.readiness_reason,context={"status":409})
-        return target,capture_deployment_revision(self.db,target),resolution.placement_dict()
+    @staticmethod
+    def _route_target(route: dict[str, Any], ordinal: int = 1) -> dict[str, str]:
+        """Project egress only from a frozen route entry, never a live target."""
+        entry = dict(route["entries"][ordinal - 1])
+        return {
+            "boundary": str(entry["boundary"]),
+            "model": str(entry["profile_id"]).removeprefix("legacy-"),
+            "deployment_revision_id": str(entry["deployment_revision_id"]),
+        }
 
-    def _invoke(self, principal: Principal, request: InvocationRequest, context: Any, planned: str, publish: Any):
-        from ..kernel.model import KernelRefused
-        from ..kernel.runtime import _as_principal
-        try:
-            with _as_principal(principal):
-                return self.runner.invoke(request,CanonicalPromptAdapter(),parent_context=context,planned_node=planned,publish=publish)
-        except KernelRefused as exc:
-            raise ServiceError("inference_failed",exc.reason,context={"status":502}) from exc
+    def _scheduled_route(self, delegation: dict[str, Any]) -> dict[str, Any]:
+        """Read the owner-enabled route by its immutable delegation identity."""
+        command_id = f"schedule-delegation-route-{delegation['id']}"
+        with self.db._connection() as conn:
+            row = conn.execute(
+                "SELECT plan_id FROM inference_route_plan_commands WHERE command_id=?",
+                (command_id,),
+            ).fetchone()
+        if row is None:
+            raise ServiceError(
+                "delegation_route_missing", "The schedule has no frozen route terms.",
+                context={"status": 409},
+            )
+        return self.broker.inference_adoption_service.plans.get_route_plan(
+            ROUTE_PLANNING_AUTHORITY, str(row["plan_id"])
+        )
+
+    async def _run_frozen_child(
+        self,
+        principal: Principal,
+        *,
+        parent: Any,
+        route_plan_id: str,
+        capability_id: str,
+        command_id: str,
+        operation_id: str,
+        payload: dict[str, Any],
+        reserved_output_tokens: int,
+        publish: Any,
+        planned_node: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Attach one child payload to the parent's frozen route and execute it."""
+        admitted = await asyncio.to_thread(
+            self.broker.inference_adoption_service.admit_on_frozen_route,
+            principal,
+            command_id=command_id,
+            route_plan_id=route_plan_id,
+            capability_id=capability_id,
+            operation_id=operation_id,
+            payload=payload,
+            reserved_output_tokens=reserved_output_tokens,
+            parent_operation_id=parent.operation_id,
+        )
+        routed = await asyncio.to_thread(
+            self.broker.inference_adoption_service.execute,
+            principal,
+            execution_id=admitted["execution"]["id"],
+            adapter=CanonicalPromptAdapter(),
+            publish=publish,
+            parent_context=parent.context,
+            planned_node=planned_node,
+        )
+        return routed, admitted["route_plan"]
 
     def _winner(self, parent: Any) -> dict[str, Any] | None:
         """Return the durable receipt elected by a concurrent terminal path."""
@@ -104,17 +152,6 @@ class WorkbenchRunner:
             raise ServiceError("parent_terminal_unresolved", "The replayed Workbench parent did not retain a terminal receipt.", context={"status": 409, "parent_operation_id": parent_operation_id})
         return {"parent_operation_id":parent_operation_id,"receipt_id":str(receipt["receipt_id"]),"parent_receipt_id":str(receipt["receipt_id"]),"terminal_disposition":str(receipt.get("outcome") or "indeterminate"),"replayed":True,"children":_children(self.db,self.broker,parent_operation_id)}
 
-    def _scheduled_drift(self, delegation: dict[str, Any] | None, recipe: Any, deployment: Any) -> str:
-        """Re-derive mutable scheduled terms before every provider dispatch."""
-        if delegation is None:
-            return ""
-        current = self.db.recipes.get(recipe.id)
-        if current is None or str(current.last_modified) != str(delegation["recipe_revision"]):
-            return "delegation_stale_work"
-        if str(deployment.id) != str(delegation["deployment_revision_id"]):
-            return "delegation_target_changed"
-        return ""
-
     def _release_unpublished_claim(self, item_id: str) -> None:
         """Return a claim that lost its parent election to the pending queue."""
         with self.db._connection() as conn:
@@ -140,6 +177,9 @@ class WorkbenchRunner:
         return {"run_id": run_id, "parent_operation_id": parent.operation_id, "receipt_id": receipt["receipt_id"], "terminal_disposition": receipt.get("outcome"), "children": links}
 
     async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool=True, request_id: str|None=None, deadline_seconds: float=60, delegation: dict[str, Any] | None = None, due_minute: int | None = None, source_event: dict[str, str] | None = None, item_ids: list[str] | None = None) -> dict[str,Any]:
+        if principal is None or principal.kind is PrincipalKind.NONE:
+            from ..kernel.model import KernelRefused
+            raise KernelRefused("principal_authentication_required")
         wb=self.db.workbenches.get(workbench_id)
         if wb is None: raise ServiceError("not_found","Unknown Workbench",context={"status":404})
         recipe=self.db.recipes.get(wb.recipe_id) if wb.recipe_id else None
@@ -157,15 +197,31 @@ class WorkbenchRunner:
             if missing:
                 raise ServiceError("item_not_pending","A scoped Workbench item is missing or no longer pending",context={"status":409,"item_ids":missing})
             items=[by_id[item_id] for item_id in requested]
+        if principal.kind is PrincipalKind.OWNER:
+            self.broker.inference_adoption_service.migrate_recipe_workbench_subject_assignments(principal)
         run_id="wbrun_"+uuid.uuid4().hex[:12]; deadline=time.time()+deadline_seconds
         snapshot={"workbench_id":workbench_id,"items":[x.id for x in items],"item_scope":"explicit" if item_ids is not None else "pending_batch","recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"memory_enabled":memory_enabled,"request_id":request_id or "","source_event":dict(source_event or {})}
         if delegation is not None:
+            route = self._scheduled_route(delegation)
             snapshot.update({"delegation_id": delegation["id"], "terms_sha256": delegation["terms_sha256"],
                              "delegator_kind": delegation["delegator_kind"], "delegator_identity": delegation["delegator_identity"],
-                             "deployment_revision_id": delegation["deployment_revision_id"], "due_minute": due_minute})
+                             "deployment_revision_id": delegation["deployment_revision_id"],
+                             "route_plan_id": route["id"], "route_plan_sha256": route["sha256"],
+                             "due_minute": due_minute})
             parent=self.broker.parent_run_controller.start_delegated_schedule(principal,definition_ref=f"workbench:{workbench_id}",definition_revision=str(wb.last_modified),input_snapshot=snapshot,deadline_at=deadline,child_budget=len(items)*(2 if memory_enabled else 1),idempotency_key=request_id or f"schedule:{workbench_id}:{due_minute}")
         else:
-            parent=self.broker.parent_run_controller.start(principal,kind="workbench",definition_ref=f"workbench:{workbench_id}",definition_revision=str(wb.last_modified),input_snapshot=snapshot,deadline_at=deadline,child_budget=len(items)*(2 if memory_enabled else 1),idempotency_key=request_id)
+            bundle = InferenceParentRouteBundleService(self.broker, self.broker.inference_adoption_service).start(
+                principal, command_id=f"workbench-route-{run_id}", parent_kind="workbench",
+                definition_ref=f"workbench:{workbench_id}", definition_revision=str(wb.last_modified),
+                input_snapshot=snapshot, deadline_at=deadline,
+                lifecycle_child_budget=len(items)*(2 if memory_enabled else 1),
+                parent_command_id=request_id,
+                routes=[{"key": "item", "capability_id": "workbench.item", "invocation_id": f"workbench:{run_id}", "subject_kind": "workbench", "subject_id": workbench_id}],
+            )
+            parent, member = bundle["parent"], bundle["bundle"]["members"][0]
+            route = self.broker.inference_adoption_service.plans.get_route_plan(
+                ROUTE_PLANNING_AUTHORITY, str(member["route_plan_id"])
+            )
         if parent.replayed:
             return self._replayed_result(parent.operation_id)
         # This is coordination metadata only; its receipt links are always retained.
@@ -209,17 +265,23 @@ class WorkbenchRunner:
                     return self._adopt_terminal(run_id, parent)
                 emit_item_claimed(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items))
                 parts=[x for x in (context,memory,_hydrate_item_grounding(self.db,item.grounding_json),f"[TASK]\n{item.title}",item.body) if x]
-                prompt="\n\n".join(parts); target,deployment,placement_block=self._target(wb,recipe)
-                drift = self._scheduled_drift(delegation, recipe, deployment)
-                if drift:
-                    from .schedule_delegation import ScheduleDelegationService
-                    ScheduleDelegationService(self.db).revoke(workbench_id, drift)
-                    self._release_unpublished_claim(item.id)
-                    return self._adopt_terminal(run_id, parent)
-                iid="workbench_item_"+uuid.uuid4().hex
-                payload={"workbench_id":workbench_id,"workbench_revision":str(wb.last_modified),"item_id":item.id,"item_revision":str(item.last_modified),"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"system_prompt":system,"user_prompt":prompt,"rendered_input_sha256":_sha(prompt),"skills":skills,"context_hash":_sha(context),"attempt_ordinal":ordinal,"deployment_revision":deployment.id}
-                projection=lambda r,iid=iid,item=item,target=target,epoch=parent.context.epoch: {"parent_operation_id":parent.operation_id,"execution_epoch":epoch,"planned_node":f"item:{item.id}","run_id":run_id,"workbench_id":workbench_id,"item_id":item.id,"output":str(r.get("output") if isinstance(r,dict) else r),"egress":{"boundary":target.boundary,"model":target.model},"artifact_id":"artifact_"+iid[-12:],"artifact_title":f"{recipe.name or recipe.id}: {item.title}","deployment_revision":deployment.id}
-                outcome=await asyncio.to_thread(self._invoke,principal,InvocationRequest(deployment.id,SavedDefinition(f"recipe:{recipe.id}",str(recipe.last_modified)),min(deadline,time.time()+60),payload,iid,parent.operation_id),parent.context,f"item:{item.id}",self.broker.projection_stager.publisher(iid,"workbench-item-output",projection))
+                prompt="\n\n".join(parts)
+                item_operation="workbench_item_"+uuid.uuid4().hex
+                payload={"workbench_id":workbench_id,"workbench_revision":str(wb.last_modified),"item_id":item.id,"item_revision":str(item.last_modified),"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"system_prompt":system,"user_prompt":prompt,"rendered_input_sha256":_sha(prompt),"skills":skills,"context_hash":_sha(context),"attempt_ordinal":ordinal}
+
+                def publish_item(value: Any, reservation: dict[str, Any], *, item: Any = item) -> str:
+                    target = self._route_target(route, int(reservation["route_leg_ordinal"]))
+                    projection = {"parent_operation_id":parent.operation_id,"execution_epoch":parent.context.epoch,"planned_node":f"item:{item.id}","run_id":run_id,"workbench_id":workbench_id,"item_id":item.id,"output":str(value.get("output") if isinstance(value,dict) else value),"egress":{"boundary":target["boundary"],"model":target["model"]},"artifact_id":"artifact_"+str(reservation["child_invocation_id"])[-12:],"artifact_title":f"{recipe.name or recipe.id}: {item.title}","deployment_revision":target["deployment_revision_id"]}
+                    digest = _sha(value)
+                    return self.broker.projection_stager.stage(str(reservation["child_invocation_id"]), "workbench-item-output", projection, result_sha256=digest, receipt_result_ref=f"inference-result:{reservation['child_invocation_id']}/{digest}").result_ref
+
+                routed, _ = await self._run_frozen_child(
+                    principal, parent=parent, route_plan_id=str(route["id"]), capability_id="workbench.item",
+                    command_id=f"{item_operation}:admit", operation_id=item_operation, payload=payload,
+                    reserved_output_tokens=512, publish=publish_item, planned_node=f"item:{item.id}",
+                )
+                outcome = type("FrozenOutcome", (), {"outcome": routed["outcome"], "error": routed["outcome"]})()
+                iid = str(routed.get("winning_reservation", {}).get("child_invocation_id") or "")
                 # The deadline is an execution fence: a dispatch that returns
                 # past it must not advance. Expiry bumps the epoch, so the
                 # child's staged output stays receipt-linked but stale.
@@ -244,25 +306,30 @@ class WorkbenchRunner:
                 complete+=1
                 emit_item_done(workbench_id=workbench_id,run_id=run_id,item_id=item.id,title=item.title,index=ordinal,total=len(items))
                 if not memory_enabled or self.broker.parent_run_controller.expire_if_due(parent.context,principal): continue
-                target,deployment,_=self._target(wb,recipe)
-                drift = self._scheduled_drift(delegation, recipe, deployment)
-                if drift:
-                    from .schedule_delegation import ScheduleDelegationService
-                    ScheduleDelegationService(self.db).revoke(workbench_id, drift)
-                    return self._adopt_terminal(run_id, parent)
-                mid="workbench_memory_"+uuid.uuid4().hex; out=str(check["output"]); mp={"workbench_id":workbench_id,"item_id":item.id,"parent_operation_id":parent.operation_id,"source_item_invocation_id":iid,"source_item_operation_id":check["operation_id"],"source_item_receipt_id":check["receipt_id"],"source_output_sha256":_sha(out),"source_output":out[:500],"prompt_contract_revision":"1","deployment_revision":deployment.id}
+                memory_operation="workbench_memory_"+uuid.uuid4().hex; out=str(check["output"]); mp={"workbench_id":workbench_id,"item_id":item.id,"parent_operation_id":parent.operation_id,"source_item_invocation_id":iid,"source_item_operation_id":check["operation_id"],"source_item_receipt_id":check["receipt_id"],"source_output_sha256":_sha(out),"source_output":out[:500],"prompt_contract_revision":"1"}
                 mprompt="Based on the task and your output, what ONE thing should future runs on this workbench remember? Reply with a single sentence. If nothing is worth remembering, reply exactly 'nothing'."
-                publish=lambda r,epoch=parent.context.epoch,item=item: {"parent_operation_id":parent.operation_id,"execution_epoch":epoch,"planned_node":f"memory:{item.id}","run_id":run_id,"workbench_id":workbench_id,"item_title":item.title,"observation":str(r.get("output") if isinstance(r,dict) else r),"source_item_receipt_id":check["receipt_id"],"deployment_revision":deployment.id}
                 mpayload={**mp,"system_prompt":"You are a concise assistant. Reply in one sentence only.","user_prompt":f"Task: {item.title}\n\nYour output:\n{out[:500]}\n\n{mprompt}"}
-                mo=await asyncio.to_thread(self._invoke,principal,InvocationRequest(deployment.id,ServiceContract.for_payload("holdspeak.workbench-memory@1","1",mpayload),min(deadline,time.time()+60),mpayload,mid,parent.operation_id),parent.context,f"memory:{item.id}",self.broker.projection_stager.publisher(mid,"workbench-memory-writeback",publish))
-                if mo.outcome=="succeeded": self.broker.projection_stager.finalize(mid)
+
+                def publish_memory(value: Any, reservation: dict[str, Any], *, item: Any = item) -> str:
+                    target = self._route_target(route, int(reservation["route_leg_ordinal"]))
+                    projection = {"parent_operation_id":parent.operation_id,"execution_epoch":parent.context.epoch,"planned_node":f"memory:{item.id}","run_id":run_id,"workbench_id":workbench_id,"item_title":item.title,"observation":str(value.get("output") if isinstance(value,dict) else value),"source_item_receipt_id":check["receipt_id"],"deployment_revision":target["deployment_revision_id"]}
+                    digest = _sha(value)
+                    return self.broker.projection_stager.stage(str(reservation["child_invocation_id"]), "workbench-memory-writeback", projection, result_sha256=digest, receipt_result_ref=f"inference-result:{reservation['child_invocation_id']}/{digest}").result_ref
+
+                memory_routed, _ = await self._run_frozen_child(
+                    principal, parent=parent, route_plan_id=str(route["id"]), capability_id="workbench.item",
+                    command_id=f"{memory_operation}:admit", operation_id=memory_operation, payload=mpayload,
+                    reserved_output_tokens=128, publish=publish_memory, planned_node=f"memory:{item.id}",
+                )
+                if memory_routed["outcome"] == "succeeded":
+                    self.broker.projection_stager.finalize(str(memory_routed["winning_reservation"]["child_invocation_id"]))
             ctx=constitutional_receipt(); stage=self.broker.projection_stager.stage(parent.native_id,"workbench-run-result",{"parent_operation_id":parent.operation_id,"run_id":run_id,"attempted":len(items),"completed":complete,"failed":failed,"mint_failures":mints,"egress_boundary":"","model":"","context_revision":ctx["revision"],"context_hash":ctx["content_hash"],"skills":skills})
             receipt=self._close_or_adopt(parent,"succeeded",principal=principal,result_ref=stage.result_ref)
             if receipt.get("outcome") != "succeeded":
                 return self._adopt_terminal(run_id,parent)
             self.broker.projection_stager.finalize(parent.native_id)
             links=self._record_terminal(run_id,parent,receipt,attempted=len(items),completed=complete,failed=failed)
-            return {"run_id":run_id,"parent_operation_id":parent.operation_id,"receipt_id":receipt["receipt_id"],"children":links,"placement":placement_block}
+            return {"run_id":run_id,"parent_operation_id":parent.operation_id,"receipt_id":receipt["receipt_id"],"children":links,"placement":self._route_target(route)}
         except Exception:
             receipt=self._close_or_adopt(parent,"failed",principal=principal)
             self._record_terminal(run_id,parent,receipt)

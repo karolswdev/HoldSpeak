@@ -8,12 +8,43 @@ model-step admission, tool admission, retry, and physical execution to the Story
 from __future__ import annotations
 
 import hashlib
+import time
+import uuid
 from typing import Any, Mapping, Sequence
 
 from ..principals import Principal
 from .errors import ValidationError
-from .tool_model_adapter import ToolModelAdapter, ToolModelProviderTransport
+from .tool_capability_service import CanonicalApplicationOperationDescriptor, ModelTurnCapabilityProjection
+from .tool_model_adapter import ToolModelAdapter, ToolModelAnswerCandidate, ToolModelProviderTransport
 from .tool_turn_service import ToolTurnFoundationService
+
+
+class _PromptToolModelAdapter:
+    """Native-tool bridge for the local text engine's answer-only first leg.
+
+    The engine boundary remains the sole physical transport. A text response is
+    represented as the closed no-tool candidate; it can never manufacture a tool
+    name from a Recipe record or from the browser.
+    """
+
+    def render(self, frozen_request: Mapping[str, Any], provider_tools: Sequence[Mapping[str, Any]]) -> Mapping[str, Any]:
+        return {"messages": list(frozen_request["messages"]), "temperature": frozen_request.get("temperature", 0.2), "max_tokens": frozen_request.get("max_tokens", 800), "tools": list(provider_tools)}
+
+    def parse(self, response: Mapping[str, Any]) -> ToolModelAnswerCandidate:
+        return ToolModelAnswerCandidate({"summary": str(response.get("output") or ""), "tool_calls": []})
+
+
+class _PromptToolProviderTransport:
+    """The one physical local-engine request; no tool retry or fallback loop."""
+
+    def dispatch(self, engine: Any, request: Mapping[str, Any], _cancellation: Any) -> Mapping[str, Any]:
+        messages = [dict(item) for item in request["messages"]]
+        system = "\n\n".join(str(item["content"]) for item in messages if item.get("role") == "system")
+        user = "\n\n".join(str(item["content"]) for item in messages if item.get("role") != "system")
+        return {"output": engine.run_prompt(system_prompt=system, user_prompt=user, temperature=float(request["temperature"]), max_tokens=int(request["max_tokens"]))}
+
+    def cancel(self) -> str:
+        return "cancelled"
 
 
 class AgentTurnService:
@@ -23,6 +54,72 @@ class AgentTurnService:
         if not isinstance(foundation, ToolTurnFoundationService):
             raise TypeError("ToolTurnFoundationService is required")
         self._foundation = foundation
+
+    @classmethod
+    def compose(cls, broker: Any) -> "AgentTurnService":
+        """Install exactly one broker-owned product façade and its foundation."""
+        existing = getattr(broker, "agent_turn_service", None)
+        if isinstance(existing, cls):
+            return existing
+        descriptor = CanonicalApplicationOperationDescriptor(
+            capability_id="evidence.note_lookup", revision=1,
+            label="Find attached Note", description="Read one attached Note.",
+            argument_schema={"type": "object", "additionalProperties": False, "properties": {"note_id": {"type": "string"}}, "required": ["note_id"]},
+            service_operation="note.lookup", capability_class="evidence_read", effect_mode="read",
+            allowed_data_classes=("note",), allowed_placements=("local", "private_network", "mesh", "cloud"),
+            allowed_egress=("local", "private_network", "mesh", "cloud"), max_calls=1,
+            max_result_bytes=1024, max_result_tokens=256, commutative_read=True,
+        )
+        foundation = ToolTurnFoundationService(
+            broker, projection=ModelTurnCapabilityProjection([descriptor]), clock=time.time,
+        )
+        service = cls(foundation)
+        service._recipe_descriptor = descriptor
+        broker.tool_turn_foundation = foundation
+        broker.agent_turn_service = service
+        return service
+
+    def run_recipe(
+        self,
+        principal: Principal,
+        *,
+        command_id: str,
+        turn_id: str,
+        recipe_id: str,
+        messages: Sequence[Mapping[str, str]],
+        deadline_at: float,
+        publish: Any,
+        max_tokens: int = 512,
+    ) -> dict[str, Any]:
+        """Run the elected Recipe surface using only server-owned route evidence."""
+        descriptor = getattr(self, "_recipe_descriptor", None)
+        if not isinstance(descriptor, CanonicalApplicationOperationDescriptor):
+            raise ValidationError("Recipe ToolTurn composition is unavailable.", code="agent_turn_unavailable")
+        lease_id = hashlib.sha256(f"{command_id}:{turn_id}".encode()).hexdigest()[:24]
+        lease_terms = {
+            "schema": "TurnCapabilityLease@1", "lease_id": f"lease-{lease_id}", "nonce": f"nonce-{lease_id}",
+            "epoch": 1, "parent_turn_id": turn_id, "owner_principal_id": principal.identity,
+            "deployment_revision": "route-frozen", "operation_kind": "recipe.chat", "operation_revision": "1",
+            "owner_intent_receipt_id": None, "policy_revision": "recipe-qualified-manifest-1",
+            "capabilities": [{
+                "capability_id": descriptor.capability_id, "capability_revision": descriptor.revision,
+                "descriptor_sha256": descriptor.descriptor_sha256, "schema_sha256": descriptor.schema_sha256,
+                "service_operation": descriptor.service_operation, "class": "evidence_read", "effect_mode": "read",
+                "scope": {"attached": True}, "data_classes": ["note"],
+                "placement": ["local", "private_network", "mesh", "cloud"],
+                "egress": ["local", "private_network", "mesh", "cloud"], "max_calls": 1,
+                "max_result_bytes": 1024, "max_result_tokens": 256, "commutative_read": True,
+            }],
+            "max_provider_steps": 1, "max_tool_calls": 0, "max_effect_proposals": 0,
+            "max_parallel_reads": 0, "aggregate_result_bytes": 0, "aggregate_result_tokens": 0,
+            "wall_deadline": deadline_at, "expires_at": deadline_at,
+        }
+        return self.run(
+            principal, command_id=command_id, turn_id=turn_id, lease_terms=lease_terms,
+            messages=messages, deadline_at=deadline_at, model_adapter=_PromptToolModelAdapter(),
+            provider_transport=_PromptToolProviderTransport(), max_tokens=max_tokens,
+            subject_kind="recipe", subject_id=recipe_id, publish_factory=publish,
+        )
 
     def run(
         self,
@@ -37,6 +134,10 @@ class AgentTurnService:
         provider_transport: ToolModelProviderTransport,
         temperature: float = 0.2,
         max_tokens: int = 800,
+        subject_kind: str | None = None,
+        subject_id: str | None = None,
+        publish: Any = None,
+        publish_factory: Any = None,
     ) -> dict[str, Any]:
         """Run one application turn through the real foundation ledger.
 
@@ -54,6 +155,7 @@ class AgentTurnService:
         started = self._foundation.start(
             principal, command_id=command, turn_id=turn, lease_terms=lease_terms,
             input_snapshot={"messages": clean_messages}, deadline_at=float(deadline_at),
+            subject_kind=subject_kind, subject_id=subject_id,
         )
         if started["status"] == "refused":
             return {"schema": "AgentTurnResult@1", "status": "refused", "start": started, "model_step": None}
@@ -63,11 +165,17 @@ class AgentTurnService:
             payload={"messages": clean_messages, "temperature": float(temperature), "max_tokens": max_tokens},
             reserved_output_tokens=max_tokens,
         )
+        step_publish = publish if publish_factory is None else publish_factory(started["route_plan"])
         outcome = self._foundation.execute_model_step(
             command_id=f"{command}:execute", turn_id=turn, model_step_id=step["id"],
             model_adapter=model_adapter, provider_transport=provider_transport,
+            publish=step_publish,
         )
-        return {"schema": "AgentTurnResult@1", "status": "completed", "start": started, "model_step": outcome}
+        evidence = self._foundation.completed_model_step_evidence(outcome["model_step"])
+        return {
+            "schema": "AgentTurnResult@1", "status": "completed", "start": started,
+            "model_step": outcome, "outcome": outcome["outcome"], **evidence,
+        }
 
     @classmethod
     def dispatch_plugin(

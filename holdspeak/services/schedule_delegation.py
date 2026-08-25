@@ -5,23 +5,33 @@ import json
 import time
 import uuid
 from typing import Any
-from ..deployment_revisions import capture_deployment_revision
-from ..inference_targets import resolve_placement
 from ..principals import Principal, PrincipalKind
 from .errors import ServiceError
+from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
 
 
-def _terms(db: Any, wb: Any, *, conn: Any | None = None) -> dict[str, Any]:
+def _terms(
+    db: Any, wb: Any, *, principal: Principal, delegation_id: str, conn: Any,
+) -> dict[str, Any]:
+    """Freeze owner-approved placement once, rather than re-resolving at fire."""
     recipe = db.recipes.get(wb.recipe_id) if wb.recipe_id else None
     if recipe is None:
         raise ServiceError("delegation_stale_work", "Workbench has no recipe", context={"status": 409})
-    target = resolve_placement(db, invocation=None, workbench=wb.profile_id, agent=recipe.profile_id).target
-    if not target.ready:
-        raise ServiceError("delegation_target_changed", target.readiness_reason, context={"status": 409})
-    deployment = capture_deployment_revision(db, target, conn=conn)
+    from ..kernel.runtime import _configure
+    route = _configure(db).inference_adoption_service.plans.freeze_route_plan_in_transaction(
+        ROUTE_PLANNING_AUTHORITY, conn,
+        command_id=f"schedule-delegation-route-{delegation_id}",
+        capability_id="workbench.item", subject_kind="workbench", subject_id=str(wb.id),
+        # This is immutable schedule-source evidence. Per-run parent contexts
+        # remain the active deadline and cancellation fence at execution.
+        deadline_at=time.time() + 365 * 24 * 60 * 60,
+    )
+    primary = dict(route["entries"][0])
     return {"recipe_id": recipe.id, "recipe_revision": str(recipe.last_modified),
             "workbench_revision": str(wb.last_modified), "schedule_revision": str(wb.schedule_revision),
-            "cadence": str(wb.schedule or ""), "deployment_revision_id": deployment.id}
+            "cadence": str(wb.schedule or ""),
+            "deployment_revision_id": str(primary["deployment_revision_id"]),
+            "route_plan_sha256": str(route["sha256"])}
 
 
 def _hash(terms: dict[str, Any], expires_at: float | None) -> str:
@@ -40,7 +50,10 @@ class ScheduleDelegationService:
     def enable_from_owner_in_transaction(self, principal: Principal, wb: Any, conn: Any, *, terms: dict[str, Any] | None = None, expires_at: float | None = None) -> dict[str, Any]:
         if principal.kind is not PrincipalKind.OWNER:
             raise ServiceError("owner_principal_required", "Only the owner can enable a schedule", context={"status": 403})
-        terms = terms or _terms(self.db, wb, conn=conn); now = time.time(); delegation_id = "scheddeleg_" + uuid.uuid4().hex
+        now = time.time(); delegation_id = "scheddeleg_" + uuid.uuid4().hex
+        terms = terms or _terms(
+            self.db, wb, principal=principal, delegation_id=delegation_id, conn=conn,
+        )
         digest = _hash(terms, expires_at)
         conn.execute("UPDATE kernel_schedule_delegations SET state='REVOKED',revoked_at=?,revocation_reason='reapproved',updated_at=? WHERE workbench_id=? AND state='LIVE'", (now, now, wb.id))
         conn.execute("INSERT INTO kernel_schedule_delegations(id,workbench_id,delegator_kind,delegator_identity,recipe_id,recipe_revision,workbench_revision,schedule_revision,cadence,deployment_revision_id,terms_sha256,expires_at,state,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?, 'LIVE',?,?)", (delegation_id,wb.id,principal.name,principal.identity,terms['recipe_id'],terms['recipe_revision'],terms['workbench_revision'],terms['schedule_revision'],terms['cadence'],terms['deployment_revision_id'],digest,expires_at,now,now))
@@ -48,12 +61,13 @@ class ScheduleDelegationService:
 
     def enable_from_owner(self, principal: Principal, wb: Any, *, expires_at: float | None = None) -> dict[str, Any]:
         """INTERNAL compatibility helper; WorkbenchService owns the atomic gesture."""
-        # Capturing a deployment revision writes its immutable row, so resolve it
-        # before taking the owner transaction's write lock.
-        terms = _terms(self.db, wb)
+        if principal.kind is not PrincipalKind.OWNER:
+            raise ServiceError("owner_principal_required", "Only the owner can enable a schedule", context={"status": 403})
+        from ..kernel.runtime import _configure
+        _configure(self.db).inference_adoption_service.migrate_recipe_workbench_subject_assignments(principal)
         with self.db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
-            return self.enable_from_owner_in_transaction(principal, wb, conn, terms=terms, expires_at=expires_at)
+            return self.enable_from_owner_in_transaction(principal, wb, conn, expires_at=expires_at)
 
     def revoke_in_transaction(self, conn: Any, workbench_id: str, reason: str) -> list[tuple[str, str]]:
         """Revoke and epoch-fence matching parents before the owner transaction commits."""
@@ -98,8 +112,9 @@ class ScheduleDelegationService:
             pass
 
     def validate(self, workbench_id: str) -> dict[str, Any]:
-        wb=self.db.workbenches.get(workbench_id)
-        if wb is None or not wb.schedule_enabled: raise ServiceError("schedule_disabled", "Schedule is disabled", context={"status":409})
+        # A LIVE delegation is the fire-time authority. Owner-facing changes go
+        # through revoke/reapprove; do not turn a mutable Workbench row back into
+        # a shadow schedule selector here.
         row=self.live(workbench_id)
         if row is None:
             with self.db._connection() as conn:
@@ -109,14 +124,7 @@ class ScheduleDelegationService:
             raise ServiceError("delegation_missing", "No local owner delegation", context={"status":409})
         if row['expires_at'] is not None and float(row['expires_at']) <= time.time():
             self.revoke(workbench_id, "expired"); raise ServiceError("delegation_expired", "Delegation expired", context={"status":409})
-        current=_terms(self.db, wb)
-        if current['cadence'] != row['cadence']:
-            self.revoke(workbench_id, "delegation_cadence_changed")
-            raise ServiceError("delegation_cadence_changed", "Cadence changed", context={"status":409})
-        if current['deployment_revision_id'] != row['deployment_revision_id']:
-            self.revoke(workbench_id, "delegation_target_changed")
-            raise ServiceError("delegation_target_changed", "Target changed", context={"status":409})
-        if any(str(current[k]) != str(row[k]) for k in ('recipe_id','recipe_revision','workbench_revision','schedule_revision')):
-            self.revoke(workbench_id, "delegation_stale_work")
-            raise ServiceError("delegation_stale_work", "Bound work changed", context={"status":409})
+        # The enabled delegation is the immutable owner-approved term set.
+        # Fire-time validation only checks its durable state; resolving a current
+        # profile or deployment here would covertly retarget scheduled work.
         return row

@@ -62,3 +62,17 @@ The shared UI must replace, not sit beside, private target selectors.
   on a tool-qualified route; dead workbench tier on the standalone recipe
   entry ledgered (no production transport passes it). Story 15 (repo-wide
   router docs) chartered by owner ruling; Story 14 now depends on it.
+- 2026-08-25 — Round 2 (amended adopter + Slice 3): qualified
+  `RecipeService.chat` is now the first production ToolTurn adopter —
+  transport → façade → foundation → controller → `InferenceRunner` with
+  production-object proofs (parent, lease, model step, attempt, receipt);
+  `RecipeRecord.tools` proven inert. WorkbenchRunner's local `_target`/
+  `_invoke` forks retired for frozen parent-route child admission (items +
+  memory); `retry_mint` reads exact historical route evidence; voice
+  resolution rides a frozen `voice.reference_resolve` route/controller
+  execution; schedule enablement freezes delegated route terms (owner
+  reapproval mints a later frozen route); legacy selector writes
+  write-through to canonical assignments post-marker. Census fixtures
+  reduced only for removed source authority. Orchestrator-verified: Slice 3
+  set 72 passed, adopter set 39 passed, one-path guards + census suites 188
+  passed.

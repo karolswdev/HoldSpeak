@@ -14,6 +14,8 @@ from ..inference_capabilities import process_inference_capability_registry
 from ..principals import Principal, PrincipalKind
 from .errors import ValidationError
 from .inference_adoption_service import ProductionRouteEvidence
+from .inference_fallback_controller import INFERENCE_FALLBACK_AUTHORITY
+from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
 from .inference_parent_route_bundle_service import InferenceParentRouteBundleService
 from .tool_capability_service import ModelTurnCapabilityProjection, ToolCapabilityFoundation
 from .tool_model_adapter import ToolModelAdapter, ToolModelProviderTransport
@@ -29,13 +31,14 @@ _EVIDENCE_PROVIDER_ID = "tool-turn-foundation"
 
 
 class ToolTurnFoundationService:
-    """Composition-owned executor for an internal, service-owned tool turn.
+    """Composition-owned ToolTurn executor behind the narrow agent façade.
 
-    It is intentionally absent from Ask, Recipe, Workbench, MCP, and public
-    application registries.  The class does not emulate an engine or a tool:
-    every model step uses the installed ``InferenceFallbackController`` /
-    ``InferenceRunner`` singleton and every tool call is admitted by the real
-    Broker through :class:`BrokerToolCallPort`.
+    It remains absent from public registries and browser/MCP transports; the
+    elected Recipe agent turn reaches it only through ``AgentTurnService``. The
+    foundation does not emulate an engine or a tool: every model step uses the
+    installed ``InferenceFallbackController`` / ``InferenceRunner`` singleton
+    and every tool call is admitted by the real Broker through
+    :class:`BrokerToolCallPort`.
     """
 
     def __init__(
@@ -84,10 +87,20 @@ class ToolTurnFoundationService:
         lease_terms: Mapping[str, Any],
         input_snapshot: Mapping[str, Any],
         deadline_at: float,
+        subject_kind: str | None = None,
+        subject_id: str | None = None,
     ) -> dict[str, Any]:
         """Freeze a `tool.turn` parent or record its exact pre-route refusal."""
         if principal.kind is not PrincipalKind.OWNER:
             raise ToolTurnRefused("tool_turn_owner_required")
+        route_declaration: dict[str, str] = {
+            "key": "model", "capability_id": _TOOL_CAPABILITY,
+            "invocation_id": f"tool-turn:{turn_id}",
+        }
+        if (subject_kind is None) != (subject_id is None):
+            raise ValidationError("ToolTurn subject evidence is incomplete.", code="tool_turn_invalid")
+        if subject_kind is not None and subject_id is not None:
+            route_declaration.update(subject_kind=str(subject_kind), subject_id=str(subject_id))
         try:
             started = self._bundles.start(
                 principal,
@@ -97,10 +110,7 @@ class ToolTurnFoundationService:
                 definition_revision="1",
                 input_snapshot=dict(input_snapshot),
                 deadline_at=float(deadline_at),
-                routes=[{
-                    "key": "model", "capability_id": _TOOL_CAPABILITY,
-                    "invocation_id": f"tool-turn:{turn_id}",
-                }],
+                routes=[route_declaration],
             )
         except ValidationError as exc:
             if exc.code != "tool_required_unavailable":
@@ -132,9 +142,13 @@ class ToolTurnFoundationService:
             route_plan_sha256=member["route_plan_sha256"],
             lease_terms=lease_terms,
         )
+        route_plan = self._adoption.plans.get_route_plan(
+            ROUTE_PLANNING_AUTHORITY, str(member["route_plan_id"]),
+        )
         return {
             "schema": "ToolTurnFoundationStart@1", "status": "started",
             "parent": started["parent"], "bundle": bundle, "turn": turn,
+            "route_plan": route_plan,
         }
 
     def stage_and_plan_model_step(
@@ -173,6 +187,7 @@ class ToolTurnFoundationService:
         model_step_id: str,
         model_adapter: ToolModelAdapter,
         provider_transport: ToolModelProviderTransport,
+        publish: Any = None,
     ) -> dict[str, Any]:
         return self._controller.execute_model_step(
             TOOL_TURN_AUTHORITY,
@@ -181,7 +196,24 @@ class ToolTurnFoundationService:
             model_step_id=model_step_id,
             model_adapter=model_adapter,
             provider_transport=provider_transport,
+            publish=publish,
         )
+
+    def completed_model_step_evidence(self, model_step: Mapping[str, Any]) -> dict[str, Any]:
+        """Return the controller-elected route evidence for a completed step."""
+        execution_id = str(model_step.get("route_execution_id") or "")
+        receipt = self._adoption.controller.get_route_execution_receipt(
+            INFERENCE_FALLBACK_AUTHORITY, execution_id=execution_id,
+        )
+        route = self._adoption.plans.get_route_plan(
+            ROUTE_PLANNING_AUTHORITY, str(receipt["route_plan_id"]),
+        )
+        winning = None
+        if receipt.get("outcome") == "succeeded":
+            winning = self._adoption._winning_reservation(
+                execution_id, str(receipt["winning_attempt_id"]),
+            )
+        return {"route_plan": route, "receipt": receipt, "winning_reservation": winning}
 
     def request_stop(
         self,

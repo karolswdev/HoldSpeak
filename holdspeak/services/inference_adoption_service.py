@@ -1025,10 +1025,12 @@ class RoutedInferenceCoordinator:
             else ""
         )
         if principal.kind is not PrincipalKind.OWNER and (
-            principal.kind is not PrincipalKind.SERVICE or (not bound_parent and not source_route)
+            (principal.kind is PrincipalKind.SERVICE and not (bound_parent or source_route))
+            or (principal.kind is PrincipalKind.SCHEDULER and not bound_parent)
+            or principal.kind not in {PrincipalKind.SERVICE, PrincipalKind.SCHEDULER}
         ):
             raise ValidationError(
-                "Frozen-route admission requires owner, bound service, or derived parentless preload authority.",
+                "Frozen-route admission requires owner, bound service, or delegated scheduler authority.",
                 code="inference_adoption_owner_required",
             )
         reference = "iam_" + hashlib.sha256(
@@ -1037,7 +1039,12 @@ class RoutedInferenceCoordinator:
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             try:
-                if principal.kind is PrincipalKind.SERVICE:
+                if principal.kind is PrincipalKind.SCHEDULER:
+                    self._validate_scheduled_frozen_route(
+                        conn, principal=principal, parent_operation_id=bound_parent,
+                        route_plan_id=route_id, capability_id=capability.id,
+                    )
+                elif principal.kind is PrincipalKind.SERVICE:
                     if source_route:
                         self._validate_parentless_local_preload_route(
                             conn,
@@ -1119,6 +1126,52 @@ class RoutedInferenceCoordinator:
                 conn.rollback()
                 raise
         return {**operation_plan, "execution": execution}
+
+    @staticmethod
+    def _validate_scheduled_frozen_route(
+        conn: Any,
+        *,
+        principal: Principal,
+        parent_operation_id: str,
+        route_plan_id: str,
+        capability_id: str,
+    ) -> None:
+        """Authorize only the exact owner-enabled schedule source route.
+
+        A scheduler has no ambient placement authority. Its sole exception is a
+        live delegated Workbench parent whose persisted terms name the same
+        immutable route command that owner enablement wrote.
+        """
+        parent = conn.execute(
+            """SELECT p.input_json,o.principal_kind,o.principal_identity
+               FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id
+               WHERE p.operation_id=?""",
+            (parent_operation_id,),
+        ).fetchone()
+        if parent is None or str(parent["principal_kind"]) != principal.name or str(parent["principal_identity"]) != principal.identity:
+            raise ValidationError("Delegated scheduler parent is required.", code="inference_adoption_service_membership_required")
+        try:
+            snapshot = json.loads(str(parent["input_json"]))
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise ValidationError("Delegated scheduler evidence is invalid.", code="inference_adoption_service_membership_required") from exc
+        delegation_id = str(snapshot.get("delegation_id") or "")
+        terms_sha = str(snapshot.get("terms_sha256") or "")
+        delegation = conn.execute(
+            "SELECT terms_sha256,state FROM kernel_schedule_delegations WHERE id=?",
+            (delegation_id,),
+        ).fetchone()
+        route = conn.execute(
+            "SELECT plan_id FROM inference_route_plan_commands WHERE command_id=?",
+            (f"schedule-delegation-route-{delegation_id}",),
+        ).fetchone()
+        if (
+            capability_id != "workbench.item" or delegation is None
+            or str(delegation["state"]) != "LIVE"
+            or str(delegation["terms_sha256"]) != terms_sha
+            or route is None or str(route["plan_id"]) != route_plan_id
+            or str(snapshot.get("route_plan_id") or "") != route_plan_id
+        ):
+            raise ValidationError("Delegated schedule route membership is required.", code="inference_adoption_service_membership_required")
 
     @staticmethod
     def _validate_parentless_local_preload_route(
@@ -1276,6 +1329,7 @@ class RoutedInferenceCoordinator:
         publish: Callable[[Any, Mapping[str, Any]], str] | None = None,
         before_physical_dispatch: Callable[[str, str, int], None] | None = None,
         parent_context: Any = None,
+        planned_node: str = "",
     ) -> dict[str, Any]:
         if self._broker is None:
             raise ServiceError(
@@ -1415,7 +1469,8 @@ class RoutedInferenceCoordinator:
 
             with _as_principal(principal):
                 runner.invoke(
-                    request, adapter, publish=project, parent_context=parent_context
+                    request, adapter, publish=project, parent_context=parent_context,
+                    planned_node=planned_node,
                 )
             receipt = self.controller.get_route_execution_receipt(
                 receipt_authority, execution_id=execution_id

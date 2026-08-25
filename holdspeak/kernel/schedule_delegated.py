@@ -25,12 +25,9 @@ def delegated_refusal(controller: Any, conn: Any, input_snapshot: Mapping[str, A
         if authoritative:
             conn.execute("UPDATE kernel_schedule_delegations SET state='EXPIRED',updated_at=? WHERE id=? AND state='LIVE'", (controller._clock(), delegation_id))
         return "delegation_expired", row
-    wb = conn.execute("SELECT * FROM workbenches WHERE id=? AND deleted=0", (row["workbench_id"],)).fetchone()
-    if wb is None or not bool(wb["schedule_enabled"]): return "schedule_disabled", row
-    if str(wb["schedule"] or "") != str(row["cadence"]): return "delegation_cadence_changed", row
-    recipe = conn.execute("SELECT last_modified FROM recipes WHERE id=? AND deleted=0", (row["recipe_id"],)).fetchone()
-    if recipe is None or str(wb["recipe_id"] or "") != str(row["recipe_id"]) or str(recipe["last_modified"]) != str(row["recipe_revision"]) or str(wb["last_modified"]) != str(row["workbench_revision"]) or str(wb["schedule_revision"]) != str(row["schedule_revision"]):
-        return "delegation_stale_work", row
+    # The durable LIVE delegation and its terms hash are the owner's authority.
+    # A fire must not re-read mutable cadence, Workbench, Recipe, or deployment
+    # selectors: supported owner edits revoke/reapprove this row first.
     return "", row
 
 

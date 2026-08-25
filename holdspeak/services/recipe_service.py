@@ -170,8 +170,30 @@ class RecipeService:
         payload = {"system_prompt": inject_skills(self._db, (recipe.system_prompt or "").strip() or f"You are {name}, a helpful assistant.", recipe_id), "user_prompt": "\n\n".join(blocks), "history": window, "recipe_id": recipe_id, "recipe_revision": str(recipe.last_modified), "context_ids": context_ids, "context_titles": context_titles, "grounding": grounding_echo, "workbench_id": str(workbench_id or "")}
         invocation_id = "recipe_chat_" + uuid.uuid4().hex
         self._broadcast(broadcast, "running", kind="recipe", ref=recipe_id, name=name)
-        admitted = await asyncio.to_thread(self._broker.inference_adoption_service.admit, principal, command_id=f"admit-{invocation_id}", capability_id="recipe.chat", operation_id=invocation_id, payload=payload, subject_kind="recipe", subject_id=recipe_id, reserved_output_tokens=512)
-        routed = await asyncio.to_thread(self._broker.inference_adoption_service.execute, principal, execution_id=admitted["execution"]["id"], adapter=_RecipeResultAdapter(), publish=self._publisher("recipe-chat-result", recipe, payload, [], admitted["route_plan"]))
+        # Qualification is a zero-write probe of the *agent.tool_turn* route.
+        # A Recipe's persisted `tools` list is intentionally never consulted.
+        qualified = await asyncio.to_thread(
+            self._broker.inference_adoption_service.next_run_summary,
+            principal, capability_id="agent.tool_turn", subject_kind="recipe", subject_id=recipe_id,
+        )
+        if qualified["status"] == "ready":
+            from .agent_turn_service import AgentTurnService
+            agent = AgentTurnService.compose(self._broker)
+            turn = await asyncio.to_thread(
+                agent.run_recipe,
+                principal, command_id=f"agent-turn-{invocation_id}", turn_id=f"turn-{invocation_id}",
+                recipe_id=recipe_id,
+                messages=[{"role": "system", "content": payload["system_prompt"]}, {"role": "user", "content": payload["user_prompt"]}],
+                deadline_at=time.time() + 20,
+                publish=lambda route: self._publisher("recipe-chat-result", recipe, payload, [], route),
+            )
+            routed = {
+                "outcome": turn["outcome"], "receipt": turn["receipt"],
+                "winning_reservation": turn["winning_reservation"],
+            }
+        else:
+            admitted = await asyncio.to_thread(self._broker.inference_adoption_service.admit, principal, command_id=f"admit-{invocation_id}", capability_id="recipe.chat", operation_id=invocation_id, payload=payload, subject_kind="recipe", subject_id=recipe_id, reserved_output_tokens=512)
+            routed = await asyncio.to_thread(self._broker.inference_adoption_service.execute, principal, execution_id=admitted["execution"]["id"], adapter=_RecipeResultAdapter(), publish=self._publisher("recipe-chat-result", recipe, payload, [], admitted["route_plan"]))
         if routed["outcome"] != "succeeded":
             raise ServiceError("inference_route_failed", "No assigned model completed this recipe", context={"receipt": routed["receipt"], "status": 409})
         winner = str(routed["winning_reservation"]["child_invocation_id"])
@@ -246,7 +268,7 @@ class RecipeService:
 
     def _chat_projection(self, result: Any, recipe: Any, payload: dict[str, Any], route: dict[str, Any], ordinal: int) -> dict[str, Any]:
         value = dict(result) if isinstance(result, dict) else {"output": str(result)}; target = self._route_summary(route, ordinal)
-        output = {"recipe_id": recipe.id, "output": str(value["output"]), "provider": str(value.get("provider") or target["engine"]), "profile_id": target["profile_id"], "inference_target": target, "actual_placement": {"boundary": target["boundary"], "deployment_revision_id": target["deployment_revision_id"]}, "egress": {"scope": target["boundary"]}, "model": str(value.get("model") or target["profile_id"]), "context_ids": payload["context_ids"], "context_titles": payload["context_titles"], "placement": {"route_plan_id": route["id"], "route_plan_sha256": route["sha256"]}}
+        output = {"recipe_id": recipe.id, "output": str(value.get("output") or value.get("summary") or ""), "provider": str(value.get("provider") or target["engine"]), "profile_id": target["profile_id"], "inference_target": target, "actual_placement": {"boundary": target["boundary"], "deployment_revision_id": target["deployment_revision_id"]}, "egress": {"scope": target["boundary"]}, "model": str(value.get("model") or target["profile_id"]), "context_ids": payload["context_ids"], "context_titles": payload["context_titles"], "placement": {"route_plan_id": route["id"], "route_plan_sha256": route["sha256"]}}
         if payload["grounding"] is not None: output["grounding"] = payload["grounding"]
         return output
 

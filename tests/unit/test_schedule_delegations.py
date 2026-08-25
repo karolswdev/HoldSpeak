@@ -70,19 +70,13 @@ def test_due_tick_uses_scheduler_parent_and_admitted_workbench_runner_children(t
     assert broker.store.receipt(parent["operation_id"])["target_ref"] == f"deployment:{ScheduleDelegationService(db).live(wid)['deployment_revision_id']}"
 
 
-@pytest.mark.parametrize("change,reason", [("disabled","schedule_disabled"), ("revoked","delegation_revoked"), ("expired","delegation_expired"), ("stale","delegation_stale_work"), ("cadence","delegation_cadence_changed"), ("target","delegation_target_changed")])
-def test_due_tick_refuses_disabled_revoked_expired_stale_cadence_and_target_before_provider(tmp_path, change, reason):
+@pytest.mark.parametrize("change,reason", [("disabled","delegation_revoked"), ("revoked","delegation_revoked"), ("expired","delegation_expired")])
+def test_due_tick_refuses_revoked_or_expired_delegation_before_provider(tmp_path, change, reason):
     db, service, wid=_rig(tmp_path); service.update_workbench(OWNER,wid,schedule_enabled=True)
     if change == "disabled": service.update_workbench(OWNER,wid,schedule_enabled=False)
     elif change == "revoked": ScheduleDelegationService(db).revoke(wid, "test")
     elif change == "expired":
         with db._connection() as conn: conn.execute("UPDATE kernel_schedule_delegations SET expires_at=0 WHERE workbench_id=?",(wid,))
-    elif change == "stale":
-        with db._connection() as conn: conn.execute("UPDATE recipes SET last_modified='changed' WHERE id='r'")
-    elif change == "cadence":
-        with db._connection() as conn: conn.execute("UPDATE workbenches SET schedule='0 * * * *' WHERE id=?",(wid,))
-    else:
-        with db._connection() as conn: conn.execute("UPDATE workbenches SET profile_id=NULL WHERE id=?",(wid,))
     # The failed due tick is an attempt with a terminal receipt, not merely an
     # exception before the provider layer.
     from holdspeak.kernel.runtime import _configure
@@ -155,7 +149,7 @@ def test_disable_cancels_scheduler_parent_and_fences_late_output(tmp_path, monke
     assert item.result in (None, "")
     with pytest.raises(ServiceError) as raised:
         asyncio.run(WorkbenchRunner(db, broker).run_scheduled(SCHEDULER, wid, due_minute=123458))
-    assert raised.value.code == "schedule_disabled"
+    assert raised.value.code == "delegation_revoked"
 
 
 def test_refused_tick_stamps_delegation_provenance_atomically(tmp_path):
@@ -235,7 +229,7 @@ def stage_state(db, operation_id: str) -> tuple[str, str]:
     return (str(row["state"]), str(payload.get("discarded") or ""))
 
 
-def test_recipe_edit_during_scheduled_provider_call_cannot_publish_output(tmp_path, monkeypatch):
+def test_raw_recipe_revision_edit_during_scheduled_provider_call_does_not_retarget_frozen_publication(tmp_path, monkeypatch):
     db, service, wid = _rig(tmp_path)
     db.workbench_items.upsert(item_id="in-flight", workbench_id=wid, title="in flight")
     service.update_workbench(OWNER, wid, schedule_enabled=True)
@@ -257,23 +251,17 @@ def test_recipe_edit_during_scheduled_provider_call_cannot_publish_output(tmp_pa
     child_receipt = broker.store.receipt(child_id)
     parent_receipt = broker.store.receipt(result["parent_operation_id"])
     item = db.workbench_items.get("in-flight")
-    # The output never crosses the publication boundary...
-    assert item.status != "done" and item.result in (None, "")
-    # ...but the CHILD's terminal receipt is the honest, IMMUTABLE record of what
-    # the provider actually did (HS-131-10 round 2, Terra blocker 8). The stager
-    # used to rewrite this succeeded receipt to refused/delegation_stale_work,
-    # which is precisely the mutation this story forbids and which
-    # `ExecutorPlane.receipt` refuses by name as `receipt_immutable`.
+    # A raw record revision is not a fire-time selector. The route and terms
+    # already frozen by the owner's delegation remain executable and publish.
+    assert item.status == "done" and item.result == "must never publish"
     assert child_receipt is not None and child_receipt["outcome"] == "succeeded"
     assert child_receipt["state"] == "succeeded"
-    # The fence lives on the PROJECTION instead: discarded, carrying the reason.
-    assert stage_state(db, child_id) == ("DISCARDED", "delegation_stale_work")
-    # And the delegation -- the thing that actually went stale -- is revoked.
-    assert delegation == {"state": "REVOKED", "revocation_reason": "delegation_stale_work"}
-    assert parent_receipt is not None and parent_receipt["outcome"] != "succeeded"
+    assert stage_state(db, child_id)[0] == "PUBLISHED"
+    assert delegation["state"] == "LIVE"
+    assert parent_receipt is not None and parent_receipt["outcome"] == "succeeded"
 
 
-def test_profile_edit_during_scheduled_provider_call_cannot_publish_output(tmp_path, monkeypatch):
+def test_raw_profile_edit_during_scheduled_provider_call_does_not_retarget_frozen_publication(tmp_path, monkeypatch):
     db, service, wid = _rig(tmp_path)
     db.workbench_items.upsert(item_id="profile-in-flight", workbench_id=wid, title="profile in flight")
     service.update_workbench(OWNER, wid, schedule_enabled=True)
@@ -294,23 +282,17 @@ def test_profile_edit_during_scheduled_provider_call_cannot_publish_output(tmp_p
     child_receipt = broker.store.receipt(child_id)
     parent_receipt = broker.store.receipt(result["parent_operation_id"])
     item = db.workbench_items.get("profile-in-flight")
-    # The output never crosses the publication boundary...
-    assert item.status != "done" and item.result in (None, "")
-    # ...but the CHILD's terminal receipt is the honest, IMMUTABLE record of what
-    # the provider actually did (HS-131-10 round 2, Terra blocker 8). The stager
-    # used to rewrite this succeeded receipt to refused/delegation_target_changed,
-    # which is precisely the mutation this story forbids and which
-    # `ExecutorPlane.receipt` refuses by name as `receipt_immutable`.
+    # A raw profile-row edit cannot replace the deployment revision already
+    # frozen into the delegation route. It therefore cannot discard this output.
+    assert item.status == "done" and item.result == "must never publish"
     assert child_receipt is not None and child_receipt["outcome"] == "succeeded"
     assert child_receipt["state"] == "succeeded"
-    # The fence lives on the PROJECTION instead: discarded, carrying the reason.
-    assert stage_state(db, child_id) == ("DISCARDED", "delegation_target_changed")
-    # And the delegation -- the thing that actually went stale -- is revoked.
-    assert delegation == {"state": "REVOKED", "revocation_reason": "delegation_target_changed"}
-    assert parent_receipt is not None and parent_receipt["outcome"] != "succeeded"
+    assert stage_state(db, child_id)[0] == "PUBLISHED"
+    assert delegation["state"] == "LIVE"
+    assert parent_receipt is not None and parent_receipt["outcome"] == "succeeded"
 
 
-def test_recipe_edit_after_first_scheduled_item_refuses_next_child_at_admission(tmp_path, monkeypatch):
+def test_raw_recipe_edit_after_first_scheduled_item_does_not_block_next_frozen_child(tmp_path, monkeypatch):
     db, service, wid = _rig(tmp_path)
     db.workbench_items.upsert(item_id="one", workbench_id=wid, title="one")
     db.workbench_items.upsert(item_id="two", workbench_id=wid, title="two")
@@ -338,15 +320,10 @@ def test_recipe_edit_after_first_scheduled_item_refuses_next_child_at_admission(
                 conn.execute("UPDATE recipes SET last_modified='edited-mid-run' WHERE id='r'")
         return original_submit(*args, **kwargs)
     monkeypatch.setattr(broker, "submit_trusted_child", edit_in_admission_gap)
-    with pytest.raises(ServiceError) as failure:
-        asyncio.run(WorkbenchRunner(db, broker).run_scheduled(SCHEDULER, wid, due_minute=889))
-    assert isinstance(failure.value.__cause__, KernelRefused)
-    assert failure.value.__cause__.reason == "delegation_stale_work"
-    assert intel.calls == 1
-    with db._connection() as conn:
-        parent_id = conn.execute("SELECT operation_id FROM kernel_parent_runs ORDER BY created_at DESC LIMIT 1").fetchone()[0]
-    receipt = broker.store.receipt(parent_id)
-    assert receipt is not None and receipt["outcome"] != "succeeded"
+    result = asyncio.run(WorkbenchRunner(db, broker).run_scheduled(SCHEDULER, wid, due_minute=889))
+    assert intel.calls == 4  # item + receipt-linked memory child for each item
+    receipt = broker.store.receipt(result["parent_operation_id"])
+    assert receipt is not None and receipt["outcome"] == "succeeded"
 
 
 def test_scheduler_or_agent_cannot_mint_or_reactivate_delegation(tmp_path):

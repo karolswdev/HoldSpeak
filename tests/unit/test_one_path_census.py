@@ -513,6 +513,7 @@ ADMITTED_SEAM_CALLERS: dict[tuple[str, str], str] = {
     # this one façade; the elected qualified agent turn uses AgentTurnService.run
     # and ToolTurnFoundationService's separate controller path.
     ("holdspeak/services/agent_turn_service.py", "AgentTurnService.dispatch_plugin"): "one already-admitted PluginDispatch child only; qualified tool turns use ToolTurnFoundationService",
+    ("holdspeak/services/agent_turn_service.py", "_PromptToolProviderTransport.dispatch"): "ToolTurnController invokes it only inside the frozen agent.tool_turn route's Runner reservation",
 }
 
 # ------------------------------------------------------- bucket 4: the findings
@@ -699,7 +700,7 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # (the queue worker plus its three DeferredIntelJob closures).
     # HS-143-10 moves the legacy issued-handle leaf behind its one precise
     # product façade; qualified ToolTurn execution remains foundation-owned.
-    assert len(sites) == 101
+    assert len(sites) == 102
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
     assert counts["finding"] == 0
