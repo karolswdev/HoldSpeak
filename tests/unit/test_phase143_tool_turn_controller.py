@@ -94,7 +94,8 @@ def _effect_lease(descriptor: CanonicalApplicationOperationDescriptor, *, turn: 
 
 def _started(
     db: Database, *, now: list[float], compose_model_steps: bool = False,
-    compose_broker: bool = False, descriptor: CanonicalApplicationOperationDescriptor | None = None,
+    compose_model_execution: bool = False, compose_broker: bool = False,
+    descriptor: CanonicalApplicationOperationDescriptor | None = None,
     lease_terms: dict[str, object] | None = None,
 ) -> tuple[ToolTurnController, str]:
     """Build real DB, kernel parent/bundle and optional production seams."""
@@ -106,11 +107,13 @@ def _started(
         "entries": [{"profile_id": "tool-parent-model", "profile_revision": 1}],
     })
     broker = _configure(db)
-    adoption = RoutedInferenceCoordinator(db, broker=broker)
+    adoption = broker.inference_adoption_service if compose_model_execution else RoutedInferenceCoordinator(db, broker=broker)
+    composed_steps = compose_model_steps or compose_model_execution
     controller = ToolTurnController(
         db, projection=ModelTurnCapabilityProjection([descriptor]), clock=lambda: now[0],
-        route_plan_service=adoption.plans if compose_model_steps else None,
-        fallback_controller=adoption.controller if compose_model_steps else None,
+        route_plan_service=adoption.plans if composed_steps else None,
+        fallback_controller=adoption.controller if composed_steps else None,
+        model_coordinator=adoption if compose_model_execution else None,
         tool_broker=BrokerToolCallPort(broker) if compose_broker else None,
     )
     bundles = InferenceParentRouteBundleService(broker, adoption)

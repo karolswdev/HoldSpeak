@@ -456,11 +456,15 @@ class ToolCallCandidate:
     provider_tool_call_id: str
     capability_id: str
     arguments: Mapping[str, Any]
+    provider_call_ordinal: int = 1
     canonical_args_sha256: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "provider_tool_call_id", _require_id(self.provider_tool_call_id, field="provider_tool_call_id"))
         object.__setattr__(self, "capability_id", _require_id(self.capability_id, field="capability_id"))
+        object.__setattr__(self, "provider_call_ordinal", _require_positive(
+            self.provider_call_ordinal, field="provider_call_ordinal", maximum=6
+        ))
         arguments = _json_plain(self.arguments)
         if not isinstance(arguments, dict):
             raise ToolCapabilityError("tool call arguments must be an object")
@@ -475,6 +479,7 @@ class ToolCallCandidate:
         return {
             "schema": "ToolCallCandidate@1",
             "provider_tool_call_id": self.provider_tool_call_id,
+            "provider_call_ordinal": self.provider_call_ordinal,
             "capability_id": self.capability_id,
             "arguments": _json_plain(self.arguments),
             "canonical_args_sha256": self.canonical_args_sha256,

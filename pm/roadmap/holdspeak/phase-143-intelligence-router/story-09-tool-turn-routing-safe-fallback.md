@@ -52,6 +52,34 @@ provider-neutral `ToolModelAdapter` (ORCH-CALL 9) — it is Part-A seam
 material and lands in the A5 gate round with those proofs, alongside
 the opus verification leg. Sweep: **6503 passed / zero branch-new**.
 
+**A5 SHIPPED — THE PART A GATE IS CLOSED (2026-08-25).** The
+provider-neutral `ToolModelAdapter` contract landed
+(`services/tool_model_adapter.py`: render once → transport once →
+parse exactly one closed answer-or-tool-call candidate; no loop, no
+retry — the coordinator/controller stay attempt authority), wired
+into the model-step seam with a deterministic internal reference
+adapter that fakes only the wire format. The outstanding proofs
+closed: 0/1/N physical-child cardinality (pre-dispatch refusal = 0
+children; ordinary step = exactly 1 admitted child + receipt; frozen
+retry policy = N distinct admitted children, one winner) and parallel
+read-result ordering (reversed completion keeps provider-call ordinal
+order in durable state and in the next step's material; forward and
+reverse completion produce identical canonical next-request hashes).
+The gate run itself caught and fixed four things, including
+random receipt IDs leaking into provider material (request identity
+now stable) and a missing durable result table in the snapshot. The
+paired **opus verification leg audited all of Part A: "PART A SOUND —
+gate may close"** — all five acceptance criteria verified in the
+tree, proofs production-honest, service principals minimally
+authorized, ledger triggers enforcing lawful transitions, restart
+reconstruction truthful, schema additive with proven CHECK-rebuild
+preservation, and the Part B boundary clean (zero production surfaces
+import the tool machinery). Two ledger notes: byte-length token
+approximation (conservatively over-reserves) and the turn-state
+transition to refine when B adds multi-step loops. Sweep: **6511
+passed / 48 failed / ZERO branch-new — not one non-baseline name.**
+Part B (tool-qualified routing and safe fallback, B1–B4) may begin.
+
 ## Problem
 
 The ruled Tool Capability Foundation is design-only. This story makes its

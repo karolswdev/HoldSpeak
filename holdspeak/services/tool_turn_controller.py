@@ -1,9 +1,11 @@
 """Durable private ToolTurn reservation authority (HS-143-09 A2).
 
-The controller owns leases, terminal election and tool/model reservation only.
-It never constructs a provider request, calls a provider, or invokes a tool
-service; later slices compose its rows with InferenceFallbackController and the
-Broker's separately admitted children.
+The controller owns leases, terminal election and tool/model reservation.  A
+selected ``ToolModelAdapter`` may render and parse one provider wire exchange,
+but the controller still delegates every physical model child to the existing
+``InferenceFallbackController``/``InferenceRunner`` path and every tool child to
+the Broker.  It never chooses a provider, loops, retries, or invokes a tool
+service directly.
 """
 from __future__ import annotations
 
@@ -34,11 +36,19 @@ from .tool_capability_service import (
     sha256,
     validate_closed_arguments,
 )
+from .tool_model_adapter import (
+    ToolModelAdapter,
+    ToolModelAdapterError,
+    ToolModelProviderAdapter,
+    ToolModelProviderTransport,
+    ToolModelToolCallCandidate,
+)
 
 
 TOOL_TURN_AUTHORITY = Principal(
     PrincipalKind.SERVICE,
     "tool-turn-controller",
+    allowed_operations=frozenset({("inference.invoke", 1)}),
     authority_basis="kernel:tool-turn@1",
 )
 _MAX_CAPABILITIES = 12
@@ -307,17 +317,26 @@ class ToolTurnController:
         clock: Callable[[], float],
         route_plan_service: InferenceRoutePlanService | None = None,
         fallback_controller: InferenceFallbackController | None = None,
+        model_coordinator: Any | None = None,
         tool_broker: ToolCallBrokerPort | None = None,
     ) -> None:
         if not isinstance(projection, ModelTurnCapabilityProjection):
             raise ToolTurnError("MODEL_TURN projection is required")
         if (route_plan_service is None) != (fallback_controller is None):
             raise ToolTurnError("model-step route and fallback composition must arrive together")
+        if model_coordinator is not None and (
+            route_plan_service is None
+            or fallback_controller is None
+            or getattr(model_coordinator, "plans", None) is not route_plan_service
+            or getattr(model_coordinator, "controller", None) is not fallback_controller
+        ):
+            raise ToolTurnError("model-step execution composition must share route authority")
         self._db = db
         self._projection = projection
         self._clock = clock
         self._plans = route_plan_service
         self._fallback = fallback_controller
+        self._model_coordinator = model_coordinator
         self._tool_broker = tool_broker
 
     @staticmethod
@@ -467,19 +486,30 @@ class ToolTurnController:
         capability_id: str,
         capability_revision: int,
         arguments: Mapping[str, Any],
+        provider_call_ordinal: int | None = None,
     ) -> dict[str, Any]:
-        """Atomically reserve a frozen worst-case tool slot before Broker admission."""
+        """Atomically reserve a frozen worst-case tool slot before Broker admission.
+
+        Native adapters always supply their provider-call ordinal.  The ``None``
+        compatibility form is retained only for internal direct reservations and
+        derives the next ordinal under this transaction; it cannot alter an
+        adapter-supplied ordinal.
+        """
         self._require_authority(principal)
         command, turn = _safe(command_id, field="command_id"), _safe(turn_id, field="turn_id")
         provider_id = _safe(provider_tool_call_id, field="provider_tool_call_id")
+        provider_ordinal = None if provider_call_ordinal is None else _int(
+            provider_call_ordinal, field="provider_call_ordinal", minimum=1, maximum=_MAX_TOOL_CALLS
+        )
         capability = _safe(capability_id, field="capability_id")
         revision = _int(capability_revision, field="capability_revision", minimum=1, maximum=1_000_000)
         args = _json(arguments, field="arguments")
         args_hash = sha256(args)
         request = {
             "schema": "ToolTurnReserveToolCall@1", "turn_id": turn,
-            "provider_tool_call_id": provider_id, "capability_id": capability,
-            "capability_revision": revision, "canonical_args_sha256": args_hash,
+            "provider_tool_call_id": provider_id, "provider_call_ordinal": provider_ordinal,
+            "capability_id": capability, "capability_revision": revision,
+            "canonical_args_sha256": args_hash,
         }
         request_hash, now = sha256(request), float(self._clock())
         with self._db._connection() as conn:
@@ -498,7 +528,8 @@ class ToolTurnController:
                 existing = conn.execute("SELECT * FROM tool_turn_tool_calls WHERE turn_id=? AND provider_tool_call_id=?", (turn, provider_id)).fetchone()
                 if existing is not None:
                     same = (
-                        str(existing["capability_id"]) == capability
+                        (provider_ordinal is None or int(existing["provider_tool_ordinal"]) == provider_ordinal)
+                        and str(existing["capability_id"]) == capability
                         and int(existing["capability_revision"]) == revision
                         and str(existing["canonical_args_sha256"]) == args_hash
                     )
@@ -544,6 +575,7 @@ class ToolTurnController:
                 if int(usage["effects"]) + reserved_effects > int(lease.terms["max_effect_proposals"]):
                     raise ToolTurnRefused("effect_budget_exhausted")
                 ordinal = int(conn.execute("SELECT COALESCE(MAX(tool_ordinal),0)+1 FROM tool_turn_tool_calls WHERE turn_id=?", (turn,)).fetchone()[0])
+                effective_provider_ordinal = ordinal if provider_ordinal is None else provider_ordinal
                 call_id = "ttc_" + uuid.uuid4().hex
                 conn.execute(
                     """INSERT INTO tool_turn_tool_calls
@@ -551,7 +583,7 @@ class ToolTurnController:
                         capability_revision,lease_sha256,canonical_args_sha256,reserved_result_bytes,
                         reserved_result_tokens,reserved_effects,state,created_at,updated_at)
                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                    (call_id, turn, ordinal, ordinal, provider_id, capability, revision, turn_row["lease_sha256"],
+                    (call_id, turn, ordinal, effective_provider_ordinal, provider_id, capability, revision, turn_row["lease_sha256"],
                      args_hash, term["max_result_bytes"], term["max_result_tokens"], reserved_effects,
                      "reserved", now, now),
                 )
@@ -649,6 +681,79 @@ class ToolTurnController:
             except Exception:
                 conn.rollback()
                 raise
+
+    def execute_model_step(
+        self,
+        principal: Principal,
+        *,
+        command_id: str,
+        turn_id: str,
+        model_step_id: str,
+        model_adapter: ToolModelAdapter,
+        provider_transport: ToolModelProviderTransport,
+    ) -> dict[str, Any]:
+        """Run one planned step through one selected native-tool adapter bridge.
+
+        The bridge is constrained to one render/request/parse exchange for every
+        physical Runner child.  Route retries remain outside it in the existing
+        fallback controller; the model-step receipt settles before any parsed tool
+        candidate is admitted through the canonical Broker path.
+        """
+        self._require_authority(principal)
+        if self._model_coordinator is None:
+            raise ToolTurnRefused("tool_turn_model_execution_composition_missing")
+        if not isinstance(model_adapter, ToolModelAdapter):
+            raise ToolTurnRefused("tool_model_adapter_required")
+        if not isinstance(provider_transport, ToolModelProviderTransport):
+            raise ToolTurnRefused("tool_model_transport_required")
+        command, turn, step_id = (
+            _safe(command_id, field="command_id"), _safe(turn_id, field="turn_id"),
+            _safe(model_step_id, field="model_step_id"),
+        )
+        now = float(self._clock())
+        with self._db._connection() as conn:
+            row, lease = self._live_turn(conn, turn, now)
+            step = conn.execute(
+                "SELECT * FROM tool_turn_model_steps WHERE id=? AND turn_id=?", (step_id, turn)
+            ).fetchone()
+            if step is None or str(step["state"]) != "running" or not str(step["route_execution_id"]):
+                raise ToolTurnRefused("model_step_not_running")
+            if str(step["lease_sha256"]) != str(row["lease_sha256"]):
+                raise ToolTurnRefused("tool_turn_step_lease_integrity_invalid")
+            provider_tools = self._projection.provider_tools([
+                str(item["capability_id"]) for item in lease.terms["capabilities"]
+            ])
+        bridge = ToolModelProviderAdapter(model_adapter, provider_transport, provider_tools)
+        outcome = self._model_coordinator.execute(
+            TOOL_TURN_AUTHORITY,
+            execution_id=str(step["route_execution_id"]),
+            adapter=bridge,
+        )
+        if outcome.get("outcome") != "succeeded" or not isinstance(outcome.get("result"), Mapping):
+            return {
+                "schema": "ToolTurnModelStepOutcome@1", "model_step": self._model_step_projection(step),
+                "outcome": str(outcome.get("outcome") or "failed"), "candidate": None,
+            }
+        settled = self.settle_model_step(
+            principal, command_id=f"settle-{hashlib.sha256(command.encode()).hexdigest()[:24]}",
+            turn_id=turn, model_step_id=step_id,
+        )
+        try:
+            candidate = bridge.candidate_for_result(outcome["result"])
+        except ToolModelAdapterError as exc:
+            raise ToolTurnRefused("tool_model_candidate_receipt_integrity_invalid") from exc
+        admitted = None
+        if isinstance(candidate, ToolModelToolCallCandidate):
+            admitted = self.admit_tool_call(
+                principal,
+                command_id=f"tool-{hashlib.sha256(command.encode()).hexdigest()[:24]}",
+                turn_id=turn,
+                candidate=candidate.tool_call,
+            )
+        return {
+            "schema": "ToolTurnModelStepOutcome@1", "model_step": settled,
+            "outcome": "succeeded", "candidate": candidate.to_dict(), "tool_call": admitted,
+        }
 
     def settle_model_step(
         self,
@@ -748,6 +853,7 @@ class ToolTurnController:
             principal, command_id=command_id, turn_id=turn,
             provider_tool_call_id=candidate.provider_tool_call_id, capability_id=candidate.capability_id,
             capability_revision=descriptor.revision, arguments=candidate.arguments,
+            provider_call_ordinal=candidate.provider_call_ordinal,
         )
         admitted = self._tool_broker.admit(
             turn_id=turn, tool_call_id=str(reservation["id"]), descriptor=descriptor, candidate=candidate,
@@ -828,16 +934,28 @@ class ToolTurnController:
                     if sha256(material) != envelope.result_sha256 or envelope.result_bytes > int(call["reserved_result_bytes"]) or envelope.result_tokens > int(call["reserved_result_tokens"]):
                         raise ToolTurnRefused("tool_result_budget_or_hash_invalid")
                     result_hash = str(envelope.result_sha256)
+                    material_json = canonical_json(material)
                     state, disposition = "receipted", "available"
                 else:
                     if result_material is not None:
                         raise ToolTurnRefused("tool_result_limitation_carries_material")
-                    result_hash = ""
+                    result_hash, material_json = "", ""
                     state, disposition = envelope.status, envelope.status
                 conn.execute(
                     """UPDATE tool_turn_tool_calls SET state=?,receipt_id=?,result_sha256=?,disposition=?,updated_at=?
                        WHERE id=? AND state='admitted'""",
                     (state, receipt, result_hash, disposition, now, call_id),
+                )
+                conn.execute(
+                    """INSERT INTO tool_turn_tool_call_results
+                       (tool_call_id,turn_id,provider_tool_ordinal,envelope_json,result_material_json,
+                        result_material_sha256,created_at)
+                       VALUES (?,?,?,?,?,?,?)""",
+                    (call_id, turn, int(call["provider_tool_ordinal"]), canonical_json({
+                        "status": envelope.status, "result_sha256": envelope.result_sha256,
+                        "result_bytes": envelope.result_bytes, "result_tokens": envelope.result_tokens,
+                        "final_answer_may_name_limitation": envelope.final_answer_may_name_limitation,
+                    }), material_json, result_hash, now),
                 )
                 effect = conn.execute("SELECT * FROM tool_turn_effect_children WHERE tool_call_id=?", (call_id,)).fetchone()
                 if effect is not None:
@@ -861,6 +979,53 @@ class ToolTurnController:
             except Exception:
                 conn.rollback()
                 raise
+
+    def ordered_tool_results(self, principal: Principal, *, turn_id: str) -> dict[str, Any]:
+        """Return durable continuation material in provider-call ordinal order.
+
+        Completion/receipt timing is intentionally absent from this projection.
+        A caller stages these exact rows into the next frozen model-step request;
+        a fallback deployment therefore sees the same bytes in the same order.
+        """
+        self._require_authority(principal)
+        turn = _safe(turn_id, field="turn_id")
+        with self._db._connection() as conn:
+            self._turn_row(conn, turn)
+            rows = conn.execute(
+                """SELECT c.provider_tool_ordinal,c.provider_tool_call_id,c.capability_id,
+                          c.capability_revision,c.state,c.disposition,
+                          r.envelope_json,r.result_material_json,r.result_material_sha256
+                     FROM tool_turn_tool_calls c
+                     JOIN tool_turn_tool_call_results r ON r.tool_call_id=c.id
+                    WHERE c.turn_id=?
+                    ORDER BY c.provider_tool_ordinal""",
+                (turn,),
+            ).fetchall()
+        results: list[dict[str, Any]] = []
+        for row in rows:
+            try:
+                envelope = json.loads(str(row["envelope_json"]))
+                material_json = str(row["result_material_json"])
+                material = None if not material_json else json.loads(material_json)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                raise ToolTurnRefused("tool_result_continuation_integrity_invalid") from exc
+            if str(envelope.get("status") or "") != str(row["disposition"]):
+                raise ToolTurnRefused("tool_result_continuation_integrity_invalid")
+            if material is not None and sha256(material) != str(row["result_material_sha256"]):
+                raise ToolTurnRefused("tool_result_continuation_integrity_invalid")
+            results.append({
+                "provider_call_ordinal": int(row["provider_tool_ordinal"]),
+                "provider_tool_call_id": str(row["provider_tool_call_id"]),
+                "capability_id": str(row["capability_id"]),
+                "capability_revision": int(row["capability_revision"]),
+                # Receipt identity remains private ledger evidence.  It cannot
+                # enter provider material, or identical read results completed in
+                # another order would receive different random child IDs.
+                "status": str(row["state"]),
+                "envelope": envelope,
+                "result": material,
+            })
+        return {"schema": "ToolTurnOrderedToolResults@1", "turn_id": turn, "tool_results": results}
 
     def reconcile_effect_child(self, principal: Principal, *, turn_id: str, tool_call_id: str) -> dict[str, Any]:
         """Restart truth: adopt a known effect receipt once, otherwise terminalize."""

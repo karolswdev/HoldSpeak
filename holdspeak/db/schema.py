@@ -3182,6 +3182,16 @@ CREATE TABLE IF NOT EXISTS tool_turn_tool_calls (
 );
 CREATE INDEX IF NOT EXISTS idx_tool_turn_tool_calls_turn_state
 ON tool_turn_tool_calls(turn_id, state, tool_ordinal);
+CREATE TABLE IF NOT EXISTS tool_turn_tool_call_results (
+    tool_call_id TEXT PRIMARY KEY REFERENCES tool_turn_tool_calls(id),
+    turn_id TEXT NOT NULL REFERENCES tool_turns(turn_id),
+    provider_tool_ordinal INTEGER NOT NULL CHECK (provider_tool_ordinal > 0),
+    envelope_json TEXT NOT NULL,
+    result_material_json TEXT NOT NULL DEFAULT '',
+    result_material_sha256 TEXT NOT NULL DEFAULT '',
+    created_at REAL NOT NULL,
+    UNIQUE(turn_id, provider_tool_ordinal)
+);
 CREATE TABLE IF NOT EXISTS tool_turn_effect_children (
     id TEXT PRIMARY KEY,
     turn_id TEXT NOT NULL REFERENCES tool_turns(turn_id),
