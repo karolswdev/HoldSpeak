@@ -77,9 +77,9 @@ def submit(broker: Any, raw: Any, principal: Any, context: Any, *, planned_node:
             delegation = conn.execute("SELECT * FROM kernel_schedule_delegations WHERE id=?", (str(parent_input.get("delegation_id") or ""),)).fetchone()
             if delegation is None or str(delegation["state"]) != "LIVE" or str(delegation["terms_sha256"]) != str(parent_input.get("terms_sha256") or ""):
                 raise KernelRefused("delegation_revoked")
-            recipe = conn.execute("SELECT last_modified FROM recipes WHERE id=? AND deleted=0", (str(delegation["recipe_id"]),)).fetchone()
-            if recipe is None or str(recipe["last_modified"]) != str(delegation["recipe_revision"]):
-                raise KernelRefused("delegation_stale_work")
+            # The source deployment is frozen at owner enablement. This equality
+            # binds the submitted child to that evidence; it is not a current
+            # placement resolution.
             if str(request.arguments.get("deployment_revision") or "") != str(delegation["deployment_revision_id"]):
                 raise KernelRefused("delegation_target_changed")
         declared_basis = str(getattr(principal, "authority_basis", "") or "")

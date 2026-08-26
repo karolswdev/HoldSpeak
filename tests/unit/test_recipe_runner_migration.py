@@ -1,62 +1,131 @@
-"""HS-131-03 Recipe runner migration, origins, and bypass fence."""
+"""HS-143-10 Recipe execution only traverses route/controller/Runner evidence."""
 from __future__ import annotations
-import ast, asyncio
+
+import asyncio
+import ast
 from pathlib import Path
+
 import pytest
+
 from holdspeak.db import Database
 from holdspeak.kernel.recipe_projection import materialize_run
 from holdspeak.kernel.model import KernelRefused
 from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.services.recipe_service import RecipeService
-OWNER=Principal(PrincipalKind.OWNER,"owner")
+from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+
+
+OWNER = Principal(PrincipalKind.OWNER, "owner")
+
+
 class Engine:
-    active_provider="test"; active_model="test-model"
-    def run_prompt(self, **kwargs): return "runner recipe"
+    active_provider = "test"
+    active_model = "test-model"
+
+    def run_prompt(self, **_kwargs: object) -> str:
+        return "runner recipe"
+
+
 @pytest.fixture
-def rig(tmp_path,monkeypatch):
-    db=Database(tmp_path/"recipe.db"); db.recipes.upsert(recipe_id="r1",name="Recipe",system_prompt="system")
-    monkeypatch.setattr("holdspeak.inference_targets._this_machine_readiness",lambda:("ready",""))
-    broker=_configure(db)
-    # HS-131-13: a `this_machine` child now builds from its FROZEN revision, so it
-    # no longer passes through the configured-provider seam this rig used to patch.
-    # Inject at the sanctioned boundary instead — the runner's engine factory.
-    broker.inference_runner._engine_factory=lambda _revision,**_:Engine()
-    return db,broker
-def test_recipe_run_and_root_chat_use_exact_saved_revision_and_stages(rig):
-    db,broker=rig; service=RecipeService(db,broker=broker); recipe=db.recipes.get("r1")
-    run=asyncio.run(service.run(OWNER,"r1",input="hello")); chat=asyncio.run(service.chat(OWNER,"r1",question="hello"))
-    assert run["artifact_id"] and chat["output"]=="runner recipe"
-    with db._connection() as conn:
-        rows=conn.execute("SELECT kind,invocation_id,operation_id,state FROM kernel_projection_stages ORDER BY kind").fetchall()
-        ops=conn.execute("SELECT native_id,parent_operation_id FROM kernel_operations ORDER BY native_id").fetchall()
-        assert conn.execute("SELECT COUNT(*) FROM recipe_results").fetchone()[0]==1
-        assert conn.execute("SELECT COUNT(*) FROM recipe_chat_results").fetchone()[0]==1
-    assert {r["kind"] for r in rows}=={"recipe-run","recipe-chat-result"}
-    assert all(r["state"]=="PUBLISHED" for r in rows)
-    assert all(r["parent_operation_id"]=="" for r in ops)
-    events=broker.events(0,{},OWNER)["events"]
-    admitted=[e for e in events if e["event_type"]=="operation.admitted"]
-    assert any(f"recipe:r1" in e["refs"] for e in admitted)
-    assert str(recipe.last_modified)
-def test_recipe_profile_revision_is_committed_before_runner_claim(rig, monkeypatch):
-    db,broker=rig
-    with db._connection() as conn:
-        before_revisions=conn.execute("SELECT COUNT(*) FROM deployment_revisions").fetchone()[0]
-    db.profiles.upsert(profile_id="profile",name="Profile",kind="openAICompatible",base_url="http://profile",model="model")
-    monkeypatch.setattr("holdspeak.intel.providers.build_meeting_intel_for_profile",lambda **_:Engine())
-    result=asyncio.run(RecipeService(db,broker=broker).run(OWNER,"r1",input="profile",inference_target_id="profile"))
-    with db._connection() as conn:
-        # Phase 143 startup may already have minted the local speech revision;
-        # this profile invocation still persists exactly one new frozen revision.
-        assert conn.execute("SELECT COUNT(*) FROM deployment_revisions").fetchone()[0]==before_revisions+1
-        assert conn.execute("SELECT outcome FROM kernel_receipts WHERE operation_id=?",(result["operation_id"],)).fetchone()[0]=="succeeded"
+def rig(tmp_path: Path) -> tuple[Database, object]:
+    db = Database(tmp_path / "recipe.db")
+    _profile(db, "recipe-primary", claims=(_result_claim("recipe.run"),))
+    db.recipes.upsert(recipe_id="r1", name="Recipe", system_prompt="system", profile_id="recipe-primary")
+    broker = _configure(db)
+    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: Engine()
+    return db, broker
 
 
-def test_recipe_service_ast_fence_and_forged_materializer_permit(rig):
-    db,_=rig; source=Path(__file__).parents[2]/"holdspeak/services/recipe_service.py"; tree=ast.parse(source.read_text())
-    text=source.read_text()
-    assert not any(token in text for token in ("RunLifecycle","run_prompt","build_intel_for_target","persona:","unversioned"))
+def test_recipe_run_and_root_chat_stage_controller_winners(rig: tuple[Database, object]) -> None:
+    db, broker = rig
+    service = RecipeService(db, broker=broker)
+    run = asyncio.run(service.run(OWNER, "r1", input="hello"))
+    chat = asyncio.run(service.chat(OWNER, "r1", question="hello"))
+    assert run["artifact_id"] and chat["output"] == "runner recipe"
+    assert run["route_execution_receipt"]["outcome"] == chat["route_execution_receipt"]["outcome"] == "succeeded"
     with db._connection() as conn:
-        with pytest.raises(KernelRefused,match="projection_publication_permit_invalid"):
-            materialize_run(conn,object(),object())
+        stages = conn.execute("SELECT kind,state FROM kernel_projection_stages ORDER BY kind").fetchall()
+        attempts = conn.execute("SELECT child_operation_id FROM inference_route_attempts ORDER BY id").fetchall()
+        receipts = conn.execute("SELECT operation_id FROM kernel_receipts ORDER BY operation_id").fetchall()
+    assert {(row["kind"], row["state"]) for row in stages} == {("recipe-run", "PUBLISHED"), ("recipe-chat-result", "PUBLISHED")}
+    assert len(attempts) == len(receipts) == 2
+    assert all(str(row["child_operation_id"] or "") for row in attempts)
+
+
+def test_recipe_subject_edit_applies_only_to_later_admission(rig: tuple[Database, object]) -> None:
+    db, broker = rig
+    _profile(db, "recipe-next", claims=(_result_claim("recipe.run"),))
+    service = RecipeService(db, broker=broker)
+    first = asyncio.run(service.run(OWNER, "r1", input="first"))
+    assignments = InferenceAssignmentService(db)
+    current = assignments.get_assignment(OWNER, {"kind": "subject", "subject_kind": "recipe", "subject_id": "r1", "capability_id": "recipe.run"})
+    assignments.set_assignment(OWNER, {"command_id": "recipe-next-run", "expected_revision": current["revision"], "scope": current["scope"], "entries": [{"profile_id": "recipe-next", "profile_revision": 1}]})
+    second = asyncio.run(service.run(OWNER, "r1", input="second"))
+    assert first["profile_id"] == "recipe-primary"
+    assert second["profile_id"] == "recipe-next"
+    assert first["placement"]["route_plan_sha256"] != second["placement"]["route_plan_sha256"]
+
+
+def test_recipe_assignment_mutation_after_admission_cannot_retarget_frozen_execution(
+    rig: tuple[Database, object],
+) -> None:
+    """The admitted route and operation hashes survive a later subject edit."""
+    from holdspeak.services.recipe_service import _RecipeResultAdapter
+
+    db, broker = rig
+    _profile(db, "recipe-later", claims=(_result_claim("recipe.run"),))
+    coordinator = broker.inference_adoption_service
+    coordinator.migrate_recipe_workbench_subject_assignments(OWNER)
+    payload = {
+        "system_prompt": "system", "user_prompt": "first", "variables": {},
+        "recipe_id": "r1", "recipe_revision": "1", "temperature": None,
+        "max_tokens": None, "workbench_id": "",
+    }
+    admitted = coordinator.admit(
+        OWNER, command_id="admit-frozen-recipe", capability_id="recipe.run",
+        operation_id="frozen-recipe", payload=payload, subject_kind="recipe", subject_id="r1",
+        reserved_output_tokens=512,
+    )
+    frozen_route = dict(admitted["route_plan"])
+    frozen_operation = dict(admitted["operation_request_plan"])
+    assignments = InferenceAssignmentService(db)
+    current = assignments.get_assignment(OWNER, {
+        "kind": "subject", "subject_kind": "recipe", "subject_id": "r1",
+        "capability_id": "recipe.run",
+    })
+    assignments.set_assignment(OWNER, {
+        "command_id": "replace-after-admission", "expected_revision": current["revision"],
+        "scope": current["scope"],
+        "entries": [{"profile_id": "recipe-later", "profile_revision": 1}],
+    })
+
+    executed = coordinator.execute(
+        OWNER, execution_id=admitted["execution"]["id"], adapter=_RecipeResultAdapter(),
+        publish=lambda _output, reservation: f"result:{reservation['child_invocation_id']}",
+    )
+    later = coordinator.admit(
+        OWNER, command_id="admit-later-recipe", capability_id="recipe.run",
+        operation_id="later-recipe", payload={**payload, "user_prompt": "second"},
+        subject_kind="recipe", subject_id="r1", reserved_output_tokens=512,
+    )
+
+    assert executed["outcome"] == "succeeded"
+    assert [entry["profile_id"] for entry in frozen_route["entries"]] == ["recipe-primary"]
+    assert frozen_operation["route_plan_id"] == frozen_route["id"]
+    assert frozen_route["sha256"].startswith("sha256:")
+    assert frozen_operation["sha256"] == admitted["operation_request_plan"]["sha256"]
+    assert [entry["profile_id"] for entry in later["route_plan"]["entries"]] == ["recipe-later"]
+
+
+def test_recipe_service_ast_fence_and_forged_materializer_permit(rig: tuple[Database, object]) -> None:
+    db, _broker = rig
+    source = Path(__file__).parents[2] / "holdspeak/services/recipe_service.py"
+    tree = ast.parse(source.read_text())
+    text = source.read_text()
+    assert not any(token in text for token in ("RunLifecycle", "resolve_placement", "_target(", "_invoke("))
+    assert not any(isinstance(node, ast.Call) and getattr(node.func, "attr", "") == "invoke" for node in ast.walk(tree))
+    with db._connection() as conn:
+        with pytest.raises(KernelRefused, match="projection_publication_permit_invalid"):
+            materialize_run(conn, object(), object())

@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
 from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_primitives_router
 
@@ -26,6 +27,24 @@ def client(tmp_path, monkeypatch) -> TestClient:
     monkeypatch.setattr(
         "holdspeak.inference_targets._this_machine_readiness",
         lambda: ("ready", ""),
+    )
+    # Existing blank Recipe/Sequence fixtures model a configured hub. Seed that
+    # configuration through the canonical default assignment rather than the
+    # retired ambient placement fallback.
+    default_model = tmp_path / "primitive-default.gguf"
+    default_model.touch()
+    db.profiles.upsert(
+        profile_id="primitive-default", name="Primitive default", kind="onDevice",
+        model_file=str(default_model),
+    )
+    InferenceAssignmentService(db).set_assignment(
+        Principal(PrincipalKind.OWNER, "primitive-test-owner"),
+        {
+            "command_id": "primitive-test-default-assignment",
+            "expected_revision": 0,
+            "scope": {"kind": "global"},
+            "entries": [{"profile_id": "legacy-primitive-default"}],
+        },
     )
     app = FastAPI()
 
@@ -57,7 +76,7 @@ def _assert_admitted_run(body: dict, recipe_id: str, input_text: str) -> None:
     # and durable artifact.
     assert body["artifact_id"]
     assert body["recipe_id"] == recipe_id
-    assert body["actual_placement"]["target_id"] == "this_machine"
+    assert body["actual_placement"]["target_id"] == "primitive-default"
     assert body["sources"] == [{"source_type": "recipe", "source_ref": recipe_id}]
     assert input_text in body["name"]
 
@@ -149,7 +168,7 @@ def test_run_agent_invokes_engine(client: TestClient, monkeypatch) -> None:
     body["artifact_id"] = artifact_id
     _assert_admitted_run(body, aid, "hello")
     assert body["recipe_id"] == aid and body["output"] == "ANSWER"
-    assert body["provider"] == "local" and body["profile_id"] is None
+    assert body["provider"] == "local" and body["profile_id"] == "primitive-default"
     assert body["sources"] == [{"source_type": "recipe", "source_ref": aid}]
     # The persona's system prompt + rendered template reached the engine.
     assert captured["system_prompt"] == "SYS"

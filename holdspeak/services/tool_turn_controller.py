@@ -773,6 +773,7 @@ class ToolTurnController:
         model_step_id: str,
         model_adapter: ToolModelAdapter,
         provider_transport: ToolModelProviderTransport,
+        publish: Callable[[Any, Mapping[str, Any]], str] | None = None,
     ) -> dict[str, Any]:
         """Run one planned step through one selected native-tool adapter bridge.
 
@@ -810,6 +811,7 @@ class ToolTurnController:
             TOOL_TURN_AUTHORITY,
             execution_id=str(step["route_execution_id"]),
             adapter=bridge,
+            publish=publish,
         )
         if outcome.get("outcome") != "succeeded" or not isinstance(outcome.get("result"), Mapping):
             return {

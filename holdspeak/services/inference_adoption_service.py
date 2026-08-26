@@ -60,6 +60,15 @@ ADOPTED_CAPABILITIES = (
     "background.cadence_draft",
     "decision.promotion_draft",
     "delivery.pr_review_draft",
+    # HS-143-10 placement adopters. Tool turns retain their separate qualified
+    # evidence provider in ToolTurnFoundationService, so they are deliberately
+    # absent here.
+    "recipe.run",
+    "recipe.chat",
+    "workbench.item",
+    "voice.reference_resolve",
+    "sequence.step",
+    "workflow.node",
     # C2 plugin membership comes only from the composed registry.  The closed
     # evidence provider must nevertheless list every installed exact capability
     # before a frozen bundle child may stage its private material.
@@ -80,6 +89,7 @@ MEETING_MIGRATION_FAMILY = "meeting-route-assignments"
 MEETING_DEFERRED_MIGRATION_FAMILY = "meeting-deferred-route-assignments"
 SPEECH_RECOGNITION_MIGRATION_FAMILY = "speech-recognition-route-assignments"
 RAILS_OBSERVER_MIGRATION_FAMILY = "rails-observer-route-assignments"
+RECIPE_WORKBENCH_MIGRATION_FAMILY = "recipe-workbench-subject-route-assignments"
 MEETING_ASSIGNMENT_CAPABILITIES = (
     "meeting.live_analysis",
     "meeting.bookmark_label",
@@ -1015,10 +1025,12 @@ class RoutedInferenceCoordinator:
             else ""
         )
         if principal.kind is not PrincipalKind.OWNER and (
-            principal.kind is not PrincipalKind.SERVICE or (not bound_parent and not source_route)
+            (principal.kind is PrincipalKind.SERVICE and not (bound_parent or source_route))
+            or (principal.kind is PrincipalKind.SCHEDULER and not bound_parent)
+            or principal.kind not in {PrincipalKind.SERVICE, PrincipalKind.SCHEDULER}
         ):
             raise ValidationError(
-                "Frozen-route admission requires owner, bound service, or derived parentless preload authority.",
+                "Frozen-route admission requires owner, bound service, or delegated scheduler authority.",
                 code="inference_adoption_owner_required",
             )
         reference = "iam_" + hashlib.sha256(
@@ -1027,7 +1039,12 @@ class RoutedInferenceCoordinator:
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             try:
-                if principal.kind is PrincipalKind.SERVICE:
+                if principal.kind is PrincipalKind.SCHEDULER:
+                    self._validate_scheduled_frozen_route(
+                        conn, principal=principal, parent_operation_id=bound_parent,
+                        route_plan_id=route_id, capability_id=capability.id,
+                    )
+                elif principal.kind is PrincipalKind.SERVICE:
                     if source_route:
                         self._validate_parentless_local_preload_route(
                             conn,
@@ -1111,6 +1128,52 @@ class RoutedInferenceCoordinator:
         return {**operation_plan, "execution": execution}
 
     @staticmethod
+    def _validate_scheduled_frozen_route(
+        conn: Any,
+        *,
+        principal: Principal,
+        parent_operation_id: str,
+        route_plan_id: str,
+        capability_id: str,
+    ) -> None:
+        """Authorize only the exact owner-enabled schedule source route.
+
+        A scheduler has no ambient placement authority. Its sole exception is a
+        live delegated Workbench parent whose persisted terms name the same
+        immutable route command that owner enablement wrote.
+        """
+        parent = conn.execute(
+            """SELECT p.input_json,o.principal_kind,o.principal_identity
+               FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id
+               WHERE p.operation_id=?""",
+            (parent_operation_id,),
+        ).fetchone()
+        if parent is None or str(parent["principal_kind"]) != principal.name or str(parent["principal_identity"]) != principal.identity:
+            raise ValidationError("Delegated scheduler parent is required.", code="inference_adoption_service_membership_required")
+        try:
+            snapshot = json.loads(str(parent["input_json"]))
+        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+            raise ValidationError("Delegated scheduler evidence is invalid.", code="inference_adoption_service_membership_required") from exc
+        delegation_id = str(snapshot.get("delegation_id") or "")
+        terms_sha = str(snapshot.get("terms_sha256") or "")
+        delegation = conn.execute(
+            "SELECT terms_sha256,state FROM kernel_schedule_delegations WHERE id=?",
+            (delegation_id,),
+        ).fetchone()
+        route = conn.execute(
+            "SELECT plan_id FROM inference_route_plan_commands WHERE command_id=?",
+            (f"schedule-delegation-route-{delegation_id}",),
+        ).fetchone()
+        if (
+            capability_id != "workbench.item" or delegation is None
+            or str(delegation["state"]) != "LIVE"
+            or str(delegation["terms_sha256"]) != terms_sha
+            or route is None or str(route["plan_id"]) != route_plan_id
+            or str(snapshot.get("route_plan_id") or "") != route_plan_id
+        ):
+            raise ValidationError("Delegated schedule route membership is required.", code="inference_adoption_service_membership_required")
+
+    @staticmethod
     def _validate_parentless_local_preload_route(
         conn: Any,
         *,
@@ -1185,6 +1248,86 @@ class RoutedInferenceCoordinator:
                 "Parentless preload route is not derived from its speech assignment.",
                 code="inference_adoption_service_membership_required",
             )
+
+    def freeze_routes(
+        self,
+        principal: Principal,
+        *,
+        command_id: str,
+        deadline_at: float,
+        routes: Sequence[Mapping[str, Any]],
+    ) -> dict[str, dict[str, Any]]:
+        """Freeze a parent's named future routes in one canonical transaction.
+
+        Unlike ``InferenceParentRouteBundleService``, a linear Sequence may need
+        several routes of the same capability (one per saved Recipe).  This
+        façade deliberately freezes route evidence only; each later child still
+        attaches its private operation material through ``admit_on_frozen_route``
+        and executes under the controller.  Nothing here selects a target.
+        """
+        if principal.kind is not PrincipalKind.OWNER or not routes:
+            raise ValidationError(
+                "Parent routes are invalid.", code="inference_adoption_composite_invalid"
+            )
+        command = _safe(command_id, field="command_id")
+        try:
+            deadline = float(deadline_at)
+        except (TypeError, ValueError) as exc:
+            raise ValidationError(
+                "Parent route deadline is invalid.",
+                code="inference_adoption_composite_invalid",
+            ) from exc
+        if deadline <= time.time():
+            raise ValidationError(
+                "Parent route deadline has elapsed.",
+                code="inference_adoption_composite_invalid",
+            )
+        frozen: dict[str, dict[str, Any]] = {}
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                for ordinal, raw in enumerate(routes, 1):
+                    if not isinstance(raw, Mapping):
+                        raise ValidationError(
+                            "Parent route is invalid.",
+                            code="inference_adoption_composite_invalid",
+                        )
+                    required = {"key", "capability_id", "invocation_id"}
+                    optional = {"subject_kind", "subject_id"}
+                    if (
+                        not required.issubset(raw)
+                        or set(raw) - (required | optional)
+                        or (("subject_kind" in raw) != ("subject_id" in raw))
+                    ):
+                        raise ValidationError(
+                            "Parent route is invalid.",
+                            code="inference_adoption_composite_invalid",
+                        )
+                    key = _safe(raw["key"], field="route_key")
+                    if key in frozen:
+                        raise ValidationError(
+                            "Parent route keys must be unique.",
+                            code="inference_adoption_composite_invalid",
+                        )
+                    request: dict[str, Any] = {
+                        "capability_id": _safe(raw["capability_id"], field="capability_id"),
+                        "invocation_id": _safe(raw["invocation_id"], field="invocation_id"),
+                        "deadline_at": deadline,
+                    }
+                    if "subject_kind" in raw:
+                        request["subject_kind"] = _safe(raw["subject_kind"], field="subject_kind")
+                        request["subject_id"] = _safe(raw["subject_id"], field="subject_id")
+                    frozen[key] = self.plans.freeze_route_plan_in_transaction(
+                        ROUTE_PLANNING_AUTHORITY,
+                        conn,
+                        command_id=f"{command}-{ordinal}",
+                        **request,
+                    )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+        return frozen
 
     def freeze_route_set(
         self,
@@ -1266,6 +1409,7 @@ class RoutedInferenceCoordinator:
         publish: Callable[[Any, Mapping[str, Any]], str] | None = None,
         before_physical_dispatch: Callable[[str, str, int], None] | None = None,
         parent_context: Any = None,
+        planned_node: str = "",
     ) -> dict[str, Any]:
         if self._broker is None:
             raise ServiceError(
@@ -1404,8 +1548,9 @@ class RoutedInferenceCoordinator:
             from ..kernel.runtime import _as_principal
 
             with _as_principal(principal):
-                runner.invoke(
-                    request, adapter, publish=project, parent_context=parent_context
+                runner_outcome = runner.invoke(
+                    request, adapter, publish=project, parent_context=parent_context,
+                    planned_node=planned_node,
                 )
             receipt = self.controller.get_route_execution_receipt(
                 receipt_authority, execution_id=execution_id
@@ -1431,7 +1576,16 @@ class RoutedInferenceCoordinator:
                     "winning_reservation": winning,
                 }
             if receipt["state"] == "terminal":
-                return {"outcome": receipt["outcome"], "result": None, "receipt": receipt}
+                return {
+                    "outcome": receipt["outcome"],
+                    "result": None,
+                    "receipt": receipt,
+                    # The route receipt deliberately stores only the typed,
+                    # content-free disposition. Return the transient physical
+                    # error to the owning service so its transport can preserve
+                    # the ordinary 502 body without making it route evidence.
+                    "error": str(getattr(runner_outcome, "error", "") or ""),
+                }
             execution = self.controller._execution(None, execution_id)
 
     def recover_route_executions(
@@ -2439,6 +2593,81 @@ class RoutedInferenceCoordinator:
             )
         return {**marker, "status": "migrated", "legacy_config_read": True}
 
+    def migrate_recipe_workbench_subject_assignments(
+        self, principal: Principal
+    ) -> dict[str, Any]:
+        """Consume Recipe/Workbench pointers once into exact subject assignments.
+
+        The durable primitive id is the assignment subject.  The old profile id
+        is only the one transaction's input and is retained in the marker's
+        source-record map for audit; neither blank nor stale pointers become a
+        post-marker execution selector.
+        """
+        family = RECIPE_WORKBENCH_MIGRATION_FAMILY
+        assignments = InferenceAssignmentService(self._db, registry=self._registry)
+        existing = assignments.migration_marker(principal, family=family)
+        if existing is not None:
+            return {**existing, "status": "migrated", "legacy_config_read": False}
+
+        def entry_for(profile_id: str) -> dict[str, Any]:
+            with self._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT MAX(revision) AS revision FROM model_profile_revisions WHERE profile_id=?",
+                    (profile_id,),
+                ).fetchone()
+                revision = int(row["revision"] or 0) if row is not None else 0
+                legacy = conn.execute(
+                    "SELECT 1 FROM profiles WHERE id=? AND deleted=0", (profile_id,)
+                ).fetchone()
+            if revision >= 1:
+                return {"profile_id": profile_id, "profile_revision": revision}
+            if legacy is not None:
+                return {"profile_id": f"legacy-{profile_id}", "profile_revision": 1}
+            # Deliberately fail the whole transaction: making a marker around a
+            # dangling pointer would hide the repair and make its old intent
+            # execution-dead without an explicit refusal.
+            raise ValidationError(
+                "Legacy subject pointer names a missing model profile.",
+                code="inference_assignment_profile_missing",
+            )
+
+        subject_entries: list[dict[str, Any]] = []
+        source_records: list[dict[str, Any]] = []
+        for recipe in self._db.recipes.list():
+            value = str(getattr(recipe, "profile_id", "") or "").strip()
+            source_records.append({
+                "record_kind": "recipe", "record_id": str(recipe.id), "field": "profile_id",
+                "legacy_value": value, "legacy_read": bool(value),
+            })
+            if value:
+                profile = entry_for(value)
+                for capability_id in ("recipe.run", "recipe.chat", "sequence.step"):
+                    subject_entries.append({
+                        "subject_kind": "recipe", "subject_id": str(recipe.id),
+                        "capability_id": capability_id, "entry": profile,
+                    })
+        for workbench in self._db.workbenches.list():
+            for field, capability_id in (
+                ("profile_id", "workbench.item"),
+                ("resolver_profile_id", "voice.reference_resolve"),
+            ):
+                value = str(getattr(workbench, field, "") or "").strip()
+                source_records.append({
+                    "record_kind": "workbench", "record_id": str(workbench.id), "field": field,
+                    "legacy_value": value, "legacy_read": bool(value),
+                })
+                if value:
+                    subject_entries.append({
+                        "subject_kind": "workbench", "subject_id": str(workbench.id),
+                        "capability_id": capability_id, "entry": entry_for(value),
+                    })
+        source_sha256 = _sha256({"records": sorted(source_records, key=lambda item: (item["record_kind"], item["record_id"], item["field"]))})
+        marker = assignments.migrate_subject_assignments_atomically(
+            principal, family=family, source_sha256=source_sha256,
+            subject_entries=subject_entries, source_records=source_records,
+        )
+        return {**marker, "status": "migrated", "legacy_config_read": True}
+
     def migrate_startup_legacy_assignments(
         self, principal: Principal, config_loader: Callable[[], Any]
     ) -> dict[str, dict[str, Any]]:
@@ -2452,6 +2681,7 @@ class RoutedInferenceCoordinator:
                 MEETING_DEFERRED_MIGRATION_FAMILY,
                 SPEECH_RECOGNITION_MIGRATION_FAMILY,
                 RAILS_OBSERVER_MIGRATION_FAMILY,
+                RECIPE_WORKBENCH_MIGRATION_FAMILY,
             )
         }
         if all(markers.values()):
@@ -2474,6 +2704,9 @@ class RoutedInferenceCoordinator:
             ),
             RAILS_OBSERVER_MIGRATION_FAMILY: self.migrate_rails_observer_route_assignments(
                 principal, config
+            ),
+            RECIPE_WORKBENCH_MIGRATION_FAMILY: self.migrate_recipe_workbench_subject_assignments(
+                principal
             ),
         }
 
@@ -2556,6 +2789,7 @@ __all__ = [
     "MEETING_DEFERRED_MIGRATION_FAMILY",
     "SPEECH_RECOGNITION_MIGRATION_FAMILY",
     "RAILS_OBSERVER_MIGRATION_FAMILY",
+    "RECIPE_WORKBENCH_MIGRATION_FAMILY",
     "ProductionInferenceAdoptionService",
     "ProductionRouteEvidence",
     "RoutedInferenceCoordinator",

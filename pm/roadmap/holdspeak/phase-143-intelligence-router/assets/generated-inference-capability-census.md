@@ -2,7 +2,7 @@
 
 **Story:** HSEGHS001HS104-143-01
 
-**Captured:** 2026-08-21
+**Regenerated:** 2026-08-25 on `feat/hs143-10-placement-adoption`
 
 This is the checked-in baseline for the Phase 143 route migration. Its
 machine-readable fixture is
@@ -15,21 +15,22 @@ capability and source-owner classification.
 
 ## Current result
 
-105 Python production model-shaped sites are registered. There are 14 direct
+102 Python production model-shaped sites are registered. There are 14 direct
 Python provider/model leaves and **zero Python legacy bypasses**. The Phase 131
 findings ledger is empty. `InferenceRunner` remains the Python physical
 admission waist; all Python direct leaves are context-gated adapters or
-dispatch closures reached from an admitted child. Apple has seven separately
-inventoried legacy physical leaves below; it does not yet use the Python runner.
+dispatch closures reached from an admitted child. The seven Swift physical
+leaves remain separately inventoried below as **HELD** by the 2026-08-25 owner
+ruling; the Python zero is never represented as a Swift zero.
 
 | Proposed capability | Sites | Current source owner |
 |---|---:|---|
-| `agent.tool_turn` | 1 | `plugins.intelligence` |
+| `agent.tool_turn` | 2 | `services.agent_turn_service` |
 | `internal.inference.dispatch` | 37 | runner, target factories, MeetingIntel provider adapters |
 | `internal.speech.runtime_assembly` | 16 | speech-session/dictation runtime assembly |
-| `meeting.auto_title` | 3 | `meeting_session` |
-| `meeting.bookmark_label` | 3 | `meeting_session` |
-| `meeting.deferred_analysis` | 3 | `meeting_session.deferred_bound` |
+| `meeting.auto_title` | 2 | `meeting_session` |
+| `meeting.bookmark_label` | 2 | `meeting_session` |
+| `meeting.deferred_analysis` | 1 | `meeting_session.deferred_bound` |
 | `meeting.live_analysis` | 1 | `meeting_session` |
 | `project_doc.suggest_update` | 3 | `project_doc_suggestions` |
 | `speech.intent_classify` | 7 | `speech_session` |
@@ -89,32 +90,22 @@ Phase 131 `allowlist` site and that its recorded admission is `InferenceRunner`.
 
 ## Product entrances into the runner
 
-The physical-site inventory above is not enough on its own: these are the 13
-production callers of `InferenceRunner.invoke`, including first-class bound
-method references passed to `asyncio.to_thread`. The checked-in fixture fails
-on any new `.invoke` expression, so a new service cannot inherit an existing
-source owner's review by merely using the runner.
+These are the four production references to `InferenceRunner.invoke`, including
+a first-class bound method reference. The exact fixture fails on any new
+`.invoke` expression, so a product service cannot inherit review merely by
+calling the runner directly.
 
 | Source location | Proposed capability provenance | Source owner |
 |---|---|---|
 | `kernel/mesh_local_runner.py:232` | dynamic: frozen mesh dispatch-offer capability | `kernel.mesh_local_runner` |
-| `meeting_session/intel_child.py:193` | dynamic: frozen `MeetingIntelPlan` capability | `meeting_session.intel_child` |
-| `rails_observer.py:268` | `background.rails_summary` | `rails_observer` |
-| `services/ask_service.py:120` | `internal.semantic_dispatch`; exact capability supplied by the semantic caller | `services.ask_service` |
-| `services/inference_adoption_service.py:1220` | dynamic: frozen `InferenceRoutePlan` capability | `services.inference_adoption_service` |
-| `services/cadence_service.py:284` | `background.cadence_draft` | `services.cadence_service` |
-| `services/decision_lifecycle_service.py:81` | `decision.promotion_draft` | `services.decision_lifecycle_service` |
-| `services/recipe_service.py:52` | `internal.semantic_dispatch`; exact capability supplied by the semantic caller | `services.recipe_service` |
-| `services/sequence_workflow_service.py:44` | `internal.semantic_dispatch`; exact capability supplied by the semantic caller | `services.sequence_workflow_service` |
-| `services/workbench_runner.py:41` | `workbench.item` | `services.workbench_runner` |
-| `services/workbench_service.py:414` | `voice.reference_resolve` | `services.workbench_service` |
+| `services/ask_service.py:120` | `internal.semantic_dispatch`; exact capability supplied by semantic caller | `services.ask_service` |
+| `services/inference_adoption_service.py:1551` | dynamic: frozen `InferenceRoutePlan` capability | `services.inference_adoption_service` |
 | `speech_session/child.py:181` | dynamic: frozen `SpeechSessionPlan` capability | `speech_session.child` |
-| `web/routes/delivery_prs.py:252` | `delivery.pr_review_draft` | `web.routes.delivery_prs` |
 
-The four dynamic rows are deliberately provenance descriptors, not fake
-registry IDs: their current plan or signed offer chooses a typed capability at
-admission. Story 02 must carry that exact capability into its registry/route
-plan rather than collapsing the family into one broad assignment.
+The dynamic rows are provenance descriptors, not fake registry IDs: their
+stored plan or signed offer supplies the typed capability at admission. Story
+143-10 product services are absent by design: they call the coordinator rather
+than `InferenceRunner.invoke`.
 
 ## Shared semantic callers
 
@@ -139,30 +130,29 @@ be the next interview question or a terminal synthesis; `thought.synthesis` is
 not separately routable today. It must not be reduced to `ask.answer` merely
 because it invokes `AskService`.
 
-## Apple Swift scope
+## Apple Swift scope — HELD by owner ruling
 
-Apple source is in scope for the physical-leaf baseline but is not covered by
-the Python `InferenceRunner`. Seven Swift leaves are named **legacy bypasses**
-with their migration owner; they must converge on the Phase 143 route/fallback
-law before an Apple capability can claim parity.
+Apple source remains in the physical-leaf scanner, but is out of Story 143-10
+scope by the owner's 2026-08-25 ruling. The seven physical leaves below are
+**HELD**. They are not Python `InferenceRunner` work, are not counted as zero,
+and must never be deleted as bookkeeping. A future Swift phase owns bridge or
+recreation work.
 
-| Swift leaf | Proposed capability | Exact migration story |
+| Swift leaf | Proposed capability | Current disposition |
 |---|---|---|
-| `InferenceLlama/LlamaProvider.swift:124` | `apple.local_completion` | Story 143-10 — Agents/workbenches/recipes adoption |
-| `Providers/Inference/OpenAIEndpointProvider.swift:48` | `apple.endpoint_completion` | Story 143-10 — Agents/workbenches/recipes adoption |
-| `Providers/Inference/StructuredOutput.swift:64` | `apple.structured_output` | Story 143-10 — Agents/workbenches/recipes adoption |
-| `Providers/Desktop/MeshServeWorker.swift:99` | `apple.mesh_serve` | Story 143-10 — Agents/workbenches/recipes adoption |
-| `RuntimeCore/Companion/CoderAnswer.swift:109` | `apple.coder_answer` | Story 143-10 — Agents/workbenches/recipes adoption |
-| `RuntimeCore/Workbench/BlueprintInterpreter.swift:333` | `apple.workbench.blueprint` | Story 143-06 — one physical call; later routes require controller admission |
-| `RuntimeCore/Workbench/WorkflowRunner.swift:338` | `apple.workbench.workflow` | Story 143-06 — one physical call; later routes require controller admission |
+| `InferenceLlama/LlamaProvider.swift:124` | `apple.local_completion` | HELD — owner ruling 2026-08-25 |
+| `Providers/Inference/OpenAIEndpointProvider.swift:48` | `apple.endpoint_completion` | HELD — owner ruling 2026-08-25 |
+| `Providers/Inference/StructuredOutput.swift:64` | `apple.structured_output` | HELD — owner ruling 2026-08-25 |
+| `Providers/Desktop/MeshServeWorker.swift:99` | `apple.mesh_serve` | HELD — owner ruling 2026-08-25 |
+| `RuntimeCore/Companion/CoderAnswer.swift:109` | `apple.coder_answer` | HELD — owner ruling 2026-08-25 |
+| `RuntimeCore/Workbench/BlueprintInterpreter.swift:333` | `apple.workbench.blueprint` | HELD — owner ruling 2026-08-25 |
+| `RuntimeCore/Workbench/WorkflowRunner.swift:338` | `apple.workbench.workflow` | HELD — owner ruling 2026-08-25 |
 
-`WorkflowRunner` and `BlueprintInterpreter` currently retry and may use an
-injected fallback provider; those are legacy application-level physical calls,
-not evidence of a canonical route-plan controller. Their Story 143-06 migration
-must replace that law before Story 143-10 adopts the resulting route.
 The scanner catches every Swift `.complete(` receiver (including `fallback`)
-and every `URLSession.data(for:)` open under `Providers/Inference`; both have
-synthetic mutation proofs.
+and every `URLSession.data(for:)` open under `Providers/Inference`; synthetic
+mutations prove that an uncatalogued physical leaf fails closed. The separate
+surface scanner continues to require zero executable Swift retry/fallback
+policy branches.
 
 ## Migration implications
 

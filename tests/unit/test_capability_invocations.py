@@ -7,6 +7,8 @@ from fastapi.testclient import TestClient
 
 import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_primitives_router
 
@@ -16,6 +18,21 @@ def rig(tmp_path, monkeypatch):
     reset_database()
     db = Database(tmp_path / "holdspeak.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    model = tmp_path / "capability-default.gguf"
+    model.touch()
+    db.profiles.upsert(
+        profile_id="capability-default", name="Capability default", kind="onDevice",
+        model_file=str(model),
+    )
+    InferenceAssignmentService(db).set_assignment(
+        Principal(PrincipalKind.OWNER, "capability-test-owner"),
+        {
+            "command_id": "capability-test-default-assignment",
+            "expected_revision": 0,
+            "scope": {"kind": "global"},
+            "entries": [{"profile_id": "legacy-capability-default"}],
+        },
+    )
     app = FastAPI()
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     yield db, TestClient(app)

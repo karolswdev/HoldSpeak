@@ -1,6 +1,6 @@
 # Phase 143 - The Intelligence Router
 
-**Last updated:** 2026-08-24.
+**Last updated:** 2026-08-26.
 
 ## Goal
 
@@ -53,11 +53,12 @@ Assignments.
 | HSEGHS001HS104-143-07 | Thoughts Ask and Writing Adoption | done | [story-07-thoughts-ask-writing-adoption](./story-07-thoughts-ask-writing-adoption.md) | [evidence](./evidence-story-07.md) |
 | HSEGHS001HS104-143-08 | Meetings Speech and Background Adoption | done | [story-08-meetings-speech-background-adoption](./story-08-meetings-speech-background-adoption.md) | [evidence-story-08](./evidence-story-08.md) |
 | HSEGHS001HS104-143-09 | Tool Capability Foundation and Safe Routing | done | [story-09-tool-turn-routing-safe-fallback](./story-09-tool-turn-routing-safe-fallback.md) | [evidence-story-09](./evidence-story-09.md) |
-| HSEGHS001HS104-143-10 | Agents Workbenches and Recipes Adoption | backlog | [story-10-agents-workbenches-recipes-adoption](./story-10-agents-workbenches-recipes-adoption.md) | - |
+| HSEGHS001HS104-143-10 | Agents Workbenches and Recipes Adoption | done | [story-10-agents-workbenches-recipes-adoption](./story-10-agents-workbenches-recipes-adoption.md) | [evidence-story-10](./evidence-story-10.md) |
 | HSEGHS001HS104-143-11 | HTTP MCP Sync and Compatibility | backlog | [story-11-http-mcp-sync-compatibility](./story-11-http-mcp-sync-compatibility.md) | - |
 | HSEGHS001HS104-143-12 | Model Library and Providers | backlog | [story-12-model-library-providers](./story-12-model-library-providers.md) | - |
 | HSEGHS001HS104-143-13 | Capability Assignments Experience | backlog | [story-13-capability-assignments-experience](./story-13-capability-assignments-experience.md) | - |
 | HSEGHS001HS104-143-14 | Chaos Glass and Closeout | backlog | [story-14-chaos-glass-closeout](./story-14-chaos-glass-closeout.md) | - |
+| HSEGHS001HS104-143-15 | Intelligence Router Repo-Wide Documentation | backlog | [story-15-intelligence-router-docs](./story-15-intelligence-router-docs.md) | - |
 
 ## Where we are
 
@@ -540,6 +541,29 @@ and [delivery map](./assets/delivery-map.md).
 - 2026-08-21 - Generalize MeetingIntelPlan/SpeechPlan's frozen ordered-revision pattern; distinguish route-leg and physical-attempt ordinals - preserves proven restart behavior and prevents dialect/fallback ordinal collision - repository census.
 - 2026-08-21 - Assignments are sparse capability/group/subject overrides with ordered qualified fallbacks and an atomic Save - scales without a matrix and keeps inheritance explainable - product/architecture ruling.
 - 2026-08-21 - Tool fallback cannot expand the independent capability lease or repeat/guess an effect; unknown completion stops - maintains YOLO speed inside explicit owner intent and policy - tool authority ruling.
+
+Story 10 is done (2026-08-26, seven gate commits on
+`feat/hs143-10-placement-adoption`, unpushed pending the owner's word):
+every non-tool Agent/Workbench/Recipe/sequence/workflow/voice caller now
+rides the canonical resolver, frozen route plans, controller execution,
+and the `InferenceRunner` waist; legacy Recipe/Workbench pointers
+migrated one-way into exact subject assignments; qualified
+`RecipeService.chat` is the first production ToolTurn adopter
+(`RecipeRecord.tools` proven inert); mutable `inference.run` late
+dispatch is retired with history readable; the fake workflow fallback
+labels decode honestly at the boundary; the census converges to zero
+Python placement forks with fail-closed regeneration and a 16-case
+production-object adoption matrix. Two opus gate audits ran clean with
+zero findings. Three full sweeps; the close evidence is 6601 passed /
+zero branch-new with the branch healing ~22 inherited failures. By owner
+ruling (three beats, final form in the plan's ruling blocks) the Swift
+half of criterion 6 is out of this story's bar: the Slice-5
+admitted-attempt bridge is frozen compile-green on
+`hold/hs143-10-slice5-swift-bridge`, the seven Swift leaves stay
+censused HELD, and the focus turns to the web glass. Story 15 (repo-wide
+router docs) was chartered mid-story by owner ruling; Story 14 now
+depends on it. Next actionable: Story 12/13 glass first per the owner's
+web-focus direction, then 11, 15, 14.
 
 ## Decisions deferred
 

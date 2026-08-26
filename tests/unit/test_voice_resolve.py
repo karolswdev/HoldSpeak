@@ -395,7 +395,7 @@ def _admitted_voice_rig(tmp_path):
     return db, service, broker, workbench["id"]
 
 
-def test_service_retry_admits_one_child_per_attempt_with_ordinals(tmp_path):
+def test_service_parse_failure_has_one_controller_owned_attempt(tmp_path):
     db, service, broker, workbench_id = _admitted_voice_rig(tmp_path)
 
     class FakeIntel:
@@ -414,7 +414,8 @@ def test_service_retry_admits_one_child_per_attempt_with_ordinals(tmp_path):
     broker.inference_runner.invoke = record_attempt
     result = service.resolve_voice(OWNER, workbench_id, "find Alpha", "voice-retry")
 
-    assert result["attempts"] == 2
+    assert result["error"] == "resolver_parse_failure"
+    assert result["attempts"] == 1
     with db._connection() as conn:
         parent = conn.execute(
             "SELECT operation_id FROM kernel_parent_runs WHERE kind='voice_reference_resolve'"
@@ -423,8 +424,8 @@ def test_service_retry_admits_one_child_per_attempt_with_ordinals(tmp_path):
             "SELECT operation_id FROM kernel_operations WHERE parent_operation_id=?",
             (parent,),
         ).fetchall()
-    assert len(children) == 2
-    assert observed_ordinals == [1, 2]
+    assert len(children) == 1
+    assert observed_ordinals == [1]
 
 
 def test_service_refuses_missing_principal_before_child_admission(tmp_path):

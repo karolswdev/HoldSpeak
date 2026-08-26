@@ -36,8 +36,8 @@ def test_swift_encoded_linear_blueprint_linearizes() -> None:
     assert [n.kind for n in plan.ordered] == ["entry", "llm", "extract", "keep_if", "output"]
 
     by_id = {n.id: n for n in plan.ordered}
-    # Per-node provenance reaches the plan exactly as the Swift inspector set it.
-    assert by_id["ask"].failure_policy == "fallbackOnDevice"
+    # The Swift compatibility spelling decodes at ingress to canonical carry.
+    assert by_id["ask"].failure_policy == "carry"
     assert by_id["ask"].runs_on == "endpoint"
     assert by_id["dec"].failure_policy == "skip"
     assert by_id["dec"].runs_on == "onDevice"

@@ -177,7 +177,7 @@ def test_parse_graph_carries_failure_policy_and_runs_on() -> None:
     nodes = parse_graph(g)
     assert nodes is not None
     assert (nodes[0].failure_policy, nodes[0].runs_on) == ("skip", "endpoint")
-    assert (nodes[1].failure_policy, nodes[1].runs_on) == ("fallbackOnDevice", "onDevice")
+    assert (nodes[1].failure_policy, nodes[1].runs_on) == ("carry", "onDevice")
 
 
 def test_parse_graph_preserves_the_desktop_pin() -> None:
@@ -215,19 +215,17 @@ def test_parse_graph_unset_or_unknown_provenance_is_byte_identical_default() -> 
 def test_resolved_failure_policy_falls_back_to_run_default() -> None:
     # An explicit node policy wins; unset inherits the runner's default.
     assert resolved_failure_policy(GraphNode("a", "llm", {}, failure_policy="skip")) == "skip"
-    assert resolved_failure_policy(GraphNode("a", "llm", {})) == "retryThenQueue"
+    assert resolved_failure_policy(GraphNode("a", "llm", {})) == "hold"
     assert resolved_failure_policy(GraphNode("a", "llm", {}), default="skip") == "skip"
 
 
-def test_on_node_error_honors_skip_and_fallback_but_surfaces_retry() -> None:
+def test_on_node_error_honors_carry_skip_and_hold() -> None:
     carried = "the resolved input"
-    # skip → carry the input straight through (the step is dropped, run survives).
+    # skip/carry preserve input after the controller's real terminal failure.
     assert on_node_error(GraphNode("a", "llm", {}, failure_policy="skip"), carried) == carried
-    # fallbackOnDevice → no separate hub fallback, so carry through (degrade, don't drop run).
-    assert on_node_error(
-        GraphNode("a", "llm", {}, failure_policy="fallbackOnDevice"), carried) == carried
-    # retryThenQueue and unset → None: the hub surfaces the failure (no silent recovery).
-    assert on_node_error(GraphNode("a", "llm", {}, failure_policy="retryThenQueue"), carried) is None
+    assert on_node_error(GraphNode("a", "llm", {}, failure_policy="carry"), carried) == carried
+    # hold and unset surface the failure; neither mints retry authority.
+    assert on_node_error(GraphNode("a", "llm", {}, failure_policy="hold"), carried) is None
     assert on_node_error(GraphNode("a", "llm", {}), carried) is None
 
 
@@ -245,4 +243,4 @@ def test_linearize_preserves_provenance_through_ordering() -> None:
     assert plan.linearizable
     a, b = plan.ordered
     assert (a.id, a.failure_policy, a.runs_on) == ("a", "skip", "endpoint")
-    assert (b.id, b.failure_policy, b.runs_on) == ("b", "fallbackOnDevice", "onDevice")
+    assert (b.id, b.failure_policy, b.runs_on) == ("b", "carry", "onDevice")

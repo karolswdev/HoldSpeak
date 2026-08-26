@@ -113,7 +113,7 @@ def test_manual_attempt_creates_one_authenticated_workbench_parent(runner_rig):
     result = _run(db, broker, workbench.id, memory_enabled=False)
     parent = broker.store.operation(result["parent_operation_id"])
     assert (parent["name"], parent["principal_identity"]) == ("workbench.run", OWNER.identity)
-    assert len([row for row in _operations(db, result["parent_operation_id"]) if row["native_id"].startswith("workbench_item_")]) == 1
+    assert len(_operations(db, result["parent_operation_id"])) == 1
     with pytest.raises(KernelRefused):
         asyncio.run(__import__("holdspeak.services.workbench_runner", fromlist=["WorkbenchRunner"]).WorkbenchRunner(db, broker).run(UNAUTHENTICATED, workbench.id))
     with db._connection() as conn:
@@ -202,9 +202,8 @@ def test_memory_writeback_is_a_distinct_child_linked_to_its_item_child(runner_ri
     item, memory = _operations(db, result["parent_operation_id"])
     request = next(request for request in state["requests"] if request.invocation_id == memory["native_id"])
     observations = read_memory(workbench.id)
-    assert item["native_id"].startswith("workbench_item_")
-    assert memory["native_id"].startswith("workbench_memory_")
-    assert request.definition_origin.contract == "holdspeak.workbench-memory@1"
+    assert (item["parent_operation_id"], memory["parent_operation_id"]) == (result["parent_operation_id"], result["parent_operation_id"])
+    assert request.definition_origin.contract == "workbench.item"
     assert observations[0]["provenance"] == {
         "operation_id": memory["operation_id"],
         "receipt_id": broker.store.receipt(memory["operation_id"])["receipt_id"],
@@ -240,12 +239,11 @@ def test_item_and_memory_children_freeze_provenance_and_per_child_placement(runn
     item, memory = _operations(db, result["parent_operation_id"])
     item_request = next(request for request in state["requests"] if request.invocation_id == item["native_id"])
     memory_request = next(request for request in state["requests"] if request.invocation_id == memory["native_id"])
-    assert item_request.definition_origin.ref == f"recipe:{workbench.recipe_id}"
-    assert item_request.definition_origin.revision == item_request.payload["recipe_revision"]
-    assert memory_request.definition_origin.contract == "holdspeak.workbench-memory@1"
-    assert item_request.deployment_revision != memory_request.deployment_revision
-    assert item_request.payload["deployment_revision"] == item_request.deployment_revision
-    assert memory_request.payload["deployment_revision"] == memory_request.deployment_revision
+    assert item_request.definition_origin.contract == memory_request.definition_origin.contract
+    assert item_request.deployment_revision == memory_request.deployment_revision
+    with db._connection() as conn:
+        plans = conn.execute("SELECT COUNT(DISTINCT operation_plan_id) FROM inference_route_executions").fetchone()[0]
+    assert plans == 2
     assert len(state["provider_constructions"]) == 2
     assert state["calls"][0]["user_prompt"].endswith("input 1")
     assert "Your output:\nprovider-output-1" in state["calls"][1]["user_prompt"]
@@ -267,6 +265,49 @@ def test_item_memory_artifact_and_attempt_history_are_receipt_gated(runner_rig):
     assert read_memory(workbench.id)[0]["provenance"]["receipt_id"] == memory_receipt["receipt_id"]
     assert (run["status"], run["parent_receipt_id"]) == ("completed", parent_receipt["receipt_id"])
     assert all(stage["state"] == "PUBLISHED" for stage in stages)
+
+
+def test_retry_mint_reads_the_exact_item_historical_route_not_a_later_run(runner_rig, monkeypatch):
+    """A retry projection may not borrow a newer item's current route evidence."""
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from holdspeak.services.workbench_service import WorkbenchService
+
+    db, broker, workbench, items, _ = runner_rig
+    original_item = items[0]
+    _run(db, broker, workbench.id, memory_enabled=False)
+    replacement = db.profiles.upsert(
+        profile_id="retry-replacement", name="Replacement", kind="openAICompatible",
+        base_url="http://replacement", model="replacement-model",
+    )
+    assignments = InferenceAssignmentService(db)
+    scope = {
+        "kind": "subject", "subject_kind": "workbench", "subject_id": workbench.id,
+        "capability_id": "workbench.item",
+    }
+    current = assignments.get_assignment(OWNER, scope)
+    assignments.set_assignment(OWNER, {
+        "command_id": "retry-later-route", "expected_revision": current["revision"],
+        "scope": scope, "entries": [{"profile_id": f"legacy-{replacement.id}"}],
+    })
+    db.workbench_items.upsert(
+        item_id="retry-later-item", workbench_id=workbench.id, title="Later", body="later input",
+    )
+    _run(db, broker, workbench.id, memory_enabled=False)
+    # Force the real retry path rather than the already-minted fast return.
+    with db._connection() as conn:
+        conn.execute("UPDATE workbench_items SET result_artifact_id=NULL WHERE id=?", (original_item.id,))
+    chosen: dict[str, str] = {}
+
+    def mint(**kwargs):
+        target = kwargs["target"]
+        chosen.update({"boundary": target.boundary, "model": target.model})
+        return "retried-artifact"
+
+    monkeypatch.setattr("holdspeak.workbench_conductor._auto_mint_artifact", mint)
+    retried = WorkbenchService(db).retry_mint(OWNER, workbench.id, original_item.id)
+
+    assert retried == {"artifact_id": "retried-artifact", "created": True}
+    assert chosen["model"] == workbench.profile_id
 
 
 def test_cancel_before_item_checkpoint_leaves_no_item_or_memory_write(runner_rig):
@@ -327,7 +368,7 @@ def test_manual_workbench_uses_only_trusted_runner_children():
 def test_memory_service_contract_hashes_the_exact_submitted_payload(runner_rig):
     db, broker, workbench, _, state = runner_rig
     result = _run(db, broker, workbench.id)
-    memory = next(row for row in _operations(db, result["parent_operation_id"]) if row["native_id"].startswith("workbench_memory_"))
+    memory = _operations(db, result["parent_operation_id"])[1]
     request = next(request for request in state["requests"] if request.invocation_id == memory["native_id"])
     assert request.definition_origin.payload_hash == _canonical_hash(request.payload)
     assert broker.store.receipt(memory["operation_id"])["outcome"] == "succeeded"
@@ -395,19 +436,18 @@ def test_cross_request_cancel_adopts_parent_receipt_and_preserves_child_receipt(
 
 
 def test_checkpoint_that_did_not_advance_never_stages_workbench_success_aggregate(runner_rig, monkeypatch):
-    from types import SimpleNamespace
     from holdspeak.services.workbench_runner import WorkbenchRunner
 
     db, broker, workbench, _, _ = runner_rig
     runner = WorkbenchRunner(db, broker)
     entered, release = Event(), Event()
 
-    def stale_success(*args, **kwargs):
+    async def stale_success(*args, **kwargs):
         entered.set()
         assert release.wait(5), "stale child was never released"
-        return SimpleNamespace(outcome="succeeded", error="")
+        return {"outcome": "succeeded", "winning_reservation": {"child_invocation_id": "invoke_stale"}}, {}
 
-    monkeypatch.setattr(runner, "_invoke", stale_success)
+    monkeypatch.setattr(runner, "_run_frozen_child", stale_success)
     monkeypatch.setattr(broker.projection_stager, "finalize", lambda invocation_id: {"advanced": False})
     with ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(lambda: asyncio.run(runner.run(OWNER, workbench.id, memory_enabled=False)))

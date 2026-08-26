@@ -60,10 +60,16 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/model_profile_service.py", "_profile_projection"): ("canonical Profile owner projection", "143-03"),
     ("holdspeak/services/model_profile_service.py", "_route_plan_dependencies"): ("exact Profile assignment dependency lookup", "143-03"),
     ("holdspeak/services/profile_service.py", "_target_fields"): ("profile transport-neutral mutation", "143-03"),
-    ("holdspeak/services/recipe_service.py", "_target"): ("recipe/workbench precedence", "143-10"),
-    ("holdspeak/services/sequence_workflow_service.py", "_target"): ("workflow legacy placement", "143-10"),
+    ("holdspeak/services/recipe_service.py", "_refuse_missing_legacy_profile"): ("post-cutover dangling legacy selection refusal fence", "143-10"),
+    ("holdspeak/services/recipe_service.py", "_reject_retired_selector"): ("legacy selector refusal fence", "143-10"),
+    ("holdspeak/services/recipe_service.py", "_route_summary"): ("canonical frozen route summary projection", "143-10"),
+    ("holdspeak/services/recipe_service.py", "_write_legacy_profile_compatibility"): ("legacy selector write-through to exact assignment", "143-10"),
+    ("holdspeak/services/sequence_workflow_service.py", "_freeze_parent_routes"): ("canonical parent route-freeze façade", "143-10"),
+    ("holdspeak/services/sequence_workflow_service.py", "_reject_retired_selector"): ("legacy selector refusal fence", "143-10"),
+    ("holdspeak/services/sequence_workflow_service.py", "_route_placement"): ("frozen route placement projection", "143-10"),
+    ("holdspeak/services/sequence_workflow_service.py", "_route_target"): ("frozen route egress projection", "143-10"),
     ("holdspeak/services/support.py", "_norm_run_target"): ("workflow placement normalization", "143-10"),
-    ("holdspeak/services/workbench_runner.py", "_target"): ("workbench/recipe precedence", "143-10"),
+    ("holdspeak/services/workbench_runner.py", "_route_target"): ("frozen route egress projection", "143-10"),
     ("holdspeak/speaker_intel.py", "_get_fallback_speaker"): ("speaker identity fallback, not inference", "143-01"),
     ("holdspeak/target_profile.py", "_build_model_target_prompt"): ("model-assisted target prompt", "143-07"),
     ("holdspeak/target_profile.py", "_profile"): ("legacy target-profile lookup", "143-07"),
@@ -195,6 +201,25 @@ def test_web_route_pointer_controls_are_classified_and_single_owned() -> None:
         and STORY_RE.fullmatch(owner)
         for classification, owner in WEB_ROUTING_SURFACES.values()
     )
+
+
+def test_story143_workflow_aliases_decode_once_and_no_adopter_reopens_fake_fallback() -> None:
+    """The old wire words survive only at the boundary, never as execution law."""
+    support = (REPO / "holdspeak/services/support.py").read_text(encoding="utf-8")
+    workflow = (REPO / "holdspeak/services/sequence_workflow_service.py").read_text(encoding="utf-8")
+    assert '"fallbackOnDevice": "carry"' in support
+    assert '"retryThenQueue": "hold"' in support
+    assert "fallbackOnDevice" not in workflow
+    assert "retryThenQueue" not in workflow
+    assert "fell_back" not in workflow
+    for relative in (
+        "holdspeak/services/recipe_service.py",
+        "holdspeak/services/workbench_runner.py",
+        "holdspeak/services/workbench_service.py",
+        "holdspeak/services/sequence_workflow_service.py",
+    ):
+        source = (REPO / relative).read_text(encoding="utf-8")
+        assert "def _target(" not in source and "def _invoke(" not in source, relative
 
 
 def test_census_artifact_covers_every_guarded_surface_and_recovery_kind() -> None:

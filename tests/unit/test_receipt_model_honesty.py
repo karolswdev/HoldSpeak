@@ -61,6 +61,7 @@ from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.ask_service import AskService
 from holdspeak.services.errors import ValidationError
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.services.sync_service import _hub_model_name
 from tests.unit.admitted_context import admitted_context
 
@@ -378,6 +379,22 @@ def test_recipe_run_and_chat_agree_on_the_model(rig, tmp_path, monkeypatch) -> N
 
     db, broker = rig
     _hub_local(db, tmp_path, monkeypatch)
+    # The old fixture relied on the retired ambient hub placement. Give this
+    # blank Recipe an actual canonical global default pointing at the same
+    # local artifact whose loaded model the test fences.
+    db.profiles.upsert(
+        profile_id="recipe-hub", name="Recipe hub", kind="onDevice",
+        model_file=str(tmp_path / "Hub-Local-8B.gguf"),
+    )
+    InferenceAssignmentService(db).set_assignment(
+        OWNER,
+        {
+            "command_id": "recipe-model-honesty-default",
+            "expected_revision": 0,
+            "scope": {"kind": "global"},
+            "entries": [{"profile_id": "legacy-recipe-hub"}],
+        },
+    )
     db.recipes.upsert(
         recipe_id="recipe_scout", name="Scout", system_prompt="You are Scout.",
         user_template="{input}",

@@ -509,14 +509,11 @@ ADMITTED_SEAM_CALLERS: dict[tuple[str, str], str] = {
     ("holdspeak/dictation_runner.py", "run_pipeline_corrections_only"): "build_pipeline(admission=…) wraps the runtime in the admitted seam",
     ("holdspeak/web/routes/dictation/_helpers.py", "_run_dictation_dry_run_text"): "requires a caller-owned live text-entry admission before construction",
     ("holdspeak/commands/dictation.py", "_cmd_dry_run"): "requires the top-level CLI's derived owner and live text-entry admission before construction",
-    # HS-131-14. The plugin dispatch handle is a CONSUMER of an admitted child, not
-    # an adapter: it constructs nothing, resolves no placement, and holds no
-    # configuration. It is handed the engine `InferenceRunner._attempt` already
-    # built for the claimed child, and it re-proves that child's context — by
-    # identity — plus its own liveness and cancellation signal before every
-    # completion. Charter §Scope forbids a plugin scope on the ADAPTER_ALLOWLIST,
-    # and this is the seam list, which is where a migrated caller belongs.
-    ("holdspeak/plugins/intelligence.py", "PluginDispatch.chat"): "the runner-built engine of ONE admitted `inference.invoke` child; refuses by name before the leaf when the handle is released, cancelled, or no longer that child's",
+    # HS-143-10 admits the old issued-handle compatibility leaf only through
+    # this one façade; the elected qualified agent turn uses AgentTurnService.run
+    # and ToolTurnFoundationService's separate controller path.
+    ("holdspeak/services/agent_turn_service.py", "AgentTurnService.dispatch_plugin"): "one already-admitted PluginDispatch child only; qualified tool turns use ToolTurnFoundationService",
+    ("holdspeak/services/agent_turn_service.py", "_PromptToolProviderTransport.dispatch"): "ToolTurnController invokes it only inside the frozen agent.tool_turn route's Runner reservation",
 }
 
 # ------------------------------------------------------- bucket 4: the findings
@@ -701,7 +698,9 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # Phase 143's C1 stored-route closures retain the three lawful deferred
     # execution leaves.  Phase F removes the four legacy direct-runner entrances
     # (the queue worker plus its three DeferredIntelJob closures).
-    assert len(sites) == 101
+    # HS-143-10 moves the legacy issued-handle leaf behind its one precise
+    # product façade; qualified ToolTurn execution remains foundation-owned.
+    assert len(sites) == 102
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
     assert counts["finding"] == 0
@@ -1681,3 +1680,36 @@ def test_a_direct_receiver_run_prompt_fails_the_fence() -> None:
         target.write_bytes(original)
     assert hashlib.sha256(target.read_bytes()).hexdigest() == before
     assert [site for site in census() if site.path == "holdspeak/commands/mesh_serve.py"] == []
+
+
+# ---------------------------------------- HS-143-10 placement-adopter closure
+
+
+def test_phase143_placement_adopters_name_no_model_execution_door() -> None:
+    """The migrated product families only hand frozen work to the coordinator."""
+    adopters = {
+        "holdspeak/services/recipe_service.py",
+        "holdspeak/services/workbench_runner.py",
+        "holdspeak/services/workbench_service.py",
+        "holdspeak/services/sequence_workflow_service.py",
+        "holdspeak/services/support.py",
+    }
+    sites = [site for site in census() if site.path in adopters]
+    assert sites == [], f"placement adopter reopened a model door: {sites}"
+    assert all(path not in ADAPTER_ALLOWLIST for path, _scope in ADAPTER_ALLOWLIST if path in adopters)
+
+
+def test_phase143_placement_adopter_direct_provider_mutation_is_unregistered() -> None:
+    """A local selector cannot smuggle a completion through an adopted service."""
+    sites = list(sites_in_source(
+        "holdspeak/services/recipe_service.py",
+        """
+class RecipeService:
+    def _local_selector(self, engine):
+        return engine.run_prompt(system_prompt='x', user_prompt='x')
+""",
+    ))
+    assert len(sites) == 1
+    assert sites[0].where == ("holdspeak/services/recipe_service.py", "RecipeService._local_selector")
+    assert sites[0].target == "run_prompt"
+    assert _bucket(sites[0]) is None

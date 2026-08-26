@@ -319,6 +319,21 @@ def test_success_workbench_one_item_is_one_child_one_receipt_one_physical_attemp
     # The parent itself is typed OUT of the child cohort by name.
     parent_row = _operation(db, result["parent_operation_id"])
     assert parent_row["name"] == "workbench.run" != "inference.invoke"
+    # HS-143-10: the one physical attempt carries the parent's immutable route,
+    # rather than an item-local target lookup selected after parent admission.
+    with db._connection() as conn:
+        frozen = conn.execute(
+            """SELECT member.route_plan_id frozen_route_id, operation.route_plan_id operation_route_id
+                 FROM inference_route_attempts attempt
+                 JOIN inference_route_executions execution ON execution.id=attempt.execution_id
+                 JOIN inference_operation_route_request_plans operation ON operation.id=execution.operation_plan_id
+                 JOIN inference_parent_route_bundles bundle ON bundle.parent_operation_id=?
+                 JOIN inference_parent_route_bundle_members member ON member.bundle_id=bundle.id
+                WHERE attempt.child_operation_id=?""",
+            (result["parent_operation_id"], children[0]["operation_id"]),
+        ).fetchone()
+    assert frozen is not None
+    assert frozen["frozen_route_id"] == frozen["operation_route_id"]
 
 
 # =========================================================== PRE-DISPATCH REFUSAL
@@ -344,11 +359,11 @@ def test_pre_dispatch_refusal_yields_one_child_one_refused_receipt_zero_physical
     db, broker, revision = _bare_rig(tmp_path)
     parent_raw = {
         "request_schema": 1, "request_id": "parent-not-running", "idempotency_key": "parent-not-running",
-        "operation": {"name": "inference.run", "version": 1}, "target": {},
+        "operation": {"name": "sequence.run", "version": 1}, "target": {},
         "arguments": {
-            "invocation_id": "parent-not-running", "definition_ref": "recipe:one", "definition_revision": "rev-1",
-            "grounding_refs": [], "requested_target_id": "local", "deadline_at": time.time() + 30,
-            "input_snapshot": {},
+            "native_id": "parent-not-running", "definition_ref": "sequence:one",
+            "definition_revision": "rev-1", "input": {},
+            "deadline_at": time.time() + 30, "child_budget": 1,
         },
     }
     parent = broker.submit(parent_raw, OWNER)

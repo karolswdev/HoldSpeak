@@ -126,24 +126,8 @@ def test_absent_receipt_stays_invisible_until_liveness_terminalizes(rig):
 # ==================================== ROUND 2: the terminal receipt is immutable
 
 
-def test_schedule_drift_discards_the_projection_without_touching_the_receipt(tmp_path):
-    """Terra blocker 8: the stager REWROTE a succeeded child receipt.
-
-    When a scheduled run's terms changed while the provider was answering, the
-    stager did this inside the materialization transaction::
-
-        UPDATE kernel_operations SET state='refused' ... WHERE state='succeeded'
-        UPDATE kernel_receipts  SET state='refused',outcome=<drift>,result_ref=''
-
-    That is a mutation of an already-terminal invocation receipt — the exact
-    thing this story's acceptance criterion forbids, and the thing
-    ``ExecutorPlane.receipt`` itself refuses by name (``receipt_immutable``). The
-    provider DID run and DID answer; the schedule going stale afterwards is a
-    fact about the delegation, not a reason to rewrite history.
-
-    The fence therefore lives entirely on the projection now. This reads the
-    child's receipt row BYTE FOR BYTE before and after the drifted finalization.
-    """
+def test_raw_schedule_record_edit_does_not_discard_a_frozen_projection_or_mutate_receipt(tmp_path):
+    """A live delegation publishes its frozen route despite an unrelated raw edit."""
     import json
 
     from holdspeak.services.schedule_delegation import ScheduleDelegationService
@@ -175,15 +159,15 @@ def test_schedule_drift_discards_the_projection_without_touching_the_receipt(tmp
     providers.build_meeting_intel_for_profile = lambda **_: _EditsTheRecipeMidCall()
     try:
         broker = _configure(db)
-        # Capture the child's receipt the instant the RUNNER made it terminal.
-        snapshots: list[str] = []
+        # Capture each child receipt the instant the Runner makes it terminal.
+        snapshots: dict[str, str] = {}
         persist = broker.inference_runner._persist_receipt
 
         def capture(active, operation_id, outcome, result_ref, **kwargs):
             receipt = persist(active, operation_id, outcome, result_ref, **kwargs)
             operation = broker.store.operation(operation_id)
             if operation and operation["name"] == "inference.invoke":
-                snapshots.append(json.dumps(dict(receipt), sort_keys=True))
+                snapshots[operation_id] = json.dumps(dict(receipt), sort_keys=True)
             return receipt
 
         broker.inference_runner._persist_receipt = capture
@@ -217,24 +201,15 @@ def test_schedule_drift_discards_the_projection_without_touching_the_receipt(tmp
 
     assert snapshots, "the runner never terminalized an invocation child"
     after = json.dumps(dict(broker.store.receipt(child_id)), sort_keys=True)
-    # BYTE FOR BYTE: not merely the same outcome — the same row.
-    assert after == snapshots[-1]
+    # BYTE FOR BYTE: the frozen child's terminal receipt remains immutable.
+    assert after == snapshots[child_id]
     assert json.loads(after)["outcome"] == "succeeded"
     assert broker.store.operation(child_id)["state"] == "succeeded"
 
-    # The projection is what carries the refusal, and nothing was published.
-    assert stage["state"] == "DISCARDED"
-    assert json.loads(stage["final_result_json"] or "{}") == {
-        "discarded": "delegation_stale_work"
-    }
+    # The raw Recipe revision is not a schedule selector; publication remains
+    # receipt-linked to the frozen route and the delegation stays authoritative.
+    assert stage["state"] == "PUBLISHED"
     item = db.workbench_items.get("byte-for-byte")
-    assert item.status != "done" and item.result in (None, "")
-    assert delegation == {
-        "state": "REVOKED", "revocation_reason": "delegation_stale_work"
-    }
-
-    # And a second finalization cannot resurrect it (no late publication).
-    assert broker.projection_stager.finalize(
-        broker.store.operation(child_id)["native_id"]
-    ) is None
+    assert item.status == "done" and item.result == "the provider really did answer"
+    assert delegation["state"] == "LIVE"
     assert json.dumps(dict(broker.store.receipt(child_id)), sort_keys=True) == after

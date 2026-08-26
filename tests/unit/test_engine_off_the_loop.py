@@ -21,6 +21,8 @@ from fastapi.testclient import TestClient
 
 import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_primitives_router
 
@@ -30,10 +32,26 @@ def env(tmp_path, monkeypatch):
     reset_database()
     db = Database(tmp_path / "holdspeak.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
-    # These route tests inject an engine; local model-file readiness is outside
-    # the behavior they cover.
+    # These route tests inject an engine; a real configured local artifact
+    # supplies the canonical route's readiness evidence.
+    default_model = tmp_path / "loop-default.gguf"
+    default_model.touch()
     monkeypatch.setattr(
-        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+        "holdspeak.intel.providers.configured_local_meeting_model_path",
+        lambda: str(default_model),
+    )
+    db.profiles.upsert(
+        profile_id="loop-default", name="Loop default", kind="onDevice",
+        model_file=str(default_model),
+    )
+    InferenceAssignmentService(db).set_assignment(
+        Principal(PrincipalKind.OWNER, "loop-test-owner"),
+        {
+            "command_id": "loop-test-default-assignment",
+            "expected_revision": 0,
+            "scope": {"kind": "global"},
+            "entries": [{"profile_id": "legacy-loop-default"}],
+        },
     )
     app = FastAPI()
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))

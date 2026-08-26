@@ -19,6 +19,8 @@ from fastapi.testclient import TestClient
 import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
 from holdspeak.meeting_session import MeetingState, TranscriptSegment
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.web.context import WebContext
 from holdspeak.web.routes import build_primitives_router
 
@@ -40,6 +42,21 @@ def env(tmp_path, monkeypatch):
         "holdspeak.intel.providers.configured_local_meeting_model_path",
         lambda: str(hub_model),
     )
+    # This legacy local profile is a real default assignment, not a transport
+    # fallback. Blank Recipe selection inherits only from this canonical row.
+    db.profiles.upsert(
+        profile_id="chat-default", name="Chat default", kind="onDevice",
+        model_file=str(hub_model),
+    )
+    InferenceAssignmentService(db).set_assignment(
+        Principal(PrincipalKind.OWNER, "chat-test-owner"),
+        {
+            "command_id": "chat-test-default-assignment",
+            "expected_revision": 0,
+            "scope": {"kind": "global"},
+            "entries": [{"profile_id": "legacy-chat-default"}],
+        },
+    )
     app = FastAPI()
     app.include_router(build_primitives_router(WebContext(get_state=lambda: {})))
     yield db, TestClient(app)
@@ -48,6 +65,7 @@ def env(tmp_path, monkeypatch):
 
 class _FakeIntel:
     active_provider = "local"
+    active_model = "HubModel-9B"
 
     def __init__(self):
         self.captured = {}

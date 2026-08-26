@@ -124,7 +124,8 @@ holdspeak/plugins/dictation/runtime_mesh_relay.py:52|MeshRelayRuntime.load|MeshR
 holdspeak/plugins/dictation/runtime_openai_compatible.py:143|OpenAICompatibleRuntime.classify|chat.completions.create|call
 holdspeak/plugins/dictation/runtime_openai_compatible.py:196|OpenAICompatibleRuntime.rewrite|chat.completions.create|call
 holdspeak/plugins/dictation/runtime_openai_compatible.py:69|OpenAICompatibleRuntime.load|OpenAI|ref
-holdspeak/plugins/intelligence.py:362|PluginDispatch.chat|_chat_completion_text|call
+holdspeak/services/agent_turn_service.py:44|_PromptToolProviderTransport.dispatch|run_prompt|call
+holdspeak/services/agent_turn_service.py:202|AgentTurnService.dispatch_plugin|_chat_completion_text|call
 holdspeak/project_doc_suggestions.py:72|suggest_project_doc_update|rewrite|ref
 holdspeak/project_doc_suggestions.py:73|suggest_project_doc_update|rewrite|ref
 holdspeak/project_doc_suggestions.py:84|suggest_project_doc_update|rewrite|call
@@ -172,20 +173,8 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
-    "holdspeak/services/inference_adoption_service.py:1407|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    "holdspeak/services/inference_adoption_service.py:1551|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
-    ),
-    "holdspeak/services/recipe_service.py:52|RecipeService._invoke|call": ProposedRoute(
-        "internal.semantic_dispatch", "services.recipe_service", "InferenceRunner service child; capability supplied by semantic caller",
-    ),
-    "holdspeak/services/sequence_workflow_service.py:44|SequenceWorkflowService._invoke|call": ProposedRoute(
-        "internal.semantic_dispatch", "services.sequence_workflow_service", "InferenceRunner service child; capability supplied by semantic caller",
-    ),
-    "holdspeak/services/workbench_runner.py:41|WorkbenchRunner._invoke|call": ProposedRoute(
-        "workbench.item", "services.workbench_runner", "InferenceRunner service child",
-    ),
-    "holdspeak/services/workbench_service.py:414|WorkbenchService.resolve_voice.run_prompt_fn|call": ProposedRoute(
-        "voice.reference_resolve", "services.workbench_service", "InferenceRunner service child",
     ),
     "holdspeak/speech_session/child.py:181|run_admitted_speech_child|call": ProposedRoute(
         "dynamic:SpeechSessionPlan capability", "speech_session.child", "InferenceRunner admitted child",
@@ -193,9 +182,9 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
 }
 
 
-# AskService._invoke, RecipeService._invoke, and SequenceWorkflowService._invoke
-# are deliberately shared internal helpers, so their runner entrances cannot
-# truthfully name one capability. This second census records semantic callers.
+# AskService._invoke remains a shared internal helper whose runner entrance
+# cannot truthfully name one capability. Sequence and Workflow enter through
+# the frozen-route coordinator above. This second census records semantic callers.
 # Refinement is one
 # ``thought.interview`` capability whose result contract branches to either a
 # next-question or terminal synthesis; synthesis is not separately routable.
@@ -299,12 +288,6 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     "holdspeak/web/routes/primitives/recipes.py:115|build_recipes_router.api_chat_recipe|chat": ProposedRoute(
         "recipe.chat", "web.routes.primitives.recipes", "RecipeService semantic caller",
     ),
-    "holdspeak/services/sequence_workflow_service.py:133|SequenceWorkflowService.run_sequence|_invoke": ProposedRoute(
-        "sequence.step", "services.sequence_workflow_service", "Sequence semantic caller",
-    ),
-    "holdspeak/services/sequence_workflow_service.py:186|SequenceWorkflowService.run_workflow|_invoke": ProposedRoute(
-        "workflow.node", "services.sequence_workflow_service", "Workflow semantic caller",
-    ),
 }
 
 
@@ -338,25 +321,25 @@ def _swift_physical_leaves(sources: dict[str, str] | None = None) -> list[str]:
 
 SWIFT_PHYSICAL_LEAVES: dict[str, ProposedRoute] = {
     "apple/Sources/InferenceLlama/LlamaProvider.swift:124|LLM.getCompletion": ProposedRoute(
-        "apple.local_completion", "apple.inference_llama", "LEGACY BYPASS: Story 143-10 Apple inference runtime",
+        "apple.local_completion", "apple.inference_llama", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
     "apple/Sources/Providers/Inference/OpenAIEndpointProvider.swift:48|InferenceProvider.URLSession.data": ProposedRoute(
-        "apple.endpoint_completion", "apple.providers.inference", "LEGACY BYPASS: Story 143-10 Apple inference runtime",
+        "apple.endpoint_completion", "apple.providers.inference", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
     "apple/Sources/Providers/Inference/StructuredOutput.swift:64|Swift.complete": ProposedRoute(
-        "apple.structured_output", "apple.providers.inference", "LEGACY BYPASS: Story 143-10 Apple inference runtime",
+        "apple.structured_output", "apple.providers.inference", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
     "apple/Sources/Providers/Desktop/MeshServeWorker.swift:99|Swift.complete": ProposedRoute(
-        "apple.mesh_serve", "apple.providers.desktop", "LEGACY BYPASS: Story 143-10 Apple/mesh adoption",
+        "apple.mesh_serve", "apple.providers.desktop", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
     "apple/Sources/RuntimeCore/Companion/CoderAnswer.swift:109|Swift.complete": ProposedRoute(
-        "apple.coder_answer", "apple.runtimecore.companion", "LEGACY BYPASS: Story 143-10 Apple/agent adoption",
+        "apple.coder_answer", "apple.runtimecore.companion", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
     "apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift:333|Swift.complete": ProposedRoute(
-        "apple.workbench.blueprint", "apple.runtimecore.workbench", "LEGACY BYPASS: Story 143-06 fallback-controller migration",
+        "apple.workbench.blueprint", "apple.runtimecore.workbench", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
     "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:338|Swift.complete": ProposedRoute(
-        "apple.workbench.workflow", "apple.runtimecore.workbench", "LEGACY BYPASS: Story 143-06 fallback-controller migration",
+        "apple.workbench.workflow", "apple.runtimecore.workbench", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
 }
 
@@ -369,8 +352,9 @@ def _group(route: ProposedRoute, keys: str) -> tuple[ProposedRoute, tuple[str, .
 # occurs in exactly one literal group. The set-equality test below makes an
 # unreviewed site (including one in a familiar module) a failure.
 EXPLICIT_ROUTE_GROUPS = (
-    _group(ProposedRoute("agent.tool_turn", "plugins.intelligence", "InferenceRunner admitted child"), """
-holdspeak/plugins/intelligence.py:362|PluginDispatch.chat|_chat_completion_text|call
+    _group(ProposedRoute("agent.tool_turn", "services.agent_turn_service", "InferenceRunner ToolTurn transport or admitted compatibility leaf"), """
+holdspeak/services/agent_turn_service.py:44|_PromptToolProviderTransport.dispatch|run_prompt|call
+holdspeak/services/agent_turn_service.py:202|AgentTurnService.dispatch_plugin|_chat_completion_text|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "inference_targets", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/inference_targets.py:655|local_pinned_meeting_intel|_local_pinned_engine|call
@@ -539,7 +523,7 @@ def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
         f"unregistered={sorted(live - EXPECTED_CALL_SITES)}\n"
         f"stale={sorted(EXPECTED_CALL_SITES - live)}"
     )
-    assert len(live) == 101
+    assert len(live) == 102
 
 
 def test_phase143_every_product_runner_entrance_has_one_owner() -> None:
@@ -600,15 +584,18 @@ class Rogue:
     assert not set(mutated) <= set(SEMANTIC_HELPER_CALLERS)
 
 
-def test_phase143_swift_physical_leaves_are_explicit_legacy_bypasses() -> None:
+def test_phase143_swift_physical_leaves_remain_explicit_held_scope() -> None:
+    """The owner descope holds the seven leaves in view; it does not erase them."""
     live = set(_swift_physical_leaves())
     assert live == set(SWIFT_PHYSICAL_LEAVES), (
         "Apple physical inference inventory changed; name its capability, source "
-        "owner, and migration owner/bypass status.\n"
+        "owner, and HELD scope status.\n"
         f"unregistered={sorted(live - set(SWIFT_PHYSICAL_LEAVES))}\n"
         f"stale={sorted(set(SWIFT_PHYSICAL_LEAVES) - live)}"
     )
-    assert all("LEGACY BYPASS: Story 143-" in route.admission for route in SWIFT_PHYSICAL_LEAVES.values())
+    held = "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope"
+    assert all(route.admission == held for route in SWIFT_PHYSICAL_LEAVES.values())
+    assert len(SWIFT_PHYSICAL_LEAVES) == 7
     workflow = SWIFT_PHYSICAL_LEAVES[
         "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:338|Swift.complete"
     ]

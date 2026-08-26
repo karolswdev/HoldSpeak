@@ -245,9 +245,11 @@ def _ready_this_machine(tmp_path, monkeypatch) -> None:
 def _recipe_rig(tmp_path, monkeypatch, name: str):
     from holdspeak.services.recipe_service import RecipeService
 
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+
     db = Database(tmp_path / f"{name}.db")
-    db.recipes.upsert(recipe_id="r1", name="Recipe", system_prompt="system")
-    _ready_this_machine(tmp_path, monkeypatch)
+    _profile(db, "spine-recipe", claims=(_result_claim("recipe.run"),))
+    db.recipes.upsert(recipe_id="r1", name="Recipe", system_prompt="system", profile_id="spine-recipe")
 
     class Engine:
         active_provider = "test"
@@ -288,6 +290,25 @@ def _http_engine_rig(tmp_path, monkeypatch, name: str):
 
     reset_database()
     db = Database(tmp_path / f"{name}.db")
+    # Sequence/workflow now require real canonical assignment evidence rather
+    # than the retired mutable this-machine selector.
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+    _profile(
+        db,
+        f"spine-{name}",
+        claims=tuple(sorted({_result_claim("sequence.step"), _result_claim("workflow.node")})),
+    )
+    for capability_id in ("sequence.step", "workflow.node"):
+        InferenceAssignmentService(db).set_assignment(
+            WEB_OWNER_SESSION,
+            {
+                "command_id": f"spine-{name}-{capability_id}",
+                "expected_revision": 0,
+                "scope": {"kind": "capability", "capability_id": capability_id},
+                "entries": [{"profile_id": f"spine-{name}", "profile_revision": 1}],
+            },
+        )
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     _ready_this_machine(tmp_path, monkeypatch)
 

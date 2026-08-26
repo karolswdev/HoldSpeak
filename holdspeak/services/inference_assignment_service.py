@@ -995,6 +995,109 @@ class InferenceAssignmentService:
                 conn.rollback()
                 raise
 
+    def migrate_subject_assignments_atomically(
+        self,
+        principal: Principal,
+        *,
+        family: str,
+        source_sha256: str,
+        subject_entries: Iterable[Mapping[str, Any]],
+        source_records: Iterable[Mapping[str, Any]],
+    ) -> dict[str, Any]:
+        """Install exact subject assignments and their one-way marker together.
+
+        Legacy record pointers are inputs to this transaction only.  Unlike the
+        older capability-default helper, a record pointer must become its own
+        exact subject/capability row even when a broader group or global row is
+        already effective.  An existing exact subject row is owner truth and is
+        never overwritten by migration.
+        """
+        self._require_owner(principal)
+        clean_family = _safe_id(family, field="family")
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", str(source_sha256)):
+            raise ValidationError("Migration source hash is invalid", code="inference_assignment_invalid")
+        rows = [dict(row) for row in subject_entries]
+        records = [dict(row) for row in source_records]
+        if any(set(row) != {"subject_kind", "subject_id", "capability_id", "entry"} for row in rows):
+            raise ValidationError("Migration subject rows are invalid", code="inference_assignment_invalid")
+        if any(set(row) != {"record_kind", "record_id", "field", "legacy_value", "legacy_read"} for row in records):
+            raise ValidationError("Migration source records are invalid", code="inference_assignment_invalid")
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                existing = conn.execute(
+                    "SELECT * FROM inference_assignment_migrations WHERE family=?", (clean_family,)
+                ).fetchone()
+                if existing is not None:
+                    stored = json.loads(str(existing["result_json"]))
+                    if str(existing["result_sha256"]) != _sha256(stored):
+                        raise ConflictError("Stored migration marker integrity could not be verified.", code="inference_assignment_migration_integrity_invalid")
+                    conn.commit()
+                    return {**stored, "committed_at": str(existing["committed_at"])}
+
+                proofs: dict[str, dict[str, Any]] = {}
+                for raw in sorted(rows, key=lambda item: (str(item["subject_kind"]), str(item["subject_id"]), str(item["capability_id"]))):
+                    scope = self._scope({
+                        "kind": "subject", "subject_kind": raw["subject_kind"],
+                        "subject_id": raw["subject_id"], "capability_id": raw["capability_id"],
+                    })
+                    capability = self._require_assignable(scope["capability_id"])
+                    current = self._current(conn, scope["assignment_key"])
+                    if current is not None:
+                        projection = self._row_projection(conn, current, capability=capability)
+                    else:
+                        entries = self._validate_entries(conn, [raw["entry"]], scope)
+                        issues = self._compatibility_issues(conn, entries, (capability,))
+                        blockers = self._save_blockers(scope, entries, (capability,), issues)
+                        if blockers:
+                            raise ValidationError("Migration model is incompatible.", code="inference_assignment_incompatible", context={"issues": blockers})
+                        assignment_id, created_at = "ia_" + uuid.uuid4().hex, _now()
+                        material = {
+                            "schema": ASSIGNMENT_SCHEMA, "id": assignment_id,
+                            "scope": self._public_scope(scope), "entries": entries,
+                            "retry_policy_id": None, "revision": 1, "created_at": created_at,
+                        }
+                        digest = _sha256(material)
+                        conn.execute(
+                            """INSERT INTO inference_assignment_revisions
+                               (assignment_id,revision,assignment_key,scope_kind,scope_id,subject_kind,
+                                selector_kind,capability_id,group_id,retry_policy_id,payload_json,sha256,created_at)
+                               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                            (assignment_id, 1, scope["assignment_key"], "subject", scope["scope_id"],
+                             scope["subject_kind"], "capability", capability.id, "", None,
+                             _canonical(material), digest, created_at),
+                        )
+                        conn.execute("INSERT INTO inference_assignment_heads VALUES (?,?,?,?,?)", (scope["assignment_key"], assignment_id, 1, 0, created_at))
+                        for entry in entries:
+                            conn.execute("INSERT INTO inference_assignments VALUES (?,?,?,?,?,?,?)", (
+                                f"{assignment_id}:1:{entry['ordinal']}", assignment_id, 1,
+                                entry["profile_id"], entry["profile_revision"], entry["profile_schema_version"], entry["ordinal"],
+                            ))
+                        stored = self._head(conn, scope["assignment_key"])
+                        if stored is None:  # pragma: no cover - transaction invariant
+                            raise ConflictError("Migration assignment was not stored.", code="inference_assignment_migration_incomplete")
+                        projection = self._row_projection(conn, stored, capability=capability)
+                    proofs[scope["assignment_key"]] = {
+                        "assignment_key": scope["assignment_key"], "assignment_id": projection["id"],
+                        "revision": projection["revision"], "sha256": projection["sha256"],
+                    }
+                normalized_records = sorted(records, key=lambda item: (str(item["record_kind"]), str(item["record_id"]), str(item["field"])))
+                result = {
+                    "schema": "InferenceAssignmentMigrationMarker@1", "family": clean_family,
+                    "marker_revision": 1, "source_sha256": str(source_sha256),
+                    "assignments": sorted(proofs.values(), key=lambda item: item["assignment_key"]),
+                    "source_records": normalized_records,
+                }
+                committed_at = _now()
+                conn.execute("INSERT INTO inference_assignment_migrations VALUES (?,?,?,?,?,?)", (
+                    clean_family, 1, source_sha256, _canonical(result), _sha256(result), committed_at,
+                ))
+                conn.commit()
+                return {**result, "committed_at": committed_at}
+            except Exception:
+                conn.rollback()
+                raise
+
     def commit_migration_marker(
         self, principal: Principal, body: Mapping[str, Any]
     ) -> dict[str, Any]:

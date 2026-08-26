@@ -177,16 +177,12 @@ def test_saved_and_service_origins_remain_distinct(rig):
 
 def test_fallback_is_two_invocations_not_one_logical_receipt(rig):
     db, broker, revision = rig
-    parent = broker.submit({
-        "request_schema": 1, "request_id": "fallback-parent", "idempotency_key": "fallback-parent",
-        "operation": {"name": "inference.run", "version": 1}, "target": {},
-        "arguments": {"invocation_id": "fallback-parent", "definition_ref": "recipe:one",
-                      "definition_revision": "rev-1", "grounding_refs": [], "requested_target_id": "local",
-                      "deadline_at": time.time() + 30, "input_snapshot": {}},
-    }, OWNER)
-    parent = broker.decide(parent["operation_id"], "approve", parent["revision"], OWNER)
-    parent_operation = broker.store.operation(parent["operation_id"])
-    broker.claim(Principal(PrincipalKind.NODE, parent_operation["placement"].removeprefix("node:")), "fallback-parent")
+    parent = broker.parent_run_controller.start(
+        OWNER, kind="sequence", definition_ref="sequence:fallback",
+        definition_revision="rev-1", input_snapshot={}, deadline_at=time.time() + 30,
+        child_budget=2, idempotency_key="fallback-parent",
+    )
+    parent_operation = broker.store.operation(parent.operation_id)
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
     first = runner.invoke(InvocationRequest(**{**request(revision).__dict__, "parent_operation_id": parent_operation["operation_id"], "attempt_ordinal": 1}), Adapter(error=RuntimeError()))
     second = runner.invoke(InvocationRequest(**{**request(revision).__dict__, "parent_operation_id": parent_operation["operation_id"], "attempt_ordinal": 2}), Adapter())
@@ -445,20 +441,13 @@ def test_publish_errors_and_invalid_result_refs_close_failed(rig):
 
 def test_claim_rechecks_revoked_parent_before_provider_dispatch(rig):
     db, broker, revision = rig
-    # This direct operation is an outer run only; the runner's child must reject
-    # after its parent loses liveness before the child claim.
-    parent = broker.submit({
-        "request_schema": 1, "request_id": "parent", "idempotency_key": "parent",
-        "operation": {"name": "inference.run", "version": 1}, "target": {},
-        "arguments": {"invocation_id": "parent", "definition_ref": "recipe:one",
-                      "definition_revision": "rev-1", "grounding_refs": [],
-                      "requested_target_id": "local", "deadline_at": time.time() + 30,
-                      "input_snapshot": {}},
-    }, OWNER)
-    parent = broker.decide(parent["operation_id"], "approve", parent["revision"], OWNER)
-    parent_op = broker.store.operation(parent["operation_id"])
-    parent_node = Principal(PrincipalKind.NODE, parent_op["placement"].removeprefix("node:"))
-    broker.claim(parent_node, "parent")
+    # The runner's child must reject after its live parent loses authority.
+    parent = broker.parent_run_controller.start(
+        OWNER, kind="sequence", definition_ref="sequence:parent",
+        definition_revision="rev-1", input_snapshot={}, deadline_at=time.time() + 30,
+        child_budget=1, idempotency_key="parent",
+    )
+    parent_op = broker.store.operation(parent.operation_id)
     broker.store.revoke_warrant(parent_op["operation_id"])
     adapter = Adapter()
     runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: OWNER)
@@ -469,32 +458,18 @@ def test_claim_rechecks_revoked_parent_before_provider_dispatch(rig):
     assert adapter.cancelled is False
 
 
-def test_agent_child_derives_live_owner_parent_authority(rig):
-    db, broker, revision = rig
-    parent = broker.submit({
+def test_agent_cannot_reanimate_retired_inference_parent_authority(rig):
+    _db, broker, _revision = rig
+    request_body = {
         "request_schema": 1, "request_id": "authority-parent", "idempotency_key": "authority-parent",
         "operation": {"name": "inference.run", "version": 1}, "target": {},
         "arguments": {"invocation_id": "authority-parent", "definition_ref": "recipe:one",
                       "definition_revision": "rev-1", "grounding_refs": [], "requested_target_id": "local",
                       "deadline_at": time.time() + 30, "input_snapshot": {},
                       "continuation_identities": ["agent:child"]},
-    }, OWNER)
-    parent = broker.decide(parent["operation_id"], "approve", parent["revision"], OWNER)
-    parent_operation = broker.store.operation(parent["operation_id"])
-    broker.claim(Principal(PrincipalKind.NODE, parent_operation["placement"].removeprefix("node:")), "authority-parent")
-    agent = Principal(PrincipalKind.AGENT, "agent:child")
-    class DelegatedRemote(Adapter):
-        egress_destination = "example.test"
-        egress_data_classes = ("instruction",)
-
-    db.profiles.upsert(profile_id="delegated-remote", name="Remote", kind="openAICompatible", base_url="https://example.test/v1", model="remote")
-    remote_revision = capture_deployment_revision(db, resolve_inference_target(db, "delegated-remote"))
-    runner = InferenceRunner(broker, db, engine_factory=lambda _revision, **_kw: object(), principal_provider=lambda: agent)
-    result = runner.invoke(InvocationRequest(**{
-        **request(remote_revision).__dict__, "parent_operation_id": parent_operation["operation_id"]
-    }), DelegatedRemote())
-    assert result.outcome == "succeeded"
-    assert broker.store.operation(result.operation_id)["principal_identity"] == "agent:child"
+    }
+    refused = broker.submit(request_body, OWNER)
+    assert refused["receipt"]["outcome"] == "inference_run_retired"
 
 
 def test_journal_has_no_prompt_output_or_audio_bodies(rig):
