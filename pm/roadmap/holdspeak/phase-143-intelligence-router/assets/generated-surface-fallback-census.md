@@ -1,6 +1,6 @@
 # Phase 143 generated surface and fallback census
 
-**Regenerated:** 2026-08-25 on `feat/hs143-10-placement-adoption`. This is the executable companion to
+**Regenerated:** 2026-08-26 on `feat/hs143-12-model-library`. This is the executable companion to
 `repository-census.md`: `tests/unit/test_phase143_surface_fallback_census.py`
 fails when a new private selector, recovery helper, or browser routing-pointer
 surface lacks a reviewed classification.
@@ -28,14 +28,14 @@ Swift executable-policy invariant remain fail-closed.
 | Surface/family | Current controls and source anchors | Current authority | One migration story |
 |---|---|---|---|
 | Profile library and credential identity | `holdspeak/services/profile_service.py`, `holdspeak/services/profile_key_service.py`, `holdspeak/intel/providers.py`, `holdspeak/inference_targets.py` | `ProfileRecord`, key slot, legacy profile factory | 143-03 |
-| Setup/library acquisition previews | `holdspeak/services/inference_acquisition_service.py`, `holdspeak/services/inference_setup_service.py`, `web/src/pages/cores/InferenceCapabilityPanel.tsx` | setup catalog and selected artifact preview; not a saved assignment | 143-12 |
+| Model Library availability and acquisition | `holdspeak/services/{model_library_service,inference_acquisition_service,inference_setup_service}.py`, `holdspeak/web/routes/model_library.py`, `web/src/pages/cores/{ModelLibraryCore,modelLibrary}.ts*` | one server-owned availability projection and library commands; provider/profile adapters retain no assignment authority | 143-12 |
 | Thoughts and Ask destination | `holdspeak/config/integrations.py`, `holdspeak/services/ask_service.py`, `holdspeak/services/inference_setup_service.py`, `web/src/desk/ask.ts`, `web/src/desk/chat.ts`, `web/src/desk/store/dataSlice.ts` | `Config.thoughts.inference_target_id` and request override | 143-07 |
 | Dictation/rewrite/punctuation destination | `holdspeak/config/model.py`, `holdspeak/speech_session/plan.py`, `holdspeak/plugins/dictation/assembly.py`, `holdspeak/target_profile.py`, `web/src/pages/cores/dictation/useSpeakDeck.ts` | `dictation.runtime.profile_id` and typed runtime policy | 143-07 |
 | Meetings destination and bound route evidence | one-time `holdspeak/config/meeting.py` migration input; `holdspeak/services/meeting_deferred_queue_binding.py`; `holdspeak/meeting_session/deferred_bound.py` | C1 parent/bundle members are the deferred execution authority; `MeetingIntelPlan` is display-only persisted history | 143-08 |
 | Deferred meeting/background jobs | `holdspeak/intel_queue.py`, `holdspeak/services/meeting_intel_service.py`, `holdspeak/services/settings_service.py` | queue schedule/recovery controls | 143-08 |
 | Workbench, Recipe, Agent and workflow placement | canonical `InferenceAssignmentService` / `RoutedInferenceCoordinator` / `InferenceParentRouteBundleService`; compatibility inputs in `holdspeak/services/{recipe_service,sequence_workflow_service,support,workbench_runner,workbench_service}.py`; listed web transports | frozen assignment/route/controller evidence; retired request fields refuse and legacy record writes translate once | 143-10 |
 | HTTP/MCP/browser pointer transport and types | `holdspeak/mcp/`, `holdspeak/web/routes/`, `web/src/desk/{api,detail-types,store/types}.ts`, `web/src/pages/cores/core-types.ts` | transport/projection only; must not resolve a route | 143-11 |
-| Assignment editor shell | `web/src/pages/cores/{SettingsCore,settingsModels}.tsx` | duplicated owner-facing Settings controls pending one editor | 143-13 |
+| Assignment editor shell | `web/src/pages/cores/SettingsCore.tsx`, `web/src/desk/components/RunsOnPicker.tsx` | remaining owner routing controls pending the peer Assignments destination; Model Library is availability-only | 143-13 |
 | Generic route/failure law and physical attempts | `holdspeak/kernel/{inference_runner,projection_stager}.py`, `holdspeak/intel/engine.py` | runner physical attempt and provider compatibility seam | 143-06 |
 | Baseline false positives/non-inference selectors | `holdspeak/desktop_presence.py`, `holdspeak/speaker_intel.py`, `holdspeak/plugins/dictation/builtin/project_rewriter.py` | renderer, speaker, and input selection—not model routing | 143-01 |
 
@@ -79,7 +79,7 @@ story that owns their migration.
 | 143-07 | `holdspeak/dictation_telemetry.py`, `holdspeak/plugins/dictation/assembly.py`, `holdspeak/plugins/dictation/builtin/project_rewriter.py`, `holdspeak/plugins/dictation/runtime_mlx.py`, `holdspeak/services/inference_setup_service.py`, `holdspeak/target_profile.py` |
 | 143-08 | `holdspeak/intel_queue.py`, `holdspeak/meeting_session/intel_plan.py`, `holdspeak/services/{inference_adoption_service,meeting_intel_service}.py` |
 | 143-10 | `holdspeak/delivery/factory_launch.py`, `holdspeak/services/recipe_service.py`, `holdspeak/services/sequence_workflow_service.py`, `holdspeak/services/support.py`, `holdspeak/services/workbench_runner.py` |
-| 143-12 | `holdspeak/services/inference_acquisition_service.py`, `holdspeak/services/inference_setup_service.py` |
+| 143-12 | `holdspeak/services/model_library_service.py`, `holdspeak/services/inference_acquisition_service.py`, `holdspeak/services/inference_setup_service.py`, `holdspeak/web/routes/primitives/profiles.py` (private-target side-door refusal) |
 
 ## Guarded web routing consumers
 
@@ -94,8 +94,9 @@ first category may participate in a future assignment migration.
 |---|---|---|
 | inference-route | `web/src/desk/ask.ts`, `web/src/desk/chat.ts`, `web/src/desk/components/AskPanel.tsx`, `web/src/desk/components/EditorAIBar.tsx`, `web/src/desk/store/dataSlice.ts`, `web/src/pages/cores/ProjectMemoryCore.tsx`, `web/src/pages/cores/dictation/UtteranceWell.tsx`, `web/src/pages/cores/dictation/useSpeakDeck.ts` | 143-07 |
 | inference-route | `web/src/desk/components/PersonaChat.tsx`, `web/src/desk/components/WorkbenchTemplatePicker.tsx`, `web/src/desk/components/WorkbenchWindow.tsx`, `web/src/desk/pullouts/editors/RecipeEditor.tsx`, `web/src/desk/pullouts/shared/CapabilitySection.tsx` | 143-10 |
-| inference-route | `web/src/desk/components/RunsOnPicker.tsx`, `web/src/pages/cores/SettingsCore.tsx`, `web/src/pages/cores/settingsModels.tsx` | 143-13 |
+| inference-route | `web/src/desk/components/RunsOnPicker.tsx`, `web/src/pages/cores/SettingsCore.tsx` | 143-13 |
 | display-transport | `web/src/desk/api.ts`, `web/src/desk/components/Pullout.tsx`, `web/src/desk/detail-types.ts`, `web/src/desk/store/types.ts`, `web/src/lib/primitives.ts`, `web/src/pages/cores/core-types.ts` | 143-11 |
+| display-transport | `web/src/pages/cores/ModelLibraryCore.tsx`, `web/src/pages/cores/modelLibrary.ts` | 143-12 availability transport; selection never writes an assignment pointer |
 | display-transport | `web/src/desk/components/workbenchTarget.ts`, `web/src/desk/infoContract.ts`, `web/src/pages/cores/WorkbenchesHomeCore.tsx` | 143-10 |
 | unrelated | `web/src/desk/components/DeliveryBoard.tsx`, `web/src/desk/deliveryFactory.ts` | 143-01 |
 

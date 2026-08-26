@@ -1,10 +1,15 @@
-"""HS-142-02 real HTTP-byte model-library acquisition glass at both widths."""
+"""HS-142-02 real-byte acquisition, migrated to Story 143 Model Library glass.
+
+The byte server and durable verification proof remain Phase-142 behavior.  The
+retired capability picker is intentionally not resurrected: the owner presses
+Download in the Model Library, receives the library receipt, and assignments
+stay unchanged.
+"""
 from __future__ import annotations
 
 import hashlib
 import json
 import os
-import re
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -112,10 +117,10 @@ def test_download_verify_add_to_library_without_assigning(
     monkeypatch.setattr(acquisition_module.importlib.metadata, "version", lambda _name: "0.3.35")
 
     class Handler(BaseHTTPRequestHandler):
-        def log_message(self, *_args):
+        def log_message(self, *_args: object) -> None:
             return
 
-        def do_GET(self):
+        def do_GET(self) -> None:
             start = 0
             value = self.headers.get("Range", "")
             if value.startswith("bytes="):
@@ -138,7 +143,7 @@ def test_download_verify_add_to_library_without_assigning(
 
     original_init = acquisition_module.InferenceAcquisitionApplicationService.__init__
 
-    def injected_init(self, *args, **kwargs):
+    def injected_init(self: Any, *args: Any, **kwargs: Any) -> Any:
         kwargs["source_url_builder"] = lambda _plan: model_url
         kwargs["allowed_download_host"] = lambda host: host == "127.0.0.1"
         return original_init(self, *args, **kwargs)
@@ -149,7 +154,7 @@ def test_download_verify_add_to_library_without_assigning(
     home.mkdir()
     browser_cache = Path(os.environ.get(
         "PLAYWRIGHT_BROWSERS_PATH",
-        Path.home() / "Library/Caches/ms-playwright",
+        str(Path.home() / "Library/Caches/ms-playwright"),
     ))
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
@@ -173,24 +178,31 @@ def test_download_verify_add_to_library_without_assigning(
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
             page.goto(f"{url}/profiles", wait_until="load")
 
-            surface = page.locator(".models-setup")
-            surface.get_by_role("heading", name="Choose a model", exact=True).wait_for()
+            surface = page.locator(".model-library")
+            surface.get_by_role("heading", name="Model Library", exact=True).wait_for()
             before = _api(page, "GET", "/api/inference/setup")["setup"]
-            radio = surface.get_by_role("radio", name=re.compile("Quick local glass AI"))
-            radio.check()
-            action = surface.get_by_role("button", name="DOWNLOAD", exact=True)
-            assert surface.locator(".models-capability-action button").count() == 1
-            action.click()
-            surface.get_by_text(re.compile(
-                "Downloading Quick local glass AI|Verifying the published checksum|Installing verified model bytes"
-            )).first.wait_for(timeout=10_000)
-            surface.get_by_text("ADDED", exact=True).wait_for(timeout=20_000)
+            row = surface.locator(".model-library-row", has_text="Quick local glass AI")
+            row.wait_for()
+            row.get_by_role("radio").check()
+            action = surface.locator(".model-library-action-seat")
+            assert action.get_by_role("button", name="Download", exact=True).count() == 1
+            action.get_by_role("button", name="Download", exact=True).click()
+            surface.get_by_role("status").filter(
+                has_text="Added to the Model Library. Assignments are unchanged."
+            ).wait_for(timeout=20_000)
 
-            setup = _api(page, "GET", "/api/inference/setup")["setup"]
-            acquisition = next(
-                row for row in setup["acquisitions"]
-                if row["preset_id"] == "preset_glass_local"
-            )
+            # Library download starts a durable acquisition and returns its
+            # receipt immediately; wait for the real byte-server worker to
+            # finish verification/install rather than reviving the old picker.
+            for _ in range(80):
+                setup = _api(page, "GET", "/api/inference/setup")["setup"]
+                acquisition = next(
+                    row for row in setup["acquisitions"]
+                    if row["preset_id"] == "preset_glass_local"
+                )
+                if acquisition["state"] == "ready":
+                    break
+                page.wait_for_timeout(250)
             assert acquisition["state"] == "ready"
             assert acquisition["activation_state"] == "not_requested"
             assert setup["current_routes"]["thoughts"] == before["current_routes"]["thoughts"]
@@ -208,9 +220,8 @@ def test_download_verify_add_to_library_without_assigning(
             assert str(home) not in json.dumps(setup)
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
             if width == 393:
-                box = surface.locator(".models-capability-action").bounding_box()
+                box = action.bounding_box()
                 assert box and box["width"] <= 393
-            page.screenshot(path=f"/tmp/holdspeak-model-acquisition-{width}.png", full_page=False)
             assert errors == []
             browser.close()
     finally:

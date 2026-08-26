@@ -243,7 +243,8 @@ def _installed_artifacts(db: Any) -> list[dict[str, Any]]:
             """SELECT artifact_id,format,source_repository,source_revision,
                       installed_bytes,state,verified_at
                  FROM inference_model_artifacts
-                WHERE state='verified' AND source_kind != 'legacy-rails-observer'
+                WHERE state='verified'
+                  AND source_kind NOT IN ('legacy-rails-observer', 'model_library_provider_material')
                 ORDER BY verified_at DESC LIMIT 100"""
         ).fetchall()
     return [
@@ -564,6 +565,44 @@ class InferenceSetupApplicationService:
     def _require_owner(principal: Principal | None) -> None:
         if principal is None or principal.kind is not PrincipalKind.OWNER:
             raise ServiceError("inference_setup_owner_required", "Owner access is required.", context={"status": 403})
+
+    def get_model_library_facts(self, principal: Principal) -> dict[str, Any]:
+        """Return availability facts for the Model Library without reading routes.
+
+        The older setup projection includes a legacy current-route diagnostic.
+        Model Library is deliberately a separate job: it receives catalog,
+        runtime, detected, installed, and acquisition facts only and never
+        observes an assignment pointer to decide what a model should do.
+        """
+        self._require_owner(principal)
+        now = self._clock()
+        catalog = verify_catalog_envelope(self._catalog_envelope_json, now=now)
+        config = self._config_provider()
+        home = self._home_provider()
+        hardware = inspect_hardware(home=home, now=now)
+        runtimes = inspect_runtimes(apple_silicon=hardware["capability"]["apple_silicon"])
+        target = _this_machine_from_config(config)
+        llama_ready = any(
+            row["id"] == "llama_cpp_prompt_v1"
+            and row["availability"]["state"] == "available"
+            and row["thought_support"]["state"] == "supported"
+            for row in runtimes
+        )
+        artifacts, artifact_detection = inspect_local_artifacts(
+            home=home, current_target=target, gguf_executable=llama_ready,
+        )
+        runtime_ids = {row["id"] for row in runtimes if row["availability"]["state"] == "available"}
+        platform_id = f'{hardware["capability"]["system"]}_{hardware["capability"]["architecture"]}'
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "runtimes": runtimes,
+            "artifact_detection": artifact_detection,
+            "detected_local_artifacts": artifacts,
+            "installed_model_artifacts": _installed_artifacts(self._db),
+            "acquisitions": _acquisitions(self._db),
+            "preset_catalog": {key: catalog[key] for key in ("schema_version", "catalog_revision", "generated_at", "expires_at", "signing_key_id", "sha256")},
+            "presets": applicable_presets(platform_id=platform_id, runtime_ids=runtime_ids, entries=catalog["entries"]),
+        }
 
     def get_inference_setup(self, principal: Principal) -> dict[str, Any]:
         self._require_owner(principal)

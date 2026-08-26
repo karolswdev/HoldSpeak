@@ -583,6 +583,7 @@ class MeetingWebServer:
         from .services.setup_service import SetupService
         from .services.inference_setup_service import InferenceSetupApplicationService
         from .services.inference_acquisition_service import InferenceAcquisitionApplicationService
+        from .services.model_library_service import ModelLibraryApplicationService
         from .services.inference_capability_service import InferenceCapabilityApplicationService
         from .services.profile_key_service import ProfileKeyService
         from .db import get_database, get_observer
@@ -608,6 +609,7 @@ class MeetingWebServer:
             build_meeting_import_router,
             build_meetings_router,
             build_memory_router,
+            build_model_library_router,
             build_monday_brief_router,
             build_mesh_router,
             build_missioncontrol_router,
@@ -704,6 +706,10 @@ class MeetingWebServer:
         inference_acquisition_service = InferenceAcquisitionApplicationService(
             get_database(), setup_service=inference_setup_service
         )
+        model_library_service = ModelLibraryApplicationService(
+            get_database(), setup_service=inference_setup_service,
+            acquisition_service=inference_acquisition_service,
+        )
         # The same frozen broker registry backs web and MCP.  Construction is
         # deliberately eager: invalid capability composition must prevent the
         # process from serving rather than become a lazy route-time surprise.
@@ -749,6 +755,7 @@ class MeetingWebServer:
             setup_service=SetupService(get_database(), observer=obs),
             inference_setup_service=inference_setup_service,
             inference_acquisition_service=inference_acquisition_service,
+            model_library_service=model_library_service,
             inference_capability_service=inference_capability_service,
             delivery_service=DeliveryService(get_database(), observer=obs),
             # HS-131-16: the relay legs sign and revalidate dispatch offers, so
@@ -818,6 +825,7 @@ class MeetingWebServer:
         app.include_router(build_decision_records_router(web_ctx))
         app.include_router(build_decisions_router(web_ctx))
         app.include_router(build_memory_router(web_ctx))
+        app.include_router(build_model_library_router(web_ctx))
         app.include_router(build_monday_brief_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))
         app.include_router(build_desk_actuators_router(web_ctx))

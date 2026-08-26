@@ -200,6 +200,18 @@ def test_profile_revision_is_immutable_locator_free_and_hash_server_generated(db
     assert forged.value.code == "model_profile_manifest_hash_invalid"
 
 
+def test_library_reuse_keeps_profile_and_binding_projections_locator_free(db: Database) -> None:
+    """S1 composes this authority; its ordinary output stays custody-safe."""
+    service = ModelProfileService(db)
+    service.create_profile(OWNER, _profile_body())
+    projection = service.list_profiles(OWNER)["profiles"]
+    assert len(projection) == 1
+    rendered = json.dumps(projection, sort_keys=True)
+    for forbidden in ("endpoint", "secret", "secret_slot", "model_path", "/private"):
+        assert forbidden not in rendered
+    assert projection[0]["current_binding"] is None
+
+
 def test_profile_and_deployment_rows_are_reverified_before_projection_or_binding(db: Database) -> None:
     service = ModelProfileService(db)
     service.create_profile(OWNER, _profile_body())
@@ -258,6 +270,10 @@ def test_binding_is_cas_protected_and_freezes_exact_existing_deployment_revision
     assert bound["deployment_configuration_revision"] == 1
     assert "secret_slot" not in bound
     assert "readiness_observation_id" not in bound
+    projected_binding = service.list_profiles(OWNER)["profiles"][0]["current_binding"]
+    assert projected_binding is not None
+    assert "secret_slot" not in json.dumps(projected_binding, sort_keys=True)
+    assert "readiness_observation_id" not in json.dumps(projected_binding, sort_keys=True)
 
     with pytest.raises(ConflictError) as forged_observation:
         service.bind_profile(

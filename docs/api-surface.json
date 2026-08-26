@@ -2522,9 +2522,7 @@
         "POST"
       ],
       "module": "web.routes.primitives.profiles",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference-targets/{target_id}/secret",
@@ -2532,9 +2530,7 @@
         "DELETE"
       ],
       "module": "web.routes.primitives.profiles",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference-targets/{target_id}/secret",
@@ -2542,9 +2538,7 @@
         "PUT"
       ],
       "module": "web.routes.primitives.profiles",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/acquisitions/download-and-use",
@@ -2552,9 +2546,7 @@
         "POST"
       ],
       "module": "web.routes.setup",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/acquisitions/use-existing",
@@ -2562,9 +2554,7 @@
         "POST"
       ],
       "module": "web.routes.setup",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/acquisitions/{job_id}",
@@ -2572,9 +2562,7 @@
         "GET"
       ],
       "module": "web.routes.setup",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/acquisitions/{job_id}/cancel",
@@ -2582,9 +2570,7 @@
         "POST"
       ],
       "module": "web.routes.setup",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/inference/capabilities",
@@ -2603,6 +2589,74 @@
       ],
       "module": "web.routes.setup",
       "consumers": []
+    },
+    {
+      "path": "/api/inference/model-library",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.model_library",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/model-library/add-to-library",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.model_library",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/model-library/connect-hosted-model",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.model_library",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/model-library/connect-paired-device",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.model_library",
+      "consumers": []
+    },
+    {
+      "path": "/api/inference/model-library/define-endpoint",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.model_library",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/model-library/download",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.model_library",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/model-library/use-model-file",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.model_library",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/inference/setup",

@@ -139,6 +139,19 @@ def _llama_runtime_ready(monkeypatch) -> None:
     )
 
 
+def test_library_download_request_has_no_route_shaped_fields(tmp_path: Path, monkeypatch):
+    _llama_runtime_ready(monkeypatch)
+    _db, service, _config, preset = _fixture(tmp_path)
+    body = {"request_id": "library-download", "catalog_id": preset["id"], "catalog_revision": 7}
+    first = service.download(OWNER, body)
+    service._run(first["acquisition"]["id"])
+    replay = service.download(OWNER, body)
+    assert replay["acquisition"]["id"] == first["acquisition"]["id"]
+    with pytest.raises(Exception) as route_shaped:
+        service.download(OWNER, {**body, "expected_route_revision": "forbidden"})
+    assert getattr(route_shaped.value, "code", "") == "inference_acquisition_request_invalid"
+
+
 def test_download_verify_adopt_activate_and_replay(tmp_path: Path, monkeypatch):
     _llama_runtime_ready(monkeypatch)
     db, service, config, preset = _fixture(tmp_path)

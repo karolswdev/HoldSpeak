@@ -917,14 +917,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       /* ── Models: destinations, runs-on, engine, rails ── */
       case "models":
         return (
-          <ModelsModule
-            settings={data}
-            update={update}
-            updateMany={updateMany}
-            commitMany={commitMany}
-            reconcileSettings={reconcileSettings}
-            onRefuse={setRefusal}
-          />
+          <ModelsModule onRefuse={setRefusal} />
         );
       /* ── Integrations: credentials + RAW ── */
       case "integrations": {

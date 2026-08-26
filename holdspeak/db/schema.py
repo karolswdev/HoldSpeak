@@ -2436,6 +2436,22 @@ CREATE INDEX IF NOT EXISTS idx_model_profile_readiness_head
         deployment_head_id, deployment_configuration_revision, deployment_revision_id
     );
 
+-- HS-143-12: provider commands reserve a nonsecret request fingerprint before
+-- writing private target/deployment/key custody. A pending row makes a delayed
+-- key-store confirmation retriable; a completed owner-safe receipt makes the
+-- exact command restart-safe. Credentials and endpoints are never stored here.
+CREATE TABLE IF NOT EXISTS model_library_provider_commands (
+    request_id TEXT PRIMARY KEY,
+    command_kind TEXT NOT NULL CHECK (command_kind IN ('connect_hosted','define_endpoint','connect_paired')),
+    request_sha256 TEXT NOT NULL,
+    profile_id TEXT NOT NULL,
+    state TEXT NOT NULL CHECK (state IN ('pending','completed')),
+    response_json TEXT,
+    response_sha256 TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
 -- Deletion is a hub-local tombstone.  Historical revision/binding evidence is
 -- retained for receipts and future frozen-plan inspection; it is never synced.
 CREATE TABLE IF NOT EXISTS model_profile_tombstones (

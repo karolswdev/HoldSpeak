@@ -113,24 +113,44 @@ def test_history_core_artifacts_wing_is_the_library() -> None:
 
 
 def test_runs_on_room_stays_folded_into_the_models_module() -> None:
-    """HS-112-01 — the standalone Runs-on room died; target CRUD lives
-    ONLY in the Prefs `models` module (`settingsModels.tsx`), composed
-    from the gadget kit — never a label-over-input `Field`/`Select`
-    stack."""
+    """HS-112-01 — the standalone Runs-on room stays retired.
+
+    Story 143-12 lawfully replaced the old target-CRUD Models body with a thin
+    `settingsModels.tsx` host adapter to ModelLibraryCore. The technical
+    placement facts now live in its folded Runs on disclosure, beside folded
+    RAW facts; the library may never recreate a raw Field/Select editor or
+    reopen the retired target route.
+    """
     assert not (WEB_SRC / "pages" / "cores" / "ProfilesCore.tsx").exists(), (
-        "HS-112-01 regression: the standalone Runs-on room must stay "
-        "retired — target CRUD lives in the Prefs models module."
+        "HS-112-01 regression: the standalone Runs-on room must stay retired."
     )
-    source = (WEB_SRC / "pages" / "cores" / "settingsModels.tsx").read_text(
+    adapter = (WEB_SRC / "pages" / "cores" / "settingsModels.tsx").read_text(
         encoding="utf-8"
     )
-    assert "<Field" not in source and "<Select" not in source, (
-        "HS-112-01 regression: the models module composes from the "
-        "gadget kit, never a label-over-input Field/Select stack."
+    core = (WEB_SRC / "pages" / "cores" / "ModelLibraryCore.tsx").read_text(
+        encoding="utf-8"
     )
-    assert "/api/inference-targets" in source, (
-        "HS-112-01 regression: the models module writes ONLY through "
-        "/api/inference-targets (the one write path)."
+    client = (WEB_SRC / "pages" / "cores" / "modelLibrary.ts").read_text(
+        encoding="utf-8"
+    )
+    assert "ModelLibraryCore" in adapter and "/api/inference-targets" not in adapter, (
+        "HS-143-12 regression: the Models slot adapter must host only the "
+        "availability library, never revive target CRUD."
+    )
+    assert 'FoldGadget title="Runs on"' in core and "SurfaceFacts" in core, (
+        "HS-112-01 regression: Runs on technical facts must remain folded in "
+        "the one Models/Model Library surface."
+    )
+    assert "<Field" not in core and "<Select" not in core, (
+        "HS-112-01 regression: Model Library must not recreate a raw "
+        "label-over-input target editor."
+    )
+    assert "/api/inference-targets" not in core + client, (
+        "HS-143-12 regression: Model Library must not reopen the retired "
+        "inference-target writer."
+    )
+    assert "/api/inference/model-library" in client, (
+        "HS-143-12 regression: the one availability authority transport is missing."
     )
 
 

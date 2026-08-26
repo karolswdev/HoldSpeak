@@ -68,7 +68,7 @@ _LEGACY_RUNTIME_FAMILIES = {
     "legacy_local": frozenset({"configured_local_engine", "llama_cpp_prompt_v1", "mlx_text_v1"}),
     "openai_compatible_v1": frozenset({"openai_compatible", "openai_compatible_v1"}),
     "mesh_relay_v1": frozenset({"mesh_relay", "node_runtime"}),
-    "paired_device_v1": frozenset({"paired_runtime", "configured_hub_engine"}),
+    "paired_device_v1": frozenset({"paired_runtime", "configured_hub_engine", "mesh_relay", "node_runtime"}),
 }
 
 DependencyProvider = Callable[[Any, str], list[dict[str, str]]]
@@ -420,7 +420,12 @@ class ModelProfileService:
             profiles = [self._profile_projection(conn, row) for row in rows]
         legacy: list[dict[str, Any]] = []
         if include_legacy:
-            legacy = [adapt_v1_profile(row) for row in self._db.profiles.list()]
+            # Library-generated v1 targets are private execution adapters for a
+            # canonical v2 profile, never a second legacy inventory row.
+            legacy = [
+                adapt_v1_profile(row) for row in self._db.profiles.list()
+                if not str(getattr(row, "id", "")).startswith("library_provider_")
+            ]
         return {"schema_version": 2, "profiles": profiles, "legacy_profiles": legacy}
 
     def get_profile(
@@ -969,9 +974,14 @@ class ModelProfileService:
         profile_identity = str(profile["model_or_artifact_identity"] or "").strip()
         runtime_family = str(profile["runtime_family"] or "").strip()
         runtime_id = str(deployment["runtime_id"] or "").strip()
+        # A legacy DeploymentRevision@1 predates the explicit runtime_id field.
+        # Its engine is the canonical captured runtime fact, and the v1 adapter
+        # families above intentionally name that engine.  V2 remains strict on
+        # runtime_id, so this does not weaken artifact deployment coherence.
+        captured_runtime = runtime_id or str(deployment["engine"] or "").strip()
         runtime_matches = (
-            runtime_family == runtime_id
-            or runtime_id in _LEGACY_RUNTIME_FAMILIES.get(runtime_family, frozenset())
+            runtime_family == captured_runtime
+            or captured_runtime in _LEGACY_RUNTIME_FAMILIES.get(runtime_family, frozenset())
         )
         if not actual_identity or profile_identity != actual_identity or not runtime_matches:
             raise ConflictError(

@@ -17,6 +17,7 @@ Plus hazard tests:
 
 from __future__ import annotations
 
+import re
 import sqlite3
 from pathlib import Path
 from unittest.mock import patch
@@ -59,6 +60,33 @@ def test_reconcile_recreates_dropped_table(fresh_conn: sqlite3.Connection) -> No
         "SELECT name FROM sqlite_master WHERE type='table' AND name='bookmarks'"
     ).fetchone()
     assert row is not None, "bookmarks should be restored after reconcile"
+
+
+def test_reconcile_adds_provider_command_table_to_old_shape_without_touching_rows(tmp_path: Path) -> None:
+    """S3's additive command ledger opens an old DB without data rewrites."""
+    old_schema, substitutions = re.subn(
+        r"\n-- HS-143-12: provider commands reserve.*?updated_at TEXT NOT NULL\n\);\n",
+        "\n",
+        SCHEMA_SQL,
+        count=1,
+        flags=re.DOTALL,
+    )
+    assert substitutions == 1
+    conn = sqlite3.connect(str(tmp_path / "old-provider-shape.db"))
+    try:
+        conn.executescript(old_schema)
+        conn.execute("INSERT INTO schema_version(version) VALUES (63)")
+        conn.execute("INSERT INTO profiles(id,name,kind,created_at,last_modified) VALUES ('kept', 'Kept', 'onDevice', 'old', 'old')")
+        conn.commit()
+        assert reconcile_schema(conn) is True
+        assert conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='model_library_provider_commands'"
+        ).fetchone() is not None
+        assert tuple(conn.execute("SELECT id,name,kind,created_at,last_modified FROM profiles WHERE id='kept'").fetchone()) == (
+            "kept", "Kept", "onDevice", "old", "old",
+        )
+    finally:
+        conn.close()
 
 
 # ── A3/A4: self-heals missing column (including datetime default) ──────

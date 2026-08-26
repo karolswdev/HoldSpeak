@@ -30,7 +30,12 @@ class ProfileService:
         self._require_owner(principal)
         from ..intel.mesh_relay import DEFAULT_LIVENESS_WINDOW_SECONDS
 
-        profiles = self._db.profiles.list()
+        # Model Library owns its generated v1 execution adapters privately.
+        # They are not a second ordinary Models inventory or endpoint editor.
+        profiles = [
+            profile for profile in self._db.profiles.list()
+            if not self._is_model_library_private(str(getattr(profile, "id", "")))
+        ]
         liveness: dict[str, Any] = {}
         nodes = {str(getattr(profile, "node", "") or "") for profile in profiles if profile.kind == "meshNode"}
         now = datetime.now()
@@ -46,7 +51,7 @@ class ProfileService:
     def get_profile(self, principal: Principal, profile_id: str) -> dict[str, Any]:
         self._require_owner(principal)
         profile = self._db.profiles.get(profile_id)
-        if profile is None:
+        if profile is None or self._is_model_library_private(str(getattr(profile, "id", ""))):
             raise NotFound("profile", profile_id)
         return profile.to_dict()
 
@@ -90,7 +95,10 @@ class ProfileService:
 
         return {
             "version": TARGET_CONTRACT_VERSION,
-            "targets": [target.to_dict() for target in list_inference_targets(self._db)],
+            "targets": [
+                target.to_dict() for target in list_inference_targets(self._db)
+                if not self._is_model_library_private(str(target.id))
+            ],
         }
 
     def probe_inference_target(
@@ -133,6 +141,11 @@ class ProfileService:
         if target.readiness_state == "unavailable":
             raise ServiceError("target_unavailable", target.readiness_reason, context={"status": 404})
         return {"inference_target": target.to_dict()}
+
+    @staticmethod
+    def _is_model_library_private(profile_id: str) -> bool:
+        """Reserve generated provider adapters for the library authority only."""
+        return str(profile_id or "").startswith("library_provider_")
 
     @staticmethod
     def _new_id() -> str:
