@@ -620,6 +620,37 @@ remaining slices:
    zero. Story 14 inherits this descope note for its kill-criteria
    ledger.
 
+## OWNER RULING 2026-08-25 (final form) — Swift FROZEN IN TIME; story refocuses on web
+
+The owner's clarified ruling, superseding both the descope and my
+over-broad reversal reading: the Swift Slice-5 progress is **frozen in
+time** — preserved exactly where it got to, brought to a coherent
+compiling state, and parked with zero further investment — while the
+story's remaining effort goes to the web/Python portion. (The interim
+unwind that deleted the partials was the orchestrator's over-read of
+"not in scope" as "discard"; lesson recorded: park, never delete by
+default. The work was rebuilt from the worker's session.)
+
+Consequences:
+
+1. **Slice 5 does not complete in this story.** The rebuilt bridge
+   service, client, seven leaf migrations, and test scaffolding are
+   parked on hold branch `hold/hs143-10-slice5-swift-bridge` at
+   compile-green, as the seed for the future Swift-recreation phase.
+   The story branch itself stays Python-only.
+2. **Acceptance criterion 6 is out of this story's bar** (descope
+   stands for Story 10's close; the story file note points here). The
+   frozen branch — not deletion, not completion — is how it is
+   honored.
+3. **Slice 6 runs Python-only as under the descope**: the seven Swift
+   physical leaves stay censused as HELD (no false zero), the
+   zero-fork invariant covers Python placement resolution. The stashed
+   Slice-6 partial (`slice6-partial-held-during-slice5-restore`) is
+   restored for that round.
+4. **The story's remaining arc = web/Python**: Slice 6 census
+   convergence + adoption matrix, full sweep, evidence, close — then
+   the phase's web glass (Stories 12/13) is where the focus goes.
+
 ## Completion evidence checklist
 
 Story 10 is ready to be marked done only when all six obligations O1–O6 have
