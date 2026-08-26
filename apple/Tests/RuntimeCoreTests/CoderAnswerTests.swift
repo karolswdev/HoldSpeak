@@ -1,5 +1,6 @@
 import XCTest
 import Contracts
+import InferenceBridge
 @testable import Providers
 @testable import RuntimeCore
 
@@ -40,6 +41,17 @@ final class CoderAnswerTests: XCTestCase {
     }
 
     enum TestError: Error { case boom }
+
+    private actor BridgeWire: AdmittedInferenceBridgeWire {
+        func begin(authorization: String) async throws {}
+        func reconcile(authorization: String, disposition: AdmittedInferenceDisposition, result: String?) async throws -> AdmittedInferenceReceipt {
+            .init(attemptID: authorization, disposition: disposition, terminal: true)
+        }
+    }
+
+    private func admitted() -> (AdmittedInferenceClient, AdmittedInferenceAttempt) {
+        (AdmittedInferenceClient(wire: BridgeWire()), .init(authorization: UUID().uuidString, transport: .init()))
+    }
 
     // MARK: compose
 
@@ -179,7 +191,8 @@ extension CoderAnswerTests {
     func testDraftCallsTheProviderOnceAndTrims() async throws {
         let llm = ScriptedLLM()
 
-        let draft = try await CoderAnswer.draft(llm, agent: "claude", question: "Proceed?")
+        let admitted = admitted()
+        let draft = try await CoderAnswer.draft(llm, agent: "claude", question: "Proceed?", admittedClient: admitted.0, admittedAttempt: admitted.1)
 
         XCTAssertEqual(draft, "Use the event-sourced approach; snapshots hourly.")
         XCTAssertEqual(llm.prompts.count, 1)
@@ -192,7 +205,8 @@ extension CoderAnswerTests {
         let llm = ScriptedLLM()
         let desk = RecordingDesktop()
 
-        _ = try await CoderAnswer.draft(llm, agent: "claude", question: "Send it?")
+        let admitted = admitted()
+        _ = try await CoderAnswer.draft(llm, agent: "claude", question: "Send it?", admittedClient: admitted.0, admittedAttempt: admitted.1)
 
         XCTAssertTrue(desk.calls.isEmpty)
         XCTAssertNil(desk.lastText)
@@ -203,7 +217,8 @@ extension CoderAnswerTests {
         llm.error = TestError.boom
 
         do {
-            _ = try await CoderAnswer.draft(llm, agent: "claude", question: "q")
+            let admitted = admitted()
+            _ = try await CoderAnswer.draft(llm, agent: "claude", question: "q", admittedClient: admitted.0, admittedAttempt: admitted.1)
             XCTFail("expected the provider failure to throw")
         } catch { /* honest error, composer keeps the human's text */ }
     }

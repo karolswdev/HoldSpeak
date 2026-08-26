@@ -554,6 +554,184 @@ class InferenceFallbackController:
                 conn.rollback()
                 raise
 
+    def mark_external_dispatch_intent(
+        self, authority: Principal, *, command_id: str, attempt_id: str
+    ) -> dict[str, Any]:
+        """Record the last pre-wire fact for an admitted companion attempt.
+
+        Apple transports have no local kernel child: their server-issued ticket is
+        claimed first, then this controller-only transition is made immediately
+        before the companion invokes its one physical transport.  The public
+        bridge service is the sole caller; it never accepts a deployment or leg.
+        """
+        self._require_controller(authority)
+        command = self._safe_id(command_id, "command_id")
+        attempt_key = self._safe_id(attempt_id, "attempt_id")
+        if command != f"dispatch-{attempt_key}":
+            raise ConflictError(
+                "Dispatch command identity is not controller-derived.",
+                code="inference_route_execution_command_conflict",
+            )
+        request_hash = _sha256({"action": "dispatch_intent", "command_id": command, "attempt_id": attempt_key})
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                attempt = conn.execute("SELECT * FROM inference_route_attempts WHERE id=?", (attempt_key,)).fetchone()
+                if attempt is None:
+                    raise ValidationError("Route attempt is missing.", code="inference_route_attempt_missing")
+                execution_id = str(attempt["execution_id"])
+                replay = self._replay_command(conn, command, "dispatch_intent", request_hash, execution_id)
+                if replay is not None:
+                    conn.commit()
+                    return replay
+                execution = conn.execute("SELECT * FROM inference_route_executions WHERE id=?", (execution_id,)).fetchone()
+                _operation, route = self._plans.reconstruct_frozen_pair_in_transaction(
+                    ROUTE_PLANNING_AUTHORITY, conn, str(execution["operation_plan_id"])
+                )
+                self._fence_execution(execution, route)
+                if str(attempt["state"]) != "admitted" or attempt["child_operation_id"] is not None:
+                    raise ConflictError("An unbound admitted companion attempt is required.", code="inference_route_child_not_bound")
+                now_text = self._now_text()
+                conn.execute(
+                    "UPDATE inference_route_attempts SET state='dispatch_intent',dispatch_intent_at=? WHERE id=? AND state='admitted'",
+                    (now_text, attempt_key),
+                )
+                effect = {
+                    "schema": "AppleAdmittedDispatchIntent@1",
+                    "attempt_id": attempt_key,
+                    "execution_id": execution_id,
+                }
+                self._insert_command(conn, command, "dispatch_intent", request_hash, execution_id, effect, now_text)
+                conn.commit()
+                return effect
+            except Exception:
+                conn.rollback()
+                raise
+
+    def reconcile_external_attempt(
+        self,
+        authority: Principal,
+        *,
+        command_id: str,
+        attempt_id: str,
+        classified_outcome: str,
+        result_sha256: str | None = None,
+    ) -> dict[str, Any]:
+        """Settle a claimed Apple transport using a closed server classification.
+
+        The companion may report only a small, content-free outcome vocabulary.
+        This controller maps it to the frozen route's policy and alone decides
+        whether the execution remains active for a later server-issued leg.
+        """
+        self._require_controller(authority)
+        command = self._safe_id(command_id, "command_id")
+        attempt_key = self._safe_id(attempt_id, "attempt_id")
+        kinds = {
+            "succeeded": ("owner_terminal", "succeeded", "provider_returned"),
+            "malformed_output": ("invalid_typed_output", "failed", "provider_returned"),
+            "unavailable": ("local_capacity_unavailable", "refused", "pre_send"),
+            "disconnected": ("dispatch_outcome_unknown", "indeterminate", "dispatch_intent"),
+            "stopped": ("owner_cancelled", "cancelled", "dispatch_intent"),
+            "failed": ("provider_permanent", "failed", "provider_returned"),
+        }
+        if classified_outcome not in kinds:
+            raise ValidationError("Companion outcome is invalid.", code="apple_admitted_outcome_invalid")
+        if command != f"settle-{attempt_key}":
+            raise ConflictError("Settlement command identity is not controller-derived.", code="inference_route_execution_command_conflict")
+        digest = str(result_sha256 or "")
+        if classified_outcome == "succeeded" and not (
+            digest.startswith("sha256:") and len(digest) == 71
+        ):
+            raise ValidationError("Companion success digest is invalid.", code="apple_admitted_result_invalid")
+        request_hash = _sha256({
+            "action": "settle", "command_id": command, "attempt_id": attempt_key,
+            "classified_outcome": classified_outcome, "result_sha256": digest,
+        })
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                attempt = conn.execute("SELECT * FROM inference_route_attempts WHERE id=?", (attempt_key,)).fetchone()
+                if attempt is None:
+                    raise ValidationError("Route attempt is missing.", code="inference_route_attempt_missing")
+                execution_id = str(attempt["execution_id"])
+                replay = self._replay_command(conn, command, "settle", request_hash, execution_id)
+                if replay is not None:
+                    conn.commit()
+                    return replay
+                if str(attempt["state"]) != "dispatch_intent" or attempt["child_operation_id"] is not None:
+                    raise ConflictError("Only a dispatched companion attempt can settle.", code="inference_route_attempt_not_dispatched")
+                disposition, outcome, send_phase = kinds[classified_outcome]
+                evidence = {
+                    "schema": "AppleAdmittedAttemptDispositionEvidence@1",
+                    "attempt_id": attempt_key,
+                    "classified_outcome": classified_outcome,
+                    "result_sha256": digest or None,
+                    "send_phase": send_phase,
+                    "classifier_revision": FALLBACK_CLASSIFIER_REVISION,
+                }
+                evidence_sha = _sha256(evidence)
+                result_ref = f"apple-admitted-result:{attempt_key}/{digest}" if outcome == "succeeded" else ""
+                now_text = self._now_text()
+                conn.execute(
+                    """UPDATE inference_route_attempts SET state='terminal',disposition=?,outcome=?,result_ref=?,
+                         child_receipt_sha256=?,disposition_evidence_json=?,disposition_evidence_sha256=?,
+                         classifier_revision=?,send_phase=?,terminal_at=?
+                       WHERE id=? AND state='dispatch_intent'""",
+                    (disposition, outcome, result_ref, evidence_sha, _canonical(evidence), evidence_sha,
+                     FALLBACK_CLASSIFIER_REVISION, send_phase, now_text, attempt_key),
+                )
+                head = conn.execute("SELECT * FROM inference_route_executions WHERE id=?", (execution_id,)).fetchone()
+                if str(head["state"]) not in {"active", "stopping"}:
+                    raise ConflictError("Route terminal was already elected.", code="inference_route_execution_terminal")
+                prior_state, prior_revision = str(head["state"]), int(head["revision"])
+                operation_plan, route_plan = self._plans.reconstruct_frozen_pair_in_transaction(
+                    ROUTE_PLANNING_AUTHORITY, conn, str(head["operation_plan_id"])
+                )
+                leg_attempts = conn.execute(
+                    "SELECT COUNT(*) FROM inference_route_attempts WHERE execution_id=? AND route_leg_ordinal=?",
+                    (execution_id, int(attempt["route_leg_ordinal"])),
+                ).fetchone()[0]
+                policy = route_plan["retry_policy"]
+                may_retry = bool(
+                    prior_state == "active" and outcome != "succeeded"
+                    and disposition in policy["retryable_dispositions"]
+                    and int(leg_attempts) < int(head["per_leg_attempt_limit"])
+                    and int(head["attempts_reserved"]) < int(head["total_attempt_limit"])
+                )
+                next_leg = int(attempt["route_leg_ordinal"]) + 1
+                may_fallback = bool(
+                    prior_state == "active" and not may_retry and outcome != "succeeded"
+                    and disposition in policy["fallback_dispositions"]
+                    and next_leg <= len(route_plan["entries"])
+                    and operation_plan["entries"][next_leg - 1]["eligibility"] == "executable"
+                    and int(head["attempts_reserved"]) < int(head["total_attempt_limit"])
+                )
+                if may_retry or may_fallback:
+                    conn.execute("UPDATE inference_route_executions SET revision=revision+1 WHERE id=?", (execution_id,))
+                    post_state = "active"
+                else:
+                    conn.execute(
+                        """UPDATE inference_route_executions SET state='terminal',revision=revision+1,
+                             terminal_disposition=?,terminal_outcome=?,result_ref=?,winning_attempt_id=?,terminal_at=?
+                           WHERE id=?""",
+                        (disposition, outcome, result_ref or None,
+                         attempt_key if outcome == "succeeded" else None, now_text, execution_id),
+                    )
+                    post_state = "terminal"
+                effect = self._settlement_effect(conn, execution_id, attempt_key)
+                self._insert_command(conn, command, "settle", request_hash, execution_id, effect, now_text)
+                self._insert_transition(
+                    conn, execution_id, action="settle", command_id=command,
+                    prior_revision=prior_revision, post_revision=prior_revision + 1,
+                    prior_state=prior_state, post_state=post_state, effect=effect,
+                )
+                self._execution(conn, execution_id)
+                conn.commit()
+                return effect
+            except Exception:
+                conn.rollback()
+                raise
+
     def settle_attempt(
         self, authority: Principal, *, command_id: str, attempt_id: str
     ) -> dict[str, Any]:
@@ -1847,17 +2025,26 @@ class InferenceFallbackController:
             else:
                 if command_id != f"dispatch-{attempt['id']}":
                     continue
-                expected = self._dispatch_effect(attempt)
                 request = {
                     "action": "dispatch_intent", "command_id": command_id,
                     "attempt_id": str(attempt["id"]),
                 }
-                if effect == expected and str(command["request_sha256"]) == _sha256(request):
+                expected = self._dispatch_effect(attempt)
+                apple_expected = {
+                    "schema": "AppleAdmittedDispatchIntent@1",
+                    "attempt_id": str(attempt["id"]),
+                    "execution_id": execution_id,
+                }
+                if (effect == expected or effect == apple_expected) and str(command["request_sha256"]) == _sha256(request):
                     dispatch_matches.append(command)
         state = str(attempt["state"])
         claimed = len(claim_matches) == 1
         bound = len(bind_matches) == 1
         dispatched = len(dispatch_matches) == 1
+        apple_dispatched = any(
+            json.loads(str(item["effect_json"])).get("schema") == "AppleAdmittedDispatchIntent@1"
+            for item in dispatch_matches
+        )
         if state == "reserved":
             return bool(
                 not claim_matches and not bind_matches and not dispatch_matches
@@ -1884,14 +2071,14 @@ class InferenceFallbackController:
             )
         if state == "dispatch_intent":
             return bool(
-                bound and dispatched
+                (bound or apple_dispatched) and dispatched
                 and str(attempt["dispatch_intent_at"] or "") == str(dispatch_matches[0]["created_at"])
             )
         if state == "terminal":
             if attempt["dispatch_intent_at"] is None:
                 return not dispatch_matches and len(bind_matches) <= 1
             return bool(
-                bound and dispatched
+                (bound or apple_dispatched) and dispatched
                 and str(attempt["dispatch_intent_at"] or "") == str(dispatch_matches[0]["created_at"])
             )
         return False
@@ -1912,6 +2099,31 @@ class InferenceFallbackController:
             or _sha256(evidence) != str(attempt["disposition_evidence_sha256"] or "")
         ):
             return False
+        if evidence.get("schema") == "AppleAdmittedAttemptDispositionEvidence@1":
+            kinds = {
+                "succeeded": ("owner_terminal", "succeeded", "provider_returned"),
+                "malformed_output": ("invalid_typed_output", "failed", "provider_returned"),
+                "unavailable": ("local_capacity_unavailable", "refused", "pre_send"),
+                "disconnected": ("dispatch_outcome_unknown", "indeterminate", "dispatch_intent"),
+                "stopped": ("owner_cancelled", "cancelled", "dispatch_intent"),
+                "failed": ("provider_permanent", "failed", "provider_returned"),
+            }
+            kind = str(evidence.get("classified_outcome") or "")
+            expected = kinds.get(kind)
+            return bool(
+                expected is not None
+                and set(evidence) == {"schema", "attempt_id", "classified_outcome", "result_sha256", "send_phase", "classifier_revision"}
+                and evidence.get("attempt_id") == str(attempt["id"])
+                and evidence.get("send_phase") == expected[2]
+                and evidence.get("classifier_revision") == FALLBACK_CLASSIFIER_REVISION
+                and attempt["child_operation_id"] is None
+                and attempt["child_receipt_sha256"] == str(attempt["disposition_evidence_sha256"])
+                and attempt["disposition"] == expected[0]
+                and attempt["outcome"] == expected[1]
+                and attempt["send_phase"] == expected[2]
+                and (kind != "succeeded" or isinstance(evidence.get("result_sha256"), str))
+                and (kind == "succeeded" or evidence.get("result_sha256") is None)
+            )
         child_id = str(attempt["child_operation_id"] or "")
         if attempt["child_receipt_sha256"] is None:
             expected = {

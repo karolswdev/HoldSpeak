@@ -1,5 +1,6 @@
 import XCTest
 import Contracts
+import InferenceBridge
 @testable import Providers
 
 /// HSM-25-01 — the Swift relay worker on the provider seam. Network stubbed
@@ -79,9 +80,17 @@ final class MeshServeWorkerTests: XCTestCase {
     {"job": {"id": "relay_1", "node": "phone-edge", "task_kind": "llm",
              "system_prompt": "Be brief.", "user_prompt": "What is the mesh?",
              "temperature": 0.2, "max_tokens": 400, "model_hint": "gemma4",
-             "status": "running", "deadline_at": "2026-07-07T12:02:00"}}
+             "status": "running", "deadline_at": "2026-07-07T12:02:00",
+             "admitted_attempt": {"schema":"AppleAdmittedAttempt@1","authorization":"relay-1","transport":{"schema":"AppleAdmittedTransport@1","begin_path":"/begin","reconcile_path":"/reconcile"}}}}
     """
     private static let idleJSON = #"{"job": null}"#
+
+    private actor BridgeWire: AdmittedInferenceBridgeWire {
+        func begin(authorization: String) async throws {}
+        func reconcile(authorization: String, disposition: AdmittedInferenceDisposition, result: String?) async throws -> AdmittedInferenceReceipt {
+            .init(attemptID: authorization, disposition: disposition, terminal: true)
+        }
+    }
 
     /// Drive `run()` deterministically: injected sleep records its delays and
     /// cancels the loop after `stopAfterSleeps` naps, so no test ever waits.
@@ -94,6 +103,7 @@ final class MeshServeWorkerTests: XCTestCase {
         let worker = MeshServeWorker(
             node: "phone-edge", client: client,
             makeProvider: makeProvider ?? { provider },
+            admittedClient: AdmittedInferenceClient(wire: BridgeWire()),
             sleep: { await recorder.record($0) },
             log: { _ in })
         let task = Task { await worker.run() }

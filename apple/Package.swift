@@ -30,13 +30,16 @@ let package = Package(
         .target(name: "Contracts"),
         // Layer 2 — meeting/artifact/MIR engines, persistence, sync. No UI.
         // Depends on Providers for the injected port protocols (ILLMProvider etc.).
-        .target(name: "RuntimeCore", dependencies: ["Contracts", "Providers"]),
+        // The admitted-attempt transport types sit below both RuntimeCore and
+        // Providers so either layer can consume a server-owned reservation.
+        .target(name: "InferenceBridge", path: "Sources/RuntimeCore/Inference"),
+        .target(name: "RuntimeCore", dependencies: ["Contracts", "Providers", "InferenceBridge"], exclude: ["Inference"]),
         // Layer 3 — provider protocols (transcriber/LLM/audio/storage/sync).
-        .target(name: "Providers", dependencies: ["Contracts"]),
+        .target(name: "Providers", dependencies: ["Contracts", "InferenceBridge"]),
         // Layer 3 (engine adapter) — the llama.cpp-backed `ILLMProvider` (Mode A).
         // Depends on the native engine; the domain does not depend on this target.
         .target(name: "InferenceLlama",
-                 dependencies: ["Providers", "Contracts", .product(name: "LLM", package: "LLM.swift")]),
+                 dependencies: ["Providers", "Contracts", "InferenceBridge", .product(name: "LLM", package: "LLM.swift")]),
         // Layer 4 — platform hosts (iPad/iPhone apps). The only UI layer.
         .target(name: "Hosts", dependencies: ["RuntimeCore", "Providers", "Contracts"]),
         // Golden wire fixtures are read in-place via #filePath (the

@@ -1,6 +1,7 @@
 import Foundation
 import Contracts
 import Providers
+import InferenceBridge
 
 /// HSM-15-04 — **One runner for the mesh.** The Workbench draws a program (`Workflow`);
 /// this makes it real. It walks the linear `Workflow.steps` in order, threads an
@@ -164,14 +165,20 @@ public struct WorkflowRunner: Sendable {
     /// failure policy.
     private let dispatch: MeshDispatch?
     private let policy: RunPolicy
+    private let admittedClient: AdmittedInferenceClient?
+    private let admittedAttemptFactory: (@Sendable (String) -> AdmittedInferenceAttempt?)?
 
     /// `fallback` is accepted only so existing hosts keep compiling. It is never stored or
     /// called; selecting another deployment requires a separately admitted server attempt.
     public init(provider: ILLMProvider, fallback _: ILLMProvider? = nil,
-                dispatch: MeshDispatch? = nil, policy: RunPolicy = RunPolicy()) {
+                dispatch: MeshDispatch? = nil, policy: RunPolicy = RunPolicy(),
+                admittedClient: AdmittedInferenceClient? = nil,
+                admittedAttemptFactory: (@Sendable (String) -> AdmittedInferenceAttempt?)? = nil) {
         self.provider = provider
         self.dispatch = dispatch
         self.policy = policy
+        self.admittedClient = admittedClient
+        self.admittedAttemptFactory = admittedAttemptFactory
     }
 
     /// Run `workflow` over `sourceText` (the resolved SOURCE text — the App supplies the
@@ -186,7 +193,8 @@ public struct WorkflowRunner: Sendable {
                     sourceText: String,
                     resumeFrom: Int = 0,
                     seedInput: String? = nil,
-                    targets: [RunTarget?] = []) async -> WorkflowRunResult {
+                    targets: [RunTarget?] = [],
+                    admittedAttempts: [AdmittedInferenceAttempt?] = []) async -> WorkflowRunResult {
         var threaded = seedInput ?? sourceText
         var outcomes: [StepOutcome] = []
         // The "head input" the first *executed* step reads: the cached/carried value on a
@@ -214,7 +222,10 @@ public struct WorkflowRunner: Sendable {
             // inspector's pin; unset = on-device), run it under the failure policy.
             let target = (index < targets.count ? targets[index] : nil) ?? .onDevice
             let prompt = buildPrompt(for: step, input: resolvedInput)
-            let attemptResult = await execute(prompt: prompt, target: target)
+            let admittedAttempt = index < admittedAttempts.count
+                ? admittedAttempts[index]
+                : admittedAttemptFactory?("workflow-step-\(index)")
+            let attemptResult = await execute(prompt: prompt, target: target, admittedAttempt: admittedAttempt)
 
             switch attemptResult {
             case .success(let text, let attempts):
@@ -320,29 +331,35 @@ public struct WorkflowRunner: Sendable {
     /// provider; `.dispatchToMac` goes through the injected mesh dispatch (HSM-15-02).
     /// Each step makes at most one physical call. A later attempt requires a new durable
     /// controller reservation outside this client executor.
-    private func execute(prompt: String, target: RunTarget) async -> AttemptResult {
+    private func execute(prompt: String, target: RunTarget,
+                         admittedAttempt: AdmittedInferenceAttempt?) async -> AttemptResult {
+        guard let admittedClient else {
+            return .failure(error: AdmittedInferenceClientError.reservationRequired, attempts: 0)
+        }
         switch target {
         case .onDevice, .endpoint:
-            return await attempt(prompt: prompt, on: provider)
+            return await attempt(prompt: prompt, admittedClient: admittedClient, admittedAttempt: admittedAttempt,
+                                 complete: { try await provider.complete(prompt: $0) })
         case .dispatchToMac:
             guard let dispatch else {
                 // No paired desktop — the step rides the failure policy.
                 return .failure(error: WorkflowRunError.dispatchUnimplemented, attempts: 0)
             }
-            return await attempt(prompt: prompt, complete: dispatch)
+            return await attempt(prompt: prompt, admittedClient: admittedClient, admittedAttempt: admittedAttempt,
+                                 complete: dispatch)
         }
     }
 
-    /// One provider call. There is intentionally no retry or alternate-provider branch here.
-    private func attempt(prompt: String, on provider: ILLMProvider) async -> AttemptResult {
-        await attempt(prompt: prompt, complete: { try await provider.complete(prompt: $0) })
-    }
-
     /// The single physical call itself, over either a provider or the mesh dispatch.
-    private func attempt(prompt: String,
-                         complete: @Sendable (String) async throws -> String) async -> AttemptResult {
+    private func attempt(prompt: String, admittedClient: AdmittedInferenceClient,
+                         admittedAttempt: AdmittedInferenceAttempt?,
+                         complete: @escaping @Sendable (String) async throws -> String) async -> AttemptResult {
         do {
-            let text = try await complete(prompt)
+            let text = try await admittedClient.perform(
+                attempt: admittedAttempt,
+                transport: { try await complete(prompt) },
+                validate: { _ in }
+            )
             return .success(text: text, attempts: 1)
         } catch {
             return .failure(error: error, attempts: 1)

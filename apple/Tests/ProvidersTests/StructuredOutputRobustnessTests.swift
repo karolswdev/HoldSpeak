@@ -1,5 +1,6 @@
 import XCTest
 import Contracts
+import InferenceBridge
 @testable import Providers
 
 /// HSM-11-06 — the structured-output salvage hardened against real 4B drift: balanced
@@ -13,6 +14,47 @@ final class StructuredOutputRobustnessTests: XCTestCase {
     }
     private func decode(_ raw: String) throws -> Draft {
         try StructuredOutput.decode(Draft.self, from: raw)
+    }
+
+    private actor BridgeWire: AdmittedInferenceBridgeWire {
+        private var begins = 0
+        private var reconciliations: [AdmittedInferenceDisposition] = []
+
+        func begin(authorization _: String) async throws { begins += 1 }
+
+        func reconcile(
+            authorization: String,
+            disposition: AdmittedInferenceDisposition,
+            result _: String?
+        ) async throws -> AdmittedInferenceReceipt {
+            reconciliations.append(disposition)
+            return .init(attemptID: authorization, disposition: disposition, terminal: true)
+        }
+
+        func observed() -> (begins: Int, reconciliations: [AdmittedInferenceDisposition]) {
+            (begins, reconciliations)
+        }
+    }
+
+    private actor CountingProvider: ILLMProvider {
+        private let response: String
+        private var calls = 0
+
+        init(response: String) { self.response = response }
+
+        func complete(prompt _: String) async throws -> String {
+            calls += 1
+            return response
+        }
+
+        func callCount() -> Int { calls }
+    }
+
+    private func admitted(_ wire: BridgeWire) -> (AdmittedInferenceClient, AdmittedInferenceAttempt) {
+        (
+            AdmittedInferenceClient(wire: wire),
+            .init(authorization: UUID().uuidString, transport: .init())
+        )
     }
 
     // MARK: balanced extraction
@@ -83,6 +125,72 @@ final class StructuredOutputRobustnessTests: XCTestCase {
     func testArrayWrappedObjectUnwraps() throws {
         let d = try decode(#"[{"title":"only","ok":true}]"#)
         XCTAssertEqual(d.title, "only"); XCTAssertEqual(d.ok, true)
+    }
+
+    // MARK: admitted attempt bridge
+
+    func testGenerateRequiresReservationBeforeProviderTransport() async {
+        let provider = CountingProvider(response: #"{"title":"never"}"#)
+
+        do {
+            let _: Draft = try await StructuredOutput.generate(Draft.self, prompt: "draft", using: provider)
+            XCTFail("expected reservation-required error")
+        } catch let error as AdmittedInferenceClientError {
+            XCTAssertEqual(error, .reservationRequired)
+        } catch {
+            XCTFail("wrong error: \(error)")
+        }
+
+        let callCount = await provider.callCount()
+        XCTAssertEqual(callCount, 0)
+    }
+
+    func testGenerateUsesOneReservationForOneTransportAndSuccessReceipt() async throws {
+        let wire = BridgeWire()
+        let admitted = admitted(wire)
+        let provider = CountingProvider(response: #"{"title":"Ship"}"#)
+
+        let value: Draft = try await StructuredOutput.generate(
+            Draft.self,
+            prompt: "draft",
+            using: provider,
+            admittedClient: admitted.0,
+            admittedAttempt: admitted.1
+        )
+
+        XCTAssertEqual(value.title, "Ship")
+        let callCount = await provider.callCount()
+        XCTAssertEqual(callCount, 1)
+        let observed = await wire.observed()
+        XCTAssertEqual(observed.begins, 1)
+        XCTAssertEqual(observed.reconciliations, [.succeeded])
+    }
+
+    func testMalformedOutputReconcilesSameReservationWithoutLocalRetry() async {
+        let wire = BridgeWire()
+        let admitted = admitted(wire)
+        let provider = CountingProvider(response: "not JSON")
+
+        do {
+            let _: Draft = try await StructuredOutput.generate(
+                Draft.self,
+                prompt: "draft",
+                using: provider,
+                admittedClient: admitted.0,
+                admittedAttempt: admitted.1
+            )
+            XCTFail("expected malformed output")
+        } catch StructuredOutputError.noJSON {
+            // The decoding error remains visible while the bridge reports it once.
+        } catch {
+            XCTFail("wrong error: \(error)")
+        }
+
+        let callCount = await provider.callCount()
+        XCTAssertEqual(callCount, 1)
+        let observed = await wire.observed()
+        XCTAssertEqual(observed.begins, 1)
+        XCTAssertEqual(observed.reconciliations, [.malformedOutput])
     }
 
     // MARK: no regressions

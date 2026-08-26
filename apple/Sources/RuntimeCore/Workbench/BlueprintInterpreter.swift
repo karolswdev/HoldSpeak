@@ -1,6 +1,7 @@
 import Foundation
 import Contracts
 import Providers
+import InferenceBridge
 
 /// HSM-14 (Workbench v2) — **the Blueprints interpreter**. Walks the `Blueprint`'s exec
 /// graph from `entry`, following exec edges and evaluating the control-flow family (branch /
@@ -97,15 +98,20 @@ public struct BlueprintInterpreter: Sendable {
 
     private let provider: ILLMProvider
     private let policy: RunPolicy
+    private let admittedClient: AdmittedInferenceClient?
+    private let admittedAttemptFactory: (@Sendable (BPNodeID) -> AdmittedInferenceAttempt?)?
     /// Hard global bound on exec steps — guards against an exec cycle the static validator
     /// can't see (a `merge` wired back into an earlier node). Generous; only trips on a true loop.
     private let maxSteps: Int
 
     /// `fallback` is source compatibility only. The interpreter never stores or calls it.
     public init(provider: ILLMProvider, fallback _: ILLMProvider? = nil,
-                policy: RunPolicy = RunPolicy(), maxSteps: Int = 10_000) {
+                policy: RunPolicy = RunPolicy(), maxSteps: Int = 10_000,
+                admittedClient: AdmittedInferenceClient? = nil,
+                admittedAttemptFactory: (@Sendable (BPNodeID) -> AdmittedInferenceAttempt?)? = nil) {
         self.provider = provider
-        self.policy = policy; self.maxSteps = maxSteps
+        self.policy = policy; self.maxSteps = maxSteps; self.admittedClient = admittedClient
+        self.admittedAttemptFactory = admittedAttemptFactory
     }
 
     /// Run `blueprint` over `sourceText` (the resolved SOURCE — the App supplies it). Returns
@@ -115,6 +121,7 @@ public struct BlueprintInterpreter: Sendable {
     @discardableResult
     public func run(_ blueprint: Blueprint,
                     sourceText: String,
+                    admittedAttempts: [BPNodeID: AdmittedInferenceAttempt] = [:],
                     onEvent: @Sendable (ExecutionEvent) -> Void = { _ in }) async -> BlueprintRunResult {
 
         if let v = blueprint.validate() {
@@ -135,7 +142,7 @@ public struct BlueprintInterpreter: Sendable {
 
         do {
             try await walk(from: blueprint.entry, blueprint: blueprint,
-                           ctx: &ctx, memo: &memo, onEvent: onEvent)
+                           ctx: &ctx, memo: &memo, admittedAttempts: admittedAttempts, onEvent: onEvent)
         } catch let err as BlueprintRunError {
             let msg = describe(err)
             onEvent(.runFailed(message: msg))
@@ -165,6 +172,7 @@ public struct BlueprintInterpreter: Sendable {
                       blueprint: Blueprint,
                       ctx: inout ExecutionContext,
                       memo: inout DataMemo,
+                      admittedAttempts: [BPNodeID: AdmittedInferenceAttempt],
                       onEvent: @Sendable (ExecutionEvent) -> Void) async throws {
         var current: BPNodeID? = nodeID
 
@@ -189,7 +197,10 @@ public struct BlueprintInterpreter: Sendable {
                 // Model op: resolve its data-in (pull-based), build the prompt, run under policy.
                 let input = memo.resolveInput(into: node.dataIn(), node: node)
                 let prompt = buildPrompt(for: node.kind, input: input)
-                let outcome = await runModel(prompt: prompt, node: node, carried: input)
+                let outcome = await runModel(
+                    prompt: prompt, node: node, carried: input,
+                    admittedAttempt: admittedAttempts[node.id] ?? admittedAttemptFactory?(node.id)
+                )
                 switch outcome {
                 case .produced(let text):
                     memo.set(id, text)
@@ -242,7 +253,7 @@ public struct BlueprintInterpreter: Sendable {
                 for name in node.kind.execOutNames where name != "then" {
                     if let target = blueprint.execTarget(from: node.exec(name)) {
                         try await walk(from: target, blueprint: blueprint, ctx: &ctx,
-                                       memo: &memo, onEvent: onEvent)
+                                       memo: &memo, admittedAttempts: admittedAttempts, onEvent: onEvent)
                     }
                 }
                 current = blueprint.execTarget(from: node.exec("then"))
@@ -260,7 +271,7 @@ public struct BlueprintInterpreter: Sendable {
                     memo.bindLoopItem(id, item)         // forEach's data-out = current item
                     if let bodyEntry {
                         try await walk(from: bodyEntry, blueprint: blueprint, ctx: &ctx,
-                                       memo: &memo, onEvent: onEvent)
+                                       memo: &memo, admittedAttempts: admittedAttempts, onEvent: onEvent)
                     }
                     _ = n
                 }
@@ -283,7 +294,7 @@ public struct BlueprintInterpreter: Sendable {
                     onEvent(.loopIteration(id: id, index: iter, count: nil))
                     if let bodyEntry {
                         try await walk(from: bodyEntry, blueprint: blueprint, ctx: &ctx,
-                                       memo: &memo, onEvent: onEvent)
+                                       memo: &memo, admittedAttempts: admittedAttempts, onEvent: onEvent)
                     }
                     iter += 1
                     _ = n
@@ -307,9 +318,10 @@ public struct BlueprintInterpreter: Sendable {
 
     private enum ModelOutcome { case produced(String), skipped(String), failed(String) }
 
-    private func runModel(prompt: String, node: BPNode, carried: String) async -> ModelOutcome {
+    private func runModel(prompt: String, node: BPNode, carried: String,
+                          admittedAttempt: AdmittedInferenceAttempt?) async -> ModelOutcome {
         let effective = node.failurePolicy ?? policy.failurePolicy
-        let primary = await attempt(prompt: prompt, on: provider)
+        let primary = await attempt(prompt: prompt, admittedAttempt: admittedAttempt)
         switch primary {
         case .success(let text):
             return .produced(text)
@@ -329,9 +341,15 @@ public struct BlueprintInterpreter: Sendable {
     private enum Attempt { case success(String), failure(Error) }
 
     /// Exactly one physical provider call. Retry/fallback authority lives above the runner.
-    private func attempt(prompt: String, on provider: ILLMProvider) async -> Attempt {
-        do { return .success(try await provider.complete(prompt: prompt)) }
-        catch { return .failure(error) }
+    private func attempt(prompt: String, admittedAttempt: AdmittedInferenceAttempt?) async -> Attempt {
+        guard let admittedClient else { return .failure(AdmittedInferenceClientError.reservationRequired) }
+        do {
+            return .success(try await admittedClient.perform(
+                attempt: admittedAttempt,
+                transport: { try await provider.complete(prompt: prompt) },
+                validate: { _ in }
+            ))
+        } catch { return .failure(error) }
     }
 
     // MARK: Prompts & pure transforms (mirrors WorkflowRunner's templates)

@@ -1,5 +1,6 @@
 import Foundation
 import Contracts
+import InferenceBridge
 
 /// Turns raw LLM text into a validated Phase-0 contract value. HSM-5-04 — the
 /// bridge between "a model produced text" and "intelligence is contract-shaped".
@@ -48,24 +49,36 @@ public enum StructuredOutput {
         }
     }
 
-    /// Ask an `ILLMProvider` for structured output, decoding to `T`. On a parse/
-    /// validation failure, re-prompt with a repair hint, up to `maxAttempts`.
+    /// Ask once under a server-issued reservation, then decode the result. A
+    /// malformed value is reconciled to that same attempt; only the server may
+    /// admit a correction or fallback leg.
     public static func generate<T: Decodable>(
         _ type: T.Type, prompt: String, using provider: ILLMProvider,
-        maxAttempts: Int = 3,
+        admittedClient: AdmittedInferenceClient? = nil,
+        admittedAttempt: AdmittedInferenceAttempt? = nil,
         decoder: JSONDecoder = HoldSpeakContracts.decoder()
     ) async throws -> T {
-        precondition(maxAttempts >= 1)
-        var lastError: Error = StructuredOutputError.exhausted
-        for attempt in 0..<maxAttempts {
-            let p = attempt == 0
-                ? prompt
-                : prompt + "\n\nReturn ONLY one valid JSON object matching the schema — no prose, no code fences, no trailing commas."
-            let raw = try await provider.complete(prompt: p)
-            do { return try decode(type, from: raw, using: decoder) }
-            catch { lastError = error }
+        guard let admittedClient, let admittedAttempt else {
+            throw AdmittedInferenceClientError.reservationRequired
         }
-        throw lastError
+        let raw = try await admittedClient.perform(
+            attempt: admittedAttempt,
+            transport: { try await provider.complete(prompt: prompt) },
+            validate: { raw in _ = try decode(type, from: raw, using: decoder) }
+        )
+        return try decode(type, from: raw, using: decoder)
+    }
+
+    /// Source compatibility only. The former retry count is deliberately ignored:
+    /// callers must acquire an admitted attempt instead of asking this helper to
+    /// perform another physical transport.
+    @available(*, deprecated, message: "Acquire a server admitted attempt; StructuredOutput never retries locally.")
+    public static func generate<T: Decodable>(
+        _ type: T.Type, prompt: String, using provider: ILLMProvider,
+        maxAttempts _: Int,
+        decoder: JSONDecoder = HoldSpeakContracts.decoder()
+    ) async throws -> T {
+        try await generate(type, prompt: prompt, using: provider, decoder: decoder)
     }
 
     // MARK: - Extraction internals (HSM-11-06)

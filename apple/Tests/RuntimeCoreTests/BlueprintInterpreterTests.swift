@@ -1,6 +1,7 @@
 import XCTest
 import Contracts
 import Providers
+import InferenceBridge
 @testable import RuntimeCore
 
 /// HSM-14 (Workbench v2) — host tests for the **Blueprints interpreter**: branches route,
@@ -35,6 +36,17 @@ final class BlueprintInterpreterTests: XCTestCase {
         RunPolicy(maxRetries: retries, failurePolicy: p, backoff: { _ in })
     }
 
+    private actor BridgeWire: AdmittedInferenceBridgeWire {
+        func begin(authorization: String) async throws {}
+        func reconcile(authorization: String, disposition: AdmittedInferenceDisposition, result: String?) async throws -> AdmittedInferenceReceipt {
+            .init(attemptID: authorization, disposition: disposition, terminal: true)
+        }
+    }
+    private static let bridge = AdmittedInferenceClient(wire: BridgeWire())
+    private static let attempt: @Sendable (BPNodeID) -> AdmittedInferenceAttempt? = { _ in
+        .init(authorization: UUID().uuidString, transport: .init())
+    }
+
     /// Collect events synchronously from a run (the callback sink).
     private func collectEvents(_ interp: BlueprintInterpreter, _ bp: Blueprint, _ src: String) async -> ([ExecutionEvent], BlueprintRunResult) {
         let box = EventBox()
@@ -61,7 +73,7 @@ final class BlueprintInterpreterTests: XCTestCase {
             BPExecEdge(from: BPExecPin(node: "br", name: "false"), to: "fn"),
         ])
         let provider = RecordingProvider()
-        let interp = BlueprintInterpreter(provider: provider)
+        let interp = BlueprintInterpreter(provider: provider, admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let (events, result) = await collectEvents(interp, bp, "this is URGENT now")
 
         XCTAssertNil(result.failure)
@@ -83,7 +95,7 @@ final class BlueprintInterpreterTests: XCTestCase {
             BPExecEdge(from: BPExecPin(node: "br", name: "true"), to: "tn"),
             BPExecEdge(from: BPExecPin(node: "br", name: "false"), to: "fn"),
         ])
-        let interp = BlueprintInterpreter(provider: RecordingProvider())
+        let interp = BlueprintInterpreter(provider: RecordingProvider(), admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let (events, result) = await collectEvents(interp, bp, "nothing pressing here")
 
         XCTAssertNil(result.failure)
@@ -111,7 +123,7 @@ final class BlueprintInterpreterTests: XCTestCase {
             BPDataEdge(from: BPDataPin(node: "fe", name: "out"), to: BPDataPin(node: "body", name: "in")),
         ])
         let provider = RecordingProvider()
-        let interp = BlueprintInterpreter(provider: provider)
+        let interp = BlueprintInterpreter(provider: provider, admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let source = "alpha\nbravo\ncharlie"   // 3 items
         let (events, result) = await collectEvents(interp, bp, source)
 
@@ -139,7 +151,7 @@ final class BlueprintInterpreterTests: XCTestCase {
             BPExecEdge(from: BPExecPin(node: "e", name: "then"), to: "wl"),
             BPExecEdge(from: BPExecPin(node: "wl", name: "body"), to: "body"),
         ])
-        let interp = BlueprintInterpreter(provider: RecordingProvider())
+        let interp = BlueprintInterpreter(provider: RecordingProvider(), admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let (events, result) = await collectEvents(interp, bp, "always here")
 
         XCTAssertNil(result.failure)
@@ -159,7 +171,7 @@ final class BlueprintInterpreterTests: XCTestCase {
             BPExecEdge(from: BPExecPin(node: "wl", name: "body"), to: "body"),
         ])
         let provider = RecordingProvider()
-        let interp = BlueprintInterpreter(provider: provider)
+        let interp = BlueprintInterpreter(provider: provider, admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let (_, result) = await collectEvents(interp, bp, "non-empty")
         XCTAssertNil(result.failure)
         XCTAssertNil(result.loopCounters["wl"])    // never iterated
@@ -181,7 +193,7 @@ final class BlueprintInterpreterTests: XCTestCase {
             BPDataEdge(from: BPDataPin(node: "a", name: "out"), to: BPDataPin(node: "b", name: "in")),
         ])
         let provider = RecordingProvider(transform: { "<\($0)>" })
-        let interp = BlueprintInterpreter(provider: provider)
+        let interp = BlueprintInterpreter(provider: provider, admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let (_, result) = await collectEvents(interp, bp, "SRC")
 
         XCTAssertNil(result.failure)
@@ -211,7 +223,7 @@ final class BlueprintInterpreterTests: XCTestCase {
         ], dataEdges: [
             BPDataEdge(from: BPDataPin(node: "k", name: "out"), to: BPDataPin(node: "o", name: "in")),
         ])
-        let interp = BlueprintInterpreter(provider: RecordingProvider())
+        let interp = BlueprintInterpreter(provider: RecordingProvider(), admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         // keepIf("x") keeps only the one line containing "x" → "fox" so the preview is unambiguous.
         let (events, result) = await collectEvents(interp, bp, "go\nfox\nbeta")
         XCTAssertNil(result.failure)
@@ -247,7 +259,7 @@ final class BlueprintInterpreterTests: XCTestCase {
         ], execEdges: [
             BPExecEdge(from: BPExecPin(node: "e", name: "then"), to: "s"),
         ])
-        let interp = BlueprintInterpreter(provider: RecordingProvider())
+        let interp = BlueprintInterpreter(provider: RecordingProvider(), admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         var got: [ExecutionEvent] = []
         for await ev in interp.events(bp, sourceText: "x") { got.append(ev) }
         XCTAssertEqual(got.first, .runStarted(blueprint: bp.id))
@@ -268,7 +280,7 @@ final class BlueprintInterpreterTests: XCTestCase {
         ], dataEdges: [
             BPDataEdge(from: BPDataPin(node: "m", name: "out"), to: BPDataPin(node: "o", name: "in")),
         ])
-        let interp = BlueprintInterpreter(provider: DeadProvider(), policy: noBackoff(1, .carry))
+        let interp = BlueprintInterpreter(provider: DeadProvider(), policy: noBackoff(1, .carry), admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let (events, result) = await collectEvents(interp, bp, "CARRY ME")
         XCTAssertNil(result.failure, "skip must not crash or fail the run")
         XCTAssertEqual(result.status["m"], .skipped)
@@ -285,7 +297,7 @@ final class BlueprintInterpreterTests: XCTestCase {
         ], execEdges: [
             BPExecEdge(from: BPExecPin(node: "e", name: "then"), to: "m"),
         ])
-        let interp = BlueprintInterpreter(provider: dead, fallback: fb, policy: noBackoff(2, .holdForRoute))
+        let interp = BlueprintInterpreter(provider: dead, fallback: fb, policy: noBackoff(2, .holdForRoute), admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let (_, result) = await collectEvents(interp, bp, "src")
         XCTAssertNotNil(result.failure)
         XCTAssertEqual(result.status["m"], .failed)
@@ -301,7 +313,7 @@ final class BlueprintInterpreterTests: XCTestCase {
         ], execEdges: [
             BPExecEdge(from: BPExecPin(node: "e", name: "then"), to: "m"),
         ])
-        let interp = BlueprintInterpreter(provider: dead, policy: noBackoff(2, .hold))
+        let interp = BlueprintInterpreter(provider: dead, policy: noBackoff(2, .hold), admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let (events, result) = await collectEvents(interp, bp, "src")
         XCTAssertNotNil(result.failure, "a held interpreter step surfaces without a crash")
         XCTAssertEqual(dead.calls, 1)
@@ -324,7 +336,7 @@ final class BlueprintInterpreterTests: XCTestCase {
             BPDataEdge(from: BPDataPin(node: "sp", name: "out"), to: BPDataPin(node: "s", name: "in")),
         ])
         XCTAssertNotNil(bp.validate())
-        let interp = BlueprintInterpreter(provider: RecordingProvider())
+        let interp = BlueprintInterpreter(provider: RecordingProvider(), admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let (events, result) = await collectEvents(interp, bp, "x")
         XCTAssertNotNil(result.failure)
         if case .runFailed? = events.last { } else { XCTFail("invalid blueprint must runFailed") }

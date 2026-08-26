@@ -1,6 +1,7 @@
 import XCTest
 import Contracts
 import Providers
+import InferenceBridge
 @testable import RuntimeCore
 
 /// HSM-15-04 — the pure workflow runner over the linear `Workflow` model. Fakes for
@@ -48,11 +49,22 @@ final class WorkflowRunnerTests: XCTestCase {
         RunPolicy(maxRetries: maxRetries, failurePolicy: policy, backoff: { _ in })
     }
 
+    private actor BridgeWire: AdmittedInferenceBridgeWire {
+        func begin(authorization: String) async throws {}
+        func reconcile(authorization: String, disposition: AdmittedInferenceDisposition, result: String?) async throws -> AdmittedInferenceReceipt {
+            .init(attemptID: authorization, disposition: disposition, terminal: true)
+        }
+    }
+    private static let bridge = AdmittedInferenceClient(wire: BridgeWire())
+    private static let attempt: @Sendable (String) -> AdmittedInferenceAttempt? = { _ in
+        .init(authorization: UUID().uuidString, transport: .init())
+    }
+
     // MARK: {input} substitution into the llmCall prompt
 
     func testCustomLLMCallSubstitutesInput() async {
         let provider = RecordingProvider()
-        let runner = WorkflowRunner(provider: provider)
+        let runner = WorkflowRunner(provider: provider, admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let step = WorkflowStep.llmCall(name: "Q",
                                         prompt: "From {input}, list questions.",
                                         input: .meeting)
@@ -70,7 +82,7 @@ final class WorkflowRunnerTests: XCTestCase {
     func testInputThreadsAcrossSteps() async {
         // Two llmCalls bound to the previous step: step 2 must see step 1's output.
         let provider = RecordingProvider(transform: { _ in "STEP_OUT" })
-        let runner = WorkflowRunner(provider: provider)
+        let runner = WorkflowRunner(provider: provider, admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let s1 = WorkflowStep.llmCall(name: "a", prompt: "first:{input}", input: .meeting)
         let s2 = WorkflowStep.llmCall(name: "b", prompt: "second:{input}", input: .previousStep)
         let wf = Workflow(name: "thread", source: .fullTranscript, steps: [s1, s2], output: .note)
@@ -87,7 +99,7 @@ final class WorkflowRunnerTests: XCTestCase {
     func testFirstStepReadsSourceSubsequentReadPrevious() async {
         // summarize then rewrite — both model-backed, both read the threaded value.
         let provider = RecordingProvider(transform: { p in "TRANSFORMED(\(p.prefix(9)))" })
-        let runner = WorkflowRunner(provider: provider)
+        let runner = WorkflowRunner(provider: provider, admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "s", source: .fullTranscript,
                           steps: [.summarize, .rewrite(tone: "executive")], output: .note)
 
@@ -104,7 +116,7 @@ final class WorkflowRunnerTests: XCTestCase {
 
     func testKeepIfFiltersLinesAndCallsNoProvider() async {
         let provider = RecordingProvider()
-        let runner = WorkflowRunner(provider: provider)
+        let runner = WorkflowRunner(provider: provider, admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "f", source: .fullTranscript,
                           steps: [.keepIf("risk")], output: .artifacts)
         let src = "line about budget\na RISK we flagged\nanother line\nrisk register"
@@ -122,7 +134,7 @@ final class WorkflowRunnerTests: XCTestCase {
 
     func testStepOrderingIsPreserved() async {
         let provider = RecordingProvider(transform: { _ in "X" })
-        let runner = WorkflowRunner(provider: provider)
+        let runner = WorkflowRunner(provider: provider, admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "o", source: .fullTranscript,
                           steps: [.summarize, .keepIf("X"), .rewrite(tone: "plain")],
                           output: .note)
@@ -139,7 +151,8 @@ final class WorkflowRunnerTests: XCTestCase {
     func testHoldMakesOneCallEvenWhenLegacyRetryBudgetIsNonzero() async {
         let dead = DeadProvider()
         let runner = WorkflowRunner(provider: dead,
-                                    policy: noBackoffPolicy(maxRetries: 2, policy: .hold))
+                                    policy: noBackoffPolicy(maxRetries: 2, policy: .hold),
+                                    admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "p", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC")
@@ -156,7 +169,7 @@ final class WorkflowRunnerTests: XCTestCase {
         // A parked run resumes at the parked step with its carried input; earlier steps
         // are NOT recomputed (we feed resumeFrom + seedInput).
         let provider = RecordingProvider(transform: { _ in "RESUMED" })
-        let runner = WorkflowRunner(provider: provider)
+        let runner = WorkflowRunner(provider: provider, admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "r", source: .fullTranscript,
                           steps: [.summarize, .rewrite(tone: "x")], output: .note)
 
@@ -175,7 +188,8 @@ final class WorkflowRunnerTests: XCTestCase {
         let primary = DeadProvider()                                   // unreachable endpoint
         let fallback = RecordingProvider(transform: { _ in "ON_DEVICE_RESULT" })
         let runner = WorkflowRunner(provider: primary, fallback: fallback,
-                                    policy: noBackoffPolicy(maxRetries: 1, policy: .holdForRoute))
+                                    policy: noBackoffPolicy(maxRetries: 1, policy: .holdForRoute),
+                                    admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "fb", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC")
@@ -190,7 +204,8 @@ final class WorkflowRunnerTests: XCTestCase {
     func testCarryPolicyCarriesInputThrough() async {
         let dead = DeadProvider()
         let runner = WorkflowRunner(provider: dead,
-                                    policy: noBackoffPolicy(maxRetries: 0, policy: .carry))
+                                    policy: noBackoffPolicy(maxRetries: 0, policy: .carry),
+                                    admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "sk", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "CARRY_ME")
@@ -227,7 +242,8 @@ final class WorkflowRunnerTests: XCTestCase {
         let provider = RecordingProvider()
         let mac = DispatchRecorder()
         let runner = WorkflowRunner(provider: provider, dispatch: mac.handler,
-                                    policy: noBackoffPolicy(maxRetries: 0, policy: .hold))
+                                    policy: noBackoffPolicy(maxRetries: 0, policy: .hold),
+                                    admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "m", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC", targets: [.dispatchToMac])
@@ -245,7 +261,8 @@ final class WorkflowRunnerTests: XCTestCase {
         // so it can resume when a peer is adopted — never a crash, never a silent skip.
         let provider = RecordingProvider()
         let runner = WorkflowRunner(provider: provider,
-                                    policy: noBackoffPolicy(maxRetries: 2, policy: .hold))
+                                    policy: noBackoffPolicy(maxRetries: 2, policy: .hold),
+                                    admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "np", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC", targets: [.dispatchToMac])
@@ -262,7 +279,8 @@ final class WorkflowRunnerTests: XCTestCase {
         let fallback = RecordingProvider(transform: { _ in "ON_DEVICE_RESULT" })
         let runner = WorkflowRunner(provider: DeadProvider(), fallback: fallback,
                                     dispatch: mac.handler,
-                                    policy: noBackoffPolicy(maxRetries: 1, policy: .holdForRoute))
+                                    policy: noBackoffPolicy(maxRetries: 1, policy: .holdForRoute),
+                                    admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "fbm", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC", targets: [.dispatchToMac])
@@ -278,7 +296,8 @@ final class WorkflowRunnerTests: XCTestCase {
     func testDispatchFailureMakesOneCallThenHolds() async {
         let mac = DispatchRecorder(failTimes: 1)
         let runner = WorkflowRunner(provider: RecordingProvider(), dispatch: mac.handler,
-                                    policy: noBackoffPolicy(maxRetries: 2, policy: .hold))
+                                    policy: noBackoffPolicy(maxRetries: 2, policy: .hold),
+                                    admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "r", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC", targets: [.dispatchToMac])
@@ -295,7 +314,8 @@ final class WorkflowRunnerTests: XCTestCase {
         let provider = RecordingProvider(transform: { _ in "LOCAL_OUT" })
         let mac = DispatchRecorder()
         let runner = WorkflowRunner(provider: provider, dispatch: mac.handler,
-                                    policy: noBackoffPolicy(maxRetries: 0, policy: .carry))
+                                    policy: noBackoffPolicy(maxRetries: 0, policy: .carry),
+                                    admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "mix", source: .fullTranscript,
                           steps: [.summarize, .rewrite(tone: "executive")], output: .note)
 
@@ -312,7 +332,7 @@ final class WorkflowRunnerTests: XCTestCase {
         // No targets array (every pre-mesh call site): the provider runs everything
         // and the outcome reports .onDevice — the pre-15-02 behaviour, locked.
         let provider = RecordingProvider()
-        let runner = WorkflowRunner(provider: provider)
+        let runner = WorkflowRunner(provider: provider, admittedClient: Self.bridge, admittedAttemptFactory: Self.attempt)
         let wf = Workflow(name: "l", source: .fullTranscript, steps: [.summarize], output: .note)
 
         let result = await runner.run(wf, sourceText: "SRC")

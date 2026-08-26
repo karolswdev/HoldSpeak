@@ -3,6 +3,7 @@ import Foundation
 import FoundationNetworking
 #endif
 import Contracts
+import InferenceBridge
 
 // HSM-25-01 — the serving node's wire: the three token-guarded relay routes a
 // mesh worker speaks (desktop HS-85-01). Claim stamps THIS node's liveness on
@@ -21,15 +22,17 @@ public struct MeshRelayJob: Codable, Equatable, Sendable, Identifiable {
     public var maxTokens: Int?
     public var modelHint: String?
     public var deadlineAt: String?
+    public var admittedAttempt: AdmittedInferenceAttempt?
 
     public init(id: String, node: String? = nil, taskKind: String? = nil,
                 systemPrompt: String? = nil, userPrompt: String? = nil,
                 temperature: Double? = nil, maxTokens: Int? = nil,
-                modelHint: String? = nil, deadlineAt: String? = nil) {
+                modelHint: String? = nil, deadlineAt: String? = nil,
+                admittedAttempt: AdmittedInferenceAttempt? = nil) {
         self.id = id; self.node = node; self.taskKind = taskKind
         self.systemPrompt = systemPrompt; self.userPrompt = userPrompt
         self.temperature = temperature; self.maxTokens = maxTokens
-        self.modelHint = modelHint; self.deadlineAt = deadlineAt
+        self.modelHint = modelHint; self.deadlineAt = deadlineAt; self.admittedAttempt = admittedAttempt
     }
 }
 

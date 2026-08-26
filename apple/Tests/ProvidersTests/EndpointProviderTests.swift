@@ -1,5 +1,6 @@
 import XCTest
 import Contracts
+import InferenceBridge
 @testable import Providers
 
 /// HSM-5-06 — the OpenAI-compatible endpoint provider (Modes B/C). Network is
@@ -48,19 +49,35 @@ final class EndpointProviderTests: XCTestCase {
         EndpointConfig(baseURL: URL(string: "http://192.168.1.43:8080/v1")!, model: "local")
     }
 
+    private actor BridgeWire: AdmittedInferenceBridgeWire {
+        var begins = 0; var reconciliations: [AdmittedInferenceDisposition] = []
+        func begin(authorization: String) async throws { begins += 1 }
+        func reconcile(authorization: String, disposition: AdmittedInferenceDisposition, result: String?) async throws -> AdmittedInferenceReceipt {
+            reconciliations.append(disposition)
+            return .init(attemptID: authorization, disposition: disposition, terminal: true)
+        }
+    }
+
+    private func admitted() -> (AdmittedInferenceClient, AdmittedInferenceAttempt) {
+        let wire = BridgeWire()
+        return (AdmittedInferenceClient(wire: wire), .init(authorization: UUID().uuidString, transport: .init()))
+    }
+
     func testCompletionParsesAssistantContent() async throws {
         StubProtocol.handler = { _ in
             let body = #"{"choices":[{"message":{"role":"assistant","content":"hello world"}}]}"#
             return (200, Data(body.utf8))
         }
-        let provider = OpenAIEndpointProvider(config: config(), session: stubbedSession())
+        let admitted = admitted()
+        let provider = OpenAIEndpointProvider(config: config(), session: stubbedSession(), admittedClient: admitted.0, admittedAttempt: admitted.1)
         let out = try await provider.complete(prompt: "hi")
         XCTAssertEqual(out, "hello world")
     }
 
     func testRequestShapeHitsChatCompletionsWithModelAndPrompt() async throws {
         StubProtocol.handler = { _ in (200, Data(#"{"choices":[{"message":{"content":"ok"}}]}"#.utf8)) }
-        let provider = OpenAIEndpointProvider(config: config(), session: stubbedSession())
+        let admitted = admitted()
+        let provider = OpenAIEndpointProvider(config: config(), session: stubbedSession(), admittedClient: admitted.0, admittedAttempt: admitted.1)
         _ = try await provider.complete(prompt: "summarize the meeting")
 
         XCTAssertEqual(StubProtocol.lastURL?.absoluteString,
@@ -76,7 +93,8 @@ final class EndpointProviderTests: XCTestCase {
 
     func testNon2xxThrowsHTTPError() async {
         StubProtocol.handler = { _ in (503, Data("overloaded".utf8)) }
-        let provider = OpenAIEndpointProvider(config: config(), session: stubbedSession())
+        let admitted = admitted()
+        let provider = OpenAIEndpointProvider(config: config(), session: stubbedSession(), admittedClient: admitted.0, admittedAttempt: admitted.1)
         do {
             _ = try await provider.complete(prompt: "x")
             XCTFail("expected http error")
@@ -88,7 +106,8 @@ final class EndpointProviderTests: XCTestCase {
 
     func testEmptyChoicesThrows() async {
         StubProtocol.handler = { _ in (200, Data(#"{"choices":[]}"#.utf8)) }
-        let provider = OpenAIEndpointProvider(config: config(), session: stubbedSession())
+        let admitted = admitted()
+        let provider = OpenAIEndpointProvider(config: config(), session: stubbedSession(), admittedClient: admitted.0, admittedAttempt: admitted.1)
         do {
             _ = try await provider.complete(prompt: "x")
             XCTFail("expected emptyCompletion")

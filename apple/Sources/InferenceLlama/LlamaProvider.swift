@@ -1,6 +1,7 @@
 import Foundation
 import LLM
 import Providers
+import InferenceBridge
 
 public enum LlamaProviderError: Error, Equatable {
     case modelLoadFailed(path: String)
@@ -44,6 +45,8 @@ public struct LlamaSampling: Sendable, Equatable {
 /// reentrancy — so single-owner sequential use is safe.
 public final class LlamaProvider: ILLMProvider, @unchecked Sendable {
     private let llm: LLM
+    private let admittedClient: AdmittedInferenceClient?
+    private let admittedAttempt: AdmittedInferenceAttempt?
 
     /// - Parameters:
     ///   - modelPath: absolute path to a local `.gguf`.
@@ -52,7 +55,9 @@ public final class LlamaProvider: ILLMProvider, @unchecked Sendable {
     public init(modelPath: String,
                 template: Template = .chatML(),
                 maxTokenCount: Int32 = 2048,
-                sampling: LlamaSampling = .extraction) throws {
+                sampling: LlamaSampling = .extraction,
+                admittedClient: AdmittedInferenceClient? = nil,
+                admittedAttempt: AdmittedInferenceAttempt? = nil) throws {
         guard let llm = LLM(from: URL(fileURLWithPath: modelPath),
                             template: template,
                             maxTokenCount: maxTokenCount) else {
@@ -66,6 +71,8 @@ public final class LlamaProvider: ILLMProvider, @unchecked Sendable {
         llm.topK = sampling.topK
         llm.repeatPenalty = sampling.repeatPenalty
         self.llm = llm
+        self.admittedClient = admittedClient
+        self.admittedAttempt = admittedAttempt
     }
 
     /// Build a provider that picks the model's chat template from its filename — so a
@@ -74,11 +81,15 @@ public final class LlamaProvider: ILLMProvider, @unchecked Sendable {
     /// over the raw init at every call site that loads a user-chosen model. Sampling
     /// defaults to the on-device extraction preset.
     public static func make(modelPath: String, maxTokenCount: Int32 = 2048,
-                            sampling: LlamaSampling = .extraction) throws -> LlamaProvider {
+                            sampling: LlamaSampling = .extraction,
+                            admittedClient: AdmittedInferenceClient? = nil,
+                            admittedAttempt: AdmittedInferenceAttempt? = nil) throws -> LlamaProvider {
         try LlamaProvider(modelPath: modelPath,
                           template: autoTemplate(for: modelPath),
                           maxTokenCount: maxTokenCount,
-                          sampling: sampling)
+                          sampling: sampling,
+                          admittedClient: admittedClient,
+                          admittedAttempt: admittedAttempt)
     }
 
     /// Map a GGUF filename to its chat template. Families are detected by the conventional
@@ -113,14 +124,18 @@ public final class LlamaProvider: ILLMProvider, @unchecked Sendable {
     )
 
     public func complete(prompt: String) async throws -> String {
-        // One-shot completion. NOTE: LLM.swift accumulates KV context across
-        // `getCompletion` calls (it's built for chat) and never clears it, so a single
-        // instance must NOT be reused for independent completions — the 2nd+ call starves
-        // for context (`noJSON`), and clearing it mid-flight races the decoder (crash).
-        // The caller therefore uses a FRESH provider per inference; see the on-device
-        // generation loop. Apply the chat template, then generate (`getCompletion`
-        // expects already-templated input — it does not re-run preprocess).
-        let templated = llm.preprocess(prompt, [], .none)
-        return await llm.getCompletion(from: templated)
+        // One-shot completion. The bridge begins the server reservation before
+        // this physical engine call and reconciles its sole classified outcome.
+        guard let admittedClient, let admittedAttempt else {
+            throw AdmittedInferenceClientError.reservationRequired
+        }
+        return try await admittedClient.perform(
+            attempt: admittedAttempt,
+            transport: { [self] in
+                let templated = self.llm.preprocess(prompt, [], .none)
+                return await self.llm.getCompletion(from: templated)
+            },
+            validate: { _ in }
+        )
     }
 }

@@ -69,6 +69,15 @@ ADOPTED_CAPABILITIES = (
     "voice.reference_resolve",
     "sequence.step",
     "workflow.node",
+    # HS-143-10's companion leaves use the same frozen operation evidence; their
+    # physical transport is reconciled through AppleAdmittedInferenceService.
+    "apple.local_completion",
+    "apple.endpoint_completion",
+    "apple.structured_output",
+    "apple.mesh_serve",
+    "apple.coder_answer",
+    "apple.workbench.blueprint",
+    "apple.workbench.workflow",
     # C2 plugin membership comes only from the composed registry.  The closed
     # evidence provider must nevertheless list every installed exact capability
     # before a frozen bundle child may stage its private material.

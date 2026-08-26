@@ -2,6 +2,7 @@ import Foundation
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
+import InferenceBridge
 
 /// An `ILLMProvider` backed by any OpenAI-compatible `chat/completions` endpoint —
 /// the charter's Mode B (homelab) and Mode C (endpoint). Foundation/URLSession
@@ -16,10 +17,19 @@ import FoundationNetworking
 public struct OpenAIEndpointProvider: ILLMProvider {
     let config: EndpointConfig
     let session: URLSession
+    let admittedClient: AdmittedInferenceClient?
+    let admittedAttempt: AdmittedInferenceAttempt?
 
-    public init(config: EndpointConfig, session: URLSession = .shared) {
+    public init(
+        config: EndpointConfig,
+        session: URLSession = .shared,
+        admittedClient: AdmittedInferenceClient? = nil,
+        admittedAttempt: AdmittedInferenceAttempt? = nil
+    ) {
         self.config = config
         self.session = session
+        self.admittedClient = admittedClient
+        self.admittedAttempt = admittedAttempt
     }
 
     public enum ProviderError: Error, Equatable {
@@ -29,36 +39,37 @@ public struct OpenAIEndpointProvider: ILLMProvider {
     }
 
     public func complete(prompt: String) async throws -> String {
-        var request = URLRequest(url: chatCompletionsURL())
-        request.httpMethod = "POST"
-        request.timeoutInterval = config.timeout
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        if let apiKey = config.apiKey, !apiKey.isEmpty {
-            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        guard let admittedClient, let admittedAttempt else {
+            throw AdmittedInferenceClientError.reservationRequired
         }
-        request.httpBody = try JSONEncoder().encode(
-            ChatRequest(
-                model: config.model,
-                messages: [.init(role: "user", content: prompt)],
-                temperature: config.temperature,
-                stream: false
-            )
+        return try await admittedClient.perform(
+            attempt: admittedAttempt,
+            transport: { [self] in
+                var request = URLRequest(url: self.chatCompletionsURL())
+                request.httpMethod = "POST"
+                request.timeoutInterval = self.config.timeout
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                if let apiKey = self.config.apiKey, !apiKey.isEmpty {
+                    request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+                }
+                request.httpBody = try JSONEncoder().encode(
+                    ChatRequest(model: self.config.model, messages: [.init(role: "user", content: prompt)], temperature: self.config.temperature, stream: false)
+                )
+                let (data, response) = try await self.session.data(for: request)
+                if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                    let body = String(data: data, encoding: .utf8) ?? ""
+                    throw ProviderError.http(status: http.statusCode, body: String(body.prefix(500)))
+                }
+                let decoded: ChatResponse
+                do { decoded = try JSONDecoder().decode(ChatResponse.self, from: data) }
+                catch { throw AdmittedInferenceTransportError.failed }
+                guard let content = decoded.choices.first?.message.content else {
+                    throw ProviderError.emptyCompletion
+                }
+                return content
+            },
+            validate: { _ in }
         )
-
-        let (data, response) = try await session.data(for: request)
-        if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
-            let body = String(data: data, encoding: .utf8) ?? ""
-            throw ProviderError.http(status: http.statusCode, body: String(body.prefix(500)))
-        }
-
-        let decoded: ChatResponse
-        do { decoded = try JSONDecoder().decode(ChatResponse.self, from: data) }
-        catch { throw ProviderError.malformedResponse }
-
-        guard let content = decoded.choices.first?.message.content else {
-            throw ProviderError.emptyCompletion
-        }
-        return content
     }
 
     /// Resolve `{baseURL}` to its `chat/completions` route, tolerating a base that

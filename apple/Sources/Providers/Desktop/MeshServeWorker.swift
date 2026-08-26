@@ -1,4 +1,5 @@
 import Foundation
+import InferenceBridge
 
 // HSM-25-01 — the Apple twin of `holdspeak mesh serve` (desktop HS-85-03):
 // claim on a jittered ~3s cadence (every poll stamps this node's liveness
@@ -30,6 +31,7 @@ public actor MeshServeWorker {
     private let node: String
     private let client: HTTPDesktopClient
     private let makeProvider: @Sendable () async throws -> any ILLMProvider
+    private let admittedClient: AdmittedInferenceClient?
     private let pollInterval: Double
     private let sleep: @Sendable (Double) async -> Void
     private let log: @Sendable (String) -> Void
@@ -42,6 +44,7 @@ public actor MeshServeWorker {
         node: String,
         client: HTTPDesktopClient,
         makeProvider: @escaping @Sendable () async throws -> any ILLMProvider,
+        admittedClient: AdmittedInferenceClient? = nil,
         pollInterval: Double = 3.0,
         sleep: @escaping @Sendable (Double) async -> Void = {
             try? await Task.sleep(nanoseconds: UInt64($0 * 1_000_000_000))
@@ -51,6 +54,7 @@ public actor MeshServeWorker {
         self.node = node
         self.client = client
         self.makeProvider = makeProvider
+        self.admittedClient = admittedClient
         self.pollInterval = pollInterval
         self.sleep = sleep
         self.log = log
@@ -96,7 +100,12 @@ public actor MeshServeWorker {
             // system + user ride as one prompt (the recorded phase limit; the
             // job's temperature/max_tokens are honored when the seam grows).
             let prompt = system.isEmpty ? user : system + "\n\n" + user
-            let result = try await provider.complete(prompt: prompt)
+            guard let admittedClient else { throw AdmittedInferenceClientError.reservationRequired }
+            let result = try await admittedClient.perform(
+                attempt: job.admittedAttempt,
+                transport: { try await provider.complete(prompt: prompt) },
+                validate: { _ in }
+            )
             guard !result.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 // the hub refuses an empty result; fail by name instead of
                 // letting the job dangle to its deadline

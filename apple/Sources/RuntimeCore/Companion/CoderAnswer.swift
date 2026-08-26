@@ -1,5 +1,6 @@
 import Foundation
 import Providers
+import InferenceBridge
 
 /// HSM-17-04 — answering a waiting coder from the desk. One flow for every
 /// human-authored input mode (typed / spoken / dropped-context): compose the
@@ -102,11 +103,20 @@ public extension CoderAnswer {
         agent: String,
         question: String,
         groundingTitle: String? = nil,
-        grounding: String? = nil
+        grounding: String? = nil,
+        admittedClient: AdmittedInferenceClient? = nil,
+        admittedAttempt: AdmittedInferenceAttempt? = nil
     ) async throws -> String {
         let prompt = draftPrompt(agent: agent, question: question,
                                  groundingTitle: groundingTitle, grounding: grounding)
-        let raw = try await provider.complete(prompt: prompt)
+        guard let admittedClient, let admittedAttempt else {
+            throw AdmittedInferenceClientError.reservationRequired
+        }
+        let raw = try await admittedClient.perform(
+            attempt: admittedAttempt,
+            transport: { try await provider.complete(prompt: prompt) },
+            validate: { _ in }
+        )
         return raw.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
