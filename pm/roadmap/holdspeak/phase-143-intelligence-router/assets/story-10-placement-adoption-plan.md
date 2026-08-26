@@ -599,6 +599,27 @@ surfaced two design findings; ruled as follows.
 Round 2 = the ORCH-CALL-1 rewire (recipe.chat qualified-route
 adoption) + Slice 3. Gate audit follows over Slices 1–3.
 
+## OWNER RULING 2026-08-25 — Slice 5 DESCOPED
+
+Mid-round-4 the owner ruled Swift/Apple work absolutely out of scope
+for this story. The round-4 worker was stopped and its partial work
+(the admitted-attempt bridge service/endpoint/client and all seven
+Swift leaf edits) was discarded uncommitted; the three committed
+rounds contain zero `apple/` changes. Consequences, binding on the
+remaining slices:
+
+1. **Slice 5 is struck.** ORCH-CALL 2's bridge design is recorded for
+   whatever future phase gives Swift its recreation from the finished
+   web spec; nothing of it ships here.
+2. **Acceptance criterion 6 is descoped** (marked in the story file).
+   Story 10's bar is the Python placement adoption: O1–O5, O7, O8.
+3. **Slice 6's census convergence is Python-only.** The seven Swift
+   physical leaves remain honestly censused as HELD leaves — the
+   scanner rows stay, the zero-fork invariant applies to Python
+   placement-resolution forks, and no fixture may claim a false Swift
+   zero. Story 14 inherits this descope note for its kill-criteria
+   ledger.
+
 ## Completion evidence checklist
 
 Story 10 is ready to be marked done only when all six obligations O1–O6 have

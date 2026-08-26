@@ -28,9 +28,13 @@ and reference-resolution code currently reconstruct placement independently.
 - [ ] Subject changes affect next run only and never mutate group/global policy.
 - [ ] `inference.run` cannot physically dispatch through mutable late resolution.
 - [ ] Generated census finds no remaining placement-resolution fork.
-- [ ] The Apple physical-leaf census has no remaining unadmitted provider leaf;
-  Swift workflow retry/fallback law is first retired or controller-aligned by
-  Story 06.
+- [ ] ~~The Apple physical-leaf census has no remaining unadmitted provider
+  leaf; Swift workflow retry/fallback law is first retired or
+  controller-aligned by Story 06.~~ **DESCOPED by owner ruling 2026-08-25:**
+  Swift/Apple work is out of scope for this story (web is the spec; Swift
+  recreates from the finished spec). The seven censused Swift physical
+  leaves remain honestly censused as HELD — the census must not claim a
+  false zero. Story-06's retry retirement stands untouched.
 
 ## Test plan
 
