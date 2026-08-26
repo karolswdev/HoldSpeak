@@ -48,6 +48,20 @@ def _api(page: Any, method: str, path: str, body: dict[str, Any] | None = None) 
     assert result < 300, result
 
 
+def _api_json(page: Any, method: str, path: str, body: dict[str, Any]) -> dict[str, Any]:
+    result = page.evaluate(
+        """async ([method, path, body]) => {
+          const response = await fetch(path, {method, headers: {
+            authorization: 'Bearer hs143-assignments-glass', 'content-type': 'application/json'},
+            body: JSON.stringify(body)});
+          return {status: response.status, body: await response.json()};
+        }""",
+        [method, path, body],
+    )
+    assert result["status"] < 300, result
+    return result["body"]
+
+
 def _open_assignments(page: Any, url: str) -> Any:
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
     _api(page, "POST", "/api/desk/seed")
@@ -126,3 +140,90 @@ def test_assignments_overview_real_hub(
     finally:
         server.stop()
         monkeypatch.setattr(InferenceAssignmentService, "assignment_summary", original)
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+@pytest.mark.parametrize("width", [1440, 393])
+def test_assignments_editor_real_hub_next_run_preview_and_conflict(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """Real editor glass saves atomically, previews, then refuses stale clear."""
+    from playwright.sync_api import sync_playwright
+    from holdspeak.db import get_database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import _profile
+
+    server, url = _boot(tmp_path, monkeypatch)
+    owner = Principal(PrincipalKind.OWNER, "assignments-editor-owner")
+    db = get_database()
+    _profile(db, "assignments-editor-model")
+    service = InferenceAssignmentService(db)
+    service.set_assignment(owner, {
+        "command_id": "assignments-editor-global", "expected_revision": 0,
+        "scope": {"kind": "global"},
+        "entries": [{"profile_id": "assignments-editor-model", "profile_revision": 1}],
+    })
+    service.set_assignment(owner, {
+        "command_id": "assignments-editor-group", "expected_revision": 0,
+        "scope": {"kind": "group", "group_id": "thoughts_notes"},
+        "entries": [{"profile_id": "assignments-editor-model", "profile_revision": 1}],
+    })
+    SHOTS.mkdir(parents=True, exist_ok=True)
+    errors: list[str] = []
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            surface = _open_assignments(page, url)
+            # The group editor's default preview resolves the real global chain.
+            surface.locator(".capability-assignment-row").filter(has_text="Thoughts & notes").get_by_role("button", name="Fix").click()
+            sheet = surface.locator(".assignment-sheet")
+            sheet.wait_for()
+            assert sheet.get_by_role("heading", name="Thoughts & notes").count() == 1
+            assert sheet.get_by_text("Assignments Editor Model", exact=True).count() >= 1
+            sheet.get_by_role("button", name="Save assignment").click()
+            receipt = surface.locator(".assignment-receipt")
+            receipt.wait_for()
+            assert "Next run" in receipt.inner_text()
+
+            surface.locator(".capability-assignment-row").filter(has_text="Thoughts & notes").get_by_role("button", name="Fix").click()
+            sheet.wait_for()
+            sheet.get_by_role("button", name="Preview").click()
+            preview = sheet.get_by_text("Will use Assignments Editor Model", exact=True)
+            preview.wait_for()
+            assert sheet.get_by_text("Retry follows the server policy", exact=False).count() == 1
+            save_box = sheet.get_by_role("button", name="Save assignment").bounding_box()
+            dock_box = page.locator(".desk-dock").bounding_box()
+            assert save_box is not None and save_box["y"] >= 0 and save_box["y"] + save_box["height"] <= 900
+            if dock_box is not None:
+                assert save_box["y"] + save_box["height"] <= dock_box["y"] or save_box["y"] >= dock_box["y"] + dock_box["height"]
+            assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            shot = SHOTS / f"assignments-editor-{width}.png"
+            page.screenshot(path=str(shot), full_page=False)
+            assert shot.exists() and shot.stat().st_size > 0
+
+            # Another owner write after preview makes this clear stale. The UI
+            # must discard the old preview and provide an in-flow refresh.
+            _api_json(page, "POST", "/api/inference/assignments/set", {
+                "command_id": f"assignments-editor-conflict-{width}",
+                "expected_revision": 2,
+                "scope": {"kind": "group", "group_id": "thoughts_notes"},
+                "entries": [{"profile_id": "assignments-editor-model", "profile_revision": 1}],
+                "retry_policy_id": None,
+            })
+            sheet.get_by_role("button", name="Use default").click()
+            sheet.get_by_role("button", name="Refresh").wait_for()
+            assert sheet.get_by_text("Assignment changed. Refresh before clearing.").count() == 1
+            assert sheet.get_by_text("Will use Assignments Editor Model", exact=True).count() == 0
+            if width == 393:
+                for button in sheet.locator("button").all():
+                    box = button.bounding_box()
+                    if box is not None:
+                        assert box["height"] >= 44
+            assert errors == []
+            browser.close()
+    finally:
+        server.stop()

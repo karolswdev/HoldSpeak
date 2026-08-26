@@ -7,7 +7,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ...logging_config import get_logger
-from ...services.errors import ServiceError
+from ...services.errors import ConflictError, NotFound, ServiceError
 from ..context import WebContext
 from ..runtime_support import error_500
 
@@ -16,7 +16,9 @@ log = get_logger("web.routes.inference_assignments")
 
 def _safe_error(exc: ServiceError) -> JSONResponse:
     """Map public domain failures without returning context or request bodies."""
-    status = int(exc.context.get("status") or 400)
+    status = int(exc.context.get("status") or 0)
+    if not status:
+        status = 409 if isinstance(exc, ConflictError) else 404 if isinstance(exc, NotFound) else 400
     if status not in {400, 403, 404, 409, 503}:
         status = 400
     return JSONResponse({"code": exc.code, "message": exc.detail}, status_code=status)

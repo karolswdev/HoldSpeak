@@ -2872,6 +2872,8 @@ button.surface-edit-in-place:hover {
   color: var(--text-muted);
   font: 500 var(--desk-surface-body-size) / 1.3 var(--font-mono);
 }
+.assignment-editor-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); align-items: start; }
+.assignment-overview { display: grid; gap: var(--space-3); min-inline-size: 0; }
 .capability-assignment-rows {
   display: grid;
   gap: 2px;
@@ -2906,29 +2908,82 @@ button.surface-edit-in-place:hover {
 .assignment-task-rows { display: grid; gap: 2px; }
 .assignment-task-rows > article { display: grid; grid-template-columns: minmax(8rem, .7fr) minmax(0, 1fr); gap: 3px 10px; padding: 8px; background: var(--surface-raised); }
 .assignment-task-rows > article small { grid-column: 2; }
-.assignment-sheet { max-inline-size: 48rem; padding: var(--space-3); background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
-.assignment-default { padding: 9px; background: var(--surface-raised); }
-.assignment-default > span { min-inline-size: 0; }
+.assignment-receipt,
+.assignment-sheet-error {
+  padding: var(--space-2);
+  background: var(--surface-raised);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.assignment-receipt { color: var(--text); font: 600 var(--desk-surface-body-size) / 1.35 var(--font-mono); }
+.assignment-sheet {
+  inline-size: min(100%, 44rem);
+  justify-self: end;
+  max-block-size: calc(100dvh - var(--space-6));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  padding: var(--space-3);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border), var(--elev-2);
+}
+.assignment-sheet-body { display: grid; align-content: start; gap: var(--space-3); min-block-size: 0; overflow-y: auto; padding-block: var(--space-2); }
+.assignment-sheet-error { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.assignment-sheet-error .surface-state { padding: 0; }
+.assignment-default { display: grid; grid-template-columns: minmax(0, 1fr) auto; padding: var(--space-2); background: var(--surface-raised); }
+.assignment-default > div:first-child { display: grid; gap: var(--space-1); min-inline-size: 0; }
+.assignment-default > div:first-child > span { color: var(--text-muted); overflow-wrap: anywhere; }
+.assignment-default-preview { grid-column: 1 / -1; display: grid; gap: var(--space-1); padding-block-start: var(--space-2); color: var(--text-muted); font: 500 var(--desk-surface-body-size) / 1.35 var(--font-mono); }
+.assignment-boundary { display: flex; align-items: center; gap: var(--space-1); color: var(--warn); }
 .assignment-draft { display: grid; gap: var(--space-2); }
-.assignment-draft ol { display: grid; gap: 2px; margin: 0; padding-inline-start: 2rem; }
-.assignment-draft li { display: flex; align-items: center; gap: 8px; min-block-size: 38px; }
-.assignment-draft li small { margin-inline-start: auto; }
+.assignment-draft > header { display: flex; align-items: center; justify-content: space-between; }
+.assignment-draft > header > span,
+.assignment-section-label { color: var(--text-muted); font: 600 var(--desk-surface-body-size) / 1 var(--font-mono); }
+.assignment-draft-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.assignment-draft-list > li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); min-block-size: 44px; padding: var(--space-2); background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--border); }
+.assignment-draft-list > li[draggable="true"] { cursor: grab; }
+.assignment-ordinal { color: var(--text-muted); font: 700 var(--desk-surface-body-size) / 1 var(--font-mono); }
+.assignment-leg-name { display: grid; gap: var(--space-1); min-inline-size: 0; overflow-wrap: anywhere; }
+.assignment-leg-actions { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 2px; }
+.assignment-leg-actions > button,
+.assignment-leg-repair {
+  min-block-size: 32px;
+  border: 0;
+  color: var(--text);
+  background: var(--surface-hover);
+  font: 600 var(--desk-surface-body-size) / 1 var(--font-mono);
+}
+.assignment-leg-repair { color: var(--warn); }
 .assignment-candidates { display: grid; gap: 2px; }
-.assignment-candidates > button { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; text-align: start; }
-.assignment-candidates > button > span { display: grid; gap: 3px; }
-.assignment-sheet-footer { position: sticky; inset-block-end: 0; padding-block: var(--space-2); background: var(--surface); }
+.assignment-candidates > button { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2); text-align: start; }
+.assignment-candidates > button > span { display: grid; gap: var(--space-1); min-inline-size: 0; overflow-wrap: anywhere; }
+.assignment-candidates > button[data-added="true"]::after { content: "Added"; color: var(--text-muted); font: 600 var(--desk-surface-body-size) / 1 var(--font-mono); }
+.assignment-live { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.assignment-sheet-footer { padding-block: var(--space-2); background: var(--surface); box-shadow: 0 -1px 0 var(--border); }
+@container surface (min-width: 560px) {
+  .assignment-editor-layout { grid-template-columns: minmax(0, 1fr) minmax(22rem, 44rem); }
+}
 @container surface (max-width: 559.9px) {
+  .capability-assignments[data-editor-open="true"] .assignment-overview { display: none; }
   .capability-assignment-row { min-block-size: 56px; }
   .capability-assignment-row button,
   .assignment-default > button,
   .assignment-sheet-head > button,
   .assignment-sheet-footer > button,
   .assignment-candidates > button,
-  .assignment-override-filter > button { min-block-size: 44px; }
+  .assignment-override-filter > button,
+  .assignment-leg-actions > button,
+  .assignment-leg-repair,
+  .assignment-sheet-error > button { min-block-size: 44px; }
   .capability-assignment-row { align-items: stretch; }
   .capability-assignment-row > div:last-child { grid-auto-flow: row; justify-items: stretch; }
-  .assignment-sheet { padding: 10px; }
-  .assignment-default { align-items: start; flex-wrap: wrap; }
+  .assignment-sheet {
+    inline-size: 100%;
+    max-block-size: min(570px, 55dvh);
+    padding: var(--space-2);
+    padding-block-end: var(--space-2);
+  }
+  .assignment-default { align-items: start; }
+  .assignment-draft-list > li { grid-template-columns: auto minmax(0, 1fr); }
+  .assignment-draft-list > li > .egress-chip { grid-column: 2; justify-self: start; }
   .assignment-task-rows > article { grid-template-columns: minmax(0, 1fr); }
   .assignment-task-rows > article small { grid-column: 1; }
 }

@@ -115,8 +115,16 @@ export function saveAssignment(
   });
 }
 
-export function previewAssignmentDefault(scope: AssignmentScope, capabilityId: string): Promise<{ effective: AssignmentEffective }> {
-  return apiFetch("/api/inference/assignments/preview-use-default", {
+export type AssignmentUseDefaultPreview = {
+  schema: "InferenceUseDefaultPreview@1";
+  clears: AssignmentScope;
+  /** The assignment head observed while the server resolved the preview. */
+  expected_revision: number;
+  effective: AssignmentEffective;
+};
+
+export function previewAssignmentDefault(scope: AssignmentScope, capabilityId: string): Promise<AssignmentUseDefaultPreview> {
+  return apiFetch<AssignmentUseDefaultPreview>("/api/inference/assignments/preview-use-default", {
     method: "POST", json: { scope, capability_id: capabilityId },
   });
 }

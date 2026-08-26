@@ -94,7 +94,7 @@ first category may participate in a future assignment migration.
 |---|---|---|
 | inference-route | `web/src/desk/ask.ts`, `web/src/desk/chat.ts`, `web/src/desk/components/AskPanel.tsx`, `web/src/desk/components/EditorAIBar.tsx`, `web/src/desk/store/dataSlice.ts`, `web/src/pages/cores/ProjectMemoryCore.tsx`, `web/src/pages/cores/dictation/UtteranceWell.tsx`, `web/src/pages/cores/dictation/useSpeakDeck.ts` | 143-07 |
 | inference-route | `web/src/desk/components/PersonaChat.tsx`, `web/src/desk/components/WorkbenchTemplatePicker.tsx`, `web/src/desk/components/WorkbenchWindow.tsx`, `web/src/desk/pullouts/editors/RecipeEditor.tsx`, `web/src/desk/pullouts/shared/CapabilitySection.tsx` | 143-10 |
-| inference-route | `web/src/desk/components/RunsOnPicker.tsx`, `web/src/pages/cores/SettingsCore.tsx`, `web/src/pages/cores/CapabilityAssignmentsCore.tsx`, `web/src/pages/cores/assignmentExperience.ts` | 143-13 |
+| inference-route | `web/src/desk/components/RunsOnPicker.tsx`, `web/src/pages/cores/SettingsCore.tsx`, `web/src/pages/cores/AssignmentEditor.tsx`, `web/src/pages/cores/AssignmentModelChooser.tsx`, `web/src/pages/cores/assignmentExperience.ts` | 143-13 |
 | display-transport | `web/src/desk/api.ts`, `web/src/desk/components/Pullout.tsx`, `web/src/desk/detail-types.ts`, `web/src/desk/store/types.ts`, `web/src/lib/primitives.ts`, `web/src/pages/cores/core-types.ts` | 143-11 |
 | display-transport | `web/src/pages/cores/ModelLibraryCore.tsx`, `web/src/pages/cores/modelLibrary.ts` | 143-12 availability transport; selection never writes an assignment pointer |
 | display-transport | `web/src/desk/components/workbenchTarget.ts`, `web/src/desk/infoContract.ts`, `web/src/pages/cores/WorkbenchesHomeCore.tsx` | 143-10 |

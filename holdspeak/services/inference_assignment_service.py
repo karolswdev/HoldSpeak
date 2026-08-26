@@ -534,6 +534,11 @@ class InferenceAssignmentService:
         definition = self._require_assignable(capability_id)
         self._validate_scope_capability(parsed, definition)
         with self._db._connection() as conn:
+            # The preview is not merely a display calculation: it binds the
+            # following clear to the head observed with this excluded-scope
+            # resolution.  Returning this server-observed revision prevents a
+            # UI from clearing an ABA-recreated assignment with an older draft.
+            current = self._current(conn, parsed["assignment_key"])
             value = self._resolve(
                 conn,
                 definition,
@@ -545,6 +550,7 @@ class InferenceAssignmentService:
         return {
             "schema": "InferenceUseDefaultPreview@1",
             "clears": self._public_scope(parsed),
+            "expected_revision": 0 if current is None else int(current["revision"]),
             "effective": value,
         }
 

@@ -148,7 +148,7 @@ PROFILE_ID_CLASSIFICATIONS = {
     }},
     **{site: "immutable evidence" for site in {
         "holdspeak/services/model_profile_service.py:1206:profile_id",
-        "holdspeak/services/inference_assignment_service.py:1782:profile_id",
+        "holdspeak/services/inference_assignment_service.py:1788:profile_id",
     }},
     **{site: "migration source" for site in {
         "holdspeak/db/models/__init__.py:1121:profile_id",

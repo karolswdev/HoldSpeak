@@ -57,3 +57,14 @@ Follow the exact composition and rejection criteria in `assets/owner-experience.
   glass e2e 31 passed; worker set 77 + component 12 + build/check green.
   Orchestrator eyeball flag for S3: the repair affordance renders doubled
   ("Fix Fix" — label beside button) on issue rows.
+- 2026-08-26 — Round 2 (S3, the shared editor sheet): reusable
+  AssignmentSummary/AssignmentEditor/AssignmentModelChooser atoms;
+  atomic 1–4 leg drafts with reorder/removal and server-only candidates;
+  ABA-safe Use-default (preview returns its observed expected_revision,
+  clear consumes it, conflict discards preview with in-flow Refresh —
+  conflicts map to HTTP 409); Next-run receipts; focus loop/Escape
+  restore/Mod+Enter; 393 sticky-footer composition; the doubled Fix
+  affordance fixed with regression proof. Eight shots regenerated incl.
+  assignments-editor-1440/393. Orchestrator-verified: service/routes/
+  glass 34 passed + component 8 passed; worker: frozen next-admission 6,
+  census guards 15, build green.
