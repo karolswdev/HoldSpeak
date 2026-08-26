@@ -107,3 +107,24 @@ Technical provenance and locators stay in explicit owner-only Details.
   shots regenerated + populated-1440-zoom200; final review set sent to
   the owner (shots-before-merge law) — orchestrator eyeballed the
   reworked empty 1440 and passes it.
+- 2026-08-26 — Closing opus audit (UI half + acceptance): CLEAN on all
+  seven dimensions, ZERO product bugs, two cosmetic LEDGER notes (44px
+  assertion at 393 only; reduced-motion spot check) — third consecutive
+  zero-product-bug audit this story. Verified the error_500 scrub and
+  that the receipt copy is validated against the server contract, not
+  hardcoded.
+- 2026-08-26 — Sweep №1 (6626/21): 12 inherited, 9 branch-new around the
+  surface replacement → fix round: hs141/hs142 e2es migrated onto the
+  Model Library with behavior preserved (projected truth, one seat,
+  byte-server download-verify-add, unchanged assignments); API manifest
+  regenerated under isolated HOME (533 routes incl. 7 library routes);
+  the Runs-on owner law was a REAL regression — restored as a folded
+  server-fact disclosure in the detail pane; census updated with the 8
+  true Story-12 decisions; refinement flake serial-green ×2 (ledgered).
+  INCIDENT, resolved: the worker first ran the manifest generator
+  without isolated HOME against the owner's real DB — the
+  migration-marker integrity guard REFUSED and wrote nothing
+  (orchestrator forensics on copies: integrity_check ok, schema counts
+  identical pre/post, backup retained); rule hardened to
+  isolated-HOME-always for DB-opening commands. Orchestrator-verified:
+  all nine fix targets 26 passed.

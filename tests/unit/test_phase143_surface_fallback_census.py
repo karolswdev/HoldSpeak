@@ -42,6 +42,14 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/plugins/dictation/builtin/project_rewriter.py", "_target_directive"): ("deterministic dictation directive", "143-07"),
     ("holdspeak/plugins/dictation/runtime_mlx.py", "_resolve_generator_factory"): ("dictation runtime factory", "143-07"),
     ("holdspeak/services/inference_acquisition_service.py", "_route_revision"): ("setup preview revision; not assignment authority", "143-12"),
+    ("holdspeak/services/model_library_service.py", "_ensure_private_target"): ("library-owned private provider adapter; never assignment selection", "143-12"),
+    ("holdspeak/services/model_library_service.py", "_ensure_profile"): ("canonical profile composition for library availability", "143-12"),
+    ("holdspeak/services/model_library_service.py", "_profile_body"): ("library profile material builder; no assignment authority", "143-12"),
+    ("holdspeak/services/model_library_service.py", "_profile_id"): ("library profile identity parser", "143-12"),
+    ("holdspeak/services/model_library_service.py", "_profile_matches"): ("library profile replay comparison", "143-12"),
+    ("holdspeak/services/model_library_service.py", "_profile_row"): ("server-owned library availability projection", "143-12"),
+    ("holdspeak/services/model_library_service.py", "_target_matches"): ("private provider adapter comparison", "143-12"),
+    ("holdspeak/web/routes/primitives/profiles.py", "_library_private_target"): ("retired legacy target side-door refusal", "143-12"),
     ("holdspeak/services/inference_assignment_service.py", "_resolve"): ("canonical sparse assignment resolver", "143-04"),
     ("holdspeak/services/inference_adoption_service.py", "_validate_parentless_local_preload_route"): ("closed parentless speech preload cross-bind", "143-08"),
     ("holdspeak/speech_session/session.py", "_routed_session_validation_plan"): ("inert validation/history carrier for fully-adopted sessions; no route selection", "143-08"),
@@ -105,7 +113,8 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/pages/cores/core-types.ts": ("display-transport", "143-11"),
     "web/src/pages/cores/dictation/UtteranceWell.tsx": ("inference-route", "143-07"),
     "web/src/pages/cores/dictation/useSpeakDeck.ts": ("inference-route", "143-07"),
-    "web/src/pages/cores/settingsModels.tsx": ("inference-route", "143-13"),
+    "web/src/pages/cores/ModelLibraryCore.tsx": ("display-transport", "143-12"),
+    "web/src/pages/cores/modelLibrary.ts": ("display-transport", "143-12"),
 }
 
 POINTER_TOKENS = ("inference_target_id", "intel_profile_id", "profile_id", "resolver_profile_id")

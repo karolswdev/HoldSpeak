@@ -9,7 +9,7 @@ and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
 
-Routes: 526 (plus static mounts). iOS-consumed: 89. Web-consumed: 409.
+Routes: 533 (plus static mounts). iOS-consumed: 89. Web-consumed: 408.
 
 ## device_audio_ws
 
@@ -472,6 +472,18 @@ Routes: 526 (plus static mounts). iOS-consumed: 89. Web-consumed: 409.
 | GET | `/api/missioncontrol/state` | ios, web |
 | POST | `/api/missioncontrol/story/propose` | web |
 
+## web.routes.model_library
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/inference/model-library` | web |
+| POST | `/api/inference/model-library/add-to-library` | web |
+| POST | `/api/inference/model-library/connect-hosted-model` | web |
+| POST | `/api/inference/model-library/connect-paired-device` | server only |
+| POST | `/api/inference/model-library/define-endpoint` | web |
+| POST | `/api/inference/model-library/download` | web |
+| POST | `/api/inference/model-library/use-model-file` | web |
+
 ## web.routes.monday_brief
 
 | Method | Path | Consumers |
@@ -629,9 +641,9 @@ Routes: 526 (plus static mounts). iOS-consumed: 89. Web-consumed: 409.
 | DELETE | `/api/inference-targets/{target_id}` | web |
 | GET | `/api/inference-targets/{target_id}` | web |
 | PUT | `/api/inference-targets/{target_id}` | web |
-| POST | `/api/inference-targets/{target_id}/probe` | web |
-| DELETE | `/api/inference-targets/{target_id}/secret` | web |
-| PUT | `/api/inference-targets/{target_id}/secret` | web |
+| POST | `/api/inference-targets/{target_id}/probe` | server only |
+| DELETE | `/api/inference-targets/{target_id}/secret` | server only |
+| PUT | `/api/inference-targets/{target_id}/secret` | server only |
 | POST | `/api/profiles` | server only |
 | DELETE | `/api/profiles/{profile_id}` | web |
 | PUT | `/api/profiles/{profile_id}` | web |
@@ -783,10 +795,10 @@ Routes: 526 (plus static mounts). iOS-consumed: 89. Web-consumed: 409.
 
 | Method | Path | Consumers |
 |---|---|---|
-| POST | `/api/inference/acquisitions/download-and-use` | web |
-| POST | `/api/inference/acquisitions/use-existing` | web |
-| GET | `/api/inference/acquisitions/{job_id}` | web |
-| POST | `/api/inference/acquisitions/{job_id}/cancel` | web |
+| POST | `/api/inference/acquisitions/download-and-use` | server only |
+| POST | `/api/inference/acquisitions/use-existing` | server only |
+| GET | `/api/inference/acquisitions/{job_id}` | server only |
+| POST | `/api/inference/acquisitions/{job_id}/cancel` | server only |
 | GET | `/api/inference/capabilities` | web |
 | GET | `/api/inference/capabilities/{capability_id}` | server only |
 | GET | `/api/inference/setup` | web |

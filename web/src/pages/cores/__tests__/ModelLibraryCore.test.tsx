@@ -92,6 +92,7 @@ describe("ModelLibraryCore", () => {
 
     for (const action of actions) expect(screen.getAllByText(action).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Download" })).toBeInTheDocument();
+    expect(screen.getByText("Runs on", { exact: true })).toBeInTheDocument();
     expect(screen.queryByText(/assignment/i)).toBeNull();
   });
 
