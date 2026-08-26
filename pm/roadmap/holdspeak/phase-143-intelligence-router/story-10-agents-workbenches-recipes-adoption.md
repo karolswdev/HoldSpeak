@@ -96,3 +96,21 @@ The shared UI must replace, not sit beside, private target selectors.
   carry-through; `retryThenQueue`→`hold`, retry authority retired); no
   `fell_back` receipt for carry. Orchestrator-verified: Slice 4 set 130
   passed, all one-path guard legs 168 passed.
+- 2026-08-25 — Owner ruling arc on Swift (three beats, final form): Slice 5
+  progress FROZEN IN TIME at compile-green on
+  `hold/hs143-10-slice5-swift-bridge` (build clean, 28/28 smoke, 6/6
+  bridge integration, orchestrator-verified); criterion 6 out of this
+  story's bar; story refocused on the web/Python portion. Full history in
+  the plan's ruling blocks.
+- 2026-08-25 — Round 5 (Slice 6, Python-only): zero-Python-fork census
+  convergence with fail-closed regeneration; three census artifacts
+  regenerated (routing-authority mutable families 10→7 with an
+  exact-empty adopter-fork scanner; capability census 102 Python AST
+  sites, 7 Swift leaves explicitly HELD, never falsely zeroed; surface
+  fallback 0 executable Swift policy sites held); new 16-case table-driven
+  placement adoption matrix over real production entries (Recipe run,
+  plain+qualified chat, Workbench item+memory, agent façade, voice,
+  sequence, workflow, legacy inference.run refusal) proving
+  freeze/mutate/later-admission and receipt linkage per family.
+  Orchestrator-verified: census+matrix set 96 passed; spine/provenance/
+  cardinality/context guards 114 passed.

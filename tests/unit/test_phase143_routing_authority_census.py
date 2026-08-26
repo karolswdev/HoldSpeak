@@ -35,9 +35,6 @@ MUTABLE_FAMILY_OWNERS = {
     "Deployment head selected by a future profile binding": "143-03",
     "Thoughts and Ask default/request pointer": "143-07",
     "Writing and dictation runtime pointer": "143-07",
-    "Recipe and agent default pointer": "143-10",
-    "Workbench execution pointer": "143-10",
-    "Workbench voice-resolver pointer": "143-10",
     "Cadence background global resolver": "143-08",
     "V1 profile and workbench sync payload": "143-11",
     "Settings Thoughts and writing legacy pointer writers": "143-07",
@@ -131,13 +128,12 @@ ROUTING_POINTER_ATTRIBUTES = {
 PROFILE_ID_CLASSIFICATIONS = {
     **{site: "mutable assignment pointer" for site in {
         "holdspeak/config/core.py:138:profile_id", "holdspeak/config/core.py:169:profile_id",
-        "holdspeak/config/integrations.py:101:profile_id", "holdspeak/config/model.py:80:profile_id", "holdspeak/db/models/workbench.py:138:profile_id",
+        "holdspeak/config/integrations.py:101:profile_id", "holdspeak/config/model.py:80:profile_id",
         "holdspeak/plugins/dictation/assembly.py:321:profile_id",
         "holdspeak/services/settings_service.py:786:profile_id",
-        "holdspeak/services/settings_service.py:858:profile_id", "holdspeak/services/workbench_service.py:564:profile_id",
+        "holdspeak/services/settings_service.py:858:profile_id",
         "holdspeak/services/sync_service.py:682:profile_id",
         "holdspeak/services/sync_service.py:697:profile_id",
-        "holdspeak/db/models/__init__.py:1121:profile_id",
     }},
     **{site: "display" for site in {
         "holdspeak/commands/doctor.py:488:profile_id", "holdspeak/commands/doctor.py:787:profile_id",
@@ -155,7 +151,10 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/inference_assignment_service.py:1656:profile_id",
     }},
     **{site: "migration source" for site in {
+        "holdspeak/db/models/__init__.py:1121:profile_id",
+        "holdspeak/db/models/workbench.py:138:profile_id",
         "holdspeak/services/recipe_service.py:309:profile_id",
+        "holdspeak/services/workbench_service.py:564:profile_id",
     }},
     **{site: "credential/provider identity" for site in {
         "holdspeak/intel/providers.py:687:profile_id", "holdspeak/intel/providers.py:694:profile_id",
@@ -163,6 +162,50 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/trust_destinations.py:59:profile_id",
     }},
 }
+
+
+# Story 143-10 retired family-local placement selection. These are the product
+# modules that may *project* frozen route evidence or translate a legacy write,
+# but may never regain a resolver/import, the old `_target`/`_invoke` helpers, or
+# a direct Runner entrance. The broad AST census above detects a new resolver in
+# any Python module; this narrow exact-empty gate makes the adopter boundary
+# reviewable and gives a mutation proof for the actual regression shape.
+PLACEMENT_ADOPTER_MODULES = frozenset({
+    "holdspeak/services/recipe_service.py",
+    "holdspeak/services/workbench_runner.py",
+    "holdspeak/services/workbench_service.py",
+    "holdspeak/services/sequence_workflow_service.py",
+    "holdspeak/services/support.py",
+})
+RETIRED_ADOPTER_HELPERS = frozenset({"_target", "_invoke"})
+
+
+def _placement_adopter_forks(root: Path) -> set[str]:
+    """Return family-local resolution/dispatch authority in adopted Python legs."""
+    found: set[str] = set()
+    for relative in PLACEMENT_ADOPTER_MODULES:
+        path = root / relative
+        if not path.exists():
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if node.name in RETIRED_ADOPTER_HELPERS or (
+                    node.name.startswith("resolve_")
+                    and any(token in node.name for token in ("placement", "inference_target", "deployment"))
+                ):
+                    found.add(f"{relative}:{node.lineno}:definition:{node.name}")
+            elif isinstance(node, ast.ImportFrom):
+                for alias in node.names:
+                    if alias.name in ROUTING_RESOLVER_NAMES or alias.name == "InferenceRunner":
+                        found.add(f"{relative}:{node.lineno}:import:{alias.name}")
+            elif isinstance(node, ast.Name) and node.id in ROUTING_RESOLVER_NAMES | {"InferenceRunner"}:
+                found.add(f"{relative}:{node.lineno}:ref:{node.id}")
+            elif isinstance(node, ast.Attribute) and node.attr == "invoke":
+                receiver = ast.unparse(node.value)
+                if "inference_runner" in receiver or "InferenceRunner" in receiver:
+                    found.add(f"{relative}:{node.lineno}:runner-invoke")
+    return found
 
 
 def _text(path: str | Path) -> str:
@@ -263,7 +306,8 @@ def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() 
     assert profile_ids == set(PROFILE_ID_CLASSIFICATIONS)
     assert set(PROFILE_ID_CLASSIFICATIONS.values()) <= CLASSES
     assert len(PROFILE_ID_CLASSIFICATIONS) == 33
-    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 12
+    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 9
+    assert sum(value == "migration source" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 4
     assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 13
     assert sum(value == "credential/provider identity" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 5
     assert sum(value == "immutable evidence" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 2
@@ -288,6 +332,38 @@ def test_ast_census_rejects_a_new_public_resolver_or_late_pointer_read(tmp_path:
     assert profile_ids == {"holdspeak/kernel/inference.py:4:profile_id"}
     assert definitions != ROUTING_RESOLVER_DEFINITIONS
     assert pointers != ROUTING_POINTER_ATTRIBUTES
+
+
+def test_phase143_placement_adopters_have_zero_python_resolution_forks() -> None:
+    """All terms originate at the assignment/coordinator seam, never a family."""
+    assert _placement_adopter_forks(REPO) == set()
+    assignment = _text("holdspeak/services/inference_assignment_service.py")
+    coordinator = _text("holdspeak/services/inference_adoption_service.py")
+    assert "def resolve_effective(" in assignment
+    assert "def admit(" in coordinator and "def freeze_routes(" in coordinator
+
+
+def test_phase143_placement_adopter_fork_scan_rejects_local_resolver_or_runner(tmp_path: Path) -> None:
+    root = tmp_path
+    source = root / "holdspeak" / "services"
+    source.mkdir(parents=True)
+    (source / "recipe_service.py").write_text(
+        "from holdspeak.inference_targets import resolve_placement\n"
+        "def _target(request):\n"
+        "    return resolve_placement(request)\n"
+        "def _invoke(broker):\n"
+        "    return broker.inference_runner.invoke()\n",
+        encoding="utf-8",
+    )
+    forks = _placement_adopter_forks(root)
+    assert forks == {
+        "holdspeak/services/recipe_service.py:1:import:resolve_placement",
+        "holdspeak/services/recipe_service.py:2:definition:_target",
+        "holdspeak/services/recipe_service.py:3:ref:resolve_placement",
+        "holdspeak/services/recipe_service.py:4:definition:_invoke",
+        "holdspeak/services/recipe_service.py:5:runner-invoke",
+    }
+    assert forks != _placement_adopter_forks(REPO)
 
 
 def test_profile_service_owner_gate_is_enforced_before_lookup_or_probe() -> None:

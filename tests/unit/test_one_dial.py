@@ -353,6 +353,10 @@ def test_feature_legs_resolve_through_the_one_resolver() -> None:
         # HS-143-10: Recipe execution admits an exact recipe subject route through
         # the canonical coordinator; it no longer resolves a mutable target.
         "holdspeak/services/recipe_service.py": "inference_adoption_service.admit",
+        # Workbench and voice freeze an immutable parent bundle; its children can
+        # only consume that route, not re-read the saved compatibility pointers.
+        "holdspeak/services/workbench_runner.py": "InferenceParentRouteBundleService",
+        "holdspeak/services/workbench_service.py": "InferenceParentRouteBundleService",
         "holdspeak/plugins/dictation/assembly.py": "effective_dictation_llm",
         "holdspeak/runtime/meeting_glue.py": "effective_intel_cloud",
         "holdspeak/setup_runtime.py": "effective_dictation_llm",
@@ -360,6 +364,25 @@ def test_feature_legs_resolve_through_the_one_resolver() -> None:
     for rel, seam in resolver_legs.items():
         text = (REPO / rel).read_text()
         assert seam in text, f"{rel} no longer resolves through {seam}"
+
+
+def test_phase143_adopters_have_no_direct_one_dial_resolver() -> None:
+    """Saved compatibility fields may migrate/project, never select a live model."""
+    forbidden = (
+        "resolve_inference_target(",
+        "resolve_placement(",
+        "resolve_workbench_deployment_revision(",
+        "resolve_deployment_revision(",
+    )
+    for rel in (
+        "holdspeak/services/recipe_service.py",
+        "holdspeak/services/workbench_runner.py",
+        "holdspeak/services/workbench_service.py",
+        "holdspeak/services/sequence_workflow_service.py",
+        "holdspeak/services/support.py",
+    ):
+        text = (REPO / rel).read_text()
+        assert not any(token in text for token in forbidden), rel
 
 
 # ── the grep census: the dead fields have no readers left ──────────────

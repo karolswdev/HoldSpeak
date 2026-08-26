@@ -1680,3 +1680,36 @@ def test_a_direct_receiver_run_prompt_fails_the_fence() -> None:
         target.write_bytes(original)
     assert hashlib.sha256(target.read_bytes()).hexdigest() == before
     assert [site for site in census() if site.path == "holdspeak/commands/mesh_serve.py"] == []
+
+
+# ---------------------------------------- HS-143-10 placement-adopter closure
+
+
+def test_phase143_placement_adopters_name_no_model_execution_door() -> None:
+    """The migrated product families only hand frozen work to the coordinator."""
+    adopters = {
+        "holdspeak/services/recipe_service.py",
+        "holdspeak/services/workbench_runner.py",
+        "holdspeak/services/workbench_service.py",
+        "holdspeak/services/sequence_workflow_service.py",
+        "holdspeak/services/support.py",
+    }
+    sites = [site for site in census() if site.path in adopters]
+    assert sites == [], f"placement adopter reopened a model door: {sites}"
+    assert all(path not in ADAPTER_ALLOWLIST for path, _scope in ADAPTER_ALLOWLIST if path in adopters)
+
+
+def test_phase143_placement_adopter_direct_provider_mutation_is_unregistered() -> None:
+    """A local selector cannot smuggle a completion through an adopted service."""
+    sites = list(sites_in_source(
+        "holdspeak/services/recipe_service.py",
+        """
+class RecipeService:
+    def _local_selector(self, engine):
+        return engine.run_prompt(system_prompt='x', user_prompt='x')
+""",
+    ))
+    assert len(sites) == 1
+    assert sites[0].where == ("holdspeak/services/recipe_service.py", "RecipeService._local_selector")
+    assert sites[0].target == "run_prompt"
+    assert _bucket(sites[0]) is None

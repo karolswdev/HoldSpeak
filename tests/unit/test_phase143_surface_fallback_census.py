@@ -202,6 +202,25 @@ def test_web_route_pointer_controls_are_classified_and_single_owned() -> None:
     )
 
 
+def test_story143_workflow_aliases_decode_once_and_no_adopter_reopens_fake_fallback() -> None:
+    """The old wire words survive only at the boundary, never as execution law."""
+    support = (REPO / "holdspeak/services/support.py").read_text(encoding="utf-8")
+    workflow = (REPO / "holdspeak/services/sequence_workflow_service.py").read_text(encoding="utf-8")
+    assert '"fallbackOnDevice": "carry"' in support
+    assert '"retryThenQueue": "hold"' in support
+    assert "fallbackOnDevice" not in workflow
+    assert "retryThenQueue" not in workflow
+    assert "fell_back" not in workflow
+    for relative in (
+        "holdspeak/services/recipe_service.py",
+        "holdspeak/services/workbench_runner.py",
+        "holdspeak/services/workbench_service.py",
+        "holdspeak/services/sequence_workflow_service.py",
+    ):
+        source = (REPO / relative).read_text(encoding="utf-8")
+        assert "def _target(" not in source and "def _invoke(" not in source, relative
+
+
 def test_census_artifact_covers_every_guarded_surface_and_recovery_kind() -> None:
     text = ARTIFACT.read_text(encoding="utf-8")
     for required in (

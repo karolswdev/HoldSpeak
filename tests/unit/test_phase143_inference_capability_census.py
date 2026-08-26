@@ -321,25 +321,25 @@ def _swift_physical_leaves(sources: dict[str, str] | None = None) -> list[str]:
 
 SWIFT_PHYSICAL_LEAVES: dict[str, ProposedRoute] = {
     "apple/Sources/InferenceLlama/LlamaProvider.swift:124|LLM.getCompletion": ProposedRoute(
-        "apple.local_completion", "apple.inference_llama", "LEGACY BYPASS: Story 143-10 Apple inference runtime",
+        "apple.local_completion", "apple.inference_llama", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
     "apple/Sources/Providers/Inference/OpenAIEndpointProvider.swift:48|InferenceProvider.URLSession.data": ProposedRoute(
-        "apple.endpoint_completion", "apple.providers.inference", "LEGACY BYPASS: Story 143-10 Apple inference runtime",
+        "apple.endpoint_completion", "apple.providers.inference", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
     "apple/Sources/Providers/Inference/StructuredOutput.swift:64|Swift.complete": ProposedRoute(
-        "apple.structured_output", "apple.providers.inference", "LEGACY BYPASS: Story 143-10 Apple inference runtime",
+        "apple.structured_output", "apple.providers.inference", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
     "apple/Sources/Providers/Desktop/MeshServeWorker.swift:99|Swift.complete": ProposedRoute(
-        "apple.mesh_serve", "apple.providers.desktop", "LEGACY BYPASS: Story 143-10 Apple/mesh adoption",
+        "apple.mesh_serve", "apple.providers.desktop", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
     "apple/Sources/RuntimeCore/Companion/CoderAnswer.swift:109|Swift.complete": ProposedRoute(
-        "apple.coder_answer", "apple.runtimecore.companion", "LEGACY BYPASS: Story 143-10 Apple/agent adoption",
+        "apple.coder_answer", "apple.runtimecore.companion", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
     "apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift:333|Swift.complete": ProposedRoute(
-        "apple.workbench.blueprint", "apple.runtimecore.workbench", "LEGACY BYPASS: Story 143-06 fallback-controller migration",
+        "apple.workbench.blueprint", "apple.runtimecore.workbench", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
     "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:338|Swift.complete": ProposedRoute(
-        "apple.workbench.workflow", "apple.runtimecore.workbench", "LEGACY BYPASS: Story 143-06 fallback-controller migration",
+        "apple.workbench.workflow", "apple.runtimecore.workbench", "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope",
     ),
 }
 
@@ -584,15 +584,18 @@ class Rogue:
     assert not set(mutated) <= set(SEMANTIC_HELPER_CALLERS)
 
 
-def test_phase143_swift_physical_leaves_are_explicit_legacy_bypasses() -> None:
+def test_phase143_swift_physical_leaves_remain_explicit_held_scope() -> None:
+    """The owner descope holds the seven leaves in view; it does not erase them."""
     live = set(_swift_physical_leaves())
     assert live == set(SWIFT_PHYSICAL_LEAVES), (
         "Apple physical inference inventory changed; name its capability, source "
-        "owner, and migration owner/bypass status.\n"
+        "owner, and HELD scope status.\n"
         f"unregistered={sorted(live - set(SWIFT_PHYSICAL_LEAVES))}\n"
         f"stale={sorted(set(SWIFT_PHYSICAL_LEAVES) - live)}"
     )
-    assert all("LEGACY BYPASS: Story 143-" in route.admission for route in SWIFT_PHYSICAL_LEAVES.values())
+    held = "HELD — owner ruling 2026-08-25: Swift/Apple is out of Story 143-10 scope"
+    assert all(route.admission == held for route in SWIFT_PHYSICAL_LEAVES.values())
+    assert len(SWIFT_PHYSICAL_LEAVES) == 7
     workflow = SWIFT_PHYSICAL_LEAVES[
         "apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift:338|Swift.complete"
     ]

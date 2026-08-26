@@ -1,6 +1,6 @@
 # Phase 143 generated surface and fallback census
 
-**Captured:** 2026-08-21.  This is the executable companion to
+**Regenerated:** 2026-08-25 on `feat/hs143-10-placement-adoption`. This is the executable companion to
 `repository-census.md`: `tests/unit/test_phase143_surface_fallback_census.py`
 fails when a new private selector, recovery helper, or browser routing-pointer
 surface lacks a reviewed classification.
@@ -17,6 +17,12 @@ leg.  It does not mean an owner pressing a button, queue rescheduling, lexical
 output preservation, a provider dialect change, or a workflow label that carries
 input forward.
 
+**Story 143-10 convergence:** its execution services have no `_target` or
+`_invoke` local selector helper. `fallbackOnDevice` and `retryThenQueue` are
+boundary decode aliases only; the executable workflow vocabulary is `carry`,
+`hold`, `skip`, or an explicit failure. The source scanner and the exact-empty
+Swift executable-policy invariant remain fail-closed.
+
 ## Owner routing controls
 
 | Surface/family | Current controls and source anchors | Current authority | One migration story |
@@ -27,7 +33,7 @@ input forward.
 | Dictation/rewrite/punctuation destination | `holdspeak/config/model.py`, `holdspeak/speech_session/plan.py`, `holdspeak/plugins/dictation/assembly.py`, `holdspeak/target_profile.py`, `web/src/pages/cores/dictation/useSpeakDeck.ts` | `dictation.runtime.profile_id` and typed runtime policy | 143-07 |
 | Meetings destination and bound route evidence | one-time `holdspeak/config/meeting.py` migration input; `holdspeak/services/meeting_deferred_queue_binding.py`; `holdspeak/meeting_session/deferred_bound.py` | C1 parent/bundle members are the deferred execution authority; `MeetingIntelPlan` is display-only persisted history | 143-08 |
 | Deferred meeting/background jobs | `holdspeak/intel_queue.py`, `holdspeak/services/meeting_intel_service.py`, `holdspeak/services/settings_service.py` | queue schedule/recovery controls | 143-08 |
-| Workbench, Recipe, Agent and workflow placement | `holdspeak/deployment_revisions.py`, `holdspeak/services/{recipe_service,sequence_workflow_service,support,workbench_runner,workbench_service}.py`, `web/src/desk/components/{WorkbenchWindow,WorkbenchTemplatePicker,workbenchTarget}.tsx`, `web/src/desk/pullouts/editors/RecipeEditor.tsx`, `web/src/desk/infoContract.ts`, `web/src/pages/cores/WorkbenchesHomeCore.tsx` | workbench → recipe → default precedence and per-run request fields | 143-10 |
+| Workbench, Recipe, Agent and workflow placement | canonical `InferenceAssignmentService` / `RoutedInferenceCoordinator` / `InferenceParentRouteBundleService`; compatibility inputs in `holdspeak/services/{recipe_service,sequence_workflow_service,support,workbench_runner,workbench_service}.py`; listed web transports | frozen assignment/route/controller evidence; retired request fields refuse and legacy record writes translate once | 143-10 |
 | HTTP/MCP/browser pointer transport and types | `holdspeak/mcp/`, `holdspeak/web/routes/`, `web/src/desk/{api,detail-types,store/types}.ts`, `web/src/pages/cores/core-types.ts` | transport/projection only; must not resolve a route | 143-11 |
 | Assignment editor shell | `web/src/pages/cores/{SettingsCore,settingsModels}.tsx` | duplicated owner-facing Settings controls pending one editor | 143-13 |
 | Generic route/failure law and physical attempts | `holdspeak/kernel/{inference_runner,projection_stager}.py`, `holdspeak/intel/engine.py` | runner physical attempt and provider compatibility seam | 143-06 |
@@ -51,7 +57,7 @@ input forward.
 | Persisting a completed speech callback | `holdspeak/speech_session/fence.py` | Storage-delivery retry of the exact completed callback, not inference execution or route fallback. | 143-08 |
 | Fully-adopted session validation carrier | `holdspeak/speech_session/session.py:_routed_session_validation_plan` | Inert validation/history `SpeechSessionPlan` for both-marker non-device sessions: no deployment legs, no resolver call, no route selection. The atomic bundle is the sole execution authority. | 143-08 |
 | Endpoint-health refusal | `holdspeak/intel/endpoint_health.py`, `holdspeak/meeting_session/live_readiness.py` | Readiness/circuit-breaker refusal before egress. It can expose an already frozen meeting leg, but cannot synthesize a model fallback. | 143-08 |
-| Python workflow `fallbackOnDevice` / `retryThenQueue` | `holdspeak/services/support.py`, `holdspeak/services/sequence_workflow_service.py` | **Python fake workflow label**: the active hub treats `fallbackOnDevice` as pure carry-through and `retryThenQueue` as an ordinary surfaced error. Neither selects another model nor queues work. Story 10 removes/renames these legacy workflow labels while migrating workflow execution to the canonical route/controller. | 143-10 |
+| Python workflow `fallbackOnDevice` / `retryThenQueue` | `holdspeak/services/support.py` decode boundary; `holdspeak/services/sequence_workflow_service.py` canonical execution | **Python fake workflow label retired from execution**: saved aliases decode exactly once to `carry` / `hold`; Sequence/Workflow emits only truthful local dispositions and never `fell_back`. Neither selects another model nor queues work. | 143-10 |
 | Swift WorkflowRunner legacy `fallbackOnDevice` / `retryThenQueue` wire values | `apple/Sources/RuntimeCore/Workbench/WorkflowRunner.swift` | **Swift dormant/client fallback retired in Story 06**: every model-backed step now makes at most one provider or mesh call. Source/UI actions are `hold`, `holdForRoute`, and `carry`; old raw values remain only so saved Blueprints decode unchanged. An injected legacy fallback is never called. | 143-06 |
 | Swift BlueprintInterpreter legacy `fallbackOnDevice` / `retryThenQueue` wire values | `apple/Sources/RuntimeCore/Workbench/BlueprintInterpreter.swift` | **Swift dormant/client fallback retired in Story 06**: a failure either carries the exact input or stops after one call for higher-level routing. The interpreter neither retries nor calls an alternate provider. | 143-06 |
 
