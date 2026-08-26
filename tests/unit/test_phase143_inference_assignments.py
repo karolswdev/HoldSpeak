@@ -741,6 +741,29 @@ def test_default_summary_is_exactly_seven_rows_and_projects_safe_runtime_truth(
     assert any(issue["code"] == "binding_disabled" for issue in drifted["issues"])
 
 
+def test_editor_projection_is_closed_and_server_filters_candidates(db: Database) -> None:
+    _profile(db, "editor-ready")
+    _profile(db, "editor-repair", ready=False)
+    service = InferenceAssignmentService(db)
+    projected = service.assignment_editor_projection(
+        OWNER, {"scope": {"kind": "capability", "capability_id": "ask.answer"}, "capability_id": "ask.answer"}
+    )
+    assert set(projected) == {
+        "schema", "scope", "selected_capability", "draft_base_revision",
+        "configured_assignment", "effective", "candidates", "retry_policy",
+    }
+    assert projected["schema"] == "AssignmentEditorProjection@1"
+    assert projected["draft_base_revision"] == 0
+    assert {candidate["profile_id"] for candidate in projected["candidates"]} == {"editor-ready", "editor-repair"}
+    assert next(candidate for candidate in projected["candidates"] if candidate["profile_id"] == "editor-repair")["status"] == "savable_with_repair"
+    saved = _set(service, "editor-saved", {"kind": "capability", "capability_id": "ask.answer"}, "editor-ready")
+    reread = service.assignment_editor_projection(
+        OWNER, {"scope": {"kind": "capability", "capability_id": "ask.answer"}, "capability_id": "ask.answer"}
+    )
+    assert reread["draft_base_revision"] == saved["revision"]
+    assert reread["configured_assignment"]["entries"][0]["label"] == "Editor Ready"
+
+
 def test_use_default_preview_and_clear_require_exact_scope_capability(
     db: Database,
 ) -> None:

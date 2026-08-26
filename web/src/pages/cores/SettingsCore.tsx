@@ -32,6 +32,7 @@ import {
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
 import { ModelsModule } from "./settingsModels";
+import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
 // HS-139-05: activateLauncher removed (Delivery tile absorbed).
@@ -560,7 +561,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       return str(nextPath, title(key));
     });
 
-  /* ── the authored modules (HS-139-05: seven tiles) ── */
+  /* ── the authored owner-facing modules ── */
   const renderModule = (id: string): ReactNode => {
     const data = resource.data;
     switch (id) {
@@ -914,11 +915,14 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </FoldGadget>
           </>
         );
-      /* ── Models: destinations, runs-on, engine, rails ── */
+      /* ── Models: availability-only Model Library ── */
       case "models":
         return (
           <ModelsModule onRefuse={setRefusal} />
         );
+      /* ── Assignments: bounded server-projected routing truth ── */
+      case "assignments":
+        return <CapabilityAssignmentsCore />;
       /* ── Integrations: credentials + RAW ── */
       case "integrations": {
         const RAW_SECRETS = new Set([

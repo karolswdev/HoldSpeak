@@ -172,6 +172,12 @@ class InferenceAssignmentService:
                 for definition in (self._registry.require(capability_id),)
                 if definition.owner_visibility == "owner"
             )
+            # The roster's Change command needs one exact capability context for
+            # group/global compatibility facts.  This is a server selection, not
+            # a browser guess; global chooses the stable first owner capability.
+            rows[0]["editor_capability_id"] = (
+                owner_capabilities[0].id if owner_capabilities else None
+            )
             unknown = sorted(
                 {
                     definition.group_id
@@ -217,6 +223,7 @@ class InferenceAssignmentService:
                     {
                         "id": group_id,
                         "label": group_label,
+                        "editor_capability_id": capabilities[0].id if capabilities else None,
                         "inherited_from": "group"
                         if group_row is not None
                         else ("global" if global_row is not None else None),
@@ -236,11 +243,130 @@ class InferenceAssignmentService:
                         else None,
                     }
                 )
+            task_overrides = []
+            for capability in owner_capabilities:
+                exact = self._head(conn, f"capability:{capability.id}")
+                effective = self._resolve(conn, capability)
+                issues = (
+                    []
+                    if effective["assignment"] is None
+                    else list(effective["assignment"].get("issues") or [])
+                )
+                task_overrides.append(
+                    {
+                        "id": capability.id,
+                        "label": capability.label,
+                        "group": {"id": capability.group_id, "label": capability.group_label},
+                        "has_override": exact is not None,
+                        "effective": effective,
+                        "issues": issues,
+                    }
+                )
         return {
             "schema": "InferenceAssignmentSummary@1",
             "rows": rows,
+            "task_overrides": task_overrides,
             "issue_count": sum(1 for row in rows if row["repair"] is not None),
         }
+
+    def assignment_editor_projection(
+        self, principal: Principal, body: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        """Project one closed, server-decided assignment editor.
+
+        The browser receives candidates and compatibility facts already evaluated
+        against the selected capability revision.  It never receives a profile
+        locator or needs to reproduce assignment precedence.
+        """
+        self._require_owner(principal)
+        if (
+            not isinstance(body, Mapping)
+            or set(body) != {"scope", "capability_id"}
+            or not isinstance(body.get("capability_id"), str)
+        ):
+            raise ValidationError(
+                "Assignment editor request has an invalid shape",
+                code="inference_assignment_invalid",
+            )
+        scope = self._scope(body["scope"])
+        capability = self._require_assignable(body["capability_id"])
+        self._validate_scope_capability(scope, capability)
+        with self._db._connection() as conn:
+            active = self._head(conn, scope["assignment_key"])
+            current = self._current(conn, scope["assignment_key"])
+            configured = (
+                None
+                if active is None
+                else self._row_projection(conn, active)
+            )
+            effective = self._resolve(conn, capability)
+            candidates = self._editor_candidates(
+                conn, scope, self._affected_capabilities(scope)
+            )
+        return {
+            "schema": "AssignmentEditorProjection@1",
+            "scope": self._public_scope(scope),
+            "selected_capability": {
+                "id": capability.id,
+                "revision": capability.revision,
+                "label": capability.label,
+                "group": {"id": capability.group_id, "label": capability.group_label},
+                "allowed_boundaries": list(capability.allowed_boundaries),
+                "fallback_dispositions": list(capability.fallback_dispositions),
+            },
+            "draft_base_revision": 0 if current is None else int(current["revision"]),
+            "configured_assignment": configured,
+            "effective": effective,
+            "candidates": candidates,
+            "retry_policy": {
+                "permitted_ids": list(capability.permitted_retry_policy_ids),
+                "default_id": capability.default_retry_policy_id,
+            },
+        }
+
+    def _editor_candidates(
+        self,
+        conn: Any,
+        scope: Mapping[str, str],
+        capabilities: Iterable[InferenceCapabilityDefinition],
+    ) -> list[dict[str, Any]]:
+        """Return only candidates compatible with every affected capability."""
+        affected = tuple(capabilities)
+        rows = conn.execute(
+            """SELECT r.* FROM model_profile_revisions r
+                 JOIN (SELECT profile_id, MAX(revision) AS revision
+                         FROM model_profile_revisions GROUP BY profile_id) latest
+                   ON latest.profile_id=r.profile_id AND latest.revision=r.revision
+                 LEFT JOIN model_profile_tombstones t ON t.profile_id=r.profile_id
+                WHERE t.profile_id IS NULL ORDER BY r.label COLLATE NOCASE, r.profile_id"""
+        ).fetchall()
+        candidates: list[dict[str, Any]] = []
+        for row in rows:
+            entry = {
+                "ordinal": 1,
+                "profile_id": str(row["profile_id"]),
+                "profile_revision": int(row["revision"]),
+                "profile_schema_version": 2,
+            }
+            issues = self._compatibility_issues(conn, [entry], affected)
+            # Match the canonical command's group/global structural rule: a
+            # partial member incompatibility stays visible as a server-described
+            # repair, while a chain usable by no affected member is excluded.
+            if self._save_blockers(scope, [entry], affected, issues):
+                continue
+            runtime = self._entry_runtime_projection(conn, entry)
+            candidates.append(
+                {
+                    "profile_id": entry["profile_id"],
+                    "profile_revision": entry["profile_revision"],
+                    "label": str(row["label"]),
+                    "boundary": runtime["boundary"],
+                    "readiness": runtime["readiness"],
+                    "status": "savable_with_repair" if issues else "compatible",
+                    "issues": self._dedupe_issues(issues),
+                }
+            )
+        return candidates
 
     def get_assignment(
         self, principal: Principal, scope: Mapping[str, Any]

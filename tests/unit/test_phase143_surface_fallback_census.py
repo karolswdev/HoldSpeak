@@ -109,6 +109,8 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/lib/primitives.ts": ("display-transport", "143-11"),
     "web/src/pages/cores/ProjectMemoryCore.tsx": ("inference-route", "143-07"),
     "web/src/pages/cores/SettingsCore.tsx": ("inference-route", "143-13"),
+    "web/src/pages/cores/CapabilityAssignmentsCore.tsx": ("inference-route", "143-13"),
+    "web/src/pages/cores/assignmentExperience.ts": ("inference-route", "143-13"),
     "web/src/pages/cores/WorkbenchesHomeCore.tsx": ("display-transport", "143-10"),
     "web/src/pages/cores/core-types.ts": ("display-transport", "143-11"),
     "web/src/pages/cores/dictation/UtteranceWell.tsx": ("inference-route", "143-07"),

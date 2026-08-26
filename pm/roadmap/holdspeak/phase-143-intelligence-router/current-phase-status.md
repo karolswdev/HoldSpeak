@@ -56,7 +56,7 @@ Assignments.
 | HSEGHS001HS104-143-10 | Agents Workbenches and Recipes Adoption | done | [story-10-agents-workbenches-recipes-adoption](./story-10-agents-workbenches-recipes-adoption.md) | [evidence-story-10](./evidence-story-10.md) |
 | HSEGHS001HS104-143-11 | HTTP MCP Sync and Compatibility | backlog | [story-11-http-mcp-sync-compatibility](./story-11-http-mcp-sync-compatibility.md) | - |
 | HSEGHS001HS104-143-12 | Model Library and Providers | done | [story-12-model-library-providers](./story-12-model-library-providers.md) | [evidence-story-12](./evidence-story-12.md) |
-| HSEGHS001HS104-143-13 | Capability Assignments Experience | backlog | [story-13-capability-assignments-experience](./story-13-capability-assignments-experience.md) | - |
+| HSEGHS001HS104-143-13 | Capability Assignments Experience | in-progress | [story-13-capability-assignments-experience](./story-13-capability-assignments-experience.md) | - |
 | HSEGHS001HS104-143-14 | Chaos Glass and Closeout | backlog | [story-14-chaos-glass-closeout](./story-14-chaos-glass-closeout.md) | - |
 | HSEGHS001HS104-143-15 | Intelligence Router Repo-Wide Documentation | backlog | [story-15-intelligence-router-docs](./story-15-intelligence-router-docs.md) | - |
 
