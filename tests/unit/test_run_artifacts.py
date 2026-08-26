@@ -19,16 +19,30 @@ pytest.importorskip("fastapi", reason="route tests drive the real app")
 
 import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 
 
 @pytest.fixture()
 def db(monkeypatch):
     reset_database()
-    database = Database(Path(tempfile.mkdtemp()) / "run-artifacts.db")
+    directory = Path(tempfile.mkdtemp())
+    database = Database(directory / "run-artifacts.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: database)
-    # Route tests inject an engine; local model-file readiness is tested elsewhere.
-    monkeypatch.setattr(
-        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+    model = directory / "artifact-default.gguf"
+    model.touch()
+    database.profiles.upsert(
+        profile_id="artifact-default", name="Artifact default", kind="onDevice",
+        model_file=str(model),
+    )
+    InferenceAssignmentService(database).set_assignment(
+        Principal(PrincipalKind.OWNER, "artifact-test-owner"),
+        {
+            "command_id": "artifact-test-default-assignment",
+            "expected_revision": 0,
+            "scope": {"kind": "global"},
+            "entries": [{"profile_id": "legacy-artifact-default"}],
+        },
     )
     yield database
     reset_database()

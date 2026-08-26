@@ -1548,7 +1548,7 @@ class RoutedInferenceCoordinator:
             from ..kernel.runtime import _as_principal
 
             with _as_principal(principal):
-                runner.invoke(
+                runner_outcome = runner.invoke(
                     request, adapter, publish=project, parent_context=parent_context,
                     planned_node=planned_node,
                 )
@@ -1576,7 +1576,16 @@ class RoutedInferenceCoordinator:
                     "winning_reservation": winning,
                 }
             if receipt["state"] == "terminal":
-                return {"outcome": receipt["outcome"], "result": None, "receipt": receipt}
+                return {
+                    "outcome": receipt["outcome"],
+                    "result": None,
+                    "receipt": receipt,
+                    # The route receipt deliberately stores only the typed,
+                    # content-free disposition. Return the transient physical
+                    # error to the owning service so its transport can preserve
+                    # the ordinary 502 body without making it route evidence.
+                    "error": str(getattr(runner_outcome, "error", "") or ""),
+                }
             execution = self.controller._execution(None, execution_id)
 
     def recover_route_executions(

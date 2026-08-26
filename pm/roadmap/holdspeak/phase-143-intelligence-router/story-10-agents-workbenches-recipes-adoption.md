@@ -114,3 +114,19 @@ The shared UI must replace, not sit beside, private target selectors.
   freeze/mutate/later-admission and receipt linkage per family.
   Orchestrator-verified: census+matrix set 96 passed; spine/provenance/
   cardinality/context guards 114 passed.
+- 2026-08-25 — Second opus gate audit (Slices 4+6 + story-level acceptance):
+  CLEAN on all six dimensions, zero findings — second consecutive
+  zero-finding audit.
+- 2026-08-25 — Sweep №1: 6574 passed / 39 failed / 53 skipped (7:23,
+  xdist). Triage: 34 inherited (baseline), 1 census xdist flake
+  (serial-green ×2, ledgered), 4 REAL branch-new in recipe web surfaces —
+  files no round's focused set covered. Fix round: two product defects
+  fixed (post-marker recipe CREATE with a dangling profile_id wrongly
+  refused via an invalid assignment write — now creation succeeds and
+  run/chat return an honest 409 inference_target_unavailable pre-admission;
+  routed provider failures laundered into generic 409s — now 502 with the
+  transient error preserved, no exception text in durable route evidence)
+  + blank-recipe rigs migrated from retired ambient placement to canonical
+  global-default seeding. Orchestrator-verified: fixed surfaces 63 passed
+  (incl. previously-inherited workflow-route failures now healed); guards +
+  census + matrix 210 passed.

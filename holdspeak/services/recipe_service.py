@@ -95,6 +95,7 @@ class RecipeService:
         self._migrate_subject_pointers(principal)
         self._reject_retired_selector(inference_target_id or requested_placement)
         recipe = self._recipe(recipe_id)
+        self._refuse_missing_legacy_profile(recipe)
         variables = variables if isinstance(variables, dict) else {}
         user = _render_user_prompt(recipe.user_template, variables, str(input or ""))
         if not user.strip():
@@ -125,7 +126,12 @@ class RecipeService:
         )
         if routed["outcome"] != "succeeded":
             self._broadcast(broadcast, "error", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id, error=routed["outcome"])
-            raise ServiceError("inference_route_failed", "No assigned model completed this recipe", context={"receipt": routed["receipt"], "status": 409})
+            failed = routed["outcome"] == "failed"
+            raise ServiceError(
+                "inference_route_failed",
+                str(routed.get("error") or "No assigned model completed this recipe"),
+                context={"receipt": routed["receipt"], "status": 502 if failed else 409},
+            )
         winner = str(routed["winning_reservation"]["child_invocation_id"])
         result = self._broker.projection_stager.finalize(winner)
         if result is None:
@@ -143,6 +149,7 @@ class RecipeService:
         if not question:
             raise ValidationError("question is required")
         recipe = self._recipe(recipe_id)
+        self._refuse_missing_legacy_profile(recipe)
         name = recipe.name or recipe_id
         blocks, context = [], []
         if (recipe.manual_context or "").strip(): context.append(recipe.manual_context)
@@ -195,7 +202,12 @@ class RecipeService:
             admitted = await asyncio.to_thread(self._broker.inference_adoption_service.admit, principal, command_id=f"admit-{invocation_id}", capability_id="recipe.chat", operation_id=invocation_id, payload=payload, subject_kind="recipe", subject_id=recipe_id, reserved_output_tokens=512)
             routed = await asyncio.to_thread(self._broker.inference_adoption_service.execute, principal, execution_id=admitted["execution"]["id"], adapter=_RecipeResultAdapter(), publish=self._publisher("recipe-chat-result", recipe, payload, [], admitted["route_plan"]))
         if routed["outcome"] != "succeeded":
-            raise ServiceError("inference_route_failed", "No assigned model completed this recipe", context={"receipt": routed["receipt"], "status": 409})
+            failed = routed["outcome"] == "failed"
+            raise ServiceError(
+                "inference_route_failed",
+                str(routed.get("error") or "No assigned model completed this recipe"),
+                context={"receipt": routed["receipt"], "status": 502 if failed else 409},
+            )
         winner = str(routed["winning_reservation"]["child_invocation_id"])
         result = self._broker.projection_stager.finalize(winner)
         if result is None: raise ServiceError("projection_not_published", "Recipe chat is awaiting receipt reconciliation", context={"invocation_id": winner, "status": 409})
@@ -221,23 +233,78 @@ class RecipeService:
         if assignments.migration_marker(principal, family=RECIPE_WORKBENCH_MIGRATION_FAMILY) is None:
             return
         profile_id = str(value or "").strip()
+        with self._db._connection() as conn:
+            revision = conn.execute(
+                "SELECT MAX(revision) FROM model_profile_revisions WHERE profile_id=?",
+                (profile_id,),
+            ).fetchone()[0]
+            legacy = conn.execute(
+                "SELECT 1 FROM profiles WHERE id=? AND deleted=0", (profile_id,)
+            ).fetchone()
+        # The retired pointer is a compatibility input, never an execution
+        # selector. An owner may nevertheless save a named destination that has
+        # gone away: retain it visibly on the Recipe, remove any prior exact
+        # assignment, and let the explicit refusal fence below prevent broader
+        # inheritance from silently retargeting the next turn.
+        entry_profile = (
+            f"legacy-{profile_id}"
+            if not revision and legacy is not None
+            else (profile_id if revision else "")
+        )
         for capability_id in ("recipe.run", "recipe.chat"):
             scope = {"kind": "subject", "subject_kind": "recipe", "subject_id": recipe_id, "capability_id": capability_id}
             try:
                 current = assignments.get_assignment(principal, scope)
             except NotFound:
                 current = None
-            if not profile_id:
+            if not entry_profile:
                 if current is not None:
                     assignments.clear_assignment(principal, {"command_id": f"recipe-profile-clear-{recipe_id}-{capability_id}", "expected_revision": current["revision"], "scope": scope, "capability_id": capability_id, "subject_kind": "recipe", "subject_id": recipe_id})
                 continue
-            entry_profile = profile_id
-            with self._db._connection() as conn:
-                revision = conn.execute("SELECT MAX(revision) FROM model_profile_revisions WHERE profile_id=?", (profile_id,)).fetchone()[0]
-                legacy = conn.execute("SELECT 1 FROM profiles WHERE id=? AND deleted=0", (profile_id,)).fetchone()
-            if not revision and legacy is not None:
-                entry_profile = f"legacy-{profile_id}"
             assignments.set_assignment(principal, {"command_id": f"recipe-profile-write-{recipe_id}-{capability_id}", "expected_revision": 0 if current is None else current["revision"], "scope": scope, "entries": [{"profile_id": entry_profile}]})
+
+    def _refuse_missing_legacy_profile(self, recipe: Any) -> None:
+        """Fence a post-cutover dangling compatibility selection before routing.
+
+        Exact canonical assignments are the sole route authority.  A saved
+        retired pointer without a corresponding legacy or canonical profile is
+        not a candidate route, but it remains owner-visible and must block
+        inherited/global routing until repaired.
+        """
+        profile_id = str(getattr(recipe, "profile_id", "") or "").strip()
+        if not profile_id:
+            return
+        with self._db._connection() as conn:
+            canonical = conn.execute(
+                "SELECT 1 FROM model_profile_revisions WHERE profile_id=? LIMIT 1",
+                (profile_id,),
+            ).fetchone()
+            legacy = conn.execute(
+                "SELECT 1 FROM profiles WHERE id=? AND deleted=0", (profile_id,)
+            ).fetchone()
+        if canonical is not None or legacy is not None:
+            return
+        from ..inference_targets import InferenceTarget, target_refusal
+        unavailable = InferenceTarget(
+            id=profile_id,
+            name=profile_id,
+            kind="unsupported",
+            boundary="unknown",
+            owner="unknown",
+            transport="none",
+            profile_id=profile_id,
+            engine="unknown",
+            model="",
+            context_limit=16_384,
+            readiness_state="unavailable",
+            readiness_reason=f"Destination '{profile_id}' does not exist on this device",
+        )
+        refusal = target_refusal(unavailable)
+        raise ServiceError(
+            "target_unavailable",
+            str(refusal["error"]),
+            context={"status": 409, **refusal},
+        )
 
     @staticmethod
     def _reject_retired_selector(value: Any) -> None:
@@ -255,20 +322,25 @@ class RecipeService:
     def _broadcast(broadcast: Broadcast | None, state: str, **frame: Any) -> None:
         if broadcast: broadcast(state, **frame)
 
-    @staticmethod
-    def _route_summary(route: dict[str, Any], ordinal: int) -> dict[str, Any]:
+    def _route_summary(self, route: dict[str, Any], ordinal: int) -> dict[str, Any]:
         entry = dict(route["entries"][ordinal - 1])
         profile_id = str(entry["profile_id"]).removeprefix("legacy-")
-        return {"id": profile_id, "profile_id": profile_id, "engine": "routed", "boundary": entry["boundary"], "deployment_revision_id": entry["deployment_revision_id"]}
+        # Target identity comes from the admitted immutable deployment revision,
+        # never from the current profile/assignment configuration.
+        revision = self._db.deployment_revisions.get(str(entry["deployment_revision_id"]))
+        target_id = str(getattr(revision, "destination_id", "") or profile_id)
+        return {"id": profile_id, "profile_id": profile_id, "target_id": target_id, "engine": "routed", "boundary": entry["boundary"], "deployment_revision_id": entry["deployment_revision_id"]}
 
     def _run_projection(self, result: Any, recipe: Any, sources: list[dict[str, str]], user: str, route: dict[str, Any], ordinal: int) -> dict[str, Any]:
         value = dict(result) if isinstance(result, dict) else {"output": str(result)}
         target = self._route_summary(route, ordinal); output = str(value["output"]); artifact_id = "artifact_" + uuid.uuid4().hex[:12]
-        return {"recipe_id": recipe.id, "name": f"{recipe.name or recipe.id}: {user}" if user else (recipe.name or recipe.id), "output": output, "provider": str(value.get("provider") or target["engine"]), "profile_id": target["profile_id"], "inference_target": target, "actual_placement": {"boundary": target["boundary"], "deployment_revision_id": target["deployment_revision_id"]}, "sources": sources, "artifact_id": artifact_id, "created_at": datetime.now().isoformat(), "placement": {"route_plan_id": route["id"], "route_plan_sha256": route["sha256"]}}
+        model = str(value.get("model") or target["profile_id"])
+        return {"recipe_id": recipe.id, "name": f"{recipe.name or recipe.id}: {user}" if user else (recipe.name or recipe.id), "output": output, "provider": str(value.get("provider") or target["engine"]), "profile_id": target["profile_id"], "inference_target": target, "actual_placement": {"target_id": target["target_id"], "boundary": target["boundary"], "deployment_revision_id": target["deployment_revision_id"], "model": model}, "sources": sources, "artifact_id": artifact_id, "created_at": datetime.now().isoformat(), "placement": {"route_plan_id": route["id"], "route_plan_sha256": route["sha256"]}}
 
     def _chat_projection(self, result: Any, recipe: Any, payload: dict[str, Any], route: dict[str, Any], ordinal: int) -> dict[str, Any]:
         value = dict(result) if isinstance(result, dict) else {"output": str(result)}; target = self._route_summary(route, ordinal)
-        output = {"recipe_id": recipe.id, "output": str(value.get("output") or value.get("summary") or ""), "provider": str(value.get("provider") or target["engine"]), "profile_id": target["profile_id"], "inference_target": target, "actual_placement": {"boundary": target["boundary"], "deployment_revision_id": target["deployment_revision_id"]}, "egress": {"scope": target["boundary"]}, "model": str(value.get("model") or target["profile_id"]), "context_ids": payload["context_ids"], "context_titles": payload["context_titles"], "placement": {"route_plan_id": route["id"], "route_plan_sha256": route["sha256"]}}
+        model = str(value.get("model") or target["profile_id"])
+        output = {"recipe_id": recipe.id, "output": str(value.get("output") or value.get("summary") or ""), "provider": str(value.get("provider") or target["engine"]), "profile_id": target["profile_id"], "inference_target": target, "actual_placement": {"target_id": target["target_id"], "boundary": target["boundary"], "deployment_revision_id": target["deployment_revision_id"], "model": model}, "egress": {"scope": target["boundary"]}, "model": model, "context_ids": payload["context_ids"], "context_titles": payload["context_titles"], "placement": {"route_plan_id": route["id"], "route_plan_sha256": route["sha256"]}}
         if payload["grounding"] is not None: output["grounding"] = payload["grounding"]
         return output
 

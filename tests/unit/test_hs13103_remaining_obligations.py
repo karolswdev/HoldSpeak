@@ -57,9 +57,17 @@ class AskEngine:
 
 
 @pytest.fixture
-def rig(tmp_path: Path) -> tuple[Database, Any, Any]:
+def rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Database, Any, Any]:
     db = Database(tmp_path / "remaining-obligations.db")
-    db.profiles.upsert(profile_id="local", name="Local", kind="onDevice", model_file="/model.gguf")
+    model = tmp_path / "local.gguf"
+    model.touch()
+    # Ask's adopted route freezes the configured local deployment; the old
+    # readiness monkeypatch is not that artifact declaration.
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.configured_local_meeting_model_path",
+        lambda: str(model),
+    )
+    db.profiles.upsert(profile_id="local", name="Local", kind="onDevice", model_file=str(model))
     revision = capture_deployment_revision(db, resolve_inference_target(db, "local"))
     return db, _configure(db), revision
 

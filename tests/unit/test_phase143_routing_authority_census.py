@@ -153,7 +153,7 @@ PROFILE_ID_CLASSIFICATIONS = {
     **{site: "migration source" for site in {
         "holdspeak/db/models/__init__.py:1121:profile_id",
         "holdspeak/db/models/workbench.py:138:profile_id",
-        "holdspeak/services/recipe_service.py:309:profile_id",
+        "holdspeak/services/recipe_service.py:381:profile_id",
         "holdspeak/services/workbench_service.py:564:profile_id",
     }},
     **{site: "credential/provider identity" for site in {

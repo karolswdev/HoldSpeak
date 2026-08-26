@@ -426,7 +426,7 @@ class SequenceWorkflowService:
                 if routed["outcome"] != "succeeded":
                     raise ServiceError(
                         "inference_failed",
-                        str(routed["outcome"]),
+                        str(routed.get("error") or routed["outcome"]),
                         context={"status": 502, "recipe_id": recipe.id, "receipt": routed["receipt"]},
                     )
                 iid = str(routed["winning_reservation"]["child_invocation_id"])
@@ -694,21 +694,22 @@ class SequenceWorkflowService:
                     policy = resolved_failure_policy(node)
                     handled = on_node_error(node, current)
                     if handled is None:
-                        code = (
-                            "workflow_failure_policy_hold"
-                            if policy == "hold"
-                            else "inference_failed"
-                        )
+                        # A saved graph may deliberately hold an admitted node
+                        # for owner repair. A prompt-only compatibility Workflow
+                        # has no such declared policy: its physical provider
+                        # failure remains an ordinary transport failure.
+                        held = policy == "hold" and plan is not None
+                        code = "workflow_failure_policy_hold" if held else "inference_failed"
                         message = (
                             "This Workflow node is held after its admitted model attempt failed."
-                            if policy == "hold"
-                            else str(routed["outcome"])
+                            if held
+                            else str(routed.get("error") or routed["outcome"])
                         )
                         raise ServiceError(
                             code,
                             message,
                             context={
-                                "status": 409 if policy == "hold" else 502,
+                                "status": 409 if held else 502,
                                 "node_id": node.id,
                                 "receipt": routed["receipt"],
                             },

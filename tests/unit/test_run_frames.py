@@ -20,17 +20,31 @@ from fastapi.testclient import TestClient
 
 import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
 
 @pytest.fixture()
 def rig(monkeypatch):
     reset_database()
-    database = Database(Path(tempfile.mkdtemp()) / "run-frames.db")
+    directory = Path(tempfile.mkdtemp())
+    database = Database(directory / "run-frames.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: database)
-    # The engine is stubbed below; target model-file readiness is not under test.
-    monkeypatch.setattr(
-        "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
+    model = directory / "frame-default.gguf"
+    model.touch()
+    database.profiles.upsert(
+        profile_id="frame-default", name="Frame default", kind="onDevice",
+        model_file=str(model),
+    )
+    InferenceAssignmentService(database).set_assignment(
+        Principal(PrincipalKind.OWNER, "frame-test-owner"),
+        {
+            "command_id": "frame-test-default-assignment",
+            "expected_revision": 0,
+            "scope": {"kind": "global"},
+            "entries": [{"profile_id": "legacy-frame-default"}],
+        },
     )
     server = MeetingWebServer(WebRuntimeCallbacks(
         on_bookmark=lambda *a, **k: None, on_stop=lambda *a, **k: None,
