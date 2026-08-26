@@ -72,3 +72,24 @@ Technical provenance and locators stay in explicit owner-only Details.
   proofs 146 passed; guards 171 passed (worker). One guard note: the
   interior-canon left-border CSS failure is inherited baseline, untouched
   by this server-only round.
+- 2026-08-26 — Opus audit of the server half (S1–S3): CLEAN on all seven
+  dimensions (zero-assignment runtime enforcement, secret custody with
+  exhaustive sentinel matrix, closed action truth incl. Anthropic
+  no-false-Ready, one-repair law, authority hygiene + side-door 404s,
+  schema discipline, test honesty). One LEDGER note: generic error_500
+  logs str(exc) for unforeseeable exceptions — crash-window class, S5
+  eyeballs it, no ceremony.
+- 2026-08-26 — Round 3 (S4, the glass): Settings Models slot body replaced
+  by ModelLibraryCore (flat wrapping radiogroup rows, source tabs, 320px
+  detail/action seat, in-world four-entry Add flow, Providers + RAW
+  disclosures, egress chips, in-flow states, write-only uncontrolled
+  credential handoff, arrow/Escape/Mod+Enter keyboard law);
+  InferenceCapabilityPanel + inferenceSetup.ts retired with grep proof
+  (no CONNECT & USE / USE MODEL / IN USE / Download & use anywhere in
+  web/src); the old hosted flow's Thoughts-pointer mutation is dead with
+  its component. Real-hub shots at 1440+393 (populated/empty/error) in
+  assets/story-12-shots/, sent to the owner per the shots-before-merge
+  law. Orchestrator-verified: component suite 7 passed, e2e 6 passed,
+  build green; orchestrator eyeball flags for S5: empty state under the
+  joy bar (bare circle + dead space on a first-run screen) and "Ready"
+  status copy over an empty library.
