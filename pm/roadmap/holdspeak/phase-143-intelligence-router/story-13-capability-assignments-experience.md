@@ -81,3 +81,21 @@ Follow the exact composition and rejection criteria in `assets/owner-experience.
   dictation-recovery/meetings-group × 1440/393). Cross-cutting net run
   in-round: 134 passed / 2 inherited-baseline failures. Orchestrator-
   verified: e2e+routes+service+manifest+census 56 passed, component 8.
+- 2026-08-26 — Round 4 (S5 + type-hygiene correction): PersonaChat,
+  CapabilitySection, and WorkbenchWindow cut over to pre-scoped
+  ContextualAssignment on their exact Story-10 subject/capability pairs
+  (recipe.run/recipe.chat; workbench.item/voice.reference_resolve);
+  RunsOnPicker + workbenchTarget DELETED with zero-reference grep proof;
+  browser-authored placement writes gone from Recipe editor, Workbench
+  templates/config/chat/runs/list (list shows server-resolved summary);
+  the contextual editor portals into a dock-safe desk layer (clipping
+  fix) with opener-focus restore. Full walk: keyboard roving, Ctrl+Enter,
+  Escape restore, live regions, 44px, overflow/dock, reduced motion,
+  200% zoom — real-hub e2e 12 passed (orchestrator-verified). All shots
+  regenerated incl. assignments-populated-1440-zoom200. Orchestrator
+  caught the worker misclassifying its own typecheck errors as baseline
+  — corrected: AssignmentSummary DTO import renamed
+  AssignmentSummaryProjection, DTO-derived row/task types, concrete test
+  fixtures, zero story-file typecheck hits (verified); the two remaining
+  pages/cores hits are inherited history/MeetingsConfig. Component
+  suites 15 passed; build green.

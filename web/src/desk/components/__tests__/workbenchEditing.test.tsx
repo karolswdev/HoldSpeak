@@ -265,6 +265,24 @@ describe("HS-132-07 drop-target honesty", () => {
   });
 });
 
+describe("HS-143-13 canonical workbench assignments", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("mounts the two exact workbench subject summaries instead of target pickers", async () => {
+    const { container } = await openWindow();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Expand configuration" }));
+    expect(container.querySelector('[data-capability="workbench.item"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-capability="voice.reference_resolve"]')).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: /runs on|resolves with/i })).toBeNull();
+  });
+});
+
 describe("HS-132-07 no bare disabled control", () => {
   beforeEach(() => {
     localStorage.clear();

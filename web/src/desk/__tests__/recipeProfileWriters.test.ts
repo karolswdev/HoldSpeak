@@ -1,7 +1,5 @@
-// HS-134-05 — the recipe profile_id writer guard. Only RecipeEditor may
-// write profile_id to a recipe. Get Info hands off — it summarizes and
-// delegates. This test FAILS when a second writer appears (the same
-// pattern as settingsWriters.test.ts).
+// HS-143-13 — browser recipe placement is contextual assignment glass only.
+// No feature may write the retired profile_id pointer beside that editor.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -39,20 +37,18 @@ export function writesRecipeProfileId(content: string): boolean {
   return false;
 }
 
-describe("the recipe profile_id writer guard (HS-134-05)", () => {
+describe("the retired browser recipe profile_id writer guard (HS-143-13)", () => {
   const files = walk(DESK_SRC).map((full) => ({
     name: path.relative(DESK_SRC, full),
     content: readFileSync(full, "utf8"),
   }));
 
-  it("only RecipeEditor writes profile_id to a recipe", () => {
+  it("has no browser writer for the retired profile pointer", () => {
     const writers = files
       .filter((f) => writesRecipeProfileId(f.content))
       .map((f) => f.name)
       .sort();
-    expect(writers).toEqual([
-      "desk/pullouts/editors/RecipeEditor.tsx",
-    ]);
+    expect(writers).toEqual([]);
   });
 
   it("infoContract does NOT write profile_id", () => {

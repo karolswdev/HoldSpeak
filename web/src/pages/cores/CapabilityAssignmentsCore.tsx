@@ -8,9 +8,11 @@ import {
   getAssignmentSummary,
   type AssignmentProjection,
   type AssignmentScope,
-  type AssignmentSummary,
+  type AssignmentSummary as AssignmentSummaryProjection,
   type AssignmentSummaryRow,
 } from "./assignmentExperience";
+
+type AssignmentTaskOverride = AssignmentSummaryProjection["task_overrides"][number];
 
 function chain(entries: AssignmentProjection["entries"] | undefined): string {
   if (!entries?.length) return "No default model";
@@ -30,7 +32,7 @@ function scopeFor(row: AssignmentSummaryRow): AssignmentScope {
 
 /** Bounded owner Settings glass; server owns assignment, compatibility, and inheritance truth. */
 export function CapabilityAssignmentsCore() {
-  const [summary, setSummary] = useState<AssignmentSummary | null>(null);
+  const [summary, setSummary] = useState<AssignmentSummaryProjection | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [selected, setSelected] = useState<AssignmentSummaryRow | null>(null);
@@ -47,7 +49,10 @@ export function CapabilityAssignmentsCore() {
   }, []);
   useEffect(() => { void reload(); }, [reload]);
 
-  const rows = useMemo(() => [...(summary?.rows ?? [])].sort((left, right) => Number(Boolean(right.repair)) - Number(Boolean(left.repair))), [summary]);
+  const rows = useMemo(
+    () => [...(summary?.rows ?? [])].sort((left, right) => Number(Boolean(right.repair)) - Number(Boolean(left.repair))),
+    [summary],
+  );
   const open = async (row: AssignmentSummaryRow, opener?: HTMLElement) => {
     if (!row.editor_capability_id) return;
     if (opener) openingFocus.current = opener;
@@ -58,7 +63,9 @@ export function CapabilityAssignmentsCore() {
   const saved = async (nextReceipt: string) => {
     close(); setReceipt(nextReceipt); await reload();
   };
-  const taskRows = (summary?.task_overrides ?? []).filter((row) => allTasks || row.has_override || row.issues.length > 0);
+  const taskRows: AssignmentTaskOverride[] = (summary?.task_overrides ?? []).filter(
+    (row: AssignmentTaskOverride) => allTasks || row.has_override || row.issues.length > 0,
+  );
 
   if (loading) return <SurfaceState loading />;
   if (loadError) return <SurfaceState error={loadError} onRetry={() => void reload()} />;
@@ -69,7 +76,7 @@ export function CapabilityAssignmentsCore() {
     <div className="assignment-editor-layout">
       <div className="assignment-overview">
         <div className="capability-assignment-rows">
-          {rows.map((row) => <AssignmentSummary
+          {rows.map((row: AssignmentSummaryRow) => <AssignmentSummary
             key={row.id}
             label={row.label}
             effective={effectiveCopy(row)}
@@ -80,7 +87,7 @@ export function CapabilityAssignmentsCore() {
         <details className="assignment-overrides" open={showOverrides} onToggle={(event) => setShowOverrides((event.currentTarget as HTMLDetailsElement).open)}>
           <summary>Show task overrides</summary>
           <div className="assignment-override-filter"><button type="button" aria-pressed={!allTasks} onClick={() => setAllTasks(false)}>Overrides & issues</button><button type="button" aria-pressed={allTasks} onClick={() => setAllTasks(true)}>All tasks</button></div>
-          {taskRows.length ? <div className="assignment-task-rows">{taskRows.map((task) => <article key={task.id}><span>{task.group.label}</span><strong>{task.label}</strong><small>{task.effective.assignment ? chain(task.effective.assignment.entries) : "No default model"}</small></article>)}</div> : <SurfaceState empty emptyContent={<span>No task overrides</span>} />}
+          {taskRows.length ? <div className="assignment-task-rows">{taskRows.map((task: AssignmentTaskOverride) => <article key={task.id}><span>{task.group.label}</span><strong>{task.label}</strong><small>{task.effective.assignment ? chain(task.effective.assignment.entries) : "No default model"}</small></article>)}</div> : <SurfaceState empty emptyContent={<span>No task overrides</span>} />}
         </details>
       </div>
       {selected && editor ? <AssignmentEditor

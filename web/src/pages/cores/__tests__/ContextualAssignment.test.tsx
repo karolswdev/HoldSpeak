@@ -56,4 +56,28 @@ describe("ContextualAssignment", () => {
     ));
     expect(await screen.findByRole("status")).toHaveTextContent("Assignment changed to Quick Qwen. Next run.");
   });
+
+  it.each([
+    ["Recipe chat", "recipe.chat", { kind: "subject", subject_kind: "recipe", subject_id: "recipe-17", capability_id: "recipe.chat" }],
+    ["Recipe run", "recipe.run", { kind: "subject", subject_kind: "recipe", subject_id: "recipe-17", capability_id: "recipe.run" }],
+    ["Workbench item", "workbench.item", { kind: "subject", subject_kind: "workbench", subject_id: "workbench-17", capability_id: "workbench.item" }],
+    ["Reference resolver", "voice.reference_resolve", { kind: "subject", subject_kind: "workbench", subject_id: "workbench-17", capability_id: "voice.reference_resolve" }],
+  ] as const)("opens %s at its exact subject/capability pair", async (label, capabilityId, subjectScope) => {
+    const scopedEditor = {
+      ...editor,
+      scope: subjectScope,
+      selected_capability: { ...editor.selected_capability, id: capabilityId },
+    };
+    vi.mocked(getAssignmentEditor).mockResolvedValue(scopedEditor);
+    render(<ContextualAssignment label={label} capabilityId={capabilityId} scope={subjectScope} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Change" }));
+    await screen.findByRole("heading", { name: label });
+    expect(getAssignmentEditor).toHaveBeenLastCalledWith(subjectScope, capabilityId);
+  });
+
+  it("keeps the host surface alive for an incomplete server response", async () => {
+    vi.mocked(getAssignmentEditor).mockResolvedValue({} as never);
+    render(<ContextualAssignment label="Recipe run" capabilityId="recipe.run" scope={scope} />);
+    expect(await screen.findByRole("status")).toHaveTextContent("Assignment unavailable");
+  });
 });

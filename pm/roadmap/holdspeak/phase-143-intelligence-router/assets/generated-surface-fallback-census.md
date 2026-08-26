@@ -29,14 +29,13 @@ Swift executable-policy invariant remain fail-closed.
 |---|---|---|---|
 | Profile library and credential identity | `holdspeak/services/profile_service.py`, `holdspeak/services/profile_key_service.py`, `holdspeak/intel/providers.py`, `holdspeak/inference_targets.py` | `ProfileRecord`, key slot, legacy profile factory | 143-03 |
 | Model Library availability and acquisition | `holdspeak/services/{model_library_service,inference_acquisition_service,inference_setup_service}.py`, `holdspeak/web/routes/model_library.py`, `web/src/pages/cores/{ModelLibraryCore,modelLibrary}.ts*` | one server-owned availability projection and library commands; provider/profile adapters retain no assignment authority | 143-12 |
-| Thoughts and Ask destination | `holdspeak/config/integrations.py`, `holdspeak/services/ask_service.py`, `holdspeak/services/inference_setup_service.py`, `web/src/desk/chat.ts`, `web/src/desk/store/dataSlice.ts` | legacy persisted migration input and remaining Recipe/Workflow request compatibility; Thought glass now reads canonical assignments | 143-07 |
+| Thoughts and Ask destination | `holdspeak/config/integrations.py`, `holdspeak/services/ask_service.py`, `holdspeak/services/inference_setup_service.py`, `web/src/desk/ask.ts`, `web/src/desk/store/dataSlice.ts` | legacy persisted migration input and remaining transport compatibility; Thought glass now reads canonical assignments | 143-07 |
 | Dictation/rewrite/punctuation destination | `holdspeak/config/model.py`, `holdspeak/speech_session/plan.py`, `holdspeak/plugins/dictation/assembly.py`, `holdspeak/target_profile.py` | `dictation.runtime.profile_id` and typed runtime policy; Dictation glass now reads canonical assignments | 143-07 |
 | Meetings destination and bound route evidence | one-time `holdspeak/config/meeting.py` migration input; `holdspeak/services/meeting_deferred_queue_binding.py`; `holdspeak/meeting_session/deferred_bound.py` | C1 parent/bundle members are the deferred execution authority; `MeetingIntelPlan` is display-only persisted history | 143-08 |
 | Deferred meeting/background jobs | `holdspeak/intel_queue.py`, `holdspeak/services/meeting_intel_service.py`, `holdspeak/services/settings_service.py` | queue schedule/recovery controls | 143-08 |
 | Workbench, Recipe, Agent and workflow placement | canonical `InferenceAssignmentService` / `RoutedInferenceCoordinator` / `InferenceParentRouteBundleService`; compatibility inputs in `holdspeak/services/{recipe_service,sequence_workflow_service,support,workbench_runner,workbench_service}.py`; listed web transports | frozen assignment/route/controller evidence; retired request fields refuse and legacy record writes translate once | 143-10 |
 | HTTP/MCP/browser pointer transport and types | `holdspeak/mcp/`, `holdspeak/web/routes/`, `web/src/desk/{api,detail-types,store/types}.ts`, `web/src/pages/cores/core-types.ts` | transport/projection only; must not resolve a route | 143-11 |
-| Assignment editor shell | `web/src/pages/cores/{ContextualAssignment,SettingsCore,AssignmentEditor,AssignmentModelChooser,assignmentExperience}.ts*` | canonical assignment summary/editor; Model Library remains availability-only | 143-13 |
-| Legacy Recipe/Workbench picker | `web/src/desk/components/RunsOnPicker.tsx` via `PersonaChat`, `CapabilitySection`, and `WorkbenchWindow` | S4 callers are retired; the remaining three S5-owned callers retain the component only until their subject summaries land | 143-10 |
+| Assignment editor shell | `web/src/pages/cores/{ContextualAssignment,SettingsCore,AssignmentEditor,AssignmentModelChooser,assignmentExperience}.ts*` | canonical assignment summary/editor; Recipe and Workbench contextual subjects reuse it; Model Library remains availability-only | 143-13 |
 | Generic route/failure law and physical attempts | `holdspeak/kernel/{inference_runner,projection_stager}.py`, `holdspeak/intel/engine.py` | runner physical attempt and provider compatibility seam | 143-06 |
 | Baseline false positives/non-inference selectors | `holdspeak/desktop_presence.py`, `holdspeak/speaker_intel.py`, `holdspeak/plugins/dictation/builtin/project_rewriter.py` | renderer, speaker, and input selection—not model routing | 143-01 |
 
@@ -93,12 +92,10 @@ first category may participate in a future assignment migration.
 
 | Classification | Surfaces | One migration story |
 |---|---|---|
-| inference-route | `web/src/desk/ask.ts`, `web/src/desk/chat.ts`, `web/src/desk/store/dataSlice.ts` | 143-07; Thought and Dictation owner glass migrated to contextual canonical assignments |
-| inference-route | `web/src/desk/components/PersonaChat.tsx`, `web/src/desk/components/RunsOnPicker.tsx`, `web/src/desk/components/WorkbenchTemplatePicker.tsx`, `web/src/desk/components/WorkbenchWindow.tsx`, `web/src/desk/pullouts/editors/RecipeEditor.tsx`, `web/src/desk/pullouts/shared/CapabilitySection.tsx` | 143-10; final picker retirement is S5 |
+| inference-route | `web/src/desk/ask.ts`, `web/src/desk/store/dataSlice.ts` | 143-07; Thought and Dictation owner glass migrated to contextual canonical assignments |
 | inference-route | `web/src/pages/cores/SettingsCore.tsx`, `web/src/pages/cores/AssignmentEditor.tsx`, `web/src/pages/cores/AssignmentModelChooser.tsx`, `web/src/pages/cores/assignmentExperience.ts` | 143-13 |
-| display-transport | `web/src/desk/api.ts`, `web/src/desk/components/Pullout.tsx`, `web/src/desk/detail-types.ts`, `web/src/desk/store/types.ts`, `web/src/lib/primitives.ts`, `web/src/pages/cores/core-types.ts` | 143-11 |
+| display-transport | `web/src/desk/api.ts`, `web/src/desk/components/Pullout.tsx`, `web/src/desk/detail-types.ts`, `web/src/desk/infoContract.ts`, `web/src/desk/store/types.ts`, `web/src/lib/primitives.ts`, `web/src/pages/cores/core-types.ts` | 143-11 / 143-10 display contracts; no browser placement writer remains |
 | display-transport | `web/src/pages/cores/ModelLibraryCore.tsx`, `web/src/pages/cores/modelLibrary.ts` | 143-12 availability transport; selection never writes an assignment pointer |
-| display-transport | `web/src/desk/components/workbenchTarget.ts`, `web/src/desk/infoContract.ts`, `web/src/pages/cores/WorkbenchesHomeCore.tsx` | 143-10 |
 | unrelated | `web/src/desk/components/DeliveryBoard.tsx`, `web/src/desk/deliveryFactory.ts` | 143-01 |
 
 Adding another production routing consumer—or a private selector/recovery

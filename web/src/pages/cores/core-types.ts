@@ -38,6 +38,12 @@ export interface WbSummary {
   name: string;
   recipe_id: string | null;
   profile_id: string | null;
+  assignment_summary?: {
+    status: string;
+    source: string | null;
+    chain: string[];
+    repair: string | null;
+  };
   schedule: string | null;
   schedule_enabled: boolean;
   item_count: number;

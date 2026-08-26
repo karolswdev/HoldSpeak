@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { readableError } from "../../lib/api";
 import { AssignmentEditor } from "./AssignmentEditor";
 import { AssignmentSummary } from "./AssignmentSummary";
@@ -9,10 +10,14 @@ import {
 } from "./assignmentExperience";
 
 function namedChain(editor: AssignmentEditorProjection): string {
-  const entries = editor.effective.assignment?.entries ?? [];
+  const entries = editor.effective?.assignment?.entries ?? [];
   const chain = entries.length ? entries.map((entry) => entry.label).join(" → ") : "No default model";
-  const source = editor.effective.inherited_from;
+  const source = editor.effective?.inherited_from;
   return source ? `Uses ${source} · ${chain}` : chain;
+}
+
+function isProjection(editor: AssignmentEditorProjection | null): editor is AssignmentEditorProjection {
+  return Boolean(editor?.effective && editor?.selected_capability && editor?.scope);
 }
 
 /**
@@ -55,27 +60,40 @@ export function ContextualAssignment({
     setOpen(true);
     void refresh();
   };
+  const close = () => {
+    // Restore synchronously before unmounting the sheet; some browser focus
+    // managers otherwise fall through to body during Escape's key event.
+    opener.current?.focus();
+    setOpen(false);
+  };
   const saved = async (nextReceipt: string) => {
     setReceipt(nextReceipt);
-    setOpen(false);
+    close();
     await refresh();
   };
 
+  const projection = isProjection(editor) ? editor : null;
+
   return <div className="contextual-assignment" data-capability={capabilityId}>
-    {editor ? <AssignmentSummary
+    {projection ? <AssignmentSummary
       label={label}
-      effective={namedChain(editor)}
-      repair={editor.effective.repair}
+      effective={namedChain(projection)}
+      repair={projection.effective.repair}
       onChange={change}
-    /> : error ? <p className="contextual-assignment-error" role="status">{error}</p> : <p className="contextual-assignment-loading">Loading assignment</p>}
+    /> : error ? <p className="contextual-assignment-error" role="status">{error}</p> : editor ? <p className="contextual-assignment-error" role="status">Assignment unavailable</p> : <p className="contextual-assignment-loading">Loading assignment</p>}
     {receipt ? <p className="contextual-assignment-receipt" role="status">{receipt}</p> : null}
-    {open && editor ? <AssignmentEditor
-      title={label}
-      editor={editor}
-      returnFocus={opener.current}
-      onClose={() => setOpen(false)}
-      onRefresh={refresh}
-      onSaved={saved}
-    /> : null}
+    {open && projection ? createPortal(
+      <div className="contextual-assignment-layer">
+        <AssignmentEditor
+          title={label}
+          editor={projection}
+          returnFocus={opener.current}
+          onClose={close}
+          onRefresh={refresh}
+          onSaved={saved}
+        />
+      </div>,
+      document.getElementById("desk-next") ?? document.body,
+    ) : null}
   </div>;
 }

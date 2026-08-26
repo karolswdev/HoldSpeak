@@ -11,7 +11,6 @@ import {
   SurfaceState,
 } from "../../desk/surface/Surface";
 import { renderHeroSlot } from "./core-layout";
-import { LampGadget } from "../../desk/surface/gadgets";
 import { humanTime } from "../../desk/surface/format";
 import type {
   CoreProps,
@@ -34,7 +33,6 @@ function humanSchedule(cron: string | null): string {
 
 export function WorkbenchesHomeCore({ hero }: CoreProps) {
   const recipes = useDesk((s) => s.items.recipe);
-  const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const [workbenches, setWorkbenches] = useState<WbSummary[]>([]);
   const [recentRuns, setRecentRuns] = useState<RunSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,8 +84,7 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
         <div className="wb-home-grid">
           {workbenches.map((wb) => {
             const recipe = recipes.find((r) => r.id === wb.recipe_id);
-            const target = inferenceTargets.find((t) => t.id === wb.profile_id);
-            const lamp = boundaryEgressLamp(target?.boundary);
+            const assignment = wb.assignment_summary;
             const needsYou = wb.pending_count > 0 || (wb.last_run?.status === "failed");
             return (
               <button
@@ -120,11 +117,11 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
                   {wb.item_count === 0 ? <span>0 items</span> : null}
                 </div>
                 <div className="wb-home-card-meta">
-                  <LampGadget
-                    label={lamp.label}
-                    on={lamp.tone !== "fail"}
-                    tone={lamp.tone as "ok" | "warn" | "fail"}
-                  />
+                  <span className="wb-home-card-assignment">
+                    {assignment?.chain.length
+                      ? `Uses ${assignment.source ? `${assignment.source} · ` : ""}${assignment.chain.join(" → ")}`
+                      : assignment?.repair || "No default model"}
+                  </span>
                   <span className="wb-home-card-schedule">
                     {wb.schedule_enabled ? humanSchedule(wb.schedule) : "Manual"}
                   </span>

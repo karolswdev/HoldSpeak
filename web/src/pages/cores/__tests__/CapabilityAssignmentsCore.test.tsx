@@ -8,7 +8,11 @@ import {
   getAssignmentSummary,
   previewAssignmentDefault,
   saveAssignment,
+  type AssignmentEditorProjection,
+  type AssignmentEntry,
   type AssignmentSummary,
+  type AssignmentSummaryRow,
+  type AssignmentUseDefaultPreview,
 } from "../assignmentExperience";
 
 vi.mock("../assignmentExperience", async (importOriginal) => ({
@@ -17,15 +21,28 @@ vi.mock("../assignmentExperience", async (importOriginal) => ({
   saveAssignment: vi.fn(), previewAssignmentDefault: vi.fn(), clearAssignmentDefault: vi.fn(),
 }));
 
-const entries = [{ ordinal: 1, profile_id: "quick", profile_revision: 1, label: "Quick Qwen", boundary: "local", readiness: "ready" }];
+const entries: AssignmentEntry[] = [
+  { ordinal: 1, profile_id: "quick", profile_revision: 1, label: "Quick Qwen", boundary: "local", readiness: "ready" },
+];
+function summaryRow(id: string, label: string): AssignmentSummaryRow {
+  return {
+    id,
+    label,
+    editor_capability_id: "ask.answer",
+    inherited_from: id === "global" ? null : "global",
+    assignment: { id: "ia", revision: 1, scope: { kind: "global" }, entries, retry_policy_id: null, issues: [] },
+    status: "assigned",
+    repair: null,
+  };
+}
 const rows = [
   ["global", "Default for AI work"], ["thoughts_notes", "Thoughts & notes"], ["writing_dictation", "Writing & dictation"],
   ["speech_recognition", "Speech recognition"], ["meetings", "Meetings"], ["agents_tools", "Agents & tools"], ["background", "Background"],
-].map(([id, label]) => ({ id, label, editor_capability_id: "ask.answer", inherited_from: id === "global" ? null : "global", assignment: { id: "ia", revision: 1, scope: { kind: "global" as const }, entries, retry_policy_id: null, issues: [] }, status: "assigned", repair: null }));
-function summary(overrides = []): AssignmentSummary {
+].map(([id, label]) => summaryRow(id, label));
+function summary(overrides: AssignmentSummary["task_overrides"] = []): AssignmentSummary {
   return { schema: "InferenceAssignmentSummary@1", rows, task_overrides: overrides, issue_count: 0 };
 }
-const editor = {
+const editor: AssignmentEditorProjection = {
   schema: "AssignmentEditorProjection@1" as const, scope: { kind: "global" as const },
   selected_capability: { id: "ask.answer", revision: 1, label: "Ask", group: { id: "thoughts_notes", label: "Thoughts & notes" }, allowed_boundaries: ["local", "cloud"], fallback_dispositions: ["known_no_generation_transient"] },
   draft_base_revision: 1, configured_assignment: { id: "ia", revision: 1, scope: { kind: "global" as const }, entries, retry_policy_id: null, issues: [] },
@@ -35,7 +52,12 @@ const editor = {
     { profile_id: "cloud", profile_revision: 1, label: "Deep Qwen", boundary: "cloud", readiness: "ready", status: "compatible" as const, issues: [] },
   ], retry_policy: { permitted_ids: ["retry.standard"], default_id: "retry.standard" },
 };
-const preview = { schema: "InferenceUseDefaultPreview@1" as const, clears: { kind: "global" as const }, expected_revision: 1, effective: editor.effective };
+const preview: AssignmentUseDefaultPreview = {
+  schema: "InferenceUseDefaultPreview@1",
+  clears: { kind: "global" },
+  expected_revision: 1,
+  effective: editor.effective,
+};
 
 const getSummary = vi.mocked(getAssignmentSummary);
 const getEditor = vi.mocked(getAssignmentEditor);
@@ -73,7 +95,7 @@ describe("CapabilityAssignmentsCore", () => {
   });
 
   it("keeps a hundred task capabilities behind the disclosure", async () => {
-    const many = Array.from({ length: 100 }, (_, index) => ({ id: `task.${index}`, label: `Task ${index}`, group: { id: "thoughts_notes", label: "Thoughts & notes" }, has_override: false, effective: editor.effective, issues: [] }));
+    const many: AssignmentSummary["task_overrides"] = Array.from({ length: 100 }, (_, index) => ({ id: `task.${index}`, label: `Task ${index}`, group: { id: "thoughts_notes", label: "Thoughts & notes" }, has_override: false, effective: editor.effective, issues: [] }));
     getSummary.mockResolvedValueOnce(summary(many));
     const { container } = render(<CapabilityAssignmentsCore />);
     await screen.findByText("Assignments");

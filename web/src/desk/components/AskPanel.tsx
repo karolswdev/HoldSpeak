@@ -485,10 +485,6 @@ export function AskPanel() {
                     {context.length === 1 ? "CARD" : "CARDS"}
                   </span>
                 )}
-                <LampGadget on {...composeLamp} />
-                {composeTarget?.name ? (
-                  <span className="surface-detail">{composeTarget.name}</span>
-                ) : null}
               </div>
             </div>
 

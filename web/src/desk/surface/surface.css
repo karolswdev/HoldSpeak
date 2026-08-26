@@ -2928,7 +2928,7 @@ button.surface-edit-in-place:hover {
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
   padding: var(--space-3);
-  background: var(--surface);
+  background: var(--desk-window-fill);
   box-shadow: inset 0 0 0 1px var(--border), var(--elev-2);
 }
 .assignment-sheet-body { display: grid; align-content: start; gap: var(--space-3); min-block-size: 0; overflow-y: auto; padding-block: var(--space-2); }
@@ -2992,4 +2992,26 @@ button.surface-edit-in-place:hover {
   .assignment-draft-list > li > .egress-chip { grid-column: 2; justify-self: start; }
   .assignment-task-rows > article { grid-template-columns: minmax(0, 1fr); }
   .assignment-task-rows > article small { grid-column: 1; }
+}
+
+/* A contextual editor starts inside a footer or configuration strip, whose
+   window deliberately clips overflow. Render the one shared editor in the
+   desk's transient layer instead: it is still an in-world sheet (no mask or
+   modal contract), but it can neither disappear below its host nor the dock. */
+.contextual-assignment-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--desk-z-popover);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4) var(--space-4)
+    calc(var(--space-6) + var(--space-4) + var(--space-2));
+  pointer-events: none;
+}
+.contextual-assignment-layer .assignment-sheet {
+  inline-size: min(44rem, 100%);
+  max-block-size: calc(100dvh - (var(--space-6) + var(--space-6)));
+  justify-self: center;
+  align-self: center;
+  pointer-events: auto;
 }

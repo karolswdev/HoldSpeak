@@ -90,7 +90,6 @@ export async function runChatTurn(
   question: string,
   history: ChatTurn[],
   grounding: GroundingSelection,
-  inferenceTargetId = "this_machine",
 ): Promise<ChatTurnResult> {
   const fail = (output: string): ChatTurnResult => ({
     ok: false,
@@ -113,7 +112,6 @@ export async function runChatTurn(
           ...(hubGrounding(grounding)
             ? { grounding: hubGrounding(grounding) }
             : {}),
-          inference_target_id: inferenceTargetId,
         }),
       },
     );
@@ -189,7 +187,6 @@ export async function runModelChatTurn(
   question: string,
   history: ChatTurn[],
   grounding: GroundingSelection,
-  inferenceTargetId = "this_machine",
 ): Promise<ChatTurnResult> {
   const { runAsk } = await import("./ask");
   const r = await runAsk({
@@ -198,7 +195,6 @@ export async function runModelChatTurn(
     context: [],
     grounding: hubGrounding(grounding),
     model,
-    inferenceTargetId,
   });
   return {
     ok: r.ok, output: r.output, egress: r.egress, model: r.model,

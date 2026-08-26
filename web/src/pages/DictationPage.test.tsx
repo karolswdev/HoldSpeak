@@ -101,7 +101,7 @@ describe("DictationPage Try it failure actions", () => {
     localStorage.clear();
   });
 
-  it("offers Retry, Copy, Keep as Note, and alternate Runs on for a delivery conflict, then re-runs on the picked target", async () => {
+  it("offers Retry, Copy, and Keep as Note for a delivery conflict, then re-runs canonically", async () => {
     let calls = 0;
     mockRoutes({
       dryRun: () => {
@@ -125,20 +125,17 @@ describe("DictationPage Try it failure actions", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Setup" })).toBeNull();
 
-    const picker = await screen.findByRole("combobox", { name: "Runs on" });
-    fireEvent.change(picker, { target: { value: "p1" } });
+    expect(screen.queryByRole("combobox", { name: "Runs on" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Retry rehearsal" }));
 
     // HS-111: the pipeline result renders as a mono receipt
     // (FINAL_TEXT: …), so match within the receipt line.
     await screen.findByText(/FINAL_TEXT: Ran on the alternate target\./);
-    // HS-130-07: "Run elsewhere" is a TRANSIENT one-run override — the chosen
-    // target rides the re-run's dry-run request, and the standing target in
-    // settings is never rewritten.
     const dryRunCalls = mocks.apiFetch.mock.calls.filter(
       (c) => c[0] === "/api/dictation/dry-run",
     );
-    expect((dryRunCalls.at(-1)?.[1] as { json?: any }).json.profile_id).toBe(
-      "p1",
+    expect((dryRunCalls.at(-1)?.[1] as { json?: any }).json).not.toHaveProperty(
+      "profile_id",
     );
     expect(mocks.apiFetch).not.toHaveBeenCalledWith(
       "/api/settings",
@@ -148,7 +145,7 @@ describe("DictationPage Try it failure actions", () => {
     expect(editor).toHaveValue("A draft that must not disappear.");
   });
 
-  it("maps this-device back to the hub default profile for that run only", async () => {
+  it("retries a timeout without a browser-authored profile override", async () => {
     let calls = 0;
     mockRoutes({
       dryRun: () => {
@@ -162,18 +159,16 @@ describe("DictationPage Try it failure actions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Rehearse" }));
     await screen.findByText(/Transcription timed out/);
 
-    const picker = await screen.findByRole("combobox", { name: "Runs on" });
-    fireEvent.change(picker, { target: { value: "this_machine" } });
+    expect(screen.queryByRole("combobox", { name: "Runs on" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Retry rehearsal" }));
 
     await screen.findByText(/FINAL_TEXT: Done\./);
-    // HS-130-07: this-machine clears the per-run override (null) on the
-    // re-run's dry-run request — it does NOT persist a standing target.
     const dryRunCalls = mocks.apiFetch.mock.calls.filter(
       (c) => c[0] === "/api/dictation/dry-run",
     );
-    expect(
-      (dryRunCalls.at(-1)?.[1] as { json?: any }).json.profile_id,
-    ).toBeNull();
+    expect((dryRunCalls.at(-1)?.[1] as { json?: any }).json).not.toHaveProperty(
+      "profile_id",
+    );
     expect(mocks.apiFetch).not.toHaveBeenCalledWith(
       "/api/settings",
       expect.objectContaining({ method: "PUT" }),

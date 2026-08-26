@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useDesk } from "../store";
-import { CycleGadget } from "../surface/gadgets";
 import { SurfaceSection, SurfaceState } from "../surface/Surface";
 import { useRovingRows } from "../surface/roving";
 
@@ -26,8 +25,6 @@ export function WorkbenchTemplatePicker({
   const [busy, setBusy] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   useRovingRows(gridRef, { selector: ".wb-picker-card" });
-  const inferenceTargets = useDesk((s) => s.inferenceTargets);
-  const [selectedTarget, setSelectedTarget] = useState("this_machine");
 
   const loadTemplates = useCallback(() => {
     setError(false);
@@ -48,9 +45,7 @@ export function WorkbenchTemplatePicker({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            profile_id: selectedTarget !== "this_machine" ? selectedTarget : null,
-          }),
+          body: JSON.stringify({}),
         },
       );
       await useDesk.getState().refresh();
@@ -71,7 +66,6 @@ export function WorkbenchTemplatePicker({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: "New Workbench",
-          profile_id: selectedTarget !== "this_machine" ? selectedTarget : null,
         }),
       });
       await useDesk.getState().refresh();
@@ -86,22 +80,6 @@ export function WorkbenchTemplatePicker({
 
   return (
     <div className="wb-picker">
-      <SurfaceSection label="RUNS ON">
-        <div className="wb-picker-target">
-          <CycleGadget
-            label="Runs on"
-            value={selectedTarget}
-            onChange={setSelectedTarget}
-            options={[
-              { value: "this_machine", label: "This device (local)" },
-              ...inferenceTargets
-                .filter((t) => t.id !== "this_machine" && t.readiness.available)
-                .map((t) => ({ value: t.id, label: `${t.name} (${t.kind})` })),
-            ]}
-          />
-        </div>
-      </SurfaceSection>
-
       <SurfaceSection label="START FROM A TEMPLATE">
         {error ? (
           <SurfaceState

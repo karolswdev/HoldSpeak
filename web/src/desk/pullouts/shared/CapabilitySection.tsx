@@ -7,9 +7,7 @@ import { useDesk } from "../../store";
 import { openSurfaceOr } from "../../shell";
 import { qualifiedRef } from "../../api";
 import { MicButton } from "../../components/MicButton";
-import { RunsOnPicker } from "../../components/RunsOnPicker";
-import { LampGadget } from "../../surface/gadgets";
-import { inferenceEgressLamp } from "../../inferenceEgress";
+import { ContextualAssignment } from "../../../pages/cores/ContextualAssignment";
 import { Material } from "../../surface/Material";
 import { SurfaceState } from "../../surface/Surface";
 import { humanizeWireValue } from "../../../lib/productLanguage";
@@ -21,7 +19,6 @@ import type { WorldObject } from "../../world";
 export function CapabilitySection({ object: o }: { object: WorldObject }) {
   const items = useDesk((s) => s.items);
   const selectedIds = useDesk((s) => s.selectedIds);
-  const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const { openPullout } = useDesk.getState();
 
   const [runBusy, setRunBusy] = useState(false);
@@ -30,9 +27,6 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
   const [runState, setRunState] = useState("");
   const [runArtifactId, setRunArtifactId] = useState<string | null>(null);
   const [runInvocationId, setRunInvocationId] = useState<string | null>(null);
-  const [runTargetId, setRunTargetId] = useState(
-    String(("profileId" in o.ref ? o.ref.profileId : "") || "this_machine"),
-  );
   const [actualPlacement, setActualPlacement] = useState<Record<
     string,
     unknown
@@ -72,7 +66,6 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
   }, [o.kind, o.id]);
 
   useEffect(() => {
-    setRunTargetId(String(("profileId" in o.ref ? o.ref.profileId : "") || "this_machine"));
     setActualPlacement(null);
   }, [o.kind, o.id]);
 
@@ -88,10 +81,6 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
     readiness.state === "ready" &&
     inputSchema?.required?.includes("input") &&
     effectClasses?.includes("creates_artifact");
-  const selectedTarget =
-    inferenceTargets.find((target) => target.id === runTargetId) ||
-    inferenceTargets[0];
-  const targetLamp = inferenceEgressLamp(selectedTarget);
   const runLabel =
     contextualAction?.label ||
     String(capability.action_label || "") ||
@@ -111,7 +100,6 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
         o.kind as "recipe" | "chain" | "workflow",
         o.id,
         runInput,
-        runTargetId,
       );
     setRunOut(result.output);
     setRunWarning(result.warning || "");
@@ -154,8 +142,7 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
             disabled={
               runBusy ||
               !capabilityCanRun ||
-              !runInput.trim() ||
-              !selectedTarget?.readiness.available
+              !runInput.trim()
             }
           >
             {runBusy
@@ -167,18 +154,20 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
                   : "Run"}
           </button>
         </div>
-        <div className="desk-chat-well-foot">
-          <RunsOnPicker
-            targets={inferenceTargets}
-            selectedId={runTargetId}
-            onChange={setRunTargetId}
-            disabled={runBusy}
-          />
-          <LampGadget on {...targetLamp} />
-          {selectedTarget?.name ? (
-            <span className="surface-detail">{selectedTarget.name}</span>
-          ) : null}
-        </div>
+        {o.kind === "recipe" ? (
+          <div className="desk-chat-well-foot">
+            <ContextualAssignment
+              label="Run assignment"
+              capabilityId="recipe.run"
+              scope={{
+                kind: "subject",
+                subject_kind: "recipe",
+                subject_id: o.id,
+                capability_id: "recipe.run",
+              }}
+            />
+          </div>
+        ) : null}
       </div>
       {runInputRecovered ? (
         <span className="quiet">Recovered local run material.</span>
@@ -202,7 +191,7 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
             openSurfaceOr("configure-runs-on", "/profiles", resourceRef)
           }
         >
-          Configure Runs on
+          Assignments
         </button>
       </div>
       {runWarning && <p className="desk-run-warning">{"⚠"} {runWarning}</p>}
@@ -222,12 +211,7 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
       )}
       {runInvocationId && (
         <p className="quiet desk-run-receipt">
-          Receipt ·{" "}
-          {String(
-            actualPlacement?.target_name ||
-              actualPlacement?.target_id ||
-              runTargetId,
-          )}
+          Receipt
           {actualPlacement?.model
             ? ` · ${String(actualPlacement.model)}`
             : ""}

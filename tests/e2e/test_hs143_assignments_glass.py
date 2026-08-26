@@ -73,6 +73,21 @@ def _open_assignments(page: Any, url: str) -> Any:
     return surface
 
 
+def _open_desk_surface(page: Any, url: str, path: str) -> None:
+    """Use the live desk's demoted-surface protocol, not a component harness."""
+    page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+    _api(page, "POST", "/api/desk/seed")
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    page.reload(wait_until="load")
+    page.evaluate(
+        """path => {
+          history.pushState({}, "", path);
+          dispatchEvent(new PopStateEvent("popstate"));
+        }""",
+        f"{path}?token={TOKEN}",
+    )
+
+
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
@@ -114,6 +129,11 @@ def test_assignments_overview_real_hub(
             page = browser.new_page(viewport={"width": width, "height": 900})
             page.on("pageerror", lambda error: errors.append(str(error)))
             surface = _open_assignments(page, url)
+            if state == "populated" and width == 1440:
+                # Product-level reduced-motion check: the real CSS preference
+                # zeroes transition/animation timing without changing the face.
+                page.emulate_media(reduced_motion="reduce")
+                assert page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--duration-short').trim()") == "0ms"
             if state == "error":
                 alert = surface.get_by_role("alert")
                 alert.wait_for()
@@ -135,6 +155,28 @@ def test_assignments_overview_real_hub(
             shot = SHOTS / f"assignments-{state}-{width}.png"
             page.screenshot(path=str(shot), full_page=False)
             assert shot.exists() and shot.stat().st_size > 0
+            if state == "populated" and width == 1440:
+                # Desktop 200% zoom halves the CSS viewport, rather than applying
+                # CSS zoom (which would magnify a fixed window without reflowing
+                # its dock reservation). Capture at 2x device scale so the proof
+                # remains a 1440×900 image of the reflowed, real hub.
+                zoom_context = browser.new_context(
+                    viewport={"width": 720, "height": 450}, device_scale_factor=2,
+                )
+                zoom_page = zoom_context.new_page()
+                zoom_surface = _open_assignments(zoom_page, url)
+                zoom_rows = zoom_surface.locator(".capability-assignment-row")
+                zoom_rows.nth(0).wait_for()
+                zoom_dock = zoom_page.locator(".desk-dock").bounding_box()
+                first_row = zoom_rows.nth(0).bounding_box()
+                assert first_row is not None
+                if zoom_dock is not None:
+                    assert first_row["y"] + first_row["height"] <= zoom_dock["y"]
+                assert zoom_page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+                zoom_shot = SHOTS / "assignments-populated-1440-zoom200.png"
+                zoom_page.screenshot(path=str(zoom_shot), full_page=False, scale="device")
+                assert zoom_shot.exists() and zoom_shot.stat().st_size > 0
+                zoom_context.close()
             assert errors == []
             browser.close()
     finally:
@@ -287,6 +329,139 @@ def test_s4_contextual_assignment_glass_uses_server_projection(
             assert dictation.locator("select").count() == 0
             page.screenshot(path=str(SHOTS / f"dictation-recovery-{width}.png"), full_page=False)
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            assert errors == []
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+@pytest.mark.parametrize("width", [1440, 393])
+def test_s5_recipe_and_workbench_contextual_assignments_are_pre_scoped_and_accessible(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """Production Recipe/Workbench objects share the one contextual editor."""
+    from playwright.sync_api import sync_playwright
+    from holdspeak.db import get_database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import _profile
+
+    server, url = _boot(tmp_path, monkeypatch)
+    db = get_database()
+    owner = Principal(PrincipalKind.OWNER, "s5-context-owner")
+    _profile(db, "s5-subject-first")
+    _profile(db, "s5-subject-second")
+    service = InferenceAssignmentService(db)
+    service.set_assignment(owner, {
+        "command_id": "s5-context-global", "expected_revision": 0,
+        "scope": {"kind": "global"},
+        "entries": [{"profile_id": "s5-subject-first", "profile_revision": 1}],
+    })
+    recipe = db.recipes.upsert(
+        recipe_id="recipe-s5-context", name="S5 Recipe", system_prompt="system", user_template="{input}",
+    )
+    workbench = db.workbenches.upsert(
+        workbench_id="workbench-s5-context", name="S5 Workbench", recipe_id=recipe.id,
+    )
+    db.workbench_items.upsert(
+        item_id="workbench-s5-item", workbench_id=workbench.id, title="Subject proof", body="body",
+    )
+    SHOTS.mkdir(parents=True, exist_ok=True)
+    errors: list[str] = []
+    requests: list[dict[str, Any]] = []
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            page.on("request", lambda request: requests.append({
+                "url": request.url, "post_data": request.post_data,
+            }) if request.url.endswith("/api/inference/assignments/editor") else None)
+
+            # Recipe chat uses the durable Recipe id + recipe.chat pair.
+            _open_desk_surface(page, url, "/companion")
+            page.get_by_role("button", name="S5 Recipe\nOK", exact=True).click()
+            recipe_context = page.locator("[data-capability='recipe.chat']")
+            recipe_context.wait_for()
+            assert recipe_context.get_by_text("Uses global · S5 Subject First", exact=True).count() == 1
+            assert recipe_context.locator("select").count() == 0
+            page.screenshot(path=str(SHOTS / f"recipe-chat-context-{width}.png"), full_page=False)
+            recipe_change = recipe_context.get_by_role("button", name="Change")
+            recipe_change.click()
+            recipe_sheet = page.get_by_label("Chat assignment")
+            recipe_sheet.wait_for()
+            assert recipe_sheet.get_by_role("radiogroup", name="Compatible models").count() == 1
+            # Screen-reader-visible names and roving radio state are live facts.
+            radios = recipe_sheet.get_by_role("radio")
+            assert radios.count() == 2
+            radios.nth(0).press("ArrowDown")
+            assert radios.nth(1).get_attribute("aria-checked") == "true"
+            assert recipe_sheet.locator("[aria-live='polite']").count() == 1
+            page.screenshot(path=str(SHOTS / f"recipe-chat-editor-{width}.png"), full_page=False)
+            # Keyboard-only composition: choose the roving candidate, then use
+            # the sheet's documented Ctrl/Cmd+Enter primary without a pointer.
+            radios.nth(1).press("Enter")
+            radios.nth(1).press("Control+Enter")
+            recipe_context.get_by_role("status").filter(has_text="Next run").wait_for()
+            assert "Next run" in recipe_context.get_by_role("status").inner_text()
+            recipe_change.click()
+            recipe_sheet.wait_for()
+            recipe_sheet.press("Escape")
+            assert page.evaluate("document.activeElement?.textContent") == "Change"
+
+            # Workbench exposes both exact durable Workbench subject pairs.
+            _open_desk_surface(page, url, "/workbenches")
+            page.locator(".wb-home-card").filter(has_text="S5 Workbench").click()
+            page.get_by_role("button", name="Expand configuration").click()
+            item_context = page.locator("[data-capability='workbench.item']")
+            resolver_context = page.locator("[data-capability='voice.reference_resolve']")
+            item_context.wait_for()
+            resolver_context.wait_for()
+            assert item_context.get_by_text("Uses global · S5 Subject First", exact=True).count() == 1
+            assert resolver_context.get_by_text("Uses global · S5 Subject First", exact=True).count() == 1
+            assert page.locator(".wb-config-panel select").count() == 0
+            for contextual in (item_context, resolver_context):
+                box = contextual.bounding_box()
+                assert box is not None and box["x"] >= 0 and box["x"] + box["width"] <= width + 1
+            page.screenshot(path=str(SHOTS / f"workbench-context-{width}.png"), full_page=False)
+
+            item_change = item_context.get_by_role("button", name="Change")
+            item_change.click()
+            item_sheet = page.get_by_label("Item assignment")
+            item_sheet.wait_for()
+            sheet_box = item_sheet.bounding_box()
+            dock_box = page.locator(".desk-dock").bounding_box()
+            assert sheet_box is not None
+            if dock_box is not None:
+                assert sheet_box["y"] + sheet_box["height"] <= dock_box["y"]
+            item_sheet.get_by_role("radio").nth(0).click()
+            # The real device walk proves the server receipt through the one
+            # primary after a local candidate choice (never an autosave).
+            item_sheet.get_by_role("button", name="Save assignment").click()
+            item_context.get_by_role("status").filter(has_text="Next run").wait_for()
+            assert "Next run" in item_context.get_by_role("status").inner_text()
+            page.screenshot(path=str(SHOTS / f"workbench-item-editor-{width}.png"), full_page=False)
+
+            resolver_context.get_by_role("button", name="Change").click()
+            resolver_sheet = page.get_by_label("Reference assignment")
+            resolver_sheet.wait_for()
+            assert resolver_sheet.get_by_role("heading", name="Reference assignment").count() == 1
+            resolver_sheet.get_by_role("radio").nth(0).click()
+            resolver_sheet.get_by_role("button", name="Save assignment").click()
+            resolver_context.get_by_role("status").filter(has_text="Next run").wait_for()
+
+            bodies = [entry["post_data"] or "" for entry in requests]
+            assert any('"subject_kind":"recipe"' in body and '"capability_id":"recipe.chat"' in body for body in bodies)
+            assert any('"subject_kind":"workbench"' in body and '"capability_id":"workbench.item"' in body for body in bodies)
+            assert any('"subject_kind":"workbench"' in body and '"capability_id":"voice.reference_resolve"' in body for body in bodies)
+            assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            if width == 393:
+                for button in page.locator(".assignment-sheet button").all():
+                    box = button.bounding_box()
+                    if box is not None:
+                        assert box["height"] >= 44
             assert errors == []
             browser.close()
     finally:

@@ -33,8 +33,8 @@ import {
 } from "../grounding";
 import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
-import { RunsOnPicker } from "./RunsOnPicker";
 import { DeskWindowFrame } from "./DeskWindow";
+import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 import { useDurableDraft } from "../../lib/durableDraft";
 import {
   SurfaceFacts,
@@ -45,7 +45,6 @@ import { LampGadget, LedMeter, TransportKey } from "../surface/gadgets";
 import {
   boundaryEgressLamp,
   egressScopeLamp,
-  inferenceEgressLamp,
 } from "../inferenceEgress";
 import { Button } from "../../components/signal/Signal";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
@@ -56,13 +55,11 @@ const turnId = () =>
 export function PersonaChat(props: { personaId: string }) {
   const { personaId } = props;
   const items = useDesk((s) => s.items);
-  const profiles = useDesk((s) => s.profiles);
-  const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const { closeChat, refresh, markNew } = useDesk.getState();
 
   // HS-83-03: a model chat is one of THESE threads — a synthetic agent
   // pinned to one of the hub's runnable models (no recipe record behind it).
-  const persona = useMemo((): { id: string; name: string; avatar: string; role: string; profileId?: string } | undefined => {
+  const persona = useMemo((): { id: string; name: string; avatar: string; role: string } | undefined => {
     if (isModelChat(personaId)) {
       const name = modelChatName(personaId);
       return {
@@ -72,7 +69,6 @@ export function PersonaChat(props: { personaId: string }) {
         // (the model family) via AgentAvatar.
         avatar: "",
         role: "hub model",
-        profileId: "",
       };
     }
     return (items.recipe || []).find((a) => a.id === personaId);
@@ -89,15 +85,13 @@ export function PersonaChat(props: { personaId: string }) {
   } = useDurableDraft(`persona-chat:${personaId}`);
   const [thinking, setThinking] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
-  const [inferenceTargetId, setInferenceTargetId] = useState("this_machine");
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setTurns(loadThread(personaId));
     setGrounding(loadChatGrounding(personaId));
-    setInferenceTargetId(String(persona?.profileId || "this_machine"));
-  }, [personaId, persona?.profileId]);
+  }, [personaId]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
@@ -105,7 +99,9 @@ export function PersonaChat(props: { personaId: string }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !thinking) closeChat();
+      // The shared assignment sheet owns Escape while open; only an unclaimed
+      // Escape closes the conversation behind it.
+      if (e.key === "Escape" && !e.defaultPrevented && !thinking) closeChat();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -113,14 +109,9 @@ export function PersonaChat(props: { personaId: string }) {
 
   if (!persona) return null;
 
-  const limitTokens = (() => {
-    const selectedTarget = inferenceTargets.find(
-      (target: any) => target.id === inferenceTargetId,
-    );
-    return Number(selectedTarget?.context_limit) > 0
-      ? Number(selectedTarget?.context_limit)
-      : 16_384;
-  })();
+  // Assignment resolution is server-owned. Context budget remains a conservative
+  // local composition limit; the admitted route supplies the actual model truth.
+  const limitTokens = 16_384;
   const overBudget = groundingTokens(grounding) > limitTokens;
 
   const setAndSaveGrounding = (s: GroundingSelection) => {
@@ -144,9 +135,8 @@ export function PersonaChat(props: { personaId: string }) {
           q,
           history,
           grounding,
-          inferenceTargetId,
         )
-      : await runChatTurn(personaId, q, history, grounding, inferenceTargetId);
+      : await runChatTurn(personaId, q, history, grounding);
     const reply: ChatTurn = r.ok
       ? {
           id: turnId(),
@@ -210,8 +200,6 @@ export function PersonaChat(props: { personaId: string }) {
   if (!persona) return null;
   const name = String(persona.name || personaId);
   const handle = name.toUpperCase();
-  const target = inferenceTargets.find((t) => t.id === inferenceTargetId);
-  const targetLamp = inferenceEgressLamp(target);
 
   return (
     <DeskWindowFrame
@@ -267,7 +255,6 @@ export function PersonaChat(props: { personaId: string }) {
         </header>
         <SurfaceFacts
           value={{
-            runs_on: String(target?.name || "This device"),
             ctx: `${Math.round(limitTokens / 1000)}K`,
             turns: turns.length || "",
           }}
@@ -317,7 +304,7 @@ export function PersonaChat(props: { personaId: string }) {
         </SurfaceTraffic>
       </div>
 
-      <SurfaceFooter receipt={copyReceipt} egress={<><LampGadget on {...targetLamp} />{target?.name ? <span className="surface-detail">{target.name}</span> : null}</>} verbs={<>
+      <SurfaceFooter receipt={copyReceipt} verbs={<>
         <GroundingSection
           meetings={(items.meeting || []).map((m: any) => ({
             id: m.id,
@@ -356,14 +343,20 @@ export function PersonaChat(props: { personaId: string }) {
               onClick={() => void send()}
             />
           </div>
-          <div className="desk-chat-well-foot">
-            <RunsOnPicker
-              targets={inferenceTargets}
-              selectedId={inferenceTargetId}
-              onChange={setInferenceTargetId}
-              disabled={thinking}
-            />
-</div>
+          {!isModelChat(personaId) ? (
+            <div className="desk-chat-well-foot">
+              <ContextualAssignment
+                label="Chat assignment"
+                capabilityId="recipe.chat"
+                scope={{
+                  kind: "subject",
+                  subject_kind: "recipe",
+                  subject_id: personaId,
+                  capability_id: "recipe.chat",
+                }}
+              />
+            </div>
+          ) : null}
         </div>
         {inputRecovered ? (
           <span className="quiet">Recovered local message draft.</span>
