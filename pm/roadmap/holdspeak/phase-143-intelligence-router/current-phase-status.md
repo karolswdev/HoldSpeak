@@ -55,7 +55,7 @@ Assignments.
 | HSEGHS001HS104-143-09 | Tool Capability Foundation and Safe Routing | done | [story-09-tool-turn-routing-safe-fallback](./story-09-tool-turn-routing-safe-fallback.md) | [evidence-story-09](./evidence-story-09.md) |
 | HSEGHS001HS104-143-10 | Agents Workbenches and Recipes Adoption | done | [story-10-agents-workbenches-recipes-adoption](./story-10-agents-workbenches-recipes-adoption.md) | [evidence-story-10](./evidence-story-10.md) |
 | HSEGHS001HS104-143-11 | HTTP MCP Sync and Compatibility | backlog | [story-11-http-mcp-sync-compatibility](./story-11-http-mcp-sync-compatibility.md) | - |
-| HSEGHS001HS104-143-12 | Model Library and Providers | in-progress | [story-12-model-library-providers](./story-12-model-library-providers.md) | - |
+| HSEGHS001HS104-143-12 | Model Library and Providers | done | [story-12-model-library-providers](./story-12-model-library-providers.md) | [evidence-story-12](./evidence-story-12.md) |
 | HSEGHS001HS104-143-13 | Capability Assignments Experience | backlog | [story-13-capability-assignments-experience](./story-13-capability-assignments-experience.md) | - |
 | HSEGHS001HS104-143-14 | Chaos Glass and Closeout | backlog | [story-14-chaos-glass-closeout](./story-14-chaos-glass-closeout.md) | - |
 | HSEGHS001HS104-143-15 | Intelligence Router Repo-Wide Documentation | backlog | [story-15-intelligence-router-docs](./story-15-intelligence-router-docs.md) | - |
@@ -564,6 +564,23 @@ censused HELD, and the focus turns to the web glass. Story 15 (repo-wide
 router docs) was chartered mid-story by owner ruling; Story 14 now
 depends on it. Next actionable: Story 12/13 glass first per the owner's
 web-focus direction, then 11, 15, 14.
+
+Story 12 is done (2026-08-26, six gate commits on
+`feat/hs143-12-model-library`, unpushed pending the owner's shot verdict
+and merge word): the Settings Models room is now the Model Library — one
+owner-only aggregate projection with the closed action vocabulary, an
+in-world four-entry Add-model flow, honest provider rows (Anthropic
+never claims Ready without a runnable adapter), the write-only secret
+handoff with sentinel proofs across projections/logs/DOM, and the
+first-run empty state that invites instead of shrugging. Adding a model
+provably changes zero assignments — the receipt is validated against
+the server contract, and the old hosted flow's silent Thoughts-pointer
+mutation died with its component. Three zero-product-bug opus audits;
+three sweeps ending 6635 passed / zero branch-new (captured evidence);
+the Runs-on owner law was caught regressed by its guard and restored;
+the owner-DB generator incident closed with forensic proof of zero
+damage. Real-hub shots at 1440/393/200% are with the owner. Next:
+Story 13 (Capability Assignments experience), then 11, 15, 14.
 
 ## Decisions deferred
 
