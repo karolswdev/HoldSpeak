@@ -99,3 +99,20 @@ Follow the exact composition and rejection criteria in `assets/owner-experience.
   fixtures, zero story-file typecheck hits (verified); the two remaining
   pages/cores hits are inherited history/MeetingsConfig. Component
   suites 15 passed; build green.
+- 2026-08-26 — Closing opus audit: CLEAN on all seven dimensions, ZERO
+  product bugs, two ledger notes (dead dataSlice profile_id key + browser-
+  unreachable compat write-throughs → Story 11 cleanup; receipts could be
+  made unforgeable by echoing the committed chain — safe under CAS).
+- 2026-08-26 — Sweep №1 (6639/29): 12 inherited + 17 branch-new
+  collapsing to TWO defects: (1) REAL owner-facing break — the S4
+  configure-runs-on retarget sent the durable /profiles alias to
+  Assignments, violating Story 12's deep-link ruling and leaving
+  Settings→Models unreachable (all Library e2es red, no JS error) →
+  /profiles restored to models; contextual controls still open
+  Assignments directly, both rulings reconciled; (2) honest census line
+  drift (workbench_service anchors 564/565→580/581). Orchestrator-
+  verified after fix: Library e2e 11 + Assignments e2e 12 + census 10 =
+  33 passed. LESSON (codified for future briefs): editing a SHARED file
+  (SettingsCore/SurfaceWindows routing) puts the entire neighboring
+  surface's e2e file in the cross-cutting net — "untouched surface" is
+  false when its host is touched.
