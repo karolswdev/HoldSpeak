@@ -34,7 +34,6 @@ def _patch_mcp(tmp_db: Database, monkeypatch: Any) -> None:
     )
     # Stub out services that dispatch builds but scheduled_recording tools never use
     monkeypatch.setattr(mcp_tools, "MeetingService", lambda db, **kw: object())
-    monkeypatch.setattr(mcp_tools, "ProfileService", lambda db, **kw: object())
     monkeypatch.setattr(mcp_tools, "DictationService", lambda db, **kw: object())
     monkeypatch.setattr(mcp_tools, "DeskService", lambda db, **kw: object())
     monkeypatch.setattr(mcp_tools, "DecisionRecordService", lambda db, **kw: object())

@@ -47,35 +47,23 @@ class WorkbenchService:
         self._observer = observer or NullObserver()
 
     def _refuse_post_marker_pointer_write(self, principal: Principal, fields: dict[str, Any]) -> None:
-        """Compatibility selectors are write-through inputs, never execution truth."""
-        # Kept as the existing call-site seam for browser/MCP compatibility. The
-        # actual canonical mutation happens after the durable Workbench write.
-        return None
-
-    def _write_legacy_pointer_compatibility(self, principal: Principal, workbench_id: str, fields: dict[str, Any]) -> None:
+        """Retired selectors never create or rewrite assignment authority."""
+        retired = sorted({"profile_id", "resolver_profile_id"} & set(fields))
+        if not retired:
+            return
         from .inference_adoption_service import RECIPE_WORKBENCH_MIGRATION_FAMILY
         from .inference_assignment_service import InferenceAssignmentService
-        assignments = InferenceAssignmentService(self._db)
-        if assignments.migration_marker(principal, family=RECIPE_WORKBENCH_MIGRATION_FAMILY) is None:
+
+        marker = InferenceAssignmentService(self._db).migration_marker(
+            principal, family=RECIPE_WORKBENCH_MIGRATION_FAMILY
+        )
+        if marker is None:
             return
-        for field, capability_id in (("profile_id", "workbench.item"), ("resolver_profile_id", "voice.reference_resolve")):
-            if field not in fields:
-                continue
-            scope = {"kind": "subject", "subject_kind": "workbench", "subject_id": workbench_id, "capability_id": capability_id}
-            try:
-                current = assignments.get_assignment(principal, scope)
-            except NotFound:
-                current = None
-            profile_id = str(fields[field] or "").strip()
-            if not profile_id:
-                if current is not None:
-                    assignments.clear_assignment(principal, {"command_id": f"workbench-pointer-clear-{workbench_id}-{capability_id}", "expected_revision": current["revision"], "scope": scope, "capability_id": capability_id, "subject_kind": "workbench", "subject_id": workbench_id})
-                continue
-            with self._db._connection() as conn:
-                row = conn.execute("SELECT MAX(revision) FROM model_profile_revisions WHERE profile_id=?", (profile_id,)).fetchone()
-                legacy = conn.execute("SELECT 1 FROM profiles WHERE id=? AND deleted=0", (profile_id,)).fetchone()
-            entry = profile_id if int(row[0] or 0) else (f"legacy-{profile_id}" if legacy is not None else profile_id)
-            assignments.set_assignment(principal, {"command_id": f"workbench-pointer-write-{workbench_id}-{capability_id}", "expected_revision": 0 if current is None else current["revision"], "scope": scope, "entries": [{"profile_id": entry}]})
+        raise ValidationError(
+            "Legacy Workbench profile selectors are unavailable after assignment migration.",
+            code="inference_legacy_selector_retired",
+            context={"retired_fields": retired},
+        )
 
     # ── Workbenches ──────────────────────────────────────────────────────
 
@@ -97,7 +85,6 @@ class WorkbenchService:
         workbench_id = str(body.pop("id", "") or _new_id("workbench"))
         if not fields["schedule_enabled"]:
             wb = self._db.workbenches.upsert(workbench_id=workbench_id, **fields)
-            self._write_legacy_pointer_compatibility(principal, wb.id, body)
             return self._wb_payload(wb, principal)
         # The owner's single enable gesture commits its configuration, captured
         # deployment revision, and local delegation as one crash-consistent unit.
@@ -108,7 +95,6 @@ class WorkbenchService:
             conn.execute("BEGIN IMMEDIATE")
             wb = self._db.workbenches.upsert_in_transaction(conn, workbench_id=workbench_id, **fields)
             ScheduleDelegationService(self._db).enable_from_owner_in_transaction(principal, wb, conn)
-        self._write_legacy_pointer_compatibility(principal, wb.id, body)
         return self._wb_payload(wb, principal)
 
     def update_workbench(
@@ -130,7 +116,6 @@ class WorkbenchService:
             proposed["schedule_revision"] = existing.schedule_revision
         if not bound_changed:
             wb = self._db.workbenches.upsert(workbench_id=workbench_id, **proposed)
-            self._write_legacy_pointer_compatibility(principal, wb.id, fields)
             return self._wb_payload(wb, principal)
         # Bound configuration and the authority it invalidates share one lock.
         # A provider is only signalled after the epoch fence has committed.
@@ -146,7 +131,6 @@ class WorkbenchService:
             if enabling:
                 service.enable_from_owner_in_transaction(principal, wb, conn)
         service.complete_fenced(fenced)
-        self._write_legacy_pointer_compatibility(principal, wb.id, fields)
         return self._wb_payload(wb, principal)
 
     def delete_workbench(self, principal: Principal, workbench_id: str) -> bool:
@@ -334,6 +318,10 @@ class WorkbenchService:
         template = get_template(template_id)
         if template is None:
             raise NotFound("template", template_id)
+        if profile_id is not None:
+            self._refuse_post_marker_pointer_write(
+                principal, {"profile_id": profile_id}
+            )
         recipe_data = template["recipe"]
         recipe = self._db.recipes.upsert(
             recipe_id=_new_id("recipe"), name=recipe_data.get("name", "Agent"),
@@ -364,13 +352,6 @@ class WorkbenchService:
                             source=skill.source, status=skill.status, recipe_ids=recipe_ids,
                             created_by=skill.created_by,
                         )
-        # Template profile selection is a compatibility input until Story 13's
-        # shared assignment glass exists. Once the one-way marker is present it
-        # must update the same exact subject assignments as the legacy editors.
-        if profile_id is not None:
-            from .recipe_service import RecipeService
-            RecipeService(self._db)._write_legacy_profile_compatibility(principal, recipe.id, profile_id)
-            self._write_legacy_pointer_compatibility(principal, wb.id, {"profile_id": profile_id})
         return {"workbench": self._wb_payload(wb, principal), "recipe": recipe.to_dict()}
 
     def list_skills(

@@ -167,8 +167,7 @@ local and is joined only at dispatch time. See
 
 Destinations also drive the desktop hub's pipelines. **Settings, Models** leads
 with **Choose your AI** and renders the owner-only Capability Truth projection
-from `GET /api/inference/setup` (with the identical MCP resource
-`holdspeak://inference/setup`). That read reports bounded hardware/runtime
+from `GET /api/inference/setup`. That read reports bounded hardware/runtime
 facts, the current immutable Thought deployment, structurally inspected local
 artifacts, and a signed packaged preset catalog. It performs no download,
 network request, model load, probe, benchmark, or configuration write, and it
@@ -179,9 +178,9 @@ The owner-only capability inventory is exposed through
 `holdspeak://inference/capabilities`; either transport can then read one exact
 definition through its `{capability_id}` detail path. It describes the registered HoldSpeak
 jobs, result-contract hashes, required modalities/tools/context, permitted
-boundaries, and frozen retry policy facts. It contains no model selection,
-profile binding, endpoint, local path, credential, or assignment state; those
-arrive through the later profile and assignment services.
+boundaries, and frozen retry policy facts. It does not choose a model or expose
+private connection material; Models and the per-job chooser handle those
+separate owner actions.
 
 The first delivery offers server-owned OpenRouter entries for quick, balanced,
 and deep Qwen experiences. Selection is inert; one fixed action seat performs
@@ -243,27 +242,25 @@ prompt travels only between the hub and the paired executing node.
 Manage Runs on destinations in **Settings, Models** or on the Web compatibility
 route `/profiles`; assign an Agent in the Agent editor.
 
-## Assignment authority
+## Choosing AI for work
 
-Phase 143 separates availability from use. Adding, downloading, detecting, or
-connecting a model changes no assignment. The hub-local
-`InferenceAssignment@1` authority stores sparse, ordered chains of at most four
-immutable model-profile revisions. Resolution uses the first whole chain at
-invocation, subject, exact capability, capability group, then global scope; it
-never concatenates or silently filters inherited entries.
+Adding, downloading, detecting, or connecting a model only makes it available
+in Models. It does not change where work runs. The hub keeps a small ordered
+model list for each kind of work and resolves the most specific list first:
+the current job, then its group, then the hub default. Lists are never combined
+or silently trimmed.
 
-`Use default` is a revision-checked clear that preserves a monotonic generation
-and previews the exact effective named chain first. Structural compatibility is
-server-owned. Readiness and runtime capacity remain operation-time observations
-and cannot prevent saving an otherwise compatible chain. Assignments, command
-receipts, migration markers, readiness, bindings, and provider material are
-hub-local and never sync.
+`Use default` restores the inherited choice after showing what will take over.
+The server checks compatibility before saving. Readiness and runtime capacity
+are checked when work begins, so an available choice can be saved even if it is
+not ready at that moment. Decisions, receipts, readiness facts, and provider
+material stay on this hub and never sync.
 
-Starter setup is also explicit: the server previews only the selected groups,
-their independent ordered chains, boundaries, retry-policy intersections, and
-current assignment generations. Apply is one hash-bound transaction over that
-preview. A stale generation, registry change, or incompatible selected group
-changes nothing; unselected groups are never filled implicitly.
+Starter setup shows only the selected groups, their ordered model lists,
+boundaries, retry-policy intersections, and current generations. Confirming the
+preview is one hash-bound change. A stale generation, registry change, or
+incompatible selection changes nothing; untouched groups are never filled
+implicitly.
 
 ## Current suggestions (a moving target)
 

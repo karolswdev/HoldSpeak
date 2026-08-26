@@ -134,8 +134,8 @@ def test_atomic_helper_rolls_back_rows_when_later_subject_is_invalid(tmp_path: P
     )["status"] == "no_assignment"
 
 
-def test_post_marker_legacy_selector_writes_update_exact_assignments(tmp_path: Path) -> None:
-    """Compatibility selectors stay behaviorally honest after the marker."""
+def test_post_marker_retired_pointer_callers_refuse_without_assignment_writes(tmp_path: Path) -> None:
+    """Every retired Recipe/Workbench pointer caller fences before its write."""
     from holdspeak.kernel.runtime import _configure
     from holdspeak.services.recipe_service import RecipeService
     from holdspeak.services.workbench_service import WorkbenchService
@@ -147,38 +147,48 @@ def test_post_marker_legacy_selector_writes_update_exact_assignments(tmp_path: P
     db.recipes.upsert(recipe_id="recipe", name="Recipe", profile_id="before")
     db.workbenches.upsert(workbench_id="workbench", name="Workbench", profile_id="before")
     broker = _configure(db)
-    coordinator = RoutedInferenceCoordinator(db)
-    coordinator.migrate_recipe_workbench_subject_assignments(OWNER)
+    RoutedInferenceCoordinator(db).migrate_recipe_workbench_subject_assignments(OWNER)
     assignments = InferenceAssignmentService(db)
-    assignments.set_assignment(OWNER, {
-        "command_id": "unchanged-global", "expected_revision": 0, "scope": {"kind": "global"},
-        "entries": [{"profile_id": "before", "profile_revision": 1}],
-    })
-    global_assignment = assignments.get_assignment(OWNER, {"kind": "global"})
+    assignment_before = {
+        (kind, subject, capability): assignments.resolve_effective(
+            OWNER, capability_id=capability, subject_kind=kind, subject_id=subject
+        )
+        for kind, subject, capability in (
+            ("recipe", "recipe", "recipe.run"),
+            ("recipe", "recipe", "recipe.chat"),
+            ("workbench", "workbench", "workbench.item"),
+            ("workbench", "workbench", "voice.reference_resolve"),
+        )
+    }
+    recipe_before = db.recipes.get("recipe").to_dict()
+    workbench_before = db.workbenches.get("workbench").to_dict()
+    recipe_count = len(db.recipes.list())
+    workbench_count = len(db.workbenches.list())
 
-    RecipeService(db, broker=broker).update_recipe(OWNER, "recipe", profile_id="after")
-    changed = assignments.resolve_effective(
-        OWNER, capability_id="recipe.run", subject_kind="recipe", subject_id="recipe"
-    )
-    assert changed["assignment"]["entries"][0]["profile_id"] == "after"
-    assert assignments.get_assignment(OWNER, {"kind": "global"}) == global_assignment
-
+    recipes = RecipeService(db, broker=broker)
     workbenches = WorkbenchService(db)
-    workbenches.update_workbench(OWNER, "workbench", profile_id="after")
-    workbench_assignment = assignments.resolve_effective(
-        OWNER, capability_id="workbench.item", subject_kind="workbench", subject_id="workbench"
-    )
-    assert workbench_assignment["assignment"]["entries"][0]["profile_id"] == "after"
-    assert db.workbenches.get("workbench").profile_id == "after"
-
     template_id = str(workbenches.list_templates(OWNER)[0]["id"])
-    instantiated = workbenches.instantiate_template(OWNER, template_id, profile_id="after")
-    template_recipe = str(instantiated["recipe"]["id"])
-    template_workbench = str(instantiated["workbench"]["id"])
-    assert assignments.resolve_effective(
-        OWNER, capability_id="recipe.run", subject_kind="recipe", subject_id=template_recipe
-    )["assignment"]["entries"][0]["profile_id"] == "after"
-    assert assignments.resolve_effective(
-        OWNER, capability_id="workbench.item", subject_kind="workbench", subject_id=template_workbench
-    )["assignment"]["entries"][0]["profile_id"] == "after"
-    assert assignments.get_assignment(OWNER, {"kind": "global"}) == global_assignment
+    calls = (
+        lambda: recipes.create_recipe(OWNER, name="New", profile_id="after"),
+        lambda: recipes.update_recipe(OWNER, "recipe", profile_id="after"),
+        lambda: workbenches.create_workbench(OWNER, name="New", profile_id="after"),
+        lambda: workbenches.create_workbench(
+            OWNER, name="Scheduled", profile_id="after", schedule_enabled=True, schedule="daily"
+        ),
+        lambda: workbenches.update_workbench(OWNER, "workbench", profile_id="after"),
+        lambda: workbenches.instantiate_template(OWNER, template_id, profile_id="after"),
+    )
+    for call in calls:
+        with pytest.raises(ValidationError) as refused:
+            call()
+        assert refused.value.code == "inference_legacy_selector_retired"
+
+    assert db.recipes.get("recipe").to_dict() == recipe_before
+    assert db.workbenches.get("workbench").to_dict() == workbench_before
+    assert len(db.recipes.list()) == recipe_count
+    assert len(db.workbenches.list()) == workbench_count
+    for key, before in assignment_before.items():
+        kind, subject, capability = key
+        assert assignments.resolve_effective(
+            OWNER, capability_id=capability, subject_kind=kind, subject_id=subject
+        ) == before

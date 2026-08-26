@@ -889,62 +889,12 @@ def test_inference_target_probe_discovers_models_for_that_target(client: TestCli
     assert client.post("/api/inference-targets/missing/probe").status_code == 404
 
 
-def test_run_agent_resolves_assigned_profile(client: TestClient, monkeypatch) -> None:
-    """An agent assigned a profile runs on THAT profile (the per-profile builder is used),
-    and the run reports the resolved profile_id."""
-    pid = client.post("/api/inference-targets", json={
-        "name": "OpenRouter", "kind": "openAICompatible",
-        "base_url": "https://openrouter.ai/api/v1", "model": "x", "requires_key": True,
-    }).json()["inference_target"]["id"]
-    from holdspeak.intel.providers import profile_key_env
-    monkeypatch.setenv(profile_key_env(pid), "test-key")
-    aid = client.post("/api/recipes", json={
-        "name": "Scout", "system_prompt": "S", "user_template": "{input}", "profile_id": pid,
-    }).json()["recipe"]["id"]
-    assert client.get(f"/api/recipes/{aid}").json()["recipe"]["profile_id"] == pid
-
-    seen = {}
-
-    class _FakeIntel:
-        active_provider = "cloud"
-        def run_prompt(self, **kwargs):
-            return "OUT"
-
-    def _for_profile(
-        *, kind, base_url, model, profile_id, node="", model_file="", deployment_revision=None, warrant=None, context=None,
-    ):
-        seen.update(kind=kind, base_url=base_url, profile_id=profile_id)
-        return _FakeIntel()
-
-    monkeypatch.setattr("holdspeak.intel.providers.build_meeting_intel_for_profile", _for_profile)
-    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
-    # its FROZEN revision, so the same double goes on the engine class too.
-    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: (_ for _ in ()).throw(AssertionError("default builder must NOT be used when a profile is assigned")))
-    monkeypatch.setattr(
-        "holdspeak.intel.providers._configured_engine",
-        lambda: (_ for _ in ()).throw(AssertionError("default builder must NOT be used when a profile is assigned")),
-    )
-    resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hi"})
-    assert resp.status_code == 200, resp.text
-    assert resp.json()["profile_id"] == pid
-    assert seen == {"kind": "openAICompatible", "base_url": "https://openrouter.ai/api/v1", "profile_id": pid}
-
-
-def test_run_agent_refuses_when_destination_missing(client: TestClient, monkeypatch) -> None:
-    """A dangling destination refuses by name; it never silently retargets."""
-    aid = client.post("/api/recipes", json={
-        "name": "Ghost", "system_prompt": "S", "user_template": "{input}", "profile_id": "gone",
-    }).json()["recipe"]["id"]
-
-    # HS-131-13: the admitted `this_machine` child builds `MeetingIntel` from
-    # its FROZEN revision, so the same double goes on the engine class too.
-    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: (_ for _ in ()).throw(AssertionError("missing destination must not build an engine")))
-    monkeypatch.setattr(
-        "holdspeak.intel.providers._configured_engine",
-        lambda: (_ for _ in ()).throw(AssertionError("missing destination must not build an engine")),
-    )
-    resp = client.post(f"/api/recipes/{aid}/run", json={"input": "hi"})
-    assert resp.status_code == 409, resp.text
-    assert resp.json()["code"] == "inference_target_unavailable"
-    assert resp.json()["alternate_target_id"] == "this_machine"
-    assert resp.json()["inference_target"]["readiness"]["state"] == "unavailable"
+def test_recipe_profile_selector_refuses_after_assignment_migration(client: TestClient) -> None:
+    """A new Agent cannot write the retired profile selector after migration."""
+    for profile_id in ("provider-profile", "gone"):
+        response = client.post("/api/recipes", json={
+            "name": "Retired selector", "system_prompt": "S",
+            "user_template": "{input}", "profile_id": profile_id,
+        })
+        assert response.status_code == 400, response.text
+        assert "unavailable after assignment migration" in response.json()["error"]

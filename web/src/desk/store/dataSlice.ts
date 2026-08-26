@@ -294,7 +294,6 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
       user_template: "userTemplate",
       tools: "tools",
       kb_id: "kbId",
-      profile_id: "profileId",
       avatar: "avatar",
     };
     const itemsKind =

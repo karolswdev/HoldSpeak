@@ -184,7 +184,7 @@ def _run_protocol(proc: subprocess.Popen, *, live_43: str | None = None, iso_hom
     print("\n--- tools/list ---")
     tools_resp = _send(proc, "tools/list")
     tools = tools_resp["result"]["tools"]
-    _assert("tool_count_82", len(tools) == 82, f"got {len(tools)}")
+    _assert("tool_count_134", len(tools) == 134, f"got {len(tools)}")
 
     # Every tool schema is closed (additionalProperties: false)
     all_closed = True
@@ -197,13 +197,12 @@ def _run_protocol(proc: subprocess.Popen, *, live_43: str | None = None, iso_hom
     _assert("all_schemas_closed", all_closed,
             f"open: {open_tools[:5]}" if open_tools else "")
 
-    # HS-134-10: placement vocabulary wired on model-invoking tools
+    # HS-143-11: assignment authority is never a per-call Ask selector.
     ask_run_tool = next((t for t in tools if t["name"] == "ask.run"), None)
-    _assert("ask.run_has_inference_target_id",
+    _assert("ask.run_has_no_inference_target_id",
             ask_run_tool is not None
-            and "inference_target_id" in ask_run_tool.get("inputSchema", {}).get("properties", {}),
-            "invocation-tier placement entry point present in ask.run schema"
-            if ask_run_tool else "ask.run tool not found")
+            and "inference_target_id" not in ask_run_tool.get("inputSchema", {}).get("properties", {}),
+            "assignment-owned Ask schema" if ask_run_tool else "ask.run tool not found")
 
     # -----------------------------------------------------------------------
     # 3. resources/list
@@ -214,9 +213,9 @@ def _run_protocol(proc: subprocess.Popen, *, live_43: str | None = None, iso_hom
     static_count = len(res_result.get("resources", []))
     template_count = len(res_result.get("resourceTemplates", []))
     total_resources = static_count + template_count
-    _assert("static_resources_14", static_count == 14, f"got {static_count}")
-    _assert("resource_templates_10", template_count == 10, f"got {template_count}")
-    _assert("total_resources_24", total_resources == 24, f"got {total_resources}")
+    _assert("static_resources_16", static_count == 16, f"got {static_count}")
+    _assert("resource_templates_16", template_count == 16, f"got {template_count}")
+    _assert("total_resources_32", total_resources == 32, f"got {total_resources}")
 
     # Check holdspeak://cadence/status is in the list
     static_uris = [r["uri"] for r in res_result.get("resources", [])]
@@ -236,9 +235,9 @@ def _run_protocol(proc: subprocess.Popen, *, live_43: str | None = None, iso_hom
 
     # --- ask family ---
     print("\n--- ask family ---")
-    models_resp = _call_tool(proc, "ask.models")
-    _assert("ask.models_ok", not _is_error(models_resp),
-            json.dumps(_tool_content(models_resp))[:120] if not _is_error(models_resp) else str(models_resp))
+    grounding_resp = _call_tool(proc, "ask.resolve_grounding", {"refs": []})
+    _assert("ask.resolve_grounding_ok", not _is_error(grounding_resp),
+            json.dumps(_tool_content(grounding_resp))[:120] if not _is_error(grounding_resp) else str(grounding_resp))
 
     # --- settings family ---
     print("\n--- settings family ---")
@@ -339,205 +338,20 @@ def _run_protocol(proc: subprocess.Popen, *, live_43: str | None = None, iso_hom
 
 
 def _run_live_43(proc: subprocess.Popen, endpoint: str, *, iso_home: str = "") -> None:
-    """The live .43 leg: create a destination, ask.run against it, verify receipt and provenance."""
-    import urllib.request
+    """Record that live endpoint provisioning belongs to Library + Assignments.
 
-    print(f"\n--- live .43 leg (endpoint={endpoint}) ---")
+    Direct destination creation and per-call target selection were retired in
+    HS-143-11, so this walk deliberately does not recreate a private endpoint
+    or alter routing authority. The live endpoint is still reported to make an
+    explicit owner Library/Assignment walk possible in its dedicated harness.
+    """
+    print(f"\n--- live .43 note (endpoint={endpoint}) ---")
+    _assert(
+        "live43_requires_library_assignment_walk",
+        bool(endpoint),
+        "direct target provisioning and invocation overrides are retired",
+    )
 
-    # Fetch the endpoint's loaded model via /v1/models
-    models_url = f"{endpoint}/v1/models"
-    try:
-        with urllib.request.urlopen(models_url, timeout=10) as resp:
-            models_data = json.loads(resp.read())
-    except Exception as exc:
-        _assert("live43_models_fetch", False, f"cannot reach {models_url}: {exc}")
-        return
-
-    # Parse the model id from the OpenAI-compatible response
-    if isinstance(models_data, dict) and "data" in models_data:
-        loaded_model = models_data["data"][0]["id"]
-    elif isinstance(models_data, list):
-        loaded_model = models_data[0]["id"]
-    else:
-        loaded_model = str(models_data)
-    print(f"  .43 loaded model: {loaded_model}")
-
-    # Read ask.models BEFORE the live call (control)
-    control_resp = _call_tool(proc, "ask.models")
-    control_models = _tool_content(control_resp) if not _is_error(control_resp) else []
-    print(f"  control ask.models: {json.dumps(control_models)[:200]}")
-
-    # Create a destination pointing at the .43 endpoint
-    # kind private_endpoint -> openAICompatible; omitting kind defaults to
-    # this_device, which demands an on-device model file (profile_service.py:157).
-    profile_resp = _call_tool(proc, "destination.create", {
-        "fields": {
-            "name": "walk-43-live",
-            "kind": "private_endpoint",
-            "endpoint": endpoint,
-            "model": loaded_model,
-        },
-    })
-    if _is_error(profile_resp):
-        _assert("live43_profile_create", False, str(profile_resp)[:200])
-        return
-    profile_data = _tool_content(profile_resp)
-    profile_id = profile_data.get("id") or profile_data.get("profile_id")
-    _assert("live43_profile_create", profile_id is not None, f"id={profile_id}")
-
-    # ask.run against it
-    ask_resp = _call_tool(proc, "ask.run", {
-        "question": "Say exactly: walk-43-alive",
-        "inference_target_id": profile_id,
-    })
-    if _is_error(ask_resp):
-        _assert("live43_ask.run", False, str(ask_resp)[:200])
-        return
-    ask_data = _tool_content(ask_resp)
-
-    # Extract receipt model
-    receipt_model = None
-    if isinstance(ask_data, dict):
-        receipt = ask_data.get("receipt") or ask_data.get("_placement") or {}
-        receipt_model = receipt.get("model") or ask_data.get("model")
-    _assert("live43_receipt_model_matches",
-            receipt_model is not None and loaded_model in str(receipt_model),
-            f"receipt={receipt_model}, endpoint={loaded_model}")
-
-    # HS-134-10: provenance assertion on ask.run -- inference_target_id was
-    # passed explicitly, so the placement source must be "invocation".
-    ask_placement = ask_data.get("placement") if isinstance(ask_data, dict) else None
-    if ask_placement:
-        _assert("live43_ask_placement_source_invocation",
-                ask_placement.get("source") == "invocation",
-                f"source={ask_placement.get('source')}")
-        _assert("live43_ask_placement_effective_target",
-                str(ask_placement.get("effective_target_id")) == str(profile_id),
-                f"effective={ask_placement.get('effective_target_id')}, expected={profile_id}")
-    else:
-        _assert("live43_ask_placement_present", False,
-                "placement block missing from ask.run response")
-
-    # Treatment line
-    treatment_resp = _call_tool(proc, "ask.models")
-    treatment_models = _tool_content(treatment_resp) if not _is_error(treatment_resp) else []
-    print(f"  treatment ask.models: {json.dumps(treatment_models)[:200]}")
-    print(f"  control-vs-treatment: control={json.dumps(control_models)[:100]}, "
-          f"treatment={json.dumps(treatment_models)[:100]}")
-    print(f"  receipt model: {receipt_model}")
-    print(f"  endpoint model: {loaded_model}")
-    print(f"  match: {receipt_model is not None and loaded_model in str(receipt_model)}")
-
-    # -------------------------------------------------------------------
-    # HS-134-10: Workbench-tier provenance proof
-    # -------------------------------------------------------------------
-    # Pre-create a recipe in the sidecar's database (recipe.create is not on
-    # the MCP surface). The recipe's profile_id is set to the .43 destination
-    # so the agent tier catches inheritance when the workbench tier is nulled.
-    # WorkbenchRunner._target calls resolve_placement(db, invocation=None,
-    # workbench=wb.profile_id, agent=recipe.profile_id) — with both tiers
-    # unset the code truthfully yields source="global",
-    # effective_target_id=THIS_MACHINE_ID, which is unready under isolated
-    # HOME. Setting the recipe's profile_id lets the proof exercise a
-    # working inheritance flip (workbench->agent).
-    print("\n--- workbench provenance proof ---")
-    import sqlite3 as _sqlite3
-    db_path = Path(iso_home) / ".local" / "share" / "holdspeak" / "holdspeak.db"
-    if not db_path.exists():
-        _assert("live43_db_exists", False, f"sidecar database not at {db_path}")
-    else:
-        conn = _sqlite3.connect(str(db_path))
-        conn.execute(
-            "INSERT OR REPLACE INTO recipes "
-            "(id, name, system_prompt, user_template, profile_id, tools_json) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            ("walk-43-recipe", "Walk provenance agent",
-             "Reply exactly: walk-alive", "{input}", str(profile_id), "[]"),
-        )
-        conn.commit()
-        conn.close()
-        print(f"  pre-created recipe walk-43-recipe with profile_id={profile_id}")
-
-        # workbench.create with the .43 destination override
-        wb_resp = _call_tool(proc, "workbench.create", {
-            "name": "Walk provenance bench",
-            "fields": {
-                "recipe_id": "walk-43-recipe",
-                "profile_id": str(profile_id),
-            },
-        })
-        if _is_error(wb_resp):
-            _assert("live43_wb_create", False, str(wb_resp)[:200])
-        else:
-            wb_data = _tool_content(wb_resp)
-            wb_id = wb_data.get("id")
-            _assert("live43_wb_create", wb_id is not None, f"id={wb_id}")
-
-            # Add one trivial item (workbench.run requires at least one
-            # pending item to resolve placement — the empty path returns
-            # {"skipped": true} with no placement block).
-            item_resp = _call_tool(proc, "workbench.add_item", {
-                "workbench_id": wb_id,
-                "title": "Say walk-alive",
-            })
-            _assert("live43_wb_item_added", not _is_error(item_resp),
-                    str(item_resp)[:120] if _is_error(item_resp) else "")
-
-            # workbench.run -> source must be "workbench"
-            wb_run_resp = _call_tool(proc, "workbench.run", {"workbench_id": wb_id})
-            if _is_error(wb_run_resp):
-                _assert("live43_wb_run_workbench_tier", False, str(wb_run_resp)[:200])
-            else:
-                wb_run = _tool_content(wb_run_resp)
-                wb_pl = wb_run.get("placement") if isinstance(wb_run, dict) else None
-                _assert("live43_wb_source_workbench",
-                        wb_pl is not None and wb_pl.get("source") == "workbench",
-                        f"placement={wb_pl}")
-                _assert("live43_wb_effective_target_workbench",
-                        wb_pl is not None and str(wb_pl.get("effective_target_id")) == str(profile_id),
-                        f"effective={wb_pl.get('effective_target_id') if wb_pl else None}")
-
-            # Null the workbench override -> agent tier catches the fall
-            update_resp = _call_tool(proc, "workbench.update", {
-                "workbench_id": wb_id,
-                "fields": {"profile_id": None},
-            })
-            _assert("live43_wb_null_profile", not _is_error(update_resp),
-                    str(update_resp)[:120] if _is_error(update_resp) else "")
-
-            # The first item was consumed (status=completed/failed); add a
-            # second so the runner has a pending item for the inherit run.
-            item2_resp = _call_tool(proc, "workbench.add_item", {
-                "workbench_id": wb_id,
-                "title": "Say walk-alive inherit",
-            })
-            _assert("live43_wb_item2_added", not _is_error(item2_resp),
-                    str(item2_resp)[:120] if _is_error(item2_resp) else "")
-
-            # workbench.run -> source must be "agent" (recipe.profile_id)
-            wb_run2_resp = _call_tool(proc, "workbench.run", {"workbench_id": wb_id})
-            if _is_error(wb_run2_resp):
-                _assert("live43_wb_run_agent_tier", False, str(wb_run2_resp)[:200])
-            else:
-                wb_run2 = _tool_content(wb_run2_resp)
-                wb2_pl = wb_run2.get("placement") if isinstance(wb_run2, dict) else None
-                _assert("live43_wb_source_agent",
-                        wb2_pl is not None and wb2_pl.get("source") == "agent",
-                        f"placement={wb2_pl}")
-                _assert("live43_wb_effective_target_agent",
-                        wb2_pl is not None and str(wb2_pl.get("effective_target_id")) == str(profile_id),
-                        f"effective={wb2_pl.get('effective_target_id') if wb2_pl else None}")
-
-            # Control-vs-treatment provenance
-            print(f"  provenance CONTROL:   source=workbench, effective_target_id={profile_id}")
-            print(f"  provenance TREATMENT: source=agent,     effective_target_id={profile_id}")
-            print(f"  (with no agent tier either, resolve_placement yields "
-                  f"source=global, effective_target_id=this_machine)")
-
-
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="MCP sidecar walk harness")

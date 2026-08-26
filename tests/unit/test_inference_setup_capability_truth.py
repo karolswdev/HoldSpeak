@@ -371,19 +371,8 @@ def test_local_preset_union_and_mlx_runtime_use_real_dependency(tmp_path: Path, 
     ) == [local]
 
 
-def test_http_and_mcp_share_exact_envelope_and_agent_cannot_discover(tmp_path: Path, monkeypatch):
-    import holdspeak.services.inference_setup_service as setup_service_module
-
+def test_http_setup_has_no_legacy_mcp_resource_alias(tmp_path: Path, monkeypatch):
     db, service = _service(tmp_path)
-    # HTTP and MCP are compared as transports, not as two hardware sampling
-    # instants.  Disk availability can change between the sequential reads, so
-    # hold the server observation fixed while proving exact DTO parity.
-    hardware = setup_service_module.inspect_hardware(home=tmp_path, now=NOW)
-    monkeypatch.setattr(
-        setup_service_module,
-        "inspect_hardware",
-        lambda *, home, now: hardware,
-    )
     app = FastAPI()
 
     @app.middleware("http")
@@ -394,34 +383,26 @@ def test_http_and_mcp_share_exact_envelope_and_agent_cannot_discover(tmp_path: P
     app.include_router(build_setup_router(WebContext(
         get_state=lambda: {}, setup_service=SetupService(db), inference_setup_service=service,
     )))
-    http = TestClient(app).get("/api/inference/setup")
-    assert http.status_code == 200
-    monkeypatch.setattr(resources, "get_database", lambda: db)
-    monkeypatch.setattr(resources, "InferenceSetupApplicationService", lambda _db: service)
-    content = resources.read_resource("holdspeak://inference/setup", OWNER)
-    mcp = json.loads(content["contents"][0]["text"])
-    assert mcp == http.json()
+    assert TestClient(app).get("/api/inference/setup").status_code == 200
+    for principal in (OWNER, AGENT):
+        assert all(
+            row["uri"] != "holdspeak://inference/setup"
+            for row in resources.list_resources(principal)["resources"]
+        )
+    with pytest.raises(resources.ResourceError, match="Unknown resource"):
+        resources.read_resource("holdspeak://inference/setup", OWNER)
 
-    owner_catalog = resources.list_resources(OWNER)
-    agent_catalog = resources.list_resources(AGENT)
-    assert any(row["uri"] == "holdspeak://inference/setup" for row in owner_catalog["resources"])
-    assert all(row["uri"] != "holdspeak://inference/setup" for row in agent_catalog["resources"])
-    with pytest.raises(ServiceError) as caught:
-        monkeypatch.setattr(resources, "get_database", lambda: pytest.fail("denied read touched DB"))
-        resources.read_resource("holdspeak://inference/setup", AGENT)
-    assert caught.value.code == "inference_setup_owner_required"
-
-    monkeypatch.setattr(mcp_server, "resolve_auth", lambda: MCPAuth(AGENT))
+    monkeypatch.setattr(mcp_server, "resolve_auth", lambda: MCPAuth(OWNER))
     listed = mcp_server.handle_message({"jsonrpc": "2.0", "id": 1, "method": "resources/list"})
     assert all(
         row["uri"] != "holdspeak://inference/setup"
         for row in listed["result"]["resources"]
     )
-    denied = mcp_server.handle_message({
+    missing = mcp_server.handle_message({
         "jsonrpc": "2.0", "id": 2, "method": "resources/read",
         "params": {"uri": "holdspeak://inference/setup"},
     })
-    assert denied["error"]["data"]["code"] == "inference_setup_owner_required"
+    assert "Unknown resource" in missing["error"]["message"]
 
 
 def test_http_agent_is_denied_and_projection_performs_no_runner_or_revision_write(tmp_path: Path, monkeypatch):

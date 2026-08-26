@@ -17,7 +17,6 @@ TOOLS: list[dict[str, Any]] = [
                 "chain_id": {"type": "string", "description": "Sequence identifier."},
                 "input": {"type": "string", "description": "Input text for the first step."},
                 "variables": {"type": "object", "description": "Template variables for prompt rendering."},
-                "inference_target_id": {"type": "string", "description": "Override inference destination."},
                 "temperature": {"type": "number", "minimum": 0, "maximum": 2},
                 "max_tokens": {"type": "integer", "minimum": 1},
                 "request_id": {"type": "string", "description": "Idempotency key for replay."},
@@ -47,7 +46,6 @@ TOOLS: list[dict[str, Any]] = [
                 "workflow_id": {"type": "string", "description": "Workflow identifier."},
                 "input": {"type": "string", "description": "Input text for the workflow."},
                 "variables": {"type": "object", "description": "Template variables for prompt rendering."},
-                "inference_target_id": {"type": "string", "description": "Override inference destination."},
                 "temperature": {"type": "number", "minimum": 0, "maximum": 2},
                 "max_tokens": {"type": "integer", "minimum": 1},
                 "request_id": {"type": "string", "description": "Idempotency key for replay."},
@@ -83,6 +81,9 @@ def _run(coro: Any) -> Any:
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Route a tool call.  Raises LookupError for unowned names."""
     if name == "sequence.run":
+        allowed = {"chain_id", "input", "variables", "temperature", "max_tokens", "request_id"}
+        if set(arguments) - allowed:
+            raise ValueError("sequence.run has an invalid request shape")
         chain_id = arguments.get("chain_id")
         if not isinstance(chain_id, str) or not chain_id.strip():
             raise ValueError("chain_id is required")
@@ -96,8 +97,6 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             body["input"] = arguments["input"]
         if "variables" in arguments:
             body["variables"] = arguments["variables"]
-        if "inference_target_id" in arguments:
-            body["inference_target_id"] = arguments["inference_target_id"]
         if "temperature" in arguments:
             body["temperature"] = arguments["temperature"]
         if "max_tokens" in arguments:
@@ -117,6 +116,9 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return {"parent_operation_id": parent_operation_id, "disposition": disposition}
 
     if name == "workflow.run":
+        allowed = {"workflow_id", "input", "variables", "temperature", "max_tokens", "request_id"}
+        if set(arguments) - allowed:
+            raise ValueError("workflow.run has an invalid request shape")
         workflow_id = arguments.get("workflow_id")
         if not isinstance(workflow_id, str) or not workflow_id.strip():
             raise ValueError("workflow_id is required")
@@ -130,8 +132,6 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             body["input"] = arguments["input"]
         if "variables" in arguments:
             body["variables"] = arguments["variables"]
-        if "inference_target_id" in arguments:
-            body["inference_target_id"] = arguments["inference_target_id"]
         if "temperature" in arguments:
             body["temperature"] = arguments["temperature"]
         if "max_tokens" in arguments:

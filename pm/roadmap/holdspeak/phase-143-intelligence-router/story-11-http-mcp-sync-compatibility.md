@@ -56,3 +56,19 @@ GET reconstructs authority; advisory events can always be lost.
   MCP_SIDECAR inventory truthfully 137→149. Orchestrator-verified: twin
   + parity suites 21 passed; worker: full focused 48, MCP/one-path
   guards 25, no schema changes, S4 retirement untouched.
+- 2026-08-26 — Round 2 (S3+S4+S5 closeout): compound production-object
+  hostile-sync proof (v2 router state refused before merge on push,
+  omitted on pull, v1 profile bucket cannot mint v2 authority — the
+  census's named blocker resolved); the retirement sweep — acquisition
+  aliases (HTTP+MCP together), raw destination.*/model_profile.*
+  families + legacy MCP resources/templates (capability registry kept),
+  ask.models, stale target-override fields across ask/sequence/recipe/
+  workbench schemas, compat write-throughs → typed post-marker refusals
+  with no-side-effect proofs, dead dataSlice key deleted;
+  cancel_model_acquisition kept and proven assignment-inert. MCP
+  inventory truthfully 134 tools / 32 resources; API manifest + three
+  censuses regenerated under isolated HOME; scripts/mcp_walk.py updated.
+  Orchestrator-verified: parity/twins/count/census/manifest 45 passed;
+  MCP walk 25/25; retired names grep-absent from holdspeak/mcp. Worker:
+  S3–S5 suite 257, compat regression 150, own full sweep 6675/13 (to be
+  re-triaged by the orchestrator's captured sweep at close).

@@ -6,6 +6,9 @@ from collections.abc import Callable
 from dataclasses import asdict
 from typing import Any
 
+from jsonschema import Draft202012Validator
+from jsonschema.exceptions import ValidationError as JsonSchemaValidationError
+
 from holdspeak.db import get_database, get_observer
 from holdspeak.mcp.families import FAMILIES
 from holdspeak.principals import Principal
@@ -16,9 +19,9 @@ from holdspeak.services.event_query_service import EventQueryService
 from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.meeting_service import MeetingService
 from holdspeak.services.monday_brief_service import MondayBriefService
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+from holdspeak.services.model_library_service import ModelLibraryApplicationService
 from holdspeak.services.primitive_service import PrimitiveService
-from holdspeak.services.profile_service import ProfileService
-from holdspeak.services.model_profile_service import ModelProfileService
 from holdspeak.services.recipe_service import RecipeService
 from holdspeak.services.scheduled_recording_service import ScheduledRecordingService
 from holdspeak.services.workbench_service import WorkbenchService
@@ -30,95 +33,6 @@ _KIND_ALIASES["kbs"] = "kb"
 
 class ToolError(ValueError):
     """An expected tool failure which maps to an MCP ``isError`` result."""
-
-
-# Model Profile requests are intentionally recursively closed.  The service
-# validates the same contract; these schemas keep MCP clients from believing an
-# arbitrary endpoint, secret, path, or future assignment pointer is accepted.
-_MODEL_PROFILE_TOKENIZER_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "tokenizer_id": {"type": "string"},
-        "chat_template": {"type": "string"},
-        "tool_call_template": {"type": "string"},
-        "requires_bos_token": {"type": "boolean"},
-        "requires_eos_token": {"type": "boolean"},
-    },
-    "additionalProperties": False,
-}
-_MODEL_PROFILE_MANIFEST_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "revision": {"type": ["string", "integer"]},
-        "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
-        "claims": {"type": "array", "items": {"type": "string"}, "maxItems": 128},
-    },
-    "required": ["revision", "sha256", "claims"],
-    "additionalProperties": False,
-}
-_MODEL_PROFILE_PRESENTATION_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {"summary": {"type": "string"}, "badge": {"type": "string"}},
-    "required": ["summary"],
-    "additionalProperties": False,
-}
-_MODEL_PROFILE_REQUEST_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,95}$"},
-        "expected_revision": {"type": "integer", "minimum": 0},
-        "label": {"type": "string"},
-        "provider_family": {"type": "string"},
-        "runtime_family": {"type": "string"},
-        "model_or_artifact_identity": {"type": "string"},
-        "supported_modalities": {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 16},
-        "context_support": {"type": "string", "enum": ["exact", "bounded", "unavailable"]},
-        "tokenizer_template_requirements": _MODEL_PROFILE_TOKENIZER_SCHEMA,
-        "capability_manifest": _MODEL_PROFILE_MANIFEST_SCHEMA,
-        "safe_presentation": _MODEL_PROFILE_PRESENTATION_SCHEMA,
-    },
-    "required": [
-        "profile_id", "expected_revision", "label", "provider_family", "runtime_family",
-        "model_or_artifact_identity", "supported_modalities", "context_support",
-        "tokenizer_template_requirements", "capability_manifest", "safe_presentation",
-    ],
-    "additionalProperties": False,
-}
-_MODEL_PROFILE_BINDING_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "binding_id": {"type": "string"},
-        "profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,95}$"},
-        "profile_revision": {"type": "integer", "minimum": 1},
-        "deployment_head_id": {"type": "string"},
-        "expected_binding_revision": {"type": "integer", "minimum": 0},
-        "expected_deployment_configuration_revision": {"type": "integer", "minimum": 1},
-        "expected_deployment_revision_id": {"type": "string"},
-        "enabled": {"type": "boolean"},
-        "readiness_observation_id": {"type": "string"},
-    },
-    "required": [
-        "binding_id", "profile_id", "profile_revision", "deployment_head_id",
-        "expected_binding_revision", "expected_deployment_configuration_revision",
-        "expected_deployment_revision_id", "enabled", "readiness_observation_id",
-    ],
-    "additionalProperties": False,
-}
-_MODEL_PROFILE_PROBE_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{0,95}$"},
-        "profile_revision": {"type": "integer", "minimum": 1},
-        "deployment_head_id": {"type": "string"},
-        "expected_deployment_configuration_revision": {"type": "integer", "minimum": 1},
-        "expected_deployment_revision_id": {"type": "string"},
-    },
-    "required": [
-        "profile_id", "profile_revision", "deployment_head_id",
-        "expected_deployment_configuration_revision", "expected_deployment_revision_id",
-    ],
-    "additionalProperties": False,
-}
 
 
 TOOLS: list[dict[str, Any]] = [
@@ -256,19 +170,62 @@ def _workbench_tool(name: str, description: str, properties: dict[str, Any], req
     }}
 
 
+_RECIPE_RUN_OPTIONS_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "variables": {"type": "object"},
+        "max_tokens": {"type": "integer", "minimum": 1},
+        "temperature": {"type": "number", "minimum": 0, "maximum": 2},
+        "source_ref": {"type": "string"},
+        "source_type": {}, "grounding_refs": {}, "grounding_revisions": {},
+        "source_revision": {}, "deadline_at": {}, "initiator": {},
+    },
+    "additionalProperties": False,
+}
+_RECIPE_CHAT_OPTIONS_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "history": {"type": "array"}, "grounding": {"type": "object"},
+        "egress_context": {},
+    },
+    "additionalProperties": False,
+}
+_WORKBENCH_FIELDS_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "recipe_id": {"type": ["string", "null"]},
+        "schedule": {"type": ["string", "null"]},
+        "schedule_enabled": {"type": "boolean"},
+        "schedule_revision": {"type": "integer", "minimum": 1},
+        "item_order": {"type": "array", "items": {"type": "string"}},
+    },
+    "additionalProperties": False,
+}
+
+
+def _workbench_fields(value: Any) -> dict[str, Any]:
+    fields = _data(value)
+    unknown = set(fields) - set(_WORKBENCH_FIELDS_SCHEMA["properties"])
+    if unknown:
+        raise ToolError(f"Unsupported Workbench fields: {', '.join(sorted(unknown))}")
+    return fields
+
+
 TOOLS.extend([
     _workbench_tool("workbench.list", "List Workbenches.", {}),
     _workbench_tool("workbench.get", "Get a Workbench.", {"workbench_id": {"type": "string"}}, ["workbench_id"]),
-    _workbench_tool("workbench.create", "Create a Workbench. Use fields for optional Workbench configuration.", {"name": {"type": "string", "description": "Non-empty Workbench name."}, "fields": {"type": "object", "description": "Optional Workbench fields such as id, recipe_id, profile_id, schedule, or context."}}, ["name"]),
-    _workbench_tool("workbench.update", "Update supplied Workbench fields.", {"workbench_id": {"type": "string"}, "fields": {"type": "object"}}, ["workbench_id", "fields"]),
+    _workbench_tool("workbench.create", "Create a Workbench with closed optional configuration fields.", {"name": {"type": "string", "description": "Non-empty Workbench name."}, "fields": _WORKBENCH_FIELDS_SCHEMA}, ["name"]),
+    _workbench_tool("workbench.update", "Update supplied closed Workbench configuration fields.", {"workbench_id": {"type": "string"}, "fields": _WORKBENCH_FIELDS_SCHEMA}, ["workbench_id", "fields"]),
     _workbench_tool("workbench.delete", "Delete a Workbench.", {"workbench_id": {"type": "string"}}, ["workbench_id"]),
     _workbench_tool("workbench.update_item", "Update supplied fields of a Workbench item.", {"workbench_id": {"type": "string"}, "item_id": {"type": "string"}, "fields": {"type": "object", "description": "Item patch fields."}}, ["workbench_id", "item_id", "fields"]),
     _workbench_tool("workbench.delete_item", "Delete a Workbench item.", {"workbench_id": {"type": "string"}, "item_id": {"type": "string"}}, ["workbench_id", "item_id"]),
     _workbench_tool("workbench.list_runs", "List Workbench runs.", {"workbench_id": {"type": "string"}}, ["workbench_id"]),
     _workbench_tool("recipe.list", "List Agent recipes.", {}),
     _workbench_tool("recipe.get", "Get an Agent recipe.", {"recipe_id": {"type": "string"}}, ["recipe_id"]),
-    _workbench_tool("recipe.run", "Run an Agent recipe and return its lifecycle-backed result and minted artifact reference.", {"recipe_id": {"type": "string"}, "input": {"type": "string"}, "options": {"type": "object", "description": "Optional documented run fields."}}, ["recipe_id"]),
-    _workbench_tool("recipe.chat", "Ask an Agent recipe a question.", {"recipe_id": {"type": "string"}, "question": {"type": "string"}, "options": {"type": "object", "description": "Optional chat fields."}}, ["recipe_id", "question"]),
+    _workbench_tool("recipe.run", "Run an Agent recipe and return its lifecycle-backed result and minted artifact reference.", {"recipe_id": {"type": "string"}, "input": {"type": "string"}, "options": _RECIPE_RUN_OPTIONS_SCHEMA}, ["recipe_id"]),
+    _workbench_tool("recipe.chat", "Ask an Agent recipe a question.", {"recipe_id": {"type": "string"}, "question": {"type": "string"}, "options": _RECIPE_CHAT_OPTIONS_SCHEMA}, ["recipe_id", "question"]),
     _workbench_tool("zone.file", "File a primitive in a Zone.", {"directory_id": {"type": "string"}, "primitive_id": {"type": "string"}}, ["directory_id", "primitive_id"]),
     _workbench_tool("zone.unfile", "Remove a primitive from a Zone.", {"directory_id": {"type": "string"}, "primitive_id": {"type": "string"}}, ["directory_id", "primitive_id"]),
     _workbench_tool("zone.list_members", "List Zone members.", {"directory_id": {"type": "string"}}, ["directory_id"]),
@@ -318,61 +275,6 @@ TOOLS.extend([
             "format": {"type": "string", "enum": ["markdown", "json"], "description": "Export format."},
         },
         ["meeting_id", "format"],
-    ),
-    _mcp_tool("destination.list", "List inference destinations and current mesh-node liveness.", {}),
-    _mcp_tool(
-        "destination.get",
-        "Get one inference destination when its non-secret configuration is needed.",
-        {"profile_id": {"type": "string", "description": "Inference destination identifier."}},
-        ["profile_id"],
-    ),
-    _mcp_tool(
-        "destination.create",
-        "Create an inference destination using non-secret destination fields.",
-        {"fields": {"type": "object", "description": "Destination fields; a non-empty name is required by the service."}},
-        ["fields"],
-    ),
-    _mcp_tool(
-        "destination.update",
-        "Update the supplied non-secret fields of an inference destination.",
-        {
-            "profile_id": {"type": "string", "description": "Inference destination identifier."},
-            "fields": {"type": "object", "description": "Destination fields to change."},
-        },
-        ["profile_id", "fields"],
-    ),
-    _mcp_tool(
-        "destination.delete",
-        "Delete an inference destination that is no longer available.",
-        {"profile_id": {"type": "string", "description": "Inference destination identifier."}},
-        ["profile_id"],
-    ),
-    _mcp_tool("model_profile.list", "List the owner-only Model Library, including read-only v1 compatibility rows.", {}),
-    _mcp_tool(
-        "model_profile.get", "Get one immutable Model Library profile revision.",
-        {"profile_id": {"type": "string"}, "revision": {"type": "integer", "minimum": 1}}, ["profile_id"],
-    ),
-    _mcp_tool(
-        "model_profile.create", "Create an immutable Model Library profile revision from a closed profile body.",
-        {"profile": _MODEL_PROFILE_REQUEST_SCHEMA}, ["profile"],
-    ),
-    _mcp_tool(
-        "model_profile.bind", "CAS-bind one profile revision to one existing deployment head.",
-        {"binding": _MODEL_PROFILE_BINDING_SCHEMA}, ["binding"],
-    ),
-    _mcp_tool(
-        "model_profile.probe", "Server-observe readiness for one exact current deployment head.",
-        {"probe": _MODEL_PROFILE_PROBE_SCHEMA}, ["probe"],
-    ),
-    _mcp_tool(
-        "model_profile.unbind", "Remove one current profile binding with its exact binding revision.",
-        {"profile_id": {"type": "string"}, "expected_binding_revision": {"type": "integer", "minimum": 1}},
-        ["profile_id", "expected_binding_revision"],
-    ),
-    _mcp_tool(
-        "model_profile.delete", "Tombstone an unreferenced profile with its exact current revision.",
-        {"profile_id": {"type": "string"}, "expected_revision": {"type": "integer", "minimum": 1}},
-        ["profile_id", "expected_revision"],
     ),
     _mcp_tool(
         "dictation.list",
@@ -545,6 +447,45 @@ def _data(value: Any) -> dict[str, Any]:
     return dict(value)
 
 
+def _tool_schema(name: str) -> dict[str, Any] | None:
+    for tool in TOOLS:
+        if tool["name"] == name:
+            return tool["inputSchema"]
+    # Families are the dispatch authority.  The fallback keeps an in-process
+    # family extension closed even before a caller refreshes the public list.
+    for family in FAMILIES:
+        for tool in family.TOOLS:
+            if tool["name"] == name:
+                return tool["inputSchema"]
+    return None
+
+
+def _validate_tool_arguments(name: str, arguments: dict[str, Any]) -> None:
+    schema = _tool_schema(name)
+    if schema is None:
+        raise ToolError(f"Unknown tool: {name}")
+    try:
+        Draft202012Validator(schema).validate(arguments)
+    except JsonSchemaValidationError as exc:
+        location = ".".join(str(part) for part in exc.absolute_path)
+        detail = f"{location}: {exc.message}" if location else exc.message
+        raise ToolError(f"Invalid arguments for {name}: {detail}") from exc
+
+
+def _require_owner_before_schema(name: str, principal: Principal | None) -> None:
+    """Preserve owner-before-body semantics for the twelve owner MCP twins.
+
+    The shared validator closes every public schema, but these endpoints must
+    return their owner denial without inspecting even a malformed body. Their
+    service guards are static, so this check neither composes a service nor
+    discovers a database before authorization.
+    """
+    if name.startswith("model_library."):
+        ModelLibraryApplicationService.require_owner(principal)
+    elif name.startswith("inference_assignment."):
+        InferenceAssignmentService._require_owner(principal)
+
+
 def _primitive_list(service: PrimitiveService, principal: Principal, kind: str) -> Any:
     return getattr(service, f"list_{kind}s" if kind != "kb" else "list_kbs")(principal)
 
@@ -583,22 +524,33 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     args = arguments or {}
     if not isinstance(args, dict):
         raise ToolError("arguments must be an object")
+    if _tool_schema(name) is None:
+        raise ToolError(f"Unknown tool: {name}")
+    retired_family_fields = {
+        "ask.run": {"inference_target_id"},
+        "sequence.run": {"inference_target_id"},
+        "workflow.run": {"inference_target_id"},
+    }
+    if retired := (retired_family_fields.get(name, set()) & set(args)):
+        raise ToolError(f"Invalid arguments for {name}: retired field(s): {', '.join(sorted(retired))}")
+    _require_owner_before_schema(name, principal)
 
-    # Route to the owning family by name membership; errors inside an owned
-    # dispatch (including LookupError subclasses like KeyError) surface to
-    # the caller instead of reading as "not mine".
+    # Families preserve their established transport-specific validation and
+    # refusal codes. S4's retired selector families reject those names before
+    # composing a service; the owner twins above already deny before body read.
+    # Main-catalogue tools have no family dispatcher, so their schemas are the
+    # dispatch-time closure fence.
     for family in FAMILIES:
         if any(tool["name"] == name for tool in family.TOOLS):
             return family.dispatch(name, args, principal)
 
+    _validate_tool_arguments(name, args)
     db = get_database()
     obs = get_observer()
     primitives = PrimitiveService(db, observer=obs)
     workbenches = WorkbenchService(db, observer=obs)
     meetings = MeetingService(db, observer=obs)
     recipes = RecipeService(db, observer=obs)
-    profiles = ProfileService(db, observer=obs)
-    model_profiles = ModelProfileService(db)
     dictation = DictationService(db, observer=obs)
     events = EventQueryService(db)
     follow_through = FollowThroughService(db, observer=obs)
@@ -627,9 +579,14 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     if name == "workbench.get":
         return workbenches.get_workbench(principal, str(args.get("workbench_id") or ""))
     if name == "workbench.create":
-        return workbenches.create_workbench(principal, name=str(args.get("name") or ""), **_data(args.get("fields")))
+        fields = _workbench_fields(args.get("fields"))
+        if "name" in fields:
+            raise ToolError("Workbench name belongs at the top level")
+        return workbenches.create_workbench(principal, name=str(args.get("name") or ""), **fields)
     if name == "workbench.update":
-        return workbenches.update_workbench(principal, str(args.get("workbench_id") or ""), **_data(args.get("fields")))
+        return workbenches.update_workbench(
+            principal, str(args.get("workbench_id") or ""), **_workbench_fields(args.get("fields"))
+        )
     if name == "workbench.delete":
         workbenches.delete_workbench(principal, str(args.get("workbench_id") or ""))
         return {"deleted": True, "id": str(args.get("workbench_id") or "")}
@@ -646,11 +603,11 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     if name == "recipe.get":
         return recipes.get_recipe(principal, str(args.get("recipe_id") or ""))
     if name == "recipe.run":
-        allowed = ("variables", "inference_target_id", "requested_placement", "max_tokens", "temperature", "source_ref", "source_type", "grounding_refs", "grounding_revisions", "source_revision", "deadline_at", "initiator")
+        allowed = ("variables", "max_tokens", "temperature", "source_ref", "source_type", "grounding_refs", "grounding_revisions", "source_revision", "deadline_at", "initiator")
         options = _data(args.get("options"))
         return _run(recipes.run(principal, str(args.get("recipe_id") or ""), input=str(args.get("input") or ""), **{key: options[key] for key in allowed if key in options}))
     if name == "recipe.chat":
-        allowed = ("history", "grounding", "inference_target_id", "egress_context")
+        allowed = ("history", "grounding", "egress_context")
         options = _data(args.get("options"))
         return _run(recipes.chat(principal, str(args.get("recipe_id") or ""), question=str(args.get("question") or ""), **{key: options[key] for key in allowed if key in options}))
     if name == "zone.file":
@@ -688,41 +645,6 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         return {"deleted": True, "id": meeting_id}
     if name == "meeting.export":
         return meetings.export_meeting(principal, str(args.get("meeting_id") or ""), str(args.get("format") or ""))
-    if name == "destination.list":
-        return profiles.list_profiles(principal)
-    if name == "destination.get":
-        return profiles.get_profile(principal, str(args.get("profile_id") or ""))
-    if name == "destination.create":
-        return profiles.create_profile(principal, _data(args.get("fields")))
-    if name == "destination.update":
-        return profiles.update_profile(principal, str(args.get("profile_id") or ""), _data(args.get("fields")))
-    if name == "destination.delete":
-        profile_id = str(args.get("profile_id") or "")
-        profiles.delete_profile(principal, profile_id)
-        return {"deleted": True, "id": profile_id}
-    if name == "model_profile.list":
-        return model_profiles.list_profiles(principal)
-    if name == "model_profile.get":
-        revision = args.get("revision")
-        return model_profiles.get_profile(
-            principal, str(args.get("profile_id") or ""),
-            revision=int(revision) if revision is not None else None,
-        )
-    if name == "model_profile.create":
-        return model_profiles.create_profile(principal, _data(args.get("profile")))
-    if name == "model_profile.bind":
-        return model_profiles.bind_profile(principal, _data(args.get("binding")))
-    if name == "model_profile.probe":
-        return model_profiles.probe_profile(principal, _data(args.get("probe")))
-    if name == "model_profile.unbind":
-        return model_profiles.unbind_profile(
-            principal, str(args.get("profile_id") or ""),
-            expected_binding_revision=int(args.get("expected_binding_revision")),
-        )
-    if name == "model_profile.delete":
-        return model_profiles.delete_profile(
-            principal, str(args.get("profile_id") or ""), expected_revision=int(args.get("expected_revision"))
-        )
     if name == "dictation.list":
         allowed = ("limit", "cursor", "source")
         return dictation.list_journal(principal, **{key: args[key] for key in allowed if key in args})

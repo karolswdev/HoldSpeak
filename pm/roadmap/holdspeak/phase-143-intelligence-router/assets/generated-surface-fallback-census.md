@@ -1,6 +1,6 @@
 # Phase 143 generated surface and fallback census
 
-**Regenerated:** 2026-08-26 on `feat/hs143-13-assignments`. This is the executable companion to
+**Regenerated:** 2026-08-26 on `feat/hs143-11-transport-parity`. This is the executable companion to
 `repository-census.md`: `tests/unit/test_phase143_surface_fallback_census.py`
 fails when a new private selector, recovery helper, or browser routing-pointer
 surface lacks a reviewed classification.
@@ -23,17 +23,23 @@ boundary decode aliases only; the executable workflow vocabulary is `carry`,
 `hold`, `skip`, or an explicit failure. The source scanner and the exact-empty
 Swift executable-policy invariant remain fail-closed.
 
+**Story 143-11 S4 delta:** direct MCP destination/model-profile and acquisition
+alias surfaces are retired, as are per-call target selectors. MCP schema closure
+refuses stale fields before composition. Recipe and Workbench retain migration
+bytes only; post-marker pointer writes refuse rather than writing an assignment,
+and the browser `profile_id` local-update map is gone.
+
 ## Owner routing controls
 
 | Surface/family | Current controls and source anchors | Current authority | One migration story |
 |---|---|---|---|
 | Profile library and credential identity | `holdspeak/services/profile_service.py`, `holdspeak/services/profile_key_service.py`, `holdspeak/intel/providers.py`, `holdspeak/inference_targets.py` | `ProfileRecord`, key slot, legacy profile factory | 143-03 |
 | Model Library availability and acquisition | `holdspeak/services/{model_library_service,inference_acquisition_service,inference_setup_service}.py`, `holdspeak/web/routes/model_library.py`, `web/src/pages/cores/{ModelLibraryCore,modelLibrary}.ts*` | one server-owned availability projection and library commands; provider/profile adapters retain no assignment authority | 143-12 |
-| Thoughts and Ask destination | `holdspeak/config/integrations.py`, `holdspeak/services/ask_service.py`, `holdspeak/services/inference_setup_service.py`, `web/src/desk/ask.ts`, `web/src/desk/store/dataSlice.ts` | legacy persisted migration input and remaining transport compatibility; Thought glass now reads canonical assignments | 143-07 |
+| Thoughts and Ask destination | `holdspeak/config/integrations.py`, `holdspeak/services/ask_service.py`, `holdspeak/services/inference_setup_service.py`, `web/src/desk/ask.ts` | legacy persisted migration input and remaining transport compatibility; Thought glass now reads canonical assignments | 143-07 |
 | Dictation/rewrite/punctuation destination | `holdspeak/config/model.py`, `holdspeak/speech_session/plan.py`, `holdspeak/plugins/dictation/assembly.py`, `holdspeak/target_profile.py` | `dictation.runtime.profile_id` and typed runtime policy; Dictation glass now reads canonical assignments | 143-07 |
 | Meetings destination and bound route evidence | one-time `holdspeak/config/meeting.py` migration input; `holdspeak/services/meeting_deferred_queue_binding.py`; `holdspeak/meeting_session/deferred_bound.py` | C1 parent/bundle members are the deferred execution authority; `MeetingIntelPlan` is display-only persisted history | 143-08 |
 | Deferred meeting/background jobs | `holdspeak/intel_queue.py`, `holdspeak/services/meeting_intel_service.py`, `holdspeak/services/settings_service.py` | queue schedule/recovery controls | 143-08 |
-| Workbench, Recipe, Agent and workflow placement | canonical `InferenceAssignmentService` / `RoutedInferenceCoordinator` / `InferenceParentRouteBundleService`; compatibility inputs in `holdspeak/services/{recipe_service,sequence_workflow_service,support,workbench_runner,workbench_service}.py`; listed web transports | frozen assignment/route/controller evidence; retired request fields refuse and legacy record writes translate once | 143-10 |
+| Workbench, Recipe, Agent and workflow placement | canonical `InferenceAssignmentService` / `RoutedInferenceCoordinator` / `InferenceParentRouteBundleService`; migration guards in `holdspeak/services/{recipe_service,sequence_workflow_service,support,workbench_runner,workbench_service}.py`; listed web transports | frozen assignment/route/controller evidence; retired request fields and post-marker legacy pointer writes refuse | 143-11 |
 | HTTP/MCP/browser pointer transport and types | `holdspeak/mcp/`, `holdspeak/web/routes/`, `web/src/desk/{api,detail-types,store/types}.ts`, `web/src/pages/cores/core-types.ts` | transport/projection only; must not resolve a route | 143-11 |
 | Assignment editor shell | `web/src/pages/cores/{ContextualAssignment,SettingsCore,AssignmentEditor,AssignmentModelChooser,assignmentExperience}.ts*` | canonical assignment summary/editor; Recipe and Workbench contextual subjects reuse it; Model Library remains availability-only | 143-13 |
 | Generic route/failure law and physical attempts | `holdspeak/kernel/{inference_runner,projection_stager}.py`, `holdspeak/intel/engine.py` | runner physical attempt and provider compatibility seam | 143-06 |
@@ -79,6 +85,7 @@ story that owns their migration.
 | 143-07 | `holdspeak/dictation_telemetry.py`, `holdspeak/plugins/dictation/assembly.py`, `holdspeak/plugins/dictation/builtin/project_rewriter.py`, `holdspeak/plugins/dictation/runtime_mlx.py`, `holdspeak/services/inference_setup_service.py`, `holdspeak/target_profile.py` |
 | 143-08 | `holdspeak/intel_queue.py`, `holdspeak/meeting_session/intel_plan.py`, `holdspeak/services/{inference_adoption_service,meeting_intel_service}.py` |
 | 143-10 | `holdspeak/delivery/factory_launch.py`, `holdspeak/services/recipe_service.py`, `holdspeak/services/sequence_workflow_service.py`, `holdspeak/services/support.py`, `holdspeak/services/workbench_runner.py` |
+| 143-11 | `holdspeak/mcp/{tools,resources}.py`, `holdspeak/mcp/families/{ask,inference,sequence,settings}.py`, `holdspeak/services/{recipe_service,sync_service,workbench_service}.py` |
 | 143-12 | `holdspeak/services/model_library_service.py`, `holdspeak/services/inference_acquisition_service.py`, `holdspeak/services/inference_setup_service.py`, `holdspeak/web/routes/primitives/profiles.py` (private-target side-door refusal) |
 
 ## Guarded web routing consumers
@@ -92,7 +99,7 @@ first category may participate in a future assignment migration.
 
 | Classification | Surfaces | One migration story |
 |---|---|---|
-| inference-route | `web/src/desk/ask.ts`, `web/src/desk/store/dataSlice.ts` | 143-07; Thought and Dictation owner glass migrated to contextual canonical assignments |
+| inference-route | `web/src/desk/ask.ts` | 143-07; Thought and Dictation owner glass migrated to contextual canonical assignments |
 | inference-route | `web/src/pages/cores/SettingsCore.tsx`, `web/src/pages/cores/AssignmentEditor.tsx`, `web/src/pages/cores/AssignmentModelChooser.tsx`, `web/src/pages/cores/assignmentExperience.ts` | 143-13 |
 | display-transport | `web/src/desk/api.ts`, `web/src/desk/components/Pullout.tsx`, `web/src/desk/detail-types.ts`, `web/src/desk/infoContract.ts`, `web/src/desk/store/types.ts`, `web/src/lib/primitives.ts`, `web/src/pages/cores/core-types.ts` | 143-11 / 143-10 display contracts; no browser placement writer remains |
 | display-transport | `web/src/pages/cores/ModelLibraryCore.tsx`, `web/src/pages/cores/modelLibrary.ts` | 143-12 availability transport; selection never writes an assignment pointer |

@@ -10,15 +10,6 @@ from holdspeak.services.ask_service import AskService
 
 TOOLS: list[dict[str, Any]] = [
     {
-        "name": "ask.models",
-        "description": "List available inference destinations for Ask. Each row names the model the destination loads.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {},
-            "additionalProperties": False,
-        },
-    },
-    {
         "name": "ask.resolve_grounding",
         "description": "Resolve grounding references and return their hydrated titles and character counts without running inference.",
         "inputSchema": {
@@ -43,7 +34,6 @@ TOOLS: list[dict[str, Any]] = [
             "properties": {
                 "question": {"type": "string", "description": "The prompt to ask."},
                 "lens": {"type": "string", "description": "Label for this Ask turn (default 'Ask')."},
-                "inference_target_id": {"type": "string", "description": "Inference destination id. Omit for the hub default."},
                 "context": {
                     "type": "array",
                     "items": {"type": "object"},
@@ -116,9 +106,6 @@ def _service() -> AskService:
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Route a tool call.  Raises LookupError for unowned names."""
-    if name == "ask.models":
-        return _service().list_models(principal)
-
     if name == "ask.resolve_grounding":
         refs = arguments.get("refs")
         if not isinstance(refs, list):
@@ -126,6 +113,9 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return _service().resolve_grounding(principal, refs)
 
     if name == "ask.run":
+        allowed = {"question", "lens", "context", "grounding", "max_tokens", "temperature"}
+        if set(arguments) - allowed:
+            raise ValueError("ask.run has an invalid request shape")
         question = arguments.get("question")
         if not isinstance(question, str) or not question.strip():
             raise ValueError("question is required")
@@ -133,8 +123,6 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         kwargs: dict[str, Any] = {"question": question}
         if "lens" in arguments:
             kwargs["lens"] = arguments["lens"]
-        if "inference_target_id" in arguments:
-            kwargs["inference_target_id"] = arguments["inference_target_id"]
         if "context" in arguments:
             kwargs["context"] = arguments["context"]
         if "grounding" in arguments:

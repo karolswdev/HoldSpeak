@@ -68,19 +68,17 @@ class RecipeService:
     def create_recipe(self, principal: Principal, *, name: str = "", recipe_id: str | None = None, **fields: Any) -> dict[str, Any]:
         if not str(name).strip():
             raise ValidationError("Agent name is required")
+        self._refuse_post_marker_profile_pointer(principal, fields)
         fields["name"] = name
         record = self._db.recipes.upsert(
             recipe_id=str(recipe_id or fields.pop("id", None) or _new_id("recipe")),
             **self._recipe_fields(fields),
         )
-        if "profile_id" in fields:
-            self._write_legacy_profile_compatibility(principal, record.id, fields["profile_id"])
         return self._payload(principal, record)
 
     def update_recipe(self, principal: Principal, recipe_id: str, **fields: Any) -> dict[str, Any]:
         existing = self._recipe(recipe_id)
-        if "profile_id" in fields:
-            self._write_legacy_profile_compatibility(principal, recipe_id, fields["profile_id"])
+        self._refuse_post_marker_profile_pointer(principal, fields)
         return self._payload(principal, self._db.recipes.upsert(
             recipe_id=recipe_id, **self._recipe_fields(fields, existing)
         ))
@@ -226,42 +224,25 @@ class RecipeService:
     def _migrate_subject_pointers(self, principal: Principal) -> None:
         self._broker.inference_adoption_service.migrate_recipe_workbench_subject_assignments(principal)
 
-    def _write_legacy_profile_compatibility(self, principal: Principal, recipe_id: str, value: Any) -> None:
+    def _refuse_post_marker_profile_pointer(
+        self, principal: Principal, fields: dict[str, Any]
+    ) -> None:
+        """Leave migrated assignments immutable to retired Recipe pointers."""
+        if "profile_id" not in fields:
+            return
         from .inference_adoption_service import RECIPE_WORKBENCH_MIGRATION_FAMILY
         from .inference_assignment_service import InferenceAssignmentService
-        assignments = InferenceAssignmentService(self._db)
-        if assignments.migration_marker(principal, family=RECIPE_WORKBENCH_MIGRATION_FAMILY) is None:
-            return
-        profile_id = str(value or "").strip()
-        with self._db._connection() as conn:
-            revision = conn.execute(
-                "SELECT MAX(revision) FROM model_profile_revisions WHERE profile_id=?",
-                (profile_id,),
-            ).fetchone()[0]
-            legacy = conn.execute(
-                "SELECT 1 FROM profiles WHERE id=? AND deleted=0", (profile_id,)
-            ).fetchone()
-        # The retired pointer is a compatibility input, never an execution
-        # selector. An owner may nevertheless save a named destination that has
-        # gone away: retain it visibly on the Recipe, remove any prior exact
-        # assignment, and let the explicit refusal fence below prevent broader
-        # inheritance from silently retargeting the next turn.
-        entry_profile = (
-            f"legacy-{profile_id}"
-            if not revision and legacy is not None
-            else (profile_id if revision else "")
+
+        marker = InferenceAssignmentService(self._db).migration_marker(
+            principal, family=RECIPE_WORKBENCH_MIGRATION_FAMILY
         )
-        for capability_id in ("recipe.run", "recipe.chat"):
-            scope = {"kind": "subject", "subject_kind": "recipe", "subject_id": recipe_id, "capability_id": capability_id}
-            try:
-                current = assignments.get_assignment(principal, scope)
-            except NotFound:
-                current = None
-            if not entry_profile:
-                if current is not None:
-                    assignments.clear_assignment(principal, {"command_id": f"recipe-profile-clear-{recipe_id}-{capability_id}", "expected_revision": current["revision"], "scope": scope, "capability_id": capability_id, "subject_kind": "recipe", "subject_id": recipe_id})
-                continue
-            assignments.set_assignment(principal, {"command_id": f"recipe-profile-write-{recipe_id}-{capability_id}", "expected_revision": 0 if current is None else current["revision"], "scope": scope, "entries": [{"profile_id": entry_profile}]})
+        if marker is None:
+            return
+        raise ValidationError(
+            "Legacy Recipe profile selectors are unavailable after assignment migration.",
+            code="inference_legacy_selector_retired",
+            context={"retired_fields": ["profile_id"]},
+        )
 
     def _refuse_missing_legacy_profile(self, recipe: Any) -> None:
         """Fence a post-cutover dangling compatibility selection before routing.
