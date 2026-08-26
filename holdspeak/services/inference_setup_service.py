@@ -243,7 +243,8 @@ def _installed_artifacts(db: Any) -> list[dict[str, Any]]:
             """SELECT artifact_id,format,source_repository,source_revision,
                       installed_bytes,state,verified_at
                  FROM inference_model_artifacts
-                WHERE state='verified' AND source_kind != 'legacy-rails-observer'
+                WHERE state='verified'
+                  AND source_kind NOT IN ('legacy-rails-observer', 'model_library_provider_material')
                 ORDER BY verified_at DESC LIMIT 100"""
         ).fetchall()
     return [

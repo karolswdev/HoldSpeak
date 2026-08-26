@@ -26,6 +26,16 @@ class ProfileKeyService:
             raise ServiceError("profile_key_store_unavailable", "Profile key store is unavailable", context={"status": 503}) from None
         return {"success": True, "secret": {"required": bool(profile.requires_key), "present": True}}
 
+    def presence(self, principal: Principal | None, profile_id: str) -> dict[str, bool]:
+        """Return only durable custody presence for an endpoint destination."""
+        self._owner(principal)
+        profile = self._profile(profile_id)
+        try:
+            state, _value = self._store.state(profile_key_env(str(profile.id)))
+        except ProfileKeyStoreError:
+            raise ServiceError("profile_key_store_unavailable", "Profile key store is unavailable", context={"status": 503}) from None
+        return {"required": bool(profile.requires_key), "present": state == "set"}
+
     def delete(self, principal: Principal | None, profile_id: str) -> dict[str, Any]:
         self._owner(principal)
         profile = self._profile(profile_id)

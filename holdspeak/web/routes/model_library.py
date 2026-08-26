@@ -46,6 +46,21 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
             raise ServiceError("model_library_request_invalid", "Expected a JSON object.", context={"status": 400})
         return body
 
+    async def _provider_body(request: Request) -> tuple[dict[str, Any], dict[str, Any] | None]:
+        """Parse the nonsecret draft and dedicated write-only secret body.
+
+        This seam intentionally has no request logging. Owner authority is
+        checked before JSON parsing so an unauthorized caller's credential body
+        cannot become request state here.
+        """
+        body = await _json(request)
+        if set(body) != {"draft", "secret"} or not isinstance(body.get("draft"), dict):
+            raise ServiceError("model_library_provider_invalid", "Provider request is invalid.", context={"status": 400})
+        secret = body.get("secret")
+        if secret is not None and not isinstance(secret, dict):
+            raise ServiceError("model_library_secret_invalid", "Provider credential is invalid.", context={"status": 400})
+        return body["draft"], secret
+
     @router.get("/api/inference/model-library")
     async def get_model_library(request: Request) -> Any:
         try:
@@ -73,6 +88,44 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
             return _safe_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to add detected model")
+
+    @router.post("/api/inference/model-library/connect-hosted-model")
+    async def connect_hosted_model(request: Request) -> Any:
+        try:
+            draft, secret = await _provider_body(request)
+            return JSONResponse(
+                service.connect_hosted_model(request.state.principal, draft, secret), status_code=200,
+            )
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            # Never include a parsed request/secret in this safe error or log.
+            return error_500(exc, log, "Failed to connect hosted model")
+
+    @router.post("/api/inference/model-library/define-endpoint")
+    async def define_endpoint(request: Request) -> Any:
+        try:
+            draft, secret = await _provider_body(request)
+            return JSONResponse(
+                service.define_endpoint(request.state.principal, draft, secret), status_code=200,
+            )
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            # Never include a parsed request/secret in this safe error or log.
+            return error_500(exc, log, "Failed to define provider endpoint")
+
+    @router.post("/api/inference/model-library/connect-paired-device")
+    async def connect_paired_device(request: Request) -> Any:
+        try:
+            draft, secret = await _provider_body(request)
+            if secret is not None:
+                raise ServiceError("model_library_secret_invalid", "Paired device has no credential body.", context={"status": 400})
+            return JSONResponse(service.connect_paired_device(request.state.principal, draft), status_code=200)
+        except ServiceError as exc:
+            return _safe_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to connect paired device")
 
     @router.post("/api/inference/model-library/use-model-file")
     async def use_model_file(request: Request) -> Any:

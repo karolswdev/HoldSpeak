@@ -837,6 +837,29 @@ def test_profile_crud_roundtrip(client: TestClient) -> None:
     assert client.get(f"/api/inference-targets/{pid}").status_code == 404
 
 
+def test_model_library_generated_target_has_no_legacy_target_route_side_door(client: TestClient) -> None:
+    """S3: legacy target reads remain, generated library adapters do not."""
+    db = hsdb.get_database()
+    db.profiles.upsert(
+        profile_id="library_provider_private", name="Private library adapter", kind="openAICompatible",
+        base_url="http://127.0.0.1:9011/v1", model="private-model", requires_key=True,
+    )
+    listed = client.get("/api/inference-targets")
+    assert listed.status_code == 200
+    assert all(target["id"] != "library_provider_private" for target in listed.json()["targets"])
+    for method, path in (
+        ("get", "/api/inference-targets/library_provider_private"),
+        ("put", "/api/inference-targets/library_provider_private"),
+        ("post", "/api/inference-targets/library_provider_private/probe"),
+        ("put", "/api/inference-targets/library_provider_private/secret"),
+        ("delete", "/api/inference-targets/library_provider_private/secret"),
+        ("delete", "/api/inference-targets/library_provider_private"),
+    ):
+        request = getattr(client, method)
+        response = request(path, json={}) if method == "put" else request(path)
+        assert response.status_code == 404
+
+
 def test_inference_target_probe_discovers_models_for_that_target(client: TestClient, monkeypatch) -> None:
     created = client.post("/api/inference-targets", json={
         "name": "LAN llama", "kind": "openAICompatible",

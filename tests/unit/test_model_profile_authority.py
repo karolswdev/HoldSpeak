@@ -270,6 +270,10 @@ def test_binding_is_cas_protected_and_freezes_exact_existing_deployment_revision
     assert bound["deployment_configuration_revision"] == 1
     assert "secret_slot" not in bound
     assert "readiness_observation_id" not in bound
+    projected_binding = service.list_profiles(OWNER)["profiles"][0]["current_binding"]
+    assert projected_binding is not None
+    assert "secret_slot" not in json.dumps(projected_binding, sort_keys=True)
+    assert "readiness_observation_id" not in json.dumps(projected_binding, sort_keys=True)
 
     with pytest.raises(ConflictError) as forged_observation:
         service.bind_profile(

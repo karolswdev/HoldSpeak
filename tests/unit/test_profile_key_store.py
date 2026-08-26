@@ -137,6 +137,16 @@ def test_owner_key_service_is_write_only_and_validates(tmp_path):
     }
 
 
+def test_owner_key_service_presence_returns_only_durable_fact(tmp_path):
+    store = ProfileKeyStore(tmp_path / "keys.json")
+    service = ProfileKeyService(_Db(_Profile()), store=store)
+    owner = Principal(PrincipalKind.OWNER, "owner")
+    assert service.presence(owner, "profile-a") == {"required": True, "present": False}
+    service.set(owner, "profile-a", {"value": "private-value"})
+    assert service.presence(owner, "profile-a") == {"required": True, "present": True}
+    assert "private-value" not in repr(service.presence(owner, "profile-a"))
+
+
 def test_owner_key_service_refuses_unknown_or_non_endpoint(tmp_path):
     owner = Principal(PrincipalKind.OWNER, "owner")
     missing = ProfileKeyService(_Db(None), store=ProfileKeyStore(tmp_path / "keys.json"))

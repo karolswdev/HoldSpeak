@@ -54,3 +54,21 @@ Technical provenance and locators stay in explicit owner-only Details.
   as compatibility aliases pending the S4 client cutover); new deployments
   stay inactive. Orchestrator-verified: S1+S2 sets + census 49 passed;
   one-path guards 171 passed.
+- 2026-08-26 — Round 2 (S3, provider custody + repair truth): explicit
+  hosted/custom/paired Connect and Define-endpoint commands (drafts +
+  one command; the autosave target editor's server contract retired for
+  the ordinary Models path); durable nonsecret provider-command ledger
+  (additive `model_library_provider_commands` table with old-shape
+  reconcile + canonical snapshot proof) carrying payload-replay
+  protection, pending-retry after custody failure, restart-safe receipts,
+  and profile/binding CAS; only the dedicated secret body reaches
+  ProfileKeyService with the sentinel proven absent from projections/
+  exceptions/logs/receipts; OpenRouter/custom/private reach Ready via the
+  existing probe, paired rows use liveness truth, Anthropic always
+  projects exactly "Anthropic runtime is not installed"; library-minted
+  private adapters hidden/refused from the legacy /api/inference-targets
+  + /secret side doors; assignment heads byte-checked on every provider
+  path and replay. Orchestrator-verified: S3+S1 regression + schema
+  proofs 146 passed; guards 171 passed (worker). One guard note: the
+  interior-canon left-border CSS failure is inherited baseline, untouched
+  by this server-only round.

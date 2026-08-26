@@ -41,6 +41,14 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
     def _principal(request: Request) -> Any:
         return getattr(request.state, "principal", None)
 
+    def _library_private_target(target_id: str) -> JSONResponse | None:
+        # S3's generated endpoint adapters are visible only through
+        # ModelLibraryProjection@1. The old target routes stay available for
+        # historical target adaptation, but cannot become a side-door writer.
+        if str(target_id or "").startswith("library_provider_"):
+            return JSONResponse({"error": "Unknown destination"}, status_code=404)
+        return None
+
     # HS-134-02: GET /api/profiles retired — the target contract is the only
     # read shape; writes were already rejected (HS-112-01).
     # `/api/inference-targets` is the one write path.
@@ -76,7 +84,9 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/inference-targets/{target_id}/probe")
     async def api_probe_target(target_id: str, request: Request) -> Any:
-        """Test this destination without persisting a connection result."""
+        """Test this legacy destination without persisting a connection result."""
+        if private := _library_private_target(target_id):
+            return private
         try:
             return JSONResponse(_svc().probe_inference_target(_principal(request), target_id))
         except NotFound:
@@ -107,6 +117,8 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/api/inference-targets/{target_id}")
     async def api_get_inference_target(target_id: str, request: Request) -> Any:
+        if private := _library_private_target(target_id):
+            return private
         try:
             return JSONResponse(_svc().get_inference_target(_principal(request), target_id))
         except NotFound:
@@ -118,6 +130,8 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
 
     @router.put("/api/inference-targets/{target_id}")
     async def api_update_inference_target(target_id: str, request: Request) -> Any:
+        if private := _library_private_target(target_id):
+            return private
         body = await _json_body(request)
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
@@ -137,6 +151,8 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
 
     @router.put("/api/inference-targets/{target_id}/secret")
     async def api_set_inference_target_secret(target_id: str, request: Request) -> Any:
+        if private := _library_private_target(target_id):
+            return private
         body = await _json_body(request)
         if body is None:
             return JSONResponse({"error": "Expected a JSON object"}, status_code=400)
@@ -156,6 +172,8 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
 
     @router.delete("/api/inference-targets/{target_id}/secret")
     async def api_delete_inference_target_secret(target_id: str, request: Request) -> Any:
+        if private := _library_private_target(target_id):
+            return private
         service = ctx.profile_key_service
         if service is None:
             return JSONResponse({"error": "Profile key service is unavailable"}, status_code=503)
@@ -172,6 +190,8 @@ def build_profiles_router(ctx: WebContext) -> APIRouter:
 
     @router.delete("/api/inference-targets/{target_id}")
     async def api_delete_inference_target(target_id: str, request: Request) -> Any:
+        if private := _library_private_target(target_id):
+            return private
         try:
             _svc().delete_profile(_principal(request), target_id)
             return JSONResponse({"success": True})
