@@ -7,6 +7,7 @@ import { InstrumentStrip } from "./InstrumentStrip";
 import { AimRow } from "./AimRow";
 import { UtteranceWell } from "./UtteranceWell";
 import { ResultPanel } from "./ResultPanel";
+import { ContextualAssignment } from "../ContextualAssignment";
 
 export function SpeakFace() {
   const announce = useAnnounce();
@@ -54,12 +55,14 @@ export function SpeakFace() {
         error={deck.error}
         previewOnly={deck.previewOnly}
         actions={deck.actions}
-        targets={deck.targets}
-        targetId={deck.targetId}
         onRun={() => void deck.run()}
         onDeliver={(text) => void deck.deliver(text)}
-        onRunElsewhere={(id) => void deck.runElsewhere(id)}
         onKeepDraft={() => void deck.keepDraft()}
+      />
+      <ContextualAssignment
+        label="Dictation"
+        capabilityId="speech.rewrite"
+        scope={{ kind: "capability", capability_id: "speech.rewrite" }}
       />
       {deck.result ? (
         <ResultPanel

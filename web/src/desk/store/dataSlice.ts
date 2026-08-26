@@ -522,7 +522,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
     }
   },
 
-  async runCapability(kind, id, input, inferenceTargetId) {
+  async runCapability(kind, id, input) {
     const routes = {
       recipe: `/api/recipes/${encodeURIComponent(id)}/run`,
       chain: `/api/chains/${encodeURIComponent(id)}/run`,
@@ -532,7 +532,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
       const res = await apiRequest(routes[kind], {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input, inference_target_id: inferenceTargetId }),
+        body: JSON.stringify({ input }),
       });
       const data = await res.json().catch(() => ({}));
       const output = String(data.output || data.error || `HTTP ${res.status}`);

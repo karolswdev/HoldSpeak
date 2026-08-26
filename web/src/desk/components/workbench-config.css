@@ -705,8 +705,15 @@
   font-size: 10px;
   color: var(--text-faint);
 }
+.desk-next .wb-home-card-assignment {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .desk-next .wb-home-card-schedule {
   margin-left: auto;
+  flex: none;
 }
 .desk-next .wb-home-runs {
   padding: 8px var(--desk-window-pad-x);

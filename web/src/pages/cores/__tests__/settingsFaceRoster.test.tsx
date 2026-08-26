@@ -1,12 +1,12 @@
-// HS-139-05 — Seven tiles: the face roster is exactly 7 tiles named by
-// what the owner DOES, and the FILTER is gone. Module aliases from the
-// retired 14-tile roster still resolve.
+// HS-139-05 / HS-143-13 — Settings uses owner-named destinations. The
+// peer Assignments room has no /api/settings key because it consumes its own
+// closed assignment projection. Module aliases from the retired roster resolve.
 import { describe, expect, it } from "vitest";
 import { MODULE_ALIASES, PREF_MODULES } from "../settingsPrefs";
 
-describe("HS-139-05 face roster", () => {
-  it("has exactly 7 tiles", () => {
-    expect(PREF_MODULES).toHaveLength(7);
+describe("Settings face roster", () => {
+  it("has the Models and Assignments peer destinations", () => {
+    expect(PREF_MODULES).toHaveLength(8);
   });
 
   it("names every tile by what the owner does, not by subsystem", () => {
@@ -17,6 +17,7 @@ describe("HS-139-05 face roster", () => {
       "meetings",
       "rhythm",
       "models",
+      "assignments",
       "integrations",
       "system",
     ]);
@@ -54,7 +55,7 @@ describe("HS-139-05 face roster", () => {
     for (const m of PREF_MODULES) {
       expect(m.glyph, `${m.id} has no glyph`).toBeTruthy();
       expect(m.sprite, `${m.id} has no sprite`).toBeTruthy();
-      if (m.id !== "integrations" && m.id !== "system") {
+      if (m.id !== "integrations" && m.id !== "assignments" && m.id !== "system") {
         // system now claims device+mesh via keys
         expect(m.keys.length, `${m.id} has no keys`).toBeGreaterThan(0);
       }

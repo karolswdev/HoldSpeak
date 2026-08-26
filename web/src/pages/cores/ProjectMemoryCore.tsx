@@ -7,9 +7,8 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../../desk/components/MicButton";
-import { RunsOnPicker } from "../../desk/components/RunsOnPicker";
+import { ContextualAssignment } from "./ContextualAssignment";
 import { runAsk, type AskRunResult } from "../../desk/ask";
-import { useDesk } from "../../desk/store";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
 import {
   CitationChips,
@@ -201,13 +200,10 @@ function ProjectAsk({
   projectName: string;
   onOpenRef(ref: string): void;
 }) {
-  const targets = useDesk((state) => state.inferenceTargets);
-  const [targetId, setTargetId] = useState("this_machine");
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<AskRunResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const target = targets.find((item) => item.id === targetId);
   const receipt = result?.groundingReceipt;
   const groundedCount = groundedMatchCount(receipt ?? null);
   const egress = result?.egress
@@ -216,9 +212,7 @@ function ProjectAsk({
       : result.egress.scope === "mesh"
         ? `⇄ ${result.egress.host || "Paired"}`
         : `→ ${result.egress.host || "Leaves device"}`
-    : target?.boundary === "same_device"
-      ? `⌂ ${target.name}`
-      : `→ ${target?.name || "This device"}`;
+    : "Uses assignment";
 
   const ask = async () => {
     if (!prompt.trim() || busy) return;
@@ -235,7 +229,6 @@ function ProjectAsk({
           title: projectName,
         },
       ],
-      inferenceTargetId: targetId,
       grounding: {
         meeting_ids: [],
         artifact_ids: [],
@@ -256,7 +249,7 @@ function ProjectAsk({
       label="Ask this project"
       actions={
         <span
-          className={`egress-badge is-${result?.egress?.scope || (target?.boundary === "same_device" ? "local" : "cloud")}`}
+          className={`egress-badge is-${result?.egress?.scope || "local"}`}
         >
           {egress}
         </span>
@@ -294,11 +287,15 @@ function ProjectAsk({
           </Button>
         </div>
         <div className="desk-chat-well-foot">
-          <RunsOnPicker
-            targets={targets}
-            selectedId={targetId}
-            onChange={setTargetId}
-            disabled={busy}
+          <ContextualAssignment
+            label="Project"
+            capabilityId="ask.answer"
+            scope={{
+              kind: "subject",
+              subject_kind: "project",
+              subject_id: projectId,
+              capability_id: "ask.answer",
+            }}
           />
           <span className="desk-chip quiet">{projectName}</span>
         </div>

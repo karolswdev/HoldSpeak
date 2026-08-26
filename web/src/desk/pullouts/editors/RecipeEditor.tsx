@@ -10,7 +10,6 @@ import type { InlineEditorContentProps } from "./types";
 
 export function RecipeEditor({ object: o, autoFocusName }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
-  const profiles = useDesk((s) => s.profiles);
   const save = useDebouncedSave("recipe", o.id);
   const [more, setMore] = useState(false);
 
@@ -26,7 +25,6 @@ export function RecipeEditor({ object: o, autoFocusName }: InlineEditorContentPr
     userTemplate: String(live.userTemplate || ""),
     tools: (live.tools || []).join(", "),
     kbId: String(live.kbId || ""),
-    profileId: String(live.profileId || ""),
   }));
 
   const set = (key: string, wire: string, value: string, split = false) => {
@@ -100,24 +98,6 @@ export function RecipeEditor({ object: o, autoFocusName }: InlineEditorContentPr
               })),
             ]}
             onChange={(value) => set("kbId", "kb_id", value)}
-          />
-          <CycleGadget
-            label="Default runs on"
-            value={f.profileId}
-            options={[
-              // HS-130-01: unset = INHERIT (falls through to the global
-              // default), NOT "this device". One empty-value meaning, one
-              // token: write null, the same token InfoWindow writes.
-              { value: "", label: "Inherit default" },
-              ...profiles.map((p) => ({
-                value: String(p.id),
-                label: String(p.name || p.id),
-              })),
-            ]}
-            onChange={(value) => {
-              setF((prev) => ({ ...prev, profileId: value }));
-              save({ profile_id: value || null });
-            }}
           />
         </>
       ) : (

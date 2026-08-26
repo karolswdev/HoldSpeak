@@ -13,7 +13,7 @@ import {
 import { ConfirmVerb } from "../../desk/surface/Surface";
 import { useDesk } from "../../desk/store";
 
-/* ── the roster (HS-139-05: seven tiles, named by what the owner DOES) ── */
+/* ── the roster (owner-named destinations, including the Models/Assignments pair) ── */
 
 export type PrefModule = {
   id: string;
@@ -35,8 +35,10 @@ export const PREF_MODULES: PrefModule[] = [
   { id: "meetings", label: "Meetings", glyph: "meeting", sprite: "meetings", keys: ["meeting"] },
   // Rhythm: cadence user-facing + Telegram + RAW.
   { id: "rhythm", label: "Rhythm", glyph: "cadence", sprite: "rhythm", keys: ["cadence", "cadence_telegram"] },
-  // Models: destinations, runs-on, engine, paths, rails observer.
+  // Models stays the availability-only Model Library.
   { id: "models", label: "Models", glyph: "models", sprite: "models", keys: ["rails_observer"] },
+  // Assignments is Models' peer: which compatible chain each job uses.
+  { id: "assignments", label: "Assignments", glyph: "models", sprite: "models", keys: [] },
   // Integrations: credentials + RAW.
   { id: "integrations", label: "Integrations", glyph: "secret", sprite: "integrations", keys: [] },
   // System: device name, desk reset, devices RAW.

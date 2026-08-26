@@ -584,6 +584,7 @@ class MeetingWebServer:
         from .services.inference_setup_service import InferenceSetupApplicationService
         from .services.inference_acquisition_service import InferenceAcquisitionApplicationService
         from .services.model_library_service import ModelLibraryApplicationService
+        from .services.inference_assignment_service import InferenceAssignmentService
         from .services.inference_capability_service import InferenceCapabilityApplicationService
         from .services.profile_key_service import ProfileKeyService
         from .db import get_database, get_observer
@@ -610,6 +611,7 @@ class MeetingWebServer:
             build_meetings_router,
             build_memory_router,
             build_model_library_router,
+            build_inference_assignments_router,
             build_monday_brief_router,
             build_mesh_router,
             build_missioncontrol_router,
@@ -715,8 +717,16 @@ class MeetingWebServer:
         # process from serving rather than become a lazy route-time surprise.
         from .kernel.runtime import _configure
 
+        broker = _configure(get_database())
         inference_capability_service = InferenceCapabilityApplicationService(
-            _configure(get_database()).inference_capability_registry
+            broker.inference_capability_registry
+        )
+        inference_assignment_service = InferenceAssignmentService(
+            get_database(),
+            registry=broker.inference_capability_registry,
+            tool_capability_foundation=getattr(
+                getattr(broker, "tool_turn_foundation", None), "_foundation", None
+            ),
         )
         web_ctx = WebContext(
             get_state=self.get_state,
@@ -756,6 +766,7 @@ class MeetingWebServer:
             inference_setup_service=inference_setup_service,
             inference_acquisition_service=inference_acquisition_service,
             model_library_service=model_library_service,
+            inference_assignment_service=inference_assignment_service,
             inference_capability_service=inference_capability_service,
             delivery_service=DeliveryService(get_database(), observer=obs),
             # HS-131-16: the relay legs sign and revalidate dispatch offers, so
@@ -826,6 +837,7 @@ class MeetingWebServer:
         app.include_router(build_decisions_router(web_ctx))
         app.include_router(build_memory_router(web_ctx))
         app.include_router(build_model_library_router(web_ctx))
+        app.include_router(build_inference_assignments_router(web_ctx))
         app.include_router(build_monday_brief_router(web_ctx))
         app.include_router(build_meetings_router(web_ctx))
         app.include_router(build_desk_actuators_router(web_ctx))

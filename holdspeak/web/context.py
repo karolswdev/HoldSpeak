@@ -87,6 +87,9 @@ class WebContext:
     # HS-143-12: owner-only aggregate availability/projection boundary. It has
     # no assignment write authority and composes the two services above.
     model_library_service: Optional[Any] = None
+    # HS-143-13: the canonical sparse assignment authority is composed once;
+    # its HTTP route only adapts closed owner commands and projections.
+    inference_assignment_service: Optional[Any] = None
     # Phase 143: process-composed, owner-only registry projection.  It owns no
     # profile/binding/assignment persistence and never resolves a model route.
     inference_capability_service: Optional[Any] = None

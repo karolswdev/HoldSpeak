@@ -293,8 +293,8 @@ const SURFACE_ALIASES: Record<string, { target: string; scope?: string }> = {
     scope: "integration:destinations",
   },
   "configure-integration": { target: "configure-settings" },
-  // HS-112-01 — the standalone Runs-on room folded into the Prefs
-  // Models module (the one dial); old dispatches keep landing.
+  // The durable /profiles alias is the Model Library; contextual assignment
+  // controls open Assignments directly rather than retargeting this library door.
   "configure-runs-on": { target: "configure-settings", scope: "models" },
   // HS-100-10 — the Runtime guide is Settings' Guide wing; old
   // dispatches and deep links keep landing.

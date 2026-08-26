@@ -8,6 +8,7 @@ Only the physical engine factory is substituted.
 from __future__ import annotations
 
 import asyncio
+import json
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -62,6 +63,8 @@ class _Case:
 # migrated. Recipe chat intentionally has both ruled paths; Apple is absent by
 # the binding owner descope.
 CASES = (
+    # S4's Thought contextual editor invokes this same canonical subject writer.
+    _Case("thought-ask", "ask.answer", "thought", "thought-matrix"),
     _Case("recipe-run", "recipe.run", "recipe", "recipe-matrix"),
     _Case("recipe-chat-unqualified", "recipe.chat", "recipe", "recipe-matrix"),
     _Case("workbench-item-and-memory", "workbench.item", "workbench", "workbench-matrix"),
@@ -174,6 +177,56 @@ def test_frozen_canonical_terms_survive_assignment_mutation_then_later_admission
         capability_id=case.capability_id,
         operation_id=f"{case.name}-operation-new",
         payload={"system_prompt": "matrix", "user_prompt": "later"},
+        subject_kind=case.subject_kind,
+        subject_id=case.subject_id,
+        reserved_output_tokens=32,
+    )
+    assert later["route_plan"]["entries"][0]["profile_id"] == "matrix-new"
+
+
+@pytest.mark.parametrize(
+    "case",
+    (
+        _Case("contextual-recipe-run", "recipe.run", "recipe", "recipe-matrix"),
+        _Case("contextual-recipe-chat", "recipe.chat", "recipe", "recipe-matrix"),
+        _Case("contextual-workbench-item", "workbench.item", "workbench", "workbench-matrix"),
+        _Case("contextual-workbench-resolver", "voice.reference_resolve", "workbench", "workbench-matrix"),
+    ),
+    ids=lambda case: case.name,
+)
+def test_contextual_subject_save_uses_canonical_assignment_and_preserves_pre_admitted_route_bytes(
+    tmp_path: Path, case: _Case
+) -> None:
+    """The S5 subject editor's save seam is the one canonical set_assignment path.
+
+    ContextualAssignment submits this complete scope/body through the S1 route;
+    this production-object proof invokes that same service mutation and proves a
+    route admitted before it remains byte-identical while the later admission
+    sees the edited subject chain.
+    """
+    db, broker, _engine = _matrix_db(tmp_path, case)
+    coordinator = broker.inference_adoption_service
+    first = coordinator.admit(
+        OWNER,
+        command_id=f"{case.name}-before",
+        capability_id=case.capability_id,
+        operation_id=f"{case.name}-before-operation",
+        payload={"system_prompt": "matrix", "user_prompt": "before"},
+        subject_kind=case.subject_kind,
+        subject_id=case.subject_id,
+        reserved_output_tokens=32,
+    )
+    frozen_route = json.dumps(first["route_plan"], sort_keys=True, separators=(",", ":"))
+
+    _assign(db, case, "matrix-new", f"{case.name}-contextual-save")
+
+    assert json.dumps(first["route_plan"], sort_keys=True, separators=(",", ":")) == frozen_route
+    later = coordinator.admit(
+        OWNER,
+        command_id=f"{case.name}-after",
+        capability_id=case.capability_id,
+        operation_id=f"{case.name}-after-operation",
+        payload={"system_prompt": "matrix", "user_prompt": "after"},
         subject_kind=case.subject_kind,
         subject_id=case.subject_id,
         reserved_output_tokens=32,

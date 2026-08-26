@@ -32,6 +32,8 @@ import {
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
 import { ModelsModule } from "./settingsModels";
+import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
+import { ContextualAssignment } from "./ContextualAssignment";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
 // HS-139-05: activateLauncher removed (Delivery tile absorbed).
@@ -45,9 +47,6 @@ import {
   PrefsFace,
   PrefStatusBar,
   WAKE_ACTION_OPTIONS,
-  meetingPlacement,
-  placementLine,
-  providerIgnoredReason,
 } from "./settingsPrefs";
 
 const SECRET_LABELS: Record<string, string> = {
@@ -535,12 +534,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
     </GadgetRow>
   );
 
-  /* HS-132-10 — the hub's meetings-placement provenance. Meetings states
-     where its intelligence runs and which dial decided; the dial itself
-     lives in Models (one control, one home). */
-  const placement = meetingPlacement(resource.data);
-  const providerIgnored = placement ? providerIgnoredReason(placement) : "";
-
   /* ── the generic walker: survives ONLY inside System (§3.2) ── */
   const walkerRows = (
     node: Record<string, unknown>,
@@ -560,7 +553,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       return str(nextPath, title(key));
     });
 
-  /* ── the authored modules (HS-139-05: seven tiles) ── */
+  /* ── the authored owner-facing modules ── */
   const renderModule = (id: string): ReactNode => {
     const data = resource.data;
     switch (id) {
@@ -689,10 +682,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   "Latency budget",
                   { unit: "ms", min: 0, step: 250 },
                 )}
-                {str(
-                  ["dictation", "pipeline", "target_profile_override"],
-                  "Target profile override",
-                )}
                 {num(
                   ["dictation", "pipeline", "rewrite_passes"],
                   "Rewrite passes",
@@ -771,22 +760,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </GadgetGroup>
             <GadgetGroup label="Intelligence">
               <div className="prefs-elsewhere">
-                <span className="prefs-elsewhere-fact">
-                  PLACEMENT LIVES IN MODELS
-                </span>
-                {placement ? (
-                  <span className="prefs-elsewhere-fact">
-                    {placementLine(placement)}
-                  </span>
-                ) : null}
-                {providerIgnored ? (
-                  <span className="prefs-elsewhere-fact" role="status">
-                    {providerIgnored}
-                  </span>
-                ) : null}
-                <Button dense onClick={() => openModule("models")}>
-                  Open Models
+                <span className="prefs-elsewhere-fact">PLACEMENT LIVES IN ASSIGNMENTS</span>
+                <Button dense onClick={() => openModule("assignments")}>
+                  Open Assignments
                 </Button>
+                <ContextualAssignment
+                  label="Meetings"
+                  capabilityId="meeting.live_analysis"
+                  scope={{ kind: "group", group_id: "meetings" }}
+                />
               </div>
             </GadgetGroup>
             {/* HS-139-04: all operator knobs fold behind one RAW well. */}
@@ -801,7 +783,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 })}
               </GadgetGroup>
               <GadgetGroup label="Intelligence">
-                {str(["meeting", "intel_summary_model"], "Summary model")}
                 {check(["meeting", "intel_cloud_store"], "Cloud store")}
               </GadgetGroup>
               <GadgetGroup label="Deferred queue">
@@ -914,11 +895,14 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </FoldGadget>
           </>
         );
-      /* ── Models: destinations, runs-on, engine, rails ── */
+      /* ── Models: availability-only Model Library ── */
       case "models":
         return (
           <ModelsModule onRefuse={setRefusal} />
         );
+      /* ── Assignments: bounded server-projected routing truth ── */
+      case "assignments":
+        return <CapabilityAssignmentsCore />;
       /* ── Integrations: credentials + RAW ── */
       case "integrations": {
         const RAW_SECRETS = new Set([

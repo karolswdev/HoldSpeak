@@ -119,7 +119,7 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/services/inference_setup_service.py:181:inference_target_id",
     "holdspeak/services/settings_service.py:636:intel_profile_id",
     "holdspeak/services/settings_service.py:885:inference_target_id",
-    "holdspeak/services/workbench_service.py:565:resolver_profile_id",
+    "holdspeak/services/workbench_service.py:581:resolver_profile_id",
 }
 
 # `profile_id` is deliberately not treated as a synonym for routing.  This
@@ -148,13 +148,13 @@ PROFILE_ID_CLASSIFICATIONS = {
     }},
     **{site: "immutable evidence" for site in {
         "holdspeak/services/model_profile_service.py:1206:profile_id",
-        "holdspeak/services/inference_assignment_service.py:1656:profile_id",
+        "holdspeak/services/inference_assignment_service.py:1788:profile_id",
     }},
     **{site: "migration source" for site in {
         "holdspeak/db/models/__init__.py:1121:profile_id",
         "holdspeak/db/models/workbench.py:138:profile_id",
         "holdspeak/services/recipe_service.py:381:profile_id",
-        "holdspeak/services/workbench_service.py:564:profile_id",
+        "holdspeak/services/workbench_service.py:580:profile_id",
     }},
     **{site: "credential/provider identity" for site in {
         "holdspeak/intel/providers.py:687:profile_id", "holdspeak/intel/providers.py:694:profile_id",

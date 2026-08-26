@@ -262,7 +262,6 @@ export interface DeskState {
     kind: "recipe" | "chain" | "workflow",
     id: string,
     input: string,
-    inferenceTargetId: string,
   ): Promise<{
     ok: boolean;
     output: string;

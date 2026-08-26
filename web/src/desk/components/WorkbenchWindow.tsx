@@ -49,8 +49,7 @@ import { WhyControl } from "./WhyControl";
 import { GroundingSection } from "./GroundingSection";
 import { MicButton } from "./MicButton";
 import type { MicState } from "./MicButton";
-import { RunsOnPicker } from "./RunsOnPicker";
-import { displayTargetToken, isInheritedTarget } from "./workbenchTarget";
+import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 import {
   CheckGadget,
   EgressChip,
@@ -121,8 +120,6 @@ const PRIORITY_LABELS = ["", "P1", "P2", "P3", "P4", "P5"];
 
 function ConfigStrip({
   recipe,
-  target,
-  lamp,
   schedule,
   scheduleEnabled,
   startSummary,
@@ -130,8 +127,6 @@ function ConfigStrip({
   onClick,
 }: {
   recipe: any;
-  target: any;
-  lamp: { label: string; tone: string };
   schedule: string | null;
   scheduleEnabled: boolean;
   startSummary: string | null;
@@ -163,15 +158,6 @@ function ConfigStrip({
       <span className="wb-config-strip-sep" aria-hidden="true">
         ·
       </span>
-      <LampGadget label={lamp.label} on={lamp.tone !== "fail"} tone={lamp.tone as "ok" | "warn" | "fail"} />
-      {target ? (
-        <span className="wb-config-strip-target">
-          {String(target.name || "Target")}
-        </span>
-      ) : null}
-      <span className="wb-config-strip-sep" aria-hidden="true">
-        ·
-      </span>
       <span className="wb-config-strip-schedule">
         {startSummary || `${scheduleEnabled ? "⏱" : "⏸"} ${humanSchedule(schedule)}`}
       </span>
@@ -190,12 +176,8 @@ function ConfigStrip({
 function ConfigPanel({
   detail,
   recipes,
-  inferenceTargets,
   skills,
-  lamp,
   onUpdateRecipe,
-  onUpdateTarget,
-  onUpdateResolverProfile,
   onUpdateSchedule,
   onToggleSchedule,
   workbenchId,
@@ -208,12 +190,8 @@ function ConfigPanel({
 }: {
   detail: WorkbenchDetail;
   recipes: any[];
-  inferenceTargets: any[];
   skills: Skill[];
-  lamp: { label: string; tone: string };
   onUpdateRecipe: (id: string) => void;
-  onUpdateTarget: (id: string) => void;
-  onUpdateResolverProfile: (id: string | null) => void;
   onUpdateSchedule: (cron: string | null) => void;
   onToggleSchedule: (enabled: boolean) => void;
   workbenchId: string;
@@ -275,7 +253,6 @@ function ConfigPanel({
   };
 
   const recipe = recipes.find((r) => r.id === detail.recipe_id);
-  const target = inferenceTargets.find((t) => t.id === detail.profile_id);
 
   const filteredRecipes = useMemo(() => {
     const q = agentSearch.toLowerCase().trim();
@@ -372,55 +349,31 @@ function ConfigPanel({
         ) : null}
       </SurfaceSection>
 
-      {/* ── runs on ─────────────────────────────────────────────────── */}
-      {/* HS-130-09 — the display token equals the stored token. An unset
-         target reads as an explicit inherited default (never a fabricated
-         "this_machine"); the effective target is resolved server-side
-         (HS-130-01). */}
+      {/* ── assignments ───────────────────────────────────────────── */}
       <SurfaceSection label="RUNS ON">
-        <div className="wb-config-runs-on">
-          {isInheritedTarget(detail.profile_id) ? (
-            <span className="desk-chip" data-tone="quiet">
-              DEFAULT · INHERITED
-            </span>
-          ) : null}
-          <RunsOnPicker
-            targets={inferenceTargets}
-            selectedId={displayTargetToken(detail.profile_id)}
-            onChange={onUpdateTarget}
-          />
-          {!isInheritedTarget(detail.profile_id) ? (
-            <LampGadget
-              label={lamp.label}
-              on={lamp.tone !== "fail"}
-              tone={lamp.tone as "ok" | "warn" | "fail"}
-            />
-          ) : null}
-        </div>
+        <ContextualAssignment
+          label="Item assignment"
+          capabilityId="workbench.item"
+          scope={{
+            kind: "subject",
+            subject_kind: "workbench",
+            subject_id: workbenchId,
+            capability_id: "workbench.item",
+          }}
+        />
       </SurfaceSection>
 
-      {/* ── resolves with (HS-118-05) ──────────────────────────────── */}
       <SurfaceSection label="RESOLVES WITH">
-        <div className="wb-config-runs-on">
-          <RunsOnPicker
-            targets={inferenceTargets}
-            selectedId={detail.resolver_profile_id || ""}
-            onChange={(id) => onUpdateResolverProfile(id || null)}
-          />
-          {detail.resolver_profile_id ? (() => {
-            const rt = inferenceTargets.find(
-              (t: any) => t.profile_id === detail.resolver_profile_id || t.id === detail.resolver_profile_id
-            );
-            const rl = rt ? boundaryEgressLamp(rt.boundary) : null;
-            return rl ? (
-              <LampGadget
-                label={rl.label}
-                on={rl.tone !== "fail"}
-                tone={rl.tone as "ok" | "warn" | "fail"}
-              />
-            ) : null;
-          })() : null}
-        </div>
+        <ContextualAssignment
+          label="Reference assignment"
+          capabilityId="voice.reference_resolve"
+          scope={{
+            kind: "subject",
+            subject_kind: "workbench",
+            subject_id: workbenchId,
+            capability_id: "voice.reference_resolve",
+          }}
+        />
       </SurfaceSection>
 
       {/* ── start condition ───────────────────────────────────────── */}
@@ -945,7 +898,6 @@ export function WorkbenchWindow({
   const wb = useDesk(
     (s) => (s.items.workbench || []).find((w) => w.id === workbenchId),
   );
-  const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const recipes = useDesk((s) => s.items.recipe);
 
   /* ── data loading (usePrimitiveDetail) ──────────────────────────── */
@@ -1092,19 +1044,8 @@ export function WorkbenchWindow({
   const recipe = recipes.find(
     (r) => r.id === (detail?.recipe_id || wb?.recipeId),
   );
-  const target = inferenceTargets.find(
-    (t) => t.id === (detail?.profile_id || wb?.profileId),
-  );
-  const lamp = boundaryEgressLamp(target?.boundary);
-
-  const resolverProfileId = detail?.resolver_profile_id || null;
-  const resolverTarget = resolverProfileId
-    ? inferenceTargets.find((t: any) => t.profile_id === resolverProfileId || t.id === resolverProfileId)
-    : null;
-  const resolverLamp = resolverTarget ? boundaryEgressLamp(resolverTarget.boundary) : null;
-
   const resolveInletReferences = useCallback((text = newTitle) => {
-    if (!resolverProfileId || !detail || !text.trim()) return;
+    if (!detail || !text.trim()) return;
     const gen = ++generationRef.current;
     setResolving(true);
     setResolverError(null);
@@ -1131,7 +1072,7 @@ export function WorkbenchWindow({
       .finally(() => {
         if (generationRef.current === gen) setResolving(false);
       });
-  }, [addGroundingRef, detail, newTitle, resolverProfileId, workbenchId]);
+  }, [addGroundingRef, detail, newTitle, workbenchId]);
 
   useEffect(() => {
     if (detail && configOpen === null && !configAutoExpanded.current) {
@@ -1214,13 +1155,6 @@ export function WorkbenchWindow({
 
   const updateName = (name: string) => void updateField({ name });
   const updateRecipe = (id: string) => void updateField({ recipe_id: id });
-  const updateTarget = (id: string) => void updateField({ profile_id: id });
-  const updateResolverProfile = (id: string | null) => {
-    generationRef.current++;
-    setResolving(false);
-    setResolverError(null);
-    void updateField({ resolver_profile_id: id });
-  };
   const updateSchedule = (cron: string | null) =>
     void updateField({
       schedule: cron,
@@ -1573,8 +1507,6 @@ export function WorkbenchWindow({
         {detail && !showConfig ? (
           <ConfigStrip
             recipe={recipe}
-            target={target}
-            lamp={lamp}
             schedule={detail.schedule}
             scheduleEnabled={detail.schedule_enabled}
             startSummary={startSummary}
@@ -1587,12 +1519,8 @@ export function WorkbenchWindow({
           <ConfigPanel
             detail={detail}
             recipes={recipes}
-            inferenceTargets={inferenceTargets}
             skills={skills}
-            lamp={lamp}
             onUpdateRecipe={updateRecipe}
-            onUpdateTarget={updateTarget}
-            onUpdateResolverProfile={updateResolverProfile}
             onUpdateSchedule={updateSchedule}
             onToggleSchedule={toggleSchedule}
             workbenchId={workbenchId}
@@ -1677,15 +1605,6 @@ export function WorkbenchWindow({
 
             {/* ── inlet (HS-118-03/04) ─────────────────────────────── */}
             <div className="wb-inlet">
-              {/* pre-call egress disclosure (HS-118-05) */}
-              {resolverLamp ? (
-                <div className="wb-inlet-egress">
-                  <EgressChip
-                    label={`RESOLVER ${resolverLamp.label}`}
-                    scope={resolverLamp.tone === "ok" ? "local" : resolverLamp.tone === "fail" ? "cloud" : "mixed"}
-                  />
-                </div>
-              ) : null}
               {/* grounding tray */}
               {groundingRefs.length > 0 ? (
                 <div className="wb-inlet-tray">
@@ -1744,7 +1663,7 @@ export function WorkbenchWindow({
                     fastRefs.forEach((r) => addGroundingRef(r));
 
                     // Smart path: fire-and-forget (if configured).
-                    if (resolverProfileId && detail) void resolveInletReferences(t);
+                    if (detail) void resolveInletReferences(t);
                   }}
                   onProposalConfirm={(p) => setVoiceProposal(p)}
                   onState={handleMicState}

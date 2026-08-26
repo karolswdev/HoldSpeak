@@ -56,7 +56,7 @@ Assignments.
 | HSEGHS001HS104-143-10 | Agents Workbenches and Recipes Adoption | done | [story-10-agents-workbenches-recipes-adoption](./story-10-agents-workbenches-recipes-adoption.md) | [evidence-story-10](./evidence-story-10.md) |
 | HSEGHS001HS104-143-11 | HTTP MCP Sync and Compatibility | backlog | [story-11-http-mcp-sync-compatibility](./story-11-http-mcp-sync-compatibility.md) | - |
 | HSEGHS001HS104-143-12 | Model Library and Providers | done | [story-12-model-library-providers](./story-12-model-library-providers.md) | [evidence-story-12](./evidence-story-12.md) |
-| HSEGHS001HS104-143-13 | Capability Assignments Experience | backlog | [story-13-capability-assignments-experience](./story-13-capability-assignments-experience.md) | - |
+| HSEGHS001HS104-143-13 | Capability Assignments Experience | done | [story-13-capability-assignments-experience](./story-13-capability-assignments-experience.md) | [evidence-story-13](./evidence-story-13.md) |
 | HSEGHS001HS104-143-14 | Chaos Glass and Closeout | backlog | [story-14-chaos-glass-closeout](./story-14-chaos-glass-closeout.md) | - |
 | HSEGHS001HS104-143-15 | Intelligence Router Repo-Wide Documentation | backlog | [story-15-intelligence-router-docs](./story-15-intelligence-router-docs.md) | - |
 
@@ -581,6 +581,21 @@ the Runs-on owner law was caught regressed by its guard and restored;
 the owner-DB generator incident closed with forensic proof of zero
 damage. Real-hub shots at 1440/393/200% are with the owner. Next:
 Story 13 (Capability Assignments experience), then 11, 15, 14.
+
+Story 13 is done (2026-08-26, six gate commits on
+`feat/hs143-13-assignments`, unpushed pending the owner's shot verdict
+and merge word): Assignments is the peer Settings destination — the
+seven-row overview with server-projected effective truth and one shared
+in-world editor (atomic chains, server-filtered candidates, ABA-safe
+Use-default with preview and revision-checked clear). Ask, Editor,
+Project, Dictation, Meetings, Personas, and Workbenches all edit
+through the one canonical path with Next-run receipts; RunsOnPicker and
+every raw pointer write are deleted (census 28→17); frozen routes
+proven byte-unchanged under mutation. Closing audit clean, zero product
+bugs; three sweeps ending 6654 passed / zero real branch-new
+(captured). The sweep caught the /profiles misroute (Settings→Models
+unreachable) — fixed, both routing rulings reconciled. Shots with the
+owner. Remaining: 11, 15, 14.
 
 ## Decisions deferred
 

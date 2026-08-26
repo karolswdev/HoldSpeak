@@ -2573,6 +2573,56 @@
       "consumers": []
     },
     {
+      "path": "/api/inference/assignments",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.inference_assignments",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/assignments/clear",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.inference_assignments",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/assignments/editor",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.inference_assignments",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/assignments/preview-use-default",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.inference_assignments",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/inference/assignments/set",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.inference_assignments",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/inference/capabilities",
       "methods": [
         "GET"

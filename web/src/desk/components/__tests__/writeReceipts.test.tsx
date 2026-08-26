@@ -131,7 +131,7 @@ describe("HS-132-06 workbench write receipts", () => {
     await openWindow();
     const inlet = screen.getByLabelText("New item instruction");
     await user.type(inlet, "Write the memo");
-    await user.click(screen.getByRole("button", { name: /GO/ }));
+    await user.click(screen.getByRole("button", { name: "Add" }));
 
     await waitFor(() =>
       expect(receiptText()).toBe("ADD ITEM FAILED · HTTP 500"),
@@ -145,7 +145,7 @@ describe("HS-132-06 workbench write receipts", () => {
     const fetchMock = mockHub();
     await openWindow();
     await user.type(screen.getByLabelText("New item instruction"), "Write the memo");
-    await user.click(screen.getByRole("button", { name: /GO/ }));
+    await user.click(screen.getByRole("button", { name: "Add" }));
     await waitFor(() => expect(receiptText()).toContain("ADD ITEM FAILED"));
 
     const posts = () =>
@@ -235,7 +235,7 @@ describe("HS-132-06 workbench write receipts", () => {
     const user = userEvent.setup();
     await openWindow();
     await user.type(screen.getByLabelText("New item instruction"), "Write the memo");
-    await user.click(screen.getByRole("button", { name: /GO/ }));
+    await user.click(screen.getByRole("button", { name: "Add" }));
     await waitFor(() =>
       expect(screen.getByLabelText("New item instruction")).toHaveValue(""),
     );

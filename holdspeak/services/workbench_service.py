@@ -80,11 +80,11 @@ class WorkbenchService:
     # ── Workbenches ──────────────────────────────────────────────────────
 
     def list_workbenches(self, principal: Principal) -> list[dict[str, Any]]:
-        return [self._wb_payload(wb) for wb in self._db.workbenches.list()]
+        return [self._wb_payload(wb, principal) for wb in self._db.workbenches.list()]
 
     def get_workbench(self, principal: Principal, workbench_id: str) -> dict[str, Any]:
         wb = self._require_workbench(workbench_id)
-        return self._wb_payload(wb)
+        return self._wb_payload(wb, principal)
 
     def create_workbench(self, principal: Principal, *, name: str, **fields: Any) -> dict[str, Any]:
         if not name.strip():
@@ -98,7 +98,7 @@ class WorkbenchService:
         if not fields["schedule_enabled"]:
             wb = self._db.workbenches.upsert(workbench_id=workbench_id, **fields)
             self._write_legacy_pointer_compatibility(principal, wb.id, body)
-            return self._wb_payload(wb)
+            return self._wb_payload(wb, principal)
         # The owner's single enable gesture commits its configuration, captured
         # deployment revision, and local delegation as one crash-consistent unit.
         from holdspeak.kernel.runtime import _configure
@@ -109,7 +109,7 @@ class WorkbenchService:
             wb = self._db.workbenches.upsert_in_transaction(conn, workbench_id=workbench_id, **fields)
             ScheduleDelegationService(self._db).enable_from_owner_in_transaction(principal, wb, conn)
         self._write_legacy_pointer_compatibility(principal, wb.id, body)
-        return self._wb_payload(wb)
+        return self._wb_payload(wb, principal)
 
     def update_workbench(
         self, principal: Principal, workbench_id: str, **fields: Any
@@ -131,7 +131,7 @@ class WorkbenchService:
         if not bound_changed:
             wb = self._db.workbenches.upsert(workbench_id=workbench_id, **proposed)
             self._write_legacy_pointer_compatibility(principal, wb.id, fields)
-            return self._wb_payload(wb)
+            return self._wb_payload(wb, principal)
         # Bound configuration and the authority it invalidates share one lock.
         # A provider is only signalled after the epoch fence has committed.
         from .schedule_delegation import ScheduleDelegationService
@@ -147,7 +147,7 @@ class WorkbenchService:
                 service.enable_from_owner_in_transaction(principal, wb, conn)
         service.complete_fenced(fenced)
         self._write_legacy_pointer_compatibility(principal, wb.id, fields)
-        return self._wb_payload(wb)
+        return self._wb_payload(wb, principal)
 
     def delete_workbench(self, principal: Principal, workbench_id: str) -> bool:
         if self._db.workbench_items.has_active_items(workbench_id):
@@ -371,7 +371,7 @@ class WorkbenchService:
             from .recipe_service import RecipeService
             RecipeService(self._db)._write_legacy_profile_compatibility(principal, recipe.id, profile_id)
             self._write_legacy_pointer_compatibility(principal, wb.id, {"profile_id": profile_id})
-        return {"workbench": self._wb_payload(wb), "recipe": recipe.to_dict()}
+        return {"workbench": self._wb_payload(wb, principal), "recipe": recipe.to_dict()}
 
     def list_skills(
         self, principal: Principal, recipe_id: str | None = None
@@ -544,7 +544,7 @@ class WorkbenchService:
             raise NotFound("item", item_id)
         return item
 
-    def _wb_payload(self, wb: Any) -> dict[str, Any]:
+    def _wb_payload(self, wb: Any, principal: Principal) -> dict[str, Any]:
         payload = wb.to_dict()
         items = self._db.workbench_items.list_for_workbench(wb.id)
         payload["items"] = [item.to_dict() for item in items]
@@ -552,6 +552,22 @@ class WorkbenchService:
         payload["pending_count"] = sum(1 for item in items if item.status == "pending")
         runs = self._db.workbench_runs.list_for_workbench(wb.id, limit=1)
         payload["last_run"] = runs[0].to_dict() if runs else None
+        if principal.kind is PrincipalKind.OWNER:
+            from .inference_assignment_service import InferenceAssignmentService
+
+            effective = InferenceAssignmentService(self._db).resolve_effective(
+                principal,
+                capability_id="workbench.item",
+                subject_kind="workbench",
+                subject_id=wb.id,
+            )
+            assignment = effective.get("assignment") or {}
+            payload["assignment_summary"] = {
+                "status": effective["status"],
+                "source": effective.get("inherited_from"),
+                "chain": [str(entry["label"]) for entry in assignment.get("entries", [])],
+                "repair": effective.get("repair"),
+            }
         return payload
 
     @staticmethod
