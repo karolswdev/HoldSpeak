@@ -173,11 +173,8 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
-    "holdspeak/services/inference_adoption_service.py:1471|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    "holdspeak/services/inference_adoption_service.py:1551|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
-    ),
-    "holdspeak/services/sequence_workflow_service.py:44|SequenceWorkflowService._invoke|call": ProposedRoute(
-        "internal.semantic_dispatch", "services.sequence_workflow_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
     "holdspeak/speech_session/child.py:181|run_admitted_speech_child|call": ProposedRoute(
         "dynamic:SpeechSessionPlan capability", "speech_session.child", "InferenceRunner admitted child",
@@ -185,9 +182,9 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
 }
 
 
-# AskService._invoke and SequenceWorkflowService._invoke are deliberately shared
-# internal helpers, so their runner entrances cannot
-# truthfully name one capability. This second census records semantic callers.
+# AskService._invoke remains a shared internal helper whose runner entrance
+# cannot truthfully name one capability. Sequence and Workflow enter through
+# the frozen-route coordinator above. This second census records semantic callers.
 # Refinement is one
 # ``thought.interview`` capability whose result contract branches to either a
 # next-question or terminal synthesis; synthesis is not separately routable.
@@ -290,12 +287,6 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     ),
     "holdspeak/web/routes/primitives/recipes.py:115|build_recipes_router.api_chat_recipe|chat": ProposedRoute(
         "recipe.chat", "web.routes.primitives.recipes", "RecipeService semantic caller",
-    ),
-    "holdspeak/services/sequence_workflow_service.py:133|SequenceWorkflowService.run_sequence|_invoke": ProposedRoute(
-        "sequence.step", "services.sequence_workflow_service", "Sequence semantic caller",
-    ),
-    "holdspeak/services/sequence_workflow_service.py:186|SequenceWorkflowService.run_workflow|_invoke": ProposedRoute(
-        "workflow.node", "services.sequence_workflow_service", "Workflow semantic caller",
     ),
 }
 

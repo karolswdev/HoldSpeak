@@ -38,8 +38,6 @@ MUTABLE_FAMILY_OWNERS = {
     "Recipe and agent default pointer": "143-10",
     "Workbench execution pointer": "143-10",
     "Workbench voice-resolver pointer": "143-10",
-    "Recipe, Sequence, and Workflow request placement override": "143-10",
-    "Kernel `inference.run` requested target selector": "143-10",
     "Cadence background global resolver": "143-08",
     "V1 profile and workbench sync payload": "143-11",
     "Settings Thoughts and writing legacy pointer writers": "143-07",
@@ -76,8 +74,6 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/intel/providers.py:235:ref:resolve_meeting_placement",
     "holdspeak/intel/providers.py:337:ref:resolve_meeting_placement",
     "holdspeak/intel/providers.py:864:ref:resolve_meeting_placement",
-    "holdspeak/kernel/inference.py:103:ref:resolve_inference_target",
-    "holdspeak/kernel/inference.py:9:import:resolve_inference_target",
     "holdspeak/kernel/inference_invoke.py:10:import:resolve_deployment_revision",
     "holdspeak/kernel/inference_invoke.py:92:ref:resolve_deployment_revision",
     "holdspeak/kernel/inference_runner.py:13:import:resolve_deployment_revision",
@@ -98,8 +94,6 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/services/refinement_coordinator.py:310:ref:resolve_thought_placement",
     "holdspeak/services/refinement_thought_service.py:640:import:resolve_thought_placement",
     "holdspeak/services/refinement_thought_service.py:681:ref:resolve_thought_placement",
-    "holdspeak/services/sequence_workflow_service.py:31:import:resolve_placement",
-    "holdspeak/services/sequence_workflow_service.py:33:ref:resolve_placement",
     "holdspeak/services/settings_service.py:68:import:resolve_meeting_placement",
     "holdspeak/services/settings_service.py:76:ref:resolve_meeting_placement",
     "holdspeak/speech_session/plan.py:452:import:resolve_placement",
@@ -129,8 +123,6 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/services/settings_service.py:636:intel_profile_id",
     "holdspeak/services/settings_service.py:885:inference_target_id",
     "holdspeak/services/workbench_service.py:565:resolver_profile_id",
-    "holdspeak/kernel/inference.py:103:requested_target_id",
-    "holdspeak/kernel/inference.py:147:requested_target_id",
 }
 
 # `profile_id` is deliberately not treated as a synonym for routing.  This
@@ -141,7 +133,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/config/core.py:138:profile_id", "holdspeak/config/core.py:169:profile_id",
         "holdspeak/config/integrations.py:101:profile_id", "holdspeak/config/model.py:80:profile_id", "holdspeak/db/models/workbench.py:138:profile_id",
         "holdspeak/plugins/dictation/assembly.py:321:profile_id",
-        "holdspeak/services/sequence_workflow_service.py:129:profile_id", "holdspeak/services/settings_service.py:786:profile_id",
+        "holdspeak/services/settings_service.py:786:profile_id",
         "holdspeak/services/settings_service.py:858:profile_id", "holdspeak/services/workbench_service.py:564:profile_id",
         "holdspeak/services/sync_service.py:682:profile_id",
         "holdspeak/services/sync_service.py:697:profile_id",
@@ -250,7 +242,7 @@ def test_census_anchors_current_routing_resolvers_and_legacy_assignment_writers(
         "holdspeak/speech_session/plan.py:DictationSessionPlanResolver": "holdspeak/speech_session/plan.py",
         "holdspeak/deployment_revisions.py:resolve_workbench_deployment_revision": "holdspeak/deployment_revisions.py",
         "holdspeak/services/schedule_delegation.py:_terms": "holdspeak/services/schedule_delegation.py",
-        "holdspeak/services/sequence_workflow_service.py:SequenceWorkflowService._target": "holdspeak/services/sequence_workflow_service.py",
+        "holdspeak/services/sequence_workflow_service.py:SequenceWorkflowService._freeze_parent_routes": "holdspeak/services/sequence_workflow_service.py",
         "holdspeak/services/decision_lifecycle_service.py:draft_promoted_with_model": "holdspeak/services/decision_lifecycle_service.py",
         "holdspeak/web/routes/delivery_prs.py:api_delivery_pr_draft_review": "holdspeak/web/routes/delivery_prs.py",
         "holdspeak/services/cadence_service.py:_drafted_next_action": "holdspeak/services/cadence_service.py",
@@ -270,8 +262,8 @@ def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() 
     assert pointers == ROUTING_POINTER_ATTRIBUTES
     assert profile_ids == set(PROFILE_ID_CLASSIFICATIONS)
     assert set(PROFILE_ID_CLASSIFICATIONS.values()) <= CLASSES
-    assert len(PROFILE_ID_CLASSIFICATIONS) == 34
-    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 13
+    assert len(PROFILE_ID_CLASSIFICATIONS) == 33
+    assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 12
     assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 13
     assert sum(value == "credential/provider identity" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 5
     assert sum(value == "immutable evidence" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 2

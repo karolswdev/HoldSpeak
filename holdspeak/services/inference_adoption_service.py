@@ -1249,6 +1249,86 @@ class RoutedInferenceCoordinator:
                 code="inference_adoption_service_membership_required",
             )
 
+    def freeze_routes(
+        self,
+        principal: Principal,
+        *,
+        command_id: str,
+        deadline_at: float,
+        routes: Sequence[Mapping[str, Any]],
+    ) -> dict[str, dict[str, Any]]:
+        """Freeze a parent's named future routes in one canonical transaction.
+
+        Unlike ``InferenceParentRouteBundleService``, a linear Sequence may need
+        several routes of the same capability (one per saved Recipe).  This
+        façade deliberately freezes route evidence only; each later child still
+        attaches its private operation material through ``admit_on_frozen_route``
+        and executes under the controller.  Nothing here selects a target.
+        """
+        if principal.kind is not PrincipalKind.OWNER or not routes:
+            raise ValidationError(
+                "Parent routes are invalid.", code="inference_adoption_composite_invalid"
+            )
+        command = _safe(command_id, field="command_id")
+        try:
+            deadline = float(deadline_at)
+        except (TypeError, ValueError) as exc:
+            raise ValidationError(
+                "Parent route deadline is invalid.",
+                code="inference_adoption_composite_invalid",
+            ) from exc
+        if deadline <= time.time():
+            raise ValidationError(
+                "Parent route deadline has elapsed.",
+                code="inference_adoption_composite_invalid",
+            )
+        frozen: dict[str, dict[str, Any]] = {}
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                for ordinal, raw in enumerate(routes, 1):
+                    if not isinstance(raw, Mapping):
+                        raise ValidationError(
+                            "Parent route is invalid.",
+                            code="inference_adoption_composite_invalid",
+                        )
+                    required = {"key", "capability_id", "invocation_id"}
+                    optional = {"subject_kind", "subject_id"}
+                    if (
+                        not required.issubset(raw)
+                        or set(raw) - (required | optional)
+                        or (("subject_kind" in raw) != ("subject_id" in raw))
+                    ):
+                        raise ValidationError(
+                            "Parent route is invalid.",
+                            code="inference_adoption_composite_invalid",
+                        )
+                    key = _safe(raw["key"], field="route_key")
+                    if key in frozen:
+                        raise ValidationError(
+                            "Parent route keys must be unique.",
+                            code="inference_adoption_composite_invalid",
+                        )
+                    request: dict[str, Any] = {
+                        "capability_id": _safe(raw["capability_id"], field="capability_id"),
+                        "invocation_id": _safe(raw["invocation_id"], field="invocation_id"),
+                        "deadline_at": deadline,
+                    }
+                    if "subject_kind" in raw:
+                        request["subject_kind"] = _safe(raw["subject_kind"], field="subject_kind")
+                        request["subject_id"] = _safe(raw["subject_id"], field="subject_id")
+                    frozen[key] = self.plans.freeze_route_plan_in_transaction(
+                        ROUTE_PLANNING_AUTHORITY,
+                        conn,
+                        command_id=f"{command}-{ordinal}",
+                        **request,
+                    )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+        return frozen
+
     def freeze_route_set(
         self,
         principal: Principal,
@@ -2552,7 +2632,7 @@ class RoutedInferenceCoordinator:
             })
             if value:
                 profile = entry_for(value)
-                for capability_id in ("recipe.run", "recipe.chat"):
+                for capability_id in ("recipe.run", "recipe.chat", "sequence.step"):
                     subject_entries.append({
                         "subject_kind": "recipe", "subject_id": str(recipe.id),
                         "capability_id": capability_id, "entry": profile,

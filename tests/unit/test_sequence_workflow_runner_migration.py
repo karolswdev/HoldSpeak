@@ -39,6 +39,24 @@ def route_rig(tmp_path: Path, monkeypatch):
     """Production HTTP chain with only the provider-construction seam faked."""
     reset_database()
     db = Database(tmp_path / "route.db")
+    # Slice 4 no longer synthesizes a route from the old mutable target. Give
+    # production services a real canonical assignment and fake only the engine.
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    profile = db.profiles.upsert(
+        profile_id="sequence-route", name="Sequence route", kind="openAICompatible",
+        base_url="http://sequence-route", model="sequence-model",
+    )
+    assignments = InferenceAssignmentService(db)
+    for capability_id in ("sequence.step", "workflow.node"):
+        assignments.set_assignment(
+            OWNER,
+            {
+                "command_id": f"sequence-test-{capability_id}",
+                "expected_revision": 0,
+                "scope": {"kind": "capability", "capability_id": capability_id},
+                "entries": [{"profile_id": f"legacy-{profile.id}"}],
+            },
+        )
     monkeypatch.setattr(hsdb, "get_database", lambda *args, **kwargs: db)
     monkeypatch.setattr(
         "holdspeak.inference_targets._this_machine_readiness", lambda: ("ready", "")
@@ -171,11 +189,12 @@ def test_three_step_sequence_has_three_admitted_children_and_terminal_receipts(r
 
 def test_workflow_child_cardinality_covers_model_retry_fallback_skip_and_pure_nodes(route_rig):
     client, db, state = route_rig
-    # retryThenQueue is terminal failure: it does not invent a retry child.
+    # Legacy retryThenQueue decodes to named hold: no local retry authority.
     retry = _workflow(client, _linear([{"id": "entry", "kind": {"entry": {}}}, {"id": "model", "kind": {"summarize": {}}, "failure_policy": "retryThenQueue"}, {"id": "out", "kind": {"output": {}}}]))
     state["fail"] = True
     failed = client.post(f"/api/workflows/{retry}/run", json={"input": "x"})
-    assert failed.status_code == 502
+    assert failed.status_code == 409
+    assert failed.json()["error"] == "This Workflow node is held after its admitted model attempt failed."
     # A child is never admitted without its owning parent, even on failure.
     with db._connection() as conn:
         parentless_children = conn.execute("SELECT count(*) FROM kernel_operations WHERE name='inference.invoke' AND parent_operation_id='' ").fetchone()[0]
@@ -489,24 +508,72 @@ def test_workflow_node_classification_is_closed_before_admission(route_rig):
     assert _receipt(db, parent_id)["outcome"] == "refused"
 
 
-def test_sequence_child_refuses_recipe_revision_changed_after_planning(route_rig, monkeypatch):
-    """The runner receives the planned SavedDefinition revision, never a refresh."""
-    client, db, _ = route_rig
-    recipe = _recipe(client, "planned")
+def test_sequence_subject_assignment_mutation_after_admission_only_moves_next_run(route_rig):
+    """A frozen step route never re-reads its Recipe subject assignment."""
+    client, db, state = route_rig
+    recipe = _recipe(client, "frozen")
     chain = _sequence(client, [recipe])
-    from holdspeak.services.sequence_workflow_service import SequenceWorkflowService
-    original = SequenceWorkflowService._target
-    def mutate_before_admission(service, *args, **kwargs):
-        with db._connection() as conn:
-            conn.execute("UPDATE recipes SET last_modified=? WHERE id=?", ("2099-01-01T00:00:00+00:00", recipe))
-        return original(service, *args, **kwargs)
-    monkeypatch.setattr(SequenceWorkflowService, "_target", mutate_before_admission)
-    response = client.post(f"/api/chains/{chain}/run", json={"input": "x"})
-    assert response.status_code == 502
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+    alternate = db.profiles.upsert(
+        profile_id="sequence-alternate", name="Alternate", kind="openAICompatible",
+        base_url="http://alternate", model="alternate-model",
+    )
+    assignments = InferenceAssignmentService(db)
+    scope = {
+        "kind": "subject", "subject_kind": "recipe", "subject_id": recipe,
+        "capability_id": "sequence.step",
+    }
+    assignments.set_assignment(
+        OWNER,
+        {
+            "command_id": "sequence-subject-initial", "expected_revision": 0,
+            "scope": scope, "entries": [{"profile_id": "legacy-sequence-route"}],
+        },
+    )
+    state["block"] = True
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        pending = executor.submit(
+            client.post, f"/api/chains/{chain}/run", json={"input": "x"}
+        )
+        assert state["entered"].wait(5)
+        assignments.set_assignment(
+            OWNER,
+            {
+                "command_id": "sequence-subject-next", "expected_revision": 1,
+                "scope": scope,
+                "entries": [{"profile_id": f"legacy-{alternate.id}"}],
+            },
+        )
+        state["release"].set()
+        first = pending.result(timeout=10)
+    assert first.status_code == 200, first.text
+    first_body = first.json()
+    first_child = _children(db, first_body["parent_operation_id"])[0]
     with db._connection() as conn:
-        parent_id = conn.execute("SELECT operation_id FROM kernel_operations WHERE name='sequence.run' ORDER BY created_at DESC LIMIT 1").fetchone()[0]
-    assert not _children(db, parent_id)
-    assert _receipt(db, parent_id)["outcome"] == "failed"
+        first_route = conn.execute(
+            """SELECT e.profile_id FROM inference_route_attempts a
+               JOIN inference_route_executions x ON x.id=a.execution_id
+               JOIN inference_operation_route_request_plans o ON o.id=x.operation_plan_id
+               JOIN inference_route_plan_entries e ON e.plan_id=o.route_plan_id
+               WHERE a.child_operation_id=?""",
+            (first_child["operation_id"],),
+        ).fetchone()
+    assert first_route is not None and first_route["profile_id"] == "legacy-sequence-route"
+    state["block"] = False
+    later = client.post(f"/api/chains/{chain}/run", json={"input": "x"})
+    assert later.status_code == 200, later.text
+    later_child = _children(db, later.json()["parent_operation_id"])[0]
+    with db._connection() as conn:
+        later_route = conn.execute(
+            """SELECT e.profile_id FROM inference_route_attempts a
+               JOIN inference_route_executions x ON x.id=a.execution_id
+               JOIN inference_operation_route_request_plans o ON o.id=x.operation_plan_id
+               JOIN inference_route_plan_entries e ON e.plan_id=o.route_plan_id
+               WHERE a.child_operation_id=?""",
+            (later_child["operation_id"],),
+        ).fetchone()
+    assert later_route is not None and later_route["profile_id"] == f"legacy-{alternate.id}"
 
 
 def test_cancel_and_failure_close_have_one_receipt_winner(rig):

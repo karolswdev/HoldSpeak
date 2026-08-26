@@ -69,56 +69,6 @@ def canonical_source_type(raw: Any) -> str:
 def capability_descriptor(*, kind: str, name: str, readiness: str = "ready", detail: str = "", supported_placements: Optional[list[str]] = None, effect_classes: Optional[list[str]] = None, action_label: str = "", support: str = "supported") -> dict[str, Any]:
     return {"kind": kind, "input_schema": {"type": "object", "required": ["input"], "properties": {"input": {"type": "string", "help": "Material to work on."}}}, "input_help": "Choose or enter the material this capability should work on.", "supported_placements": supported_placements or ["this_machine"], "effect_classes": effect_classes or ["creates_artifact"], "readiness": {"state": readiness, "detail": detail}, "action_label": action_label or f"Run {name}", "support": support}
 
-class RunLifecycle:
-    def __init__(self, db: Any, invocation_id: str, definition_ref: str, *, operation_id: str = "", broker: Any = None) -> None:
-        self.db, self.invocation_id, self.definition_ref = db, invocation_id, definition_ref
-        self.operation_id, self.broker, self.node_principal, self.attempt_id, self.target = operation_id, broker, None, None, None
-    @classmethod
-    def begin(cls, db: Any, *, definition_ref: str, body: dict[str, Any], default_placement: str = "this_machine", principal: Any = None, definition_revision: str = "") -> "RunLifecycle":
-        invocation_id = _new_id("invocation"); raw_refs, grounding = body.get("grounding_refs", []), []
-        if isinstance(raw_refs, list):
-            revisions = body.get("grounding_revisions") if isinstance(body.get("grounding_revisions"), dict) else {}
-            for item in raw_refs:
-                if isinstance(item, dict): grounding.append({"ref": str(item.get("ref") or ""), "revision": str(item.get("revision") or "")})
-                elif str(item).strip(): grounding.append({"ref": str(item).strip(), "revision": str(revisions.get(str(item)) or "unversioned")})
-        source_ref = str(body.get("source_ref") or "").strip()
-        if source_ref:
-            source_kind = canonical_source_type(body.get("source_type") or "input") or "input"; grounding.append({"ref": source_ref if ":" in source_ref else f"{source_kind}:{source_ref}", "revision": str(body.get("source_revision") or "unversioned")})
-        snapshot: dict[str, Any] = {"input": str(body.get("input") or "")}
-        if isinstance(body.get("variables"), dict): snapshot["variables"] = dict(body["variables"])
-        requested = str(body.get("inference_target_id") or body.get("requested_placement") or default_placement)
-        if principal is not None and definition_ref.startswith("persona:"):
-            import time
-            from ..kernel.runtime import _service
-            broker = _service(); handle = broker.submit({"request_schema": 1, "request_id": _new_id("request"), "idempotency_key": invocation_id, "operation": {"name": "inference.run", "version": 1}, "target": {}, "arguments": {"invocation_id": invocation_id, "definition_ref": definition_ref, "definition_revision": definition_revision or "unversioned", "grounding_refs": grounding, "requested_target_id": requested, "deadline_at": float(body.get("deadline_at") or time.time() + 300.0), "input_snapshot": snapshot}}, principal)
-            if handle["state"] == "refused": raise ValueError(handle["receipt"]["outcome"])
-            handle = broker.decide(handle["operation_id"], "approve", handle["revision"], principal); return cls(db, invocation_id, definition_ref, operation_id=handle["operation_id"], broker=broker)
-        db.capability_invocations.begin(invocation_id=invocation_id, definition_ref=definition_ref, initiator=str(body.get("initiator") or "owner"), grounding_refs=[f"{item['ref']}@{item['revision']}" for item in grounding], requested_placement=requested, input_snapshot=snapshot); return cls(db, invocation_id, definition_ref)
-    def start_attempt(self, *, destination: str, provider: Optional[str] = None, target: Any = None) -> str:
-        self.attempt_id, self.target = _new_id("attempt"), target
-        if self.broker is not None and self.operation_id:
-            from ..principals import Principal, PrincipalKind
-            operation = self.broker.store.operation(self.operation_id); self.node_principal = Principal(PrincipalKind.NODE, str(operation["placement"]).removeprefix("node:")); claimed = self.broker.claim(self.node_principal, self.invocation_id)
-            if not claimed["operations"] or claimed["operations"][0]["operation_id"] != self.operation_id: raise ValueError("inference operation could not be claimed")
-        self.db.capability_invocations.start_attempt(invocation_id=self.invocation_id, attempt_id=self.attempt_id, destination=destination, provider=provider, actual_placement=target.placement_receipt(provider=provider) if target else None); return self.attempt_id
-    def fail(self, error: str, *, state: str = "failed", provider: Optional[str] = None, model: Optional[str] = None) -> dict[str, Any]:
-        if self.attempt_id: self.db.capability_invocations.finish_attempt(self.attempt_id, state="failed" if state != "empty" else "empty", provider=provider, error=error, actual_placement=self.target.placement_receipt(provider=provider, model=model) if self.target else None)
-        value = self.db.capability_invocations.finish(self.invocation_id, state=state, error=error).to_dict(); self._close("failed", f"invocation:{self.invocation_id}"); return value
-    def succeed(self, artifact_id: str, *, provider: Optional[str] = None, model: Optional[str] = None) -> dict[str, Any]:
-        result_ref = f"artifact:{artifact_id}"
-        if self.attempt_id: self.db.capability_invocations.finish_attempt(self.attempt_id, state="succeeded", provider=provider, result_ref=result_ref, actual_placement=self.target.placement_receipt(provider=provider, model=model) if self.target else None)
-        value = self.db.capability_invocations.finish(self.invocation_id, state="succeeded", result_ref=result_ref).to_dict(); self._close("succeeded", result_ref); return value
-    def cancelled(self) -> Optional[dict[str, Any]]:
-        value = self.db.capability_invocations.get(self.invocation_id)
-        if value is None or value.state != "cancelled": return None
-        self._close("refused", f"invocation:{self.invocation_id}"); return value.to_dict()
-    def _close(self, outcome: str, result_ref: str) -> None:
-        if self.broker is not None and self.node_principal is not None and self.operation_id and self.broker.store.receipt(self.operation_id) is None: self.broker.receipt(self.operation_id, outcome, result_ref, self.node_principal)
-    def lineage(self) -> list[dict[str, str]]:
-        rows = [{"source_type": "invocation", "source_ref": self.invocation_id}]
-        if self.attempt_id: rows.append({"source_type": "attempt", "source_ref": self.attempt_id})
-        return rows
-
 def _render_user_prompt(template: str, variables: dict[str, Any], user_input: str) -> str:
     if not template: return user_input
     mapping = dict(variables or {}); mapping.setdefault("input", user_input)
@@ -194,8 +144,14 @@ _LINEAR_KINDS = _PASSTHROUGH_KINDS | _MODEL_KINDS | _PURE_TRANSFORM_KINDS
 # the run default (== "auto" target, == the runner's default policy), which stays
 # byte-identical to the pre-provenance behaviour.
 #
-# What a run does when a node's model call throws (`FailurePolicy`):
-_FAILURE_POLICIES = frozenset({"retryThenQueue", "fallbackOnDevice", "skip"})
+# Workflow execution owns only truthful local dispositions. Old Swift wire names
+# are decoded at this boundary; neither alias grants retry or route-selection
+# authority. The routed controller remains the sole owner of actual attempts.
+_FAILURE_POLICIES = frozenset({"carry", "hold", "skip"})
+_FAILURE_POLICY_ALIASES = {
+    "fallbackOnDevice": "carry",
+    "retryThenQueue": "hold",
+}
 # Where a model-op node prefers to run (`ModelPref`). "desktop" pins the step to
 # the paired desktop (the mesh dispatch, HSM-15-02): ON the hub that simply means
 # "run here", so the trail preserves the pin instead of folding it to "auto".
@@ -203,14 +159,17 @@ _RUN_TARGETS = frozenset({"auto", "onDevice", "endpoint", "desktop"})
 
 
 def _norm_failure_policy(raw: Any) -> Optional[str]:
-    """Normalize a node's raw `failure_policy` to a known value, else None (= inherit).
+    """Decode old wire aliases to canonical local failure disposition words.
 
-    Accepts the Swift enum raw string (`retryThenQueue`/`fallbackOnDevice`/`skip`).
-    Unset / unrecognised → None so the runner falls back to its default (unchanged).
+    ``fallbackOnDevice`` was always a hub carry-through, not a fallback route;
+    it becomes ``carry``. ``retryThenQueue`` becomes ``hold`` so the caller gets
+    a typed refusal after the controller settles its admitted attempt. It never
+    creates local retry or queue authority.
     """
-    if isinstance(raw, str) and raw in _FAILURE_POLICIES:
-        return raw
-    return None
+    if not isinstance(raw, str):
+        return None
+    value = _FAILURE_POLICY_ALIASES.get(raw, raw)
+    return value if value in _FAILURE_POLICIES else None
 
 
 def _norm_run_target(raw: Any) -> str:
@@ -237,7 +196,7 @@ class GraphNode:
     id: str
     kind: str
     payload: Any  # the value beside the kind tag (dict, str, or {} for nullary kinds)
-    failure_policy: Optional[str] = None  # retryThenQueue | fallbackOnDevice | skip | None
+    failure_policy: Optional[str] = None  # carry | hold | skip | None
     runs_on: str = "auto"  # auto | onDevice | endpoint
 
 
@@ -497,35 +456,19 @@ def apply_pure_transform(node: GraphNode, input_text: str) -> str:
 # ── Per-node provenance the hub honours / surfaces ───────────────────────────
 
 
-def resolved_failure_policy(node: GraphNode, default: str = "retryThenQueue") -> str:
-    """The policy that governs this node: its own `failure_policy`, else the run default.
-
-    Mirrors the Swift `node.failurePolicy ?? policy.failurePolicy` resolution in
-    `BlueprintInterpreter`. `default` matches the runner's `RunPolicy` default
-    (`retryThenQueue`).
-    """
+def resolved_failure_policy(node: GraphNode, default: str = "hold") -> str:
+    """Return the canonical local disposition, never a retry instruction."""
     return node.failure_policy or default
 
 
 def on_node_error(node: GraphNode, carried_input: str) -> Optional[str]:
-    """Decide what the linear runner does when this node's model call throws.
+    """Apply only local workflow semantics after controller settlement.
 
-    Returns the text to carry forward (the step was handled), or None when the run
-    must surface the failure (the policy does not recover here):
-
-      * `skip`            → carry the resolved input through unchanged (Swift's
-                            `.skip`: "drop this step and carry the input straight
-                            through").
-      * `fallbackOnDevice`→ the hub has a single configured provider, so there is no
-                            separate fallback to swap to — carry the input through so
-                            the chain survives a transient endpoint failure rather
-                            than dropping the whole run (degrades gracefully).
-      * `retryThenQueue` / None (inherit) → None: the hub does not queue/park runs,
-                            so the caller surfaces the error honestly.
-
-    The runner records the chosen disposition in the step it returns.
+    ``carry`` and ``skip`` preserve input. ``hold`` deliberately returns no
+    value: the service emits a named typed refusal, rather than pretending it
+    can retry, queue, or fall back to another deployment.
     """
     policy = resolved_failure_policy(node)
-    if policy in ("skip", "fallbackOnDevice"):
+    if policy in {"carry", "skip"}:
         return carried_input
     return None

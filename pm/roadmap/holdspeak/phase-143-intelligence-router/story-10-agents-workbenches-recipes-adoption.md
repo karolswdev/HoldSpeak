@@ -76,3 +76,18 @@ The shared UI must replace, not sit beside, private target selectors.
   reduced only for removed source authority. Orchestrator-verified: Slice 3
   set 72 passed, adopter set 39 passed, one-path guards + census suites 188
   passed.
+- 2026-08-25 — Opus gate audit over Slices 1–3 + amended adopter: CLEAN on
+  all five dimensions (migration honesty, frozen-plan integrity, ToolTurn
+  adoption reality, receipt/refusal truth, test honesty), zero findings;
+  the audit traced recipe.chat → façade → foundation → controller →
+  InferenceRunner in source and verified every census-fixture reduction
+  against deleted code.
+- 2026-08-25 — Round 3 (Slice 4): Sequence/Workflow model steps admit
+  through frozen `sequence.step`/`workflow.node` routes with stable
+  operation identities for restart replay; new executable `inference.run@1`
+  admission is refused before mutable resolution (historical records stay
+  readable); duplicate `RunLifecycle` submissions removed; legacy policy
+  vocabulary decodes honestly (`fallbackOnDevice`→`carry` — it was always a
+  carry-through; `retryThenQueue`→`hold`, retry authority retired); no
+  `fell_back` receipt for carry. Orchestrator-verified: Slice 4 set 130
+  passed, all one-path guard legs 168 passed.

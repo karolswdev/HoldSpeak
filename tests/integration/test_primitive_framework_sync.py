@@ -624,6 +624,16 @@ def test_ipad_synced_graph_workflow_runs_on_the_hub(env, monkeypatch) -> None:
     deployment_revision = __import__("holdspeak.deployment_revisions", fromlist=["capture_deployment_revision"]).capture_deployment_revision(
         db, __import__("holdspeak.inference_targets", fromlist=["resolve_inference_target"]).resolve_inference_target(db, "sync-ready")
     )
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    InferenceAssignmentService(db).set_assignment(
+        Principal(PrincipalKind.OWNER, "owner-session"),
+        {
+            "command_id": "sync-workflow-route", "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "workflow.node"},
+            "entries": [{"profile_id": "legacy-sync-ready"}],
+        },
+    )
     calls = []
 
     class _FakeIntel:
@@ -639,7 +649,7 @@ def test_ipad_synced_graph_workflow_runs_on_the_hub(env, monkeypatch) -> None:
         return _FakeIntel()
     monkeypatch.setattr("holdspeak.intel.providers.build_meeting_intel_for_profile", _build_fake)
 
-    resp = client.post("/api/workflows/wf-golden/run", json={"input": "the standup", "inference_target_id": "sync-ready"})
+    resp = client.post("/api/workflows/wf-golden/run", json={"input": "the standup"})
     assert resp.status_code == 200, resp.text
     body = resp.json()
 
@@ -649,7 +659,8 @@ def test_ipad_synced_graph_workflow_runs_on_the_hub(env, monkeypatch) -> None:
     assert [s["node_id"] for s in body["steps"]] == ["ask", "dec", "keep"]
     assert [s["kind"] for s in body["steps"]] == ["llm", "extract", "keep_if"]
     by_id = {s["node_id"]: s for s in body["steps"]}
-    assert by_id["ask"]["failure_policy"] == "fallbackOnDevice"
+    assert by_id["ask"]["failure_policy"] == "carry"
+    assert by_id["ask"]["status"] == "ok"
     assert by_id["ask"]["runs_on"] == "endpoint"
     assert by_id["dec"]["failure_policy"] == "skip"
     assert by_id["dec"]["runs_on"] == "onDevice"

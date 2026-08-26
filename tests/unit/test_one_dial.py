@@ -347,9 +347,9 @@ def test_feature_legs_resolve_through_the_one_resolver() -> None:
         # (resolve_placement composes the one resolve_inference_target seam),
         # so the id selects placement and Ask never model-name-hops.
         "holdspeak/services/ask_service.py": "resolve_placement",
-        # HS-131-04: Sequence and Workflow now share the admitted service;
-        # _target resolves placement for every eligible child.
-        "holdspeak/services/sequence_workflow_service.py": "resolve_placement",
+        # HS-143-10: Sequence and Workflow atomically freeze canonical routes
+        # through the coordinator; they do not resolve mutable placement locally.
+        "holdspeak/services/sequence_workflow_service.py": "inference_adoption_service.freeze_routes",
         # HS-143-10: Recipe execution admits an exact recipe subject route through
         # the canonical coordinator; it no longer resolves a mutable target.
         "holdspeak/services/recipe_service.py": "inference_adoption_service.admit",

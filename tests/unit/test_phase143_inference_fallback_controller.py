@@ -1944,3 +1944,21 @@ def test_nonce_hash_and_second_valid_reserve_command_cannot_replace_mint_provena
     with pytest.raises(ConflictError) as forged:
         controller.reserve_next_attempt(INFERENCE_FALLBACK_AUTHORITY, command_id="reserve-provenance", execution_id=execution["id"])
     assert forged.value.code == "inference_route_execution_integrity_invalid"
+
+
+def test_legacy_workflow_policy_aliases_decode_without_local_retry_authority() -> None:
+    from holdspeak.services.support import GraphNode, _norm_failure_policy, on_node_error, resolved_failure_policy
+
+    carry = GraphNode("legacy-carry", "summarize", {}, _norm_failure_policy("fallbackOnDevice"))
+    hold = GraphNode("legacy-hold", "summarize", {}, _norm_failure_policy("retryThenQueue"))
+
+    assert (carry.failure_policy, resolved_failure_policy(carry), on_node_error(carry, "input")) == (
+        "carry", "carry", "input"
+    )
+    assert (hold.failure_policy, resolved_failure_policy(hold), on_node_error(hold, "input")) == (
+        "hold", "hold", None
+    )
+    # The alias decoder only reports a local disposition. It does not mint a
+    # controller fallback/retry reservation or receipt.
+    assert "fallback" not in resolved_failure_policy(carry)
+    assert "retry" not in resolved_failure_policy(hold)

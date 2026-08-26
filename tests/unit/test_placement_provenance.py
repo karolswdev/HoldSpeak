@@ -245,6 +245,16 @@ def test_sequence_run_placement(tmp_path, monkeypatch):
     db = Database(tmp_path / "seq_prov.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     _ready_local_model(tmp_path, monkeypatch)
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    _profile(db, "sequence-provenance", claims=(_result_claim("sequence.step"),))
+    InferenceAssignmentService(db).set_assignment(
+        OWNER,
+        {
+            "command_id": "sequence-provenance-assignment", "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "sequence.step"},
+            "entries": [{"profile_id": "sequence-provenance", "profile_revision": 1}],
+        },
+    )
 
     class _Engine:
         active_provider = "local"
@@ -276,9 +286,9 @@ def test_sequence_run_placement(tmp_path, monkeypatch):
     assert response.status_code == 200, response.text
     result = response.json()
     assert "placement" in result, f"placement missing from sequence: {sorted(result)}"
-    # No invocation/workbench/agent override -> global
-    assert result["placement"]["source"] == "global"
-    assert result["placement"]["effective_target_id"] == THIS_MACHINE_ID
+    # The public block projects the canonical frozen route, not a legacy target.
+    assert result["placement"]["source"] == "capability"
+    assert result["placement"]["effective_target_id"] == "sequence-provenance"
 
 
 # ---------------------------------------------------------------------------
@@ -299,6 +309,16 @@ def test_workflow_run_placement(tmp_path, monkeypatch):
     db = Database(tmp_path / "wf_prov.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
     _ready_local_model(tmp_path, monkeypatch)
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    _profile(db, "workflow-provenance", claims=(_result_claim("workflow.node"),))
+    InferenceAssignmentService(db).set_assignment(
+        OWNER,
+        {
+            "command_id": "workflow-provenance-assignment", "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "workflow.node"},
+            "entries": [{"profile_id": "workflow-provenance", "profile_revision": 1}],
+        },
+    )
 
     class _Engine:
         active_provider = "local"
@@ -339,8 +359,8 @@ def test_workflow_run_placement(tmp_path, monkeypatch):
     assert response.status_code == 200, response.text
     result = response.json()
     assert "placement" in result, f"placement missing from workflow: {sorted(result)}"
-    assert result["placement"]["source"] == "global"
-    assert result["placement"]["effective_target_id"] == THIS_MACHINE_ID
+    assert result["placement"]["source"] == "capability"
+    assert result["placement"]["effective_target_id"] == "workflow-provenance"
 
 
 # ---------------------------------------------------------------------------

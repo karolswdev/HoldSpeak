@@ -12,7 +12,6 @@ import pytest
 from holdspeak.db import Database
 from holdspeak.kernel.broker import Broker
 from holdspeak.kernel.executor import ExecutorPlane
-from holdspeak.kernel.inference import executor_identity
 from holdspeak.kernel.journal import JournalStore
 from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
@@ -55,54 +54,48 @@ def _run_request(key: str = "one", **arguments) -> dict:
 
 
 def _running(rig, key: str = "one"):
-    database, broker = rig
-    submitted = broker.submit(_run_request(key), OWNER)
-    approved = broker.decide(
-        submitted["operation_id"], "approve", submitted["revision"], OWNER
+    """Use a live parent-run capability; inference.run is history-only."""
+    _database, broker = rig
+    parent = broker.parent_run_controller.start(
+        OWNER,
+        kind="sequence",
+        definition_ref=f"sequence:{key}",
+        definition_revision="rev-1",
+        input_snapshot={"input": "proof"},
+        deadline_at=time.time() + 300,
+        child_budget=3,
+        idempotency_key=f"kernel-parent-{key}",
     )
-    operation = broker.store.operation(approved["operation_id"])
-    node = Principal(PrincipalKind.NODE, operation["placement"].removeprefix("node:"))
-    claimed = broker.claim(node, operation["native_id"])["operations"][0]
-    database.capability_invocations.start_attempt(
-        invocation_id=operation["native_id"], attempt_id=f"attempt_{key}",
-        destination="this_machine",
-    )
-    return operation, node, claimed
+    operation = broker.store.operation(parent.operation_id)
+    assert operation is not None
+    return operation, Principal(PrincipalKind.NODE, "parent-controller"), parent
 
 
-def test_codec_derives_placement_model_egress_and_rejects_assertions(rig) -> None:
+def test_new_inference_run_is_refused_before_placement_or_native_invocation(rig) -> None:
     database, broker = rig
-    handle = broker.submit(_run_request(), OWNER)
-    operation = broker.store.operation(handle["operation_id"])
-    assert operation["placement"] == f"node:{executor_identity('this_machine')}"
-    events = broker.events(0, {"operation_id": handle["operation_id"]}, OWNER)["events"]
-    admitted = next(item for item in events if item["event_type"] == "operation.admitted")
-    assert "persona:proof" in admitted["refs"]
-    assert "revision:rev-7" in admitted["refs"]
-    assert "revision:rev-3" in admitted["refs"]
-    assert "egress:none" in admitted["refs"]
-    assert database.capability_invocations.get("invocation_one") is not None
-
-    asserted = _run_request("asserted")
-    asserted["placement"] = "node:client-chose-this"
-    refused = broker.submit(asserted, OWNER)
-    assert refused["receipt"]["outcome"] == "inference_placement_not_client_settable"
+    refused = broker.submit(_run_request(), OWNER)
+    assert refused["receipt"]["outcome"] == "inference_run_retired"
+    assert database.capability_invocations.get("invocation_one") is None
+    with database._connection() as conn:
+        assert conn.execute(
+            "SELECT COUNT(*) FROM kernel_operations WHERE name='inference.invoke'"
+        ).fetchone()[0] == 0
 
 
-def test_only_owner_can_declare_continuation_identities(rig) -> None:
+def test_retirement_is_independent_of_continuation_identity_shape(rig) -> None:
     _, broker = rig
     request = _run_request("continuation")
     request["arguments"]["continuation_identities"] = ["agent:bound"]
     refused = broker.submit(request, Principal(PrincipalKind.AGENT, "agent:unbound"))
-    assert refused["receipt"]["outcome"] == "continuation_identities_owner_required"
+    assert refused["receipt"]["outcome"] == "inference_run_retired"
 
 
-def test_token_stream_is_refused_before_any_native_invocation(rig) -> None:
+def test_retirement_does_not_journal_input_snapshot_content(rig) -> None:
     database, broker = rig
     request = _run_request("tokens")
     request["arguments"]["input_snapshot"]["token_stream"] = ["secret-token"]
     refused = broker.submit(request, OWNER)
-    assert refused["receipt"]["outcome"] == "journal_content_forbidden"
+    assert refused["receipt"]["outcome"] == "inference_run_retired"
     assert database.capability_invocations.get("invocation_tokens") is None
     journal = broker.events(0, {}, OWNER)["events"]
     assert "secret-token" not in str(journal)
@@ -155,52 +148,21 @@ def test_tool_effect_is_causally_linked_child_with_own_receipt(rig, tmp_path: Pa
     )
 
 
-def test_cancellation_is_a_child_operation_with_receipt(rig) -> None:
-    database, broker = rig
-    parent, node, _ = _running(rig, "cancel")
-    signal_id = "cancel_" + uuid.uuid4().hex
-    signal = broker.submit(
-        {
-            "request_schema": 1, "request_id": signal_id, "idempotency_key": signal_id,
-            "operation": {"name": "inference.cancel", "version": 1},
-            "parent_operation_id": parent["operation_id"], "target": {},
-            "arguments": {
-                "invocation_id": parent["native_id"], "signal_id": signal_id,
-                "reason": "owner_cancelled",
-            },
-        },
-        OWNER,
+def test_historical_cancelled_invocation_remains_readable(rig) -> None:
+    database, _broker = rig
+    database.capability_invocations.begin(
+        invocation_id="historical-cancel", definition_ref="persona:old"
     )
-    approved = broker.decide(signal["operation_id"], "approve", signal["revision"], OWNER)
-    broker.claim(node, signal_id)
-    invocation = database.capability_invocations.cancel(parent["native_id"])
-    receipt = broker.receipt(
-        approved["operation_id"], "succeeded", f"invocation:{parent['native_id']}", node
-    )
+    invocation = database.capability_invocations.cancel("historical-cancel")
     assert invocation.state == "cancelled"
-    assert receipt["outcome"] == "succeeded"
-    assert broker.store.operation(approved["operation_id"])["parent_operation_id"] == parent["operation_id"]
+    assert database.capability_invocations.get("historical-cancel").state == "cancelled"
 
 
-def test_reaper_terminalizes_claimed_inference_cancel_child(rig) -> None:
-    _, broker = rig
-    parent, node, _ = _running(rig, "reap-cancel")
-    signal_id = "cancel_reap_" + uuid.uuid4().hex
-    signal = broker.submit(
-        {"request_schema": 1, "request_id": signal_id, "idempotency_key": signal_id,
-         "operation": {"name": "inference.cancel", "version": 1},
-         "parent_operation_id": parent["operation_id"], "target": {},
-         "arguments": {"invocation_id": parent["native_id"], "signal_id": signal_id, "reason": "owner_cancelled"}},
-        OWNER,
-    )
-    approved = broker.decide(signal["operation_id"], "approve", signal["revision"], OWNER)
-    assert broker.claim(node, signal_id)["operations"]
-    broker._clock = lambda: time.time() + 3601
-    assert {
-        "operation_id": approved["operation_id"], "state": "indeterminate", "outcome": "execution_liveness_expired",
-    } in broker.reap_expired()["reaped"]
-    receipt = broker.store.receipt(approved["operation_id"])
-    assert receipt["state"] == "indeterminate" and receipt["outcome"] == "execution_liveness_expired"
+def test_retired_inference_run_has_no_new_claimed_work_for_reaper(rig) -> None:
+    _database, broker = rig
+    refused = broker.submit(_run_request("reap-cancel"), OWNER)
+    assert refused["receipt"]["outcome"] == "inference_run_retired"
+    assert broker.reap_expired()["reaped"] == []
 
 
 def test_three_drivers_reach_literal_same_spine_functions(rig, monkeypatch) -> None:
@@ -261,7 +223,7 @@ def test_three_drivers_reach_literal_same_spine_functions(rig, monkeypatch) -> N
             "reversible": False, "required_capabilities": ["actuator"],
         },
     }
-    requests = (process, actuator, _run_request("shared"))
+    requests = (process, actuator)
     for request in requests:
         submitted = broker.submit(request, OWNER)
         approved = broker.decide(
@@ -272,7 +234,7 @@ def test_three_drivers_reach_literal_same_spine_functions(rig, monkeypatch) -> N
         broker.claim(node, operation["native_id"])
         broker.receipt(operation["operation_id"], "succeeded", "result:shared", node)
 
-    expected = {"process.input", "actuator.egress", "inference.run"}
+    expected = {"process.input", "actuator.egress"}
     functions = {
         (layer, function): {name for name, seen_layer, seen_function in calls
                             if seen_layer == layer and seen_function == function}
@@ -288,16 +250,15 @@ def test_three_drivers_reach_literal_same_spine_functions(rig, monkeypatch) -> N
                       for (layer, function), names in functions.items()}, sort_keys=True))
 
 
-def test_hub_restart_projects_claimed_run_and_desk_state_as_unknown(rig) -> None:
-    database, broker = rig
-    parent, _, _ = _running(rig, "restart")
-    recovered = recover_inference_on_startup()
-    invocation = database.capability_invocations.get(parent["native_id"])
-    process = broker.read(
-        [f"operation:{parent['operation_id']}"], "process", "committed", OWNER
-    )["objects"][0]["process"]
-    assert recovered == [parent["native_id"]]
-    assert invocation is not None and invocation.state == "unknown"
-    assert invocation.attempts[0].state == "unknown"
-    assert process["domain_state"] == "unknown"
-    assert broker.store.receipt(parent["operation_id"])["outcome"] == "indeterminate"
+def test_hub_restart_leaves_new_retired_run_history_only(rig) -> None:
+    database, _broker = rig
+    database.capability_invocations.begin(
+        invocation_id="old-terminal", definition_ref="persona:old"
+    )
+    database.capability_invocations.finish(
+        "old-terminal", state="succeeded", result_ref="artifact:old"
+    )
+    # Startup recovery only sees genuinely claimed historical kernel operations;
+    # retirement cannot mint a new one.
+    assert recover_inference_on_startup() == []
+    assert database.capability_invocations.get("old-terminal").state == "succeeded"

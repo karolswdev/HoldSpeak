@@ -359,11 +359,11 @@ def test_pre_dispatch_refusal_yields_one_child_one_refused_receipt_zero_physical
     db, broker, revision = _bare_rig(tmp_path)
     parent_raw = {
         "request_schema": 1, "request_id": "parent-not-running", "idempotency_key": "parent-not-running",
-        "operation": {"name": "inference.run", "version": 1}, "target": {},
+        "operation": {"name": "sequence.run", "version": 1}, "target": {},
         "arguments": {
-            "invocation_id": "parent-not-running", "definition_ref": "recipe:one", "definition_revision": "rev-1",
-            "grounding_refs": [], "requested_target_id": "local", "deadline_at": time.time() + 30,
-            "input_snapshot": {},
+            "native_id": "parent-not-running", "definition_ref": "sequence:one",
+            "definition_revision": "rev-1", "input": {},
+            "deadline_at": time.time() + 30, "child_budget": 1,
         },
     }
     parent = broker.submit(parent_raw, OWNER)
