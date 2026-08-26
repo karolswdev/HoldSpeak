@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 143
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** 143-03, 143-04, 143-05, 143-06
 - **Unblocks:** 143-12 through 143-14
 - **Owner:** unassigned
@@ -37,3 +37,22 @@ binding material.
 ## Notes / open questions
 
 GET reconstructs authority; advisory events can always be lost.
+
+## Progress
+
+- 2026-08-26 — Plan ratified (`assets/story-11-transport-parity-plan.md`;
+  six ORCH-CALLs accepted: declarative parity vectors, bounded base64
+  file intake, retired-shapes-disappear, receipt golden proof, aliases
+  retire together, raw model_profile.*/destination.* families retire —
+  closing the MCP-vs-HTTP private-provider bypass). Round 1 (S1+S2):
+  twelve owner-only MCP twins (7 model_library.* + 5
+  inference_assignment.*) in two new family modules, each calling the
+  same application service as its HTTP route — owner guard before body,
+  closed versioned DTOs, 16MiB base64 file intake staged-and-deleted,
+  write-only secret, assignment-head invariance byte-checked per twin;
+  the reciprocal parity harness runs 12 declarative vectors + the
+  committed_effect receipt proof against fresh production HTTP and MCP
+  compositions (GET/summary invalid-body variants honestly N/A).
+  MCP_SIDECAR inventory truthfully 137→149. Orchestrator-verified: twin
+  + parity suites 21 passed; worker: full focused 48, MCP/one-path
+  guards 25, no schema changes, S4 retirement untouched.

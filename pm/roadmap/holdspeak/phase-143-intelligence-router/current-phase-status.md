@@ -54,7 +54,7 @@ Assignments.
 | HSEGHS001HS104-143-08 | Meetings Speech and Background Adoption | done | [story-08-meetings-speech-background-adoption](./story-08-meetings-speech-background-adoption.md) | [evidence-story-08](./evidence-story-08.md) |
 | HSEGHS001HS104-143-09 | Tool Capability Foundation and Safe Routing | done | [story-09-tool-turn-routing-safe-fallback](./story-09-tool-turn-routing-safe-fallback.md) | [evidence-story-09](./evidence-story-09.md) |
 | HSEGHS001HS104-143-10 | Agents Workbenches and Recipes Adoption | done | [story-10-agents-workbenches-recipes-adoption](./story-10-agents-workbenches-recipes-adoption.md) | [evidence-story-10](./evidence-story-10.md) |
-| HSEGHS001HS104-143-11 | HTTP MCP Sync and Compatibility | backlog | [story-11-http-mcp-sync-compatibility](./story-11-http-mcp-sync-compatibility.md) | - |
+| HSEGHS001HS104-143-11 | HTTP MCP Sync and Compatibility | in-progress | [story-11-http-mcp-sync-compatibility](./story-11-http-mcp-sync-compatibility.md) | - |
 | HSEGHS001HS104-143-12 | Model Library and Providers | done | [story-12-model-library-providers](./story-12-model-library-providers.md) | [evidence-story-12](./evidence-story-12.md) |
 | HSEGHS001HS104-143-13 | Capability Assignments Experience | done | [story-13-capability-assignments-experience](./story-13-capability-assignments-experience.md) | [evidence-story-13](./evidence-story-13.md) |
 | HSEGHS001HS104-143-14 | Chaos Glass and Closeout | backlog | [story-14-chaos-glass-closeout](./story-14-chaos-glass-closeout.md) | - |

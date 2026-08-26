@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-137 tools and 38 resources through the Model Context Protocol, so any MCP
+149 tools and 38 resources through the Model Context Protocol, so any MCP
 client (Claude Code, Cursor, a custom script) can read and drive the desk
 without touching the web UI.
 
@@ -56,7 +56,7 @@ default.
 
 ## Tool families
 
-The 137 tools are organized into domain families. Each tool follows the
+The 149 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -93,6 +93,31 @@ it without exposing its locator, and records the same availability ledger.
 All three use the same application service,
 receipts, and refusal codes as HTTP; model/agent principals receive no authority
 through these tools.
+
+### model library (7 tools)
+
+Owner-only availability commands over the same Model Library application service
+as the HTTP owner API: `model_library.get`, `model_library.download`,
+`model_library.add_to_library`, `model_library.use_model_file`,
+`model_library.connect_hosted_model`, `model_library.define_endpoint`, and
+`model_library.connect_paired_device`. They can add or connect available models
+but cannot select one for a capability; every command proves the assignment
+heads are unchanged. File intake accepts only a request ID, a basename, and
+base64 bytes capped at 16 MiB decoded. The sidecar owns temporary staging and
+deletes it after the command; client paths are refused. Hosted-provider secrets
+have a dedicated write-only `secret` field and never appear in errors, logs, or
+receipts.
+
+### inference assignment (5 tools)
+
+Owner-only assignment projection and command twins over the same Assignment
+application service as HTTP: `inference_assignment.summary`,
+`inference_assignment.editor`, `inference_assignment.set`,
+`inference_assignment.preview_use_default`, and
+`inference_assignment.clear`. Their schemas are recursively closed. Set and
+clear preserve the canonical narrow CAS and stable command replay; replay
+returns the original committed-effect chain and hash, never a route, endpoint,
+path, secret, or binding detail.
 
 ### thought (18 tools)
 
