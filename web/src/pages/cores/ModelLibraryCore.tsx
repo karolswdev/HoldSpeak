@@ -102,6 +102,7 @@ export function ModelLibraryCore() {
   const [file, setFile] = useState<File | null>(null);
   const secretRef = useRef<HTMLInputElement>(null);
   const addTriggerRef = useRef<HTMLButtonElement>(null);
+  const addFaceRef = useRef<HTMLElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const restoreAddFocus = useRef(false);
   const rowRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -125,8 +126,9 @@ export function ModelLibraryCore() {
   const allRows = projection?.rows ?? [];
   const visibleRows = useMemo(() => sourceRows(allRows, source), [allRows, source]);
   const selected = visibleRows.find((row) => row.id === selectedId) ?? visibleRows[0] ?? null;
-  const readyCount = allRows.filter((row) => row.status === "ready").length;
-  const attentionCount = allRows.filter((row) => row.repair).length;
+  // Header truth is closed and projected by the aggregate; this surface never
+  // infers readiness from a local count (an empty library is an invitation).
+  const summary = projection?.summary ?? null;
 
   useEffect(() => {
     if (selected?.id && selected.id !== selectedId) setSelectedId(selected.id);
@@ -140,6 +142,12 @@ export function ModelLibraryCore() {
     } else {
       restoreFocusRef.current?.focus();
     }
+  }, [face]);
+
+  useEffect(() => {
+    // The trigger unmounts when the in-world flow opens. Move focus inside it
+    // so Escape remains a real keyboard exit rather than falling onto body.
+    if (face !== "inventory") addFaceRef.current?.focus();
   }, [face]);
 
   const showReceipt = (result: ModelLibraryReceipt) => {
@@ -335,21 +343,30 @@ export function ModelLibraryCore() {
     </aside>
   ) : null;
 
+  const chooseCatalog = () => {
+    setSource("available");
+    setFace("inventory");
+  };
+
+  const addChoices = (
+    <div className="model-library-add-choices">
+      <button type="button" onClick={chooseCatalog}>Download from catalog</button>
+      <button type="button" onClick={() => setFace("hosted")}>Connect hosted model</button>
+      <button type="button" onClick={() => setFace("endpoint")}>Define endpoint</button>
+      <button type="button" onClick={() => setFace("file")}>Use model file</button>
+    </div>
+  );
+
   const addFace = face === "choices" ? (
-    <section className="model-library-add" aria-label="Add model">
+    <section ref={addFaceRef} tabIndex={-1} className="model-library-add" aria-label="Add model">
       <header>
         <h2>Add model</h2>
         <button type="button" className="model-library-back" onClick={leaveAdd}>Back</button>
       </header>
-      <div className="model-library-add-choices">
-        <button type="button" onClick={() => { setSource("available"); setFace("inventory"); }}>Download from catalog</button>
-        <button type="button" onClick={() => setFace("hosted")}>Connect hosted model</button>
-        <button type="button" onClick={() => setFace("endpoint")}>Define endpoint</button>
-        <button type="button" onClick={() => setFace("file")}>Use model file</button>
-      </div>
+      {addChoices}
     </section>
   ) : face === "hosted" ? (
-    <section className="model-library-add" aria-label="Connect hosted model">
+    <section ref={addFaceRef} tabIndex={-1} className="model-library-add" aria-label="Connect hosted model">
       <header><h2>Connect hosted model</h2><button type="button" className="model-library-back" onClick={leaveAdd}>Back</button></header>
       <div className="model-library-form">
         <EgressChip label="Egress" scope="cloud" title="Provider request leaves this hub." />
@@ -361,7 +378,7 @@ export function ModelLibraryCore() {
       </div>
     </section>
   ) : face === "endpoint" ? (
-    <section className="model-library-add" aria-label="Define endpoint">
+    <section ref={addFaceRef} tabIndex={-1} className="model-library-add" aria-label="Define endpoint">
       <header><h2>Define endpoint</h2><button type="button" className="model-library-back" onClick={leaveAdd}>Back</button></header>
       <div className="model-library-form">
         <EgressChip label="Egress" scope="cloud" title="Provider request leaves this hub." />
@@ -374,7 +391,7 @@ export function ModelLibraryCore() {
       </div>
     </section>
   ) : face === "file" ? (
-    <section className="model-library-add" aria-label="Use model file">
+    <section ref={addFaceRef} tabIndex={-1} className="model-library-add" aria-label="Use model file">
       <header><h2>Use model file</h2><button type="button" className="model-library-back" onClick={leaveAdd}>Back</button></header>
       <div className="model-library-form">
         <label className="model-library-file"><span>Model file</span><input type="file" accept=".gguf,.mlx" aria-label="Model file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} /></label>
@@ -385,7 +402,7 @@ export function ModelLibraryCore() {
 
   return (
     <div className="model-library" onKeyDown={onSurfaceKeyDown}>
-      <SurfaceVerbs status={<span className="model-library-summary">{readyCount} ready{attentionCount ? ` · ${attentionCount} attention` : ""}</span>}>
+      <SurfaceVerbs status={summary ? <span className="model-library-summary" data-state={summary.state} role="status">{summary.label}</span> : null}>
         {face === "inventory" && allRows.length ? <button ref={addTriggerRef} type="button" className="model-library-add-trigger" onClick={(event) => openChoices(event.currentTarget)}>+ Add model</button> : null}
       </SurfaceVerbs>
       {receipt ? <div className="model-library-receipt" role="status">{receipt}</div> : null}
@@ -397,7 +414,7 @@ export function ModelLibraryCore() {
             <section className="model-library-inventory" aria-labelledby="model-library-title">
               <header className="model-library-title">
                 <div><h2 id="model-library-title">Model Library</h2><span>{allRows.length} models</span></div>
-                <span className="model-library-status" data-tone={attentionCount ? "warn" : "ok"}>{attentionCount ? "Needs attention" : "Ready"}</span>
+                {summary ? <span className="model-library-status" data-state={summary.state}>{summary.label}</span> : null}
               </header>
               <div className="model-library-tabs" role="tablist" aria-label="Model source">
                 {SOURCES.map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={source === value} onClick={() => setSource(value)}>{label} <span>{sourceCount(allRows, value)}</span></button>)}
@@ -413,7 +430,17 @@ export function ModelLibraryCore() {
                     </label>;
                   })}
                 </div>
-              ) : <SurfaceState empty emptyLabel="No models" onAction={() => { restoreFocusRef.current = document.activeElement as HTMLElement; setReceipt(""); setActionError(""); setFace("choices"); }} actionLabel="Add model" />}
+              ) : (
+                <SurfaceState
+                  empty
+                  emptyContent={
+                    <section className="model-library-empty" aria-labelledby="model-library-empty-title">
+                      <h3 id="model-library-empty-title">Add model</h3>
+                      {addChoices}
+                    </section>
+                  }
+                />
+              )}
             </section>
           }
           detail={detail}

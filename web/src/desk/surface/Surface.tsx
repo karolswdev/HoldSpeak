@@ -146,6 +146,7 @@ export function SurfaceState({
   emptyLabel = "Nothing yet",
   emptyGlyph = "○",
   emptyImage,
+  emptyContent,
   onRetry,
   onAction,
   actionLabel,
@@ -159,6 +160,8 @@ export function SurfaceState({
   /** A pixel-sprite URL — the world's own objects carry the empty
    * state (wins over the glyph). */
   emptyImage?: string;
+  /** Compact custom content inside the shared in-flow empty-state material. */
+  emptyContent?: ReactNode;
   onRetry?: () => void;
   /** An optional in-flow action for the empty state. */
   onAction?: () => void;
@@ -192,28 +195,30 @@ export function SurfaceState({
   if (empty)
     return (
       <div className="surface-state" data-kind="empty">
-        {emptyImage ? (
-          <img
-            className="surface-state-sprite"
-            src={emptyImage}
-            alt=""
-            aria-hidden
-          />
-        ) : (
-          <span className="surface-state-glyph" aria-hidden>
-            {emptyGlyph}
-          </span>
-        )}
-        <span>{emptyLabel}</span>
-        {onAction && actionLabel ? (
-          <button
-            type="button"
-            className="desk-chip surface-state-action"
-            onClick={onAction}
-          >
-            {actionLabel}
-          </button>
-        ) : null}
+        {emptyContent ?? <>
+          {emptyImage ? (
+            <img
+              className="surface-state-sprite"
+              src={emptyImage}
+              alt=""
+              aria-hidden
+            />
+          ) : (
+            <span className="surface-state-glyph" aria-hidden>
+              {emptyGlyph}
+            </span>
+          )}
+          <span>{emptyLabel}</span>
+          {onAction && actionLabel ? (
+            <button
+              type="button"
+              className="desk-chip surface-state-action"
+              onClick={onAction}
+            >
+              {actionLabel}
+            </button>
+          ) : null}
+        </>}
       </div>
     );
   return children;

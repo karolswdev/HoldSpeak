@@ -20,10 +20,19 @@ export type ModelLibraryRow = {
   selected_action: ModelLibraryAction | string;
 };
 
+export type ModelLibrarySummaryState = "empty" | "ready" | "attention";
+
 export type ModelLibraryProjection = {
   schema: "ModelLibraryProjection@1";
   catalog_revision: number;
   artifact_detection: { state: string };
+  /** Closed server-owned header truth; never inferred from browser rows. */
+  summary: {
+    state: ModelLibrarySummaryState;
+    label: "Add model" | "Ready" | "Needs attention";
+    ready_count: number;
+    attention_count: number;
+  };
   rows: ModelLibraryRow[];
 };
 

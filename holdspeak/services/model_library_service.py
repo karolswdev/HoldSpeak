@@ -32,6 +32,9 @@ _SUCCESS_COPY = "Added to the Model Library. Assignments are unchanged."
 _ACTIONS = frozenset({
     "Download", "Add to library", "Connect", "Add model", "Ready", "Checking", "Try again",
 })
+# The aggregate owns the header truth too: the browser must not infer that an
+# empty library is ready merely because there are no repairs to count.
+_SUMMARY_STATES = frozenset({"empty", "ready", "attention"})
 _PROVIDER_FAMILIES = frozenset({
     "openrouter", "anthropic", "openai_compatible", "private_endpoint", "paired_device", "future_backend",
 })
@@ -96,6 +99,7 @@ class ModelLibraryApplicationService:
             "schema": MODEL_LIBRARY_SCHEMA,
             "catalog_revision": int(setup["preset_catalog"]["catalog_revision"]),
             "artifact_detection": {"state": str(setup["artifact_detection"]["state"])},
+            "summary": self._summary(rows),
             "rows": rows,
         }
 
@@ -749,6 +753,26 @@ class ModelLibraryApplicationService:
         if type(value) is not int or value < 1:
             raise ServiceError("model_library_request_invalid", "catalog_revision is invalid.", context={"status": 400})
         return value
+
+    @staticmethod
+    def _summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+        """Project the closed header state from the same facts as the rows."""
+        ready_count = sum(row["status"] == "ready" for row in rows)
+        attention_count = sum(row["repair"] is not None for row in rows)
+        if not rows:
+            state, label = "empty", "Add model"
+        elif attention_count:
+            state, label = "attention", "Needs attention"
+        else:
+            state, label = "ready", "Ready"
+        if state not in _SUMMARY_STATES:
+            raise AssertionError("model library summary is not closed")
+        return {
+            "state": state,
+            "label": label,
+            "ready_count": ready_count,
+            "attention_count": attention_count,
+        }
 
     def _rows(self, setup: dict[str, Any], profiles: dict[str, Any]) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []

@@ -93,3 +93,17 @@ Technical provenance and locators stay in explicit owner-only Details.
   build green; orchestrator eyeball flags for S5: empty state under the
   joy bar (bare circle + dead space on a first-run screen) and "Ready"
   status copy over an empty library.
+- 2026-08-26 — Round 4 (S5, closeout + polish): both joy-bar flags FIXED —
+  the empty glass now leads with the four Add-model entries as a centered
+  in-flow surface-state choice, and the summary state is server-owned and
+  closed (empty→"Add model", never Ready). The audit's error_500 ledger
+  note proved real and was FIXED: provider post-routes scrub unexpected
+  post-secret exceptions, sentinel proof green. Full matrix + 200% zoom +
+  keyboard/screen-reader/reduced-motion legs: glass e2e now 11 tests;
+  e2e+secret-boundary 14 passed (orchestrator-verified); one-path guards
+  269 passed; web arch/surface guards 13; component 7; build green; npm
+  check stops only at 5 inherited raw-token violations (pullout/
+  thought-workspace CSS — not this story's), new CSS token-clean. All six
+  shots regenerated + populated-1440-zoom200; final review set sent to
+  the owner (shots-before-merge law) — orchestrator eyeballed the
+  reworked empty 1440 and passes it.

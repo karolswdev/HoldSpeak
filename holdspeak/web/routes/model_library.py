@@ -46,6 +46,15 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
             raise ServiceError("model_library_request_invalid", "Expected a JSON object.", context={"status": 400})
         return body
 
+    def _provider_error_500(detail: str) -> JSONResponse:
+        """Never hand a post-parse provider exception to the generic echo mapper.
+
+        Provider credentials are deliberately write-only. A lower custody or
+        runtime adapter can fail unexpectedly, so neither its text nor an
+        exception repr may become an ordinary HTTP body or route log.
+        """
+        return error_500(RuntimeError("Provider request could not be completed."), log, detail)
+
     async def _provider_body(request: Request) -> tuple[dict[str, Any], dict[str, Any] | None]:
         """Parse the nonsecret draft and dedicated write-only secret body.
 
@@ -98,9 +107,8 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
             )
         except ServiceError as exc:
             return _safe_error(exc)
-        except Exception as exc:
-            # Never include a parsed request/secret in this safe error or log.
-            return error_500(exc, log, "Failed to connect hosted model")
+        except Exception:
+            return _provider_error_500("Failed to connect hosted model")
 
     @router.post("/api/inference/model-library/define-endpoint")
     async def define_endpoint(request: Request) -> Any:
@@ -111,9 +119,8 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
             )
         except ServiceError as exc:
             return _safe_error(exc)
-        except Exception as exc:
-            # Never include a parsed request/secret in this safe error or log.
-            return error_500(exc, log, "Failed to define provider endpoint")
+        except Exception:
+            return _provider_error_500("Failed to define provider endpoint")
 
     @router.post("/api/inference/model-library/connect-paired-device")
     async def connect_paired_device(request: Request) -> Any:
@@ -124,8 +131,8 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(service.connect_paired_device(request.state.principal, draft), status_code=200)
         except ServiceError as exc:
             return _safe_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to connect paired device")
+        except Exception:
+            return _provider_error_500("Failed to connect paired device")
 
     @router.post("/api/inference/model-library/use-model-file")
     async def use_model_file(request: Request) -> Any:

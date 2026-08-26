@@ -101,6 +101,26 @@ def test_secret_is_absent_from_json_exceptions_logs_receipts_and_assignment_head
     assert before == after
 
 
+def test_provider_unexpected_error_is_secret_safe(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    def custody_crash(*_args: object, **_kwargs: object) -> None:
+        raise RuntimeError(f"custody adapter crashed with {SENTINEL}")
+
+    monkeypatch.setattr(ProfileKeyService, "set", custody_crash)
+    client, _service = _app(tmp_path)
+    caplog.set_level(logging.DEBUG)
+
+    response = client.post(
+        "/api/inference/model-library/define-endpoint",
+        headers={"x-owner": "yes"},
+        json={"draft": _draft("secret-error-500"), "secret": {"value": SENTINEL}},
+    )
+
+    assert response.status_code == 500
+    assert response.json() == {"error": "Provider request could not be completed."}
+    serialized = "\n".join((response.text, "\n".join(record.getMessage() for record in caplog.records)))
+    assert SENTINEL not in serialized
+
+
 def test_owner_refusal_precedes_provider_secret_body(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     monkeypatch.setattr("holdspeak.setup_runtime.discover_endpoint_models", lambda *_args, **_kwargs: {"ok": True, "models": []})
     client, service = _app(tmp_path)

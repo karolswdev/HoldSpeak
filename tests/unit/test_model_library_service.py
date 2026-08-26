@@ -41,6 +41,9 @@ def test_projection_is_aggregate_owner_safe_and_action_closed(tmp_path: Path) ->
     projection = service.get_library(OWNER)
     assert projection["schema"] == MODEL_LIBRARY_SCHEMA
     assert projection["rows"]
+    assert set(projection["summary"]) == {"state", "label", "ready_count", "attention_count"}
+    assert projection["summary"]["state"] in {"empty", "ready", "attention"}
+    assert projection["summary"]["label"] in {"Add model", "Ready", "Needs attention"}
     closed = {"Download", "Add to library", "Connect", "Add model", "Ready", "Checking", "Try again"}
     assert {row["selected_action"] for row in projection["rows"]} <= closed
     assert all(row["selected_action"] == "Connect" for row in projection["rows"] if row["source"] == "catalog" and "OpenRouter" in row["label"])
@@ -51,6 +54,20 @@ def test_projection_is_aggregate_owner_safe_and_action_closed(tmp_path: Path) ->
         assert set(row) == {"id", "source", "label", "status", "detail", "repair", "selected_action"}
         assert row["repair"] is None or set(row["repair"]) == {"code", "label"}
         assert "/" not in row["label"]
+
+
+def test_empty_projection_invites_an_add_from_server_facts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    service = _service(tmp_path)
+    monkeypatch.setattr(service, "_rows", lambda *_: [])
+
+    summary = service.get_library(OWNER)["summary"]
+
+    assert summary == {
+        "state": "empty",
+        "label": "Add model",
+        "ready_count": 0,
+        "attention_count": 0,
+    }
 
 
 def test_profile_rows_keep_one_repair_and_no_locator_or_secret(tmp_path: Path) -> None:

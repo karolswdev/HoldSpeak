@@ -54,6 +54,9 @@ function projection(rows: ModelLibraryRow[] = actions.map((selected_action, inde
     schema: "ModelLibraryProjection@1",
     catalog_revision: 7,
     artifact_detection: { state: "complete" },
+    summary: rows.length
+      ? { state: "ready", label: "Ready", ready_count: rows.filter((row) => row.status === "ready").length, attention_count: 0 }
+      : { state: "empty", label: "Add model", ready_count: 0, attention_count: 0 },
     rows,
   };
 }
@@ -151,8 +154,15 @@ describe("ModelLibraryCore", () => {
   it("renders inviting empty, in-flow error, one repair, and one egress badge", async () => {
     getLibrary.mockResolvedValueOnce(projection([]));
     const empty = render(<ModelLibraryCore />);
-    await screen.findByText("No models");
-    expect(screen.getByRole("button", { name: "Add model" })).toBeInTheDocument();
+    await screen.findByRole("heading", { name: "Add model" });
+    expect(screen.getAllByText("Add model")).toHaveLength(3);
+    for (const label of [
+      "Download from catalog",
+      "Connect hosted model",
+      "Define endpoint",
+      "Use model file",
+    ]) expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
+    expect(screen.queryByText("Ready")).toBeNull();
     empty.unmount();
 
     getLibrary.mockRejectedValueOnce(new Error("Library unavailable"));

@@ -44,7 +44,7 @@ def test_library_http_is_owner_before_body_and_closed(tmp_path: Path) -> None:
 
     projection = client.get("/api/inference/model-library", headers={"x-owner": "yes"})
     assert projection.status_code == 200
-    assert set(projection.json()) == {"schema", "catalog_revision", "artifact_detection", "rows"}
+    assert set(projection.json()) == {"schema", "catalog_revision", "artifact_detection", "summary", "rows"}
     invalid = client.post(
         "/api/inference/model-library/download", headers={"x-owner": "yes"},
         json={"request_id": "one", "catalog_id": "x", "catalog_revision": 1, "expected_route_revision": "forbidden"},
