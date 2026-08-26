@@ -38,7 +38,7 @@ import { MicButton } from "./MicButton";
 import { apiRequest } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
-import { RunsOnPicker } from "./RunsOnPicker";
+import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 import { DeskWindowFrame } from "./DeskWindow";
 import { Material } from "../surface/Material";
 import { SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
@@ -52,7 +52,6 @@ import {
 import {
   boundaryEgressLamp,
   egressScopeLamp,
-  inferenceEgressLamp,
 } from "../inferenceEgress";
 import { CitationChips, groundedMatchCount } from "../surface/citations";
 import { Button } from "../../components/signal/Signal";
@@ -64,7 +63,6 @@ const fmtK = (n: number): string => `${(n / 1000).toFixed(1)}K`;
 
 export function AskPanel() {
   const items = useDesk((s) => s.items);
-  const inferenceTargets = useDesk((s) => s.inferenceTargets);
   const selectedIds = useDesk((s) => s.selectedIds);
   const { closeAsk, clearSelection, refresh, markNew } = useDesk.getState();
 
@@ -74,7 +72,6 @@ export function AskPanel() {
     setDraft: setPrompt,
     recovered: promptRecovered,
   } = useDurableDraft("desk-ask", ASK_LENSES[0].instruction);
-  const [profileId, setProfileId] = useState("this_machine");
   const [phase, setPhase] = useState<"compose" | "routing" | "printed">(
     "compose",
   );
@@ -152,13 +149,9 @@ export function AskPanel() {
   // time (the receipts rule): the kept ask names what grounded the answer.
   const printedContext = useRef(context);
 
-  // The gauge's budget comes from the same destination view model as the picker.
-  const limitTokens = useMemo(() => {
-    const target = inferenceTargets.find((x) => x.id === profileId);
-    return Number(target?.context_limit) > 0
-      ? Number(target?.context_limit)
-      : 16_384;
-  }, [profileId, inferenceTargets]);
+  // The editor receives the server's compatible chain. The Ask composer has no
+  // browser-selected destination whose context window it can invent.
+  const limitTokens = 16_384;
   const groundTokens = groundingTokens(grounding) + railsTokens(rails);
   const overBudget = groundTokens > limitTokens;
 
@@ -169,18 +162,6 @@ export function AskPanel() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [phase]);
-
-  // Before execution this names the selected boundary; the printed receipt is
-  // the hub's actual placement, never a client-side inference.
-  const composeTarget = useMemo(
-    () => inferenceTargets.find((item) => item.id === profileId),
-    [profileId, inferenceTargets],
-  );
-  const composeLamp = inferenceEgressLamp(composeTarget);
-  const composeEgress = {
-    local: composeLamp.tone === "ok",
-    text: composeTarget?.name || "No model",
-  };
 
   const ask = async () => {
     if (!prompt.trim() || phase === "routing" || overBudget) return;
@@ -199,7 +180,6 @@ export function AskPanel() {
       prompt: prompt.trim(),
       lens,
       context,
-      inferenceTargetId: profileId,
       grounding: buildGrounding(grounding, rails),
     });
     if (!r.ok) {
@@ -281,11 +261,7 @@ export function AskPanel() {
         : [
             promptRecovered ? "DRAFT · RECOVERED" : "",
             `CTX ${fmtK(groundTokens)}/${fmtK(limitTokens)}`,
-            overBudget
-              ? "PAST THE WINDOW"
-              : composeEgress.local
-                ? "LOCAL"
-                : composeEgress.text,
+            overBudget ? "PAST THE WINDOW" : "USES ASSIGNMENT",
           ]
             .filter(Boolean)
             .join(" · ");
@@ -498,11 +474,10 @@ export function AskPanel() {
                 }}
               />
               <div className="desk-chat-well-foot">
-                <RunsOnPicker
-                  targets={inferenceTargets}
-                  selectedId={profileId}
-                  onChange={setProfileId}
-                  disabled={phase === "routing"}
+                <ContextualAssignment
+                  label="Ask"
+                  capabilityId="ask.answer"
+                  scope={{ kind: "capability", capability_id: "ask.answer" }}
                 />
                 {context.length > 0 && (
                   <span className="surface-token">

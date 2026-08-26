@@ -66,7 +66,6 @@ describe("the run/keep wire", () => {
       prompt: "Go",
       lens: "Distill",
       context: askContexts(items, ["m1", "n1"]),
-      profileId: "p1",
     });
     expect(sent).toEqual({
       prompt: "Go",
@@ -75,8 +74,9 @@ describe("the run/keep wire", () => {
         { id: "m1", kind: "meeting", ref: "meeting:m1", title: "Q3 kickoff" },
         { id: "n1", kind: "note", ref: "note:n1", title: "Mesh sync owner" },
       ],
-      profile_id: "p1",
     });
+    expect(sent).not.toHaveProperty("profile_id");
+    expect(sent).not.toHaveProperty("inference_target_id");
     expect(r).toEqual({
       ok: true,
       output: "PRINTED",

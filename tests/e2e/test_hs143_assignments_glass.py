@@ -227,3 +227,67 @@ def test_assignments_editor_real_hub_next_run_preview_and_conflict(
             browser.close()
     finally:
         server.stop()
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+@pytest.mark.parametrize("width", [1440, 393])
+def test_s4_contextual_assignment_glass_uses_server_projection(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """Thoughts, Dictation, and Meetings expose canonical assignment glass, never a picker."""
+    from playwright.sync_api import sync_playwright
+    from holdspeak.db import get_database
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from tests.unit.test_phase143_inference_assignments import _profile
+
+    server, url = _boot(tmp_path, monkeypatch)
+    db = get_database()
+    owner = Principal(PrincipalKind.OWNER, "s4-context-owner")
+    _profile(db, "s4-context-model")
+    service = InferenceAssignmentService(db)
+    service.set_assignment(owner, {
+        "command_id": "s4-context-global", "expected_revision": 0,
+        "scope": {"kind": "global"},
+        "entries": [{"profile_id": "s4-context-model", "profile_revision": 1}],
+    })
+    SHOTS.mkdir(parents=True, exist_ok=True)
+    errors: list[str] = []
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            assignments = _open_assignments(page, url)
+            thought = assignments.locator(".capability-assignment-row").filter(has_text="Thoughts & notes")
+            thought.wait_for()
+            assert thought.get_by_text("Uses default · S4 Context Model", exact=True).count() == 1
+            assert thought.locator("select").count() == 0
+            thought.get_by_role("button").click()
+            page.get_by_role("heading", name="Thoughts & notes", exact=True).wait_for()
+            page.screenshot(path=str(SHOTS / f"thoughts-context-{width}.png"), full_page=False)
+            page.get_by_role("button", name="Close", exact=True).click()
+
+            page.goto(f"{url}/settings?token={TOKEN}", wait_until="load")
+            page.locator(".prefs-tile").filter(has_text="Meetings").click()
+            meetings = page.locator("[data-capability='meeting.live_analysis']")
+            meetings.wait_for()
+            assert meetings.locator("select").count() == 0
+            meetings.get_by_role("button").click()
+            meeting_sheet = page.get_by_label("Meetings assignment")
+            meeting_sheet.wait_for()
+            page.screenshot(path=str(SHOTS / f"meetings-group-{width}.png"), full_page=False)
+            meeting_sheet.get_by_role("button", name="Close", exact=True).click()
+
+            page.goto(f"{url}/dictation?token={TOKEN}", wait_until="load")
+            dictation = page.locator("[data-capability='speech.rewrite']")
+            dictation.wait_for()
+            dictation.get_by_text("Uses global · S4 Context Model", exact=True).wait_for()
+            assert dictation.locator("select").count() == 0
+            page.screenshot(path=str(SHOTS / f"dictation-recovery-{width}.png"), full_page=False)
+            assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+            assert errors == []
+            browser.close()
+    finally:
+        server.stop()

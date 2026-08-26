@@ -68,3 +68,16 @@ Follow the exact composition and rejection criteria in `assets/owner-experience.
   assignments-editor-1440/393. Orchestrator-verified: service/routes/
   glass 34 passed + component 8 passed; worker: frozen next-admission 6,
   census guards 15, build green.
+- 2026-08-26 — Round 3 (S4, feature cutover): Ask/Editor/Project, Dictation
+  (alternate-target retry retired), and Meetings (group-scoped) all mount
+  the shared ContextualAssignment wrapper over the canonical editor;
+  Settings RAW pointer controls retired; configure-runs-on retargets the
+  Assignments destination; the Thought mutation-after-admission
+  route-freeze case joins the placement adoption matrix. RunsOnPicker
+  honestly classified to its three surviving S5 referencers
+  (PersonaChat/CapabilitySection/WorkbenchWindow) — component retirement
+  HANDED TO S5. API manifest regenerated under isolated HOME (+5
+  assignment routes). Six new contextual shots (thoughts-context/
+  dictation-recovery/meetings-group × 1440/393). Cross-cutting net run
+  in-round: 134 passed / 2 inherited-baseline failures. Orchestrator-
+  verified: e2e+routes+service+manifest+census 56 passed, component 8.

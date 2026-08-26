@@ -2908,6 +2908,12 @@ button.surface-edit-in-place:hover {
 .assignment-task-rows { display: grid; gap: 2px; }
 .assignment-task-rows > article { display: grid; grid-template-columns: minmax(8rem, .7fr) minmax(0, 1fr); gap: 3px 10px; padding: 8px; background: var(--surface-raised); }
 .assignment-task-rows > article small { grid-column: 2; }
+.contextual-assignment { display: grid; gap: var(--space-1); min-inline-size: 0; }
+.contextual-assignment .capability-assignment-row { min-block-size: 44px; }
+.contextual-assignment-receipt,
+.contextual-assignment-error,
+.contextual-assignment-loading { margin: 0; padding: var(--space-1) var(--space-2); color: var(--text-muted); font: 600 var(--desk-surface-body-size) / 1.35 var(--font-mono); }
+.contextual-assignment-receipt { color: var(--text); }
 .assignment-receipt,
 .assignment-sheet-error {
   padding: var(--space-2);

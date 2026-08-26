@@ -14,9 +14,7 @@ import type {
   DictationDryRunResponse,
   DictationReadinessResponse,
 } from "../core-types";
-import type { InferenceTarget } from "../../../desk/api";
 import type { MicState } from "../../../desk/components/MicButton";
-import { openSurfaceOr } from "../../../desk/shell";
 import {
   subscribeMicPhase,
   micCaptureSupported,
@@ -51,8 +49,6 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
   const [correctionKind, setCorrectionKind] = useState("target");
   const [correctionValue, setCorrectionValue] = useState("");
   const [verdict, setVerdict] = useState<"" | "right" | "wrong">("");
-  const [targets, setTargets] = useState<InferenceTarget[]>([]);
-  const [targetId, setTargetId] = useState("this_machine");
   const [micState, setMicState] = useState<MicState>("idle");
   const [level, setLevel] = useState(0);
   // HS-112-02 — the delivery half of the deck.
@@ -86,12 +82,9 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
   useEffect(() => {
     if (utteranceRecovered) announce("Draft restored");
   }, [utteranceRecovered, announce]);
-  /* REHEARSE — the explicit dry run. It previews the pipeline and
-     delivers NOTHING; it is never what a plain TALK release does.
-     HS-130-07: an optional `profileId` is a TRANSIENT one-run target
-     override (the "Retry on" recovery). It rides the dry-run request for
-     this run only and never persists to settings. */
-  const run = async (text: string = utterance, profileId?: string | null) => {
+  /* REHEARSE — the explicit dry run. It previews the assigned pipeline and
+     delivers NOTHING; it is never what a plain TALK release does. */
+  const run = async (text: string = utterance) => {
     setBusy(true);
     setError("");
     setFailure(null);
@@ -103,9 +96,6 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
           json: {
             utterance: text,
             ...(projectRoot ? { project_root: projectRoot } : {}),
-            ...(profileId !== undefined
-              ? { profile_id: profileId === "this_machine" ? null : profileId }
-              : {}),
           },
         }),
       );
@@ -278,32 +268,6 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
   const actions = failure
     ? applicableActions(failure, { draftPresent: Boolean(utterance.trim()) })
     : [];
-  useEffect(() => {
-    if (!actions.includes("alternate_runs_on") || targets.length) return;
-    let mounted = true;
-    void apiFetch<{ targets?: InferenceTarget[] }>("/api/inference-targets")
-      .then((result) => {
-        if (mounted && Array.isArray(result.targets))
-          setTargets(result.targets);
-      })
-      .catch(() => undefined);
-    return () => {
-      mounted = false;
-    };
-  }, [actions, targets.length]);
-  /* HS-130-07: "Run elsewhere" is a TRANSIENT one-run override, not a
-     standing preference. It retries THIS run on the chosen target and
-     leaves `dictation.runtime.profile_id` in settings untouched — a
-     recovery must never silently rewrite the desk's standing target
-     (Settings is the one writer of that preference). */
-  const runElsewhere = async (id: string) => {
-    setTargetId(id);
-    try {
-      await run(utterance, id);
-    } catch (reason) {
-      announce(`⚠ ${readableError(reason)}`, "warn");
-    }
-  };
   const keepDraft = async () => {
     if (!utterance.trim()) return;
     try {
@@ -382,8 +346,6 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
     setCorrectionValue,
     verdict,
     setVerdict,
-    targets,
-    targetId,
     micState,
     setMicState,
     level,
@@ -415,7 +377,6 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
     deliver,
     onReleased,
     toggleOpenMic,
-    runElsewhere,
     keepDraft,
     teach,
   };

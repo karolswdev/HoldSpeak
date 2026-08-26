@@ -1,9 +1,7 @@
 // The durable-draft textarea with the deliver/rehearse button row.
 import { Button } from "../../../components/signal/Signal";
 import { openSurfaceOr } from "../../../desk/shell";
-import { RunsOnPicker } from "../../../desk/components/RunsOnPicker";
 import { PadGadget, StringGadget } from "../../../desk/surface/gadgets";
-import type { InferenceTarget } from "../../../desk/api";
 
 export function UtteranceWell({
   utterance,
@@ -14,11 +12,8 @@ export function UtteranceWell({
   error,
   previewOnly,
   actions,
-  targets,
-  targetId,
   onRun,
   onDeliver,
-  onRunElsewhere,
   onKeepDraft,
 }: {
   utterance: string;
@@ -29,11 +24,8 @@ export function UtteranceWell({
   error: string;
   previewOnly: boolean;
   actions: string[];
-  targets: InferenceTarget[];
-  targetId: string;
   onRun: () => void;
   onDeliver: (text: string) => void;
-  onRunElsewhere: (id: string) => void;
   onKeepDraft: () => void;
 }) {
   return (
@@ -97,14 +89,6 @@ export function UtteranceWell({
             </Button>
           ) : null}
         </div>
-      ) : null}
-      {error && actions.includes("alternate_runs_on") && targets.length ? (
-        <RunsOnPicker
-          targets={targets}
-          selectedId={targetId}
-          onChange={(id) => void onRunElsewhere(id)}
-          disabled={busy}
-        />
       ) : null}
     </>
   );

@@ -62,6 +62,8 @@ class _Case:
 # migrated. Recipe chat intentionally has both ruled paths; Apple is absent by
 # the binding owner descope.
 CASES = (
+    # S4's Thought contextual editor invokes this same canonical subject writer.
+    _Case("thought-ask", "ask.answer", "thought", "thought-matrix"),
     _Case("recipe-run", "recipe.run", "recipe", "recipe-matrix"),
     _Case("recipe-chat-unqualified", "recipe.chat", "recipe", "recipe-matrix"),
     _Case("workbench-item-and-memory", "workbench.item", "workbench", "workbench-matrix"),

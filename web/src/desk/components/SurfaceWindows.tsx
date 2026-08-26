@@ -293,9 +293,8 @@ const SURFACE_ALIASES: Record<string, { target: string; scope?: string }> = {
     scope: "integration:destinations",
   },
   "configure-integration": { target: "configure-settings" },
-  // HS-112-01 — the standalone Runs-on room folded into the Prefs
-  // Models module (the one dial); old dispatches keep landing.
-  "configure-runs-on": { target: "configure-settings", scope: "models" },
+  // The former raw selector opens the canonical Assignments Settings job.
+  "configure-runs-on": { target: "configure-settings", scope: "assignments" },
   // HS-100-10 — the Runtime guide is Settings' Guide wing; old
   // dispatches and deep links keep landing.
   "read-runtime-docs": { target: "configure-settings", scope: "guide" },

@@ -131,8 +131,6 @@ export async function runAsk(opts: {
   prompt: string;
   lens: string;
   context: AskContext[];
-  profileId?: string;
-  inferenceTargetId?: string;
   grounding?: {
     meeting_ids: string[];
     artifact_ids: string[];
@@ -172,10 +170,6 @@ export async function runAsk(opts: {
           title: c.title,
           ref: c.ref || qualifiedRef(c.kind, c.id),
         })),
-        ...(opts.profileId ? { profile_id: opts.profileId } : {}),
-        ...(opts.inferenceTargetId
-          ? { inference_target_id: opts.inferenceTargetId }
-          : {}),
         ...(opts.grounding ? { grounding: opts.grounding } : {}),
         ...(opts.model ? { model: opts.model } : {}),
       }),

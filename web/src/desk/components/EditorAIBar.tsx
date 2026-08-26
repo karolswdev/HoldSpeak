@@ -3,10 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { EditorView } from "@codemirror/view";
 import { runAsk } from "../ask";
 import { AI_VERBS, type EditorAIVerb } from "../editorAI";
-import { useDesk } from "../store";
-import { RunsOnPicker } from "./RunsOnPicker";
-import { LampGadget } from "../surface/gadgets";
-import { inferenceEgressLamp } from "../inferenceEgress";
+import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 
 export interface EditorAIProposal {
   original: string;
@@ -43,21 +40,11 @@ export function EditorAIBar({
   onDismiss,
   disabled = false,
 }: EditorAIBarProps) {
-  const inferenceTargets = useDesk((s) => s.inferenceTargets);
-  const [inferenceTargetId, setInferenceTargetId] = useState("this_machine");
   const [selectionKey, setSelectionKey] = useState("");
   const [shownSelection, setShownSelection] = useState("");
   const [pending, setPending] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-
-  const target = useMemo(
-    () =>
-      inferenceTargets.find((item) => item.id === inferenceTargetId) ||
-      inferenceTargets[0],
-    [inferenceTargetId, inferenceTargets],
-  );
-  const targetLamp = inferenceEgressLamp(target);
 
   const selection = useMemo(() => {
     if (!editorView) return null;
@@ -154,7 +141,6 @@ export function EditorAIBar({
       prompt: template,
       lens: AI_VERBS[verb].label,
       context: [],
-      inferenceTargetId: target?.id,
       signal: controller.signal,
     });
     const latency = Math.round(performance.now() - startedAt);
@@ -189,20 +175,18 @@ export function EditorAIBar({
             key={verb}
             type="button"
             className="desk-chip quiet"
-            disabled={pending || disabled || !target}
+            disabled={pending || disabled}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => void run(verb)}
           >
             {pending ? "Working…" : AI_VERBS[verb].label}
           </button>
         ))}
-        <RunsOnPicker
-          targets={inferenceTargets}
-          selectedId={inferenceTargetId}
-          onChange={setInferenceTargetId}
-          disabled={pending}
+        <ContextualAssignment
+          label="Thought"
+          capabilityId="thought.interview"
+          scope={{ kind: "capability", capability_id: "thought.interview" }}
         />
-        <LampGadget on {...targetLamp} />
         <button type="button" className="desk-chip quiet" onClick={dismiss} aria-label="Dismiss AI controls">×</button>
       </div>
       {receipt ? (

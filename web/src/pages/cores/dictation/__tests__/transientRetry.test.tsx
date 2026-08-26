@@ -1,7 +1,6 @@
-// HS-130-07 — "Run elsewhere" is a TRANSIENT one-run override. It retries the
-// dry run on the chosen target for THAT run only and NEVER PUTs
-// `dictation.runtime.profile_id` to settings (a recovery must not silently
-// rewrite the desk's standing target — Settings is that setting's one writer).
+// HS-143-13 — Dictation uses the canonical assignment at admission. The former
+// one-run target picker is intentionally absent: recovery never authorizes a
+// browser-selected route or rewrites settings.
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useSpeakDeck } from "../useSpeakDeck";
@@ -21,9 +20,8 @@ vi.mock("../../../../lib/openMic", () => ({
   openMicDrop: vi.fn(),
   openMicListen: vi.fn(),
 }));
-vi.mock("../../../../desk/shell", () => ({ openSurfaceOr: vi.fn() }));
 
-type Init = { method?: string; json?: any };
+type Init = { method?: string; json?: Record<string, unknown> };
 
 function calls(path: string): Init[] {
   return mocks.apiFetch.mock.calls
@@ -37,29 +35,23 @@ beforeEach(() => {
   mocks.apiFetch.mockResolvedValue({});
 });
 
-describe("Run elsewhere is transient (HS-130-07)", () => {
-  it("retries the dry run on the chosen target and does NOT PUT settings", async () => {
+describe("Dictation recovery uses assignments", () => {
+  it("posts an ordinary dry run without a raw profile override or settings write", async () => {
     const { result } = renderHook(() => useSpeakDeck(() => undefined));
-    await act(async () => {
-      await result.current.runElsewhere("p-lan");
-    });
-    // The retry rode the dry-run request carrying the transient target…
+    await act(async () => { await result.current.run("retry this"); });
+
     const dryRuns = calls("/api/dictation/dry-run");
     expect(dryRuns).toHaveLength(1);
     expect(dryRuns[0].method).toBe("POST");
-    expect(dryRuns[0].json.profile_id).toBe("p-lan");
-    // …and the standing target in settings was never rewritten.
+    expect(dryRuns[0].json).toMatchObject({ utterance: "retry this" });
+    expect(dryRuns[0].json).not.toHaveProperty("profile_id");
     expect(calls("/api/settings").filter((c) => c.method === "PUT")).toEqual([]);
   });
 
-  it("'this_machine' clears the per-run override (null), still no settings PUT", async () => {
+  it("does not expose a one-run route writer", () => {
     const { result } = renderHook(() => useSpeakDeck(() => undefined));
-    await act(async () => {
-      await result.current.runElsewhere("this_machine");
-    });
-    const dryRuns = calls("/api/dictation/dry-run");
-    expect(dryRuns).toHaveLength(1);
-    expect(dryRuns[0].json.profile_id).toBeNull();
-    expect(calls("/api/settings").filter((c) => c.method === "PUT")).toEqual([]);
+    expect(result.current).not.toHaveProperty("runElsewhere");
+    expect(result.current).not.toHaveProperty("targetId");
+    expect(result.current).not.toHaveProperty("targets");
   });
 });
