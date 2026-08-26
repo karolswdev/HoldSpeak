@@ -155,36 +155,61 @@ class InferenceAcquisitionApplicationService:
         with self._submitted_lock:
             self._submitted.discard(job_id)
 
+    def download(self, principal: Principal, body: dict[str, Any]) -> dict[str, Any]:
+        """Library-scoped catalog download.  The caller supplies no route data."""
+        return self._download_request(principal, body, legacy=False)
+
     def download_and_use(self, principal: Principal, body: dict[str, Any]) -> dict[str, Any]:
+        """Compatibility alias for the retired Phase-142 transport shape."""
+        return self._download_request(principal, body, legacy=True)
+
+    def _download_request(self, principal: Principal, body: dict[str, Any], *, legacy: bool) -> dict[str, Any]:
         self._require_owner(principal)
-        allowed = {
-            "request_id", "preset_id", "catalog_revision", "context_choice",
-            "expected_route_revision",
-        }
+        allowed = (
+            {"request_id", "preset_id", "catalog_revision", "context_choice", "expected_route_revision"}
+            if legacy else {"request_id", "catalog_id", "catalog_revision"}
+        )
         if not isinstance(body, dict) or set(body) != allowed:
             raise ServiceError(
                 "inference_acquisition_request_invalid",
                 "Download model has an invalid request shape.", context={"status": 400},
             )
         request_id = str(body["request_id"] or "").strip()
-        if not request_id or len(request_id) > 128:
-            raise ServiceError("inference_request_id_invalid", "A stable request id is required.", context={"status": 400})
-        if (
-            not isinstance(body["preset_id"], str)
-            or not body["preset_id"]
-            or type(body["catalog_revision"]) is not int
-            or type(body["context_choice"]) is not int
-            or not isinstance(body["expected_route_revision"], str)
-        ):
+        catalog_id = str(body.get("preset_id") if legacy else body.get("catalog_id") or "").strip()
+        if not request_id or len(request_id) > 128 or not catalog_id or type(body["catalog_revision"]) is not int:
             raise ServiceError("inference_acquisition_request_invalid", "Download model has invalid field types.", context={"status": 400})
-        expected_route = body["expected_route_revision"]
-        payload = {
-            "request_id": request_id,
-            "preset_id": body["preset_id"],
-            "catalog_revision": body["catalog_revision"],
-            "context_choice": body["context_choice"],
-            "expected_route_revision": expected_route,
-        }
+        # Compatibility requests retain their established replay-before-current-
+        # catalog-validation ordering.  A reused id is a conflict even if the
+        # changed body would otherwise fail today's catalog validation.
+        if legacy and isinstance(body.get("context_choice"), int) and isinstance(body.get("expected_route_revision"), str):
+            legacy_sha = _sha({"request_id": request_id, "preset_id": catalog_id, "catalog_revision": body["catalog_revision"], "context_choice": body["context_choice"], "expected_route_revision": body["expected_route_revision"]})
+            with self._db._connection() as conn:
+                existing = conn.execute("SELECT job_id,request_sha256 FROM inference_model_acquisitions WHERE request_id=?", (request_id,)).fetchone()
+            if existing is not None:
+                if str(existing["request_sha256"]) != legacy_sha:
+                    raise ServiceError("request_payload_mismatch", "That request id was already used for different model setup.", context={"status": 409})
+                acquisition = self._get(str(existing["job_id"]))
+                return self._command_result(principal, acquisition, legacy=legacy)
+        catalog = self._catalog_provider()
+        if body["catalog_revision"] != catalog["catalog_revision"]:
+            raise ServiceError("inference_catalog_stale", "The model catalog changed. Check again.", context={"status": 409})
+        preset = next((row for row in catalog["entries"] if row["id"] == catalog_id), None)
+        if preset is None or preset["kind"] != "local_artifact_preset":
+            raise ServiceError("inference_preset_unknown", "That local model is not in this catalog.", context={"status": 404})
+        context_choice = int(preset["context"]["recommended_tokens"])
+        if legacy and (type(body["context_choice"]) is not int or body["context_choice"] != context_choice):
+            raise ServiceError("inference_context_choice_invalid", "That context size is not qualified for this preset.", context={"status": 409})
+        # This historical column survives old databases, but the library command
+        # derives its opaque availability marker server-side and never accepts it.
+        expected_route = str(body["expected_route_revision"]) if legacy else _route_revision(Config())
+        if legacy and not expected_route:
+            raise ServiceError("inference_acquisition_request_invalid", "Download model has invalid field types.", context={"status": 400})
+        body = {"preset_id": catalog_id, "catalog_revision": body["catalog_revision"], "context_choice": context_choice}
+        payload = (
+            {"request_id": request_id, "preset_id": catalog_id, "catalog_revision": body["catalog_revision"],
+             "context_choice": context_choice, "expected_route_revision": expected_route}
+            if legacy else {"request_id": request_id, "catalog_id": catalog_id, "catalog_revision": body["catalog_revision"]}
+        )
         request_sha = _sha(payload)
         with self._db._connection() as conn:
             replay = conn.execute(
@@ -196,7 +221,7 @@ class InferenceAcquisitionApplicationService:
             if str(replay["request_sha256"]) != request_sha:
                 raise ServiceError("request_payload_mismatch", "That request id was already used for different model setup.", context={"status": 409})
             acquisition = self._get(str(replay["job_id"]))
-            return {"acquisition": acquisition, "receipt": self._receipt(acquisition), "setup": self._setup.get_inference_setup(principal)}
+            return self._command_result(principal, acquisition, legacy=legacy)
         catalog = self._catalog_provider()
         if body["catalog_revision"] != catalog["catalog_revision"]:
             raise ServiceError("inference_catalog_stale", "The model catalog changed. Check again.", context={"status": 409})
@@ -262,7 +287,7 @@ class InferenceAcquisitionApplicationService:
                     raise ServiceError("request_payload_mismatch", "That request id was already used for different model setup.", context={"status": 409})
                 conn.commit()
                 acquisition = self._get(job_id)
-                return {"acquisition": acquisition, "receipt": self._receipt(acquisition), "setup": self._setup.get_inference_setup(principal)}
+                return self._command_result(principal, acquisition, legacy=legacy)
             active = conn.execute(
                 """SELECT job_id FROM inference_model_acquisitions
                     WHERE source_claim_sha256=?
@@ -273,7 +298,7 @@ class InferenceAcquisitionApplicationService:
             if active is not None:
                 conn.commit()
                 acquisition = self._get(str(active["job_id"]))
-                return {"acquisition": acquisition, "receipt": self._receipt(acquisition), "setup": self._setup.get_inference_setup(principal)}
+                return self._command_result(principal, acquisition, legacy=legacy)
             conn.execute(
                 """INSERT INTO inference_model_acquisitions
                    (job_id,request_id,request_sha256,preset_id,catalog_revision,
@@ -290,42 +315,46 @@ class InferenceAcquisitionApplicationService:
         self._adopt_resumable_prefix(job_id, source_claim_sha, int(plan["size"]), str(plan["filename"]))
         self._submit(job_id)
         acquisition = self._get(job_id)
-        return {"acquisition": acquisition, "receipt": self._receipt(acquisition), "setup": self._setup.get_inference_setup(principal)}
+        return self._command_result(principal, acquisition, legacy=legacy)
+
+    def add_to_library(self, principal: Principal, body: dict[str, Any]) -> dict[str, Any]:
+        """Adopt a detected artifact through the library-only request shape."""
+        return self._existing_request(principal, body, legacy=False)
 
     def use_existing(self, principal: Principal, body: dict[str, Any]) -> dict[str, Any]:
-        """Verify and activate one freshly re-resolved detected GGUF."""
+        """Compatibility alias for the retired Phase-142 transport shape."""
+        return self._existing_request(principal, body, legacy=True)
+
+    def _existing_request(self, principal: Principal, body: dict[str, Any], *, legacy: bool) -> dict[str, Any]:
+        """Verify and adopt one freshly re-resolved detected GGUF."""
         self._require_owner(principal)
-        allowed = {
-            "request_id", "detected_artifact_id", "context_choice",
-            "expected_route_revision",
-        }
+        allowed = (
+            {"request_id", "detected_artifact_id", "context_choice", "expected_route_revision"}
+            if legacy else {"request_id", "detected_artifact_id"}
+        )
         if not isinstance(body, dict) or set(body) != allowed:
             raise ServiceError(
                 "inference_existing_request_invalid",
-                "Use existing model has an invalid request shape.",
-                context={"status": 400},
+                "Add to library has an invalid request shape.", context={"status": 400},
             )
         request_id = str(body["request_id"] or "").strip()
         detected_id = str(body["detected_artifact_id"] or "").strip()
-        expected_route = str(body["expected_route_revision"] or "")
+        expected_route = str(body.get("expected_route_revision") or _route_revision(Config()))
         if (
             not request_id or len(request_id) > 128
             or not detected_id.startswith("detected_")
             or len(detected_id) > 96
-            or type(body["context_choice"]) is not int
-            or body["context_choice"] != 8192
-            or not expected_route
+            or (legacy and (type(body["context_choice"]) is not int or body["context_choice"] != 8192 or not expected_route))
         ):
             raise ServiceError(
                 "inference_existing_request_invalid",
-                "Use existing model has invalid fields.", context={"status": 400},
+                "Add to library has invalid fields.", context={"status": 400},
             )
-        payload = {
-            "request_id": request_id,
-            "detected_artifact_id": detected_id,
-            "context_choice": body["context_choice"],
-            "expected_route_revision": expected_route,
-        }
+        payload = (
+            {"request_id": request_id, "detected_artifact_id": detected_id,
+             "context_choice": 8192, "expected_route_revision": expected_route}
+            if legacy else {"request_id": request_id, "detected_artifact_id": detected_id}
+        )
         request_sha = _sha(payload)
         with self._db._connection() as conn:
             replay = conn.execute(
@@ -340,11 +369,7 @@ class InferenceAcquisitionApplicationService:
                     context={"status": 409},
                 )
             acquisition = self._get(str(replay["job_id"]))
-            return {
-                "acquisition": acquisition,
-                "receipt": self._receipt(acquisition),
-                "setup": self._setup.get_inference_setup(principal),
-            }
+            return self._command_result(principal, acquisition, legacy=legacy)
         config = self._config_provider()
         from .inference_setup_service import (
             _this_machine_from_config,
@@ -416,11 +441,7 @@ class InferenceAcquisitionApplicationService:
                     )
                 conn.commit()
                 acquisition = self._get(str(replay["job_id"]))
-                return {
-                    "acquisition": acquisition,
-                    "receipt": self._receipt(acquisition),
-                    "setup": self._setup.get_inference_setup(principal),
-                }
+                return self._command_result(principal, acquisition, legacy=legacy)
             active = conn.execute(
                 """SELECT job_id FROM inference_model_acquisitions
                     WHERE source_claim_sha256=?
@@ -431,11 +452,7 @@ class InferenceAcquisitionApplicationService:
             if active is not None:
                 conn.commit()
                 acquisition = self._get(str(active["job_id"]))
-                return {
-                    "acquisition": acquisition,
-                    "receipt": self._receipt(acquisition),
-                    "setup": self._setup.get_inference_setup(principal),
-                }
+                return self._command_result(principal, acquisition, legacy=legacy)
             conn.execute(
                 """INSERT INTO inference_model_acquisitions
                    (job_id,request_id,request_sha256,preset_id,catalog_revision,
@@ -451,11 +468,106 @@ class InferenceAcquisitionApplicationService:
             conn.commit()
         self._submit(job_id)
         acquisition = self._get(job_id)
-        return {
-            "acquisition": acquisition,
-            "receipt": self._receipt(acquisition),
-            "setup": self._setup.get_inference_setup(principal),
+        return self._command_result(principal, acquisition, legacy=legacy)
+
+    def adopt_uploaded(
+        self, principal: Principal, *, request_id: str, filename: str, staging_path: Path,
+    ) -> dict[str, Any]:
+        """Verify and ingest one hub-staged GGUF without ever receiving a client path.
+
+        Upload intake owns the supplied staging file only for this call.  It is
+        moved into content-addressed custody on success and removed by the route
+        on every failure path.
+        """
+        self._require_owner(principal)
+        if not request_id or len(request_id) > 128 or Path(filename).name != filename:
+            raise ServiceError("inference_upload_invalid", "Model file upload is invalid.", context={"status": 400})
+        suffix = Path(filename).suffix.lower()
+        if suffix not in {".gguf", ".safetensors", ".mlx"} or not staging_path.is_file() or staging_path.is_symlink():
+            raise ServiceError("inference_upload_invalid", "Upload one GGUF or MLX model file.", context={"status": 400})
+        format_id = "gguf" if suffix == ".gguf" else "mlx_safetensors"
+        try:
+            with staging_path.open("rb") as handle:
+                if format_id == "gguf" and handle.read(4) != b"GGUF":
+                    raise ServiceError("inference_upload_invalid", "That file is not a GGUF model.", context={"status": 400})
+            size = int(staging_path.stat().st_size)
+            digest = self._hash_file(staging_path)
+        except OSError as exc:
+            raise ServiceError("inference_upload_invalid", "The uploaded model could not be read.", context={"status": 400}) from exc
+        if size < 4:
+            raise ServiceError("inference_upload_invalid", "That file is not a GGUF model.", context={"status": 400})
+        manifest = {"files": [{"path": filename, "sha256": "sha256:" + digest, "size": size}]}
+        manifest_sha = _sha(manifest)
+        plan = {
+            "kind": "uploaded_file", "filename": filename, "sha256": "sha256:" + digest,
+            "size": size, "manifest_sha256": manifest_sha, "repository": "Owner model file",
+            "revision": "sha256:" + digest,
+            "runtime_id": "llama_cpp_prompt_v1" if format_id == "gguf" else "mlx_text_v1",
+            "runtime_min_revision": "0.3.16", "format": format_id,
+            "architecture": "gguf" if format_id == "gguf" else "mlx",
+            "model_identity": Path(filename).stem, "context_ceiling": 8192,
         }
+        request_sha = _sha({"request_id": request_id, "filename": filename, "sha256": plan["sha256"]})
+        job_id = "acq_" + hashlib.sha256(request_id.encode("utf-8")).hexdigest()[:32]
+        with self._db._connection() as conn:
+            replay = conn.execute("SELECT job_id,request_sha256 FROM inference_model_acquisitions WHERE request_id=?", (request_id,)).fetchone()
+        if replay is not None:
+            if str(replay["request_sha256"]) != request_sha:
+                raise ServiceError("request_payload_mismatch", "That request id was already used for different model setup.", context={"status": 409})
+            return {"acquisition": self._get(str(replay["job_id"])), "receipt": self._receipt(self._get(str(replay["job_id"]))) }
+        artifact_id = "artifact_" + manifest_sha.removeprefix("sha256:")
+        artifact_dir = self._root / "artifacts" / artifact_id
+        final_file = artifact_dir / filename
+        now = _now()
+        try:
+            artifact_dir.parent.mkdir(parents=True, exist_ok=True)
+            if artifact_dir.exists():
+                if not final_file.is_file() or self._hash_file(final_file) != digest:
+                    raise ServiceError("inference_upload_integrity", "A stored model did not match this upload.", context={"status": 409})
+                staging_path.unlink(missing_ok=True)
+            else:
+                artifact_dir.mkdir(parents=True, exist_ok=False)
+                os.replace(staging_path, final_file)
+        except OSError as exc:
+            raise ServiceError("inference_upload_storage", "The uploaded model could not be stored.", context={"status": 409}) from exc
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                replay = conn.execute("SELECT job_id,request_sha256 FROM inference_model_acquisitions WHERE request_id=?", (request_id,)).fetchone()
+                if replay is not None:
+                    if str(replay["request_sha256"]) != request_sha:
+                        raise ServiceError("request_payload_mismatch", "That request id was already used for different model setup.", context={"status": 409})
+                    conn.commit()
+                    return {"acquisition": self._get(str(replay["job_id"]))}
+                conn.execute(
+                    """INSERT INTO inference_model_artifacts
+                       (artifact_id,format,source_kind,source_repository,source_revision,manifest_json,manifest_sha256,installed_bytes,state,local_locator,created_at,verified_at)
+                       VALUES (?,?,?,?,?,?,?,?, 'verified',?,?,?)
+                       ON CONFLICT(artifact_id) DO NOTHING""",
+                    (artifact_id, format_id, "uploaded_file", "Owner model file", plan["revision"], _canonical(manifest), manifest_sha, size, str(final_file), now, now),
+                )
+                conn.execute(
+                    """INSERT INTO inference_model_acquisitions
+                       (job_id,request_id,request_sha256,preset_id,catalog_revision,source_plan_json,source_plan_sha256,source_claim_sha256,state,bytes_total,verified_bytes,transport_bytes,artifact_id,activation_state,expected_route_revision,created_at,updated_at)
+                       VALUES (?,?,?,?,0,?,?,?,'installing',?,?,?,?, 'not_requested',?,?,?)""",
+                    (job_id, request_id, request_sha, "upload:" + filename, _canonical(plan), _sha(plan), _sha({"upload": manifest_sha}), size, size, size, artifact_id, _route_revision(Config()), now, now),
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+        if format_id == "gguf":
+            self._activate(job_id, artifact_id, final_file, plan)
+        else:
+            # One uploaded MLX file is a durable library artifact, but its
+            # runtime is not an executable Thought adapter yet. Retain it with
+            # the explicit repair rather than claiming readiness or selecting it.
+            self._transition(
+                job_id, "ready", artifact_id=artifact_id, activation_state="failed",
+                error_code="mlx_runtime_unavailable", error_message="MLX runtime is not installed.",
+            )
+        acquisition = self._get(job_id)
+        return {"acquisition": acquisition, "receipt": self._receipt(acquisition)}
 
     def get_acquisition(self, principal: Principal, job_id: str) -> dict[str, Any]:
         self._require_owner(principal)
@@ -503,6 +615,15 @@ class InferenceAcquisitionApplicationService:
             conn.commit()
         acquisition = self._get(job_id)
         return {"acquisition": acquisition, "receipt": self._receipt(acquisition), "setup": self._setup.get_inference_setup(principal)}
+
+    def _command_result(self, principal: Principal, acquisition: dict[str, Any], *, legacy: bool) -> dict[str, Any]:
+        result = {"acquisition": acquisition, "receipt": self._receipt(acquisition)}
+        # Only the compatibility aliases retain the old setup payload. The
+        # Model Library command contract is an availability receipt, never a
+        # route/settings projection that a caller could turn into selection.
+        if legacy:
+            result["setup"] = self._setup.get_inference_setup(principal)
+        return result
 
     def list_active(self) -> list[dict[str, Any]]:
         with self._db._connection() as conn:
@@ -824,7 +945,8 @@ class InferenceAcquisitionApplicationService:
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
             self._insert_revision(conn, revision)
-            conn.execute("UPDATE inference_deployments SET active=0 WHERE destination_id='this_machine'")
+            # Adding availability never selects a deployment. Existing heads
+            # remain untouched; this new head is deliberately inactive.
             conn.execute(
                 """INSERT INTO inference_deployments
                    (deployment_id,destination_id,runtime_id,runtime_revision,
@@ -832,9 +954,9 @@ class InferenceAcquisitionApplicationService:
                     recommended_context,capability_json,capability_sha256,
                     execution_revision_id,configuration_revision,active,
                     created_at,updated_at)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,1,1,?,?)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,1,0,?,?)
                    ON CONFLICT(deployment_id) DO UPDATE SET
-                    active=1, configuration_revision=configuration_revision+1,
+                    active=0, configuration_revision=configuration_revision+1,
                     updated_at=excluded.updated_at""",
                 (
                     deployment_id, "this_machine", plan["runtime_id"],

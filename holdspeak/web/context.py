@@ -84,6 +84,9 @@ class WebContext:
     inference_setup_service: Optional[Any] = None
     # HS-142-02: durable model acquisition/activation saga.
     inference_acquisition_service: Optional[Any] = None
+    # HS-143-12: owner-only aggregate availability/projection boundary. It has
+    # no assignment write authority and composes the two services above.
+    model_library_service: Optional[Any] = None
     # Phase 143: process-composed, owner-only registry projection.  It owns no
     # profile/binding/assignment persistence and never resolves a model route.
     inference_capability_service: Optional[Any] = None
