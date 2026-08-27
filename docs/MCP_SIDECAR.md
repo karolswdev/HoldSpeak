@@ -299,7 +299,7 @@ client discovers it at tool-listing time, not at call time.
 
 ## Resources
 
-The sidecar exposes 19 static resources and 17 resource templates. List
+The sidecar exposes 16 static resources and 16 resource templates. List
 results are bounded to the first 100 items per read.
 
 ### Static resources
