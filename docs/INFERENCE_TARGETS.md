@@ -1,26 +1,20 @@
-# Inference destinations
+# Models and assignments
 
-`GET /api/inference-targets` is the versioned “Runs on” discovery contract. It
-names the destination kind, boundary, owner, transport, data classes, engine and
-model separately, plus readiness derived without probing the destination.
-`POST`, `PUT`, and `DELETE` use the same resource shape. Unavailable selections
-refuse with an explicit alternate target; they never silently retarget.
+**Settings, Models** is where HoldSpeak keeps intelligence available. Adding,
+downloading, or connecting a model makes it available. It does not choose work
+for that model.
 
-`/api/profiles` and the synced `profile` primitive remain supported version-1
-aliases over the same stored rows. Their earliest possible removal is
-InferenceTarget v3, after a separately published migration window. API keys and
-tokens are accepted by neither contract. **Settings, Models** uses a dedicated
-owner-only secret write/delete subresource for a destination key; target CRUD,
-sync, and reads receive only the non-secret shape. The hub joins its local
-per-destination secret at execution time, and reads report presence only.
+**Settings, Assignments** is where the owner chooses which available models do
+HoldSpeak jobs. The server checks the capability, readiness, and saved boundary
+before an assignment can be saved. A missing key, unsupported capability, or
+unavailable model stays visible with a named repair. HoldSpeak never silently
+chooses another model.
 
-Before a run, each surface names the target and the data classes it may receive.
-Afterward, the attempt receipt names the actual target, destination kind,
-boundary, owner, transport, data classes, engine, model, and any fallback
-reason. Choosing “This device” is local-only; it cannot fall back across a
-boundary. Missing keys, unsupported kinds, offline nodes, and stale manifests
-remain selected but unavailable, with a deliberate “choose alternate target”
-recovery action.
+When work starts, HoldSpeak freezes the selected assignment into an immutable
+plan. Editing an assignment affects the next run only. The receipt records the
+frozen primary, every attempt, any fallback reason, the actual model and
+boundary, and the terminal result without consulting today's settings.
 
-The machine-readable vocabulary and compatibility plan live in
-[`inference-targets.json`](inference-targets.json).
+Keys are written only through the owner-only secret subresource. Settings reads
+report whether a key is present, never its value. Keys do not appear in sync,
+ordinary API responses, receipts, or the database.

@@ -377,8 +377,8 @@ machine except via the connector CLIs above (entity IDs only).
 
 - **Cloud API key**: Set, replace, or remove it inline in **Settings, Models**.
   The value travels only through an owner-only secret write/delete subresource,
-  never destination CRUD, sync, DTOs, the database, read responses, logs, or
-  receipts. The hub stores it locally in owner-only `0600` custody; reads report
+  never a general model-management resource, sync, DTOs, the database, read
+  responses, logs, or receipts. The hub stores it locally in owner-only `0600` custody; reads report
   presence only. `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback. A UI
   deletion writes a tombstone that suppresses that fallback for the destination.
   A destination never borrows another one's key.
@@ -394,7 +394,7 @@ machine except via the connector CLIs above (entity IDs only).
   joins it to the POST in memory at execution time).
 - **Runs on destination keys**: a destination stores only its definition:
   name, kind, endpoint, model, and context window. Its key is local to the hub,
-  never part of target CRUD or sync, and joined only at run time. The Settings
+  never part of a general model-management resource or sync, and joined only at run time. The Settings
   read surface reports only whether a key is set; it never returns the value.
 - Bridge/firmware secrets (AIPI-Lite) live in gitignored `bridge.env` /
   `secrets.yaml`; `.example` templates are checked in.

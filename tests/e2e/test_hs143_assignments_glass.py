@@ -62,7 +62,7 @@ def _api_json(page: Any, method: str, path: str, body: dict[str, Any]) -> dict[s
     return result["body"]
 
 
-def _open_assignments(page: Any, url: str) -> Any:
+def _open_assignments(page: Any, url: str, *, summary_ready: bool = True) -> Any:
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
     _api(page, "POST", "/api/desk/seed")
     _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
@@ -70,6 +70,15 @@ def _open_assignments(page: Any, url: str) -> Any:
     page.locator(".prefs-tile").filter(has_text="Assignments").click()
     surface = page.locator(".prefs-module")
     surface.wait_for()
+    if summary_ready:
+        # The Settings shell appears before CapabilityAssignmentsCore has consumed
+        # its server-owned summary. Wait for the component's loaded fact and its
+        # complete bounded roster, never a timing delay or a snapshot count.
+        assignments = surface.locator(
+            ".capability-assignments[data-assignment-summary-state='loaded']"
+        )
+        assignments.get_by_role("heading", name="Assignments", exact=True).wait_for()
+        assignments.locator(".capability-assignment-row").nth(6).wait_for(state="visible")
     return surface
 
 
@@ -128,7 +137,7 @@ def test_assignments_overview_real_hub(
             browser = pw.chromium.launch(headless=True)
             page = browser.new_page(viewport={"width": width, "height": 900})
             page.on("pageerror", lambda error: errors.append(str(error)))
-            surface = _open_assignments(page, url)
+            surface = _open_assignments(page, url, summary_ready=state != "error")
             if state == "populated" and width == 1440:
                 # Product-level reduced-motion check: the real CSS preference
                 # zeroes transition/animation timing without changing the face.

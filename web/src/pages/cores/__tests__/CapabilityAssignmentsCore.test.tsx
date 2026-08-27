@@ -80,6 +80,7 @@ describe("CapabilityAssignmentsCore", () => {
   it("renders exactly the bounded seven server rows with no per-row selects", async () => {
     const { container } = render(<CapabilityAssignmentsCore />);
     await screen.findByText("Background");
+    expect(container.querySelector(".capability-assignments")).toHaveAttribute("data-assignment-summary-state", "loaded");
     expect(container.querySelectorAll(".capability-assignment-row")).toHaveLength(7);
     expect(container.querySelectorAll("select")).toHaveLength(0);
     expect(screen.getAllByText("Uses default · Quick Qwen")).toHaveLength(6);
