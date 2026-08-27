@@ -38,14 +38,13 @@ as `sequence.run@1`, `workflow.run@1`, `workbench.run@1`,
 `wake.session@1`. Each type owns validation and native projections in its codec;
 the broker remains blind to driver-specific behavior.
 
-Model execution has a stricter rule inside that kernel: every physical provider
-attempt enters an `InferenceRunner` at its executing boundary, becomes one
-admitted/claimed `inference.invoke@1` child over one immutable deployment
-revision, and receives one immutable terminal receipt. Parent runs and sessions
-provide causation, liveness, and budgets but never stand in for child receipts.
-Retry and fallback attempts are separate children; cancellation fences late publication; uncertain execution is
-`indeterminate`. See the canonical
-[Inference admission contract](../ARCHITECTURE.md#inference-admission-one-path-one-receipt-per-attempt).
+Model execution crosses the kernel through the `InferenceRunner` waist: one
+physical provider attempt becomes one admitted and claimed `inference.invoke@1`
+child over one immutable deployment revision and receives one terminal receipt.
+The router owns capability resolution, assignment precedence, frozen plans,
+controller fallback, and route-level receipt election. Read
+[Intelligence Router architecture](ARCHITECTURE_INTELLIGENCE_ROUTER.md) for that
+canonical mechanic chain and its end-to-end Recipe trace.
 
 Execution is a separate plane for authenticated nodes. `claim` atomically takes
 approved work and validates its one-use authority; `receipt` writes an immutable

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 143
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** 143-10, 143-11, 143-12, 143-13
 - **Unblocks:** 143-14
 - **Owner:** unassigned
@@ -61,3 +61,24 @@ Chartered 2026-08-25 by owner ruling during Story 10, per the standing
 dedicated-docs-story law (after features, before closeout). Runs after the
 owner-facing glass (12/13) lands so screenshots and flows are documented once,
 not twice.
+
+## Progress
+
+- 2026-08-27 — Plan ratified (`assets/story-15-router-docs-plan.md`; four
+  ORCH-CALLs accepted: 1,800–2,500-word budget, MODELS.md substantial
+  rewrite, in-doc trace with stable anchor, generator-owned API_SURFACE
+  deferral). One build round, all three slices:
+  `docs/internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md` (1,816 words,
+  eleven sections, the Recipe-run trace verified step-by-step against
+  shipped code with file:line per step, stable anchor
+  `#recipe-run-from-assignment-to-receipt` added by the orchestrator);
+  entry-point deferrals in Backend Runtime, MODELS (owner-guide rewrite
+  around Library→Assignments, retired mental models killed), README
+  (incl. live MCP census 134 tools), Plugin Authoring (host-issued
+  PluginDispatch, direct-provider guidance gone), MCP Sidecar
+  (defers mechanics), API_SURFACE via the generator under isolated HOME
+  (one deferral sentence; json unchanged, 536 routes). Verification:
+  stale-vocabulary sweep clean incl. inference_target_id; doc-drift +
+  api-surface 24 passed (orchestrator-verified); router adoption/census/
+  ToolTurn 61; product-copy 13 + 2 inherited-only. Eight deferral links
+  across the six entry points.

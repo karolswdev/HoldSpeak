@@ -1,301 +1,120 @@
 # Models: bring your own
 
-HoldSpeak does **not** ship model weights, and it does not require one specific
-model. The LLM layer is deliberately model-agnostic: pick whatever runs well on
-your hardware and point HoldSpeak at it.
+HoldSpeak uses models you choose. **Model Library** is where you make a model
+available. **Assignments** is where you choose the compatible ordered model list
+for a kind of work. This guide gets you set up. Read the internal
+[Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md)
+when you need the execution mechanics.
 
-> **Model names are a moving target.** The specific models suggested below are
-> *current picks*, refreshed periodically; they are **suggestions, not
-> requirements**. If a name here looks dated, that's expected: swap in whatever
-> the current good small/mid instruct model is. The contract is the *interface*
-> (GGUF / MLX / OpenAI-compatible), not any single checkpoint.
+> **Local-first.** Your model material and connection details stay on your hub.
+> Nothing leaves your machine except the model endpoint you choose. Read
+> [Security & Privacy](SECURITY.md) for the full boundary.
 
-There are two model roles, configured independently:
+## Start here
 
-| Role | What it does | Config keys |
-|------|--------------|-------------|
-| **Transcription** (Whisper) | speech → text | `model.name`, `model.backend` |
-| **LLM** | dictation block-classification + KB enrichment, meeting intel, Ask, and explicit Thought refinement | destinations under Settings, Models |
+1. Open **Settings, Models**.
+2. In **Model Library**, add a model from the catalog, add a model file, connect
+   a provider, or connect a paired device.
+3. Check its readiness. A model that is present is not necessarily ready to run.
+4. Open **Assignments** and choose the compatible model list for the work you
+   want to run. Use **Use default** when the inherited choice is the right one.
 
-Most setup below is about the **LLM** role. Transcription uses Whisper sizes,
-`tiny` / `base` / `small` and up, via MLX-Whisper or faster-whisper; its model
-calls still follow the same admitted execution contract described below.
+Adding or connecting a model does not change an Assignment. Choosing or
+clearing an Assignment does not alter the Model Library. Keep those two actions
+separate when you repair setup.
 
----
+## Model Library: make models available
 
-## The three ways to bring an LLM
+The Model Library is the owner surface for availability. It can start a
+catalog-pinned model acquisition, adopt a detected or uploaded model file,
+connect a hosted provider, define an OpenAI-compatible endpoint, or connect an
+existing paired device. A provider key is submitted through a separate
+write-only field. The Library shows whether a required key is present, never its
+value.
 
-You can run the LLM **in-process** (HoldSpeak loads the weights) or **over an
-endpoint** (a server you run loads them). Pick one per consumer.
+You can use three practical sources:
 
-### 1. GGUF, in-process (`llama_cpp` / intel `local`)
+- **Local GGUF.** Install the `dictation-llama` extra when you want the local
+  runtime, then add a supported GGUF model to the Library. HoldSpeak detects
+  valid local artifacts and reports runtime readiness rather than treating a
+  filename as proof that a model will run.
+- **MLX on Apple Silicon.** Install the `dictation-mlx` extra for MLX text
+  support. Model Library can detect MLX safetensors artifacts. Today they remain
+  unavailable for Thoughts, even when the artifact is present, and stay useful
+  only on the paths that support them.
+- **A provider or another device.** Connect a hosted provider, define an
+  OpenAI-compatible endpoint, or connect a paired device. Install
+  `dictation-openai` when the dictation path needs an OpenAI-compatible
+  endpoint. A keyless self-hosted endpoint needs no key.
 
-The cross-platform default. HoldSpeak loads a `.gguf` file directly via
-`llama-cpp-python` (Metal on Apple Silicon, CUDA/CPU elsewhere).
+For a provider draft, enter its label, model identity, and required connection
+information in the Library. The Library creates the public model record,
+private deployment material, binding, and current readiness observation as one
+owner action. It reports an unavailable runtime honestly. For example, a stored
+key does not make an unsupported provider runtime ready.
 
-- **Install:** `uv pip install -e '.[dictation-llama]'`
-  (on macOS arm64, build with Metal: `CMAKE_ARGS="-DGGML_METAL=on" …`)
-- **Get a model:** any GGUF chat model from HuggingFace. Example (swap freely):
-  ```bash
-  mkdir -p ~/Models/gguf
-  huggingface-cli download bartowski/Qwen3.5-4B-Instruct-GGUF \
-    Qwen3.5-4B-Instruct-Q4_K_M.gguf \
-    --local-dir ~/Models/gguf --local-dir-use-symlinks False
-  ```
-- **Point HoldSpeak at it:**
-  - dictation → `dictation.runtime.llama_cpp_model_path`
-  - meeting intel → `meeting.intel_realtime_model`
+### Readiness is current, not a promise
 
-### 2. MLX, in-process (Apple Silicon, `mlx`)
+Use **Check** or **Try again** after changing a local runtime, model file,
+provider, key, endpoint, or paired machine. Readiness belongs to the exact
+bound deployment revision. It can report an unavailable artifact, missing
+credential, unreachable endpoint, unavailable runtime, or offline device.
+Fix the named issue in Model Library, then check again.
 
-The recommended in-process path on M-series Macs: faster and more
-memory-efficient than GGUF there.
+Availability is not routing. A model can stay in your Library while you choose
+another model list in Assignments. Removing or revising a model that is assigned
+may require you to repair the dependent Assignment first.
 
-- **Install:** `uv pip install -e '.[dictation-mlx]'`
-- **Get a model:** any MLX chat build (a local snapshot dir **or** an HF repo id).
-  Example (swap freely):
-  ```bash
-  huggingface-cli download mlx-community/Qwen3.5-8B-MLX-4bit \
-    --local-dir ~/Models/mlx/Qwen3.5-8B-MLX-4bit
-  ```
-- **Point HoldSpeak at it:** `dictation.runtime.mlx_model`
-  (a path, or a bare `mlx-community/…` repo id).
+## Assignments: choose where work runs
 
-> MLX is currently wired for **writing and dictation**, not Thought interviews.
-> On-device Thought interviews and meeting intel load a GGUF model through
-> llama.cpp. Settings therefore never presents an MLX folder as a working local
-> Thought AI.
+Assignments is the owner surface for selecting models for registered HoldSpeak
+jobs. Choose a compatible ordered model list of one to four models. The list is
+saved as a whole. HoldSpeak does not combine part of your new list with an
+inherited one or silently remove an incompatible entry.
 
-### 3. Any OpenAI-compatible endpoint (`openai_compatible` / intel `cloud`)
+You can set a model list for a capability group, an individual capability, or an
+eligible saved item. More specific scope wins. **Use default**
+clears the current row and reveals the next complete compatible model list. The
+editor previews compatibility before it saves. It can retain a valid choice
+that is temporarily not ready, then name the repair when work starts.
 
-The escape hatch: point HoldSpeak at **any** server that implements
-`/v1/chat/completions`. This covers a self-hosted LAN box, Ollama's OpenAI
-bridge, vLLM, llama.cpp-server, LM Studio, LiteLLM, or an actual cloud API. The
-endpoint owns model loading; HoldSpeak needs no local weights.
+You do not choose a model at the point of use. Saved work and meetings ask for
+their capability. HoldSpeak resolves the applicable Assignment and freezes the
+resulting route at admission. Later Library or Assignment edits affect later
+work, not a run already in progress.
 
-- **Install:** `uv pip install -e '.[dictation-openai]'` (dictation side)
-- **Configure:** add the endpoint once under **Settings, Models → AI
-  connections** (the API resource is `/api/inference-targets`; `/api/profiles`
-  is a read-only alias). Give it a name, base URL, model, and context window,
-  then choose it for a job:
-  - **Thoughts & notes, writing & dictation, meetings, background assistance:**
-    **Choose AI for each job** in the same module.
-  - **Agents:** the **Runs on** picker where you author the Agent.
-- **Keys:** set, replace, or remove a destination key inline in **Settings,
-  Models**. The hub keeps that value in owner-only local custody and joins it
-  only at run time; Settings reads show only whether it is set.
-  `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback. Removing an inline
-  key suppresses that fallback for the destination. A keyless self-hosted
-  endpoint needs no key at all.
+## Provider and runtime notes
 
-There is no hand-edited alternative. `dictation.runtime.openai_compatible_*`
-and `meeting.intel_cloud_*` are dead fields: an upgrade reads a configured
-legacy endpoint once, converts it into a `legacy-dictation` or `legacy-intel`
-destination, and points the feature at it. After that the destination is the
-only truth.
+HoldSpeak does not require a particular model family. Select a model that fits
+your hardware and the capability's requirements. Structured output, tool use,
+context size, supported modalities, runtime availability, and boundary are
+checked against the capability before a model list can execute.
 
-> **On the name `cloud`.** `meeting.intel_provider` still chooses whether the
-> meeting-intel leg runs `local` (in-process GGUF), `cloud`, or `auto`.
-> `cloud` means "the endpoint leg", not necessarily a hosted or paid API:
-> point its destination at a self-hosted LAN server and it stays entirely
-> local.
-
----
-
-## What a destination means at execution
-
-A **Runs on** choice is mutable configuration only until work is admitted. Before
-an actual model attempt, HoldSpeak captures the resolved destination as an
-immutable `DeploymentRevision`: engine kind, endpoint/model identity, boundary,
-secret slot reference, and mesh node where applicable. The `InferenceRunner` at
-the executing boundary admits one `inference.invoke@1` child against that exact
-revision. The reviewed adapter constructs and dispatches only after the child is
-claimed. Editing a destination or picker after admission cannot retarget that
-attempt.
-
-Every physical attempt gets its own immutable terminal receipt. An `auto` local
-to endpoint fallback is two frozen revisions and, when both are attempted, two
-children and two receipts; it is never an invisible provider switch inside one
-receipt. Cancellation suppresses late output, and uncertain execution remains
-`indeterminate`. Destination keys are joined only inside the selected adapter;
-credentials, prompts, completions, and token streams are absent from deployment
-revisions and kernel rows.
-
-Thought refinement follows the same admission path with a stricter context
-boundary. A new Thought has no attached context. The owner explicitly attaches
-a qualified Note or the seeded Everyday-context collection; HTTP and MCP carry
-refs and expected revisions only. Immediately before dispatch, the hub verifies
-the immutable attachment ledger, resolves the exact versioned leaves into a
-bounded canonical JSON block, labels it as untrusted data, and binds its hash to
-the invocation. Changed or deleted sources refuse by human name. Once the
-dispatch hook commits, later edits or detach cannot alter the provider bytes,
-and no attachment/review action silently launches a second model attempt.
-
-No backend is exempt. In-process GGUF/MLX work, endpoint calls, mesh workers,
-and shared Whisper transcription/preload all enter an `InferenceRunner` at their
-executing boundary. Meeting, dictation, and configured wake sessions are finite
-parents, while each
-actual LLM or Whisper call is a causally linked child with a live authority and
-revision check. See the canonical
-[one-path inference contract](ARCHITECTURE.md#inference-admission-one-path-one-receipt-per-attempt).
-
-## Runs on destinations
-
-The three backends above answer *how* an LLM runs. A **Runs on destination**
-answers *where*: a named, reusable target for model-backed work. API and
-persistence contracts retain the `profile` compatibility name.
-
-- **Basic.** Pick one active destination. This is the single-target experience:
-  one model, app wide. Most users never need more.
-- **Advanced.** Keep a list of named destinations (this device, or any
-  OpenAI-compatible endpoint such as OpenRouter or Claude) and assign one
-  **per Agent**. Scout can run on this device while Editor runs on an endpoint
-  and Critic runs on a third. Every place that touches a model shows a small
-  "Runs on" control with the resolved default already selected and changeable
-  at the point of use.
-
-A destination carries only its definition: name, kind, endpoint, model, and
-usable context window. It never carries the API key. The Python/web sync contract
-is derived from `SYNC_REGISTRY` in `holdspeak/services/sync_service.py`; its
-`profile` and `deployment_revision` kinds, pull buckets, and JSON schemas are the
-authority. Web fields are checked against those schemas. No Swift enum or native
-fixture defines this contract, and the inference-admission change adds no Swift
-compatibility work.
-A future native client may consume the finished Python/web shape. The key stays
-local and is joined only at dispatch time. See
-[Security & privacy](SECURITY.md#5-secrets-handling).
-
-Destinations also drive the desktop hub's pipelines. **Settings, Models** leads
-with **Choose your AI** and renders the owner-only Capability Truth projection
-from `GET /api/inference/setup`. That read reports bounded hardware/runtime
-facts, the current immutable Thought deployment, structurally inspected local
-artifacts, and a signed packaged preset catalog. It performs no download,
-network request, model load, probe, benchmark, or configuration write, and it
-never returns a local model path, endpoint, or secret.
-
-The owner-only capability inventory is exposed through
-`GET /api/inference/capabilities` and the matching MCP resource
-`holdspeak://inference/capabilities`; either transport can then read one exact
-definition through its `{capability_id}` detail path. It describes the registered HoldSpeak
-jobs, result-contract hashes, required modalities/tools/context, permitted
-boundaries, and frozen retry policy facts. It does not choose a model or expose
-private connection material; Models and the per-job chooser handle those
-separate owner actions.
-
-The first delivery offers server-owned OpenRouter entries for quick, balanced,
-and deep Qwen experiences. Selection is inert; one fixed action seat performs
-the existing destination creation, owner-only key storage, and confirmed
-**Thoughts & notes** route update. A detected local artifact is labelled
-separately as detected, configured, path-ready, and executable. In particular,
-MLX remains explicitly unavailable for Thought interviews until its later
-runtime slice lands, and a filename or memory estimate can never manufacture a
-Ready/Recommended claim.
-
-**Define your own provider** opens the same first-class **AI connections**
-ledger for any OpenAI-compatible endpoint, private server, paired device, or
-mesh node. **Choose AI for each job** can route Thoughts and notes, writing and
-dictation, meetings, and background assistance independently. `holdspeak doctor` reports
-which destination each pipeline resolves to and warns when an assigned
-destination is missing or has no key. Set the key inline in **Settings,
-Models**, or use `HOLDSPEAK_PROFILE_<ID>_KEY` for headless fallback.
-
-### The mesh edge: run on another node
-
-A Runs on destination can name a node instead of an endpoint: pick the **Mesh
-node** kind and type the node's name. A run against that destination relays
-through the hub to the node's worker, which executes it on the node's own
-provider and keys. The model and provider key never move; the request does.
-
-Pair the node deliberately. On the hub:
+For local work, install only the optional runtime you use:
 
 ```bash
-holdspeak node token create --name edge >/dev/null
-holdspeak node token export --name edge --out ./holdspeak-pairing-edge.json
+uv pip install -e '.[dictation-llama]'   # local GGUF runtime
+uv pip install -e '.[dictation-mlx]'     # MLX text support on Apple Silicon
+uv pip install -e '.[dictation-openai]'  # OpenAI-compatible dictation path
 ```
 
-Move that owner-only pairing file to the serving machine through a channel you
-trust, then on that machine:
+For a headless provider key, `HOLDSPEAK_PROFILE_<ID>_KEY` remains a fallback.
+Use the Model Library for the ordinary owner workflow. It keeps secret material
+out of model records, Library projections, receipts, and error messages.
 
-```bash
-holdspeak node pair --from ./holdspeak-pairing-edge.json
-holdspeak mesh serve --hub http://<hub>:8765
-```
+## When a model will not run
 
-The transfer contains this node's bearer credential plus the hub's public
-Ed25519 offer pin; the hub's private signing key never leaves the hub. The worker
-authenticates as a node, not with `HOLDSPEAK_HUB_TOKEN`. For every claimed job it
-verifies and reserves the signed, node/revision/operation/attempt/deadline-bound
-offer
-before its local `InferenceRunner` constructs or calls a provider. The worker's
-physical attempt gets its own immutable local receipt; the hub independently
-settles the content-free report. Retrying report delivery never reruns the model.
-
-Running `mesh serve` is the consent; Ctrl-C stops it and the node reads offline
-within seconds. A node is live only while its worker polls, so pickers and the
-models list show its state, a run against an offline node refuses immediately and
-names the node, and `holdspeak doctor` lists every edge with its age under "Mesh
-edges". The serving machine needs a real provider of its own (a local model or an
-endpoint) in its config; the hub-side destination only names where the run goes.
-Relay runs are chat, Agent, meeting intelligence, and dictation rewrites; the
-prompt travels only between the hub and the paired executing node.
-
-Manage Runs on destinations in **Settings, Models** or on the Web compatibility
-route `/profiles`; assign an Agent in the Agent editor.
-
-## Choosing AI for work
-
-Adding, downloading, detecting, or connecting a model only makes it available
-in Models. It does not change where work runs. The hub keeps a small ordered
-model list for each kind of work and resolves the most specific list first:
-the current job, then its group, then the hub default. Lists are never combined
-or silently trimmed.
-
-`Use default` restores the inherited choice after showing what will take over.
-The server checks compatibility before saving. Readiness and runtime capacity
-are checked when work begins, so an available choice can be saved even if it is
-not ready at that moment. Decisions, receipts, readiness facts, and provider
-material stay on this hub and never sync.
-
-Starter setup shows only the selected groups, their ordered model lists,
-boundaries, retry-policy intersections, and current generations. Confirming the
-preview is one hash-bound change. A stale generation, registry change, or
-incompatible selection changes nothing; untouched groups are never filled
-implicitly.
-
-## Current suggestions (a moving target)
-
-These are reasonable defaults at the time of writing, **not** mandates. Newer
-or smaller models that fit your hardware are fine; HoldSpeak only cares that the
-model can follow an instruction and return JSON when asked.
-
-| Consumer | Backend | Suggested default | Where set |
-|----------|---------|-------------------|-----------|
-| Dictation | `llama_cpp` (GGUF) | a current small instruct GGUF (e.g. `Qwen3.5-4B-Instruct-Q4_K_M`) | `dictation.runtime.llama_cpp_model_path` |
-| Dictation | `mlx` (Apple) | a current Qwen3.5 MLX build (e.g. `Qwen3.5-8B-MLX-4bit`) | `dictation.runtime.mlx_model` |
-| Meeting intel | `local` (GGUF) | a current small/mid instruct GGUF (e.g. `Qwen3.5-9B-Instruct-Q6_K`) | `meeting.intel_realtime_model` |
-| Meeting intel | `cloud` (endpoint) | whatever your endpoint serves | a destination under Settings, Models, chosen as the meetings **Runs on** |
-
-**Sizing intuition:** a small instruct model (~4-9B, Q4-Q6) is fast and good
-enough for routing/enrichment and most meeting intel; a mid model (~14-32B) gives
-sharper intel at the cost of latency. GPU offload (Metal/CUDA, `n_gpu_layers=-1`)
-makes the larger tiers practical.
-
----
-
-## Notes
-
-- **GGUF is current**, not legacy: it's the standard local-inference format and
-  HoldSpeak keeps it as the default in-process format. Only specific *model
-  names* get refreshed over time.
-- HoldSpeak never downloads weights for you. `holdspeak doctor` and the web
-  readiness panel only *show* the install/download commands; you run them.
-- If a model path is missing or an endpoint times out, HoldSpeak degrades
-  gracefully (preserves the original transcript; queues meeting intel for retry)
-  rather than failing the capture.
+| What you see | What to do |
+|---|---|
+| A model is listed but not ready | Open Model Library, read the readiness reason, fix it, then check again. |
+| An Assignment needs attention | Choose a compatible, enabled model in Assignments or clear it with **Use default**. |
+| A local artifact is detected but unavailable | Install the required runtime and verify the artifact and runtime again. |
+| An endpoint is unavailable | Check the endpoint, required key, and network reachability, then run **Check**. |
+| A capability cannot use your model | Use a model whose declared modalities, context, structured output, tools, and boundary meet that capability. |
 
 ## See also
 
-- [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): where the dictation model
-  is used.
-- [Meeting Mode Guide](MEETING_MODE_GUIDE.md): where the meeting-intel model is used.
-- [Security & Privacy](SECURITY.md): what a cloud endpoint changes about egress.
+- [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md): capability, routing, freeze, execution, and receipt mechanics.
+- [Security & Privacy](SECURITY.md): local custody and egress posture.
+- [Dictation Pipeline Setup](DICTATION_PIPELINE_GUIDE.md): where a configured dictation model is used.
+- [Meeting Mode Guide](MEETING_MODE_GUIDE.md): where a configured meeting model is used.

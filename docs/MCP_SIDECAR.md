@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-134 tools and 32 resources through the Model Context Protocol, so any MCP
+134 tools and 29 resources through the Model Context Protocol, so any MCP
 client (Claude Code, Cursor, a custom script) can read and drive the desk
 without touching the web UI.
 
@@ -236,34 +236,23 @@ marks a job done. Both refuse running jobs.
 
 ## Model-invoking tools
 
-Five tools reach an inference provider. Each rides the admitted
-`InferenceRunner.invoke()` path; no tool opens a side door.
+A sidecar tool that starts model work uses the same owner service authority as
+HTTP. It cannot choose a provider, alter an already admitted run, or bypass the
+registered capability and assignment checks. Results carry the receipt and
+placement projection appropriate to that product operation, so a caller can
+inspect the boundary after the fact.
 
-| Tool | Admitted path |
-|---|---|
-| `ask.run` | `AskService.ask()` enters `InferenceRunner.invoke()` via `_as_principal` |
-| `thought.refine` | `RefinementApplicationService.refine()` reserves the exact Thought revision, then the sidecar-lifetime coordinator enters `AskService.ask()` |
-| `cadence.get_loop` | Conditional: when the loop's `use_llm` is true, enters the kernel through `_drafted_next_action` |
-| `sequence.run` | `SequenceWorkflowService.run_sequence()` enters `InferenceRunner.invoke()` via `_as_principal` |
-| `workflow.run` | `SequenceWorkflowService.run_workflow()` enters `InferenceRunner.invoke()` via `_as_principal` |
-
-Every model-invoking result carries a receipt: `model`, `provider`,
-`egress`, and `actual_placement` (`_placement`). The receipt names what
-ran and where, so the caller can verify the egress boundary after the
-fact.
-
-**Placement provenance.** Each model-invoking result also carries
-`placement.effective_target_id` and `placement.source`. The source names
-which precedence tier decided the run's destination: `invocation`,
-`workbench`, `agent`, or `global`.
+Route resolution, frozen plans, controller fallback, physical execution, and
+receipt election are documented once in
+[Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
+This guide is the MCP transport reference, not a second routing specification.
 
 ## The egress note on settings.update
 
-`settings.update` can change the product's egress boundary by reassigning
-which inference destination a feature uses. The tool description carries this
-warning, and the response includes a `_placement` block showing the
-effective placement after the write. This is a constitutional requirement
-(Article III.2: egress disclosed at the point of decision).
+`settings.update` cannot write inference assignments or connection secrets.
+Use the Model Library and inference-assignment tools for those owner actions.
+The corresponding tool descriptions state their closed input and receipt
+contracts.
 
 ## Trust model
 

@@ -58,7 +58,7 @@ Assignments.
 | HSEGHS001HS104-143-12 | Model Library and Providers | done | [story-12-model-library-providers](./story-12-model-library-providers.md) | [evidence-story-12](./evidence-story-12.md) |
 | HSEGHS001HS104-143-13 | Capability Assignments Experience | done | [story-13-capability-assignments-experience](./story-13-capability-assignments-experience.md) | [evidence-story-13](./evidence-story-13.md) |
 | HSEGHS001HS104-143-14 | Chaos Glass and Closeout | backlog | [story-14-chaos-glass-closeout](./story-14-chaos-glass-closeout.md) | - |
-| HSEGHS001HS104-143-15 | Intelligence Router Repo-Wide Documentation | backlog | [story-15-intelligence-router-docs](./story-15-intelligence-router-docs.md) | - |
+| HSEGHS001HS104-143-15 | Intelligence Router Repo-Wide Documentation | in-progress | [story-15-intelligence-router-docs](./story-15-intelligence-router-docs.md) | - |
 
 ## Where we are
 

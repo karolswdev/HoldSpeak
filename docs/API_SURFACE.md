@@ -8,6 +8,7 @@ Every HTTP route the runtime serves, with the module that defines it
 and the clients that call it (extracted from the real call sites in
 `web/src` and `apple/`). "server only" means no in-repo client calls
 it today.
+Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
 Routes: 536 (plus static mounts). iOS-consumed: 89. Web-consumed: 413.
 
