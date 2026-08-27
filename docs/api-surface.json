@@ -2351,6 +2351,14 @@
       ]
     },
     {
+      "path": "/api/door",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.door",
+      "consumers": []
+    },
+    {
       "path": "/api/follow-through/board",
       "methods": [
         "GET"
