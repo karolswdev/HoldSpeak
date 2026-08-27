@@ -24,20 +24,20 @@ Assignments.
 
 ## Exit criteria (evidence required)
 
-- [ ] Every production inference call site belongs to one versioned capability.
-- [ ] Every execution freezes one immutable route plan before first egress.
-- [ ] Every physical generation remains a separately admitted `InferenceRunner`
+- [x] Every production inference call site belongs to one versioned capability.
+- [x] Every execution freezes one immutable route plan before first egress.
+- [x] Every physical generation remains a separately admitted `InferenceRunner`
   / `inference.invoke@1` child.
-- [ ] Ordered fallback advances only for a closed eligible disposition and its
+- [x] Ordered fallback advances only for a closed eligible disposition and its
   receipt explains every leg, child, boundary, and terminal outcome.
-- [ ] Config/profile/subject legacy pointers have one-way migrations and no
+- [x] Config/profile/subject legacy pointers have one-way migrations and no
   competing authority remains after each family crosses.
-- [ ] Adding/downloading/connecting a model changes zero assignments.
-- [ ] Model Library and bounded Assignments glass pass at 1440, 393, and 200%
+- [x] Adding/downloading/connecting a model changes zero assignments.
+- [x] Model Library and bounded Assignments glass pass at 1440, 393, and 200%
   zoom with keyboard/screen-reader/reduced-motion proof.
-- [ ] HTTP/MCP parity, OWNER boundary, hub-local sync, restart, privacy, schema,
+- [x] HTTP/MCP parity, OWNER boundary, hub-local sync, restart, privacy, schema,
   API inventory, one-path census, full tests, and production build are green.
-- [ ] All kill criteria in `assets/architecture-contract.md` have production-path
+- [x] All kill criteria in `assets/architecture-contract.md` have production-path
   evidence in Story 14's write-once ledger.
 
 ## Story status
@@ -57,10 +57,20 @@ Assignments.
 | HSEGHS001HS104-143-11 | HTTP MCP Sync and Compatibility | done | [story-11-http-mcp-sync-compatibility](./story-11-http-mcp-sync-compatibility.md) | [evidence-story-11](./evidence-story-11.md) |
 | HSEGHS001HS104-143-12 | Model Library and Providers | done | [story-12-model-library-providers](./story-12-model-library-providers.md) | [evidence-story-12](./evidence-story-12.md) |
 | HSEGHS001HS104-143-13 | Capability Assignments Experience | done | [story-13-capability-assignments-experience](./story-13-capability-assignments-experience.md) | [evidence-story-13](./evidence-story-13.md) |
-| HSEGHS001HS104-143-14 | Chaos Glass and Closeout | backlog | [story-14-chaos-glass-closeout](./story-14-chaos-glass-closeout.md) | - |
+| HSEGHS001HS104-143-14 | Chaos Glass and Closeout | done | [story-14-chaos-glass-closeout](./story-14-chaos-glass-closeout.md) | [evidence-story-14](./evidence-story-14.md) |
 | HSEGHS001HS104-143-15 | Intelligence Router Repo-Wide Documentation | done | [story-15-intelligence-router-docs](./story-15-intelligence-router-docs.md) | [evidence-story-15](./evidence-story-15.md) |
 
 ## Where we are
+
+**Phase 143 implementation and evidence closure are complete.** The final
+write-once record is [the closeout ledger](./assets/phase-143-closeout-ledger.md):
+it maps all twelve architecture-contract kill criteria and all nine exit criteria
+to production-path tests and immutable evidence captures. Its binding close
+language is scoped Python/web PASS plus the seven named Swift leaves **HELD BY
+OWNER RULING** on `hold/hs143-10-slice5-swift-bridge`, never a false global-zero
+claim; it also records the accepted owner-shot session citations and the exact
+11-node inherited baseline/no-branch-new rule. Story 14's PMO status flip is
+performed separately by the orchestrator.
 
 The architecture and owner-experience contracts are ratified for planning. A
 horizontal repository audit found the existing lawful foundation—immutable

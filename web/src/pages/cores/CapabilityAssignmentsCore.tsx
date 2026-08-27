@@ -69,7 +69,9 @@ export function CapabilityAssignmentsCore() {
 
   if (loading) return <SurfaceState loading />;
   if (loadError) return <SurfaceState error={loadError} onRetry={() => void reload()} />;
-  return <section className="capability-assignments" aria-labelledby="assignments-title" data-editor-open={selected && editor ? "true" : undefined}>
+  // This is a server-summary readiness fact, not a browser-derived route state.
+  // Real-hub consumers may wait for it before measuring the bounded row roster.
+  return <section className="capability-assignments" aria-labelledby="assignments-title" data-assignment-summary-state="loaded" data-editor-open={selected && editor ? "true" : undefined}>
     <SurfaceVerbs status={summary?.issue_count ? <span role="status">{summary.issue_count} issue{summary.issue_count === 1 ? "" : "s"}</span> : null} />
     <header className="capability-assignments-head"><h2 id="assignments-title">Assignments</h2><span>Next run</span></header>
     {receipt ? <div className="assignment-receipt" role="status">{receipt}</div> : null}

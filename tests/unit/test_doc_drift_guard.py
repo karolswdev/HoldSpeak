@@ -52,6 +52,59 @@ def test_drift_guard_actually_scans_docs() -> None:
     assert any(p.name == "PLAN_ARCHITECT_PLUGIN_SYSTEM.md" for p in docs)
 
 
+# HS-143-14 S1: retired setup vocabulary must not turn Models/Assignments back
+# into per-job mutable pointers or a general destination resource. Unlike the
+# narrower user-facing style rules below, this scans the complete docs corpus and
+# root README because old operational advice is harmful wherever it is copied.
+_RETIRED_INFERENCE_VOCAB = re.compile(
+    r"\bdownload\s*(?:&|and)\s*use\b"
+    r"|\b(?:destination|target)\s+crud\b"
+    r"|\b(?:per[-\s]job|job[-\s]level|per[-\s]run)\s+(?:target|destination|profile)\b"
+    r"|\binference_target_id\b",
+    re.IGNORECASE,
+)
+
+
+def _all_docs_and_readme() -> list[Path]:
+    return [_REPO / "README.md", *sorted((_REPO / "docs").rglob("*.md"))]
+
+
+def test_docs_do_not_restore_retired_inference_setup_vocabulary() -> None:
+    offenders: list[str] = []
+    for path in _all_docs_and_readme():
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            match = _RETIRED_INFERENCE_VOCAB.search(line)
+            if match:
+                offenders.append(f"{path.relative_to(_REPO)}:{lineno}: {match.group(0)!r}")
+
+    assert not offenders, (
+        "Retired inference setup vocabulary returned to docs/ or README. Use "
+        "Models for availability and Assignments for job selection instead:\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def test_retired_inference_vocab_guard_patterns_are_nonvacuous() -> None:
+    for retired in (
+        "Download & use this model",
+        "Download and use this model",
+        "destination CRUD endpoint",
+        "target CRUD endpoint",
+        "per-job target selection",
+        "job-level profile pointer",
+        "per-run destination pointer",
+        "inference_target_id",
+    ):
+        assert _RETIRED_INFERENCE_VOCAB.search(retired), retired
+    for current in (
+        "Download model",
+        "Assignments choose work",
+        "the frozen route plan",
+        "the next run sees an assignment edit",
+    ):
+        assert not _RETIRED_INFERENCE_VOCAB.search(current), current
+
+
 # HS-33-03: a lightweight link-check so the `docs/` reorg (and future moves)
 # can't silently leave a dangling relative link. Scope is the same live-docs
 # set; the PMO corpus + evidence snapshots are frozen history and excluded.
