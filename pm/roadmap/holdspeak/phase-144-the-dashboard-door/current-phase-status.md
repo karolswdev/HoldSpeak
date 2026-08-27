@@ -105,16 +105,16 @@ with dispositions — no counsel round was spent:
    menu, `/meetings` deep-link race) — a Door phase does not ship a
    broken doorframe. They ride in HS-144-04.
 
-## Stories
+## Story status
 
-| Story | Title | Status |
-|---|---|---|
-| [HS-144-01](./story-01-door-read-model.md) | The Door read model | ready |
-| [HS-144-02](./story-02-calendar-ingest-ics.md) | Calendar ingest (ICS first) | backlog |
-| [HS-144-03](./story-03-kanban-on-glass.md) | The kanban on glass | backlog |
-| [HS-144-04](./story-04-upcoming-rail-and-repairs.md) | The upcoming rail + doorframe repairs | backlog |
-| [HS-144-05](./story-05-docs.md) | Docs | backlog |
-| [HS-144-06](./story-06-walk-and-close.md) | The walk and the close | backlog |
+| ID | Story | Status | Story file | Evidence |
+| --- | --- | --- | --- | --- |
+| HS-144-01 | The Door read model | in-progress | [story-01](./story-01-door-read-model.md) | — |
+| HS-144-02 | Calendar ingest (ICS first) | backlog | [story-02](./story-02-calendar-ingest-ics.md) | — |
+| HS-144-03 | The kanban on glass | backlog | [story-03](./story-03-kanban-on-glass.md) | — |
+| HS-144-04 | The upcoming rail + doorframe repairs | backlog | [story-04](./story-04-upcoming-rail-and-repairs.md) | — |
+| HS-144-05 | Docs | backlog | [story-05](./story-05-docs.md) | — |
+| HS-144-06 | The walk and the close | backlog | [story-06](./story-06-walk-and-close.md) | — |
 
 ## Risk register
 
