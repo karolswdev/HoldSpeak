@@ -58,7 +58,7 @@ Assignments.
 | HSEGHS001HS104-143-12 | Model Library and Providers | done | [story-12-model-library-providers](./story-12-model-library-providers.md) | [evidence-story-12](./evidence-story-12.md) |
 | HSEGHS001HS104-143-13 | Capability Assignments Experience | done | [story-13-capability-assignments-experience](./story-13-capability-assignments-experience.md) | [evidence-story-13](./evidence-story-13.md) |
 | HSEGHS001HS104-143-14 | Chaos Glass and Closeout | backlog | [story-14-chaos-glass-closeout](./story-14-chaos-glass-closeout.md) | - |
-| HSEGHS001HS104-143-15 | Intelligence Router Repo-Wide Documentation | backlog | [story-15-intelligence-router-docs](./story-15-intelligence-router-docs.md) | - |
+| HSEGHS001HS104-143-15 | Intelligence Router Repo-Wide Documentation | done | [story-15-intelligence-router-docs](./story-15-intelligence-router-docs.md) | [evidence-story-15](./evidence-story-15.md) |
 
 ## Where we are
 
@@ -613,6 +613,15 @@ tools / 32 resources. Sixth consecutive zero-product-bug opus audit;
 FIRST sweep of the phase with zero branch-new (6677 passed). One
 genuinely timing-flaky Story-13 e2e (assignments overview populated-393)
 is named for Story 14's intake. Remaining: 15 (docs), 14 (closeout).
+
+Story 15 is done (2026-08-27, two gate commits on
+`feat/hs143-15-router-docs`, unpushed pending the owner's word;
+docs-only): the canonical ARCHITECTURE_INTELLIGENCE_ROUTER.md with the
+verified Recipe-run trace, six entry points deferring instead of
+parallel-teaching, MODELS.md rewritten around the shipped world, and
+the stale-vocabulary sweep clean. Captured sweep 6674 passed / zero
+real branch-new. Story 14 (plan ratified, four dispositions recorded)
+is the last story of the phase.
 
 ## Decisions deferred
 

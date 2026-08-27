@@ -3,8 +3,8 @@
 > A meeting-intel **plugin** turns a saved meeting's transcript into a
 > structured, reviewable artifact: decisions, requirements, a risk
 > register, an architecture diagram. The transcript is scored for
-> intent, a chain of plugins is selected, and each plugin calls your
-> configured LLM to produce typed output that the web UI renders
+> intent, a chain of plugins is selected, and an LLM-backed plugin receives
+> host-issued admitted dispatch to produce typed output that the web UI renders
 > read-only at `/history`.
 
 Writing one is the highest-leverage way to make HoldSpeak yours: the
@@ -25,9 +25,9 @@ A plugin is a Python object that:
 
 1. Declares `id`, `version`, and (optionally) `kind`,
    `execution_mode`, and `required_capabilities` as attributes.
-2. Implements `run(context: dict) -> dict`: build a JSON-only prompt,
-   call the configured intel, parse + validate the response, and
-   return structured output carrying a `confidence_hint`.
+2. Implements `run(context: dict) -> dict`: build and validate typed output.
+   An LLM-backed plugin reads the host-issued dispatch handle from its context
+   and must never construct or cache a provider of its own.
 3. Registers a **synthesis renderer** so its artifact shows up in the
    web `/history` view.
 4. Joins one or more **plugin chains** (by profile and/or intent) so it
@@ -57,8 +57,9 @@ guide.
 - **Route**: the router scores the transcript's intents and assembles
   a plugin chain for the meeting's profile + active intents.
 - **Run**: the host calls `run(context)` inside a timeout, after the
-  actuator gate and the capability gate pass. You build a prompt, call
-  the LLM, and return a dict.
+  actuator and capability gates pass. For an LLM-backed plugin, the context
+  contains the host-issued dispatch handle for this admitted child. You use
+  that handle, validate the result, and return a dict.
 - **Persist**: the host stores your output as a canonical artifact
   keyed by an idempotency hash (a re-run on the same window is a no-op).
 - **Render**: your registered renderer turns the stored output into a
@@ -159,116 +160,55 @@ documented next.
 
 ---
 
-## The reference run pattern
+## LLM-backed plugins use host-issued dispatch
 
-Every LLM-backed built-in follows the same four steps. Here is
-`decision_capture`, condensed.
+An LLM-backed plugin declares `required_capabilities = ["llm"]`. It does not
+construct a provider, resolve configuration, read a connection, or cache an
+engine. The host owns that work.
 
-**Step 1: build a JSON-only prompt.** Pin the exact output shape in the
-system prompt and demand a single fenced ```json block, no prose:
-
-````python
-_SYSTEM_PROMPT = (
-    "You capture the decisions and open questions from a meeting transcript.\n"
-    ...
-    "Output format — strictly: a single fenced code block tagged ```json "
-    "containing an object of the form:\n"
-    '{"decisions": [{"decision": "...", "rationale": "why, or null"}], '
-    '"open_questions": ["..."]}\n'
-    "Output only the JSON block — no prose, no extra fences."
-)
-````
-
-**Step 2: call the configured intel.** Use the shared provider so the
-plugin honors whatever LLM the user configured (in-process GGUF, MLX, or
-any OpenAI-compatible endpoint). Build it lazily and cache it:
+The shipped host interface is
+[`PluginHost.issued_dispatch()`](../holdspeak/plugins/host.py), used by the
+meeting execution path to issue one `PluginDispatch` handle over an already
+admitted child engine. `PluginHost.execute()` places that handle under
+`PLUGIN_DISPATCH_KEY` in a private copy of this invocation's context. The
+plugin consumes that handle for its one model completion. A deterministic plugin
+receives no handle and needs none.
 
 ```python
-def _call_intel(self, messages: list[dict[str, str]]) -> str:
-    if self._intel_call_override is not None:      # test seam — see "Testing"
-        return self._intel_call_override(messages)
-    if self._cached_provider is None:
-        from ...intel import build_configured_meeting_intel  # lazy: optional deps
-        self._cached_provider = build_configured_meeting_intel()
-    return self._cached_provider._chat_completion_text(
-        messages, temperature=0.2, max_tokens=800,
-    )
-```
+from holdspeak.plugins.intelligence import PLUGIN_DISPATCH_KEY
 
-`build_configured_meeting_intel()`
-([`holdspeak/intel`](../holdspeak/intel/__init__.py)) returns the
-configured provider; `_chat_completion_text(messages, *, temperature,
-max_tokens)` takes OpenAI-style `{"role", "content"}` messages and
-returns the raw response text.
-
-**Step 3: parse + validate.** Pull the JSON out of the fenced block (with a
-brace-scan fallback), `json.loads` it, and normalize; never trust the
-shape. Return `None` on anything unparseable so `run` can emit the
-failure shape:
-
-````python
-fence = _JSON_FENCE_RE.search(text)          # r"```(?:json)?\s*\n(.*?)```"
-candidate = fence.group(1) if fence else text[text.find("{"): text.rfind("}") + 1]
-obj = json.loads(candidate)                  # guarded by try/except
-# ... coerce each field, drop empties ...
-````
-
-**Step 4: return structured output.** Two shapes by convention:
-
-- **Success**: your typed keys plus a `summary` string and
-  `confidence_hint` of `1.0`:
-
-  ```python
-  return {
-      "summary": f"{len(decisions)} decision(s); {len(open_questions)} open question(s).",
-      "decisions": decisions,
-      "open_questions": open_questions,
-      "confidence_hint": 1.0,
-      "active_intents": active_intents,
-  }
-  ```
-
-- **Failure**: a `summary` explaining why and `confidence_hint` of
-  `0.0`, with the typed keys **absent**:
-
-  ```python
-  return {"summary": reason, "confidence_hint": 0.0, "active_intents": active_intents}
-  ```
-
-Catch exceptions from the intel call and turn them into the failure
-shape: a plugin must never raise out of `run`. `confidence_hint` is a
-float in `[0.0, 1.0]` that downstream surfaces use to rank/triage
-artifacts; emit `0.0` for failures and a calibrated value otherwise.
-
-The host wraps the whole call in a timeout and records a
-`PluginRunResult` with `status` ∈ `success | error | timeout | deduped |
-blocked | queued`. A re-run on the same `(meeting, window, plugin,
-transcript_hash)` is deduped automatically.
-
----
-
-## The `llm` capability gate
-
-A plugin that needs the LLM declares it:
-
-```python
 class DecisionCapturePlugin:
-    required_capabilities: list[str] = ["llm"]
+    id = "decision_capture"
+    version = "1.0.0"
+    required_capabilities = ["llm"]
+
+    def run(self, context: dict) -> dict:
+        dispatch = context[PLUGIN_DISPATCH_KEY]
+        text = dispatch.chat([
+            {"role": "system", "content": "Return the declared JSON shape."},
+            {"role": "user", "content": context["transcript"]},
+        ], temperature=0.2, max_tokens=800)
+        return self._parse_and_validate(text, context)
 ```
 
-At dispatch the host compares each required capability against its
-`enabled_capabilities` set. If any is missing, the plugin is **not run**
-instead it returns status `blocked` with `error="Missing capabilities: llm"`,
-duration `0.0`, no output. "Blocked" is a clean skip, not a failure:
-the meeting still completes; the artifact simply isn't produced.
+`PluginDispatch` is a single-use handle, not a general provider. It is bound to
+the exact admitted engine, dispatch context, cancellation signal, deployment
+revision, and physical child. A missing, forged, released, cancelled, or
+already-used handle refuses by name. Do not catch a dispatch revocation as a
+successful plugin result. The host releases the handle when this dispatch ends,
+so a timed-out worker cannot borrow a later child's authority.
 
-In production the host's capabilities are resolved from the user's
-config: `resolve_llm_capability(config.meeting)` decides whether an LLM
-endpoint is actually configured, and only then is the host built with
-`enabled_capabilities={"llm"}` (see
-[`holdspeak/web_runtime.py`](../holdspeak/web_runtime.py)). So with no
-endpoint configured, every `llm`-gated plugin is uniformly skipped; by
-design.
+Build the prompt from the supplied context, parse the response, and validate the
+exact output shape before returning it. Return a typed success shape or a typed
+failure shape as the plugin contract requires. The router owns capability
+selection, assignment resolution, frozen route and operation plans, fallback,
+and receipts. Read [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md)
+for those mechanics.
+
+The legacy capability gate remains useful for host scheduling: the host blocks a
+plugin whose declared capability is unavailable before it starts an admitted
+child. It is not a configuration-derived provider gate and it is not permission
+to create a direct provider call.
 
 ---
 
@@ -538,8 +478,8 @@ for the full set.
 A plugin is done — per the RFC's definition-of-done — only when it has
 **all** of:
 
-- [ ] A real `run()` that calls the configured intel (not a placeholder
-      that fabricates output).
+- [ ] A real `run()` that consumes the host-issued admitted dispatch when it
+      needs model work (not a placeholder that fabricates output).
 - [ ] A real downstream effect — the artifact persists and is fetched
       by the history view.
 - [ ] A registered renderer so the artifact is readable at `/history`.

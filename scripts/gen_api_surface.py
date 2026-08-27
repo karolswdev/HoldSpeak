@@ -235,6 +235,7 @@ def render_markdown(manifest: dict[str, Any]) -> str:
         "and the clients that call it (extracted from the real call sites in",
         "`web/src` and `apple/`). \"server only\" means no in-repo client calls",
         "it today.",
+        "Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).",
         "",
         f"Routes: {sum(1 for r in routes if r['methods'] not in (['MOUNT'],))} "
         f"(plus static mounts). iOS-consumed: "

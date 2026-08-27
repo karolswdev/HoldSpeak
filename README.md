@@ -21,9 +21,9 @@ Thoughts. No extra setup is required before this first value.
 
 After that, HoldSpeak can type into another app or keep work on the Desk as
 notes, meetings, decisions, and artifacts. Transcription runs on this machine.
-Optional model-backed features use a destination you configure under Settings,
-Models; the badge in the corner names what can leave this machine and where it
-goes.
+Optional model-backed features use models you make available and assign under
+Settings, Models. The badge in the corner names what can leave this machine and
+where it goes.
 
 A meeting should change what happens next, not disappear into an archive.
 HoldSpeak keeps decisions as durable records with transcript moments, lets you
@@ -34,16 +34,13 @@ states how many matches fit its prompt. The read-only Process window shows what
 the kernel journal says is running, waiting, unknown, or finished without
 controlling the work.
 
-**Every model attempt has one door and one receipt.** Ask, Agents, Sequences,
-Workflows, Workbenches, scheduled work, meetings, dictation, wake capture, local
-Whisper, endpoints, and mesh workers all enter the admitted `InferenceRunner`
-path at the executing boundary. A multi-step run or live session may be the
-parent, but each real provider attempt is its own child. It binds the exact frozen
-deployment revision and receives one immutable terminal receipt. Cancellation
-rejects late output; fallback and retry attempts get separate receipts; uncertain execution stays `indeterminate` instead of being
-reported as success. Prompts, transcripts, audio, completions, and token streams
-are not copied into the kernel journal. The complete integrator contract is
-[Inference admission: one path, one receipt per attempt](docs/ARCHITECTURE.md#inference-admission-one-path-one-receipt-per-attempt).
+**Every model attempt has one door and one receipt.** HoldSpeak freezes an
+assigned compatible route before it executes a physical provider attempt. Each
+attempt uses one immutable deployment revision and receives one terminal receipt.
+Cancellation fences late output, and uncertain execution stays `indeterminate`.
+Read [Models](docs/MODELS.md) for setup or the internal
+[Intelligence Router architecture](docs/internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md)
+for the technical mechanics.
 
 > **Status: 0.x, early but real.** HoldSpeak is on PyPI (`pip install holdspeak`).
 > The features are mature; APIs, config, and defaults can still change while it is
@@ -144,9 +141,8 @@ reply can be kept on the Desk as an Artifact. The attach control rides the
 chat composer too, so a conversation can be grounded on the meetings it is
 about.
 
-**Open a model.** The rail also lists every model the hub can run: its own
-engine and each Runs on destination's model. One tap opens a chat pinned to that model,
-through the same conversation surface, grounding included.
+**Set up models.** Open **Settings, Models** to make models available in Model
+Library, check their readiness, and choose compatible model lists in Assignments.
 
 **The gate: your agent asks first.** Off by default, and armed only by two
 deliberate steps of yours, a Claude Code session's risky Bash call can stop
@@ -166,17 +162,13 @@ of reach by design.
 
 ## Data boundaries
 
-- **Every run names its destination.** Transcription and model-backed work can
-  run on this device, a paired device, a private endpoint, or an external
-  OpenAI-compatible service.
-  Add them once under **Settings, Models → AI connections**, then choose one
-  for each job under **Choose AI for each job**, and one per Agent where you
-  author it. The destination definition syncs across your surfaces while its
-  key stays local: set, replace, or remove it inline in **Settings, Models**.
-  A destination can name another of your machines: run
-  `holdspeak mesh serve` there and every run against that destination executes on
-  that node, with its own model and keys.
-  See [Security & privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md) and [Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
+- **Every run names its boundary.** Model-backed work can use a local model, a
+  paired device, a private endpoint, or an external OpenAI-compatible service.
+  Add or connect a model in **Settings, Models → Model Library**, then choose its
+  compatible ordered model list in **Assignments**. Connection secrets stay in local
+  custody and readiness is checked against the exact bound model. See
+  [Security & privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md)
+  and [Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
 - **It learns how you work, and shows you the receipts.** The dictation
   journal records what you said, what it typed, where it routed, and how long
   it took. Fix a wrong result in one tap and the correction memory learns; the
@@ -319,12 +311,10 @@ Automatic furnishing is the ordinary first-run path. For repair, `holdspeak
 seed` creates only starter objects HoldSpeak has never seen, preserving your
 edits and deletions. To deliberately restore the default Desk, use the
 destructive, confirmed **Settings, Desk → Reset to seed** action. To add a
-model-backed feature or deploy headlessly, open **Settings, Models → Choose
-your AI**. Pick an OpenRouter Qwen preset, point **This device** at a GGUF chat
-model, or define any compatible provider and choose it for the relevant job; a
-`HOLDSPEAK_PROFILE_<ID>_KEY` environment variable remains the headless key
-fallback. See [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md)
-and [Inference destinations](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INFERENCE_TARGETS.md).
+model-backed feature or deploy headlessly, open **Settings, Models**. Add or
+connect a model in Model Library, check readiness, then choose a compatible
+model list in Assignments. `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless key
+fallback. See [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
 
 Install only the extras you need for those later features:
 
@@ -453,7 +443,7 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 ## MCP sidecar
 
 The MCP sidecar (`holdspeak-mcp`) is the desk's programmable surface over
-stdio. It exposes 127 tools across 27 families and 32 resources,
+stdio. It exposes 134 tools across 29 families and 29 resources,
 so any MCP client can read and drive the desk without the web UI.
 
 Claude Code discovers the sidecar automatically: the repo ships a
@@ -464,10 +454,10 @@ command:
 uv run holdspeak-mcp
 ```
 
-Four tools invoke inference through the admitted path; their results carry
-the receipt (model, provider, egress, placement). The sidecar names the
-verbs it deliberately excludes (live-runtime delivery paths it does not
-own) so an MCP client discovers the boundary at tool-listing time.
+Model-invoking tools use the same admitted routing path and return their
+receipt. The sidecar names the verbs it deliberately excludes (live-runtime
+delivery paths it does not own) so an MCP client discovers the boundary at
+tool-listing time.
 
 See [MCP sidecar](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MCP_SIDECAR.md) for the full
 reference: families, model-invoking tools, trust model, resources, and
@@ -481,8 +471,8 @@ deliberate absences.
 | Understand how it works, with diagrams | [Architecture](https://github.com/karolswdev/HoldSpeak/blob/main/docs/ARCHITECTURE.md) |
 | Get it running and verify my setup | [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) |
 | Take the first-sentence loop or repair/deploy later | [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) |
-| Choose / configure a model | [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) |
-| Point every feature at one endpoint | [Inference destinations](https://github.com/karolswdev/HoldSpeak/blob/main/docs/INFERENCE_TARGETS.md) |
+| Make models available and assign them | [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) |
+| Understand technical routing and receipts | [Intelligence Router architecture](https://github.com/karolswdev/HoldSpeak/blob/main/docs/internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md) |
 | Live on the Desk (the web front door) | [The Desk](https://github.com/karolswdev/HoldSpeak/blob/main/docs/WEB_DESK.md) |
 | See speech become a project-grounded task | [The Dictation Copilot](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_COPILOT.md) |
 | Set up the dictation pipeline for Codex / Claude | [Dictation Pipeline Setup](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_PIPELINE_GUIDE.md) |
@@ -501,14 +491,11 @@ deliberate absences.
 ## Configuration
 
 Config lives at `~/.config/holdspeak/config.json`, but you rarely edit it by hand.
-The Settings window on the Desk exposes the hotkey, meeting intel, dictation
-pipeline, and presence options. Endpoint and model identity has exactly one
-editor, **Settings, Models**: the guided **Choose your AI** setup, followed by
-per-job choices and progressively disclosed AI connections.
-The old `intel_cloud_*` and `openai_compatible_*` fields no longer configure
-anything. An upgrade reads them once, turns them into destinations named
-`legacy-intel` and `legacy-dictation`, and points the matching feature at
-them; after that the destination is the truth and the fields are ignored.
+The Settings window on the Desk exposes the hotkey, meeting intelligence,
+dictation pipeline, and presence options. **Settings, Models** has the model
+setup surface: use Model Library to make a model available, then Assignments to
+choose compatible model lists for registered work. The full owner guide is
+[Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
 The full reference is in
 [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) and the guides above.
 
