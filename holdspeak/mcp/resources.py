@@ -21,13 +21,10 @@ from holdspeak.services.follow_through_service import FollowThroughService
 from holdspeak.services.meeting_service import MeetingService
 from holdspeak.services.monday_brief_service import MondayBriefService
 from holdspeak.services.primitive_service import PrimitiveService
-from holdspeak.services.profile_service import ProfileService
-from holdspeak.services.model_profile_service import ModelProfileService
 from holdspeak.services.recipe_service import RecipeService
 from holdspeak.services.refinement_application_service import RefinementApplicationService
 from holdspeak.services.refinement_thought_service import RefinementThoughtService
 from holdspeak.services.workbench_service import WorkbenchService
-from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
 from holdspeak.services.inference_capability_service import InferenceCapabilityApplicationService
 from holdspeak.inference_capabilities import process_inference_capability_registry
 from holdspeak.services.errors import ServiceError
@@ -152,18 +149,6 @@ _STATIC_RESOURCES = [
         "mimeType": _TEXT_MIME,
     },
     {
-        "uri": "holdspeak://desk/inference-targets",
-        "name": "Inference targets",
-        "description": "Available local and configured inference profiles.",
-        "mimeType": _JSON_MIME,
-    },
-    {
-        "uri": "holdspeak://inference/setup",
-        "name": "Inference setup",
-        "description": "Owner-only read-only inference capability truth for this hub.",
-        "mimeType": _JSON_MIME,
-    },
-    {
         "uri": "holdspeak://inference/capabilities",
         "name": "Inference capabilities",
         "description": "Owner-only registered intelligence jobs and their exact compatibility requirements.",
@@ -185,18 +170,6 @@ _STATIC_RESOURCES = [
         "uri": "holdspeak://recipes",
         "name": "Recipes",
         "description": "Canonical list of agent recipes available on the Desk.",
-        "mimeType": _JSON_MIME,
-    },
-    {
-        "uri": "holdspeak://destinations",
-        "name": "Destinations",
-        "description": "Canonical redacted list of configured inference destinations.",
-        "mimeType": _JSON_MIME,
-    },
-    {
-        "uri": "holdspeak://model-profiles",
-        "name": "Model Library",
-        "description": "Owner-only immutable Model Library profiles and hub-local binding summaries.",
         "mimeType": _JSON_MIME,
     },
     {
@@ -278,18 +251,6 @@ _RESOURCE_TEMPLATES = [
         "uriTemplate": "holdspeak://recipes/{id}",
         "name": "Recipe detail",
         "description": "Canonical stored definition for one agent recipe.",
-        "mimeType": _JSON_MIME,
-    },
-    {
-        "uriTemplate": "holdspeak://destinations/{id}",
-        "name": "Destination detail",
-        "description": "Canonical redacted configuration for one inference destination.",
-        "mimeType": _JSON_MIME,
-    },
-    {
-        "uriTemplate": "holdspeak://model-profiles/{id}",
-        "name": "Model Library profile",
-        "description": "Owner-only immutable detail for one Model Library profile.",
         "mimeType": _JSON_MIME,
     },
     {
@@ -378,8 +339,6 @@ _PRIMITIVE_DETAIL_PATTERN = re.compile(r"^holdspeak://primitives/([^/]+)/([^/]+)
 _WORKBENCH_DETAIL_PATTERN = re.compile(r"^holdspeak://workbenches/([^/]+)$")
 _WORKBENCH_RUNS_PATTERN = re.compile(r"^holdspeak://workbenches/([^/]+)/runs$")
 _RECIPE_DETAIL_PATTERN = re.compile(r"^holdspeak://recipes/([^/]+)$")
-_DESTINATION_DETAIL_PATTERN = re.compile(r"^holdspeak://destinations/([^/]+)$")
-_MODEL_PROFILE_DETAIL_PATTERN = re.compile(r"^holdspeak://model-profiles/([^/]+)$")
 _ZONE_MEMBERS_PATTERN = re.compile(r"^holdspeak://zones/([^/]+)/members$")
 _MEETING_DETAIL_PATTERN = re.compile(r"^holdspeak://meetings/([^/]+)$")
 _DECISION_RECORD_PATTERN = re.compile(r"^holdspeak://decision-records/([^/]+)$")
@@ -412,9 +371,7 @@ def list_resources(principal: Principal | None = None) -> dict[str, list[dict[st
             row
             for row in resources
             if row["uri"] not in {
-                "holdspeak://inference/setup",
                 "holdspeak://inference/capabilities",
-                "holdspeak://model-profiles",
             }
         ]
         templates = [
@@ -422,7 +379,6 @@ def list_resources(principal: Principal | None = None) -> dict[str, list[dict[st
             for row in _RESOURCE_TEMPLATES
             if "inference/acquisitions" not in row["uriTemplate"]
             and "inference/capabilities" not in row["uriTemplate"]
-            and "model-profiles" not in row["uriTemplate"]
         ]
     else:
         templates = _RESOURCE_TEMPLATES
@@ -452,17 +408,6 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         except OSError as exc:
             raise ResourceError(f"Constitution unavailable: {exc}") from exc
         return _contents(uri, _TEXT_MIME, text)
-    if uri == "holdspeak://desk/inference-targets":
-        return _contents(uri, _JSON_MIME, ProfileService(get_database()).list_inference_targets(principal))
-    if uri == "holdspeak://inference/setup":
-        if principal.kind is not PrincipalKind.OWNER:
-            raise ServiceError(
-                "inference_setup_owner_required",
-                "Owner access is required.",
-                context={"status": 403},
-            )
-        value = InferenceSetupApplicationService(get_database()).get_inference_setup(principal)
-        return _contents(uri, _JSON_MIME, {"setup": value})
     if uri == "holdspeak://inference/capabilities":
         if principal.kind is not PrincipalKind.OWNER:
             raise ServiceError(
@@ -505,12 +450,6 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         return _contents(uri, _JSON_MIME, WorkbenchService(get_database()).list_workbenches(principal)[:100])
     if uri == "holdspeak://recipes":
         return _contents(uri, _JSON_MIME, RecipeService(get_database()).list_recipes(principal)[:100])
-    if uri == "holdspeak://destinations":
-        result = ProfileService(get_database()).list_profiles(principal)
-        result["profiles"] = result["profiles"][:100]
-        return _contents(uri, _JSON_MIME, result)
-    if uri == "holdspeak://model-profiles":
-        return _contents(uri, _JSON_MIME, ModelProfileService(get_database()).list_profiles(principal))
     if uri == "holdspeak://dictation/journal":
         return _contents(uri, _JSON_MIME, DictationService(get_database()).list_journal(principal, limit=100))
     if uri == "holdspeak://follow-through/board":
@@ -579,12 +518,6 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
         return _contents(uri, _JSON_MIME, value)
     if match := _RECIPE_DETAIL_PATTERN.fullmatch(uri):
         value = RecipeService(get_database()).get_recipe(principal, match.group(1))
-        return _contents(uri, _JSON_MIME, value)
-    if match := _DESTINATION_DETAIL_PATTERN.fullmatch(uri):
-        value = ProfileService(get_database()).get_profile(principal, match.group(1))
-        return _contents(uri, _JSON_MIME, value)
-    if match := _MODEL_PROFILE_DETAIL_PATTERN.fullmatch(uri):
-        value = ModelProfileService(get_database()).get_profile(principal, match.group(1))
         return _contents(uri, _JSON_MIME, value)
     if match := _ZONE_MEMBERS_PATTERN.fullmatch(uri):
         value = PrimitiveService(get_database()).list_directory_members(principal, match.group(1))

@@ -54,7 +54,7 @@ Assignments.
 | HSEGHS001HS104-143-08 | Meetings Speech and Background Adoption | done | [story-08-meetings-speech-background-adoption](./story-08-meetings-speech-background-adoption.md) | [evidence-story-08](./evidence-story-08.md) |
 | HSEGHS001HS104-143-09 | Tool Capability Foundation and Safe Routing | done | [story-09-tool-turn-routing-safe-fallback](./story-09-tool-turn-routing-safe-fallback.md) | [evidence-story-09](./evidence-story-09.md) |
 | HSEGHS001HS104-143-10 | Agents Workbenches and Recipes Adoption | done | [story-10-agents-workbenches-recipes-adoption](./story-10-agents-workbenches-recipes-adoption.md) | [evidence-story-10](./evidence-story-10.md) |
-| HSEGHS001HS104-143-11 | HTTP MCP Sync and Compatibility | backlog | [story-11-http-mcp-sync-compatibility](./story-11-http-mcp-sync-compatibility.md) | - |
+| HSEGHS001HS104-143-11 | HTTP MCP Sync and Compatibility | done | [story-11-http-mcp-sync-compatibility](./story-11-http-mcp-sync-compatibility.md) | [evidence-story-11](./evidence-story-11.md) |
 | HSEGHS001HS104-143-12 | Model Library and Providers | done | [story-12-model-library-providers](./story-12-model-library-providers.md) | [evidence-story-12](./evidence-story-12.md) |
 | HSEGHS001HS104-143-13 | Capability Assignments Experience | done | [story-13-capability-assignments-experience](./story-13-capability-assignments-experience.md) | [evidence-story-13](./evidence-story-13.md) |
 | HSEGHS001HS104-143-14 | Chaos Glass and Closeout | backlog | [story-14-chaos-glass-closeout](./story-14-chaos-glass-closeout.md) | - |
@@ -596,6 +596,23 @@ bugs; three sweeps ending 6654 passed / zero real branch-new
 (captured). The sweep caught the /profiles misroute (Settings→Models
 unreachable) — fixed, both routing rulings reconciled. Shots with the
 owner. Remaining: 11, 15, 14.
+
+Story 11 is done (2026-08-27, three gate commits on
+`feat/hs143-11-transport-parity`, unpushed pending the owner's word;
+transport-only, no glass): the router's owner API has its MCP half —
+twelve twins over the same application services as HTTP, a reciprocal
+golden-parity harness (declarative vectors against fresh production
+compositions, committed_effect receipt proof), a compound hostile-sync
+proof (v2 router state refused before merge, pull-omitted, v1 bucket
+cannot mint v2 authority — sync_service itself unchanged), and the
+retirement sweep: acquisition aliases dead on both transports, raw
+destination.*/model_profile.* families and legacy resources gone
+(closing the MCP-vs-HTTP bypass), stale target-override fields removed,
+compat write-throughs now typed refusals. MCP inventory truthfully 134
+tools / 32 resources. Sixth consecutive zero-product-bug opus audit;
+FIRST sweep of the phase with zero branch-new (6677 passed). One
+genuinely timing-flaky Story-13 e2e (assignments overview populated-393)
+is named for Story 14's intake. Remaining: 15 (docs), 14 (closeout).
 
 ## Decisions deferred
 

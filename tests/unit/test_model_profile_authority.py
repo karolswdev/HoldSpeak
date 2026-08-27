@@ -13,6 +13,7 @@ from holdspeak.db import Database
 from holdspeak.deployment_revisions import DeploymentRevision
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ConflictError, NotFound, ServiceError, ValidationError
+from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.services.model_profile_service import (
     ModelProfileService,
     adapt_v1_profile,
@@ -687,38 +688,23 @@ def test_owner_matrix_covers_v2_service_legacy_service_http_and_mcp(db: Database
     assert client.delete("/api/model-profiles/not-visible/binding").status_code == 403
     assert client.delete("/api/model-profiles/not-visible").status_code == 403
 
-    monkeypatch.setattr(mcp_tools, "get_database", lambda: db)
-    with pytest.raises(ServiceError, match="Owner access"):
-        mcp_tools.dispatch("destination.list", {}, AGENT)
-    with pytest.raises(ServiceError, match="Owner access"):
-        mcp_tools.dispatch("model_profile.list", {}, AGENT)
-    with pytest.raises(ServiceError, match="Owner access"):
-        mcp_tools.dispatch("model_profile.get", {"profile_id": "not-visible"}, AGENT)
-    with pytest.raises(ServiceError, match="Owner access"):
-        mcp_tools.dispatch("model_profile.create", {"profile": {}}, AGENT)
-    with pytest.raises(ServiceError, match="Owner access"):
-        mcp_tools.dispatch("model_profile.probe", {}, AGENT)
-    with pytest.raises(ServiceError, match="Owner access"):
-        mcp_tools.dispatch("model_profile.bind", {"binding": {}}, AGENT)
-    with pytest.raises(ServiceError, match="Owner access"):
-        mcp_tools.dispatch(
-            "model_profile.unbind",
-            {"profile_id": "not-visible", "expected_binding_revision": 1},
-            AGENT,
-        )
-    with pytest.raises(ServiceError, match="Owner access"):
-        mcp_tools.dispatch(
-            "model_profile.delete",
-            {"profile_id": "not-visible", "expected_revision": 1},
-            AGENT,
-        )
+    # Raw profile and destination authority is service/HTTP composition only;
+    # MCP discovery and dispatch cannot retain a second owner control plane.
+    retired = {
+        "destination.list", "destination.get", "destination.create",
+        "destination.update", "destination.delete",
+        "model_profile.list", "model_profile.get", "model_profile.create",
+        "model_profile.bind", "model_profile.probe", "model_profile.unbind",
+        "model_profile.delete",
+    }
+    assert not (retired & {tool["name"] for tool in mcp_tools.TOOLS})
+    for name in retired:
+        with pytest.raises(mcp_tools.ToolError, match="Unknown tool"):
+            mcp_tools.dispatch(name, {}, OWNER)
 
     profiles.create_profile(OWNER, _profile_body())
     http = client.get("/api/model-profiles/balanced-qwen", headers={"x-test-principal": "owner"})
     assert http.status_code == 200
-    assert http.json()["profile"] == mcp_tools.dispatch(
-        "model_profile.get", {"profile_id": "balanced-qwen"}, OWNER
-    )
 
     deployment_id, deployment_revision_id = _install_deployment(db)
     monkeypatch.setattr(
@@ -732,41 +718,102 @@ def test_owner_matrix_covers_v2_service_legacy_service_http_and_mcp(db: Database
         headers={"x-test-principal": "owner"},
     )
     assert http_probe.status_code == 201
-    mcp_probe = mcp_tools.dispatch("model_profile.probe", {"probe": probe}, OWNER)
-    assert set(http_probe.json()["observation"]) == set(mcp_probe)
-    assert http_probe.json()["observation"]["state"] == mcp_probe["state"] == "ready"
 
 
-def test_mcp_model_profile_request_schemas_are_recursively_closed() -> None:
-    tools = {tool["name"]: tool["inputSchema"] for tool in mcp_tools.TOOLS}
-    profile = tools["model_profile.create"]["properties"]["profile"]
-    binding = tools["model_profile.bind"]["properties"]["binding"]
-    probe = tools["model_profile.probe"]["properties"]["probe"]
-    assert profile["additionalProperties"] is False
-    assert binding["additionalProperties"] is False
-    assert probe["additionalProperties"] is False
-    assert profile["properties"]["tokenizer_template_requirements"]["additionalProperties"] is False
-    assert profile["properties"]["capability_manifest"]["additionalProperties"] is False
-    assert profile["properties"]["safe_presentation"]["additionalProperties"] is False
+def test_compound_router_sync_attack_is_inert_and_v1_cannot_mint_v2(
+    db: Database, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Push rejects every router bucket before validation, work, or merge.
 
+    The only remaining ``profiles`` sync bucket is v1 historical state.  It is
+    deliberately proven unable to become a v2 binding, assignment, acquisition,
+    probe, resume, or invocation rather than being silently relabelled safe.
+    """
+    from holdspeak.config import Config
+    from holdspeak.kernel.inference_runner import InferenceRunner
+    from holdspeak.services.inference_acquisition_service import InferenceAcquisitionApplicationService
+    from holdspeak.services.refinement_thought_service import RefinementThoughtService
+    from holdspeak.services import sync_service as sync_module
 
-def test_v2_profile_and_binding_are_hub_local_and_hostile_sync_refuses(db: Database) -> None:
     service = ModelProfileService(db)
     service.create_profile(OWNER, _profile_body())
+    deployment_id, deployment_revision_id = _install_deployment(db)
+    monkeypatch.setattr(
+        service, "_observe_destination_readiness", lambda *_args, **_kwargs: ("ready", "ready")
+    )
+    observation_id = _mint_observation(service, deployment_id, deployment_revision_id)
+    service.bind_profile(OWNER, {
+        "binding_id": "local-ready-binding", "profile_id": "balanced-qwen",
+        "profile_revision": 1, "deployment_head_id": deployment_id,
+        "expected_binding_revision": 0,
+        "expected_deployment_configuration_revision": 1,
+        "expected_deployment_revision_id": deployment_revision_id,
+        "enabled": True, "readiness_observation_id": observation_id,
+    })
+    assignments = InferenceAssignmentService(db)
+    assignments.set_assignment(OWNER, {
+        "command_id": "local-ready-assignment", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "ask.answer"},
+        "entries": [{"profile_id": "balanced-qwen"}],
+    })
+
+    def router_snapshot() -> dict[str, tuple[int, bytes]]:
+        with db._connection() as conn:
+            tables = {
+                row["name"] for row in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                ).fetchall()
+            }
+            snapshot: dict[str, tuple[int, bytes]] = {}
+            for table in sorted(sync_module._HUB_LOCAL_FORBIDDEN_BUCKETS & tables):
+                rows = [dict(row) for row in conn.execute(f"SELECT * FROM {table} ORDER BY rowid")]
+                encoded = json.dumps(rows, sort_keys=True, separators=(",", ":"), default=str).encode()
+                snapshot[table] = (len(rows), encoded)
+            return snapshot
+
+    config_path = tmp_path / "holdspeak-config.json"
+    Config().save(config_path)
+    config_before = config_path.read_bytes()
+    before = router_snapshot()
+    calls: list[str] = []
+
+    def spy(label: str):
+        def _called(*_args, **_kwargs):
+            calls.append(label)
+            raise AssertionError(f"sync reached physical {label}")
+        return _called
+
+    monkeypatch.setattr(ModelProfileService, "bind_profile", spy("bind"))
+    monkeypatch.setattr(InferenceAssignmentService, "set_assignment", spy("assign"))
+    monkeypatch.setattr(InferenceAcquisitionApplicationService, "download", spy("download"))
+    monkeypatch.setattr(ModelProfileService, "probe_profile", spy("probe"))
+    monkeypatch.setattr(InferenceAcquisitionApplicationService, "_run", spy("resume"))
+    monkeypatch.setattr(InferenceRunner, "invoke", spy("invoke"))
+    monkeypatch.setattr(RefinementThoughtService, "resume", spy("resume-thought"))
+
+    hostile = {
+        bucket: [{"operation": "bind/assign/download/probe/resume/invoke", "poison": bucket}]
+        for bucket in sync_module._HUB_LOCAL_FORBIDDEN_BUCKETS
+    }
+    hostile["notes"] = []
+    sync = SyncService(db, hub_model_name=lambda: "")
     with pytest.raises(ValidationError) as refusal:
-        SyncService(db).push(
-            OWNER,
-            {
-                "notes": [],
-                "model_profile_revisions": [{"profile_id": "remote", "model_file": "/leak"}],
-                "model_profile_bindings": [{"profile_id": "remote", "endpoint": "https://leak"}],
-                "model_profile_readiness_observations": [{"observation_id": "forged"}],
-            },
-        )
+        sync.push(OWNER, hostile)
     assert refusal.value.code == "sync_hub_local_bucket_forbidden"
-    with db._connection() as conn:
-        assert conn.execute("SELECT count(*) FROM model_profile_revisions").fetchone()[0] == 1
-        assert conn.execute("SELECT count(*) FROM model_profile_binding_revisions").fetchone()[0] == 0
-    pulled = SyncService(db).pull(OWNER)
-    assert "model_profile_revisions" not in pulled
-    assert "model_profile_bindings" not in pulled
+    assert calls == []
+    assert router_snapshot() == before
+    assert config_path.read_bytes() == config_before
+    pulled = sync.pull(OWNER)
+    assert not (set(pulled) & sync_module._HUB_LOCAL_FORBIDDEN_BUCKETS)
+
+    source = Database(tmp_path / "v1-source.db")
+    source.profiles.upsert(
+        profile_id="v1-history", name="Legacy history", kind="local",
+        model_file="/historical/path.gguf", model="Old model", context_limit=8192,
+    )
+    v1_payload = {"profiles": SyncService(source, hub_model_name=lambda: "").pull(OWNER)["profiles"]}
+    pushed = sync.push(OWNER, v1_payload)
+    assert pushed["received"]["profiles"] == 1
+    assert db.profiles.get("v1-history").model_file == "/historical/path.gguf"
+    assert calls == []
+    assert router_snapshot() == before

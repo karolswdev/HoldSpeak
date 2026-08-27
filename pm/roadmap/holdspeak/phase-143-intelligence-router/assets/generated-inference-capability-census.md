@@ -2,7 +2,7 @@
 
 **Story:** HSEGHS001HS104-143-01
 
-**Regenerated:** 2026-08-25 on `feat/hs143-10-placement-adoption`
+**Regenerated:** 2026-08-26 on `feat/hs143-11-transport-parity`
 
 This is the checked-in baseline for the Phase 143 route migration. Its
 machine-readable fixture is
@@ -118,10 +118,10 @@ routes it. A synthetic new Ask/Recipe caller is a fail-closed test mutation.
 
 | Source location | Capability | Source owner |
 |---|---|---|
-| `mcp/families/ask.py:146`, `web/routes/primitives/ask.py:49` | `ask.answer` | Ask transports |
-| `services/refinement_coordinator.py:328` | `thought.interview` (question-or-synthesis result branch) | refinement coordinator |
-| `mcp/tools.py:651`, `web/routes/primitives/recipes.py:100` | `recipe.run` | Recipe transports |
-| `mcp/tools.py:655`, `web/routes/primitives/recipes.py:115` | `recipe.chat` | Recipe transports |
+| `mcp/families/ask.py:134`, `web/routes/primitives/ask.py:49` | `ask.answer` | Ask transports |
+| `services/refinement_coordinator.py:419` | `thought.interview` (question-or-synthesis result branch) | refinement coordinator |
+| `mcp/tools.py:608`, `web/routes/primitives/recipes.py:100` | `recipe.run` | Recipe transports |
+| `mcp/tools.py:612`, `web/routes/primitives/recipes.py:115` | `recipe.chat` | Recipe transports |
 | `services/sequence_workflow_service.py:133` | `sequence.step` | Sequence service |
 | `services/sequence_workflow_service.py:186` | `workflow.node` | Workflow service |
 

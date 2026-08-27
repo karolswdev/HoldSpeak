@@ -1,7 +1,7 @@
 # Phase 143 generated routing-authority census
 
-**Regenerated:** 2026-08-25 from production `holdspeak/**` anchors on
-`feat/hs143-10-placement-adoption`. This is the checked-in, fail-closed review
+**Regenerated:** 2026-08-26 from production `holdspeak/**` anchors on
+`feat/hs143-11-transport-parity`. This is the checked-in, fail-closed review
 fixture for HSEGHS001HS104-143-01. Test coverage:
 `tests/unit/test_phase143_routing_authority_census.py`.
 
@@ -25,6 +25,15 @@ Rails selectors; Rails recurrent execution derives provenance solely from its
 frozen bundle. Fully adopted owner/wake speech never invokes the v1 resolver,
 and text-entry egress reads the frozen provider routes even without a
 transcription member.
+
+**Story 143-11 S3/S4 delta (2026-08-26):** v2 profile revisions, bindings,
+assignments, route/attempt/receipt state, and acquisition/readiness/probe/
+invocation state are hub-local: hostile sync refuses them before validation or
+merge, pull omits them, and the production-object proof shows no physical work.
+The historical v1 `profiles` bucket remains a named path-bearing compatibility
+seam only; it cannot mint v2 state. Retired raw MCP destination/model-profile
+surfaces, acquisition aliases, and request selectors are absent; post-marker
+Recipe and Workbench pointer writes refuse before persistent work.
 
 ## Classification vocabulary
 
@@ -60,22 +69,22 @@ transcription member.
 | Thoughts and Ask default/request pointer | `holdspeak/config/integrations.py:ThoughtsConfig.inference_target_id`; `holdspeak/inference_targets.py:resolve_thought_placement`; `holdspeak/services/refinement_coordinator.py:_admission_claim`; `holdspeak/services/refinement_application_service.py:get_workbench`; `holdspeak/services/refinement_thought_service.py:_validate_current_admission_under_write_fence`; `holdspeak/services/ask_service.py:AskService.ask` | mutable assignment pointer | 143-07 |
 | Writing and dictation runtime pointer | `holdspeak/config/model.py:LLMRuntimeConfig.profile_id`; `holdspeak/intel/providers.py:effective_dictation_llm`; `holdspeak/speech_session/plan.py:DictationSessionPlanResolver` | mutable assignment pointer | 143-07 |
 | Meeting migration source | Saved `holdspeak/config/meeting.py:MeetingConfig.intel_profile_id` and `intel_provider` may be read exactly once by `RoutedInferenceCoordinator.migrate_meeting_route_assignments`; post-marker Settings hides/refuses them and execution uses only `MeetingDeferredQueueBinder` / `BoundDeferredIntelJob`. | migration source | 143-08 |
-| Recipe legacy selector migration/write-through | `holdspeak/db/models/__init__.py:RecipeRecord.profile_id`; `holdspeak/services/recipe_service.py:_write_legacy_profile_compatibility`; canonical `RoutedInferenceCoordinator.admit` | migration source | 143-10 |
-| Workbench legacy execution migration/write-through | `holdspeak/db/models/workbench.py:WorkbenchRecord.profile_id`; `holdspeak/services/workbench_runner.py:WorkbenchRunner`; canonical `InferenceParentRouteBundleService` | migration source | 143-10 |
-| Workbench voice legacy migration/write-through | `holdspeak/db/models/workbench.py:WorkbenchRecord.resolver_profile_id`; `holdspeak/services/workbench_service.py:resolve_voice`; canonical `InferenceParentRouteBundleService` | migration source | 143-10 |
+| Recipe legacy selector migration source | `holdspeak/db/models/__init__.py:RecipeRecord.profile_id`; `holdspeak/services/recipe_service.py:_refuse_post_marker_profile_pointer` refuses a post-marker write; canonical `RoutedInferenceCoordinator.admit` | migration source | 143-11 |
+| Workbench legacy execution migration source | `holdspeak/db/models/workbench.py:WorkbenchRecord.profile_id`; `holdspeak/services/workbench_service.py:_refuse_post_marker_pointer_write` refuses a post-marker write; canonical `InferenceParentRouteBundleService` | migration source | 143-11 |
+| Workbench voice legacy migration source | `holdspeak/db/models/workbench.py:WorkbenchRecord.resolver_profile_id`; `holdspeak/services/workbench_service.py:_refuse_post_marker_pointer_write` refuses a post-marker write; canonical `InferenceParentRouteBundleService` | migration source | 143-11 |
 | Recipe, Sequence, and Workflow request placement fence | `holdspeak/services/recipe_service.py:RecipeService._reject_retired_selector`; `holdspeak/services/sequence_workflow_service.py:SequenceWorkflowService._reject_retired_selector` reject nonblank legacy request selectors before route freeze. | refusal fence | 143-10 |
 | Kernel `inference.run` historical reader | `holdspeak/kernel/inference.py:InferenceRunCodec` refuses every new admission and retains only historical native/receipt projection. | display | 143-10 |
 | Decision and delivery request target fence | `holdspeak/services/decision_lifecycle_service.py:draft_promoted_with_model`; `holdspeak/web/routes/delivery_prs.py:api_delivery_pr_draft_review` read a nonblank target only to refuse `inference_request_target_override_retired`. | refusal fence | 143-08 |
 | Rails observer migration source | `holdspeak/config/integrations.py:RailsObserverConfig.profile_id` is consumed once by `migrate_rails_observer_route_assignments`; `build_profile_summarizer` and `web_server` receive no profile/config hash thereafter. | migration source | 143-08 |
 | Cadence background global resolver | `holdspeak/services/cadence_service.py:_drafted_next_action`; `holdspeak/inference_targets.py:resolve_placement` | mutable assignment pointer | 143-08 |
 | Local model acquisition availability receipt | `holdspeak/services/inference_acquisition_service.py:_activate`; `holdspeak/services/inference_setup_service.py` | credential/provider identity | 143-03 |
-| V1 profile and workbench sync payload | `holdspeak/services/sync_service.py:SYNC_REGISTRY`; `holdspeak/services/sync_service.py:_MERGEABLE`; `holdspeak/services/sync_service.py:pull` | mutable assignment pointer | 143-11 |
+| V1 profile and workbench sync payload | `holdspeak/services/sync_service.py:SYNC_REGISTRY`; `holdspeak/services/sync_service.py:_MERGEABLE`; `holdspeak/services/sync_service.py:push` refuses v2 router state before merge; `holdspeak/services/sync_service.py:pull` omits it | mutable assignment pointer | 143-11 |
 | Settings Thoughts and writing legacy pointer writers | `holdspeak/services/settings_service.py:SettingsService.update_settings`; dictation/thoughts pointer normalization | mutable assignment pointer | 143-07 |
 | Settings Meeting/Rails migration-source guard | `holdspeak/services/settings_service.py:SettingsService.update_settings`; pre-marker values normalize as saved migration evidence, while post-marker PATCH refuses and GET omits the selectors. | migration source | 143-08 |
 | DeploymentRevision ID in runner, lease, and receipts | `holdspeak/deployment_revisions.py:resolve_deployment_revision`; `holdspeak/kernel/inference_runner.py`; `holdspeak/kernel/local_runtime_lease.py` | immutable evidence | — |
 | Frozen meeting and speech plan entries | `holdspeak/meeting_session/intel_plan.py:decode_meeting_intel_plan_v1` is a display-only history decoder; `holdspeak/meeting_session/deferred_bound.py:BoundDeferredIntelJob` and `holdspeak/speech_session/plan.py` reconstruct immutable execution evidence | immutable evidence | — |
 | InferenceTarget and placement response DTOs | `holdspeak/inference_targets.py:InferenceTarget.to_dict`; `holdspeak/services/ask_service.py:_ask_projection`; `holdspeak/services/recipe_service.py:_chat_projection` | display | — |
-| Doctor, desk, and MCP destination views | `holdspeak/commands/doctor.py`; `holdspeak/services/desk_service.py`; `holdspeak/mcp/resources.py` | display | — |
+| Doctor, desk, and retained MCP availability/capability views | `holdspeak/commands/doctor.py`; `holdspeak/services/desk_service.py`; `holdspeak/mcp/resources.py` | display | 143-11 |
 | Endpoint/profile key slot and key custody | `holdspeak/intel/providers.py:profile_key_env`; `holdspeak/services/profile_key_service.py:ProfileKeyService`; `holdspeak/profile_key_store.py`; `holdspeak/services/model_library_service.py:_connect_provider` | credential/provider identity | 143-03 |
 | Model Library provider replay/receipt ledger | `holdspeak/services/model_library_service.py:_provider_command`; `model_library_provider_commands` records nonsecret draft fingerprints and owner-safe receipts only. | credential/provider identity | 143-12 |
 | Provider/runtime/readiness facts | `holdspeak/inference_targets.py:DeploymentIdentity`; `holdspeak/intel/providers.py:resolve_intel_provider`; `holdspeak/services/profile_service.py:probe_inference_target`; `holdspeak/services/model_library_service.py:_ensure_provider_readiness` | credential/provider identity | 143-03 |
@@ -158,7 +167,7 @@ The exact guard also keeps these production seams visible by name:
 | ID | Current production seam | Treatment |
 | --- | --- | --- |
 | `PROFILE_SERVICE_OWNER_ENFORCEMENT` | `holdspeak/services/profile_service.py:ProfileService` now checks `PrincipalKind.OWNER` before every profile/target list, lookup, mutation, or probe. | Story 143-03 closed the former direct-service/HTTP/MCP discovery gap. |
-| `PROFILE_SYNC_PATH_BEARING_SEAM` | `holdspeak/services/sync_service.py:SYNC_REGISTRY` syncs historical v1 `profile`; `_MERGEABLE["profiles"]` includes `model_file` and `base_url`; pull serializes profile rows. | Historical v1 remains the compatibility case. V2 profile revisions/bindings are hub-local and hostile import refuses; Story 143-11 owns retirement of the v1 path-bearing wire seam. |
+| `PROFILE_SYNC_PATH_BEARING_SEAM` | `holdspeak/services/sync_service.py:SYNC_REGISTRY` syncs historical v1 `profile`; `_MERGEABLE["profiles"]` includes `model_file` and `base_url`; pull serializes profile rows. | Historical v1 remains the named constrained compatibility seam. V2 profile revisions/bindings and all router state are hub-local; hostile import refuses before merge and v1 cannot mint v2 authority or physical work. |
 
 ## Legacy assignment ownership
 

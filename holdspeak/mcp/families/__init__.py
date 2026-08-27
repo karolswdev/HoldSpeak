@@ -27,6 +27,11 @@ from holdspeak.mcp.families import (
     settings,
     thought,
     inference,
+    model_library,
+    inference_assignments,
 )
 
-FAMILIES = [ask, settings, coder, cadence, sequence, memory, people, plugin_job, reactions, thought, inference]
+FAMILIES = [
+    ask, settings, coder, cadence, sequence, memory, people, plugin_job, reactions, thought, inference,
+    model_library, inference_assignments,
+]

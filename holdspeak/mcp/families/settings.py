@@ -24,13 +24,11 @@ TOOLS: list[dict[str, Any]] = [
     {
         "name": "settings.update",
         "description": (
-            "Update HoldSpeak settings with a partial patch. Secrets cannot "
-            "be written through this tool. Echo _revision from settings.get "
-            "for optimistic concurrency; omit it for last-writer-wins. "
-            "EGRESS: changing intel_provider, intel_profile_id, or other "
-            "profile assignments may change the product's egress boundary "
-            "(local/cloud); the response's _placement block shows the "
-            "effective placement after the write. Settings are persisted "
+            "Update HoldSpeak settings with a partial patch. EGRESS: "
+            "intel_provider and intel_profile_id are retired routing controls; "
+            "_placement inference assignments and secrets cannot be written through "
+            "this tool. Echo _revision from settings.get for optimistic concurrency; omit it "
+            "for last-writer-wins. Settings are persisted "
             "immediately; a running HoldSpeak web server picks up the new "
             "values on its next settings read (no live-reload signal is "
             "sent from the MCP sidecar)."

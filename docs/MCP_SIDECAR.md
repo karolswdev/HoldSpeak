@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-137 tools and 38 resources through the Model Context Protocol, so any MCP
+134 tools and 32 resources through the Model Context Protocol, so any MCP
 client (Claude Code, Cursor, a custom script) can read and drive the desk
 without touching the web UI.
 
@@ -56,7 +56,7 @@ default.
 
 ## Tool families
 
-The 137 tools are organized into domain families. Each tool follows the
+The 134 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -72,27 +72,45 @@ rows; the remaining 12 (including the singleton People surface) are computed,
 composite, or managed by a dedicated capability. Each description names
 which kinds it handles.
 
-### ask (5 tools)
+### ask (4 tools)
 
-Ask the desk a question. `ask.models` lists available inference
-destinations. `ask.resolve_grounding` hydrates grounding references
-without running inference. `ask.run` submits a question through the
-admitted inference path and returns the answer with its receipt.
-`ask.cancel` cancels an in-flight invocation. `ask.keep` persists an
-answer as a desk artifact (not model-invoking).
+Ask the desk a question. `ask.resolve_grounding` hydrates grounding references
+without running inference. `ask.run` submits a question through the admitted
+inference path and returns the answer with its receipt. `ask.cancel` cancels an
+in-flight invocation. `ask.keep` persists an answer as a desk artifact (not
+model-invoking). Model selection is never an Ask-side MCP control.
 
-### inference (3 tools)
+### inference (1 tool)
 
-Owner-only durable local-model setup. `inference.download_and_use` records one
-stable command, resolves a signed catalogue source, downloads bounded bytes,
-verifies the published digest, and adopts the content-addressed artifact into
-the Model Library. `inference.use_existing_model`
-freshly resolves a projected local GGUF, verifies its complete contents, adopts
-it without exposing its locator, and records the same availability ledger.
-`inference.cancel_model_acquisition` cancels only before verification begins.
-All three use the same application service,
-receipts, and refusal codes as HTTP; model/agent principals receive no authority
-through these tools.
+`inference.cancel_model_acquisition` cancels a model download only before
+verification begins. It cannot change model availability or any assignment.
+Model acquisition enters through the seven Model Library commands below; model
+and agent principals receive no authority through this tool.
+
+### model library (7 tools)
+
+Owner-only availability commands over the same Model Library application service
+as the HTTP owner API: `model_library.get`, `model_library.download`,
+`model_library.add_to_library`, `model_library.use_model_file`,
+`model_library.connect_hosted_model`, `model_library.define_endpoint`, and
+`model_library.connect_paired_device`. They can add or connect available models
+but cannot select one for a capability; every command proves the assignment
+heads are unchanged. File intake accepts only a request ID, a basename, and
+base64 bytes capped at 16 MiB decoded. The sidecar owns temporary staging and
+deletes it after the command; client paths are refused. Hosted-provider secrets
+have a dedicated write-only `secret` field and never appear in errors, logs, or
+receipts.
+
+### inference assignment (5 tools)
+
+Owner-only assignment projection and command twins over the same Assignment
+application service as HTTP: `inference_assignment.summary`,
+`inference_assignment.editor`, `inference_assignment.set`,
+`inference_assignment.preview_use_default`, and
+`inference_assignment.clear`. Their schemas are recursively closed. Set and
+clear preserve the canonical narrow CAS and stable command replay; replay
+returns the original committed-effect chain and hash, never a route, endpoint,
+path, secret, or binding detail.
 
 ### thought (18 tools)
 
@@ -154,30 +172,8 @@ the same stable code in JSON-RPC `error.data`.
 
 `settings.get` returns the current configuration with secrets redacted
 and a `_revision` field for optimistic concurrency. `settings.update`
-applies a partial patch. Secrets cannot be written through this tool.
-Changing `intel_provider`, `intel_profile_id`, or destination assignments
-may change the product's egress boundary; the response's `_placement`
-block shows the effective placement after the write.
-
-### destination (5 tools)
-
-CRUD for inference destinations. `destination.list` returns all
-destinations with current mesh-node liveness. `destination.get`,
-`destination.create`, `destination.update`, and `destination.delete`
-manage individual destinations. Secrets cannot be read or written
-through these tools.
-
-### model profile (7 tools)
-
-Owner-only Model Library authority. `model_profile.list` and
-`model_profile.get` project immutable, locator-free model profile revisions;
-historical v1 rows are exposed through a read-only compatibility adapter.
-`model_profile.create` writes the next profile revision under a narrow CAS.
-`model_profile.probe` mints server-observed readiness for one exact deployment
-head, while `model_profile.bind` records a CAS-protected, hub-local binding to
-that exact immutable deployment revision. `model_profile.unbind` removes only
-the binding head; `model_profile.delete` tombstones only an unreferenced
-profile. These tools neither assign a capability nor select a running model.
+applies a partial patch. Secrets and inference assignments cannot be written
+through this tool.
 
 ### coder (3 tools)
 
@@ -303,7 +299,7 @@ client discovers it at tool-listing time, not at call time.
 
 ## Resources
 
-The sidecar exposes 19 static resources and 17 resource templates. List
+The sidecar exposes 16 static resources and 16 resource templates. List
 results are bounded to the first 100 items per read.
 
 ### Static resources
@@ -313,14 +309,10 @@ results are bounded to the first 100 items per read.
 | `holdspeak://desk/schema` | Primitive kinds, product nouns, synchronization classes |
 | `holdspeak://desk/verbs` | Registered desk verbs, scopes, key bindings |
 | `holdspeak://desk/constitution` | The project's constitutional context |
-| `holdspeak://desk/inference-targets` | Available inference destinations |
-| `holdspeak://inference/setup` | Owner-only, read-only capability truth for this hub's inference setup |
 | `holdspeak://inference/capabilities` | Owner-only registered intelligence jobs, result contracts, requirements, boundaries, and retry-policy facts; never profiles, paths, keys, or assignments |
 | `holdspeak://desk/snapshot` | Current desk state (objects, layout) |
 | `holdspeak://workbenches` | Workbench list and summaries |
 | `holdspeak://recipes` | Agent recipe list |
-| `holdspeak://destinations` | Redacted inference destination list |
-| `holdspeak://model-profiles` | Owner-only immutable Model Library profiles and binding summaries |
 | `holdspeak://dictation/journal` | Stored dictation entries |
 | `holdspeak://follow-through/board` | Follow-through execution lanes |
 | `holdspeak://briefs/latest` | Latest Monday Brief (or null) |
@@ -339,8 +331,6 @@ results are bounded to the first 100 items per read.
 | `holdspeak://workbenches/{id}` | One workbench with its items and run summary |
 | `holdspeak://workbenches/{id}/runs` | Run history for one workbench |
 | `holdspeak://recipes/{id}` | One agent recipe |
-| `holdspeak://destinations/{id}` | One inference destination (redacted) |
-| `holdspeak://model-profiles/{id}` | One immutable Model Library profile (owner-only) |
 | `holdspeak://zones/{id}/members` | Members of one desk zone |
 | `holdspeak://meetings/{id}` | One archived meeting |
 | `holdspeak://decision-records/{id}` | One decision record with evidence and revision trail |

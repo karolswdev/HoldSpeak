@@ -160,40 +160,6 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to read inference capability")
 
-    @router.post("/api/inference/acquisitions/download-and-use")
-    async def api_inference_download_and_use(request: Request) -> Any:
-        try:
-            if inference_acquisition is None:
-                raise ServiceError("inference_acquisition_unavailable", "Model downloads are unavailable on this hub.", context={"status": 503})
-            body = await request.json()
-            if not isinstance(body, dict):
-                raise ServiceError("inference_acquisition_request_invalid", "Expected a JSON object.", context={"status": 400})
-            return JSONResponse(
-                inference_acquisition.download_and_use(request.state.principal, body),
-                status_code=202,
-            )
-        except ServiceError as exc:
-            return _inference_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to start model acquisition")
-
-    @router.post("/api/inference/acquisitions/use-existing")
-    async def api_inference_use_existing(request: Request) -> Any:
-        try:
-            if inference_acquisition is None:
-                raise ServiceError("inference_acquisition_unavailable", "Local model setup is unavailable on this hub.", context={"status": 503})
-            body = await request.json()
-            if not isinstance(body, dict):
-                raise ServiceError("inference_existing_request_invalid", "Expected a JSON object.", context={"status": 400})
-            return JSONResponse(
-                inference_acquisition.use_existing(request.state.principal, body),
-                status_code=202,
-            )
-        except ServiceError as exc:
-            return _inference_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to use existing local model")
-
     @router.get("/api/inference/acquisitions/{job_id}")
     async def api_inference_acquisition(job_id: str, request: Request) -> Any:
         try:

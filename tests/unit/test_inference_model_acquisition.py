@@ -19,7 +19,6 @@ from holdspeak.kernel.local_runtime_lease import (
 )
 from holdspeak.kernel.model import KernelRefused
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.mcp import resources
 from holdspeak.mcp.families import inference as inference_mcp
 from holdspeak.services.inference_acquisition_service import InferenceAcquisitionApplicationService
 from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
@@ -144,6 +143,7 @@ def test_library_download_request_has_no_route_shaped_fields(tmp_path: Path, mon
     _db, service, _config, preset = _fixture(tmp_path)
     body = {"request_id": "library-download", "catalog_id": preset["id"], "catalog_revision": 7}
     first = service.download(OWNER, body)
+    assert "setup" not in first
     service._run(first["acquisition"]["id"])
     replay = service.download(OWNER, body)
     assert replay["acquisition"]["id"] == first["acquisition"]["id"]
@@ -248,8 +248,11 @@ def test_detected_gguf_can_be_verified_selected_and_replayed(tmp_path: Path, mon
     assert complete["verified_bytes"] == model.stat().st_size
     assert config.meeting.intel_realtime_model == original_local_model
     assert service.use_existing(OWNER, body)["acquisition"]["id"] == complete["id"]
-    monkeypatch.setattr(inference_mcp, "_service", lambda: service)
-    assert inference_mcp.dispatch("inference.use_existing_model", body, OWNER)["acquisition"]["id"] == complete["id"]
+    # The service implementation remains behind Model Library composition; its
+    # old HTTP/MCP public alias has no surviving receipt projection or schema.
+    assert "inference.use_existing_model" not in {tool["name"] for tool in inference_mcp.TOOLS}
+    with pytest.raises(LookupError):
+        inference_mcp.dispatch("inference.use_existing_model", body, OWNER)
     app = FastAPI()
 
     @app.middleware("http")
@@ -262,10 +265,7 @@ def test_detected_gguf_can_be_verified_selected_and_replayed(tmp_path: Path, mon
         inference_setup_service=setup, inference_acquisition_service=service,
     )))
     client = TestClient(app)
-    assert client.post("/api/inference/acquisitions/use-existing", json=body).status_code == 202
-    assert client.post(
-        "/api/inference/acquisitions/use-existing", json={**body, "invented": True},
-    ).status_code == 400
+    assert client.post("/api/inference/acquisitions/use-existing", json=body).status_code == 405
     with db._connection() as conn:
         artifact = conn.execute(
             "SELECT source_kind,local_locator FROM inference_model_artifacts WHERE artifact_id=?",
@@ -376,8 +376,8 @@ def test_cancel_after_verification_is_typed_too_late(tmp_path: Path):
     assert getattr(too_late.value, "code", "") == "cancellation_too_late"
 
 
-def test_http_mcp_and_resource_share_one_durable_acquisition(tmp_path: Path, monkeypatch):
-    db, service, config, preset = _fixture(tmp_path)
+def test_retired_acquisition_aliases_disappear_without_replacement_receipt(tmp_path: Path):
+    db, service, _config, preset = _fixture(tmp_path)
     app = FastAPI()
 
     @app.middleware("http")
@@ -396,34 +396,17 @@ def test_http_mcp_and_resource_share_one_durable_acquisition(tmp_path: Path, mon
         "preset_id": preset["id"],
         "catalog_revision": 7,
         "context_choice": 8192,
-        "expected_route_revision": service.route_revision(config),
+        "expected_route_revision": service.route_revision(_config),
     }
     client = TestClient(app)
-    http = client.post("/api/inference/acquisitions/download-and-use", json=body)
-    assert http.status_code == 202
-    assert client.post(
-        "/api/inference/acquisitions/download-and-use",
-        json={**body, "invented": True},
-    ).status_code == 400
-
-    monkeypatch.setattr(inference_mcp, "_service", lambda: service)
-    mcp = inference_mcp.dispatch("inference.download_and_use", body, OWNER)
-    assert mcp["acquisition"] == http.json()["acquisition"]
-
-    monkeypatch.setattr(resources, "get_database", lambda: db)
-    resource = resources.read_resource(
-        f"holdspeak://inference/acquisitions/{mcp['acquisition']['id']}", OWNER,
-    )
-    decoded = json.loads(resource["contents"][0]["text"])
-    assert decoded == {"acquisition": mcp["acquisition"]}
-
-    with pytest.raises(Exception) as denied:
-        inference_mcp.dispatch(
-            "inference.download_and_use",
-            {**body, "request_id": "agent-attempt"},
-            Principal(PrincipalKind.AGENT, "agent"),
-        )
-    assert getattr(denied.value, "code", "") == "inference_setup_owner_required"
+    assert client.post("/api/inference/acquisitions/download-and-use", json=body).status_code == 405
+    assert client.post("/api/inference/acquisitions/use-existing", json=body).status_code == 405
+    assert {
+        "inference.download_and_use", "inference.use_existing_model",
+    }.isdisjoint({tool["name"] for tool in inference_mcp.TOOLS})
+    for name in ("inference.download_and_use", "inference.use_existing_model"):
+        with pytest.raises(LookupError):
+            inference_mcp.dispatch(name, body, OWNER)
 
 
 def test_v2_context_ceiling_reaches_the_existing_local_engine_adapter(monkeypatch):

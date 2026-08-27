@@ -14,7 +14,6 @@ from holdspeak.db.core import Database, reset_database
 from holdspeak.mcp import server
 from holdspeak.mcp.server import handle_message
 from holdspeak.principals import Principal, PrincipalKind
-from holdspeak.services.profile_service import ProfileService
 
 
 OWNER = Principal(PrincipalKind.OWNER, "surface-test")
@@ -29,22 +28,24 @@ def db(tmp_path: Path):
 
 
 # ---------------------------------------------------------------------------
-# (a) Pagination: >100 destinations truncated to exactly 100 by the resource read
+# (a) Retired destination resources do not survive catalogue or read paths
 # ---------------------------------------------------------------------------
 
 
-def test_destination_resource_read_truncates_to_100(
-    db: Database, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Seed 101 profiles; the holdspeak://destinations resource must return exactly 100."""
-    for i in range(101):
-        db.profiles.upsert(profile_id=f"profile-{i:04d}", name=f"Profile {i}")
-
-    monkeypatch.setattr(mcp_resources, "get_database", lambda: db)
-
-    result = mcp_resources.read_resource("holdspeak://destinations", OWNER)
-    payload = json.loads(result["contents"][0]["text"])
-    assert len(payload["profiles"]) == 100
+def test_retired_destination_and_profile_resources_are_absent() -> None:
+    catalogue = mcp_resources.list_resources(OWNER)
+    resources = {row["uri"] for row in catalogue["resources"]}
+    templates = {row["uriTemplate"] for row in catalogue["resourceTemplates"]}
+    assert resources.isdisjoint({
+        "holdspeak://desk/inference-targets", "holdspeak://destinations",
+        "holdspeak://model-profiles",
+    })
+    assert templates.isdisjoint({
+        "holdspeak://destinations/{id}", "holdspeak://model-profiles/{id}",
+    })
+    for uri in ("holdspeak://destinations", "holdspeak://model-profiles"):
+        with pytest.raises(mcp_resources.ResourceError, match="Unknown resource"):
+            mcp_resources.read_resource(uri, OWNER)
 
 
 def test_workbench_resource_read_truncates_to_100(

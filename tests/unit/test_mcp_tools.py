@@ -3,6 +3,8 @@
 import json
 from types import SimpleNamespace
 
+import pytest
+
 from holdspeak.mcp import server
 from holdspeak.mcp import tools as mcp_tools
 from holdspeak.mcp.server import handle_message
@@ -14,7 +16,7 @@ REQUIRED_TOOLS = {
     "workbench.list_runs", "recipe.list", "recipe.get", "recipe.run", "recipe.chat",
     "zone.file", "zone.unfile", "zone.list_members", "kb.add_member",
     "kb.remove_member", "kb.list_members",
-    "ask.models", "ask.resolve_grounding", "ask.run", "ask.cancel", "ask.keep",
+    "ask.resolve_grounding", "ask.run", "ask.cancel", "ask.keep",
     "plugin_job.list", "plugin_job.summary", "plugin_job.retry", "plugin_job.cancel",
     "coder.list", "coder.get", "coder.audit", "memory.search",
     "settings.get", "settings.update",
@@ -29,6 +31,11 @@ REQUIRED_TOOLS = {
     "watch.list", "watch.create", "watch.set_enabled", "watch.refresh", "watch.preview",
     "event.list", "reaction.presets", "reaction.list", "reaction.create", "reaction.set_enabled",
     "reaction.process",
+    "model_library.get", "model_library.download", "model_library.add_to_library",
+    "model_library.use_model_file", "model_library.connect_hosted_model",
+    "model_library.define_endpoint", "model_library.connect_paired_device",
+    "inference_assignment.summary", "inference_assignment.editor", "inference_assignment.set",
+    "inference_assignment.preview_use_default", "inference_assignment.clear",
 }
 
 
@@ -42,6 +49,49 @@ def test_tools_list_exposes_pipeline_mcp_tools_with_closed_schemas() -> None:
         schema = tool["inputSchema"]
         assert schema["type"] == "object"
         assert schema["additionalProperties"] is False
+
+
+def test_retired_router_tools_are_absent_from_the_catalogue() -> None:
+    names = {tool["name"] for tool in mcp_tools.TOOLS}
+    retired = {
+        "ask.models",
+        "inference.download_and_use", "inference.use_existing_model",
+        "destination.list", "destination.get", "destination.create",
+        "destination.update", "destination.delete",
+        "model_profile.list", "model_profile.get", "model_profile.create",
+        "model_profile.bind", "model_profile.probe", "model_profile.unbind",
+        "model_profile.delete",
+    }
+    assert not (names & retired)
+    assert "inference.cancel_model_acquisition" in names
+
+
+def test_retired_shapes_refuse_before_mcp_dispatch(monkeypatch) -> None:
+    touched = []
+
+    def no_database():
+        touched.append("database")
+        raise AssertionError("a retired shape reached MCP composition")
+
+    monkeypatch.setattr(mcp_tools, "get_database", no_database)
+    for name in (
+        "inference.download_and_use", "inference.use_existing_model",
+        "destination.list", "model_profile.bind", "ask.models",
+    ):
+        with pytest.raises(mcp_tools.ToolError, match="Unknown tool"):
+            mcp_tools.dispatch(name, {}, object())
+    for name, arguments in (
+        ("ask.run", {"question": "no", "inference_target_id": "retired"}),
+        ("sequence.run", {"chain_id": "chain", "inference_target_id": "retired"}),
+        ("workflow.run", {"workflow_id": "workflow", "inference_target_id": "retired"}),
+        ("recipe.run", {"recipe_id": "recipe", "options": {"inference_target_id": "retired"}}),
+        ("recipe.chat", {"recipe_id": "recipe", "question": "no", "options": {"inference_target_id": "retired"}}),
+        ("workbench.create", {"name": "No", "fields": {"profile_id": "retired"}}),
+        ("workbench.update", {"workbench_id": "wb", "fields": {"resolver_profile_id": "retired"}}),
+    ):
+        with pytest.raises(mcp_tools.ToolError, match="Invalid arguments"):
+            mcp_tools.dispatch(name, arguments, object())
+    assert touched == []
 
 
 def test_pipeline_tools_dispatch_through_mcp_protocol(monkeypatch) -> None:
@@ -74,7 +124,6 @@ def test_pipeline_tools_dispatch_through_mcp_protocol(monkeypatch) -> None:
     monkeypatch.setattr(mcp_tools, "RecipeService", Recipes)
     monkeypatch.setattr(mcp_tools, "PrimitiveService", Primitives)
     monkeypatch.setattr(mcp_tools, "MeetingService", lambda db, **kw: object())
-    monkeypatch.setattr(mcp_tools, "ProfileService", lambda db, **kw: object())
     monkeypatch.setattr(mcp_tools, "DictationService", lambda db, **kw: object())
     monkeypatch.setattr(mcp_tools, "DeskService", lambda db, **kw: object())
     monkeypatch.setattr(server, "resolve_auth", lambda: SimpleNamespace(principal=object()))

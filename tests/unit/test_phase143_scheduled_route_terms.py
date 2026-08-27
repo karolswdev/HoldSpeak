@@ -88,11 +88,18 @@ def test_schedule_fire_consumes_enabled_route_and_owner_reapproval_mints_later_r
     assert child is not None and frozen is not None
     assert child["target_ref"] == f"deployment-revision:{frozen['deployment_revision_id']}"
 
-    # An explicit owner change revokes the old authority. Re-enable is a later
-    # owner decision and therefore freezes a distinct source route.
-    service.update_workbench(OWNER, workbench_id, profile_id=replacement.id)
-    assert ScheduleDelegationService(db).live(workbench_id) is None
+    # An explicit owner disables the old delegation, changes the canonical
+    # assignment, then re-enables. The later owner decision freezes a distinct
+    # source route without using the retired Workbench profile write-through.
     service.update_workbench(OWNER, workbench_id, schedule_enabled=False)
+    assert ScheduleDelegationService(db).live(workbench_id) is None
+    amended_current = assignments.get_assignment(OWNER, scope)
+    assignments.set_assignment(OWNER, {
+        "command_id": "amended-workbench-assignment",
+        "expected_revision": amended_current["revision"],
+        "scope": scope,
+        "entries": [{"profile_id": f"legacy-{replacement.id}"}],
+    })
     service.update_workbench(OWNER, workbench_id, schedule_enabled=True)
     amended = ScheduleDelegationService(db).live(workbench_id)
     assert amended is not None and amended["id"] != enabled["id"]

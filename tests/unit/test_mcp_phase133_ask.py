@@ -58,10 +58,6 @@ class StubAskService:
         self._init_kwargs = kwargs
         self.calls: list[tuple[str, tuple, dict]] = []
 
-    def list_models(self, principal: Principal) -> list[dict[str, Any]]:
-        self.calls.append(("list_models", (principal,), {}))
-        return [{"id": "this_machine", "name": "test-model", "source": "hub"}]
-
     def resolve_grounding(self, principal: Principal, refs: list[str]) -> dict[str, Any]:
         self.calls.append(("resolve_grounding", (principal, refs), {}))
         return {"refs": refs, "titles": ["Title A"], "chars": 42, "blocks": []}
@@ -96,15 +92,16 @@ def _patch_ask(monkeypatch: pytest.MonkeyPatch):
 
 
 # ---------------------------------------------------------------------------
-# 1. Catalogue: all five tools appear with closed schemas
+# 1. Catalogue: the four assignment-safe tools appear with closed schemas
 # ---------------------------------------------------------------------------
 
 def test_ask_tools_appear_in_catalogue() -> None:
     response = handle_message({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
     assert response is not None
     names = {t["name"] for t in response["result"]["tools"]}
-    expected = {"ask.models", "ask.resolve_grounding", "ask.run", "ask.cancel", "ask.keep"}
+    expected = {"ask.resolve_grounding", "ask.run", "ask.cancel", "ask.keep"}
     assert expected <= names, f"missing: {expected - names}"
+    assert "ask.models" not in names
 
 
 def test_ask_tools_have_closed_schemas() -> None:
@@ -120,13 +117,6 @@ def test_ask_tools_have_closed_schemas() -> None:
 # ---------------------------------------------------------------------------
 # 2. Dispatch tests: each tool dispatches to the correct service method
 # ---------------------------------------------------------------------------
-
-def test_dispatch_ask_models(_patch_ask) -> None:
-    stub = _patch_ask
-    payload = _call_ok("ask.models", {})
-    assert payload == [{"id": "this_machine", "name": "test-model", "source": "hub"}]
-    assert stub.calls[-1][0] == "list_models"
-
 
 def test_dispatch_ask_resolve_grounding(_patch_ask) -> None:
     stub = _patch_ask
