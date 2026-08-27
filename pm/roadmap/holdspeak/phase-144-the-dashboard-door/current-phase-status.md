@@ -110,7 +110,7 @@ with dispositions — no counsel round was spent:
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-144-01 | The Door read model | done | [story-01](./story-01-door-read-model.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-144-02 | Calendar ingest (ICS first) | backlog | [story-02](./story-02-calendar-ingest-ics.md) | — |
+| HS-144-02 | Calendar ingest (ICS first) | in-progress | [story-02](./story-02-calendar-ingest-ics.md) | — |
 | HS-144-03 | The kanban on glass | backlog | [story-03](./story-03-kanban-on-glass.md) | — |
 | HS-144-04 | The upcoming rail + doorframe repairs | backlog | [story-04](./story-04-upcoming-rail-and-repairs.md) | — |
 | HS-144-05 | Docs | backlog | [story-05](./story-05-docs.md) | — |
@@ -150,3 +150,10 @@ two zero-product-bug opus audits; close sweep baseline-exact, zero
 branch-new (evidence-story-01.md carries the capture chain + triage).
 One ledger note carried: the theoretical pagination spin (outside the
 YOLO bar).
+
+- 2026-08-27 — HS-144-03 scope amendment (visible): the glass plan
+  found `people.commitment.transition` is MCP-only — the Door
+  aggregate advertises a verb the browser cannot reach. Story 03
+  slice 0 adds the one thin HTTP route over the same application
+  service, parity-proven. Recorded here per the amendment duty; the
+  owner may overrule at the sitting.

@@ -54,10 +54,15 @@ from .device import (  # noqa: F401
     WakeWordConfig,
 )
 
-# Integrations: Cadence, Telegram, Rails observer
+# Integrations: Cadence, Telegram, Rails observer, calendar ingest
 from .integrations import (  # noqa: F401
+    CALENDAR_REFRESH_SECONDS,
     CadenceConfig,
+    CalendarConfig,
     RailsObserverConfig,
     TelegramConfig,
     ThoughtsConfig,
+    calendar_subscription_revision,
+    calendar_subscription_summary,
+    validate_calendar_subscription,
 )

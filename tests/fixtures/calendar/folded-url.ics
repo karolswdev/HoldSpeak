@@ -1,0 +1,12 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//HoldSpeak//Calendar parser test//EN
+BEGIN:VEVENT
+UID:folded-1
+DTSTART:20260828T100000Z
+DTEND:20260828T110000Z
+SUMMARY:Planning\, review\; now
+URL:https://meet.example.test/join/abcdef?token=one
+ andtwo
+END:VEVENT
+END:VCALENDAR

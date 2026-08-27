@@ -51,6 +51,10 @@ The Door's kanban puts it ON the front door.
 - The upcoming rail and schedule-create (HS-144-04).
 - New write verbs or backend changes (glass consumes HS-144-01 as-is;
   a missing need goes back to 01, not into an ad-hoc route).
+  **Amended 2026-08-27 (visible, owner may overrule):** the plan found
+  `people.commitment.transition` has no browser-reachable HTTP route —
+  slice 0 adds that ONE thin route over the exact service the MCP tool
+  calls, with parity proof. Nothing else re-enters scope.
 - Drag-reordering WITHIN a column (no board-position store — settled
   design §2).
 

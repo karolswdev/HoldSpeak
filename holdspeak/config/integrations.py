@@ -4,8 +4,103 @@ Extracted from the monolithic ``holdspeak/config.py``.
 """
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from typing import Optional
+from urllib.parse import urlsplit
+
+
+CALENDAR_REFRESH_SECONDS = 900
+
+
+@dataclass
+class CalendarConfig:
+    """The one owner-configured ICS source (HS-144-02)."""
+
+    subscription: str = ""
+
+    def __post_init__(self) -> None:
+        self.subscription = str(self.subscription or "").strip()
+
+
+def validate_calendar_subscription(value: object) -> str:
+    """Normalize and validate the one calendar source at the write boundary.
+
+    Plain text is a local path.  Anything carrying a URI scheme must be an
+    ordinary HTTPS URL with a host and without embedded credentials or a
+    fragment.  Fetch mechanics deliberately live in the later ingest slice.
+    """
+    if not isinstance(value, str):
+        raise ValueError("calendar.subscription must be a string")
+    source = value.strip()
+    if not source:
+        return ""
+
+    parsed = urlsplit(source)
+    # Windows drive-letter paths are local files even though urlsplit sees a
+    # one-character scheme.  They remain useful in shared config fixtures.
+    is_windows_path = (
+        len(parsed.scheme) == 1
+        and len(source) >= 3
+        and source[1] == ":"
+        and source[2] in {"/", "\\"}
+    )
+    if parsed.scheme and not is_windows_path:
+        if parsed.scheme.lower() != "https":
+            raise ValueError("calendar.subscription must be a file path or HTTPS URL")
+        try:
+            port = parsed.port
+        except ValueError as exc:
+            raise ValueError("calendar.subscription has an invalid HTTPS port") from exc
+        if not parsed.hostname:
+            raise ValueError("calendar.subscription HTTPS URL must include a host")
+        if parsed.username is not None or parsed.password is not None:
+            raise ValueError("calendar.subscription HTTPS URL cannot include userinfo")
+        if parsed.fragment:
+            raise ValueError("calendar.subscription HTTPS URL cannot include a fragment")
+        if port is not None and not (0 < port <= 65535):
+            raise ValueError("calendar.subscription has an invalid HTTPS port")
+    return source
+
+
+def calendar_subscription_revision(subscription: object) -> str:
+    """Return the stable source fingerprint used by the calendar projection."""
+    normalized = validate_calendar_subscription(subscription)
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def calendar_subscription_summary(subscription: object) -> dict[str, object]:
+    """Produce the non-persisted source/egress fact for Settings transports."""
+    try:
+        source = validate_calendar_subscription(subscription)
+    except ValueError:
+        return {
+            "kind": "invalid",
+            "host": "",
+            "refresh_seconds": CALENDAR_REFRESH_SECONDS,
+            "egress": False,
+        }
+    if not source:
+        return {
+            "kind": "disabled",
+            "host": "",
+            "refresh_seconds": CALENDAR_REFRESH_SECONDS,
+            "egress": False,
+        }
+    parsed = urlsplit(source)
+    if parsed.scheme.lower() == "https":
+        return {
+            "kind": "https",
+            "host": str(parsed.hostname or "").lower(),
+            "refresh_seconds": CALENDAR_REFRESH_SECONDS,
+            "egress": True,
+        }
+    return {
+        "kind": "file",
+        "host": "",
+        "refresh_seconds": CALENDAR_REFRESH_SECONDS,
+        "egress": False,
+    }
 
 
 @dataclass
