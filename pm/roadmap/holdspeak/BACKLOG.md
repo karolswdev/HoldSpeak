@@ -837,3 +837,47 @@ rather than current open work.
    eight hubs live, so load is the likely explanation — but it is
    unproven. The owner did not report it as slow on his walk. Worth one
    clean measurement.
+
+### AE. The Calendar Snapshot adapter — screenshot → reviewed events → a file CalendarSource (O365-without-the-server)
+
+Filed 2026-08-28 from the owner's direction, mid-Phase-146: *"most of
+the time I will certainly not have access to the server my work's
+O365's. Any way we could somehow build an adapter? e.g., I take a
+screenshot of my whole week, and the adapter essentially translates
+that into individual .icses."*
+
+The shape (grounded in what ships with 146):
+
+1. The owner drops one or more screenshots of the O365/OWA week view
+   into HoldSpeak (desk drop / a dedicated affordance beside the
+   calendar list editor).
+2. A vision-capable model — through the intelligence router's
+   assignments, so local-first with the egress badge telling the
+   truth if a cloud model reads the owner's work calendar — extracts
+   events: title, weekday, start, end, location.
+3. **Week anchoring:** the screenshot's date header is read when
+   visible; otherwise one confirm field ("week of …"). Never guessed
+   silently.
+4. **Review before commit** (the preview-before-type doctrine): the
+   extracted events render as an editable list; the owner confirms.
+   No silent writes from a model read of a screenshot, ever.
+5. HoldSpeak writes a local `.ics` and registers/updates a
+   **file-based CalendarSource** (label e.g. "O365 SNAPSHOT"). From
+   there Phase 146's machinery does everything: the bounded
+   hostile-input parser stays the one trust boundary (the model's
+   output is parsed like any feed), replace-on-success means each new
+   snapshot batch replaces that source's projection, provenance chips
+   name it on the rail, per-source last-good protects the other
+   calendars.
+
+Why this beats the Phase-135-era "black-box OWA/Playwright" ruling
+for the no-server case: corporate SSO/2FA makes driven-browser
+automation brittle and credential-adjacent; a screenshot is something
+the owner already can take on any locked-down machine, and the
+adapter never touches work credentials at all. Zero new wire surface;
+zero schema beyond 146's.
+
+Open questions for the charter: which vision assignment (local .43
+capability vs cloud with badge); multi-screenshot stitching for
+overflowing weeks; whether the review step reuses the Thought/refine
+surface or gets a small dedicated one.
