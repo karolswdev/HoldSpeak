@@ -19,7 +19,8 @@ import pytest
 pytest.importorskip("playwright.sync_api", reason="glass walk needs Playwright")
 pytest.importorskip("fastapi.testclient", reason="glass walk needs web dependencies")
 
-ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-03-shots"
+DOOR_ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-03-shots"
+RAIL_ASSETS = Path(__file__).resolve().parents[2] / "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-04-shots"
 TOKEN = "hs144-door-glass"
 
 
@@ -66,7 +67,8 @@ def _record_console(errors: list[str], message: Any, *, expected_http_statuses: 
 
 
 def _start_hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, str]:
-    ASSETS.mkdir(parents=True, exist_ok=True)
+    DOOR_ASSETS.mkdir(parents=True, exist_ok=True)
+    RAIL_ASSETS.mkdir(parents=True, exist_ok=True)
     import holdspeak.config as config_module
     import holdspeak.db.core as db_core
     from holdspeak.db import reset_database
@@ -169,6 +171,61 @@ def _seed_populated_door(page: Any) -> dict[str, str]:
     return {"thought_id": thought_id, "overdue_id": "hs144-overdue"}
 
 
+def _seed_future_schedule(page: Any, title: str) -> dict[str, Any]:
+    """Use the production schedule authority for an honest future rail row."""
+    starts = datetime.now(timezone.utc).replace(second=0, microsecond=0) + timedelta(hours=3)
+    result = _api(page, "POST", "/api/scheduled-recordings", {
+        "title": title,
+        "cron_expr": f"{starts.minute} {starts.hour} {starts.day} {starts.month} *",
+        "tz": "UTC",
+        "one_shot": True,
+        "duration_minutes": 30,
+        "enabled": True,
+    })
+    assert result["schedule"]["title"] == title
+    return result["schedule"]
+
+
+def _seed_calendar_fixture_via_settings(page: Any, tmp_path: Path) -> None:
+    """Write a local ICS source through Settings, then apply it through its conductor."""
+    starts = datetime.now(timezone.utc).replace(second=0, microsecond=0) + timedelta(hours=2)
+    ends = starts + timedelta(minutes=45)
+    fixture = tmp_path / "door-upcoming.ics"
+    fixture.write_text(
+        "\r\n".join([
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//HoldSpeak//Door glass//EN",
+            "BEGIN:VEVENT",
+            "UID:hs144-calendar-fixture",
+            f"DTSTART:{starts.strftime('%Y%m%dT%H%M%SZ')}",
+            f"DTEND:{ends.strftime('%Y%m%dT%H%M%SZ')}",
+            "SUMMARY:Door Calendar Fixture",
+            "LOCATION:Room 4",
+            "URL:https://meet.example.test/door-fixture",
+            "END:VEVENT",
+            "END:VCALENDAR",
+            "",
+        ]),
+        encoding="utf-8",
+    )
+    saved = _api(page, "PUT", "/api/settings", {
+        "calendar": {"subscription": str(fixture)},
+    })
+    assert saved["settings"]["_calendar_subscription"]["kind"] == "file"
+
+    from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
+
+    # This is the production reader + parser + projection replacement; the
+    # browser never receives a mocked Door response or a projection-table write.
+    assert CalendarIngestConductor().refresh() is True
+    door = _api(page, "GET", "/api/door")
+    assert any(
+        item["source"] == "calendar_event" and item["title"] == "Door Calendar Fixture"
+        for item in door["upcoming"]
+    )
+
+
 def _door_column(page: Any, name: str) -> Any:
     return page.locator(".door-board-column", has=page.get_by_role("heading", name=name, exact=True))
 
@@ -261,7 +318,9 @@ def test_hs144_door_populated_glass_action_refusal_and_shots(
             assert "thought · idle · updated now" in active_card.inner_text()
             page.get_by_role("heading", name="MEETINGS", exact=True).wait_for()
             meetings = page.locator('[data-lane="meetings"]')
-            assert meetings.get_by_text("Door Glass Recording", exact=True).is_visible()
+            rail = door.locator(".door-upcoming-rail")
+            assert rail.get_by_text("Door Glass Recording", exact=True).is_visible()
+            assert meetings.get_by_text("Door Glass Recording", exact=True).count() == 0
             agents = page.locator('[data-lane="agents"]')
             agents.get_by_text("No sessions", exact=True).wait_for()
             assert agents.get_by_role("heading", name="AGENTS · CREW 0 · BLOCKED 0", exact=True).is_visible()
@@ -305,7 +364,7 @@ def test_hs144_door_populated_glass_action_refusal_and_shots(
             assert lower_band is not None
             assert abs(lower_band["meetingsWidth"] - lower_band["agentsWidth"]) <= 0.5, lower_band
             assert abs(lower_band["meetingsTop"] - lower_band["agentsTop"]) <= 0.5, lower_band
-            page.screenshot(path=str(ASSETS / "door-populated-1440.png"), full_page=False)
+            page.screenshot(path=str(DOOR_ASSETS / "door-populated-1440.png"), full_page=False)
 
             # A named Door descriptor calls its production route; the settled card
             # disappears only after the board reloads from the aggregate.
@@ -317,7 +376,9 @@ def test_hs144_door_populated_glass_action_refusal_and_shots(
                 "now": 1,
                 "waiting": 1,
                 "active": 1,
-                "upcoming_today": 0,
+                # The production schedule seeded above is a separate Door
+                # rail source, so this aggregate must retain its one upcoming row.
+                "upcoming_today": 1,
             }
 
             # Drift the thought through its genuine custody endpoint while the
@@ -341,7 +402,7 @@ def test_hs144_door_populated_glass_action_refusal_and_shots(
             board_viewport = door.locator(".door-board-viewport")
             assert board_viewport.evaluate("el => el.scrollWidth > el.clientWidth")
             _assert_clean(page, errors)
-            page.screenshot(path=str(ASSETS / "door-populated-393.png"), full_page=False)
+            page.screenshot(path=str(DOOR_ASSETS / "door-populated-393.png"), full_page=False)
 
             # Phase-143 review convention: 720 CSS px at DSF 2 yields a 1440 px
             # owner artifact while testing the 200% layout, not a fake CSS zoom.
@@ -359,7 +420,7 @@ def test_hs144_door_populated_glass_action_refusal_and_shots(
             zoom_done.focus()
             assert zoom_done.evaluate("el => document.activeElement === el && el.matches(':focus-visible')")
             _assert_clean(zoom_page, zoom_errors)
-            zoom_page.screenshot(path=str(ASSETS / "door-populated-1440-zoom200.png"), full_page=False)
+            zoom_page.screenshot(path=str(DOOR_ASSETS / "door-populated-1440-zoom200.png"), full_page=False)
             zoom_context.close()
 
             # The header is the re-homed one-click Brief capability, not a second
@@ -397,7 +458,7 @@ def test_hs144_door_empty_and_error_shots(
             empty = page.locator(".door-board-section")
             empty.get_by_text("Door clear", exact=True).wait_for()
             _assert_clean(page, errors)
-            page.screenshot(path=str(ASSETS / f"door-empty-{width}.png"), full_page=False)
+            page.screenshot(path=str(DOOR_ASSETS / f"door-empty-{width}.png"), full_page=False)
 
             def refused_door(_self: DoorService, _principal: Any) -> dict[str, Any]:
                 raise RuntimeError("controlled Door glass refusal")
@@ -408,7 +469,297 @@ def test_hs144_door_empty_and_error_shots(
             error_state = page.locator('.door-board-section .surface-state[data-kind="error"]')
             error_state.get_by_text("HoldSpeak could not complete that request (HTTP 500).", exact=True).wait_for()
             _assert_clean(page, errors)
-            page.screenshot(path=str(ASSETS / f"door-error-{width}.png"), full_page=False)
+            page.screenshot(path=str(DOOR_ASSETS / f"door-error-{width}.png"), full_page=False)
+            browser.close()
+    finally:
+        server.stop()
+        reset_database()
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+def test_upcoming_rail_real_hub_states_and_dimensions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One actual Door aggregate moves empty → schedule-only → mixed chronology."""
+    from playwright.sync_api import sync_playwright
+    from holdspeak.db import reset_database
+
+    server, url = _start_hub(tmp_path, monkeypatch)
+    errors: list[str] = []
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda error: errors.append(f"page: {error}"))
+            page.on("console", lambda message: _record_console(errors, message))
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _normal_chair(page)
+
+            door = page.locator(".door-board-section")
+            empty_rail = door.locator(".door-upcoming-rail")
+            empty_rail.get_by_text("No future time scheduled.", exact=True).wait_for()
+            _assert_clean(page, errors)
+            page.screenshot(path=str(RAIL_ASSETS / "rail-empty-1440.png"), full_page=False)
+
+            # Calendar-less is ordinary: the real recording authority creates
+            # the only upcoming row, with no second MeetingsLane projection.
+            _seed_future_schedule(page, "Rail-only recording")
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            door = page.locator(".door-board-section")
+            rail = door.locator(".door-upcoming-rail")
+            rail.get_by_text("Rail-only recording", exact=True).wait_for()
+            assert rail.locator('[data-upcoming-source="scheduled_recording"]').count() == 1
+            assert rail.locator('[data-upcoming-source="calendar_event"]').count() == 0
+            assert page.locator('[data-lane="meetings"]').get_by_text(
+                "Rail-only recording", exact=True,
+            ).count() == 0
+
+            # The one Story-02 setting reaches the real file reader, parser,
+            # conductor and production projection before Door reads it back.
+            _seed_calendar_fixture_via_settings(page, tmp_path)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            door = page.locator(".door-board-section")
+            rail = door.locator(".door-upcoming-rail")
+            rail.get_by_text("Door Calendar Fixture", exact=True).wait_for()
+            rail.get_by_text("Rail-only recording", exact=True).wait_for()
+            rows = rail.locator(".door-upcoming-row")
+            assert rows.evaluate_all(
+                "rows => rows.map(row => row.dataset.upcomingSource)",
+            ) == ["calendar_event", "scheduled_recording"]
+            assert rail.get_by_text("EVENT", exact=True).is_visible()
+            assert rail.get_by_text("SCHEDULED RECORDING", exact=True).is_visible()
+            assert rail.get_by_text("Room 4", exact=True).is_visible()
+            assert rail.get_by_role("link", name="Meeting link", exact=True).is_visible()
+            assert page.locator('[data-lane="meetings"]').get_by_text(
+                "Rail-only recording", exact=True,
+            ).count() == 0
+            _assert_clean(page, errors)
+            page.screenshot(path=str(RAIL_ASSETS / "rail-populated-1440.png"), full_page=False)
+
+            page.set_viewport_size({"width": 393, "height": 900})
+            rail.get_by_text("Door Calendar Fixture", exact=True).wait_for()
+            _assert_clean(page, errors)
+            page.screenshot(path=str(RAIL_ASSETS / "rail-populated-393.png"), full_page=False)
+
+            # 720 CSS px at DSF 2 is the actual 200% review condition.
+            zoom_context = browser.new_context(
+                viewport={"width": 720, "height": 450}, device_scale_factor=2,
+            )
+            zoom_page = zoom_context.new_page()
+            zoom_errors: list[str] = []
+            zoom_page.emulate_media(reduced_motion="reduce")
+            zoom_page.on("pageerror", lambda error: zoom_errors.append(f"page: {error}"))
+            zoom_page.on("console", lambda message: _record_console(zoom_errors, message))
+            zoom_page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _normal_chair(zoom_page)
+            zoom_page.locator(".door-upcoming-rail").get_by_text(
+                "Door Calendar Fixture", exact=True,
+            ).wait_for()
+            _assert_clean(zoom_page, zoom_errors)
+            zoom_page.screenshot(
+                path=str(RAIL_ASSETS / "rail-populated-1440-zoom200.png"),
+                full_page=False,
+            )
+            zoom_context.close()
+            browser.close()
+    finally:
+        server.stop()
+        reset_database()
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+def test_upcoming_rail_schedule_create_round_trip_and_form_cancel(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The rail reuses the in-world form and the existing schedule writer."""
+    from playwright.sync_api import sync_playwright
+    from holdspeak.db import reset_database
+
+    server, url = _start_hub(tmp_path, monkeypatch)
+    errors: list[str] = []
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda error: errors.append(f"page: {error}"))
+            page.on("console", lambda message: _record_console(errors, message))
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _normal_chair(page)
+            rail = page.locator(".door-upcoming-rail")
+
+            rail.get_by_role("button", name="Schedule recording", exact=True).click()
+            form = page.locator("#schedule\\:__create__")
+            form.wait_for()
+            assert form.get_by_role("button", name="Speak Title", exact=True).is_visible()
+            form.get_by_role("button", name="Cancel", exact=True).click()
+            form.wait_for(state="detached")
+            assert _api(page, "GET", "/api/scheduled-recordings")["schedules"] == []
+
+            rail.get_by_role("button", name="Schedule recording", exact=True).click()
+            form = page.locator("#schedule\\:__create__")
+            form.get_by_role("textbox", name="Title", exact=True).fill("Rail form recording")
+            form.get_by_test_id("schedule-create-submit").click()
+            form.wait_for(state="detached")
+            rail.get_by_text("Rail form recording", exact=True).wait_for()
+            schedules = _api(page, "GET", "/api/scheduled-recordings")["schedules"]
+            assert [schedule["title"] for schedule in schedules] == ["Rail form recording"]
+            assert page.locator('[data-lane="meetings"]').get_by_text(
+                "Rail form recording", exact=True,
+            ).count() == 0
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+        reset_database()
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+def test_go_menu_is_usable_at_393(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Compact Go is the existing WorkMenu and opens its registered application."""
+    from playwright.sync_api import sync_playwright
+    from holdspeak.db import reset_database
+
+    server, url = _start_hub(tmp_path, monkeypatch)
+    errors: list[str] = []
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 393, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda error: errors.append(f"page: {error}"))
+            page.on("console", lambda message: _record_console(errors, message))
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _normal_chair(page)
+
+            go = page.get_by_role("button", name="Go", exact=True)
+            go.wait_for()
+            go.click()
+            menu = page.get_by_role("menu", name="Go menu")
+            meetings_item = menu.get_by_role("menuitem", name="Meetings")
+            meetings_item.wait_for()
+            _assert_clean(page, errors)
+            page.screenshot(path=str(RAIL_ASSETS / "go-menu-393.png"), full_page=False)
+            meetings_item.click()
+            page.locator("#surface-meetings").wait_for()
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+        reset_database()
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+def test_meetings_settings_calendar_glass_and_egress_fact(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Meetings owns the one calendar setting and its backend-derived egress fact."""
+    from playwright.sync_api import sync_playwright
+    from holdspeak.db import reset_database
+
+    server, url = _start_hub(tmp_path, monkeypatch)
+    errors: list[str] = []
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda error: errors.append(f"page: {error}"))
+            page.on("console", lambda message: _record_console(errors, message))
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _normal_chair(page)
+            saved = _api(page, "PUT", "/api/settings", {
+                "calendar": {"subscription": "https://calendar.example.test/team.ics"},
+            })
+            assert saved["settings"]["_calendar_subscription"] == {
+                "kind": "https",
+                "host": "calendar.example.test",
+                "refresh_seconds": 900,
+                "egress": True,
+            }
+
+            # Open Settings through its normal Go registry path; the settings
+            # window retains the browser's authorized root context.
+            page.get_by_role("button", name="Go", exact=True).click()
+            go_menu = page.get_by_role("menu", name="Go menu")
+            go_menu.get_by_role("menuitem", name="Settings").click()
+            settings = page.locator("#surface-settings")
+            settings.wait_for()
+            # A listitem's content is intentionally not its accessible name;
+            # select the actual tile button by its visible module label.
+            settings.locator("button.prefs-tile", has_text="MEETINGS").click()
+            subscription = settings.get_by_role(
+                "textbox", name="Calendar subscription", exact=True,
+            )
+            subscription.wait_for()
+            assert settings.get_by_role(
+                "button", name="Speak Calendar subscription", exact=True,
+            ).is_visible()
+            assert settings.get_by_text(
+                "FETCHES CALENDAR.EXAMPLE.TEST · 15 MIN", exact=True,
+            ).is_visible()
+            _assert_clean(page, errors)
+            page.screenshot(path=str(RAIL_ASSETS / "settings-calendar-1440.png"), full_page=False)
+
+            # File and disabled inputs retain their truthful no-egress state.
+            for source in [str(tmp_path / "calendar.ics"), ""]:
+                fact = _api(page, "PUT", "/api/settings", {
+                    "calendar": {"subscription": source},
+                })["settings"]["_calendar_subscription"]
+                assert fact["egress"] is False
+            browser.close()
+    finally:
+        server.stop()
+        reset_database()
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+def test_meetings_deep_link_waits_for_registered_surface_x15(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Fifteen serial fresh /meetings arrivals wait for actual registry completion."""
+    from playwright.sync_api import sync_playwright
+    from holdspeak.db import reset_database
+
+    server, url = _start_hub(tmp_path, monkeypatch)
+    errors: list[str] = []
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            context = browser.new_context(viewport={"width": 1440, "height": 900})
+            arrival = context.new_page()
+            arrival.emulate_media(reduced_motion="reduce")
+            arrival.on("pageerror", lambda error: errors.append(f"page: {error}"))
+            arrival.on("console", lambda message: _record_console(errors, message))
+            arrival.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _normal_chair(arrival)
+            arrival.close()
+
+            # These are fifteen independent document loads, not retries: each
+            # must queue the demoted route before React registers its Door rows.
+            for navigation in range(1, 16):
+                page = context.new_page()
+                page.emulate_media(reduced_motion="reduce")
+                page.on("pageerror", lambda error: errors.append(f"{navigation}: {error}"))
+                page.on("console", lambda message: _record_console(errors, message))
+                page.goto(f"{url}/meetings?token={TOKEN}", wait_until="load")
+                page.locator('[data-surface-registry-state="registered"]').wait_for(state="attached")
+                page.locator("#surface-meetings").wait_for()
+                assert page.locator("#surface-meetings").is_visible()
+                print(f"deep-link {navigation:02d}/15 registry=registered meetings=visible")
+                _assert_clean(page, errors)
+                page.close()
+            context.close()
             browser.close()
     finally:
         server.stop()

@@ -766,10 +766,34 @@
   cursor: default;
 }
 @media (max-width: 720px) {
-  /* The phone's bar has no room for pull-downs; the shelf reaches
-     every verb there (one registry, the palette face). */
+  /* The compact bar keeps its navigator as one deliberately framed control,
+     not a stray desktop title: Go is the app door at phone width while the
+     palette still carries Desk/Object/Window from the same registry. */
   .desk-verbbar {
+    display: inline-flex;
+    align-self: stretch;
+    flex: 0 0 auto;
+    align-items: stretch;
+    margin-inline: 1px;
+    border-inline: 1px solid var(--border);
+    box-shadow: inset 1px 0 var(--bevel-light), inset -1px 0 var(--shade-1);
+  }
+  .desk-verbbar-item:not([data-menu-id="go"]) {
     display: none;
+  }
+  .desk-verbbar-item[data-menu-id="go"] {
+    display: inline-flex;
+    align-items: stretch;
+  }
+  .desk-verbbar-item[data-menu-id="go"] .desk-verbbar-title {
+    min-height: 26px;
+    padding-inline: 8px;
+    color: var(--text);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .desk-verbbar-item[data-menu-id="go"] .desk-verbbar-title.on {
+    box-shadow: inset 0 -2px 0 var(--accent);
   }
   /* Keep the bar's two truthful clusters in the phone width. The privacy
      badge remains a labeled control (and retains its full title/aria label),

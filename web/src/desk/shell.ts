@@ -9,6 +9,9 @@ export type SurfaceOpener = (scope?: string) => void;
 
 const surfaces = new Map<string, SurfaceOpener>();
 const pendingOpens: Array<{ key: string; scope?: string }> = [];
+const STAGED_SURFACE_OPEN_KEY = "hs.desk.staged-surface-open";
+
+type StagedSurfaceOpen = { key: string; scope?: string };
 
 /** Register a window opener for a surface key. Returns the unregister.
  * Registration flushes any queued deep-link opens for the key (a demoted
@@ -30,6 +33,40 @@ export function registerSurface(key: string, opener: SurfaceOpener) {
  * demoted-route arrival path). */
 export function openSurfaceWhenReady(key: string, scope?: string): void {
   if (!openSurface(key, scope)) pendingOpens.push({ key, scope });
+}
+
+/** Stage one demoted-route intent until normal SurfaceWindows has finished
+ * registering. Session storage survives the route hand-off but is consumed
+ * exactly once by the normal registry; first-value recovery deliberately
+ * leaves it alone because it only registers Setup. */
+export function stageSurfaceOpen(key: string, scope?: string): void {
+  try {
+    sessionStorage.setItem(STAGED_SURFACE_OPEN_KEY, JSON.stringify({ key, scope }));
+  } catch {
+    // Storage can be unavailable; the legacy in-memory dispatcher is still
+    // preferable to abandoning a lawful deep link.
+    openSurfaceWhenReady(key, scope);
+  }
+}
+
+export function consumeStagedSurfaceOpen(): StagedSurfaceOpen | null {
+  try {
+    const raw = sessionStorage.getItem(STAGED_SURFACE_OPEN_KEY);
+    sessionStorage.removeItem(STAGED_SURFACE_OPEN_KEY);
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      typeof (parsed as StagedSurfaceOpen).key === "string"
+    ) {
+      const { key, scope } = parsed as StagedSurfaceOpen;
+      return typeof scope === "string" ? { key, scope } : { key };
+    }
+  } catch {
+    // An invalid/stale browser value must not block ordinary Desk startup.
+  }
+  return null;
 }
 
 /** Open a surface in-world. False = not yet registered (legacy fallback). */

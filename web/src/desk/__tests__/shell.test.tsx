@@ -12,7 +12,12 @@ import {
   resizeEdge,
   snapForPointer,
 } from "../components/DeskWindow";
-import { openSurface, registerSurface, __resetSurfaces } from "../shell";
+import {
+  openSurface,
+  openSurfaceWhenReady,
+  registerSurface,
+  __resetSurfaces,
+} from "../shell";
 import { useDesk } from "../store";
 
 beforeEach(() => {
@@ -282,5 +287,14 @@ describe("the surface dispatcher", () => {
     expect(openSurface("review-meetings")).toBe(false);
     off();
     expect(openSurface("dictate")).toBe(false);
+  });
+
+  it("flushes a Meetings deep-link queued before the normal registry exists", () => {
+    const opened: Array<string | undefined> = [];
+    openSurfaceWhenReady("review-meetings", "meeting:door-proof");
+    const off = registerSurface("review-meetings", (scope) => opened.push(scope));
+
+    expect(opened).toEqual(["meeting:door-proof"]);
+    off();
   });
 });
