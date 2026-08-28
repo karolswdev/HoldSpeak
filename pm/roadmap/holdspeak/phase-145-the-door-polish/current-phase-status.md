@@ -1,6 +1,9 @@
 # Phase 145 — The Door Polish
 
-**Status:** in progress (2/3).
+**Status:** complete (3/3). Close counsel RATIFY-WITH-CONCERNS (zero
+should-fixes; all concerns ledger-grade, dispositions in the decision
+log). Owner gates open: shot verdicts + the merge word for the
+stacked 144→145 line.
 
 **Last updated:** 2026-08-28.
 
@@ -73,7 +76,7 @@ same day; no counsel round was spent on the charter:
 | --- | --- | --- | --- | --- |
 | HS-145-01 | The board scroll hint | done | [story-01](./story-01-board-scroll-hint.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-145-02 | The connect-calendar affordance | done | [story-02](./story-02-connect-calendar.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-145-03 | Shots and the close | ready | [story-03](./story-03-shots-and-close.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-145-03 | Shots and the close | done | [story-03](./story-03-shots-and-close.md) | [evidence-story-03](./evidence-story-03.md) |
 
 ## Risk register
 
