@@ -184,7 +184,20 @@ def _run_protocol(proc: subprocess.Popen, *, live_43: str | None = None, iso_hom
     print("\n--- tools/list ---")
     tools_resp = _send(proc, "tools/list")
     tools = tools_resp["result"]["tools"]
-    _assert("tool_count_134", len(tools) == 134, f"got {len(tools)}")
+    _assert("tool_count_135", len(tools) == 135, f"got {len(tools)}")
+    door_get_tool = next((tool for tool in tools if tool["name"] == "door.get"), None)
+    _assert(
+        "door.get_closed_versioned",
+        door_get_tool is not None
+        and door_get_tool.get("inputSchema") == {
+            "$id": "holdspeak://mcp/door.get@1",
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": False,
+        },
+        "closed Door aggregate schema" if door_get_tool else "door.get not listed",
+    )
 
     # Every tool schema is closed (additionalProperties: false)
     all_closed = True
@@ -238,6 +251,20 @@ def _run_protocol(proc: subprocess.Popen, *, live_43: str | None = None, iso_hom
     grounding_resp = _call_tool(proc, "ask.resolve_grounding", {"refs": []})
     _assert("ask.resolve_grounding_ok", not _is_error(grounding_resp),
             json.dumps(_tool_content(grounding_resp))[:120] if not _is_error(grounding_resp) else str(grounding_resp))
+
+    # --- door family ---
+    print("\n--- door family ---")
+    door_resp = _call_tool(proc, "door.get")
+    _assert("door.get_ok", not _is_error(door_resp),
+            json.dumps(_tool_content(door_resp))[:120] if not _is_error(door_resp) else str(door_resp))
+    if not _is_error(door_resp):
+        door_data = _tool_content(door_resp)
+        _assert(
+            "door.get_aggregate_shape",
+            set(door_data) == {"board", "upcoming", "counts", "calendar_configured"}
+            and set(door_data.get("board", {})) == {"now", "waiting", "unassigned", "overdue", "active"},
+            f"keys: {list(door_data)} / board: {list(door_data.get('board', {}))}",
+        )
 
     # --- settings family ---
     print("\n--- settings family ---")

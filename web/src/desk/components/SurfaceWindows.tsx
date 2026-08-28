@@ -12,7 +12,11 @@ import {
   type ReactNode,
 } from "react";
 import { create } from "zustand";
-import { registerSurface } from "../shell";
+import {
+  consumeStagedSurfaceOpen,
+  openSurfaceWhenReady,
+  registerSurface,
+} from "../shell";
 import { useDesk } from "../store";
 import { objectByRef } from "../world";
 import { DeskWindowFrame } from "./DeskWindow";
@@ -315,6 +319,10 @@ export function SurfaceWindows({
   const open = useSurfaceWindows((s) => s.open);
   const items = useDesk((s) => s.items);
   const [ready, setReady] = useState(!firstValueRecoveryOnly);
+  // `ready` is first-value paint recovery. This separate fact names the
+  // completed normal-surface registration that the demoted-route dispatcher
+  // actually depends on; Setup-only recovery must never claim it.
+  const [registryState, setRegistryState] = useState<"pending" | "registered">("pending");
   const rows = firstValueRecoveryOnly
     ? FIRST_VALUE_RECOVERY_SURFACES
     : SURFACES;
@@ -344,16 +352,30 @@ export function SurfaceWindows({
             .openSurfaceWindow(alias.target, scope ?? alias.scope),
         ),
       );
+    // This runs only after every normal row and applicable alias is present in
+    // the dispatcher. Consume a demoted-route intent only here, then publish
+    // the fact the /meetings proof awaits; first-value recovery has no normal
+    // registry and must not claim or consume either.
+    if (!firstValueRecoveryOnly) {
+      const staged = consumeStagedSurfaceOpen();
+      if (staged) openSurfaceWhenReady(staged.key, staged.scope);
+      setRegistryState("registered");
+    }
     return () => {
       offs.forEach((off) => off());
       aliasOffs.forEach((off) => off());
     };
-  }, [rows]);
+  }, [firstValueRecoveryOnly, rows]);
 
   if (!ready) return null;
 
   return (
-    <>
+    <div
+      className="desk-surface-windows"
+      data-surface-registry-state={
+        firstValueRecoveryOnly ? "recovery-only" : registryState
+      }
+    >
       {rows.map((row) => {
         const isOpen = row.key in open;
         if (!isOpen) return null;
@@ -366,7 +388,7 @@ export function SurfaceWindows({
           />
         );
       })}
-    </>
+    </div>
   );
 }
 

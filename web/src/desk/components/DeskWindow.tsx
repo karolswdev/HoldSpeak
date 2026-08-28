@@ -796,6 +796,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
 
   return (
     <motion.div
+      id={id}
       ref={(el: HTMLDivElement | null) => {
         win.setEl(el);
         shellRef.current = el;

@@ -89,6 +89,40 @@ def test_reconcile_adds_provider_command_table_to_old_shape_without_touching_row
         conn.close()
 
 
+def test_reconcile_adds_calendar_events_to_old_shape_without_touching_rows(
+    tmp_path: Path,
+) -> None:
+    """HS-144-02's additive calendar projection never rewrites old rows."""
+    old_schema, substitutions = re.subn(
+        r"\n-- HS-144-02: Calendar ingest is a replace-on-success ICS projection\.\n"
+        r"CREATE TABLE IF NOT EXISTS calendar_events \(.*?\n"
+        r"ON calendar_events\(starts_at, id\);\n",
+        "\n",
+        SCHEMA_SQL,
+        count=1,
+        flags=re.DOTALL,
+    )
+    assert substitutions == 1
+    conn = sqlite3.connect(str(tmp_path / "old-calendar-shape.db"))
+    try:
+        conn.executescript(old_schema)
+        conn.execute(
+            "INSERT INTO profiles(id,name,kind,created_at,last_modified) "
+            "VALUES ('kept', 'Kept', 'onDevice', 'old', 'old')"
+        )
+        conn.commit()
+
+        assert reconcile_schema(conn) is True
+        assert conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='calendar_events'"
+        ).fetchone() is not None
+        assert conn.execute(
+            "SELECT id,name,kind,created_at,last_modified FROM profiles WHERE id='kept'"
+        ).fetchone() == ("kept", "Kept", "onDevice", "old", "old")
+    finally:
+        conn.close()
+
+
 # ── A3/A4: self-heals missing column (including datetime default) ──────
 
 

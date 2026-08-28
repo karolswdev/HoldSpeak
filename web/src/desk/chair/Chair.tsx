@@ -1,7 +1,7 @@
 // HS-135-05 -- the Chair surface: HOME at every width (L2). A
 // jobs-first composite surface, not a new data model. The capture
-// hero is a placeholder slot (story 11 fills it). Four ordered lane
-// slots render from a static array (counsel ruling B.Q2). Ember-only
+// hero is a placeholder slot (story 11 fills it). Ordered lane slots
+// render from a static array. Ember-only
 // on the Chair (no accent-cool, no accent-gradient on the shell --
 // accent-gradient is hero-only, story 11).
 //
@@ -10,7 +10,7 @@
 // shows it -- and scales the hero -- only when no lane carries a
 // .surface-section, via the same :has() gate. One calm state, no
 // per-lane spinners, and reachable through ChairHome (the old JS
-// timer fallback could never fire once all four lanes registered).
+// timer fallback could never fire once lanes were registered).
 
 import { type ReactNode } from "react";
 import { LANE_ORDER, type LaneId } from "./laneContract";
@@ -19,7 +19,7 @@ import "./chair.css";
 export interface ChairProps {
   /** The capture hero slot (story 11 fills this with mic/record). */
   hero?: ReactNode;
-  /** Immediate owner work, kept distinct from the fixed four-lane registry. */
+  /** Immediate owner work, kept distinct from the fixed lane registry. */
   activeWork?: ReactNode;
   /** Lane render slots keyed by lane id. The Chair renders them in
    *  the fixed LANE_ORDER; missing lanes render nothing (the CSS
@@ -44,7 +44,7 @@ export function Chair({ hero, activeWork, lanes }: ChairProps) {
         <span className="chair-empty-invitation-text">Start rough. Keep developing it.</span>
       </div>
 
-      {/* The four ordered lane slots. */}
+      {/* The ordered lane slots. */}
       <div className="chair-lanes" data-testid="chair-lanes">
         {LANE_ORDER.map((id) => {
           const content = lanes[id];

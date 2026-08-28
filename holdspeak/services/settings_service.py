@@ -54,6 +54,7 @@ def settings_revision(config: Config) -> str:
 # decided and what that decision loaded. It is derived, never persisted: the
 # writer strips it back off on the way in (see `_update`).
 PLACEMENT_KEY = "_placement"
+CALENDAR_SUBSCRIPTION_KEY = "_calendar_subscription"
 
 
 def meeting_placement_summary(config: Config) -> dict[str, Any]:
@@ -116,10 +117,16 @@ def redacted_settings(
     recalculating this legacy placement projection would be a fresh mutable
     selector hidden inside a harmless-looking GET.
     """
-    from holdspeak.config import LEGACY_ENDPOINT_FIELDS
+    from holdspeak.config import (
+        LEGACY_ENDPOINT_FIELDS,
+        calendar_subscription_summary,
+    )
 
     payload = deepcopy(config.to_dict())
     payload[REVISION_KEY] = settings_revision(config)
+    payload[CALENDAR_SUBSCRIPTION_KEY] = calendar_subscription_summary(
+        config.calendar.subscription
+    )
     if include_meeting_placement:
         # The provenance rides both the read and the write's echo, so a surface
         # that changes the dial sees the new placement without a reload.
@@ -287,6 +294,7 @@ class SettingsService:
     def _update(self, patch: dict[str, Any]) -> dict[str, Any]:
         from holdspeak.config import (
             Config,
+            CalendarConfig,
             DeviceConfig,
             DictationConfig,
             DictationConfigError,
@@ -304,6 +312,7 @@ class SettingsService:
             UIConfig,
             VoiceMacroError,
             WakeWordConfig,
+            validate_calendar_subscription,
         )
 
         current = Config.load()
@@ -647,6 +656,7 @@ class SettingsService:
         # the client echoed it back (both are derived, never persisted).
         merged.pop("_runtime_status", None)
         merged.pop(PLACEMENT_KEY, None)
+        merged.pop(CALENDAR_SUBSCRIPTION_KEY, None)
         dictation_data = merged.get("dictation", {}) or {}
         pipeline_data = dictation_data.get("pipeline", {}) or {}
         runtime_data = dictation_data.get("runtime", {}) or {}
@@ -889,6 +899,18 @@ class SettingsService:
             or None
         )
 
+        calendar_data = merged.get("calendar", {}) or {}
+        if not isinstance(calendar_data, dict):
+            return {"success": False, "error": "calendar must be an object"}
+        try:
+            calendar_cfg = CalendarConfig(
+                subscription=validate_calendar_subscription(
+                    calendar_data.get("subscription", current.calendar.subscription)
+                )
+            )
+        except ValueError as exc:
+            return {"success": False, "error": str(exc)}
+
         updated = replace(
             current,
             hotkey=HotkeyConfig(**hotkey_data),
@@ -901,6 +923,7 @@ class SettingsService:
             wake_word=WakeWordConfig(**wake_data),
             rails_observer=RailsObserverConfig(**rails_data),
             thoughts=ThoughtsConfig(**thoughts_data),
+            calendar=calendar_cfg,
         )
         updated.save()
 

@@ -745,7 +745,9 @@
         "GET"
       ],
       "module": "web.routes.cadence",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/cadence/loops/{loop_id}/close",
@@ -2351,6 +2353,16 @@
       ]
     },
     {
+      "path": "/api/door",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/follow-through/board",
       "methods": [
         "GET"
@@ -3514,6 +3526,16 @@
     },
     {
       "path": "/api/people/commitments/{commitment_id}/satisfy",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/commitments/{commitment_id}/transition",
       "methods": [
         "POST"
       ],

@@ -58,6 +58,7 @@ dependencies = [
     # Production People keys live only in an allow-listed native credential
     # backend (macOS Keychain or Linux Secret Service).
     "keyring>=25.0",
+    "icalendar>=7.3.0",
 ]
 
 [project.optional-dependencies]

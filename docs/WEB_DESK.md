@@ -1,19 +1,21 @@
 # The Desk
 
-The Desk is HoldSpeak's operating surface. Launch `holdspeak` and open `/`
-to work with Meetings, Notes, Knowledge, Agents, Sequences, Workflows,
-Artifacts, and live Coder sessions. Zones provide placement for durable
-work. The world itself renders on a WebGL stage; every product surface
-(Dictation, Meetings, Settings, Workbench, and the rest) opens as a window
-on the Desk, so nothing you do here navigates away.
+The Chair Door is HoldSpeak's post-first-value arrival at `/`. Its board and
+upcoming rail put the next work first. The **Floor** is the Desk's spatial
+object world, reached through the existing **Floor** control. There you work
+with Meetings, Notes, Knowledge, Agents, Sequences, Workflows, Artifacts, and
+live Coder sessions. Zones provide placement for durable work. The Floor
+renders on a WebGL stage; every product surface (Dictation, Meetings, Settings,
+Workbench, and the rest) opens as a window, so nothing navigates away.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk.png" alt="The HoldSpeak Desk: pixel-art objects floating on a warm dark stage; a Zone tray holding a filed Meeting; Coder session avatars on a right-edge rail; a record orb bottom-center; the compact HoldSpeak menu and an egress badge top-left; Create controls top-right." width="760">
 </p>
 
 It serves at `/`. On a fresh install the first-run guard sends you to the
-`/welcome` wizard instead, and a hard-blocked setup goes to `/setup`;
-everyone else arrives here. (`/desk`, the old address, redirects home.)
+`/welcome` wizard instead, and a hard-blocked setup goes to `/setup`; after
+first value, everyone else arrives at the Chair Door. (`/desk`, the old
+address, redirects home.)
 
 ## What you see
 

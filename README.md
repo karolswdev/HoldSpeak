@@ -76,18 +76,19 @@ Click selects, double-click opens.
 <p align="center">
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk.png" alt="The HoldSpeak Desk: pixel-art objects (meetings as cassettes, notes, a Knowledge plant, an Artifact page) floating on a warm dark stage; a Q3 release Zone tray holding one filed Meeting; Coder session avatars on a right-edge rail; a record orb bottom-center; a compact HoldSpeak menu and an egress badge top-left." width="760">
 </p>
-<p align="center"><em>The front door: the world your voice work lives in. The orb records, the rail asks, the tray files.</em></p>
+<p align="center"><em>The Floor: the spatial world your voice work lives in. The orb records, the rail asks, the tray files.</em></p>
 
-**The Chair is home after first value.** The browser opens on the Chair: four fixed lanes
-(Brief, Follow-Through, Meetings, Agents) showing what needs you at a
-glance, and a capture hero at the center. Tap the hero to record a meeting
-(one tap, same verb as the dock orb). Say "start meeting" into its mic and
-recording starts by voice. Ask AI is one tap away from the hero. Each lane
-header opens its full surface in a window; every action opens a window, never
-a page transition. The **Floor** button in the dock swaps to the spatial
-floor (the object world below) and back. A toggle in Settings, Sounds & Presence
-controls **Desk Sounds**, the six mechanical click sounds the Chair plays on
-key presses, window opens, and landings.
+**The Chair Door is home after first value.** Its board puts the work needing
+you first: **Overdue, Now, Waiting, Unassigned,** and **Active**. The board is
+a server projection. A card action appears only when its aggregate names a
+lawful verb; using it calls that verb and shows its Receipt in flow. A move or
+completion is never a cosmetic board edit. The one **Upcoming** rail orders
+**EVENT** and **SCHEDULED RECORDING** rows by time. Meetings keeps live and
+recent meetings, Agents remains, and the compact Brief entry point opens
+Intelligence. On a phone, **Go** is the compact application menu. The
+**Floor** button in the dock opens the spatial object world. A toggle in
+Settings, Sounds & Presence controls **Desk Sounds**, the six mechanical
+click sounds the Chair plays on key presses, window opens, and landings.
 
 The Desk is where the loops close. Press the orb and the hub records a
 meeting; when it ends, the meeting lands on the stage as an object. Rope a
@@ -443,8 +444,9 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 ## MCP sidecar
 
 The MCP sidecar (`holdspeak-mcp`) is the desk's programmable surface over
-stdio. It exposes 134 tools across 29 families and 29 resources,
-so any MCP client can read and drive the desk without the web UI.
+stdio. It exposes 135 tools across 30 families and 29 default, non-owner
+resources, so any MCP client can read and drive the desk without the web UI.
+The Door family adds one aggregate read tool, `door.get`, with no new resource.
 
 Claude Code discovers the sidecar automatically: the repo ships a
 `.mcp.json` that wires it. For other MCP clients, the entry point is one

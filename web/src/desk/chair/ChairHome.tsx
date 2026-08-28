@@ -10,7 +10,6 @@ import { Chair } from "./Chair";
 import { LANE_ORDER, type LaneId } from "./laneContract";
 import { LANE_COMPONENTS } from "./lanes";
 import { ThoughtEntry } from "./ThoughtEntry";
-import { FinishThoughtsLane } from "./FinishThoughtsLane";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
 import { openSurface } from "../shell";
@@ -56,7 +55,7 @@ export function ChairHome({ arrivalRequired = false }: { arrivalRequired?: boole
   return (
     <Chair
       hero={foregroundWork ? null : <ThoughtEntry />}
-      activeWork={<FinishThoughtsLane />}
+      activeWork={null}
       lanes={lanes}
     />
   );

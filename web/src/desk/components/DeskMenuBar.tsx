@@ -72,7 +72,7 @@ export function DeskMenuBar() {
   return (
     <nav ref={barRef} className="desk-verbbar" aria-label="Desk menus">
       {MENUS.map((m) => (
-        <span key={m.id} className="desk-verbbar-item">
+        <span key={m.id} className="desk-verbbar-item" data-menu-id={m.id}>
           <button
             type="button"
             className={`desk-verbbar-title${open === m.id ? " on" : ""}`}

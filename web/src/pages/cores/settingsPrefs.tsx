@@ -31,8 +31,8 @@ export const PREF_MODULES: PrefModule[] = [
   { id: "voice", label: "Voice", glyph: "dictation", sprite: "voice", keys: ["hotkey", "model", "dictation", "wake_word"] },
   // Sounds & Presence merges Appearance (desk sounds only) + Presence.
   { id: "sounds", label: "Sounds & Presence", glyph: "presence", sprite: "sounds", keys: ["ui", "presence"] },
-  // Meetings: pointer tile + actuators + RAW well.
-  { id: "meetings", label: "Meetings", glyph: "meeting", sprite: "meetings", keys: ["meeting"] },
+  // Meetings: capture pointer + calendar source + actuators + RAW well.
+  { id: "meetings", label: "Meetings", glyph: "meeting", sprite: "meetings", keys: ["meeting", "calendar"] },
   // Rhythm: cadence user-facing + Telegram + RAW.
   { id: "rhythm", label: "Rhythm", glyph: "cadence", sprite: "rhythm", keys: ["cadence", "cadence_telegram"] },
   // Models stays the availability-only Model Library.

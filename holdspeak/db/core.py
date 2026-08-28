@@ -30,6 +30,7 @@ from . import (  # noqa: F401
     relationships as _m22, steering as _m23, workbenches as _m24,
     automations as _m25, resourceful as _m26,
     scheduled_recordings as _m27, refinement_thoughts as _m28,
+    calendar_events as _m29,
 )
 
 from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401  re-exported
@@ -131,11 +132,13 @@ class Database:
         from .plugins import PluginArtifactRepository
         from .projects import ProjectRepository
         from .activity import ActivityRepository
+        from .calendar_events import CalendarEventRepository
         meetings: MeetingRepository
         intel: IntelRepository
         plugins: PluginArtifactRepository
         projects: ProjectRepository
         activity: ActivityRepository
+        calendar_events: CalendarEventRepository
 
     def __init__(self, db_path: Optional[Path] = None):
         self.db_path = db_path or DEFAULT_DB_PATH

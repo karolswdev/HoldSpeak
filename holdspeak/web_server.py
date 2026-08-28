@@ -569,6 +569,8 @@ class MeetingWebServer:
         from .services.cadence_service import CadenceService
         from .services.coder_service import CoderService
         from .services.dictation_service import DictationService
+        from .services.door_service import DoorService
+        from .services.refinement_thought_service import RefinementThoughtService
         from .services.sync_service import SyncService
         from .services.actuator_service import ActuatorProposalService
         from .config import Config
@@ -603,6 +605,7 @@ class MeetingWebServer:
             build_delivery_terminal_router,
             build_delivery_factory_router,
             build_dictation_router,
+            build_door_router,
             build_follow_through_router,
             build_people_router,
             build_desk_actuators_router,
@@ -703,6 +706,16 @@ class MeetingWebServer:
             people_service = PeopleService(production_people_store())
         except Exception:
             people_service = PeopleService(UnavailablePeopleStore())
+        follow_through_service = FollowThroughService(
+            get_database(), observer=obs, people_projection=people_service
+        )
+        door_service = DoorService(
+            follow_through_service,
+            RefinementThoughtService(get_database()),
+            get_database().scheduled_recordings,
+            get_database().calendar_events,
+            config_loader=Config.load,
+        )
 
         inference_setup_service = InferenceSetupApplicationService(get_database())
         inference_acquisition_service = InferenceAcquisitionApplicationService(
@@ -758,7 +771,8 @@ class MeetingWebServer:
                 get_database(), on_settings_applied=self.on_settings_applied, observer=obs
             ),
             cadence_service=CadenceService(get_database(), Config.load().cadence, observer=obs),
-            follow_through_service=FollowThroughService(get_database(), observer=obs, people_projection=people_service),
+            follow_through_service=follow_through_service,
+            door_service=door_service,
             people_service=people_service,
             sync_service=SyncService(get_database(), observer=obs),
             gate_service=GateService(get_database(), observer=obs),
@@ -831,6 +845,7 @@ class MeetingWebServer:
         app.include_router(build_authority_router(web_ctx))
         app.include_router(build_cadence_router(web_ctx))
         app.include_router(build_follow_through_router(web_ctx))
+        app.include_router(build_door_router(web_ctx))
         app.include_router(build_people_router(web_ctx))
         app.include_router(build_automations_router(web_ctx))
         app.include_router(build_decision_records_router(web_ctx))
@@ -980,11 +995,23 @@ class MeetingWebServer:
                 )
             except Exception as e:
                 log.error(f"scheduled recording conductor startup failed: {e}")
+            try:
+                from .calendar_ingest_conductor import start_calendar_ingest_conductor
+
+                start_calendar_ingest_conductor()
+            except Exception as e:
+                log.error(f"calendar ingest conductor startup failed: {e}")
             self._started.set()
             log.debug("Meeting web server startup complete")
 
         @app.on_event("shutdown")
         async def _shutdown() -> None:
+            try:
+                from .calendar_ingest_conductor import stop_calendar_ingest_conductor
+
+                stop_calendar_ingest_conductor()
+            except Exception as e:
+                log.error(f"calendar ingest conductor shutdown failed: {e}")
             await refinement_coordinator.shutdown()
             for task in (
                 self._duration_task,

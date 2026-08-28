@@ -28,54 +28,25 @@ function makeItems(count: number): LaneItem[] {
 // ---------------------------------------------------------------------------
 
 describe("Chair lane contract", () => {
-  it("renders four lane slots in the fixed order", () => {
+  it("renders Door, Meetings, and Agents in the fixed order", () => {
     const onOpen = vi.fn();
     const { container } = render(
       <Chair
         lanes={{
-          brief: (
-            <ChairLane
-              title="BRIEF"
-              items={makeItems(2)}
-              onOpenInWindow={onOpen}
-              surfaceId="intelligence"
-            />
-          ),
-          "follow-through": (
-            <ChairLane
-              title="FOLLOW-THROUGH"
-              items={makeItems(1)}
-              onOpenInWindow={onOpen}
-              surfaceId="follow-through"
-            />
-          ),
-          meetings: (
-            <ChairLane
-              title="MEETINGS"
-              items={makeItems(3)}
-              onOpenInWindow={onOpen}
-              surfaceId="meetings"
-            />
-          ),
-          agents: (
-            <ChairLane
-              title="AGENTS"
-              items={makeItems(1)}
-              onOpenInWindow={onOpen}
-              surfaceId="agents"
-            />
-          ),
+          door: <ChairLane title="DOOR" items={makeItems(2)} onOpenInWindow={onOpen} surfaceId="door" />,
+          meetings: <ChairLane title="MEETINGS" items={makeItems(3)} onOpenInWindow={onOpen} surfaceId="meetings" />,
+          agents: <ChairLane title="AGENTS" items={makeItems(1)} onOpenInWindow={onOpen} surfaceId="agents" />,
         }}
       />,
     );
     const laneEls = container.querySelectorAll("[data-lane]");
-    expect(laneEls).toHaveLength(4);
+    expect(laneEls).toHaveLength(3);
     const order = Array.from(laneEls).map((el) => el.getAttribute("data-lane"));
     expect(order).toEqual([...LANE_ORDER]);
   });
 
-  it("LANE_ORDER is exactly [brief, follow-through, meetings, agents]", () => {
-    expect(LANE_ORDER).toEqual(["brief", "follow-through", "meetings", "agents"]);
+  it("LANE_ORDER is exactly [door, meetings, agents]", () => {
+    expect(LANE_ORDER).toEqual(["door", "meetings", "agents"]);
   });
 
   it("DEFAULT_MAX_ITEMS is 12", () => {
@@ -148,7 +119,7 @@ describe("Chair lane contract", () => {
     );
     expect(screen.getByTestId("chair-active-work")).toHaveTextContent("Finish thoughts");
     expect(container.querySelectorAll("[data-lane]")).toHaveLength(0);
-    expect(LANE_ORDER).toEqual(["brief", "follow-through", "meetings", "agents"]);
+    expect(LANE_ORDER).toEqual(["door", "meetings", "agents"]);
   });
 });
 
@@ -168,12 +139,12 @@ describe("Chair all-blank invitation", () => {
     render(
       <Chair
         lanes={{
-          brief: (
+          door: (
             <ChairLane
-              title="BRIEF"
+              title="DOOR"
               items={makeItems(1)}
               onOpenInWindow={onOpen}
-              surfaceId="intelligence"
+              surfaceId="door"
             />
           ),
         }}
@@ -253,11 +224,25 @@ describe("Chair void polish (HS-135-13)", () => {
 
   it("seats the normal Chair inside the complete working band", () => {
     expect(stripped).toMatch(
-      /\.chair\s*\{[^}]*min-height:\s*calc\(100vh\s*-\s*var\(--desk-snap-top\)/,
+      /\.chair\s*\{[^}]*min-height:\s*calc\(100dvh\s*-\s*var\(--desk-snap-top\)/,
     );
     expect(stripped).toMatch(
       /\.chair\s*\{[^}]*margin:\s*var\(--desk-work-top\)\s+auto\s+var\(--desk-work-bottom\)/,
     );
+  });
+
+  it("caps a populated short Chair and scrolls its contained lane column", () => {
+    expect(stripped).toMatch(
+      /\.chair:not\(\.chair-first-value\)\s*\{[^}]*box-sizing:\s*border-box[^}]*height:\s*calc\(100dvh\s*-\s*var\(--desk-work-top\)\s*-\s*var\(--desk-work-bottom\)\)/,
+    );
+    expect(stripped).toMatch(
+      /\.chair-lanes\s*\{[^}]*flex:\s*1\s+1\s+auto[^}]*min-height:\s*0[^}]*overflow-y:\s*auto/,
+    );
+  });
+
+  it("caps the Door board and future rail inside the short phone lane", () => {
+    expect(stripped).toMatch(/@media\s*\(max-height:\s*720px\)[\s\S]*?\.door-board-viewport\s*\{[^}]*max-block-size/);
+    expect(stripped).toMatch(/@media\s*\(max-height:\s*720px\)[\s\S]*?\.door-upcoming-list\s*\{[^}]*max-block-size/);
   });
 
   it("does not reserve absent chrome around the first-value Chair", () => {
@@ -274,13 +259,13 @@ describe("Chair void polish (HS-135-13)", () => {
     const { container } = render(
       <Chair
         hero={<div data-testid="hero-content">MIC</div>}
-        lanes={{ brief: <NullLane /> }}
+        lanes={{ door: <NullLane /> }}
       />,
     );
-    const briefLane = container.querySelector('[data-lane="brief"]');
-    expect(briefLane).not.toBeNull();
+    const doorLane = container.querySelector('[data-lane="door"]');
+    expect(doorLane).not.toBeNull();
     // The wrapper has no child ELEMENTS (NullLane rendered null).
-    expect(briefLane!.childElementCount).toBe(0);
+    expect(doorLane!.childElementCount).toBe(0);
   });
 
   it("populated lanes have content for the grid layout", () => {
@@ -289,12 +274,12 @@ describe("Chair void polish (HS-135-13)", () => {
       <Chair
         hero={<div>MIC</div>}
         lanes={{
-          brief: (
+          door: (
             <ChairLane
-              title="BRIEF"
+              title="DOOR"
               items={makeItems(3)}
               onOpenInWindow={onOpen}
-              surfaceId="intelligence"
+              surfaceId="door"
             />
           ),
           meetings: (

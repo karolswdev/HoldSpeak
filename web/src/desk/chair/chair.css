@@ -16,8 +16,8 @@
      matching block offsets a populated hero starts underneath the fixed
      system bar. */
   margin: var(--desk-work-top) auto var(--desk-work-bottom);
-  /* Fill the working area between chrome and dock. */
-  min-height: calc(100vh - var(--desk-snap-top) - var(--desk-snap-bottom));
+  /* The normal Chair fills the working area between chrome and dock. */
+  min-height: calc(100dvh - var(--desk-snap-top) - var(--desk-snap-bottom));
 }
 
 /* ── The capture hero slot (story 11 fills it with mic/record). ──── */
@@ -74,7 +74,7 @@
   height: var(--size-icon-lg);
 }
 
-/* ── The four lane slots. ────────────────────────────────────────── */
+/* ── The composed lane slots. ────────────────────────────────────── */
 .chair-lanes {
   display: grid;
   /* A single `1fr` track has an automatic minimum: a populated lane can
@@ -83,8 +83,13 @@
   gap: var(--space-5);
 }
 
-/* Two-column grid at wide viewports (1440 desk width). */
+/* Two-column grid at wide viewports (1440 desk width). The Door spans
+   both tracks there, so its five live columns need the full desk working band
+   rather than the older, single-lane 960px cap. */
 @media (min-width: 1200px) {
+  .chair {
+    max-width: 1280px;
+  }
   .chair-lanes {
     grid-template-columns: 1fr 1fr;
   }
@@ -307,4 +312,263 @@
   font-size: var(--desk-surface-detail-size);
   color: var(--text-muted);
   letter-spacing: 0.04em;
+}
+
+/* ── HS-144-03 — Door board: one contained workbench rail. ───────── */
+@media (min-width: 1200px) {
+  .chair-lane[data-lane="door"] { grid-column: 1 / -1; }
+}
+.door-board-section { min-width: 0; }
+.door-board-summary {
+  min-height: 18px;
+  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+.door-board-receipt { margin: 0 var(--desk-surface-row-pad-x) var(--space-2); }
+.door-board-viewport {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable both-edges;
+  outline: none;
+}
+.door-board-viewport:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+/* HS-145-01 — scroll-edge gradient hints on the 393 board viewport.
+   An outer wrapper holds absolutely positioned pseudo-elements that
+   overlay the scroll container without affecting its scroll geometry. */
+.door-board-hint-wrap { position: relative; }
+.door-board-hint-wrap::before,
+.door-board-hint-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  display: none;
+  pointer-events: none;
+  z-index: 1;
+}
+.door-board-hint-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, var(--surface-1), transparent);
+}
+.door-board-hint-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, var(--surface-1), transparent);
+}
+.door-board-hint-wrap[data-scroll-hint="right"]::after,
+.door-board-hint-wrap[data-scroll-hint="both"]::before,
+.door-board-hint-wrap[data-scroll-hint="both"]::after,
+.door-board-hint-wrap[data-scroll-hint="left"]::before {
+  display: block;
+}
+.door-board-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(196px, 1fr));
+  min-width: 980px;
+  gap: var(--space-2);
+  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
+}
+.door-board-column {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch);
+}
+.door-board-column-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 22px;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.door-board-column-head h4 { margin: 0; font: inherit; font-weight: 600; }
+.door-board-column-head > span { font-variant-numeric: tabular-nums; }
+.door-board-cards { display: grid; align-content: start; gap: var(--space-2); }
+.door-card {
+  min-width: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  box-shadow: var(--desk-window-bevel);
+}
+.door-card-open {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 3px;
+  padding: var(--space-2);
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.door-card-open:hover { background: var(--wash-1); }
+.door-card-open:focus-visible { outline: 1px solid var(--accent); outline-offset: -2px; }
+.door-card-open strong,
+.door-card-open > span,
+.door-card-open small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.door-card-open strong { font-size: var(--desk-surface-body-size); font-weight: 600; }
+.door-card-open > span { color: var(--text-muted); font-size: var(--desk-surface-detail-size); }
+.door-card-open small { color: var(--text-muted); font-family: var(--font-mono); font-size: var(--font-size-xs); }
+.door-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 var(--space-2) var(--space-2);
+}
+.door-card-action { min-width: 0; }
+.door-card-action-seat {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--border);
+}
+.door-card-action-seat .string-gadget { min-width: 0; }
+.door-board-column-empty {
+  min-height: 64px;
+  padding: var(--space-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+}
+
+/* HS-144-04 — the Door's one chronological future rail. */
+.door-upcoming-rail {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-2) var(--desk-surface-row-pad-x) 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+.door-upcoming-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.door-upcoming-head h3 {
+  margin: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.door-upcoming-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.door-upcoming-row {
+  display: grid;
+  grid-template-columns: minmax(130px, auto) minmax(12rem, 1fr) auto;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  min-width: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch);
+}
+.door-upcoming-kind,
+.door-upcoming-time,
+.door-upcoming-detail,
+.door-upcoming-link,
+.door-upcoming-empty {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+}
+.door-upcoming-kind { letter-spacing: 0.04em; }
+.door-upcoming-row strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--desk-surface-body-size);
+}
+.door-upcoming-time { white-space: nowrap; }
+.door-upcoming-detail,
+.door-upcoming-link { grid-column: 2 / -1; }
+.door-upcoming-link { color: var(--accent); }
+.door-upcoming-empty {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: var(--space-2);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+/* HS-145-02 — connect-calendar affordance on the empty rail. */
+.door-upcoming-empty--connect { justify-content: space-between; gap: var(--space-2); }
+@media (max-width: 640px) {
+  .door-upcoming-row { grid-template-columns: 1fr auto; }
+  .door-upcoming-kind { grid-column: 1 / -1; }
+  .door-upcoming-detail,
+  .door-upcoming-link { grid-column: 1 / -1; }
+}
+/* The short phone has only one working band. Keep each dense Door region
+   independently browseable there rather than allowing rows to lengthen the
+   Chair beneath the dock. The wider/normal-height Chair keeps its generous
+   all-at-once scan. */
+@media (max-height: 720px) {
+  /* HS-144-04 — a populated short Chair remains a working-band surface, not
+     a page that runs beneath the fixed dock. The lane column owns overflow;
+     the regular-height Chair retains its generous all-at-once scan. */
+  .chair:not(.chair-first-value) {
+    box-sizing: border-box;
+    height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
+    max-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
+  }
+  .chair-lanes {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-block: contain;
+  }
+  .door-board-viewport {
+    max-block-size: min(30dvh, 14rem);
+    overflow-y: auto;
+    overscroll-behavior-block: contain;
+  }
+  .door-upcoming-list {
+    max-block-size: min(22dvh, 9rem);
+    overflow-y: auto;
+    overscroll-behavior-block: contain;
+  }
+}
+@media (max-width: 480px) {
+  .door-board-grid { grid-template-columns: repeat(5, minmax(224px, 1fr)); min-width: 1120px; }
+  .door-card-open strong { white-space: normal; }
 }

@@ -153,8 +153,9 @@ def test_normal_chair_stays_inside_chrome_at_all_owner_widths(
                 ASSETS.mkdir(parents=True, exist_ok=True)
                 page.screenshot(path=str(ASSETS / f"chair-working-band-empty-{label}.png"), full_page=False)
 
-            # A real unfinished Thought adds the bounded Finish thoughts lane
-            # without forging a projection row.
+            # A real unfinished Thought appears once in the Door active column.
+            # HS-144-03 retired ChairHome's duplicate Finish thoughts slot; this
+            # remains a real HTTP-created aggregate, not a forged projection row.
             _api(page, "POST", "/api/thoughts", {
                 "request_id": str(uuid.uuid4()),
                 "raw_text": "Keep the Chair capture surface clear of global chrome.",
@@ -169,7 +170,10 @@ def test_normal_chair_stays_inside_chrome_at_all_owner_widths(
             for width, height, label in VIEWPORTS:
                 page.set_viewport_size({"width": width, "height": height})
                 page.reload(wait_until="load")
-                page.get_by_role("heading", name="Finish thoughts", exact=True).wait_for()
+                active_column = page.locator(".door-board-column", has=page.get_by_role("heading", name="Active", exact=True))
+                active_column.locator(".door-card", has_text="Chair geometry").wait_for()
+                assert page.get_by_role("heading", name="Finish thoughts", exact=True).count() == 0
+                assert page.locator(".finish-thoughts-row", has_text="Chair geometry").count() == 0
                 _assert_working_band(page)
                 for name in ("Develop a thought", "More capture options"):
                     _assert_hit(page, name)
@@ -177,10 +181,9 @@ def test_normal_chair_stays_inside_chrome_at_all_owner_widths(
                 page.get_by_role("button", name="More capture options", exact=True).click()
                 _assert_hit(page, "Open advanced capture")
                 page.get_by_role("button", name="More capture options", exact=True).click()
-                resume_row = page.locator(".finish-thoughts-row", has_text="Chair geometry")
-                resume_row.wait_for()
-                resume_row.scroll_into_view_if_needed()
-                assert resume_row.evaluate(
+                active_card = active_column.locator(".door-card", has_text="Chair geometry")
+                active_card.scroll_into_view_if_needed()
+                assert active_card.evaluate(
                     """el => {
                       const r = el.getBoundingClientRect();
                       const dock = document.querySelector('.desk-dock')?.getBoundingClientRect();

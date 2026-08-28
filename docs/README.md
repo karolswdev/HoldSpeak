@@ -4,9 +4,11 @@ HoldSpeak provides voice typing, meeting capture, retained results, and
 recovery. Work can run on this device, a paired device, a private endpoint, or
 an external service; each operational surface names the applicable boundary.
 
-The Web app opens on the **Desk**, where Meetings, Notes, Artifacts, Projects,
-Agents, Workflows, Integrations, Coder sessions, attention, and Receipts are
-available. Dictation, Meetings, Studio, and Settings are focused workrooms.
+After first value, the Web app opens on the **Chair Door**, where its board
+and upcoming rail put the next work first. The **Floor** remains the spatial
+Desk world for Meetings, Notes, Artifacts, Projects, Agents, Workflows,
+Integrations, Coder sessions, attention, and Receipts. Dictation, Meetings,
+Studio, and Settings are focused workrooms.
 
 > New here? Start with the [main README](../README.md) for the pitch and a
 > quickstart, then follow **Start here** below.
@@ -15,8 +17,10 @@ available. Dictation, Meetings, Studio, and Settings are focused workrooms.
 
 - **[Getting Started](./GETTING_STARTED.md)**: install, grant permissions, and land
   your first hold-to-talk dictation in another app.
-- **[The Desk](./WEB_DESK.md)**: the front door itself. The world, its
-  objects, and every verb (create, open, file, record, ask, preview).
+- **[The Door](./USER_GUIDE.md#the-door)**: the post-first-value arrival.
+  Its board, upcoming rail, and calendar subscription.
+- **[The Desk](./WEB_DESK.md)**: the Floor's spatial world, its objects, and
+  every verb (create, open, file, record, ask, preview).
 - **[Desk memory](./DESK_MEMORY.md)**: the shared attention and receipt read
   model, its privacy boundary, contextual badges, pagination, and source links.
 

@@ -1,13 +1,13 @@
 // HS-95-08 — one shell. Three real routes (Desk, Welcome, Presence); every
 // demoted product path walks home and opens its desk window at the right
 // scope (Constitution, Article I: features do not own routes).
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SurfaceState } from "./desk/surface/Surface";
 import { DEMOTED_ROUTES, PRODUCT_ROUTES, type DemotedRoute } from "./routes";
-import { openSurfaceWhenReady, setShellNavigator } from "./desk/shell";
+import { setShellNavigator, stageSurfaceOpen } from "./desk/shell";
 import {
   decodeWorkroomContext,
   workroomSubjectId,
@@ -16,6 +16,10 @@ import {
 /** A demoted route: queue the window open (it fires the moment the desk
  * registers the surface), then land on the desk. */
 function SurfaceRedirect({ route }: { route: DemotedRoute }) {
+  // Queue the in-world open in one committed render before Navigate is allowed
+  // to unmount this route. Rendering Navigate immediately made its own effect
+  // win occasionally, so /meetings could leave before it had queued its open.
+  const [queued, setQueued] = useState(false);
   useEffect(() => {
     const search = window.location.search;
     let scope: string | undefined;
@@ -28,10 +32,13 @@ function SurfaceRedirect({ route }: { route: DemotedRoute }) {
           : null);
       if (id) scope = `${route.subjectKind}:${id}`;
     }
-    openSurfaceWhenReady(route.surface, scope);
+    stageSurfaceOpen(route.surface, scope);
+    setQueued(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route.path]);
-  return <Navigate to="/" replace />;
+  // Preserve the one URL token/context through the demotion; the surface's
+  // lazy core still needs the same authenticated browser request context.
+  return queued ? <Navigate to={{ pathname: "/", search: window.location.search }} replace /> : null;
 }
 
 export function App() {

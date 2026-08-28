@@ -1,9 +1,10 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-134 tools and 29 resources through the Model Context Protocol, so any MCP
-client (Claude Code, Cursor, a custom script) can read and drive the desk
-without touching the web UI.
+135 tools across 30 families. The default non-owner discovery lists 29
+resources; the owner discovery lists 32 because access filtering admits 16
+static resources and 16 templates. Any MCP client (Claude Code, Cursor, a
+custom script) can read and drive the desk without touching the web UI.
 
 The sidecar runs as a child process of the MCP client. It opens the same
 local database the web runtime uses, dispatches every tool through the same
@@ -56,7 +57,7 @@ default.
 
 ## Tool families
 
-The 134 tools are organized into domain families. Each tool follows the
+The 135 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -79,6 +80,14 @@ without running inference. `ask.run` submits a question through the admitted
 inference path and returns the answer with its receipt. `ask.cancel` cancels an
 in-flight invocation. `ask.keep` persists an answer as a desk artifact (not
 model-invoking). Model selection is never an Ask-side MCP control.
+
+### door (1 tool)
+
+`door.get` returns one closed, read-only Dashboard Door aggregate: the board,
+active Thoughts, a mixed calendar-event and scheduled-recording upcoming
+timeline, and matching server-derived counts. Door has no MCP resource. Its
+Follow-Through People overlay respects `HOLDSPEAK_MCP_PEOPLE_ACCESS` and is
+safely empty when that encrypted disclosure capability is unavailable or off.
 
 ### inference (1 tool)
 
@@ -288,8 +297,10 @@ client discovers it at tool-listing time, not at call time.
 
 ## Resources
 
-The sidecar exposes 16 static resources and 16 resource templates. List
-results are bounded to the first 100 items per read.
+Owner discovery exposes 16 static resources and 16 resource templates. The
+default non-owner discovery filters that to 15 static resources and 14
+templates, or 29 total. List results are bounded to the first 100 items per
+read.
 
 ### Static resources
 

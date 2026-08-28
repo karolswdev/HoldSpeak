@@ -1,7 +1,8 @@
 // HS-135-05 -- the lane composition contract (design-laws.md L2 +
 // counsel ruling A.L2). A lane is a composed surface plugged into the
 // Chair's door via this interface. The static order is fixed by
-// counsel ruling B.Q2: Brief -> Follow-Through -> Meetings -> Agents.
+// HS-144-03: Door -> Meetings -> Agents. Door replaces the old Brief and
+// Follow-Through Chair slots; their pullouts remain independently reachable.
 
 import type { ReactNode } from "react";
 
@@ -21,11 +22,9 @@ export interface LaneProps {
 /** Default curated-dozen bound (L2). */
 export const DEFAULT_MAX_ITEMS = 12;
 
-/** The fixed lane order (counsel ruling B.Q2). An urgency gradient:
- *  information -> obligations -> calendar -> automation. */
+/** The fixed Door-first order: obligations -> calendar -> automation. */
 export const LANE_ORDER = [
-  "brief",
-  "follow-through",
+  "door",
   "meetings",
   "agents",
 ] as const;

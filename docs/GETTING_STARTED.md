@@ -85,31 +85,33 @@ empty until you set it, never changes existing Thoughts, never syncs, and never
 starts AI. **Remove from this Thought** and **Stop using by default** are
 deliberately separate actions.
 
-Open a developing Thought from **Finish thoughts** to enter its Thought
-Workbench. The Note remains a full editable document; the Interview asks one
-focused question at a time. Use **Add & ask next** for the fast explicit loop,
-**Add to Note** to stop after the current answer, and **Finish Thought** when the
-Note is ready. Each turn names its intended boundary and records where it
-actually ran. No model call happens merely because the Workbench was opened.
+Open a developing Thought from the Door's **Active** column to enter its
+Thought Workbench. The Note remains a full editable document; the Interview
+asks one focused question at a time. Use **Add & ask next** for the fast
+explicit loop, **Add to Note** to stop after the current answer, and **Finish
+Thought** when the Note is ready. Each turn names its intended boundary and
+records where it actually ran. No model call happens merely because the
+Workbench was opened.
 
-## 5. The Desk, in passing
+## 5. The Door, then the Floor
 
-A returning user lands on **the Desk** (there is no wizard): your
-meetings, notes, knowledge bases, and agents as objects in a spatial world.
-Tap an object to open it in place, drag it onto a zone to file it, press the
-orb to record, and ask an agent from the rail: its answer lands on the desk
-as an artifact you can open, trace (`via` the agent that made it), and file.
-Every input takes speech: hold the mic, talk, release (the hub's own local
-Whisper transcribes; the boundary badge names any configured egress). A fresh
-Desk offers your next action. If something later needs
-attention, the **Setup window** (deep link `/setup`) is the calm health
-surface, and the egress
-badge in the Desk's corner always shows what can leave your machine.
+After your first sentence, a returning user lands on the **Chair Door**
+(there is no wizard). Its server-derived board shows **Overdue, Now, Waiting,
+Unassigned,** and **Active**, followed by one upcoming timeline. The **Floor**
+remains the spatial world for your meetings, notes, knowledge bases, and
+agents. Tap an object to open it in place, drag it onto a zone to file it,
+press the orb to record, and ask an agent from the rail: its answer lands on
+the Floor as an artifact you can open, trace (`via` the agent that made it),
+and file. Every input takes speech: hold the mic, talk, release (the hub's own
+local Whisper transcribes; the boundary badge names any configured egress). If
+something later needs attention, the **Setup window** (deep link `/setup`) is
+the calm health surface, and the egress badge in the Desk's corner always
+shows what can leave your machine.
 
-The web surface IS the Desk: every mode opens as a window on it. The menu
-(top left) and the tool shelf open Dictation, Meetings, Studio, Settings,
-and the rest as floating windows you can drag, resize, snap to an edge,
-minimize to the dock, or maximize. Nothing navigates away from the Desk.
+The web surface carries the Chair Door and the Floor. The menu (top left) and
+the tool shelf open Dictation, Meetings, Studio, Settings, and the rest as
+floating windows you can drag, resize, snap to an edge, minimize to the dock,
+or maximize. Nothing navigates away from the Desk.
 
 Old route addresses still work as deep links; each lands on the Desk with
 the matching window open:
@@ -117,7 +119,7 @@ the matching window open:
 | Deep link | Opens the window |
 | --- | --- |
 | `/welcome` | A compatibility route to the same first-words atom the Desk shows |
-| `/` | The Desk itself: your primitives as a spatial world (record, create, open, file, run) |
+| `/` | The Chair Door after first value: the board and upcoming rail. Use the Floor control for the spatial world (record, create, open, file, run). |
 | `/dictation` | Speak: the TALK key and its Aim row, the journal, learning, pre-briefing. An optional preview mode (Settings, Voice) shows each dictation on a card first: Type it commits, Discard drops it. |
 | `/history` | Meetings: capture or import, the archive, aftercare |
 | `/studio` | Studio: the advanced tier (Workbench, Cadence, Commands, and more) |

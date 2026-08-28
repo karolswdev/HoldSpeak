@@ -475,6 +475,27 @@ After a meeting, open:
 
 Use History to search meetings, review action items, edit accepted actions, inspect generated artifacts, and export local handoff files.
 
+## The Door
+
+The Chair Door follows your first sentence. Its board puts work in five
+meaning-based columns: **Overdue, Now, Waiting, Unassigned,** and **Active**.
+The board is server-derived. A card action appears only when the aggregate
+names a lawful verb; choosing it invokes that verb and returns its Receipt in
+flow. Moving or completing a card is not a cosmetic board-position edit.
+
+The Door's **Upcoming** rail is one chronological timeline. **EVENT** rows
+come from the calendar subscription. **SCHEDULED RECORDING** rows name a
+recording the hub will start. A calendar event is not a recording, and a
+schedule is not an invitation. The rail can be empty or contain only
+schedules. Meetings keeps live and recent meetings.
+
+At phone width, the compact **Go** menu opens applications. To add a calendar
+source, open **Settings → Meetings → Calendar** and set **Subscription** to a
+local ICS file path or HTTPS URL. The Door projects the next 14 days and
+refreshes the source at boot and every 15 minutes. An HTTPS subscription shows
+its fetch egress chip. See [Security & Privacy](SECURITY.md#4-egress-points-everywhere-data-can-leave-the-machine)
+for the source boundary.
+
 ## Schedule A Recording
 
 You can set the hub to start a recording on its own at a time you choose.
@@ -485,9 +506,9 @@ path a manual recording uses; no browser needs to be open.
 
 Use any of three paths:
 
-1. **The Chair.** On the capture hero, choose **Schedule**. A DeskWindow opens
-   where you name the recording, pick a time (one-shot or recurring cron), and
-   set a duration (default 60 minutes).
+1. **The Chair Door.** In **Upcoming**, choose **Schedule recording**. The
+   in-world schedule window lets you name the recording, choose **Once** or
+   **Recurring**, and set a duration (default 60 minutes).
 2. **HTTP.** `POST /api/scheduled-recordings` with `title`, `cron_expr`,
    `duration_minutes`, and `enabled`.
 3. **MCP.** The `scheduled_recording.*` tools expose the same CRUD.
@@ -497,9 +518,8 @@ advances to its next fire time after every terminal outcome.
 
 ### What happens at fire time
 
-When the schedule is due, the hub enters an arming countdown visible on the
-capture hero: "Recording starts in Ns." During the countdown you can cancel
-(tap the cancel control, or `POST /api/scheduled-recordings/{id}/cancel`).
+When the schedule is due, the hub enters an arming countdown. During the
+countdown you can cancel with `POST /api/scheduled-recordings/{id}/cancel`.
 If nobody cancels, capture starts under the hub's real microphone. The
 recording auto-stops at the set duration.
 
@@ -510,9 +530,10 @@ fire on restart and leaves a missed receipt. Neither case is a silent skip.
 
 ### Where scheduled recordings appear
 
-Scheduled recordings show in the Meetings lane with a SCHEDULED badge and
-their next fire time. After a recording completes, its meeting entry is the
-same as any other captured meeting: transcript, artifacts, aftercare.
+Future schedules appear in the Door **Upcoming** rail as **SCHEDULED
+RECORDING** rows with their next fire time. After a recording completes, its
+meeting entry is the same as any other captured meeting: transcript,
+artifacts, aftercare.
 
 ## Meeting Intelligence
 
