@@ -1,6 +1,6 @@
 # Phase 146 — Multiple Calendars
 
-**Status:** in progress (0/5).
+**Status:** in progress (0/6).
 
 **Last updated:** 2026-08-28.
 
@@ -62,11 +62,12 @@ ceremony budget):
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-146-01 | Multi-source plumbing (config + DB + conductor) | ready | [story-01](./story-01-multi-source-plumbing.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-146-01 | Multi-source plumbing (config + DB + conductor) | in-progress | [story-01](./story-01-multi-source-plumbing.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-146-02 | Settings service + wire | ready | [story-02](./story-02-settings-service-wire.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-146-03 | The settings list editor (joy surface) | ready | [story-03](./story-03-settings-list-editor.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-146-04 | Rail provenance + seed repairs | ready | [story-04](./story-04-rail-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-146-05 | Docs, walk, and close | ready | [story-05](./story-05-docs-walk-close.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-146-05 | The walk and the close | ready | [story-05](./story-05-docs-walk-close.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-146-06 | The calendar book (thorough docs) | ready | [story-06](./story-06-the-calendar-book.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Risk register
 
@@ -91,3 +92,11 @@ ceremony budget):
 - 2026-08-28 — Phase chartered on the owner's menu pick (
   "Multiple calendars" over event→one-tap-record). Plan archived;
   all seven [ORCH-CALL]s ruled as recorded in the settled design.
+- 2026-08-28 — **OWNER ORDER: a dedicated thorough-documentation
+  story.** HS-146-06 (the calendar book) added: a real USER_GUIDE
+  Calendars section, the SECURITY multi-source egress truth, an
+  ARCHITECTURE calendar-pipeline section, the entry-point mentions,
+  the six "one subscription" sites (moved out of story 05), and a
+  doc-drift retirement guard if the mechanism accommodates it.
+  Story 05 amended to walk+close only and now depends on 06 (docs
+  after features, before closeout — the house law). Phase is 0/6.

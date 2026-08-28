@@ -1,27 +1,26 @@
-# HS-146-05 — Docs, walk, and close
+# HS-146-05 — The walk and the close
 
 - **Project:** holdspeak
 - **Phase:** 146
 - **Status:** ready
-- **Depends on:** HS-146-02, HS-146-03, HS-146-04
+- **Depends on:** HS-146-02, HS-146-03, HS-146-04, HS-146-06
 - **Unblocks:** —
 - **Owner:** unassigned
 
+> **Amended 2026-08-28 (owner order):** the docs scope moved to the
+> dedicated thorough-documentation story [HS-146-06](./story-06-the-calendar-book.md);
+> this story is now the walk and the close only, and depends on it
+> (docs after features, before closeout — the house law).
+
 ## Problem
 
-Six surfaces still say "one subscription", and multi-calendar is a
-claim until the shots, the cold walk, and a baseline-judged sweep
-say otherwise.
+Multi-calendar is a claim until the shots, the cold walk, and a
+baseline-judged sweep say otherwise.
 
 ## Scope
 
 ### In
 
-- The six prose sites (plan §7): `docs/USER_GUIDE.md:486-497`,
-  `docs/SECURITY.md:355` (the egress row tells the multi-source
-  truth), `holdspeak/mcp/families/settings.py:28`, and the three
-  docstrings (`integrations.py`, `calendar_ingest_conductor.py`,
-  `db/calendar_events.py`).
 - **Shots against the real hub**, both widths, eyeballed by the
   orchestrator first: the list editor (empty / one / two sources,
   egress chips), the rail with two sources (provenance chips, a
@@ -40,11 +39,9 @@ say otherwise.
 
 ## Acceptance criteria
 
-1. Zero "one subscription" claims survive on the six sites (grep
-   proof in evidence).
-2. Shot set delivered; no byte-identical pairs.
-3. Walk 7/7; sweep baseline-exact zero branch-new (or triaged).
-4. Counsel verdict recorded; final-summary exists; statuses truthful.
+1. Shot set delivered; no byte-identical pairs.
+2. Walk 7/7; sweep baseline-exact zero branch-new (or triaged).
+3. Counsel verdict recorded; final-summary exists; statuses truthful.
 
 ## Test plan
 
