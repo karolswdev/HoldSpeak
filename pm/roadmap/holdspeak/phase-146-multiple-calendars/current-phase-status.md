@@ -1,6 +1,6 @@
 # Phase 146 — Multiple Calendars
 
-**Status:** in progress (1/6).
+**Status:** in progress (1/7).
 
 **Last updated:** 2026-08-28.
 
@@ -63,11 +63,12 @@ ceremony budget):
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-146-01 | Multi-source plumbing (config + DB + conductor) | done | [story-01](./story-01-multi-source-plumbing.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-146-02 | Settings service + wire | ready | [story-02](./story-02-settings-service-wire.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-146-02 | Settings service + wire | in-progress | [story-02](./story-02-settings-service-wire.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-146-03 | The settings list editor (joy surface) | ready | [story-03](./story-03-settings-list-editor.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-146-04 | Rail provenance + seed repairs | ready | [story-04](./story-04-rail-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-146-05 | The walk and the close | ready | [story-05](./story-05-docs-walk-close.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-146-06 | The calendar book (thorough docs) | ready | [story-06](./story-06-the-calendar-book.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-146-07 | The Calendar Snapshot adapter | ready | [story-07](./story-07-calendar-snapshot-adapter.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Risk register
 
@@ -100,6 +101,16 @@ ceremony budget):
   doc-drift retirement guard if the mechanism accommodates it.
   Story 05 amended to walk+close only and now depends on 06 (docs
   after features, before closeout — the house law). Phase is 0/6.
+- 2026-08-28 — **OWNER RULING: the Calendar Snapshot adapter folds
+  INTO this phase as HS-146-07** (over the recommended Phase-147
+  deferral; backlog candidate AE is the settled direction). The
+  no-server O365 case: screenshot → vision extraction via a router
+  assignment (egress honest) → week anchor never silently guessed →
+  review-before-commit → a generated local `.ics` registered as a
+  file CalendarSource, with the 146 parser staying the one trust
+  boundary. The story carries a REQUIRED design-beat plan round
+  before implementation. Stories 05 (walk) and 06 (docs) now also
+  cover the adapter; phase is 1/7.
 - 2026-08-28 — HS-146-01 closed (details + full-sweep triage in
   evidence-story-01.md): the multi-source plumbing with the
   wire-stability bridge; 66-test focused close; sweep 13 failed /

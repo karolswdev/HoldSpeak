@@ -3,7 +3,7 @@
 - **Project:** holdspeak
 - **Phase:** 146
 - **Status:** ready
-- **Depends on:** HS-146-02, HS-146-03, HS-146-04
+- **Depends on:** HS-146-02, HS-146-03, HS-146-04, HS-146-07
 - **Unblocks:** HS-146-05
 - **Owner:** unassigned
 
@@ -60,6 +60,15 @@ to learn from the docs alone.
   creep back into the user-facing docs once retired — only if the
   existing guard mechanism accommodates it cleanly; otherwise record
   the tie-break in evidence.
+
+- **The Snapshot adapter chapter** (amended 2026-08-28 at the
+  HS-146-07 fold-in): USER_GUIDE covers the screenshot import
+  end-to-end (what to screenshot, the week anchor, the review step,
+  what "O365 SNAPSHOT" on the rail means, re-importing a week);
+  SECURITY covers where the screenshot goes (the vision assignment's
+  egress truth — local vs cloud) and that the generated `.ics` rides
+  the same bounded parser; ARCHITECTURE covers the adapter's
+  trust-boundary claim (model output is hostile input).
 
 ### Out
 

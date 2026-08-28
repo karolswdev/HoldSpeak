@@ -3,7 +3,7 @@
 - **Project:** holdspeak
 - **Phase:** 146
 - **Status:** ready
-- **Depends on:** HS-146-02, HS-146-03, HS-146-04, HS-146-06
+- **Depends on:** HS-146-02, HS-146-03, HS-146-04, HS-146-06, HS-146-07
 - **Unblocks:** —
 - **Owner:** unassigned
 
@@ -21,6 +21,10 @@ baseline-judged sweep say otherwise.
 
 ### In
 
+- **The adapter leg** (amended 2026-08-28 at the HS-146-07 fold-in):
+  the shot set and walk also cover the snapshot-import flow (fixture
+  screenshot → review list → confirmed events on the rail as the
+  SNAPSHOT source).
 - **Shots against the real hub**, both widths, eyeballed by the
   orchestrator first: the list editor (empty / one / two sources,
   egress chips), the rail with two sources (provenance chips, a
