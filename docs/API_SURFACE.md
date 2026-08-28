@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 537 (plus static mounts). iOS-consumed: 89. Web-consumed: 413.
+Routes: 538 (plus static mounts). iOS-consumed: 89. Web-consumed: 416.
 
 ## device_audio_ws
 
@@ -145,7 +145,7 @@ Routes: 537 (plus static mounts). iOS-consumed: 89. Web-consumed: 413.
 | POST | `/api/cadence/closeout/apply` | server only |
 | GET | `/api/cadence/history` | web |
 | GET | `/api/cadence/loops` | web |
-| GET | `/api/cadence/loops/{loop_id}` | server only |
+| GET | `/api/cadence/loops/{loop_id}` | web |
 | POST | `/api/cadence/loops/{loop_id}/close` | web |
 | POST | `/api/cadence/loops/{loop_id}/kill` | web |
 | POST | `/api/cadence/loops/{loop_id}/reply` | web |
@@ -357,7 +357,7 @@ Routes: 537 (plus static mounts). iOS-consumed: 89. Web-consumed: 413.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/door` | server only |
+| GET | `/api/door` | web |
 
 ## web.routes.follow_through
 
@@ -540,6 +540,7 @@ Routes: 537 (plus static mounts). iOS-consumed: 89. Web-consumed: 413.
 |---|---|---|
 | GET | `/api/people/commitments/{commitment_id}/execution` | web |
 | POST | `/api/people/commitments/{commitment_id}/satisfy` | web |
+| POST | `/api/people/commitments/{commitment_id}/transition` | web |
 | POST | `/api/people/commitments/{commitment_id}/workbench` | web |
 | GET | `/api/people/history` | web |
 | POST | `/api/people/one-on-ones/{session_id}/agenda` | web |

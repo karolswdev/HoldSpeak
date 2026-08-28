@@ -1,6 +1,6 @@
 # Phase 144 — The Dashboard Door
 
-**Status:** in progress (2/6). HS-144-01 and HS-144-02 done; HS-144-03 (the kanban on glass) next.
+**Status:** in progress (3/6). Stories 01-03 done; HS-144-04 (the upcoming rail + doorframe repairs) next. Owner shot verdict on the Door glass pending.
 
 **Last updated:** 2026-08-27.
 
@@ -111,7 +111,7 @@ with dispositions — no counsel round was spent:
 | --- | --- | --- | --- | --- |
 | HS-144-01 | The Door read model | done | [story-01](./story-01-door-read-model.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-144-02 | Calendar ingest (ICS first) | done | [story-02](./story-02-calendar-ingest-ics.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-144-03 | The kanban on glass | in-progress | [story-03](./story-03-kanban-on-glass.md) | — |
+| HS-144-03 | The kanban on glass | done | [story-03](./story-03-kanban-on-glass.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-144-04 | The upcoming rail + doorframe repairs | backlog | [story-04](./story-04-upcoming-rail-and-repairs.md) | — |
 | HS-144-05 | Docs | backlog | [story-05](./story-05-docs.md) | — |
 | HS-144-06 | The walk and the close | backlog | [story-06](./story-06-walk-and-close.md) | — |
@@ -166,3 +166,10 @@ notes fixed-in-flight (MINUTELY refusal, join timeout), two ledgered
 scheduled-recording shutdown gap carried to the phase ledger; sweep
 baseline-exact, zero branch-new; the inference-capability-census
 xdist name is a WATCH ITEM for the 03 sweep.
+
+HS-144-03 closed 2026-08-28: the Door board on glass (details in
+evidence-story-03.md); seven+eighth consecutive zero-product-bug opus
+audits on the phase; three walk-caught regressions fixed in-round; the
+manifest guard caught the undeclared People route (regen 538);
+capture baseline-exact, zero branch-new. Owner shot verdict pending —
+gates the merge, not the flip.
