@@ -1,6 +1,6 @@
 # Phase 144 — The Dashboard Door
 
-**Status:** in progress (3/6). Stories 01-03 done; HS-144-04 (the upcoming rail + doorframe repairs) next. Owner shot verdict on the Door glass pending.
+**Status:** in progress (4/6). Stories 01-04 done; HS-144-05 (docs) next. Owner shot verdicts (board + rail sets) pending.
 
 **Last updated:** 2026-08-27.
 
@@ -112,7 +112,7 @@ with dispositions — no counsel round was spent:
 | HS-144-01 | The Door read model | done | [story-01](./story-01-door-read-model.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-144-02 | Calendar ingest (ICS first) | done | [story-02](./story-02-calendar-ingest-ics.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-144-03 | The kanban on glass | done | [story-03](./story-03-kanban-on-glass.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-144-04 | The upcoming rail + doorframe repairs | in-progress | [story-04](./story-04-upcoming-rail-and-repairs.md) | — |
+| HS-144-04 | The upcoming rail + doorframe repairs | done | [story-04](./story-04-upcoming-rail-and-repairs.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-144-05 | Docs | backlog | [story-05](./story-05-docs.md) | — |
 | HS-144-06 | The walk and the close | backlog | [story-06](./story-06-walk-and-close.md) | — |
 
@@ -173,3 +173,9 @@ audits on the phase; three walk-caught regressions fixed in-round; the
 manifest guard caught the undeclared People route (regen 538);
 capture baseline-exact, zero branch-new. Owner shot verdict pending —
 gates the merge, not the flip.
+
+HS-144-04 closed 2026-08-28: the rail + repairs (evidence-story-04.md
+carries the full triage incl. the fixed working-band regression and
+the second xdist watch item). Phase ledger addition: the central
+trust-destinations registry lacks a calendar-fetch entry — documented
+truthfully, no fake entry; named product gap for the owner.
