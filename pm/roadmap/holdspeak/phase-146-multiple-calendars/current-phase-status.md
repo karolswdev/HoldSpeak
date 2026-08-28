@@ -1,6 +1,6 @@
 # Phase 146 — Multiple Calendars
 
-**Status:** in progress (2/7).
+**Status:** in progress (3/7).
 
 **Last updated:** 2026-08-28.
 
@@ -64,7 +64,7 @@ ceremony budget):
 | --- | --- | --- | --- | --- |
 | HS-146-01 | Multi-source plumbing (config + DB + conductor) | done | [story-01](./story-01-multi-source-plumbing.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-146-02 | Settings service + wire | done | [story-02](./story-02-settings-service-wire.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-146-03 | The settings list editor (joy surface) | in-progress | [story-03](./story-03-settings-list-editor.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-146-03 | The settings list editor (joy surface) | done | [story-03](./story-03-settings-list-editor.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-146-04 | Rail provenance + seed repairs | in-progress | [story-04](./story-04-rail-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-146-05 | The walk and the close | ready | [story-05](./story-05-docs-walk-close.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-146-06 | The calendar book (thorough docs) | ready | [story-06](./story-06-the-calendar-book.md) | [evidence-story-06](./evidence-story-06.md) |
@@ -124,6 +124,12 @@ ceremony budget):
   api-surface regen. One orchestrator override of the plan: the
   canonical payload hash stays WHOLE — no image-exclusion
   special-case in kernel hash semantics.
+- 2026-08-28 — HS-146-03 closed (evidence-story-03.md): the calendar
+  list editor on real glass — empty state leads with one + ADD SOURCE
+  act; label/url/on rows with mics and in-world remove; per-source
+  egress chips; `_calendar_subscription` UI reads retired with grep
+  proof; orchestrator shot rig verified both widths
+  (assets/story-0304-shots).
 - 2026-08-28 — HS-146-02 closed (evidence-story-02.md): the real
   sources wire with per-entry named refusals + the `_calendar_sources`
   fact; RULED dual-fact reality — `_calendar_subscription` ships
