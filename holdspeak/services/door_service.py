@@ -5,6 +5,7 @@ from dataclasses import asdict
 from datetime import datetime, time, timedelta, timezone
 from typing import Any, Callable
 
+from ..db.calendar_events import CalendarEvent, CalendarEventRepository
 from ..db.scheduled_recordings import ScheduledRecording, ScheduledRecordingRepository
 from .follow_through_service import FollowThroughCard, FollowThroughService
 from .refinement_thought_service import RefinementThoughtService
@@ -16,12 +17,14 @@ class DoorService:
         follow_through_service: FollowThroughService,
         refinement_thought_service: RefinementThoughtService,
         scheduled_recordings: ScheduledRecordingRepository,
+        calendar_events: CalendarEventRepository,
         *,
         clock: Callable[[], datetime] | None = None,
     ) -> None:
         self._follow_through_service = follow_through_service
         self._refinement_thought_service = refinement_thought_service
         self._scheduled_recordings = scheduled_recordings
+        self._calendar_events = calendar_events
         self._clock = clock or (lambda: datetime.now().astimezone())
 
     def get(self, principal: Any) -> dict[str, Any]:
@@ -153,6 +156,11 @@ class DoorService:
             if recording.next_fire_at is None or recording.next_fire_at < now.timestamp():
                 continue
             upcoming.append(self._scheduled_recording_item(recording))
+        now_iso = self._utc_iso(now)
+        upcoming.extend(
+            self._calendar_event_item(event)
+            for event in self._calendar_events.list_upcoming(now_iso)
+        )
         return sorted(upcoming, key=lambda item: (item["starts_at"], item["source"], item["id"]))
 
     @staticmethod
@@ -169,6 +177,21 @@ class DoorService:
             "location": None,
             "meeting_url": None,
             "state": recording.state,
+        }
+
+    @staticmethod
+    def _calendar_event_item(event: CalendarEvent) -> dict[str, Any]:
+        """Map the persisted projection into Story 01's reserved timeline row."""
+        return {
+            "id": event.id,
+            "source": "calendar_event",
+            "target_ref": f"calendar_event:{event.id}",
+            "title": event.title,
+            "starts_at": event.starts_at,
+            "ends_at": event.ends_at,
+            "location": event.location,
+            "meeting_url": event.meeting_url,
+            "state": "scheduled",
         }
 
     @staticmethod

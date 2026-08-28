@@ -72,10 +72,12 @@ class CalendarEventRepository(BaseRepository):
         revision = str(subscription_revision)
         desired = tuple(events)
         with self._connection() as conn:
-            conn.execute(
-                "DELETE FROM calendar_events WHERE subscription_revision != ?",
-                (revision,),
-            )
+            # The source owns this whole projection. Clear old/current rows in
+            # the transaction before inserting its complete desired set, rather
+            # than depending on a clock value being unique across refreshes.
+            # A transaction rollback restores the prior working projection if
+            # any insert fails.
+            conn.execute("DELETE FROM calendar_events")
             for event in desired:
                 conn.execute(
                     """INSERT INTO calendar_events
@@ -103,11 +105,6 @@ class CalendarEventRepository(BaseRepository):
                         revision,
                     ),
                 )
-            conn.execute(
-                "DELETE FROM calendar_events "
-                "WHERE subscription_revision = ? AND last_seen_at != ?",
-                (revision, float(seen_at)),
-            )
 
     def list_upcoming(self, now_iso: str) -> list[CalendarEvent]:
         """Return future projected occurrences in the Door's chronological order."""

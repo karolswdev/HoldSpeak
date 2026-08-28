@@ -217,10 +217,10 @@ def _event_occurrences(
         occurrences = [starts_at]
     else:
         frequency = _rrule_frequency(rrule)
-        # A seconds rule can place an unbounded amount of work before dateutil
-        # reaches a far-future ``now``. Meetings do not need this granularity;
-        # refusing it is safer and more honest than a wall-clock timeout.
-        if frequency == "SECONDLY":
+        # Seconds/minutes rules can place an unbounded amount of work before
+        # dateutil reaches a far-future ``now``. Meetings do not need this
+        # granularity; refusing them is safer than a wall-clock timeout.
+        if frequency in {"SECONDLY", "MINUTELY"}:
             raise _EventProblem("calendar_event_skipped_unsupported_rrule_frequency")
         try:
             rule_text = rrule.to_ical().decode("utf-8")

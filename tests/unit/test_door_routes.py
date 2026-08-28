@@ -1,13 +1,14 @@
 """HTTP coverage for the Dashboard Door aggregate route."""
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from holdspeak.calendar_ingest import CalendarEventCandidate
 from holdspeak.db.core import Database, reset_database
 from holdspeak.principals import Principal, PrincipalKind, UNAUTHENTICATED
 from holdspeak.services.door_service import DoorService
@@ -40,6 +41,7 @@ def _service(db: Database) -> DoorService:
         FollowThroughService(db),
         RefinementThoughtService(db),
         db.scheduled_recordings,
+        db.calendar_events,
         clock=lambda: FIXED_NOW,
     )
 
@@ -89,6 +91,21 @@ def test_get_door_returns_one_complete_aggregate_from_real_service(db: Database)
         next_fire_at=FIXED_NOW.timestamp() + 3600,
         duration_minutes=30,
     )
+    db.calendar_events.replace_projection(
+        "route-calendar",
+        [
+            CalendarEventCandidate(
+                id="ce_route",
+                uid="route-event",
+                title="Route calendar event",
+                starts_at=(FIXED_NOW + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+                ends_at=(FIXED_NOW + timedelta(hours=1)).isoformat().replace("+00:00", "Z"),
+                location=None,
+                meeting_url=None,
+            )
+        ],
+        seen_at=FIXED_NOW.timestamp(),
+    )
 
     response = _client(_service(db)).get("/api/door")
 
@@ -96,7 +113,18 @@ def test_get_door_returns_one_complete_aggregate_from_real_service(db: Database)
     assert set(response.json()) == {"board", "upcoming", "counts"}
     assert response.json()["board"]["now"][0]["target_ref"] == "action_item:route-action"
     assert response.json()["board"]["active"][0]["source"] == "thought"
-    assert response.json()["upcoming"][0]["source"] == "scheduled_recording"
+    assert response.json()["upcoming"][0] == {
+        "id": "ce_route",
+        "source": "calendar_event",
+        "target_ref": "calendar_event:ce_route",
+        "title": "Route calendar event",
+        "starts_at": (FIXED_NOW + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+        "ends_at": (FIXED_NOW + timedelta(hours=1)).isoformat().replace("+00:00", "Z"),
+        "location": None,
+        "meeting_url": None,
+        "state": "scheduled",
+    }
+    assert response.json()["upcoming"][1]["source"] == "scheduled_recording"
 
 
 def test_get_door_carries_existing_thought_authority_refusal(db: Database) -> None:

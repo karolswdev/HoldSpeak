@@ -160,6 +160,12 @@ DTSTART:20260827T010000Z\r
 DTEND:20260827T010100Z\r
 RRULE:FREQ=SECONDLY\r
 END:VEVENT\r
+BEGIN:VEVENT\r
+UID:too-often\r
+DTSTART:20000101T010000Z\r
+DTEND:20000101T010100Z\r
+RRULE:FREQ=MINUTELY\r
+END:VEVENT\r
 END:VCALENDAR\r
 """
 
@@ -171,6 +177,7 @@ END:VCALENDAR\r
         ("all-day", "calendar_event_skipped_unsupported_date_only"),
         ("override", "calendar_event_skipped_unsupported_recurrence_override"),
         ("too-fast", "calendar_event_skipped_unsupported_rrule_frequency"),
+        ("too-often", "calendar_event_skipped_unsupported_rrule_frequency"),
     }
 
 

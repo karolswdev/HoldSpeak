@@ -12,6 +12,7 @@ import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
+from holdspeak.calendar_ingest import CalendarEventCandidate
 from holdspeak.db.core import Database, reset_database
 from holdspeak.mcp import server
 from holdspeak.mcp.families import door
@@ -43,6 +44,7 @@ def _side(tmp_path: Path, *, http: bool) -> Side:
         FollowThroughService(db),
         RefinementThoughtService(db),
         db.scheduled_recordings,
+        db.calendar_events,
     )
     if not http:
         return Side(db, service, None)
@@ -86,6 +88,22 @@ def _seed(side: Side) -> None:
         enabled=True,
         next_fire_at=(datetime.now(timezone.utc) + timedelta(hours=1)).timestamp(),
         duration_minutes=30,
+    )
+    starts_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+    side.db.calendar_events.replace_projection(
+        "parity-calendar",
+        [
+            CalendarEventCandidate(
+                id="ce_parity",
+                uid="parity-calendar-event",
+                title="Parity calendar event",
+                starts_at=starts_at.replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+                ends_at=(starts_at + timedelta(minutes=30)).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+                location=None,
+                meeting_url=None,
+            )
+        ],
+        seen_at=starts_at.timestamp(),
     )
 
 

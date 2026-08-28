@@ -713,6 +713,7 @@ class MeetingWebServer:
             follow_through_service,
             RefinementThoughtService(get_database()),
             get_database().scheduled_recordings,
+            get_database().calendar_events,
         )
 
         inference_setup_service = InferenceSetupApplicationService(get_database())
@@ -993,11 +994,23 @@ class MeetingWebServer:
                 )
             except Exception as e:
                 log.error(f"scheduled recording conductor startup failed: {e}")
+            try:
+                from .calendar_ingest_conductor import start_calendar_ingest_conductor
+
+                start_calendar_ingest_conductor()
+            except Exception as e:
+                log.error(f"calendar ingest conductor startup failed: {e}")
             self._started.set()
             log.debug("Meeting web server startup complete")
 
         @app.on_event("shutdown")
         async def _shutdown() -> None:
+            try:
+                from .calendar_ingest_conductor import stop_calendar_ingest_conductor
+
+                stop_calendar_ingest_conductor()
+            except Exception as e:
+                log.error(f"calendar ingest conductor shutdown failed: {e}")
             await refinement_coordinator.shutdown()
             for task in (
                 self._duration_task,

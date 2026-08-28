@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from holdspeak.calendar_ingest import CalendarEventCandidate
 from holdspeak.db.core import Database, reset_database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.door_service import DoorService
@@ -43,6 +44,7 @@ def _door(
         FollowThroughService(db, people_projection=people_service),
         RefinementThoughtService(db),
         db.scheduled_recordings,
+        db.calendar_events,
         clock=lambda: now,
     )
 
@@ -229,6 +231,82 @@ def test_upcoming_filters_and_orders_enabled_next_fire_records_with_calendar_rea
         "meeting_url": None,
         "state": "idle",
     }
+
+
+def test_upcoming_merges_calendar_events_and_scheduled_recordings_in_one_stable_order(
+    db: Database,
+) -> None:
+    same_time = FIXED_NOW + timedelta(hours=1)
+    schedule_id = _scheduled(
+        db, "Scheduled at same instant", enabled=True, next_fire_at=same_time.timestamp()
+    )
+    db.calendar_events.replace_projection(
+        "calendar-revision",
+        [
+            CalendarEventCandidate(
+                id="ce_later",
+                uid="later",
+                title="Later calendar event",
+                starts_at=(FIXED_NOW + timedelta(hours=2)).isoformat().replace("+00:00", "Z"),
+                ends_at=(FIXED_NOW + timedelta(hours=3)).isoformat().replace("+00:00", "Z"),
+                location=None,
+                meeting_url=None,
+            ),
+            CalendarEventCandidate(
+                id="ce_same",
+                uid="same",
+                title="Calendar at same instant",
+                starts_at=same_time.isoformat().replace("+00:00", "Z"),
+                ends_at=(same_time + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+                location="Room 4",
+                meeting_url="https://meet.example.test/door",
+            ),
+        ],
+        seen_at=FIXED_NOW.timestamp(),
+    )
+
+    upcoming = _door(db).get(OWNER)["upcoming"]
+
+    assert [item["id"] for item in upcoming] == ["ce_same", schedule_id, "ce_later"]
+    assert upcoming[0] == {
+        "id": "ce_same",
+        "source": "calendar_event",
+        "target_ref": "calendar_event:ce_same",
+        "title": "Calendar at same instant",
+        "starts_at": same_time.isoformat().replace("+00:00", "Z"),
+        "ends_at": (same_time + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+        "location": "Room 4",
+        "meeting_url": "https://meet.example.test/door",
+        "state": "scheduled",
+    }
+
+
+def test_calendar_timeline_rows_preserve_the_reserved_nullable_fields_and_do_not_change_counts_shape(
+    db: Database,
+) -> None:
+    starts_at = FIXED_NOW + timedelta(hours=1)
+    db.calendar_events.replace_projection(
+        "calendar-revision",
+        [
+            CalendarEventCandidate(
+                id="ce_nullable",
+                uid="nullable",
+                title="No location calendar event",
+                starts_at=starts_at.isoformat().replace("+00:00", "Z"),
+                ends_at=(starts_at + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+                location=None,
+                meeting_url=None,
+            )
+        ],
+        seen_at=FIXED_NOW.timestamp(),
+    )
+
+    projection = _door(db).get(OWNER)
+
+    assert projection["upcoming"][0]["location"] is None
+    assert projection["upcoming"][0]["meeting_url"] is None
+    assert set(projection["counts"]) == {"overdue", "now", "waiting", "active", "upcoming_today"}
+    assert projection["counts"]["upcoming_today"] == 1
 
 
 def test_door_never_needs_refinement_thought_schema_fields_beyond_existing_projection(db: Database) -> None:

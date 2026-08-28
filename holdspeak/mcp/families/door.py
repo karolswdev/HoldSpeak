@@ -40,6 +40,7 @@ def _service() -> DoorService:
         FollowThroughService(db, people_projection=people_projection),
         RefinementThoughtService(db),
         db.scheduled_recordings,
+        db.calendar_events,
     )
 
 

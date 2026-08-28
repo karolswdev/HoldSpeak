@@ -91,8 +91,8 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/services/refinement_coordinator.py:310:ref:resolve_thought_placement",
     "holdspeak/services/refinement_thought_service.py:640:import:resolve_thought_placement",
     "holdspeak/services/refinement_thought_service.py:681:ref:resolve_thought_placement",
-    "holdspeak/services/settings_service.py:68:import:resolve_meeting_placement",
-    "holdspeak/services/settings_service.py:76:ref:resolve_meeting_placement",
+    "holdspeak/services/settings_service.py:69:import:resolve_meeting_placement",
+    "holdspeak/services/settings_service.py:77:ref:resolve_meeting_placement",
     "holdspeak/speech_session/plan.py:452:import:resolve_placement",
     "holdspeak/speech_session/plan.py:461:ref:resolve_placement",
     "holdspeak/speech_session/plan.py:629:import:resolve_placement",
@@ -104,10 +104,10 @@ ROUTING_RESOLVER_REFERENCES = {
 }
 
 ROUTING_POINTER_ATTRIBUTES = {
-    "holdspeak/config/core.py:135:intel_profile_id",
-    "holdspeak/config/core.py:158:intel_profile_id",
-    "holdspeak/config/integrations.py:22:inference_target_id",
-    "holdspeak/config/integrations.py:23:inference_target_id",
+    "holdspeak/config/core.py:141:intel_profile_id",
+    "holdspeak/config/core.py:164:intel_profile_id",
+    "holdspeak/config/integrations.py:117:inference_target_id",
+    "holdspeak/config/integrations.py:118:inference_target_id",
     "holdspeak/config/meeting.py:143:intel_profile_id",
     "holdspeak/config/meeting.py:144:intel_profile_id",
     "holdspeak/db/models/__init__.py:1122:resolver_profile_id",
@@ -117,8 +117,8 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/services/inference_setup_service.py:650:inference_target_id",
     "holdspeak/services/inference_setup_service.py:654:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:181:inference_target_id",
-    "holdspeak/services/settings_service.py:636:intel_profile_id",
-    "holdspeak/services/settings_service.py:885:inference_target_id",
+    "holdspeak/services/settings_service.py:645:intel_profile_id",
+    "holdspeak/services/settings_service.py:895:inference_target_id",
     "holdspeak/services/workbench_service.py:562:resolver_profile_id",
 }
 
@@ -127,11 +127,11 @@ ROUTING_POINTER_ATTRIBUTES = {
 # receipts, DTOs, readiness, and unrelated records out of the assignment lane.
 PROFILE_ID_CLASSIFICATIONS = {
     **{site: "mutable assignment pointer" for site in {
-        "holdspeak/config/core.py:138:profile_id", "holdspeak/config/core.py:169:profile_id",
-        "holdspeak/config/integrations.py:101:profile_id", "holdspeak/config/model.py:80:profile_id",
+        "holdspeak/config/core.py:144:profile_id", "holdspeak/config/core.py:175:profile_id",
+        "holdspeak/config/integrations.py:196:profile_id", "holdspeak/config/model.py:80:profile_id",
         "holdspeak/plugins/dictation/assembly.py:321:profile_id",
-        "holdspeak/services/settings_service.py:786:profile_id",
-        "holdspeak/services/settings_service.py:858:profile_id",
+        "holdspeak/services/settings_service.py:796:profile_id",
+        "holdspeak/services/settings_service.py:868:profile_id",
         "holdspeak/services/sync_service.py:682:profile_id",
         "holdspeak/services/sync_service.py:697:profile_id",
     }},
@@ -141,7 +141,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/commands/doctor.py:934:profile_id",
         "holdspeak/db/models/__init__.py:683:profile_id", "holdspeak/inference_targets.py:161:profile_id",
         "holdspeak/services/ask_service.py:318:profile_id",
-        "holdspeak/services/inference_setup_service.py:653:profile_id", "holdspeak/services/settings_service.py:99:profile_id",
+        "holdspeak/services/inference_setup_service.py:653:profile_id", "holdspeak/services/settings_service.py:100:profile_id",
         "holdspeak/setup_status.py:151:profile_id",
         "holdspeak/services/model_profile_service.py:225:profile_id",
         "holdspeak/services/model_profile_service.py:264:profile_id",
