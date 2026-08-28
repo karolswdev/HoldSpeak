@@ -1,6 +1,6 @@
 # Phase 144 — The Dashboard Door
 
-**Status:** in progress (1/6). HS-144-01 done; HS-144-02 next.
+**Status:** in progress (2/6). HS-144-01 and HS-144-02 done; HS-144-03 (the kanban on glass) next.
 
 **Last updated:** 2026-08-27.
 
@@ -110,7 +110,7 @@ with dispositions — no counsel round was spent:
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-144-01 | The Door read model | done | [story-01](./story-01-door-read-model.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-144-02 | Calendar ingest (ICS first) | in-progress | [story-02](./story-02-calendar-ingest-ics.md) | — |
+| HS-144-02 | Calendar ingest (ICS first) | done | [story-02](./story-02-calendar-ingest-ics.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-144-03 | The kanban on glass | backlog | [story-03](./story-03-kanban-on-glass.md) | — |
 | HS-144-04 | The upcoming rail + doorframe repairs | backlog | [story-04](./story-04-upcoming-rail-and-repairs.md) | — |
 | HS-144-05 | Docs | backlog | [story-05](./story-05-docs.md) | — |
@@ -157,3 +157,12 @@ YOLO bar).
   slice 0 adds the one thin HTTP route over the same application
   service, parity-proven. Recorded here per the amendment duty; the
   owner may overrule at the sitting.
+
+HS-144-02 closed 2026-08-28: the ICS ingest end-to-end (subscription
+setting, bounded parser, wire-posture conductor, Door timeline merge
+on both transports); two zero-product-bug opus audits; two audit
+notes fixed-in-flight (MINUTELY refusal, join timeout), two ledgered
+(theoretical double-start, sleeping conductor); the pre-existing
+scheduled-recording shutdown gap carried to the phase ledger; sweep
+baseline-exact, zero branch-new; the inference-capability-census
+xdist name is a WATCH ITEM for the 03 sweep.

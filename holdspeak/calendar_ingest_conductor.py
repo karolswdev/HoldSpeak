@@ -162,7 +162,8 @@ class CalendarIngestConductor:
     def stop(self) -> None:
         self._stop.set()
         if self._thread is not None:
-            self._thread.join(timeout=5)
+            # join must outlast the 10s HTTP timeout so stop() means stopped
+            self._thread.join(timeout=12)
         log.info("Calendar ingest conductor stopped")
 
     def refresh(self) -> bool:
