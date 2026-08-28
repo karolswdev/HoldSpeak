@@ -1,6 +1,6 @@
 # Phase 146 — Multiple Calendars
 
-**Status:** in progress (1/7).
+**Status:** in progress (2/7).
 
 **Last updated:** 2026-08-28.
 
@@ -63,7 +63,7 @@ ceremony budget):
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-146-01 | Multi-source plumbing (config + DB + conductor) | done | [story-01](./story-01-multi-source-plumbing.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-146-02 | Settings service + wire | in-progress | [story-02](./story-02-settings-service-wire.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-146-02 | Settings service + wire | done | [story-02](./story-02-settings-service-wire.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-146-03 | The settings list editor (joy surface) | ready | [story-03](./story-03-settings-list-editor.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-146-04 | Rail provenance + seed repairs | ready | [story-04](./story-04-rail-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-146-05 | The walk and the close | ready | [story-05](./story-05-docs-walk-close.md) | [evidence-story-05](./evidence-story-05.md) |
@@ -111,6 +111,13 @@ ceremony budget):
   boundary. The story carries a REQUIRED design-beat plan round
   before implementation. Stories 05 (walk) and 06 (docs) now also
   cover the adapter; phase is 1/7.
+- 2026-08-28 — HS-146-02 closed (evidence-story-02.md): the real
+  sources wire with per-entry named refusals + the `_calendar_sources`
+  fact; RULED dual-fact reality — `_calendar_subscription` ships
+  alongside until story 03 retires the UI consumer and story 04 flips
+  the seeds/walk (12 consumers tabled in the worker report); the
+  routing census drifted again on the hot file and was remapped 1:1
+  (pointers, classifications, resolver references).
 - 2026-08-28 — HS-146-01 closed (details + full-sweep triage in
   evidence-story-01.md): the multi-source plumbing with the
   wire-stability bridge; 66-test focused close; sweep 13 failed /

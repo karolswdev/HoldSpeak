@@ -55,6 +55,9 @@ def settings_revision(config: Config) -> str:
 # writer strips it back off on the way in (see `_update`).
 PLACEMENT_KEY = "_placement"
 CALENDAR_SUBSCRIPTION_KEY = "_calendar_subscription"
+# HS-146-02: the per-source derived fact. _calendar_subscription stays until
+# HS-146-03 retires it (the UI, walk script, and e2e tests still read it).
+CALENDAR_SOURCES_KEY = "_calendar_sources"
 
 
 def meeting_placement_summary(config: Config) -> dict[str, Any]:
@@ -119,6 +122,7 @@ def redacted_settings(
     """
     from holdspeak.config import (
         LEGACY_ENDPOINT_FIELDS,
+        calendar_sources_summary,
         calendar_subscription_summary,
     )
 
@@ -127,11 +131,15 @@ def redacted_settings(
     if isinstance(cal, dict) and "subscription" not in cal:
         cal["subscription"] = cal["sources"][0]["url"] if cal.get("sources") else ""
     payload[REVISION_KEY] = settings_revision(config)
+    # HS-146-03 retirement: _calendar_subscription is the legacy single-source
+    # fact kept alive for SettingsCore.tsx, the walk script, and e2e seeds until
+    # story 03 retires it. _calendar_sources is the canonical per-source truth.
     payload[CALENDAR_SUBSCRIPTION_KEY] = (
         calendar_subscription_summary(config.calendar.sources[0].url)
         if config.calendar.sources
         else calendar_subscription_summary("")
     )
+    payload[CALENDAR_SOURCES_KEY] = calendar_sources_summary(config.calendar.sources)
     if include_meeting_placement:
         # The provenance rides both the read and the write's echo, so a surface
         # that changes the dial sees the new placement without a reload.
@@ -663,6 +671,7 @@ class SettingsService:
         merged.pop("_runtime_status", None)
         merged.pop(PLACEMENT_KEY, None)
         merged.pop(CALENDAR_SUBSCRIPTION_KEY, None)
+        merged.pop(CALENDAR_SOURCES_KEY, None)
         dictation_data = merged.get("dictation", {}) or {}
         pipeline_data = dictation_data.get("pipeline", {}) or {}
         runtime_data = dictation_data.get("runtime", {}) or {}
@@ -909,7 +918,48 @@ class SettingsService:
         if not isinstance(calendar_data, dict):
             return {"success": False, "error": "calendar must be an object"}
         try:
-            if "subscription" in calendar_data:
+            if "sources" in calendar_data and "subscription" not in calendar_data:
+                raw_sources = calendar_data["sources"]
+                if not isinstance(raw_sources, list):
+                    return {"success": False, "error": "calendar.sources must be a list"}
+                existing_by_id = {s.id: s for s in current.calendar.sources}
+                validated_sources: list[CalendarSource] = []
+                for idx, entry in enumerate(raw_sources):
+                    if not isinstance(entry, dict):
+                        return {
+                            "success": False,
+                            "error": f"calendar.sources[{idx}] must be an object",
+                        }
+                    raw_url = str(entry.get("url", "") or "").strip()
+                    if raw_url:
+                        try:
+                            url = validate_calendar_subscription(raw_url)
+                        except ValueError as url_exc:
+                            label = str(entry.get("label", "") or "").strip()
+                            name = label or f"sources[{idx}]"
+                            return {
+                                "success": False,
+                                "error": f"calendar source \"{name}\": {url_exc}",
+                            }
+                    else:
+                        url = ""
+                    import uuid as _uuid
+                    entry_id = str(entry.get("id", "") or "").strip()
+                    if entry_id and entry_id in existing_by_id:
+                        source_id = entry_id
+                    else:
+                        source_id = entry_id or str(_uuid.uuid4())
+                    validated_sources.append(CalendarSource(
+                        id=source_id,
+                        label=str(entry.get("label", "") or "").strip(),
+                        url=url,
+                        enabled=bool(entry.get("enabled", True)),
+                    ))
+                calendar_cfg = CalendarConfig(sources=validated_sources)
+            elif "subscription" in calendar_data:
+                # HS-146-04 handoff: the e2e seeds and walk script still post the
+                # old single-key wire shape; accepted as a single-source translation
+                # until story 04 flips them to the sources wire.
                 old_sub = calendar_data.get("subscription", "")
                 if not old_sub and current.calendar.sources:
                     old_sub = current.calendar.sources[0].url
@@ -927,29 +977,6 @@ class SettingsService:
                     ])
                 else:
                     calendar_cfg = CalendarConfig()
-            elif "sources" in calendar_data:
-                # HS-146-01 bridge guard: the full sources wire (per-entry named
-                # refusals, the _calendar_sources fact) is story 02's; until it
-                # lands, a sources write still validates every URL — nothing
-                # unvalidated reaches config.
-                raw_sources = calendar_data["sources"]
-                if not isinstance(raw_sources, list):
-                    return {"success": False, "error": "calendar.sources must be a list"}
-                validated_sources = []
-                for entry in raw_sources:
-                    if not isinstance(entry, dict):
-                        return {"success": False, "error": "calendar.sources entries must be objects"}
-                    url = validate_calendar_subscription(entry.get("url", ""))
-                    if not url:
-                        continue
-                    import uuid as _uuid
-                    validated_sources.append(CalendarSource(
-                        id=str(entry.get("id") or _uuid.uuid4()),
-                        label=str(entry.get("label", "") or ""),
-                        url=url,
-                        enabled=bool(entry.get("enabled", True)),
-                    ))
-                calendar_cfg = CalendarConfig(sources=validated_sources)
             else:
                 calendar_cfg = current.calendar
         except ValueError as exc:
