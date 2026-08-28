@@ -114,7 +114,7 @@ with dispositions — no counsel round was spent:
 | HS-144-03 | The kanban on glass | done | [story-03](./story-03-kanban-on-glass.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-144-04 | The upcoming rail + doorframe repairs | done | [story-04](./story-04-upcoming-rail-and-repairs.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-144-05 | Docs | done | [story-05](./story-05-docs.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-144-06 | The walk and the close | backlog | [story-06](./story-06-walk-and-close.md) | — |
+| HS-144-06 | The walk and the close | in-progress | [story-06](./story-06-walk-and-close.md) | — |
 
 ## Risk register
 

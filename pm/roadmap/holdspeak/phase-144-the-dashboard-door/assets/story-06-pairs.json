@@ -1,0 +1,143 @@
+[
+  {
+    "before": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/audit-b-shots/chair-home-1440.png",
+    "after": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-06-shots/after-chair-home-1440.png",
+    "viewport": "1440\u00d7900",
+    "state": "populated Door",
+    "claim": "Chair scattered lanes \u2192 Door board + upcoming rail",
+    "assertion_ids": [
+      "container-scoped Door assertions",
+      "SHA-256 false-positive tell"
+    ],
+    "before_sha256": "dd63aef375b321973c75e50575c78c6f7cfabef122ef3ca4f3cd1a29ed2ed836",
+    "after_sha256": "f521207fd22c9967b184f6645ae17e71efda78dd4a418b1806249c3066b11985",
+    "expected_byte_relationship": "different",
+    "byte_identical": false,
+    "owner_review": "pending owner shot review"
+  },
+  {
+    "before": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/audit-b-shots/chair-home-393.png",
+    "after": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-06-shots/after-chair-home-393.png",
+    "viewport": "393\u00d7852",
+    "state": "populated Door",
+    "claim": "narrow Door board + rail; Go shown separately",
+    "assertion_ids": [
+      "container-scoped Door assertions",
+      "SHA-256 false-positive tell"
+    ],
+    "before_sha256": "9d287641f66d697a69d25d0e2b4b1ceb3dd778a3bc4fadde8f3bc0499d8eee59",
+    "after_sha256": "6eac8f53bf96dfbf8a85532436dadab8279574c1b586d69685c18a90f5b50a8c",
+    "expected_byte_relationship": "different",
+    "byte_identical": false,
+    "owner_review": "pending owner shot review"
+  },
+  {
+    "before": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/audit-b-shots/cadence-surface-1440.png",
+    "after": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-06-shots/after-cadence-surface-1440.png",
+    "viewport": "1440\u00d7900",
+    "state": "schedule form",
+    "claim": "schedule create begins on Door, not Cadence",
+    "assertion_ids": [
+      "container-scoped Door assertions",
+      "SHA-256 false-positive tell"
+    ],
+    "before_sha256": "7e5232a77fe93f7fc0d5553e1349e682613f44fc3c7fc64feb7f30faef0b35ba",
+    "after_sha256": "8fea245cf3034e267c52aa2fc65c9c15019fe36d81ca976e1e301a840f75ee1d",
+    "expected_byte_relationship": "different",
+    "byte_identical": false,
+    "owner_review": "pending owner shot review"
+  },
+  {
+    "before": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/audit-b-shots/cadence-surface-393.png",
+    "after": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-06-shots/after-cadence-surface-393.png",
+    "viewport": "393\u00d7852",
+    "state": "schedule form",
+    "claim": "narrow schedule create begins on Door, not Cadence",
+    "assertion_ids": [
+      "container-scoped Door assertions",
+      "SHA-256 false-positive tell"
+    ],
+    "before_sha256": "ead8bcddbfc1384453472bed69ec40ba045a5704b24606c1bd3e68f6d6281264",
+    "after_sha256": "758ea353f6905861d83c9bb46f689991a5db0e4a1bd5debec630cea72bc6fde1",
+    "expected_byte_relationship": "different",
+    "byte_identical": false,
+    "owner_review": "pending owner shot review"
+  },
+  {
+    "before": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/audit-b-shots/first-value-capture-1440.png",
+    "after": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-06-shots/cold-first-value-1440.png",
+    "viewport": "1440\u00d7900",
+    "state": "First Sentence",
+    "claim": "First Sentence remains one job",
+    "assertion_ids": [
+      "container-scoped Door assertions",
+      "SHA-256 false-positive tell"
+    ],
+    "before_sha256": "60a68846b807d1a2ff2cf687c1a47be7e054e1f8325fcef55a568f9d8935dfaf",
+    "after_sha256": "60a68846b807d1a2ff2cf687c1a47be7e054e1f8325fcef55a568f9d8935dfaf",
+    "expected_byte_relationship": "parity",
+    "byte_identical": true,
+    "owner_review": "pending owner shot review"
+  },
+  {
+    "before": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/audit-b-shots/first-value-capture-393.png",
+    "after": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-06-shots/cold-first-value-393.png",
+    "viewport": "393\u00d7852",
+    "state": "First Sentence",
+    "claim": "First Sentence remains one job",
+    "assertion_ids": [
+      "container-scoped Door assertions",
+      "SHA-256 false-positive tell"
+    ],
+    "before_sha256": "ead8bcddbfc1384453472bed69ec40ba045a5704b24606c1bd3e68f6d6281264",
+    "after_sha256": "ead8bcddbfc1384453472bed69ec40ba045a5704b24606c1bd3e68f6d6281264",
+    "expected_byte_relationship": "parity",
+    "byte_identical": true,
+    "owner_review": "pending owner shot review"
+  },
+  {
+    "before": null,
+    "after": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-06-shots/door-populated-zoom200.png",
+    "viewport": "720\u00d7450 CSS / DSF 2",
+    "state": "accessibility evidence",
+    "claim": "200% populated Door accessibility evidence",
+    "assertion_ids": [
+      "container-scoped assertions"
+    ],
+    "before_sha256": null,
+    "after_sha256": "123a1c32d52600c4bd17295344a75739b94b024a209b5e4c3025b9023c861a6d",
+    "expected_byte_relationship": "no comparable Audit-B before",
+    "byte_identical": null,
+    "owner_review": "pending owner shot review"
+  },
+  {
+    "before": null,
+    "after": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-06-shots/door-focus-zoom200.png",
+    "viewport": "720\u00d7450 CSS / DSF 2",
+    "state": "accessibility evidence",
+    "claim": "200% Door keyboard focus evidence",
+    "assertion_ids": [
+      "container-scoped assertions"
+    ],
+    "before_sha256": null,
+    "after_sha256": "123a1c32d52600c4bd17295344a75739b94b024a209b5e4c3025b9023c861a6d",
+    "expected_byte_relationship": "no comparable Audit-B before",
+    "byte_identical": null,
+    "owner_review": "pending owner shot review"
+  },
+  {
+    "before": null,
+    "after": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-06-shots/door-calendar-rail-1440.png",
+    "viewport": "1440\u00d7900",
+    "state": "calendar rail",
+    "claim": "Settings-fed ICS rail",
+    "assertion_ids": [
+      "container-scoped assertions"
+    ],
+    "before_sha256": null,
+    "after_sha256": "3ef7d3c539df0917883acda62438ecb312ecf299073888fc8074f119f4fd849a",
+    "expected_byte_relationship": "no comparable Audit-B before",
+    "byte_identical": null,
+    "owner_review": "pending owner shot review"
+  }
+]
