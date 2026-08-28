@@ -1,6 +1,6 @@
 # Phase 144 — The Dashboard Door
 
-**Status:** in progress (4/6). Stories 01-04 done; HS-144-05 (docs) next. Owner shot verdicts (board + rail sets) pending.
+**Status:** in progress (5/6). Stories 01-05 done; HS-144-06 (the walk and the close) is the last. Owner shot verdicts (board + rail sets) pending.
 
 **Last updated:** 2026-08-27.
 
@@ -113,7 +113,7 @@ with dispositions — no counsel round was spent:
 | HS-144-02 | Calendar ingest (ICS first) | done | [story-02](./story-02-calendar-ingest-ics.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-144-03 | The kanban on glass | done | [story-03](./story-03-kanban-on-glass.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-144-04 | The upcoming rail + doorframe repairs | done | [story-04](./story-04-upcoming-rail-and-repairs.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-144-05 | Docs | in-progress | [story-05](./story-05-docs.md) | — |
+| HS-144-05 | Docs | done | [story-05](./story-05-docs.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-144-06 | The walk and the close | backlog | [story-06](./story-06-walk-and-close.md) | — |
 
 ## Risk register
@@ -179,3 +179,8 @@ carries the full triage incl. the fixed working-band regression and
 the second xdist watch item). Phase ledger addition: the central
 trust-destinations registry lacks a calendar-fetch entry — documented
 truthfully, no fake entry; named product gap for the owner.
+
+HS-144-05 closed 2026-08-28: nine docs surfaces corrected + the
+retirement guard; cleanest sweep of the phase (all-baseline, zero
+non-baseline); the docs-only no-audit tie-break recorded in the
+evidence.
