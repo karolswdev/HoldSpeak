@@ -83,8 +83,13 @@
   gap: var(--space-5);
 }
 
-/* Two-column grid at wide viewports (1440 desk width). */
+/* Two-column grid at wide viewports (1440 desk width). The Door spans
+   both tracks there, so its five live columns need the full desk working band
+   rather than the older, single-lane 960px cap. */
 @media (min-width: 1200px) {
+  .chair {
+    max-width: 1280px;
+  }
   .chair-lanes {
     grid-template-columns: 1fr 1fr;
   }

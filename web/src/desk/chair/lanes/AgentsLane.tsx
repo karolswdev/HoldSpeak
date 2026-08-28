@@ -163,10 +163,6 @@ export function AgentsLane({
     };
   });
 
-  if (items.length === 0) {
-    return <SurfaceState empty emptyLabel="No sessions" />;
-  }
-
   return (
     <ChairLane
       title={`AGENTS · CREW ${crewCount} · BLOCKED ${blocked.length}`}
@@ -181,6 +177,7 @@ export function AgentsLane({
       }}
       surfaceId={SURFACE_ID}
       footerVerb="Open Agents"
+      emptyState={<SurfaceState empty emptyLabel="No sessions" />}
     />
   );
 }

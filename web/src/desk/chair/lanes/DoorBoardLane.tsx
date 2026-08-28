@@ -242,8 +242,31 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
     setBusyCardId(null);
   };
 
-  if (loading && !projection) return <SurfaceState loading />;
-  if (loadError && !projection) return <SurfaceState error={loadError} onRetry={() => void reload()} />;
+  // Door owns its loading/refusal seat too: leaving a bare SurfaceState outside
+  // the named lane hid both the source of a failed read and the re-homed Brief
+  // capability. Keep every initial state in the same Chair material.
+  if (loading && !projection) {
+    return (
+      <SurfaceSection
+        label="DOOR"
+        actions={<Button dense variant="ghost" onClick={() => openIntelligence({ view: "brief" })}>Brief</Button>}
+        className="door-board-section"
+      >
+        <SurfaceState loading />
+      </SurfaceSection>
+    );
+  }
+  if (loadError && !projection) {
+    return (
+      <SurfaceSection
+        label="DOOR"
+        actions={<Button dense variant="ghost" onClick={() => openIntelligence({ view: "brief" })}>Brief</Button>}
+        className="door-board-section"
+      >
+        <SurfaceState error={loadError} onRetry={() => void reload()} />
+      </SurfaceSection>
+    );
+  }
   if (!projection) return null;
 
   const cards = COLUMNS.flatMap(({ id }) => projection.board[id] ?? []);

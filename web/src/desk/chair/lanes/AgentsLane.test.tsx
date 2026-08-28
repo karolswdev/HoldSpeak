@@ -190,6 +190,10 @@ describe("AgentsLane", () => {
     await waitFor(() => {
       expect(screen.getByText("No sessions")).toBeInTheDocument();
     });
+    const emptyState = screen.getByText("No sessions");
+    expect(emptyState.closest(".surface-section")).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "AGENTS · CREW 0 · BLOCKED 0" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Open AGENTS · CREW 0 · BLOCKED 0")).toBeInTheDocument();
   });
 
   // -- header-click opens Agents window --------------------------------------

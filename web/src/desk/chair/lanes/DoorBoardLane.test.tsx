@@ -157,7 +157,9 @@ describe("DoorBoardLane", () => {
     unmount();
     apiFetch.mockRejectedValue(new Error("Door unavailable"));
     renderLane();
-    expect(await screen.findByText("Door unavailable")).toBeInTheDocument();
+    const error = await screen.findByText("Door unavailable");
+    expect(error.closest(".door-board-section")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Brief" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
   });
 });

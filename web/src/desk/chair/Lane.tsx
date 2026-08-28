@@ -29,6 +29,8 @@ export interface ChairLaneProps {
   surfaceId: string;
   /** Optional footer verb label (e.g. "Open Intelligence"). */
   footerVerb?: string;
+  /** Honest in-lane treatment when this named lane has no rows. */
+  emptyState?: ReactNode;
 }
 
 /** The lane component: L2's composition contract rendered as Surface
@@ -41,6 +43,7 @@ export function ChairLane({
   onOpenInWindow,
   surfaceId,
   footerVerb,
+  emptyState,
 }: ChairLaneProps) {
   const visible = items.slice(0, maxItems);
   const overflow = items.length - visible.length;
@@ -72,7 +75,7 @@ export function ChairLane({
             />
           ))}
         </SurfaceRows>
-      ) : null}
+      ) : emptyState ?? null}
       {overflow > 0 && footerVerb ? (
         <button
           type="button"
