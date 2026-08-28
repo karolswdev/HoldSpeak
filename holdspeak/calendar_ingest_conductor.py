@@ -23,7 +23,7 @@ from .config import (
     calendar_subscription_revision,
     validate_calendar_subscription,
 )
-from .config.integrations import CALENDAR_REFRESH_SECONDS, CalendarSource
+from .config.integrations import CALENDAR_REFRESH_SECONDS, CalendarSource, _source_label
 from .logging_config import get_logger
 
 
@@ -243,7 +243,7 @@ class CalendarIngestConductor:
                 result.events,
                 seen_at=now_epoch,
                 source_id=source.id,
-                source_label=source.label,
+                source_label=_source_label(source),
             )
         except Exception as exc:
             self._write_refresh_failure(revision, error_class="calendar_projection_failed")

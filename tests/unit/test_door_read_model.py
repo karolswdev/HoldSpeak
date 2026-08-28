@@ -283,6 +283,8 @@ def test_upcoming_merges_calendar_events_and_scheduled_recordings_in_one_stable_
         "location": "Room 4",
         "meeting_url": "https://meet.example.test/door",
         "state": "scheduled",
+        "source_id": "",
+        "source_label": "",
     }
 
 
@@ -361,3 +363,80 @@ def test_calendar_configured_true_on_valid_https_subscription(db: Database) -> N
 def test_calendar_configured_false_when_no_config_loader(db: Database) -> None:
     projection = _door(db).get(OWNER)
     assert projection["calendar_configured"] is False
+
+
+# ── HS-146-04: source_label projection + label fallback chain + no-dedupe ──
+
+
+def test_calendar_event_projects_source_id_and_source_label(db: Database) -> None:
+    """_calendar_event_item projects source_id and source_label from the DB row."""
+    starts_at = FIXED_NOW + timedelta(hours=1)
+    db.calendar_events.replace_projection(
+        "rev-work",
+        [
+            CalendarEventCandidate(
+                id="ce_labelled",
+                uid="labelled",
+                title="Labelled event",
+                starts_at=starts_at.isoformat().replace("+00:00", "Z"),
+                ends_at=(starts_at + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+                location=None,
+                meeting_url=None,
+            ),
+        ],
+        seen_at=FIXED_NOW.timestamp(),
+        source_id="src-work",
+        source_label="Work",
+    )
+
+    upcoming = _door(db).get(OWNER)["upcoming"]
+
+    assert len(upcoming) == 1
+    assert upcoming[0]["source_id"] == "src-work"
+    assert upcoming[0]["source_label"] == "Work"
+
+
+def test_source_label_fallback_chain(db: Database) -> None:
+    """The label fallback chain: label -> hostname -> LOCAL."""
+    from holdspeak.config.integrations import CalendarSource, _source_label
+
+    # Explicit label wins.
+    assert _source_label(CalendarSource(id="s1", label="Team", url="https://example.com/a.ics")) == "Team"
+    # No label -> hostname from URL.
+    assert _source_label(CalendarSource(id="s2", label="", url="https://cal.example.com/b.ics")) == "cal.example.com"
+    # No label, no URL -> LOCAL.
+    assert _source_label(CalendarSource(id="s3", label="", url="")) == "LOCAL"
+    # File path -> LOCAL (no scheme, no hostname).
+    assert _source_label(CalendarSource(id="s4", label="", url="/tmp/cal.ics")) == "LOCAL"
+
+
+def test_no_dedupe_duplicate_uids_both_project(db: Database) -> None:
+    """Two sources with the same UID both project (settled design row 6: no dedupe)."""
+    starts_at = FIXED_NOW + timedelta(hours=1)
+    starts_iso = starts_at.isoformat().replace("+00:00", "Z")
+    ends_iso = (starts_at + timedelta(minutes=30)).isoformat().replace("+00:00", "Z")
+    for source_id, source_label in [("src-a", "Source A"), ("src-b", "Source B")]:
+        db.calendar_events.replace_projection(
+            f"rev-{source_id}",
+            [
+                CalendarEventCandidate(
+                    id=f"ce_{source_id}",
+                    uid="shared-uid",
+                    title="Same meeting",
+                    starts_at=starts_iso,
+                    ends_at=ends_iso,
+                    location=None,
+                    meeting_url=None,
+                ),
+            ],
+            seen_at=FIXED_NOW.timestamp(),
+            source_id=source_id,
+            source_label=source_label,
+        )
+
+    upcoming = _door(db).get(OWNER)["upcoming"]
+
+    calendar_events = [item for item in upcoming if item["source"] == "calendar_event"]
+    assert len(calendar_events) == 2
+    labels = {item["source_label"] for item in calendar_events}
+    assert labels == {"Source A", "Source B"}

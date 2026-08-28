@@ -198,7 +198,11 @@ class DoorService:
 
     @staticmethod
     def _calendar_event_item(event: CalendarEvent) -> dict[str, Any]:
-        """Map the persisted projection into Story 01's reserved timeline row."""
+        """Map the persisted projection into Story 01's reserved timeline row.
+
+        HS-146-04: source_id and source_label are projected so the rail can
+        render provenance chips when >1 distinct source is configured.
+        """
         return {
             "id": event.id,
             "source": "calendar_event",
@@ -209,6 +213,8 @@ class DoorService:
             "location": event.location,
             "meeting_url": event.meeting_url,
             "state": "scheduled",
+            "source_id": event.source_id,
+            "source_label": event.source_label,
         }
 
     @staticmethod

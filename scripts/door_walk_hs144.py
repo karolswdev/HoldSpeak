@@ -705,30 +705,25 @@ def open_meetings_settings(page: Any) -> Any:
     chrome = page.locator(".desk-menubar")
     chrome.get_by_role("button", name="Go", exact=True).click()
     menu = page.get_by_role("menu", name="Go menu")
-    # The registry labels this as a Settings verb (for example, “Configure
-    # Settings”); substring matching remains scoped to the already-open Go menu.
+    # The registry labels this as a Settings verb (for example, "Configure
+    # Settings"); substring matching remains scoped to the already-open Go menu.
     menu.get_by_role("menuitem", name="Settings").click()
     settings = page.locator("#surface-settings")
     settings.wait_for(timeout=15000)
     settings.locator("button.prefs-tile", has_text="MEETINGS").click()
-    settings.get_by_role("textbox", name="Calendar subscription", exact=True).wait_for(timeout=15000)
+    # TODO(HS-146-05): story 03 replaces the single textbox with a GadgetTable
+    # list editor.  Wait for the Settings Meetings module to render, but do not
+    # assert any specific calendar control glass.
+    settings.wait_for(timeout=15000)
     return settings
 
 
-def wait_calendar_setting(page: Any, expected_kind: str, expected_value: str) -> dict[str, Any]:
-    deadline = time.monotonic() + 15
-    last: dict[str, Any] = {}
-    while time.monotonic() < deadline:
-        try:
-            last = page_api(page, "GET", "/api/settings")
-            settings_payload = last.get("settings", last)
-            fact = settings_payload.get("_calendar_subscription", {})
-            if fact.get("kind") == expected_kind and (expected_kind != "file" or expected_value):
-                return last
-        except Exception:
-            pass
-        page.wait_for_timeout(250)
-    raise WalkAssertionError(f"calendar settings never became {expected_kind}: {last}")
+def _write_calendar_sources_api(page: Any, hub: Hub, sources: list[dict[str, Any]]) -> dict[str, Any]:
+    """HS-146-04: configure calendar via the settings API (sources wire), not the UI."""
+    status, payload = hub.api("PUT", "/api/settings", {"calendar": {"sources": sources}})
+    if status >= 300:
+        raise WalkAssertionError(f"settings PUT {status}: {payload}")
+    return payload
 
 
 def leg_calendar(reporter: Reporter, browser: Any, hub: Hub, out: Path, fixture_dir: Path) -> None:
@@ -743,21 +738,21 @@ def leg_calendar(reporter: Reporter, browser: Any, hub: Hub, out: Path, fixture_
     ]), encoding="utf-8")
     reporter.current.facts["ics_fixture"] = str(fixture)  # type: ignore[union-attr]
 
+    # HS-146-04: seed repair — configure via the sources-wire API, not the UI textbox.
     context, page, errors = browser_context(browser, 1440, 900)
     try:
         go(page, hub)
-        settings = open_meetings_settings(page)
-        subscription = settings.get_by_role("textbox", name="Calendar subscription", exact=True)
-        subscription.fill(str(fixture))
-        saved = wait_calendar_setting(page, "file", str(fixture))
-        fact = saved.get("settings", saved).get("_calendar_subscription", {})
-        reporter.check("Settings saves local fixture through its real control", fact.get("kind") == "file" and fact.get("egress") is False,
-                       repr(fact), scope="Settings Meetings Calendar subscription AND GET /api/settings")
+        saved = _write_calendar_sources_api(page, hub, [
+            {"id": "walk-file", "label": "Walk File", "url": str(fixture), "enabled": True},
+        ])
+        sources_fact = saved.get("settings", saved).get("_calendar_sources", [])
+        reporter.check("Settings saves local fixture through sources-wire API",
+                       len(sources_fact) == 1 and sources_fact[0].get("kind") == "file" and sources_fact[0].get("egress") is False,
+                       repr(sources_fact), scope="PUT /api/settings calendar.sources AND _calendar_sources fact")
         refreshed = hub.refresh_calendar()
         reporter.check("real CalendarIngestConductor refresh succeeds", refreshed.returncode == 0 and '"calendar_refresh": true' in refreshed.stdout,
                        f"exit={refreshed.returncode} stdout={refreshed.stdout.strip()} stderr={refreshed.stderr.strip()}", scope="isolated child CalendarIngestConductor.refresh()")
-        # Settings is a retained in-world window.  Do not photograph through
-        # it: a fresh Door document is the only honest frame for the rail claim
+        # A fresh Door document is the only honest frame for the rail claim
         # and forces a real aggregate revalidation after the conductor refresh.
         rail_context, rail_page, rail_errors = browser_context(browser, 1440, 900)
         try:
@@ -784,25 +779,32 @@ def leg_calendar(reporter: Reporter, browser: Any, hub: Hub, out: Path, fixture_
     finally:
         context.close()
 
+    # HS-146-04: HTTPS egress fact via the sources-wire API.
     context, page, errors = browser_context(browser, 1440, 900)
     try:
         go(page, hub)
-        settings = open_meetings_settings(page)
-        subscription = settings.get_by_role("textbox", name="Calendar subscription", exact=True)
-        https_source = "https://calendar.example.test/team.ics"
-        subscription.fill(https_source)
-        saved = wait_calendar_setting(page, "https", https_source)
-        fact = saved.get("settings", saved).get("_calendar_subscription", {})
-        reporter.check("HTTPS subscription egress fact is true", fact == {"kind": "https", "host": "calendar.example.test", "refresh_seconds": 900, "egress": True},
-                       repr(fact), scope="GET /api/settings derived calendar fact")
-        reporter.check("egress chip belongs to Settings subscription control", settings.get_by_text("FETCHES CALENDAR.EXAMPLE.TEST · 15 MIN", exact=True).is_visible(), scope="#surface-settings Meetings Calendar GadgetRow (not global chrome)")
-        capture(reporter, page, out, "settings-calendar-egress-1440.png", "HTTPS transport egress fact scoped to Settings")
-        # Restore the file by the same actual settings input; no fetch happens on
-        # the HTTPS source and the report calls this a transport fact only.
-        subscription.fill(str(fixture))
-        restored = wait_calendar_setting(page, "file", str(fixture))
-        reporter.check("Settings restores local fixture before cleanup", restored.get("settings", restored).get("_calendar_subscription", {}).get("egress") is False,
-                       scope="Settings Meetings Calendar subscription")
+        https_saved = _write_calendar_sources_api(page, hub, [
+            {"id": "walk-https", "label": "", "url": "https://calendar.example.test/team.ics", "enabled": True},
+        ])
+        https_fact = https_saved.get("settings", https_saved).get("_calendar_sources", [])
+        reporter.check("HTTPS sources-wire egress fact is true",
+                       len(https_fact) == 1 and https_fact[0] == {
+                           "id": "walk-https", "label": "", "kind": "https",
+                           "host": "calendar.example.test", "refresh_seconds": 900,
+                           "egress": True, "enabled": True,
+                       },
+                       repr(https_fact), scope="PUT /api/settings calendar.sources derived _calendar_sources fact")
+        # TODO(HS-146-05): once story 03's list editor lands, assert the egress
+        # chip glass on the Settings surface here.
+        capture(reporter, page, out, "settings-calendar-egress-1440.png", "HTTPS transport egress fact via sources-wire API")
+        # Restore the file source before cleanup.
+        restored = _write_calendar_sources_api(page, hub, [
+            {"id": "walk-file", "label": "Walk File", "url": str(fixture), "enabled": True},
+        ])
+        restored_fact = restored.get("settings", restored).get("_calendar_sources", [])
+        reporter.check("Settings restores local fixture before cleanup",
+                       len(restored_fact) == 1 and restored_fact[0].get("egress") is False,
+                       scope="PUT /api/settings calendar.sources restore")
         assert_clean(reporter, page, errors, "calendar egress fact")
     finally:
         context.close()

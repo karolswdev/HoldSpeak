@@ -97,6 +97,22 @@ def validate_calendar_subscription(value: object) -> str:
     return source
 
 
+def _source_label(source: CalendarSource) -> str:
+    """HS-146-04: resolved label for rail provenance chips.
+
+    Fallback chain: source.label -> hostname of source.url -> "LOCAL".
+    """
+    if source.label:
+        return source.label
+    url = source.url.strip()
+    if url:
+        parsed = urlsplit(url)
+        hostname = parsed.hostname
+        if hostname:
+            return hostname
+    return "LOCAL"
+
+
 def calendar_subscription_revision(subscription: object) -> str:
     """Return the stable source fingerprint used by the calendar projection."""
     normalized = validate_calendar_subscription(subscription)

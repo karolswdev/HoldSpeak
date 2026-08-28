@@ -1,6 +1,6 @@
 # Phase 146 — Multiple Calendars
 
-**Status:** in progress (3/7).
+**Status:** in progress (4/7).
 
 **Last updated:** 2026-08-28.
 
@@ -65,7 +65,7 @@ ceremony budget):
 | HS-146-01 | Multi-source plumbing (config + DB + conductor) | done | [story-01](./story-01-multi-source-plumbing.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-146-02 | Settings service + wire | done | [story-02](./story-02-settings-service-wire.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-146-03 | The settings list editor (joy surface) | done | [story-03](./story-03-settings-list-editor.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-146-04 | Rail provenance + seed repairs | in-progress | [story-04](./story-04-rail-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-146-04 | Rail provenance + seed repairs | done | [story-04](./story-04-rail-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-146-05 | The walk and the close | ready | [story-05](./story-05-docs-walk-close.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-146-06 | The calendar book (thorough docs) | ready | [story-06](./story-06-the-calendar-book.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-146-07 | The Calendar Snapshot adapter | ready | [story-07](./story-07-calendar-snapshot-adapter.md) | [evidence-story-07](./evidence-story-07.md) |
@@ -124,6 +124,14 @@ ceremony budget):
   api-surface regen. One orchestrator override of the plan: the
   canonical payload hash stays WHOLE — no image-exclusion
   special-case in kernel hash semantics.
+- 2026-08-28 — HS-146-04 closed (evidence-story-04.md): provenance
+  chips on the rail (server-stamped label→hostname→LOCAL), the
+  no-dedupe proof live on glass (a cross-feed duplicate shows twice,
+  distinguishable by chip), the three old-wire seeds flipped, walk
+  leg 5 rewritten against the settings API. Two orchestrator
+  in-round findings fixed: the chip's grid-stretch (now hugs its
+  label) and the shot rig's window-over-chair trap (fresh-context
+  fix; the walk-law honesty chain recorded in evidence).
 - 2026-08-28 — HS-146-03 closed (evidence-story-03.md): the calendar
   list editor on real glass — empty state leads with one + ADD SOURCE
   act; label/url/on rows with mics and in-world remove; per-source
