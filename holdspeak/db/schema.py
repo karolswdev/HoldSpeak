@@ -3375,6 +3375,7 @@ CREATE INDEX IF NOT EXISTS idx_scheduled_recordings_enabled
 ON scheduled_recordings(enabled, next_fire_at) WHERE enabled=1;
 
 -- HS-144-02: Calendar ingest is a replace-on-success ICS projection.
+-- HS-146-01: source_id + source_label for multi-source plumbing.
 CREATE TABLE IF NOT EXISTS calendar_events (
     id TEXT PRIMARY KEY,
     uid TEXT NOT NULL,
@@ -3384,10 +3385,12 @@ CREATE TABLE IF NOT EXISTS calendar_events (
     location TEXT,
     meeting_url TEXT,
     last_seen_at REAL NOT NULL,
-    subscription_revision TEXT NOT NULL
+    subscription_revision TEXT NOT NULL,
+    source_id TEXT NOT NULL DEFAULT '',
+    source_label TEXT NOT NULL DEFAULT ''
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_calendar_events_source_uid_start
-ON calendar_events(subscription_revision, uid, starts_at);
+ON calendar_events(source_id, uid, starts_at);
 CREATE INDEX IF NOT EXISTS idx_calendar_events_upcoming
 ON calendar_events(starts_at, id);
 """

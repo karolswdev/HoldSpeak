@@ -5,6 +5,7 @@ Extracted from the monolithic ``holdspeak/config.py``.
 from __future__ import annotations
 
 import hashlib
+import uuid
 from dataclasses import dataclass, field
 from typing import Optional
 from urllib.parse import urlsplit
@@ -14,13 +15,46 @@ CALENDAR_REFRESH_SECONDS = 900
 
 
 @dataclass
-class CalendarConfig:
-    """The one owner-configured ICS source (HS-144-02)."""
+class CalendarSource:
+    """One owner-configured ICS source (HS-146-01)."""
 
-    subscription: str = ""
+    id: str = ""
+    label: str = ""
+    url: str = ""
+    enabled: bool = True
 
     def __post_init__(self) -> None:
-        self.subscription = str(self.subscription or "").strip()
+        self.id = str(self.id or "").strip()
+        self.label = str(self.label or "").strip()
+        self.url = str(self.url or "").strip()
+        self.enabled = bool(self.enabled)
+
+
+@dataclass
+class CalendarConfig:
+    """Owner-configured ICS sources (HS-146-01, multi-source)."""
+
+    sources: list[CalendarSource] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        coerced: list[CalendarSource] = []
+        for item in (self.sources or []):
+            if isinstance(item, CalendarSource):
+                coerced.append(item)
+            elif isinstance(item, dict):
+                coerced.append(CalendarSource(**{
+                    k: v for k, v in item.items()
+                    if k in ("id", "label", "url", "enabled")
+                }))
+        self.sources = coerced
+
+    @property
+    def subscription(self) -> str:
+        """Bridge property: returns the first source's URL for callers
+        that still read the old single-source field."""
+        if self.sources:
+            return self.sources[0].url
+        return ""
 
 
 def validate_calendar_subscription(value: object) -> str:
@@ -67,6 +101,29 @@ def calendar_subscription_revision(subscription: object) -> str:
     """Return the stable source fingerprint used by the calendar projection."""
     normalized = validate_calendar_subscription(subscription)
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def calendar_source_revision(source_id: str, url: str) -> str:
+    """Per-source projection fingerprint (HS-146-01).
+
+    The source id enters the hash so two sources pointing at the same URL
+    get independent projection namespaces.
+    """
+    normalized = validate_calendar_subscription(url)
+    payload = f"{source_id}\0{normalized}"
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def calendar_sources_summary(sources: list[CalendarSource]) -> list[dict[str, object]]:
+    """Produce one summary dict per source for Settings transports."""
+    result: list[dict[str, object]] = []
+    for source in sources:
+        base = calendar_subscription_summary(source.url)
+        base["id"] = source.id
+        base["label"] = source.label
+        base["enabled"] = source.enabled
+        result.append(base)
+    return result
 
 
 def calendar_subscription_summary(subscription: object) -> dict[str, object]:

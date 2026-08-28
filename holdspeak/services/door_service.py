@@ -58,12 +58,15 @@ class DoorService:
         }
 
     def _calendar_configured(self) -> bool:
-        """HS-145-02: live config read — True iff a valid subscription exists."""
+        """HS-146-01: True iff at least one enabled source passes validation."""
         if self._config_loader is None:
             return False
         try:
             config = self._config_loader()
-            return bool(validate_calendar_subscription(config.calendar.subscription))
+            for source in config.calendar.sources:
+                if source.enabled and validate_calendar_subscription(source.url):
+                    return True
+            return False
         except Exception:
             return False
 

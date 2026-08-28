@@ -1,6 +1,6 @@
 # Phase 146 — Multiple Calendars
 
-**Status:** in progress (0/6).
+**Status:** in progress (1/6).
 
 **Last updated:** 2026-08-28.
 
@@ -62,7 +62,7 @@ ceremony budget):
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-146-01 | Multi-source plumbing (config + DB + conductor) | in-progress | [story-01](./story-01-multi-source-plumbing.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-146-01 | Multi-source plumbing (config + DB + conductor) | done | [story-01](./story-01-multi-source-plumbing.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-146-02 | Settings service + wire | ready | [story-02](./story-02-settings-service-wire.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-146-03 | The settings list editor (joy surface) | ready | [story-03](./story-03-settings-list-editor.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-146-04 | Rail provenance + seed repairs | ready | [story-04](./story-04-rail-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -100,3 +100,11 @@ ceremony budget):
   doc-drift retirement guard if the mechanism accommodates it.
   Story 05 amended to walk+close only and now depends on 06 (docs
   after features, before closeout — the house law). Phase is 0/6.
+- 2026-08-28 — HS-146-01 closed (details + full-sweep triage in
+  evidence-story-01.md): the multi-source plumbing with the
+  wire-stability bridge; 66-test focused close; sweep 13 failed /
+  6745 passed = 11 baseline + 2 lawful branch-caused fixture updates
+  (schema snapshot regen; routing-census line-drift remap). Two
+  orchestrator surgical deltas recorded: restored five out-of-scope
+  comment deletions; hardened the bridge so a `sources` wire write
+  validates every URL until story 02 lands the real treatment.

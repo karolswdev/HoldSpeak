@@ -16,7 +16,13 @@ from holdspeak.calendar_ingest_conductor import (
     CalendarSourceError,
     CalendarSourceReader,
 )
-from holdspeak.config import CalendarConfig, Config, calendar_subscription_revision
+from holdspeak.config import (
+    CalendarConfig,
+    CalendarSource,
+    Config,
+    calendar_source_revision,
+    calendar_subscription_revision,
+)
 from holdspeak.db.core import Database, reset_database
 
 
@@ -95,7 +101,9 @@ def _conductor(
         clock=lambda: clock,
         db_factory=lambda: db,
         source_reader=reader,
-        config_loader=lambda: Config(calendar=CalendarConfig(source)),
+        config_loader=lambda: Config(calendar=CalendarConfig(sources=[
+            CalendarSource(id="test-src", label="", url=source, enabled=True)
+        ])),
     )
 
 
@@ -173,7 +181,7 @@ def test_reader_rejects_redirect_timeout_and_oversize_before_projection(
         "refused",
         "calendar_refresh_failed",
         "calendar-source:"
-        f"{calendar_subscription_revision('https://calendar.example.test/source.ics')[:16]}:"
+        f"{calendar_source_revision('test-src', 'https://calendar.example.test/source.ics')[:16]}:"
         "https://calendar-final.example.test/final.ics",
     )
 

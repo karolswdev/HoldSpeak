@@ -349,9 +349,11 @@ def test_calendar_configured_false_on_empty_subscription(db: Database) -> None:
 
 def test_calendar_configured_true_on_valid_https_subscription(db: Database) -> None:
     from holdspeak.config import Config
-    from holdspeak.config.integrations import CalendarConfig
+    from holdspeak.config.integrations import CalendarConfig, CalendarSource
 
-    config = Config(calendar=CalendarConfig(subscription="https://example.com/calendar.ics"))
+    config = Config(calendar=CalendarConfig(sources=[
+        CalendarSource(id="test-src", label="", url="https://example.com/calendar.ics", enabled=True)
+    ]))
     projection = _door(db, config_loader=lambda: config).get(OWNER)
     assert projection["calendar_configured"] is True
 

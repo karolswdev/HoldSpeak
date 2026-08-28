@@ -123,9 +123,14 @@ def redacted_settings(
     )
 
     payload = deepcopy(config.to_dict())
+    cal = payload.get("calendar", {})
+    if isinstance(cal, dict) and "subscription" not in cal:
+        cal["subscription"] = cal["sources"][0]["url"] if cal.get("sources") else ""
     payload[REVISION_KEY] = settings_revision(config)
-    payload[CALENDAR_SUBSCRIPTION_KEY] = calendar_subscription_summary(
-        config.calendar.subscription
+    payload[CALENDAR_SUBSCRIPTION_KEY] = (
+        calendar_subscription_summary(config.calendar.sources[0].url)
+        if config.calendar.sources
+        else calendar_subscription_summary("")
     )
     if include_meeting_placement:
         # The provenance rides both the read and the write's echo, so a surface
@@ -295,6 +300,7 @@ class SettingsService:
         from holdspeak.config import (
             Config,
             CalendarConfig,
+            CalendarSource,
             DeviceConfig,
             DictationConfig,
             DictationConfigError,
@@ -903,11 +909,49 @@ class SettingsService:
         if not isinstance(calendar_data, dict):
             return {"success": False, "error": "calendar must be an object"}
         try:
-            calendar_cfg = CalendarConfig(
-                subscription=validate_calendar_subscription(
-                    calendar_data.get("subscription", current.calendar.subscription)
-                )
-            )
+            if "subscription" in calendar_data:
+                old_sub = calendar_data.get("subscription", "")
+                if not old_sub and current.calendar.sources:
+                    old_sub = current.calendar.sources[0].url
+                validated = validate_calendar_subscription(old_sub)
+                if validated:
+                    existing_id = (
+                        current.calendar.sources[0].id
+                        if current.calendar.sources
+                        else ""
+                    )
+                    import uuid as _uuid
+                    source_id = existing_id or str(_uuid.uuid4())
+                    calendar_cfg = CalendarConfig(sources=[
+                        CalendarSource(id=source_id, label="", url=validated, enabled=True)
+                    ])
+                else:
+                    calendar_cfg = CalendarConfig()
+            elif "sources" in calendar_data:
+                # HS-146-01 bridge guard: the full sources wire (per-entry named
+                # refusals, the _calendar_sources fact) is story 02's; until it
+                # lands, a sources write still validates every URL — nothing
+                # unvalidated reaches config.
+                raw_sources = calendar_data["sources"]
+                if not isinstance(raw_sources, list):
+                    return {"success": False, "error": "calendar.sources must be a list"}
+                validated_sources = []
+                for entry in raw_sources:
+                    if not isinstance(entry, dict):
+                        return {"success": False, "error": "calendar.sources entries must be objects"}
+                    url = validate_calendar_subscription(entry.get("url", ""))
+                    if not url:
+                        continue
+                    import uuid as _uuid
+                    validated_sources.append(CalendarSource(
+                        id=str(entry.get("id") or _uuid.uuid4()),
+                        label=str(entry.get("label", "") or ""),
+                        url=url,
+                        enabled=bool(entry.get("enabled", True)),
+                    ))
+                calendar_cfg = CalendarConfig(sources=validated_sources)
+            else:
+                calendar_cfg = current.calendar
         except ValueError as exc:
             return {"success": False, "error": str(exc)}
 

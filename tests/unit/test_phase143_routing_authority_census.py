@@ -104,10 +104,10 @@ ROUTING_RESOLVER_REFERENCES = {
 }
 
 ROUTING_POINTER_ATTRIBUTES = {
-    "holdspeak/config/core.py:141:intel_profile_id",
-    "holdspeak/config/core.py:164:intel_profile_id",
-    "holdspeak/config/integrations.py:117:inference_target_id",
-    "holdspeak/config/integrations.py:118:inference_target_id",
+    "holdspeak/config/core.py:142:intel_profile_id",
+    "holdspeak/config/core.py:165:intel_profile_id",
+    "holdspeak/config/integrations.py:174:inference_target_id",
+    "holdspeak/config/integrations.py:175:inference_target_id",
     "holdspeak/config/meeting.py:143:intel_profile_id",
     "holdspeak/config/meeting.py:144:intel_profile_id",
     "holdspeak/db/models/__init__.py:1122:resolver_profile_id",
@@ -117,8 +117,8 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/services/inference_setup_service.py:650:inference_target_id",
     "holdspeak/services/inference_setup_service.py:654:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:181:inference_target_id",
-    "holdspeak/services/settings_service.py:645:intel_profile_id",
-    "holdspeak/services/settings_service.py:895:inference_target_id",
+    "holdspeak/services/settings_service.py:651:intel_profile_id",
+    "holdspeak/services/settings_service.py:901:inference_target_id",
     "holdspeak/services/workbench_service.py:562:resolver_profile_id",
 }
 
@@ -127,11 +127,11 @@ ROUTING_POINTER_ATTRIBUTES = {
 # receipts, DTOs, readiness, and unrelated records out of the assignment lane.
 PROFILE_ID_CLASSIFICATIONS = {
     **{site: "mutable assignment pointer" for site in {
-        "holdspeak/config/core.py:144:profile_id", "holdspeak/config/core.py:175:profile_id",
-        "holdspeak/config/integrations.py:196:profile_id", "holdspeak/config/model.py:80:profile_id",
+        "holdspeak/config/core.py:145:profile_id", "holdspeak/config/core.py:176:profile_id",
+        "holdspeak/config/integrations.py:253:profile_id", "holdspeak/config/model.py:80:profile_id",
         "holdspeak/plugins/dictation/assembly.py:321:profile_id",
-        "holdspeak/services/settings_service.py:796:profile_id",
-        "holdspeak/services/settings_service.py:868:profile_id",
+        "holdspeak/services/settings_service.py:802:profile_id",
+        "holdspeak/services/settings_service.py:874:profile_id",
         "holdspeak/services/sync_service.py:682:profile_id",
         "holdspeak/services/sync_service.py:697:profile_id",
     }},
