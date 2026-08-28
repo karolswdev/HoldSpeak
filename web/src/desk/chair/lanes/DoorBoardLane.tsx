@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, newDeliveryId, readableError } from "../../../lib/api";
 import { openIntelligence } from "../../intelligenceNavigation";
@@ -7,6 +7,7 @@ import { StringGadget } from "../../surface/gadgets";
 import { SurfaceSection, SurfaceState } from "../../surface/Surface";
 import { useDesk } from "../../store";
 import type { LaneProps } from "../laneContract";
+import { upcomingTimeLabel } from "./upcomingTime";
 
 type DoorColumnId = "overdue" | "now" | "waiting" | "unassigned" | "active";
 type DoorVerbArguments = Record<string, string | number | null | undefined>;
@@ -34,6 +35,18 @@ export type DoorCard = {
   lawful_verbs?: DoorVerb[];
 };
 
+export type DoorUpcomingItem = {
+  id: string;
+  source: "calendar_event" | "scheduled_recording";
+  target_ref: string;
+  title: string;
+  starts_at: string;
+  ends_at: string;
+  location: string | null;
+  meeting_url: string | null;
+  state: string;
+};
+
 export type DoorProjection = {
   board: Record<DoorColumnId, DoorCard[]>;
   counts: {
@@ -43,7 +56,7 @@ export type DoorProjection = {
     active: number;
     upcoming_today: number;
   };
-  upcoming: unknown[];
+  upcoming: DoorUpcomingItem[];
 };
 
 type Command = { endpoint: string; body?: Record<string, unknown> };
@@ -200,8 +213,55 @@ function headline(counts: DoorProjection["counts"]): string {
   ].filter(Boolean).join(" · ");
 }
 
+function upcomingKind(item: DoorUpcomingItem): string {
+  return item.source === "calendar_event" ? "EVENT" : "SCHEDULED RECORDING";
+}
+
+function upcomingTitle(item: DoorUpcomingItem): string {
+  return item.title.trim() || (item.source === "calendar_event" ? "Untitled event" : "Untitled scheduled recording");
+}
+
+function UpcomingRail({ upcoming }: { upcoming: DoorUpcomingItem[] }) {
+  return (
+    <section className="door-upcoming-rail" aria-labelledby="door-upcoming-title">
+      <header className="door-upcoming-head">
+        <h3 id="door-upcoming-title">UPCOMING</h3>
+        <Button dense variant="ghost" onClick={() => useDesk.getState().openScheduleCreate()}>
+          Schedule recording
+        </Button>
+      </header>
+      {upcoming.length ? (
+        <ol className="door-upcoming-list">
+          {upcoming.map((item) => {
+            const time = upcomingTimeLabel(item.starts_at);
+            return (
+              <li className="door-upcoming-row" key={`${item.source}:${item.id}`} data-upcoming-source={item.source}>
+                <span className="door-upcoming-kind">{upcomingKind(item)}</span>
+                <strong>{upcomingTitle(item)}</strong>
+                {time ? <span className="door-upcoming-time">STARTS {time}</span> : null}
+                {item.location ? <span className="door-upcoming-detail">{item.location}</span> : null}
+                {item.meeting_url ? (
+                  <a className="door-upcoming-link" href={item.meeting_url} target="_blank" rel="noreferrer">
+                    Meeting link
+                  </a>
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <div className="door-upcoming-empty">No future time scheduled.</div>
+      )}
+    </section>
+  );
+}
+
 export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
   const deskUpdatedAt = useDesk((state) => state.updatedAt);
+  // The schedule slice remains its own writer. This is only a post-save
+  // invalidation signal for the aggregate that owns the visible rail.
+  const scheduledRecordings = useDesk((state) => state.scheduledRecordings);
+  const sawScheduleList = useRef(false);
   const [projection, setProjection] = useState<DoorProjection | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -225,6 +285,14 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
   useEffect(() => {
     void reload();
   }, [reload, deskUpdatedAt]);
+
+  useEffect(() => {
+    if (!sawScheduleList.current) {
+      sawScheduleList.current = true;
+      return;
+    }
+    void reload();
+  }, [reload, scheduledRecordings]);
 
   const dispatch = async (card: DoorCard, verb: DoorVerb, payload: ActionPayload = {}) => {
     const command = commandForDoorVerb(verb, payload);
@@ -270,17 +338,6 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
   if (!projection) return null;
 
   const cards = COLUMNS.flatMap(({ id }) => projection.board[id] ?? []);
-  if (!cards.length) {
-    return (
-      <SurfaceSection
-        label="DOOR"
-        actions={<Button dense variant="ghost" onClick={() => openIntelligence({ view: "brief" })}>Brief</Button>}
-        className="door-board-section"
-      >
-        <SurfaceState empty emptyLabel="Door clear" />
-      </SurfaceSection>
-    );
-  }
 
   return (
     <SurfaceSection
@@ -293,8 +350,9 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
       </div>
       {receipt ? <div className="door-board-receipt">{receipt}</div> : null}
       {loadError ? <SurfaceState error={loadError} onRetry={() => void reload()} /> : null}
-      <div className="door-board-viewport" tabIndex={0} aria-label="Door board, scroll horizontally for all columns">
-        <div className="door-board-grid">
+      {cards.length ? (
+        <div className="door-board-viewport" tabIndex={0} aria-label="Door board, scroll horizontally for all columns">
+          <div className="door-board-grid">
           {COLUMNS.map(({ id, label, count }) => {
             const columnCards = projection.board[id] ?? [];
             const displayedCount = count ? projection.counts[count] : null;
@@ -375,8 +433,10 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
               </section>
             );
           })}
+          </div>
         </div>
-      </div>
+      ) : <SurfaceState empty emptyLabel="Door clear" />}
+      <UpcomingRail upcoming={projection.upcoming} />
     </SurfaceSection>
   );
 }

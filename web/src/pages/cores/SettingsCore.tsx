@@ -10,6 +10,7 @@ import type {
   SecretState,
   SettingsResponse,
   AuthorityPolicyResponse,
+  CalendarSubscriptionFact,
 } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
@@ -113,6 +114,22 @@ export function projectPendingSettingsChanges(
     (draft, changes) => mergeSettingsChanges(draft, changes),
     base,
   );
+}
+
+/** Render only the server's declared off-device calendar fact. */
+export function calendarEgressChipProps(
+  subscription: CalendarSubscriptionFact | undefined,
+): { label: string; title: string; scope: "cloud" } | null {
+  if (!subscription?.egress || !subscription.host || !subscription.refresh_seconds)
+    return null;
+  const minutes = Math.round(subscription.refresh_seconds / 60);
+  if (minutes < 1) return null;
+  const host = subscription.host.toUpperCase();
+  return {
+    label: `FETCHES ${host} · ${minutes} MIN`,
+    title: `Fetches calendar from ${subscription.host} every ${minutes} minutes. No credentials or headers are sent.`,
+    scope: "cloud",
+  };
 }
 
 /* HS-101 round 4 — the glass never wears wire keys: curated names
@@ -744,8 +761,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </GadgetGroup>
           </>
         );
-      /* ── Meetings: pointer tile + actuators + RAW ── */
-      case "meetings":
+      /* ── Meetings: pointer tile + calendar + actuators + RAW ── */
+      case "meetings": {
+        const calendarEgress = calendarEgressChipProps(data._calendar_subscription);
         return (
           <>
             <GadgetGroup label="Capture + export">
@@ -754,6 +772,17 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   CONFIG LIVES ON MEETINGS
                 </span>
               </div>
+            </GadgetGroup>
+            <GadgetGroup label="Calendar">
+              <GadgetRow label="Subscription" highlight={hl(["calendar", "subscription"])}>
+                <StringGadget
+                  label="Calendar subscription"
+                  value={String(val(["calendar", "subscription"]) ?? "")}
+                  placeholder="ICS file path or HTTPS URL"
+                  onChange={(next) => update(["calendar", "subscription"], next)}
+                />
+                {calendarEgress ? <EgressChip {...calendarEgress} /> : null}
+              </GadgetRow>
             </GadgetGroup>
             <GadgetGroup label="Actuators">
               {check(["meeting", "allow_actuators"], "Allow actuators")}
@@ -852,6 +881,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </FoldGadget>
           </>
         );
+      }
       /* ── Rhythm: cadence user-facing + Telegram + RAW ── */
       case "rhythm":
         return (

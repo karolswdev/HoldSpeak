@@ -91,6 +91,13 @@ export type Macro = {
 
 /** SettingsCore */
 export type SecretState = { configured?: boolean; destination?: string };
+export type CalendarSettings = { subscription?: string };
+export type CalendarSubscriptionFact = {
+  kind?: "disabled" | "file" | "https" | "invalid";
+  host?: string | null;
+  refresh_seconds?: number | null;
+  egress?: boolean;
+};
 
 /* ── endpoint response types ── */
 
@@ -155,6 +162,8 @@ export interface SettingsResponse {
   /** HS-130-07: the optimistic-concurrency token; echoed on PUT. */
   _revision?: string;
   _secrets?: Record<string, SecretState>;
+  _calendar_subscription?: CalendarSubscriptionFact;
+  calendar?: CalendarSettings;
   dictation?: DictationSettings;
   hotkey?: Record<string, unknown>;
   ui?: Record<string, unknown>;

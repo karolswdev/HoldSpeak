@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DoorBoardLane, commandForDoorVerb, type DoorProjection } from "./DoorBoardLane";
+import { useDesk } from "../../store";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 const newDeliveryId = vi.hoisted(() => vi.fn(() => "door-request-id"));
@@ -52,7 +53,12 @@ const projection: DoorProjection = {
     }],
   },
   counts: { overdue: 7, now: 6, waiting: 5, active: 4, upcoming_today: 99 },
-  upcoming: [{ title: "HS-144-04 owns this" }],
+  upcoming: [{
+    id: "calendar-1", source: "calendar_event", target_ref: "calendar_event:calendar-1",
+    title: "HS-144-04 owns this", starts_at: "2099-08-28T10:00:00Z",
+    ends_at: "2099-08-28T10:30:00Z", location: "Door room",
+    meeting_url: "https://meet.example/door", state: "scheduled",
+  }],
 };
 
 function mockDoor(value: DoorProjection = projection) {
@@ -71,7 +77,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockDoor();
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  useDesk.setState({ scheduledRecordings: [], scheduleCreateWindow: null });
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe("DoorBoardLane", () => {
   it("renders the exact five server columns in visual order with server counts", async () => {
@@ -81,7 +91,8 @@ describe("DoorBoardLane", () => {
       .toEqual(["Overdue", "Now", "Waiting", "Unassigned", "Active"]);
     expect(screen.getByText("7 overdue · 6 now · 5 waiting · 4 active")).toBeInTheDocument();
     expect(screen.getByLabelText("7 overdue items")).toBeInTheDocument();
-    expect(screen.queryByText("HS-144-04 owns this")).toBeNull();
+    expect(screen.getByText("HS-144-04 owns this")).toBeInTheDocument();
+    expect(screen.getByText("EVENT")).toBeInTheDocument();
     expect(screen.getByText(/action item · owner Ada · overdue/)).toBeInTheDocument();
     expect(screen.getByText(/thought · review ready · updated/)).toBeInTheDocument();
   });
@@ -150,10 +161,15 @@ describe("DoorBoardLane", () => {
   });
 
   it("renders designed empty and initial-error states", async () => {
-    const empty: DoorProjection = { ...projection, board: { overdue: [], now: [], waiting: [], unassigned: [], active: [] } };
+    const empty: DoorProjection = {
+      ...projection,
+      board: { overdue: [], now: [], waiting: [], unassigned: [], active: [] },
+      upcoming: [],
+    };
     mockDoor(empty);
     const { unmount } = renderLane();
     expect(await screen.findByText("Door clear")).toBeInTheDocument();
+    expect(screen.getByText("No future time scheduled.")).toBeInTheDocument();
     unmount();
     apiFetch.mockRejectedValue(new Error("Door unavailable"));
     renderLane();
@@ -161,5 +177,67 @@ describe("DoorBoardLane", () => {
     expect(error.closest(".door-board-section")).not.toBeNull();
     expect(screen.getByRole("button", { name: "Brief" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+  });
+
+  it("keeps the server's mixed chronology and kind truth without a client sort", async () => {
+    const mixed: DoorProjection = {
+      ...projection,
+      upcoming: [
+        {
+          id: "recording-1", source: "scheduled_recording", target_ref: "scheduled_recording:recording-1",
+          title: "Capture the review", starts_at: "2099-08-27T12:00:00Z", ends_at: "2099-08-27T12:30:00Z",
+          location: null, meeting_url: null, state: "idle",
+        },
+        {
+          id: "calendar-2", source: "calendar_event", target_ref: "calendar_event:calendar-2",
+          title: "Calendar follows server order", starts_at: "2099-08-27T11:00:00Z", ends_at: "2099-08-27T11:30:00Z",
+          location: "North room", meeting_url: "https://meet.example/north", state: "scheduled",
+        },
+      ],
+    };
+    mockDoor(mixed);
+    renderLane();
+    await screen.findByText("Capture the review");
+    const rows = Array.from(document.querySelectorAll<HTMLElement>(".door-upcoming-row"));
+    expect(rows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining("SCHEDULED RECORDING"),
+      expect.stringContaining("EVENT"),
+    ]);
+    expect(rows[0]).toHaveTextContent("Capture the review");
+    expect(rows[1]).toHaveTextContent("Calendar follows server order");
+    expect(rows[1]).toHaveTextContent("North room");
+    expect(within(rows[1]).getByRole("link", { name: "Meeting link" })).toHaveAttribute("href", "https://meet.example/north");
+  });
+
+  it("renders a calendar-less schedule normally, with no orphaned calendar chrome", async () => {
+    const calendarLess: DoorProjection = {
+      ...projection,
+      board: { overdue: [], now: [], waiting: [], unassigned: [], active: [] },
+      upcoming: [{
+        id: "recording-only", source: "scheduled_recording", target_ref: "scheduled_recording:recording-only",
+        title: "One future recording", starts_at: "2099-08-27T12:00:00Z", ends_at: "2099-08-27T12:15:00Z",
+        location: null, meeting_url: null, state: "idle",
+      }],
+    };
+    mockDoor(calendarLess);
+    renderLane();
+    expect(await screen.findByText("One future recording")).toBeInTheDocument();
+    expect(screen.getByText("SCHEDULED RECORDING")).toBeInTheDocument();
+    expect(screen.queryByText(/calendar unavailable/i)).toBeNull();
+    expect(screen.queryByText("EVENT")).toBeNull();
+  });
+
+  it("opens the existing schedule-create verb and revalidates only after its store list changes", async () => {
+    const openScheduleCreate = vi.spyOn(useDesk.getState(), "openScheduleCreate");
+    renderLane();
+    await screen.findByText("HS-144-04 owns this");
+    fireEvent.click(screen.getByRole("button", { name: "Schedule recording" }));
+    expect(openScheduleCreate).toHaveBeenCalledTimes(1);
+    expect(apiFetch.mock.calls.filter(([path]) => path === "/api/scheduled-recordings")).toHaveLength(0);
+    expect(apiFetch.mock.calls.filter(([path]) => path === "/api/door")).toHaveLength(1);
+
+    useDesk.setState({ scheduledRecordings: [{ id: "post-save" }] as never });
+    await waitFor(() => expect(apiFetch.mock.calls.filter(([path]) => path === "/api/door")).toHaveLength(2));
+    expect(apiFetch.mock.calls.filter(([path]) => path === "/api/scheduled-recordings")).toHaveLength(0);
   });
 });

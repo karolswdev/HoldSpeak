@@ -34,6 +34,13 @@ describe("SettingsCore atomic settings writer", () => {
     });
   });
 
+  it("keeps an explicitly cleared calendar subscription as the backend-valid empty string", () => {
+    const merged = mergeSettingsChanges({ calendar: { subscription: "https://calendar.example/a.ics" } } as never, [
+      [["calendar", "subscription"], ""],
+    ]);
+    expect(merged.calendar).toEqual({ subscription: "" });
+  });
+
   it("rebases exact C/D/E patches without allowing old responses or conflicts to erase newer edits", () => {
     const initial = {
       _revision: "r1",

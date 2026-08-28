@@ -430,6 +430,83 @@
   font-family: var(--font-mono);
   font-size: var(--desk-surface-detail-size);
 }
+
+/* HS-144-04 — the Door's one chronological future rail. */
+.door-upcoming-rail {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-2) var(--desk-surface-row-pad-x) 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+.door-upcoming-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.door-upcoming-head h3 {
+  margin: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.door-upcoming-list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.door-upcoming-row {
+  display: grid;
+  grid-template-columns: minmax(130px, auto) minmax(12rem, 1fr) auto;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  min-width: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch);
+}
+.door-upcoming-kind,
+.door-upcoming-time,
+.door-upcoming-detail,
+.door-upcoming-link,
+.door-upcoming-empty {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+}
+.door-upcoming-kind { letter-spacing: 0.04em; }
+.door-upcoming-row strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--desk-surface-body-size);
+}
+.door-upcoming-time { white-space: nowrap; }
+.door-upcoming-detail,
+.door-upcoming-link { grid-column: 2 / -1; }
+.door-upcoming-link { color: var(--accent); }
+.door-upcoming-empty {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: var(--space-2);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+@media (max-width: 640px) {
+  .door-upcoming-row { grid-template-columns: 1fr auto; }
+  .door-upcoming-kind { grid-column: 1 / -1; }
+  .door-upcoming-detail,
+  .door-upcoming-link { grid-column: 1 / -1; }
+}
 @media (max-width: 480px) {
   .door-board-grid { grid-template-columns: repeat(5, minmax(224px, 1fr)); min-width: 1120px; }
   .door-card-open strong { white-space: normal; }

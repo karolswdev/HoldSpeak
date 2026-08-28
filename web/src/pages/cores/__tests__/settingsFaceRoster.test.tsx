@@ -51,6 +51,11 @@ describe("Settings face roster", () => {
     }
   });
 
+  it("keeps the calendar source under the existing Meetings tile", () => {
+    expect(PREF_MODULES.find((module) => module.id === "meetings")?.keys).toContain("calendar");
+    expect(PREF_MODULES.filter((module) => module.id === "calendar")).toEqual([]);
+  });
+
   it("every module has a glyph, sprite, and at least one key claim (except integrations)", () => {
     for (const m of PREF_MODULES) {
       expect(m.glyph, `${m.id} has no glyph`).toBeTruthy();
