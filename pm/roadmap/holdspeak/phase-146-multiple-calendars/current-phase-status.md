@@ -64,8 +64,8 @@ ceremony budget):
 | --- | --- | --- | --- | --- |
 | HS-146-01 | Multi-source plumbing (config + DB + conductor) | done | [story-01](./story-01-multi-source-plumbing.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-146-02 | Settings service + wire | done | [story-02](./story-02-settings-service-wire.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-146-03 | The settings list editor (joy surface) | ready | [story-03](./story-03-settings-list-editor.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-146-04 | Rail provenance + seed repairs | ready | [story-04](./story-04-rail-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-146-03 | The settings list editor (joy surface) | in-progress | [story-03](./story-03-settings-list-editor.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-146-04 | Rail provenance + seed repairs | in-progress | [story-04](./story-04-rail-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-146-05 | The walk and the close | ready | [story-05](./story-05-docs-walk-close.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-146-06 | The calendar book (thorough docs) | ready | [story-06](./story-06-the-calendar-book.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-146-07 | The Calendar Snapshot adapter | ready | [story-07](./story-07-calendar-snapshot-adapter.md) | [evidence-story-07](./evidence-story-07.md) |
@@ -111,6 +111,19 @@ ceremony budget):
   boundary. The story carries a REQUIRED design-beat plan round
   before implementation. Stories 05 (walk) and 06 (docs) now also
   cover the adapter; phase is 1/7.
+- 2026-08-28 — **HS-146-07 design beat RULED** (plan archived at
+  [`assets/plan-snapshot-adapter.md`](./assets/plan-snapshot-adapter.md)):
+  glass-drop primary entry + settings IMPORT affordance + a dedicated
+  in-world review SurfaceWindow; the vision seam = a
+  `calendar.snapshot_extract` background capability (`vision=True` so
+  non-vision profiles refuse), a VisionPromptAdapter, and the
+  engine's message-type widening; anchor-required confirm gate;
+  atomic per-source `.ics` under the data dir registered through the
+  settings write path only + an immediate conductor refresh trigger;
+  ≤3 screenshots merged into one review; the new route drags the
+  api-surface regen. One orchestrator override of the plan: the
+  canonical payload hash stays WHOLE — no image-exclusion
+  special-case in kernel hash semantics.
 - 2026-08-28 — HS-146-02 closed (evidence-story-02.md): the real
   sources wire with per-entry named refusals + the `_calendar_sources`
   fact; RULED dual-fact reality — `_calendar_subscription` ships
