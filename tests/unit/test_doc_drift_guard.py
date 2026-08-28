@@ -105,6 +105,56 @@ def test_retired_inference_vocab_guard_patterns_are_nonvacuous() -> None:
         assert not _RETIRED_INFERENCE_VOCAB.search(current), current
 
 
+# HS-144-05: Brief and Follow-Through remain Intelligence views, but the old
+# Chair lane composition is retired. This scans the complete docs corpus and
+# root README while leaving the PMO roadmap outside the fence.
+_RETIRED_CHAIR_VOCAB = re.compile(
+    r"\b(?:BriefLane|FollowThroughLane|FinishThoughtsLane)\b"
+    r"|\bfour\s+fixed\s+lanes\b"
+    r"|\bBrief\s*,\s*Follow-Through\s*,\s*Meetings\s*,\s*Agents\b"
+    r"|\bFinish\s+thoughts\b"
+    r"|\bScheduled\s+recordings\s+show\s+in\s+the\s+Meetings\s+lane\b",
+    re.IGNORECASE,
+)
+
+
+def test_docs_do_not_restore_retired_chair_vocabulary() -> None:
+    offenders: list[str] = []
+    for path in _all_docs_and_readme():
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            match = _RETIRED_CHAIR_VOCAB.search(line)
+            if match:
+                offenders.append(f"{path.relative_to(_REPO)}:{lineno}: {match.group(0)!r}")
+
+    assert not offenders, (
+        "Retired Chair lane vocabulary returned to docs/ or README. Keep Brief "
+        "and Follow-Through as Intelligence views, and use the Door board for "
+        "unfinished Thoughts and scheduled recordings instead:\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def test_retired_chair_vocab_guard_patterns_are_nonvacuous() -> None:
+    for retired in (
+        "BriefLane",
+        "FollowThroughLane",
+        "FinishThoughtsLane",
+        "four fixed lanes",
+        "Brief, Follow-Through, Meetings, Agents",
+        "Finish thoughts",
+        "Scheduled recordings show in the Meetings lane.",
+    ):
+        assert _RETIRED_CHAIR_VOCAB.search(retired), retired
+    for current in (
+        "Brief opens an Intelligence view.",
+        "Follow-Through remains an Intelligence view.",
+        "Finish Thought completes a Thought.",
+        "Meetings keeps live and recent meetings.",
+        "The Door Active column holds developing Thoughts.",
+    ):
+        assert not _RETIRED_CHAIR_VOCAB.search(current), current
+
+
 # HS-33-03: a lightweight link-check so the `docs/` reorg (and future moves)
 # can't silently leave a dangling relative link. Scope is the same live-docs
 # set; the PMO corpus + evidence snapshots are frozen history and excluded.

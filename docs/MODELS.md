@@ -7,8 +7,8 @@ for a kind of work. This guide gets you set up. Read the internal
 when you need the execution mechanics.
 
 > **Local-first.** Your model material and connection details stay on your hub.
-> Nothing leaves your machine except the model endpoint you choose. Read
-> [Security & Privacy](SECURITY.md) for the full boundary.
+> Model material leaves only for the model endpoint you choose. Read
+> [Security & Privacy](SECURITY.md) for the complete egress boundary.
 
 ## Start here
 
