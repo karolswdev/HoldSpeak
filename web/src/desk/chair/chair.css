@@ -16,8 +16,8 @@
      matching block offsets a populated hero starts underneath the fixed
      system bar. */
   margin: var(--desk-work-top) auto var(--desk-work-bottom);
-  /* Fill the working area between chrome and dock. */
-  min-height: calc(100vh - var(--desk-snap-top) - var(--desk-snap-bottom));
+  /* The normal Chair fills the working area between chrome and dock. */
+  min-height: calc(100dvh - var(--desk-snap-top) - var(--desk-snap-bottom));
 }
 
 /* ── The capture hero slot (story 11 fills it with mic/record). ──── */
@@ -506,6 +506,36 @@
   .door-upcoming-kind { grid-column: 1 / -1; }
   .door-upcoming-detail,
   .door-upcoming-link { grid-column: 1 / -1; }
+}
+/* The short phone has only one working band. Keep each dense Door region
+   independently browseable there rather than allowing rows to lengthen the
+   Chair beneath the dock. The wider/normal-height Chair keeps its generous
+   all-at-once scan. */
+@media (max-height: 720px) {
+  /* HS-144-04 — a populated short Chair remains a working-band surface, not
+     a page that runs beneath the fixed dock. The lane column owns overflow;
+     the regular-height Chair retains its generous all-at-once scan. */
+  .chair:not(.chair-first-value) {
+    box-sizing: border-box;
+    height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
+    max-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
+  }
+  .chair-lanes {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-block: contain;
+  }
+  .door-board-viewport {
+    max-block-size: min(30dvh, 14rem);
+    overflow-y: auto;
+    overscroll-behavior-block: contain;
+  }
+  .door-upcoming-list {
+    max-block-size: min(22dvh, 9rem);
+    overflow-y: auto;
+    overscroll-behavior-block: contain;
+  }
 }
 @media (max-width: 480px) {
   .door-board-grid { grid-template-columns: repeat(5, minmax(224px, 1fr)); min-width: 1120px; }

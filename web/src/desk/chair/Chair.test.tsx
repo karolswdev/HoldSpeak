@@ -224,11 +224,25 @@ describe("Chair void polish (HS-135-13)", () => {
 
   it("seats the normal Chair inside the complete working band", () => {
     expect(stripped).toMatch(
-      /\.chair\s*\{[^}]*min-height:\s*calc\(100vh\s*-\s*var\(--desk-snap-top\)/,
+      /\.chair\s*\{[^}]*min-height:\s*calc\(100dvh\s*-\s*var\(--desk-snap-top\)/,
     );
     expect(stripped).toMatch(
       /\.chair\s*\{[^}]*margin:\s*var\(--desk-work-top\)\s+auto\s+var\(--desk-work-bottom\)/,
     );
+  });
+
+  it("caps a populated short Chair and scrolls its contained lane column", () => {
+    expect(stripped).toMatch(
+      /\.chair:not\(\.chair-first-value\)\s*\{[^}]*box-sizing:\s*border-box[^}]*height:\s*calc\(100dvh\s*-\s*var\(--desk-work-top\)\s*-\s*var\(--desk-work-bottom\)\)/,
+    );
+    expect(stripped).toMatch(
+      /\.chair-lanes\s*\{[^}]*flex:\s*1\s+1\s+auto[^}]*min-height:\s*0[^}]*overflow-y:\s*auto/,
+    );
+  });
+
+  it("caps the Door board and future rail inside the short phone lane", () => {
+    expect(stripped).toMatch(/@media\s*\(max-height:\s*720px\)[\s\S]*?\.door-board-viewport\s*\{[^}]*max-block-size/);
+    expect(stripped).toMatch(/@media\s*\(max-height:\s*720px\)[\s\S]*?\.door-upcoming-list\s*\{[^}]*max-block-size/);
   });
 
   it("does not reserve absent chrome around the first-value Chair", () => {
