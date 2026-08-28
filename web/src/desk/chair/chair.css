@@ -341,6 +341,35 @@
   outline: 1px solid var(--accent);
   outline-offset: -1px;
 }
+/* HS-145-01 — scroll-edge gradient hints on the 393 board viewport.
+   An outer wrapper holds absolutely positioned pseudo-elements that
+   overlay the scroll container without affecting its scroll geometry. */
+.door-board-hint-wrap { position: relative; }
+.door-board-hint-wrap::before,
+.door-board-hint-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  display: none;
+  pointer-events: none;
+  z-index: 1;
+}
+.door-board-hint-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, var(--surface-1), transparent);
+}
+.door-board-hint-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, var(--surface-1), transparent);
+}
+.door-board-hint-wrap[data-scroll-hint="right"]::after,
+.door-board-hint-wrap[data-scroll-hint="both"]::before,
+.door-board-hint-wrap[data-scroll-hint="both"]::after,
+.door-board-hint-wrap[data-scroll-hint="left"]::before {
+  display: block;
+}
 .door-board-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(196px, 1fr));
@@ -501,6 +530,8 @@
   border: 1px dashed var(--border);
   border-radius: var(--radius-sm);
 }
+/* HS-145-02 — connect-calendar affordance on the empty rail. */
+.door-upcoming-empty--connect { justify-content: space-between; gap: var(--space-2); }
 @media (max-width: 640px) {
   .door-upcoming-row { grid-template-columns: 1fr auto; }
   .door-upcoming-kind { grid-column: 1 / -1; }

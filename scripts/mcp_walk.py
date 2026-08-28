@@ -261,7 +261,7 @@ def _run_protocol(proc: subprocess.Popen, *, live_43: str | None = None, iso_hom
         door_data = _tool_content(door_resp)
         _assert(
             "door.get_aggregate_shape",
-            set(door_data) == {"board", "upcoming", "counts"}
+            set(door_data) == {"board", "upcoming", "counts", "calendar_configured"}
             and set(door_data.get("board", {})) == {"now", "waiting", "unassigned", "overdue", "active"},
             f"keys: {list(door_data)} / board: {list(door_data.get('board', {}))}",
         )

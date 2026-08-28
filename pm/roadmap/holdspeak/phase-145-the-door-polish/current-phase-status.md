@@ -1,6 +1,6 @@
 # Phase 145 — The Door Polish
 
-**Status:** in progress (0/3).
+**Status:** in progress (2/3).
 
 **Last updated:** 2026-08-28.
 
@@ -71,8 +71,8 @@ same day; no counsel round was spent on the charter:
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-145-01 | The board scroll hint | ready | [story-01](./story-01-board-scroll-hint.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-145-02 | The connect-calendar affordance | ready | [story-02](./story-02-connect-calendar.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-145-01 | The board scroll hint | done | [story-01](./story-01-board-scroll-hint.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-145-02 | The connect-calendar affordance | done | [story-02](./story-02-connect-calendar.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-145-03 | Shots and the close | ready | [story-03](./story-03-shots-and-close.md) | [evidence-story-03](./evidence-story-03.md) |
 
 ## Risk register
@@ -92,3 +92,45 @@ same day; no counsel round was spent on the charter:
 - 2026-08-28 — Phase chartered on the owner's menu pick. Plan worker
   report archived; [A1] and [B2a] ruled as recorded in the settled
   design.
+- 2026-08-28 — **The plan's CSS did not survive glass.** The sticky
+  in-flow pseudo-elements resolved to zero height (invisible); the
+  worker's e2e measured it and shipped the corrected design (outer
+  `.door-board-hint-wrap`, absolute pseudo-elements, 20px
+  scrollbar-gutter tolerance). Recorded as an implementation
+  divergence, not a settled-design amendment — the data-attribute
+  contract and behavioral contract are unchanged.
+- 2026-08-28 — **Sweep triage ruled (full table in
+  final-summary.md):** zero branch-new product defects; three TEST
+  defects fixed by orchestrator surgical hands at diagnosed seams —
+  the hs144 rail test's retired-posture assertion (class a), the
+  hs144 populated seed's time-of-day-dependent fixed cron
+  (pre-existing; only passed 00:00–03:00 local), and the
+  calendar-conductor xdist watch item (2nd recurrence → diagnosed as
+  an await-the-wrong-signal race; now waits on the receipts it
+  asserts — the watch item is CLOSED).
+- 2026-08-28 — Close sweep 12 failed / 6736 passed: baseline-exact,
+  zero branch-new. Cold walk rerun: 7/7 legs PASS on the polished
+  product; the 144 walk artifacts restored after the rerun.
+- 2026-08-28 — **CLOSE COUNSEL (opus): RATIFY-WITH-CONCERNS, zero
+  should-fixes.** All six orchestrator judgment calls ruled
+  defensible (A1/B2a charter rulings, the bundled flip, the three
+  surgical test fixes with their repro provenance, the 20px tolerance
+  — bounded <2.8% of the scroll range, cannot fake a state — and the
+  sweep-verdict methodology). House laws PASS across the board;
+  Tuesday question PASS on all six affordance states. Concerns, all
+  LEDGER severity, orchestrator dispositions: (1) sweep-clobbered
+  old-phase shot binaries must be restored before commit → DONE as
+  standing protocol (restored after every run, re-checked before the
+  flip commits); (2) the scroll-hint `useEffect` runs per-render
+  (correct for the null↔live ref transition; ResizeObserver pattern
+  noted) → ledgered for a future hot-render pass; (3)
+  `_calendar_configured`'s silent exception swallow — fail-to-nag is
+  the right posture, a debug-log breadcrumb ledgered for a
+  diagnostics pass; (4) no `rail-quiet-393` shot — counsel judged
+  acceptable (visually identical to the shipped 144 empty rail);
+  (5) withdrawn by the counsel itself on closer reading.
+- 2026-08-28 — **Flip-commit shape ruled:** HS-145-01 and HS-145-02
+  flip in ONE bundled commit (BUNDLE-OK) because both stories
+  interleave in the same three web files (`DoorBoardLane.tsx`,
+  `chair.css`, `DoorBoardLane.test.tsx`); splitting would
+  misattribute hunks. The owner may overrule at the sitting.

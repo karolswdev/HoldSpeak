@@ -159,9 +159,18 @@ def _seed_populated_door(page: Any) -> dict[str, str]:
     thought = created.get("thought", created)
     thought_id = str(thought["id"])
 
+    # HS-145 triage: the original fixed "0 9 * * *" seed made upcoming_today
+    # time-of-day dependent (next 09:00 UTC is only "today" for a ~3h local
+    # window). Seed a recurring fire relative to now, clamped inside today's
+    # local day so the counts assertion holds at any hour. The sub-two-minute
+    # window right before local midnight is accepted, not mitigated.
+    fire = datetime.now(timezone.utc).replace(second=0, microsecond=0) + timedelta(hours=3)
+    end_of_local_day = datetime.now().astimezone().replace(hour=23, minute=58, second=0, microsecond=0)
+    if fire.astimezone() > end_of_local_day:
+        fire = end_of_local_day.astimezone(timezone.utc)
     schedule = _api(page, "POST", "/api/scheduled-recordings", {
         "title": "Door Glass Recording",
-        "cron_expr": "0 9 * * *",
+        "cron_expr": f"{fire.minute} {fire.hour} * * *",
         "tz": "UTC",
         "one_shot": False,
         "duration_minutes": 30,
@@ -499,7 +508,11 @@ def test_upcoming_rail_real_hub_states_and_dimensions(
 
             door = page.locator(".door-board-section")
             empty_rail = door.locator(".door-upcoming-rail")
-            empty_rail.get_by_text("No future time scheduled.", exact=True).wait_for()
+            # HS-145-02: an unconfigured hub's empty rail now leads to calendar
+            # setup instead of dead-ending. The configured-but-quiet state keeps
+            # the original copy (pinned in test_hs145_door_polish_glass).
+            empty_rail.get_by_text("No calendar connected.", exact=True).wait_for()
+            assert empty_rail.get_by_role("button", name="Connect calendar", exact=True).is_visible()
             _assert_clean(page, errors)
             page.screenshot(path=str(RAIL_ASSETS / "rail-empty-1440.png"), full_page=False)
 

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DoorBoardLane, commandForDoorVerb, type DoorProjection } from "./DoorBoardLane";
+import { DoorBoardLane, commandForDoorVerb, computeScrollHint, type DoorProjection } from "./DoorBoardLane";
+import { useSurfaceWindows } from "../../components/SurfaceWindows";
 import { useDesk } from "../../store";
 
 const apiFetch = vi.hoisted(() => vi.fn());
@@ -59,6 +60,7 @@ const projection: DoorProjection = {
     ends_at: "2099-08-28T10:30:00Z", location: "Door room",
     meeting_url: "https://meet.example/door", state: "scheduled",
   }],
+  calendar_configured: true,
 };
 
 function mockDoor(value: DoorProjection = projection) {
@@ -239,5 +241,68 @@ describe("DoorBoardLane", () => {
     useDesk.setState({ scheduledRecordings: [{ id: "post-save" }] as never });
     await waitFor(() => expect(apiFetch.mock.calls.filter(([path]) => path === "/api/door")).toHaveLength(2));
     expect(apiFetch.mock.calls.filter(([path]) => path === "/api/scheduled-recordings")).toHaveLength(0);
+  });
+
+  /* HS-145-01 — scroll-hint pure function. */
+  it("computeScrollHint returns none when nothing clips", () => {
+    expect(computeScrollHint(0, 800, 800)).toBe("none");
+    expect(computeScrollHint(0, 700, 800)).toBe("none");
+  });
+  it("computeScrollHint returns right at the left edge", () => {
+    expect(computeScrollHint(0, 1120, 393)).toBe("right");
+  });
+  it("computeScrollHint returns left at the right edge", () => {
+    expect(computeScrollHint(727, 1120, 393)).toBe("left");
+  });
+  it("computeScrollHint returns both at a mid-scroll position", () => {
+    expect(computeScrollHint(200, 1120, 393)).toBe("both");
+  });
+  it("sets data-scroll-hint on the populated viewport wrapper", async () => {
+    renderLane();
+    await screen.findByText("Ship Door");
+    const wrap = document.querySelector(".door-board-hint-wrap");
+    expect(wrap).not.toBeNull();
+    expect(wrap!.hasAttribute("data-scroll-hint")).toBe(true);
+  });
+
+  /* HS-145-02 — connect-calendar affordance. */
+  it("shows connect-calendar affordance when calendar is not configured and rail is empty", async () => {
+    const unconfigured: DoorProjection = {
+      ...projection,
+      upcoming: [],
+      calendar_configured: false,
+    };
+    mockDoor(unconfigured);
+    renderLane();
+    expect(await screen.findByText("No calendar connected.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Connect calendar" })).toBeInTheDocument();
+    expect(screen.queryByText("No future time scheduled.")).toBeNull();
+  });
+
+  it("shows quiet empty message when calendar is configured and rail is empty", async () => {
+    const configured: DoorProjection = {
+      ...projection,
+      upcoming: [],
+      calendar_configured: true,
+    };
+    mockDoor(configured);
+    renderLane();
+    expect(await screen.findByText("No future time scheduled.")).toBeInTheDocument();
+    expect(screen.queryByText("No calendar connected.")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Connect calendar" })).toBeNull();
+  });
+
+  it("connect-calendar click opens Settings scoped to Meetings", async () => {
+    const openSurfaceWindow = vi.spyOn(useSurfaceWindows.getState(), "openSurfaceWindow");
+    const unconfigured: DoorProjection = {
+      ...projection,
+      upcoming: [],
+      calendar_configured: false,
+    };
+    mockDoor(unconfigured);
+    renderLane();
+    await screen.findByText("No calendar connected.");
+    fireEvent.click(screen.getByRole("button", { name: "Connect calendar" }));
+    expect(openSurfaceWindow).toHaveBeenCalledWith("configure-settings", "meetings");
   });
 });

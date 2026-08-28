@@ -5,6 +5,7 @@ from dataclasses import asdict
 from datetime import datetime, time, timedelta, timezone
 from typing import Any, Callable
 
+from ..config.integrations import validate_calendar_subscription
 from ..db.calendar_events import CalendarEvent, CalendarEventRepository
 from ..db.scheduled_recordings import ScheduledRecording, ScheduledRecordingRepository
 from .follow_through_service import FollowThroughCard, FollowThroughService
@@ -20,12 +21,14 @@ class DoorService:
         calendar_events: CalendarEventRepository,
         *,
         clock: Callable[[], datetime] | None = None,
+        config_loader: Callable[[], Any] | None = None,
     ) -> None:
         self._follow_through_service = follow_through_service
         self._refinement_thought_service = refinement_thought_service
         self._scheduled_recordings = scheduled_recordings
         self._calendar_events = calendar_events
         self._clock = clock or (lambda: datetime.now().astimezone())
+        self._config_loader = config_loader
 
     def get(self, principal: Any) -> dict[str, Any]:
         now = self._clock()
@@ -51,7 +54,18 @@ class DoorService:
                 "active": len(projected_board["active"]),
                 "upcoming_today": self._upcoming_today(upcoming, now),
             },
+            "calendar_configured": self._calendar_configured(),
         }
+
+    def _calendar_configured(self) -> bool:
+        """HS-145-02: live config read — True iff a valid subscription exists."""
+        if self._config_loader is None:
+            return False
+        try:
+            config = self._config_loader()
+            return bool(validate_calendar_subscription(config.calendar.subscription))
+        except Exception:
+            return False
 
     def _active_thoughts(self, principal: Any) -> list[dict[str, Any]]:
         items: list[dict[str, Any]] = []

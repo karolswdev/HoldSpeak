@@ -110,7 +110,7 @@ def test_get_door_returns_one_complete_aggregate_from_real_service(db: Database)
     response = _client(_service(db)).get("/api/door")
 
     assert response.status_code == 200
-    assert set(response.json()) == {"board", "upcoming", "counts"}
+    assert set(response.json()) == {"board", "upcoming", "counts", "calendar_configured"}
     assert response.json()["board"]["now"][0]["target_ref"] == "action_item:route-action"
     assert response.json()["board"]["active"][0]["source"] == "thought"
     assert response.json()["upcoming"][0] == {

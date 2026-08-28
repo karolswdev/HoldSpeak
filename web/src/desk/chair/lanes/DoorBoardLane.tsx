@@ -5,6 +5,7 @@ import { openIntelligence } from "../../intelligenceNavigation";
 import { useWriteReceipt } from "../../hooks/useWriteReceipt";
 import { StringGadget } from "../../surface/gadgets";
 import { SurfaceSection, SurfaceState } from "../../surface/Surface";
+import { useSurfaceWindows } from "../../components/SurfaceWindows";
 import { useDesk } from "../../store";
 import type { LaneProps } from "../laneContract";
 import { upcomingTimeLabel } from "./upcomingTime";
@@ -57,6 +58,7 @@ export type DoorProjection = {
     upcoming_today: number;
   };
   upcoming: DoorUpcomingItem[];
+  calendar_configured: boolean;
 };
 
 type Command = { endpoint: string; body?: Record<string, unknown> };
@@ -204,6 +206,25 @@ function cardFacts(card: DoorCard): string[] {
   ].filter(Boolean);
 }
 
+/** HS-145-01: pure scroll-hint state from viewport geometry. */
+export type ScrollHint = "none" | "right" | "left" | "both";
+
+export function computeScrollHint(
+  scrollLeft: number,
+  scrollWidth: number,
+  clientWidth: number,
+): ScrollHint {
+  if (scrollWidth <= clientWidth) return "none";
+  const atLeft = scrollLeft <= 0;
+  // The 20px tolerance absorbs scrollbar-gutter: stable both-edges
+  // which reduces the effective scrollable range by the gutter width.
+  const atRight = scrollLeft + clientWidth >= scrollWidth - 20;
+  if (atLeft && atRight) return "none";
+  if (atLeft) return "right";
+  if (atRight) return "left";
+  return "both";
+}
+
 function headline(counts: DoorProjection["counts"]): string {
   return [
     counts.overdue ? `${counts.overdue} overdue` : "",
@@ -221,7 +242,7 @@ function upcomingTitle(item: DoorUpcomingItem): string {
   return item.title.trim() || (item.source === "calendar_event" ? "Untitled event" : "Untitled scheduled recording");
 }
 
-function UpcomingRail({ upcoming }: { upcoming: DoorUpcomingItem[] }) {
+function UpcomingRail({ upcoming, calendarConfigured }: { upcoming: DoorUpcomingItem[]; calendarConfigured: boolean }) {
   return (
     <section className="door-upcoming-rail" aria-labelledby="door-upcoming-title">
       <header className="door-upcoming-head">
@@ -249,6 +270,13 @@ function UpcomingRail({ upcoming }: { upcoming: DoorUpcomingItem[] }) {
             );
           })}
         </ol>
+      ) : !calendarConfigured ? (
+        <div className="door-upcoming-empty door-upcoming-empty--connect">
+          <span>No calendar connected.</span>
+          <Button dense variant="ghost" onClick={() => useSurfaceWindows.getState().openSurfaceWindow("configure-settings", "meetings")}>
+            Connect calendar
+          </Button>
+        </div>
       ) : (
         <div className="door-upcoming-empty">No future time scheduled.</div>
       )}
@@ -269,6 +297,8 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
   const [expanded, setExpanded] = useState<{ cardId: string; verbIndex: number } | null>(null);
   const [payloadValue, setPayloadValue] = useState("");
   const { attempt, receipt } = useWriteReceipt();
+  /* HS-145-01: scroll-hint listener on the populated viewport. */
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -293,6 +323,28 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
     }
     void reload();
   }, [reload, scheduledRecordings]);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const wrap = el.parentElement;
+    if (!wrap) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const hint = computeScrollHint(el.scrollLeft, el.scrollWidth, el.clientWidth);
+      if (wrap.dataset.scrollHint !== hint) wrap.dataset.scrollHint = hint;
+    };
+    const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    el.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      el.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  });
 
   const dispatch = async (card: DoorCard, verb: DoorVerb, payload: ActionPayload = {}) => {
     const command = commandForDoorVerb(verb, payload);
@@ -351,7 +403,8 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
       {receipt ? <div className="door-board-receipt">{receipt}</div> : null}
       {loadError ? <SurfaceState error={loadError} onRetry={() => void reload()} /> : null}
       {cards.length ? (
-        <div className="door-board-viewport" tabIndex={0} aria-label="Door board, scroll horizontally for all columns">
+        <div className="door-board-hint-wrap">
+        <div ref={viewportRef} className="door-board-viewport" tabIndex={0} aria-label="Door board, scroll horizontally for all columns">
           <div className="door-board-grid">
           {COLUMNS.map(({ id, label, count }) => {
             const columnCards = projection.board[id] ?? [];
@@ -435,8 +488,9 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
           })}
           </div>
         </div>
+        </div>
       ) : <SurfaceState empty emptyLabel="Door clear" />}
-      <UpcomingRail upcoming={projection.upcoming} />
+      <UpcomingRail upcoming={projection.upcoming} calendarConfigured={projection.calendar_configured} />
     </SurfaceSection>
   );
 }

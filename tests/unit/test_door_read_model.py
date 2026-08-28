@@ -39,13 +39,18 @@ def _door(
     *,
     now: datetime = FIXED_NOW,
     people_service: PeopleService | None = None,
+    config_loader: object | None = None,
 ) -> DoorService:
+    kwargs: dict = {}
+    if config_loader is not None:
+        kwargs["config_loader"] = config_loader
     return DoorService(
         FollowThroughService(db, people_projection=people_service),
         RefinementThoughtService(db),
         db.scheduled_recordings,
         db.calendar_events,
         clock=lambda: now,
+        **kwargs,
     )
 
 
@@ -333,3 +338,24 @@ def test_door_preserves_people_unavailable_no_leak_no_crash(db: Database) -> Non
     assert projection["board"]["now"][0]["id"] == "ordinary"
     assert all(card["source"] != "people_commitment" for lane in projection["board"].values() for card in lane)
     assert "people" not in json.dumps(projection)
+
+
+def test_calendar_configured_false_on_empty_subscription(db: Database) -> None:
+    from holdspeak.config import Config
+
+    projection = _door(db, config_loader=lambda: Config()).get(OWNER)
+    assert projection["calendar_configured"] is False
+
+
+def test_calendar_configured_true_on_valid_https_subscription(db: Database) -> None:
+    from holdspeak.config import Config
+    from holdspeak.config.integrations import CalendarConfig
+
+    config = Config(calendar=CalendarConfig(subscription="https://example.com/calendar.ics"))
+    projection = _door(db, config_loader=lambda: config).get(OWNER)
+    assert projection["calendar_configured"] is True
+
+
+def test_calendar_configured_false_when_no_config_loader(db: Database) -> None:
+    projection = _door(db).get(OWNER)
+    assert projection["calendar_configured"] is False

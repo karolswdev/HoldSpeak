@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from holdspeak.config import Config
 from holdspeak.db import get_database
 from holdspeak.mcp.families import people
 from holdspeak.principals import Principal
@@ -41,6 +42,7 @@ def _service() -> DoorService:
         RefinementThoughtService(db),
         db.scheduled_recordings,
         db.calendar_events,
+        config_loader=Config.load,
     )
 
 

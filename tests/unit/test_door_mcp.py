@@ -113,6 +113,7 @@ def test_door_get_dispatches_the_real_door_service(db: Database) -> None:
     is_error, projection = _call("door.get")
 
     assert is_error is False
+    assert set(projection) == {"board", "upcoming", "counts", "calendar_configured"}
     assert projection["board"]["now"][0]["target_ref"] == "action_item:door-mcp-action"
     assert projection["board"]["active"][0]["source"] == "thought"
     assert projection["upcoming"][0]["source"] == "scheduled_recording"

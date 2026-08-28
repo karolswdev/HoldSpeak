@@ -38,6 +38,7 @@ class Side:
 
 
 def _side(tmp_path: Path, *, http: bool) -> Side:
+    from holdspeak.config import Config
     db = Database(tmp_path / ("http.db" if http else "mcp.db"))
     db.directories.upsert(directory_id=INBOX_DIRECTORY_ID, name="Inbox")
     service = DoorService(
@@ -45,6 +46,7 @@ def _side(tmp_path: Path, *, http: bool) -> Side:
         RefinementThoughtService(db),
         db.scheduled_recordings,
         db.calendar_events,
+        config_loader=lambda: Config(),
     )
     if not http:
         return Side(db, service, None)

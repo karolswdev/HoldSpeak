@@ -83,15 +83,23 @@ def test_boot_and_tick_contain_fetch_and_parse_failures(db: Database) -> None:
     )
     conductor.start()
     try:
-        deadline = time.monotonic() + 1
-        while calls < 2 and time.monotonic() < deadline:
+        # HS-145 triage of the cross-arc xdist watch item: waiting on reader
+        # ENTRY raced the second receipt write (entry precedes the tick's
+        # failure receipt). Wait on the receipts themselves — the observable
+        # this test asserts.
+        def _receipts() -> list:
+            with db._connection() as conn:
+                return conn.execute(
+                    "SELECT outcome FROM kernel_receipts ORDER BY created_at"
+                ).fetchall()
+
+        deadline = time.monotonic() + 5
+        receipts = _receipts()
+        while len(receipts) < 2 and time.monotonic() < deadline:
             time.sleep(0.005)
+            receipts = _receipts()
         assert calls >= 2
         assert db.calendar_events.list_all() == []
-        with db._connection() as conn:
-            receipts = conn.execute(
-                "SELECT outcome FROM kernel_receipts ORDER BY created_at"
-            ).fetchall()
         assert [tuple(receipt) for receipt in receipts] == [
             ("calendar_refresh_failed",),
             ("calendar_refresh_failed",),

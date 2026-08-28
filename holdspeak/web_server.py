@@ -714,6 +714,7 @@ class MeetingWebServer:
             RefinementThoughtService(get_database()),
             get_database().scheduled_recordings,
             get_database().calendar_events,
+            config_loader=Config.load,
         )
 
         inference_setup_service = InferenceSetupApplicationService(get_database())
