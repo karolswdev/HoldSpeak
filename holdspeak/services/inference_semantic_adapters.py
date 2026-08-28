@@ -251,6 +251,8 @@ def adapter_for(
         "delivery.pr_review_draft",
     }:
         normalize = normalize_named_text("draft")
+    elif capability_id == "calendar.snapshot_extract":
+        normalize = normalize_named_text("output")
     else:
         raise ValueError("capability has no Story-143 semantic adapter")
     return ClosedSemanticAdapter(

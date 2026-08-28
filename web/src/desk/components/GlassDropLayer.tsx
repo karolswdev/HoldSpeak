@@ -11,6 +11,7 @@ type DropState =
   | { phase: "armed" }
   | { phase: "importing"; name: string }
   | { phase: "imported"; name: string; meetingId: string }
+  | { phase: "extracting"; name: string }
   | { phase: "refused"; reason: string };
 
 export function GlassDropLayer() {
@@ -46,8 +47,29 @@ export function GlassDropLayer() {
         setState({ phase: "idle" });
         return;
       }
-      if (!glassFileKind(file.name)) {
+      const kind = glassFileKind(file.name);
+      if (!kind) {
         setState({ phase: "refused", reason: glassFileRefusal(file.name) });
+        return;
+      }
+      if (kind === "screenshot") {
+        setState({ phase: "extracting", name: file.name });
+        const body = new FormData();
+        body.append("files", file);
+        void apiFetch<{
+          success: boolean;
+          anchor_date?: string | null;
+          anchor_confidence?: string;
+          events?: Array<Record<string, unknown>>;
+          error?: string | null;
+        }>("/api/calendar/snapshot", { method: "POST", body })
+          .then((result) => {
+            setState({ phase: "idle" });
+            openSurfaceOr("review-calendar-snapshot", JSON.stringify(result));
+          })
+          .catch((error) =>
+            setState({ phase: "refused", reason: readableError(error) }),
+          );
         return;
       }
       setState({ phase: "importing", name: file.name });
@@ -96,14 +118,20 @@ export function GlassDropLayer() {
       <div className="desk-glassdrop-card">
         {state.phase === "armed" ? (
           <>
-            <strong>Drop to import a Meeting</strong>
-            <small>.vtt · .srt · .txt · audio</small>
+            <strong>Drop to import</strong>
+            <small>Meeting (.vtt .srt .txt audio) or calendar screenshot (.png .jpg .webp)</small>
           </>
         ) : null}
         {state.phase === "importing" ? (
           <>
             <strong>Importing {state.name}</strong>
             <small>Transcribing runs on this device</small>
+          </>
+        ) : null}
+        {state.phase === "extracting" ? (
+          <>
+            <strong>Extracting events from {state.name}</strong>
+            <small>Vision model reading the screenshot</small>
           </>
         ) : null}
         {state.phase === "imported" ? (

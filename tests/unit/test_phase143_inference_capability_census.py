@@ -76,10 +76,11 @@ holdspeak/intel/engine.py:356|MeetingIntel._chat_completion_stream|create_chat_c
 holdspeak/intel/engine.py:394|MeetingIntel._chat_completion_stream|_remote_completion|call
 holdspeak/intel/engine.py:394|MeetingIntel._chat_completion_stream|chat.completions.create|ref
 holdspeak/intel/engine.py:449|MeetingIntel.run_prompt|_chat_completion_text|call
-holdspeak/intel/engine.py:465|MeetingIntel._analyze_once|_chat_completion_text|call
-holdspeak/intel/engine.py:540|MeetingIntel._analyze_stream|_chat_completion_stream|call
-holdspeak/intel/engine.py:609|MeetingIntel.generate_title|_chat_completion_text|call
-holdspeak/intel/engine.py:684|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
+holdspeak/intel/engine.py:477|MeetingIntel.run_prompt_messages|_chat_completion_text|call
+holdspeak/intel/engine.py:491|MeetingIntel._analyze_once|_chat_completion_text|call
+holdspeak/intel/engine.py:566|MeetingIntel._analyze_stream|_chat_completion_stream|call
+holdspeak/intel/engine.py:635|MeetingIntel.generate_title|_chat_completion_text|call
+holdspeak/intel/engine.py:710|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
 holdspeak/intel/mesh_relay.py:252|MeshRelayIntel._chat_completion_text|run_prompt|call
 holdspeak/intel/providers.py:239|_configured_engine|MeshRelayIntel|call
 holdspeak/intel/providers.py:251|_configured_engine|MeetingIntel|call
@@ -173,11 +174,16 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
-    "holdspeak/services/inference_adoption_service.py:1551|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    "holdspeak/services/inference_adoption_service.py:1553|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
     ),
     "holdspeak/speech_session/child.py:181|run_admitted_speech_child|call": ProposedRoute(
         "dynamic:SpeechSessionPlan capability", "speech_session.child", "InferenceRunner admitted child",
+    ),
+    # HS-146-07: the snapshot adapter's direct-dispatch fallback (the ask
+    # template) when no calendar.snapshot_extract assignment exists.
+    "holdspeak/services/calendar_snapshot_service.py:532|extract_via_router|call": ProposedRoute(
+        "calendar.snapshot_extract", "services.calendar_snapshot_service", "InferenceRunner direct dispatch fallback (routed path preferred when assigned)",
     ),
 }
 
@@ -377,10 +383,11 @@ holdspeak/intel/engine.py:356|MeetingIntel._chat_completion_stream|create_chat_c
 holdspeak/intel/engine.py:394|MeetingIntel._chat_completion_stream|_remote_completion|call
 holdspeak/intel/engine.py:394|MeetingIntel._chat_completion_stream|chat.completions.create|ref
 holdspeak/intel/engine.py:449|MeetingIntel.run_prompt|_chat_completion_text|call
-holdspeak/intel/engine.py:465|MeetingIntel._analyze_once|_chat_completion_text|call
-holdspeak/intel/engine.py:540|MeetingIntel._analyze_stream|_chat_completion_stream|call
-holdspeak/intel/engine.py:609|MeetingIntel.generate_title|_chat_completion_text|call
-holdspeak/intel/engine.py:684|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
+holdspeak/intel/engine.py:477|MeetingIntel.run_prompt_messages|_chat_completion_text|call
+holdspeak/intel/engine.py:491|MeetingIntel._analyze_once|_chat_completion_text|call
+holdspeak/intel/engine.py:566|MeetingIntel._analyze_stream|_chat_completion_stream|call
+holdspeak/intel/engine.py:635|MeetingIntel.generate_title|_chat_completion_text|call
+holdspeak/intel/engine.py:710|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "intel.mesh_relay", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/intel/mesh_relay.py:252|MeshRelayIntel._chat_completion_text|run_prompt|call
@@ -523,7 +530,8 @@ def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
         f"unregistered={sorted(live - EXPECTED_CALL_SITES)}\n"
         f"stale={sorted(EXPECTED_CALL_SITES - live)}"
     )
-    assert len(live) == 102
+    # HS-146-07 adds the one vision prompt leaf (run_prompt_messages).
+    assert len(live) == 103
 
 
 def test_phase143_every_product_runner_entrance_has_one_owner() -> None:

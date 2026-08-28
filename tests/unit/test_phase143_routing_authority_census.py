@@ -83,6 +83,11 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/services/model_profile_service.py:695:ref:resolve_inference_target",
     "holdspeak/services/profile_service.py:139:import:resolve_inference_target",
     "holdspeak/services/profile_service.py:140:ref:resolve_inference_target",
+    # HS-146-07: the snapshot adapter's direct-dispatch fallback follows the
+    # ask_service template (routed when assigned, resolve_placement + runner
+    # when not) — a DELIBERATELY registered adopter, not drift.
+    "holdspeak/services/calendar_snapshot_service.py:495:import:resolve_placement",
+    "holdspeak/services/calendar_snapshot_service.py:513:ref:resolve_placement",
     "holdspeak/services/refinement_application_service.py:63:import:resolve_placement",
     "holdspeak/services/refinement_application_service.py:64:ref:resolve_placement",
     "holdspeak/services/refinement_application_service.py:70:import:resolve_thought_placement",
@@ -106,8 +111,8 @@ ROUTING_RESOLVER_REFERENCES = {
 ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/config/core.py:142:intel_profile_id",
     "holdspeak/config/core.py:165:intel_profile_id",
-    "holdspeak/config/integrations.py:174:inference_target_id",
-    "holdspeak/config/integrations.py:175:inference_target_id",
+    "holdspeak/config/integrations.py:190:inference_target_id",
+    "holdspeak/config/integrations.py:191:inference_target_id",
     "holdspeak/config/meeting.py:143:intel_profile_id",
     "holdspeak/config/meeting.py:144:intel_profile_id",
     "holdspeak/db/models/__init__.py:1122:resolver_profile_id",
@@ -128,7 +133,7 @@ ROUTING_POINTER_ATTRIBUTES = {
 PROFILE_ID_CLASSIFICATIONS = {
     **{site: "mutable assignment pointer" for site in {
         "holdspeak/config/core.py:145:profile_id", "holdspeak/config/core.py:176:profile_id",
-        "holdspeak/config/integrations.py:253:profile_id", "holdspeak/config/model.py:80:profile_id",
+        "holdspeak/config/integrations.py:269:profile_id", "holdspeak/config/model.py:80:profile_id",
         "holdspeak/plugins/dictation/assembly.py:321:profile_id",
         "holdspeak/services/settings_service.py:811:profile_id",
         "holdspeak/services/settings_service.py:883:profile_id",

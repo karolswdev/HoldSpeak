@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 146
-- **Status:** ready
+- **Status:** done
 - **Depends on:** HS-146-01, HS-146-02, HS-146-03
 - **Unblocks:** HS-146-05, HS-146-06
 - **Owner:** unassigned

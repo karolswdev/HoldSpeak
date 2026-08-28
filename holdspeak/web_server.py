@@ -595,6 +595,7 @@ class MeetingWebServer:
             build_automations_router,
             build_authority_router,
             build_cadence_router,
+            build_calendar_snapshot_router,
             build_core_router,
             build_decisions_router,
             build_delivery_router,
@@ -844,6 +845,7 @@ class MeetingWebServer:
         app.include_router(build_core_router(web_ctx))
         app.include_router(build_authority_router(web_ctx))
         app.include_router(build_cadence_router(web_ctx))
+        app.include_router(build_calendar_snapshot_router(web_ctx))
         app.include_router(build_follow_through_router(web_ctx))
         app.include_router(build_door_router(web_ctx))
         app.include_router(build_people_router(web_ctx))

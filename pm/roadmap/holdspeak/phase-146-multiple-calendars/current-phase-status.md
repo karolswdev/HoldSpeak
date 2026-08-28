@@ -1,6 +1,6 @@
 # Phase 146 — Multiple Calendars
 
-**Status:** in progress (4/7).
+**Status:** in progress (5/7).
 
 **Last updated:** 2026-08-28.
 
@@ -68,7 +68,7 @@ ceremony budget):
 | HS-146-04 | Rail provenance + seed repairs | done | [story-04](./story-04-rail-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-146-05 | The walk and the close | ready | [story-05](./story-05-docs-walk-close.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-146-06 | The calendar book (thorough docs) | ready | [story-06](./story-06-the-calendar-book.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-146-07 | The Calendar Snapshot adapter | ready | [story-07](./story-07-calendar-snapshot-adapter.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-146-07 | The Calendar Snapshot adapter | done | [story-07](./story-07-calendar-snapshot-adapter.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Risk register
 
@@ -124,6 +124,17 @@ ceremony budget):
   api-surface regen. One orchestrator override of the plan: the
   canonical payload hash stays WHOLE — no image-exclusion
   special-case in kernel hash semantics.
+- 2026-08-28 — HS-146-07 closed (evidence-story-07.md, the full
+  two-round story): the snapshot adapter is REAL end-to-end — drop or
+  IMPORT SCREENSHOT → vision extraction through the router (ask-
+  template dual path; round 1's stub REFUSED by the orchestrator and
+  wired in round 2) → anchor-gated review window → confirmed .ics
+  through the bounded parser → the rail under O365 SNAPSHOT with
+  provenance. Routes 538→540 with regen; three guard-forced
+  deliberate registrations (routing census adopter, one-path vision
+  leaf 102→103, capability census entrance); checkpoint sweep over
+  03+04+07: zero branch-new product defects; glass eyeballed at both
+  widths.
 - 2026-08-28 — HS-146-04 closed (evidence-story-04.md): provenance
   chips on the rail (server-stamped label→hostname→LOCAL), the
   no-dedupe proof live on glass (a cross-feed duplicate shows twice,

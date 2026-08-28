@@ -262,7 +262,7 @@ class MeetingIntel:
 
     def _chat_completion_text(
         self,
-        messages: list[dict[str, str]],
+        messages: list[dict[str, Any]],
         *,
         temperature: float,
         max_tokens: int,
@@ -336,7 +336,7 @@ class MeetingIntel:
 
     def _chat_completion_stream(
         self,
-        messages: list[dict[str, str]],
+        messages: list[dict[str, Any]],
         *,
         temperature: float,
         max_tokens: int,
@@ -458,6 +458,32 @@ class MeetingIntel:
         except Exception as exc:
             log.error(f"Persona run failed: {exc}", exc_info=True)
             raise MeetingIntelError(f"Persona run failed: {exc}") from exc
+
+    def run_prompt_messages(
+        self,
+        *,
+        messages: list[dict[str, Any]],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> str:
+        """Run a multi-part chat completion (text + vision content arrays).
+
+        HS-146-07: the vision prompt adapter builds OpenAI-style multi-part
+        content arrays that both llama.cpp and the OpenAI client accept
+        natively.  This method bypasses the system-prompt assembly of
+        ``run_prompt`` and forwards the pre-built message list directly.
+        """
+        try:
+            return self._chat_completion_text(
+                messages,
+                temperature=self.temperature if temperature is None else temperature,
+                max_tokens=self.max_tokens if max_tokens is None else max_tokens,
+            )
+        except (MeetingIntelError, *CONTROL_SIGNALS):
+            raise
+        except Exception as exc:
+            log.error(f"Vision prompt failed: {exc}", exc_info=True)
+            raise MeetingIntelError(f"Vision prompt failed: {exc}") from exc
 
     def _analyze_once(self, transcript: str) -> IntelResult:
         messages = _json_only_messages(transcript)

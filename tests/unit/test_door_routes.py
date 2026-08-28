@@ -123,6 +123,9 @@ def test_get_door_returns_one_complete_aggregate_from_real_service(db: Database)
         "location": None,
         "meeting_url": None,
         "state": "scheduled",
+        # HS-146-04: rail provenance fields ride every calendar item.
+        "source_id": "",
+        "source_label": "",
     }
     assert response.json()["upcoming"][1]["source"] == "scheduled_recording"
 

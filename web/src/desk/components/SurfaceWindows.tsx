@@ -239,6 +239,19 @@ const SURFACES: SurfaceRow[] = [
       })),
     ),
   },
+  {
+    key: "review-calendar-snapshot",
+    id: "surface-calendar-snapshot",
+    title: "Calendar snapshot",
+    glyph: "▦",
+    eyebrow: "Calendar",
+    minW: 640,
+    Core: lazy(() =>
+      import("../../pages/cores/CalendarSnapshotReviewCore").then((m) => ({
+        default: m.CalendarSnapshotReviewCore,
+      })),
+    ),
+  },
 ];
 
 /** HS-103-01 — which surface windows were open survives a reload, the

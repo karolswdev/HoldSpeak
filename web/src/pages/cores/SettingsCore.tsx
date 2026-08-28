@@ -30,6 +30,7 @@ import {
   StringGadget,
   type CycleOption,
 } from "../../desk/surface/gadgets";
+import { openSurface } from "../../desk/shell";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
 import { ModelsModule } from "./settingsModels";
@@ -852,6 +853,38 @@ function SettingsFace({ hero, scope }: CoreProps) {
                         ))}
                       </div>
                     : null}
+                  <Button
+                    dense
+                    onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = ".png,.jpg,.jpeg,.webp";
+                      input.multiple = true;
+                      input.onchange = async () => {
+                        const files = input.files;
+                        if (!files?.length) return;
+                        const body = new FormData();
+                        for (let i = 0; i < Math.min(files.length, 3); i++) {
+                          body.append("files", files[i]);
+                        }
+                        try {
+                          const result = await apiFetch<Record<string, unknown>>(
+                            "/api/calendar/snapshot",
+                            { method: "POST", body },
+                          );
+                          openSurface(
+                            "review-calendar-snapshot",
+                            JSON.stringify(result),
+                          );
+                        } catch {
+                          // Error surface handled by the review core
+                        }
+                      };
+                      input.click();
+                    }}
+                  >
+                    IMPORT SCREENSHOT
+                  </Button>
                 </div>
               </GadgetRow>
             </GadgetGroup>
