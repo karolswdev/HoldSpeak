@@ -7,9 +7,9 @@
 
 | Leg | Result | Timing / fact | Assertion scope |
 |---|---|---|---|
-| cold | PASS | 1341.100 ms | First Sentence container; First Sentence editable pad |
+| cold | PASS | 1891.900 ms | First Sentence container; First Sentence editable pad |
 | reveal | PASS | — | .door-board-section; .door-board-section > .door-board-column heading Active |
-| completion | PASS | 38.600 ms | .door-board-section .door-board-receipt; GET /api/door after Door action |
+| completion | PASS | 41.000 ms | .door-board-section .door-board-receipt; GET /api/door after Door action |
 | schedule | PASS | — | #schedule\:__create__ opened from .door-upcoming-rail; #schedule\:__create__ opened from narrow .door-upcoming-rail |
 | calendar | PASS | — | #surface-settings Meetings Calendar GadgetRow (not global chrome); .door-upcoming-rail calendar_event row |
 | click-depth | PASS | — | .door-upcoming-rail calendar row; ClickLedger Schedule + #schedule\:__create__ |
@@ -55,7 +55,7 @@
 - PASS — **cold 1440: body has no horizontal overflow**. Scope: body; Door board viewport is not exempt.
 - PASS — **model-less speech returns named unavailability**. Scope: real /ws/dictation/stream browser protocol. {'type': 'error', 'error': 'Transcription unavailable.', 'reason': 'transcription_unavailable', 'failure_category': 'transcription_unavailable'}
 - PASS — **typed first value visibly remains editable**. Scope: First Sentence editable pad.
-- PASS — **typed first value reaches visible Desk result and custody within 3 minutes**. Scope: First Sentence real Continue later handoff. first_value_mode=typed_fallback elapsed_ms=1341.100
+- PASS — **typed first value reaches visible Desk result and custody within 3 minutes**. Scope: First Sentence real Continue later handoff. first_value_mode=typed_fallback elapsed_ms=1891.900
 - PASS — **typed first value has authoritative note custody**. Scope: GET /api/notes after visible Desk handoff. notes=7
 - PASS — **typed handoff reveals normal Door state**. Scope: normal Chair after First Sentence handoff.
 - PASS — **typed first-value handoff: no page errors**. Scope: current browser document. []
@@ -83,7 +83,7 @@
 - PASS — **Active column exists inside Door**. Scope: .door-board-section > .door-board-column heading Active.
 - PASS — **Active owns its labelled source card**. Scope: Active Door column.
 - PASS — **Active count label agrees with aggregate**. Scope: Active column count label.
-- PASS — **Active API source id and title agree**. Scope: GET /api/door board.active. api cards=[{'id': 'thought_f5674e79ab18', 'source': 'thought', 'target_ref': 'thought:thought_f5674e79ab18', 'open_ref': 'note:note_thought_43c983c6e0231566', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-28T08:08:06Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_f5674e79ab18', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]
+- PASS — **Active API source id and title agree**. Scope: GET /api/door board.active. api cards=[{'id': 'thought_dc227043a576', 'source': 'thought', 'target_ref': 'thought:thought_dc227043a576', 'open_ref': 'note:note_thought_9b8fba7022691b84', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-28T08:18:09Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_dc227043a576', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]
 - PASS — **Unassigned owns source card without invented count**. Scope: Unassigned Door column.
 - PASS — **rail owns baseline schedule**. Scope: .door-upcoming-rail.
 - PASS — **schedule does not duplicate into retained Meetings lane**. Scope: retained Meetings lane absence check.
@@ -108,7 +108,7 @@
 - PASS — **Active column exists inside Door**. Scope: .door-board-section > .door-board-column heading Active.
 - PASS — **Active owns its labelled source card**. Scope: Active Door column.
 - PASS — **Active count label agrees with aggregate**. Scope: Active column count label.
-- PASS — **Active API source id and title agree**. Scope: GET /api/door board.active. api cards=[{'id': 'thought_f5674e79ab18', 'source': 'thought', 'target_ref': 'thought:thought_f5674e79ab18', 'open_ref': 'note:note_thought_43c983c6e0231566', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-28T08:08:06Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_f5674e79ab18', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]
+- PASS — **Active API source id and title agree**. Scope: GET /api/door board.active. api cards=[{'id': 'thought_dc227043a576', 'source': 'thought', 'target_ref': 'thought:thought_dc227043a576', 'open_ref': 'note:note_thought_9b8fba7022691b84', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-28T08:18:09Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_dc227043a576', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]
 - PASS — **Unassigned owns source card without invented count**. Scope: Unassigned Door column.
 - PASS — **rail owns baseline schedule**. Scope: .door-upcoming-rail.
 - PASS — **schedule does not duplicate into retained Meetings lane**. Scope: retained Meetings lane absence check.
@@ -135,7 +135,7 @@
 - PASS — **Active column exists inside Door**. Scope: .door-board-section > .door-board-column heading Active.
 - PASS — **Active owns its labelled source card**. Scope: Active Door column.
 - PASS — **Active count label agrees with aggregate**. Scope: Active column count label.
-- PASS — **Active API source id and title agree**. Scope: GET /api/door board.active. api cards=[{'id': 'thought_f5674e79ab18', 'source': 'thought', 'target_ref': 'thought:thought_f5674e79ab18', 'open_ref': 'note:note_thought_43c983c6e0231566', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-28T08:08:06Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_f5674e79ab18', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]
+- PASS — **Active API source id and title agree**. Scope: GET /api/door board.active. api cards=[{'id': 'thought_dc227043a576', 'source': 'thought', 'target_ref': 'thought:thought_dc227043a576', 'open_ref': 'note:note_thought_9b8fba7022691b84', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-28T08:18:09Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_dc227043a576', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]
 - PASS — **Unassigned owns source card without invented count**. Scope: Unassigned Door column.
 - PASS — **rail owns baseline schedule**. Scope: .door-upcoming-rail.
 - PASS — **schedule does not duplicate into retained Meetings lane**. Scope: retained Meetings lane absence check.
@@ -151,9 +151,9 @@
 - PASS — **completion target exposes production Done descriptor**. Scope: GET /api/door board.overdue descriptor. [{'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'done'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'dismiss'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'snooze'}, 'required_arguments': ['payload.until']}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'delegate'}, 'required_arguments': ['payload.to']}]
 - PASS — **completion button belongs to named Overdue card**. Scope: Overdue Door column -> fixture card.
 - PASS — **Done changes the authoritative Door aggregate**. Scope: GET /api/door after Door action.
-- PASS — **Done changes its owning Overdue column within 500ms**. Scope: Overdue Door card detachment measured by page performance.now(). completion_ms=38.600
-- PASS — **read active Thought for stale-refusal setup**. Scope: production HTTP authority GET /api/thoughts/thought_f5674e79ab18. status=200 payload={'thought': {'id': 'thought_f5674e79ab18', 'raw_id': 'thought_f5674e79ab18', 'raw_sha256': 'c3ef1083d1e712832249d018d4f85bd872a336c423f4497ae738659381bec4de', 'source': {'kind': 'typed'}, 'raw_captured_at': '2026-08-28T0
-- PASS — **drift active Thought through custody authority**. Scope: production HTTP authority PATCH /api/thoughts/thought_f5674e79ab18/working. status=200 payload={'thought': {'id': 'thought_f5674e79ab18', 'raw_id': 'thought_f5674e79ab18', 'raw_sha256': 'c3ef1083d1e712832249d018d4f85bd872a336c423f4497ae738659381bec4de', 'source': {'kind': 'typed'}, 'raw_captured_at': '2026-08-28T0
+- PASS — **Done changes its owning Overdue column within 500ms**. Scope: Overdue Door card detachment measured by page performance.now(). completion_ms=41.000
+- PASS — **read active Thought for stale-refusal setup**. Scope: production HTTP authority GET /api/thoughts/thought_dc227043a576. status=200 payload={'thought': {'id': 'thought_dc227043a576', 'raw_id': 'thought_dc227043a576', 'raw_sha256': 'c3ef1083d1e712832249d018d4f85bd872a336c423f4497ae738659381bec4de', 'source': {'kind': 'typed'}, 'raw_captured_at': '2026-08-28T0
+- PASS — **drift active Thought through custody authority**. Scope: production HTTP authority PATCH /api/thoughts/thought_dc227043a576/working. status=200 payload={'thought': {'id': 'thought_dc227043a576', 'raw_id': 'thought_dc227043a576', 'raw_sha256': 'c3ef1083d1e712832249d018d4f85bd872a336c423f4497ae738659381bec4de', 'source': {'kind': 'typed'}, 'raw_captured_at': '2026-08-28T0
 - PASS — **stale 409 receipt stays in Door**. Scope: .door-board-section .door-board-receipt.
 - PASS — **stale refusal opens no dialog**. Scope: whole document dialog absence.
 - PASS — **completion and stale receipt: no page errors**. Scope: current browser document. []
@@ -177,8 +177,10 @@
 - PASS — **Settings saves local fixture through its real control**. Scope: Settings Meetings Calendar subscription AND GET /api/settings. {'kind': 'file', 'host': '', 'refresh_seconds': 900, 'egress': False}
 - PASS — **real CalendarIngestConductor refresh succeeds**. Scope: isolated child CalendarIngestConductor.refresh(). exit=0 stdout={"calendar_refresh": true} stderr=
 - PASS — **fixture event is source-labelled inside Door rail**. Scope: .door-upcoming-rail calendar_event row.
+- PASS — **calendar evidence also shows scheduled-recording rail row**. Scope: .door-upcoming-rail scheduled_recording row.
 - PASS — **fixture rail row owns location and meeting link**. Scope: calendar_event row in .door-upcoming-rail.
-- PASS — **Door aggregate contains actual fixture calendar source**. Scope: GET /api/door upcoming. [{'id': 'sr_f33532dc8c41', 'source': 'scheduled_recording', 'target_ref': 'scheduled_recording:sr_f33532dc8c41', 'title': 'HS144 WALK baseline recording', 'starts_at': '2026-08-28T09:00:00Z', 'ends_at': '2026-08-28T09:30:00Z', 'location': None, 'meeting_url': None, 'state': 'idle'}, {'id': 'ce_d4e0f41e9df6c76099e3786addbaa65076a044f2d0f8736dd22c5ca440019614', 'source': 'calendar_event', 'target_ref': 'calendar_event:ce_d4e0f41e9df6c76099e3786addbaa65076a044f2d0f8736dd22c5ca440019614', 'title': 'HS144 WALK calendar fixture', 'starts_at': '2026-08-28T10:08:00Z', 'ends_at': '2026-08-28T10:53:00Z', 'location': 'Walk Room 4', 'meeting_url': 'https://meet.example.test/hs144-walk', 'state': 'scheduled'}, {'id': 'sr_a1c10f638fb9', 'source': 'scheduled_recording', 'target_ref': 'scheduled_recording:sr_a1c10f638fb9', 'title': 'HS144 WALK in-world recording', 'starts_at': '2027-08-28T02:38:00Z', 'ends_at': '2027-08-28T03:38:00Z', 'location': None, 'meeting_url': None, 'state': 'idle'}]
+- PASS — **Door aggregate contains actual fixture calendar source**. Scope: GET /api/door upcoming. [{'id': 'sr_6af17f010926', 'source': 'scheduled_recording', 'target_ref': 'scheduled_recording:sr_6af17f010926', 'title': 'HS144 WALK baseline recording', 'starts_at': '2026-08-28T09:00:00Z', 'ends_at': '2026-08-28T09:30:00Z', 'location': None, 'meeting_url': None, 'state': 'idle'}, {'id': 'ce_0db481b40356a673ac8bc6c09bacbd1e8dc3f5a31e07d3f0535476a25942d9b3', 'source': 'calendar_event', 'target_ref': 'calendar_event:ce_0db481b40356a673ac8bc6c09bacbd1e8dc3f5a31e07d3f0535476a25942d9b3', 'title': 'HS144 WALK calendar fixture', 'starts_at': '2026-08-28T10:18:00Z', 'ends_at': '2026-08-28T11:03:00Z', 'location': 'Walk Room 4', 'meeting_url': 'https://meet.example.test/hs144-walk', 'state': 'scheduled'}, {'id': 'sr_e7a62d76c35a', 'source': 'scheduled_recording', 'target_ref': 'scheduled_recording:sr_e7a62d76c35a', 'title': 'HS144 WALK in-world recording', 'starts_at': '2027-08-28T02:48:00Z', 'ends_at': '2027-08-28T03:48:00Z', 'location': None, 'meeting_url': None, 'state': 'idle'}]
+- PASS — **calendar evidence capture has no Settings window**. Scope: fresh Door capture document.
 - PASS — **calendar fixture rail: no page errors**. Scope: current browser document. []
 - PASS — **calendar fixture rail: document has no horizontal overflow**. Scope: document root; Door board viewport is not exempt.
 - PASS — **calendar fixture rail: body has no horizontal overflow**. Scope: body; Door board viewport is not exempt.
@@ -293,7 +295,7 @@
 ## Cleanup
 
 - closed Playwright browser
-- stopped hub pid=65478 exit=0
-- deleted ICS fixture tree: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs144-door-walk-m25l6yg9/fixtures
-- deleted walk HOME/XDG/TMP tree: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs144-door-walk-m25l6yg9
+- stopped hub pid=73237 exit=0
+- deleted ICS fixture tree: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs144-door-walk-xc_ok8rd/fixtures
+- deleted walk HOME/XDG/TMP tree: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs144-door-walk-xc_ok8rd
 - cleanup=pass

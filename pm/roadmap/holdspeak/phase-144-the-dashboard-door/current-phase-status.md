@@ -184,3 +184,22 @@ HS-144-05 closed 2026-08-28: nine docs surfaces corrected + the
 retirement guard; cleanest sweep of the phase (all-baseline, zero
 non-baseline); the docs-only no-audit tie-break recorded in the
 evidence.
+
+- 2026-08-28 — CLOSE COUNSEL (opus): **RATIFY-WITH-CONCERNS, zero
+  should-fixes.** All five settled-design dispositions, the ICS-in
+  ruling, the docs no-audit tie-break, the height-cap fix, and the
+  revival itself: ratified with evidence. Ledger honesty verified
+  item-by-item (the pagination note re-derived: a spin needs a very
+  specific concurrent mutation; the shutdown gap confirmed
+  pre-existing at web_server shutdown). Every baseline-exact triage
+  claim survived spot-checks; the walk's ClickLedger ruled honest and
+  not gameable. Tuesday question: PASS on all five owner jobs. Two
+  counsel concerns, ORCHESTRATOR DISPOSITION = LEDGERED for the next
+  usability/beauty pass (polish, not defects): (1) the 393 board's
+  horizontal scroll has no visual hint that more columns exist;
+  (2) calendar setup is not discoverable from the Door itself — a
+  future "connect calendar" affordance on the empty rail. Counsel
+  also caught one dishonest artifact: door-calendar-rail-1440.png
+  captured the wrong surface — sent back to the walk harness for a
+  capture-point fix + full rerun (the leg's assertions were sound;
+  the shot must show what its name claims).

@@ -6,7 +6,7 @@
     "cold": {
       "name": "cold",
       "passed": true,
-      "elapsed_ms": 1341.1000000238419,
+      "elapsed_ms": 1891.9000000953674,
       "assertions": [
         {
           "label": "cold narrow starts at First Sentence",
@@ -125,7 +125,7 @@
         {
           "label": "typed first value reaches visible Desk result and custody within 3 minutes",
           "passed": true,
-          "detail": "first_value_mode=typed_fallback elapsed_ms=1341.100",
+          "detail": "first_value_mode=typed_fallback elapsed_ms=1891.900",
           "assertion_scope": "First Sentence real Continue later handoff"
         },
         {
@@ -186,7 +186,7 @@
           "failure_category": "transcription_unavailable"
         },
         "first_value_mode": "typed_fallback",
-        "first_value_ms": 1341.1
+        "first_value_ms": 1891.9
       }
     },
     "reveal": {
@@ -299,7 +299,7 @@
         {
           "label": "Active API source id and title agree",
           "passed": true,
-          "detail": "api cards=[{'id': 'thought_f5674e79ab18', 'source': 'thought', 'target_ref': 'thought:thought_f5674e79ab18', 'open_ref': 'note:note_thought_43c983c6e0231566', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-28T08:08:06Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_f5674e79ab18', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]",
+          "detail": "api cards=[{'id': 'thought_dc227043a576', 'source': 'thought', 'target_ref': 'thought:thought_dc227043a576', 'open_ref': 'note:note_thought_9b8fba7022691b84', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-28T08:18:09Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_dc227043a576', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]",
           "assertion_scope": "GET /api/door board.active"
         },
         {
@@ -449,7 +449,7 @@
         {
           "label": "Active API source id and title agree",
           "passed": true,
-          "detail": "api cards=[{'id': 'thought_f5674e79ab18', 'source': 'thought', 'target_ref': 'thought:thought_f5674e79ab18', 'open_ref': 'note:note_thought_43c983c6e0231566', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-28T08:08:06Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_f5674e79ab18', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]",
+          "detail": "api cards=[{'id': 'thought_dc227043a576', 'source': 'thought', 'target_ref': 'thought:thought_dc227043a576', 'open_ref': 'note:note_thought_9b8fba7022691b84', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-28T08:18:09Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_dc227043a576', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]",
           "assertion_scope": "GET /api/door board.active"
         },
         {
@@ -611,7 +611,7 @@
         {
           "label": "Active API source id and title agree",
           "passed": true,
-          "detail": "api cards=[{'id': 'thought_f5674e79ab18', 'source': 'thought', 'target_ref': 'thought:thought_f5674e79ab18', 'open_ref': 'note:note_thought_43c983c6e0231566', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-28T08:08:06Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_f5674e79ab18', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]",
+          "detail": "api cards=[{'id': 'thought_dc227043a576', 'source': 'thought', 'target_ref': 'thought:thought_dc227043a576', 'open_ref': 'note:note_thought_9b8fba7022691b84', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-28T08:18:09Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_dc227043a576', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]",
           "assertion_scope": "GET /api/door board.active"
         },
         {
@@ -681,7 +681,7 @@
     "completion": {
       "name": "completion",
       "passed": true,
-      "elapsed_ms": 38.60000002384186,
+      "elapsed_ms": 41.0,
       "assertions": [
         {
           "label": "completion target exposes production Done descriptor",
@@ -704,20 +704,20 @@
         {
           "label": "Done changes its owning Overdue column within 500ms",
           "passed": true,
-          "detail": "completion_ms=38.600",
+          "detail": "completion_ms=41.000",
           "assertion_scope": "Overdue Door card detachment measured by page performance.now()"
         },
         {
           "label": "read active Thought for stale-refusal setup",
           "passed": true,
-          "detail": "status=200 payload={'thought': {'id': 'thought_f5674e79ab18', 'raw_id': 'thought_f5674e79ab18', 'raw_sha256': 'c3ef1083d1e712832249d018d4f85bd872a336c423f4497ae738659381bec4de', 'source': {'kind': 'typed'}, 'raw_captured_at': '2026-08-28T0",
-          "assertion_scope": "production HTTP authority GET /api/thoughts/thought_f5674e79ab18"
+          "detail": "status=200 payload={'thought': {'id': 'thought_dc227043a576', 'raw_id': 'thought_dc227043a576', 'raw_sha256': 'c3ef1083d1e712832249d018d4f85bd872a336c423f4497ae738659381bec4de', 'source': {'kind': 'typed'}, 'raw_captured_at': '2026-08-28T0",
+          "assertion_scope": "production HTTP authority GET /api/thoughts/thought_dc227043a576"
         },
         {
           "label": "drift active Thought through custody authority",
           "passed": true,
-          "detail": "status=200 payload={'thought': {'id': 'thought_f5674e79ab18', 'raw_id': 'thought_f5674e79ab18', 'raw_sha256': 'c3ef1083d1e712832249d018d4f85bd872a336c423f4497ae738659381bec4de', 'source': {'kind': 'typed'}, 'raw_captured_at': '2026-08-28T0",
-          "assertion_scope": "production HTTP authority PATCH /api/thoughts/thought_f5674e79ab18/working"
+          "detail": "status=200 payload={'thought': {'id': 'thought_dc227043a576', 'raw_id': 'thought_dc227043a576', 'raw_sha256': 'c3ef1083d1e712832249d018d4f85bd872a336c423f4497ae738659381bec4de', 'source': {'kind': 'typed'}, 'raw_captured_at': '2026-08-28T0",
+          "assertion_scope": "production HTTP authority PATCH /api/thoughts/thought_dc227043a576/working"
         },
         {
           "label": "stale 409 receipt stays in Door",
@@ -752,7 +752,7 @@
       ],
       "findings": [],
       "facts": {
-        "completion_ms": 38.6
+        "completion_ms": 41.0
       }
     },
     "schedule": {
@@ -854,6 +854,12 @@
           "assertion_scope": ".door-upcoming-rail calendar_event row"
         },
         {
+          "label": "calendar evidence also shows scheduled-recording rail row",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-upcoming-rail scheduled_recording row"
+        },
+        {
           "label": "fixture rail row owns location and meeting link",
           "passed": true,
           "detail": "",
@@ -862,8 +868,14 @@
         {
           "label": "Door aggregate contains actual fixture calendar source",
           "passed": true,
-          "detail": "[{'id': 'sr_f33532dc8c41', 'source': 'scheduled_recording', 'target_ref': 'scheduled_recording:sr_f33532dc8c41', 'title': 'HS144 WALK baseline recording', 'starts_at': '2026-08-28T09:00:00Z', 'ends_at': '2026-08-28T09:30:00Z', 'location': None, 'meeting_url': None, 'state': 'idle'}, {'id': 'ce_d4e0f41e9df6c76099e3786addbaa65076a044f2d0f8736dd22c5ca440019614', 'source': 'calendar_event', 'target_ref': 'calendar_event:ce_d4e0f41e9df6c76099e3786addbaa65076a044f2d0f8736dd22c5ca440019614', 'title': 'HS144 WALK calendar fixture', 'starts_at': '2026-08-28T10:08:00Z', 'ends_at': '2026-08-28T10:53:00Z', 'location': 'Walk Room 4', 'meeting_url': 'https://meet.example.test/hs144-walk', 'state': 'scheduled'}, {'id': 'sr_a1c10f638fb9', 'source': 'scheduled_recording', 'target_ref': 'scheduled_recording:sr_a1c10f638fb9', 'title': 'HS144 WALK in-world recording', 'starts_at': '2027-08-28T02:38:00Z', 'ends_at': '2027-08-28T03:38:00Z', 'location': None, 'meeting_url': None, 'state': 'idle'}]",
+          "detail": "[{'id': 'sr_6af17f010926', 'source': 'scheduled_recording', 'target_ref': 'scheduled_recording:sr_6af17f010926', 'title': 'HS144 WALK baseline recording', 'starts_at': '2026-08-28T09:00:00Z', 'ends_at': '2026-08-28T09:30:00Z', 'location': None, 'meeting_url': None, 'state': 'idle'}, {'id': 'ce_0db481b40356a673ac8bc6c09bacbd1e8dc3f5a31e07d3f0535476a25942d9b3', 'source': 'calendar_event', 'target_ref': 'calendar_event:ce_0db481b40356a673ac8bc6c09bacbd1e8dc3f5a31e07d3f0535476a25942d9b3', 'title': 'HS144 WALK calendar fixture', 'starts_at': '2026-08-28T10:18:00Z', 'ends_at': '2026-08-28T11:03:00Z', 'location': 'Walk Room 4', 'meeting_url': 'https://meet.example.test/hs144-walk', 'state': 'scheduled'}, {'id': 'sr_e7a62d76c35a', 'source': 'scheduled_recording', 'target_ref': 'scheduled_recording:sr_e7a62d76c35a', 'title': 'HS144 WALK in-world recording', 'starts_at': '2027-08-28T02:48:00Z', 'ends_at': '2027-08-28T03:48:00Z', 'location': None, 'meeting_url': None, 'state': 'idle'}]",
           "assertion_scope": "GET /api/door upcoming"
+        },
+        {
+          "label": "calendar evidence capture has no Settings window",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh Door capture document"
         },
         {
           "label": "calendar fixture rail: no page errors",
@@ -922,7 +934,7 @@
       ],
       "findings": [],
       "facts": {
-        "ics_fixture": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs144-door-walk-m25l6yg9/fixtures/hs144-door-calendar.ics"
+        "ics_fixture": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs144-door-walk-xc_ok8rd/fixtures/hs144-door-calendar.ics"
       }
     },
     "click-depth": {
@@ -1608,7 +1620,7 @@
         {
           "label": "Door rail \u2192 Schedule recording",
           "selector": ".door-upcoming-rail button[name=\"Schedule recording\"]",
-          "at_monotonic": 1038374.202868
+          "at_monotonic": 1038979.756037
         }
       ],
       "final_evidence_selector": "#schedule\\:__create__",
@@ -1662,7 +1674,7 @@
     },
     {
       "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-06-shots/door-calendar-rail-1440.png",
-      "claim": "Settings-fed ICS fixture visible in Door rail"
+      "claim": "fresh Door rail with ICS EVENT and scheduled-recording rows"
     },
     {
       "path": "pm/roadmap/holdspeak/phase-144-the-dashboard-door/assets/story-06-shots/settings-calendar-egress-1440.png",
@@ -1692,9 +1704,9 @@
   "findings": [],
   "cleanup": [
     "closed Playwright browser",
-    "stopped hub pid=65478 exit=0",
-    "deleted ICS fixture tree: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs144-door-walk-m25l6yg9/fixtures",
-    "deleted walk HOME/XDG/TMP tree: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs144-door-walk-m25l6yg9"
+    "stopped hub pid=73237 exit=0",
+    "deleted ICS fixture tree: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs144-door-walk-xc_ok8rd/fixtures",
+    "deleted walk HOME/XDG/TMP tree: /var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs144-door-walk-xc_ok8rd"
   ],
   "cleanup_ok": true,
   "paths": {

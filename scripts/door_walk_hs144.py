@@ -756,18 +756,31 @@ def leg_calendar(reporter: Reporter, browser: Any, hub: Hub, out: Path, fixture_
         refreshed = hub.refresh_calendar()
         reporter.check("real CalendarIngestConductor refresh succeeds", refreshed.returncode == 0 and '"calendar_refresh": true' in refreshed.stdout,
                        f"exit={refreshed.returncode} stdout={refreshed.stdout.strip()} stderr={refreshed.stderr.strip()}", scope="isolated child CalendarIngestConductor.refresh()")
-        page.reload(wait_until="load")
-        door = normal_door(page)
-        rail = door.locator(".door-upcoming-rail")
-        title = f"{FIXTURE_PREFIX} calendar fixture"
-        calendar_row = rail.locator('[data-upcoming-source="calendar_event"]', has_text=title)
-        reporter.check("fixture event is source-labelled inside Door rail", calendar_row.count() == 1 and calendar_row.get_by_text("EVENT", exact=True).is_visible(), scope=".door-upcoming-rail calendar_event row")
-        reporter.check("fixture rail row owns location and meeting link", calendar_row.get_by_text("Walk Room 4", exact=True).is_visible() and calendar_row.get_by_role("link", name="Meeting link", exact=True).is_visible(), scope="calendar_event row in .door-upcoming-rail")
-        door_api = page_api(page, "GET", "/api/door")
-        reporter.check("Door aggregate contains actual fixture calendar source", any(item.get("source") == "calendar_event" and item.get("title") == title for item in door_api.get("upcoming", [])),
-                       repr(door_api.get("upcoming")), scope="GET /api/door upcoming")
-        capture(reporter, page, out, "door-calendar-rail-1440.png", "Settings-fed ICS fixture visible in Door rail")
-        assert_clean(reporter, page, errors, "calendar fixture rail")
+        # Settings is a retained in-world window.  Do not photograph through
+        # it: a fresh Door document is the only honest frame for the rail claim
+        # and forces a real aggregate revalidation after the conductor refresh.
+        rail_context, rail_page, rail_errors = browser_context(browser, 1440, 900)
+        try:
+            go(rail_page, hub)
+            door = normal_door(rail_page)
+            rail = door.locator(".door-upcoming-rail")
+            title = f"{FIXTURE_PREFIX} calendar fixture"
+            calendar_row = rail.locator('[data-upcoming-source="calendar_event"]', has_text=title)
+            scheduled_row = rail.locator(
+                '[data-upcoming-source="scheduled_recording"]',
+                has_text=f"{FIXTURE_PREFIX} baseline recording",
+            )
+            reporter.check("fixture event is source-labelled inside Door rail", calendar_row.count() == 1 and calendar_row.get_by_text("EVENT", exact=True).is_visible(), scope=".door-upcoming-rail calendar_event row")
+            reporter.check("calendar evidence also shows scheduled-recording rail row", scheduled_row.count() == 1 and scheduled_row.get_by_text("SCHEDULED RECORDING", exact=True).is_visible(), scope=".door-upcoming-rail scheduled_recording row")
+            reporter.check("fixture rail row owns location and meeting link", calendar_row.get_by_text("Walk Room 4", exact=True).is_visible() and calendar_row.get_by_role("link", name="Meeting link", exact=True).is_visible(), scope="calendar_event row in .door-upcoming-rail")
+            door_api = page_api(rail_page, "GET", "/api/door")
+            reporter.check("Door aggregate contains actual fixture calendar source", any(item.get("source") == "calendar_event" and item.get("title") == title for item in door_api.get("upcoming", [])),
+                           repr(door_api.get("upcoming")), scope="GET /api/door upcoming")
+            reporter.check("calendar evidence capture has no Settings window", rail_page.locator("#surface-settings").count() == 0, scope="fresh Door capture document")
+            capture(reporter, rail_page, out, "door-calendar-rail-1440.png", "fresh Door rail with ICS EVENT and scheduled-recording rows")
+            assert_clean(reporter, rail_page, rail_errors, "calendar fixture rail")
+        finally:
+            rail_context.close()
     finally:
         context.close()
 
