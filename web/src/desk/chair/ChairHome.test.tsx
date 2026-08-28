@@ -145,15 +145,13 @@ describe("Chair/Floor toggle state", () => {
 describe("ChairHome lane registry composition", () => {
   beforeEach(resetChairState);
 
-  it("renders registered lanes from the registry (HS-135-08 follow-through present)", () => {
+  it("renders the Door registry slot and leaves activeWork empty", () => {
     render(<ChairHome />);
-    // The Chair renders; the follow-through lane slot exists (HS-135-08
-    // registered it). The 300ms all-blank fallback does NOT fire because
-    // hasAnyLane is true.
     expect(screen.getByTestId("chair")).toBeInTheDocument();
     expect(screen.getByTestId("chair-lanes")).toBeInTheDocument();
-    // The follow-through lane slot is rendered.
-    const laneEl = screen.getByTestId("chair-lanes").querySelector('[data-lane="follow-through"]');
-    expect(laneEl).toBeTruthy();
+    expect(screen.getByTestId("chair-lanes").querySelector('[data-lane="door"]')).toBeTruthy();
+    expect(screen.getByTestId("chair-lanes").querySelector('[data-lane="brief"]')).toBeNull();
+    expect(screen.getByTestId("chair-lanes").querySelector('[data-lane="follow-through"]')).toBeNull();
+    expect(screen.getByTestId("chair-active-work")).toBeEmptyDOMElement();
   });
 });

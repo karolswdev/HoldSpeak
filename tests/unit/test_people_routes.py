@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 import holdspeak.db as db_module
+from holdspeak.mcp.families import people as people_family
 from holdspeak.db.core import Database, reset_database
 from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
 from holdspeak.principals import Principal, PrincipalKind
@@ -18,8 +19,15 @@ from holdspeak.web.context import WebContext
 from holdspeak.web.routes.people import build_people_router
 
 
-def _client(tmp_path: Path, principal: Principal) -> TestClient:
-    store = EncryptedPeopleStore(tmp_path / "people.sqlite3", MemoryKeyStore())
+def _client(
+    tmp_path: Path,
+    principal: Principal,
+    service: PeopleService | None = None,
+) -> TestClient:
+    people_service = service or PeopleService(
+        EncryptedPeopleStore(tmp_path / "people.sqlite3", MemoryKeyStore()),
+        setup_runner=lambda *, initialize, principal: initialize(),
+    )
     app = FastAPI()
 
     @app.middleware("http")
@@ -29,7 +37,7 @@ def _client(tmp_path: Path, principal: Principal) -> TestClient:
 
     app.include_router(build_people_router(WebContext(
         get_state=lambda: {},
-        people_service=PeopleService(store, setup_runner=lambda *, initialize, principal: initialize()),
+        people_service=people_service,
     )))
     return TestClient(app)
 
@@ -62,6 +70,9 @@ def test_people_routes_require_authenticated_owner(tmp_path: Path) -> None:
     response = client.get("/api/people/readiness")
     assert response.status_code == 403
     assert response.json() == {"detail": "people_owner_required"}
+    transition = client.post("/api/people/commitments/missing/transition", json={"verb": "done"})
+    assert transition.status_code == 403
+    assert transition.json() == {"detail": "people_owner_required"}
 
 
 def test_commitment_can_flow_to_workbench_output_and_satisfaction_history(
@@ -127,3 +138,52 @@ def test_commitment_can_flow_to_workbench_output_and_satisfaction_history(
     assert history["satisfied"] == 1
     assert history["with_evidence"] == 1
     reset_database()
+
+
+def test_commitment_transition_http_is_a_parity_twin_of_mcp(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The Door's browser adapter lands through the same People service call."""
+    owner = Principal(PrincipalKind.OWNER, "transition-owner")
+    store = EncryptedPeopleStore(tmp_path / "people.sqlite3", MemoryKeyStore())
+    service = PeopleService(store, setup_runner=lambda *, initialize, principal: initialize())
+    client = _client(tmp_path, owner, service)
+    assert client.post("/api/people/setup").status_code == 200
+    relationship = client.post(
+        "/api/people/relationships",
+        json={"display_name": "Transition parity"},
+    ).json()["relationship"]
+
+    shared_request = client.post(
+        f"/api/people/relationships/{relationship['id']}/requests",
+        json={"body": "Finish parity proof", "visibility": "shared_intent"},
+    ).json()["request"]
+    http_commitment = client.post(
+        f"/api/people/requests/{shared_request['id']}/accept",
+        json={},
+    ).json()["commitment"]
+    mcp_request = service.create_request(owner, relationship["id"], {
+        "body": "Finish MCP parity proof", "visibility": "shared_intent",
+    })
+    mcp_commitment = service.accept_request(owner, mcp_request["id"])
+
+    monkeypatch.setattr(people_family, "build_people_service", lambda: service)
+    monkeypatch.delenv(people_family.ACCESS_ENV, raising=False)
+    mcp_result = people_family.dispatch(
+        "people.commitment.transition",
+        {"commitment_id": mcp_commitment["id"], "verb": "done"},
+        owner,
+    )
+    http = client.post(
+        f"/api/people/commitments/{http_commitment['id']}/transition",
+        json={"verb": "done"},
+    )
+
+    assert http.status_code == 200
+    assert mcp_result == {"card_id": f"people:{mcp_commitment['id']}", "verb": "done"}
+    assert http.json() == {
+        "transition": {"card_id": f"people:{http_commitment['id']}", "verb": "done"},
+    }
+    assert service.get_commitment(owner, mcp_commitment["id"])["state"] == "done"
+    assert service.get_commitment(owner, http_commitment["id"])["state"] == "done"

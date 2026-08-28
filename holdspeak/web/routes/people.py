@@ -249,6 +249,23 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except NotFound as exc:
             raise HTTPException(status_code=404, detail="people_workbench_not_found") from exc
 
+    @router.post("/commitments/{commitment_id}/transition")
+    async def transition_commitment(
+        request: Request,
+        commitment_id: str,
+        body: dict[str, Any] = Body(default={}),
+    ) -> dict[str, Any]:
+        """Browser twin of the MCP commitment-transition application call."""
+        try:
+            result = service.transition(
+                principal(request),
+                f"people:{commitment_id}",
+                str(body.get("verb") or ""),
+            )
+            return {"transition": result}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
     @router.post("/commitments/{commitment_id}/satisfy")
     async def satisfy_commitment(
         request: Request,

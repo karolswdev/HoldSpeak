@@ -111,7 +111,7 @@ with dispositions — no counsel round was spent:
 | --- | --- | --- | --- | --- |
 | HS-144-01 | The Door read model | done | [story-01](./story-01-door-read-model.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-144-02 | Calendar ingest (ICS first) | done | [story-02](./story-02-calendar-ingest-ics.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-144-03 | The kanban on glass | backlog | [story-03](./story-03-kanban-on-glass.md) | — |
+| HS-144-03 | The kanban on glass | in-progress | [story-03](./story-03-kanban-on-glass.md) | — |
 | HS-144-04 | The upcoming rail + doorframe repairs | backlog | [story-04](./story-04-upcoming-rail-and-repairs.md) | — |
 | HS-144-05 | Docs | backlog | [story-05](./story-05-docs.md) | — |
 | HS-144-06 | The walk and the close | backlog | [story-06](./story-06-walk-and-close.md) | — |

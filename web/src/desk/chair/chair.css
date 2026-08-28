@@ -74,7 +74,7 @@
   height: var(--size-icon-lg);
 }
 
-/* ── The four lane slots. ────────────────────────────────────────── */
+/* ── The composed lane slots. ────────────────────────────────────── */
 .chair-lanes {
   display: grid;
   /* A single `1fr` track has an automatic minimum: a populated lane can
@@ -307,4 +307,125 @@
   font-size: var(--desk-surface-detail-size);
   color: var(--text-muted);
   letter-spacing: 0.04em;
+}
+
+/* ── HS-144-03 — Door board: one contained workbench rail. ───────── */
+@media (min-width: 1200px) {
+  .chair-lane[data-lane="door"] { grid-column: 1 / -1; }
+}
+.door-board-section { min-width: 0; }
+.door-board-summary {
+  min-height: 18px;
+  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+.door-board-receipt { margin: 0 var(--desk-surface-row-pad-x) var(--space-2); }
+.door-board-viewport {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable both-edges;
+  outline: none;
+}
+.door-board-viewport:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+.door-board-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(196px, 1fr));
+  min-width: 980px;
+  gap: var(--space-2);
+  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
+}
+.door-board-column {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch);
+}
+.door-board-column-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 22px;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.door-board-column-head h4 { margin: 0; font: inherit; font-weight: 600; }
+.door-board-column-head > span { font-variant-numeric: tabular-nums; }
+.door-board-cards { display: grid; align-content: start; gap: var(--space-2); }
+.door-card {
+  min-width: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  box-shadow: var(--desk-window-bevel);
+}
+.door-card-open {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 3px;
+  padding: var(--space-2);
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.door-card-open:hover { background: var(--wash-1); }
+.door-card-open:focus-visible { outline: 1px solid var(--accent); outline-offset: -2px; }
+.door-card-open strong,
+.door-card-open > span,
+.door-card-open small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.door-card-open strong { font-size: var(--desk-surface-body-size); font-weight: 600; }
+.door-card-open > span { color: var(--text-muted); font-size: var(--desk-surface-detail-size); }
+.door-card-open small { color: var(--text-muted); font-family: var(--font-mono); font-size: var(--font-size-xs); }
+.door-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 var(--space-2) var(--space-2);
+}
+.door-card-action { min-width: 0; }
+.door-card-action-seat {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--border);
+}
+.door-card-action-seat .string-gadget { min-width: 0; }
+.door-board-column-empty {
+  min-height: 64px;
+  padding: var(--space-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+}
+@media (max-width: 480px) {
+  .door-board-grid { grid-template-columns: repeat(5, minmax(224px, 1fr)); min-width: 1120px; }
+  .door-card-open strong { white-space: normal; }
 }
