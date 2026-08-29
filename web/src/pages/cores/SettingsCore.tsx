@@ -876,8 +876,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
                             "review-calendar-snapshot",
                             JSON.stringify(result),
                           );
-                        } catch {
-                          // Error surface handled by the review core
+                        } catch (error) {
+                          setRefusal(readableError(error));
                         }
                       };
                       input.click();

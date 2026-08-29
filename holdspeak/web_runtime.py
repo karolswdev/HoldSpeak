@@ -174,6 +174,7 @@ class WebRuntime(
         self.meeting_lock = threading.Lock()
         self.bookmarks: list[dict[str, object]] = []
         self.pending_title: Optional[str] = None
+        self.pending_calendar_event_id: Optional[str] = None
         self.pending_tags: Optional[list[str]] = None
         self.last_meeting_snapshot: Optional[dict[str, object]] = None
         self.pending_intent_windows: list[dict[str, object]] = []

@@ -180,6 +180,108 @@ root), and the ONE run frame/persist tail all three run endpoints call.
 Guard additions: package `__init__` files stay composition-only (≤ 90);
 concern modules stay ≤ 600; `system/settings.py` carries a named 800.
 
+## The event-linked recording pipeline
+
+A calendar event on the Upcoming rail can be armed for recording with one
+tap. The pipeline spans three modules, one invariant index, and one
+reconciliation pass. This section documents the canonical anchors.
+
+### Link columns and the L1 index
+
+`scheduled_recordings` carries three additive link columns
+(`holdspeak/db/schema.py`, declarative reconcile):
+
+| Column | Purpose |
+|---|---|
+| `calendar_event_id` (TEXT, default `''`) | The projection id (`ce_...`) at arm time; the display and join key |
+| `calendar_uid` (TEXT, default `''`) | The recovery key (a uid survives time shifts across feed refreshes) |
+| `calendar_source_id` (TEXT, default `''`) | Scopes the uid to a single source |
+
+`meetings` carries `calendar_event_id` (TEXT, nullable) for provenance.
+
+**Invariant L1 (one live arm per event):** a partial unique index on
+`calendar_event_id WHERE calendar_event_id != '' AND enabled = 1` ensures
+at most one enabled schedule per event. The service-level check in
+`ScheduledRecordingService._find_armed_for_event`
+(`holdspeak/services/scheduled_recording_service.py:313`) returns the named
+refusal `event_already_armed` before the index is tested. One-shot schedules
+disable on every terminal outcome (`_advance_after_terminal`), so the index
+naturally frees the event for a future re-arm.
+
+### The arm verb (server-computed)
+
+`ScheduledRecordingService.create_schedule`
+(`holdspeak/services/scheduled_recording_service.py:171`) accepts an
+optional `calendar_event_id`. When present, the service loads the event and
+computes everything:
+
+- **Title** = event title.
+- **Duration** = `ceil((ends_at - starts_at) / 60)`, capped at 480. For an
+  in-progress event, `ceil((ends_at - now) / 60)` (the remainder rule).
+- **next_fire_at** = `starts_at - 60s` (the 60-second lead); immediately if
+  the event has already started.
+- **Flags**: `one_shot = True`, `enabled = True`, `tz` = hub's local zone.
+- **Cron**: a dummy expression (`0 0 1 1 *`) satisfying the schema NOT NULL;
+  the conductor fires by `next_fire_at`.
+
+Named refusals (raised before creation):
+
+| Code | Condition | UI label (`DoorBoardLane.tsx:263`) |
+|---|---|---|
+| `not_found` (via `NotFound`) | Event row does not exist | EVENT NOT FOUND |
+| `event_already_ended` | `ends_at <= now` | EVENT ENDED |
+| `event_already_armed` (via `ConflictError`) | L1 check finds an enabled schedule | ALREADY ARMED |
+
+### Reconciliation (R1, R2, R3, X1)
+
+After a source's projection is replaced by a feed refresh, the ingest
+conductor (`holdspeak/calendar_ingest_conductor.py:290`,
+`_reconcile_linked_schedules`) reconciles every linked schedule for that
+source. The pass is idempotent, catches its own exceptions, and never
+propagates errors to the ingest tick (invariant D3b).
+
+**X1 (immunity):** only idle rows participate. `list_linked_for_source`
+filters by state, so a schedule that is arming or recording is never
+touched by a feed change.
+
+| Rule | Condition | Action |
+|---|---|---|
+| **R1** (refresh in place) | Projection id survives (starts_at unchanged) | Refresh duration and title if `ends_at` or `title` changed (`refresh_in_place`, line 356) |
+| **R2** (rebind) | Projection id gone, but `(source_id, uid)` has occurrences | Rebind to the nearest occurrence by `starts_at`; recompute `next_fire_at` and `duration_minutes` (`rebind_event`, line 428). If the rebind target is already armed by another schedule, degrade to R3 (the counsel-ledgered case) |
+| **R3** (cancel) | uid gone from the projection | Cancel with `event_removed` (`cancel_for_event_removed`, line 445) |
+
+### The fire seam (meeting provenance)
+
+When the conductor fires an armed schedule, the web server writes the
+schedule's `calendar_event_id` onto
+`WebRuntime.pending_calendar_event_id`
+(`holdspeak/web_server.py:988`). The meeting glue reads it at session start
+(`holdspeak/runtime/meeting_glue.py:294`) and passes it as the
+`calendar_event_id` on the meeting row. The read side
+(`MeetingService._enrich_calendar_origin`,
+`holdspeak/services/meeting_service.py:627`) looks up the event title and
+source label, producing the origin line in the Meetings surface:
+`FROM <SOURCE> · <EVENT TITLE>` (`web/src/pages/cores/history/CatalogRail.tsx:207`).
+Honest degradation: when the calendar event row is gone, the fields stay
+absent rather than raising a dangling lookup error.
+
+### Snapshot identity (deterministic UIDs)
+
+`_snapshot_uid` (`holdspeak/services/calendar_snapshot_service.py:276`)
+computes a content-deterministic UID:
+`sha256(title + "\0" + starts_at + "\0" + ends_at + "\0" + location)[:16]
++ "@holdspeak-snapshot"`. Re-importing the same week yields the same UIDs,
+so linked arms survive re-import through the reconciliation pass (the
+projection id is the same, so R1 applies rather than R3).
+
+### One-intent-one-row rail suppression
+
+The Door projection (`holdspeak/services/door_service.py:182`) suppresses a
+linked schedule's **SCHEDULED RECORDING** row while its event row is in the
+projection. The event row wears the **ARMED** chip and carries
+`armed_schedule_id`. If the event leaves the projection, the schedule row
+reappears (pending work is never hidden).
+
 ## Named watch items
 
 - `holdspeak/db/schema.py`: the canonical schema DDL (`SCHEMA_SQL`),

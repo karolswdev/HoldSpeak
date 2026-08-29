@@ -31,6 +31,9 @@ class ScheduledRecording:
     last_outcome: str
     last_receipt_id: str
     delegation_receipt_id: str
+    calendar_event_id: str
+    calendar_uid: str
+    calendar_source_id: str
 
 
 def _row_to_model(row: Any) -> ScheduledRecording:
@@ -52,6 +55,9 @@ def _row_to_model(row: Any) -> ScheduledRecording:
         last_outcome=str(row["last_outcome"] or ""),
         last_receipt_id=str(row["last_receipt_id"] or ""),
         delegation_receipt_id=str(row["delegation_receipt_id"] or ""),
+        calendar_event_id=str(row["calendar_event_id"] or ""),
+        calendar_uid=str(row["calendar_uid"] or ""),
+        calendar_source_id=str(row["calendar_source_id"] or ""),
     )
 
 
@@ -69,6 +75,9 @@ class ScheduledRecordingRepository(BaseRepository):
         enabled: bool = False,
         next_fire_at: Optional[float] = None,
         delegation_receipt_id: str = "",
+        calendar_event_id: str = "",
+        calendar_uid: str = "",
+        calendar_source_id: str = "",
     ) -> ScheduledRecording:
         rec_id = f"sr_{uuid.uuid4().hex[:12]}"
         now = time.time()
@@ -77,8 +86,9 @@ class ScheduledRecordingRepository(BaseRepository):
                 """INSERT INTO scheduled_recordings
                    (id, title, cron_expr, tz, one_shot, duration_minutes, enabled,
                     revision, created_at, next_fire_at, state,
-                    delegation_receipt_id)
-                   VALUES (?,?,?,?,?,?,?,1,?,?,'idle',?)""",
+                    delegation_receipt_id,
+                    calendar_event_id, calendar_uid, calendar_source_id)
+                   VALUES (?,?,?,?,?,?,?,1,?,?,'idle',?,?,?,?)""",
                 (
                     rec_id,
                     str(title or "").strip(),
@@ -90,6 +100,9 @@ class ScheduledRecordingRepository(BaseRepository):
                     now,
                     next_fire_at,
                     delegation_receipt_id,
+                    str(calendar_event_id or ""),
+                    str(calendar_uid or ""),
+                    str(calendar_source_id or ""),
                 ),
             )
             row = conn.execute(
@@ -220,6 +233,113 @@ class ScheduledRecordingRepository(BaseRepository):
             conn.execute(
                 f"UPDATE scheduled_recordings SET {','.join(sets)} WHERE id=?",
                 params,
+            )
+            row = conn.execute(
+                "SELECT * FROM scheduled_recordings WHERE id=?",
+                (str(rec_id),),
+            ).fetchone()
+        return _row_to_model(row) if row else None
+
+    # ── HS-147-03: narrow reconciliation helpers ────────────────────
+
+    def list_linked_for_source(self, source_id: str) -> list[ScheduledRecording]:
+        """Return enabled, idle schedules linked to a calendar source (D3a).
+
+        Only rows with state='idle' are eligible for reconciliation; arming
+        and recording rows are excluded by X1.
+        """
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT * FROM scheduled_recordings
+                   WHERE calendar_source_id = ?
+                     AND enabled = 1
+                     AND state = 'idle'
+                     AND calendar_event_id != ''""",
+                (str(source_id),),
+            ).fetchall()
+        return [_row_to_model(r) for r in rows]
+
+    def rebind_event(
+        self,
+        rec_id: str,
+        *,
+        calendar_event_id: str,
+        next_fire_at: Optional[float],
+        duration_minutes: int,
+        title: str,
+    ) -> Optional[ScheduledRecording]:
+        """Rebind a schedule to a new event occurrence (R2).
+
+        Updates the projection id, fire time, duration, and title in one
+        atomic statement.  Returns None if the row vanished between query
+        and update (conductor interleave -- harmless).
+        """
+        with self._connection() as conn:
+            conn.execute(
+                """UPDATE scheduled_recordings
+                   SET calendar_event_id = ?,
+                       next_fire_at = ?,
+                       duration_minutes = ?,
+                       title = ?
+                   WHERE id = ?""",
+                (
+                    str(calendar_event_id),
+                    next_fire_at,
+                    max(1, int(duration_minutes)),
+                    str(title or "").strip(),
+                    str(rec_id),
+                ),
+            )
+            row = conn.execute(
+                "SELECT * FROM scheduled_recordings WHERE id=?",
+                (str(rec_id),),
+            ).fetchone()
+        return _row_to_model(row) if row else None
+
+    def refresh_in_place(
+        self,
+        rec_id: str,
+        *,
+        duration_minutes: int,
+        title: str,
+    ) -> Optional[ScheduledRecording]:
+        """Refresh duration and title in place (R1).
+
+        The projection id is unchanged (starts_at did not move).
+        """
+        with self._connection() as conn:
+            conn.execute(
+                """UPDATE scheduled_recordings
+                   SET duration_minutes = ?,
+                       title = ?
+                   WHERE id = ?""",
+                (
+                    max(1, int(duration_minutes)),
+                    str(title or "").strip(),
+                    str(rec_id),
+                ),
+            )
+            row = conn.execute(
+                "SELECT * FROM scheduled_recordings WHERE id=?",
+                (str(rec_id),),
+            ).fetchone()
+        return _row_to_model(row) if row else None
+
+    def cancel_for_event_removed(self, rec_id: str) -> Optional[ScheduledRecording]:
+        """Cancel a schedule whose linked event was removed from the feed (R3).
+
+        Sets state='cancelled', last_outcome='event_removed', enabled=0,
+        next_fire_at=NULL.  Uses only existing state vocabulary.
+        """
+        with self._connection() as conn:
+            conn.execute(
+                """UPDATE scheduled_recordings
+                   SET state = 'cancelled',
+                       last_outcome = 'event_removed',
+                       enabled = 0,
+                       next_fire_at = NULL
+                   WHERE id = ?""",
+                (str(rec_id),),
             )
             row = conn.execute(
                 "SELECT * FROM scheduled_recordings WHERE id=?",

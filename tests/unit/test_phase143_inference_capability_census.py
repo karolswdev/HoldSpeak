@@ -182,7 +182,7 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     ),
     # HS-146-07: the snapshot adapter's direct-dispatch fallback (the ask
     # template) when no calendar.snapshot_extract assignment exists.
-    "holdspeak/services/calendar_snapshot_service.py:532|extract_via_router|call": ProposedRoute(
+    "holdspeak/services/calendar_snapshot_service.py:592|extract_via_router|call": ProposedRoute(
         "calendar.snapshot_extract", "services.calendar_snapshot_service", "InferenceRunner direct dispatch fallback (routed path preferred when assigned)",
     ),
 }
@@ -282,10 +282,10 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     "holdspeak/web/routes/primitives/ask.py:49|build_ask_router.api_ask|ask": ProposedRoute(
         "ask.answer", "web.routes.primitives.ask", "AskService semantic caller",
     ),
-    "holdspeak/mcp/tools.py:608|dispatch|run": ProposedRoute(
+    "holdspeak/mcp/tools.py:609|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
-    "holdspeak/mcp/tools.py:612|dispatch|chat": ProposedRoute(
+    "holdspeak/mcp/tools.py:613|dispatch|chat": ProposedRoute(
         "recipe.chat", "mcp.tools", "RecipeService semantic caller",
     ),
     "holdspeak/web/routes/primitives/recipes.py:100|build_recipes_router.api_run_recipe|run": ProposedRoute(

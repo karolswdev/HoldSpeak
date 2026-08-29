@@ -158,6 +158,65 @@ describe("Meetings calendar sources list editor", () => {
   });
 });
 
+describe("IMPORT SCREENSHOT button refusal (HS-147-05)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    apiFetch.mockResolvedValue({ settings: { ...settings, _revision: "calendar-r2" } });
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it("surfaces a 422 upload refusal in the status bar", async () => {
+    render(<SettingsCore scope="meetings" />);
+
+    // Intercept the dynamically created file input
+    let capturedInput: HTMLInputElement | null = null;
+    const originalCreate = document.createElement.bind(document);
+    vi.spyOn(document, "createElement").mockImplementation((tag: string, options?: ElementCreationOptions) => {
+      const el = originalCreate(tag, options);
+      if (tag === "input" && !capturedInput) {
+        capturedInput = el as HTMLInputElement;
+        // Prevent the real click (no file dialog in JSDOM)
+        vi.spyOn(el, "click").mockImplementation(() => {});
+      }
+      return el;
+    });
+
+    // Make the snapshot upload reject with a 422
+    const uploadError = new Error("File 1: unsupported type text/plain; use PNG, JPEG, or WebP");
+    apiFetch.mockImplementation((url: string) => {
+      if (url === "/api/calendar/snapshot") return Promise.reject(uploadError);
+      return Promise.resolve({ settings: { ...settings, _revision: "calendar-r2" } });
+    });
+
+    // Click the IMPORT SCREENSHOT button
+    const importBtn = screen.getByText("IMPORT SCREENSHOT");
+    fireEvent.click(importBtn);
+
+    expect(capturedInput).not.toBeNull();
+    expect(capturedInput!.type).toBe("file");
+
+    // Simulate file selection by calling the onchange handler
+    const mockFile = new File(["fake"], "bad.txt", { type: "text/plain" });
+    Object.defineProperty(capturedInput!, "files", {
+      value: [mockFile],
+      writable: false,
+    });
+    Object.defineProperty(capturedInput!.files!, "length", { value: 1 });
+
+    // Trigger onchange
+    await act(async () => {
+      capturedInput!.onchange?.(new Event("change"));
+      await vi.advanceTimersByTimeAsync(100);
+    });
+
+    // The refusal should appear in the status bar (role="alert")
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toContain("unsupported type");
+  });
+});
+
 describe("calendarSourceEgressChips", () => {
   it("produces one chip per enabled HTTPS source", () => {
     const chips = calendarSourceEgressChips([

@@ -6,9 +6,11 @@ wire format.
 """
 from __future__ import annotations
 
+import math
 import time
 import uuid
 from dataclasses import asdict
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from ..cron import next_cron_fire
@@ -80,6 +82,9 @@ def _schedule_dict(rec: ScheduledRecording) -> dict[str, Any]:
     # Convert all epoch-seconds float fields to ISO-8601 strings (HS-136-03).
     for key in ("created_at", "next_fire_at", "last_fired_at", "armed_at", "deadline_at"):
         d[key] = _epoch_to_iso(d.get(key))
+    # HS-147-01: link fields are always present (empty string = no link).
+    for key in ("calendar_event_id", "calendar_uid", "calendar_source_id"):
+        d.setdefault(key, "")
     return d
 
 
@@ -142,8 +147,15 @@ class ScheduledRecordingService:
     The bounded-delegation receipt is written on enable (I5).
     """
 
-    def __init__(self, db: Any) -> None:
+    def __init__(
+        self,
+        db: Any,
+        *,
+        clock: Optional[Any] = None,
+    ) -> None:
         self.db = db
+        # HS-147-01: injectable clock for deterministic arm-from-event tests.
+        self._clock = clock or (lambda: datetime.now(tz=timezone.utc))
 
     def list_schedules(self, principal: Principal) -> list[dict[str, Any]]:
         """List all scheduled recordings."""
@@ -161,26 +173,115 @@ class ScheduledRecordingService:
         principal: Principal,
         *,
         title: str = "",
-        cron_expr: str,
+        cron_expr: str = "",
         tz: str = "UTC",
         one_shot: bool = False,
         duration_minutes: int = 60,
         enabled: bool = False,
+        calendar_event_id: str = "",
     ) -> dict[str, Any]:
-        """Create a scheduled recording. Validates cron and duration."""
-        _validate_cron(cron_expr)
-        _validate_duration(duration_minutes)
+        """Create a scheduled recording.
 
-        # Compute next_fire_at if enabling
-        delegation_receipt_id = ""
-        nf: Optional[float] = None
-        if enabled:
-            nf = next_cron_fire(cron_expr)
+        When ``calendar_event_id`` is given the service computes everything
+        from the event (D2): title, one_shot, enabled, tz, duration, and
+        next_fire_at.  Named refusals: ``calendar_event_not_found``,
+        ``event_already_ended``, ``event_already_armed`` (HS-147-01).
+        """
+        calendar_uid = ""
+        calendar_source_id = ""
+
+        if calendar_event_id:
+            # ── event-linked arm path (D2) ──────────────────────────
+            event = self.db.calendar_events.get(calendar_event_id)
+            if event is None:
+                # HS-147-01: named refusal "calendar_event_not_found"
+                raise NotFound("calendar_event", calendar_event_id)
+
+            now = self._clock()
+
+            # Parse event times with fromisoformat/astimezone ONLY (ISO-offset law).
+            starts_at = datetime.fromisoformat(
+                event.starts_at.replace("Z", "+00:00")
+            ).astimezone(timezone.utc)
+            ends_at = datetime.fromisoformat(
+                event.ends_at.replace("Z", "+00:00")
+            ).astimezone(timezone.utc)
+
+            # Refusal: event already ended
+            if ends_at <= now:
+                raise ValidationError(
+                    f"Event '{event.title}' has already ended",
+                    code="event_already_ended",
+                    context={"calendar_event_id": calendar_event_id},
+                )
+
+            # Refusal: event already armed (L1 service-level check)
+            existing = self._find_armed_for_event(calendar_event_id)
+            if existing is not None:
+                raise ConflictError(
+                    f"Event is already armed by schedule '{existing.id}'",
+                    code="event_already_armed",
+                    context={
+                        "calendar_event_id": calendar_event_id,
+                        "existing_schedule_id": existing.id,
+                    },
+                )
+
+            # Compute fields from event
+            title = event.title
+            one_shot = True
+            enabled = True
+
+            # tz = hub's local zone
+            local_tz_name = datetime.now().astimezone().tzinfo
+            try:
+                tz = str(local_tz_name)
+            except Exception:
+                tz = "UTC"
+
+            # Duration: remainder rule for in-progress events; 480-min cap
+            if starts_at <= now:
+                # Event already started: record the remainder
+                remainder_seconds = (ends_at - now).total_seconds()
+                duration_minutes = min(math.ceil(remainder_seconds / 60), 480)
+            else:
+                event_seconds = (ends_at - starts_at).total_seconds()
+                duration_minutes = min(math.ceil(event_seconds / 60), 480)
+
+            duration_minutes = max(1, duration_minutes)
+
+            # next_fire_at = starts_at - 60s (the 60s lead); fire-now if already started
+            if starts_at <= now:
+                nf = now.timestamp()
+            else:
+                nf = (starts_at - timedelta(seconds=60)).timestamp()
+
+            # cron_expr: one-shot event-linked schedules use a dummy cron
+            # that satisfies the schema NOT NULL; the conductor uses next_fire_at.
+            cron_expr = "0 0 1 1 *"
+
+            calendar_uid = event.uid
+            calendar_source_id = event.source_id
+
             delegation_receipt_id = _write_receipt(
                 self.db, "pending", "succeeded", "delegation_enabled",
-                detail=f"Bounded delegation for new schedule '{title}' "
-                       f"(cron={cron_expr}, duration={duration_minutes}m)",
+                detail=f"Bounded delegation for event-linked schedule "
+                       f"'{title}' (event={calendar_event_id})",
             )
+        else:
+            # ── manual path (existing) ──────────────────────────────
+            _validate_cron(cron_expr)
+            _validate_duration(duration_minutes)
+
+            delegation_receipt_id = ""
+            nf = None  # type: Optional[float]
+            if enabled:
+                nf = next_cron_fire(cron_expr)
+                delegation_receipt_id = _write_receipt(
+                    self.db, "pending", "succeeded", "delegation_enabled",
+                    detail=f"Bounded delegation for new schedule '{title}' "
+                           f"(cron={cron_expr}, duration={duration_minutes}m)",
+                )
 
         rec = self.db.scheduled_recordings.create(
             title=title,
@@ -191,6 +292,9 @@ class ScheduledRecordingService:
             enabled=enabled,
             next_fire_at=nf,
             delegation_receipt_id=delegation_receipt_id,
+            calendar_event_id=calendar_event_id,
+            calendar_uid=calendar_uid,
+            calendar_source_id=calendar_source_id,
         )
 
         # Write create receipt
@@ -204,6 +308,22 @@ class ScheduledRecordingService:
         if delegation_receipt_id:
             result["delegation_receipt_id"] = delegation_receipt_id
         return result
+
+    def _find_armed_for_event(
+        self, calendar_event_id: str
+    ) -> Optional[ScheduledRecording]:
+        """Service-level L1 check: find an enabled schedule linked to this event."""
+        with self.db._connection() as conn:
+            row = conn.execute(
+                """SELECT * FROM scheduled_recordings
+                   WHERE calendar_event_id = ? AND enabled = 1
+                   LIMIT 1""",
+                (calendar_event_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        from ..db.scheduled_recordings import _row_to_model
+        return _row_to_model(row)
 
     def update_schedule(
         self,

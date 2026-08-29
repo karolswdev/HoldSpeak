@@ -66,14 +66,21 @@ def build_scheduled_recordings_router(ctx: WebContext) -> APIRouter:
     @router.post("")
     async def create_schedule(request: Request, body: dict = Body(default={})) -> Any:
         try:
+            kwargs: dict[str, Any] = {}
+            # HS-147-01: calendar_event_id triggers the event-linked arm path;
+            # when present, the service computes everything from the event.
+            calendar_event_id = str(body.get("calendar_event_id") or "")
+            if calendar_event_id:
+                kwargs["calendar_event_id"] = calendar_event_id
+            else:
+                kwargs["title"] = str(body.get("title") or "")
+                kwargs["cron_expr"] = str(body.get("cron_expr") or "")
+                kwargs["tz"] = str(body.get("tz") or "UTC")
+                kwargs["one_shot"] = bool(body.get("one_shot", False))
+                kwargs["duration_minutes"] = int(body.get("duration_minutes", 60))
+                kwargs["enabled"] = bool(body.get("enabled", False))
             result = _service().create_schedule(
-                _principal(request),
-                title=str(body.get("title") or ""),
-                cron_expr=str(body.get("cron_expr") or ""),
-                tz=str(body.get("tz") or "UTC"),
-                one_shot=bool(body.get("one_shot", False)),
-                duration_minutes=int(body.get("duration_minutes", 60)),
-                enabled=bool(body.get("enabled", False)),
+                _principal(request), **kwargs,
             )
             return JSONResponse({"success": True, "schedule": result}, status_code=201)
         except (ValidationError, NotFound, ConflictError) as exc:

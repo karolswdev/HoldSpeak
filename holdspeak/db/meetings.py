@@ -253,8 +253,9 @@ class MeetingRepository(BaseRepository):
                 intel_requested_at, intel_completed_at, mic_label, remote_label, web_url,
                 capture_status, capture_failure, transcription_status,
                 transcription_status_detail_json, capture_checkpoint_at,
-                capture_checkpoint_seconds, provenance, sync_modified_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                capture_checkpoint_seconds, provenance, calendar_event_id,
+                sync_modified_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 ended_at = excluded.ended_at,
                 title = excluded.title,
@@ -273,6 +274,7 @@ class MeetingRepository(BaseRepository):
                 capture_checkpoint_at = excluded.capture_checkpoint_at,
                 capture_checkpoint_seconds = excluded.capture_checkpoint_seconds,
                 provenance = excluded.provenance,
+                calendar_event_id = excluded.calendar_event_id,
                 sync_modified_at = excluded.sync_modified_at,
                 updated_at = datetime('now')
         """, (
@@ -296,6 +298,7 @@ class MeetingRepository(BaseRepository):
             state.capture_checkpoint_at.isoformat() if state.capture_checkpoint_at else None,
             state.capture_checkpoint_seconds,
             state.provenance,
+            state.calendar_event_id,
             (sync_modified_at or datetime.now()).isoformat(),
         ))
 
@@ -531,6 +534,7 @@ class MeetingRepository(BaseRepository):
             ),
             capture_checkpoint_seconds=float(row['capture_checkpoint_seconds'] or 0.0),
             provenance=row['provenance'] or "desktop",
+            calendar_event_id=row['calendar_event_id'] if row['calendar_event_id'] else None,
             sync_modified_at=(
                 datetime.fromisoformat(row['sync_modified_at'])
                 if row['sync_modified_at'] else None
@@ -663,6 +667,7 @@ class MeetingRepository(BaseRepository):
                     ),
                     capture_checkpoint_seconds=float(r["capture_checkpoint_seconds"] or 0.0),
                     provenance=r["provenance"] or "desktop",
+                    calendar_event_id=r["calendar_event_id"] if r["calendar_event_id"] else None,
                 )
                 for r in conn.execute(query, params)
             ]

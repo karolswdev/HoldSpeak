@@ -141,6 +141,15 @@ class CalendarEventRepository(BaseRepository):
             )
             return cursor.rowcount
 
+    def get(self, event_id: str) -> Optional[CalendarEvent]:
+        """Load a single calendar event by projection id (HS-147-01)."""
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM calendar_events WHERE id=?",
+                (str(event_id),),
+            ).fetchone()
+        return _row_to_model(row) if row else None
+
     def list_upcoming(self, now_iso: str) -> list[CalendarEvent]:
         """Return future projected occurrences in the Door's chronological order."""
         with self._connection() as conn:

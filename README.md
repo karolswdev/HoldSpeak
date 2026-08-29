@@ -83,8 +83,9 @@ you first: **Overdue, Now, Waiting, Unassigned,** and **Active**. The board is
 a server projection. A card action appears only when its aggregate names a
 lawful verb; using it calls that verb and shows its Receipt in flow. A move or
 completion is never a cosmetic board edit. The one **Upcoming** rail orders
-**EVENT** and **SCHEDULED RECORDING** rows by time. Meetings keeps live and
-recent meetings, Agents remains, and the compact Brief entry point opens
+**EVENT** and **SCHEDULED RECORDING** rows by time; tap **Record this** on
+any event to arm the hub for that meeting. Meetings keeps live and recent
+meetings, Agents remains, and the compact Brief entry point opens
 Intelligence. On a phone, **Go** is the compact application menu. The
 **Floor** button in the dock opens the spatial object world. A toggle in
 Settings, Sounds & Presence controls **Desk Sounds**, the six mechanical

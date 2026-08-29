@@ -361,4 +361,202 @@ describe("DoorBoardLane", () => {
     fireEvent.click(screen.getByRole("button", { name: "Connect calendar" }));
     expect(openSurfaceWindow).toHaveBeenCalledWith("configure-settings", "meetings");
   });
+
+  /* HS-147-02 — RECORD THIS / ARMED+CANCEL? on calendar event rows. */
+  describe("event arm/cancel (HS-147-02)", () => {
+    it("renders RECORD THIS button on unarmed calendar_event rows", async () => {
+      mockDoor();
+      renderLane();
+      await screen.findByText("HS-144-04 owns this");
+      const btn = screen.getByTestId("door-record-this");
+      expect(btn).toBeInTheDocument();
+      expect(btn).toHaveTextContent("Record this");
+    });
+
+    it("does not render RECORD THIS on scheduled_recording rows", async () => {
+      const withRec: DoorProjection = {
+        ...projection,
+        upcoming: [
+          {
+            id: "rec-1", source: "scheduled_recording", target_ref: "scheduled_recording:rec-1",
+            title: "A recording", starts_at: "2099-08-28T12:00:00Z", ends_at: "2099-08-28T12:30:00Z",
+            location: null, meeting_url: null, state: "idle",
+          },
+        ],
+      };
+      mockDoor(withRec);
+      renderLane();
+      await screen.findByText("A recording");
+      expect(screen.queryByTestId("door-record-this")).toBeNull();
+      expect(screen.queryByTestId("door-armed-chip")).toBeNull();
+    });
+
+    it("arms an event recording via POST with calendar_event_id on RECORD THIS click", async () => {
+      apiFetch.mockImplementation((path: string, opts?: { method?: string; json?: unknown }) => {
+        if (path === "/api/door") return Promise.resolve(projection);
+        if (path === "/api/scheduled-recordings" && opts?.method === "POST") {
+          return Promise.resolve({ success: true, schedule: { id: "sched-new" } });
+        }
+        if (path === "/api/scheduled-recordings") {
+          return Promise.resolve({ success: true, schedules: [] });
+        }
+        return Promise.resolve({});
+      });
+      renderLane();
+      await screen.findByText("HS-144-04 owns this");
+      fireEvent.click(screen.getByTestId("door-record-this"));
+      await waitFor(() => {
+        expect(apiFetch).toHaveBeenCalledWith("/api/scheduled-recordings", {
+          method: "POST",
+          json: { calendar_event_id: "calendar-1" },
+        });
+      });
+    });
+
+    it("renders ARMED chip and CANCEL? verb when armed_schedule_id is present", async () => {
+      const armed: DoorProjection = {
+        ...projection,
+        upcoming: [{
+          id: "calendar-armed", source: "calendar_event", target_ref: "calendar_event:calendar-armed",
+          title: "Armed meeting", starts_at: "2099-08-28T10:00:00Z", ends_at: "2099-08-28T10:30:00Z",
+          location: null, meeting_url: null, state: "scheduled",
+          armed_schedule_id: "sched-42",
+        }],
+      };
+      mockDoor(armed);
+      renderLane();
+      await screen.findByText("Armed meeting");
+      expect(screen.getByTestId("door-armed-chip")).toHaveTextContent("ARMED");
+      expect(screen.getByTestId("door-cancel-prompt")).toHaveTextContent("Cancel?");
+      expect(screen.queryByTestId("door-record-this")).toBeNull();
+    });
+
+    it("two-beat cancel: first tap shows confirm, second fires DELETE", async () => {
+      const armed: DoorProjection = {
+        ...projection,
+        upcoming: [{
+          id: "calendar-armed", source: "calendar_event", target_ref: "calendar_event:calendar-armed",
+          title: "Armed meeting", starts_at: "2099-08-28T10:00:00Z", ends_at: "2099-08-28T10:30:00Z",
+          location: null, meeting_url: null, state: "scheduled",
+          armed_schedule_id: "sched-42",
+        }],
+      };
+      apiFetch.mockImplementation((path: string, opts?: { method?: string }) => {
+        if (path === "/api/door") return Promise.resolve(armed);
+        if (path.startsWith("/api/scheduled-recordings/sched-42") && opts?.method === "DELETE") {
+          return Promise.resolve({ success: true });
+        }
+        if (path === "/api/scheduled-recordings") {
+          return Promise.resolve({ success: true, schedules: [] });
+        }
+        return Promise.resolve({});
+      });
+      renderLane();
+      await screen.findByText("Armed meeting");
+      // Beat 1: CANCEL? prompt
+      fireEvent.click(screen.getByTestId("door-cancel-prompt"));
+      // Beat 2: confirm Cancel button appears
+      const confirm = screen.getByTestId("door-cancel-confirm");
+      expect(confirm).toHaveTextContent("Cancel");
+      fireEvent.click(confirm);
+      await waitFor(() => {
+        expect(apiFetch).toHaveBeenCalledWith("/api/scheduled-recordings/sched-42", {
+          method: "DELETE",
+        });
+      });
+    });
+
+    it("renders in-flow refusal when arming fails with a typed code", async () => {
+      const errorPayload = { success: false, error: "Event already ended", code: "event_already_ended" };
+      apiFetch.mockImplementation((path: string, opts?: { method?: string }) => {
+        if (path === "/api/door") return Promise.resolve(projection);
+        if (path === "/api/scheduled-recordings" && opts?.method === "POST") {
+          const err = new Error("Event already ended");
+          (err as unknown as Record<string, unknown>).payload = errorPayload;
+          return Promise.reject(err);
+        }
+        return Promise.resolve({});
+      });
+      renderLane();
+      await screen.findByText("HS-144-04 owns this");
+      fireEvent.click(screen.getByTestId("door-record-this"));
+      const refusal = await screen.findByTestId("door-arm-refusal");
+      expect(refusal).toHaveTextContent("EVENT ENDED");
+    });
+
+    it("renders in-flow refusal for event_already_armed conflict", async () => {
+      const errorPayload = { success: false, error: "Already armed", code: "event_already_armed" };
+      apiFetch.mockImplementation((path: string, opts?: { method?: string }) => {
+        if (path === "/api/door") return Promise.resolve(projection);
+        if (path === "/api/scheduled-recordings" && opts?.method === "POST") {
+          const err = new Error("Already armed");
+          (err as unknown as Record<string, unknown>).payload = errorPayload;
+          return Promise.reject(err);
+        }
+        return Promise.resolve({});
+      });
+      renderLane();
+      await screen.findByText("HS-144-04 owns this");
+      fireEvent.click(screen.getByTestId("door-record-this"));
+      const refusal = await screen.findByTestId("door-arm-refusal");
+      expect(refusal).toHaveTextContent("ALREADY ARMED");
+    });
+
+    it("renders cancel refusal in-flow when DELETE fails", async () => {
+      const armed: DoorProjection = {
+        ...projection,
+        upcoming: [{
+          id: "calendar-armed", source: "calendar_event", target_ref: "calendar_event:calendar-armed",
+          title: "Armed meeting", starts_at: "2099-08-28T10:00:00Z", ends_at: "2099-08-28T10:30:00Z",
+          location: null, meeting_url: null, state: "scheduled",
+          armed_schedule_id: "sched-42",
+        }],
+      };
+      const errorPayload = { success: false, error: "Not found", code: "not_found" };
+      apiFetch.mockImplementation((path: string, opts?: { method?: string }) => {
+        if (path === "/api/door") return Promise.resolve(armed);
+        if (path.startsWith("/api/scheduled-recordings/sched-42") && opts?.method === "DELETE") {
+          const err = new Error("Not found");
+          (err as unknown as Record<string, unknown>).payload = errorPayload;
+          return Promise.reject(err);
+        }
+        return Promise.resolve({});
+      });
+      renderLane();
+      await screen.findByText("Armed meeting");
+      fireEvent.click(screen.getByTestId("door-cancel-prompt"));
+      fireEvent.click(screen.getByTestId("door-cancel-confirm"));
+      const refusal = await screen.findByTestId("door-arm-refusal");
+      expect(refusal).toHaveTextContent("EVENT NOT FOUND");
+    });
+
+    it("has stable data-testid selectors on all arm/cancel elements", async () => {
+      const armed: DoorProjection = {
+        ...projection,
+        upcoming: [
+          {
+            id: "cal-unarmed", source: "calendar_event", target_ref: "calendar_event:cal-unarmed",
+            title: "Unarmed event", starts_at: "2099-08-28T09:00:00Z", ends_at: "2099-08-28T09:30:00Z",
+            location: null, meeting_url: null, state: "scheduled",
+          },
+          {
+            id: "cal-armed", source: "calendar_event", target_ref: "calendar_event:cal-armed",
+            title: "Armed event", starts_at: "2099-08-28T10:00:00Z", ends_at: "2099-08-28T10:30:00Z",
+            location: null, meeting_url: null, state: "scheduled",
+            armed_schedule_id: "sched-99",
+          },
+        ],
+      };
+      mockDoor(armed);
+      renderLane();
+      await screen.findByText("Unarmed event");
+      // All arm actions containers
+      expect(screen.getAllByTestId("door-arm-actions")).toHaveLength(2);
+      // Unarmed row has RECORD THIS
+      expect(screen.getByTestId("door-record-this")).toBeInTheDocument();
+      // Armed row has chip + cancel prompt
+      expect(screen.getByTestId("door-armed-chip")).toBeInTheDocument();
+      expect(screen.getByTestId("door-cancel-prompt")).toBeInTheDocument();
+    });
+  });
 });

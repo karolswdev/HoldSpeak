@@ -43,7 +43,7 @@ DEFAULT_PAIRS_MD = ASSETS / "story-06-pairs.md"
 TOKEN = "hs144-06-cold-walk-token"
 FIXTURE_TEXT = "Typed first value — this remains editable and has note custody."
 FIXTURE_PREFIX = "HS144 WALK"
-ALL_LEGS = ("cold", "reveal", "completion", "schedule", "calendar", "click-depth", "doorframe")
+ALL_LEGS = ("cold", "reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe")
 
 
 class WalkAssertionError(AssertionError):
@@ -810,6 +810,161 @@ def leg_calendar(reporter: Reporter, browser: Any, hub: Hub, out: Path, fixture_
         context.close()
 
 
+def leg_one_tap(reporter: Reporter, browser: Any, hub: Hub, out: Path, fixture_dir: Path) -> None:
+    """HS-147: see the meeting on the rail, tap once, trust the arm.
+
+    The stub walk hub deliberately has no meeting runtime (no
+    ``_start_meeting`` on its callbacks), so the FIRE cannot honestly
+    produce a live meeting here; the fire → meeting → provenance chain is
+    proven by the story-01 real-conductor lifecycle test and the story-04
+    glue test. This leg proves the OWNER's journey on real glass — tap,
+    ARMED, cancel, the honest stale-row refusal — and the origin line on a
+    linked meeting delivered through the production sync authority.
+    """
+    starts_a = datetime.now(timezone.utc).replace(second=0, microsecond=0) + timedelta(hours=2)
+    starts_b = starts_a + timedelta(hours=1)
+    fixture = fixture_dir / "hs147-one-tap.ics"
+    lines: list[str] = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//HoldSpeak//HS147 Walk//EN"]
+    for uid, starts, title in (
+        ("hs147-walk-a", starts_a, f"{FIXTURE_PREFIX} one-tap standup"),
+        ("hs147-walk-b", starts_b, f"{FIXTURE_PREFIX} one-tap review"),
+    ):
+        ends = starts + timedelta(minutes=45)
+        lines += ["BEGIN:VEVENT", f"UID:{uid}", f"DTSTART:{starts.strftime('%Y%m%dT%H%M%SZ')}",
+                  f"DTEND:{ends.strftime('%Y%m%dT%H%M%SZ')}", f"SUMMARY:{title}", "END:VEVENT"]
+    lines += ["END:VCALENDAR", ""]
+    fixture.write_text("\r\n".join(lines), encoding="utf-8")
+
+    context, page, errors = browser_context(browser, 1440, 900)
+    try:
+        go(page, hub)
+        # Append beside the existing sources; later legs (click-depth) assert
+        # on the calendar leg's fixture, so this leg must never orphan it.
+        settings_payload = page_api(page, "GET", "/api/settings")
+        raw_calendar = settings_payload.get("settings", settings_payload).get("calendar", {}) or {}
+        prior_sources = [
+            {"id": s["id"], "label": s.get("label", ""), "url": s.get("url", ""), "enabled": bool(s.get("enabled"))}
+            for s in (raw_calendar.get("sources") or []) if s.get("url")
+        ]
+        _write_calendar_sources_api(page, hub, prior_sources + [
+            {"id": "walk-one-tap", "label": "Walk Tap", "url": str(fixture), "enabled": True},
+        ])
+        refreshed = hub.refresh_calendar()
+        reporter.check("one-tap fixture refresh succeeds", refreshed.returncode == 0,
+                       f"exit={refreshed.returncode}", scope="isolated child CalendarIngestConductor.refresh()")
+        door_api = page_api(page, "GET", "/api/door")
+        ids_by_title = {i["title"]: i["id"] for i in door_api.get("upcoming", []) if i.get("source") == "calendar_event"}
+        title_a = f"{FIXTURE_PREFIX} one-tap standup"
+        title_b = f"{FIXTURE_PREFIX} one-tap review"
+        reporter.check("both one-tap events reach the aggregate", title_a in ids_by_title and title_b in ids_by_title,
+                       repr(sorted(ids_by_title)), scope="GET /api/door upcoming")
+
+        tap_context, tap_page, tap_errors = browser_context(browser, 1440, 900)
+        try:
+            go(tap_page, hub)
+            door = normal_door(tap_page)
+            rail = door.locator(".door-upcoming-rail")
+            row_a = rail.locator('[data-upcoming-source="calendar_event"]', has_text=title_a)
+            row_b = rail.locator('[data-upcoming-source="calendar_event"]', has_text=title_b)
+            row_a.get_by_test_id("door-record-this").wait_for(timeout=15000)
+            reporter.check("every event row offers RECORD THIS", row_b.get_by_test_id("door-record-this").is_visible(),
+                           scope='[data-upcoming-source="calendar_event"] door-record-this')
+            capture(reporter, tap_page, out, "one-tap-unarmed-1440.png", "populated rail, RECORD THIS on every event row")
+
+            # ONE TAP.
+            row_a.get_by_test_id("door-record-this").click()
+            row_a.get_by_test_id("door-armed-chip").wait_for(timeout=15000)
+            schedules = page_api(tap_page, "GET", "/api/scheduled-recordings").get("schedules", [])
+            linked = [s for s in schedules if s.get("calendar_event_id") == ids_by_title[title_a]]
+            reporter.check("one tap arms a linked enabled one-shot",
+                           len(linked) == 1 and linked[0]["one_shot"] is True and linked[0]["enabled"] is True
+                           and linked[0]["title"] == title_a,
+                           repr(linked), scope="POST via door-record-this + GET /api/scheduled-recordings")
+            expected_fire = (starts_a - timedelta(seconds=60)).timestamp()
+            raw_fire = str(linked[0].get("next_fire_at") or "")
+            actual_fire = datetime.fromisoformat(raw_fire.replace("Z", "+00:00")).timestamp()
+            reporter.check("armed fire time carries the 60s lead", abs(actual_fire - expected_fire) < 1.0,
+                           f"next_fire_at={raw_fire} expected_epoch={expected_fire}", scope="60s-lead ruling (D4)")
+            door_after = page_api(tap_page, "GET", "/api/door")
+            reporter.check("one intent renders one row (linked schedule suppressed)",
+                           not [i for i in door_after.get("upcoming", []) if i.get("source") == "scheduled_recording" and i.get("id") == linked[0]["id"]],
+                           scope="GET /api/door upcoming suppression ruling")
+            capture(reporter, tap_page, out, "one-tap-armed-1440.png", "ARMED chip + Cancel? on the tapped row; no duplicate schedule row")
+
+            # Two-beat cancel returns the row.
+            row_a.get_by_test_id("door-cancel-prompt").click()
+            row_a.get_by_test_id("door-cancel-confirm").wait_for(timeout=15000)
+            row_a.get_by_test_id("door-cancel-confirm").click()
+            row_a.get_by_test_id("door-record-this").wait_for(timeout=15000)
+            schedules = page_api(tap_page, "GET", "/api/scheduled-recordings").get("schedules", [])
+            reporter.check("two-beat cancel disarms server-side",
+                           not [s for s in schedules if s.get("calendar_event_id") == ids_by_title[title_a]],
+                           scope="DELETE via door-cancel-confirm + GET /api/scheduled-recordings")
+
+            # The honest refusal: arm row B out-of-band, tap its stale button.
+            page_api(tap_page, "POST", "/api/scheduled-recordings", {"calendar_event_id": ids_by_title[title_b]})
+            row_b.get_by_test_id("door-record-this").click()
+            refusal = row_b.get_by_test_id("door-arm-refusal")
+            refusal.wait_for(timeout=15000)
+            reporter.check("stale tap refuses in-flow by name", refusal.inner_text() == "ALREADY ARMED",
+                           refusal.inner_text(), scope="door-arm-refusal on the stale row (live L1 guard)")
+            capture(reporter, tap_page, out, "one-tap-refusal-1440.png", "ALREADY ARMED renders in-flow on the stale row")
+            assert_clean(reporter, tap_page, tap_errors, "one-tap 1440")
+        finally:
+            tap_context.close()
+
+        # The origin line, through the production sync authority: a linked
+        # meeting arrives exactly as a peer device would deliver it.
+        now = datetime.now(timezone.utc)
+        meeting_id = "hs147-walk-linked-meeting"
+        page_api(page, "POST", "/api/sync/push", {"meetings": [{
+            "meta": {"id": meeting_id, "kind": "meeting", "last_modified": now.isoformat(), "deleted": False},
+            "value": {
+                "id": meeting_id,
+                "started_at": (now - timedelta(hours=1)).isoformat(),
+                "ended_at": (now - timedelta(minutes=15)).isoformat(),
+                "title": title_b, "tags": [], "segments": [], "bookmarks": [],
+                "capture_status": "finalized", "transcription_status": "active",
+                "provenance": "native",
+                "calendar_event_id": ids_by_title[title_b],
+            },
+        }]})
+        meetings = page_api(page, "GET", "/api/meetings").get("meetings", [])
+        linked_meeting = [m for m in meetings if m.get("id") == meeting_id]
+        reporter.check("synced linked meeting keeps calendar_event_id (round-trip law)",
+                       bool(linked_meeting) and linked_meeting[0].get("calendar_event_id") == ids_by_title[title_b],
+                       repr(linked_meeting[:1]), scope="POST /api/sync/push + GET /api/meetings")
+        origin_context, origin_page, origin_errors = browser_context(browser, 1440, 900)
+        try:
+            go(origin_page, hub)
+            normal_door(origin_page)
+            origin_page.get_by_role("button", name="Meetings", exact=True).first.click()
+            origin = origin_page.locator('[data-meeting-origin="calendar-event"]')
+            origin.first.wait_for(timeout=15000)
+            reporter.check("Meetings surface wears the origin line",
+                           title_b.upper() in origin.first.inner_text().upper() and "WALK TAP" in origin.first.inner_text().upper(),
+                           origin.first.inner_text(), scope='[data-meeting-origin="calendar-event"] on the Meetings surface')
+            capture(reporter, origin_page, out, "one-tap-origin-1440.png", "linked meeting wears FROM <SOURCE> · <EVENT>")
+            assert_clean(reporter, origin_page, origin_errors, "one-tap origin line")
+        finally:
+            origin_context.close()
+
+        # Narrow leg in a fresh context (walk law): armed state at 393.
+        narrow_context, narrow_page, narrow_errors = browser_context(browser, 393, 852)
+        try:
+            go(narrow_page, hub)
+            ndoor = normal_door(narrow_page)
+            nrail = ndoor.locator(".door-upcoming-rail")
+            nrow_b = nrail.locator('[data-upcoming-source="calendar_event"]', has_text=title_b)
+            nrow_b.get_by_test_id("door-armed-chip").wait_for(timeout=15000)
+            capture(reporter, narrow_page, out, "one-tap-armed-393.png", "ARMED chip clean at 393")
+            assert_clean(reporter, narrow_page, narrow_errors, "one-tap 393")
+        finally:
+            narrow_context.close()
+    finally:
+        context.close()
+
+
 def measured_tasks(reporter: Reporter, page: Any, ids: dict[str, str]) -> None:
     ledger = ClickLedger(reporter, "Tasks", "1", "settled populated Door after first-value handoff")
     door = normal_door(page)
@@ -1043,7 +1198,7 @@ def run_walk(args: argparse.Namespace) -> int:
             leg_cold(reporter, browser, hub, out)
 
         # Seeding never occurs until the actual first-value handoff has occurred.
-        needs_populated = any(leg in selected for leg in ("reveal", "completion", "schedule", "calendar", "click-depth", "doorframe"))
+        needs_populated = any(leg in selected for leg in ("reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe"))
         if needs_populated:
             if "cold" not in selected:
                 reporter.finding("partial walk bypassed cold first-value handoff; populated legs are diagnostic only")
@@ -1077,6 +1232,8 @@ def run_walk(args: argparse.Namespace) -> int:
             call("schedule", lambda: leg_schedule(reporter, browser, hub, out))
         if "calendar" in selected:
             call("calendar", lambda: leg_calendar(reporter, browser, hub, out, fixture_dir))
+        if "one-tap" in selected:
+            call("one-tap", lambda: leg_one_tap(reporter, browser, hub, out, fixture_dir))
         if "click-depth" in selected:
             call("click-depth", lambda: leg_click_depth(reporter, browser, hub, ids))
         if "doorframe" in selected:

@@ -147,6 +147,7 @@ class MeetingState:
     capture_checkpoint_at: Optional[datetime] = None
     capture_checkpoint_seconds: float = 0.0
     provenance: str = "desktop"
+    calendar_event_id: Optional[str] = None
     sync_modified_at: Optional[datetime] = None
     # Phase 14: registered AIPI-Lite devices contributing audio to
     # this meeting. Captured at attach time; ``DeviceDescriptor.id``
@@ -231,6 +232,7 @@ class MeetingState:
             ),
             "capture_checkpoint_seconds": self.capture_checkpoint_seconds,
             "provenance": self.provenance,
+            "calendar_event_id": self.calendar_event_id,
             "sync_modified_at": (
                 self.sync_modified_at.isoformat() if self.sync_modified_at else None
             ),

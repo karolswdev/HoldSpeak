@@ -549,11 +549,42 @@
   white-space: nowrap;
   grid-column: 2 / -1;
 }
+/* HS-147-02 — arm/cancel actions + armed chip + in-flow refusal on EVENT rows. */
+.door-upcoming-arm-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+.door-upcoming-armed-chip {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.door-upcoming-refusal {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--danger, #c53030);
+  border-radius: var(--radius-sm);
+  color: var(--danger, #c53030);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
 /* HS-145-02 — connect-calendar affordance on the empty rail. */
 .door-upcoming-empty--connect { justify-content: space-between; gap: var(--space-2); }
 @media (max-width: 640px) {
   .door-upcoming-row { grid-template-columns: 1fr auto; }
   .door-upcoming-kind { grid-column: 1 / -1; }
+  .door-upcoming-arm-actions { grid-column: 1 / -1; }
   .door-upcoming-detail,
   .door-upcoming-link { grid-column: 1 / -1; }
 }

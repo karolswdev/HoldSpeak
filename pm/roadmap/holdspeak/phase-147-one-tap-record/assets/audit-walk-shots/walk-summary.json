@@ -1,0 +1,74 @@
+{
+  "shots": [
+    {
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/hs147-audit-walk/door-populated-1440.png",
+      "surface": "Door board + rail",
+      "width": "1440",
+      "proves": "The populated Door at 1440px with calendar events and scheduled recordings"
+    },
+    {
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/hs147-audit-walk/door-event-click-1440.png",
+      "surface": "Door after event click",
+      "width": "1440",
+      "proves": "What happens when you click a rail event at 1440px"
+    },
+    {
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/hs147-audit-walk/door-populated-393.png",
+      "surface": "Door board + rail",
+      "width": "393",
+      "proves": "The populated Door at 393px with calendar events and scheduled recordings"
+    },
+    {
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/hs147-audit-walk/door-event-click-393.png",
+      "surface": "Door after event click",
+      "width": "393",
+      "proves": "What happens when you click a rail event at 393px"
+    },
+    {
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/hs147-audit-walk/schedule-create-form-1440.png",
+      "surface": "Schedule create form",
+      "width": "1440",
+      "proves": "In-world schedule creation from Door rail at 1440px"
+    },
+    {
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/hs147-audit-walk/schedule-created-1440.png",
+      "surface": "Door after schedule creation",
+      "width": "1440",
+      "proves": "New schedule appears on rail after in-world creation"
+    },
+    {
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/hs147-audit-walk/schedule-create-form-393.png",
+      "surface": "Schedule create form",
+      "width": "393",
+      "proves": "In-world schedule creation from Door rail at 393px"
+    },
+    {
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/hs147-audit-walk/meetings-surface-1440.png",
+      "surface": "Meetings",
+      "width": "1440",
+      "proves": "Where completed meetings show at 1440px"
+    },
+    {
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/hs147-audit-walk/meetings-surface-393.png",
+      "surface": "Meetings",
+      "width": "393",
+      "proves": "Where completed meetings show at 393px"
+    },
+    {
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/hs147-audit-walk/door-meeting-follow-up-1440.png",
+      "surface": "Door board with meeting follow-up",
+      "width": "1440",
+      "proves": "Where meeting-originated tasks land on the Door"
+    },
+    {
+      "path": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/hs147-audit-walk/schedule-form-no-prefill-1440.png",
+      "surface": "Schedule form (no event context)",
+      "width": "1440",
+      "proves": "The schedule form has no concept of 'from this event'"
+    }
+  ],
+  "findings": [
+    "Schedule form does NOT pre-fill title from calendar event context"
+  ],
+  "defects": []
+}

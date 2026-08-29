@@ -83,11 +83,11 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/services/model_profile_service.py:695:ref:resolve_inference_target",
     "holdspeak/services/profile_service.py:139:import:resolve_inference_target",
     "holdspeak/services/profile_service.py:140:ref:resolve_inference_target",
-    # HS-146-07: the snapshot adapter's direct-dispatch fallback follows the
-    # ask_service template (routed when assigned, resolve_placement + runner
-    # when not) — a DELIBERATELY registered adopter, not drift.
-    "holdspeak/services/calendar_snapshot_service.py:495:import:resolve_placement",
-    "holdspeak/services/calendar_snapshot_service.py:513:ref:resolve_placement",
+    # HS-147-05: the HS-146-07 snapshot resolve_placement fallback entries are
+    # RETIRED — the direct dispatch now pre-filters the profile list to
+    # vision-capable targets and refuses (no_vision_model_assigned) with zero
+    # dispatches when none qualify; resolve_placement no longer appears in
+    # calendar_snapshot_service.py. Deliberate deregistration, not drift.
     "holdspeak/services/refinement_application_service.py:63:import:resolve_placement",
     "holdspeak/services/refinement_application_service.py:64:ref:resolve_placement",
     "holdspeak/services/refinement_application_service.py:70:import:resolve_thought_placement",
@@ -115,7 +115,7 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/config/integrations.py:191:inference_target_id",
     "holdspeak/config/meeting.py:143:intel_profile_id",
     "holdspeak/config/meeting.py:144:intel_profile_id",
-    "holdspeak/db/models/__init__.py:1122:resolver_profile_id",
+    "holdspeak/db/models/__init__.py:1123:resolver_profile_id",
     "holdspeak/db/models/workbench.py:139:resolver_profile_id",
     "holdspeak/services/inference_setup_service.py:644:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:649:inference_target_id",
@@ -137,14 +137,14 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/plugins/dictation/assembly.py:321:profile_id",
         "holdspeak/services/settings_service.py:811:profile_id",
         "holdspeak/services/settings_service.py:883:profile_id",
-        "holdspeak/services/sync_service.py:682:profile_id",
-        "holdspeak/services/sync_service.py:697:profile_id",
+        "holdspeak/services/sync_service.py:687:profile_id",
+        "holdspeak/services/sync_service.py:702:profile_id",
     }},
     **{site: "display" for site in {
         "holdspeak/commands/doctor.py:488:profile_id", "holdspeak/commands/doctor.py:787:profile_id",
         "holdspeak/commands/doctor.py:795:profile_id", "holdspeak/commands/doctor.py:809:profile_id",
         "holdspeak/commands/doctor.py:934:profile_id",
-        "holdspeak/db/models/__init__.py:683:profile_id", "holdspeak/inference_targets.py:161:profile_id",
+        "holdspeak/db/models/__init__.py:684:profile_id", "holdspeak/inference_targets.py:161:profile_id",
         "holdspeak/services/ask_service.py:318:profile_id",
         "holdspeak/services/inference_setup_service.py:653:profile_id", "holdspeak/services/settings_service.py:103:profile_id",
         "holdspeak/setup_status.py:151:profile_id",
@@ -156,7 +156,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/inference_assignment_service.py:1788:profile_id",
     }},
     **{site: "migration source" for site in {
-        "holdspeak/db/models/__init__.py:1121:profile_id",
+        "holdspeak/db/models/__init__.py:1122:profile_id",
         "holdspeak/db/models/workbench.py:138:profile_id",
         "holdspeak/services/recipe_service.py:362:profile_id",
         "holdspeak/services/workbench_service.py:561:profile_id",

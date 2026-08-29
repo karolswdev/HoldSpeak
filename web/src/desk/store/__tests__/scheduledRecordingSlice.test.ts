@@ -5,6 +5,9 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { createScheduledRecordingSlice } from "../scheduledRecordingSlice";
 import type { DeskState } from "../types";
 
+const apiFetchMock = vi.hoisted(() => vi.fn());
+vi.mock("../../../lib/api", () => ({ apiFetch: apiFetchMock }));
+
 // ---------------------------------------------------------------------------
 // minimal slice harness (same pattern as the existing store tests)
 // ---------------------------------------------------------------------------
@@ -119,6 +122,43 @@ describe("scheduledRecordingSlice", () => {
       });
       expect(state.scheduledArming).not.toBeNull();
       expect(state.scheduledArming!.outcome).toBe("refused");
+    });
+  });
+
+  describe("armEventRecording (HS-147-02)", () => {
+    it("posts calendar_event_id and reloads schedules on success", async () => {
+      apiFetchMock.mockImplementation((path: string, opts?: { method?: string }) => {
+        if (path === "/api/scheduled-recordings" && opts?.method === "POST") {
+          return Promise.resolve({ success: true, schedule: { id: "sched-new" } });
+        }
+        if (path === "/api/scheduled-recordings") {
+          return Promise.resolve({ success: true, schedules: [{ id: "sched-new" }] });
+        }
+        return Promise.resolve({});
+      });
+      const { state } = makeSlice();
+
+      const result = await state.armEventRecording("event-123");
+      expect(result).toBe(true);
+      expect(apiFetchMock).toHaveBeenCalledWith("/api/scheduled-recordings", {
+        method: "POST",
+        json: { calendar_event_id: "event-123" },
+      });
+      // loadSchedules is called after arm.
+      expect(apiFetchMock).toHaveBeenCalledWith("/api/scheduled-recordings");
+    });
+
+    it("returns false on failure", async () => {
+      apiFetchMock.mockImplementation((path: string, opts?: { method?: string }) => {
+        if (path === "/api/scheduled-recordings" && opts?.method === "POST") {
+          return Promise.reject(new Error("conflict"));
+        }
+        return Promise.resolve({});
+      });
+      const { state } = makeSlice();
+
+      const result = await state.armEventRecording("event-bad");
+      expect(result).toBe(false);
     });
   });
 
