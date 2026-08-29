@@ -271,7 +271,72 @@ describe("HS-99-04: the dock chip owns a right-click menu", () => {
     fireEvent.contextMenu(screen.getByRole("button", { name: "Focus Chip menu" }));
     const menu = screen.getByRole("menu", { name: "Chip menu dock menu" });
     expect(menu).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Close" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /Close/ }));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("dock chip menu entries have VerbGlyph glyphs", () => {
+    render(
+      <>
+        <DeskWindowFrame id="dg" title="Glyph dock" open onClose={() => {}}>
+          <p>body</p>
+        </DeskWindowFrame>
+        <Dock />
+      </>,
+    );
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Focus Glyph dock" }));
+    const menu = screen.getByRole("menu", { name: "Glyph dock dock menu" });
+    // Both items must carry an SVG glyph (the lane law).
+    const items = menu.querySelectorAll("[role='menuitem']");
+    expect(items.length).toBe(2);
+    for (const item of items) {
+      expect(item.querySelector("svg")).toBeTruthy();
+    }
+  });
+
+  it("dock chip menu shows keycap wells from the registry", () => {
+    render(
+      <>
+        <DeskWindowFrame id="dk" title="Keycap dock" open onClose={() => {}}>
+          <p>body</p>
+        </DeskWindowFrame>
+        <Dock />
+      </>,
+    );
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Focus Keycap dock" }));
+    const menu = screen.getByRole("menu", { name: "Keycap dock dock menu" });
+    // At least one keycap well should be present (window.minimize has key ⌘M).
+    const wells = menu.querySelectorAll(".desk-menu-well");
+    expect(wells.length).toBeGreaterThan(0);
+  });
+});
+
+describe("HS-148-04: head menu scopes to its window, not the front", () => {
+  it("back window's head Close closes THAT window; front stays", () => {
+    const closeAlpha = vi.fn();
+    const closeBeta = vi.fn();
+    render(
+      <>
+        <DeskWindowFrame id="sc-a" title="Alpha" open onClose={closeAlpha}>
+          <p>a</p>
+        </DeskWindowFrame>
+        <DeskWindowFrame id="sc-b" title="Beta" open onClose={closeBeta}>
+          <p>b</p>
+        </DeskWindowFrame>
+      </>,
+    );
+    // Beta is the front window (rendered last). Open Alpha's head menu.
+    const alphaHead = screen
+      .getByRole("region", { name: "Alpha" })
+      .querySelector("header") as HTMLElement;
+    fireEvent.contextMenu(alphaHead);
+    const menu = screen.getByRole("menu", { name: "Alpha window menu" });
+    expect(menu).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: /Close/ }));
+    // Alpha's close was called, Beta's was not.
+    expect(closeAlpha).toHaveBeenCalledTimes(1);
+    expect(closeBeta).not.toHaveBeenCalled();
+    // Beta is still in the document.
+    expect(screen.getByRole("region", { name: "Beta" })).toBeTruthy();
   });
 });

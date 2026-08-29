@@ -18,6 +18,9 @@ export function VerbGlyph({ kind }: { kind: string }) {
     // grid, reset = the return loop.
     overview: "M3 3.5h3.2v3.2H3Z M7.8 3.5H11v3.2H7.8Z M3 8.3h3.2v3.2H3Z M7.8 8.3H11v3.2H7.8Z",
     reset: "M11 7a4 4 0 1 1-1.55-3.16 M9.2 2.2l.55 1.9-1.9.55",
+    // HS-148-04 — snap directionals for the Window bar menu:
+    "snap-left": "M3 3h4v8H3Z",
+    "snap-right": "M7 3h4v8H7Z",
     // HS-148-01 — checkable lane marks (the Amiga toggle grammar):
     // square-check for boolean toggles, circle-dot for mutual-exclude.
     check: "M3 3h8v8H3Z M5.2 7l1.6 1.6 2.4-3.2",

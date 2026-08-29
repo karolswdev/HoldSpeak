@@ -8,7 +8,8 @@ import { useDesk } from "../../store";
 import { useChairState } from "../../chairState";
 import { useShortcutSheet } from "../../chromeState";
 import { useKeymap } from "../../keymap";
-import { DeskMenuItem, DeskMenuList } from "../DeskMenu";
+import { WorkMenu } from "../DeskMenu";
+import { dockChipMenuEntries } from "../../windowMenuAdapter";
 import { useOpenWindows, chipEls } from "./windowRegistry";
 import { useLaunchers } from "./launcherRegistry";
 import { toggleExpose } from "./Expose";
@@ -270,35 +271,20 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
         </>
       ) : null}
       {chipMenu ? (
-        <DeskMenuList
+        <WorkMenu
           className="desk-dock-menu"
           label={`${chipMenu.label} dock menu`}
           anchor="above"
-          style={{
-            left: Math.min(chipMenu.x, window.innerWidth - 184),
-            top: Math.max(8, chipMenu.y - 104),
-          }}
+          x={chipMenu.x}
+          y={chipMenu.y}
+          entries={dockChipMenuEntries({
+            minimized: chipMenu.minimized,
+            restore: () => useDesk.getState().restorePanel(chipMenu.id),
+            minimize: () => useDesk.getState().minimizePanel(chipMenu.id),
+            close: chipMenu.close,
+          })}
           onClose={() => setChipMenu(null)}
-        >
-          <DeskMenuItem
-            onSelect={() => {
-              const s = useDesk.getState();
-              if (chipMenu.minimized) s.restorePanel(chipMenu.id);
-              else s.minimizePanel(chipMenu.id);
-              setChipMenu(null);
-            }}
-          >
-            {chipMenu.minimized ? "Restore" : "Minimize"}
-          </DeskMenuItem>
-          <DeskMenuItem
-            onSelect={() => {
-              chipMenu.close();
-              setChipMenu(null);
-            }}
-          >
-            Close
-          </DeskMenuItem>
-        </DeskMenuList>
+        />
       ) : null}
       {sheetOpen ? (
         <ShortcutSheet

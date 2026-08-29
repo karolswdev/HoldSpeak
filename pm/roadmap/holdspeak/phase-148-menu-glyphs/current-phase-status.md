@@ -1,6 +1,6 @@
 # Phase 148 — The Menu Grammar
 
-**Status:** in progress (1/6).
+**Status:** in progress (2/6).
 
 **Last updated:** 2026-08-29.
 
@@ -66,15 +66,21 @@ bindings this phase.
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-148-01 | The grammar core (DeskMenu + material) | done | [story-01](./story-01-grammar-core.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-148-02 | The content sweep (glyphs, groups, casing, …) | ready | [story-02](./story-02-content-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-148-02 | The content sweep (glyphs, groups, casing, …) | in-progress | [story-02](./story-02-content-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-148-03 | The mock exhibit (the owner's variant gate) | ready | [story-03](./story-03-mock-exhibit.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-148-04 | Head + dock menus on the registry (AA) | ready | [story-04](./story-04-head-dock-registry.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-148-04 | Head + dock menus on the registry (AA) | done | [story-04](./story-04-head-dock-registry.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-148-05 | The record book + the emoji guard | ready | [story-05](./story-05-record-book-guards.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-148-06 | The walk and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-**1/6.** HS-148-01 (the grammar core) is DONE in two rounds — the
+**2/6.** HS-148-04 (head + dock on the registry) is DONE — the AA
+graduation: the hardcoded window menus are dead; one adapter builds
+WorkMenuEntry rows FROM the registry (labels + keycaps — ⌘W/⌘M
+finally visible where they act), dispatched to the CLICKED window
+(two-window scoping pinned), VerbGlyph glyphs kept, snap
+directionals staged for story 02, zero hardcoded labels (grep pin).
+55 focused green orchestrator-read. Earlier — **1/6.** HS-148-01 (the grammar core) is DONE in two rounds — the
 menus have their grammar: ground-color stipple ghosting (2×2, picked
 on real glass), drawn keycap wells (visible even when ghosted),
 the checkable entry type with honest aria and conditional roles,
