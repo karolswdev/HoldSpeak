@@ -559,4 +559,46 @@ describe("DoorBoardLane", () => {
       expect(screen.getByTestId("door-cancel-prompt")).toBeInTheDocument();
     });
   });
+
+  /* HS-149-01 L2 — People store state line. */
+  describe("people store state (HS-149-01 L2)", () => {
+    it("renders a quiet named state line when people_store_state is not ready", async () => {
+      const locked: DoorProjection = { ...projection, people_store_state: "locked" };
+      mockDoor(locked);
+      renderLane();
+      await screen.findByText("Ship Door");
+      expect(screen.getByTestId("door-people-state")).toHaveTextContent("People store locked");
+    });
+
+    it("renders no state line when people_store_state is ready", async () => {
+      const ready: DoorProjection = { ...projection, people_store_state: "ready" };
+      mockDoor(ready);
+      renderLane();
+      await screen.findByText("Ship Door");
+      expect(screen.queryByTestId("door-people-state")).toBeNull();
+    });
+
+    it("renders no state line when people_store_state is absent", async () => {
+      mockDoor(projection);
+      renderLane();
+      await screen.findByText("Ship Door");
+      expect(screen.queryByTestId("door-people-state")).toBeNull();
+    });
+
+    it("renders the unconfigured label for unconfigured state", async () => {
+      const unconfigured: DoorProjection = { ...projection, people_store_state: "unconfigured" };
+      mockDoor(unconfigured);
+      renderLane();
+      await screen.findByText("Ship Door");
+      expect(screen.getByTestId("door-people-state")).toHaveTextContent("People not set up");
+    });
+
+    it("renders unavailable label for unavailable state", async () => {
+      const unavail: DoorProjection = { ...projection, people_store_state: "unavailable" };
+      mockDoor(unavail);
+      renderLane();
+      await screen.findByText("Ship Door");
+      expect(screen.getByTestId("door-people-state")).toHaveTextContent("People store unavailable");
+    });
+  });
 });

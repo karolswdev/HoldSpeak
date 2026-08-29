@@ -460,7 +460,28 @@ def _now() -> str:
 _UMASK_LOCK = threading.Lock()
 
 
+def _dev_sidecar_path(keyfile: Path) -> Path:
+    """F4: derive the dev sidecar path from the keyfile world.
+
+    The dev world uses ``<keyfile-stem>.sidecar.sqlite3`` adjacent to the
+    key file.  This is NEVER ``DEFAULT_PEOPLE_DB_PATH`` -- the dev store
+    cannot open or create the production sidecar.
+    """
+    return keyfile.parent / f"{keyfile.stem}.sidecar.sqlite3"
+
+
 def production_people_store() -> EncryptedPeopleStore:
-    """Build the sole production People authority; never substitutes a fallback."""
+    """Build the sole production People authority; never substitutes a fallback.
+
+    When ``HOLDSPEAK_PEOPLE_KEYSTORE_FILE`` is set, the store uses a
+    :class:`FileKeyStore` at that path AND an ISOLATED sidecar derived from
+    the key file (F4, HS-149-01).  Unset means byte-identical production
+    behaviour through :class:`NativeKeyStore`.
+    """
+    env = os.environ.get("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", "").strip()
+    if env:
+        from .keys import FileKeyStore
+        keyfile = Path(env)
+        return EncryptedPeopleStore(_dev_sidecar_path(keyfile), FileKeyStore(keyfile))
     from .keys import NativeKeyStore
     return EncryptedPeopleStore(DEFAULT_PEOPLE_DB_PATH, NativeKeyStore())

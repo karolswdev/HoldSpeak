@@ -329,6 +329,15 @@
   letter-spacing: 0.03em;
 }
 .door-board-receipt { margin: 0 var(--desk-surface-row-pad-x) var(--space-2); }
+/* HS-149-01 L2: quiet named People-state line. */
+.door-board-people-state {
+  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
 .door-board-viewport {
   max-width: 100%;
   overflow-x: auto;

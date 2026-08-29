@@ -44,7 +44,7 @@ class DoorService:
             "active": self._active_thoughts(principal),
         }
         upcoming = self._upcoming(now_utc)
-        return {
+        result: dict[str, Any] = {
             "board": projected_board,
             "upcoming": upcoming,
             "counts": {
@@ -56,6 +56,12 @@ class DoorService:
             },
             "calendar_configured": self._calendar_configured(),
         }
+        # L2 (HS-149-01): carry the People store state so the Door never
+        # renders a broken/locked/absent sidecar as silent emptiness.
+        people_state = self._follow_through_service.people_store_state(principal)
+        if people_state is not None:
+            result["people_store_state"] = people_state
+        return result
 
     def _calendar_configured(self) -> bool:
         """HS-146-01: True iff at least one enabled source passes validation."""

@@ -64,6 +64,8 @@ export type DoorProjection = {
   };
   upcoming: DoorUpcomingItem[];
   calendar_configured: boolean;
+  /** HS-149-01 L2: the People store readiness state. Absent when no People projection is wired. */
+  people_store_state?: string;
 };
 
 type Command = { endpoint: string; body?: Record<string, unknown> };
@@ -228,6 +230,19 @@ export function computeScrollHint(
   if (atLeft) return "right";
   if (atRight) return "left";
   return "both";
+}
+
+/** HS-149-01 L2: map the People store state to PeopleCore's gate vocabulary. */
+function peopleStateLabel(state: string | undefined): string | null {
+  if (!state || state === "ready") return null;
+  switch (state) {
+    case "locked": return "People store locked";
+    case "key_unavailable": return "People key unavailable";
+    case "corrupt": return "People store unavailable";
+    case "unavailable": return "People store unavailable";
+    case "unconfigured": return "People not set up";
+    default: return "People store unavailable";
+  }
 }
 
 function headline(counts: DoorProjection["counts"]): string {
@@ -545,6 +560,10 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
       </div>
       {receipt ? <div className="door-board-receipt">{receipt}</div> : null}
       {loadError ? <SurfaceState error={loadError} onRetry={() => void reload()} /> : null}
+      {/* HS-149-01 L2: quiet named line when People store is not ready. */}
+      {peopleStateLabel(projection.people_store_state) ? (
+        <div className="door-board-people-state" data-testid="door-people-state">{peopleStateLabel(projection.people_store_state)}</div>
+      ) : null}
       {cards.length ? (
         <div className="door-board-hint-wrap">
         <div ref={viewportRef} className="door-board-viewport" tabIndex={0} aria-label="Door board, scroll horizontally for all columns">

@@ -1,6 +1,6 @@
 # Phase 149 — The 1:1 Loop
 
-**Status:** chartered (0/6).
+**Status:** in progress (1/6).
 
 **Last updated:** 2026-08-29.
 
@@ -49,7 +49,7 @@ surface; the Tuesday question IS this phase.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-149-01 | The honest keystore + sidecar truth (L3+L2) | ready | [story-01](./story-01-honest-keystore.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-149-01 | The honest keystore + sidecar truth (L3+L2) | done | [story-01](./story-01-honest-keystore.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-149-02 | The link (encrypted series link + resolution) | ready | [story-02](./story-02-the-link.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-149-03 | The gesture (picker + rail person chip) | ready | [story-03](./story-03-the-gesture.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-149-04 | The brief (Prep lens + PREP on the rail) | ready | [story-04](./story-04-the-brief.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -58,9 +58,18 @@ surface; the Tuesday question IS this phase.
 
 ## Where we are
 
-Chartered 2026-08-29 from the census + the reduced Tuesday walk;
-the design counsel ruling is the gate ahead of builders. No story
-started.
+**1/6.** HS-149-01 (the honest keystore + sidecar truth) is DONE —
+the two-dialog incident can never recur for a walk: with
+HOLDSPEAK_PEOPLE_KEYSTORE_FILE set, a FULL People lifecycle runs
+headless with a spy asserting ZERO keyring/Security calls (the
+phase's founding proof); the dev world is F4-isolated
+(keyfile-adjacent sidecar, structurally unable to touch the
+production path); doctor names the dev keystore LOUDLY and warns
+on both-worlds; and L2 is repaired — the Door carries a named
+people_store_state and renders one quiet line (locked/unavailable/
+not-set-up) instead of silent emptiness. 152+34 focused green
+orchestrator-read; custody code eyeballed line-by-line. Next: 02
+(the encrypted series link).
 
 ## Decision log
 
@@ -110,6 +119,13 @@ started.
   (folded into story 04).
 - Source re-subscription dangles links; unlink/relink is the
   honest recovery (auto-migration deliberately not built).
+- **Owner note (2026-08-29): headless-Linux custody.** The KeyStore
+  Protocol already whitelists Linux Secret Service (desktop Linux
+  works today); a HEADLESS box (.43) refuses honestly
+  (`people_key_store_not_native`). Promoting a production-sanctioned
+  file/systemd-creds keystore for headless servers is a one-class
+  future story against the same Protocol — deliberately NOT this
+  phase's dev-only seam.
 
 ## Risk register
 

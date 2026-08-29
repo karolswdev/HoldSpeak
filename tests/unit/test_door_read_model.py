@@ -339,7 +339,14 @@ def test_door_preserves_people_unavailable_no_leak_no_crash(db: Database) -> Non
 
     assert projection["board"]["now"][0]["id"] == "ordinary"
     assert all(card["source"] != "people_commitment" for lane in projection["board"].values() for card in lane)
-    assert "people" not in json.dumps(projection)
+    # L2 (HS-149-01): the people_store_state fact is deliberately carried
+    # so the Door can render a named state instead of silent emptiness.
+    # The no-leak invariant checks that no People CARDS appear, not that
+    # the readiness state name is absent.
+    all_cards = [card for lane in projection["board"].values() for card in lane]
+    assert not any("people" in json.dumps(card) for card in all_cards)
+    # The state field is present and names the unavailable sidecar.
+    assert projection.get("people_store_state") == "unavailable"
 
 
 def test_calendar_configured_false_on_empty_subscription(db: Database) -> None:
