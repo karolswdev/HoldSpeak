@@ -31,6 +31,9 @@ class ScheduledRecording:
     last_outcome: str
     last_receipt_id: str
     delegation_receipt_id: str
+    calendar_event_id: str
+    calendar_uid: str
+    calendar_source_id: str
 
 
 def _row_to_model(row: Any) -> ScheduledRecording:
@@ -52,6 +55,9 @@ def _row_to_model(row: Any) -> ScheduledRecording:
         last_outcome=str(row["last_outcome"] or ""),
         last_receipt_id=str(row["last_receipt_id"] or ""),
         delegation_receipt_id=str(row["delegation_receipt_id"] or ""),
+        calendar_event_id=str(row["calendar_event_id"] or ""),
+        calendar_uid=str(row["calendar_uid"] or ""),
+        calendar_source_id=str(row["calendar_source_id"] or ""),
     )
 
 
@@ -69,6 +75,9 @@ class ScheduledRecordingRepository(BaseRepository):
         enabled: bool = False,
         next_fire_at: Optional[float] = None,
         delegation_receipt_id: str = "",
+        calendar_event_id: str = "",
+        calendar_uid: str = "",
+        calendar_source_id: str = "",
     ) -> ScheduledRecording:
         rec_id = f"sr_{uuid.uuid4().hex[:12]}"
         now = time.time()
@@ -77,8 +86,9 @@ class ScheduledRecordingRepository(BaseRepository):
                 """INSERT INTO scheduled_recordings
                    (id, title, cron_expr, tz, one_shot, duration_minutes, enabled,
                     revision, created_at, next_fire_at, state,
-                    delegation_receipt_id)
-                   VALUES (?,?,?,?,?,?,?,1,?,?,'idle',?)""",
+                    delegation_receipt_id,
+                    calendar_event_id, calendar_uid, calendar_source_id)
+                   VALUES (?,?,?,?,?,?,?,1,?,?,'idle',?,?,?,?)""",
                 (
                     rec_id,
                     str(title or "").strip(),
@@ -90,6 +100,9 @@ class ScheduledRecordingRepository(BaseRepository):
                     now,
                     next_fire_at,
                     delegation_receipt_id,
+                    str(calendar_event_id or ""),
+                    str(calendar_uid or ""),
+                    str(calendar_source_id or ""),
                 ),
             )
             row = conn.execute(

@@ -3369,10 +3369,16 @@ CREATE TABLE IF NOT EXISTS scheduled_recordings (
         CHECK (state IN ('idle','arming','recording','stopped','cancelled','refused','missed')),
     last_outcome TEXT NOT NULL DEFAULT '',
     last_receipt_id TEXT NOT NULL DEFAULT '',
-    delegation_receipt_id TEXT NOT NULL DEFAULT ''
+    delegation_receipt_id TEXT NOT NULL DEFAULT '',
+    calendar_event_id TEXT NOT NULL DEFAULT '',
+    calendar_uid TEXT NOT NULL DEFAULT '',
+    calendar_source_id TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_scheduled_recordings_enabled
 ON scheduled_recordings(enabled, next_fire_at) WHERE enabled=1;
+-- HS-147-01: invariant L1 — one live arm per calendar event.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_scheduled_recordings_calendar_event_armed
+ON scheduled_recordings(calendar_event_id) WHERE calendar_event_id != '' AND enabled = 1;
 
 -- HS-144-02: Calendar ingest is a replace-on-success ICS projection.
 -- HS-146-01: source_id + source_label for multi-source plumbing.

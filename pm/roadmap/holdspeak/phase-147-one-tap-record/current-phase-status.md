@@ -1,6 +1,6 @@
 # Phase 147 — One-Tap Record
 
-**Status:** in progress (1/7).
+**Status:** in progress (2/7).
 
 **Last updated:** 2026-08-29.
 
@@ -69,7 +69,7 @@ meeting row with a quiet origin line (D7).
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-147-01 | The link (schema + arm verb, server side) | in-progress | [story-01](./story-01-the-link.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-147-01 | The link (schema + arm verb, server side) | done | [story-01](./story-01-the-link.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-147-02 | The tap (rail verb + armed state, web) | ready | [story-02](./story-02-the-tap.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-147-03 | The honest follow (reconciliation + snapshot identity) | ready | [story-03](./story-03-the-honest-follow.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-147-04 | Meeting provenance (the event on the record) | ready | [story-04](./story-04-meeting-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -79,7 +79,22 @@ meeting row with a quiet origin line (D7).
 
 ## Where we are
 
-**1/7.** HS-147-05 (the snapshot polish riders) is DONE first — the
+**2/7.** HS-147-01 (the link) is DONE — the keystone: three additive
+link columns + the L1 partial unique index (one live arm per event),
+the server-computed arm verb (`POST /api/scheduled-recordings
+{calendar_event_id}` computes title/one_shot/enabled/local-tz/
+duration-with-remainder-rule/60s-lead entirely server-side;
+fromisoformat/astimezone only), the three named refusals through
+route AND MCP, `armed_schedule_id` projected on door calendar items,
+and a full arm→countdown→fire→auto-stop→terminal-advance lifecycle
+proof on the REAL conductor (stub law satisfied). 24 new tests; 156
+focused green re-run by the orchestrator. The commit also healed
+branch-new census fallout from 05 (the retired resolve_placement
+entries — deliberate deregistration with attribution; the builder
+had mis-attributed it as pre-existing, caught by orchestrator
+triage). Wave 2 rides next: 02 (the tap) ∥ 03 (the honest follow) ∥
+04 (meeting provenance) in disjoint lanes. Earlier — **1/7.**
+HS-147-05 (the snapshot polish riders) was DONE first — the
 independent lane shipped while story 01 built: the IMPORT SCREENSHOT
 bare catch is dead (422 refusals surface in the PrefStatusBar via the
 same `readableError` path the drop layer uses), and the

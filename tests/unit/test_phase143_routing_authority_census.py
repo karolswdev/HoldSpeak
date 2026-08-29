@@ -83,11 +83,11 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/services/model_profile_service.py:695:ref:resolve_inference_target",
     "holdspeak/services/profile_service.py:139:import:resolve_inference_target",
     "holdspeak/services/profile_service.py:140:ref:resolve_inference_target",
-    # HS-146-07: the snapshot adapter's direct-dispatch fallback follows the
-    # ask_service template (routed when assigned, resolve_placement + runner
-    # when not) — a DELIBERATELY registered adopter, not drift.
-    "holdspeak/services/calendar_snapshot_service.py:495:import:resolve_placement",
-    "holdspeak/services/calendar_snapshot_service.py:513:ref:resolve_placement",
+    # HS-147-05: the HS-146-07 snapshot resolve_placement fallback entries are
+    # RETIRED — the direct dispatch now pre-filters the profile list to
+    # vision-capable targets and refuses (no_vision_model_assigned) with zero
+    # dispatches when none qualify; resolve_placement no longer appears in
+    # calendar_snapshot_service.py. Deliberate deregistration, not drift.
     "holdspeak/services/refinement_application_service.py:63:import:resolve_placement",
     "holdspeak/services/refinement_application_service.py:64:ref:resolve_placement",
     "holdspeak/services/refinement_application_service.py:70:import:resolve_thought_placement",

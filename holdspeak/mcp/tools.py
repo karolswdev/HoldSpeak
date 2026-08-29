@@ -378,16 +378,17 @@ TOOLS.extend([
     ),
     _mcp_tool(
         "scheduled_recording.create",
-        "Create a scheduled recording. Validates the cron expression and duration. Enabling writes a bounded-delegation receipt.",
+        "Create a scheduled recording. Pass calendar_event_id to arm a calendar event (title/times/duration computed server-side, one-shot, enabled, fires 60 s before start). Without it, pass cron_expr + fields for a manual schedule.",
         {
-            "title": {"type": "string", "description": "Human-readable schedule name."},
-            "cron_expr": {"type": "string", "description": "5-field cron expression (minute hour dom month dow)."},
-            "tz": {"type": "string", "description": "IANA timezone name (default UTC)."},
-            "one_shot": {"type": "boolean", "description": "Disable after first fire (default false)."},
-            "duration_minutes": {"type": "integer", "minimum": 1, "description": "Auto-stop after this many minutes (default 60)."},
-            "enabled": {"type": "boolean", "description": "Start scheduling immediately (default false)."},
+            "title": {"type": "string", "description": "Human-readable schedule name (ignored when calendar_event_id is set)."},
+            "cron_expr": {"type": "string", "description": "5-field cron expression (required without calendar_event_id)."},
+            "tz": {"type": "string", "description": "IANA timezone name (default UTC; auto-detected for event-linked)."},
+            "one_shot": {"type": "boolean", "description": "Disable after first fire (default false; always true for event-linked)."},
+            "duration_minutes": {"type": "integer", "minimum": 1, "description": "Auto-stop minutes (default 60; computed from event for event-linked)."},
+            "enabled": {"type": "boolean", "description": "Start scheduling immediately (default false; always true for event-linked)."},
+            "calendar_event_id": {"type": "string", "description": "Calendar event projection id (ce_...) to arm. Server computes all fields from the event."},
         },
-        ["cron_expr"],
+        [],
     ),
     _mcp_tool(
         "scheduled_recording.update",
@@ -717,7 +718,13 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         if name == "scheduled_recording.list":
             return sr_service.list_schedules(principal)
         if name == "scheduled_recording.create":
-            kwargs: dict[str, Any] = {"cron_expr": str(args.get("cron_expr") or "")}
+            kwargs: dict[str, Any] = {}
+            # HS-147-01: calendar_event_id triggers event-linked arm;
+            # service computes everything from the event.
+            if "calendar_event_id" in args:
+                kwargs["calendar_event_id"] = str(args["calendar_event_id"])
+            else:
+                kwargs["cron_expr"] = str(args.get("cron_expr") or "")
             if "title" in args:
                 kwargs["title"] = str(args["title"])
             if "tz" in args:
