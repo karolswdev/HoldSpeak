@@ -1,130 +1,186 @@
-# HANDOVER — the value era (written 2026-08-29, after Phases 147+148)
+# HANDOVER — the loop is sewn; pick the next heavy hitter (2026-08-29, night)
 
-For the next agent. Supersedes the "one tap" handover of earlier
-today (historical). Read this whole file, orient
-(`.githooks/dw context holdspeak --compact`; the README "Current
-phase" line is truth), then go get the owner's pick — they said,
-verbatim: **"If you need me, I'm here."**
-
-## 0. THE PIVOT — read this section twice
-
-The owner has re-aimed the roadmap, verbatim: *"start focusing on
-things that will add a ton of value to me, a Senior Software
-Architect, who now manages 3 people."*
-
-That sentence is the new charter question. Every phase menu from
-here leads with it, ahead of craft, ahead of debt: **does this make
-the architect-who-manages-three measurably better at their actual
-week?** The Tuesday question and the joy question still apply — but
-they now serve THIS frame.
+For the next agent. Supersedes the value-era handover of earlier
+today (its §0 pivot REMAINS LAW — read it in the git history if
+you want the origin; the operative parts are restated here). Read
+this whole file, orient (`.githooks/dw context holdspeak
+--compact`; the README "Current phase" line is truth), then put
+the menu in §3 in front of the owner. Their standing frame,
+verbatim law: value for **"a Senior Software Architect, who now
+manages 3 people"** — it leads every charter menu. Their latest
+verb: *"another heavy-hitting functional development."*
 
 ## 1. What the world looks like now
 
-- **Main `387aa560`.** Phase 147 (One-Tap Record, PR #501) and
-  Phase 148 (The Menu Grammar, PR #503) both merged 2026-08-29;
-  close counsels zero must-fix ×4 (design+close, both arcs). A
-  docs accuracy sweep (PR #502) also landed from another session.
-- **The daily flywheel is WHOLE and polished:** `/` → First
-  Sentence → the Door (five-column follow-through board + the
-  UPCOMING rail from many calendars incl. the screenshot adapter) →
-  **Record this** on any event → armed one-shot → captured meeting
-  that KNOWS its calendar event → action items back onto the Door.
-  Menus wear the Amiga grammar (C=Hybrid live; the owner's A/B/C
-  flip stands as one attribute).
-- **The People module EXISTS** — the owner asked and the answer is
-  yes: Phase 138 (The People Ledger, 8/8, merged 2026-08-18) built
-  relationships, 1:1s, agenda items, commitments with transitions,
-  notes, readiness, requests, grounding — service
-  (`holdspeak/services/people_service.py`), MCP family, and the
-  desk's "Open People" verb. Phases 125–128 built follow-through,
-  the Monday Brief, decision receipts, and Desk Intelligence.
-- **The honest gap (the value era's thesis):** the People module
-  was built BEFORE the flywheel and never woven into it. Nothing
-  connects a recurring "1:1 w/ \<name\>" calendar event to a
-  person; a recorded 1:1's commitments don't flow to that person's
-  ledger; the Door has no per-person lane for "what I'm waiting on
-  from A/B/C"; the Monday Brief doesn't brief the week's 1:1s. Two
-  eras of machinery, one seam never sewn. (Also: the Phase-138
-  owner sitting items were held and never revisited.)
+Main `155f4af2`. THREE phases shipped today alone — 147 (One-Tap
+Record, PR #501), 148 (The Menu Grammar, PR #503), 149 (The 1:1
+Loop, PR #505) — plus the value-era pivot handover (#504) and an
+external docs sweep (#502, another session; it can drift census
+pins — see §4.7). Six counsels across the day, zero must-fixes
+surviving to any close.
 
-## 2. The menu to put in front of the owner (they're HERE — ask)
+**The product's spine, end to end:** `/` → First Sentence → the
+Door (follow-through board + the many-calendar UPCOMING rail) →
+rail rows read `EVENT · 1:1 w/ Ewa · [Record this] · [PREP] ·
+[Ewa]` → Record this arms a one-shot that follows the feed
+honestly and fires a meeting that KNOWS its calendar event AND its
+person → PREP opens the read-time brief (NEXT 1:1 / YOU OWE /
+THEIR AGENDA / LAST 1:1s by reference / the honest unlinked
+count) → action items land back on the Door. Menus wear the Amiga
+grammar (C=Hybrid live; the owner's A/B/C flip stands as one
+attribute). The People module (138) is sewn into all of it via ONE
+encrypted series link, gestured explicitly per
+docs/PEOPLE_INTEGRATION.md (its first FULFILLED association is
+recorded there rule-by-rule).
 
-Lead with the pivot question. Grounded candidates, most-leveraged
-first:
+**Privacy is mechanical now:** a schema grep pin forbids
+person-referencing plaintext columns; write-count spies prove the
+brief persists nothing; `_MeetingPersonRedactor` +
+`_FollowThroughObserver` keep People projections out of the
+plaintext flight recorder; the MCP boundary is planted-secret
+proven (shared_intent-only).
 
-1. **The 1:1 Loop (the natural keystone).** Calendar event ↔ person
-   link (147's `calendar_event_id` machinery is the proven
-   pattern); Record this on a 1:1 → the meeting knows the PERSON,
-   not just the event → commitments/agenda items flow to their
-   ledger → the NEXT 1:1 opens with an auto-built brief (open
-   commitments, agenda backlog, last decisions, readiness). This
-   sews 138 into 144–147 and is the single highest-value seam for a
-   manager-of-three. Audit first: what people_* actually ships vs.
-   what the 138 record claims, and whether the held sitting items
-   bite.
-2. **The delegation lane.** The Door learns "waiting on WHOM":
-   per-person filters/chips on the follow-through columns; "what
-   did I delegate, to whom, how stale" at a glance.
-3. **The architect's decision practice.** Decision receipts (127)
-   wired to people + meetings: "what did we decide, who owns it,
-   which 1:1 do I chase it in." Possibly riding candidate W (JIRA
-   Desk Sync, plan filed) if the owner's team tracks work there —
-   ASK; W was the 147 menu's runner-up and fits the manager frame.
-4. **The Monday Brief as chief-of-staff** (126): the week's 1:1s
-   with readiness, stale delegations, decisions awaiting owners.
+**Walks are headless forever:** `HOLDSPEAK_PEOPLE_KEYSTORE_FILE`
+(story 149-01) gives an isolated dev world (keyfile-adjacent
+sidecar, doctor shouts). The macOS keychain dialog the owner saw
+twice is structurally impossible from a walk. KEYCHAIN DRILLS ARE
+RETIRED.
 
-Debt that should ride ANY next arc (small, named):
-- **The web-unit baseline blind spot** (148's discovery): three
-  inherited vitest failures (chat egress / containerQueryLaw
-  chair.css / writeReceiptGuard BriefLane, one from HS-135-07) are
-  invisible to the pytest sweep baseline — establish a web baseline
-  file or fix the three.
-- 148 counsel ledger: the rAF inner-handle cleanup; the
-  "majority"→plurality naming; unselected-radio when a real
-  mutual-exclude group ships. 147 ledger stands (recurring-arm
-  collision, snapshot uid collapse, the STARTS wrong-day label —
-  now twice-observed). The real-metal vision probe has STILL never
-  run.
+## 2. The records
 
-## 3. Standing laws (all prior eras' — the 146/147 handovers'
-lists stand — plus this pivot's)
+`phase-147-one-tap-record/`, `phase-148-menu-glyphs/`,
+`phase-149-one-on-one-loop/` — each: audits, counsel-ruled
+settled-design, evidence with orchestrator triage notes,
+final-summary, shot exhibits, and REUSABLE RIGS
+(assets/story-0N-rig.py — copy their patterns, they encode the
+laws). The cold walk `scripts/door_walk_hs144.py` has NINE legs;
+the People walk is `phase-149.../assets/story-04-rig.py`
+(graduated as that phase's walk). BACKLOG.md is the parking lot
+and menus source from it FIRST (the owner enforced this once).
 
-1. **The value frame leads every charter** (§0). BACKLOG.md is the
-   parking lot and menus source from it FIRST (the owner caught a
-   bypass once; the 147 retroactive row is the scar).
-2. Models law (opus-worker for ALL delegated work; author
-   PMO/roadmap YOURSELF); guard files are ORCHESTRATOR-owned (three
-   builder attribution misses this era); one commit lane, explicit
-   paths; counsel design-beat BEFORE build pays (four zero-must-fix
-   closes say so); shots cross-read; the walk leg BEFORE trusting
-   units.
-3. **jsdom lies about focus** — real-Chromium probes are mandatory
-   for any focus/interaction work (native post-click focus lands
-   after React's sync effect; the double-rAF pattern in
-   DeskMenu.tsx is the precedent).
-4. Detached sweeps (nohup+disown+done-file — the 10-min tool
-   timeout kills backgrounded ones); stalled-wave recovery =
-   TaskStop + SendMessage-resume (context survives); asset-clobber
-   restore after every glass run (dirs 141–148 now).
-5. Owner gates: shots before merge; merge on the word (147 had a
-   pre-given goal word; 148 did not and HELD — match the arc's
-   grant, never assume carry-over).
+## 3. THE MENU — heavy-hitting functional candidates, prepared
 
-## 4. Mechanics (current)
+Put these in front of the owner; recommendation first. Each entry
+names its seams and its first audit so the winning arc starts
+within minutes.
 
-- Cold walk: `scripts/door_walk_hs144.py`, NINE legs (menus leg
-  newest; walk sources APPEND, never replace; list-view context
-  targets OBJECT rows — zone rows don't wire it; the pair-manifest
-  FAIL in `--only` partial runs is an artifact).
-- Glass proofs: `tests/e2e/test_hs147_one_tap_glass.py`; the menu
-  exhibit rig `phase-148-menu-glyphs/assets/story-03-rig.py`
-  (variant flips via localStorage `hs:menu-glyphs` before boot).
-- Sweep recipe + isolated-HOME + baseline vocabulary: per the 146
-  handover; the inherited pytest baseline is still the 143 file
-  (72 names); flake families gained `test_single_fire_across_
-  multiple_ticks` (xdist, serial-proven).
-- Memory: `~/.claude/.../memory/` — 147/148 arc files current;
-  MEMORY.md Active list current as of this handover.
+### A. The Delegation Lane + the Chief-of-Staff Brief (RECOMMENDED — the manager suite completes)
 
-Go ask the owner which value seam to sew first. The desk is
-beautiful and the loop is whole — now make it carry their team.
+One phase, two sewn surfaces, both unblocked TODAY by 149's link:
+- **Waiting-on-WHOM**: the Door's follow-through learns people —
+  per-person chips/filters on the board (action_items already
+  carry `owner` TEXT; People commitments already project cards);
+  "what did I delegate, to whom, how stale" at a glance. Seams:
+  follow_through_service.board (the lanes), DoorBoardLane columns,
+  the owner-name ↔ relationship question (careful: owner is a free
+  string on action_items; matching to People must be another
+  EXPLICIT gesture or display-only grouping — the INTEGRATION
+  contract forbids inference; a design-beat question).
+- **Monday Brief per-person sections** (126 + 149): the week's
+  linked 1:1s with each person's brief digest, stale delegations,
+  decisions awaiting owners. Seams: monday_brief_service (the
+  collectors), the read-time-only law (the brief stays computed,
+  never persisted — 138's "Cadence overlay categorically unsafe"
+  still stands; the Monday Brief IS persisted today? AUDIT FIRST:
+  how monday_brief_get stores briefs — if persisted, the People
+  digest must be excluded or redacted, the F2 ledger item made
+  real).
+First audit: census follow_through owner-string reality + the
+Monday Brief persistence model + the 129-era brief surfaces.
+Value: the manager suite becomes whole — see, prep, record,
+chase, and start the week briefed. Heavy AND coherent.
+
+### B. JIRA Desk Sync (candidate W — the external heavy hitter)
+
+The full RFC is ALREADY FILED:
+`docs/internal/PLAN_PHASE_JIRA_DESK_SYNC.md` (a `desk_sync`
+connector kind; JQL report → Notes per issue, statusCategory
+lanes, provenance sidecar, read-only until detach; write-back
+deferred to a later actuator). Seams named in the plan
+(connector_sdk, connector_packs/jira_desk_sync.py,
+primitive_sources, settings_secrets, doctor). First audit: verify
+the plan's anchors still hold post-137/143 (the plan predates the
+One Schema and the router). ASK THE OWNER FIRST: does their team
+actually live in JIRA? The live proof needs a real instance +
+token. If yes, this is the biggest net-new capability on the
+board and it feeds candidate A later (JIRA items per person).
+
+### C. The Live Intelligence Proof (the record→intel loop on real metal)
+
+The one-tap loop has never fired against a REAL model end-to-end:
+a real 1:1 recorded on `.43` (or local), transcribed, intel
+producing action items that land on the Door and in the person's
+brief. Pairs with the never-run snapshot VISION probe (two metal
+moments, one sitting). Control-vs-treatment per the real-metal
+law. Smaller build, highest truth; possibly a rider on A rather
+than its own phase. Requires the owner's machine/mic or `.43`
+availability — coordinate with them.
+
+### D. Debt riders (attach to WHATEVER wins — do not skip again)
+
+- **The web-unit baseline** (now SIX verified-inherited names:
+  chat / containerQueryLaw / writeReceiptGuard / InlineEditor /
+  MicButton / workbenchAutomations). Two arcs have carried this.
+  Either a `web-inherited-baseline.txt` + a sweep-side check, or
+  six fixes. Budget: one story.
+- Headless-Linux production keystore (one class against the
+  KeyStore Protocol) — only if the owner wants People on `.43`.
+- The STARTS wrong-day label (twice-observed, pre-148).
+
+## 4. The standing laws (the era's full scar list — READ ALL)
+
+1. The value frame (§0 above) leads every menu; BACKLOG.md first;
+   the Tuesday + joy questions close every UI story.
+2. Models law: opus-worker for ALL delegated work; author
+   PMO/roadmap YOURSELF; counsel design-beat BEFORE build (six
+   ratifications today say it pays); one commit lane, explicit
+   paths; the owner sees shots before merge; merge ONLY on the
+   owner's word for that arc (147 had a pre-given goal; 148/149
+   held — match the grant, never assume carry-over).
+3. **Guard files and failure ATTRIBUTION are ORCHESTRATOR-ONLY.**
+   FIVE builder attribution misses this era ("pre-existing" that
+   wasn't, twice by arithmetic). Interrogate every such claim:
+   stash-compare lists, diff to main, count what your own arc
+   added. Remap only verified 1:1 drift, with attribution.
+4. **Rig laws** (each has a scar): REBUILD THE BUNDLE before any
+   shot rig (bit its own author); fresh-context shots with an
+   OCCLUSION TELL (the persisted-window trap has fired three
+   times); wait for the assertion TARGET, never the container
+   (the SUGGESTED race); `--out` inside the repo; sources APPEND
+   never replace; `git checkout --` phase asset dirs (141–149 now)
+   after every glass run.
+5. **jsdom lies about focus/timing** — real-Chromium probes for
+   any interaction work (the double-rAF precedent in DeskMenu).
+6. **Sweeps run DETACHED** (nohup+disown+done-file; the 10-min
+   tool timeout kills both sweeps AND their watchers — re-arm
+   watchers when they die early). Quiet-tree only; readable log +
+   dw capture are a PAIR; verdict vocabulary "baseline-subset/
+   exact, zero unresolved branch-new"; flake families gained
+   test_single_fire_across_multiple_ticks and
+   test_device_recording_tick (xdist timing; serial ×2 protocol,
+   recurrence = DIAGNOSE).
+7. **External merges drift pins**: another session's PR (#502)
+   moved a census line; the first sweep to include it surfaces the
+   red. Attribution class: "already-on-main", remap with the PR
+   named.
+8. **Stalled subagent waves**: TaskStop + SendMessage-resume keeps
+   context; arm a transcript-growth watchdog; a whole wave can
+   wedge on one API hiccup ~1 min in.
+9. Walk briefs CARRY the touched module's phase-memory gotchas
+   verbatim (the keychain lesson) — though for People
+   specifically, the seam has retired the drill.
+10. The privacy laws are mechanical — keep them so: any new
+    People-adjacent read path gets a redactor check
+    (_MeetingPersonRedactor / _FollowThroughObserver precedents),
+    a planted-secret test if it faces MCP, and the schema grep pin
+    stays green.
+
+## 5. Memory
+
+`~/.claude/.../memory/` — project_phase147/148/149 files carry the
+arc details + gotchas; MEMORY.md Active list is current; the
+value-era pivot is a standing-directions entry. The owner said "If
+you need me, I'm here" — they mean it; menus and genuine gates only.
+
+Go get the pick. The desk finally works for its owner; the next
+arc should make it indispensable.
