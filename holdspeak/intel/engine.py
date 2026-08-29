@@ -421,6 +421,170 @@ class MeetingIntel:
             if piece:
                 yield str(piece)
 
+    def _chat_completion_deltas(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        temperature: float,
+        max_tokens: int,
+    ) -> "Iterator[Delta]":
+        """Yield typed ``Delta`` objects from the active provider.
+
+        The typed twin of ``_chat_completion_stream``: ``delta.content`` maps
+        to ``text``, ``delta.reasoning_content`` (when present) maps to
+        ``reasoning``, the final ``usage`` chunk maps to ``usage``, then
+        ``done``.  Errors become ``error`` deltas.
+
+        OpenAI SDK shape: ``stream_options={"include_usage": True}`` requests
+        a final chunk whose ``usage`` field carries the token counts (not all
+        endpoints support it -- tolerate absence).
+
+        llama.cpp shape: the last chunk carries ``timings`` (and sometimes
+        ``usage``) in the root object -- both are read and merged.
+        """
+        from ..kernel.inference_stream import Delta
+
+        self._ensure_model_loaded()
+
+        if self._active_provider == "local":
+            assert self._llm is not None
+            stream_iter = self._llm.create_chat_completion(
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=True,
+            )
+            usage_seen = False
+            for chunk in stream_iter:
+                try:
+                    choice0 = (chunk.get("choices") or [{}])[0]
+                    delta_obj = choice0.get("delta") or {}
+                    # Text content.
+                    piece = delta_obj.get("content")
+                    if piece is None:
+                        piece = choice0.get("text")
+                    if piece:
+                        yield Delta(kind="text", text=str(piece))
+                    # Reasoning content (llama.cpp may not emit this).
+                    reasoning = delta_obj.get("reasoning_content")
+                    if reasoning:
+                        yield Delta(kind="reasoning", text=str(reasoning))
+                    # llama.cpp: usage/timings on the last chunk.
+                    usage_data = chunk.get("usage")
+                    timings = chunk.get("timings")
+                    if usage_data or timings:
+                        meta: dict[str, Any] = {}
+                        if usage_data and isinstance(usage_data, dict):
+                            meta.update(usage_data)
+                        if timings and isinstance(timings, dict):
+                            meta.setdefault("timings", timings)
+                        if meta:
+                            usage_seen = True
+                            yield Delta(kind="usage", meta=meta)
+                except Exception:
+                    continue
+            yield Delta(kind="done")
+            return
+
+        assert self._openai_client is not None
+        endpoint_key = self._cloud_endpoint_key()
+        base_kwargs: dict[str, object] = {
+            "model": self.cloud_model,
+            "messages": messages,
+            "temperature": temperature,
+            "extra_body": {"thinking": False},
+            "stream": True,
+            "stream_options": {"include_usage": True},
+            **_token_budget_kwargs(endpoint_key, max_tokens),
+        }
+        if self.cloud_reasoning_effort:
+            base_kwargs["reasoning_effort"] = self.cloud_reasoning_effort
+        if self.cloud_store:
+            base_kwargs["store"] = True
+
+        try:
+            stream_iter = self._remote_completion(
+                self._openai_client.chat.completions.create, base_kwargs,
+            )
+        except Exception as exc:
+            if _compatibility_retry(endpoint_key, exc):
+                raise _compat_signal(exc) from exc
+            if _extract_status_code(exc) == 429:
+                raise ProviderKnownNoGenerationTransient() from exc
+            if _extract_status_code(exc) in {401, 403}:
+                raise ProviderPermissionDenied() from exc
+            if _extract_status_code(exc) == 404:
+                raise ProviderPermanentNoGeneration() from exc
+            yield Delta(kind="error", text=str(
+                _describe_cloud_exception(
+                    exc, model=self.cloud_model,
+                    base_url=self.cloud_base_url,
+                )
+            ))
+            return
+
+        for chunk in stream_iter:
+            try:
+                # OpenAI SDK: the final chunk with stream_options has
+                # choices=[] and usage set.
+                usage_obj = getattr(chunk, "usage", None)
+                if usage_obj is not None:
+                    meta = {}
+                    for field in ("prompt_tokens", "completion_tokens", "total_tokens"):
+                        val = getattr(usage_obj, field, None)
+                        if val is not None:
+                            meta[field] = val
+                    if meta:
+                        yield Delta(kind="usage", meta=meta)
+
+                choices = getattr(chunk, "choices", None) or []
+                if not choices:
+                    continue
+                delta_obj = getattr(choices[0], "delta", None)
+                if delta_obj is None:
+                    continue
+
+                # Text content.
+                piece = getattr(delta_obj, "content", None)
+                if piece:
+                    yield Delta(kind="text", text=str(piece))
+
+                # Reasoning content (OpenRouter/DeepSeek/o-series).
+                reasoning = getattr(delta_obj, "reasoning_content", None)
+                if reasoning:
+                    yield Delta(kind="reasoning", text=str(reasoning))
+            except Exception:
+                continue
+
+        yield Delta(kind="done")
+
+    def run_prompt_stream(
+        self,
+        *,
+        messages: list[dict[str, Any]],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> "Iterator[Delta]":
+        """Stream typed ``Delta`` objects from a freeform prompt.
+
+        The streaming twin of ``run_prompt_messages``.  The thread service
+        adapter (HS-150-04) calls this; it does not assemble system prompts
+        itself -- the caller pre-builds the message array.
+        """
+        from ..kernel.inference_stream import Delta
+
+        try:
+            yield from self._chat_completion_deltas(
+                messages,
+                temperature=self.temperature if temperature is None else temperature,
+                max_tokens=self.max_tokens if max_tokens is None else max_tokens,
+            )
+        except (MeetingIntelError, *CONTROL_SIGNALS):
+            raise
+        except Exception as exc:
+            log.error(f"Streaming prompt failed: {exc}", exc_info=True)
+            yield Delta(kind="error", text=str(exc))
+
     def run_prompt(
         self,
         *,

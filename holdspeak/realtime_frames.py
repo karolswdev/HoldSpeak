@@ -64,6 +64,12 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "scheduled_recording.stopped",   # a scheduled capture stopped (auto-stop or manual)
     "segment",                  # one finalized transcript segment
     "stopped",                  # the meeting stopped
+    "thread_delta",             # a streaming token/reasoning delta for a thread turn
+                                # payload: {thread_id, message_id, ordinal, kind, text, seq}
+    "thread_turn_done",         # a thread turn completed (succeeded, aborted, or errored)
+                                # payload: {thread_id, message_id, receipt_id, outcome, egress, stats}
+    "thread_turn_started",      # a thread turn began streaming
+                                # payload: {thread_id, message_id, user_message_id, model_id, egress}
     "wake_armed",               # the wake word armed its capture window
     "wake_preview",             # a wake capture is held for preview
     "workbench.item_claimed",   # a run took an item
@@ -76,6 +82,18 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
 #: Frames the hub emits that no web surface listens for, WITH the reason.
 #: Every entry here is a deliberate, named exception — never a silent one.
 EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
+    "thread_delta": (
+        "HS-150-03: the streaming seam emits deltas; the web consumer "
+        "arrives in HS-150-05 (ThreadPullout)."
+    ),
+    "thread_turn_done": (
+        "HS-150-03: the streaming seam emits turn-done; the web consumer "
+        "arrives in HS-150-05 (ThreadPullout)."
+    ),
+    "thread_turn_started": (
+        "HS-150-03: the streaming seam emits turn-started; the web consumer "
+        "arrives in HS-150-05 (ThreadPullout)."
+    ),
     "wake_armed": (
         "Dormant desktop wake-word leg: arming is a host-side hotkey window "
         "with no web affordance; the web consumes only its result "

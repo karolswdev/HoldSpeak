@@ -46,6 +46,13 @@ class ClosurePersistenceError(RuntimeError): pass
 class ProviderAdapter(Protocol):
     def dispatch(self, engine: Any, payload: Any, cancellation: threading.Event) -> Any: ...
     def cancel(self) -> str: ...
+    def dispatch_stream(self, engine: Any, payload: Any, cancellation: threading.Event) -> Any:
+        """Yield :class:`Delta` objects.  Default: wrap ``dispatch`` into one text delta + done."""
+        from .inference_stream import Delta
+        result = self.dispatch(engine, payload, cancellation)
+        text = str(result.get("output", "") if isinstance(result, dict) else result)
+        yield Delta(kind="text", text=text)
+        yield Delta(kind="done")
 @dataclass(frozen=True)
 class SavedDefinition:
     ref: str; revision: str
@@ -180,6 +187,347 @@ class InferenceRunner:
             return self._attempt(follow,adapter,publish=retarget_publisher(publish,follow.invocation_id),parent_context=parent_context,planned_node=planned_node,signal=None,sequence=sequence)
         finally:
             self._sequences.close(sequence)
+    def invoke_stream(self, request, adapter, *, on_delta, publish=None, parent_context=None, planned_node: str = ""):
+        """Streaming twin of ``invoke``: same admission/plan/receipt envelope.
+
+        The adapter's ``dispatch_stream`` yields ``Delta`` objects; the runner
+        calls ``on_delta(delta)`` for each.  Disposition rules (D3):
+        - Receipt ``succeeded`` at done.
+        - Receipt ``indeterminate`` on cancel or error AFTER the first delta.
+        - Fallback (existing retry path) ONLY on error BEFORE the first delta.
+        - On cancel, ``on_delta`` stops being called within 250 ms.
+        """
+        from .inference_stream import Delta
+
+        iid = request.invocation_id or "invoke_" + uuid.uuid4().hex
+        first = request if request.invocation_id else replace(request, invocation_id=iid)
+        sequence = self._sequences.open(iid)
+        signal: list[BaseException] = []
+        try:
+            outcome = self._attempt_stream(
+                first, adapter, on_delta=on_delta, publish=publish,
+                parent_context=parent_context, planned_node=planned_node,
+                signal=signal, sequence=sequence,
+            )
+            if first.route_attempt_reservation is not None:
+                self._routed_attempt_runtime.settle(dict(first.route_attempt_reservation), outcome)
+            if not signal or outcome.outcome != "failed" or sequence.cancelled:
+                return outcome
+            if first.route_attempt_reservation is not None:
+                return outcome
+            follow = compatibility_follow_up(first, outcome.invocation_id)
+            if first.before_compatibility_retry is not None:
+                first.before_compatibility_retry(
+                    outcome.operation_id, outcome.invocation_id,
+                    follow.invocation_id, follow.attempt_ordinal, str(signal[0].mode),
+                )
+            if sequence.cancelled:
+                return self._cancelled_before_retry(outcome)
+            return self._attempt_stream(
+                follow, adapter, on_delta=on_delta,
+                publish=retarget_publisher(publish, follow.invocation_id),
+                parent_context=parent_context, planned_node=planned_node,
+                signal=None, sequence=sequence,
+            )
+        finally:
+            self._sequences.close(sequence)
+
+    def _attempt_stream(self, request, adapter, *, on_delta, publish=None, parent_context=None, planned_node: str = "", signal=None, sequence=None):
+        """Like ``_attempt`` but dispatches via ``adapter.dispatch_stream``."""
+        from .inference_stream import Delta
+
+        principal = self._principal_provider()
+        material = _canonical_payload(request.payload)
+        if isinstance(request.definition_origin, ServiceContract):
+            digest = "sha256:" + hashlib.sha256(material.encode()).hexdigest()
+            if request.definition_origin.payload_hash and request.definition_origin.payload_hash != digest:
+                raise KernelRefused("inference_payload_hash_mismatch")
+            origin = ServiceContract(request.definition_origin.contract, request.definition_origin.revision, digest)
+        else:
+            origin = request.definition_origin
+            if not self._saved_definition_live(origin):
+                raise KernelRefused("inference_saved_definition_revision_unknown")
+        iid = request.invocation_id or "invoke_" + uuid.uuid4().hex
+        if not iid.replace("_", "").isalnum():
+            raise KernelRefused("inference_invocation_id_invalid")
+        raw = {
+            "request_schema": 1, "request_id": "request_" + uuid.uuid4().hex,
+            "idempotency_key": iid,
+            "operation": {"name": "inference.invoke", "version": 1},
+            "target": {}, "parent_operation_id": request.parent_operation_id,
+            "arguments": {
+                "invocation_id": iid, "deployment_revision": request.deployment_revision,
+                "definition_origin": origin.journal_value(),
+                "deadline_at": request.deadline_at, "attempt_ordinal": request.attempt_ordinal,
+            },
+        }
+        routed = request.route_attempt_reservation
+        if routed is not None:
+            runtime = self._routed_attempt_runtime
+            if runtime is None:
+                raise KernelRefused("inference_routed_attempt_runtime_missing")
+            if (
+                str(routed.get("child_invocation_id") or "") != iid
+                or str(routed.get("deployment_revision_id") or "") != request.deployment_revision
+                or int(routed.get("physical_attempt_ordinal") or 0) != request.attempt_ordinal
+            ):
+                raise KernelRefused("inference_route_reservation_mismatch")
+            runtime.claim(dict(routed))
+        submitted = (
+            self._broker.submit_trusted_child(raw, principal, parent_context, planned_node=planned_node)
+            if parent_context is not None
+            else self._broker.submit(raw, principal)
+        )
+        if submitted["state"] == "refused":
+            return InvocationOutcome(submitted["operation_id"], iid, "refused", "", submitted["receipt"])
+        try:
+            approved = self._broker.decide(submitted["operation_id"], "approve", submitted["revision"], principal)
+        except Exception:
+            node = Principal(PrincipalKind.NODE, executor_identity(self._revision(request.deployment_revision).destination_id))
+            return self._close_pre_child_failure(
+                submitted["operation_id"], iid, routed, node,
+                expected_state="awaiting_decision", principal=principal,
+                deployment_revision_id=request.deployment_revision,
+            )
+        op = self._broker.store.operation(approved["operation_id"])
+        node = Principal(PrincipalKind.NODE, executor_identity(self._revision(request.deployment_revision).destination_id))
+        claimed = self._broker.claim(node, iid)
+        if not claimed["operations"]:
+            if claimed.get("refusal"):
+                return InvocationOutcome(
+                    op["operation_id"], iid, "refused", "", claimed["refusal"],
+                    runner_signal="kernel_refused", send_phase="pre_send",
+                )
+            return self._close_pre_child_failure(
+                op["operation_id"], iid, routed, node,
+                expected_state="awaiting_execution", principal=principal,
+                deployment_revision_id=request.deployment_revision,
+            )
+        if routed is not None:
+            runtime.bind(dict(routed), op["operation_id"])
+        active = _Active(adapter, op["operation_id"], node, principal, routed=routed is not None)
+        with self._active_lock:
+            self._active[iid] = active
+            pending = self._pending.pop(iid, None)
+            if sequence is not None:
+                pending = sequence.enter(iid) or pending
+        if pending is not None:
+            self._request_cancel(iid, pending)
+        watchdog = threading.Timer(max(0, request.deadline_at - self._clock()), lambda: self._cancel_internal(iid, principal))
+        watchdog.daemon = True
+        watchdog.start()
+        context = None
+        bound_engine = None
+        local_runtime_lease = None
+        local_lease_indeterminate = False
+        try:
+            revision = self._revision(request.deployment_revision)
+            child = claimed["operations"][0]
+            if str(child.get("operation_id") or "") != op["operation_id"]:
+                raise KernelRefused(CONTEXT_MISMATCH)
+            warrant = child["warrant"]
+            context = _issue_dispatch_context(witness=child.get("claim_witness"), revision=revision, attempt_ordinal=request.attempt_ordinal, warrant=warrant)
+            if revision.schema_version >= 2 and revision.boundary == "same_device":
+                from .local_runtime_lease import acquire_local_runtime_lease
+                local_runtime_lease = acquire_local_runtime_lease(
+                    self._database, operation_id=op["operation_id"],
+                    deployment_revision_id=revision.id, clock=self._clock,
+                )
+            engine = self._engine_factory(revision, warrant=warrant, context=context)
+            carried = dispatch_context_of(engine)
+            if carried is not None and carried is not context:
+                raise KernelRefused(CONTEXT_MISMATCH)
+            bind_dispatch_context(engine, context)
+            bound_engine = engine
+            with active.condition:
+                while active.state == "CANCELLING" or active.closing:
+                    active.condition.wait()
+                pending_principal = active.cancel_principal if active.state == "CANCEL_REQUESTED" else None
+            if pending_principal:
+                self._perform_cancel(iid, active, pending_principal)
+            with active.condition:
+                while active.state == "CANCELLING" or active.closing:
+                    active.condition.wait()
+                if active.state != "RUNNING":
+                    if active.state == "CLOSURE_FAILED":
+                        self._terminal_disposition(active)
+                    return self._finish(active, iid, "indeterminate" if active.disposition == "unknown" else "cancelled")
+                active.state = "DISPATCHING"
+                active.condition.notify_all()
+            if self._clock() >= request.deadline_at:
+                raise KernelRefused("inference_deadline_exceeded")
+            if request.before_physical_dispatch is not None:
+                request.before_physical_dispatch(op["operation_id"], iid, request.attempt_ordinal)
+
+            def mark_dispatch_intent():
+                if routed is not None:
+                    runtime.mark_dispatch_intent(dict(routed))
+                active.dispatch_intent = True
+
+            # --- streaming dispatch ---
+            require_dispatch_context(dispatch_context_of(engine) or context, operation_id=op["operation_id"], attempt_ordinal=getattr(context, "attempt_ordinal", 0))
+            mark_dispatch_intent()
+            first_delta_seen = False
+            collected_text: list[str] = []
+            usage_meta: dict[str, Any] = {}
+            error_text = ""
+            try:
+                for delta in adapter.dispatch_stream(engine, json.loads(material), active.cancelled):
+                    if active.cancelled.is_set():
+                        break
+                    if delta.kind == "text":
+                        first_delta_seen = True
+                        collected_text.append(delta.text)
+                        on_delta(delta)
+                    elif delta.kind == "reasoning":
+                        first_delta_seen = True
+                        on_delta(delta)
+                    elif delta.kind == "usage":
+                        usage_meta = dict(delta.meta)
+                        on_delta(delta)
+                    elif delta.kind == "done":
+                        on_delta(delta)
+                    elif delta.kind == "error":
+                        error_text = delta.text
+                        if not first_delta_seen:
+                            raise ProviderIndeterminate()
+                        on_delta(delta)
+            except ProviderIndeterminate:
+                raise
+            except ProviderCompatibilityRetry:
+                raise
+            except ProviderKnownNoGenerationTransient:
+                raise
+            except ProviderPermanentNoGeneration:
+                raise
+            except ProviderPermissionDenied:
+                raise
+            except InferenceInvalidTypedOutput:
+                raise
+            except KernelRefused:
+                raise
+            except Exception as exc:
+                if not first_delta_seen:
+                    raise
+                # After the first delta: indeterminate, no fallback.
+                local_lease_indeterminate = True
+                return self._finish(active, iid, "indeterminate", runner_signal="physical_outcome_unknown", send_phase="dispatch_intent")
+
+            # Check for cancellation after the loop.
+            if active.cancelled.is_set():
+                local_lease_indeterminate = True
+                return self._finish(active, iid, "indeterminate", runner_signal="physical_outcome_unknown", send_phase="dispatch_intent")
+
+            # If an error delta arrived after the first delta, it's indeterminate.
+            if error_text and first_delta_seen:
+                local_lease_indeterminate = True
+                return self._finish(active, iid, "indeterminate", runner_signal="physical_outcome_unknown", send_phase="dispatch_intent")
+
+            # --- publishing ---
+            with active.condition:
+                while active.state == "CANCELLING" or active.closing or (active.state == "DISPATCHING" and active.cancel_performing and not active.disposition):
+                    active.condition.wait()
+                pending_principal = None
+                if active.state == "DISPATCHING" and active.disposition and active.disposition != "completed":
+                    publishing = False
+                elif active.state == "DISPATCHING":
+                    active.state = "PUBLISHING"
+                    active.condition.notify_all()
+                    publishing = True
+                elif active.state == "RUNNING":
+                    active.state = "PUBLISHING"
+                    publishing = True
+                elif active.state == "CANCEL_REQUESTED":
+                    publishing = False
+                    pending_principal = active.cancel_principal
+                elif active.state == "CANCELLED":
+                    publishing = False
+                else:
+                    publishing = False
+            if not publishing:
+                if pending_principal:
+                    self._perform_cancel(iid, active, pending_principal)
+                return self._finish(active, iid, "indeterminate" if active.disposition == "unknown" else "cancelled")
+            result = {"output": "".join(collected_text)}
+            if usage_meta:
+                result["usage"] = usage_meta
+            try:
+                result_ref = publish(result) if publish else f"inference-result:{iid}"
+            except Exception as exc:
+                return self._finish(
+                    active, iid, "failed", error=str(exc),
+                    runner_signal="effect_indeterminate", send_phase="provider_returned",
+                )
+            outcome_str = "succeeded" if result_ref and valid_ref(result_ref) else "failed"
+            with active.condition:
+                active.closing = True
+            receipt = self._persist_receipt(
+                active, active.operation_id, outcome_str,
+                result_ref if outcome_str == "succeeded" else "",
+                runner_signal="none" if outcome_str == "succeeded" else "effect_indeterminate",
+                send_phase="provider_returned",
+            )
+            with active.condition:
+                active.state = "PUBLISHED" if outcome_str == "succeeded" else "FAILED"
+                active.closing = False
+                active.condition.notify_all()
+            return InvocationOutcome(
+                active.operation_id, iid, outcome_str,
+                result_ref if outcome_str == "succeeded" else "", receipt,
+                runner_signal="none" if outcome_str == "succeeded" else "effect_indeterminate",
+                send_phase="provider_returned",
+            )
+        except ProviderIndeterminate:
+            if not active.dispatch_intent:
+                return self._finish(active, iid, "failed", runner_signal="unclassified_pre_send", send_phase="pre_send")
+            local_lease_indeterminate = True
+            return self._finish(active, iid, "indeterminate", runner_signal="physical_outcome_unknown", send_phase="dispatch_intent")
+        except ProviderCompatibilityRetry as exc:
+            if not active.dispatch_intent:
+                return self._finish(active, iid, "failed", runner_signal="unclassified_pre_send", send_phase="pre_send")
+            if signal is not None:
+                signal.append(exc)
+            return self._finish(active, iid, "failed", error=str(exc), runner_signal="compatibility_no_generation", send_phase="provider_no_generation")
+        except ProviderKnownNoGenerationTransient:
+            if not active.dispatch_intent:
+                return self._finish(active, iid, "failed", runner_signal="unclassified_pre_send", send_phase="pre_send")
+            return self._finish(active, iid, "failed", runner_signal="known_no_generation_transient", send_phase="provider_no_generation")
+        except ProviderPermanentNoGeneration:
+            if not active.dispatch_intent:
+                return self._finish(active, iid, "failed", runner_signal="unclassified_pre_send", send_phase="pre_send")
+            return self._finish(active, iid, "failed", runner_signal="provider_permanent_no_generation", send_phase="provider_no_generation")
+        except ProviderPermissionDenied:
+            if not active.dispatch_intent:
+                return self._finish(active, iid, "failed", runner_signal="unclassified_pre_send", send_phase="pre_send")
+            return self._finish(active, iid, "refused", runner_signal="permission_denied", send_phase="provider_no_generation")
+        except InferenceInvalidTypedOutput:
+            if not active.dispatch_intent:
+                return self._finish(active, iid, "failed", runner_signal="unclassified_pre_send", send_phase="pre_send")
+            return self._finish(active, iid, "failed", runner_signal="invalid_typed_output", send_phase="provider_returned")
+        except KernelRefused as exc:
+            local_capacity = str(exc.reason) == "inference_local_runtime_busy" and not active.dispatch_intent
+            return self._finish(active, iid, "refused", error=str(exc.reason), runner_signal="local_capacity_unavailable" if local_capacity else "kernel_refused", send_phase="dispatch_intent" if active.dispatch_intent else "pre_send")
+        except Exception as exc:
+            return self._finish(
+                active, iid, "failed", error=str(exc),
+                runner_signal="dispatch_outcome_unknown" if active.dispatch_intent else "unclassified_pre_send",
+                send_phase="dispatch_intent" if active.dispatch_intent else "pre_send",
+            )
+        finally:
+            watchdog.cancel()
+            release_dispatch_context(bound_engine, context)
+            if local_runtime_lease is not None:
+                from .local_runtime_lease import release_local_runtime_lease
+                release_local_runtime_lease(
+                    self._database, local_runtime_lease,
+                    indeterminate=local_lease_indeterminate, clock=self._clock,
+                )
+            if sequence is not None:
+                sequence.leave(iid)
+            with self._active_lock:
+                if active.state != "CLOSURE_FAILED":
+                    self._active.pop(iid, None)
+
     @staticmethod
     def _cancelled_before_retry(first):
         """The LOGICAL invocation was cancelled before its follow-up was admitted.

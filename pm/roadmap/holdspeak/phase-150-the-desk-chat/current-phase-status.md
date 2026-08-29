@@ -1,6 +1,6 @@
 # Phase 150 — The Desk Chat: The Thread (DC-01)
 
-**Status:** building (1/8). Design-beat counsel RATIFY-WITH-CONCERNS;
+**Status:** building (2/8). Design-beat counsel RATIFY-WITH-CONCERNS;
 M1–M4 accepted into the settled design. Building.
 
 **Last updated:** 2026-08-29.
@@ -44,7 +44,7 @@ boundary at MESSAGE level (counsel M1); shots before merge.
 | --- | --- | --- | --- | --- |
 | HS-150-01 | The thread ledger (schema + repository + import) | done | [story-01](./story-01-thread-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-150-02 | The capability (chat.turn sealed + assigned) | in-progress | [story-02](./story-02-capability.md) | - |
-| HS-150-03 | The streaming seam (invoke_stream + typed deltas + frames) | in-progress | [story-03](./story-03-streaming-seam.md) | - |
+| HS-150-03 | The streaming seam (invoke_stream + typed deltas + frames) | done | [story-03](./story-03-streaming-seam.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-150-04 | The turn route (threads API, refs frozen, abort, branch, keep) | backlog | [story-04](./story-04-turn-route.md) | - |
 | HS-150-05 | The Thread on the Desk (primitive, verbs, ThreadPullout, streaming renderer) | backlog | [story-05](./story-05-thread-pullout.md) | - |
 | HS-150-06 | The composer (mic, @-refs, send/stop, / verbs) | backlog | [story-06](./story-06-composer.md) | - |
@@ -53,7 +53,7 @@ boundary at MESSAGE level (counsel M1); shots before merge.
 
 ## Where we are
 
-**1/8.** HS-150-01 (the ledger) is DONE — threads / thread_messages (parent_id tree, `streaming`, kernel provenance) / thread_message_parts (`sensitive`) / thread_refs / thread_messages_fts with soft-delete-aware triggers; ThreadRepository with the full D1 surface + D7's import dedup (`import_hash` ref row); snapshot fixture regenerated (diff = exactly the block); 25 new tests + snapshot + reconcile-twice green (32 passed, orchestrator-read). Builder decisions recorded in evidence: REAL epoch timestamps (newer-table convention), FTS on implicit rowid, nullable `thread_refs.message_id` for thread-level refs. 02 and 03 build in parallel. Earlier — **Chartered — 0/8.** Census + counsel done in one sitting after the
+**2/8.** HS-150-03 (the streaming seam) is DONE — `InferenceRunner.invoke_stream` beside `invoke` in the same admission/plan/receipt envelope (fallback only before the first delta; `indeterminate` on cancel or late error), `ProviderAdapter.dispatch_stream` with a default that wraps `dispatch` so every existing adapter keeps working, typed `Delta`s from `engine._chat_completion_deltas` (content / reasoning_content / usage for both the OpenAI and llama.cpp shapes, absence tolerated), `StreamingPromptAdapter` for story 04, `StreamCadence` (500 chars / 2 s / done — counsel M2), the three `thread_*` frames mirrored with the drift test green; 34 passed orchestrator-read; one_path spine/cardinality reds (10) verified pre-existing by the builder against clean code — carried to the close sweep. Landed ahead of 02 as a commit (02's census fixtures absorb 03's line shifts). Earlier — **1/8.** HS-150-01 (the ledger) is DONE — threads / thread_messages (parent_id tree, `streaming`, kernel provenance) / thread_message_parts (`sensitive`) / thread_refs / thread_messages_fts with soft-delete-aware triggers; ThreadRepository with the full D1 surface + D7's import dedup (`import_hash` ref row); snapshot fixture regenerated (diff = exactly the block); 25 new tests + snapshot + reconcile-twice green (32 passed, orchestrator-read). Builder decisions recorded in evidence: REAL epoch timestamps (newer-table convention), FTS on implicit rowid, nullable `thread_refs.message_id` for thread-level refs. 02 and 03 build in parallel. Earlier — **Chartered — 0/8.** Census + counsel done in one sitting after the
 plan was filed; the settled design carries all four must-fixes. Wave
 1 = 01 (ledger); wave 2 = 02 → 03 → 04 (serial: capability, stream,
 route); wave 3 = 05 → 06 ∥ 07; close = 08.

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import threading
+from collections.abc import Iterator
 from typing import Any
 
 
@@ -27,3 +28,38 @@ class CanonicalPromptAdapter:
 
     def cancel(self) -> str:
         return "cancelled"
+
+
+class StreamingPromptAdapter:
+    """Streaming dispatch adapter for thread turns (HS-150-03).
+
+    Calls ``engine.run_prompt_stream(messages=..., temperature=..., max_tokens=...)``
+    and yields ``Delta`` objects, checking the cancellation Event between chunks.
+    The non-streaming ``dispatch`` falls back to ``run_prompt_messages`` so the
+    Protocol is satisfied for callers that use ``invoke`` instead of
+    ``invoke_stream``.
+    """
+
+    connector_id = "inference-provider"
+
+    def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: threading.Event) -> dict[str, str]:
+        return {"output": str(engine.run_prompt_messages(
+            messages=payload["messages"],
+            temperature=payload.get("temperature"),
+            max_tokens=payload.get("max_tokens"),
+        )), "provider": str(getattr(engine, "active_provider", "")),
+            "model": str(getattr(engine, "active_model", "") or getattr(engine, "model", ""))}
+
+    def cancel(self) -> str:
+        return "cancelled"
+
+    def dispatch_stream(self, engine: Any, payload: dict[str, Any], cancellation: threading.Event) -> Iterator:
+        """Yield ``Delta`` objects from the engine's streaming completion."""
+        for delta in engine.run_prompt_stream(
+            messages=payload["messages"],
+            temperature=payload.get("temperature"),
+            max_tokens=payload.get("max_tokens"),
+        ):
+            if cancellation.is_set():
+                return
+            yield delta
