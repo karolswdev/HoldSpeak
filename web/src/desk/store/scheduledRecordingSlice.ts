@@ -12,6 +12,7 @@ export type ScheduledRecordingSlice = Pick<
   | "createSchedule"
   | "deleteSchedule"
   | "cancelArmedSchedule"
+  | "armEventRecording"
   | "applyScheduledRecordingEvent"
   | "openScheduleCreate"
   | "closeScheduleCreate"
@@ -69,6 +70,19 @@ export const createScheduledRecordingSlice: SliceCreator<ScheduledRecordingSlice
       await apiFetch(`/api/scheduled-recordings/${encodeURIComponent(id)}/cancel`, {
         method: "POST",
       });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  async armEventRecording(eventId) {
+    try {
+      await apiFetch("/api/scheduled-recordings", {
+        method: "POST",
+        json: { calendar_event_id: eventId },
+      });
+      await get().loadSchedules();
       return true;
     } catch {
       return false;

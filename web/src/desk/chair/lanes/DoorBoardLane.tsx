@@ -49,6 +49,8 @@ export type DoorUpcomingItem = {
   /* HS-146-04: rail provenance fields projected by _calendar_event_item. */
   source_id?: string;
   source_label?: string;
+  /* HS-147-01: present when an event-linked schedule exists. */
+  armed_schedule_id?: string;
 };
 
 export type DoorProjection = {
@@ -257,7 +259,126 @@ function hasMultipleSources(upcoming: DoorUpcomingItem[]): boolean {
   return false;
 }
 
-function UpcomingRail({ upcoming, calendarConfigured }: { upcoming: DoorUpcomingItem[]; calendarConfigured: boolean }) {
+/** HS-147-02: refusal code to human-readable, fewest words. */
+function refusalLabel(code: string): string {
+  if (code === "event_already_armed" || code === "conflict") return "ALREADY ARMED";
+  if (code === "event_already_ended") return "EVENT ENDED";
+  if (code === "not_found") return "EVENT NOT FOUND";
+  return code.toUpperCase().replace(/_/g, " ");
+}
+
+/** HS-147-02: extract the refusal code from an ApiError payload. */
+function refusalCode(error: unknown): string {
+  if (error && typeof error === "object" && "payload" in error) {
+    const payload = (error as { payload: unknown }).payload;
+    if (payload && typeof payload === "object" && "code" in payload) {
+      const code = (payload as { code: unknown }).code;
+      if (typeof code === "string" && code) return code;
+    }
+  }
+  return "request_failed";
+}
+
+/** HS-147-02: per-row arm/cancel state for the upcoming rail. */
+function UpcomingRowActions({ item, onReload }: { item: DoorUpcomingItem; onReload: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [refusal, setRefusal] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+
+  const arm = async () => {
+    setBusy(true);
+    setRefusal(null);
+    try {
+      await apiFetch("/api/scheduled-recordings", {
+        method: "POST",
+        json: { calendar_event_id: item.id },
+      });
+      // Success: the store's scheduledRecordings list change triggers
+      // DoorBoardLane.tsx:339-345 re-fetch, which repopulates armed_schedule_id.
+      await useDesk.getState().loadSchedules();
+      onReload();
+    } catch (err) {
+      setRefusal(refusalLabel(refusalCode(err)));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancel = async () => {
+    if (!item.armed_schedule_id) return;
+    setBusy(true);
+    setRefusal(null);
+    try {
+      // DELETE removes the idle event-linked one-shot schedule entirely.
+      // POST /{id}/cancel is for actively-arming countdowns; DELETE is the
+      // correct authority for disarming an idle linked schedule.
+      await apiFetch(`/api/scheduled-recordings/${encodeURIComponent(item.armed_schedule_id)}`, {
+        method: "DELETE",
+      });
+      setConfirmCancel(false);
+      await useDesk.getState().loadSchedules();
+      onReload();
+    } catch (err) {
+      setRefusal(refusalLabel(refusalCode(err)));
+      setConfirmCancel(false);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (item.source !== "calendar_event") return null;
+
+  // Armed state: ARMED chip + CANCEL? two-beat verb.
+  if (item.armed_schedule_id) {
+    return (
+      <span className="door-upcoming-arm-actions" data-testid="door-arm-actions">
+        <span className="door-upcoming-armed-chip" data-testid="door-armed-chip">ARMED</span>
+        {confirmCancel ? (
+          <Button
+            dense
+            variant="danger"
+            loading={busy}
+            disabled={busy}
+            data-testid="door-cancel-confirm"
+            onClick={() => void cancel()}
+          >
+            Cancel
+          </Button>
+        ) : (
+          <Button
+            dense
+            variant="ghost"
+            disabled={busy}
+            data-testid="door-cancel-prompt"
+            onClick={() => setConfirmCancel(true)}
+          >
+            Cancel?
+          </Button>
+        )}
+        {refusal ? <span className="door-upcoming-refusal" data-testid="door-arm-refusal">{refusal}</span> : null}
+      </span>
+    );
+  }
+
+  // Unarmed: RECORD THIS button.
+  return (
+    <span className="door-upcoming-arm-actions" data-testid="door-arm-actions">
+      <Button
+        dense
+        variant="ghost"
+        loading={busy}
+        disabled={busy}
+        data-testid="door-record-this"
+        onClick={() => void arm()}
+      >
+        Record this
+      </Button>
+      {refusal ? <span className="door-upcoming-refusal" data-testid="door-arm-refusal">{refusal}</span> : null}
+    </span>
+  );
+}
+
+function UpcomingRail({ upcoming, calendarConfigured, onReload }: { upcoming: DoorUpcomingItem[]; calendarConfigured: boolean; onReload: () => void }) {
   const showChips = hasMultipleSources(upcoming);
   return (
     <section className="door-upcoming-rail" aria-labelledby="door-upcoming-title">
@@ -276,6 +397,8 @@ function UpcomingRail({ upcoming, calendarConfigured }: { upcoming: DoorUpcoming
                 <span className="door-upcoming-kind">{upcomingKind(item)}</span>
                 <strong>{upcomingTitle(item)}</strong>
                 {time ? <span className="door-upcoming-time">STARTS {time}</span> : null}
+                {/* HS-147-02: arm/cancel verb on EVENT rows. */}
+                <UpcomingRowActions item={item} onReload={onReload} />
                 {/* HS-146-04: provenance chip on EVENT rows when >1 source. */}
                 {showChips && item.source === "calendar_event" && item.source_label ? (
                   <span className="door-upcoming-provenance">{item.source_label.toUpperCase()}</span>
@@ -510,7 +633,7 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
         </div>
         </div>
       ) : <SurfaceState empty emptyLabel="Door clear" />}
-      <UpcomingRail upcoming={projection.upcoming} calendarConfigured={projection.calendar_configured} />
+      <UpcomingRail upcoming={projection.upcoming} calendarConfigured={projection.calendar_configured} onReload={() => void reload()} />
     </SurfaceSection>
   );
 }

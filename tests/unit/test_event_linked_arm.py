@@ -380,6 +380,43 @@ class TestDoorArmedProjection:
         event_item = next(i for i in upcoming if i["id"] == "ce_door_armed")
         assert event_item["armed_schedule_id"] == armed["id"]
 
+    def test_linked_schedule_row_suppressed_while_event_is_on_rail(self, db: Database) -> None:
+        """HS-147-02 ruling: one intent, one row — the armed EVENT row wears
+        the truth; the linked schedule never renders as a near-duplicate
+        SCHEDULED RECORDING row while its event is in the projection."""
+        from holdspeak.services.door_service import DoorService
+        from holdspeak.services.follow_through_service import FollowThroughService
+        from holdspeak.services.refinement_thought_service import (
+            INBOX_DIRECTORY_ID,
+            RefinementThoughtService,
+        )
+
+        db.directories.upsert(directory_id=INBOX_DIRECTORY_ID, name="Inbox")
+        starts = FIXED_NOW + timedelta(hours=1)
+        _insert_event(
+            db, "ce_suppress",
+            starts_at=starts.isoformat().replace("+00:00", "Z"),
+            ends_at=(starts + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+        )
+        armed = _svc(db).create_schedule(OWNER, calendar_event_id="ce_suppress")
+        door = DoorService(
+            FollowThroughService(db),
+            RefinementThoughtService(db),
+            db.scheduled_recordings,
+            db.calendar_events,
+            clock=lambda: FIXED_NOW,
+        )
+        upcoming = door.get(OWNER)["upcoming"]
+        assert not [i for i in upcoming if i["source"] == "scheduled_recording" and i["id"] == armed["id"]]
+        assert next(i for i in upcoming if i["id"] == "ce_suppress")["armed_schedule_id"] == armed["id"]
+
+        # The event leaves the projection (feed moved on before reconcile):
+        # the schedule row REAPPEARS — pending work is never hidden.
+        with db._connection() as conn:
+            conn.execute("DELETE FROM calendar_events WHERE id = 'ce_suppress'")
+        upcoming = door.get(OWNER)["upcoming"]
+        assert [i for i in upcoming if i["source"] == "scheduled_recording" and i["id"] == armed["id"]]
+
 
 # ────────────────────────────────────────────────────────────────
 # AC-5: full lifecycle through the REAL conductor

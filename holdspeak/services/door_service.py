@@ -170,19 +170,28 @@ class DoorService:
     def _upcoming(self, now: datetime) -> list[dict[str, Any]]:
         upcoming: list[dict[str, Any]] = []
         enabled_recordings = self._scheduled_recordings.list_enabled()
+        now_iso = self._utc_iso(now)
+        events = list(self._calendar_events.list_upcoming(now_iso))
+        event_ids = {event.id for event in events}
         # HS-147-01: build an index of armed calendar_event_id -> schedule_id
         # so _calendar_event_item can project armed_schedule_id without N+1.
         armed_index: dict[str, str] = {}
         for recording in enabled_recordings:
             if recording.calendar_event_id:
                 armed_index[recording.calendar_event_id] = recording.id
+                # HS-147-02 ruling: a linked schedule whose event row is on
+                # the rail would render the same intent twice — the event row
+                # wears ARMED and carries armed_schedule_id, so the schedule
+                # row is suppressed. If the event has left the projection the
+                # schedule row still shows (honest pending work, never hidden).
+                if recording.calendar_event_id in event_ids:
+                    continue
             if recording.next_fire_at is None or recording.next_fire_at < now.timestamp():
                 continue
             upcoming.append(self._scheduled_recording_item(recording))
-        now_iso = self._utc_iso(now)
         upcoming.extend(
             self._calendar_event_item(event, armed_index=armed_index)
-            for event in self._calendar_events.list_upcoming(now_iso)
+            for event in events
         )
         return sorted(upcoming, key=lambda item: (item["starts_at"], item["source"], item["id"]))
 

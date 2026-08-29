@@ -1,6 +1,6 @@
 # Phase 147 — One-Tap Record
 
-**Status:** in progress (2/7).
+**Status:** in progress (3/7).
 
 **Last updated:** 2026-08-29.
 
@@ -70,16 +70,27 @@ meeting row with a quiet origin line (D7).
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-147-01 | The link (schema + arm verb, server side) | done | [story-01](./story-01-the-link.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-147-02 | The tap (rail verb + armed state, web) | ready | [story-02](./story-02-the-tap.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-147-03 | The honest follow (reconciliation + snapshot identity) | ready | [story-03](./story-03-the-honest-follow.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-147-04 | Meeting provenance (the event on the record) | ready | [story-04](./story-04-meeting-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-147-02 | The tap (rail verb + armed state, web) | done | [story-02](./story-02-the-tap.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-147-03 | The honest follow (reconciliation + snapshot identity) | in-progress | [story-03](./story-03-the-honest-follow.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-147-04 | Meeting provenance (the event on the record) | in-progress | [story-04](./story-04-meeting-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-147-05 | Snapshot polish riders (the 146 ledger pair) | done | [story-05](./story-05-snapshot-polish.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-147-06 | The record book (docs) | ready | [story-06](./story-06-the-record-book.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-147-07 | The walk and the close | ready | [story-07](./story-07-walk-and-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**2/7.** HS-147-01 (the link) is DONE — the keystone: three additive
+**3/7.** HS-147-02 (the tap) is DONE — the job exists on glass: one
+real tap on RECORD THIS arms the event (proven end-to-end by the new
+tests/e2e/test_hs147_one_tap_glass.py on a live hub), ARMED +
+two-beat CANCEL?, the honest stale-row refusal rendering ALREADY
+ARMED in-flow, both widths, 11/11 existing door glass green under
+the new geometry. The shot cross-read earned its keep AGAIN: it
+caught the armed intent rendering twice (event row + near-duplicate
+schedule row) → ruled one-intent-one-row, suppression landed with a
+unit pin + glass assertion, exhibit re-shot. Wave-2 remainder (03
+the honest follow, 04 meeting provenance) is built, orchestrator-
+verified (89 + 137/34 focused green), shipping next. Earlier —
+**2/7.** HS-147-01 (the link) was DONE — the keystone: three additive
 link columns + the L1 partial unique index (one live arm per event),
 the server-computed arm verb (`POST /api/scheduled-recordings
 {calendar_event_id}` computes title/one_shot/enabled/local-tz/

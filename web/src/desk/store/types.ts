@@ -317,6 +317,8 @@ export interface DeskState {
   deleteSchedule(id: string): Promise<void>;
   /** HS-136-03: cancel an armed scheduled recording. */
   cancelArmedSchedule(id: string): Promise<boolean>;
+  /** HS-147-02: one-tap arm of a calendar event via POST {calendar_event_id}. */
+  armEventRecording(eventId: string): Promise<boolean>;
   /** HS-136-03: apply a scheduled_recording broadcast event. */
   applyScheduledRecordingEvent(type: string, data: Record<string, unknown>): void;
   /** HS-136-03: open/close the schedule-create window. */
