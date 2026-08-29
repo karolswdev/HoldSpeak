@@ -50,6 +50,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/model_library_service.py", "_profile_row"): ("server-owned library availability projection", "143-12"),
     ("holdspeak/services/model_library_service.py", "_target_matches"): ("private provider adapter comparison", "143-12"),
     ("holdspeak/web/routes/primitives/profiles.py", "_library_private_target"): ("retired legacy target side-door refusal", "143-12"),
+    ("holdspeak/db/reconcile.py", "_backfill_chat_route_assignments"): ("additive data backfill; no route selection", "150-02"),
     ("holdspeak/services/inference_assignment_service.py", "_resolve"): ("canonical sparse assignment resolver", "143-04"),
     ("holdspeak/services/inference_adoption_service.py", "_validate_parentless_local_preload_route"): ("closed parentless speech preload cross-bind", "143-08"),
     ("holdspeak/speech_session/session.py", "_routed_session_validation_plan"): ("inert validation/history carrier for fully-adopted sessions; no route selection", "143-08"),
@@ -110,7 +111,7 @@ CAMEL_POINTER_TOKENS = ("inferenceTargetId", "intelProfileId", "profileId", "res
 RUNS_ON_PICKER_SURFACE = re.compile(
     r"(?:import\s*\{\s*RunsOnPicker\s*\}|export\s+function\s+RunsOnPicker)"
 )
-STORY_RE = re.compile(r"^143-(?:0[1-9]|1[0-4])$")
+STORY_RE = re.compile(r"^(?:143-(?:0[1-9]|1[0-4])|150-0[1-9])$")  # HS-150-02: widen for Phase 150 entries
 
 # Story 06 retired every client-owned Swift retry/fallback execution site. The
 # scanner remains as a zero-regression fence: legacy wire strings may survive in

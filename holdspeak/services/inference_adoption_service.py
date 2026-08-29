@@ -66,7 +66,7 @@ ADOPTED_CAPABILITIES = (
     # evidence provider in ToolTurnFoundationService, so they are deliberately
     # absent here.
     "recipe.run",
-    "recipe.chat",
+    "chat.turn",  # HS-150-02: replaces retired recipe.chat
     "workbench.item",
     "voice.reference_resolve",
     "sequence.step",
@@ -2643,7 +2643,7 @@ class RoutedInferenceCoordinator:
             })
             if value:
                 profile = entry_for(value)
-                for capability_id in ("recipe.run", "recipe.chat", "sequence.step"):
+                for capability_id in ("recipe.run", "chat.turn", "sequence.step"):  # HS-150-02: recipe.chat → chat.turn
                     subject_entries.append({
                         "subject_kind": "recipe", "subject_id": str(recipe.id),
                         "capability_id": capability_id, "entry": profile,

@@ -110,28 +110,16 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/recipes/{recipe_id}/chat")
     async def api_chat_recipe(recipe_id: str, request: Request) -> Any:
-        body = await _json_body(request) or {}
-        try:
-            result = await _svc().chat(
-                _principal(request), recipe_id,
-                question=str(body.get("question") or ""),
-                history=body.get("history") if isinstance(body.get("history"), list) else [],
-                grounding=body.get("grounding"),
-                inference_target_id=body.get("inference_target_id"),
-                broadcast=_broadcast,
-                # HS-132-09: no `default_model`. The transport used to inject the
-                # hub's configured-placement model name here, which the receipt
-                # then printed for a turn that ran somewhere else entirely.
-            )
-            return JSONResponse(result)
-        except ValidationError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
-        except NotFound:
-            return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
-        except ServiceError as exc:
-            return _service_error(exc)
-        except Exception as exc:
-            return error_500(exc, log, "Failed to chat with recipe")
+        # HS-150-02: recipe.chat RETIRED. This stub stays so HS-150-04 can
+        # turn it into the thread alias (POST /api/threads/{id}/turns).
+        return JSONResponse(
+            {
+                "error": "recipe_chat_retired",
+                "replacement": "POST /api/threads/{id}/turns",
+                "reason": "HS-150-04 lands the thread alias",
+            },
+            status_code=410,
+        )
 
     @router.post("/api/recipes/{recipe_id}/keep")
     async def api_keep_recipe_reply(recipe_id: str, request: Request) -> Any:

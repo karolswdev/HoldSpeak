@@ -663,3 +663,109 @@ def _apply_data_backfills(conn: sqlite3.Connection) -> None:
         "Memory index rebuild: "
         + ", ".join(f"{key}={value}" for key, value in memory_counts.items())
     )
+
+    # ── chat-route-assignments (HS-150-02) ─────────────────────────────
+    # Copy the assignment chain from recipe.chat to chat.turn. If no
+    # recipe.chat chain exists, copy from ask.answer instead. Idempotent:
+    # an existing chat.turn chain is never overwritten.
+    _backfill_chat_route_assignments(conn)
+
+
+def _backfill_chat_route_assignments(conn: sqlite3.Connection) -> None:
+    """Family ``chat-route-assignments`` (HS-150-02).
+
+    Copies an existing global capability assignment chain to ``chat.turn``.
+    Source precedence: ``recipe.chat`` first, then ``ask.answer``.
+    Idempotent: a second run is a no-op; an existing ``chat.turn`` chain
+    is never overwritten.
+    """
+    import uuid as _uuid
+
+    TARGET_KEY = "capability:chat.turn"
+    existing = conn.execute(
+        "SELECT 1 FROM inference_assignment_heads WHERE assignment_key=?",
+        (TARGET_KEY,),
+    ).fetchone()
+    if existing is not None:
+        return  # chat.turn already assigned; never overwrite
+
+    source_key: str | None = None
+    for candidate in ("capability:recipe.chat", "capability:ask.answer"):
+        row = conn.execute(
+            "SELECT assignment_id, revision FROM inference_assignment_heads "
+            "WHERE assignment_key=? AND cleared=0",
+            (candidate,),
+        ).fetchone()
+        if row is not None:
+            source_key = candidate
+            break
+
+    if source_key is None:
+        return  # no source chain to copy
+
+    src_assignment_id, src_revision = row[0], row[1]
+    rev_row = conn.execute(
+        "SELECT scope_kind, scope_id, subject_kind, selector_kind, "
+        "capability_id, group_id, retry_policy_id, payload_json, sha256, "
+        "created_at FROM inference_assignment_revisions "
+        "WHERE assignment_id=? AND revision=?",
+        (src_assignment_id, src_revision),
+    ).fetchone()
+    if rev_row is None:
+        return  # orphan head; nothing to copy
+
+    entries = conn.execute(
+        "SELECT profile_id, profile_revision, profile_schema_version, ordinal "
+        "FROM inference_assignments "
+        "WHERE assignment_id=? AND assignment_revision=?",
+        (src_assignment_id, src_revision),
+    ).fetchall()
+    if not entries:
+        return  # empty chain
+
+    new_id = "ia_" + _uuid.uuid4().hex
+    new_revision = 1
+    created_at = rev_row[9]
+
+    conn.execute(
+        """INSERT INTO inference_assignment_revisions
+           (assignment_id, revision, assignment_key, scope_kind, scope_id,
+            subject_kind, selector_kind, capability_id, group_id,
+            retry_policy_id, payload_json, sha256, created_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (
+            new_id, new_revision, TARGET_KEY,
+            "global",  # scope_kind
+            "",         # scope_id
+            "",         # subject_kind
+            "capability",  # selector_kind
+            "chat.turn",   # capability_id
+            "",         # group_id
+            rev_row[6],  # retry_policy_id
+            rev_row[7],  # payload_json
+            rev_row[8],  # sha256
+            created_at,
+        ),
+    )
+    conn.execute(
+        """INSERT INTO inference_assignment_heads
+           (assignment_key, assignment_id, revision, cleared, updated_at)
+           VALUES (?,?,?,0,?)""",
+        (TARGET_KEY, new_id, new_revision, created_at),
+    )
+    for entry in entries:
+        conn.execute(
+            """INSERT INTO inference_assignments
+               (id, assignment_id, assignment_revision, profile_id,
+                profile_revision, profile_schema_version, ordinal)
+               VALUES (?,?,?,?,?,?,?)""",
+            (
+                f"{new_id}:{new_revision}:{entry[3]}",
+                new_id, new_revision,
+                entry[0], entry[1], entry[2], entry[3],
+            ),
+        )
+    log.info(
+        "chat-route-assignments backfill: copied %s to chat.turn (%d entries)",
+        source_key, len(entries),
+    )

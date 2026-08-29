@@ -50,7 +50,7 @@ PRODUCTION = REPO / "holdspeak"
 # general effect lint: this protects model execution, not all network code.
 VOCABULARY: dict[str, frozenset[str]] = {
     "provider-completion": frozenset({
-        "run_prompt", "_chat_completion_text", "_chat_completion_stream",
+        "run_prompt", "_chat_completion_text", "_chat_completion_stream", "_chat_completion_deltas",
         "_remote_completion", "create_chat_completion", "create_completion",
     }),
     # The SDK's own wire verb, recognized as a RECEIVER CHAIN rather than as the
@@ -400,6 +400,7 @@ EXECUTOR = "holdspeak/kernel/executor.py"
 #: places where a physical thing is actually admitted or dispatched.
 AUTHORIZED_GATEWAY: dict[tuple[str, str], str] = {
     (RUNNER, "InferenceRunner._attempt"): "the one admission + claim + context mint + engine-factory entrance",
+    (RUNNER, "InferenceRunner._attempt_stream"): "the streaming admission + claim + context mint + engine-factory entrance (HS-150-02/D3)",
     (RUNNER, "InferenceRunner._dispatch"): "the one adapter-dispatch and causally linked egress entrance",
 }
 
@@ -455,7 +456,9 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
     ("holdspeak/intel/engine.py", "MeetingIntel._ensure_model_loaded"): "L: the legacy alias of the load entrance",
     ("holdspeak/intel/engine.py", "MeetingIntel._chat_completion_text"): "L: the ONE non-streaming completion open",
     ("holdspeak/intel/engine.py", "MeetingIntel._chat_completion_stream"): "L: the ONE streaming completion open",
+    ("holdspeak/intel/engine.py", "MeetingIntel._chat_completion_deltas"): "L: the typed-delta streaming completion open (HS-150-02/D3)",
     ("holdspeak/intel/engine.py", "MeetingIntel.run_prompt"): "L: the canonical prompt leaf an adapter dispatches",
+    ("holdspeak/intel/engine.py", "MeetingIntel.run_prompt_stream"): "L: the streaming prompt leaf the stream adapter dispatches (HS-150-02/D3)",
     ("holdspeak/intel/engine.py", "MeetingIntel.run_prompt_messages"): "L: the multi-part (vision) prompt leaf the VisionPromptAdapter dispatches (HS-146-07)",
     ("holdspeak/intel/engine.py", "MeetingIntel._analyze_once"): "L: the analysis leaf an admitted meeting child dispatches",
     ("holdspeak/intel/engine.py", "MeetingIntel._analyze_stream"): "L: the streaming analysis leaf an admitted meeting child dispatches",
@@ -703,7 +706,9 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # product façade; qualified ToolTurn execution remains foundation-owned.
     # HS-146-07 adds the one vision prompt leaf (run_prompt_messages), the
     # multi-part sibling of run_prompt the VisionPromptAdapter dispatches.
-    assert len(sites) == 103
+    # HS-150-02/D3: streaming seam adds _chat_completion_deltas (3) +
+    # _attempt_stream (1); line shifts do not change count.
+    assert len(sites) == 108
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
     assert counts["finding"] == 0
@@ -728,6 +733,7 @@ def test_the_gateway_is_exactly_two_scopes_and_is_not_an_adapter() -> None:
     """
     assert set(AUTHORIZED_GATEWAY) == {
         (RUNNER, "InferenceRunner._attempt"),
+        (RUNNER, "InferenceRunner._attempt_stream"),  # HS-150-02/D3
         (RUNNER, "InferenceRunner._dispatch"),
     }
     # The public entrance is a pure orchestrator: it admits nothing, dispatches
@@ -802,9 +808,10 @@ def test_the_context_mint_and_the_legacy_marker_are_pinned() -> None:
         (EXECUTOR, "ExecutorPlane.claim")
     ], witness_mints
     context_mints = [site for site in sites if site.target == "_issue_dispatch_context"]
-    assert [site.where for site in context_mints] == [
-        (RUNNER, "InferenceRunner._attempt")
-    ], context_mints
+    assert sorted(site.where for site in context_mints) == sorted([
+        (RUNNER, "InferenceRunner._attempt"),
+        (RUNNER, "InferenceRunner._attempt_stream"),  # HS-150-02/D3
+    ]), context_mints
 
     marker_scopes: set[tuple[str, str]] = set()
     for path in sorted(PRODUCTION.rglob("*.py")):

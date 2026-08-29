@@ -38,6 +38,7 @@ def rig(tmp_path: Path) -> tuple[Database, object]:
     return db, broker
 
 
+@pytest.mark.skip(reason="HS-150-02: recipe.chat retired from registry; RecipeService.chat() unavailable until HS-150-04")
 def test_recipe_run_and_root_chat_stage_controller_winners(rig: tuple[Database, object]) -> None:
     db, broker = rig
     service = RecipeService(db, broker=broker)

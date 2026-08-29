@@ -138,6 +138,7 @@ def test_recipe_run_rejects_legacy_invocation_selector(recipe_rig):
     assert raised.value.code == "inference_legacy_selector_retired"
 
 
+@pytest.mark.skip(reason="HS-150-02: recipe.chat retired from registry; RecipeService.chat() unavailable until HS-150-04")
 def test_recipe_chat_canonical_subject_assignment(recipe_rig):
     _db, service = recipe_rig
     result = asyncio.run(service.chat(OWNER, "r1", question="hello", workbench_id="wb_target"))
@@ -147,6 +148,7 @@ def test_recipe_chat_canonical_subject_assignment(recipe_rig):
     assert result["route_execution_receipt"]["outcome"] == "succeeded"
 
 
+@pytest.mark.skip(reason="HS-150-02: recipe.chat retired from registry; RecipeService.chat() unavailable until HS-150-04")
 def test_recipe_chat_rejects_legacy_invocation_selector(recipe_rig):
     _db, service = recipe_rig
     with pytest.raises(ValidationError, match="Legacy model selectors") as raised:

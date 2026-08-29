@@ -4,6 +4,8 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
+import pytest
+
 from holdspeak.db import Database
 from holdspeak.kernel.runtime import _configure
 from holdspeak.principals import Principal, PrincipalKind
@@ -45,6 +47,7 @@ def _qualified_recipe(db: Database, *, tools: list[str] | None = None) -> tuple[
     return RecipeService(db, broker=broker), engine, recipe.id
 
 
+@pytest.mark.skip(reason="HS-150-02: recipe.chat retired from registry")
 def test_recipe_chat_qualified_route_drives_foundation_controller_and_runner(tmp_path: Path) -> None:
     db = Database(tmp_path / "recipe-tool.db")
     recipes, engine, recipe_id = _qualified_recipe(db)
@@ -65,6 +68,7 @@ def test_recipe_chat_qualified_route_drives_foundation_controller_and_runner(tmp
     assert attempt["child_operation_id"] and attempt["child_receipt_sha256"]
 
 
+@pytest.mark.skip(reason="HS-150-02: recipe.chat retired from registry")
 def test_recipe_chat_unqualified_uses_ruled_plain_fallback_and_no_toolturn_rows(tmp_path: Path) -> None:
     db = Database(tmp_path / "recipe-plain.db")
     broker = _configure(db)
@@ -86,6 +90,7 @@ def test_recipe_chat_unqualified_uses_ruled_plain_fallback_and_no_toolturn_rows(
         assert conn.execute("SELECT COUNT(*) FROM turn_capability_leases").fetchone()[0] == 0
 
 
+@pytest.mark.skip(reason="HS-150-02: recipe.chat retired from registry")
 def test_recipe_tools_remain_inert_on_the_qualified_production_turn(tmp_path: Path) -> None:
     db = Database(tmp_path / "recipe-tools-inert.db")
     recipes, engine, recipe_id = _qualified_recipe(db, tools=["delete_everything", "ambient_tool"])

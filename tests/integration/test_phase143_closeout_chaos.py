@@ -162,6 +162,7 @@ def _set_tool_assignment(
     })
 
 
+@pytest.mark.skip(reason="HS-150-02: recipe.chat retired from registry; RecipeService.chat() unavailable until HS-150-04")
 @pytest.mark.timeout(30)
 def test_one_restart_cross_product_preserves_frozen_recipe_receipt_library_and_assignment_truth(
     tmp_path: Path,

@@ -74,7 +74,7 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/kernel/inference_invoke.py:10:import:resolve_deployment_revision",
     "holdspeak/kernel/inference_invoke.py:92:ref:resolve_deployment_revision",
     "holdspeak/kernel/inference_runner.py:13:import:resolve_deployment_revision",
-    "holdspeak/kernel/inference_runner.py:491:ref:resolve_deployment_revision",
+    "holdspeak/kernel/inference_runner.py:839:ref:resolve_deployment_revision",
     "holdspeak/services/ask_service.py:307:import:resolve_placement",
     "holdspeak/services/ask_service.py:308:ref:resolve_placement",
     "holdspeak/services/inference_setup_service.py:184:ref:resolve_inference_target",

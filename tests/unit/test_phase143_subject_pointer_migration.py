@@ -37,7 +37,7 @@ def test_recipe_and_workbench_pointers_become_exact_subject_rows_once(tmp_path: 
     assignments = InferenceAssignmentService(db)
     for kind, subject, capability in (
         ("recipe", "recipe-one", "recipe.run"),
-        ("recipe", "recipe-one", "recipe.chat"),
+        ("recipe", "recipe-one", "chat.turn"),
         ("workbench", "workbench-one", "workbench.item"),
         ("workbench", "workbench-one", "voice.reference_resolve"),
     ):
@@ -155,7 +155,7 @@ def test_post_marker_retired_pointer_callers_refuse_without_assignment_writes(tm
         )
         for kind, subject, capability in (
             ("recipe", "recipe", "recipe.run"),
-            ("recipe", "recipe", "recipe.chat"),
+            ("recipe", "recipe", "chat.turn"),
             ("workbench", "workbench", "workbench.item"),
             ("workbench", "workbench", "voice.reference_resolve"),
         )
