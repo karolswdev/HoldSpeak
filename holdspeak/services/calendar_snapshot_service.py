@@ -407,6 +407,36 @@ def _service():
     return runtime_service()
 
 
+def _vision_capable(profile: Any, db: Any) -> bool:
+    """Pre-filter: can this profile plausibly handle a vision payload?
+
+    Checks the v2 model-profile capability manifest first (the source of
+    truth when a binding exists).  Falls back to the profile kind for
+    unbound legacy profiles: ``openAICompatible`` endpoints commonly
+    accept multi-part image content; ``onDevice`` GGUF models do not.
+    """
+    profile_id = str(getattr(profile, "id", "") or "").strip()
+    if not profile_id:
+        return False
+    try:
+        with db._connection() as conn:
+            row = conn.execute(
+                """SELECT capability_manifest_json
+                     FROM model_profile_revisions
+                    WHERE profile_id = ?
+                    ORDER BY revision DESC LIMIT 1""",
+                (profile_id,),
+            ).fetchone()
+            if row is not None:
+                manifest = json.loads(str(row["capability_manifest_json"]))
+                return "vision" in (manifest.get("claims") or [])
+    except Exception:
+        pass
+    # No v2 profile — fall back to the kind heuristic.
+    kind = str(getattr(profile, "kind", "") or "")
+    return kind == "openAICompatible"
+
+
 def extract_via_router(
     principal: Any,
     payload: dict[str, Any],
@@ -502,27 +532,29 @@ def extract_via_router(
     # VisionPromptAdapter.
     import time
     from ..deployment_revisions import capture_deployment_revision
-    from ..inference_targets import resolve_placement
 
     runner = broker.inference_runner
     adapter = VisionPromptAdapter()
     try:
         from ..db import get_database
         db = get_database()
-        # Try each available profile for a ready target
+        # Pre-filter to vision-capable profiles BEFORE dispatching
+        # (HS-147-05): the profile list already knows which targets can
+        # handle multi-part image content.  When none qualify, the named
+        # refusal fires with zero inference dispatches.
+        from ..inference_targets import target_from_profile
+
         target = None
         for profile in db.profiles.list():
             if profile.deleted:
                 continue
-            from ..inference_targets import target_from_profile
+            if not _vision_capable(profile, db):
+                continue
             candidate = target_from_profile(profile, db)
             if candidate.ready:
                 target = candidate
                 break
         if target is None:
-            placement = resolve_placement(db)
-            target = placement.target
-        if not target.ready:
             return {
                 "output": json.dumps({
                     "error": "no_vision_model_assigned",

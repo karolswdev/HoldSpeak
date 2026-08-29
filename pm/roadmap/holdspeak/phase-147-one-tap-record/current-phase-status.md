@@ -1,8 +1,8 @@
 # Phase 147 — One-Tap Record
 
-**Status:** chartered (0/7).
+**Status:** in progress (1/7).
 
-**Last updated:** 2026-08-28.
+**Last updated:** 2026-08-29.
 
 ## Owner mandate
 
@@ -69,19 +69,28 @@ meeting row with a quiet origin line (D7).
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-147-01 | The link (schema + arm verb, server side) | ready | [story-01](./story-01-the-link.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-147-01 | The link (schema + arm verb, server side) | in-progress | [story-01](./story-01-the-link.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-147-02 | The tap (rail verb + armed state, web) | ready | [story-02](./story-02-the-tap.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-147-03 | The honest follow (reconciliation + snapshot identity) | ready | [story-03](./story-03-the-honest-follow.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-147-04 | Meeting provenance (the event on the record) | ready | [story-04](./story-04-meeting-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-147-05 | Snapshot polish riders (the 146 ledger pair) | ready | [story-05](./story-05-snapshot-polish.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-147-05 | Snapshot polish riders (the 146 ledger pair) | done | [story-05](./story-05-snapshot-polish.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-147-06 | The record book (docs) | ready | [story-06](./story-06-the-record-book.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-147-07 | The walk and the close | ready | [story-07](./story-07-walk-and-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-Chartered 2026-08-28 from the two same-day audits; the design beat
-ran BEFORE implementation (counsel ruling dispositioned in the
-decision log). No story started yet.
+**1/7.** HS-147-05 (the snapshot polish riders) is DONE first — the
+independent lane shipped while story 01 built: the IMPORT SCREENSHOT
+bare catch is dead (422 refusals surface in the PrefStatusBar via the
+same `readableError` path the drop layer uses), and the
+direct-dispatch fallback pre-filters to vision-capable profiles (v2
+capability manifest first, kind heuristic for unbound legacy;
+`no_vision_model_assigned` now fires with ZERO inference dispatches
+— call-count asserted; the non-vision `resolve_placement` fallback
+removed). 37 Python + 21 web focused tests green, re-run and read by
+the orchestrator. Full-sweep verdict rides the next quiet-tree
+window. Story 01 (the link) is in-progress in its parallel lane;
+02/03/04 wait on it.
 
 ## Decision log
 

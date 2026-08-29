@@ -222,3 +222,190 @@ class TestProductionPathDispatch:
         assert "no_vision_model" in parsed.error or "unavailable" in parsed.error or "no_route" in parsed.error or "failed" in parsed.error, (
             f"Expected a named config/assignment refusal, got {parsed.error!r}"
         )
+
+
+class TestVisionPreFilter:
+    """HS-147-05: pre-filter the direct-dispatch fallback to vision-capable
+    profiles.  When none qualify the named refusal fires with ZERO dispatches."""
+
+    def test_ondevice_only_profiles_refused_with_zero_dispatches(
+        self, tmp_path, monkeypatch,
+    ):
+        """Only onDevice profiles exist and none have v2 vision claims.
+        The refusal must fire before any inference dispatch."""
+        db = Database(tmp_path / "no-vision-prefilter.db")
+        # Create a local on-device profile (GGUF language model, no vision)
+        db.profiles.upsert(
+            profile_id="prof_local",
+            name="Local Q6",
+            kind="onDevice",
+            model_file=str(tmp_path / "fake-model.gguf"),
+            model="fake-q6",
+            requires_key=False,
+            context_limit=16384,
+        )
+        # Make the model file exist so the profile is "ready"
+        (tmp_path / "fake-model.gguf").write_bytes(b"GGUF")
+
+        broker = _configure(db)
+
+        dispatch_count = 0
+        original_invoke = broker.inference_runner.invoke
+
+        def counting_invoke(*args, **kwargs):
+            nonlocal dispatch_count
+            dispatch_count += 1
+            return original_invoke(*args, **kwargs)
+
+        monkeypatch.setattr(broker.inference_runner, "invoke", counting_invoke)
+        monkeypatch.setattr(
+            "holdspeak.services.calendar_snapshot_service._service",
+            lambda: broker,
+        )
+        monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+
+        from holdspeak.services.calendar_snapshot_service import (
+            EXTRACTION_SYSTEM_PROMPT,
+            EXTRACTION_USER_PROMPT,
+            extract_via_router,
+            parse_extraction_json,
+        )
+
+        payload = {
+            "system_prompt": EXTRACTION_SYSTEM_PROMPT,
+            "user_prompt": EXTRACTION_USER_PROMPT,
+            "image_base64": "AAAA",
+            "image_media_type": "image/png",
+        }
+
+        result = extract_via_router(OWNER, payload)
+
+        parsed = parse_extraction_json(result["output"])
+        assert parsed.error == "no_vision_model_assigned", (
+            f"Expected no_vision_model_assigned, got {parsed.error!r}"
+        )
+        assert dispatch_count == 0, (
+            f"Pre-filter should prevent all dispatches; got {dispatch_count}"
+        )
+
+    def test_openai_compatible_profile_passes_prefilter(
+        self, tmp_path, monkeypatch,
+    ):
+        """An openAICompatible profile (no v2 binding) passes the vision
+        pre-filter — the dispatch reaches the engine."""
+        db = Database(tmp_path / "vision-compat.db")
+        profile_id = _setup_profile(db, profile_id="prof_cloud_vision")
+        broker = _configure(db)
+
+        from holdspeak.deployment_revisions import capture_deployment_revision
+        from holdspeak.inference_targets import target_from_profile
+
+        profile = db.profiles.get(profile_id)
+        target = target_from_profile(profile, db)
+        capture_deployment_revision(db, target)
+
+        dispatch_count = 0
+
+        class FakeVisionEngine:
+            active_provider = "openai_compatible"
+            active_model = "vision-model"
+
+            def run_prompt_messages(self, *, messages, **_):
+                return DETERMINISTIC_EXTRACTION
+
+        monkeypatch.setattr(
+            broker.inference_runner,
+            "_engine_factory",
+            lambda revision, **_: FakeVisionEngine(),
+        )
+        original_invoke = broker.inference_runner.invoke
+
+        def counting_invoke(*args, **kwargs):
+            nonlocal dispatch_count
+            dispatch_count += 1
+            return original_invoke(*args, **kwargs)
+
+        monkeypatch.setattr(broker.inference_runner, "invoke", counting_invoke)
+        monkeypatch.setattr(
+            "holdspeak.services.calendar_snapshot_service._service",
+            lambda: broker,
+        )
+        monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+
+        from holdspeak.services.calendar_snapshot_service import (
+            EXTRACTION_SYSTEM_PROMPT,
+            EXTRACTION_USER_PROMPT,
+            extract_via_router,
+            parse_extraction_json,
+        )
+
+        payload = {
+            "system_prompt": EXTRACTION_SYSTEM_PROMPT,
+            "user_prompt": EXTRACTION_USER_PROMPT,
+            "image_base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+            "image_media_type": "image/png",
+        }
+
+        result = extract_via_router(OWNER, payload)
+
+        assert dispatch_count > 0, (
+            "openAICompatible profile should pass the vision pre-filter "
+            "and dispatch at least once"
+        )
+        parsed = parse_extraction_json(result["output"])
+        assert parsed.error is None, f"Happy path should succeed, got {parsed.error!r}"
+
+    def test_vision_capable_helper_with_v2_claims(self, tmp_path):
+        """A profile with a v2 model-profile revision claiming 'vision'
+        passes _vision_capable regardless of legacy kind."""
+        db = Database(tmp_path / "v2-vision.db")
+        db.profiles.upsert(
+            profile_id="prof_with_v2",
+            name="V2 Vision",
+            kind="onDevice",
+            model_file=str(tmp_path / "model.gguf"),
+            model="llava-v1.6",
+            requires_key=False,
+        )
+        # Insert a v2 model profile revision WITH vision in claims
+        import json as _json
+        manifest = {"revision": "test-v2", "claims": ["vision", "language"]}
+        manifest["sha256"] = "test-sha"
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO model_profile_revisions
+                   (profile_id, revision, sha256, label, provider_family,
+                    runtime_family, model_or_artifact_identity,
+                    supported_modalities_json, context_support,
+                    tokenizer_template_requirements_json,
+                    capability_manifest_json, safe_presentation_json,
+                    created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                ("prof_with_v2", 1, "sha-test", "V2 Vision", "local",
+                 "llama_cpp", "llava-v1.6",
+                 _json.dumps(["language", "vision"]), "bounded",
+                 _json.dumps({}), _json.dumps(manifest), _json.dumps({}),
+                 "2026-08-28T00:00:00Z"),
+            )
+
+        from holdspeak.services.calendar_snapshot_service import _vision_capable
+
+        profile = db.profiles.get("prof_with_v2")
+        assert _vision_capable(profile, db) is True
+
+    def test_vision_capable_helper_rejects_ondevice_without_claims(self, tmp_path):
+        """An onDevice profile with no v2 binding is NOT vision-capable."""
+        db = Database(tmp_path / "no-v2.db")
+        db.profiles.upsert(
+            profile_id="prof_local_only",
+            name="Local Only",
+            kind="onDevice",
+            model_file=str(tmp_path / "model.gguf"),
+            model="qwen3-q6",
+            requires_key=False,
+        )
+
+        from holdspeak.services.calendar_snapshot_service import _vision_capable
+
+        profile = db.profiles.get("prof_local_only")
+        assert _vision_capable(profile, db) is False
