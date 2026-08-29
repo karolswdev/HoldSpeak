@@ -16,11 +16,14 @@ subject to the owner's mock verdict.
 
 ## D1 — the grammar core (variant-independent)
 
-- **Stipple ghosting** replaces faint-text: a 2×2 shadow-tone
-  checkerboard overlay (CSS repeating-conic trick, ~45% opacity,
-  the item's box only; tune sparser if dense on dark). The Style
-  Guide law adopted verbatim: a menu item that does nothing is
-  ALWAYS ghosted, never hidden.
+- **Stipple ghosting** replaces faint-text: a checkerboard overlay
+  in the PANEL'S OWN GROUND color (var(--surface-3)) that punches
+  holes in the text — the counsel's amendment: the Amiga stipple
+  ERASED to background, it never darkened; a black stipple on the
+  dark Signal ground only muddies. 2×2 first, 3×3 fallback, decided
+  at a real-glass checkpoint during story 01. Item box only. The
+  Style Guide law adopted verbatim: a menu item that does nothing
+  is ALWAYS ghosted, never hidden.
 - **Ghost-reason collapse:** when every item in a panel shares one
   ghost reason (the no-selection Object menu — eight "Select an
   object" echoes today), render ONE quiet panel-footer hint; mixed
@@ -77,7 +80,14 @@ is a truthful screenshot, not a drawing):
 C ships as the default after the exhibit is delivered; the owner's
 verdict at the exhibit (or any later flinch) flips the attribute and
 re-ships — the implementation cost of the other variants is zero by
-construction.
+construction. Counsel amendment (the discrimination sentence):
+entry builders attach glyph data wherever a glyph exists (DESK_TOOLS
+nouns, create kinds, and a small unicode verb set so B is truthful);
+every panel declares `data-menu-context="launcher"|"verb"`; the root
+attribute gates rendering — `none` hides all, `launcher` shows the
+column only in launcher-context panels, `all` shows it everywhere.
+Discrimination lives in the panel declaration + one render check,
+never in scattered CSS selectors.
 
 ## D3 — glyph vocabulary jurisdictions (settled)
 

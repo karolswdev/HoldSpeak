@@ -7,6 +7,9 @@
 // chrome z-trap), separators, a right-aligned key column, type-ahead,
 // and ONE-deep submenus (adjacent at 1440; at 393 a submenu REPLACES
 // the panel with a back row - it never floats beside it).
+// HS-148-01 - the grammar core: stipple ghosting, drawn keycap wells,
+// checkable lane (menuitemcheckbox/menuitemradio), the lane law,
+// recessed separators, ghost-reason collapse, submenu indicator.
 import {
   useEffect,
   useMemo,
@@ -16,6 +19,12 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { VerbGlyph } from "./window/VerbGlyph";
+
+/** HS-148-01: selector that finds ALL menu-item roles (menuitem,
+ * menuitemcheckbox, menuitemradio) for keyboard navigation. */
+const MENUITEM_SELECTOR =
+  "[role='menuitem'],[role='menuitemcheckbox'],[role='menuitemradio']";
 
 /** Type-ahead + roving-arrow keyboard grammar shared by every panel. */
 function menuKeyDown(
@@ -24,7 +33,7 @@ function menuKeyDown(
   returnFocus?: () => void,
 ) {
   const items = Array.from(
-    e.currentTarget.querySelectorAll<HTMLElement>("[role='menuitem']"),
+    e.currentTarget.querySelectorAll<HTMLElement>(MENUITEM_SELECTOR),
   );
   const at = items.indexOf(document.activeElement as HTMLElement);
   if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -109,6 +118,7 @@ export function DeskMenuItem({
   ariaLabel,
   onSelect,
   disabled,
+  checked,
   children,
 }: {
   glyph?: ReactNode;
@@ -119,14 +129,30 @@ export function DeskMenuItem({
   /** HS-105-05 - ghosting over hiding: a disabled item stays visible
    * (aria-disabled) and refuses to run; the caller renders the reason. */
   disabled?: boolean;
+  /** HS-148-01 - checkable: boolean = checkbox, "exclusive" = radio. */
+  checked?: boolean | "exclusive";
   children: ReactNode;
 }) {
+  // HS-148-01: role is conditional on checkable props (counsel should-fix).
+  const role =
+    checked !== undefined
+      ? checked === "exclusive"
+        ? "menuitemradio"
+        : "menuitemcheckbox"
+      : "menuitem";
+  const ariaChecked =
+    checked !== undefined
+      ? checked === true || checked === "exclusive"
+        ? true
+        : false
+      : undefined;
   return (
     <button
       type="button"
-      role="menuitem"
+      role={role}
       aria-label={ariaLabel}
       aria-disabled={disabled || undefined}
+      aria-checked={ariaChecked}
       className={disabled ? "is-ghost" : undefined}
       onClick={() => {
         if (!disabled) onSelect();
@@ -139,7 +165,8 @@ export function DeskMenuItem({
   );
 }
 
-/** HS-111-07 - the separator: a 1px rule between verb groups. */
+/** HS-111-07 - the separator: a 1px rule between verb groups.
+ * HS-148-01 - recessed: shadow + shine pair. */
 export function WorkMenuSep() {
   return <span role="separator" className="desk-menu-sep" />;
 }
@@ -155,6 +182,8 @@ export type WorkMenuEntry =
       keycap?: string;
       /** null/undefined = runnable; a string = ghosted WITH that reason. */
       ghost?: string | null;
+      /** HS-148-01: checkable. boolean = checkbox, "exclusive" = radio. */
+      checked?: boolean | "exclusive";
       onSelect(): void;
     }
   | { type: "sep"; id?: string }
@@ -181,23 +210,97 @@ function clampStyle(x: number, y: number): CSSProperties {
   };
 }
 
+/** HS-148-01: render a keycap string as drawn keycap wells.
+ * Each modifier/key character gets its own well. */
+function KeycapWells({ keycap }: { keycap: string }) {
+  // The keycap is already in symbol notation (e.g. "⌘N", "⌃⇧`", "F2").
+  // Split into individual keys: each modifier symbol (⌘⇧⌃⌥) is one key,
+  // remaining characters form the final key (handles "F2", "Delete", etc.).
+  const parts: string[] = [];
+  let rest = keycap;
+  for (const ch of rest) {
+    if ("⌘⇧⌃⌥".includes(ch)) {
+      parts.push(ch);
+    } else {
+      break;
+    }
+  }
+  const remainder = rest.slice(parts.length);
+  if (remainder) parts.push(remainder);
+  return (
+    <span className="desk-menu-keycaps" aria-label={keycap}>
+      {parts.map((k, i) => (
+        <kbd key={i} className="desk-menu-well">
+          {k}
+        </kbd>
+      ))}
+    </span>
+  );
+}
+
+/** HS-148-01: detect whether a panel's entries need the glyph/check lane.
+ * Returns true if ANY item has a glyph or is checkable. */
+function panelHasLane(entries: WorkMenuEntry[]): boolean {
+  return entries.some(
+    (e) =>
+      e.type === "item" && (e.glyph != null || e.checked !== undefined),
+  );
+}
+
+/** HS-148-01: compute ghost-reason MAJORITY collapse for a panel.
+ * The single most common ghost reason, when it appears on >=3 ghosted
+ * rows, collapses to the panel footer; rows carrying a DIFFERENT reason
+ * keep their per-row echo. On tie, collapse only the first-encountered. */
+function collapseGhostReason(
+  entries: WorkMenuEntry[],
+): string | null {
+  const ghosts = entries.filter(
+    (e): e is Extract<WorkMenuEntry, { type: "item" }> =>
+      e.type === "item" && typeof e.ghost === "string",
+  );
+  if (ghosts.length < 3) return null;
+  // Count occurrences, track first-encountered order.
+  const counts = new Map<string, number>();
+  for (const g of ghosts) {
+    counts.set(g.ghost!, (counts.get(g.ghost!) ?? 0) + 1);
+  }
+  let best: string | null = null;
+  let bestCount = 0;
+  for (const [reason, count] of counts) {
+    if (count > bestCount) {
+      best = reason;
+      bestCount = count;
+    }
+  }
+  return bestCount >= 3 ? best : null;
+}
+
 function WorkMenuRows({
   entries,
   onClose,
   openSub,
   setOpenSub,
   onSubAnchor,
+  hasLane,
+  collapsedReason,
 }: {
   entries: WorkMenuEntry[];
   onClose(): void;
   openSub: string | null;
   setOpenSub(id: string | null): void;
   onSubAnchor(id: string, el: HTMLElement): void;
+  /** HS-148-01: lane law — every row reserves the lane when the panel has any. */
+  hasLane: boolean;
+  /** HS-148-01: collapsed ghost reason (null = show per-row reasons). */
+  collapsedReason: string | null;
 }) {
   const intent = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (intent.current) clearTimeout(intent.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (intent.current) clearTimeout(intent.current);
+    },
+    [],
+  );
   return (
     <>
       {entries.map((entry, i) => {
@@ -236,20 +339,61 @@ function WorkMenuRows({
                 setOpenSub(openSub === entry.id ? null : entry.id);
               }}
             >
+              {/* HS-148-01: lane law — sub rows reserve the lane too. */}
+              {hasLane ? (
+                <span className="desk-menu-glyph" aria-hidden="true" />
+              ) : null}
               <span className="desk-menu-label">{entry.label}</span>
               <span className="desk-menu-submark" aria-hidden="true">
-                ▸
+                {"»"}
               </span>
             </button>
           );
         }
         const ghost = entry.ghost ?? null;
+        const isCheckable = entry.checked !== undefined;
+        // HS-148-01: role is conditional on checkable props.
+        const role = isCheckable
+          ? entry.checked === "exclusive"
+            ? "menuitemradio"
+            : "menuitemcheckbox"
+          : "menuitem";
+        const ariaChecked = isCheckable
+          ? entry.checked === true || entry.checked === "exclusive"
+          : undefined;
+        // HS-148-01: the glyph lane — checkable mark, entry glyph, or spacer.
+        let laneMark: ReactNode = null;
+        if (isCheckable && ariaChecked) {
+          laneMark = (
+            <span className="desk-menu-glyph" aria-hidden="true">
+              <VerbGlyph
+                kind={entry.checked === "exclusive" ? "dot" : "check"}
+              />
+            </span>
+          );
+        } else if (entry.glyph) {
+          laneMark = (
+            <span className="desk-menu-glyph" aria-hidden="true">
+              {entry.glyph}
+            </span>
+          );
+        } else if (hasLane) {
+          // Lane law: reserve the column even when this row has nothing.
+          laneMark = (
+            <span className="desk-menu-glyph" aria-hidden="true" />
+          );
+        }
+        // HS-148-01: per-row ghost reason — suppressed when collapsed.
+        // HS-148-01: majority collapse — suppress per-row reason only
+        // when it matches the collapsed majority; different reasons stay.
+        const showPerRowReason = ghost && ghost !== collapsedReason;
         return (
           <button
             key={entry.id}
             type="button"
-            role="menuitem"
+            role={role}
             aria-disabled={ghost ? true : undefined}
+            aria-checked={ariaChecked}
             className={ghost ? "is-ghost" : undefined}
             onPointerEnter={() => {
               if (intent.current) clearTimeout(intent.current);
@@ -268,18 +412,16 @@ function WorkMenuRows({
               entry.onSelect();
             }}
           >
-            {entry.glyph ? (
-              <span className="desk-menu-glyph" aria-hidden="true">
-                {entry.glyph}
-              </span>
-            ) : null}
+            {laneMark}
             <span className="desk-menu-label">
               {entry.label}
-              {ghost ? <small className="quiet"> · {ghost}</small> : null}
+              {showPerRowReason ? (
+                <small className="quiet"> &middot; {ghost}</small>
+              ) : null}
             </span>
-            {entry.keycap && !ghost ? (
-              <kbd className="desk-menu-key">{entry.keycap}</kbd>
-            ) : null}
+            {/* HS-148-01: keycaps render on ghosted rows too (stippled with
+                the row) — the `&& !ghost` suppression is removed. */}
+            {entry.keycap ? <KeycapWells keycap={entry.keycap} /> : null}
           </button>
         );
       })}
@@ -300,6 +442,7 @@ export function WorkMenu({
   onClose,
   returnFocus,
   autoFocus,
+  menuContext,
 }: {
   label: string;
   x: number;
@@ -310,6 +453,8 @@ export function WorkMenu({
   onClose(): void;
   returnFocus?: () => void;
   autoFocus?: boolean;
+  /** HS-148-01: panel-level context declaration (mechanism — default "verb"). */
+  menuContext?: string;
 }) {
   const [openSub, setOpenSub] = useState<string | null>(null);
   const [subAt, setSubAt] = useState<{ x: number; y: number } | null>(null);
@@ -330,7 +475,7 @@ export function WorkMenu({
   useEffect(() => {
     if (autoFocus)
       panelRef.current
-        ?.querySelector<HTMLElement>("[role='menuitem']")
+        ?.querySelector<HTMLElement>(MENUITEM_SELECTOR)
         ?.focus();
   }, [autoFocus]);
 
@@ -338,7 +483,7 @@ export function WorkMenu({
   useEffect(() => {
     if (openSub && subAt)
       subRef.current
-        ?.querySelector<HTMLElement>("[role='menuitem']")
+        ?.querySelector<HTMLElement>(MENUITEM_SELECTOR)
         ?.focus();
   }, [openSub, subAt]);
 
@@ -358,6 +503,10 @@ export function WorkMenu({
     setSubAt({ x: r.right + 1, y: r.top - 3 });
   };
 
+  // HS-148-01: lane law + ghost collapse computed once per render.
+  const hasLane = panelHasLane(entries);
+  const collapsedReason = collapseGhostReason(entries);
+
   const panel = (
     <nav
       ref={panelRef}
@@ -369,6 +518,7 @@ export function WorkMenu({
       role="menu"
       aria-label={label}
       style={clampStyle(x, y)}
+      data-menu-context={menuContext || "verb"}
       onPointerDown={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
         if (openSub && e.key === "ArrowLeft") {
@@ -397,8 +547,9 @@ export function WorkMenu({
             className="desk-menu-back"
             onClick={() => setOpenSub(null)}
           >
+            {/* HS-148-01: the back row participates in the lane law. */}
             <span className="desk-menu-glyph" aria-hidden="true">
-              ◂
+              {"◂"}
             </span>
             <span className="desk-menu-label">{sub.label}</span>
           </button>
@@ -409,6 +560,8 @@ export function WorkMenu({
             openSub={null}
             setOpenSub={() => {}}
             onSubAnchor={() => {}}
+            hasLane={panelHasLane(sub.entries)}
+            collapsedReason={collapseGhostReason(sub.entries)}
           />
         </>
       ) : (
@@ -418,8 +571,14 @@ export function WorkMenu({
           openSub={openSub}
           setOpenSub={setOpenSub}
           onSubAnchor={onSubAnchor}
+          hasLane={hasLane}
+          collapsedReason={collapsedReason}
         />
       )}
+      {/* HS-148-01: ghost-reason collapse footer. */}
+      {collapsedReason && !narrow ? (
+        <span className="desk-menu-ghost-hint">{collapsedReason}</span>
+      ) : null}
       {!narrow && sub && subAt ? (
         <nav
           ref={subRef}
@@ -427,6 +586,7 @@ export function WorkMenu({
           role="menu"
           aria-label={`${sub.label} submenu`}
           style={clampStyle(subAt.x, subAt.y)}
+          data-menu-context={menuContext || "verb"}
           onKeyDown={(e) => {
             // The submenu owns its own keys; never let them bubble to
             // the parent panel (whose item query would move focus twice).
@@ -449,6 +609,8 @@ export function WorkMenu({
             openSub={null}
             setOpenSub={() => {}}
             onSubAnchor={() => {}}
+            hasLane={panelHasLane(sub.entries)}
+            collapsedReason={collapseGhostReason(sub.entries)}
           />
         </nav>
       ) : null}

@@ -1,6 +1,6 @@
 # Phase 148 — The Menu Grammar
 
-**Status:** chartered (0/6).
+**Status:** in progress (1/6).
 
 **Last updated:** 2026-08-29.
 
@@ -65,7 +65,7 @@ bindings this phase.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-148-01 | The grammar core (DeskMenu + material) | ready | [story-01](./story-01-grammar-core.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-148-01 | The grammar core (DeskMenu + material) | done | [story-01](./story-01-grammar-core.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-148-02 | The content sweep (glyphs, groups, casing, …) | ready | [story-02](./story-02-content-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-148-03 | The mock exhibit (the owner's variant gate) | ready | [story-03](./story-03-mock-exhibit.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-148-04 | Head + dock menus on the registry (AA) | ready | [story-04](./story-04-head-dock-registry.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -74,9 +74,17 @@ bindings this phase.
 
 ## Where we are
 
-Chartered 2026-08-29 from three same-day audits; the design counsel
-ruling and the owner's mock verdict are the two gates ahead of the
-close. No story started.
+**1/6.** HS-148-01 (the grammar core) is DONE in two rounds — the
+menus have their grammar: ground-color stipple ghosting (2×2, picked
+on real glass), drawn keycap wells (visible even when ghosted),
+the checkable entry type with honest aria and conditional roles,
+the lane alignment law, recessed separators, the true `»`, the
+majority-collapse ghost-reason footer (round 2 — the orchestrator's
+eyeball caught the all-identical rule missing the audit's own
+motivating panel), and the D3 keyboard repair gated to intentional
+opens. 52 focused green orchestrator-read; the reforged Object
+panel is the exhibit (story-01-shots/). Next: 02 (content) ∥ 04
+(head+dock) in disjoint lanes, then the owner's mock exhibit.
 
 ## Decision log
 
@@ -92,8 +100,26 @@ close. No story started.
   one footer hint); keycaps stay visible when ghosted; variants
   A/B/C are one-attribute states so the owner's verdict is cheap
   forever. The owner may overrule any row.
-- **2026-08-29 — counsel design ruling:** recorded here when it
-  returns.
+- **2026-08-29 — counsel design ruling: RATIFY-WITH-CONCERNS,
+  zero MUST-FIX ("Build it").** Three should-fixes ABSORBED into the
+  spec before any builder rides: (1) the stipple punches holes in
+  the panel's own ground color, never black-on-dark — "the Amiga
+  stipple ERASED to background" — with a 2×2 vs 3×3 real-glass
+  checkpoint; (2) DeskMenuItem's hardcoded role becomes conditional
+  so the primitive path can't emit a wrong checkable role; (3) the
+  variant-C discrimination sentence (panel-level
+  data-menu-context + one render check). Three items LEDGERED
+  below. Human-compliance: "the owner finds Settings by its gear
+  glyph instead of reading 13 labels… It operates with joy."
+
+## Ledger (counsel, carried openly)
+
+- The `▸`→`»` submenu indicator is a discrete story-01 criterion,
+  not just spec prose (folded).
+- The ellipsis audit is scoped to story 02's sweep (folded).
+- List-view context-menu reachability gets explicit walk coverage
+  in story 06 (the before-walk could not trigger it via Playwright)
+  (folded).
 
 ## Risk register
 
