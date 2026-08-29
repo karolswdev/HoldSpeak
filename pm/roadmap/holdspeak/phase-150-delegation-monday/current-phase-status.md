@@ -1,6 +1,7 @@
 # Phase 150 — Delegation + the Chief-of-Staff Brief
 
-**Status:** in progress (5/6).
+**Status:** complete (6/6) — holding for the owner's shot verdict
+and merge word.
 
 **Last updated:** 2026-08-29.
 
@@ -54,11 +55,31 @@ NON-NEGOTIABLE this phase (two arcs carried it).
 | HS-150-03 | The chief-of-staff overlay (person_sections) | done | [story-03](./story-03-chief-of-staff.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-150-04 | The web-inherited baseline (the debt rider) | done | [story-04](./story-04-web-baseline.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-150-05 | The record book | done | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-150-06 | The walk and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-150-06 | The walk and the close | done | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-**5/6.** HS-150-05 (the record book) is DONE — the manager suite
+**6/6 — PHASE 150 COMPLETE, holding for the owner.** HS-150-06
+closed it: the phase walk (assets/walk-rig.py) green ×2 + a third
+run under the final geometry, with the stamped capture — the
+persisted boundary WALKED (person_sections in the response; the
+relationship id absent from all three monday_brief tables, rows
+scanned non-empty; zero keychain calls by construction), the
+Add-to-1:1-agenda round-trip through the real 138 authority, both
+audit probes flipped PAINFUL/PERSON-BLIND → one-gesture answers
+with before/after frames. Close sweep: pytest 15 failed / 6985
+passed = 11 inherited-baseline + 4 dispositioned (the api-surface
+regen for our two routes; two census line-drift remaps with
+attribution; and ONE real branch-new — the 144 door-glass band law
+met the four-lane chair, ruled to the new truth with a joy fix
+killing the orphaned half-width AGENTS lane, green ×2 serial) =
+zero unresolved branch-new; web checker verdict verbatim
+"baseline-subset/exact, zero branch-new" (six names, each
+matched). Close counsel: RATIFY-WITH-CONCERNS, ZERO must-fix,
+ZERO should-fix, six observation-grade ledger items (decision
+log). final-summary.md is the exit record. The branch HOLDS for
+the owner: shot verdict + merge word.
+Earlier — **5/6.** HS-150-05 (the record book) is DONE — the manager suite
 reads cold: PEOPLE_INTEGRATION records the SECOND fulfilled
 sanctioned association (owner_aliases) rule-by-rule mirroring the
 first; USER_GUIDE walks map-once → chips → filter → staleness and
@@ -168,7 +189,42 @@ builds in its parallel lane. Earlier — chartered 0/6.
   INSERTs fresh (true stamps); _collect_waiting is person-blind by
   design (correct).
 
+- **2026-08-29 — CLOSE counsel: RATIFY-WITH-CONCERNS ("Build with
+  the constraints applied; the boundary is structural and the pins
+  attack the right joints"). ZERO must-fix, ZERO should-fix, SIX
+  ledger items.** The standing persisted-boundary attack ran the
+  full surface (generate/load/shelf writes, @observe_service,
+  pipeline_events, briefs/latest, caches/export/sync, the
+  composition itself) — every path CLEAN, the adapter-layer
+  composition judged STRUCTURAL (a leaking refactor would have to
+  break three pins at once). Also ratified: the picker's
+  containment sort is lawful suggestion-not-inference (149
+  precedent); delegated_at cannot lie on any write path
+  (upsert CASE / edit / delegate / commit_decision all proven);
+  brief-second-after-door does not violate 144's Door-first
+  ruling and the registry pin is effective; the walk rig's exit
+  assertions prove what the evidence claims; Tuesday
+  ("a manager's daily operating picture, not a one-time setup")
+  and joy both PASS. The six ledger items are recorded below.
+
 ## Ledger (counsel, carried openly)
+
+Close-counsel additions (all observation-grade, none blocks):
+- Pin 2 (pipeline_events content check) exercises NullObserver —
+  the structural defense makes it moot; future tightening: a real
+  observer asserting a person-free result_summary.
+- The overlay constructs its own unobserved FollowThroughService
+  (intentional — the secondary board read stays unlogged).
+- person_overlay's next-1:1 lookup uses a raw read-only
+  db._connection() query on the plaintext calendar table —
+  acceptable at read time; a repository refactor is optional.
+- The walk rig's table scan string-matches repr(row) against the
+  relationship UUID — collision probability negligible; a
+  column-specific scan would be more precise.
+- ModelLibraryCore is the first web flake-family member (story 04's
+  capture, ruled and documented).
+- The picker's suggestion sort over-matches on substrings —
+  harmless: over-suggesting still requires the owner's click.
 
 - Meeting TITLES already carry human names into persisted brief
   items (pre-existing, not a 150 regression; person_sections makes

@@ -357,25 +357,34 @@ def test_hs144_door_populated_glass_action_refusal_and_shots(
             assert wide_geometry["scrollWidth"] == wide_geometry["clientWidth"], wide_geometry
             assert wide_geometry["activeRight"] <= wide_geometry["viewportWidth"] + 0.5, wide_geometry
 
-            # Door leaves the two retained lanes as one calm, equal lower band.
+            # HS-150-03 restored the Brief lane (second, after the Door), so
+            # the calm equal band is now BRIEF + MEETINGS, with AGENTS as the
+            # dangling odd last lane spanning the full band below it.
             lower_band = page.evaluate(
                 """() => {
+                  const brief = document.querySelector('[data-lane="brief"]');
                   const meetings = document.querySelector('[data-lane="meetings"]');
                   const agents = document.querySelector('[data-lane="agents"]');
-                  if (!meetings || !agents) return null;
+                  if (!brief || !meetings || !agents) return null;
+                  const briefBox = brief.getBoundingClientRect();
                   const meetingBox = meetings.getBoundingClientRect();
                   const agentBox = agents.getBoundingClientRect();
                   return {
+                    briefTop: briefBox.top,
+                    briefWidth: briefBox.width,
                     agentsTop: agentBox.top,
                     agentsWidth: agentBox.width,
                     meetingsTop: meetingBox.top,
                     meetingsWidth: meetingBox.width,
+                    meetingsBottom: meetingBox.bottom,
                   };
                 }"""
             )
             assert lower_band is not None
-            assert abs(lower_band["meetingsWidth"] - lower_band["agentsWidth"]) <= 0.5, lower_band
-            assert abs(lower_band["meetingsTop"] - lower_band["agentsTop"]) <= 0.5, lower_band
+            assert abs(lower_band["briefWidth"] - lower_band["meetingsWidth"]) <= 0.5, lower_band
+            assert abs(lower_band["briefTop"] - lower_band["meetingsTop"]) <= 0.5, lower_band
+            assert lower_band["agentsTop"] >= lower_band["meetingsTop"], lower_band
+            assert lower_band["agentsWidth"] >= 2 * lower_band["meetingsWidth"], lower_band
             page.screenshot(path=str(DOOR_ASSETS / "door-populated-1440.png"), full_page=False)
 
             # A named Door descriptor calls its production route; the settled card

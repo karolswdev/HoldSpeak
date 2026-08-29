@@ -115,7 +115,7 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/config/integrations.py:191:inference_target_id",
     "holdspeak/config/meeting.py:145:intel_profile_id",
     "holdspeak/config/meeting.py:144:intel_profile_id",
-    "holdspeak/db/models/__init__.py:1123:resolver_profile_id",
+    "holdspeak/db/models/__init__.py:1124:resolver_profile_id",
     "holdspeak/db/models/workbench.py:139:resolver_profile_id",
     "holdspeak/services/inference_setup_service.py:644:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:649:inference_target_id",

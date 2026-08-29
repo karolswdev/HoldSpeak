@@ -317,6 +317,9 @@
 /* ── HS-144-03 — Door board: one contained workbench rail. ───────── */
 @media (min-width: 1200px) {
   .chair-lane[data-lane="door"] { grid-column: 1 / -1; }
+  /* HS-150-06: the Door spans first, so lanes pair (2,3), (4,5), … —
+     a dangling EVEN last lane is the orphan and spans the band. */
+  .chair-lane:last-child:nth-child(even) { grid-column: 1 / -1; }
 }
 .door-board-section { min-width: 0; }
 .door-board-summary {
