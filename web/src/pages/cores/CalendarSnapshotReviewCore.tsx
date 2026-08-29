@@ -35,7 +35,7 @@ function parseScope(scope: string | undefined): {
   confidence: string;
   error: string | null;
 } {
-  if (!scope) return { events: [], anchor: "", confidence: "absent", error: "No extraction data" };
+  if (!scope) return { events: [], anchor: "", confidence: "absent", error: "This review window opened without an import. Close it and re-import the screenshot." };
   try {
     const data = JSON.parse(scope);
     if (data.error) {
@@ -107,7 +107,7 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
           sourceLabel: result.source_label ?? "O365 SNAPSHOT",
         });
       } else {
-        setPhase({ step: "error", message: result.error ?? "Confirm failed" });
+        setPhase({ step: "error", message: result.error ?? "Could not save the events. Your review is still open. Try again." });
       }
     } catch (err) {
       setPhase({ step: "error", message: readableError(err) });

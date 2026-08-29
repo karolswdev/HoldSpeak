@@ -248,13 +248,17 @@ def resolve_events_to_timestamps(
         event_date = anchor_monday + timedelta(days=day_offset)
         h_start, m_start = int(event.start_time[:2]), int(event.start_time[3:])
         h_end, m_end = int(event.end_time[:2]), int(event.end_time[3:])
+        # The times the owner reads off a calendar screenshot are wall-clock
+        # LOCAL times; stamping them UTC shifted every imported event by the
+        # UTC offset on the rail (close-counsel should-fix, 2026-08-28).
+        local_tz = datetime.now().astimezone().tzinfo
         starts_at = datetime(
             event_date.year, event_date.month, event_date.day,
-            h_start, m_start, tzinfo=timezone.utc,
+            h_start, m_start, tzinfo=local_tz,
         )
         ends_at = datetime(
             event_date.year, event_date.month, event_date.day,
-            h_end, m_end, tzinfo=timezone.utc,
+            h_end, m_end, tzinfo=local_tz,
         )
         resolved.append({
             "title": event.title,
@@ -283,12 +287,18 @@ def generate_ics(
     ]
     for event in events:
         uid = f"{uuid.uuid4()}@holdspeak-snapshot"
-        starts_at = event["starts_at"].replace("-", "").replace(":", "").replace("+00:00", "Z")
-        if not starts_at.endswith("Z"):
-            starts_at = starts_at.split("+")[0] + "Z"
-        ends_at = event["ends_at"].replace("-", "").replace(":", "").replace("+00:00", "Z")
-        if not ends_at.endswith("Z"):
-            ends_at = ends_at.split("+")[0] + "Z"
+        # Convert honestly to UTC before formatting — string surgery on ISO
+        # offsets corrupts any non-UTC timestamp (close-counsel round).
+        starts_at = (
+            datetime.fromisoformat(event["starts_at"])
+            .astimezone(timezone.utc)
+            .strftime("%Y%m%dT%H%M%SZ")
+        )
+        ends_at = (
+            datetime.fromisoformat(event["ends_at"])
+            .astimezone(timezone.utc)
+            .strftime("%Y%m%dT%H%M%SZ")
+        )
         lines.append("BEGIN:VEVENT")
         lines.append(f"UID:{uid}")
         lines.append(f"DTSTART:{starts_at}")

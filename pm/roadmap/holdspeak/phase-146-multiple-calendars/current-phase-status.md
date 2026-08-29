@@ -1,6 +1,9 @@
 # Phase 146 — Multiple Calendars
 
-**Status:** in progress (6/7).
+**Status:** complete (7/7). Close counsel RATIFY-WITH-CONCERNS (one
+should-fix, FIXED in-round with photographic proof; five ledger
+concerns dispositioned below). Owner gates open: shot verdicts + the
+merge word.
 
 **Last updated:** 2026-08-28.
 
@@ -66,7 +69,7 @@ ceremony budget):
 | HS-146-02 | Settings service + wire | done | [story-02](./story-02-settings-service-wire.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-146-03 | The settings list editor (joy surface) | done | [story-03](./story-03-settings-list-editor.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-146-04 | Rail provenance + seed repairs | done | [story-04](./story-04-rail-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-146-05 | The walk and the close | ready | [story-05](./story-05-docs-walk-close.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-146-05 | The walk and the close | done | [story-05](./story-05-docs-walk-close.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-146-06 | The calendar book (thorough docs) | done | [story-06](./story-06-the-calendar-book.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-146-07 | The Calendar Snapshot adapter | done | [story-07](./story-07-calendar-snapshot-adapter.md) | [evidence-story-07](./evidence-story-07.md) |
 
@@ -89,6 +92,27 @@ ceremony budget):
   verdict vocabulary "baseline-exact, zero branch-new".
 
 ## Decision log
+
+- 2026-08-28 — **CLOSE COUNSEL (opus): RATIFY-WITH-CONCERNS.** All
+  seven orchestrator judgment-call clusters ruled lawful (incl. the
+  direct-dispatch fallback under the one-path doctrine — both arms
+  ride runner.invoke, the AskService is the precedent; and every
+  census registration verified honest). Tuesday table: joy on the
+  editor, clean chips, honest refusals. **ONE SHOULD-FIX, FIXED
+  IN-ROUND:** snapshot times were stamped UTC — the owner's 09:00
+  standup rendered 03:00 on the rail (visible in the delivered
+  shots; the counsel read the two shots against each other). Fixed
+  to local wall-clock; the fix exposed a SECOND latent defect — the
+  ICS generator's string surgery corrupted any non-UTC offset — now
+  an honest fromisoformat→UTC conversion; 33 unit + e2e green and
+  the rail exhibit re-shot showing 09:00. Ledger dispositions:
+  (2) IMPORT SCREENSHOT's bare catch swallows 422 upload refusals
+  (narrow surface; the drop path is honest) → ledgered; (3)+(4) two
+  factless fallback strings → FIXED in-round (cheap copy); (5) the
+  direct-dispatch fallback doesn't pre-filter vision-capable
+  profiles (failure mode = named refusal + wasted inference, never
+  bad data) → ledgered; (6) ARCHITECTURE's class-vs-module cosmetic
+  naming → FIXED.
 
 - 2026-08-28 — Phase chartered on the owner's menu pick (
   "Multiple calendars" over event→one-tap-record). Plan archived;

@@ -229,9 +229,12 @@ class TestResolveEvents:
         ]
         resolved = resolve_events_to_timestamps(events, monday)
         assert len(resolved) == 2
-        assert resolved[0]["starts_at"] == "2026-08-24T09:00:00+00:00"
-        assert resolved[1]["starts_at"] == "2026-08-28T14:00:00+00:00"
-        assert resolved[1]["ends_at"] == "2026-08-28T15:00:00+00:00"
+        # Close-counsel should-fix (2026-08-28): screenshot times are LOCAL
+        # wall-clock, not UTC — a 09:00 standup must render 09:00 on the rail.
+        local_tz = datetime.now().astimezone().tzinfo
+        assert resolved[0]["starts_at"] == datetime(2026, 8, 24, 9, 0, tzinfo=local_tz).isoformat()
+        assert resolved[1]["starts_at"] == datetime(2026, 8, 28, 14, 0, tzinfo=local_tz).isoformat()
+        assert resolved[1]["ends_at"] == datetime(2026, 8, 28, 15, 0, tzinfo=local_tz).isoformat()
 
 
 # ── Merge and dedupe ──────────────────────────────────────────────────

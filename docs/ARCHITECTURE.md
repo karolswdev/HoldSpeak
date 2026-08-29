@@ -438,7 +438,7 @@ enabled source passes validation. `_calendar_event_item`
 `source_id` and `source_label` into the `DoorUpcomingItem` aggregate, so the
 rail can render provenance chips when more than one source is configured.
 
-**The snapshot adapter.** `CalendarSnapshotService`
+**The snapshot adapter.** `calendar_snapshot_service`
 (`holdspeak/services/calendar_snapshot_service.py`) extracts events from a
 calendar screenshot via the `calendar.snapshot_extract` inference capability
 (vision-required). The extraction result is model output and is treated as
