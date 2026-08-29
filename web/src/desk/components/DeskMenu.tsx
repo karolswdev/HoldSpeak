@@ -483,11 +483,23 @@ export function WorkMenu({
     return () => document.removeEventListener("pointerdown", down, true);
   }, [onClose]);
 
+  // HS-148-01 D3 repair: defer focus past the browser's native click-to-focus.
+  // On a real pointer-down open, the browser's click sequence
+  // (pointerdown -> mousedown -> focus -> mouseup -> click) focuses the
+  // bar title button AFTER React's synchronous useEffect runs .focus().
+  // A double-rAF escapes the browser's focus-assignment frame so the
+  // menu item wins. Keyboard opens (Enter/Space) are unaffected but the
+  // deferral is harmless there.
   useEffect(() => {
-    if (autoFocus)
-      panelRef.current
-        ?.querySelector<HTMLElement>(MENUITEM_SELECTOR)
-        ?.focus();
+    if (!autoFocus) return;
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        panelRef.current
+          ?.querySelector<HTMLElement>(MENUITEM_SELECTOR)
+          ?.focus();
+      });
+    });
+    return () => cancelAnimationFrame(id);
   }, [autoFocus]);
 
   // An adjacent submenu receives focus as it opens (ArrowLeft returns).

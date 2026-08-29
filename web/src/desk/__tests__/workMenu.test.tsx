@@ -2,9 +2,19 @@
  * fix), separators, key column, type-ahead, one-deep submenus.
  * HS-148-01 — the grammar core: stipple ghosting, drawn keycap wells,
  * checkable lane, lane law, ghost-reason collapse, submenu indicator. */
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
+
+/** Flush the double-rAF focus deferral used by WorkMenu's autoFocus.
+ * In jsdom, rAF is a polyfill backed by setTimeout; we use fake timers
+ * to tick both frames synchronously so the focus() call lands. */
+async function flushAutoFocus() {
+  // First rAF tick (outer)
+  await act(async () => { vi.advanceTimersByTime(16); });
+  // Second rAF tick (inner)
+  await act(async () => { vi.advanceTimersByTime(16); });
+}
 
 function entries(onNote = vi.fn(), onSpeak = vi.fn()): WorkMenuEntry[] {
   return [
@@ -465,65 +475,77 @@ describe("WorkMenu grammar (HS-148-01)", () => {
     expect(menu.getAttribute("data-menu-context")).toBe("verb");
   });
 
-  it("autoFocus on open focuses the first item", () => {
-    render(
-      <WorkMenu
-        label="T"
-        x={0}
-        y={0}
-        entries={[
-          { type: "item", id: "a", label: "First", onSelect: vi.fn() },
-          { type: "item", id: "b", label: "Second", onSelect: vi.fn() },
-        ]}
-        onClose={() => {}}
-        autoFocus
-      />,
-    );
-    expect(document.activeElement).toBe(
-      screen.getByRole("menuitem", { name: "First" }),
-    );
+  it("autoFocus on open focuses the first item", async () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <WorkMenu
+          label="T"
+          x={0}
+          y={0}
+          entries={[
+            { type: "item", id: "a", label: "First", onSelect: vi.fn() },
+            { type: "item", id: "b", label: "Second", onSelect: vi.fn() },
+          ]}
+          onClose={() => {}}
+          autoFocus
+        />,
+      );
+      await flushAutoFocus();
+      expect(document.activeElement).toBe(
+        screen.getByRole("menuitem", { name: "First" }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
-  it("keyboard nav finds menuitemcheckbox and menuitemradio roles", () => {
-    render(
-      <WorkMenu
-        label="T"
-        x={0}
-        y={0}
-        entries={[
-          {
-            type: "item",
-            id: "a",
-            label: "Toggle",
-            checked: true,
-            onSelect: vi.fn(),
-          },
-          {
-            type: "item",
-            id: "b",
-            label: "Radio",
-            checked: "exclusive",
-            onSelect: vi.fn(),
-          },
-          { type: "item", id: "c", label: "Plain", onSelect: vi.fn() },
-        ]}
-        onClose={() => {}}
-        autoFocus
-      />,
-    );
-    // Focus should be on first item (checkbox).
-    const toggle = screen.getByRole("menuitemcheckbox", { name: /Toggle/ });
-    expect(document.activeElement).toBe(toggle);
-    // ArrowDown should move to radio.
-    const menu = screen.getByRole("menu", { name: "T" });
-    fireEvent.keyDown(menu, { key: "ArrowDown" });
-    expect(document.activeElement).toBe(
-      screen.getByRole("menuitemradio", { name: /Radio/ }),
-    );
-    // ArrowDown again to plain.
-    fireEvent.keyDown(menu, { key: "ArrowDown" });
-    expect(document.activeElement).toBe(
-      screen.getByRole("menuitem", { name: /Plain/ }),
-    );
+  it("keyboard nav finds menuitemcheckbox and menuitemradio roles", async () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <WorkMenu
+          label="T"
+          x={0}
+          y={0}
+          entries={[
+            {
+              type: "item",
+              id: "a",
+              label: "Toggle",
+              checked: true,
+              onSelect: vi.fn(),
+            },
+            {
+              type: "item",
+              id: "b",
+              label: "Radio",
+              checked: "exclusive",
+              onSelect: vi.fn(),
+            },
+            { type: "item", id: "c", label: "Plain", onSelect: vi.fn() },
+          ]}
+          onClose={() => {}}
+          autoFocus
+        />,
+      );
+      await flushAutoFocus();
+      // Focus should be on first item (checkbox).
+      const toggle = screen.getByRole("menuitemcheckbox", { name: /Toggle/ });
+      expect(document.activeElement).toBe(toggle);
+      // ArrowDown should move to radio.
+      const menu = screen.getByRole("menu", { name: "T" });
+      fireEvent.keyDown(menu, { key: "ArrowDown" });
+      expect(document.activeElement).toBe(
+        screen.getByRole("menuitemradio", { name: /Radio/ }),
+      );
+      // ArrowDown again to plain.
+      fireEvent.keyDown(menu, { key: "ArrowDown" });
+      expect(document.activeElement).toBe(
+        screen.getByRole("menuitem", { name: /Plain/ }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
