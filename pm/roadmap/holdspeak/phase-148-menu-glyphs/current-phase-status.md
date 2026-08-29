@@ -1,6 +1,6 @@
 # Phase 148 — The Menu Grammar
 
-**Status:** in progress (4/6).
+**Status:** in progress (5/6).
 
 **Last updated:** 2026-08-29.
 
@@ -69,12 +69,24 @@ bindings this phase.
 | HS-148-02 | The content sweep (glyphs, groups, casing, …) | done | [story-02](./story-02-content-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-148-03 | The mock exhibit (the owner's variant gate) | done | [story-03](./story-03-mock-exhibit.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-148-04 | Head + dock menus on the registry (AA) | done | [story-04](./story-04-head-dock-registry.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-148-05 | The record book + the emoji guard | ready | [story-05](./story-05-record-book-guards.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-148-06 | The walk and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-148-05 | The record book + the emoji guard | done | [story-05](./story-05-record-book-guards.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-148-06 | The walk and the close | in-progress | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-**4/6.** HS-148-03 (the mock exhibit) is DONE — the owner's gate is
+**5/6.** HS-148-05 (the record book + the emoji guard) is DONE —
+DESK_GRAMMAR §7 is the menu law (lanes, the stipple law with the
+Commodore quote, majority-collapse, checkable roles, jurisdictions,
+the variant attribute, registry derivation), the USER_GUIDE says
+its one honest new sentence, and the sprites-never-emoji doctrine
+finally has teeth (the guard fails on an injected emoji, proven
+both ways). Meanwhile story 06's walk leg caught a REAL
+jsdom-vs-Chromium gap in the D3 focus repair (native post-click
+focus lands after React's sync effect) — fixed with a double-rAF
+deferral, proven on real glass three ways, and the list-view
+context-menu ledger item is CLOSED on the walk (object rows wire
+it; zone rows honestly do not). Remaining: the full walk ×2, the
+sweep, the counsel, the after-exhibit. Earlier — **4/6.** HS-148-03 (the mock exhibit) is DONE — the owner's gate is
 served: nine truthful shots off the real hub (the rig flips the
 variant before app boot), cross-read clean, DELIVERED to the owner
 with the before-shot, the A/C/B Go triptych, the Object and Desk
