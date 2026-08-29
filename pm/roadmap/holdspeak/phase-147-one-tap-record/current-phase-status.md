@@ -1,6 +1,6 @@
 # Phase 147 — One-Tap Record
 
-**Status:** in progress (5/7).
+**Status:** in progress (6/7).
 
 **Last updated:** 2026-08-29.
 
@@ -74,12 +74,24 @@ meeting row with a quiet origin line (D7).
 | HS-147-03 | The honest follow (reconciliation + snapshot identity) | done | [story-03](./story-03-the-honest-follow.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-147-04 | Meeting provenance (the event on the record) | done | [story-04](./story-04-meeting-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-147-05 | Snapshot polish riders (the 146 ledger pair) | done | [story-05](./story-05-snapshot-polish.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-147-06 | The record book (docs) | ready | [story-06](./story-06-the-record-book.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-147-06 | The record book (docs) | done | [story-06](./story-06-the-record-book.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-147-07 | The walk and the close | ready | [story-07](./story-07-walk-and-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**5/7.** HS-147-04 (meeting provenance) is DONE — the loop closes:
+**6/7.** HS-147-06 (the record book) is DONE — a cold reader can now
+run the whole loop from the docs alone: the USER_GUIDE "Arm an event
+for recording" section (labels verbatim: Record this, ARMED, Cancel?,
+ALREADY ARMED / EVENT ENDED / EVENT NOT FOUND), the README one-tap
+sentence, and a full event-linked-recording pipeline section in
+ARCHITECTURE_BACKEND_RUNTIME with verified anchors. Doc guards green;
+the stash-compare law proved zero branch-new violations hiding in
+the two inherited-baseline language guards. Meanwhile the walk grew
+its one-tap leg and passed 8/8 TWICE (including the live origin line
+through the sync authority — made possible by a sync round-trip fix
+the leg's construction exposed: meeting_state_from_sync_value dropped
+calendar_event_id, violating its exact-inverse contract; fixed +
+pinned). Only the close (07) remains. Earlier — **5/7.** HS-147-04 (meeting provenance) is DONE — the loop closes:
 a fired event-linked recording writes `calendar_event_id` onto the
 meeting row through the explicit `pending_calendar_event_id` seam
 (the counsel's D7 amendment, mirroring pending_title exactly), the

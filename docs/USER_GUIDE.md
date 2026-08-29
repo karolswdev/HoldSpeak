@@ -484,10 +484,11 @@ names a lawful verb; choosing it invokes that verb and returns its Receipt in
 flow. Moving or completing a card is not a cosmetic board-position edit.
 
 The Door's **Upcoming** rail is one chronological timeline. **EVENT** rows
-come from your calendar sources. **SCHEDULED RECORDING** rows name a
-recording the hub will start. A calendar event is not a recording, and a
-schedule is not an invitation. The rail can be empty or contain only
-schedules. Meetings keeps live and recent meetings.
+come from your calendar sources; each carries a **Record this** button that
+arms the event for recording with one tap. **SCHEDULED RECORDING** rows name
+a recording the hub will start. A schedule is not an invitation. The rail
+can be empty or contain only schedules. Meetings keeps live and recent
+meetings.
 
 At phone width, the compact **Go** menu opens applications.
 
@@ -528,11 +529,14 @@ rail while every healthy source refreshes normally.
 #### What the rail shows
 
 Each **EVENT** row shows the title, a **STARTS** time, and (when present) the
-location and meeting link. When more than one source is configured, each event
-row carries a provenance chip: a mono uppercase label naming the source (the
-label you gave it, falling back to the hostname of the URL, falling back to
-**LOCAL** for file sources). When only one source is connected the chip is
-omitted.
+location and meeting link. Every event row also carries a **Record this** button.
+Tapping it arms the event for recording; the button is replaced by an **ARMED**
+chip and a **Cancel?** prompt. If the event cannot be armed, the row states the
+reason: **ALREADY ARMED**, **EVENT ENDED**, or **EVENT NOT FOUND**. When more
+than one source is configured, each event row carries a provenance chip: a mono
+uppercase label naming the source (the label you gave it, falling back to the
+hostname of the URL, falling back to **LOCAL** for file sources). When only one
+source is connected the chip is omitted.
 
 If the same event appears in two feeds it shows twice, each with its own
 provenance chip. Cross-feed UIDs are not globally unique, so HoldSpeak does not
@@ -577,7 +581,59 @@ feed, you can import a week by screenshot.
    boundary; model output is treated as hostile input).
 7. The rail shows the imported events under the **O365 SNAPSHOT** provenance
    chip. Importing a new screenshot for the same week replaces that source's
-   events.
+   events. If an imported event was armed for recording, re-importing the
+   same week preserves the armed link: each snapshot event's identity is
+   computed from its content (title, times, location), so an unchanged event
+   keeps the same identity across imports.
+
+#### Arm an event for recording
+
+A calendar event on the Upcoming rail is one tap from becoming a live
+recording. Tap **Record this** on the event row and the hub arms a recording
+linked to that event. The row changes: the button is replaced by an **ARMED**
+chip and a **Cancel?** prompt.
+
+The hub computes everything from the event. The recording title, duration,
+and start time come from the calendar data. If the event is already in
+progress, the recording covers the remaining time and starts immediately. If
+the event has not started, the recording starts 60 seconds before it.
+Duration is capped at 480 minutes.
+
+Three reasons can prevent arming, stated on the row:
+
+- **ALREADY ARMED**: the event already has a linked recording.
+- **EVENT ENDED**: the event's end time has passed.
+- **EVENT NOT FOUND**: the event row is stale (the feed moved on since the
+  rail loaded).
+
+To cancel, tap **Cancel?** on the event row, then confirm with **Cancel**.
+
+When the armed recording fires, the hub captures the meeting through the same
+path a manual or scheduled recording uses. The finished meeting carries the
+event's identity: in Meetings, its row reads **FROM <SOURCE>** with the
+event title (for example, **FROM WORK** followed by the event title in
+uppercase). If the calendar event has been removed from the feed by the time
+the recording ends, the origin line is absent rather than fabricated.
+
+**Calendar changes follow the recording.** When the hub refreshes a calendar
+source and a linked event has changed:
+
+- If the event was extended or its title changed, the armed recording's
+  duration and title update to match.
+- If the event moved to a different start time, the hub finds the nearest
+  occurrence with the same series identity and rebinds the recording to it.
+- If the event was removed from the feed, the armed recording cancels itself.
+
+A recording that has already started capturing is never touched by a feed
+refresh. Only idle armed recordings participate in reconciliation.
+
+An event imported via **IMPORT SCREENSHOT** is armable in exactly the same
+way. Re-importing the same week preserves the link as described above.
+
+When a schedule is linked to a calendar event, it does not appear as a
+separate **SCHEDULED RECORDING** row while the event row is on the rail. The
+event row wears the **ARMED** chip instead. The schedule row reappears only
+if the event leaves the projection.
 
 ## Schedule A Recording
 
@@ -587,14 +643,18 @@ path a manual recording uses; no browser needs to be open.
 
 ### Create a schedule
 
-Use any of three paths:
+Use any of four paths:
 
 1. **The Chair Door.** In **Upcoming**, choose **Schedule recording**. The
    in-world schedule window lets you name the recording, choose **Once** or
    **Recurring**, and set a duration (default 60 minutes).
-2. **HTTP.** `POST /api/scheduled-recordings` with `title`, `cron_expr`,
+2. **From a calendar event.** Tap **Record this** on any event in the
+   Upcoming rail. The hub creates a one-shot schedule linked to that event
+   with all fields computed automatically. See
+   [Arm an event for recording](#arm-an-event-for-recording) in Calendars.
+3. **HTTP.** `POST /api/scheduled-recordings` with `title`, `cron_expr`,
    `duration_minutes`, and `enabled`.
-3. **MCP.** The `scheduled_recording.*` tools expose the same CRUD.
+4. **MCP.** The `scheduled_recording.*` tools expose the same CRUD.
 
 A one-shot schedule fires once and disables itself. A recurring schedule
 advances to its next fire time after every terminal outcome.
