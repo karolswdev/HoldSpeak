@@ -1304,9 +1304,48 @@ def collect_doctor_checks(*, skip_network: bool = False) -> list[DoctorCheck]:
         _check_pactl(),
         _check_system_audio_capture(),
         _check_connector_packs(),
+        _check_people_keystore(),
         _check_agent_capabilities(),
         _check_tool_call_gate(),
     ]
+
+
+def _check_people_keystore() -> DoctorCheck:
+    """HS-149-01: surface the People keystore mode and F4 both-worlds warning."""
+    env = os.environ.get("HOLDSPEAK_PEOPLE_KEYSTORE_FILE", "").strip()
+    if not env:
+        return DoctorCheck(
+            name="People keystore",
+            status="PASS",
+            detail="native (macOS Keychain / Secret Service)",
+        )
+    # Dev file keystore is active -- always WARN so it is LOUD.
+    from ..people.store import DEFAULT_PEOPLE_DB_PATH, _dev_sidecar_path
+
+    keyfile = Path(env)
+    dev_sidecar = _dev_sidecar_path(keyfile)
+    prod_exists = DEFAULT_PEOPLE_DB_PATH.exists()
+    dev_exists = dev_sidecar.exists()
+
+    parts = [f"DEV FILE keystore at {keyfile} -- not for real use"]
+    if dev_exists:
+        parts.append(f"dev sidecar: {dev_sidecar}")
+    if prod_exists and dev_exists:
+        parts.append(
+            f"BOTH WORLDS EXIST: production sidecar at {DEFAULT_PEOPLE_DB_PATH} "
+            f"and dev sidecar at {dev_sidecar} -- the dev store never opens the production sidecar"
+        )
+    detail = "; ".join(parts)
+    fix = (
+        "Unset HOLDSPEAK_PEOPLE_KEYSTORE_FILE for production use. "
+        "The file keystore is for development and testing only."
+    )
+    return DoctorCheck(
+        name="People keystore",
+        status="WARN",
+        detail=detail,
+        fix=fix,
+    )
 
 
 def _check_agent_capabilities() -> DoctorCheck:

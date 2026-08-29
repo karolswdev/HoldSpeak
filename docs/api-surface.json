@@ -3645,6 +3645,36 @@
       ]
     },
     {
+      "path": "/api/people/relationships/{relationship_id}/brief",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships/{relationship_id}/calendar-links",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships/{relationship_id}/calendar-links",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/people/relationships/{relationship_id}/notes",
       "methods": [
         "GET"

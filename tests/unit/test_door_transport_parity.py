@@ -173,7 +173,7 @@ def test_door_get_http_and_mcp_parity_on_fresh_production_compositions(
     assert http_projection["board"]["now"][0]["lawful_verbs"][0]["name"] == "follow_through.complete"
     assert http_projection["board"]["active"][0]["continuity_state"] == "idle"
     assert set(http_projection["upcoming"][0]) == {
-        "id", "source", "target_ref", "title", "starts_at", "ends_at",
+        "id", "uid", "source", "target_ref", "title", "starts_at", "ends_at",
         "location", "meeting_url", "state", "source_id", "source_label",
     }
     assert http_projection["counts"] == mcp_projection["counts"]

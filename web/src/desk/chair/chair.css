@@ -329,6 +329,15 @@
   letter-spacing: 0.03em;
 }
 .door-board-receipt { margin: 0 var(--desk-surface-row-pad-x) var(--space-2); }
+/* HS-149-01 L2: quiet named People-state line. */
+.door-board-people-state {
+  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
 .door-board-viewport {
   max-width: 100%;
   overflow-x: auto;
@@ -546,6 +555,23 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  white-space: nowrap;
+  grid-column: 2 / -1;
+}
+/* HS-149-03 — person chip on linked EVENT rows (quiet mono, sibling to provenance). */
+.door-upcoming-person {
+  display: inline-block;
+  justify-self: start;
+  width: max-content;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
   white-space: nowrap;
   grid-column: 2 / -1;
 }

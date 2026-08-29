@@ -21,6 +21,15 @@ class PeopleUnavailable(PeopleServiceError):
     """The encrypted sidecar is not available; never fall back to plaintext."""
 
 
+class SeriesAlreadyLinked(PeopleServiceError):
+    """Invariant P1: a calendar series is already linked to another relationship."""
+
+    def __init__(self, holder_id: str, holder_name: str) -> None:
+        self.holder_id = holder_id
+        self.holder_name = holder_name
+        super().__init__("series_already_linked")
+
+
 _VISIBILITIES = frozenset({"shared_intent", "leader_private"})
 _RELATIONSHIP_KINDS = frozenset({"direct_report", "peer", "extended"})
 _ENTRY_KINDS = frozenset({"one_on_one"})
@@ -340,6 +349,312 @@ class PeopleService:
             item = self._create("agenda_item", item_payload)
         return self._agenda_view(item)
 
+    # -- Brief (D5, D6) — read-time, NEVER persisted --------------------------------
+
+    def one_on_one_brief(
+        self, principal: Any, relationship_id: str, *, db: Any = None,
+    ) -> dict[str, Any]:
+        """Compute a read-time 1:1 brief across the encrypted/plaintext boundary.
+
+        The brief aggregates encrypted People content (commitments, agenda,
+        grounding notes) with plaintext meeting data (linked meetings, their
+        open action items, decision records) and returns it as a transient dict.
+        It NEVER writes to any store — the 138 law.
+
+        ``db`` is the main HoldSpeak database; when ``None`` the plaintext
+        sections degrade gracefully to empty lists.
+        """
+        relationship = self._require_relationship(principal, relationship_id)
+
+        # Encrypted: open commitments for this relationship.
+        open_commitments = [
+            self._record_view(item)
+            for item in self._list("commitment", relationship_id=relationship_id)
+            if item.get("state") == _OPEN_COMMITMENT
+        ]
+
+        # Encrypted: open agenda items across all sessions.
+        sessions = self._list("one_on_one", relationship_id=relationship_id)
+        session_ids = {str(s.get("id") or "") for s in sessions}
+        agenda_items = [
+            self._agenda_view(item)
+            for item in self._list("agenda_item", relationship_id=relationship_id)
+            if str(item.get("session_id") or "") in session_ids
+            and str(item.get("state") or "") == "open"
+        ]
+
+        # Encrypted: grounding note count.
+        grounding_note_count = len(
+            self._list("grounding_note", relationship_id=relationship_id)
+        )
+
+        # Plaintext: linked meetings via the uid chain.
+        linked_meetings: list[dict[str, Any]] = []
+        unlinked_meeting_count = 0
+        calendar_links = relationship.get("calendar_links") or []
+        N = 5
+
+        if db is not None and calendar_links:
+            linked_meetings, unlinked_meeting_count = self._brief_plaintext(
+                db, calendar_links, limit=N,
+            )
+
+        return {
+            "relationship_id": relationship_id,
+            "display_name": relationship.get("display_name"),
+            "open_commitments": open_commitments,
+            "agenda_items": agenda_items,
+            "grounding_note_count": grounding_note_count,
+            "linked_meetings": linked_meetings,
+            "unlinked_meeting_count": unlinked_meeting_count,
+        }
+
+    @staticmethod
+    def _brief_plaintext(
+        db: Any,
+        calendar_links: list[dict[str, Any]],
+        *,
+        limit: int = 5,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Query the plaintext DB for linked meetings, action items, and decisions.
+
+        Returns ``(linked_meetings, unlinked_meeting_count)``.
+
+        The uid chain: relationship.calendar_links -> calendar_events by
+        (uid, source_id) -> their IDs -> meetings.calendar_event_id IN those IDs.
+        """
+        # Step 1: Collect all calendar_event IDs for the linked UIDs.
+        uid_source_pairs = [
+            (str(link.get("uid") or ""), str(link.get("source_id") or ""))
+            for link in calendar_links
+            if isinstance(link, dict) and link.get("uid") and link.get("source_id")
+        ]
+        if not uid_source_pairs:
+            return [], 0
+
+        try:
+            conn_factory = db._connection
+        except AttributeError:
+            return [], 0
+
+        with conn_factory() as conn:
+            # Find calendar_events matching any linked (uid, source_id).
+            # Build per-pair OR clauses.
+            where_clauses = " OR ".join(
+                "(uid = ? AND source_id = ?)" for _ in uid_source_pairs
+            )
+            params: list[str] = []
+            for uid, source_id in uid_source_pairs:
+                params.extend([uid, source_id])
+
+            event_rows = conn.execute(
+                f"SELECT id FROM calendar_events WHERE {where_clauses}",
+                params,
+            ).fetchall()
+            calendar_event_ids = [str(row["id"]) for row in event_rows]
+
+            if not calendar_event_ids:
+                return [], 0
+
+            # Step 2: Find linked meetings (have calendar_event_id in our set).
+            placeholders = ",".join("?" for _ in calendar_event_ids)
+            meeting_rows = conn.execute(
+                f"""SELECT id, title, started_at, ended_at, calendar_event_id
+                    FROM meetings
+                    WHERE calendar_event_id IN ({placeholders})
+                    ORDER BY started_at DESC
+                    LIMIT ?""",
+                [*calendar_event_ids, limit],
+            ).fetchall()
+
+            if not meeting_rows:
+                return [], 0
+
+            # Determine the time window for counting unlinked meetings.
+            # Window = from oldest linked meeting to now.
+            oldest_start = str(meeting_rows[-1]["started_at"])
+
+            # Step 3: Count unlinked meetings in the same window.
+            # Unlinked = meetings WITHOUT calendar_event_id in the same window.
+            unlinked_count_row = conn.execute(
+                """SELECT COUNT(*) as cnt FROM meetings
+                   WHERE (calendar_event_id IS NULL OR calendar_event_id = '')
+                   AND started_at >= ?""",
+                (oldest_start,),
+            ).fetchone()
+            unlinked_count = int(unlinked_count_row["cnt"]) if unlinked_count_row else 0
+
+            # Step 4: For each linked meeting, get open action items and decisions.
+            linked = []
+            for row in meeting_rows:
+                meeting_id = str(row["id"])
+
+                # Open action items BY REFERENCE (never copied).
+                action_rows = conn.execute(
+                    """SELECT id, task, owner, due
+                       FROM action_items
+                       WHERE meeting_id = ? AND status = 'pending'
+                       ORDER BY created_at""",
+                    (meeting_id,),
+                ).fetchall()
+                open_action_items = [
+                    {
+                        "id": str(r["id"]),
+                        "task": str(r["task"]),
+                        "owner": r["owner"],
+                        "due": r["due"],
+                    }
+                    for r in action_rows
+                ]
+
+                # Decision records minted from this meeting via the
+                # decision_record_sources join table (source_type='meeting',
+                # source_ref=meeting_id).
+                decision_rows = conn.execute(
+                    """SELECT dr.id, dr.decision_text, dr.rationale, dr.lifecycle
+                       FROM decision_records dr
+                       JOIN decision_record_sources drs ON drs.record_id = dr.id
+                       WHERE drs.source_type = 'meeting' AND drs.source_ref = ?
+                       AND dr.deleted = 0
+                       ORDER BY dr.created_at DESC""",
+                    (meeting_id,),
+                ).fetchall()
+                decisions = [
+                    {
+                        "id": str(r["id"]),
+                        "decision_text": str(r["decision_text"]),
+                        "rationale": r["rationale"],
+                        "lifecycle": str(r["lifecycle"]),
+                    }
+                    for r in decision_rows
+                ]
+
+                linked.append({
+                    "meeting_id": meeting_id,
+                    "title": row["title"],
+                    "started_at": str(row["started_at"]),
+                    "ended_at": row["ended_at"],
+                    "calendar_event_id": row["calendar_event_id"],
+                    "open_action_items": open_action_items,
+                    "decisions": decisions,
+                })
+
+        return linked, unlinked_count
+
+    # -- Calendar series links (D2) ------------------------------------------------
+
+    def link_calendar_series(
+        self,
+        principal: Any,
+        relationship_id: str,
+        uid: str,
+        source_id: str,
+        label: str,
+    ) -> dict[str, Any]:
+        """Link a calendar series to a relationship inside the encrypted payload.
+
+        Invariant P1: if ANY other relationship holds ``(uid, source_id)``,
+        refuse with :class:`SeriesAlreadyLinked` naming the holder.  Re-linking
+        the SAME relationship is idempotent (refreshes label and linked_at).
+        """
+        relationship = self._require_relationship(principal, relationship_id)
+        clean_uid = str(uid or "").strip()
+        clean_source = str(source_id or "").strip()
+        clean_label = str(label or "").strip()[:500]
+        if not clean_uid or not clean_source:
+            raise PeopleServiceError("people_calendar_link_required")
+
+        # P1: scan all relationships for an existing holder of (uid, source_id).
+        for other in self._list("relationship"):
+            other_id = str(other.get("id") or "")
+            if other_id == relationship_id:
+                continue
+            if str(other.get("state") or "") == "archived":
+                continue
+            for link in other.get("calendar_links") or []:
+                if isinstance(link, dict) and str(link.get("uid") or "") == clean_uid and str(link.get("source_id") or "") == clean_source:
+                    raise SeriesAlreadyLinked(
+                        holder_id=other_id,
+                        holder_name=str(other.get("display_name") or ""),
+                    )
+
+        # Idempotent: update existing or append.
+        now = _now()
+        links: list[dict[str, Any]] = [
+            dict(item) for item in relationship.get("calendar_links") or []
+            if isinstance(item, dict)
+        ]
+        found = False
+        for link in links:
+            if str(link.get("uid") or "") == clean_uid and str(link.get("source_id") or "") == clean_source:
+                link["label"] = clean_label
+                link["linked_at"] = now
+                found = True
+                break
+        if not found:
+            links.append({"uid": clean_uid, "source_id": clean_source, "label": clean_label, "linked_at": now})
+
+        value = dict(relationship)
+        value.update({"calendar_links": links, "updated_at": now})
+        return self._relationship_view(self._replace(relationship_id, value))
+
+    def unlink_calendar_series(
+        self,
+        principal: Any,
+        relationship_id: str,
+        uid: str,
+        source_id: str,
+    ) -> dict[str, Any]:
+        """Remove a calendar series link from a relationship.  Idempotent."""
+        relationship = self._require_relationship(principal, relationship_id)
+        clean_uid = str(uid or "").strip()
+        clean_source = str(source_id or "").strip()
+        if not clean_uid or not clean_source:
+            raise PeopleServiceError("people_calendar_link_required")
+        now = _now()
+        links = [
+            dict(item) for item in relationship.get("calendar_links") or []
+            if isinstance(item, dict)
+            and not (str(item.get("uid") or "") == clean_uid and str(item.get("source_id") or "") == clean_source)
+        ]
+        value = dict(relationship)
+        value.update({"calendar_links": links, "updated_at": now})
+        return self._relationship_view(self._replace(relationship_id, value))
+
+    def resolve_relationship_by_series(self, uid: str, source_id: str) -> dict[str, Any]:
+        """Find the relationship linked to a calendar series.
+
+        Readiness-guarded: a locked/absent store returns
+        ``{"state": "unavailable"}``, NEVER a bare no-match.  A ready store
+        with no link returns ``{"state": "ready", "relationship": None}``.
+        """
+        try:
+            state = self._store.readiness()
+            if str(getattr(state, "value", state)) != "ready":
+                return {"state": "unavailable"}
+        except Exception:
+            return {"state": "unavailable"}
+
+        clean_uid = str(uid or "").strip()
+        clean_source = str(source_id or "").strip()
+        if not clean_uid or not clean_source:
+            return {"state": "ready", "relationship": None}
+
+        try:
+            relationships = self._store.list(kind="relationship")
+        except Exception:
+            return {"state": "unavailable"}
+
+        for record in relationships:
+            if not isinstance(record, dict):
+                continue
+            if str(record.get("state") or "") == "archived":
+                continue
+            for link in record.get("calendar_links") or []:
+                if isinstance(link, dict) and str(link.get("uid") or "") == clean_uid and str(link.get("source_id") or "") == clean_source:
+                    return {"state": "ready", "relationship": self._relationship_view(record)}
+        return {"state": "ready", "relationship": None}
+
     # -- Follow-through projection -------------------------------------------------
 
     def list_cards(self, principal: Any, *, owner: str | None = None) -> list[FollowThroughCard]:
@@ -507,7 +822,7 @@ class PeopleService:
 
     @staticmethod
     def _relationship_view(record: dict[str, Any]) -> dict[str, Any]:
-        return {key: record.get(key) for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "project_refs", "state", "created_at", "updated_at")}
+        return {key: record.get(key) for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "project_refs", "calendar_links", "state", "created_at", "updated_at")}
 
     @staticmethod
     def _entry_view(record: dict[str, Any]) -> dict[str, Any]:

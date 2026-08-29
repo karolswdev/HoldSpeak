@@ -50,6 +50,7 @@ def _door(
         db.scheduled_recordings,
         db.calendar_events,
         clock=lambda: now,
+        people_service=people_service,
         **kwargs,
     )
 
@@ -275,6 +276,7 @@ def test_upcoming_merges_calendar_events_and_scheduled_recordings_in_one_stable_
     assert [item["id"] for item in upcoming] == ["ce_same", schedule_id, "ce_later"]
     assert upcoming[0] == {
         "id": "ce_same",
+        "uid": "same",
         "source": "calendar_event",
         "target_ref": "calendar_event:ce_same",
         "title": "Calendar at same instant",
@@ -339,7 +341,14 @@ def test_door_preserves_people_unavailable_no_leak_no_crash(db: Database) -> Non
 
     assert projection["board"]["now"][0]["id"] == "ordinary"
     assert all(card["source"] != "people_commitment" for lane in projection["board"].values() for card in lane)
-    assert "people" not in json.dumps(projection)
+    # L2 (HS-149-01): the people_store_state fact is deliberately carried
+    # so the Door can render a named state instead of silent emptiness.
+    # The no-leak invariant checks that no People CARDS appear, not that
+    # the readiness state name is absent.
+    all_cards = [card for lane in projection["board"].values() for card in lane]
+    assert not any("people" in json.dumps(card) for card in all_cards)
+    # The state field is present and names the unavailable sidecar.
+    assert projection.get("people_store_state") == "unavailable"
 
 
 def test_calendar_configured_false_on_empty_subscription(db: Database) -> None:
@@ -440,3 +449,179 @@ def test_no_dedupe_duplicate_uids_both_project(db: Database) -> None:
     assert len(calendar_events) == 2
     labels = {item["source_label"] for item in calendar_events}
     assert labels == {"Source A", "Source B"}
+
+
+# ── HS-149-03: uid projection + person_label projection ──────────────────
+
+
+def test_calendar_event_projects_uid(db: Database) -> None:
+    """HS-149-03: _calendar_event_item projects uid for the picker/link flow."""
+    starts_at = FIXED_NOW + timedelta(hours=1)
+    db.calendar_events.replace_projection(
+        "rev-uid",
+        [
+            CalendarEventCandidate(
+                id="ce_uid",
+                uid="uid-weekly-1on1",
+                title="1:1 w/ Ewa",
+                starts_at=starts_at.isoformat().replace("+00:00", "Z"),
+                ends_at=(starts_at + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+                location=None,
+                meeting_url=None,
+            ),
+        ],
+        seen_at=FIXED_NOW.timestamp(),
+        source_id="cal-outlook",
+        source_label="Outlook",
+    )
+
+    upcoming = _door(db).get(OWNER)["upcoming"]
+
+    assert len(upcoming) == 1
+    assert upcoming[0]["uid"] == "uid-weekly-1on1"
+
+
+def test_person_label_projected_for_linked_event(db: Database, tmp_path: Path) -> None:
+    """HS-149-03: linked calendar series -> person_label on the event item."""
+    from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
+
+    store = EncryptedPeopleStore(tmp_path / "people-label.sqlite3", MemoryKeyStore())
+    store.initialize()
+    people = PeopleService(store)
+    rel = people.create_relationship(OWNER, {"display_name": "Ewa"})
+    people.link_calendar_series(OWNER, rel["id"], "uid-weekly", "cal-work", "1:1 w/ Ewa")
+
+    starts_at = FIXED_NOW + timedelta(hours=1)
+    db.calendar_events.replace_projection(
+        "rev-linked",
+        [
+            CalendarEventCandidate(
+                id="ce_linked",
+                uid="uid-weekly",
+                title="1:1 w/ Ewa",
+                starts_at=starts_at.isoformat().replace("+00:00", "Z"),
+                ends_at=(starts_at + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+                location=None,
+                meeting_url=None,
+            ),
+        ],
+        seen_at=FIXED_NOW.timestamp(),
+        source_id="cal-work",
+        source_label="Work",
+    )
+
+    upcoming = _door(db, people_service=people).get(OWNER)["upcoming"]
+
+    assert len(upcoming) == 1
+    assert upcoming[0]["person_label"] == "Ewa"
+
+
+def test_person_label_absent_for_unlinked_event(db: Database, tmp_path: Path) -> None:
+    """HS-149-03: unlinked event -> no person_label field."""
+    from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
+
+    store = EncryptedPeopleStore(tmp_path / "people-nolabel.sqlite3", MemoryKeyStore())
+    store.initialize()
+    people = PeopleService(store)
+
+    starts_at = FIXED_NOW + timedelta(hours=1)
+    db.calendar_events.replace_projection(
+        "rev-unlinked",
+        [
+            CalendarEventCandidate(
+                id="ce_unlinked",
+                uid="uid-no-link",
+                title="Team standup",
+                starts_at=starts_at.isoformat().replace("+00:00", "Z"),
+                ends_at=(starts_at + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+                location=None,
+                meeting_url=None,
+            ),
+        ],
+        seen_at=FIXED_NOW.timestamp(),
+        source_id="cal-work",
+        source_label="Work",
+    )
+
+    upcoming = _door(db, people_service=people).get(OWNER)["upcoming"]
+
+    assert len(upcoming) == 1
+    assert "person_label" not in upcoming[0]
+
+
+def test_person_label_absent_when_sidecar_unavailable(db: Database) -> None:
+    """HS-149-03: unavailable sidecar -> no person_label, Door never blocks."""
+    people = PeopleService(UnavailablePeopleStore())
+
+    starts_at = FIXED_NOW + timedelta(hours=1)
+    db.calendar_events.replace_projection(
+        "rev-unavail",
+        [
+            CalendarEventCandidate(
+                id="ce_unavail",
+                uid="uid-any",
+                title="Some event",
+                starts_at=starts_at.isoformat().replace("+00:00", "Z"),
+                ends_at=(starts_at + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+                location=None,
+                meeting_url=None,
+            ),
+        ],
+        seen_at=FIXED_NOW.timestamp(),
+        source_id="cal-work",
+        source_label="Work",
+    )
+
+    upcoming = _door(db, people_service=people).get(OWNER)["upcoming"]
+
+    assert len(upcoming) == 1
+    assert "person_label" not in upcoming[0]
+
+
+def test_person_label_memoization_single_resolve_per_series(db: Database, tmp_path: Path) -> None:
+    """HS-149-03: multiple occurrences of the same series -> one resolve call."""
+    from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
+    from unittest.mock import patch
+
+    store = EncryptedPeopleStore(tmp_path / "people-memo.sqlite3", MemoryKeyStore())
+    store.initialize()
+    people = PeopleService(store)
+    rel = people.create_relationship(OWNER, {"display_name": "Jan"})
+    people.link_calendar_series(OWNER, rel["id"], "uid-memo", "cal-1", "Recurring sync")
+
+    starts_at = FIXED_NOW + timedelta(hours=1)
+    # Insert two occurrences of the same series (same uid + source_id).
+    db.calendar_events.replace_projection(
+        "rev-memo",
+        [
+            CalendarEventCandidate(
+                id="ce_memo_1",
+                uid="uid-memo",
+                title="Recurring sync",
+                starts_at=starts_at.isoformat().replace("+00:00", "Z"),
+                ends_at=(starts_at + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+                location=None,
+                meeting_url=None,
+            ),
+            CalendarEventCandidate(
+                id="ce_memo_2",
+                uid="uid-memo",
+                title="Recurring sync",
+                starts_at=(starts_at + timedelta(hours=168)).isoformat().replace("+00:00", "Z"),
+                ends_at=(starts_at + timedelta(hours=168, minutes=30)).isoformat().replace("+00:00", "Z"),
+                location=None,
+                meeting_url=None,
+            ),
+        ],
+        seen_at=FIXED_NOW.timestamp(),
+        source_id="cal-1",
+    )
+
+    with patch.object(people, "resolve_relationship_by_series", wraps=people.resolve_relationship_by_series) as spy:
+        upcoming = _door(db, people_service=people).get(OWNER)["upcoming"]
+
+    calendar_events = [item for item in upcoming if item["source"] == "calendar_event"]
+    assert len(calendar_events) == 2
+    assert all(item["person_label"] == "Jan" for item in calendar_events)
+    # Pin: exactly one call per distinct (uid, source_id), not per event.
+    assert spy.call_count == 1

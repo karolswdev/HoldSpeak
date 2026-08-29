@@ -235,6 +235,21 @@ class FollowThroughService:
                     lanes[lane] = []
         return FollowThroughBoard(**lanes)
 
+    def people_store_state(self, principal: Any) -> str | None:
+        """L2 (HS-149-01): the People store readiness for honest projection.
+
+        Returns the readiness string when the projection is wired and
+        queryable, ``None`` when no projection is composed.  Never raises --
+        a locked/broken store returns its named state, never silence.
+        """
+        if self._people_projection is None:
+            return None
+        try:
+            result = self._people_projection.readiness(principal)  # type: ignore[attr-defined]
+            return str(result.get("readiness") or result.get("state") or "unavailable")
+        except Exception:
+            return "unavailable"
+
     def commit_decision(
         self,
         principal: Any,

@@ -34,27 +34,71 @@ derives relationship health.
 - **Sprite language:** the PixelLab-generated relationship-ledger sprite registers
   as the People family and as the People dock icon.
 
-## Suggested next integration: meeting participants
+## Deliberate association: the calendar series link (FULFILLED)
 
-Maintainer prompt: **consider allowing the owner to identify a meeting participant
-as an existing People relationship.** Treat this as a deliberate association, not
-identity inference.
+The calendar series link is the first sanctioned deliberate association between a
+People relationship and a HoldSpeak data source. It satisfies rules 1 through 7
+below and is the only shipped association path in this delivery.
 
-A safe follow-up should:
+**The gesture.** On the relationship detail, the owner chooses **Link calendar
+event** on the Context lens. A picker lists upcoming events from the rail;
+rows whose title contains the person's display name are sorted first and tagged
+**SUGGESTED** (case-insensitive, in-memory only, never logged or persisted). The
+owner's click is the association gesture. The stored evidence is the event's own
+title and UID, selected by the owner.
 
-1. propose candidate links from owner-selected textual evidence only;
-2. require an explicit owner gesture before persisting a link;
-3. keep the association and aliases inside the encrypted People store;
-4. expose only an opaque People scope to the meeting surface;
-5. never use voice embeddings, speaking time, sentiment, attendance, calendar
-   frequency, or message volume as identity or relationship-health signals;
-6. make unlinking complete and auditable without deleting either source record;
-7. apply visibility before any linked material reaches MCP or a model.
+**The link.** The association is a `calendar_links` entry (`uid`, `source_id`,
+`label`) inside the relationship's encrypted payload. The link is series-level:
+one link covers every past and future occurrence of the recurring event. Invariant
+P1 enforces one person per series; linking a series already held by another
+relationship refuses by naming the holder (`series_already_linked`). Re-linking
+the same person is idempotent (refreshes label and timestamp). Unlinking is a
+two-beat in-world verb on the same surface.
 
-That contract lets a meeting offer “Open relationship,” attach an accepted agenda
-source, or suggest a follow-up without turning speaker recognition into employee
-monitoring. Automatic correlation remains intentionally unshipped until this
-consent, custody, and unlink model is reviewed.
+**Resolution.** `resolve_relationship_by_series(uid, source_id)` in
+`people_service` queries the encrypted store at read time. It is
+readiness-guarded: a locked or absent sidecar returns `{“state”: “unavailable”}`,
+never an empty match. The plaintext database never stores a person reference (the
+138 law). Resolution projects a `person_label` on linked rail event rows and
+extends the meeting origin line when the sidecar is open.
+
+**The brief.** `one_on_one_brief(relationship_id)` computes a transient 1:1
+preparation view across the encrypted/plaintext boundary: open commitments
+(encrypted), agenda backlog (encrypted), grounding note count (encrypted), the
+last linked meetings with their open action items (plaintext, by reference), any
+decisions minted from those meetings (plaintext, via the `decision_record_sources`
+chain), and the count of unlinked meetings in the window (manual recordings
+without `calendar_event_id`). The brief never persists a byte to any store.
+
+**MCP boundary.** The `people.one_on_one.brief` tool gates on `access_mode() !=
+“off”` via `_require_access` and filters encrypted items to `shared_intent`
+visibility via the `_mcp_readable` path. Leader-private content never crosses to
+an MCP client. The response carries a `policy` block naming the disclosure
+boundary (`visibility: shared_intent_only`, `inference: client_owned`,
+`employment_decisions: prohibited`).
+
+**Compliance with the integration contract:**
+
+1. The picker proposes candidates from owner-selected textual evidence only (the
+   event title).
+2. The owner's click is the explicit gesture; nothing auto-links.
+3. The link itself (`calendar_links`) lives inside the encrypted People payload.
+4. The Door rail exposes only an opaque person chip (`person_label`); meeting
+   surfaces carry no People reference in the plaintext database.
+5. Voice embeddings, speaking time, sentiment, attendance, calendar frequency,
+   and message volume are never used as identity or relationship signals.
+6. Unlinking is complete and auditable; it removes the link from the encrypted
+   payload without deleting either the calendar event or the relationship.
+7. The MCP adapter applies `_mcp_readable` visibility before any linked material
+   reaches an MCP client.
+
+### Deferred: meeting participants
+
+Meeting-participant association (identifying a meeting participant as an existing
+People relationship) remains intentionally unshipped. The seven rules above
+constrain it when it is reviewed. Automatic correlation, voice-based identity,
+attendance frequency analysis, and speaker-to-person inference are forbidden by
+this contract.
 
 ## Satisfaction history
 

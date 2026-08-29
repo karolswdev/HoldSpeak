@@ -21,4 +21,15 @@
 .people-history-facts div { padding: 8px; border: 1px solid var(--border); }
 .people-history-facts dt { color: var(--text-muted); font-size: var(--desk-surface-label-size); }
 .people-history-facts dd { margin: 3px 0 0; font-size: 18px; }
+/* HS-149-03 — joy state: lead with the act, not the absence. */
+.people-joy-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 32px 16px; min-height: 120px; }
+.people-joy-lead { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.people-joy-line { color: var(--text-muted); font-size: var(--desk-surface-detail-size); text-align: center; }
+/* HS-149-03 — empty roster: lead with the create act. */
+.people-empty-roster { padding: 16px 0; }
+.people-empty-lead { color: var(--text-muted); font-size: var(--desk-surface-body-size); margin: 0; }
+/* HS-149-03 — NEXT 1:1 header on relationship detail. */
+.people-next-header { color: var(--text-muted); font-family: var(--font-mono); font-size: var(--desk-surface-detail-size); letter-spacing: 0.04em; margin-bottom: 4px; }
+/* HS-149-03 — picker inline region. */
+.people-picker { margin-top: 8px; }
 @container surface (max-width: 559.9px) { .people-new, .people-agenda-add, .people-context-add, .people-project-link, .people-delegate, .people-satisfy { align-items: stretch; flex-wrap: wrap; } .people-new .gadget-string, .people-agenda-add .gadget-pad, .people-context-add .gadget-pad, .people-project-link > :first-child, .people-delegate > :first-child, .people-satisfy > :first-child { flex-basis: 100%; } .people-history-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

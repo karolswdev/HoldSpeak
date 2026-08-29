@@ -6,6 +6,7 @@ import { useWriteReceipt } from "../../hooks/useWriteReceipt";
 import { StringGadget } from "../../surface/gadgets";
 import { SurfaceSection, SurfaceState } from "../../surface/Surface";
 import { useSurfaceWindows } from "../../components/SurfaceWindows";
+import { openSurfaceOr } from "../../shell";
 import { useDesk } from "../../store";
 import type { LaneProps } from "../laneContract";
 import { upcomingTimeLabel } from "./upcomingTime";
@@ -51,6 +52,12 @@ export type DoorUpcomingItem = {
   source_label?: string;
   /* HS-147-01: present when an event-linked schedule exists. */
   armed_schedule_id?: string;
+  /* HS-149-03: series uid for the picker/link flow. */
+  uid?: string;
+  /* HS-149-03: person label for linked calendar series (only-when-present). */
+  person_label?: string;
+  /* HS-149-04: relationship ID for the PREP affordance (only-when-present). */
+  person_relationship_id?: string;
 };
 
 export type DoorProjection = {
@@ -64,6 +71,8 @@ export type DoorProjection = {
   };
   upcoming: DoorUpcomingItem[];
   calendar_configured: boolean;
+  /** HS-149-01 L2: the People store readiness state. Absent when no People projection is wired. */
+  people_store_state?: string;
 };
 
 type Command = { endpoint: string; body?: Record<string, unknown> };
@@ -230,6 +239,19 @@ export function computeScrollHint(
   return "both";
 }
 
+/** HS-149-01 L2: map the People store state to PeopleCore's gate vocabulary. */
+function peopleStateLabel(state: string | undefined): string | null {
+  if (!state || state === "ready") return null;
+  switch (state) {
+    case "locked": return "People store locked";
+    case "key_unavailable": return "People key unavailable";
+    case "corrupt": return "People store unavailable";
+    case "unavailable": return "People store unavailable";
+    case "unconfigured": return "People not set up";
+    default: return "People store unavailable";
+  }
+}
+
 function headline(counts: DoorProjection["counts"]): string {
   return [
     counts.overdue ? `${counts.overdue} overdue` : "",
@@ -360,7 +382,7 @@ function UpcomingRowActions({ item, onReload }: { item: DoorUpcomingItem; onRelo
     );
   }
 
-  // Unarmed: RECORD THIS button.
+  // Unarmed: RECORD THIS button + PREP (F8: only when person_label is present).
   return (
     <span className="door-upcoming-arm-actions" data-testid="door-arm-actions">
       <Button
@@ -373,6 +395,16 @@ function UpcomingRowActions({ item, onReload }: { item: DoorUpcomingItem; onRelo
       >
         Record this
       </Button>
+      {item.person_label && item.person_relationship_id ? (
+        <Button
+          dense
+          variant="ghost"
+          data-testid="door-prep"
+          onClick={() => openSurfaceOr("open-people", "/", `people:${item.person_relationship_id}:prep`)}
+        >
+          Prep
+        </Button>
+      ) : null}
       {refusal ? <span className="door-upcoming-refusal" data-testid="door-arm-refusal">{refusal}</span> : null}
     </span>
   );
@@ -402,6 +434,10 @@ function UpcomingRail({ upcoming, calendarConfigured, onReload }: { upcoming: Do
                 {/* HS-146-04: provenance chip on EVENT rows when >1 source. */}
                 {showChips && item.source === "calendar_event" && item.source_label ? (
                   <span className="door-upcoming-provenance">{item.source_label.toUpperCase()}</span>
+                ) : null}
+                {/* HS-149-03: quiet mono person chip on linked EVENT rows. */}
+                {item.person_label ? (
+                  <span className="door-upcoming-person" data-testid="door-person-chip">{item.person_label}</span>
                 ) : null}
                 {item.location ? <span className="door-upcoming-detail">{item.location}</span> : null}
                 {item.meeting_url ? (
@@ -545,6 +581,10 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
       </div>
       {receipt ? <div className="door-board-receipt">{receipt}</div> : null}
       {loadError ? <SurfaceState error={loadError} onRetry={() => void reload()} /> : null}
+      {/* HS-149-01 L2: quiet named line when People store is not ready. */}
+      {peopleStateLabel(projection.people_store_state) ? (
+        <div className="door-board-people-state" data-testid="door-people-state">{peopleStateLabel(projection.people_store_state)}</div>
+      ) : null}
       {cards.length ? (
         <div className="door-board-hint-wrap">
         <div ref={viewportRef} className="door-board-viewport" tabIndex={0} aria-label="Door board, scroll horizontally for all columns">

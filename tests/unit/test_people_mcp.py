@@ -259,6 +259,7 @@ def test_people_mcp_catalogue_is_closed_and_does_not_offer_forbidden_operations(
         "people.relationship.list",
         "people.relationship.get",
         "people.grounding.get",
+        "people.one_on_one.brief",
         "people.relationship.create",
         "people.one_on_one.create",
         "people.agenda.add",
@@ -266,6 +267,8 @@ def test_people_mcp_catalogue_is_closed_and_does_not_offer_forbidden_operations(
         "people.request.create",
         "people.request.accept",
         "people.commitment.transition",
+        "people.calendar.link",
+        "people.calendar.unlink",
     }
     assert not any(
         fragment in name

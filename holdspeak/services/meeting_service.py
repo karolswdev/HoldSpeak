@@ -65,6 +65,32 @@ def _accepts_principal(callback: Any) -> bool:
     return any(p.kind is inspect.Parameter.VAR_KEYWORD for p in parameters.values())
 
 
+class _MeetingPersonRedactor:
+    """Keep the read-time People projection out of durable observation.
+
+    HS-149 close-counsel finding 1: ``_enrich_calendar_origin`` injects
+    ``person_label`` (a display name resolved from the ENCRYPTED People
+    store) into meeting read payloads. The observer serializes results
+    into the plaintext ``pipeline_events`` table, which would persist
+    that name outside the encrypted boundary — the same crossing
+    ``_FollowThroughObserver`` exists to prevent for the board. Meeting
+    reads that can carry the projection have their result replaced, not
+    trimmed (timing/outcome retained).
+    """
+
+    _REDACTED_METHODS = frozenset({"list_meetings", "get_meeting"})
+
+    def __init__(self, delegate: "PipelineObserver") -> None:
+        self._delegate = delegate
+
+    def on_event(self, event):  # PipelineEvent
+        from dataclasses import replace as _replace
+        if event.service == "MeetingService" and event.method in self._REDACTED_METHODS:
+            if event.result_summary and "person_label" in str(event.result_summary):
+                event = _replace(event, result_summary='{"meetings":"person_projection_redacted"}')
+        self._delegate.on_event(event)
+
+
 @observe_service
 class MeetingService:
     """One service boundary for meeting capture and persisted meeting data."""
@@ -81,7 +107,10 @@ class MeetingService:
         self._on_live_update_action_item: Callable[[str, str], Any] | None = None
         self._on_live_review_action_item: Callable[[str, str], Any] | None = None
         self._on_live_edit_action_item: Callable[..., Any] | None = None
-        self._observer = observer or NullObserver()
+        # HS-149-04: optional person resolver for the calendar origin line.
+        # When bound, _enrich_calendar_origin extends with person_label.
+        self._resolve_person: Callable[[str, str], str | None] | None = None
+        self._observer = _MeetingPersonRedactor(observer or NullObserver())
 
     def bind_lifecycle(
         self,
@@ -113,6 +142,17 @@ class MeetingService:
         self._on_live_update_action_item = on_update
         self._on_live_review_action_item = on_review
         self._on_live_edit_action_item = on_edit
+
+    def bind_person_resolver(
+        self,
+        resolver: Callable[[str, str], str | None] | None = None,
+    ) -> None:
+        """HS-149-04: bind a (uid, source_id) -> display_name resolver.
+
+        The resolver returns the person's display_name when the sidecar
+        is open and the series is linked, or ``None`` otherwise.
+        """
+        self._resolve_person = resolver
 
     def validate_import(self, principal: Principal, filename: str) -> None:
         try:
@@ -653,6 +693,14 @@ class MeetingService:
             if ev is not None:
                 p["calendar_event_title"] = ev.title
                 p["calendar_source_label"] = ev.source_label
+                # HS-149-04: resolve person display name when the sidecar is open.
+                if self._resolve_person is not None:
+                    try:
+                        person = self._resolve_person(ev.uid, ev.source_id)
+                        if person:
+                            p["person_label"] = person
+                    except Exception:
+                        pass
 
     @staticmethod
     def _summary_payload(meeting: Any) -> dict[str, Any]:
