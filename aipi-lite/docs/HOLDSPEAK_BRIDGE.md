@@ -30,7 +30,7 @@ the typing/transcription pipeline. The bridge only translates events:
   firmware's `update_screen` API service.
 
 Wire contract: see HoldSpeak's
-`~/dev/HoldSpeak/docs/DEVICE_PROTOCOL.md`. Don't duplicate it
+[`../../docs/DEVICE_PROTOCOL.md`](../../docs/DEVICE_PROTOCOL.md). Don't duplicate it
 here — that doc is canonical.
 
 ---
@@ -38,7 +38,7 @@ here — that doc is canonical.
 ## 2. Prerequisites
 
 - **HoldSpeak** running on the host where you want voice typing
-  to land. See `~/dev/HoldSpeak/README.md` for install. Minimum:
+  to land. See [`../../README.md`](../../README.md) for install. Minimum:
   the `holdspeak` web runtime up (`holdspeak web`).
 - **AIPI-Lite** flashed with the production firmware. See
   [`PROVISIONING.md`](./PROVISIONING.md) for first-time flash and
@@ -77,9 +77,9 @@ here — that doc is canonical.
    ```
 
    The port is in HoldSpeak's startup log
-   (`Uvicorn running on http://127.0.0.1:<port>`). For phase 14
-   the runtime binds to `127.0.0.1` only — run the bridge on the
-   same machine.
+   (`Uvicorn running on http://127.0.0.1:<port>`). The default runtime binds to
+   `127.0.0.1`, so run the bridge on the same machine unless you have deliberately
+   configured and secured an off-loopback deployment.
 
 3. **Configure the bridge:**
 
@@ -174,15 +174,15 @@ include its `device_id` in the meeting-start payload.
      ```
 
 3. **Speak naturally.** Audio streams continuously into HoldSpeak
-   regardless of button state — meetings own the recorder. Per
-   HS-14-06, button presses during an active meeting are
+   regardless of button state — meetings own the recorder. Button presses during an active meeting are
    server-side no-ops (HoldSpeak ignores attached-device
    `start`/`stop` frames while the meeting is recording).
 4. **End the meeting** from the HoldSpeak dashboard. HoldSpeak
    transcribes per-segment and runs its meeting-intelligence
    pipeline (topics, action items, summary) either inline or via
-   the deferred queue — see `~/dev/HoldSpeak/holdspeak/intel.py`
-   for which path your install uses.
+   the deferred queue — see
+   [`../../holdspeak/intel_queue.py`](../../holdspeak/intel_queue.py) for the
+   queue implementation.
 5. **The transcript** shows segments tagged with the device's
    label (`DEVICE_LABEL` from `bridge.env`, defaults to
    `DEVICE_ID`). Multi-device meetings tag each segment with the
@@ -402,8 +402,9 @@ state-publish loses to an immediate connection close (observed live
 - Provisioning: [`PROVISIONING.md`](./PROVISIONING.md)
 - Roadmap: [`pm/roadmap/aipi-lite/`](../pm/roadmap/aipi-lite/) —
   full phase + story breakdowns, decisions, risks
-- HoldSpeak protocol (canonical): `~/dev/HoldSpeak/docs/DEVICE_PROTOCOL.md`
+- HoldSpeak protocol (canonical):
+  [`../../docs/DEVICE_PROTOCOL.md`](../../docs/DEVICE_PROTOCOL.md)
 - HoldSpeak device-side implementation:
-  `~/dev/HoldSpeak/holdspeak/device_audio.py`,
-  `~/dev/HoldSpeak/holdspeak/device_audio_ws.py`,
-  `~/dev/HoldSpeak/holdspeak/voice_typing.py`
+  [`../../holdspeak/device_audio.py`](../../holdspeak/device_audio.py),
+  [`../../holdspeak/device_audio_ws.py`](../../holdspeak/device_audio_ws.py),
+  [`../../holdspeak/voice_typing.py`](../../holdspeak/voice_typing.py)

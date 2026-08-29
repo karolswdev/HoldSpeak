@@ -1,5 +1,9 @@
 # UX Inventory
 
+> Archived 2026-04-29 Astro-era inventory. Routes and components below are
+> historical; see [`../docs/WEB_DESK.md`](../docs/WEB_DESK.md) for the current
+> Desk.
+
 ## Routes
 
 | Route | Purpose | Main User |

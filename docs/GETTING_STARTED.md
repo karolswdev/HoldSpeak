@@ -10,7 +10,16 @@ Desk automatically. No extra setup is required before that first value.
 
 ## 1. Install
 
-From a checkout:
+The latest published release is `0.4.0`:
+
+```bash
+python -m pip install holdspeak
+```
+
+This guide tracks `main`, which includes unreleased work after `0.4.0`. For
+exact parity with the screens and features described below, install from a
+checkout. Building the bundled Web app requires npm and a Vite-compatible
+Node.js release (20.19+ or 22.12+):
 
 ```bash
 uv pip install -e .
@@ -279,12 +288,12 @@ preserving edits, filing, attachments, and deletions. To deliberately restore
 the furnished defaults, use the destructive, confirmed **Settings, Desk →
 Reset to seed** action.
 
-For model-backed work or headless deployment, open **Settings, Models → Choose
-your AI**. Pick an OpenRouter Qwen preset, point **This device** at a GGUF chat
-model, or define any compatible provider and choose it for the relevant job. A
+For model-backed work or headless deployment, open **Settings > Models > Model
+Library**. Add a local GGUF, preset, or compatible endpoint, then choose the
+ordered model list for each relevant job in **Assignments**. A
 `HOLDSPEAK_PROFILE_<ID>_KEY` environment variable remains the headless key
-fallback. See [Models (bring your own)](MODELS.md) and [Inference
-destinations](INFERENCE_TARGETS.md) for those optional contracts.
+fallback. See [Models (bring your own)](MODELS.md) and [Models and
+assignments](INFERENCE_TARGETS.md) for those optional contracts.
 
 ## 11. Configure model-backed rewriting later
 
@@ -329,6 +338,6 @@ Once hold-to-talk feels natural, the rest is one setting away each:
   works, turn on the project-aware copilot.
 - [Meeting Mode Guide](MEETING_MODE_GUIDE.md): meeting-specific setup and capture.
 - [Models (bring your own)](MODELS.md): pick and point at an LLM.
-- [Inference destinations](INFERENCE_TARGETS.md): the destination contract behind
-  Settings, Models.
+- [Models and assignments](INFERENCE_TARGETS.md): availability, job selection,
+  frozen plans, and secret custody.
 - [Security & Privacy](SECURITY.md): what's stored and what can leave your machine.

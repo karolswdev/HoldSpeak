@@ -1,11 +1,8 @@
 """Built-in MIR plugins shipped with the runtime host.
 
-The package keeps the deterministic-stub `DeterministicPlugin` and the
-generic `register_builtin_plugins` registrar that existed when this was
-a single module, alongside real plugin implementations (one per
-submodule). Phase 16 ships `mermaid_architecture` as the first real
-LLM-backed synthesizer; the remaining plugin IDs continue to register
-as `DeterministicPlugin` stubs until their own stories land.
+The package keeps `DeterministicPlugin` as a compatibility and test helper,
+alongside the generic registrar and one real implementation module for every
+currently declared built-in plugin ID.
 """
 
 from __future__ import annotations
@@ -71,7 +68,8 @@ from .stakeholder_update_drafter import (
     _extract_update,
 )
 
-# Real plugin classes keyed by ID; every other ID falls back to the stub.
+# Real plugin classes keyed by ID. Every current built-in definition appears
+# here; the registrar's fallback remains defensive for compatibility.
 _REAL_PLUGINS = {
     "mermaid_architecture": MermaidArchitecturePlugin,
     "action_owner_enforcer": ActionOwnerEnforcerPlugin,
@@ -145,9 +143,9 @@ _BUILTIN_PLUGIN_DEFS: tuple[tuple[str, str], ...] = (
 def register_builtin_plugins(host: PluginHost) -> list[str]:
     """Register built-in plugins onto the provided host.
 
-    Plugin IDs in `_REAL_PLUGINS` register as their real class; every other
-    entry registers as a `DeterministicPlugin` stub until its dedicated phase
-    ships.
+    Every currently declared built-in ID registers its real class. The
+    deterministic fallback is retained for compatibility if a definition is
+    introduced before its implementation mapping.
     """
     registered: list[str] = []
     for plugin_id, kind in _BUILTIN_PLUGIN_DEFS:

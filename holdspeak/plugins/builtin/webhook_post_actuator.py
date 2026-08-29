@@ -21,15 +21,15 @@ Two halves, the same safety split as the GitHub connector (HS-38-02):
 
 Decision (resolved here, deferred from HS-38-01): **host allow-listing granularity**
 is a *config allow-list of hosts* — `MeetingConfig.webhook_allowed_hosts`. A
-proposal's target host must be a member; the list is **default-empty**, so a
-misconfigured webhook actuator posts nowhere. Slack/Teams are simply incoming-webhook
-URLs whose host is on the allow-list — not bespoke API integrations (no OAuth, no
-rich blocks; a plain incoming-webhook POST only).
+proposal's target host must be a member. The shipped config defaults to `["*"]`;
+operators can narrow it to exact hosts. Slack/Teams are simply incoming-webhook
+URLs whose host is on the allow-list — not bespoke API integrations (no OAuth,
+no rich blocks; a plain incoming-webhook POST only).
 
 Like the other connectors this is a **host-side gated connector** the executor
 injects (not a discovered pack), opt-in (`register_webhook_post_actuator`, NOT in
-`register_builtin_plugins`) and off by default — reached only after approval + the
-policy/parity gates + `network:outbound`.
+`register_builtin_plugins`) — reached only after authority resolution, the
+policy/parity gates, and `network:outbound`.
 """
 from __future__ import annotations
 

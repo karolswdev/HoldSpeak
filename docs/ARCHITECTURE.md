@@ -19,18 +19,19 @@ hardware-facing pieces and a local FastAPI server (`MeetingWebServer`) that
 serves the web UI and the API. Two modes run on top of the same building
 blocks:
 
-- **Dictation** turns held-key or wake-word speech into typed text, with an
-  optional pipeline that routes and rewrites it before it lands.
+- **Dictation** turns held-key or wake-word speech into typed text. Its
+  always-on pipeline routes it through local stages and uses a model only for
+  configured model-backed stages.
 - **Meetings** turn captured or imported audio into a transcript, typed
-  artifacts, and an aftercare digest, with approval-gated actions out.
+  artifacts, and an aftercare digest, with control-mode-authorized actions out.
 
-Transcription is local (`Transcriber`, MLX or faster-whisper). The LLM runs
-wherever you pointed it: since HS-112-01 the `profiles` table is the single
-source of truth for endpoint and model identity (an `InferenceTarget`), each
-feature holds one pointer into it, and `resolve_inference_target` is the one
-resolver. State lives in one SQLite database behind
-a set of repositories. Nothing takes an outbound action without an explicit
-approval, and the network crossings are enumerated in the
+Transcription is local (`Transcriber`, MLX or faster-whisper). Model Library is
+the authority for available model profiles, Assignments owns the ordered
+compatible choices for each registered capability, and the Intelligence Router
+freezes the selected route before a physical attempt. State lives in one SQLite
+database behind a set of repositories. Outbound actions require audited
+authority from the captured control posture, a scoped grant, or a per-action
+decision, and the network crossings are enumerated in the
 [trust boundary](#the-trust-boundary) below and in
 [`SECURITY.md`](SECURITY.md).
 
@@ -138,7 +139,7 @@ flowchart TB
     TY["Keyboard inject<br/>(typer.py)"]
     DESK["The Desk, the operating surface<br/>(web/src/desk/: WebGL stage + windows,<br/>every product surface a window at /)"]
     UI["The rooms + presence<br/>(web/src/pages/, desktop_presence.py)"]
-    BUS["Runtime bus, the one /ws per page<br/>(web/src/scripts/runtime-bus.js)"]
+    BUS["Runtime bus, the one /ws per page<br/>(web/src/runtime/RuntimeBus.tsx)"]
     CN["Gated connectors<br/>(plugins/gated_connector.py)"]
   end
 
@@ -359,13 +360,13 @@ flowchart TD
   IR --> LLM(["LLM backend"])
   HOST --> ART["Typed artifacts:<br/>decisions, action items, ADRs, risk registers, and more"]
   RUNB["An Agent / chain / workflow run<br/>(web/routes/primitives/)"] -- "run-born artifact,<br/>lineage names the capability" --> ART
-  GRAPH["A Workbench graph, authored on the iPad canvas<br/>or the web desk, synced as graph_json"] -- "linear subset runs;<br/>control flow refused with a warning<br/>(web/routes/workflow_graph.py)" --> RUNB
+  GRAPH["A Workbench graph, authored on the iPad canvas<br/>or the web desk, synced as graph_json"] -- "linear subset runs;<br/>control flow refused with a warning<br/>(services/sequence_workflow_service.py)" --> RUNB
   ART --> AFT["Aftercare digest:<br/>open, decided, changed since last time<br/>(meeting_aftercare.py)"]
   AFT --> ISSUE["An accepted action becomes<br/>a GitHub issue proposal"]
   AFT --> SLACK["The digest or draft becomes<br/>a Send to Slack proposal (slack_export.py)"]
-  ISSUE --> APV{"Propose, approve, execute<br/>(plugins/actuator_executor.py)"}
+  ISSUE --> APV{"Propose, authorize, execute<br/>(plugins/actuator_executor.py)"}
   SLACK --> APV
-  APV -. "approved only" .-> EXT(["GitHub, Slack"])
+  APV -. "authorized only" .-> EXT(["GitHub, Slack"])
 ```
 
 ### The scheduled recording conductor

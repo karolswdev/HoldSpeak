@@ -42,7 +42,7 @@ domain (`Contracts`/`RuntimeCore`) never links it. The package manifest
 | 2 | `RuntimeCore` | Meeting-intelligence engine, MIR routing, the sync engine. No UI, no engine. | Contracts, Providers |
 | 3 | `Providers` | The port protocols (`I*`) + their Foundation adapters (audio core, transcription registry, SQLite storage, model store/downloader, HTTP sync + queue, the endpoint LLM provider). | Contracts |
 | 3 | `InferenceLlama` | `LlamaProvider` — the on-device (Mode A) `ILLMProvider` on **llama.cpp via LLM.swift**. Kept a separate product so the engine never links into the domain. | Providers, Contracts, LLM.swift |
-| 4 | `Hosts` | The SwiftUI iPad/iPhone apps (Phases 8–9). | RuntimeCore, Providers, Contracts |
+| 4 | `Hosts` + `App/` | Shared host code and the native SwiftUI iPad/iPhone app. | RuntimeCore, Providers, Contracts |
 
 ## The provider seams (Layer 3)
 

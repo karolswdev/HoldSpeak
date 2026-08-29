@@ -39,9 +39,8 @@ regressions. If you touch anything under `web/`, rebuild the static bundle
 (`cd web && npm run build`; Node ≥ 22.12) since some tests read the built JS.
 Before changing web pages or their scripts, read
 [`docs/internal/ARCHITECTURE_WEB_FRONTEND.md`](docs/internal/ARCHITECTURE_WEB_FRONTEND.md)
-— it records the page decomposition pattern (section partials + behavior
-modules), the Astro scoped-CSS-on-JS-rendered-DOM trap, and the density
-budgets a guard test enforces. Before changing `web_runtime.py` or
+— it records the React/Vite source boundaries, Desk surface-core pattern,
+runtime bus, design-token contract, and the architectural guards. Before changing `web_runtime.py` or
 `meeting_session/`, read
 [`docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md`](docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md)
 — the backend twin: the mixin pattern, where patch targets live, and the

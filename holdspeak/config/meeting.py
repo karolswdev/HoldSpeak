@@ -101,8 +101,9 @@ class MeetingConfig:
     # PROPOSE by default; *executing* an approved proposal needs BOTH the master
     # switch on AND the actuator id on the per-project allow-list.
     # HS-139-08: permissive defaults (owner ruling: ledger-not-gate).
-    # allow_actuators=True with a wildcard allow-list so actuators run by
-    # default. Approval is always additionally required (the proposal lifecycle).
+    # allow_actuators=True with a wildcard allow-list so eligible actuators can
+    # run by default. Authority still comes from the captured control posture,
+    # an exact scoped grant, or a per-action decision.
     allow_actuators: bool = True
     allowed_actuators: list[str] = field(default_factory=lambda: ["*"])
     # HS-38-03: the webhook write connector's host allow-list (the resolved
@@ -208,8 +209,8 @@ class MeetingConfig:
         self.allowed_actuators = normalized_act
 
         # HS-38-03: the webhook host allow-list -- normalized like the others, but
-        # lowercased (DNS hostnames are case-insensitive). Default-empty refuses
-        # every host, so a misconfigured webhook actuator posts nowhere.
+        # lowercased (DNS hostnames are case-insensitive). The shipped wildcard
+        # default admits any host; operators can narrow it to exact hosts.
         if not isinstance(self.webhook_allowed_hosts, list) or not all(
             isinstance(h, str) for h in self.webhook_allowed_hosts
         ):
@@ -339,7 +340,7 @@ def validate_spoken_symbols(raw: object) -> list[dict]:
 
 @dataclass
 class DictationPipelineConfig:
-    """DIR-01 dictation pipeline config (spec $9.4). OFF by default."""
+    """DIR-01 dictation pipeline config (spec $9.4), enabled by default."""
 
     # HS-139-02: pinned to True (was False). The pipeline is core
     # functionality; toggling it off breaks dictation. Removed from the
@@ -431,5 +432,3 @@ class DictationConfig:
 
     def __post_init__(self) -> None:
         self.spoken_symbols = validate_spoken_symbols(self.spoken_symbols)
-
-

@@ -1,7 +1,7 @@
 """Hatch build hooks for HoldSpeak.
 
 The default ``holdspeak`` command serves the web runtime, so wheels built from
-source must contain the Astro output under ``holdspeak/static/_built``.
+source must contain the Vite/React output under ``holdspeak/static/_built``.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 
 class CustomBuildHook(BuildHookInterface):
-    """Build the Astro frontend before packaging the Python wheel."""
+    """Build the Vite/React frontend before packaging the Python wheel."""
 
     def initialize(self, version: str, build_data: dict) -> None:
         _ = version

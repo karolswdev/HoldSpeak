@@ -8,7 +8,7 @@ same iPad are different execution slots.
 ## Start and pair
 
 ```bash
-cd /Users/karol/dev/tools/HoldSpeak
+cd /path/to/HoldSpeak
 UAT_HOST=0.0.0.0 uv run python -m uat.conductor
 ```
 

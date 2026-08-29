@@ -42,10 +42,11 @@ Read [Models](docs/MODELS.md) for setup or the internal
 [Intelligence Router architecture](docs/internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md)
 for the technical mechanics.
 
-> **Status: 0.x, early but real.** HoldSpeak is on PyPI (`pip install holdspeak`).
-> The features are mature; APIs, config, and defaults can still change while it is
-> pre-1.0. Upgrades are safe by default (your data is backed up first). Feedback
-> and contributions welcome.
+> **Status: 0.x, early but real.** The latest published release is
+> `holdspeak==0.4.0` on PyPI. This README tracks `main`, which includes
+> unreleased work after `0.4.0`; install from a checkout when you need exact
+> documentation parity. APIs, config, and defaults can still change before
+> 1.0. Shape-changing database upgrades create a backup first.
 
 ## The two modes
 
@@ -186,9 +187,9 @@ of reach by design.
   [meeting intelligence](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MEETING_MODE_GUIDE.md).
 - **Honest by construction.** `holdspeak doctor` reports what is actually
   broken. The import panel says which timestamps are approximate. The learning
-  digest never inflates a count. Upgrades back your database up before
-  touching it and refuse to open data written by a newer build. The docs hold
-  themselves to the same bar.
+  digest never inflates a count. A database shape change creates a backup
+  before the additive reconcile runs, and a newer informational schema stamp
+  is not mistaken for corruption. The docs hold themselves to the same bar.
 
 ## See it learn
 
@@ -254,8 +255,8 @@ they do; pick the one that fits.
 | Tool | What it does better | What HoldSpeak does better |
 |---|---|---|
 | **OS dictation** (Apple Dictation, Windows Voice Typing) | Zero setup, free, always available | Your own models, LLM rewriting with project context, the learning loop, meetings |
-| **Local Whisper apps** (superwhisper, MacWhisper, VoiceInk) | Simpler setup, polished single-purpose UX | The LLM stays local too (their AI modes often call cloud APIs), a visible learning loop, meeting intelligence, Linux support |
-| **AI dictation services** (Wispr Flow, Aqua Voice) | Out-of-box accuracy and editing polish, no model management | Your voice never leaves your machine, open source, no subscription, meetings |
+| **Local Whisper apps** (superwhisper, MacWhisper, VoiceInk) | Simpler setup, polished single-purpose UX | Owner-chosen model endpoints, a visible learning loop, meeting intelligence, Linux support |
+| **AI dictation services** (Wispr Flow, Aqua Voice) | Out-of-box accuracy and editing polish, no model management | Local transcription, explicit destination boundaries, open source, no subscription, meetings |
 | **Talon** | The deepest hands-free coding and computer control there is | Prose-first dictation with LLM rewriting, lower learning curve, meeting intelligence |
 | **Raw Whisper tooling** (whisper.cpp scripts) | Total control, minimal surface | A product: typing integration, routing, the journal, meetings, a web UI |
 
@@ -265,7 +266,7 @@ Windows build today, and Wayland limits global hotkeys to best effort.
 
 ## Quickstart
 
-Install from PyPI and launch the web runtime:
+For the latest published release:
 
 ```bash
 pip install holdspeak
@@ -274,17 +275,26 @@ holdspeak          # launch the web runtime (the browser opens on the Desk)
 
 Prefer [`uv`](https://docs.astral.sh/uv/)? `uv pip install holdspeak`.
 
-Or use the install script (creates an isolated venv and a `holdspeak` launcher),
-or work from a clone:
+The documentation on `main` includes features added after the `0.4.0` release.
+For exact parity with these docs, install from a current checkout:
+
+```bash
+git clone https://github.com/karolswdev/HoldSpeak.git
+cd HoldSpeak
+uv pip install -e .
+holdspeak
+```
+
+The install script creates an isolated venv and a `holdspeak` launcher. It pins
+the latest release by default; set `HOLDSPEAK_REF=main` only when you
+deliberately want the unreleased source state:
 
 ```bash
 # one-line install
 curl -fsSL https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/scripts/install.sh | bash
 
-# or from a clone (for development)
-git clone https://github.com/karolswdev/HoldSpeak.git && cd HoldSpeak
-uv pip install -e .
-holdspeak
+# unreleased main in the same isolated layout
+curl -fsSL https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/scripts/install.sh | HOLDSPEAK_REF=main bash
 ```
 
 ### Your first sentence
@@ -333,10 +343,11 @@ pip install 'holdspeak[dictation-openai]' # the dictation pipeline via an OpenAI
 
 Your whole HoldSpeak database is a single SQLite file. Before a version jump you
 can snapshot it with `holdspeak backup`, and put one back with `holdspeak
-restore`. Upgrades are safe by default: HoldSpeak backs up an older database
-before it touches it, and refuses to open a database written by a newer build
-rather than risk your data. `holdspeak doctor` reports the schema and config
-state it found. The full policy is in
+restore`. On open, HoldSpeak reconciles missing tables and columns additively.
+It backs up an existing database before a real shape change and never drops an
+unknown table, column, or row. The schema stamp is informational, so a database
+stamped by a newer build opens without a version-gate refusal. `holdspeak
+doctor` reports the schema and config state it found. The full policy is in
 [`docs/RELEASING.md`](https://github.com/karolswdev/HoldSpeak/blob/main/docs/RELEASING.md).
 
 ## Platform support
@@ -398,8 +409,8 @@ dictionary on that dictation path, reads a meeting back with its artifacts,
 confidence, and sources, closes the meeting's loop from the aftercare digest
 (an accepted action item becomes a GitHub issue proposal, typed against a
 repo you name inline), reviews every pending proposal for a meeting wherever
-it was created (the human gate stays its own step, and approving a Slack
-send carries the cloud mark because that approval executes), searches and
+it was created (Secure and Normal keep the human authorization step; default
+YOLO can execute an eligible configured destination immediately), searches and
 filters the archive with the same facets the web has (narrowed on the hub,
 never a stale page filtered locally), imports a recording or transcript file
 into the hub's full intelligence pipeline (the new meeting appears

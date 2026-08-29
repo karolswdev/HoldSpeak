@@ -1,5 +1,8 @@
 # Functional Handoff
 
+> Archived 2026-04-29 Astro-era snapshot. It does not describe the current
+> React/Vite Desk; start with [`../docs/WEB_DESK.md`](../docs/WEB_DESK.md).
+
 ## Global Navigation Model
 
 HoldSpeak currently exposes several local web routes:

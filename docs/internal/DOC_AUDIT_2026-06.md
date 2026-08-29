@@ -1,5 +1,10 @@
 # Documentation truth audit — 2026-06
 
+> **Historical snapshot.** This audit records the June 2026 documentation
+> state. It is not the current product ledger. Use
+> [`DOC_AUDIT_2026-08.md`](./DOC_AUDIT_2026-08.md) for the current sweep and
+> canonical facts.
+
 **Story:** HS-46-01 (Phase 46 — Documentation Excellence & the 10-Second Hook).
 **Date:** 2026-06-06. **Method:** every claim checked against live code at
 `HEAD` of `phase-46-documentation-lift`. Paths below are repo-root relative.

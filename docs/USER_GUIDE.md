@@ -57,7 +57,7 @@ Choose **Finish Thought** to finish immediately, with no confirmation step.
 Opening or editing the Workbench never starts AI by itself.
 If no runnable model is configured, Interview places **Set up AI** directly
 beneath the explanation and opens Settings in **Models**. On a phone, the fixed
-footer first takes you to that Interview action. After a model destination is
+footer first takes you to that Interview action. After a runnable model is
 saved, the open Workbench rechecks readiness and restores **Ask AI**
 automatically.
 
@@ -324,21 +324,21 @@ Use `openai_compatible` when the model is served somewhere else:
 - LiteLLM
 - OpenAI or another hosted compatible API
 
-The one path: add the endpoint once under **Settings, Models → AI connections**,
-then choose it for **Writing & dictation** under **Choose AI for each job**.
-Assigning a connection is itself the "run it there" instruction, so the
+The one path: add the endpoint once under **Settings > Models > Model Library**,
+then choose it for **Writing & dictation** under **Assignments**.
+Assigning a model is itself the "run it there" instruction, so the
 dictation backend follows. Set
-or replace its key inline in **Settings, Models**; the environment variable
+or replace its key on the model profile in Model Library; the environment variable
 `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback.
 
 The old `dictation.runtime.openai_compatible_*` fields no longer configure
-anything (HS-112-01). An upgrade reads a configured legacy endpoint once,
-converts it into a destination named `legacy-dictation`, and points dictation
-at it; the legacy key env deliberately does not carry over.
+anything. An upgrade reads a configured legacy endpoint once,
+converts it into a model profile named `legacy-dictation`, and points dictation
+at it; the legacy key environment value deliberately does not carry over.
 `dictation.runtime.openai_compatible_timeout_seconds` is not part of the
-destination and still applies.
+model profile and still applies.
 
-Known-good endpoint families include llama.cpp server, LM Studio, Ollama's OpenAI bridge, vLLM, LiteLLM, and hosted OpenAI-compatible APIs. HoldSpeak uses the key you set inline for that destination, or its `HOLDSPEAK_PROFILE_<ID>_KEY` headless fallback. It does not put the key in the destination definition, config, or project context files. If the endpoint is unavailable, times out, or returns malformed output, HoldSpeak preserves the original transcript and surfaces the failure in dry-run/readiness output.
+Known-good endpoint families include llama.cpp server, LM Studio, Ollama's OpenAI bridge, vLLM, LiteLLM, and hosted OpenAI-compatible APIs. HoldSpeak uses the key you set on that model profile, or its `HOLDSPEAK_PROFILE_<ID>_KEY` headless fallback. It does not put the key in the profile definition, config, or project context files. If the endpoint is unavailable, times out, or returns malformed output, HoldSpeak preserves the original transcript and surfaces the failure in dry-run/readiness output.
 
 ## Project Context
 
@@ -691,14 +691,14 @@ Local-first behavior:
 
 Cloud or homelab behavior:
 
-- If you set `meeting.intel_provider` to `cloud` (or `auto`, which can fall back to it), meeting text may be sent to the destination you picked for analysis.
-- The one path: add the endpoint once under **Settings, Models → AI connections**,
-  then choose it for **Meetings** under **Choose AI for each job**. The
-  `intel_cloud_*` fields are dead (HS-112-01).
-- Use `holdspeak doctor` from the same shell environment to verify endpoint, model, TLS, DNS, and authentication; its Runs on line names the destination each pipeline resolves to.
+- If you set `meeting.intel_provider` to `cloud` (or `auto`, which can fall back to it), meeting text may be sent to the model endpoint you picked for analysis.
+- The one path: add the endpoint once under **Settings > Models > Model Library**,
+  then choose it for **Meetings** under **Assignments**. The
+  `intel_cloud_*` fields are legacy migration inputs and do not configure runs.
+- Use `holdspeak doctor` from the same shell environment to verify endpoint, model, TLS, DNS, and authentication; its placement line names the model each pipeline resolves to.
 
 The provider switch itself still lives in config (deferred intel is
-always on, pinned since HS-139-02):
+always on and no longer user-configurable):
 
 ```json
 {
@@ -798,8 +798,8 @@ and the iPad shows it:
 
 The iPad's own storage is schema safe the way the desktop is: it backs an older
 database up before migrating it, and refuses to open one written by a newer
-build rather than risk your data. The on-device screens for these are still
-coming together; the client layer they ride on is shipped and tested.
+build rather than risk your data. Its Settings readiness section reports that
+store health alongside the paired desktop's status.
 
 ### AIPI-Lite
 
@@ -1118,7 +1118,7 @@ Sensitive files:
 
 - Do not place secrets in `.hs/`.
 - Use `.hs/ignore` to document paths and topics that should not be injected.
-- Set destination keys inline in **Settings, Models**; use environment variables
+- Set model-profile keys in **Model Library**; use environment variables
   when provisioning a headless hub.
 
 ## Troubleshooting

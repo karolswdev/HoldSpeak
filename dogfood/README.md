@@ -1,7 +1,8 @@
 # dogfood/ — the HoldSpeak dogfooding harness
 
-A self-contained rig for exercising **all** of HoldSpeak against believable
-data, on real metal, and recording what works. Built in Phase 67.
+A self-contained rig for exercising HoldSpeak against believable data, on real
+metal, and recording what works. It complements the broader UAT conductor with
+a compact pair of deterministic and live-model tiers.
 
 What's here:
 

@@ -113,20 +113,20 @@ For the full operations guide (daemonising, PSK rotation,
 multi-device meetings, the troubleshooting table) see
 [`docs/HOLDSPEAK_BRIDGE.md`](docs/HOLDSPEAK_BRIDGE.md).
 
-## Project status
+## Software status
 
-- **Phase 1 — Provisioning:** implementation-complete on disk;
-  hardware verification + close-out is the open item. Multi-SSID +
-  captive portal + BLE + serial + factory-reset gestures are all
-  wired in `aipi.yaml`.
-- **Phase 2 — Bridge protocol translator:** in-progress; pairs
-  with HoldSpeak HS-14. The thin-forwarder rewrite is on `main`;
-  hardware end-to-end smoke + close-out remaining.
-- **Phase 3 — Cross-network transport:** scaffolding open. TLS
-  (`wss://`), tunnel/VPN choice, PSK lifecycle. Pairs with HoldSpeak
-  HS-15.
+- `aipi.yaml` implements multi-SSID provisioning, captive portal, BLE Improv,
+  serial recovery, and factory-reset gestures. Hardware-specific behavior still
+  needs validation on the exact board and peripherals you flash.
+- The Python bridge is the implemented thin protocol translator and has unit
+  coverage for configuration, protocol shapes, audio helpers, and reconnect
+  behavior. Use `--check` before an end-to-end hardware run.
+- The bridge currently constructs plaintext `ws://` and `http://` HoldSpeak
+  URLs. Its safe default is a co-located bridge talking to HoldSpeak on
+  `127.0.0.1`; it does not provide TLS termination for a cross-network link.
 
-Roadmap detail: [`pm/roadmap/aipi-lite/`](pm/roadmap/aipi-lite/).
+Historical roadmap and hardware evidence:
+[`pm/roadmap/aipi-lite/`](pm/roadmap/aipi-lite/).
 
 ## A note to the community
 

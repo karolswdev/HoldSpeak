@@ -7,11 +7,32 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 > **0.x, early but real.** HoldSpeak is published on PyPI (`pip install
 > holdspeak`). APIs, config, and defaults can still change while it is pre-1.0;
-> upgrades are safe by default (your database is backed up first).
+> database shape is reconciled additively, with a timestamped backup before an
+> existing database needs a real shape change.
 
 ## [Unreleased]
 
 ### Added
+- **One Model Library and one Assignments editor.** Models are registered once,
+  secrets stay in owner-only custody, and each capability receives an ordered
+  model list without adding or editing a model silently changing placement.
+  The inference router freezes route/operation plans, records every physical
+  attempt, and applies the same admission rules across Web, CLI, MCP, and jobs.
+- **The Door is the front page.** The React Desk opens on a working board with
+  upcoming calendar events, scheduled recordings, meetings, and honest action
+  verbs. Multiple ICS sources are independently bounded and reported; a
+  calendar screenshot can be reviewed into a local ICS source; **Record this**
+  arms an event through the normal scheduled-recording conductor.
+- **Thought Workbench.** Notes can be developed through an explicit interview,
+  with preserved originals, user-selected context, frozen context revisions,
+  placement/egress receipts, and no background model call on open or edit.
+- **Encrypted People records.** Relationship material lives in a dedicated
+  AES-256-GCM sidecar whose data key is held by the native credential store.
+  It fails closed when key custody is unavailable and is excluded from normal
+  search, sync, exports, Cadence, backups, and generic MCP projections.
+- **Delivery and operation authority.** Consequential operations now use one
+  typed policy, scoped grants, payload/destination binding, and durable receipts
+  across actuator, dictation, coder-steering, and sync/cadence families.
 - **The mesh knows its models.** A new synced `model` manifest ("this node has
   this model, with these capabilities") joins the sync wire as its eleventh
   kind: devices advertise their installed models on push, the hub stores them
@@ -23,6 +44,21 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   cards on the desk, speak or type an instruction, keep the printed answer —
   now persists as an artifact whose provenance names every card it read and
   the exact prompt, on the synced wire the web and hub already read.
+
+### Changed
+- The default control posture is YOLO. Registered fixed-destination operations
+  may execute from captured posture authority, while Secure and Normal retain
+  explicit decisions and bounded grants. Identity, secret custody,
+  destination/payload binding, audit receipts, and schema safety cannot be
+  weakened by control mode.
+- Meeting actuator and webhook allow-lists default to wildcard enabled. The
+  connector manifest, configured-destination checks, payload parity, and audit
+  path still apply, and operators can narrow the lists.
+- Database startup uses declarative additive reconciliation instead of a
+  hand-maintained version ladder. `schema_version` is informational; a newer
+  stamp alone is not a refusal condition.
+- The browser product is one React 19/Vite application served by FastAPI. The
+  earlier Astro designer handoff is retained only as an archived snapshot.
 
 ### Fixed
 - The iPad's printed run card and routing theater stated where the run went

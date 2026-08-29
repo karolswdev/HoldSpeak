@@ -1,5 +1,9 @@
 # AIPI-Lite Import Note
 
+> Historical provenance record for the original repository import. Paths,
+> branch names, commit IDs, and the listed dirty files are intentionally
+> point-in-time facts, not current setup instructions.
+
 This directory makes the AIPI-Lite firmware and bridge a first-class part of
 the HoldSpeak checkout.
 

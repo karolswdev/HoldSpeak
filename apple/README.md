@@ -1,78 +1,84 @@
-# HoldSpeak Mobile (Apple)
+# HoldSpeak for Apple platforms
 
-The Apple runtime of the HoldSpeak ecosystem (iPhone/iPad). Roadmap + canon live
-at [`../pm/roadmap/holdspeak-mobile/`](../pm/roadmap/holdspeak-mobile/); this is
-the Swift codebase that roadmap builds.
+This directory contains the Swift runtime, native iPhone/iPad application
+sources, and device-build tooling for HoldSpeak. The architectural map is
+[`ARCHITECTURE.md`](./ARCHITECTURE.md); historical roadmap and contract rationale
+live under [`../pm/roadmap/holdspeak-mobile/`](../pm/roadmap/holdspeak-mobile/).
 
-**New here? Read [`ARCHITECTURE.md`](./ARCHITECTURE.md)** — the map of the four
-layers, the provider seams, the two inference modes, the meeting-intelligence + MIR
-path, and sync.
+## Layout
 
-## Layout (charter four-layer architecture)
-
-```
+```text
 Sources/
-  Contracts/    # Layer 1 — language-neutral schema as Swift Codable types (Foundation only)
-  RuntimeCore/  # Layer 2 — meeting/artifact/MIR engines, persistence, sync (no UI)
-  Providers/    # Layer 3 — ITranscriber / ILLMProvider / IAudioCapture / IStorage / ISyncProvider
-  Hosts/        # Layer 4 — iPad/iPhone SwiftUI apps (the only UI layer)
-Tests/
-  ContractsTests/  # round-trips the Phase-0 golden fixtures
+  Contracts/       language-neutral Codable contracts
+  RuntimeCore/     meeting, artifact, routing, persistence, and sync logic
+  Providers/       audio, transcription, storage, endpoint, and sync adapters
+  InferenceLlama/  llama.cpp-backed on-device inference adapter
+  Hosts/           shared host-facing Swift code
+App/               native SwiftUI app and harness entry points
+Tests/             package tests for all runtime layers
+scripts/           generated-Xcode-project and physical-device workflows
 ```
 
-**Layer rule (enforced):** `Contracts`, `RuntimeCore`, and `Providers` import no
-SwiftUI/UIKit/WebKit — business logic does not depend on UI (charter Architecture
-§Principle).
+Only host/application code imports SwiftUI or UIKit. `Contracts`, `RuntimeCore`,
+and `Providers` remain UI-independent; the package and layer-guard tests enforce
+that boundary.
 
-## Build & test
+The supported deployment floors declared by `Package.swift` are macOS 14 and
+iOS 17. Swift tools version 6.0 is required.
+
+## Build and test the runtime
 
 ```bash
 cd apple
-swift build      # compiles all four layers (macOS host)
-swift test       # round-trips the Phase-0 fixtures through Swift Codable
+swift build
+swift test
 ```
 
-The `Contracts` types are written against
-[`../pm/roadmap/holdspeak-mobile/contracts/`](../pm/roadmap/holdspeak-mobile/contracts/)
-(the schemas + serialization contract + golden fixtures). The tests read those
-same fixtures, so the Swift and Python runtimes are validated against one source.
+The contract tests read the golden wire fixtures under the mobile roadmap, so
+Swift and Python are checked against the same serialized shapes. Tests needing
+a real model, endpoint, or device are opt-in; see
+[`ARCHITECTURE.md`](./ARCHITECTURE.md#testing).
 
-### Launch the shell on a device
+## Run the native app
+
+The primary physical-device workflow generates a signed Xcode project under the
+gitignored `apple/build/` directory, builds it, installs it, and launches it:
 
 ```bash
-# Simulator (Gate 1, no signing): iPhone + iPad simulators, screenshots each.
-scripts/gate1-launch.sh
-
-# Physical device (Gate 1 on real metal): build → sign → install → launch via
-# devicectl. Auto-selects a connected iPad. One-time prereqs (all persist):
-#   Xcode > Settings > Accounts signed in · latest Apple Developer PLA accepted ·
-#   Developer Mode on the device · the device registered in the account.
-scripts/gate1-device.sh [device-udid]
+cd apple
+scripts/meeting-capture-device.sh [device-udid]
 ```
 
-`gate1-device.sh` calls `gen-device-project.rb` to generate a signed iOS app
-project under `build/` (gitignored). Override the signing team with `HS_TEAM=…`.
+One-time prerequisites are an Xcode account with an accepted developer
+agreement, a trusted/registered device with Developer Mode enabled, and valid
+automatic signing. The script prefers a connected iPad, then an iPhone. Review
+the script before running it: as part of signing recovery it clears cached local
+provisioning profiles so Xcode can regenerate them for the selected device.
 
-## Serve the mesh
+Other scripts are purpose-built harnesses rather than alternate production app
+roots:
 
-The device can host runs for the whole mesh: Settings → "Serve my models to
-the mesh" (off by default). While the toggle is on and the app is in the
-foreground, a worker (`MeshServeWorker`, Providers layer) claims relayed runs
-from the paired hub and executes them on this device's own active profile —
-its model, its Keychain key; neither ever leaves the device. Hub-side, a
-profile with the Mesh node kind naming `iPad`/`iPhone` routes any run here,
-badged `Mesh · <node>`. Closing the app reads offline within seconds and
-further runs refuse fast, naming the node. Serving requires an on-device
-model or an endpoint profile — a profile that itself runs elsewhere refuses
-to serve, by name.
+- `gate1-launch.sh` and `gate1-device.sh`: minimal shell smoke tests.
+- `harness-device.sh`: endpoint/inference harness.
+- `local-harness-device.sh`: on-device inference harness.
+- `speak-harness-device.sh`: speech/dictation harness.
+- `push-model-device.sh`: copy a GGUF into an installed app container.
 
-## Status
+Each device script prints its exact prerequisites and accepted arguments.
 
-Phase 1 (Mobile Foundation): the SPM package + `Contracts` types are in
-(HSM-1-01/02). CI (HSM-1-03) and the on-device launch closeout (HSM-1-04) are the
-remaining Phase-1 stories. The SwiftUI app target / Xcode project arrives with the
-iPad (Phase 8) and iPhone (Phase 9) experience phases; `Hosts` is a placeholder
-until then so the package builds + tests on the macOS host.
+## Mesh serving
 
-Provisional iOS floor: 17 — revisit at Phase 5 (if Core ML wins, `MLState` moves
-it to 18; PROGRAM-RISKS P6).
+The native app can serve its active model to the paired HoldSpeak mesh. Enable
+**Serve my models to the mesh** in Settings. Serving is off by default and
+foreground-only: while enabled, `MeshServeWorker` claims signed work from the
+hub and executes it with the device's own model and Keychain-held endpoint key.
+The model and key stay on the device. Closing the app makes the node offline and
+later runs refuse with the node named.
+
+## Current status
+
+The Swift package and native app are both implemented. `App/MeetingCapture/`
+contains the flagship desk, recording/review, models, sync, companion, and mesh
+surfaces; the remaining app entry points are focused test and compatibility
+harnesses. Treat `pm/` as historical planning/evidence, not as the current
+product-status reference.

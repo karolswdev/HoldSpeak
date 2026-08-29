@@ -104,7 +104,7 @@ In `/dictation -> Runtime`, set:
 | Backend | `openai_compatible` |
 | Base URL | `http://127.0.0.1:8000/v1` |
 | Model | `qwen2.5-7b-instruct` |
-| API key | Set inline in **Settings, Models**; optional headless fallback `HOLDSPEAK_PROFILE_<ID>_KEY` |
+| API key | Set on the model profile in **Model Library**; optional headless fallback `HOLDSPEAK_PROFILE_<ID>_KEY` |
 | Timeout seconds | `8` |
 
 Config file shape:
@@ -125,12 +125,13 @@ Config file shape:
 }
 ```
 
-The endpoint and model are not config fields (HS-112-01). Author the endpoint
-once as a destination under **Settings, Models** and pick it as the dictation
-**Runs on**; assigning it also selects the `openai_compatible` backend. See
+The endpoint and model are not dictation config fields. Add the endpoint once
+in **Settings > Models > Model Library** and select it for **Writing &
+dictation** in **Assignments**; assigning it also selects the
+`openai_compatible` backend. See
 [MODELS.md](./MODELS.md).
 
-Set the destination key inline in **Settings, Models**. For a headless hub,
+Set the model profile's key in Model Library. For a headless hub,
 `HOLDSPEAK_PROFILE_<ID>_KEY` remains the fallback. Do not put API keys in
 `.hs/` files.
 
@@ -423,7 +424,7 @@ confidence threshold.](assets/cockpit/copilot-depth.png)
 | Control (Runtime → Copilot depth) | Knob (`dictation.pipeline`) | Default | What it does |
 | --- | --- | --- | --- |
 | **Rewrite passes** (segmented 1-5) | `rewrite_passes` | `1` | Project-rewriter passes (draft → critique → refine). `1` is single-pass. Extra passes are skipped if they would breach `max_total_latency_ms`. |
-| **Learn from my corrections** | `corrections_enabled` | `true` | Always on (pinned since HS-139-02). Consult the **correction memory** when routing: a correction you made earlier nudges a similar later utterance. |
+| **Learn from my corrections** | `corrections_enabled` | `true` | Always on. Consult the **correction memory** when routing: a correction you made earlier nudges a similar later utterance. |
 | **Infer the target when unsure** (toggle) | `target_detect_llm_enabled` | `false` | When window/app detection is unsure, ask the LLM to infer the **output target** from your words. A manual override always wins. |
 | **Ask the model below confidence** (slider) | `target_detect_llm_below` | `0.8` | The heuristic-confidence threshold below which the LLM fallback fires. |
 
@@ -453,8 +454,7 @@ timings.](assets/cockpit/memory-panel.png)
 
 The **What the copilot has learned** panel lists every persistent correction
 (kind · gist · → corrected value · when) with a remove (`×`) on each, an **add**
-form and a **Forget all** button. Correction memory is always on (pinned
-since HS-139-02).
+form and a **Forget all** button. Correction memory is always on.
 
 **Model-assisted target detection.** On Wayland/terminal setups where the active
 window can't be read, the heuristic returns low confidence; with the fallback on,
@@ -729,11 +729,11 @@ wipe*, not from being off:
   are checked with the same secret-shape filter the correction memory uses; a
   field that looks like it carries a key/token is redacted, so a secret never
   lands in the journal.
-- **Retention-capped.** The journal keeps the most recent 500 entries
-  (pinned since HS-139-02) and prunes older ones on every write.
+- **Retention-capped.** The journal keeps the most recent 500 entries and
+  prunes older ones on every write.
 - **Curatable.** Delete any single entry, or **Clear journal** to wipe it all,
   from the tab.
-- **Always on.** The journal is always enabled (pinned since HS-139-02);
+- **Always on.** The journal is always enabled;
   journaling is a pure side-channel that never changes what gets typed or
   how fast.
 
@@ -830,8 +830,8 @@ The learning is real, local, and bounded. Be clear-eyed about what it is:
   threshold. The "learned from N similar" count everywhere in the UI is that same
   measure, run over your journal. There is no hidden training and no embedding
   model, which is also why the count is honest and easy to reason about.
-- **Always on for routing.** Correction memory is always enabled (pinned
-  since HS-139-02). A correction nudges routing from the moment you make it.
+- **Always on for routing.** Correction memory is always enabled. A correction
+  nudges routing from the moment you make it.
 - **It is local.** Corrections and the journal live on your machine, gist-only
   and secret-filtered, like everything else in this loop. A secret-shaped
   correction teaches nothing, and the confirmation says so.

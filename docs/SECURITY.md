@@ -1,8 +1,8 @@
 # HoldSpeak Security & Privacy Posture
 
 **Status:** living document.
-**Last updated:** 2026-08-18 (HS-139-08 open throttle: YOLO default posture,
-actuators on, People MCP default write; hard boundary unchanged).
+**Last updated:** 2026-08-29 (YOLO default posture, actuators on, People MCP
+default write; hard boundary unchanged).
 
 This document is the threat model for HoldSpeak: what data it holds, where that
 data lives, what can leave the machine, and the decisions behind its at-rest
@@ -128,16 +128,17 @@ HoldSpeak is **local-first**. The design goal is that nothing leaves your
 machine unless you explicitly choose a feature that sends it. The sections below
 make that promise auditable rather than aspirational.
 
-### Control posture (HS-139-08)
+### Control posture
 
 The control posture (`control_mode` in config) governs how actuator proposals
-are handled. Three modes exist: **YOLO**, **neutral**, and **safe**.
+are handled. Three product modes exist: **YOLO**, **Normal**, and **Secure**;
+their persisted wire values are `yolo`, `neutral`, and `safe`.
 
-**YOLO is the default** (owner ruling: ledger-not-gate). Under YOLO:
+**YOLO is the default.** Under YOLO:
 - Actuator proposals to a registered, configured destination auto-execute at
   propose time. Every execution writes an immutable receipt.
-- The propose-approve lifecycle is still intact as a code path and activates
-  under neutral or safe postures.
+- The propose-authorize-execute lifecycle remains intact and requires a
+  decision or exact bounded grant under Normal or Secure.
 - Actuators are on by default (`allow_actuators: true`) with a wildcard
   allowlist.
 
@@ -209,7 +210,7 @@ If that credential store is absent, locked, or mismatched, People fails closed.
 People content is excluded from the normal database, its safety backups, global
 FTS/Search/Ask/Memory, sync, exports/connectors, Cadence, generic MCP surfaces, and
 content-bearing logs. The People MCP adapter defaults to write capability for the local owner
-process (HS-139-08: ledger-not-gate). Leader-private content is always excluded
+process. Leader-private content is always excluded
 from MCP projections. The owner can set `HOLDSPEAK_MCP_PEOPLE_ACCESS=off` or
 `=read` to restrict; the hard boundary (encryption at rest, key custody,
 policy refusal matrix) does not loosen regardless of the access mode.
@@ -356,10 +357,10 @@ adds implementation detail but is not a second product inventory.
 | **Calendar snapshot extraction** (`services/calendar_snapshot_service.py`) | Owner imports a calendar screenshot via **IMPORT SCREENSHOT** or a Desk glass drop. | The screenshot image is sent to the vision model assigned to `calendar.snapshot_extract`. Where that assignment routes determines the egress: a local model means nothing leaves; a cloud endpoint means the image reaches that host, stated by the extraction result's egress badge. The generated `.ics` is a local file source and causes zero network egress. | Assignment-gated: no vision assignment means a named refusal, not a silent skip. The generated `.ics` passes through the same bounded parser as every ICS source (5 MiB, 14-day horizon, 128 occurrences per master event). |
 | **Deferred-intel failure webhook** (`intel_queue.py`, the `urlopen` send) | User configures `intel_retry_failure_webhook_url` | Queue statistics only (counts, rates), **no transcript** | Opt-in (URL must be set). |
 | **Wake-model download** (`wake_word.py`, first enable) | `wake_word.enabled` flipped on with models absent | Nothing leaves: an inbound fetch of the detection models (~7 MB) from the openWakeWord GitHub releases, once, cached locally | Opt-in (the feature is off by default); stated in the settings copy. Detection itself runs locally and no audio ever egresses. |
-| **Send to Slack** (`slack_export.py` → the gated webhook connector) | User configures `meeting.slack_webhook_url`; under YOLO posture (the default) the send auto-executes at propose time; under neutral/safe posture, per-action approval is required | The meeting digest or follow-up draft, exactly as previewed on the proposal (plain text; no transcript, no audio) | The URL must be set (consent for exactly its host; the connector refuses any other host before egress). Under YOLO, execution is immediate with a receipt; under neutral/safe, every send is a separate approval. The webhook URL is treated as a credential: never in proposals, broadcasts, or API responses. |
-| **Desk Slack relay** (`web/routes/desk_actuators.py` → the same gated webhook connector) | A desk or companion card proposes a Slack send; under YOLO the registered destination auto-executes; under neutral/safe, per-action approval | The proposed text, exactly as previewed (plain text) | Same gate as Send to Slack: `meeting.slack_webhook_url` must be set; the URL never rides a payload. |
-| **Desk webhook connector** (`web/routes/desk_actuators.py` → `actuator_shared.execute_webhook_proposal`) | `meeting.companion_webhook_url` is configured; under YOLO the registered destination auto-executes; under neutral/safe, per-action approval | The proposed text, exactly as previewed, to that one configured endpoint (Discord, Zapier, n8n, or any URL you set) | The URL must be set (consent for exactly its host). Every execution writes a receipt. The URL is a credential: never in proposals, broadcasts, or API responses. |
-| **Desk GitHub issue** (`web/routes/desk_actuators.py` → `gh issue create`) | The GitHub connector is enabled; under YOLO a registered repo auto-executes; under neutral/safe, per-action approval | The issue title and body, exactly as previewed, through your own `gh` CLI | Runs your authenticated `gh`, never a stored token of ours. Unregistered repos are refused even under YOLO. Distinct from the read-only enrichment row below. |
+| **Send to Slack** (`slack_export.py` → the gated webhook connector) | User configures `meeting.slack_webhook_url`; under YOLO posture (the default) the send auto-executes at propose time; under Normal/Secure, per-action authorization or an exact bounded grant is required | The meeting digest or follow-up draft, exactly as previewed on the proposal (plain text; no transcript, no audio) | The URL must be set (consent for exactly its host; the connector refuses any other host before egress). Under YOLO, execution is immediate with a receipt; under Normal/Secure, every send requires authority. The webhook URL is treated as a credential: never in proposals, broadcasts, or API responses. |
+| **Desk Slack relay** (`web/routes/desk_actuators.py` → the same gated webhook connector) | A desk or companion card proposes a Slack send; under YOLO the registered destination auto-executes; under Normal/Secure, per-action authorization or a grant is required | The proposed text, exactly as previewed (plain text) | Same gate as Send to Slack: `meeting.slack_webhook_url` must be set; the URL never rides a payload. |
+| **Desk webhook connector** (`web/routes/desk_actuators.py` → `actuator_shared.execute_webhook_proposal`) | `meeting.companion_webhook_url` is configured; under YOLO the registered destination auto-executes; under Normal/Secure, per-action authorization or a grant is required | The proposed text, exactly as previewed, to that one configured endpoint (Discord, Zapier, n8n, or any URL you set) | The URL must be set (consent for exactly its host). Every execution writes a receipt. The URL is a credential: never in proposals, broadcasts, or API responses. |
+| **Desk GitHub issue** (`web/routes/desk_actuators.py` → `gh issue create`) | The GitHub connector is enabled; under YOLO a registered repo auto-executes; under Normal/Secure, per-action authorization or a grant is required | The issue title and body, exactly as previewed, through your own `gh` CLI | Runs your authenticated `gh`, never a stored token of ours. Unregistered repos are refused even under YOLO. Distinct from the read-only enrichment row below. |
 | **Connector CLI enrichment** (`gh`, `jira` via subprocess) | User enables the connector pack | Entity IDs (PR/issue/ticket numbers) to the user's own CLI tools, which call their services | Opt-in + manifest permissions (`shell:exec`, `network:outbound`). |
 | **Mission-control receipts** (`missioncontrol_bridge.py` → `gh pr list`) | A rails repo is named in your project map (`~/.holdspeak/delivery_workbench.json`) and the desk conveyor is open | Nothing composed: a read of that repo's open pull requests through your own authenticated `gh` CLI (GitHub learns which repo asked) | The map is yours to author; the belt's routes are GET-only end to end (fitness-tested); `gh` missing or failing renders as a typed absence, never a retry loop. |
 | **PR receipts** (`delivery/pr_receipts.py` → `gh pr list`) | You click **Refresh** on the Pull requests section, or you set `pr_refresh_seconds` on a source's registry entry yourself | Nothing composed: one batched read of that registered repo's pull requests through your own authenticated `gh` (GitHub learns which repo asked). The optional **fetch** offered when a diff's commits are absent locally is a separate, explicit `git fetch` | Manual verb by default, never ambient; the cadence is per-source and hand-set. `gh` is grep-censused to this one module; a failing refresh degrades to a named stale row, keeping last-known-good. |
@@ -377,13 +378,14 @@ machine except via the connector CLIs above (entity IDs only).
 
 ## 5. Secrets handling
 
-- **Cloud API key**: Set, replace, or remove it inline in **Settings, Models**.
+- **Cloud API key**: Set, replace, or remove it on the model profile in
+  **Settings > Models > Model Library**.
   The value travels only through an owner-only secret write/delete subresource,
   never a general model-management resource, sync, DTOs, the database, read
   responses, logs, or receipts. The hub stores it locally in owner-only `0600` custody; reads report
   presence only. `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback. A UI
-  deletion writes a tombstone that suppresses that fallback for the destination.
-  A destination never borrows another one's key.
+  deletion writes a tombstone that suppresses that fallback for the profile.
+  A profile never borrows another one's key.
 - **Device PSK**: generated lazily, stored in `config.json`
   (`device_audio.ensure_device_psk`); constant-time comparison; empty PSK fails
   closed.
@@ -394,7 +396,7 @@ machine except via the connector CLIs above (entity IDs only).
   a credential everywhere else: shown only in the Settings window, never on a
   proposal record, a broadcast, or any other API response (the connector
   joins it to the POST in memory at execution time).
-- **Runs on destination keys**: a destination stores only its definition:
+- **Model-profile keys**: a profile stores only its non-secret definition:
   name, kind, endpoint, model, and context window. Its key is local to the hub,
   never part of a general model-management resource or sync, and joined only at run time. The Settings
   read surface reports only whether a key is set; it never returns the value.

@@ -1,9 +1,13 @@
-# HoldSpeak Designer Handoff
+# Archived HoldSpeak Designer Handoff
 
-This directory packages the current HoldSpeak UI/UX layer for a graphic
-designer and product designer. It describes what exists, what each screen
-does, where the interaction boundaries are, and which screenshots represent
-the current implementation.
+> Historical snapshot captured on 2026-04-29 from the retired Astro frontend.
+> It is preserved for design archaeology and is not a current product map.
+> See [`../docs/WEB_DESK.md`](../docs/WEB_DESK.md),
+> [`../docs/internal/DESIGN_SYSTEM.md`](../docs/internal/DESIGN_SYSTEM.md), and
+> [`../web/README.md`](../web/README.md) for the React/Vite implementation.
+
+This directory packages that snapshot for a graphic or product designer. It
+describes the screens and visual language that existed at capture time.
 
 ## Product Frame
 
@@ -24,7 +28,7 @@ The design direction should stay quiet, dense, and trustworthy:
 
 - [functional-handoff.md](./functional-handoff.md) - screen-by-screen behavior,
   workflows, and interaction states.
-- [style-handoff.md](./style-handoff.md) - current visual language, constraints,
+- [style-handoff.md](./style-handoff.md) - captured visual language, constraints,
   and open style questions.
 - [ux-inventory.md](./ux-inventory.md) - routes, components, controls, data
   states, and designer review checklist.
@@ -32,9 +36,9 @@ The design direction should stay quiet, dense, and trustworthy:
   each one is meant to evaluate.
 - [capture-screenshots.py](./capture-screenshots.py) - repeatable Playwright
   capture script.
-- [screenshots/](./screenshots/) - Playwright screenshots of the current app.
+- [screenshots/](./screenshots/) - Playwright screenshots of the archived app.
 
-## Current Capture Target
+## Archived Capture Target
 
 Screenshots were captured from the local web runtime:
 

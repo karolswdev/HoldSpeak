@@ -1,6 +1,10 @@
 # Style Handoff
 
-## Current Visual Language
+> Archived 2026-04-29 Astro-era snapshot. Current design tokens and components
+> are documented in
+> [`../docs/internal/DESIGN_SYSTEM.md`](../docs/internal/DESIGN_SYSTEM.md).
+
+## Captured Visual Language
 
 Phase 12 replatformed the values layer onto a **Workbench-evoking
 voice** — symbolic of Amiga Workbench, not a literal pixel

@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import re
+import tempfile
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -45,16 +46,27 @@ _BRACE_PARAM = re.compile(r"\{[^}]*\}")
 
 def build_app_routes() -> list[dict[str, Any]]:
     """Enumerate the real app's HTTP routes (path, methods, defining module)."""
+    from holdspeak.db import get_database, reset_database
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=lambda *_a, **_k: None,
-            on_stop=lambda *_a, **_k: None,
-            get_state=lambda: None,
-        ),
-        host="127.0.0.1",
-    )
+    # Route generation must never open or reconcile a contributor's live Desk.
+    # MeetingWebServer reaches the process-wide database singleton while it
+    # assembles a few service-backed routers, so point that singleton at an
+    # isolated, disposable database for the duration of this read-only census.
+    reset_database()
+    with tempfile.TemporaryDirectory(prefix="holdspeak-api-surface-") as tmp:
+        get_database(Path(tmp) / "api-surface.db")
+        try:
+            server = MeetingWebServer(
+                WebRuntimeCallbacks(
+                    on_bookmark=lambda *_a, **_k: None,
+                    on_stop=lambda *_a, **_k: None,
+                    get_state=lambda: None,
+                ),
+                host="127.0.0.1",
+            )
+        finally:
+            reset_database()
     routes: list[dict[str, Any]] = []
     for route in server.app.routes:
         path = getattr(route, "path", "")
