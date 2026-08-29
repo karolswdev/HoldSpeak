@@ -8,7 +8,18 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-07-30 (candidate **Y** GRADUATED and CLOSED as
+**Last updated:** 2026-08-28 (candidate **AE** GRADUATED and SHIPPED the
+same day it was filed — the Calendar Snapshot adapter landed as story
+HS-146-07 inside [Phase 146 — Multiple
+Calendars](./phase-146-multiple-calendars/current-phase-status.md)
+(CLOSED 7/7, merged as PR #500): screenshot → router vision extraction →
+anchor-gated review → generated `.ics` registered as the "O365 SNAPSHOT"
+file source through the one bounded parser. The two counsel ledger items
+(422 upload-refusal surfacing; vision-capable pre-filter in the
+direct-dispatch fallback) carry in the Phase 146 handover ledger, and no
+real-vision-model probe has run yet — named honestly in the story's
+Out-scope.)
+Earlier: 2026-07-30 (candidate **Y** GRADUATED and CLOSED as
 [Phase 108 — The Locked Room](./phase-108-the-locked-room/current-phase-status.md),
 CLOSED 7/7: the post-ruling 15-row register is empty, the corrected machine
 closeout passes 8/8, and the owner's verdict was "'s all's good, moyt.").
@@ -838,7 +849,17 @@ rather than current open work.
    unproven. The owner did not report it as slow on his walk. Worth one
    clean measurement.
 
-### AE. The Calendar Snapshot adapter — screenshot → reviewed events → a file CalendarSource (O365-without-the-server)
+### AE. The Calendar Snapshot adapter — screenshot → reviewed events → a file CalendarSource (O365-without-the-server) — **GRADUATED → SHIPPED as HS-146-07 ([Phase 146](./phase-146-multiple-calendars/current-phase-status.md), CLOSED 7/7, PR #500)**
+
+**Disposition (2026-08-28):** shipped the same day it was filed, folded
+into Phase 146 by owner ruling with a required design beat. All five
+shape points below landed as designed; the review surface became the
+anchor-gated SurfaceWindow (week never silently guessed, CANCEL writes
+nothing), and the vision call routes through `calendar.snapshot_extract`
+(vision=True) with the named refusal `no_vision_model_assigned` when no
+vision-capable model is assigned. Residue: the two counsel ledger items
+and the not-yet-run real-vision-model probe, carried in the Phase 146
+handover. The original filing, for the record:
 
 Filed 2026-08-28 from the owner's direction, mid-Phase-146: *"most of
 the time I will certainly not have access to the server my work's

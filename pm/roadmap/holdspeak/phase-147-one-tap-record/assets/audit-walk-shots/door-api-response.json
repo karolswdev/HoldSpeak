@@ -1,0 +1,151 @@
+{
+  "board": {
+    "now": [
+      {
+        "id": "hs147-walk-action-1",
+        "text": "HS147 AUDIT follow-up task",
+        "owner": "Karol",
+        "due": "2026-08-30",
+        "status": "pending",
+        "meeting_id": "hs147-walk-source-meeting",
+        "decision_id": null,
+        "stale_score": null,
+        "source": "action_item",
+        "lane": "now",
+        "provenance": {
+          "meeting_id": "hs147-walk-source-meeting",
+          "segment_text": null,
+          "segment_speaker": null,
+          "segment_start": null,
+          "moment": null,
+          "available": false
+        },
+        "target_ref": "action_item:hs147-walk-action-1",
+        "lawful_verbs": [
+          {
+            "name": "follow_through.complete",
+            "arguments": {
+              "card_id": "hs147-walk-action-1",
+              "verb": "done"
+            }
+          },
+          {
+            "name": "follow_through.complete",
+            "arguments": {
+              "card_id": "hs147-walk-action-1",
+              "verb": "dismiss"
+            }
+          },
+          {
+            "name": "follow_through.complete",
+            "arguments": {
+              "card_id": "hs147-walk-action-1",
+              "verb": "snooze"
+            },
+            "required_arguments": [
+              "payload.until"
+            ]
+          },
+          {
+            "name": "follow_through.complete",
+            "arguments": {
+              "card_id": "hs147-walk-action-1",
+              "verb": "delegate"
+            },
+            "required_arguments": [
+              "payload.to"
+            ]
+          }
+        ]
+      }
+    ],
+    "waiting": [],
+    "unassigned": [],
+    "overdue": [],
+    "active": []
+  },
+  "upcoming": [
+    {
+      "id": "ce_c567be8b5cb10bc499ba138f1ef3e44c139cb68d206a0f797923ff6d1f98a6c7",
+      "source": "calendar_event",
+      "target_ref": "calendar_event:ce_c567be8b5cb10bc499ba138f1ef3e44c139cb68d206a0f797923ff6d1f98a6c7",
+      "title": "HS147 AUDIT Team standup",
+      "starts_at": "2026-08-29T06:08:00Z",
+      "ends_at": "2026-08-29T06:38:00Z",
+      "location": "Room 1",
+      "meeting_url": "https://meet.example.test/hs147-0",
+      "state": "scheduled",
+      "source_id": "walk-file",
+      "source_label": "Walk Calendar"
+    },
+    {
+      "id": "ce_0f2821aea30f70d0ed615e451cc90fff55e4487ec48e3399d7e6775dd2a599b0",
+      "source": "calendar_event",
+      "target_ref": "calendar_event:ce_0f2821aea30f70d0ed615e451cc90fff55e4487ec48e3399d7e6775dd2a599b0",
+      "title": "HS147 AUDIT Design review with Ewa",
+      "starts_at": "2026-08-29T07:08:00Z",
+      "ends_at": "2026-08-29T08:08:00Z",
+      "location": "Room 2",
+      "meeting_url": "https://meet.example.test/hs147-1",
+      "state": "scheduled",
+      "source_id": "walk-file",
+      "source_label": "Walk Calendar"
+    },
+    {
+      "id": "sr_a2e1f70e72ff",
+      "source": "scheduled_recording",
+      "target_ref": "scheduled_recording:sr_a2e1f70e72ff",
+      "title": "HS147 AUDIT daily standup",
+      "starts_at": "2026-08-29T09:00:00Z",
+      "ends_at": "2026-08-29T09:30:00Z",
+      "location": null,
+      "meeting_url": null,
+      "state": "idle"
+    },
+    {
+      "id": "ce_c88a1ec0708697b3635670d2e379699c3cf82ff9845aa83bb051502f89af8ce8",
+      "source": "calendar_event",
+      "target_ref": "calendar_event:ce_c88a1ec0708697b3635670d2e379699c3cf82ff9845aa83bb051502f89af8ce8",
+      "title": "HS147 AUDIT Sprint retrospective",
+      "starts_at": "2026-08-29T09:08:00Z",
+      "ends_at": "2026-08-29T09:53:00Z",
+      "location": "Room 3",
+      "meeting_url": "https://meet.example.test/hs147-2",
+      "state": "scheduled",
+      "source_id": "walk-file",
+      "source_label": "Walk Calendar"
+    },
+    {
+      "id": "ce_48cfa566946a50a2f60fe02b25202b36f4a0522f77a189cb86b2fb99dc118b85",
+      "source": "calendar_event",
+      "target_ref": "calendar_event:ce_48cfa566946a50a2f60fe02b25202b36f4a0522f77a189cb86b2fb99dc118b85",
+      "title": "HS147 AUDIT 1:1 with manager",
+      "starts_at": "2026-08-30T05:08:00Z",
+      "ends_at": "2026-08-30T05:38:00Z",
+      "location": "Room 4",
+      "meeting_url": "https://meet.example.test/hs147-3",
+      "state": "scheduled",
+      "source_id": "walk-file",
+      "source_label": "Walk Calendar"
+    },
+    {
+      "id": "sr_e5f0c18d0ec8",
+      "source": "scheduled_recording",
+      "target_ref": "scheduled_recording:sr_e5f0c18d0ec8",
+      "title": "HS147 AUDIT created via UI",
+      "starts_at": "2027-08-28T23:38:00Z",
+      "ends_at": "2027-08-29T00:38:00Z",
+      "location": null,
+      "meeting_url": null,
+      "state": "idle"
+    }
+  ],
+  "counts": {
+    "overdue": 0,
+    "now": 1,
+    "waiting": 0,
+    "active": 0,
+    "upcoming_today": 0
+  },
+  "calendar_configured": true
+}
