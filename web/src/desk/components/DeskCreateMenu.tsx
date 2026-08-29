@@ -57,6 +57,7 @@ export function DeskCreateMenu({ className = "" }: { className?: string }) {
           onClose={() => setOpen(false)}
           returnFocus={() => buttonRef.current?.focus()}
           onMouseLeave={() => setOpen(false)}
+          menuContext="launcher"
         >
           {creates.map((v) => {
             // "New Note" → the bare kind word for the Create face.
@@ -68,6 +69,13 @@ export function DeskCreateMenu({ className = "" }: { className?: string }) {
               <DeskMenuItem
                 key={v.id}
                 ariaLabel={`Create ${word}`}
+                glyph={
+                  v.glyph ? (
+                    <span className="desk-menu-glyph" aria-hidden="true">
+                      {v.glyph}
+                    </span>
+                  ) : undefined
+                }
                 onSelect={() => {
                   setOpen(false);
                   v.run(CTX);

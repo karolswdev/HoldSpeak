@@ -80,6 +80,7 @@ export function DeskMenuList({
   onClose,
   returnFocus,
   onMouseLeave,
+  menuContext,
   children,
 }: {
   className?: string;
@@ -91,6 +92,8 @@ export function DeskMenuList({
   /** Focus to restore when Escape closes the menu. */
   returnFocus?: () => void;
   onMouseLeave?: () => void;
+  /** HS-148-02: panel-level context declaration for glyph gating. */
+  menuContext?: string;
   children: ReactNode;
 }) {
   return (
@@ -103,6 +106,7 @@ export function DeskMenuList({
       role="menu"
       aria-label={label}
       style={style}
+      data-menu-context={menuContext}
       onMouseLeave={onMouseLeave}
       onPointerDown={(e) => e.stopPropagation()}
       onKeyDown={(e) => menuKeyDown(e, onClose, returnFocus)}
@@ -187,7 +191,14 @@ export type WorkMenuEntry =
       onSelect(): void;
     }
   | { type: "sep"; id?: string }
-  | { type: "sub"; id: string; label: string; entries: WorkMenuEntry[] };
+  | {
+      type: "sub";
+      id: string;
+      label: string;
+      entries: WorkMenuEntry[];
+      /** HS-148-02: override the parent panel's context for this submenu. */
+      menuContext?: string;
+    };
 
 const SUB_HOVER_INTENT_MS = 120;
 const NARROW = () =>
@@ -586,7 +597,7 @@ export function WorkMenu({
           role="menu"
           aria-label={`${sub.label} submenu`}
           style={clampStyle(subAt.x, subAt.y)}
-          data-menu-context={menuContext || "verb"}
+          data-menu-context={sub.menuContext || menuContext || "verb"}
           onKeyDown={(e) => {
             // The submenu owns its own keys; never let them bubble to
             // the parent panel (whose item query would move focus twice).

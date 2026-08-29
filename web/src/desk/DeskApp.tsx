@@ -40,6 +40,16 @@ import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
 import "./desk.css";
 
+/** HS-148-02: the root attribute gate for the glyph column.
+ * Reads from localStorage so story-03's rig can flip it;
+ * valid values: "none" | "launcher" | "all"; default "launcher". */
+function menuGlyphsVariant(): string {
+  if (typeof window === "undefined") return "launcher";
+  const raw = localStorage.getItem("hs:menu-glyphs");
+  if (raw === "none" || raw === "launcher" || raw === "all") return raw;
+  return "launcher";
+}
+
 export default function DeskApp() {
   const items = useDesk((s) => s.items);
   const updatedAt = useDesk((s) => s.updatedAt);
@@ -114,6 +124,7 @@ export default function DeskApp() {
       <div
         className="desk-next desk-arrival-pending"
         id="desk-next"
+        data-menu-glyphs={menuGlyphsVariant()}
         aria-busy="true"
         aria-label="Preparing HoldSpeak"
       >
@@ -130,7 +141,7 @@ export default function DeskApp() {
   }
 
   return (
-    <div className="desk-next" id="desk-next">
+    <div className="desk-next" id="desk-next" data-menu-glyphs={menuGlyphsVariant()}>
       {/* GL layers render only when the spatial floor is active. */}
       {showFloor && <Atmosphere />}
       {showFloor && <GlassDropLayer />}

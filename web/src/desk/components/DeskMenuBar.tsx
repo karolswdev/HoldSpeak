@@ -68,6 +68,7 @@ export function DeskMenuBar() {
         type: "item",
         id: v.id,
         label: verbLabel(v, ctx),
+        glyph: v.glyph,
         keycap: v.key,
         ghost: v.ghost(ctx),
         onSelect: () => v.run(ctx),
@@ -118,6 +119,7 @@ export function DeskMenuBar() {
               entries={entries(m.id)}
               onClose={() => setOpen(null)}
               autoFocus={intentional}
+              menuContext={m.id === "go" ? "launcher" : "verb"}
             />
           )}
         </span>

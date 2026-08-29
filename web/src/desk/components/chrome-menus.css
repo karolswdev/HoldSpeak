@@ -222,6 +222,16 @@
   letter-spacing: 0.02em;
   border-top: 1px solid var(--border);
 }
+/* HS-148-02: root-attribute glyph gating.
+   "none" hides all glyphs everywhere; "launcher" hides only in verb panels;
+   "all" shows everywhere (no override needed — the lane renders by default). */
+.desk-next[data-menu-glyphs="none"] .desk-menu-glyph {
+  display: none;
+}
+.desk-next[data-menu-glyphs="launcher"] [data-menu-context="verb"] .desk-menu-glyph {
+  display: none;
+}
+
 .desk-next .desk-work-submenu {
   min-width: 168px;
 }

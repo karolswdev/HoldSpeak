@@ -5,12 +5,14 @@
 
 export const DESK_TOOLS = [
   // HS-100-11 - the search palette reaches the four applications too.
+  // HS-148-02: group "app" = keycapped primary apps; "tool" = config/inspect.
   {
     href: "/dictation",
     label: "Speak",
     description: "Voice typing: speak, see it land, teach it.",
     glyph: "⌁",
     action: "dictate",
+    group: "app",
     subjectRef: undefined,
   },
   {
@@ -19,6 +21,7 @@ export const DESK_TOOLS = [
     description: "Ask across the work on your desk.",
     glyph: "✦",
     action: "ask",
+    group: "app",
     subjectRef: undefined,
   },
   {
@@ -27,6 +30,7 @@ export const DESK_TOOLS = [
     description: "Outcomes, recordings, and the typed record.",
     glyph: "▣",
     action: "review-meetings",
+    group: "app",
     subjectRef: undefined,
   },
   {
@@ -35,6 +39,7 @@ export const DESK_TOOLS = [
     description: "Every boundary, stated once.",
     glyph: "⚙",
     action: "configure-settings",
+    group: "app",
     subjectRef: undefined,
   },
   {
@@ -43,6 +48,7 @@ export const DESK_TOOLS = [
     description: "Mission control for your agent workbenches.",
     glyph: "⚒",
     action: "open-workbenches",
+    group: "tool",
     subjectRef: undefined,
   },
   {
@@ -51,6 +57,7 @@ export const DESK_TOOLS = [
     description: "Use saved behavior and inspect live sessions.",
     glyph: "◉",
     action: "inspect-personas-and-coders",
+    group: "tool",
     subjectRef: undefined,
   },
   {
@@ -59,6 +66,7 @@ export const DESK_TOOLS = [
     description: "Configure model and runtime destinations.",
     glyph: "▣",
     action: "configure-runs-on",
+    group: "tool",
     subjectRef: undefined,
   },
   {
@@ -67,6 +75,7 @@ export const DESK_TOOLS = [
     description: "Configure connected destinations and credentials.",
     glyph: "↗",
     action: "configure-integrations",
+    group: "tool",
     subjectRef: "integration:destinations",
   },
   {
@@ -75,6 +84,7 @@ export const DESK_TOOLS = [
     description: "Map spoken phrases to registered actions.",
     glyph: "⌘",
     action: "configure-commands",
+    group: "tool",
     subjectRef: undefined,
   },
   {
@@ -83,6 +93,7 @@ export const DESK_TOOLS = [
     description: "Configure scheduled background work.",
     glyph: "◷",
     action: "configure-cadence",
+    group: "tool",
     subjectRef: undefined,
   },
   {
@@ -91,6 +102,7 @@ export const DESK_TOOLS = [
     description: "The always-on briefing every agent receives.",
     glyph: "§",
     action: "open-constitutional-context",
+    group: "tool",
     subjectRef: undefined,
   },
   {
@@ -99,6 +111,7 @@ export const DESK_TOOLS = [
     description: "Inspect work context and source records.",
     glyph: "≋",
     action: "inspect-activity",
+    group: "tool",
     subjectRef: undefined,
   },
   {
@@ -107,9 +120,23 @@ export const DESK_TOOLS = [
     description: "See what the kernel is running.",
     glyph: "∷",
     action: "inspect-processes",
+    group: "tool",
     subjectRef: undefined,
   },
 ] as const;
+
+/** HS-148-02: unicode kind glyphs for the seven create nouns —
+ * geometric/dingbat family matching the DESK_TOOLS deck aesthetic.
+ * One glyph per kind, shared by menus, the create face, and the palette. */
+export const KIND_GLYPH: Record<string, string> = {
+  note: "▤",       // horizontal rules — a written page
+  decision: "◈",   // diamond with inner — a weighed gem
+  kb: "⬡",         // hexagon — a knowledge cell
+  recipe: "◎",     // bullseye — a targeted agent
+  workflow: "⟁",   // triangle with dots — a flow graph
+  workbench: "⊞",  // boxed plus — a compound workspace
+  zone: "◰",       // square with upper-left quadrant — a region
+};
 
 export const KIND_LABEL: Record<string, string> = {
   artifact: "Artifact",

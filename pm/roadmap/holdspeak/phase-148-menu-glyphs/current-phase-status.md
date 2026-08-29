@@ -1,6 +1,6 @@
 # Phase 148 — The Menu Grammar
 
-**Status:** in progress (2/6).
+**Status:** in progress (3/6).
 
 **Last updated:** 2026-08-29.
 
@@ -66,7 +66,7 @@ bindings this phase.
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-148-01 | The grammar core (DeskMenu + material) | done | [story-01](./story-01-grammar-core.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-148-02 | The content sweep (glyphs, groups, casing, …) | in-progress | [story-02](./story-02-content-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-148-02 | The content sweep (glyphs, groups, casing, …) | done | [story-02](./story-02-content-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-148-03 | The mock exhibit (the owner's variant gate) | ready | [story-03](./story-03-mock-exhibit.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-148-04 | Head + dock menus on the registry (AA) | done | [story-04](./story-04-head-dock-registry.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-148-05 | The record book + the emoji guard | ready | [story-05](./story-05-record-book-guards.md) | [evidence-story-05](./evidence-story-05.md) |
@@ -74,7 +74,22 @@ bindings this phase.
 
 ## Where we are
 
-**2/6.** HS-148-04 (head + dock on the registry) is DONE — the AA
+**3/6.** HS-148-02 (the content sweep) is DONE — the data joined the
+grammar: 24 verbs carry glyphs (the 13 Go programs reuse their deck
+chars, dock-parity pinned; seven new kind glyphs argued one line
+each; a restrained verb set keeps variant B truthful; window verbs
+glyphless by ruled choice — the wells carry their identity), panel
+contexts declared launcher|verb, the root data-menu-glyphs
+attribute defaults to launcher with a localStorage override for the
+exhibit rig, Go wears its 4/9 separator, Window casing is uniform,
+the ellipsis audit found the two dialog-openers already honest, the
+mark menu gains Intelligence and People. 52 focused green
+orchestrator-read; bound-key set byte-identical. DISCOVERY
+ledgered: three inherited web-unit failures (byte-identical to
+main; one dating to HS-135-07) are invisible to the pytest sweep
+baseline — the protocol has a web blind spot, named for the close
+counsel. Next: the story-03 exhibit rig (orchestrator hands)
+delivers A/B/C to the owner. Earlier — **2/6.** HS-148-04 (head + dock on the registry) is DONE — the AA
 graduation: the hardcoded window menus are dead; one adapter builds
 WorkMenuEntry rows FROM the registry (labels + keycaps — ⌘W/⌘M
 finally visible where they act), dispatched to the CLICKED window
