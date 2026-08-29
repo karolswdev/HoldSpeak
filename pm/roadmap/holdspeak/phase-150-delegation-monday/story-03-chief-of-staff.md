@@ -17,12 +17,20 @@ human items (the walk's joy judgment, verbatim in the audit).
 
 ### In (settled-design D3 + D4)
 
-- `person_sections` computed in BOTH generate() and _load_brief()
-  responses, NEVER inserted (the write-count pin on
-  monday_briefs/monday_brief_items/shelf during generation with
-  People present); per relationship-with-signal: next linked 1:1,
-  THEY-OWE count + stalest age (board by aliases), YOU-OWE count,
-  agenda backlog; L2 honesty when the sidecar is closed.
+- **The counsel's structural law:** `person_sections` is composed
+  by a standalone `compose_person_overlay(...)` at the ROUTE/MCP
+  adapter layer AFTER the observed methods return — the
+  MondayBrief dataclass NEVER carries it; generate()/_load_brief()
+  stay person-free BY CONSTRUCTION (this kills the
+  pipeline_events observer path and the briefs/latest resource
+  path in one move). Per relationship-with-signal: next linked
+  1:1, THEY-OWE count + stalest age (board by aliases), YOU-OWE
+  count, agenda backlog; L2 honesty when the sidecar is closed.
+  Pins: the write-count spy on the three brief tables AND a
+  pipeline_events content check (no person content in
+  result_summary after a full generate+get cycle with People
+  present) AND an asdict(MondayBrief) shape pin (no
+  person_sections field, ever).
 - MCP gate discipline: person_sections absent when People access
   is off; shared_intent-only contents (the 149 F6 pattern).
 - The manager's verbs on person items: "Add to 1:1 agenda" (the

@@ -41,7 +41,14 @@ never touches the persisted brief tables.
 - `delegated_at` lands on action_items (a bare TIMESTAMP — no
   person reference; lawful under the schema grep pin): set by the
   delegate verb and by commit_decision/edit when the owner string
-  CHANGES; staleness renders from delegated_at ?? created_at.
+  CHANGES. **Counsel MUST-FIX (finding 4):** the intel upsert at
+  meetings.py:415 unconditionally overwrites owner
+  (`owner = excluded.owner`, no CASE guard — unlike status and
+  review_state) so re-extraction would churn delegated_at
+  dishonestly; the implementation adds a VALUE-CHANGE guard at the
+  upsert site (the SQL CASE pattern, atomic) and edit_action_item
+  compares before stamping. commit_decision INSERTs fresh — always
+  a true stamp. Staleness renders from delegated_at ?? created_at.
 
 ## D2 — the delegation lane (read-time projection on the board)
 
@@ -65,11 +72,21 @@ never touches the persisted brief tables.
 
 ## D3 — the chief-of-staff overlay (READ-TIME ONLY, the hard law)
 
-- The Monday Brief response gains `person_sections` — computed in
-  BOTH generate() and _load_brief() for the RESPONSE, NEVER
-  inserted into monday_briefs/monday_brief_items/shelf (the
-  never-persist pin: a write-count spy on the brief tables during
-  generation with People present).
+- **Counsel MUST-FIX (structural, findings 1+2+3 in one move):**
+  `person_sections` is composed at the ROUTE/MCP ADAPTER layer,
+  AFTER the observed service methods return — a standalone
+  composing function (`compose_person_overlay(brief,
+  people_service, follow_through_service)`), the one_on_one_brief
+  precedent. The MondayBrief dataclass NEVER gains a
+  person_sections field; generate()/_load_brief() stay person-free
+  BY CONSTRUCTION. This kills three leak paths at once: the
+  @observe_service serialization into plaintext pipeline_events
+  (uncharted in the original spec), the ungated
+  holdspeak://briefs/latest MCP resource (asdict of the dataclass),
+  and the tired-builder-in-the-INSERT-scope risk. The
+  never-persist pin (write-count spy on
+  monday_briefs/_items/_shelf AND a pipeline_events content check)
+  remains as the regression guard, no longer the sole defense.
 - Each section (per relationship with ANY signal): the next linked
   1:1 (the door person-index read), open THEY-OWE count + stalest
   age (board filtered by the person's aliases), YOU-OWE count
@@ -81,11 +98,13 @@ never touches the persisted brief tables.
   1:1 agenda" (the EXISTING 138 people.agenda.add path — a real
   write to the encrypted store through its own authority) and
   "Open person" — never Acknowledge/Defer on a human.
-- MCP: monday_brief.get returns person_sections ONLY through the
-  People family's gate discipline: reuse the F6 pattern — if
-  people access is off, person_sections is absent; contents
-  filtered shared_intent-only. (The brief tool precedent from 149
-  is the law.)
+- MCP: with the adapter-layer composition, monday_brief.get gains
+  person_sections at ITS adapter, gated: absent when
+  `access_mode() == "off"`, contents shared_intent-only via
+  _mcp_readable (the 149 F6 precedent); the briefs/latest RESOURCE
+  serves the person-free dataclass by construction (counsel
+  finding 3 resolved structurally). The builder states the adapter
+  wiring in the report.
 
 ## D4 — the walk's defects, folded
 
@@ -98,8 +117,12 @@ never touches the persisted brief tables.
 
 ## D5 — the debt rider (non-negotiable this phase)
 
-**The web-inherited baseline**: a
-`web/web-inherited-baseline.txt` (the six names, each annotated
+**The web-inherited baseline** (counsel should-fix: the six named
+IN the charter — chat.test.ts / containerQueryLaw.test.ts /
+writeReceiptGuard.test.ts / InlineEditor.test.tsx /
+MicButton.test.tsx / workbenchAutomations.test.tsx, all verified
+byte-identical to main across 148-149): a
+`tests/web-inherited-baseline.txt` (the six names, each annotated
 with its main-anchored provenance) + a vitest-side or script-side
 checker the close sweep can consult, so web failures get the same
 baseline-subset vocabulary as pytest. Fixing any of the six

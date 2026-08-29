@@ -78,8 +78,36 @@ started.
   verbs on person items ("Add to 1:1 agenda" via the real 138
   authority); the three walk defects folded; the web baseline is
   story 04, not a hope. The owner may overrule any row.
-- **2026-08-29 — counsel design ruling:** recorded here when it
-  returns.
+- **2026-08-29 — counsel design ruling: RATIFY-WITH-CONCERNS
+  ("Build with the constraints applied").** THREE must-fixes
+  ABSORBED before any builder: (1+2+3 in one structural move)
+  person_sections composes at the ROUTE/MCP ADAPTER layer via a
+  standalone function — the dataclass never carries it, so the
+  @observe_service → pipeline_events serialization (the counsel's
+  uncharted-leak find) and the ungated briefs/latest resource die
+  by construction; (4) the intel upsert's unconditional
+  `owner = excluded.owner` gains a VALUE-CHANGE CASE guard so
+  delegated_at never churns on re-extraction (the counsel verified
+  status/review_state have guards and owner does not). Should-fix
+  absorbed: the six web names written into the charter. The
+  counsel also verified: the _FollowThroughObserver's TOTAL board
+  redaction auto-covers the new projected fields; commit_decision
+  INSERTs fresh (true stamps); _collect_waiting is person-blind by
+  design (correct).
+
+## Ledger (counsel, carried openly)
+
+- Meeting TITLES already carry human names into persisted brief
+  items (pre-existing, not a 150 regression; person_sections makes
+  it no worse) — acknowledged, not chased.
+- The MCP gate wiring choice (person_sections on monday_brief.get's
+  adapter vs a People-family pointer) — the builder states which
+  and why; either is lawful with the gate.
+- BriefView (not just BriefLane) renders person_sections and the
+  access-off absence — folded into story 03's render scope.
+- Inference-rot vectors (auto-map temptation, bulk mapping) —
+  structurally hard under the gesture contract; watch at reviews.
+- Shelf item IDs are UUIDs (safe; the pin watches drift).
 
 ## Risk register
 

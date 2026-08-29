@@ -28,8 +28,14 @@ delegated_at anywhere).
   People family's exact gate patterns.
 - `delegated_at` on action_items (bare timestamp — the schema grep
   pin stays green): set on the delegate verb and wherever the
-  owner string CHANGES (commit_decision, edit_action_item);
-  backfill NOT attempted (honest null).
+  owner string CHANGES; **counsel finding 4 is law**: the intel
+  upsert (meetings.py:415) gains a VALUE-CHANGE CASE guard so
+  re-extraction never churns owner or delegated_at (mirror the
+  status/review_state guard pattern beside it); edit_action_item
+  compares old vs new before stamping; commit_decision INSERTs
+  fresh (true stamp). Backfill NOT attempted (honest null). A
+  deliberate test: re-run intel upsert with the SAME owner →
+  delegated_at untouched; with a CHANGED owner → stamped.
 - Tests through the 149 seam: alias roundtrip, P2, reserved
   refusals, guarded resolution, delegated_at on every owner-write
   path, the schema pin extended.
