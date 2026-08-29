@@ -431,3 +431,54 @@ class TestCommitmentTriadUntouched:
         after = conn.execute("SELECT * FROM action_items ORDER BY id").fetchall()
         after_data = [(row["id"], row["task"], row["status"]) for row in after]
         assert after_data == before_data, "Brief modified action_items"
+
+
+class TestMeetingObserverRedaction:
+    """HS-149 close-counsel finding 1: person_label never persists into
+    plaintext pipeline_events via the MeetingService observer."""
+
+    def test_person_label_redacted_from_result_summary(self):
+        from dataclasses import dataclass, field
+        from holdspeak.services.meeting_service import _MeetingPersonRedactor
+
+        captured = []
+
+        class Sink:
+            def on_event(self, event):
+                captured.append(event)
+
+        @dataclass
+        class FakeEvent:
+            service: str = "MeetingService"
+            method: str = "get_meeting"
+            args_summary: str = "{}"
+            result_summary: str = '{"id":"m1","person_label":"Ewa"}'
+            error: object = None
+            error_code: object = None
+
+        _MeetingPersonRedactor(Sink()).on_event(FakeEvent())
+        assert "Ewa" not in captured[0].result_summary
+        assert "person_label" not in captured[0].result_summary
+        assert "redacted" in captured[0].result_summary
+
+    def test_untouched_when_no_projection(self):
+        from dataclasses import dataclass
+        from holdspeak.services.meeting_service import _MeetingPersonRedactor
+
+        captured = []
+
+        class Sink:
+            def on_event(self, event):
+                captured.append(event)
+
+        @dataclass
+        class FakeEvent:
+            service: str = "MeetingService"
+            method: str = "get_meeting"
+            args_summary: str = "{}"
+            result_summary: str = '{"id":"m1","title":"planning"}'
+            error: object = None
+            error_code: object = None
+
+        _MeetingPersonRedactor(Sink()).on_event(FakeEvent())
+        assert captured[0].result_summary == '{"id":"m1","title":"planning"}'

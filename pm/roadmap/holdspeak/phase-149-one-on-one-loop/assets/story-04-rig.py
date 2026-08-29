@@ -151,7 +151,9 @@ def main() -> int:
                 page.locator('[data-testid="people-link-event"]').click()
                 picker = page.locator('[data-testid="people-event-picker"]')
                 picker.wait_for(timeout=15000)
-                if "SUGGESTED" not in picker.inner_text():
+                try:
+                    picker.get_by_text("SUGGESTED", exact=True).first.wait_for(timeout=8000)
+                except Exception:
                     failures.append("picker: no SUGGESTED tag on the name-matching row")
                 page.screenshot(path=str(SHOTS / "picker-suggested-1440.png"), full_page=True)
                 picker.get_by_text("1:1 w/ Ewa", exact=False).first.click()

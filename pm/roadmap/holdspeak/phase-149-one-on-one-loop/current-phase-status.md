@@ -1,6 +1,10 @@
 # Phase 149 — The 1:1 Loop
 
-**Status:** in progress (5/6).
+**Status:** complete (6/6). Close counsel RATIFY-WITH-CONCERNS
+("The phase earns the owner's Tuesday"); its one should-fix — the
+person_label observer leak into plaintext pipeline_events — FIXED
+IN-ROUND with the 138 redaction pattern and pinned. The branch
+HOLDS for the owner's shot verdict and merge word.
 
 **Last updated:** 2026-08-29.
 
@@ -54,11 +58,22 @@ surface; the Tuesday question IS this phase.
 | HS-149-03 | The gesture (picker + rail person chip) | done | [story-03](./story-03-the-gesture.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-149-04 | The brief (Prep lens + PREP on the rail) | done | [story-04](./story-04-the-brief.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-149-05 | The record book | done | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-149-06 | The walk and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-149-06 | The walk and the close | done | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-**5/6.** HS-149-05 (the record book) is DONE — the INTEGRATION
+**COMPLETE — 6/6.** HS-149-06 closed it: the People walk green ×3
+(the SUGGESTED race honestly diagnosed and wait-fixed, counsel-
+ruled best practice); close sweep zero unresolved branch-new (11
+baseline + 3 dispositioned incl. the EXTERNAL #502 census drift
+and this phase's own three-route manifest regen); close counsel
+RATIFY-WITH-CONCERNS with the privacy boundary verified end-to-end
+and its one borderline-must-fix — person_label persisting into the
+plaintext flight recorder via the meeting observer — FIXED IN-ROUND
+(_MeetingPersonRedactor, the exact _FollowThroughObserver pattern,
+pinned both directions). Both Tuesday probes stand flipped to
+EXISTS with before/after frames. final-summary.md is the exit
+record. THE BRANCH WAITS FOR THE OWNER. Earlier — **5/6.** HS-149-05 (the record book) is DONE — the INTEGRATION
 contract records its first FULFILLED deliberate association with
 all seven rules itemized against shipped evidence; the USER_GUIDE
 speaks the manager's loop with every label verbatim;
