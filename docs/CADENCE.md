@@ -70,9 +70,11 @@ is off. The switch only governs the autonomous in-runtime tick.
 This is a *pressure system*, not an autonomous agent. The guarantees, enforced by tests
 rather than good intentions:
 
-1. **No external side effect without your approval.** Any outbound action (a GitHub
-   issue, a Slack post) goes through HoldSpeak's existing propose, approve, execute
-   path. Cadence never calls a connector directly.
+1. **No external side effect without audited authority.** Any outbound action (a
+   GitHub issue, a Slack post) goes through HoldSpeak's proposal, authority, and
+   guarded-execution path. Eligible fixed destinations can execute under the
+   captured YOLO posture; Normal/Secure require a decision or bounded grant.
+   Cadence never calls a connector directly.
 2. **The cadence core is pure.** It performs no network, terminal, subprocess, or
    connector execution. A test fails the build if that ever changes. Every surface that
    does reach out (the Telegram bot, the agent-reply delivery, the LLM provider) lives

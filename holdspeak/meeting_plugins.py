@@ -17,7 +17,7 @@ Design (the phase's load-bearing call):
   meeting/window/plugin/transcript-hash, so re-running an unchanged meeting
   dedups instead of duplicating; artifact synthesis upserts by artifact id.
 - **Actuators stay proposal-only** (`allow_actuators=False` on the standalone
-  host — proposing is always allowed, executing is the approval flow's job).
+  host — proposing is always allowed, executing is the authority flow's job).
 - **Heavy plugins run inline** (``defer_heavy=False``): callers are background
   contexts (the queue, the CLI), not a latency-budgeted UI thread.
 """

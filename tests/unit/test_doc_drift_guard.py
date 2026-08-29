@@ -31,6 +31,47 @@ def _live_docs() -> list[Path]:
     ]
 
 
+def _maintained_docs() -> list[Path]:
+    """Current guidance outside frozen roadmap, evidence, and fixture corpora."""
+    paths = [
+        *(_REPO / name for name in (
+            ".guru_meditation.md",
+            "CHANGELOG.md",
+            "CLAUDE.md",
+            "CONTRIBUTING.md",
+            "README.md",
+        )),
+        *_live_docs(),
+    ]
+    for relative in (
+        "aipi-lite",
+        "apple",
+        "designer-handoff",
+        "dogfood",
+        "holdspeak/skills_library",
+        "uat",
+        "web",
+    ):
+        root = _REPO / relative
+        for path in root.rglob("*.md"):
+            posix = path.as_posix()
+            if any(
+                excluded in posix
+                for excluded in (
+                    "/pm/",
+                    "/results/",
+                    "/repos/",
+                    "/_runs/",
+                    "/.build/",
+                    "/build/",
+                    "/node_modules/",
+                )
+            ):
+                continue
+            paths.append(path)
+    return sorted(set(paths))
+
+
 def test_no_live_doc_claims_a_deterministicplugin_stub() -> None:
     offenders: list[str] = []
     for path in _live_docs():
@@ -200,15 +241,15 @@ def test_retired_calendar_singular_vocab_guard_patterns_are_nonvacuous() -> None
         assert not _RETIRED_CALENDAR_SINGULAR.search(current), current
 
 
-# HS-33-03: a lightweight link-check so the `docs/` reorg (and future moves)
-# can't silently leave a dangling relative link. Scope is the same live-docs
-# set; the PMO corpus + evidence snapshots are frozen history and excluded.
+# HS-33-03: a lightweight link-check so reorgs cannot silently leave dangling
+# relative links. The PMO/evidence/fixture corpora are frozen and excluded; all
+# maintained root, product, device, UAT, and contributor docs are included.
 _MD_LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 
 
 def test_no_live_doc_has_a_dangling_relative_link() -> None:
     offenders: list[str] = []
-    for path in _live_docs():
+    for path in _maintained_docs():
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             for target in _MD_LINK.findall(line):
                 target = target.strip()
@@ -226,9 +267,25 @@ def test_no_live_doc_has_a_dangling_relative_link() -> None:
                     )
 
     assert not offenders, (
-        "A live doc links a path that does not exist (dangling relative link). "
+        "A maintained doc links a path that does not exist (dangling relative link). "
         "Fix the path or the move:\n  " + "\n  ".join(offenders)
     )
+
+
+def test_mcp_tool_count_claims_match_registry() -> None:
+    """Published MCP counts stay pinned to the actual aggregate registry."""
+    from holdspeak.mcp.tools import TOOLS
+
+    claim = re.compile(
+        r"(\d+)\s+(?:MCP\s+)?tools\s+(?:across|are organized)", re.IGNORECASE
+    )
+    for relative in (Path("docs/README.md"), Path("docs/MCP_SIDECAR.md")):
+        text = (_REPO / relative).read_text(encoding="utf-8")
+        counts = [int(value) for value in claim.findall(text)]
+        assert counts, f"{relative} must state its MCP tool count"
+        assert set(counts) == {len(TOOLS)}, (
+            f"{relative} states MCP tool counts {counts}, registry has {len(TOOLS)}"
+        )
 
 
 # HS-107-06: the current effect census is stated at both security/architecture
@@ -367,7 +424,7 @@ def test_all_embedded_image_refs_resolve() -> None:
 # real (see Phase 51 HS-51-02), and the patterns stay narrow enough that the kept
 # architecture spec names MIR-01 / DIR-01 / WFS-01 never match.
 _ROADMAP_VOCAB = re.compile(
-    r"\bHS-\d{1,2}(?:-\d+)?\b"    # story ids: HS-25, HS-17-05, HS-9-03
+    r"\bHS-\d{1,3}(?:-\d+)?\b"    # story ids: HS-139, HS-17-05, HS-9-03
     r"|\bphase[ -]\d+\b"          # phase tags: Phase 15, phase-37, phase 9
     r"|\bPMO\b"
     r"|the current roadmap",
@@ -419,7 +476,7 @@ def test_roadmap_vocab_guard_scans_real_user_facing_docs() -> None:
 def test_roadmap_vocab_pattern_is_narrow_enough_to_keep_spec_names() -> None:
     """The pattern flags phase/story tags but never the kept architecture spec names
     (MIR-01 / DIR-01 / WFS-01) or bare 'phase' with no number."""
-    for leak in ("Phase 15", "phase-37", "phase 9", "HS-25-03", "HS-17-05",
+    for leak in ("Phase 15", "phase-137", "phase 9", "HS-139-02", "HS-17-05",
                  "HS-9-03",  # single-digit phase — leaked past the old pattern (found live)
                  "the current roadmap", "PMO", "from HS-19 closeout"):
         assert _ROADMAP_VOCAB.search(leak), f"guard should flag {leak!r}"

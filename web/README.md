@@ -6,8 +6,8 @@ builds into `../holdspeak/static/_built/`; FastAPI serves the hashed assets at
 
 ## Requirements and commands
 
-Node.js 20 or newer is needed only to build and test. The shipped runtime stays
-Python/FastAPI.
+Node.js 20.19+ or 22.12+ is needed only to build and test, matching Vite 7's
+runtime requirement. The shipped runtime stays Python/FastAPI.
 
 ```bash
 npm install
@@ -52,15 +52,16 @@ The machine-readable URL/verb/state inventory is
   `../holdspeak/static/_built/`.
 - Browser routes and API payloads remain stable; React Router does not redefine
   backend contracts.
-- API keys never enter browser storage or response bodies. Runtime profiles
-  carry only shape and `requires_key`; the key remains an environment variable
-  on the hub.
+- API keys never enter browser storage or ordinary response bodies. Model
+  profiles carry only shape and secret-state metadata; key values remain in
+  owner-only hub secret custody, with per-profile environment variables as a
+  headless fallback.
 - `localStorage` is only for explicitly device-local preferences such as Desk
   positions, Workbench layout, chat threads, and project-root history.
 - New browser network calls go through the typed API client. New live consumers
   subscribe to `RuntimeBus`; they do not open another `/ws`.
 
-## Adding a surface (the Desk OS pattern, HS-95-04)
+## Adding a surface (the Desk OS pattern)
 
 Features do not own surfaces; the OS owns surfaces and features plug into
 them (docs/internal/CONSTITUTION.md, Articles I–II). To add or re-home a
@@ -74,7 +75,7 @@ surface:
    (`tests/unit/test_page_cores_guard.py` enforces this mechanically).
    The core owns its verbs and hands them to the optional `hero` slot so
    each host chooses the chrome.
-2. **Demote the route** (HS-95-08): there are no flat wrappers anymore.
+2. **Demote the route:** there are no flat wrappers anymore.
    Add one `DEMOTED_ROUTES` row in `src/routes.tsx` mapping the legacy
    path to the surface key (plus a `subjectKind` when deep links carry a
    scope); the path then lands on the Desk with the window open.
@@ -84,7 +85,7 @@ surface:
    menu and the tool shelf dispatch through `desk/shell.ts`; the no-exit
    lock (`tests/unit/test_desk_no_exit_guard.py`) forbids desk navigation
    outright.
-4. **Compose the surface kit** (HS-98): a core builds its interior
+4. **Compose the surface kit:** a core builds its interior
    from `src/desk/surface/` — `SurfaceVerbs` (one sticky verb bar),
    `SurfaceSection` (hairline + quiet label, never a nested card),
    `SurfaceRows`/`SurfaceRow` (dense honest rows, revealed verbs),
@@ -105,7 +106,7 @@ surface:
    entries; the focus and pressed state grammars are inherited — never
    hand-roll them; the window material is ONE `:where()` rule — no
    per-window recipes.
-6. **The chrome ladder** (HS-99; the chrome ladder chapter in
+6. **The chrome ladder** (see the chrome ladder chapter in
    `DESIGN_SYSTEM.md` is the contract): interiors layer by TONE
    (head/rail/well around the body fill), never by borders. Popovers
    render through `DeskMenuList`/`DeskMenuItem` (`src/desk/components/
@@ -114,7 +115,7 @@ surface:
    control foundation mechanically; never opt a control out of it.
    Scrollbars are the drawn pill — verify HEADED (the headless shell
    suppresses them).
-7. **Window grammar** (HS-97; the physics floors chapter in
+7. **Window grammar** (see the physics floors chapter in
    `DESIGN_SYSTEM.md` is the contract): windows are placed by the OS —
    never hand-position a surface window; its CSS default is only the
    placement seed. A fixed shelf verb registers through

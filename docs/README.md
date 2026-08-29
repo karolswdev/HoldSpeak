@@ -40,7 +40,7 @@ Studio, and Settings are focused workrooms.
   word (hands-free entry, previewed before it types), the spoken language
   setting (any of Whisper's 99 languages), and the spoken-symbol dictionary.
 - **[Dictation Pipeline Setup](./DICTATION_PIPELINE_GUIDE.md)**: the project-aware
-  pipeline. Intent routing, project facts, Runs on destinations, and LLM rewriting.
+  pipeline. Intent routing, project facts, model assignments, and LLM rewriting.
 - **[Project knowledge: facts + context](./DICTATION_PIPELINE_GUIDE.md#5-set-up-project-knowledge)**:
   teach the copilot about a repo. Facts (the `project.yaml` KB, stamped in verbatim)
   and context (the `.hs/` files an optional rewrite reads) are two different things;
@@ -80,9 +80,10 @@ Studio, and Settings are focused workrooms.
   together, get a live transcript with speaker labels, review AI-extracted topics,
   actions, and artifacts at `/history`, then close the loop with aftercare: see
   what is still open, decided, or changed since last time, jump to the transcript
-  moment that justifies a result, file an accepted action as a human-approved
+  moment that justifies a result, file an accepted action as an authorized
   issue, draft the follow-up, or send the digest to your team with Send to
-  Slack (every send is a proposal you approve). Import recordings and transcripts you
+  Slack. Under the default YOLO control mode, an eligible configured destination
+  executes with a Receipt; Secure and Normal keep per-action approval. Import recordings and transcripts you
   already have (web upload or `holdspeak import`; vtt and srt keep their real
   timestamps and speaker names) and filter the archive by date, speaker, tag,
   and open actions.
@@ -90,7 +91,8 @@ Studio, and Settings are focused workrooms.
 ## Extend: build on it
 
 - **[MCP sidecar](./MCP_SIDECAR.md)**: the desk's programmable surface over
-  stdio. 127 tools and 32 resources, wired automatically
+  stdio. 135 tools across 30 domain families, with 29 resources in default
+  non-owner discovery and 32 for the owner, wired automatically
   in Claude Code via the repo's `.mcp.json`. The reference for families,
   model-invoking tools, trust model, resources, and the explicit opt-in,
   shared-intent-only People boundary.
@@ -99,11 +101,11 @@ Studio, and Settings are focused workrooms.
   items in Zones and inspect their results and Receipts.
 - **[Plugin Authoring](./PLUGIN_AUTHORING.md)**: write a meeting-intel plugin. The
   `HostPlugin` contract, prompt to LLM to structured output, rendering, sequences, and
-  the actuator propose/approve/execute flow.
+  the actuator proposal, authority, and execution flow.
 - **[Connector Development](./CONNECTOR_DEVELOPMENT.md)**: build a local activity
   connector (the `cli_enrichment` / `pipeline` / other kinds).
 - **[Claude/Codex automation hooks](./AGENT_HOOK_INSTALL.md)**: wire Claude/Codex automation hooks
-  into the intelligent-typing layer.
+  into the dictation pipeline.
 - **[Firefox Extension Guide](./FIREFOX_EXTENSION_GUIDE.md)**: the browser activity
   connector.
 - **[AIPI-Lite Developer Workflow](./AIPI_LITE_DEV_WORKFLOW.md)** and **[Device
@@ -125,8 +127,10 @@ Design RFCs, phase specs, and cross-platform/port planning live in
 context, not as user-facing guides, and some describe work in progress or already
 shipped. Also there: the docs working notes,
 **[`internal/DOCS_STYLE.md`](./internal/DOCS_STYLE.md)** (voice and page skeleton)
-and **[`internal/DOC_AUDIT_2026-06.md`](./internal/DOC_AUDIT_2026-06.md)** (the
-accuracy audit and canonical facts). A few highlights:
+and **[`internal/DOC_AUDIT_2026-08.md`](./internal/DOC_AUDIT_2026-08.md)** (the
+current accuracy audit and canonical facts). The
+**[June audit](./internal/DOC_AUDIT_2026-06.md)** remains a historical snapshot.
+A few highlights:
 
 - `internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`: the parent plugin-system RFC.
 - `internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md`: the DIR-01 dictation pipeline spec.

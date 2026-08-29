@@ -129,7 +129,7 @@ so the task still landed in the right block.
 | # | Feature | What happened above | Configure with |
 |---|---------|---------------------|-----------------|
 | ① | **Multi-pass rewriting** | Drafted, then critiqued + tightened in a second pass (latency-budget-gated). | `rewrite_passes: 2` |
-| ② | **Correction memory** | A correction you made last session (`this kind of utterance → agent_task_buildout`) nudged routing. The LLM classifier actually *failed* on this turn; the correction **rescued** it. **Persists across restarts** (DB-backed); curate it in `/dictation → Memory`. | Always on (pinned since HS-139-02). |
+| ② | **Correction memory** | A correction you made last session (`this kind of utterance → agent_task_buildout`) nudged routing. The LLM classifier actually *failed* on this turn; the correction **rescued** it. **Persists across restarts** (DB-backed); curate it in `/dictation → Memory`. | Always on. |
 | ③ | **Model-assisted target** | No window signal was available (the Wayland/terminal reality). The heuristic gave `unknown@0.00`; below the threshold, the LLM **inferred** `claude_code` from your words. A manual override always wins. | `target_detect_llm_enabled: true` |
 | ④ | **KB injection** | The matched block injected the project's stack / invariants / definition-of-done before the rewrite. | add a block with an `inject` template |
 
@@ -143,7 +143,7 @@ text un-typeable.
 the cockpit to configure its runtime and depth:
 
 ```
-/dictation -> Runtime         # pick a runtime and model destination
+/dictation -> Runtime         # choose a runtime and assigned model
 /dictation -> Runtime -> Copilot depth   # rewrite passes and model-assist
 /dictation -> Memory          # see + curate what the copilot has learned
 ```
@@ -182,10 +182,10 @@ at any local or LAN [OpenAI-compatible / GGUF / MLX endpoint](./MODELS.md)):
 }
 ```
 
-The endpoint and model are not config fields any more (HS-112-01). Author the
-endpoint once as a destination under **Settings, Models** and pick it as the
-dictation **Runs on**; assigning it also selects the `openai_compatible`
-backend. Set or replace its key inline in **Settings, Models**; the environment
+The endpoint and model are not dictation config fields. Add the endpoint once
+in **Settings > Models > Model Library** and select it for **Writing &
+dictation** in **Assignments**; assigning it also selects the
+`openai_compatible` backend. Set or replace its key in Model Library; the environment
 variable `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback.
 
 </details>

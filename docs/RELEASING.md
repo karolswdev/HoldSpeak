@@ -1,9 +1,9 @@
 # Releasing, upgrading, and your data
 
 This is the contract for how HoldSpeak versions itself, what happens to your
-data when you upgrade, and how to be safe about it. It is forward-looking: it
-describes how upgrades behave from this release on. There is no historical
-migration ladder, because no older versions were ever published.
+data when you upgrade, and how to be safe about it. HoldSpeak no longer carries
+an ordered historical migration ladder. Every supported database is reconciled
+against the canonical shape instead.
 
 If you are installing for the first time, start with
 [`GETTING_STARTED.md`](GETTING_STARTED.md) instead.
@@ -77,10 +77,9 @@ were in is still saved.
 
 `holdspeak doctor` reports the state it actually found, so you are never guessing:
 
-- **Database.** The stamped schema version reads as a pass. A database whose
-  shape differs from the build reads as a warning (the reconcile will bring it
-  forward on the next start and back it up first). A file that is not a
-  readable HoldSpeak database reads as a warning.
+- **Database.** The check reports the path, informational schema stamp, and
+  table count. A missing database is a clean first-run state. A file that is
+  not readable SQLite, or has no HoldSpeak tables, reads as a warning.
 - **Config.** A config newer than this build reads as a warning that some settings
   may be ignored. Otherwise it passes and shows the config version.
 
@@ -96,7 +95,8 @@ For whoever cuts a release:
    prints the new number. The drift test (`tests/unit/test_version_ssot.py`)
    enforces this, so step 4 also covers it.
 3. If the on-disk database or config shape changed, bump `SCHEMA_VERSION`
-   (`holdspeak/db/schema.py`) or `CONFIG_VERSION` (`holdspeak/config.py`). The
+   (`holdspeak/db/schema.py`) or `CONFIG_VERSION`
+   (`holdspeak/config/core.py`). The
    schema reconcile handles forward changes automatically (additive-only); the
    version bump is an informational stamp. Most releases change neither.
 4. Run the suite and read the output:

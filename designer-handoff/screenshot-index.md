@@ -1,5 +1,8 @@
 # Screenshot Index
 
+> Archived 2026-04-29 Astro-era capture set. These images are not current UI
+> reference material; see [`../docs/WEB_DESK.md`](../docs/WEB_DESK.md).
+
 Screenshots are captured from the local running app and stored in
 [`screenshots/`](./screenshots/).
 

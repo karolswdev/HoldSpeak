@@ -28,20 +28,18 @@ separate campaign legs, and parity is joined only after both legs were run.
 ## The owner's functional runbook
 
 ```bash
-cd /Users/karol/dev/tools/HoldSpeak
+cd /path/to/HoldSpeak
 git pull                                 # the merged framework
 uv run python -m uat.conductor           # opens the UAT site; note the URL it prints
 ```
 
 Then, in the browser (it prints `http://localhost:8799`):
 
-1. Start **1 · React Web Desk foundation — desktop**. The twelve numbered owner
+1. Start **1 · React Web Desk foundation — desktop**. The thirteen numbered owner
    campaigns are the execution protocol; ordinary packs remain below them as
-   reference/diagnostic material. Campaigns 10–12 are the Phase 93/94
-   physical-proof legs (BACKLOG candidate Y): 10 is production-Web owner
-   evidence, 11 is the flagship pass on physical devices (TestFlight build 12+),
-   12 is the Delivery Runtime on real metal (second machine, iPad, tailnet
-   HTTPS).
+   reference/diagnostic material. Campaigns 10–12 are the production-Web,
+   physical flagship, and Delivery Runtime proof legs; campaign 13 covers the
+   Desk OS on React and flagship Swift.
 2. Walk the beats: each says *do this*, *expect this*. Use **Open the product**
    to jump to the right screen. Cast a verdict only for the displayed
    **target/form-factor slot**. Campaign 1 is React desktop; Campaign 5 is the
@@ -59,14 +57,13 @@ Then, in the browser (it prints `http://localhost:8799`):
 If anything is broken or pending, it is named honestly under **Known state**
 below.
 
-Campaigns 1–9 contain 90 scenarios and 327 direct observations: 54 are fully
-automatic, 27 are recipe-staged plus a real-world preflight, and 9 begin at a
-genuinely hands-on boundary. Exact meeting/action/proposal fixtures remove
-model wording and manual setup from UI-mechanics tests; live inference stays
-in the scenarios that judge intelligence itself. Campaigns 10–12 add 20
-scenarios that are deliberately hands-on: they exist to capture the owner and
-physical-device evidence the Phase 93/94 closes parked, so most beats start at
-a human boundary (real microphones, real devices, a second machine).
+The conductor computes scenario, verdict-slot, and bootstrap counts directly
+from the current campaign YAML; the guided site's campaign cards are the
+authoritative totals. Exact meeting/action/proposal fixtures remove model
+wording and manual setup from UI-mechanics tests, while live inference remains
+in scenarios that judge intelligence itself. Later proof campaigns deliberately
+start at human boundaries such as real microphones, physical devices, and a
+second machine.
 
 ---
 

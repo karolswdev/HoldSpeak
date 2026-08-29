@@ -223,21 +223,21 @@ pass bar; if reality disagrees, that's a `FAIL` and a finding.
 ### 2.4 Aftercare
 
 - [ ] **T2-12 · Aftercare digest + jump + draft.** On a finished meeting: `/api/meetings/<id>/aftercare`, `/followup-draft`; in the UI use the transcript-moment jump.
-  - Expect: an open/decided/changed digest; jumping lands on the right transcript moment; a local follow-up email draft reads sensibly. Read-only — nothing executes without approval.
+  - Expect: an open/decided/changed digest; jumping lands on the right transcript moment; a local follow-up email draft reads sensibly. These read/draft actions do not call a connector.
   - Result: ___  · Note:
 
-### 2.5 Actuators — propose → approve → execute
+### 2.5 Actuators — propose → authorize → execute
 
-- [ ] **T2-13 · Approval is the gate.** With `allow_actuators=false`, open a meeting's aftercare.
-  - Expect: the dashboard/UI offers no un-gated execute affordance; nothing runs without an explicit approval. (Per the ratified aftercare design, approving a proposal IS the execution gate on that route — approval executing is correct, not a failure.)
+- [ ] **T2-13 · Secure refusal is the gate.** Set `control_mode="safe"` and `allow_actuators=false`, then open a meeting's aftercare.
+  - Expect: the dashboard/UI offers no ungated execute affordance; a proposal waits for authority and a disabled executor refuses. For registered product connectors, an approval request may execute in the same request; review and execution still have separate recorded states.
   - Result: ___  · Note:
 
-- [ ] **T2-14 · GitHub issue actuator.** Set `allow_actuators=true`, `allowed_actuators=["github_issue_actuator"]`. From an accepted action item, propose → approve → `/aftercare/file-issue`.
-  - Expect: a proposal with target + preview; approval gates execution; the result carries an **egress badge** (cloud + target). (Use a throwaway repo or a dry path.)
+- [ ] **T2-14 · GitHub issue actuator.** Keep Secure mode, set `allow_actuators=true`, `allowed_actuators=["github_issue_actuator"]`. From an accepted action item, propose → authorize → `/aftercare/file-issue`.
+  - Expect: a proposal with target + preview; authorization admits execution; the result carries an **egress badge** (cloud + target). (Use a throwaway repo or a dry path.)
   - Result: ___  · Note:
 
-- [ ] **T2-15 · Slack send.** Set `slack_webhook_url` (a real incoming webhook, or observe the refusal when empty). `POST /api/meetings/<id>/export/slack`.
-  - Expect: with a URL set, the digest/draft posts to Slack via propose→approve→execute; the egress badge shows `cloud` + the Slack target; the URL never appears in any stored payload.
+- [ ] **T2-15 · Slack send.** Set `slack_webhook_url` (a real incoming webhook, or observe the refusal when empty). `POST /api/meetings/<id>/export/slack`. Exercise Secure for a reviewed send, then YOLO for a captured-posture send.
+  - Expect: Secure waits for authorization; YOLO can execute immediately to the configured fixed destination. Both paths write a receipt and show the Slack egress badge; the URL never appears in any stored payload.
   - Result: ___  · Note:
 
 - [ ] **T2-16 · Webhook host allowlist.** Enable `webhook_post_actuator`, set `webhook_allowed_hosts=["example.com"]`, try a proposal targeting a non-listed host.

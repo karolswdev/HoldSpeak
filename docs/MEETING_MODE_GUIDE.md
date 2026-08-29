@@ -4,7 +4,7 @@ A meeting should end with decisions, owners, and follow-ups, not a recording
 you never reopen. Meeting Mode captures your microphone plus remote
 participants' audio, transcribes in real time, and runs meeting intelligence
 over the transcript: typed artifacts, action items, aftercare, and
-approval-gated follow-through. It runs local-first, with optional endpoint
+audited follow-through. It runs local-first, with optional endpoint
 inference when configured.
 
 ## Table of Contents
@@ -36,7 +36,7 @@ holdspeak meeting --setup
 # 3. Start HoldSpeak web runtime (default command)
 holdspeak
 
-# 4. Start a meeting from the dashboard ("Start meeting") or POST /api/meeting/start
+# 4. Open Meetings > Record and choose "Start meeting"
 ```
 
 ---
@@ -56,19 +56,18 @@ holdspeak
   Bring your own; any GGUF chat model works (see [MODELS.md](./MODELS.md)). A
   current small/mid instruct model (e.g. a Qwen3.5 build) is a good default;
   larger models give better intel at the cost of speed.
-- Optional endpoint mode: `intel_provider: "cloud"` (or `auto` fallback) points
-  at **any OpenAI-compatible endpoint**: a self-hosted LAN server, Ollama, vLLM,
-  llama.cpp-server, or a hosted API. Author the endpoint once as a destination
-  under **Settings, Models** and pick it as the meetings **Runs on**; the API
-  key is optional for keyless self-hosted endpoints. The `intel_cloud_*`
-  config fields are dead (HS-112-01): an upgrade converts a configured legacy
-  endpoint into a `legacy-intel` destination, once.
+- Optional endpoint mode: add an OpenAI-compatible endpoint to **Settings >
+  Models > Model Library**, then select it for **Meetings** in **Assignments**.
+  This supports self-hosted LAN servers, Ollama, vLLM, llama.cpp-server, and
+  hosted APIs. A key is optional for a keyless self-hosted endpoint. Legacy
+  `intel_cloud_model`, `intel_cloud_api_key_env`, and `intel_cloud_base_url`
+  values are migration inputs only; an upgrade converts them to a model profile
+  once.
 
 ### For Web Interfaces
-- **FastAPI + Uvicorn** - Web server dependencies
-```bash
-uv pip install fastapi uvicorn
-```
+
+FastAPI and Uvicorn are core HoldSpeak dependencies; no separate web install is
+needed. Building the browser app from source requires Node.js 20.19+ or 22.12+.
 
 ---
 
@@ -129,7 +128,7 @@ runs inside it.
 
 ### Starting a Meeting
 
-From the web runtime, use the dashboard controls (the **Start meeting** button)
+From the web runtime, open **Meetings > Record** and use **Start meeting**
 or the API directly:
 - `POST /api/meeting/start` to begin a meeting
 - `POST /api/meeting/stop` to stop and persist meeting output
@@ -175,17 +174,12 @@ Use this during or after meetings for cross-session management:
 - Manage deferred-intel queue (list jobs, process now, retry meeting jobs)
 - Manage deferred MIR plugin queue (list jobs, process due jobs, force retry scheduled jobs, retry/cancel individual jobs)
 - Run MIR CLI dry-run and manual reroute flows for saved meetings
-- Edit app settings from browser, including cloud options:
-  - `intel_provider` (`local`, `cloud`, `auto`)
-  - the endpoint itself is not a settings field: it is the destination picked
-    as the meetings **Runs on** under Settings, Models. The settings write path
-    strips `intel_cloud_model`, `intel_cloud_api_key_env`, and
-    `intel_cloud_base_url` from the wire (HS-112-01).
-  - `intel_cloud_store` (**dead, HS-112-01**): when `true`, HoldSpeak sends OpenAI's `store` flag with
-    each request. **Advisory:** this only takes effect if your endpoint honors
-    the `store` parameter (OpenAI does; many OpenAI-compatible servers ignore
-    unknown fields). HoldSpeak forwards the flag but cannot guarantee the remote
-    acts on it; verify with your provider if retention matters.
+- Edit app settings in the browser. Add runnable models in **Model Library** and
+  choose the ordered model list for **Meetings** in **Assignments**. The
+  low-level `intel_provider` (`local`, `cloud`, or `auto`) and provider tuning
+  remain available in the Meetings raw settings. When `intel_cloud_store` is
+  true, HoldSpeak forwards the OpenAI `store` flag; compatible endpoints may
+  ignore it, so verify retention behavior with the endpoint operator.
 
 ### Multiple Clients
 
@@ -204,7 +198,7 @@ a copy-as-Markdown card at `/history`:
 
 HoldSpeak supports three intelligence modes:
 - `local`: requires a local GGUF model
-- `cloud`: uses your configured OpenAI-compatible endpoint and destination key
+- `cloud`: uses your assigned OpenAI-compatible endpoint and model-profile key
 - `auto`: local-first, then cloud fallback
 
 ### Where your transcripts go (egress posture)
@@ -234,9 +228,10 @@ MIR classifies each meeting segment against multiple intent categories simultane
 
 **Enabling MIR**
 
-MIR is always on (pinned to `true` since HS-139-02; no longer a user
-toggle). The `mir_enabled` field remains in the config dataclass but is
-not exposed on the Settings surface.
+MIR controls are available in the shipped runtime. Automatic intent-window
+routing is opt-in: enable **Intent router** in the Meetings settings or set
+`meeting.intent_router_enabled` to `true`. The low-level `mir_enabled` field is
+pinned on and is not an ordinary Settings toggle.
 
 **Intent Routing Presets**
 
@@ -253,7 +248,7 @@ The active preset sets which intents are weighted most heavily and which plugin 
 Change the preset from the web dashboard (Intent routing preset in the live meeting view) or in config:
 
 ```json
-{ "meeting": { "mir_profile": "architect" } }
+{ "meeting": { "routing_profile": "architect" } }
 ```
 
 **During a Meeting**
@@ -288,13 +283,14 @@ Notes:
 For local-first capture plus remote intel on your LAN:
 
 1. Run an OpenAI-compatible endpoint on homelab (for example vLLM/Ollama-compatible API).
-2. Author it as a destination under **Settings, Models** (with the endpoint's
-   `http://host:port/v1` URL) and pick it as the meetings **Runs on**. There
-   is no hand-edited alternative; `intel_cloud_base_url` is dead.
-3. Deferred intel is always on (`intel_deferred_enabled` pinned to `true`
-   since HS-139-02), so meetings continue when the homelab is temporarily
+2. Add it in **Settings > Models > Model Library** with the endpoint's
+   `http://host:port/v1` URL.
+3. Select that model for **Meetings** in **Assignments**. Deferred intelligence
+   remains enabled, so meetings continue when the homelab is temporarily
    unavailable.
-4. Set the destination key inline in **Settings, Models** and run `holdspeak doctor` to preflight reachability and model availability. `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless fallback; the Runs on line names the destination each pipeline resolves to.
+4. Set the model profile's key in Model Library and run `holdspeak doctor` to
+   preflight reachability and availability. `HOLDSPEAK_PROFILE_<ID>_KEY`
+   remains a headless fallback.
 
 ### What It Extracts
 
@@ -386,23 +382,27 @@ a real timestamp resolves to a real segment, so there is no misleading jump to
 
 When you have reviewed and accepted an action item, a "File as issue" button
 appears on it in the panel. It opens a small form for a target repo (`owner/name`)
-and creates a GitHub-issue **proposal**. This reuses the existing actuator system
-(propose, then approve, then execute), so filing here records a proposal only.
-Nothing leaves your machine at this step.
+and creates a GitHub-issue **proposal**. Proposal construction never performs the
+connector call itself. The captured control posture then decides whether the
+proposal waits for authorization or can proceed immediately.
 
 ![The "File as issue" proposal in the Proposed actions section: a create_issue -> github proposal awaiting approval, showing the full payload preview (repo, title, body) with Approve and Reject controls.](assets/aftercare/file-as-issue.png)
 
-*The filed proposal lands in the existing Proposed actions section, awaiting your approval. Execution is a separate, audited step.*
+*In Secure or Normal mode, the filed proposal lands in Proposed actions and
+waits for your decision. Execution remains a separate, audited lifecycle axis.*
 
-The execution posture depends on your control mode (HS-139-08):
+The execution posture depends on your control mode:
 
 - **On by default (YOLO posture).** `allow_actuators` defaults to `true` with a
-  wildcard allow-list. Under YOLO, proposals to a registered destination
-  auto-execute at creation and produce a receipt. You can switch to neutral or
-  safe posture in Settings > System to restore manual approval.
-- **Human-approved under neutral/safe.** Under neutral or safe posture, you
+  wildcard allow-list. Under YOLO, an eligible proposal to a registered fixed
+  destination can be authorized by the captured posture and execute at creation,
+  producing a receipt. Switch to Normal or Secure in **Settings > System** to
+  require a decision or bounded grant.
+- **Reviewed under Normal/Secure.** Under Normal or Secure, you
   approve or reject each proposal yourself in the Proposed actions section.
-  Approval only records the decision; execution is a separate step.
+  For registered Slack, webhook, and GitHub targets, approval also invokes the
+  guarded executor in the same request; review and execution state remain
+  separate in the record.
 - **Audited, and what executes is what you saw.** Every state change is recorded,
   and a payload-parity check aborts execution if the stored payload no longer
   matches what was approved.
@@ -431,19 +431,21 @@ a "Send to Slack" button on the digest and another on the follow-up draft.
 With no URL configured, the buttons do not exist and nothing about Slack
 appears anywhere.
 
-![The aftercare panel with Send to Slack configured: a green Send to Slack pill in the panel header, the follow-up draft open with Copy draft and Send to Slack side by side, and the one-line note that sending creates a proposal you approve.](assets/aftercare/send-to-slack.png)
+![The aftercare panel with Send to Slack configured: a green Send to Slack pill in the panel header, the follow-up draft open with Copy draft and Send to Slack side by side, and the one-line authority note.](assets/aftercare/send-to-slack.png)
 
-*The one outbound door: the green buttons appear only after you configure a webhook URL, and they create proposals, not sends.*
+*The one outbound door: the green buttons appear only after you configure a
+webhook URL. In Normal or Secure they create a proposal awaiting authority; in
+YOLO an eligible fixed-destination proposal can execute immediately.*
 
 How a send actually works:
 
 1. Clicking the button creates a **proposal** in the Proposed actions
    section. The proposal's preview is the exact message Slack will receive,
    so what you read is what posts, byte for byte.
-2. **Approving the proposal is the moment it posts.** Unlike the
-   GitHub-issue flow above, you initiated this send yourself and the
-   approval is your confirmation, so HoldSpeak posts immediately on
-   approval. Rejecting it ends there; nothing is sent.
+2. The captured control posture resolves authority. In YOLO, an eligible send
+   to the configured fixed destination posts immediately and records a receipt.
+   In Normal or Secure, **approving the proposal is the moment it posts**;
+   rejecting it ends there.
 3. The message can only ever go to the host of the URL you configured. The
    connector refuses any other destination before a single byte leaves, and
    a failed post is recorded honestly on the proposal.
@@ -553,11 +555,10 @@ Configuration file: `~/.config/holdspeak/config.json`
 
 ### Meeting Settings
 
-User-configurable keys the `meeting` config block still holds, with
-defaults. Keys pinned by HS-139-02 (always-on values removed from the
-Settings surface) and killed by HS-139-01 (no runtime consumer) are
-omitted; the `intel_cloud_*` keys are listed because they persist on
-disk but are dead (HS-112-01) and the reference table says so per row.
+The browser Settings surfaces are the preferred editor. This representative
+`meeting` block shows the supported low-level controls most often needed for
+capture, intelligence, routing, and connectors. Model placement itself belongs
+in Model Library and Assignments, not in hand-authored endpoint fields.
 
 ```json
 {
@@ -573,15 +574,17 @@ disk but are dead (HS-112-01) and the reference table says so per row.
     "intel_retry_failure_webhook_url": null,
     "intel_retry_failure_webhook_header_name": null,
     "intel_retry_failure_webhook_header_value": null,
-    "intel_cloud_model": "gpt-5-mini",
-    "intel_cloud_api_key_env": "OPENAI_API_KEY",
-    "intel_cloud_base_url": null,
     "intel_cloud_reasoning_effort": null,
     "intel_cloud_store": false,
     "intel_summary_model": null,
+    "routing_profile": "balanced",
+    "intent_router_enabled": false,
     "allow_actuators": true,
     "allowed_actuators": ["*"],
     "webhook_allowed_hosts": ["*"],
+    "slack_webhook_url": "",
+    "companion_webhook_url": "",
+    "companion_github_repo": "",
     "diarization_enabled": false,
     "diarize_mic": false,
     "similarity_threshold": 0.75
@@ -589,15 +592,9 @@ disk but are dead (HS-112-01) and the reference table says so per row.
 }
 ```
 
-> **Pinned defaults (HS-139-02):** The following fields still exist in the config
-> dataclass but are pinned to their values and no longer appear on the Settings
-> surface: `intel_enabled` (true), `intel_deferred_enabled` (true),
-> `mir_enabled` (true), `mic_label` ("Me"), `remote_label` ("Remote"),
-> `cross_meeting_recognition` (true), `web_auto_open` (true).
->
-> **Killed (HS-139-01):** `intel_queue_poll_seconds`,
-> `intel_retry_failure_alert_percent`, `intel_retry_failure_hysteresis_minutes`
-> had no runtime consumer and were removed entirely.
+`intel_cloud_model`, `intel_cloud_api_key_env`, and `intel_cloud_base_url` are
+accepted only for one-time migration from older installations. Do not use them
+for new configuration. Model Library and Assignments are authoritative.
 
 ### Option Details
 
@@ -614,28 +611,25 @@ disk but are dead (HS-112-01) and the reference table says so per row.
 | `intel_retry_failure_webhook_url` | string | null | Optional HTTP(S) webhook for sustained failure alerts |
 | `intel_retry_failure_webhook_header_name` | string | null | Optional custom header name added to failure-alert webhooks |
 | `intel_retry_failure_webhook_header_value` | string | null | Optional custom header value (set together with header name) |
-| `intel_cloud_model` | string | "gpt-5-mini" | **Dead (HS-112-01).** Read once by the legacy migration, then ignored. The model comes from the meetings Runs on destination. |
-| `intel_cloud_api_key_env` | string | "OPENAI_API_KEY" | **Dead (HS-112-01).** Set the destination key inline in **Settings, Models**; `HOLDSPEAK_PROFILE_<ID>_KEY` remains the per-destination headless fallback. |
-| `intel_cloud_base_url` | string | null | **Dead (HS-112-01).** Read once by the legacy migration, then ignored. The URL comes from the meetings Runs on destination. |
-| `intel_cloud_reasoning_effort` | string | null | **Dead (HS-112-01).** Read only by the one-time legacy migration. |
-| `intel_cloud_store` | bool | false | **Dead (HS-112-01).** Read only by the one-time legacy migration. |
+| `intel_cloud_reasoning_effort` | string | null | Optional reasoning effort forwarded to compatible endpoint models. |
+| `intel_cloud_store` | bool | false | Forward the OpenAI `store` flag; endpoint support and retention behavior vary. |
 | `intel_summary_model` | string | null | Path to larger model for end-of-meeting summary. Falls back to realtime model if null. |
-| `allow_actuators` | bool | true | Master switch for actuator execution (HS-139-08: on by default). |
+| `routing_profile` | string | `balanced` | MIR weighting preset: `balanced`, `architect`, `delivery`, `product`, or `incident`. |
+| `intent_router_enabled` | bool | false | Enable automatic intent-window routing at meeting finalization. |
+| `allow_actuators` | bool | true | Master switch for actuator execution. Control mode still determines authority. |
 | `allowed_actuators` | list | `["*"]` | Per-actuator allow-list. `["*"]` = all actuators may execute. |
 | `webhook_allowed_hosts` | list | `["*"]` | Webhook host allow-list. `["*"]` = any host may be POSTed to. |
+| `slack_webhook_url` | string | `""` | Fixed Slack incoming-webhook credential. Empty keeps Slack aftercare offline. |
+| `companion_webhook_url` | string | `""` | Fixed generic webhook credential for the companion desk. |
+| `companion_github_repo` | string | `""` | Default `owner/name` repo for companion GitHub issue creation. |
 | `diarization_enabled` | bool | false | Enable speaker diarization for system audio |
 | `diarize_mic` | bool | false | Enable diarization for microphone stream |
 | `similarity_threshold` | float | 0.75 | Matching threshold for speaker recognition (`0.0` to `1.0`) |
 
-> **Pinned defaults removed from this table (HS-139-02):** `mic_label` ("Me"),
-> `remote_label` ("Remote"), `intel_enabled` (true), `intel_deferred_enabled`
-> (true), `web_auto_open` (true), `cross_meeting_recognition` (true),
-> `mir_enabled` (true). These fields still exist in the config dataclass but
-> are no longer user-configurable from the Settings surface.
->
-> **Killed fields removed (HS-139-01):** `intel_queue_poll_seconds`,
-> `intel_retry_failure_alert_percent`, `intel_retry_failure_hysteresis_minutes`
-> had no runtime consumer.
+The config model also retains defaults such as `mic_label`, `remote_label`,
+`intel_enabled`, `intel_deferred_enabled`, `cross_meeting_recognition`, and
+`mir_enabled`. They are intentionally absent from the ordinary Settings
+surface. Removed no-op fields are not part of this reference.
 
 ---
 
@@ -688,7 +682,7 @@ Health check endpoint.
 - `GET /api/meetings/{meeting_id}/aftercare` - read-only aftercare digest (open items by owner, decisions, the since-last-meeting diff)
 - `GET /api/meetings/{meeting_id}/followup-draft` - locally-assembled follow-up draft (preview + copy; nothing sent)
 - `POST /api/meetings/{meeting_id}/aftercare/file-issue` - file an accepted action as a GitHub-issue actuator proposal (under default YOLO, an eligible configured action executes with a receipt; Secure and Normal retain approval; audited)
-- `POST /api/meetings/{meeting_id}/export/slack` - propose sending the digest or follow-up draft to the configured Slack webhook (`what`: `digest` or `followup`; records a proposal whose preview is the exact message; refuses when no URL is configured)
+- `POST /api/meetings/{meeting_id}/export/slack` - propose sending the digest or follow-up draft to the configured Slack webhook (`what`: `digest` or `followup`; the preview is the exact message; captured YOLO may execute it immediately, while Normal/Secure wait for authority; refuses when no URL is configured)
 - `GET /api/all-action-items`
 - `PATCH /api/all-action-items/{item_id}` - update persisted action item status
 - `PATCH /api/all-action-items/{item_id}/review` - update persisted action item review state
@@ -771,7 +765,7 @@ Send `"ping"` text message, receive `"pong"` response.
 
 ### Web dashboard not loading
 
-1. Check FastAPI is installed: `uv pip install fastapi uvicorn`
+1. Verify the HoldSpeak installation: `holdspeak doctor`
 2. Verify the runtime URL printed at startup is accessible
 3. Check firewall isn't blocking localhost
 4. Try `/history` directly on the same port to confirm server health
@@ -780,12 +774,11 @@ Send `"ping"` text message, receive `"pong"` response.
 
 1. Run `holdspeak doctor` and check the `Cloud intel preflight` line.
 2. If it reports DNS/connection failures, verify the homelab hostname/IP, LAN routing, and firewall.
-3. If it reports auth failures (HTTP 401/403), check the destination key in
-   **Settings, Models**. For a headless hub, check the
-   `HOLDSPEAK_PROFILE_<ID>_KEY` fallback for the destination the meetings Runs
-   on picker names.
-4. If it reports model mismatch, set that destination's model to one of the model IDs exposed by `/models`.
-5. Verify that destination's base URL starts with `http://` or `https://` and includes the right API prefix (commonly `/v1`). PROBE in Settings, Models tests reachability.
+3. If it reports auth failures (HTTP 401/403), check the model profile's key in
+   **Settings > Models > Model Library**. For a headless hub, check its
+   `HOLDSPEAK_PROFILE_<ID>_KEY` fallback.
+4. If it reports model mismatch, set that profile's model to one of the model IDs exposed by `/models`.
+5. Verify that profile's base URL starts with `http://` or `https://` and includes the right API prefix (commonly `/v1`). **Probe** in Model Library tests reachability.
 
 ### Transcription quality is poor
 
@@ -797,8 +790,8 @@ Send `"ping"` text message, receive `"pong"` response.
 
 1. Use smaller quantization (Q4 instead of Q6)
 2. Close other applications
-3. Intel is always on (pinned since HS-139-02); to reduce memory, use a
-   smaller quantization or assign a lighter model as your Runs on destination.
+3. Meeting intelligence is enabled in the shipped configuration. To reduce
+   memory, use a smaller quantization or assign a lighter model to Meetings.
 
 ---
 

@@ -111,13 +111,15 @@ is a hint for rendering. The built-ins use these values:
 | `artifact_generator` | A diagram or formatted document | `mermaid_architecture`, `adr_drafter`, `stakeholder_update_drafter` |
 | `validator` | Flags gaps or issues | `action_owner_enforcer`, `scope_guard` |
 | `signals` | Extracted signals/intelligence | `customer_signal_extractor` |
-| `actuator` | Proposes an external side effect (approval-gated) | `followup_ticket_actuator` |
+| `actuator` | Proposes an external side effect (authority-gated) | `followup_ticket_actuator` |
 
 **Actuators propose; they never act on their own.** A plugin whose
 `kind` is `actuator` returns an `ActuatorProposal` from `run()`, a
 *description* of a side effect, which the host records (status
-`proposed`); the effect only happens after an explicit human **approval**
-and the governance gate, performed by a separate guarded executor. This
+`proposed`). A separate authority policy and guarded executor decide whether an
+eligible fixed-destination proposal may execute immediately under YOLO, is
+authorized by a scoped grant, or waits for an explicit decision under
+Normal/Secure. This
 is its own topic; see [Actuators](#actuators) below before authoring one.
 
 ### Execution mode
@@ -382,7 +384,7 @@ def create_plugin():            # zero-arg factory → a HostPlugin instance
 `invalid_execution_mode`, `unknown_profile`, `unknown_intent`), so you fix
 all issues in one pass. `actuator` **is** a valid `kind` (see
 [Actuators](#actuators)); a manifest may declare one, but executing its
-proposals is approval- and gate-controlled.
+proposals is authority- and gate-controlled.
 
 **Discovery.** Drop the file into `~/.holdspeak/plugin_packs/`
 (override with `HOLDSPEAK_USER_PLUGIN_PACKS_DIR`). At startup the loader
@@ -499,17 +501,16 @@ proposes an **external side effect** — file a ticket, post a message,
 open a PR comment. Because that *leaves the machine*, actuators are built
 around one invariant:
 
-> **No external side effect occurs without an explicit, audited,
-> per-action human approval — and what executes is exactly what was
-> previewed.**
+> **No external side effect occurs without captured, audited authority, and
+> what executes is exactly what was previewed.**
 
 The contract enforces that invariant by splitting "decide what to do"
 from "do it":
 
 ```
- actuator.run()        human          guarded executor
- ─────────────►  proposal  ──────►  approve  ──────►  execute  ──► audit
-   (proposes)    (persisted)      (HS approval UI)   (connector)
+ actuator.run()       authority policy        guarded executor
+ ─────────────► proposal ───────────────► authorized ───────► execute ──► audit
+   (proposes)   (persisted)       (posture / grant / review)  (connector)
 ```
 
 ### What an actuator returns: `ActuatorProposal`
@@ -546,14 +547,16 @@ Three independent gates stand between a proposal and a side effect:
 1. **Capability (`actuator`)** — to even *propose*, the host must have
    `actuator` in `enabled_capabilities`. It's off by default, so a
    registered actuator is `blocked` until an operator opts in.
-2. **Human approval** — execution acts only on an `approved` proposal.
-   Approve/reject happens in the meeting UI (or
-   `POST /api/meetings/{id}/proposals/{pid}/decision`); approving records
-   `decided_by` + an audit entry and performs **no** side effect.
-3. **Governance (`MeetingConfig`)** — `allow_actuators` is the master
-   switch (default `False`); `allowed_actuators` is a per-project
-   allow-list of actuator ids. **Default-safe:** off + empty ⇒ no
-   external side effect ever runs, even for an approved proposal.
+2. **Authority policy** — an executor receives only an `approved` proposal.
+   YOLO may authorize an eligible operation to a registered fixed destination
+   from the captured control posture. Normal and Secure require an explicit
+   review decision or an exact, bounded grant. For registered product
+   connectors, an approval request may invoke the executor immediately; review
+   and execution are still recorded as separate state axes.
+3. **Governance (`MeetingConfig`)** — `allow_actuators` is the master switch
+   and `allowed_actuators` is the per-actuator allow-list. Shipped configuration
+   defaults to `true` and `["*"]`; an individual host/executor constructor
+   remains closed unless explicitly enabled. Projects can narrow either value.
 
 ### The guarded executor
 
@@ -585,7 +588,7 @@ class FollowupTicketActuator:
     id = "followup_ticket_actuator"
     version = "0.1.0"
     kind = "actuator"
-    required_capabilities = ["actuator"]   # off by default → opt-in
+    required_capabilities = ["actuator"]   # the host must admit proposal creation
 
     def run(self, context):
         unowned = _first_unowned(context.get("action_items") or [])
@@ -615,7 +618,7 @@ register_followup_actuator(host)                       # opt-in, NOT in register
 result = host.execute("followup_ticket_actuator", context=ctx, ...)   # → status "proposed"
 record_actuator_proposal(db, run_from(result))         # persist
 
-# ... a human approves in the UI ...
+# Normal/Secure example: a human approves in the UI.
 db.actuators.transition_proposal(pid, to_status="approved", actor="karol")
 
 executor = ActuatorExecutor(
@@ -634,7 +637,7 @@ GitHub issue, POST to a webhook — the connector must still be unable to do
 anything it didn't declare. That's what
 [`build_gated_connector`](../holdspeak/plugins/gated_connector.py) gives you: a
 *write* connector behind a per-connector **permission manifest**, layered
-**under** the approval + policy + parity gates (it only ever *narrows* what can
+**under** the authority + policy + parity gates (it only ever *narrows* what can
 reach the wire — it never replaces a gate above it).
 
 A [`WriteConnectorManifest`](../holdspeak/plugins/gated_connector.py) declares
@@ -679,16 +682,17 @@ no tokens.) Tests inject a fake runner — no real `gh`:
 **Reference 2 — webhook POST (`network:outbound`).**
 [`webhook_post_actuator.py`](../holdspeak/plugins/builtin/webhook_post_actuator.py)
 proposes an HTTP POST (payload `{url, body}`); `build_webhook_connector` POSTs
-**only to an allow-listed host** — `MeetingConfig.webhook_allowed_hosts` (default
-empty ⇒ nothing posts). An off-list host is refused before egress; a non-2xx /
+**only to an allow-listed host** — `MeetingConfig.webhook_allowed_hosts`
+(`["*"]` in the shipped config, which can be narrowed to exact hosts). An
+off-list host is refused before egress; a non-2xx /
 transport error → `failed` + audit; the status is the result. A Slack/Teams
 incoming webhook is simply a URL whose host you add to the allow-list — not a
 bespoke API integration. Tests inject a fake client — no real HTTP:
 [`test_webhook_post_actuator.py`](../tests/unit/test_webhook_post_actuator.py).
 
 Both reference connectors are **host-side** (the executor injects them; they are
-not discovered packs) and **off by default** — reached only after approval + the
-policy/parity gates + the manifest. jira/linear/etc. are the same pattern (a CLI
+not discovered packs) and require explicit registration — reached only after
+authority resolution, the policy/parity gates, and the manifest. jira/linear/etc. are the same pattern (a CLI
 or webhook connector + a manifest), not separate machinery.
 
 ### Live proposals
@@ -699,10 +703,10 @@ When the pipeline produces a proposal, the `MeetingSession` emits a **read-only*
 / `reversible` only; the machine `payload` is **never** put on the wire — and the
 live dashboard shows it in a **"Pending actions"** panel with Approve / Reject.
 Live approval reuses the *same* gated decision endpoint
-(`POST /api/meetings/{id}/proposals/{pid}/decision`): it records a decision (+
-audit) and performs **no** side effect — it's a surface, not a new way to act.
-Default off; nothing broadcasts unless an actuator is registered + the capability
-enabled. See
+(`POST /api/meetings/{id}/proposals/{pid}/decision`). It records the decision
+and audit; for a registered connector target, that request can also invoke the
+guarded executor. Nothing broadcasts unless an actuator is registered and its
+capability is enabled. See
 [`test_live_proposals.py`](../tests/unit/test_live_proposals.py).
 
 ### Registering + testing
@@ -712,7 +716,7 @@ Register actuators **explicitly and opt-in** — `register_followup_actuator` /
 of `register_builtin_plugins`, so the default plugin set and routing chains stay
 unchanged. Test the loop end-to-end against a stub or injected connector (no real
 egress — inject the runner / HTTP client): assert the proposal is faithful, that
-executing **before** approval / with the gate off / when not allow-listed / for an
+executing **without authority** / with the gate off / when not allow-listed / for an
 operation the manifest doesn't admit performs **no** side effect, and that
 approve → execute writes the audited terminal state. See
 [`test_actuator_reference.py`](../tests/unit/test_actuator_reference.py).

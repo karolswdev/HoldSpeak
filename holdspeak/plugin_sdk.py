@@ -30,8 +30,9 @@ from typing import Any, Mapping, Optional
 # built-ins declare (see `plugins/builtin/__init__.py`). `actuator` is the
 # third kind, unblocked in Phase 37 (HS-37-01): an actuator proposes an
 # external side effect rather than emitting a read-only artifact. It is
-# *proposable* here; *executing* a proposal is gated behind explicit human
-# approval + the host `allow_actuators` flag (see `plugins/actuators.py`).
+# *proposable* here; *executing* a proposal requires captured posture authority,
+# a scoped grant, or an explicit decision plus the host `allow_actuators` flag
+# (see `plugins/actuators.py`).
 KNOWN_PLUGIN_KINDS: frozenset[str] = frozenset(
     {
         "synthesizer",        # structured intermediate data (decisions, requirements, …)
@@ -39,7 +40,7 @@ KNOWN_PLUGIN_KINDS: frozenset[str] = frozenset(
         "artifact_generator", # a diagram or formatted document
         "signals",            # extracted customer/intelligence signals
         "detector",           # identifies associated projects/entities
-        "actuator",           # proposes an external side effect (Phase 37; approval-gated)
+        "actuator",           # proposes an external side effect (authority-gated)
     }
 )
 

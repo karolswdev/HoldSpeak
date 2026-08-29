@@ -1,12 +1,13 @@
 # HoldSpeak docs style guide
 
-The 13 guides were written across many phases and drifted in tone and shape.
+HoldSpeak's live guides were written across many releases and can drift in tone
+and shape.
 This is the **floor** they should all clear — a shared voice and a standard page
 skeleton — so the set reads as one product, not an anthology. It is a floor, not
 a cage: reference docs keep their depth; a doc may add sections, just not skip the
 spine.
 
-Companion to [`DOC_AUDIT_2026-06.md`](./DOC_AUDIT_2026-06.md) (accuracy) — this
+Companion to [`DOC_AUDIT_2026-08.md`](./DOC_AUDIT_2026-08.md) (accuracy) — this
 one is **voice + structure + navigation**.
 
 ## Voice
@@ -125,8 +126,9 @@ link, not re-derive.
 
 ## Cross-links & anchors (what the link-check enforces)
 
-- **Relative links only** between docs (`./FILE.md`, `../README.md`) — never an
-  absolute repo path or a bare filename. The dangling-link guard
+- **Relative links only** between docs (`FILE.md`, `./FILE.md`,
+  `../README.md`) — never an absolute repository path. A sibling bare filename
+  and its `./` form are both valid. The dangling-link guard
   (`tests/unit/test_doc_drift_guard.py`) fails the build on a path that doesn't
   resolve.
 - **Anchors** follow GitHub's slugger: lowercase, punctuation `().,&` stripped,
@@ -158,7 +160,7 @@ table — same journeys, same names.
 
 ## See also
 
-- [`DOC_AUDIT_2026-06.md`](./DOC_AUDIT_2026-06.md) — the accuracy audit + canonical
+- [`DOC_AUDIT_2026-08.md`](./DOC_AUDIT_2026-08.md) — the current accuracy audit + canonical
   facts the guides are measured against.
 - [`../README.md`](../README.md) — the public entry; the index map mirrors its
   "Where to go next" table.
