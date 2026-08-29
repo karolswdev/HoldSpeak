@@ -146,6 +146,17 @@ TOOLS: list[dict[str, Any]] = [
         ["commitment_id", "verb"],
     ),
     _tool(
+        "people.one_on_one.brief",
+        _BOUNDARY
+        + "Compute a read-time 1:1 preparation brief for a relationship. "
+        "Returns open shared-intent commitments, agenda items, grounding note count, "
+        "the last linked meetings with their open action items, decision records, "
+        "and the count of un-linked meetings in the window. "
+        "Never persists any data. Leader-private items are never returned.",
+        {"relationship_id": {"type": "string", "description": "Opaque relationship identifier."}},
+        ["relationship_id"],
+    ),
+    _tool(
         "people.calendar.link",
         _BOUNDARY
         + "Link a recurring calendar series to a relationship. The link is encrypted owner-selected evidence. "
@@ -233,6 +244,8 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     if name == "people.grounding.get":
         detail = get_relationship(principal, _required_id(arguments, "relationship_id"))
         return _grounding_bundle(detail)
+    if name == "people.one_on_one.brief":
+        return one_on_one_brief(principal, _required_id(arguments, "relationship_id"))
 
     _require_access(write=True)
     service = build_people_service()
@@ -369,6 +382,36 @@ def _shared_relationship(detail: dict[str, Any]) -> dict[str, Any]:
         if isinstance(item, dict) and _mcp_readable(item)
     ]
     return result
+
+
+def one_on_one_brief(principal: Principal, relationship_id: str) -> dict[str, Any]:
+    """HS-149-04 F6: _require_access + shared_intent-only through _mcp_readable."""
+    _require_access(write=False)
+    service = build_people_service()
+    # Cross-boundary: get the main DB for plaintext meeting data.
+    try:
+        from holdspeak.db import get_database
+        db = get_database()
+    except Exception:
+        db = None
+    brief = service.one_on_one_brief(principal, relationship_id, db=db)
+    # F6: filter encrypted items to shared_intent only via _mcp_readable.
+    brief["open_commitments"] = [
+        item for item in brief.get("open_commitments") or []
+        if isinstance(item, dict) and _mcp_readable(item)
+    ]
+    brief["agenda_items"] = [
+        item for item in brief.get("agenda_items") or []
+        if isinstance(item, dict) and _mcp_readable(item)
+    ]
+    # F7: policy disclosure block (grounding-bundle pattern).
+    brief["policy"] = {
+        "visibility": "shared_intent_only",
+        "source": "manual",
+        "inference": "client_owned",
+        "employment_decisions": "prohibited",
+    }
+    return brief
 
 
 def _grounding_bundle(detail: dict[str, Any]) -> dict[str, Any]:

@@ -110,6 +110,16 @@ def build_people_router(ctx: WebContext) -> APIRouter:
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 
+    @router.get("/relationships/{relationship_id}/brief")
+    async def relationship_brief(request: Request, relationship_id: str) -> dict[str, Any]:
+        """HS-149-04: read-time 1:1 brief across the encrypted/plaintext boundary."""
+        try:
+            from ...db import get_database
+            db = get_database()
+            return {"brief": service.one_on_one_brief(principal(request), relationship_id, db=db)}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
     @router.get("/relationships/{relationship_id}/one-on-ones")
     async def one_on_ones(request: Request, relationship_id: str) -> dict[str, list[dict[str, Any]]]:
         try:

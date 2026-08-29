@@ -1,6 +1,6 @@
 # Phase 149 — The 1:1 Loop
 
-**Status:** in progress (3/6).
+**Status:** in progress (4/6).
 
 **Last updated:** 2026-08-29.
 
@@ -52,12 +52,24 @@ surface; the Tuesday question IS this phase.
 | HS-149-01 | The honest keystore + sidecar truth (L3+L2) | done | [story-01](./story-01-honest-keystore.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-149-02 | The link (encrypted series link + resolution) | done | [story-02](./story-02-the-link.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-149-03 | The gesture (picker + rail person chip) | done | [story-03](./story-03-the-gesture.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-149-04 | The brief (Prep lens + PREP on the rail) | ready | [story-04](./story-04-the-brief.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-149-04 | The brief (Prep lens + PREP on the rail) | done | [story-04](./story-04-the-brief.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-149-05 | The record book | ready | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-149-06 | The walk and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
+**4/6 — THE LOOP IS WHOLE ON GLASS.** HS-149-04 (the brief) is DONE:
+the Prep lens renders YOU OWE / THEIR AGENDA / LAST 1:1s (plaintext
+action items BY REFERENCE, decisions via the decision_record_sources
+chain, the F11 unlinked count), PREP sits beside Record this on
+linked rail rows (F8: only-when-resolvable), the meeting origin
+line knows the person, and the MCP brief tool carries the F6 gate
+as law (planted-private proof) + the F7 policy block; the
+write-count spy proves the brief never persists a byte to either
+store. The exhibit frame shows the two commitment worlds
+coexisting unmerged — the D6 ruling photographed. The web
+blind-spot ledger grew 3→6 verified-inherited names (carried to
+close). Remaining: 05 (record book), 06 (walk + close). Earlier —
 **3/6.** HS-149-03 (the gesture) is DONE — and photographed: the
 picker on the Context lens lists real upcoming events with the
 name-matched row tagged SUGGESTED (in-memory, never persisted —

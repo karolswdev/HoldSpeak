@@ -269,3 +269,58 @@ describe("PeopleCore HS-149-03 gesture", () => {
     expect(screen.getByText("SUGGESTED")).toBeTruthy();
   });
 });
+
+describe("PeopleCore HS-149-04 Prep lens", () => {
+  it("renders the Prep tab and brief sections", async () => {
+    stub({
+      "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
+      "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Ewa", relationship_kind: "direct_report" }] }),
+      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Ewa", calendar_links: [] } }),
+      "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      "/api/people/relationships/r1/brief": () => json({ brief: {
+        relationship_id: "r1", display_name: "Ewa",
+        open_commitments: [{ id: "c1", body: "Ship the feature", visibility: "shared_intent" }],
+        agenda_items: [{ id: "a1", body: "Discuss roadmap", visibility: "shared_intent", state: "open" }],
+        grounding_note_count: 2,
+        linked_meetings: [
+          { meeting_id: "m1", title: "Last 1:1", started_at: "2026-08-01T10:00:00", open_action_items: [{ id: "ai1", task: "Review docs", owner: "Ewa", due: null }], decisions: [{ id: "d1", decision_text: "Approved RFC", rationale: null, lifecycle: "active" }] },
+        ],
+        unlinked_meeting_count: 3,
+      } }),
+      "/api/door": () => json({ upcoming: [] }),
+    });
+    render(<PeopleCore scope="people:r1" />);
+    await waitFor(() => expect(screen.getByRole("tab", { name: "Prep" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("tab", { name: "Prep" }));
+    // Sections render
+    expect(await screen.findByTestId("people-prep-lens")).toBeTruthy();
+    expect(screen.getByText("Ship the feature")).toBeTruthy();
+    expect(screen.getByText("Discuss roadmap")).toBeTruthy();
+    expect(screen.getByTestId("prep-grounding-count")).toHaveTextContent("2 grounding notes");
+    expect(screen.getByText("Last 1:1")).toBeTruthy();
+    expect(screen.getByText("Review docs (Ewa)")).toBeTruthy();
+    expect(screen.getByText("Approved RFC")).toBeTruthy();
+    expect(screen.getByTestId("prep-unlinked-count")).toHaveTextContent("3 unlinked meetings in this window");
+  });
+
+  it("opens Prep lens directly via scope focus", async () => {
+    stub({
+      "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
+      "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Ewa", relationship_kind: "direct_report" }] }),
+      "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Ewa", calendar_links: [] } }),
+      "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+      "/api/people/relationships/r1/brief": () => json({ brief: {
+        relationship_id: "r1", display_name: "Ewa",
+        open_commitments: [], agenda_items: [], grounding_note_count: 0,
+        linked_meetings: [], unlinked_meeting_count: 0,
+      } }),
+      "/api/door": () => json({ upcoming: [] }),
+    });
+    render(<PeopleCore scope="people:r1:prep" />);
+    // Prep tab should be active on load
+    expect(await screen.findByTestId("people-prep-lens")).toBeTruthy();
+    // Verify the Prep tab is selected
+    const prepTab = screen.getByRole("tab", { name: "Prep" });
+    expect(prepTab.getAttribute("aria-selected")).toBe("true");
+  });
+});

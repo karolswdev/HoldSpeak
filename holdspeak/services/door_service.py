@@ -212,18 +212,20 @@ class DoorService:
         )
         return sorted(upcoming, key=lambda item: (item["starts_at"], item["source"], item["id"]))
 
-    def _build_person_index(self, events: list[CalendarEvent]) -> dict[tuple[str, str], str]:
-        """HS-149-03: resolve person labels for linked calendar series.
+    def _build_person_index(
+        self, events: list[CalendarEvent],
+    ) -> dict[tuple[str, str], tuple[str, str]]:
+        """HS-149-03/04: resolve person labels and relationship IDs for linked calendar series.
 
-        Returns a map from ``(uid, source_id)`` to ``display_name`` for
-        every linked series.  One ``resolve_relationship_by_series`` call per
+        Returns a map from ``(uid, source_id)`` to ``(display_name, relationship_id)``
+        for every linked series.  One ``resolve_relationship_by_series`` call per
         distinct key — memoized in-request only, never cached across requests.
         The sidecar being unavailable or a series having no link silently
         produces no entry (the Door never blocks on the sidecar).
         """
         if self._people_service is None:
             return {}
-        seen: dict[tuple[str, str], str | None] = {}
+        seen: dict[tuple[str, str], tuple[str, str] | None] = {}
         for event in events:
             key = (event.uid, event.source_id)
             if key in seen:
@@ -240,7 +242,9 @@ class DoorService:
                 continue
             rel = result.get("relationship")
             if rel is not None:
-                seen[key] = str(rel.get("display_name") or "")
+                name = str(rel.get("display_name") or "")
+                rel_id = str(rel.get("id") or "")
+                seen[key] = (name, rel_id) if name else None
             else:
                 seen[key] = None
         return {k: v for k, v in seen.items() if v}
@@ -266,7 +270,7 @@ class DoorService:
         event: CalendarEvent,
         *,
         armed_index: dict[str, str] | None = None,
-        person_index: dict[tuple[str, str], str] | None = None,
+        person_index: dict[tuple[str, str], tuple[str, str]] | None = None,
     ) -> dict[str, Any]:
         """Map the persisted projection into Story 01's reserved timeline row.
 
@@ -276,8 +280,9 @@ class DoorService:
         HS-147-01: armed_schedule_id is projected when a live event-linked
         schedule exists (the read side; story 02 renders the chip).
 
-        HS-149-03: uid is projected for the picker/link flow; person_label
-        is projected (only-when-present) for linked calendar series.
+        HS-149-03/04: uid is projected for the picker/link flow; person_label
+        and person_relationship_id are projected (only-when-present) for linked
+        calendar series.
         """
         item: dict[str, Any] = {
             "id": event.id,
@@ -297,12 +302,15 @@ class DoorService:
             schedule_id = armed_index.get(event.id)
             if schedule_id:
                 item["armed_schedule_id"] = schedule_id
-        # HS-149-03: person_label projected only when present — the
-        # armed_schedule_id only-when-present analogy.
+        # HS-149-03/04: person_label + person_relationship_id projected
+        # only when present — the armed_schedule_id only-when-present analogy.
         if person_index:
-            label = person_index.get((event.uid, event.source_id))
-            if label:
+            resolved = person_index.get((event.uid, event.source_id))
+            if resolved:
+                label, rel_id = resolved
                 item["person_label"] = label
+                if rel_id:
+                    item["person_relationship_id"] = rel_id
         return item
 
     @staticmethod

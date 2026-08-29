@@ -6,6 +6,7 @@ import { useWriteReceipt } from "../../hooks/useWriteReceipt";
 import { StringGadget } from "../../surface/gadgets";
 import { SurfaceSection, SurfaceState } from "../../surface/Surface";
 import { useSurfaceWindows } from "../../components/SurfaceWindows";
+import { openSurfaceOr } from "../../shell";
 import { useDesk } from "../../store";
 import type { LaneProps } from "../laneContract";
 import { upcomingTimeLabel } from "./upcomingTime";
@@ -55,6 +56,8 @@ export type DoorUpcomingItem = {
   uid?: string;
   /* HS-149-03: person label for linked calendar series (only-when-present). */
   person_label?: string;
+  /* HS-149-04: relationship ID for the PREP affordance (only-when-present). */
+  person_relationship_id?: string;
 };
 
 export type DoorProjection = {
@@ -379,7 +382,7 @@ function UpcomingRowActions({ item, onReload }: { item: DoorUpcomingItem; onRelo
     );
   }
 
-  // Unarmed: RECORD THIS button.
+  // Unarmed: RECORD THIS button + PREP (F8: only when person_label is present).
   return (
     <span className="door-upcoming-arm-actions" data-testid="door-arm-actions">
       <Button
@@ -392,6 +395,16 @@ function UpcomingRowActions({ item, onReload }: { item: DoorUpcomingItem; onRelo
       >
         Record this
       </Button>
+      {item.person_label && item.person_relationship_id ? (
+        <Button
+          dense
+          variant="ghost"
+          data-testid="door-prep"
+          onClick={() => openSurfaceOr("open-people", "/", `people:${item.person_relationship_id}:prep`)}
+        >
+          Prep
+        </Button>
+      ) : null}
       {refusal ? <span className="door-upcoming-refusal" data-testid="door-arm-refusal">{refusal}</span> : null}
     </span>
   );

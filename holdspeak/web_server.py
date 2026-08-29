@@ -707,6 +707,20 @@ class MeetingWebServer:
             people_service = PeopleService(production_people_store())
         except Exception:
             people_service = PeopleService(UnavailablePeopleStore())
+        # HS-149-04: bind person resolver so the meeting origin line can
+        # extend with the resolved person display name (read-time only).
+        def _resolve_person_label(uid: str, source_id: str) -> str | None:
+            try:
+                result = people_service.resolve_relationship_by_series(uid, source_id)
+                if result.get("state") != "ready":
+                    return None
+                rel = result.get("relationship")
+                return str(rel.get("display_name") or "") if rel else None
+            except Exception:
+                return None
+
+        meeting_service.bind_person_resolver(_resolve_person_label)
+
         follow_through_service = FollowThroughService(
             get_database(), observer=obs, people_projection=people_service
         )

@@ -7,6 +7,7 @@ import { useDesk } from "../../store";
 const apiFetch = vi.hoisted(() => vi.fn());
 const newDeliveryId = vi.hoisted(() => vi.fn(() => "door-request-id"));
 const openIntelligence = vi.hoisted(() => vi.fn());
+const openSurfaceOr = vi.hoisted(() => vi.fn());
 
 vi.mock("../../../lib/api", () => ({
   apiFetch,
@@ -14,6 +15,7 @@ vi.mock("../../../lib/api", () => ({
   readableError: (cause: unknown) => cause instanceof Error ? cause.message : "Request failed",
 }));
 vi.mock("../../intelligenceNavigation", () => ({ openIntelligence }));
+vi.mock("../../shell", () => ({ openSurfaceOr }));
 vi.mock("../../surface/gadgets", () => ({
   StringGadget: ({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) => (
     <label>{label}<input aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} /></label>
@@ -668,6 +670,62 @@ describe("DoorBoardLane", () => {
       // The second row has no person chip
       const row = document.querySelectorAll(".door-upcoming-row");
       expect(row[1]?.querySelector("[data-testid='door-person-chip']")).toBeNull();
+    });
+  });
+
+  /* HS-149-04 — PREP affordance on linked EVENT rows. */
+  describe("PREP affordance (HS-149-04)", () => {
+    it("renders PREP button beside Record this when person_label and person_relationship_id are present", async () => {
+      const withPrep: DoorProjection = {
+        ...projection,
+        upcoming: [{
+          id: "cal-prep", source: "calendar_event", target_ref: "calendar_event:cal-prep",
+          title: "1:1 w/ Ewa", starts_at: "2099-08-28T10:00:00Z", ends_at: "2099-08-28T10:30:00Z",
+          location: null, meeting_url: null, state: "scheduled",
+          uid: "uid-ewa", source_id: "cal-1",
+          person_label: "Ewa", person_relationship_id: "rel-ewa",
+        }],
+      };
+      mockDoor(withPrep);
+      renderLane();
+      await screen.findByText("1:1 w/ Ewa");
+      expect(screen.getByTestId("door-prep")).toHaveTextContent("Prep");
+      expect(screen.getByTestId("door-record-this")).toBeInTheDocument();
+    });
+
+    it("F8: PREP is ABSENT when person_label is missing", async () => {
+      const withoutPerson: DoorProjection = {
+        ...projection,
+        upcoming: [{
+          id: "cal-no-person", source: "calendar_event", target_ref: "calendar_event:cal-no-person",
+          title: "Team standup", starts_at: "2099-08-28T10:00:00Z", ends_at: "2099-08-28T10:30:00Z",
+          location: null, meeting_url: null, state: "scheduled",
+          uid: "uid-team", source_id: "cal-1",
+        }],
+      };
+      mockDoor(withoutPerson);
+      renderLane();
+      await screen.findByText("Team standup");
+      expect(screen.queryByTestId("door-prep")).toBeNull();
+      expect(screen.getByTestId("door-record-this")).toBeInTheDocument();
+    });
+
+    it("PREP click opens People focused on the person's Prep lens", async () => {
+      const withPrep: DoorProjection = {
+        ...projection,
+        upcoming: [{
+          id: "cal-focus", source: "calendar_event", target_ref: "calendar_event:cal-focus",
+          title: "1:1 w/ Jan", starts_at: "2099-08-28T10:00:00Z", ends_at: "2099-08-28T10:30:00Z",
+          location: null, meeting_url: null, state: "scheduled",
+          uid: "uid-jan", source_id: "cal-1",
+          person_label: "Jan", person_relationship_id: "rel-jan",
+        }],
+      };
+      mockDoor(withPrep);
+      renderLane();
+      await screen.findByText("1:1 w/ Jan");
+      fireEvent.click(screen.getByTestId("door-prep"));
+      expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:rel-jan:prep");
     });
   });
 });

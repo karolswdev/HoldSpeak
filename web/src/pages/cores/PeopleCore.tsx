@@ -21,7 +21,7 @@ import "./people.css";
 type ReadinessState = "unconfigured" | "locked" | "key_unavailable" | "corrupt" | "unavailable" | "ready";
 type Visibility = "shared_intent" | "leader_private";
 type RelationshipKind = "direct_report" | "peer" | "extended";
-type Lens = "now" | "one-on-ones" | "context" | "history" | "info";
+type Lens = "now" | "prep" | "one-on-ones" | "context" | "history" | "info";
 
 type Readiness = {
   readiness?: ReadinessState;
@@ -52,6 +52,18 @@ type Commitment = { id: string; body: string; due?: string | null; state?: strin
 type Workbench = { id: string; name: string };
 type Project = { id: string; name: string; description?: string };
 type ExecutionItem = { id: string; workbench_id: string; status: string; result?: string | null; result_artifact_id?: string | null; completed_at?: string | null };
+type BriefActionItem = { id: string; task: string; owner: string | null; due: string | null };
+type BriefDecision = { id: string; decision_text: string; rationale: string | null; lifecycle: string };
+type BriefMeeting = { meeting_id: string; title: string | null; started_at: string; open_action_items: BriefActionItem[]; decisions: BriefDecision[] };
+type OneOnOneBrief = {
+  relationship_id: string;
+  display_name: string | null;
+  open_commitments: Array<{ id: string; body: string; visibility: Visibility; state?: string }>;
+  agenda_items: Array<{ id: string; body: string; visibility: Visibility; state: string }>;
+  grounding_note_count: number;
+  linked_meetings: BriefMeeting[];
+  unlinked_meeting_count: number;
+};
 type RelationshipDetail = Relationship & {
   commitments?: Commitment[];
   requests?: Array<{ id: string; body: string; state: string }>;
@@ -112,9 +124,9 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const [newKind, setNewKind] = useState<RelationshipKind>("direct_report");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const requestedRelationshipId = scope?.startsWith("people:")
-    ? scope.slice("people:".length)
-    : null;
+  const requestedScope = scope?.startsWith("people:") ? scope.slice("people:".length) : null;
+  const requestedRelationshipId = requestedScope?.includes(":") ? requestedScope.split(":")[0] : requestedScope;
+  const requestedLens = requestedScope?.includes(":") ? requestedScope.split(":")[1] as Lens : null;
 
   const clearProtected = useCallback(() => {
     setRelationships([]);
@@ -204,7 +216,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     <SurfaceSplit
       detailOpen={Boolean(selected)}
       main={<Roster relationships={relationships} selectedId={selectedId} newName={newName} setNewName={setNewName} newKind={newKind} setNewKind={setNewKind} busy={busy} onCreate={() => void createRelationship()} onSelect={(id) => void select(id)} />}
-      detail={selected ? <RelationshipPane relationship={selected} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); }} /> : undefined}
+      detail={selected ? <RelationshipPane relationship={selected} initialLens={requestedLens} onRefresh={() => void select(selected.id)} onProtectedFailure={protectedFailure} onArchived={() => { clearProtected(); void load(); }} onBack={() => { setSelectedId(null); setDetail(null); }} /> : undefined}
     />
   </>;
 }
@@ -223,8 +235,8 @@ function Roster({ relationships, selectedId, newName, setNewName, newKind, setNe
   </SurfaceSection>;
 }
 
-function RelationshipPane({ relationship, onRefresh, onProtectedFailure, onArchived, onBack }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; onArchived(): void; onBack(): void }) {
-  const [lens, setLens] = useState<Lens>("now");
+function RelationshipPane({ relationship, initialLens, onRefresh, onProtectedFailure, onArchived, onBack }: { relationship: RelationshipDetail; initialLens?: Lens | null; onRefresh(): void; onProtectedFailure(cause: unknown): void; onArchived(): void; onBack(): void }) {
+  const [lens, setLens] = useState<Lens>(initialLens || "now");
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
   useEffect(() => {
     void apiFetch<{ upcoming?: UpcomingEvent[] }>("/api/door")
@@ -244,9 +256,10 @@ function RelationshipPane({ relationship, onRefresh, onProtectedFailure, onArchi
     <div className="people-detail-head"><Button dense variant="ghost" onClick={onBack}>Back</Button><strong>{relationship.display_name}</strong></div>
     {nextLabel ? <div className="people-next-header" data-testid="people-next-1on1">NEXT 1:1 &middot; {nextLabel}</div> : null}
     <div className="people-lenses" role="tablist" aria-label={`${relationship.display_name} lenses`}>
-      {([['now', 'Now'], ['one-on-ones', '1:1s'], ['context', 'Context'], ['history', 'History'], ['info', 'Info']] as const).map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={lens === id} onClick={() => setLens(id)}>{label}</button>)}
+      {([['now', 'Now'], ['prep', 'Prep'], ['one-on-ones', '1:1s'], ['context', 'Context'], ['history', 'History'], ['info', 'Info']] as const).map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={lens === id} onClick={() => setLens(id)}>{label}</button>)}
     </div>
     {lens === "now" ? <NowLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} /> : null}
+    {lens === "prep" ? <PrepLens relationship={relationship} onProtectedFailure={onProtectedFailure} /> : null}
     {lens === "one-on-ones" ? <OneOnOnes relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} /> : null}
     {lens === "context" ? <ContextLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} /> : null}
     {lens === "history" ? <HistoryLens relationship={relationship} /> : null}
@@ -267,6 +280,46 @@ function shortWhen(isoDate: string): string {
     const day = d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
     return `${day} ${time}`;
   } catch { return ""; }
+}
+
+/** HS-149-04: the Prep lens -- read-time brief rendered in house grammar. */
+function PrepLens({ relationship, onProtectedFailure }: { relationship: RelationshipDetail; onProtectedFailure(cause: unknown): void }) {
+  const [brief, setBrief] = useState<OneOnOneBrief | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    setLoading(true); setError("");
+    void apiFetch<{ brief: OneOnOneBrief }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/brief`)
+      .then((result) => setBrief(result.brief))
+      .catch((cause) => {
+        setBrief(null);
+        if (typeof cause === "object" && cause !== null && "status" in cause && (cause as { status: number }).status === 503) {
+          setError("People store locked");
+        } else {
+          onProtectedFailure(cause);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [relationship.id]);
+  if (loading) return <SurfaceState loading />;
+  if (error) return <SurfaceState error={error} data-testid="prep-locked" />;
+  if (!brief) return <SurfaceState empty emptyLabel="Brief unavailable" />;
+  return <div data-testid="people-prep-lens">
+    <SurfaceSection label="You owe" data-testid="prep-you-owe">
+      {brief.open_commitments.length ? <SurfaceRows>{brief.open_commitments.map((item) => <SurfaceRow key={item.id} title={item.body} meta={item.visibility === "leader_private" ? "Leader private" : undefined} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No open commitments" />}
+    </SurfaceSection>
+    <SurfaceSection label="Their agenda" data-testid="prep-their-agenda">
+      {brief.agenda_items.length ? <SurfaceRows>{brief.agenda_items.map((item) => <SurfaceRow key={item.id} title={item.body} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No agenda items" />}
+    </SurfaceSection>
+    {brief.grounding_note_count > 0 ? <div className="people-prep-notes" data-testid="prep-grounding-count">{brief.grounding_note_count} grounding note{brief.grounding_note_count !== 1 ? "s" : ""}</div> : null}
+    <SurfaceSection label="Last 1:1s" data-testid="prep-last-meetings">
+      {brief.linked_meetings.length ? <SurfaceRows>{brief.linked_meetings.map((meeting) => <SurfaceRow key={meeting.meeting_id} title={meeting.title || "Untitled meeting"} detail={new Date(meeting.started_at).toLocaleDateString()} meta={meeting.open_action_items.length ? `${meeting.open_action_items.length} open` : undefined}>
+        {meeting.open_action_items.length ? <ul className="people-prep-actions" data-testid="prep-meeting-actions">{meeting.open_action_items.map((action) => <li key={action.id}>{action.task}{action.owner ? ` (${action.owner})` : ""}{action.due ? ` due ${action.due}` : ""}</li>)}</ul> : null}
+        {meeting.decisions.length ? <ul className="people-prep-decisions" data-testid="prep-meeting-decisions">{meeting.decisions.map((decision) => <li key={decision.id}>{decision.decision_text}</li>)}</ul> : null}
+      </SurfaceRow>)}</SurfaceRows> : <SurfaceState empty emptyLabel="No linked meetings" />}
+    </SurfaceSection>
+    {brief.unlinked_meeting_count > 0 ? <div className="people-prep-unlinked" data-testid="prep-unlinked-count">{brief.unlinked_meeting_count} unlinked meeting{brief.unlinked_meeting_count !== 1 ? "s" : ""} in this window</div> : null}
+  </div>;
 }
 
 /** HS-149-03: the picker + linked series + unlink two-beat. In-world, no modal. */

@@ -81,6 +81,9 @@ class MeetingService:
         self._on_live_update_action_item: Callable[[str, str], Any] | None = None
         self._on_live_review_action_item: Callable[[str, str], Any] | None = None
         self._on_live_edit_action_item: Callable[..., Any] | None = None
+        # HS-149-04: optional person resolver for the calendar origin line.
+        # When bound, _enrich_calendar_origin extends with person_label.
+        self._resolve_person: Callable[[str, str], str | None] | None = None
         self._observer = observer or NullObserver()
 
     def bind_lifecycle(
@@ -113,6 +116,17 @@ class MeetingService:
         self._on_live_update_action_item = on_update
         self._on_live_review_action_item = on_review
         self._on_live_edit_action_item = on_edit
+
+    def bind_person_resolver(
+        self,
+        resolver: Callable[[str, str], str | None] | None = None,
+    ) -> None:
+        """HS-149-04: bind a (uid, source_id) -> display_name resolver.
+
+        The resolver returns the person's display_name when the sidecar
+        is open and the series is linked, or ``None`` otherwise.
+        """
+        self._resolve_person = resolver
 
     def validate_import(self, principal: Principal, filename: str) -> None:
         try:
@@ -653,6 +667,14 @@ class MeetingService:
             if ev is not None:
                 p["calendar_event_title"] = ev.title
                 p["calendar_source_label"] = ev.source_label
+                # HS-149-04: resolve person display name when the sidecar is open.
+                if self._resolve_person is not None:
+                    try:
+                        person = self._resolve_person(ev.uid, ev.source_id)
+                        if person:
+                            p["person_label"] = person
+                    except Exception:
+                        pass
 
     @staticmethod
     def _summary_payload(meeting: Any) -> dict[str, Any]:
