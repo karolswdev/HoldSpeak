@@ -8,7 +8,26 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-08-28 (candidate **AE** GRADUATED and SHIPPED the
+**Last updated:** 2026-08-29 (two entries. First, the record made
+honest retroactively per the owner's catch: **Event → one-tap
+record** never had a row here — it lived only in the Phase 146
+handover menu as the twice-deferred "rail's natural next verb" —
+and graduated directly as [Phase 147 — One-Tap
+Record](./phase-147-one-tap-record/current-phase-status.md)
+(COMPLETE 7/7, merged 2026-08-29 as PR #501, main `16477660`).
+Recorded here so the parking lot stays the "all of them" container;
+future menus source from THIS file first. Second, candidate **AA**
+partially GRADUATES: its "window-head menus and keyboard
+equivalents on the verb registry" row rides into **Phase 148 — the
+menu-glyph craft pass** (owner direction 2026-08-29: the Amiga
+tribute deserves menus with craft — "if you now go and expand the
+top menu toolbar... they are really poor, right?"; scope = top-bar
+menus + context menus + window-head menus, keycap-glyph grammar,
+ghosting/separators/toggle marks, restrained sprite glyphs where
+meaning is earned; AA's OTHER rows — drag-reorder, cross-window
+re-filing, record-orb drop target, per-object Receipts, pull-down
+screens, in-place icon editor — stay parked here).)
+Earlier: 2026-08-28 (candidate **AE** GRADUATED and SHIPPED the
 same day it was filed — the Calendar Snapshot adapter landed as story
 HS-146-07 inside [Phase 146 — Multiple
 Calendars](./phase-146-multiple-calendars/current-phase-status.md)
