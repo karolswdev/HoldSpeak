@@ -1,0 +1,1985 @@
+{
+  "story": "HS-144-06",
+  "mode": "full",
+  "result": "PASS",
+  "legs": {
+    "cold": {
+      "name": "cold",
+      "passed": true,
+      "elapsed_ms": 1860.9000000953674,
+      "assertions": [
+        {
+          "label": "cold narrow starts at First Sentence",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "[data-testid=\"chair-first-value\"]"
+        },
+        {
+          "label": "cold narrow has editable pad and Continue later",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "First Sentence container"
+        },
+        {
+          "label": "cold narrow has no Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "whole document absence check"
+        },
+        {
+          "label": "cold 393: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "cold 393: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "cold 393: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "cold starts at First Sentence",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "[data-testid=\"chair-first-value\"]"
+        },
+        {
+          "label": "cold First Sentence heading is one job",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "First Sentence container"
+        },
+        {
+          "label": "cold First Sentence has editable pad",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "First Sentence container"
+        },
+        {
+          "label": "cold First Sentence has Click to speak",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "First Sentence container"
+        },
+        {
+          "label": "cold First Sentence has continue verb",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "First Sentence container"
+        },
+        {
+          "label": "cold has no Door before first value",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "whole document absence check"
+        },
+        {
+          "label": "cold has no Desk chrome before first value",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "whole document absence check"
+        },
+        {
+          "label": "cold has no fake transcript state",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "First Sentence container"
+        },
+        {
+          "label": "cold 1440: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "cold 1440: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "cold 1440: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "model-less speech returns named unavailability",
+          "passed": true,
+          "detail": "{'type': 'error', 'error': 'Transcription unavailable.', 'reason': 'transcription_unavailable', 'failure_category': 'transcription_unavailable'}",
+          "assertion_scope": "real /ws/dictation/stream browser protocol"
+        },
+        {
+          "label": "typed first value visibly remains editable",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "First Sentence editable pad"
+        },
+        {
+          "label": "typed first value reaches visible Desk result and custody within 3 minutes",
+          "passed": true,
+          "detail": "first_value_mode=typed_fallback elapsed_ms=1860.900",
+          "assertion_scope": "First Sentence real Continue later handoff"
+        },
+        {
+          "label": "typed first value has authoritative note custody",
+          "passed": true,
+          "detail": "notes=7",
+          "assertion_scope": "GET /api/notes after visible Desk handoff"
+        },
+        {
+          "label": "typed handoff reveals normal Door state",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "normal Chair after First Sentence handoff"
+        },
+        {
+          "label": "typed first-value handoff: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "typed first-value handoff: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "typed first-value handoff: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "post-handoff 393: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "post-handoff 393: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "post-handoff 393: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        }
+      ],
+      "findings": [],
+      "facts": {
+        "speech_unavailable": {
+          "type": "error",
+          "error": "Transcription unavailable.",
+          "reason": "transcription_unavailable",
+          "failure_category": "transcription_unavailable"
+        },
+        "first_value_mode": "typed_fallback",
+        "first_value_ms": 1860.9
+      }
+    },
+    "reveal": {
+      "name": "reveal",
+      "passed": true,
+      "elapsed_ms": null,
+      "assertions": [
+        {
+          "label": "Door owns its summary",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section"
+        },
+        {
+          "label": "Door owns upcoming rail",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section"
+        },
+        {
+          "label": "Overdue column exists inside Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section > .door-board-column heading Overdue"
+        },
+        {
+          "label": "Overdue owns its labelled source card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Overdue Door column"
+        },
+        {
+          "label": "Overdue count label agrees with aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Overdue column count label"
+        },
+        {
+          "label": "Overdue API source id and title agree",
+          "passed": true,
+          "detail": "api cards=[{'id': 'hs144-walk-overdue', 'text': 'HS144 WALK unblock overdue Door', 'owner': 'Ada', 'due': '2026-08-28', 'status': 'pending', 'meeting_id': 'hs144-walk-source-meeting', 'decision_id': None, 'stale_score': None, 'source': 'action_item', 'lane': 'overdue', 'provenance': {'meeting_id': 'hs144-walk-source-meeting', 'segment_text': None, 'segment_speaker': None, 'segment_start': None, 'moment': None, 'available': False}, 'target_ref': 'action_item:hs144-walk-overdue', 'lawful_verbs': [{'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'done'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'dismiss'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'snooze'}, 'required_arguments': ['payload.until']}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'delegate'}, 'required_arguments': ['payload.to']}]}]",
+          "assertion_scope": "GET /api/door board.overdue"
+        },
+        {
+          "label": "Now column exists inside Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section > .door-board-column heading Now"
+        },
+        {
+          "label": "Now owns its labelled source card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Now Door column"
+        },
+        {
+          "label": "Now count label agrees with aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Now column count label"
+        },
+        {
+          "label": "Now API source id and title agree",
+          "passed": true,
+          "detail": "api cards=[{'id': 'hs144-walk-now', 'text': 'HS144 WALK review Door today', 'owner': 'Bea', 'due': '2026-08-29', 'status': 'pending', 'meeting_id': 'hs144-walk-source-meeting', 'decision_id': None, 'stale_score': None, 'source': 'action_item', 'lane': 'now', 'provenance': {'meeting_id': 'hs144-walk-source-meeting', 'segment_text': None, 'segment_speaker': None, 'segment_start': None, 'moment': None, 'available': False}, 'target_ref': 'action_item:hs144-walk-now', 'lawful_verbs': [{'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-now', 'verb': 'done'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-now', 'verb': 'dismiss'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-now', 'verb': 'snooze'}, 'required_arguments': ['payload.until']}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-now', 'verb': 'delegate'}, 'required_arguments': ['payload.to']}]}]",
+          "assertion_scope": "GET /api/door board.now"
+        },
+        {
+          "label": "Waiting column exists inside Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section > .door-board-column heading Waiting"
+        },
+        {
+          "label": "Waiting owns its labelled source card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Waiting Door column"
+        },
+        {
+          "label": "Waiting count label agrees with aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Waiting column count label"
+        },
+        {
+          "label": "Waiting API source id and title agree",
+          "passed": true,
+          "detail": "api cards=[{'id': 'hs144-walk-waiting', 'text': 'HS144 WALK prepare next review', 'owner': 'Cy', 'due': '2026-09-03', 'status': 'pending', 'meeting_id': 'hs144-walk-source-meeting', 'decision_id': None, 'stale_score': None, 'source': 'action_item', 'lane': 'waiting', 'provenance': {'meeting_id': 'hs144-walk-source-meeting', 'segment_text': None, 'segment_speaker': None, 'segment_start': None, 'moment': None, 'available': False}, 'target_ref': 'action_item:hs144-walk-waiting', 'lawful_verbs': [{'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-waiting', 'verb': 'done'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-waiting', 'verb': 'dismiss'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-waiting', 'verb': 'snooze'}, 'required_arguments': ['payload.until']}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-waiting', 'verb': 'delegate'}, 'required_arguments': ['payload.to']}]}]",
+          "assertion_scope": "GET /api/door board.waiting"
+        },
+        {
+          "label": "Active column exists inside Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section > .door-board-column heading Active"
+        },
+        {
+          "label": "Active owns its labelled source card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Active Door column"
+        },
+        {
+          "label": "Active count label agrees with aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Active column count label"
+        },
+        {
+          "label": "Active API source id and title agree",
+          "passed": true,
+          "detail": "api cards=[{'id': 'thought_699ad5132ad3', 'source': 'thought', 'target_ref': 'thought:thought_699ad5132ad3', 'open_ref': 'note:note_thought_b50641538e337fc7', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-29T17:07:10Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_699ad5132ad3', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]",
+          "assertion_scope": "GET /api/door board.active"
+        },
+        {
+          "label": "Unassigned owns source card without invented count",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Unassigned Door column"
+        },
+        {
+          "label": "rail owns baseline schedule",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-upcoming-rail"
+        },
+        {
+          "label": "schedule does not duplicate into retained Meetings lane",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "retained Meetings lane absence check"
+        },
+        {
+          "label": "Door aggregate counts are exact fixture truth",
+          "passed": true,
+          "detail": "{'overdue': 1, 'now': 1, 'waiting': 1, 'active': 1, 'upcoming_today': 0}",
+          "assertion_scope": "GET /api/door counts"
+        },
+        {
+          "label": "reveal 1440: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "reveal 1440: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "reveal 1440: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "Door owns its summary",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section"
+        },
+        {
+          "label": "Door owns upcoming rail",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section"
+        },
+        {
+          "label": "Overdue column exists inside Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section > .door-board-column heading Overdue"
+        },
+        {
+          "label": "Overdue owns its labelled source card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Overdue Door column"
+        },
+        {
+          "label": "Overdue count label agrees with aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Overdue column count label"
+        },
+        {
+          "label": "Overdue API source id and title agree",
+          "passed": true,
+          "detail": "api cards=[{'id': 'hs144-walk-overdue', 'text': 'HS144 WALK unblock overdue Door', 'owner': 'Ada', 'due': '2026-08-28', 'status': 'pending', 'meeting_id': 'hs144-walk-source-meeting', 'decision_id': None, 'stale_score': None, 'source': 'action_item', 'lane': 'overdue', 'provenance': {'meeting_id': 'hs144-walk-source-meeting', 'segment_text': None, 'segment_speaker': None, 'segment_start': None, 'moment': None, 'available': False}, 'target_ref': 'action_item:hs144-walk-overdue', 'lawful_verbs': [{'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'done'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'dismiss'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'snooze'}, 'required_arguments': ['payload.until']}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'delegate'}, 'required_arguments': ['payload.to']}]}]",
+          "assertion_scope": "GET /api/door board.overdue"
+        },
+        {
+          "label": "Now column exists inside Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section > .door-board-column heading Now"
+        },
+        {
+          "label": "Now owns its labelled source card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Now Door column"
+        },
+        {
+          "label": "Now count label agrees with aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Now column count label"
+        },
+        {
+          "label": "Now API source id and title agree",
+          "passed": true,
+          "detail": "api cards=[{'id': 'hs144-walk-now', 'text': 'HS144 WALK review Door today', 'owner': 'Bea', 'due': '2026-08-29', 'status': 'pending', 'meeting_id': 'hs144-walk-source-meeting', 'decision_id': None, 'stale_score': None, 'source': 'action_item', 'lane': 'now', 'provenance': {'meeting_id': 'hs144-walk-source-meeting', 'segment_text': None, 'segment_speaker': None, 'segment_start': None, 'moment': None, 'available': False}, 'target_ref': 'action_item:hs144-walk-now', 'lawful_verbs': [{'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-now', 'verb': 'done'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-now', 'verb': 'dismiss'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-now', 'verb': 'snooze'}, 'required_arguments': ['payload.until']}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-now', 'verb': 'delegate'}, 'required_arguments': ['payload.to']}]}]",
+          "assertion_scope": "GET /api/door board.now"
+        },
+        {
+          "label": "Waiting column exists inside Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section > .door-board-column heading Waiting"
+        },
+        {
+          "label": "Waiting owns its labelled source card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Waiting Door column"
+        },
+        {
+          "label": "Waiting count label agrees with aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Waiting column count label"
+        },
+        {
+          "label": "Waiting API source id and title agree",
+          "passed": true,
+          "detail": "api cards=[{'id': 'hs144-walk-waiting', 'text': 'HS144 WALK prepare next review', 'owner': 'Cy', 'due': '2026-09-03', 'status': 'pending', 'meeting_id': 'hs144-walk-source-meeting', 'decision_id': None, 'stale_score': None, 'source': 'action_item', 'lane': 'waiting', 'provenance': {'meeting_id': 'hs144-walk-source-meeting', 'segment_text': None, 'segment_speaker': None, 'segment_start': None, 'moment': None, 'available': False}, 'target_ref': 'action_item:hs144-walk-waiting', 'lawful_verbs': [{'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-waiting', 'verb': 'done'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-waiting', 'verb': 'dismiss'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-waiting', 'verb': 'snooze'}, 'required_arguments': ['payload.until']}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-waiting', 'verb': 'delegate'}, 'required_arguments': ['payload.to']}]}]",
+          "assertion_scope": "GET /api/door board.waiting"
+        },
+        {
+          "label": "Active column exists inside Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section > .door-board-column heading Active"
+        },
+        {
+          "label": "Active owns its labelled source card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Active Door column"
+        },
+        {
+          "label": "Active count label agrees with aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Active column count label"
+        },
+        {
+          "label": "Active API source id and title agree",
+          "passed": true,
+          "detail": "api cards=[{'id': 'thought_699ad5132ad3', 'source': 'thought', 'target_ref': 'thought:thought_699ad5132ad3', 'open_ref': 'note:note_thought_b50641538e337fc7', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-29T17:07:10Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_699ad5132ad3', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]",
+          "assertion_scope": "GET /api/door board.active"
+        },
+        {
+          "label": "Unassigned owns source card without invented count",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Unassigned Door column"
+        },
+        {
+          "label": "rail owns baseline schedule",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-upcoming-rail"
+        },
+        {
+          "label": "schedule does not duplicate into retained Meetings lane",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "retained Meetings lane absence check"
+        },
+        {
+          "label": "Door aggregate counts are exact fixture truth",
+          "passed": true,
+          "detail": "{'overdue': 1, 'now': 1, 'waiting': 1, 'active': 1, 'upcoming_today': 0}",
+          "assertion_scope": "GET /api/door counts"
+        },
+        {
+          "label": "narrow board scroll belongs to board viewport",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-viewport"
+        },
+        {
+          "label": "reveal 393: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "reveal 393: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "reveal 393: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "reveal 393: narrow Door board owns its intentional scroll",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-viewport only"
+        },
+        {
+          "label": "Door owns its summary",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section"
+        },
+        {
+          "label": "Door owns upcoming rail",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section"
+        },
+        {
+          "label": "Overdue column exists inside Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section > .door-board-column heading Overdue"
+        },
+        {
+          "label": "Overdue owns its labelled source card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Overdue Door column"
+        },
+        {
+          "label": "Overdue count label agrees with aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Overdue column count label"
+        },
+        {
+          "label": "Overdue API source id and title agree",
+          "passed": true,
+          "detail": "api cards=[{'id': 'hs144-walk-overdue', 'text': 'HS144 WALK unblock overdue Door', 'owner': 'Ada', 'due': '2026-08-28', 'status': 'pending', 'meeting_id': 'hs144-walk-source-meeting', 'decision_id': None, 'stale_score': None, 'source': 'action_item', 'lane': 'overdue', 'provenance': {'meeting_id': 'hs144-walk-source-meeting', 'segment_text': None, 'segment_speaker': None, 'segment_start': None, 'moment': None, 'available': False}, 'target_ref': 'action_item:hs144-walk-overdue', 'lawful_verbs': [{'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'done'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'dismiss'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'snooze'}, 'required_arguments': ['payload.until']}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'delegate'}, 'required_arguments': ['payload.to']}]}]",
+          "assertion_scope": "GET /api/door board.overdue"
+        },
+        {
+          "label": "Now column exists inside Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section > .door-board-column heading Now"
+        },
+        {
+          "label": "Now owns its labelled source card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Now Door column"
+        },
+        {
+          "label": "Now count label agrees with aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Now column count label"
+        },
+        {
+          "label": "Now API source id and title agree",
+          "passed": true,
+          "detail": "api cards=[{'id': 'hs144-walk-now', 'text': 'HS144 WALK review Door today', 'owner': 'Bea', 'due': '2026-08-29', 'status': 'pending', 'meeting_id': 'hs144-walk-source-meeting', 'decision_id': None, 'stale_score': None, 'source': 'action_item', 'lane': 'now', 'provenance': {'meeting_id': 'hs144-walk-source-meeting', 'segment_text': None, 'segment_speaker': None, 'segment_start': None, 'moment': None, 'available': False}, 'target_ref': 'action_item:hs144-walk-now', 'lawful_verbs': [{'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-now', 'verb': 'done'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-now', 'verb': 'dismiss'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-now', 'verb': 'snooze'}, 'required_arguments': ['payload.until']}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-now', 'verb': 'delegate'}, 'required_arguments': ['payload.to']}]}]",
+          "assertion_scope": "GET /api/door board.now"
+        },
+        {
+          "label": "Waiting column exists inside Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section > .door-board-column heading Waiting"
+        },
+        {
+          "label": "Waiting owns its labelled source card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Waiting Door column"
+        },
+        {
+          "label": "Waiting count label agrees with aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Waiting column count label"
+        },
+        {
+          "label": "Waiting API source id and title agree",
+          "passed": true,
+          "detail": "api cards=[{'id': 'hs144-walk-waiting', 'text': 'HS144 WALK prepare next review', 'owner': 'Cy', 'due': '2026-09-03', 'status': 'pending', 'meeting_id': 'hs144-walk-source-meeting', 'decision_id': None, 'stale_score': None, 'source': 'action_item', 'lane': 'waiting', 'provenance': {'meeting_id': 'hs144-walk-source-meeting', 'segment_text': None, 'segment_speaker': None, 'segment_start': None, 'moment': None, 'available': False}, 'target_ref': 'action_item:hs144-walk-waiting', 'lawful_verbs': [{'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-waiting', 'verb': 'done'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-waiting', 'verb': 'dismiss'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-waiting', 'verb': 'snooze'}, 'required_arguments': ['payload.until']}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-waiting', 'verb': 'delegate'}, 'required_arguments': ['payload.to']}]}]",
+          "assertion_scope": "GET /api/door board.waiting"
+        },
+        {
+          "label": "Active column exists inside Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section > .door-board-column heading Active"
+        },
+        {
+          "label": "Active owns its labelled source card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Active Door column"
+        },
+        {
+          "label": "Active count label agrees with aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Active column count label"
+        },
+        {
+          "label": "Active API source id and title agree",
+          "passed": true,
+          "detail": "api cards=[{'id': 'thought_699ad5132ad3', 'source': 'thought', 'target_ref': 'thought:thought_699ad5132ad3', 'open_ref': 'note:note_thought_b50641538e337fc7', 'title': 'HS144 WALK active thought', 'body_preview': 'HTTP custody route created this thought.', 'state': 'working', 'continuity_state': 'idle', 'updated_at': '2026-08-29T17:07:10Z', 'aggregate_revision': 1, 'lifecycle_revision': 1, 'filing_status': 'filed', 'lawful_verbs': [{'name': 'thought.complete', 'arguments': {'thought_id': 'thought_699ad5132ad3', 'expected_aggregate_revision': 1, 'expected_lifecycle_revision': 1}, 'required_arguments': ['request_id']}]}]",
+          "assertion_scope": "GET /api/door board.active"
+        },
+        {
+          "label": "Unassigned owns source card without invented count",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Unassigned Door column"
+        },
+        {
+          "label": "rail owns baseline schedule",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-upcoming-rail"
+        },
+        {
+          "label": "schedule does not duplicate into retained Meetings lane",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "retained Meetings lane absence check"
+        },
+        {
+          "label": "Door aggregate counts are exact fixture truth",
+          "passed": true,
+          "detail": "{'overdue': 1, 'now': 1, 'waiting': 1, 'active': 1, 'upcoming_today': 0}",
+          "assertion_scope": "GET /api/door counts"
+        },
+        {
+          "label": "narrow board scroll belongs to board viewport",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-viewport"
+        },
+        {
+          "label": "200% Door card action has visible keyboard focus",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Now Door card at DSF 2"
+        },
+        {
+          "label": "reveal 200%: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "reveal 200%: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "reveal 200%: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "reveal 200%: narrow Door board owns its intentional scroll",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-viewport only"
+        }
+      ],
+      "findings": [],
+      "facts": {}
+    },
+    "completion": {
+      "name": "completion",
+      "passed": true,
+      "elapsed_ms": 50.700000047683716,
+      "assertions": [
+        {
+          "label": "completion target exposes production Done descriptor",
+          "passed": true,
+          "detail": "[{'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'done'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'dismiss'}}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'snooze'}, 'required_arguments': ['payload.until']}, {'name': 'follow_through.complete', 'arguments': {'card_id': 'hs144-walk-overdue', 'verb': 'delegate'}, 'required_arguments': ['payload.to']}]",
+          "assertion_scope": "GET /api/door board.overdue descriptor"
+        },
+        {
+          "label": "completion button belongs to named Overdue card",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Overdue Door column -> fixture card"
+        },
+        {
+          "label": "Done changes the authoritative Door aggregate",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "GET /api/door after Door action"
+        },
+        {
+          "label": "Done changes its owning Overdue column within 500ms",
+          "passed": true,
+          "detail": "completion_ms=50.700",
+          "assertion_scope": "Overdue Door card detachment measured by page performance.now()"
+        },
+        {
+          "label": "read active Thought for stale-refusal setup",
+          "passed": true,
+          "detail": "status=200 payload={'thought': {'id': 'thought_699ad5132ad3', 'raw_id': 'thought_699ad5132ad3', 'raw_sha256': 'c3ef1083d1e712832249d018d4f85bd872a336c423f4497ae738659381bec4de', 'source': {'kind': 'typed'}, 'raw_captured_at': '2026-08-29T1",
+          "assertion_scope": "production HTTP authority GET /api/thoughts/thought_699ad5132ad3"
+        },
+        {
+          "label": "drift active Thought through custody authority",
+          "passed": true,
+          "detail": "status=200 payload={'thought': {'id': 'thought_699ad5132ad3', 'raw_id': 'thought_699ad5132ad3', 'raw_sha256': 'c3ef1083d1e712832249d018d4f85bd872a336c423f4497ae738659381bec4de', 'source': {'kind': 'typed'}, 'raw_captured_at': '2026-08-29T1",
+          "assertion_scope": "production HTTP authority PATCH /api/thoughts/thought_699ad5132ad3/working"
+        },
+        {
+          "label": "stale 409 receipt stays in Door",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-section .door-board-receipt"
+        },
+        {
+          "label": "stale refusal opens no dialog",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "whole document dialog absence"
+        },
+        {
+          "label": "completion and stale receipt: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "completion and stale receipt: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "completion and stale receipt: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        }
+      ],
+      "findings": [],
+      "facts": {
+        "completion_ms": 50.7
+      }
+    },
+    "schedule": {
+      "name": "schedule",
+      "passed": true,
+      "elapsed_ms": null,
+      "assertions": [
+        {
+          "label": "Door schedule form is in-world",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "#schedule\\:__create__ opened from .door-upcoming-rail"
+        },
+        {
+          "label": "Door schedule form has voice-enabled title",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Door schedule form"
+        },
+        {
+          "label": "in-world schedule is authoritative and visible on Door rail",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "production schedule list AND owning Door rail"
+        },
+        {
+          "label": "schedule 1440: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "schedule 1440: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "schedule 1440: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "narrow Door schedule form is in-world",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "#schedule\\:__create__ opened from narrow .door-upcoming-rail"
+        },
+        {
+          "label": "schedule 393: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "schedule 393: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "schedule 393: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "schedule 393: narrow Door board owns its intentional scroll",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-viewport only"
+        }
+      ],
+      "findings": [],
+      "facts": {}
+    },
+    "calendar": {
+      "name": "calendar",
+      "passed": true,
+      "elapsed_ms": null,
+      "assertions": [
+        {
+          "label": "Settings saves local fixture through sources-wire API",
+          "passed": true,
+          "detail": "[{'kind': 'file', 'host': '', 'refresh_seconds': 900, 'egress': False, 'id': 'walk-file', 'label': 'Walk File', 'enabled': True}]",
+          "assertion_scope": "PUT /api/settings calendar.sources AND _calendar_sources fact"
+        },
+        {
+          "label": "real CalendarIngestConductor refresh succeeds",
+          "passed": true,
+          "detail": "exit=0 stdout={\"calendar_refresh\": true} stderr=",
+          "assertion_scope": "isolated child CalendarIngestConductor.refresh()"
+        },
+        {
+          "label": "fixture event is source-labelled inside Door rail",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-upcoming-rail calendar_event row"
+        },
+        {
+          "label": "calendar evidence also shows scheduled-recording rail row",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-upcoming-rail scheduled_recording row"
+        },
+        {
+          "label": "fixture rail row owns location and meeting link",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "calendar_event row in .door-upcoming-rail"
+        },
+        {
+          "label": "Door aggregate contains actual fixture calendar source",
+          "passed": true,
+          "detail": "[{'id': 'ce_37ebf40e2879d599b13d8cc485e14a8eb50130f0d65d4267834e124a6a30a71d', 'source': 'calendar_event', 'target_ref': 'calendar_event:ce_37ebf40e2879d599b13d8cc485e14a8eb50130f0d65d4267834e124a6a30a71d', 'title': 'HS144 WALK calendar fixture', 'starts_at': '2026-08-29T19:07:00Z', 'ends_at': '2026-08-29T19:52:00Z', 'location': 'Walk Room 4', 'meeting_url': 'https://meet.example.test/hs144-walk', 'state': 'scheduled', 'source_id': 'walk-file', 'source_label': 'Walk File'}, {'id': 'sr_10550d4495f5', 'source': 'scheduled_recording', 'target_ref': 'scheduled_recording:sr_10550d4495f5', 'title': 'HS144 WALK baseline recording', 'starts_at': '2026-08-30T09:00:00Z', 'ends_at': '2026-08-30T09:30:00Z', 'location': None, 'meeting_url': None, 'state': 'idle'}, {'id': 'sr_dfe63179c28d', 'source': 'scheduled_recording', 'target_ref': 'scheduled_recording:sr_dfe63179c28d', 'title': 'HS144 WALK in-world recording', 'starts_at': '2027-08-29T11:37:00Z', 'ends_at': '2027-08-29T12:37:00Z', 'location': None, 'meeting_url': None, 'state': 'idle'}]",
+          "assertion_scope": "GET /api/door upcoming"
+        },
+        {
+          "label": "calendar evidence capture has no Settings window",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh Door capture document"
+        },
+        {
+          "label": "calendar fixture rail: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "calendar fixture rail: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "calendar fixture rail: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "HTTPS sources-wire egress fact is true",
+          "passed": true,
+          "detail": "[{'kind': 'https', 'host': 'calendar.example.test', 'refresh_seconds': 900, 'egress': True, 'id': 'walk-https', 'label': '', 'enabled': True}]",
+          "assertion_scope": "PUT /api/settings calendar.sources derived _calendar_sources fact"
+        },
+        {
+          "label": "Settings restores local fixture before cleanup",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "PUT /api/settings calendar.sources restore"
+        },
+        {
+          "label": "calendar egress fact: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "calendar egress fact: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "calendar egress fact: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        }
+      ],
+      "findings": [],
+      "facts": {
+        "ics_fixture": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/walk148-tmp/hs144-door-walk-w_gm97rb/fixtures/hs144-door-calendar.ics"
+      }
+    },
+    "one-tap": {
+      "name": "one-tap",
+      "passed": true,
+      "elapsed_ms": null,
+      "assertions": [
+        {
+          "label": "one-tap fixture refresh succeeds",
+          "passed": true,
+          "detail": "exit=0",
+          "assertion_scope": "isolated child CalendarIngestConductor.refresh()"
+        },
+        {
+          "label": "both one-tap events reach the aggregate",
+          "passed": true,
+          "detail": "['HS144 WALK calendar fixture', 'HS144 WALK one-tap review', 'HS144 WALK one-tap standup']",
+          "assertion_scope": "GET /api/door upcoming"
+        },
+        {
+          "label": "every event row offers RECORD THIS",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "[data-upcoming-source=\"calendar_event\"] door-record-this"
+        },
+        {
+          "label": "one tap arms a linked enabled one-shot",
+          "passed": true,
+          "detail": "[{'id': 'sr_7e35e054700e', 'title': 'HS144 WALK one-tap standup', 'cron_expr': '0 0 1 1 *', 'tz': 'MDT', 'one_shot': True, 'duration_minutes': 45, 'enabled': True, 'revision': 1, 'created_at': '2026-08-29T17:07:39Z', 'last_fired_at': None, 'next_fire_at': '2026-08-29T19:06:00Z', 'armed_at': None, 'deadline_at': None, 'state': 'idle', 'last_outcome': '', 'last_receipt_id': '', 'delegation_receipt_id': 'sr_rcpt_214e609245f5', 'calendar_event_id': 'ce_8a05176c46ccd652e636dc02d7da5356edda5449455a1029a333414a77b183f2', 'calendar_uid': 'hs147-walk-a', 'calendar_source_id': 'walk-one-tap'}]",
+          "assertion_scope": "POST via door-record-this + GET /api/scheduled-recordings"
+        },
+        {
+          "label": "armed fire time carries the 60s lead",
+          "passed": true,
+          "detail": "next_fire_at=2026-08-29T19:06:00Z expected_epoch=1788030360.0",
+          "assertion_scope": "60s-lead ruling (D4)"
+        },
+        {
+          "label": "one intent renders one row (linked schedule suppressed)",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "GET /api/door upcoming suppression ruling"
+        },
+        {
+          "label": "two-beat cancel disarms server-side",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "DELETE via door-cancel-confirm + GET /api/scheduled-recordings"
+        },
+        {
+          "label": "stale tap refuses in-flow by name",
+          "passed": true,
+          "detail": "ALREADY ARMED",
+          "assertion_scope": "door-arm-refusal on the stale row (live L1 guard)"
+        },
+        {
+          "label": "one-tap 1440: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "one-tap 1440: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "one-tap 1440: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "synced linked meeting keeps calendar_event_id (round-trip law)",
+          "passed": true,
+          "detail": "[{'id': 'hs147-walk-linked-meeting', 'started_at': '2026-08-29T16:07:39.351121', 'ended_at': '2026-08-29T16:52:39.351121', 'title': 'HS144 WALK one-tap review', 'duration_seconds': 2700, 'segment_count': 0, 'action_item_count': 0, 'tags': [], 'intel_status': 'disabled', 'intel_status_detail': None, 'capture_status': 'finalized', 'capture_failure': None, 'capture_checkpoint_seconds': 0, 'provenance': 'native', 'calendar_event_id': 'ce_6424ee2a39846a246e7194c2eee7804222042c06ef1ff649b05a5904c420046b', 'calendar_event_title': 'HS144 WALK one-tap review', 'calendar_source_label': 'Walk Tap'}]",
+          "assertion_scope": "POST /api/sync/push + GET /api/meetings"
+        },
+        {
+          "label": "Meetings surface wears the origin line",
+          "passed": true,
+          "detail": "FROM WALK TAP \u00b7 HS144 WALK ONE-TAP REVIEW",
+          "assertion_scope": "[data-meeting-origin=\"calendar-event\"] on the Meetings surface"
+        },
+        {
+          "label": "one-tap origin line: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "one-tap origin line: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "one-tap origin line: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "one-tap 393: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "one-tap 393: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "one-tap 393: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        }
+      ],
+      "findings": [],
+      "facts": {}
+    },
+    "click-depth": {
+      "name": "click-depth",
+      "passed": true,
+      "elapsed_ms": null,
+      "assertions": [
+        {
+          "label": "click-depth Tasks is direct board evidence",
+          "passed": true,
+          "detail": "completed fixture is absent; Now remains direct task evidence",
+          "assertion_scope": "Overdue and Now Door columns"
+        },
+        {
+          "label": "click-depth Tasks has settled Now card and count",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "Now Door column"
+        },
+        {
+          "label": "click-depth Tasks uses zero clicks",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "ClickLedger Tasks"
+        },
+        {
+          "label": "click-depth Upcoming is direct rail evidence",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-upcoming-rail calendar row"
+        },
+        {
+          "label": "click-depth Upcoming uses zero clicks",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "ClickLedger Upcoming"
+        },
+        {
+          "label": "click-depth schedule form opens after one Door click",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "ClickLedger Schedule + #schedule\\:__create__"
+        },
+        {
+          "label": "click-depth: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "click-depth: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "click-depth: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        }
+      ],
+      "findings": [],
+      "facts": {}
+    },
+    "doorframe": {
+      "name": "doorframe",
+      "passed": true,
+      "elapsed_ms": null,
+      "assertions": [
+        {
+          "label": "393 Go is visible Desk chrome control",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".desk-menubar"
+        },
+        {
+          "label": "393 Go owns Meetings registered app",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "role=menu[name=\"Go menu\"]"
+        },
+        {
+          "label": "393 Go Meetings opens registered Meetings surface",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "#surface-meetings"
+        },
+        {
+          "label": "doorframe Go 393: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "doorframe Go 393: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "doorframe Go 393: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "doorframe Go 393: narrow Door board owns its intentional scroll",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".door-board-viewport only"
+        },
+        {
+          "label": "deep-link 01/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 1 /meetings"
+        },
+        {
+          "label": "deep-link desktop 01: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 01: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 01: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 02/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 2 /meetings"
+        },
+        {
+          "label": "deep-link desktop 02: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 02: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 02: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 03/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 3 /meetings"
+        },
+        {
+          "label": "deep-link desktop 03: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 03: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 03: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 04/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 4 /meetings"
+        },
+        {
+          "label": "deep-link desktop 04: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 04: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 04: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 05/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 5 /meetings"
+        },
+        {
+          "label": "deep-link desktop 05: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 05: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 05: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 06/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 6 /meetings"
+        },
+        {
+          "label": "deep-link desktop 06: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 06: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 06: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 07/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 7 /meetings"
+        },
+        {
+          "label": "deep-link desktop 07: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 07: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 07: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 08/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 8 /meetings"
+        },
+        {
+          "label": "deep-link desktop 08: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 08: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 08: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 09/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 9 /meetings"
+        },
+        {
+          "label": "deep-link desktop 09: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 09: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 09: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 10/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 10 /meetings"
+        },
+        {
+          "label": "deep-link desktop 10: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 10: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 10: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 11/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 11 /meetings"
+        },
+        {
+          "label": "deep-link desktop 11: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 11: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 11: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 12/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 12 /meetings"
+        },
+        {
+          "label": "deep-link desktop 12: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 12: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 12: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 13/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 13 /meetings"
+        },
+        {
+          "label": "deep-link desktop 13: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 13: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 13: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 14/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 14 /meetings"
+        },
+        {
+          "label": "deep-link desktop 14: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 14: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 14: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link 15/15 registered Meetings visible",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh desktop document 15 /meetings"
+        },
+        {
+          "label": "deep-link desktop 15: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link desktop 15: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link desktop 15: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "narrow fresh /meetings reaches registered surface",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "fresh 393px /meetings document"
+        },
+        {
+          "label": "deep-link narrow: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "deep-link narrow: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "deep-link narrow: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        }
+      ],
+      "findings": [],
+      "facts": {
+        "deep_links": [
+          {
+            "ordinal": 1,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 2,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 3,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 4,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 5,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 6,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 7,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 8,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 9,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 10,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 11,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 12,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 13,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 14,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 15,
+            "viewport": "1440x900",
+            "route": "/meetings",
+            "result": "PASS"
+          },
+          {
+            "ordinal": 1,
+            "viewport": "393x852",
+            "route": "/meetings",
+            "result": "PASS"
+          }
+        ]
+      }
+    },
+    "menus": {
+      "name": "menus",
+      "passed": true,
+      "elapsed_ms": null,
+      "assertions": [
+        {
+          "label": "Go menu declares launcher context",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "nav[role=menu] data-menu-context"
+        },
+        {
+          "label": "Go menu wears the glyph lane",
+          "passed": true,
+          "detail": "glyph spans=13",
+          "assertion_scope": ".desk-menu-glyph lane law"
+        },
+        {
+          "label": "keycaps render as drawn wells",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".desk-menu-well keycap wells"
+        },
+        {
+          "label": "D3 repair: click-open focuses the first item",
+          "passed": true,
+          "detail": "activeElement role=menuitem",
+          "assertion_scope": "autoFocus on intentional bar open (3s poll)"
+        },
+        {
+          "label": "ghosted rows carry the stipple class",
+          "passed": true,
+          "detail": "is-ghost=9",
+          "assertion_scope": ".is-ghost stipple law"
+        },
+        {
+          "label": "majority ghost reason collapses to one footer",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": ".desk-menu-ghost-hint majority-collapse"
+        },
+        {
+          "label": "minority reason stays inline once",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "inline minority ghost reason"
+        },
+        {
+          "label": "keycaps stay visible when ghosted",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "ghosted keycap wells"
+        },
+        {
+          "label": "head menu carries registry labels + keycaps",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "registry-derived head menu (AA graduation)"
+        },
+        {
+          "label": "list-view context menu is reachable (ledger item closed)",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "list-view row contextmenu"
+        },
+        {
+          "label": "menus list-view leg: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "menus list-view leg: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "menus list-view leg: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "393 Go wears lane + wells",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "393 Go grammar"
+        },
+        {
+          "label": "menus 393 leg: no page errors",
+          "passed": true,
+          "detail": "[]",
+          "assertion_scope": "current browser document"
+        },
+        {
+          "label": "menus 393 leg: document has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "document root; Door board viewport is not exempt"
+        },
+        {
+          "label": "menus 393 leg: body has no horizontal overflow",
+          "passed": true,
+          "detail": "",
+          "assertion_scope": "body; Door board viewport is not exempt"
+        },
+        {
+          "label": "pair assets exist: after-chair-home-1440.png",
+          "passed": true,
+          "detail": "before=True after=True",
+          "assertion_scope": "before/after pair manifest"
+        },
+        {
+          "label": "claimed changed pair is not byte-identical: after-chair-home-1440.png",
+          "passed": true,
+          "detail": "hashes differ",
+          "assertion_scope": "SHA-256 false-positive tell"
+        },
+        {
+          "label": "pair assets exist: after-chair-home-393.png",
+          "passed": true,
+          "detail": "before=True after=True",
+          "assertion_scope": "before/after pair manifest"
+        },
+        {
+          "label": "claimed changed pair is not byte-identical: after-chair-home-393.png",
+          "passed": true,
+          "detail": "hashes differ",
+          "assertion_scope": "SHA-256 false-positive tell"
+        },
+        {
+          "label": "pair assets exist: after-cadence-surface-1440.png",
+          "passed": true,
+          "detail": "before=True after=True",
+          "assertion_scope": "before/after pair manifest"
+        },
+        {
+          "label": "claimed changed pair is not byte-identical: after-cadence-surface-1440.png",
+          "passed": true,
+          "detail": "hashes differ",
+          "assertion_scope": "SHA-256 false-positive tell"
+        },
+        {
+          "label": "pair assets exist: after-cadence-surface-393.png",
+          "passed": true,
+          "detail": "before=True after=True",
+          "assertion_scope": "before/after pair manifest"
+        },
+        {
+          "label": "claimed changed pair is not byte-identical: after-cadence-surface-393.png",
+          "passed": true,
+          "detail": "hashes differ",
+          "assertion_scope": "SHA-256 false-positive tell"
+        },
+        {
+          "label": "pair assets exist: cold-first-value-1440.png",
+          "passed": true,
+          "detail": "before=True after=True",
+          "assertion_scope": "before/after pair manifest"
+        },
+        {
+          "label": "pair assets exist: cold-first-value-393.png",
+          "passed": true,
+          "detail": "before=True after=True",
+          "assertion_scope": "before/after pair manifest"
+        }
+      ],
+      "findings": [],
+      "facts": {}
+    }
+  },
+  "click_depth": [
+    {
+      "measure": "Tasks",
+      "baseline": "1",
+      "start_condition": "settled populated Door after first-value handoff",
+      "clicks": [],
+      "final_evidence_selector": ".door-board-section .door-board-column:has(h4:text-is('Now'))",
+      "result": "PASS"
+    },
+    {
+      "measure": "Upcoming",
+      "baseline": "1+",
+      "start_condition": "same settled populated Door",
+      "clicks": [],
+      "final_evidence_selector": ".door-upcoming-rail [data-upcoming-source=\"calendar_event\"]",
+      "result": "PASS"
+    },
+    {
+      "measure": "Open schedule creation",
+      "baseline": "2",
+      "start_condition": "same settled populated Door",
+      "clicks": [
+        {
+          "label": "Door rail \u2192 Schedule recording",
+          "selector": ".door-upcoming-rail button[name=\"Schedule recording\"]",
+          "at_monotonic": 1157126.575773
+        }
+      ],
+      "final_evidence_selector": "#schedule\\:__create__",
+      "result": "PASS"
+    }
+  ],
+  "shots": [
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/cold-first-value-393.png",
+      "claim": "untouched First Sentence at narrow width"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/cold-first-value-1440.png",
+      "claim": "untouched First Sentence at desktop"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/after-chair-home-1440.png",
+      "claim": "populated Door board and rail at 1440px"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/after-chair-home-393.png",
+      "claim": "populated Door board and rail at 393px"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/door-populated-zoom200.png",
+      "claim": "200% populated Door accessibility evidence"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/door-focus-zoom200.png",
+      "claim": "200% keyboard focus evidence on Door action"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/door-completion-1440.png",
+      "claim": "quiet success: authoritative Door board changed"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/door-stale-refusal-1440.png",
+      "claim": "named stale 409 refusal receipt beside Door"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/after-cadence-surface-1440.png",
+      "claim": "schedule creation begins in-world from Door rail"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/door-schedule-created-1440.png",
+      "claim": "created schedule visible on Door rail"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/after-cadence-surface-393.png",
+      "claim": "narrow schedule creation begins in-world from Door rail"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/door-calendar-rail-1440.png",
+      "claim": "fresh Door rail with ICS EVENT and scheduled-recording rows"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/settings-calendar-egress-1440.png",
+      "claim": "HTTPS transport egress fact via sources-wire API"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/one-tap-unarmed-1440.png",
+      "claim": "populated rail, RECORD THIS on every event row"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/one-tap-armed-1440.png",
+      "claim": "ARMED chip + Cancel? on the tapped row; no duplicate schedule row"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/one-tap-refusal-1440.png",
+      "claim": "ALREADY ARMED renders in-flow on the stale row"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/one-tap-origin-1440.png",
+      "claim": "linked meeting wears FROM <SOURCE> \u00b7 <EVENT>"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/one-tap-armed-393.png",
+      "claim": "ARMED chip clean at 393"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/go-menu-393.png",
+      "claim": "393px Go menu with Meetings entry"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/go-meetings-393.png",
+      "claim": "393px Go activates Meetings surface"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/meetings-deep-link-01-1440.png",
+      "claim": "fresh /meetings arrival 1/15"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/meetings-deep-link-15-1440.png",
+      "claim": "fresh /meetings arrival 15/15"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/meetings-deep-link-393.png",
+      "claim": "fresh narrow /meetings registered arrival"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/menus-go-after-1440.png",
+      "claim": "the Go launcher: glyph lane + keycap wells + separator"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/menus-object-after-1440.png",
+      "claim": "stippled ghosts, one footer hint, wells alive"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/menus-head-after-1440.png",
+      "claim": "the head menu from the one registry, wells included"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/menus-listctx-after-1440.png",
+      "claim": "list-view object context menu, reachable"
+    },
+    {
+      "path": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots/menus-go-after-393.png",
+      "claim": "the narrow launcher with the full grammar"
+    }
+  ],
+  "findings": [],
+  "cleanup": [
+    "closed Playwright browser",
+    "stopped hub pid=33883 exit=0",
+    "deleted ICS fixture tree: /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/walk148-tmp/hs144-door-walk-w_gm97rb/fixtures",
+    "deleted walk HOME/XDG/TMP tree: /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/walk148-tmp/hs144-door-walk-w_gm97rb"
+  ],
+  "cleanup_ok": true,
+  "paths": {
+    "shots": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/shots",
+    "pairs_json": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/walk-pairs.json",
+    "pairs_md": "pm/roadmap/holdspeak/phase-148-menu-glyphs/assets/story-06-walk/walk-pairs.md"
+  }
+}

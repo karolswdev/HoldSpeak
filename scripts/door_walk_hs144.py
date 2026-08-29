@@ -1231,7 +1231,7 @@ def write_report(reporter: Reporter, out: Path, report_path: Path, json_path: Pa
         "paths": {"shots": str(out.relative_to(REPO)), "pairs_json": str(pairs_path.relative_to(REPO)), "pairs_md": str(pairs_md_path.relative_to(REPO))},
     }
     json_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    lines = ["# HS-144-06 — cold Door walk report", "", f"**Mode:** {'partial diagnostic walk' if partial else 'full cold walk'}", f"**Result:** {'PASS' if reporter.passed else 'FAIL'}", "", "## Leg results", "", "| Leg | Result | Timing / fact | Assertion scope |", "|---|---|---|---|"]
+    lines = ["# The cold Door walk report (born HS-144-06; nine legs as of HS-148)", "", f"**Mode:** {'partial diagnostic walk' if partial else 'full cold walk'}", f"**Result:** {'PASS' if reporter.passed else 'FAIL'}", "", "## Leg results", "", "| Leg | Result | Timing / fact | Assertion scope |", "|---|---|---|---|"]
     for name in ALL_LEGS:
         leg = reporter.legs.get(name)
         if leg is None:

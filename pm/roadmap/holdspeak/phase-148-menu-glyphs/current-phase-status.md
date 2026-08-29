@@ -1,6 +1,9 @@
 # Phase 148 — The Menu Grammar
 
-**Status:** in progress (5/6).
+**Status:** complete (6/6). Close counsel RATIFY-WITH-CONCERNS,
+zero must-fix ("The craft is real"); two of three should-fixes done
+in-round, the third (a web-unit baseline) on the next-arc menu. The
+branch HOLDS for the owner's shot verdict and merge word.
 
 **Last updated:** 2026-08-29.
 
@@ -70,11 +73,23 @@ bindings this phase.
 | HS-148-03 | The mock exhibit (the owner's variant gate) | done | [story-03](./story-03-mock-exhibit.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-148-04 | Head + dock menus on the registry (AA) | done | [story-04](./story-04-head-dock-registry.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-148-05 | The record book + the emoji guard | done | [story-05](./story-05-record-book-guards.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-148-06 | The walk and the close | in-progress | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-148-06 | The walk and the close | done | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-**5/6.** HS-148-05 (the record book + the emoji guard) is DONE —
+**COMPLETE — 6/6.** HS-148-06 closed it: the cold walk (nine legs
+now) 9/9 THREE times with the menus leg green cold — and the leg
+EARNED the phase its best catch first (the D3 focus repair passed
+jsdom and failed real Chromium; fixed with a double-rAF past the
+browser's native click-focus, proven three ways on glass). Close
+sweep baseline-subset, zero real branch-new (the one non-baseline
+name = an xdist conductor flake, serial proof captured as a paired
+log). Close counsel: RATIFY-WITH-CONCERNS, ZERO must-fix, Amiga
+fidelity verified point by point, all five orchestrator judgment
+calls ACCEPTED. final-summary.md is the exit record; the after
+exhibit rides the close delivery. THE BRANCH WAITS FOR THE OWNER:
+the shot verdict (incl. the standing A/B/C variant flip) and the
+merge word. Earlier — **5/6.** HS-148-05 (the record book + the emoji guard) is DONE —
 DESK_GRAMMAR §7 is the menu law (lanes, the stipple law with the
 Commodore quote, majority-collapse, checkable roles, jurisdictions,
 the variant attribute, registry derivation), the USER_GUIDE says
