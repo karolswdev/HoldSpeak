@@ -6,8 +6,12 @@ different custody contract from HoldSpeak's normal, plaintext local database.
 ## Shipped boundary
 
 - **Manual and notes-only.** Relationships, 1:1 agenda/private prep, requests, and
-  explicit manager commitments are entered by the local owner. There is no People
-  audio, transcript import, speaker/calendar binding, or automatic extraction.
+  explicit manager commitments are entered by the local owner. The calendar series
+  link is a deliberate owner gesture (encrypted, inside the relationship payload);
+  resolution is read-time only and the plaintext database never stores a person
+  reference. The 1:1 brief is computed in memory and never persisted.
+  There is no People audio, transcript import, speaker identity binding, or
+  automatic extraction.
 - **Encrypted before persistence.** Sensitive values are serialized as canonical
   UTF-8 JSON and encrypted with AES-256-GCM before SQLite receives them. AAD binds
   ciphertext to the store format, random record ID, record kind, and key ID; every
@@ -36,11 +40,13 @@ parent MCP client may retain or forward it.
 The adapter exposes relationship metadata plus only records whose
 encrypted visibility is `shared_intent`. Leader-private 1:1s, private prep, agenda,
 grounding notes, requests, and commitments are filtered before serialization; guessed private record
-IDs named-refuse. The default write mode can create shared-intent records and transition shared
-commitments, but cannot initialize/recover the store, archive/delete relationships,
-or invoke capture, inference, scoring, search, sync, export, or connectors. The
-repository's default `.mcp.json` sets no override and therefore uses the local-owner
-write default.
+IDs named-refuse. The `people.one_on_one.brief` tool gates on `_require_access`
+and filters encrypted items through `_mcp_readable`; its response carries a
+`policy` block naming the disclosure boundary. The default write mode can create
+shared-intent records and transition shared commitments, but cannot
+initialize/recover the store, archive/delete relationships, or invoke capture,
+inference, scoring, search, sync, export, or connectors. The repository's default
+`.mcp.json` sets no override and therefore uses the local-owner write default.
 
 ## Deliberately unavailable
 

@@ -635,6 +635,90 @@ separate **SCHEDULED RECORDING** row while the event row is on the rail. The
 event row wears the **ARMED** chip instead. The schedule row reappears only
 if the event leaves the projection.
 
+## People
+
+People is an encrypted, local-only relationship surface for managers who run
+recurring 1:1s. Every People record is encrypted at rest with a key held by your
+OS credential store (macOS Keychain or Linux Secret Service). The trust facts are
+stated on the surface: **Encrypted**, **Local storage**, **Notes only**.
+
+### Set up People
+
+Open People from the Desk (or the Go menu). The first visit shows **Set up
+People** with the subtitle "Encrypted, local-only relationship context." Choose
+it, and HoldSpeak creates the encrypted sidecar and generates the random key in
+your OS credential store.
+
+### Add a relationship
+
+Choose **New relationship**. Name the person, pick a kind (Direct report, Peer,
+or Extended), and choose **Add**. The roster sorts by open commitment count, then
+alphabetically.
+
+### Link the 1:1 series
+
+Open a relationship and switch to the **Context** lens. Choose **Link calendar
+event** at the bottom of the Calendar series section. The picker lists upcoming
+events from your calendar sources. Rows whose title contains the person's name
+are sorted first and tagged **SUGGESTED**: that tag is an in-memory hint, never
+logged or persisted. Choose the row and your click is the link. One link covers
+every past and future occurrence of the recurring series.
+
+A series can be linked to one person at a time. Linking a series already held by
+another relationship refuses by naming the holder. Re-linking the same person
+refreshes the label. To remove a link, choose **Unlink** on the linked series
+row, then confirm with **Unlink?**.
+
+### The rail person chip and PREP
+
+Once a series is linked, every occurrence of that event on the Door's Upcoming
+rail carries the person's name as a quiet mono chip beside the event title.
+Next to **Record this**, linked event rows also show a **Prep** button. Choosing
+it opens the person's Prep lens directly.
+
+The relationship header shows the next linked occurrence (for example,
+**NEXT 1:1** followed by the day and time).
+
+### What the Prep brief shows
+
+The Prep lens is a read-time view computed across the encrypted and plaintext
+boundary. It never persists. It shows:
+
+- **You owe**: your open commitments to this person (encrypted). Leader-private
+  items show a "Leader private" tag.
+- **Their agenda**: open agenda items from their 1:1 sessions (encrypted).
+- **Grounding note count** if any grounding notes exist (encrypted).
+- **Last 1:1s**: the most recent linked meetings with their open action items
+  (plaintext, by reference) and any decisions minted from those meetings
+  (plaintext, via the decision record chain).
+- **Unlinked meeting count**: manual recordings without a calendar event link in
+  the same time window, so you see what the brief does not cover.
+
+### The MCP brief tool
+
+The `people.one_on_one.brief` tool computes the same brief for an MCP client. It
+returns only `shared_intent` material. Leader-private commitments, agenda items,
+and grounding notes are never returned. The response carries a `policy` block
+naming the disclosure boundary.
+
+The People MCP capability defaults to write for the local owner process. Set
+`HOLDSPEAK_MCP_PEOPLE_ACCESS=read` to reduce it or `=off` to disable it before
+the sidecar starts.
+
+### The dev keystore (walk and test only)
+
+Set `HOLDSPEAK_PEOPLE_KEYSTORE_FILE` to a file path to bypass the OS credential
+store during development or testing. The file keystore uses a JSON format at the
+named path, creates on first use with 0600 permissions, and isolates its sidecar
+alongside the key file (never the production sidecar path). It is never the
+default.
+
+`holdspeak doctor` reports the keystore mode. When the dev keystore is active,
+doctor prints: "People keystore: WARN: DEV FILE keystore at <path>. not for real
+use" with a fix: "Unset HOLDSPEAK_PEOPLE_KEYSTORE_FILE for production use. The
+file keystore is for development and testing only." If both the production
+sidecar and the dev sidecar exist, doctor warns: "BOTH WORLDS EXIST."
+
 ## Schedule A Recording
 
 You can set the hub to start a recording on its own at a time you choose.

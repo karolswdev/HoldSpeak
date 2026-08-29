@@ -1,6 +1,6 @@
 # Phase 149 — The 1:1 Loop
 
-**Status:** in progress (4/6).
+**Status:** in progress (5/6).
 
 **Last updated:** 2026-08-29.
 
@@ -53,11 +53,19 @@ surface; the Tuesday question IS this phase.
 | HS-149-02 | The link (encrypted series link + resolution) | done | [story-02](./story-02-the-link.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-149-03 | The gesture (picker + rail person chip) | done | [story-03](./story-03-the-gesture.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-149-04 | The brief (Prep lens + PREP on the rail) | done | [story-04](./story-04-the-brief.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-149-05 | The record book | ready | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-149-05 | The record book | done | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-149-06 | The walk and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
+**5/6.** HS-149-05 (the record book) is DONE — the INTEGRATION
+contract records its first FULFILLED deliberate association with
+all seven rules itemized against shipped evidence; the USER_GUIDE
+speaks the manager's loop with every label verbatim;
+PEOPLE_SECURITY's two stale claims healed; the MCP tool counts
+told the truth again (135→138 — the fifth builder attribution
+miss, caught by arithmetic: 149 added exactly three tools). 129
+doc guards green. Only the close remains. Earlier —
 **4/6 — THE LOOP IS WHOLE ON GLASS.** HS-149-04 (the brief) is DONE:
 the Prep lens renders YOU OWE / THEIR AGENDA / LAST 1:1s (plaintext
 action items BY REFERENCE, decisions via the decision_record_sources
