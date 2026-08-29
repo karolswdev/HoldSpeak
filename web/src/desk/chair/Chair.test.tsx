@@ -10,6 +10,7 @@ import { Chair } from "./Chair";
 import { ChairLane } from "./Lane";
 import type { LaneItem } from "./Lane";
 import { LANE_ORDER, DEFAULT_MAX_ITEMS } from "./laneContract";
+import { LANE_COMPONENTS } from "./lanes";
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -28,25 +29,26 @@ function makeItems(count: number): LaneItem[] {
 // ---------------------------------------------------------------------------
 
 describe("Chair lane contract", () => {
-  it("renders Door, Meetings, and Agents in the fixed order", () => {
+  it("renders Door, Brief, Meetings, and Agents in the fixed order", () => {
     const onOpen = vi.fn();
     const { container } = render(
       <Chair
         lanes={{
           door: <ChairLane title="DOOR" items={makeItems(2)} onOpenInWindow={onOpen} surfaceId="door" />,
+          brief: <ChairLane title="BRIEF" items={makeItems(1)} onOpenInWindow={onOpen} surfaceId="brief" />,
           meetings: <ChairLane title="MEETINGS" items={makeItems(3)} onOpenInWindow={onOpen} surfaceId="meetings" />,
           agents: <ChairLane title="AGENTS" items={makeItems(1)} onOpenInWindow={onOpen} surfaceId="agents" />,
         }}
       />,
     );
     const laneEls = container.querySelectorAll("[data-lane]");
-    expect(laneEls).toHaveLength(3);
+    expect(laneEls).toHaveLength(4);
     const order = Array.from(laneEls).map((el) => el.getAttribute("data-lane"));
     expect(order).toEqual([...LANE_ORDER]);
   });
 
-  it("LANE_ORDER is exactly [door, meetings, agents]", () => {
-    expect(LANE_ORDER).toEqual(["door", "meetings", "agents"]);
+  it("LANE_ORDER is exactly [door, brief, meetings, agents]", () => {
+    expect(LANE_ORDER).toEqual(["door", "brief", "meetings", "agents"]);
   });
 
   it("DEFAULT_MAX_ITEMS is 12", () => {
@@ -119,7 +121,12 @@ describe("Chair lane contract", () => {
     );
     expect(screen.getByTestId("chair-active-work")).toHaveTextContent("Finish thoughts");
     expect(container.querySelectorAll("[data-lane]")).toHaveLength(0);
-    expect(LANE_ORDER).toEqual(["door", "meetings", "agents"]);
+    expect(LANE_ORDER).toEqual(["door", "brief", "meetings", "agents"]);
+  });
+
+  it("LANE_COMPONENTS has an entry for every LANE_ORDER id (registry pin)", () => {
+    const missing = LANE_ORDER.filter((id) => !(id in LANE_COMPONENTS));
+    expect(missing).toEqual([]);
   });
 });
 

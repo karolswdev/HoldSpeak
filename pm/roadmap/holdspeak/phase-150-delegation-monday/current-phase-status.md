@@ -1,6 +1,6 @@
 # Phase 150 — Delegation + the Chief-of-Staff Brief
 
-**Status:** in progress (3/6).
+**Status:** in progress (4/6).
 
 **Last updated:** 2026-08-29.
 
@@ -51,14 +51,35 @@ NON-NEGOTIABLE this phase (two arcs carried it).
 | --- | --- | --- | --- | --- |
 | HS-150-01 | The owner gesture (aliases + resolution + delegated_at) | done | [story-01](./story-01-owner-gesture.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-150-02 | The delegation lane (chips, filter, staleness) | done | [story-02](./story-02-delegation-lane.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-150-03 | The chief-of-staff overlay (person_sections) | in-progress | [story-03](./story-03-chief-of-staff.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-150-03 | The chief-of-staff overlay (person_sections) | done | [story-03](./story-03-chief-of-staff.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-150-04 | The web-inherited baseline (the debt rider) | done | [story-04](./story-04-web-baseline.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-150-05 | The record book | ready | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-150-06 | The walk and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-**3/6.** HS-150-02 (the delegation lane) is DONE — the Door board
+**4/6, ALL FEATURE STORIES DONE.** HS-150-03 (the chief-of-staff
+overlay) is DONE — the Monday Brief finally knows the manager's
+people, without persisting a byte about them: person_sections
+composes at the route/MCP adapter via compose_person_overlay (the
+counsel's structural law — the MondayBrief dataclass never carries
+it; write-count spy, pipeline_events content check, dataclass
+shape pin, the F6 MCP gate with a planted leader_private, and the
+L2 refusal all pinned verbatim), staleness speaks the ruled
+`delegated_at ?? created_at` (reconciled to story 02's created_at
+in a round-2; three-case pin), and the manager's verbs — Add to
+1:1 agenda through the real 138 authority + Open person — ride
+row selection in BriefView. The D1 act state ("Generate your
+brief") leads the chair… and the rig exposed that it COULDN'T:
+BriefLane had been ORPHANED since 144's front-door rebuild
+(written, tested in jsdom, never mounted). Mount restored (brief
+second after door) with a registry pin so a lane can never
+silently unmount again; SurfaceLedgerRow learned to forward
+data-testid (it silently dropped BriefView's row selectors).
+50 Python + 57 web captured green; the whole loop shot on real
+glass (assets/story-0203-shots/). Remaining: the record book (05),
+the walk + close (06).
+Earlier — **3/6.** HS-150-02 (the delegation lane) is DONE — the Door board
 answers waiting-on-WHOM: mapped cards wear the person chip +
 honest staleness (`delegated_at ?? created_at`, the ruled order;
 created_at added to FollowThroughCard here), the Everyone/person
