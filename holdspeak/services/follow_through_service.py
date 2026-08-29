@@ -78,6 +78,8 @@ class FollowThroughCard:
     target_ref: str | None = None
     # HS-150-01: bare timestamp recording WHEN ownership last changed.
     delegated_at: str | None = None
+    # HS-150-02: the row's created_at for staleness fallback (delegated_at ?? created_at).
+    created_at: str | None = None
 
 
 @dataclass(frozen=True)
@@ -179,6 +181,7 @@ class FollowThroughService:
                     decision_id=action["decision_id"],
                 ),
                 delegated_at=action["delegated_at"],
+                created_at=action["created_at"] if action["created_at"] else None,
             )
             lanes[card.lane].append(card)
 

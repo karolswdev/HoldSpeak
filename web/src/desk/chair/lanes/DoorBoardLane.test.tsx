@@ -728,4 +728,210 @@ describe("DoorBoardLane", () => {
       expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:rel-jan:prep");
     });
   });
+
+  /* HS-150-02 — board delegation lane: person chips, filter, staleness, map affordance. */
+  describe("delegation lane (HS-150-02)", () => {
+    const mappedProjection: DoorProjection = {
+      ...projection,
+      people_store_state: "ready",
+      board: {
+        ...projection.board,
+        waiting: [
+          {
+            id: "card-ewa", text: "Follow up with Ewa", source: "action_item",
+            target_ref: "action_item:card-ewa", owner: "Ewa",
+            person_label: "Ewa", person_relationship_id: "rel-ewa",
+            delegated_at: "2026-08-25T10:00:00",
+            lawful_verbs: [
+              { name: "follow_through.complete", arguments: { card_id: "card-ewa", verb: "done" } },
+            ],
+          },
+          {
+            id: "card-unmapped", text: "Talk to stranger", source: "action_item",
+            target_ref: "action_item:card-unmapped", owner: "Stranger",
+            lawful_verbs: [],
+          },
+          {
+            id: "card-reserved", text: "My own task", source: "action_item",
+            target_ref: "action_item:card-reserved", owner: "Me",
+            lawful_verbs: [],
+          },
+        ],
+      },
+    };
+
+    it("renders person chip on mapped card and omits raw owner from facts", async () => {
+      mockDoor(mappedProjection);
+      renderLane();
+      await screen.findByText("Follow up with Ewa");
+      expect(screen.getByTestId("door-card-person-chip")).toHaveTextContent("Ewa");
+      // The facts line should NOT contain "owner Ewa" since it is mapped.
+      const factsEl = screen.getByText("Follow up with Ewa").closest("article")!.querySelector("small");
+      expect(factsEl?.textContent).not.toContain("owner Ewa");
+    });
+
+    it("renders header chip row with Everyone and per-person chips", async () => {
+      mockDoor(mappedProjection);
+      renderLane();
+      await screen.findByText("Follow up with Ewa");
+      expect(screen.getByTestId("door-person-chip-row")).toBeInTheDocument();
+      expect(screen.getByTestId("door-filter-everyone")).toHaveTextContent("Everyone");
+      expect(screen.getByTestId("door-filter-person")).toHaveTextContent("Ewa");
+    });
+
+    it("clicking person chip filters the board, EVERYONE clears", async () => {
+      mockDoor(mappedProjection);
+      renderLane();
+      await screen.findByText("Follow up with Ewa");
+      // Filter to Ewa
+      fireEvent.click(screen.getByTestId("door-filter-person"));
+      // Unmapped card should be hidden (no person_relationship_id matching)
+      expect(screen.queryByText("Talk to stranger")).toBeNull();
+      expect(screen.getByText("Follow up with Ewa")).toBeInTheDocument();
+      // Clear filter
+      fireEvent.click(screen.getByTestId("door-filter-everyone"));
+      expect(screen.getByText("Talk to stranger")).toBeInTheDocument();
+    });
+
+    it("renders staleness text on mapped cards with delegated_at", async () => {
+      mockDoor(mappedProjection);
+      renderLane();
+      await screen.findByText("Follow up with Ewa");
+      const staleness = screen.getByTestId("door-card-staleness");
+      expect(staleness.textContent).toMatch(/^waiting \d+d$/);
+    });
+
+    it("staleness uses created_at as fallback when delegated_at is absent", async () => {
+      const withCreatedAt: DoorProjection = {
+        ...mappedProjection,
+        board: {
+          ...mappedProjection.board,
+          waiting: [
+            {
+              id: "card-created", text: "Fallback card", source: "action_item",
+              target_ref: "action_item:card-created", owner: "Ewa",
+              person_label: "Ewa", person_relationship_id: "rel-ewa",
+              created_at: "2026-08-20T10:00:00",
+              lawful_verbs: [],
+            },
+          ],
+        },
+      };
+      mockDoor(withCreatedAt);
+      renderLane();
+      await screen.findByText("Fallback card");
+      const staleness = screen.getByTestId("door-card-staleness");
+      expect(staleness.textContent).toMatch(/^waiting \d+d$/);
+    });
+
+    it("staleness absent when neither delegated_at nor created_at", async () => {
+      const noTimestamps: DoorProjection = {
+        ...mappedProjection,
+        board: {
+          ...mappedProjection.board,
+          waiting: [
+            {
+              id: "card-none", text: "No timestamps", source: "action_item",
+              target_ref: "action_item:card-none", owner: "Ewa",
+              person_label: "Ewa", person_relationship_id: "rel-ewa",
+              lawful_verbs: [],
+            },
+          ],
+        },
+      };
+      mockDoor(noTimestamps);
+      renderLane();
+      await screen.findByText("No timestamps");
+      expect(screen.queryByTestId("door-card-staleness")).toBeNull();
+    });
+
+    it("renders map affordance on unmapped non-reserved owners when People is ready", async () => {
+      mockDoor(mappedProjection);
+      renderLane();
+      await screen.findByText("Talk to stranger");
+      const article = screen.getByText("Talk to stranger").closest("article")!;
+      expect(within(article).getByTestId("door-card-map-btn")).toHaveTextContent("map");
+    });
+
+    it("no map affordance on reserved owner strings", async () => {
+      mockDoor(mappedProjection);
+      renderLane();
+      await screen.findByText("My own task");
+      const article = screen.getByText("My own task").closest("article")!;
+      expect(within(article).queryByTestId("door-card-map-btn")).toBeNull();
+    });
+
+    it("no map affordance when People store is not ready", async () => {
+      const noReady: DoorProjection = {
+        ...mappedProjection,
+        people_store_state: "locked",
+      };
+      mockDoor(noReady);
+      renderLane();
+      await screen.findByText("Talk to stranger");
+      expect(screen.queryByTestId("door-card-map-btn")).toBeNull();
+    });
+
+    it("map picker shows relationships, suggestion-first, and POSTs alias", async () => {
+      apiFetch.mockImplementation((path: string, opts?: { method?: string; json?: unknown }) => {
+        if (path === "/api/door") return Promise.resolve(mappedProjection);
+        if (path === "/api/people/relationships" && !opts?.method) {
+          return Promise.resolve({ relationships: [
+            { id: "rel-ewa", display_name: "Ewa" },
+            { id: "rel-jan", display_name: "Jan" },
+          ]});
+        }
+        if (path.includes("/owner-aliases") && opts?.method === "POST") {
+          return Promise.resolve({ relationship: { id: "rel-ewa", display_name: "Ewa", owner_aliases: ["Stranger"] } });
+        }
+        return Promise.resolve({});
+      });
+      renderLane();
+      await screen.findByText("Talk to stranger");
+      // Click map affordance
+      const article = screen.getByText("Talk to stranger").closest("article")!;
+      fireEvent.click(within(article).getByTestId("door-card-map-btn"));
+      // Picker appears
+      const picker = await screen.findByTestId("door-card-map-picker");
+      expect(picker).toBeInTheDocument();
+      const options = screen.getAllByTestId("door-card-map-option");
+      expect(options.length).toBe(2);
+      // Click a relationship
+      fireEvent.click(options[0]);
+      await waitFor(() => {
+        expect(apiFetch).toHaveBeenCalledWith(
+          expect.stringContaining("/owner-aliases"),
+          expect.objectContaining({ method: "POST", json: { alias: "Stranger" } }),
+        );
+      });
+    });
+
+    it("zero-auto-map pin: no alias POST without explicit click", async () => {
+      mockDoor(mappedProjection);
+      renderLane();
+      await screen.findByText("Talk to stranger");
+      // No alias POST calls made just by rendering.
+      const aliasCalls = apiFetch.mock.calls.filter((call) =>
+        String(call[0]).includes("owner-aliases"),
+      );
+      expect(aliasCalls).toHaveLength(0);
+    });
+
+    it("has stable selectors for the orchestrator rig", async () => {
+      mockDoor(mappedProjection);
+      renderLane();
+      await screen.findByText("Follow up with Ewa");
+      // Card chip
+      expect(screen.getByTestId("door-card-person-chip")).toBeInTheDocument();
+      // Header chip row
+      expect(screen.getByTestId("door-person-chip-row")).toBeInTheDocument();
+      // Filter buttons
+      expect(screen.getByTestId("door-filter-everyone")).toBeInTheDocument();
+      expect(screen.getByTestId("door-filter-person")).toBeInTheDocument();
+      // Staleness
+      expect(screen.getByTestId("door-card-staleness")).toBeInTheDocument();
+      // Map affordance (multiple unmapped cards may show it)
+      expect(screen.getAllByTestId("door-card-map-btn").length).toBeGreaterThanOrEqual(1);
+    });
+  });
 });

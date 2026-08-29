@@ -1,6 +1,6 @@
 # Phase 150 — Delegation + the Chief-of-Staff Brief
 
-**Status:** in progress (2/6).
+**Status:** in progress (3/6).
 
 **Last updated:** 2026-08-29.
 
@@ -50,15 +50,35 @@ NON-NEGOTIABLE this phase (two arcs carried it).
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-150-01 | The owner gesture (aliases + resolution + delegated_at) | done | [story-01](./story-01-owner-gesture.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-150-02 | The delegation lane (chips, filter, staleness) | ready | [story-02](./story-02-delegation-lane.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-150-03 | The chief-of-staff overlay (person_sections) | ready | [story-03](./story-03-chief-of-staff.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-150-02 | The delegation lane (chips, filter, staleness) | done | [story-02](./story-02-delegation-lane.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-150-03 | The chief-of-staff overlay (person_sections) | in-progress | [story-03](./story-03-chief-of-staff.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-150-04 | The web-inherited baseline (the debt rider) | done | [story-04](./story-04-web-baseline.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-150-05 | The record book | ready | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-150-06 | The walk and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-**2/6.** HS-150-01 (the owner gesture) is DONE — the contract's
+**3/6.** HS-150-02 (the delegation lane) is DONE — the Door board
+answers waiting-on-WHOM: mapped cards wear the person chip +
+honest staleness (`delegated_at ?? created_at`, the ruled order;
+created_at added to FollowThroughCard here), the Everyone/person
+filter flips the board client-side, and the unmapped card shows
+`owner <string> · map…` and nothing more — the map… gesture IS the
+second association (owner-alias picker on the card; zero-auto-map
+pinned). Enrichment lives ONLY in door_service's read model —
+follow_through_service.board() stays person-free for every other
+consumer, and the observer's total redaction is re-pinned over the
+enriched shape. PeopleCore's Context lens grew the Owner aliases
+section (add/remove, reserved words refused honestly). Proven on
+real glass by the orchestrator's combined rig (bundle rebuilt
+first; the map gesture clicked for real; occlusion tells armed):
+assets/story-0203-shots/. One branch-new tsc error (the
+zero-auto-map pin's filter typing) found and fixed at triage; the
+other nine tsc-erroring files verified unmodified-inherited.
+Story 03 (the overlay) holds its round-3 delta (BriefLane was
+ORPHANED by 144's front-door rebuild — mount restored + a registry
+pin so a lane can never silently unmount again) and ships next.
+Earlier — **2/6.** HS-150-01 (the owner gesture) is DONE — the contract's
 second association exists: owner_aliases in the encrypted payload
 (P2 naming its holder; me/remote/you reserved; casefold in memory,
 never logged), resolution readiness-guarded, HTTP+MCP through the

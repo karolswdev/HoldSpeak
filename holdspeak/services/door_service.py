@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable
 from ..config.integrations import validate_calendar_subscription
 from ..db.calendar_events import CalendarEvent, CalendarEventRepository
 from ..db.scheduled_recordings import ScheduledRecording, ScheduledRecordingRepository
-from .follow_through_service import FollowThroughCard, FollowThroughService
+from .follow_through_service import FollowThroughBoard, FollowThroughCard, FollowThroughService
 from .refinement_thought_service import RefinementThoughtService
 
 if TYPE_CHECKING:
@@ -41,11 +41,13 @@ class DoorService:
             now = now.astimezone()
         now_utc = now.astimezone(timezone.utc)
         board = self._follow_through_service.board(principal)
+        # HS-150-02: resolve mapped owner strings to person labels.
+        owner_person_index = self._build_owner_person_index(board)
         projected_board = {
-            "now": [self._follow_through_card(card) for card in board.now],
-            "waiting": [self._follow_through_card(card) for card in board.waiting],
-            "unassigned": [self._follow_through_card(card) for card in board.unassigned],
-            "overdue": [self._follow_through_card(card) for card in board.overdue],
+            "now": [self._follow_through_card(card, owner_person_index=owner_person_index) for card in board.now],
+            "waiting": [self._follow_through_card(card, owner_person_index=owner_person_index) for card in board.waiting],
+            "unassigned": [self._follow_through_card(card, owner_person_index=owner_person_index) for card in board.unassigned],
+            "overdue": [self._follow_through_card(card, owner_person_index=owner_person_index) for card in board.overdue],
             "active": self._active_thoughts(principal),
         }
         upcoming = self._upcoming(now_utc)
@@ -95,7 +97,11 @@ class DoorService:
         return [self._thought_card(item) for item in items]
 
     @staticmethod
-    def _follow_through_card(card: FollowThroughCard) -> dict[str, Any]:
+    def _follow_through_card(
+        card: FollowThroughCard,
+        *,
+        owner_person_index: dict[str, tuple[str, str]] | None = None,
+    ) -> dict[str, Any]:
         result = asdict(card)
         if card.source == "action_item":
             result["target_ref"] = f"action_item:{card.id}"
@@ -109,6 +115,15 @@ class DoorService:
         else:
             raise ValueError(f"Unknown follow-through card source: {card.source}")
         result["lawful_verbs"] = verbs
+        # HS-150-02: person projection for mapped owner strings (additive;
+        # unmapped cards byte-identical to today).
+        if owner_person_index and card.owner:
+            resolved = owner_person_index.get(card.owner)
+            if resolved:
+                label, rel_id = resolved
+                result["person_label"] = label
+                if rel_id:
+                    result["person_relationship_id"] = rel_id
         return result
 
     @staticmethod
@@ -211,6 +226,41 @@ class DoorService:
             for event in events
         )
         return sorted(upcoming, key=lambda item: (item["starts_at"], item["source"], item["id"]))
+
+    def _build_owner_person_index(
+        self, board: FollowThroughBoard,
+    ) -> dict[str, tuple[str, str]]:
+        """HS-150-02: resolve person labels for mapped owner strings on board cards.
+
+        Returns a map from ``owner_string`` to ``(display_name, relationship_id)``
+        for every mapped owner.  One ``resolve_relationship_by_owner`` call per
+        distinct owner string -- memoized in-request only, never cached across
+        requests.  The sidecar being unavailable silently produces no entry
+        (the Door never blocks on the sidecar).
+        """
+        if self._people_service is None:
+            return {}
+        seen: dict[str, tuple[str, str] | None] = {}
+        all_cards = list(board.now) + list(board.waiting) + list(board.unassigned) + list(board.overdue)
+        for card in all_cards:
+            if not card.owner or card.owner in seen:
+                continue
+            try:
+                result = self._people_service.resolve_relationship_by_owner(card.owner)
+            except Exception:
+                seen[card.owner] = None
+                continue
+            if result.get("state") != "ready":
+                seen[card.owner] = None
+                continue
+            rel = result.get("relationship")
+            if rel is not None:
+                name = str(rel.get("display_name") or "")
+                rel_id = str(rel.get("id") or "")
+                seen[card.owner] = (name, rel_id) if name else None
+            else:
+                seen[card.owner] = None
+        return {k: v for k, v in seen.items() if v}
 
     def _build_person_index(
         self, events: list[CalendarEvent],
