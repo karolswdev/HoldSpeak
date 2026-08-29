@@ -1,6 +1,6 @@
 # Phase 146 — Multiple Calendars
 
-**Status:** in progress (5/7).
+**Status:** in progress (6/7).
 
 **Last updated:** 2026-08-28.
 
@@ -67,7 +67,7 @@ ceremony budget):
 | HS-146-03 | The settings list editor (joy surface) | done | [story-03](./story-03-settings-list-editor.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-146-04 | Rail provenance + seed repairs | done | [story-04](./story-04-rail-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-146-05 | The walk and the close | ready | [story-05](./story-05-docs-walk-close.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-146-06 | The calendar book (thorough docs) | ready | [story-06](./story-06-the-calendar-book.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-146-06 | The calendar book (thorough docs) | done | [story-06](./story-06-the-calendar-book.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-146-07 | The Calendar Snapshot adapter | done | [story-07](./story-07-calendar-snapshot-adapter.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Risk register
@@ -124,6 +124,16 @@ ceremony budget):
   api-surface regen. One orchestrator override of the plan: the
   canonical payload hash stays WHOLE — no image-exclusion
   special-case in kernel hash semantics.
+- 2026-08-28 — HS-146-06 closed (evidence-story-06.md): the calendar
+  book — the USER_GUIDE Calendars section (setup both doors, chips,
+  duplicates, breakage, the snapshot walkthrough with UI labels
+  verified at named lines), the SECURITY two-row egress truth, the
+  ARCHITECTURE pipeline section with HEAD-verified anchors + the
+  trust-boundary diagram arrow, the entry points; zero singular-
+  subscription claims (grep + a NEW doc-drift retirement fence). The
+  honesty check caught one branch-new product_copy violation from
+  story 07 (a factless failure string) — fixed in-round to carry the
+  four failure facts.
 - 2026-08-28 — HS-146-07 closed (evidence-story-07.md, the full
   two-round story): the snapshot adapter is REAL end-to-end — drop or
   IMPORT SCREENSHOT → vision extraction through the router (ask-

@@ -155,6 +155,51 @@ def test_retired_chair_vocab_guard_patterns_are_nonvacuous() -> None:
         assert not _RETIRED_CHAIR_VOCAB.search(current), current
 
 
+# HS-146-06: the singular "calendar subscription" claim is retired now that
+# multi-source calendars have shipped. User-facing docs must not restore the
+# claim that there is one subscription; internal/historical docs are exempt.
+_RETIRED_CALENDAR_SINGULAR = re.compile(
+    r"\bcalendar subscription\b"
+    r"|\bthe calendar subscription\b"
+    r"|\bone subscription\b"
+    r"|\bsingle subscription\b",
+    re.IGNORECASE,
+)
+
+
+def test_docs_do_not_restore_retired_calendar_singular_vocabulary() -> None:
+    offenders: list[str] = []
+    for path in _user_facing_docs():
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            match = _RETIRED_CALENDAR_SINGULAR.search(line)
+            if match:
+                offenders.append(f"{path.relative_to(_REPO)}:{lineno}: {match.group(0)!r}")
+
+    assert not offenders, (
+        "Retired singular calendar vocabulary returned to user-facing docs. "
+        "HoldSpeak supports multiple calendar sources; use 'calendar sources' "
+        "or 'ICS sources' instead:\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def test_retired_calendar_singular_vocab_guard_patterns_are_nonvacuous() -> None:
+    for retired in (
+        "the calendar subscription",
+        "Calendar subscription field",
+        "one subscription per user",
+        "single subscription mode",
+    ):
+        assert _RETIRED_CALENDAR_SINGULAR.search(retired), retired
+    for current in (
+        "calendar sources",
+        "ICS sources",
+        "each enabled source",
+        "multiple calendars",
+    ):
+        assert not _RETIRED_CALENDAR_SINGULAR.search(current), current
+
+
 # HS-33-03: a lightweight link-check so the `docs/` reorg (and future moves)
 # can't silently leave a dangling relative link. Scope is the same live-docs
 # set; the PMO corpus + evidence snapshots are frozen history and excluded.

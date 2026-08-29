@@ -54,7 +54,12 @@ function parseScope(scope: string | undefined): {
       error: null,
     };
   } catch {
-    return { events: [], anchor: "", confidence: "absent", error: "Failed to parse extraction" };
+    return {
+      events: [],
+      anchor: "",
+      confidence: "absent",
+      error: "Could not read events from this screenshot. Nothing was written. Retry with a clearer capture.",
+    };
   }
 }
 

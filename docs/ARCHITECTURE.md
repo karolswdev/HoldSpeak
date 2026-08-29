@@ -387,6 +387,69 @@ scheduled time passed while the hub was down produces a bounded missed receipt
 disable after their terminal outcome; recurring schedules advance `next_fire_at`
 strictly forward.
 
+## The calendar pipeline
+
+The Door's Upcoming rail projects calendar events from one or more ICS
+sources into a merged chronological timeline. The pipeline is config-driven,
+source-isolated, and bounded.
+
+**Config shape.** `CalendarConfig.sources` is a list of `CalendarSource`
+(`holdspeak/config/integrations.py:18`), each carrying an `id` (UUID, minted
+on add), `label`, `url` (a local file path or HTTPS URL), and `enabled` flag.
+A one-shot migration in `Config.load()` (`holdspeak/config/core.py`) converts
+the old single `calendar.subscription` key to a one-element `sources` list;
+the old key is consumed once and dropped on the next save.
+
+**Per-source revision namespace.** `calendar_source_revision(source_id, url)`
+(`holdspeak/config/integrations.py:122`) hashes the source id and the
+normalized URL together. The source id enters the hash so two sources
+pointing at the same URL get independent projection namespaces, and the
+parser's existing `subscription_revision` parameter carries the per-source
+fingerprint unchanged.
+
+**Conductor refresh.** `CalendarIngestConductor`
+(`holdspeak/calendar_ingest_conductor.py:137`) ticks at boot and every
+15 minutes. Each tick iterates enabled sources independently:
+`CalendarSourceReader` fetches the URL (HTTPS: no redirects, 10 s timeout,
+no credentials or custom headers; file: direct read); `parse_calendar_bytes`
+(`holdspeak/calendar_ingest.py:66`) parses within hard bounds (5 MiB feed,
+14-day horizon, 128 occurrences per master event);
+`CalendarEventRepository.replace_projection`
+(`holdspeak/db/calendar_events.py:62`) atomically deletes and reinserts only
+that source's rows (`DELETE ... WHERE source_id = ?`). A failed source never
+touches a healthy source's projection (per-source last-good law).
+
+**Orphan cleanup.** After all enabled sources have refreshed, the conductor
+calls `delete_sources_not_in(enabled_ids)`
+(`holdspeak/db/calendar_events.py:125`), removing rows whose `source_id` is
+no longer enabled. Disabling or removing a source cleans up its events at the
+next tick; re-enabling refetches.
+
+**Projection columns.** `calendar_events`
+(`holdspeak/db/schema.py:3379`): `id`, `uid`, `title`, `starts_at`,
+`ends_at`, `location`, `meeting_url`, `last_seen_at`,
+`subscription_revision`, `source_id`, `source_label`. Unique index:
+`(source_id, uid, starts_at)`.
+
+**Door consumption.** `DoorService._calendar_configured`
+(`holdspeak/services/door_service.py:60`) returns true when at least one
+enabled source passes validation. `_calendar_event_item`
+(`holdspeak/services/door_service.py:200`) projects each row including
+`source_id` and `source_label` into the `DoorUpcomingItem` aggregate, so the
+rail can render provenance chips when more than one source is configured.
+
+**The snapshot adapter.** `CalendarSnapshotService`
+(`holdspeak/services/calendar_snapshot_service.py`) extracts events from a
+calendar screenshot via the `calendar.snapshot_extract` inference capability
+(vision-required). The extraction result is model output and is treated as
+hostile input: the generated `.ics` passes through the same
+`parse_calendar_bytes` parser used by every other source (the parser is the
+one trust boundary). Confirmed events become a local `.ics` file under
+`~/.local/share/holdspeak/calendar-snapshots/<source_id>.ics`, registered as
+a `CalendarSource` through the settings write path only. The review gate
+(`CalendarSnapshotReviewCore`) requires an explicit week anchor (never
+silently guessed) and lets the owner edit or remove events before confirm.
+
 ## Project memory and the process read model
 
 Meeting plugins still produce ordinary typed artifacts. When the shared
@@ -654,6 +717,7 @@ flowchart LR
   RT -->|"approved proposal only; via your own gh"| GH(["GitHub issue create"])
   RT -->|"opt-in pack; entity IDs via your own CLIs"| CLI(["gh, jira, to their services"])
   RT -->|"opt-in; queue stats only, no transcript"| OPS(["Ops alert webhook"])
+  RT -->|"per-source bounded ICS fetch; no credentials, no redirects"| ICS(["HTTPS calendar sources you configured"])
   RT -->|"one-time inbound fetch, about 7 MB"| WM(["Wake models, GitHub releases"])
   DEVCE(["Paired device, same LAN, PSK"]) -->|"audio in, status out"| RT
   IPAD(["iPad app, same LAN / Tailscale, Bearer token"]) -->|"meeting / dictation / proposal route calls"| RT

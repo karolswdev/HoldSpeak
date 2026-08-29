@@ -84,8 +84,10 @@ model-invoking). Model selection is never an Ask-side MCP control.
 ### door (1 tool)
 
 `door.get` returns one closed, read-only Dashboard Door aggregate: the board,
-active Thoughts, a mixed calendar-event and scheduled-recording upcoming
-timeline, and matching server-derived counts. Door has no MCP resource. Its
+active Thoughts, and a mixed upcoming timeline of calendar events (from all
+enabled ICS sources, with per-source provenance when more than one source is
+configured) and scheduled recordings, plus matching server-derived counts.
+Door has no MCP resource. Its
 Follow-Through People overlay respects `HOLDSPEAK_MCP_PEOPLE_ACCESS` and is
 safely empty when that encrypted disclosure capability is unavailable or off.
 
