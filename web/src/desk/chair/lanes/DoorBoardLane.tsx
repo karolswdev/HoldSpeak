@@ -51,6 +51,10 @@ export type DoorUpcomingItem = {
   source_label?: string;
   /* HS-147-01: present when an event-linked schedule exists. */
   armed_schedule_id?: string;
+  /* HS-149-03: series uid for the picker/link flow. */
+  uid?: string;
+  /* HS-149-03: person label for linked calendar series (only-when-present). */
+  person_label?: string;
 };
 
 export type DoorProjection = {
@@ -417,6 +421,10 @@ function UpcomingRail({ upcoming, calendarConfigured, onReload }: { upcoming: Do
                 {/* HS-146-04: provenance chip on EVENT rows when >1 source. */}
                 {showChips && item.source === "calendar_event" && item.source_label ? (
                   <span className="door-upcoming-provenance">{item.source_label.toUpperCase()}</span>
+                ) : null}
+                {/* HS-149-03: quiet mono person chip on linked EVENT rows. */}
+                {item.person_label ? (
+                  <span className="door-upcoming-person" data-testid="door-person-chip">{item.person_label}</span>
                 ) : null}
                 {item.location ? <span className="door-upcoming-detail">{item.location}</span> : null}
                 {item.meeting_url ? (

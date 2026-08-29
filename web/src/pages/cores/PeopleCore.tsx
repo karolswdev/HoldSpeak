@@ -5,7 +5,6 @@ import type { CoreProps } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { openSurfaceOr } from "../../desk/shell";
-import { spriteUrl } from "../../desk/sprites";
 import { CycleGadget, PadGadget, StringGadget } from "../../desk/surface/gadgets";
 import {
   ConfirmVerb,
@@ -31,6 +30,8 @@ type Readiness = {
   sync?: "local_only";
   capture?: "notes_only";
 };
+type CalendarLink = { uid: string; source_id: string; label: string; linked_at?: string };
+type UpcomingEvent = { id: string; uid: string; title: string; starts_at: string; ends_at: string; source_id: string; source_label?: string };
 type Relationship = {
   id: string;
   display_name: string;
@@ -41,6 +42,7 @@ type Relationship = {
   manager_commitment_count?: number;
   open_request_count?: number;
   project_refs?: string[];
+  calendar_links?: CalendarLink[] | null;
 };
 type AgendaItem = { id: string; body: string; visibility: Visibility; state: string; rolled_from_id?: string | null };
 type Session = { id: string; occurred_at?: string; title?: string; agenda?: AgendaItem[] };
@@ -187,7 +189,14 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   if (loading) return <SurfaceState loading />;
   if (unavailable) {
     const face = readinessFace(stateOf(readiness));
-    return <SurfaceState empty emptyLabel={face.label} onAction={recover} actionLabel={face.action}>{error ? <span className="sr-only">{error}</span> : null}</SurfaceState>;
+    const isUnconfigured = stateOf(readiness) === "unconfigured";
+    return <div className="people-joy-state" data-testid="people-joy-state">
+      <div className="people-joy-lead">
+        <Button variant="primary" onClick={recover} data-testid="people-joy-action">{isUnconfigured ? "Set up People" : face.action}</Button>
+        <span className="people-joy-line">{isUnconfigured ? "Encrypted, local-only relationship context" : face.label}</span>
+      </div>
+      {error ? <span className="sr-only">{error}</span> : null}
+    </div>;
   }
   return <>
     {renderHeroSlot(hero, verbs, facts())}
@@ -210,33 +219,140 @@ function Roster({ relationships, selectedId, newName, setNewName, newKind, setNe
       <CycleGadget label="Relationship" value={newKind} onChange={(value) => setNewKind(value as RelationshipKind)} options={[{ value: "direct_report", label: "Direct report" }, { value: "peer", label: "Peer" }, { value: "extended", label: "Extended" }]} />
       <Button dense disabled={!newName.trim() || busy} loading={busy} onClick={onCreate}>Add</Button>
     </div>
-    {!ordered.length ? <SurfaceState empty emptyLabel="No relationships" emptyImage={spriteUrl("people", "people")} /> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} title={relationship.display_name} detail={`${relationshipLabel(relationship.relationship_kind)}${relationship.next_one_on_one ? ` · ${relationship.next_one_on_one}` : ""}`} meta={relationship.manager_commitment_count ? `You owe ${relationship.manager_commitment_count}` : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
+    {!ordered.length ? <div className="people-empty-roster" data-testid="people-empty-roster"><p className="people-empty-lead">Add a relationship to start</p></div> : <SurfaceRows>{ordered.map((relationship) => <SurfaceRow key={relationship.id} selected={selectedId === relationship.id} title={relationship.display_name} detail={`${relationshipLabel(relationship.relationship_kind)}${relationship.next_one_on_one ? ` · ${relationship.next_one_on_one}` : ""}`} meta={relationship.manager_commitment_count ? `You owe ${relationship.manager_commitment_count}` : undefined} onOpen={() => onSelect(relationship.id)} />)}</SurfaceRows>}
   </SurfaceSection>;
 }
 
 function RelationshipPane({ relationship, onRefresh, onProtectedFailure, onArchived, onBack }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; onArchived(): void; onBack(): void }) {
   const [lens, setLens] = useState<Lens>("now");
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
+  useEffect(() => {
+    void apiFetch<{ upcoming?: UpcomingEvent[] }>("/api/door")
+      .then((door) => {
+        const events = (door.upcoming ?? []).filter(
+          (item: Record<string, unknown>) => item.source === "calendar_event" && item.uid,
+        ) as UpcomingEvent[];
+        setUpcomingEvents(events);
+      })
+      .catch(() => setUpcomingEvents([]));
+  }, [relationship.id]);
+  const links = relationship.calendar_links ?? [];
+  const linkedKeys = new Set(links.map((l) => `${l.uid}:${l.source_id}`));
+  const nextLinked = upcomingEvents.find((ev) => linkedKeys.has(`${ev.uid}:${ev.source_id}`));
+  const nextLabel = nextLinked ? shortWhen(nextLinked.starts_at) : null;
   return <div className="people-detail">
     <div className="people-detail-head"><Button dense variant="ghost" onClick={onBack}>Back</Button><strong>{relationship.display_name}</strong></div>
+    {nextLabel ? <div className="people-next-header" data-testid="people-next-1on1">NEXT 1:1 &middot; {nextLabel}</div> : null}
     <div className="people-lenses" role="tablist" aria-label={`${relationship.display_name} lenses`}>
       {([['now', 'Now'], ['one-on-ones', '1:1s'], ['context', 'Context'], ['history', 'History'], ['info', 'Info']] as const).map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={lens === id} onClick={() => setLens(id)}>{label}</button>)}
     </div>
     {lens === "now" ? <NowLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} /> : null}
     {lens === "one-on-ones" ? <OneOnOnes relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} /> : null}
-    {lens === "context" ? <ContextLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} /> : null}
+    {lens === "context" ? <ContextLens relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} /> : null}
     {lens === "history" ? <HistoryLens relationship={relationship} /> : null}
     {lens === "info" ? <InfoLens relationship={relationship} onArchived={onArchived} onProtectedFailure={onProtectedFailure} /> : null}
   </div>;
 }
 
-function ContextLens({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
+function shortWhen(isoDate: string): string {
+  try {
+    const d = new Date(isoDate);
+    if (Number.isNaN(d.getTime())) return "";
+    const now = new Date();
+    const diffMs = d.getTime() - now.getTime();
+    const diffDays = Math.floor(diffMs / 86_400_000);
+    const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    if (diffDays === 0) return `TODAY ${time}`;
+    if (diffDays === 1) return `TOMORROW ${time}`;
+    const day = d.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
+    return `${day} ${time}`;
+  } catch { return ""; }
+}
+
+/** HS-149-03: the picker + linked series + unlink two-beat. In-world, no modal. */
+function CalendarLinkSection({ relationship, onRefresh, onProtectedFailure, upcomingEvents }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; upcomingEvents: UpcomingEvent[] }) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const links = relationship.calendar_links ?? [];
+  const linkedKeys = new Set(links.map((l) => `${l.uid}:${l.source_id}`));
+  // In-memory suggestion sort: display_name-containing rows first (case-insensitive, F10: never logged/persisted).
+  const displayName = relationship.display_name;
+  const available = upcomingEvents.filter((ev) => !linkedKeys.has(`${ev.uid}:${ev.source_id}`));
+  const sorted = useMemo(() => {
+    const lower = displayName.toLowerCase();
+    const suggested: UpcomingEvent[] = [];
+    const rest: UpcomingEvent[] = [];
+    for (const ev of available) {
+      if (ev.title.toLowerCase().includes(lower)) {
+        suggested.push(ev);
+      } else {
+        rest.push(ev);
+      }
+    }
+    return { suggested, rest, all: [...suggested, ...rest] };
+  }, [available, displayName]);
+
+  const linkEvent = async (ev: UpcomingEvent) => {
+    setBusy(true);
+    try {
+      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/calendar-links`, {
+        method: "POST",
+        json: { uid: ev.uid, source_id: ev.source_id, label: ev.title },
+      });
+      setPickerOpen(false);
+      onRefresh();
+    } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
+  };
+  const unlinkSeries = async (link: CalendarLink) => {
+    setBusy(true);
+    try {
+      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/calendar-links`, {
+        method: "DELETE",
+        json: { uid: link.uid, source_id: link.source_id },
+      });
+      onRefresh();
+    } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
+  };
+
+  return <SurfaceSection label="Calendar series">
+    {links.length ? <SurfaceRows>{links.map((link) => <SurfaceRow
+      key={`${link.uid}:${link.source_id}`}
+      title={link.label || "Linked series"}
+      detail={link.linked_at ? `Linked ${new Date(link.linked_at).toLocaleDateString()}` : undefined}
+      verbs={<ConfirmVerb label="Unlink" confirmLabel="Unlink?" busy={busy} onConfirm={() => void unlinkSeries(link)} />}
+    />)}</SurfaceRows> : null}
+    {pickerOpen ? (
+      <div className="people-picker" data-testid="people-event-picker">
+        {sorted.all.length ? <SurfaceRows>{sorted.all.map((ev) => {
+          const isSuggested = sorted.suggested.includes(ev);
+          return <SurfaceRow
+            key={`${ev.uid}:${ev.source_id}:${ev.id}`}
+            title={ev.title}
+            detail={`${shortWhen(ev.starts_at)}${ev.source_label ? ` · ${ev.source_label}` : ""}`}
+            meta={isSuggested ? "SUGGESTED" : undefined}
+            onOpen={() => void linkEvent(ev)}
+          />;
+        })}</SurfaceRows> : <SurfaceState empty emptyLabel="No upcoming events" />}
+        <Button dense variant="ghost" onClick={() => setPickerOpen(false)}>Cancel</Button>
+      </div>
+    ) : (
+      <Button dense variant="ghost" disabled={busy} onClick={() => setPickerOpen(true)} data-testid="people-link-event">Link calendar event</Button>
+    )}
+  </SurfaceSection>;
+}
+
+function ContextLens({ relationship, onRefresh, onProtectedFailure, upcomingEvents = [] }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; upcomingEvents?: UpcomingEvent[] }) {
   const [topic, setTopic] = useState(""); const [body, setBody] = useState(""); const [visibility, setVisibility] = useState<Visibility>("leader_private"); const [busy, setBusy] = useState(false); const [projects, setProjects] = useState<Project[]>([]); const [projectId, setProjectId] = useState("");
   useEffect(() => { void apiFetch<{ projects?: Project[] }>("/api/projects").then((result) => { const rows = result.projects ?? []; setProjects(rows); setProjectId((current) => current || rows[0]?.id || ""); }).catch(onProtectedFailure); }, [relationship.id]);
   const add = async () => { if (!body.trim()) return; setBusy(true); try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/notes`, { method: "POST", json: { topic: topic.trim(), body: body.trim(), visibility } }); setTopic(""); setBody(""); onRefresh(); } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); } };
   const linkProject = async () => { if (!projectId) return; try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/projects/${encodeURIComponent(projectId)}`, { method: "POST", json: {} }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
   const unlinkProject = async (id: string) => { try { await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/projects/${encodeURIComponent(id)}`, { method: "DELETE" }); onRefresh(); } catch (cause) { onProtectedFailure(cause); } };
   const linkedProjects = projects.filter((project) => relationship.project_refs?.includes(project.id));
-  return <><SurfaceSection label="Projects"><div className="people-project-link"><CycleGadget label="Project" value={projectId} onChange={setProjectId} options={projects.map((project) => ({ value: project.id, label: project.name }))} /><Button dense disabled={!projectId || relationship.project_refs?.includes(projectId)} onClick={() => void linkProject()}>Link</Button></div>{linkedProjects.length ? <SurfaceRows>{linkedProjects.map((project) => <SurfaceRow key={project.id} title={project.name} detail={project.description} onOpen={() => openSurfaceOr("open-project-memory", "/project-memory", `project:${project.id}`)} verbs={<Button dense variant="ghost" onClick={() => void unlinkProject(project.id)}>Unlink</Button>} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No linked projects" />}</SurfaceSection><SurfaceSection label="Grounding notes"><div className="people-context-add"><StringGadget mic={false} label="Topic" value={topic} onChange={setTopic} placeholder="Topic (optional)" /><PadGadget mic={false} label="Grounding note" value={body} onChange={setBody} placeholder="Context worth remembering" rows={3} /><CycleGadget label="Visibility" value={visibility} onChange={(value) => setVisibility(value as Visibility)} options={[{ value: "leader_private", label: "Leader private" }, { value: "shared_intent", label: "Shared" }]} /><Button dense disabled={!body.trim() || busy} onClick={() => void add()}>Add note</Button></div>{!(relationship.notes ?? []).length ? <SurfaceState empty emptyLabel="No grounding notes" /> : <SurfaceRows>{(relationship.notes ?? []).map((note) => <SurfaceRow key={note.id} title={note.topic || note.body} detail={note.topic ? note.body : undefined} meta={note.visibility === "leader_private" ? "Leader private" : "Shared"} />)}</SurfaceRows>}</SurfaceSection></>;
+  return <>
+    <CalendarLinkSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} />
+    <SurfaceSection label="Projects"><div className="people-project-link"><CycleGadget label="Project" value={projectId} onChange={setProjectId} options={projects.map((project) => ({ value: project.id, label: project.name }))} /><Button dense disabled={!projectId || relationship.project_refs?.includes(projectId)} onClick={() => void linkProject()}>Link</Button></div>{linkedProjects.length ? <SurfaceRows>{linkedProjects.map((project) => <SurfaceRow key={project.id} title={project.name} detail={project.description} onOpen={() => openSurfaceOr("open-project-memory", "/project-memory", `project:${project.id}`)} verbs={<Button dense variant="ghost" onClick={() => void unlinkProject(project.id)}>Unlink</Button>} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No linked projects" />}</SurfaceSection>
+    <SurfaceSection label="Grounding notes"><div className="people-context-add"><StringGadget mic={false} label="Topic" value={topic} onChange={setTopic} placeholder="Topic (optional)" /><PadGadget mic={false} label="Grounding note" value={body} onChange={setBody} placeholder="Context worth remembering" rows={3} /><CycleGadget label="Visibility" value={visibility} onChange={(value) => setVisibility(value as Visibility)} options={[{ value: "leader_private", label: "Leader private" }, { value: "shared_intent", label: "Shared" }]} /><Button dense disabled={!body.trim() || busy} onClick={() => void add()}>Add note</Button></div>{!(relationship.notes ?? []).length ? <SurfaceState empty emptyLabel="No grounding notes" /> : <SurfaceRows>{(relationship.notes ?? []).map((note) => <SurfaceRow key={note.id} title={note.topic || note.body} detail={note.topic ? note.body : undefined} meta={note.visibility === "leader_private" ? "Leader private" : "Shared"} />)}</SurfaceRows>}</SurfaceSection>
+  </>;
 }
 
 function relationshipLabel(kind?: string): string {

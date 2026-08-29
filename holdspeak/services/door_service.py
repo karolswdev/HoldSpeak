@@ -3,13 +3,16 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from datetime import datetime, time, timedelta, timezone
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from ..config.integrations import validate_calendar_subscription
 from ..db.calendar_events import CalendarEvent, CalendarEventRepository
 from ..db.scheduled_recordings import ScheduledRecording, ScheduledRecordingRepository
 from .follow_through_service import FollowThroughCard, FollowThroughService
 from .refinement_thought_service import RefinementThoughtService
+
+if TYPE_CHECKING:
+    from .people_service import PeopleService
 
 
 class DoorService:
@@ -22,6 +25,7 @@ class DoorService:
         *,
         clock: Callable[[], datetime] | None = None,
         config_loader: Callable[[], Any] | None = None,
+        people_service: PeopleService | None = None,
     ) -> None:
         self._follow_through_service = follow_through_service
         self._refinement_thought_service = refinement_thought_service
@@ -29,6 +33,7 @@ class DoorService:
         self._calendar_events = calendar_events
         self._clock = clock or (lambda: datetime.now().astimezone())
         self._config_loader = config_loader
+        self._people_service = people_service
 
     def get(self, principal: Any) -> dict[str, Any]:
         now = self._clock()
@@ -195,11 +200,50 @@ class DoorService:
             if recording.next_fire_at is None or recording.next_fire_at < now.timestamp():
                 continue
             upcoming.append(self._scheduled_recording_item(recording))
+        # HS-149-03: build a person label index for linked calendar series.
+        # Memoize one resolve per distinct (uid, source_id) in the aggregate
+        # build — CHEAP, never cached across requests.
+        person_index = self._build_person_index(events)
         upcoming.extend(
-            self._calendar_event_item(event, armed_index=armed_index)
+            self._calendar_event_item(
+                event, armed_index=armed_index, person_index=person_index,
+            )
             for event in events
         )
         return sorted(upcoming, key=lambda item: (item["starts_at"], item["source"], item["id"]))
+
+    def _build_person_index(self, events: list[CalendarEvent]) -> dict[tuple[str, str], str]:
+        """HS-149-03: resolve person labels for linked calendar series.
+
+        Returns a map from ``(uid, source_id)`` to ``display_name`` for
+        every linked series.  One ``resolve_relationship_by_series`` call per
+        distinct key — memoized in-request only, never cached across requests.
+        The sidecar being unavailable or a series having no link silently
+        produces no entry (the Door never blocks on the sidecar).
+        """
+        if self._people_service is None:
+            return {}
+        seen: dict[tuple[str, str], str | None] = {}
+        for event in events:
+            key = (event.uid, event.source_id)
+            if key in seen:
+                continue
+            try:
+                result = self._people_service.resolve_relationship_by_series(
+                    event.uid, event.source_id,
+                )
+            except Exception:
+                seen[key] = None
+                continue
+            if result.get("state") != "ready":
+                seen[key] = None
+                continue
+            rel = result.get("relationship")
+            if rel is not None:
+                seen[key] = str(rel.get("display_name") or "")
+            else:
+                seen[key] = None
+        return {k: v for k, v in seen.items() if v}
 
     @staticmethod
     def _scheduled_recording_item(recording: ScheduledRecording) -> dict[str, Any]:
@@ -222,6 +266,7 @@ class DoorService:
         event: CalendarEvent,
         *,
         armed_index: dict[str, str] | None = None,
+        person_index: dict[tuple[str, str], str] | None = None,
     ) -> dict[str, Any]:
         """Map the persisted projection into Story 01's reserved timeline row.
 
@@ -230,9 +275,13 @@ class DoorService:
 
         HS-147-01: armed_schedule_id is projected when a live event-linked
         schedule exists (the read side; story 02 renders the chip).
+
+        HS-149-03: uid is projected for the picker/link flow; person_label
+        is projected (only-when-present) for linked calendar series.
         """
         item: dict[str, Any] = {
             "id": event.id,
+            "uid": event.uid,
             "source": "calendar_event",
             "target_ref": f"calendar_event:{event.id}",
             "title": event.title,
@@ -248,6 +297,12 @@ class DoorService:
             schedule_id = armed_index.get(event.id)
             if schedule_id:
                 item["armed_schedule_id"] = schedule_id
+        # HS-149-03: person_label projected only when present — the
+        # armed_schedule_id only-when-present analogy.
+        if person_index:
+            label = person_index.get((event.uid, event.source_id))
+            if label:
+                item["person_label"] = label
         return item
 
     @staticmethod

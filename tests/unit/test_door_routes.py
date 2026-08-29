@@ -115,6 +115,7 @@ def test_get_door_returns_one_complete_aggregate_from_real_service(db: Database)
     assert response.json()["board"]["active"][0]["source"] == "thought"
     assert response.json()["upcoming"][0] == {
         "id": "ce_route",
+        "uid": "route-event",
         "source": "calendar_event",
         "target_ref": "calendar_event:ce_route",
         "title": "Route calendar event",

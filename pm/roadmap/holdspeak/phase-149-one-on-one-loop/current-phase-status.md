@@ -1,6 +1,6 @@
 # Phase 149 — The 1:1 Loop
 
-**Status:** in progress (2/6).
+**Status:** in progress (3/6).
 
 **Last updated:** 2026-08-29.
 
@@ -51,14 +51,26 @@ surface; the Tuesday question IS this phase.
 | --- | --- | --- | --- | --- |
 | HS-149-01 | The honest keystore + sidecar truth (L3+L2) | done | [story-01](./story-01-honest-keystore.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-149-02 | The link (encrypted series link + resolution) | done | [story-02](./story-02-the-link.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-149-03 | The gesture (picker + rail person chip) | ready | [story-03](./story-03-the-gesture.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-149-03 | The gesture (picker + rail person chip) | done | [story-03](./story-03-the-gesture.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-149-04 | The brief (Prep lens + PREP on the rail) | ready | [story-04](./story-04-the-brief.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-149-05 | The record book | ready | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-149-06 | The walk and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-**2/6.** HS-149-02 (the link) is DONE — the keystone exists:
+**3/6.** HS-149-03 (the gesture) is DONE — and photographed: the
+picker on the Context lens lists real upcoming events with the
+name-matched row tagged SUGGESTED (in-memory, never persisted —
+F10), the click is the only path to a link, unlink is a two-beat,
+the relationship header says NEXT 1:1, the People empty states
+lead with the act, and the rail row now reads
+EVENT · 1:1 w/ Ewa · Record this · [Ewa] — the value era's first
+money shot, taken in a fresh context after the orchestrator caught
+the burned-twice occlusion trap in the first frame (the rig now
+carries an occlusion tell). The door wire gained uid additively.
+63+49 focused green orchestrator-read; the stamped capture is the
+first-ever headless populated-People glass run. Next: 04 (the
+brief — the F6 visibility gate is its law). Earlier — **2/6.** HS-149-02 (the link) is DONE — the keystone exists:
 `calendar_links` lives INSIDE the relationship's encrypted payload
 with the owner-selected evidence, P1 refuses by naming the holder
 at every transport, resolution is readiness-guarded ("unavailable"

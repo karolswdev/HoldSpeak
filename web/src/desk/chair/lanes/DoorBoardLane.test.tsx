@@ -601,4 +601,73 @@ describe("DoorBoardLane", () => {
       expect(screen.getByTestId("door-people-state")).toHaveTextContent("People store unavailable");
     });
   });
+
+  /* HS-149-03 — person chip on linked EVENT rows. */
+  describe("person chip (HS-149-03)", () => {
+    it("renders a person chip on EVENT rows carrying person_label", async () => {
+      const withPerson: DoorProjection = {
+        ...projection,
+        upcoming: [{
+          id: "cal-linked", source: "calendar_event", target_ref: "calendar_event:cal-linked",
+          title: "1:1 w/ Ewa", starts_at: "2099-08-28T10:00:00Z", ends_at: "2099-08-28T10:30:00Z",
+          location: null, meeting_url: null, state: "scheduled",
+          uid: "uid-ewa", source_id: "cal-1",
+          person_label: "Ewa",
+        }],
+      };
+      mockDoor(withPerson);
+      renderLane();
+      await screen.findByText("1:1 w/ Ewa");
+      expect(screen.getByTestId("door-person-chip")).toHaveTextContent("Ewa");
+      expect(screen.getByTestId("door-person-chip")).toHaveClass("door-upcoming-person");
+    });
+
+    it("omits person chip when person_label is absent", async () => {
+      const noPerson: DoorProjection = {
+        ...projection,
+        upcoming: [{
+          id: "cal-unlinked", source: "calendar_event", target_ref: "calendar_event:cal-unlinked",
+          title: "Team standup", starts_at: "2099-08-28T10:00:00Z", ends_at: "2099-08-28T10:30:00Z",
+          location: null, meeting_url: null, state: "scheduled",
+          uid: "uid-team", source_id: "cal-1",
+        }],
+      };
+      mockDoor(noPerson);
+      renderLane();
+      await screen.findByText("Team standup");
+      expect(screen.queryByTestId("door-person-chip")).toBeNull();
+    });
+
+    it("person chip and provenance chip coexist at 393 geometry", async () => {
+      const both: DoorProjection = {
+        ...projection,
+        upcoming: [
+          {
+            id: "cal-a", source: "calendar_event", target_ref: "calendar_event:cal-a",
+            title: "1:1 w/ Ewa", starts_at: "2099-08-28T10:00:00Z", ends_at: "2099-08-28T10:30:00Z",
+            location: null, meeting_url: null, state: "scheduled",
+            uid: "uid-ewa", source_id: "src-work", source_label: "Work",
+            person_label: "Ewa",
+          },
+          {
+            id: "cal-b", source: "calendar_event", target_ref: "calendar_event:cal-b",
+            title: "Dentist", starts_at: "2099-08-28T14:00:00Z", ends_at: "2099-08-28T14:30:00Z",
+            location: null, meeting_url: null, state: "scheduled",
+            uid: "uid-dentist", source_id: "src-personal", source_label: "Personal",
+          },
+        ],
+      };
+      mockDoor(both);
+      renderLane();
+      await screen.findByText("1:1 w/ Ewa");
+      // Provenance chips present (>1 source)
+      expect(screen.getByText("WORK")).toBeInTheDocument();
+      expect(screen.getByText("PERSONAL")).toBeInTheDocument();
+      // Person chip coexists
+      expect(screen.getByTestId("door-person-chip")).toHaveTextContent("Ewa");
+      // The second row has no person chip
+      const row = document.querySelectorAll(".door-upcoming-row");
+      expect(row[1]?.querySelector("[data-testid='door-person-chip']")).toBeNull();
+    });
+  });
 });

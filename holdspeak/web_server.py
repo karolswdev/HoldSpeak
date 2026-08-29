@@ -716,6 +716,7 @@ class MeetingWebServer:
             get_database().scheduled_recordings,
             get_database().calendar_events,
             config_loader=Config.load,
+            people_service=people_service,
         )
 
         inference_setup_service = InferenceSetupApplicationService(get_database())
