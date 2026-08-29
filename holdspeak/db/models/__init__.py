@@ -136,6 +136,7 @@ class ActionItemSummary:
     created_at: datetime
     completed_at: Optional[datetime]
     reviewed_at: Optional[datetime]
+    delegated_at: Optional[str] = None
 
 
 @dataclass

@@ -76,6 +76,8 @@ class FollowThroughCard:
     # A source-owned deep link.  Only People currently needs it: it is an
     # in-memory opaque record reference, never persisted on a Cadence/action row.
     target_ref: str | None = None
+    # HS-150-01: bare timestamp recording WHEN ownership last changed.
+    delegated_at: str | None = None
 
 
 @dataclass(frozen=True)
@@ -176,6 +178,7 @@ class FollowThroughService:
                     source_timestamp=action["source_timestamp"],
                     decision_id=action["decision_id"],
                 ),
+                delegated_at=action["delegated_at"],
             )
             lanes[card.lane].append(card)
 
@@ -273,10 +276,12 @@ class FollowThroughService:
             if decision["lifecycle"] != "accepted":
                 raise ValueError("Only accepted decisions can be committed")
 
+            # Fresh INSERT: stamp delegated_at when an owner is assigned.
+            delegated_at = now if owner else None
             conn.execute(
                 """INSERT INTO action_items
-                   (id, meeting_id, task, owner, due, status, review_state, created_at)
-                   VALUES (?, ?, ?, ?, ?, 'open', 'accepted', ?)""",
+                   (id, meeting_id, task, owner, due, status, review_state, created_at, delegated_at)
+                   VALUES (?, ?, ?, ?, ?, 'open', 'accepted', ?, ?)""",
                 (
                     action_item_id,
                     decision["source_meeting_id"],
@@ -284,6 +289,7 @@ class FollowThroughService:
                     owner,
                     due_at,
                     now,
+                    delegated_at,
                 ),
             )
             ServiceEventLedger(self._db).append_in_transaction(
@@ -403,7 +409,19 @@ class FollowThroughService:
                 if not isinstance(owner, str) or not owner.strip():
                     raise ValueError("delegate requires payload['to']")
                 owner = owner.strip()
-                conn.execute("UPDATE action_items SET owner = ? WHERE id = ?", (owner, card_id))
+                # Stamp delegated_at only when the owner actually changes.
+                existing = conn.execute(
+                    "SELECT owner FROM action_items WHERE id = ?", (card_id,)
+                ).fetchone()
+                old_owner = existing["owner"] if existing else None
+                owner_changed = (old_owner or None) != (owner or None)
+                if owner_changed:
+                    conn.execute(
+                        "UPDATE action_items SET owner = ?, delegated_at = ? WHERE id = ?",
+                        (owner, now, card_id),
+                    )
+                else:
+                    conn.execute("UPDATE action_items SET owner = ? WHERE id = ?", (owner, card_id))
                 conn.execute(
                     "UPDATE decision_commitments SET owner = ?, updated_at = ? WHERE action_item_id = ?",
                     (owner, now, card_id),

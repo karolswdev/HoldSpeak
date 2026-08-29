@@ -1,6 +1,6 @@
 # Phase 150 — Delegation + the Chief-of-Staff Brief
 
-**Status:** in progress (1/6).
+**Status:** in progress (2/6).
 
 **Last updated:** 2026-08-29.
 
@@ -49,7 +49,7 @@ NON-NEGOTIABLE this phase (two arcs carried it).
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-150-01 | The owner gesture (aliases + resolution + delegated_at) | in-progress | [story-01](./story-01-owner-gesture.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-150-01 | The owner gesture (aliases + resolution + delegated_at) | done | [story-01](./story-01-owner-gesture.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-150-02 | The delegation lane (chips, filter, staleness) | ready | [story-02](./story-02-delegation-lane.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-150-03 | The chief-of-staff overlay (person_sections) | ready | [story-03](./story-03-chief-of-staff.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-150-04 | The web-inherited baseline (the debt rider) | done | [story-04](./story-04-web-baseline.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -58,7 +58,18 @@ NON-NEGOTIABLE this phase (two arcs carried it).
 
 ## Where we are
 
-**1/6.** HS-150-04 (the web-inherited baseline) is DONE first —
+**2/6.** HS-150-01 (the owner gesture) is DONE — the contract's
+second association exists: owner_aliases in the encrypted payload
+(P2 naming its holder; me/remote/you reserved; casefold in memory,
+never logged), resolution readiness-guarded, HTTP+MCP through the
+family gates — and delegation finally has WHEN: delegated_at with
+the counsel's atomic CASE guard on the intel upsert (same owner →
+byte-untouched; changed → stamped; proven both directions). The
+canonical-snapshot guard was red outside the builder's selection
+(the sixth attribution near-miss, caught pre-suite) — fixture
+regenerated, with the orchestrator reproducing and then dodging
+the recorded double-escape regen gotcha. 197 focused green.
+Earlier — **1/6.** HS-150-04 (the web-inherited baseline) is DONE first —
 two arcs of carried debt end: tests/web-inherited-baseline.txt
 holds the six names with provenance, scripts/check_web_baseline.py
 (stdlib-only, --run or consume-a-JSON) speaks the house vocabulary

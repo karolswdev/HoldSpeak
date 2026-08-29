@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 64  # informational; owner's real DB is stamped 64
+SCHEMA_VERSION = 65  # informational; 64→65: delegated_at on action_items (HS-150-01)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -106,7 +106,8 @@ CREATE TABLE IF NOT EXISTS action_items (
     reviewed_at TEXT,
     source_timestamp REAL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    completed_at TEXT
+    completed_at TEXT,
+    delegated_at TEXT
 );
 
 -- Topics extracted from meetings

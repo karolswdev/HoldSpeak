@@ -61,7 +61,8 @@ def _make_plain_db(tmp_path: Path) -> Any:
     conn.execute("""CREATE TABLE action_items (
         id TEXT PRIMARY KEY, meeting_id TEXT NOT NULL, task TEXT NOT NULL,
         owner TEXT, due TEXT, status TEXT NOT NULL DEFAULT 'pending',
-        created_at TEXT NOT NULL DEFAULT (datetime('now')))""")
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        delegated_at TEXT)""")
     conn.execute("""CREATE TABLE decision_records (
         id TEXT PRIMARY KEY, decision_text TEXT NOT NULL, rationale TEXT,
         lifecycle TEXT NOT NULL DEFAULT 'active',
