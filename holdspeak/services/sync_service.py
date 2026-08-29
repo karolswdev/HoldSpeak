@@ -383,6 +383,11 @@ def meeting_state_from_sync_value(value: dict[str, Any]) -> Any:
         capture_checkpoint_at=_parse_dt(value.get("capture_checkpoint_at")),
         capture_checkpoint_seconds=float(value.get("capture_checkpoint_seconds") or 0.0),
         provenance=str(value.get("provenance") or "native"),
+        # HS-147-04 follow-up: to_dict carries calendar_event_id, so the
+        # exact-inverse contract must round-trip it — a linked meeting must
+        # not lose its event provenance crossing the sync wire.
+        calendar_event_id=(str(value.get("calendar_event_id")).strip() or None)
+        if value.get("calendar_event_id") else None,
         sync_modified_at=_parse_dt(value.get("sync_modified_at")),
     )
 

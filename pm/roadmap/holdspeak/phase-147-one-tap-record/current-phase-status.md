@@ -1,6 +1,9 @@
 # Phase 147 — One-Tap Record
 
-**Status:** in progress (6/7).
+**Status:** complete (7/7). Close counsel RATIFY-WITH-CONCERNS,
+zero must-fix (two ledger notes dispositioned below). Delivered
+under the owner's open-throttle directive with the merge word given
+in advance; the shot exhibit rides the close.
 
 **Last updated:** 2026-08-29.
 
@@ -75,11 +78,25 @@ meeting row with a quiet origin line (D7).
 | HS-147-04 | Meeting provenance (the event on the record) | done | [story-04](./story-04-meeting-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-147-05 | Snapshot polish riders (the 146 ledger pair) | done | [story-05](./story-05-snapshot-polish.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-147-06 | The record book (docs) | done | [story-06](./story-06-the-record-book.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-147-07 | The walk and the close | ready | [story-07](./story-07-walk-and-close.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-147-07 | The walk and the close | done | [story-07](./story-07-walk-and-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**6/7.** HS-147-06 (the record book) is DONE — a cold reader can now
+**COMPLETE — 7/7.** HS-147-07 closed it: the cold walk 8/8 THREE
+times (runs 1-2 readable, run 3 under the stamped dw capture) with
+the new one-tap leg — tap, ARMED with the 60s lead read off the
+wire, one-intent-one-row asserted on the aggregate, two-beat
+cancel, the live stale-row ALREADY ARMED refusal, the origin line
+delivered through the production sync authority, 393 fresh-context;
+close sweep 12 failed / 6862 passed = 11 inherited-baseline names +
+1 lawful census remap → baseline-subset, ZERO branch-new (counsel
+independently verified the accounting). Close counsel (fresh opus):
+RATIFY-WITH-CONCERNS, ZERO must-fix; all five orchestrator judgment
+calls ACCEPTED; human-compliance verdict: "The one tap does what it
+says." The walk's construction also caught and killed a real sync
+round-trip gap (calendar_event_id dropped by the exact-inverse
+mapper — fixed + pinned). final-summary.md is the exit record.
+Earlier — **6/7.** HS-147-06 (the record book) is DONE — a cold reader can now
 run the whole loop from the docs alone: the USER_GUIDE "Arm an event
 for recording" section (labels verbatim: Record this, ARMED, Cancel?,
 ALREADY ARMED / EVENT ENDED / EVENT NOT FOUND), the README one-tap
@@ -193,6 +210,18 @@ window. Story 01 (the link) is in-progress in its parallel lane;
   LEDGERED, loud and re-armable (03).
 
 ## Ledger (counsel, carried openly)
+
+- **Close counsel note — reappear-claim wording:** the
+  one-intent-one-row ruling's "schedule row reappears if the event
+  leaves" is over-broad as written: a linked schedule with a PAST
+  fire time whose event vanished also drops from the rail — correct
+  behavior (R3 reconciliation cancels it first), but the doc
+  wording could be tighter.
+- **Close counsel note — fire-seam setattr chain:** the
+  web_server.py lambda's `setattr(...) or setattr(...) or call`
+  pattern is fragile by construction (a truthy __setattr__ override
+  would break it silently); no such override exists anywhere; a
+  refactor note, not a bug.
 
 - **Adjacent recurring arms on an R2 rebind:** if two occurrences
   of one recurring uid are both armed and the series shifts, both

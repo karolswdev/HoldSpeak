@@ -137,8 +137,8 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/plugins/dictation/assembly.py:321:profile_id",
         "holdspeak/services/settings_service.py:811:profile_id",
         "holdspeak/services/settings_service.py:883:profile_id",
-        "holdspeak/services/sync_service.py:682:profile_id",
-        "holdspeak/services/sync_service.py:697:profile_id",
+        "holdspeak/services/sync_service.py:687:profile_id",
+        "holdspeak/services/sync_service.py:702:profile_id",
     }},
     **{site: "display" for site in {
         "holdspeak/commands/doctor.py:488:profile_id", "holdspeak/commands/doctor.py:787:profile_id",

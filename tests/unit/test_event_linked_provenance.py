@@ -452,3 +452,27 @@ class TestWebServerLambdaCalendarEventId:
             title="Manual",
         )
         assert callbacks.pending_calendar_event_id is None
+
+
+class TestSyncRoundTripPreservesCalendarEventId:
+    """HS-147-04 follow-up: the sync wire is the exact inverse of
+    MeetingState.to_dict — a linked meeting must not lose its event
+    provenance crossing devices."""
+
+    def test_sync_value_round_trip_keeps_calendar_event_id(self) -> None:
+        from holdspeak.services.sync_service import meeting_state_from_sync_value
+
+        state = MeetingState(id="m-sync-linked", started_at=datetime(2026, 8, 29, 9, 0, 0))
+        state.calendar_event_id = "ce_sync_round_trip"
+        wire = state.to_dict()
+        assert wire["calendar_event_id"] == "ce_sync_round_trip"
+        rebuilt = meeting_state_from_sync_value({**wire, "id": state.id})
+        assert rebuilt.calendar_event_id == "ce_sync_round_trip"
+
+    def test_sync_value_without_field_stays_none(self) -> None:
+        from holdspeak.services.sync_service import meeting_state_from_sync_value
+
+        state = MeetingState(id="m-sync-unlinked", started_at=datetime(2026, 8, 29, 9, 0, 0))
+        wire = state.to_dict()
+        rebuilt = meeting_state_from_sync_value({**wire, "id": state.id})
+        assert rebuilt.calendar_event_id is None
