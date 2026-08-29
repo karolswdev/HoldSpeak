@@ -7,12 +7,13 @@ It deliberately has no recording, mic-floor, route-plan, or browser concerns.
 from __future__ import annotations
 
 import hashlib
+import math
 import threading
 import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -237,8 +238,32 @@ class CalendarIngestConductor:
             log.warning("Calendar feed parse failure (%s): %s", source.id, result.feed_error)
             return False
 
+        # D3b: capture linked schedules' event data BEFORE replace so R2
+        # nearest-matching has the old starts_at.  The pre-read is a separate
+        # transaction (the connection pattern does not share); reconciliation
+        # is idempotent and catches its own errors, so a gap is harmless.
+        db = self._get_db()
+        pre_replace_events: dict[str, dict[str, Any]] = {}
         try:
-            self._get_db().calendar_events.replace_projection(
+            linked = db.scheduled_recordings.list_linked_for_source(source.id)
+            for sched in linked:
+                if sched.calendar_event_id:
+                    ev = db.calendar_events.get(sched.calendar_event_id)
+                    if ev is not None:
+                        pre_replace_events[sched.id] = {
+                            "calendar_event_id": ev.id,
+                            "starts_at": ev.starts_at,
+                            "ends_at": ev.ends_at,
+                            "title": ev.title,
+                            "uid": ev.uid,
+                        }
+        except Exception as exc:
+            log.warning("Pre-replace event snapshot failed (%s): %s", source.id, exc)
+            # Proceed: reconciliation degrades to R3 for anything it cannot
+            # reconstruct, which is safer than skipping the whole refresh.
+
+        try:
+            db.calendar_events.replace_projection(
                 revision,
                 result.events,
                 seen_at=now_epoch,
@@ -249,9 +274,219 @@ class CalendarIngestConductor:
             self._write_refresh_failure(revision, error_class="calendar_projection_failed")
             log.exception("Calendar projection replacement failed (%s): %s", source.id, exc)
             return False
+
+        # HS-147-03 D3a: reconcile linked schedules for THIS source only.
+        # Idempotent, catches its own exceptions, never propagates (D3b).
+        self._reconcile_linked_schedules(
+            db, source.id, pre_replace_events, now_epoch,
+        )
+
         for skip in result.skips:
             self._write_event_skip(revision, skip.event_ref, skip.reason)
         return True
+
+    # ── HS-147-03: post-replace reconciliation ─────────────────────
+
+    def _reconcile_linked_schedules(
+        self,
+        db: Any,
+        source_id: str,
+        pre_replace_events: dict[str, dict[str, Any]],
+        now_epoch: float,
+    ) -> None:
+        """Reconcile linked schedules after a source's projection is replaced.
+
+        Idempotent, catches its own exceptions, logs, never propagates (D3b).
+        Scoped to the refreshed source only (D3a).
+        X1: only idle rows are read (list_linked_for_source filters state).
+        """
+        try:
+            linked = db.scheduled_recordings.list_linked_for_source(source_id)
+        except Exception as exc:
+            log.error("Reconcile: failed to list linked schedules for %s: %s", source_id, exc)
+            return
+
+        for sched in linked:
+            try:
+                self._reconcile_one(db, sched, pre_replace_events, now_epoch)
+            except Exception as exc:
+                log.error(
+                    "Reconcile: schedule %s (event %s) failed: %s",
+                    sched.id, sched.calendar_event_id, exc,
+                )
+
+    def _reconcile_one(
+        self,
+        db: Any,
+        sched: Any,
+        pre_replace_events: dict[str, dict[str, Any]],
+        now_epoch: float,
+    ) -> None:
+        """Reconcile a single linked schedule against the new projection.
+
+        R1: id survives -> refresh duration/title in place.
+        R2: id gone, uid survives -> rebind to nearest occurrence.
+        R3: uid gone -> cancel with event_removed.
+        """
+        # R1: check if the projection id still exists
+        current_event = db.calendar_events.get(sched.calendar_event_id)
+        if current_event is not None:
+            # Projection id survived (starts_at unchanged).  Refresh
+            # duration and title if ends_at or title changed.
+            pre = pre_replace_events.get(sched.id)
+            needs_refresh = False
+            if pre is not None:
+                if pre["ends_at"] != current_event.ends_at:
+                    needs_refresh = True
+                if pre["title"] != current_event.title:
+                    needs_refresh = True
+            else:
+                # No pre-snapshot: refresh anyway to be safe.
+                needs_refresh = True
+
+            if needs_refresh:
+                starts_at = datetime.fromisoformat(
+                    current_event.starts_at.replace("Z", "+00:00")
+                ).astimezone(timezone.utc)
+                ends_at = datetime.fromisoformat(
+                    current_event.ends_at.replace("Z", "+00:00")
+                ).astimezone(timezone.utc)
+                duration_seconds = (ends_at - starts_at).total_seconds()
+                duration_minutes = min(max(1, math.ceil(duration_seconds / 60)), 480)
+                db.scheduled_recordings.refresh_in_place(
+                    sched.id,
+                    duration_minutes=duration_minutes,
+                    title=current_event.title,
+                )
+                log.info(
+                    "Reconcile R1: refreshed schedule %s in place "
+                    "(duration=%d, title=%s)",
+                    sched.id, duration_minutes, current_event.title,
+                )
+            return
+
+        # R2: id gone but uid might survive — look for occurrences with
+        # the same (source_id, uid) in the new projection.
+        uid = sched.calendar_uid
+        source_id = sched.calendar_source_id
+        if uid:
+            candidates = self._find_uid_occurrences(db, source_id, uid)
+            if candidates:
+                # Pick the occurrence whose starts_at is nearest the old one.
+                old_starts_epoch = self._old_starts_epoch(sched, pre_replace_events)
+                best = min(
+                    candidates,
+                    key=lambda ev: abs(
+                        datetime.fromisoformat(
+                            ev.starts_at.replace("Z", "+00:00")
+                        ).timestamp() - old_starts_epoch
+                    ),
+                )
+                # Compute new fire time and duration
+                new_starts = datetime.fromisoformat(
+                    best.starts_at.replace("Z", "+00:00")
+                ).astimezone(timezone.utc)
+                new_ends = datetime.fromisoformat(
+                    best.ends_at.replace("Z", "+00:00")
+                ).astimezone(timezone.utc)
+                duration_seconds = (new_ends - new_starts).total_seconds()
+                duration_minutes = min(max(1, math.ceil(duration_seconds / 60)), 480)
+
+                # next_fire_at: starts_at - 60s, or now if already started
+                now_dt = datetime.fromtimestamp(now_epoch, tz=timezone.utc)
+                if new_starts <= now_dt:
+                    next_fire_at = now_epoch
+                else:
+                    next_fire_at = (new_starts - timedelta(seconds=60)).timestamp()
+
+                # L1 check: if the rebind target is already armed by another
+                # enabled schedule, treat as R3 (the counsel-ledgered case).
+                try:
+                    with db._connection() as conn:
+                        existing = conn.execute(
+                            """SELECT id FROM scheduled_recordings
+                               WHERE calendar_event_id = ?
+                                 AND enabled = 1
+                                 AND id != ?
+                               LIMIT 1""",
+                            (best.id, sched.id),
+                        ).fetchone()
+                    if existing:
+                        log.warning(
+                            "Reconcile R2->R3: rebind target %s already armed "
+                            "by %s; cancelling schedule %s",
+                            best.id, existing["id"], sched.id,
+                        )
+                        db.scheduled_recordings.cancel_for_event_removed(sched.id)
+                        return
+                except Exception as exc:
+                    log.error("Reconcile L1 check failed for %s: %s", sched.id, exc)
+                    # On L1 check failure, cancel to be safe (never violate the index).
+                    db.scheduled_recordings.cancel_for_event_removed(sched.id)
+                    return
+
+                db.scheduled_recordings.rebind_event(
+                    sched.id,
+                    calendar_event_id=best.id,
+                    next_fire_at=next_fire_at,
+                    duration_minutes=duration_minutes,
+                    title=best.title,
+                )
+                log.info(
+                    "Reconcile R2: rebound schedule %s to event %s "
+                    "(new fire at %s, duration=%d)",
+                    sched.id, best.id,
+                    datetime.fromtimestamp(next_fire_at, tz=timezone.utc).isoformat(),
+                    duration_minutes,
+                )
+                return
+
+        # R3: uid gone from the projection -> cancel.
+        db.scheduled_recordings.cancel_for_event_removed(sched.id)
+        log.info(
+            "Reconcile R3: cancelled schedule %s (event %s removed from feed)",
+            sched.id, sched.calendar_event_id,
+        )
+
+    def _find_uid_occurrences(self, db: Any, source_id: str, uid: str) -> list[Any]:
+        """Find all projection rows for (source_id, uid) after replace."""
+        try:
+            with db._connection() as conn:
+                rows = conn.execute(
+                    """SELECT * FROM calendar_events
+                       WHERE source_id = ? AND uid = ?
+                       ORDER BY starts_at""",
+                    (source_id, uid),
+                ).fetchall()
+            from .db.calendar_events import _row_to_model as _ce_row
+            return [_ce_row(r) for r in rows]
+        except Exception as exc:
+            log.error("Reconcile: uid lookup failed for %s/%s: %s", source_id, uid, exc)
+            return []
+
+    def _old_starts_epoch(
+        self,
+        sched: Any,
+        pre_replace_events: dict[str, dict[str, Any]],
+    ) -> float:
+        """Recover the old starts_at epoch for nearest-occurrence matching.
+
+        Prefers the pre-replace snapshot; falls back to reconstructing from
+        next_fire_at + 60s (valid for future arms; close enough for fire-now).
+        """
+        pre = pre_replace_events.get(sched.id)
+        if pre is not None:
+            try:
+                return datetime.fromisoformat(
+                    pre["starts_at"].replace("Z", "+00:00")
+                ).timestamp()
+            except Exception:
+                pass
+        # Fallback: next_fire_at + 60s (the 60s lead rule).
+        if sched.next_fire_at is not None:
+            return sched.next_fire_at + 60
+        # Last resort: use created_at as a rough proxy.
+        return sched.created_at
 
     def _loop(self) -> None:
         # Boot is an actual refresh, not merely a delayed first cadence tick.

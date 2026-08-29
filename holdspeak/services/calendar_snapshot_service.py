@@ -6,6 +6,7 @@ CalendarSource through the settings write path.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -272,6 +273,23 @@ def resolve_events_to_timestamps(
     return resolved
 
 
+def _snapshot_uid(event: dict[str, Any]) -> str:
+    """Content-deterministic UID for snapshot events (D5, HS-147-03).
+
+    sha256(title + "\\0" + starts_at + "\\0" + ends_at + "\\0" + location)[:16]
+    + "@holdspeak-snapshot".  Re-confirming identical content yields identical
+    uids so linked arms survive re-import.
+    """
+    parts = "\0".join([
+        str(event.get("title") or ""),
+        str(event.get("starts_at") or ""),
+        str(event.get("ends_at") or ""),
+        str(event.get("location") or ""),
+    ])
+    digest = hashlib.sha256(parts.encode("utf-8")).hexdigest()[:16]
+    return f"{digest}@holdspeak-snapshot"
+
+
 def generate_ics(
     events: list[dict[str, Any]],
     *,
@@ -286,7 +304,7 @@ def generate_ics(
         "METHOD:PUBLISH",
     ]
     for event in events:
-        uid = f"{uuid.uuid4()}@holdspeak-snapshot"
+        uid = _snapshot_uid(event)
         # Convert honestly to UTC before formatting — string surgery on ISO
         # offsets corrupts any non-UTC timestamp (close-counsel round).
         starts_at = (

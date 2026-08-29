@@ -409,3 +409,131 @@ class TestVisionPreFilter:
 
         profile = db.profiles.get("prof_local_only")
         assert _vision_capable(profile, db) is False
+
+
+class TestSnapshotUIDDeterminism:
+    """HS-147-03 D5: snapshot UIDs are content-deterministic.
+
+    sha256(title + "\\0" + starts_at + "\\0" + ends_at + "\\0" + location)[:16]
+    + "@holdspeak-snapshot".  Same content yields same uid; different
+    content yields a different uid.
+    """
+
+    def test_same_content_yields_same_uid(self):
+        from holdspeak.services.calendar_snapshot_service import _snapshot_uid
+
+        event = {
+            "title": "Morning Standup",
+            "starts_at": "2026-08-31T09:00:00+02:00",
+            "ends_at": "2026-08-31T09:30:00+02:00",
+            "location": "Room 1",
+        }
+        uid1 = _snapshot_uid(event)
+        uid2 = _snapshot_uid(event)
+        assert uid1 == uid2
+        assert uid1.endswith("@holdspeak-snapshot")
+
+    def test_different_content_yields_different_uid(self):
+        from holdspeak.services.calendar_snapshot_service import _snapshot_uid
+
+        event_a = {
+            "title": "Morning Standup",
+            "starts_at": "2026-08-31T09:00:00+02:00",
+            "ends_at": "2026-08-31T09:30:00+02:00",
+            "location": "Room 1",
+        }
+        event_b = {
+            "title": "Morning Standup",
+            "starts_at": "2026-08-31T10:00:00+02:00",  # different start
+            "ends_at": "2026-08-31T10:30:00+02:00",
+            "location": "Room 1",
+        }
+        assert _snapshot_uid(event_a) != _snapshot_uid(event_b)
+
+    def test_uid_format_is_hex_at_snapshot_domain(self):
+        import re
+        from holdspeak.services.calendar_snapshot_service import _snapshot_uid
+
+        event = {
+            "title": "Test",
+            "starts_at": "2026-08-31T09:00:00Z",
+            "ends_at": "2026-08-31T10:00:00Z",
+            "location": None,
+        }
+        uid = _snapshot_uid(event)
+        # 16 hex chars + @holdspeak-snapshot
+        assert re.match(r"^[0-9a-f]{16}@holdspeak-snapshot$", uid), \
+            f"UID format wrong: {uid}"
+
+    def test_none_location_handled(self):
+        from holdspeak.services.calendar_snapshot_service import _snapshot_uid
+
+        event_a = {
+            "title": "Test",
+            "starts_at": "2026-08-31T09:00:00Z",
+            "ends_at": "2026-08-31T10:00:00Z",
+            "location": None,
+        }
+        event_b = {
+            "title": "Test",
+            "starts_at": "2026-08-31T09:00:00Z",
+            "ends_at": "2026-08-31T10:00:00Z",
+        }
+        # Both None and missing location should produce the same uid
+        assert _snapshot_uid(event_a) == _snapshot_uid(event_b)
+
+    def test_generate_ics_uses_deterministic_uids(self):
+        """generate_ics produces deterministic UIDs across calls."""
+        from holdspeak.services.calendar_snapshot_service import generate_ics
+
+        events = [
+            {
+                "title": "Standup",
+                "starts_at": "2026-08-31T09:00:00+02:00",
+                "ends_at": "2026-08-31T09:30:00+02:00",
+                "location": "Room 1",
+            },
+        ]
+        ics1 = generate_ics(events, source_id="snap-1")
+        ics2 = generate_ics(events, source_id="snap-1")
+        # Extract UIDs from both
+        import re
+        uids1 = re.findall(rb"UID:(.+?)@holdspeak-snapshot", ics1)
+        uids2 = re.findall(rb"UID:(.+?)@holdspeak-snapshot", ics2)
+        assert uids1 == uids2, "generate_ics must produce identical UIDs for identical events"
+        assert len(uids1) == 1
+
+    def test_reimport_preserves_uid_identity_through_ingest(self, tmp_path):
+        """Full round-trip: generate ICS, parse through the ingest parser,
+        regenerate ICS from the same events, parse again, verify same UIDs."""
+        from holdspeak.services.calendar_snapshot_service import (
+            generate_ics,
+            resolve_events_to_timestamps,
+        )
+        from holdspeak.calendar_ingest import parse_calendar_bytes
+        from datetime import datetime, timezone
+
+        events = [
+            {
+                "title": "Daily Sync",
+                "starts_at": "2026-09-01T14:00:00+00:00",
+                "ends_at": "2026-09-01T14:30:00+00:00",
+                "location": "Virtual",
+            },
+        ]
+        ics_bytes = generate_ics(events, source_id="snap-test")
+        now = datetime(2026, 9, 1, 10, 0, 0, tzinfo=timezone.utc)
+        result1 = parse_calendar_bytes(ics_bytes, now=now, subscription_revision="rev1")
+        assert result1.succeeded
+        assert len(result1.events) == 1
+        uid1 = result1.events[0].uid
+
+        # Re-generate the same ICS (simulating a re-confirm)
+        ics_bytes2 = generate_ics(events, source_id="snap-test")
+        result2 = parse_calendar_bytes(ics_bytes2, now=now, subscription_revision="rev2")
+        assert result2.succeeded
+        assert len(result2.events) == 1
+        uid2 = result2.events[0].uid
+
+        assert uid1 == uid2, \
+            f"Re-import must yield same UID: {uid1} vs {uid2}"

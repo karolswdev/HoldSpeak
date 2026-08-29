@@ -1,6 +1,6 @@
 # Phase 147 — One-Tap Record
 
-**Status:** in progress (3/7).
+**Status:** in progress (4/7).
 
 **Last updated:** 2026-08-29.
 
@@ -71,7 +71,7 @@ meeting row with a quiet origin line (D7).
 | --- | --- | --- | --- | --- |
 | HS-147-01 | The link (schema + arm verb, server side) | done | [story-01](./story-01-the-link.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-147-02 | The tap (rail verb + armed state, web) | done | [story-02](./story-02-the-tap.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-147-03 | The honest follow (reconciliation + snapshot identity) | in-progress | [story-03](./story-03-the-honest-follow.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-147-03 | The honest follow (reconciliation + snapshot identity) | done | [story-03](./story-03-the-honest-follow.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-147-04 | Meeting provenance (the event on the record) | in-progress | [story-04](./story-04-meeting-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-147-05 | Snapshot polish riders (the 146 ledger pair) | done | [story-05](./story-05-snapshot-polish.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-147-06 | The record book (docs) | ready | [story-06](./story-06-the-record-book.md) | [evidence-story-06](./evidence-story-06.md) |
@@ -79,7 +79,17 @@ meeting row with a quiet origin line (D7).
 
 ## Where we are
 
-**3/7.** HS-147-02 (the tap) is DONE — the job exists on glass: one
+**4/7.** HS-147-03 (the honest follow) is DONE — an arm no longer
+lies when the feed moves: R1 refresh-in-place (an extended meeting
+refreshes duration under the same projection id — the counsel's
+catch, implemented and pinned), R2 nearest-occurrence rebind by
+(source_id, uid) with next_fire_at/duration/title following, R3
+cancel with event_removed for vanished events, X1 immunity for
+arming/recording rows, all inside the ingest tick, per-source, with
+D3b idempotence (a reconcile crash never kills the tick). Snapshot
+UIDs are content-deterministic — re-imports stop orphaning arms.
+91 focused green orchestrator-read; two deviations ruled (the rare
+pre-read-failure degrade is LEDGERED). Earlier — **3/7.** HS-147-02 (the tap) is DONE — the job exists on glass: one
 real tap on RECORD THIS arms the event (proven end-to-end by the new
 tests/e2e/test_hs147_one_tap_glass.py on a live hub), ARMED +
 two-beat CANCEL?, the honest stale-row refusal rendering ALREADY
@@ -145,6 +155,20 @@ window. Story 01 (the link) is in-progress in its parallel lane;
   explicitly. Two items LEDGERED (see the ledger). The counsel's
   human-compliance verdict: the one-tap promise holds — "the
   refusal surface is complete, the visibility surface is complete."
+
+- **2026-08-29 — orchestrator ruling (one intent, one row):** the
+  story-02 shot cross-read caught the armed intent rendering twice
+  (the EVENT row wearing ARMED plus its linked schedule as a
+  near-duplicate SCHEDULED RECORDING row 60 s earlier). Ruled: a
+  linked schedule row is suppressed while its event is in the
+  projection; it reappears if the event leaves (pending work never
+  hidden). Unit pin + glass assertion; exhibit re-shot.
+- **2026-08-29 — deviation rulings at ship time:** house
+  NotFound = the named refusal (01); dummy cron on event-linked
+  one-shots accepted, conductor drives by next_fire_at (01); DELETE
+  disarms an idle linked one-shot, the countdown cancel route stays
+  for arming-state (02); the rare pre-read-failure R2→R3 degrade is
+  LEDGERED, loud and re-armable (03).
 
 ## Ledger (counsel, carried openly)
 
