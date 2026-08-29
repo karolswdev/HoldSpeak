@@ -1,6 +1,6 @@
 # Phase 148 — The Menu Grammar
 
-**Status:** in progress (3/6).
+**Status:** in progress (4/6).
 
 **Last updated:** 2026-08-29.
 
@@ -67,14 +67,20 @@ bindings this phase.
 | --- | --- | --- | --- | --- |
 | HS-148-01 | The grammar core (DeskMenu + material) | done | [story-01](./story-01-grammar-core.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-148-02 | The content sweep (glyphs, groups, casing, …) | done | [story-02](./story-02-content-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-148-03 | The mock exhibit (the owner's variant gate) | ready | [story-03](./story-03-mock-exhibit.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-148-03 | The mock exhibit (the owner's variant gate) | done | [story-03](./story-03-mock-exhibit.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-148-04 | Head + dock menus on the registry (AA) | done | [story-04](./story-04-head-dock-registry.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-148-05 | The record book + the emoji guard | ready | [story-05](./story-05-record-book-guards.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-148-06 | The walk and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-**3/6.** HS-148-02 (the content sweep) is DONE — the data joined the
+**4/6.** HS-148-03 (the mock exhibit) is DONE — the owner's gate is
+served: nine truthful shots off the real hub (the rig flips the
+variant before app boot), cross-read clean, DELIVERED to the owner
+with the before-shot, the A/C/B Go triptych, the Object and Desk
+comparisons, and C at 393. C ships as default; the verdict is a
+one-attribute flip forever. Remaining: 05 (record book + emoji
+guard), 06 (walk + close). Earlier — **3/6.** HS-148-02 (the content sweep) is DONE — the data joined the
 grammar: 24 verbs carry glyphs (the 13 Go programs reuse their deck
 chars, dock-parity pinned; seven new kind glyphs argued one line
 each; a restrained verb set keeps variant B truthful; window verbs
