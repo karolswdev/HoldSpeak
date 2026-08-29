@@ -631,6 +631,7 @@ class MeetingWebServer:
             build_setup_router,
             build_sync_router,
             build_system_router,
+            build_threads_router,
         )
 
         from .services.meeting_aftercare_service import MeetingAftercareService
@@ -947,6 +948,7 @@ class MeetingWebServer:
         app.include_router(build_scheduled_recordings_router(web_ctx))
         app.include_router(build_setup_router(web_ctx))
         app.include_router(build_sync_router(web_ctx))
+        app.include_router(build_threads_router(web_ctx))
 
         @app.on_event("startup")
         async def _startup() -> None:

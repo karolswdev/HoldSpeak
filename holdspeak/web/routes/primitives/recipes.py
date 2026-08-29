@@ -110,16 +110,35 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/recipes/{recipe_id}/chat")
     async def api_chat_recipe(recipe_id: str, request: Request) -> Any:
-        # HS-150-02: recipe.chat RETIRED. This stub stays so HS-150-04 can
-        # turn it into the thread alias (POST /api/threads/{id}/turns).
-        return JSONResponse(
-            {
-                "error": "recipe_chat_retired",
-                "replacement": "POST /api/threads/{id}/turns",
-                "reason": "HS-150-04 lands the thread alias",
-            },
-            status_code=410,
-        )
+        # HS-150-04: recipe.chat is now an alias that creates/reuses a thread
+        # bound to this recipe and starts a turn with the body's text.
+        from ....db import get_database
+        from ....services.thread_service import ThreadService
+        body = await _json_body(request) or {}
+        text = str(body.get("text") or body.get("question") or "")
+        if not text.strip():
+            return JSONResponse({"error": "text is required"}, status_code=400)
+        db = get_database()
+        broadcast = ctx.broadcast or (lambda t, d: None)
+        thread_svc = ThreadService(db, broadcast=broadcast, broker=getattr(db, "_broker", None))
+        # Reuse newest non-deleted thread with this recipe_id, or create one.
+        existing = [t for t in db.threads.list(limit=50) if t.recipe_id == recipe_id]
+        if existing:
+            thread_id = existing[0].id
+        else:
+            created = thread_svc.create(recipe_id=recipe_id, title=recipe_id)
+            thread_id = created["id"]
+        try:
+            result = await thread_svc.start_turn(
+                _principal(request), thread_id, text,
+            )
+            return JSONResponse(result, status_code=201)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except ServiceError as exc:
+            return _service_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to chat via recipe alias")
 
     @router.post("/api/recipes/{recipe_id}/keep")
     async def api_keep_recipe_reply(recipe_id: str, request: Request) -> Any:

@@ -38,21 +38,9 @@ def rig(tmp_path: Path) -> tuple[Database, object]:
     return db, broker
 
 
-@pytest.mark.skip(reason="HS-150-02: recipe.chat retired from registry; RecipeService.chat() unavailable until HS-150-04")
-def test_recipe_run_and_root_chat_stage_controller_winners(rig: tuple[Database, object]) -> None:
-    db, broker = rig
-    service = RecipeService(db, broker=broker)
-    run = asyncio.run(service.run(OWNER, "r1", input="hello"))
-    chat = asyncio.run(service.chat(OWNER, "r1", question="hello"))
-    assert run["artifact_id"] and chat["output"] == "runner recipe"
-    assert run["route_execution_receipt"]["outcome"] == chat["route_execution_receipt"]["outcome"] == "succeeded"
-    with db._connection() as conn:
-        stages = conn.execute("SELECT kind,state FROM kernel_projection_stages ORDER BY kind").fetchall()
-        attempts = conn.execute("SELECT child_operation_id FROM inference_route_attempts ORDER BY id").fetchall()
-        receipts = conn.execute("SELECT operation_id FROM kernel_receipts ORDER BY operation_id").fetchall()
-    assert {(row["kind"], row["state"]) for row in stages} == {("recipe-run", "PUBLISHED"), ("recipe-chat-result", "PUBLISHED")}
-    assert len(attempts) == len(receipts) == 2
-    assert all(str(row["child_operation_id"] or "") for row in attempts)
+# HS-150-04: test_recipe_run_and_root_chat_stage_controller_winners DELETED.
+# It tested RecipeService.chat() which is permanently retired
+# (recipe.chat replaced by chat.turn in HS-150-02).
 
 
 def test_recipe_subject_edit_applies_only_to_later_admission(rig: tuple[Database, object]) -> None:

@@ -50,6 +50,7 @@ from .scheduled_recordings import build_scheduled_recordings_router
 from .setup import build_setup_router
 from .sync import build_sync_router
 from .system import build_system_router
+from .threads import build_threads_router
 
 __all__ = [
     "build_activity_router",
@@ -92,4 +93,5 @@ __all__ = [
     "build_setup_router",
     "build_sync_router",
     "build_system_router",
+    "build_threads_router",
 ]

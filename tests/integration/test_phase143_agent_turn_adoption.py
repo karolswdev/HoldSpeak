@@ -47,58 +47,8 @@ def _qualified_recipe(db: Database, *, tools: list[str] | None = None) -> tuple[
     return RecipeService(db, broker=broker), engine, recipe.id
 
 
-@pytest.mark.skip(reason="HS-150-02: recipe.chat retired from registry")
-def test_recipe_chat_qualified_route_drives_foundation_controller_and_runner(tmp_path: Path) -> None:
-    db = Database(tmp_path / "recipe-tool.db")
-    recipes, engine, recipe_id = _qualified_recipe(db)
-
-    result = asyncio.run(recipes.chat(OWNER, recipe_id, question="What is frozen?"))
-
-    assert result["output"] == "one admitted answer"
-    assert engine.calls == 1
-    receipt = result["route_execution_receipt"]
-    assert receipt["outcome"] == "succeeded"
-    with db._connection() as conn:
-        parent = conn.execute("SELECT operation_id FROM kernel_parent_runs WHERE kind='tool.turn'").fetchone()
-        lease = conn.execute("SELECT turn_id,terms_sha256 FROM turn_capability_leases").fetchone()
-        step = conn.execute("SELECT route_execution_id,child_receipt_id FROM tool_turn_model_steps").fetchone()
-        attempt = conn.execute("SELECT child_operation_id,child_receipt_sha256 FROM inference_route_attempts").fetchone()
-    assert parent is not None and lease is not None and step is not None
-    assert step["route_execution_id"] == receipt["execution_id"]
-    assert attempt["child_operation_id"] and attempt["child_receipt_sha256"]
-
-
-@pytest.mark.skip(reason="HS-150-02: recipe.chat retired from registry")
-def test_recipe_chat_unqualified_uses_ruled_plain_fallback_and_no_toolturn_rows(tmp_path: Path) -> None:
-    db = Database(tmp_path / "recipe-plain.db")
-    broker = _configure(db)
-    _profile(db, "plain-model", claims=("language", _result_claim("recipe.chat")))
-    recipe = db.recipes.upsert(recipe_id="recipe-plain", name="Plain", system_prompt="Answer.")
-    InferenceAssignmentService(db).set_assignment(OWNER, {
-        "command_id": "plain-recipe-chat", "expected_revision": 0,
-        "scope": {"kind": "subject", "subject_kind": "recipe", "subject_id": recipe.id, "capability_id": "recipe.chat"},
-        "entries": [{"profile_id": "plain-model", "profile_revision": 1}],
-    })
-    engine = _Engine()
-    broker.inference_runner._engine_factory = lambda _revision, **_kwargs: engine
-
-    result = asyncio.run(RecipeService(db, broker=broker).chat(OWNER, recipe.id, question="Plain route?"))
-
-    assert result["output"] == "one admitted answer"
-    with db._connection() as conn:
-        assert conn.execute("SELECT COUNT(*) FROM tool_turns").fetchone()[0] == 0
-        assert conn.execute("SELECT COUNT(*) FROM turn_capability_leases").fetchone()[0] == 0
-
-
-@pytest.mark.skip(reason="HS-150-02: recipe.chat retired from registry")
-def test_recipe_tools_remain_inert_on_the_qualified_production_turn(tmp_path: Path) -> None:
-    db = Database(tmp_path / "recipe-tools-inert.db")
-    recipes, engine, recipe_id = _qualified_recipe(db, tools=["delete_everything", "ambient_tool"])
-
-    result = asyncio.run(recipes.chat(OWNER, recipe_id, question="Does the stored list matter?"))
-
-    assert result["output"] == "one admitted answer"
-    assert engine.calls == 1
-    with db._connection() as conn:
-        terms = str(conn.execute("SELECT terms_json FROM turn_capability_leases").fetchone()[0])
-    assert "delete_everything" not in terms and "ambient_tool" not in terms
+# HS-150-04: three tests DELETED. They tested RecipeService.chat() which is
+# permanently retired (recipe.chat replaced by chat.turn in HS-150-02):
+# - test_recipe_chat_qualified_route_drives_foundation_controller_and_runner
+# - test_recipe_chat_unqualified_uses_ruled_plain_fallback_and_no_toolturn_rows
+# - test_recipe_tools_remain_inert_on_the_qualified_production_turn
