@@ -276,8 +276,10 @@ class MeetingService:
         )
         filtered = bool(query or from_date or to_date or speaker or tag or has_open_actions)
         total = len(meetings) if filtered else self._db.meetings.get_meeting_count()
+        payloads = [self._summary_payload(meeting) for meeting in meetings]
+        self._enrich_calendar_origin(payloads)
         return {
-            "meetings": [self._summary_payload(meeting) for meeting in meetings],
+            "meetings": payloads,
             "total": total,
             "next_cursor": str(offset + len(meetings)) if len(meetings) == bounded_limit else None,
         }
@@ -297,7 +299,9 @@ class MeetingService:
         meeting = self._db.meetings.get_meeting(resolved_id)
         if meeting is None:
             raise NotFound("meeting", resolved_id)
-        return meeting.to_dict()
+        payload = meeting.to_dict()
+        self._enrich_calendar_origin([payload])
+        return payload
 
     def start_capture(
         self, principal: Principal, config: dict[str, Any] | None = None
@@ -620,6 +624,36 @@ class MeetingService:
         except (TypeError, ValueError) as exc:
             raise ValidationError("cursor must be a non-negative integer") from exc
 
+    def _enrich_calendar_origin(self, payloads: list[dict[str, Any]]) -> None:
+        """Attach calendar event title and source label to meeting payloads.
+
+        Honest degradation: when the calendar_events row is gone (feed moved
+        on), the fields stay absent rather than raising a dangling lookup error.
+        """
+        event_ids = [
+            p["calendar_event_id"]
+            for p in payloads
+            if p.get("calendar_event_id")
+        ]
+        if not event_ids:
+            return
+        event_map: dict[str, Any] = {}
+        for eid in event_ids:
+            try:
+                ev = self._db.calendar_events.get(eid)
+                if ev is not None:
+                    event_map[eid] = ev
+            except Exception:
+                pass
+        for p in payloads:
+            eid = p.get("calendar_event_id")
+            if not eid:
+                continue
+            ev = event_map.get(eid)
+            if ev is not None:
+                p["calendar_event_title"] = ev.title
+                p["calendar_source_label"] = ev.source_label
+
     @staticmethod
     def _summary_payload(meeting: Any) -> dict[str, Any]:
         return {
@@ -637,4 +671,5 @@ class MeetingService:
             "capture_failure": meeting.capture_failure,
             "capture_checkpoint_seconds": meeting.capture_checkpoint_seconds,
             "provenance": meeting.provenance,
+            "calendar_event_id": getattr(meeting, "calendar_event_id", None),
         }

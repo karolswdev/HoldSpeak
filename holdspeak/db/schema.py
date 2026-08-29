@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS meetings (
     capture_checkpoint_at TEXT,
     capture_checkpoint_seconds REAL NOT NULL DEFAULT 0,
     provenance TEXT NOT NULL DEFAULT 'desktop',
+    calendar_event_id TEXT,
     sync_modified_at TEXT NOT NULL DEFAULT (datetime('now')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))

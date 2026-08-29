@@ -291,12 +291,16 @@ class MeetingGlueMixin:
                 state = session.state or state
             with self.state_lock:
                 title_override = self.pending_title
+                calendar_event_id_override = self.pending_calendar_event_id
                 tags_override = list(self.pending_tags) if self.pending_tags is not None else None
                 self.pending_title = None
+                self.pending_calendar_event_id = None
                 self.pending_tags = None
             if title_override is not None:
                 session.set_title(title_override)
                 state = session.state or state
+            if calendar_event_id_override is not None:
+                state.calendar_event_id = calendar_event_id_override
             if tags_override is not None:
                 session.set_tags(tags_override)
                 state = session.state or state

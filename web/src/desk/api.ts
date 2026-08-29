@@ -419,6 +419,9 @@ const fromWireMeeting = (m: unknown): Meeting | null => {
     durationSeconds: wireRaw(m, "duration_seconds") as number | null | undefined,
     tags: wireArray(m, "tags").filter((t): t is string => typeof t === "string"),
     intelStatus: wireStringOrNull(m, "intel_status"),
+    calendarEventId: wireStringOrNull(m, "calendar_event_id"),
+    calendarEventTitle: wireStringOrNull(m, "calendar_event_title"),
+    calendarSourceLabel: wireStringOrNull(m, "calendar_source_label"),
   };
 };
 

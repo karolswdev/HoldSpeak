@@ -1,6 +1,6 @@
 # Phase 147 — One-Tap Record
 
-**Status:** in progress (4/7).
+**Status:** in progress (5/7).
 
 **Last updated:** 2026-08-29.
 
@@ -72,14 +72,24 @@ meeting row with a quiet origin line (D7).
 | HS-147-01 | The link (schema + arm verb, server side) | done | [story-01](./story-01-the-link.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-147-02 | The tap (rail verb + armed state, web) | done | [story-02](./story-02-the-tap.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-147-03 | The honest follow (reconciliation + snapshot identity) | done | [story-03](./story-03-the-honest-follow.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-147-04 | Meeting provenance (the event on the record) | in-progress | [story-04](./story-04-meeting-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-147-04 | Meeting provenance (the event on the record) | done | [story-04](./story-04-meeting-provenance.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-147-05 | Snapshot polish riders (the 146 ledger pair) | done | [story-05](./story-05-snapshot-polish.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-147-06 | The record book (docs) | ready | [story-06](./story-06-the-record-book.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-147-07 | The walk and the close | ready | [story-07](./story-07-walk-and-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**4/7.** HS-147-03 (the honest follow) is DONE — an arm no longer
+**5/7.** HS-147-04 (meeting provenance) is DONE — the loop closes:
+a fired event-linked recording writes `calendar_event_id` onto the
+meeting row through the explicit `pending_calendar_event_id` seam
+(the counsel's D7 amendment, mirroring pending_title exactly), the
+read side exposes it on HTTP and MCP, and the Meetings surface wears
+a quiet origin line (`FROM <SOURCE> · <EVENT>`, server-enriched,
+honestly absent when the event row is gone). 137+34 focused green
+orchestrator-read; the LIVE origin shot rides the walk (07) where a
+real fire produces a linked meeting — named, not skipped. All five
+feature stories are DONE; the record book (06) and the walk + close
+(07) remain. Earlier — **4/7.** HS-147-03 (the honest follow) is DONE — an arm no longer
 lies when the feed moves: R1 refresh-in-place (an extended meeting
 refreshes duration under the same projection id — the counsel's
 catch, implemented and pinned), R2 nearest-occurrence rebind by

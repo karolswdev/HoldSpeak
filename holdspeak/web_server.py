@@ -983,8 +983,9 @@ class MeetingWebServer:
                     voice_floor_fn=lambda: self.voice_session.active_owner
                     if hasattr(self, "voice_session")
                     else None,
-                    start_meeting_fn=lambda principal, title: (
+                    start_meeting_fn=lambda principal, title, calendar_event_id=None: (
                         setattr(callbacks, "pending_title", title) or  # type: ignore[func-returns-value]
+                        setattr(callbacks, "pending_calendar_event_id", calendar_event_id or None) or  # type: ignore[func-returns-value]
                         callbacks._start_meeting(principal=principal)
                     )
                     if hasattr(callbacks, "_start_meeting")

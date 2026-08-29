@@ -506,7 +506,11 @@ class ScheduledRecordingConductor:
 
         try:
             if self._start_meeting_fn:
-                self._start_meeting_fn(principal=principal, title=sched.title)
+                self._start_meeting_fn(
+                    principal=principal,
+                    title=sched.title,
+                    calendar_event_id=sched.calendar_event_id or None,
+                )
         except Exception as exc:
             log.error(f"Scheduled recording fire failed for {schedule_id}: {exc}")
             error_receipt = self._write_receipt(

@@ -204,11 +204,31 @@ export function CatalogRail({
                 "recoverable",
                 "recording",
               ].includes(String(row.capture_status ?? ""));
+              const originLine = row.calendar_event_id ? (
+                <span
+                  className="surface-ledger-origin"
+                  data-meeting-origin="calendar-event"
+                >
+                  {`FROM ${String(row.calendar_source_label || "CALENDAR").toUpperCase()}`}
+                  {row.calendar_event_title
+                    ? ` · ${String(row.calendar_event_title).toUpperCase()}`
+                    : ""}
+                </span>
+              ) : null;
               return (
                 <SurfaceLedgerRow
                   key={rowId(row, index)}
                   time={ledgerDate(row.started_at ?? row.created_at)}
-                  primary={String(row.title ?? "Meeting")}
+                  primary={
+                    originLine ? (
+                      <>
+                        {String(row.title ?? "Meeting")}
+                        {originLine}
+                      </>
+                    ) : (
+                      String(row.title ?? "Meeting")
+                    )
+                  }
                   open={isOpen}
                   onToggle={() => setSelected(isOpen ? null : row)}
                   cells={

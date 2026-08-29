@@ -91,6 +91,10 @@ export interface Meeting {
   durationSeconds?: number | null;
   tags?: string[];
   intelStatus?: string | null;
+  /** HS-147-04: the calendar event this recording originated from. */
+  calendarEventId?: string | null;
+  calendarEventTitle?: string | null;
+  calendarSourceLabel?: string | null;
 }
 
 /** 15 server artifact types — synthesized from a meeting's intel. */

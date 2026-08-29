@@ -714,7 +714,7 @@ def test_deadline_persisted_before_start(tmp_path):
 
     deadline_at_on_start = []
 
-    def capturing_start(principal, title):
+    def capturing_start(principal, title, **kwargs):
         sched = db.scheduled_recordings.list_all()[0]
         deadline_at_on_start.append(sched.deadline_at)
 

@@ -47,6 +47,7 @@ class MeetingSummary:
     transcription_status_detail: Optional[dict[str, str]] = None
     capture_checkpoint_seconds: float = 0.0
     provenance: str = "desktop"
+    calendar_event_id: Optional[str] = None
 
 
 @dataclass

@@ -1354,6 +1354,19 @@ button.surface-edit-in-place:hover {
 .surface-ledger[data-cols="meetings"] .surface-ledger-line {
   grid-template-columns: 52px minmax(0, 1fr) max-content max-content max-content;
 }
+/* HS-147-04 — the origin line on event-linked meetings: quiet mono
+   meta text below the row, fewest words, house grammar. */
+.surface-ledger-origin {
+  display: block;
+  padding: 2px 6px 0;
+  font: 500 10px / 1.3 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 /* Inside the railed split's master rail the catalog folds the same
    way it does in a narrow window: date + title + state, the head
    wraps, the search well narrows. Fixed max-content columns must
