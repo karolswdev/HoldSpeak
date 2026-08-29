@@ -1,6 +1,6 @@
 # Phase 150 — Delegation + the Chief-of-Staff Brief
 
-**Status:** in progress (4/6).
+**Status:** in progress (5/6).
 
 **Last updated:** 2026-08-29.
 
@@ -53,12 +53,27 @@ NON-NEGOTIABLE this phase (two arcs carried it).
 | HS-150-02 | The delegation lane (chips, filter, staleness) | done | [story-02](./story-02-delegation-lane.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-150-03 | The chief-of-staff overlay (person_sections) | done | [story-03](./story-03-chief-of-staff.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-150-04 | The web-inherited baseline (the debt rider) | done | [story-04](./story-04-web-baseline.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-150-05 | The record book | ready | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-150-05 | The record book | done | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-150-06 | The walk and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-**4/6, ALL FEATURE STORIES DONE.** HS-150-03 (the chief-of-staff
+**5/6.** HS-150-05 (the record book) is DONE — the manager suite
+reads cold: PEOPLE_INTEGRATION records the SECOND fulfilled
+sanctioned association (owner_aliases) rule-by-rule mirroring the
+first; USER_GUIDE walks map-once → chips → filter → staleness and
+the chief-of-staff brief with every label verbatim from the
+shipped components; SECURITY + PEOPLE_SECURITY each gained one
+precise persisted-boundary paragraph stating exactly what the walk
+rig proves on glass. Triage caught the SEVENTH builder attribution
+miss (third by arithmetic): the deselected tool-count guard's
+138→140 drift was OUR story 01's two owner-alias tools — docs
+updated to 140, the guard passing UNFILTERED (26/26 captured).
+Only the walk + close (06) remains; its rig is already authored
+and green ×2 with the exit assertions (the persisted boundary
+walked — response has the section, tables scanned clean; the
+Add-to-1:1-agenda round-trip; both audit probes flipped).
+Earlier — **4/6, ALL FEATURE STORIES DONE.** HS-150-03 (the chief-of-staff
 overlay) is DONE — the Monday Brief finally knows the manager's
 people, without persisting a byte about them: person_sections
 composes at the route/MCP adapter via compose_person_overlay (the
