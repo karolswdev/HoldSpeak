@@ -1,6 +1,6 @@
 # Phase 150 — Delegation + the Chief-of-Staff Brief
 
-**Status:** chartered (0/6).
+**Status:** in progress (1/6).
 
 **Last updated:** 2026-08-29.
 
@@ -49,18 +49,24 @@ NON-NEGOTIABLE this phase (two arcs carried it).
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-150-01 | The owner gesture (aliases + resolution + delegated_at) | ready | [story-01](./story-01-owner-gesture.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-150-01 | The owner gesture (aliases + resolution + delegated_at) | in-progress | [story-01](./story-01-owner-gesture.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-150-02 | The delegation lane (chips, filter, staleness) | ready | [story-02](./story-02-delegation-lane.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-150-03 | The chief-of-staff overlay (person_sections) | ready | [story-03](./story-03-chief-of-staff.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-150-04 | The web-inherited baseline (the debt rider) | ready | [story-04](./story-04-web-baseline.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-150-04 | The web-inherited baseline (the debt rider) | done | [story-04](./story-04-web-baseline.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-150-05 | The record book | ready | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-150-06 | The walk and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-Chartered 2026-08-29 (night) from the census + the Monday walk;
-the design counsel ruling is the gate ahead of builders. No story
-started.
+**1/6.** HS-150-04 (the web-inherited baseline) is DONE first —
+two arcs of carried debt end: tests/web-inherited-baseline.txt
+holds the six names with provenance, scripts/check_web_baseline.py
+(stdlib-only, --run or consume-a-JSON) speaks the house vocabulary
+and was proven BOTH directions (the real suite → exactly six
+matched, zero branch-new, exit 0; a deliberately broken test →
+BRANCH-NEW + exit 1, reverted clean); tests/WEB_BASELINE.md
+carries the add/remove protocol. Story 01 (the owner gesture)
+builds in its parallel lane. Earlier — chartered 0/6.
 
 ## Decision log
 
