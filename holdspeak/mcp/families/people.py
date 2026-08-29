@@ -16,6 +16,7 @@ from holdspeak.principals import Principal
 from holdspeak.services.people_service import (
     PeopleService,
     PeopleServiceError,
+    SeriesAlreadyLinked,
     UnavailablePeopleStore,
 )
 
@@ -144,6 +145,30 @@ TOOLS: list[dict[str, Any]] = [
         },
         ["commitment_id", "verb"],
     ),
+    _tool(
+        "people.calendar.link",
+        _BOUNDARY
+        + "Link a recurring calendar series to a relationship. The link is encrypted owner-selected evidence. "
+        "Invariant P1: a series already linked to another person refuses with series_already_linked.",
+        {
+            "relationship_id": {"type": "string", "description": "Opaque relationship identifier."},
+            "uid": {"type": "string", "description": "Calendar event UID (series-level)."},
+            "source_id": {"type": "string", "description": "Calendar source identifier."},
+            "label": {"type": "string", "description": "Event title at link time (owner-selected evidence)."},
+        },
+        ["relationship_id", "uid", "source_id"],
+    ),
+    _tool(
+        "people.calendar.unlink",
+        _BOUNDARY
+        + "Remove a calendar series link from a relationship. Idempotent.",
+        {
+            "relationship_id": {"type": "string", "description": "Opaque relationship identifier."},
+            "uid": {"type": "string", "description": "Calendar event UID (series-level)."},
+            "source_id": {"type": "string", "description": "Calendar source identifier."},
+        },
+        ["relationship_id", "uid", "source_id"],
+    ),
 ]
 
 
@@ -254,6 +279,21 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         commitment = service.get_commitment(principal, commitment_id)
         _require_shared(commitment)
         return service.transition(principal, f"people:{commitment_id}", str(arguments.get("verb") or ""))
+    if name == "people.calendar.link":
+        return service.link_calendar_series(
+            principal,
+            _required_id(arguments, "relationship_id"),
+            _required_id(arguments, "uid"),
+            _required_id(arguments, "source_id"),
+            str(arguments.get("label") or ""),
+        )
+    if name == "people.calendar.unlink":
+        return service.unlink_calendar_series(
+            principal,
+            _required_id(arguments, "relationship_id"),
+            _required_id(arguments, "uid"),
+            _required_id(arguments, "source_id"),
+        )
     raise LookupError(name)
 
 
@@ -298,7 +338,7 @@ def _shared_relationship(detail: dict[str, Any]) -> dict[str, Any]:
         key: detail.get(key)
         for key in (
             "id", "display_name", "relationship_kind", "role_context", "timezone",
-            "cadence", "project_refs", "state", "created_at", "updated_at",
+            "cadence", "project_refs", "calendar_links", "state", "created_at", "updated_at",
         )
     }
     sessions = []
@@ -336,7 +376,7 @@ def _grounding_bundle(detail: dict[str, Any]) -> dict[str, Any]:
     return {
         "relationship": {
             key: detail.get(key)
-            for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "project_refs")
+            for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "project_refs", "calendar_links")
         },
         "grounding": {
             "notes": list(detail.get("notes") or []),

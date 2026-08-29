@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import APIRouter, Body, HTTPException, Request
 
 from ...principals import UNAUTHENTICATED
-from ...services.people_service import PeopleServiceError
+from ...services.people_service import PeopleServiceError, SeriesAlreadyLinked
 from ...services.errors import NotFound
 from ...services.workbench_service import WorkbenchService
 from ...services.project_service import ProjectService
@@ -20,6 +20,12 @@ def _failure(exc: PeopleServiceError) -> HTTPException:
         return HTTPException(status_code=403, detail=code)
     if code in {"people_store_unavailable", "people_store_write_failed"}:
         return HTTPException(status_code=503, detail="people_store_unavailable")
+    if code == "series_already_linked" and isinstance(exc, SeriesAlreadyLinked):
+        return HTTPException(status_code=409, detail={
+            "code": "series_already_linked",
+            "holder_id": exc.holder_id,
+            "holder_name": exc.holder_name,
+        })
     if code.endswith("_not_found"):
         return HTTPException(status_code=404, detail=code)
     return HTTPException(status_code=400, detail=code)
@@ -143,6 +149,29 @@ def build_people_router(ctx: WebContext) -> APIRouter:
     async def create_note(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
         try:
             return {"note": service.create_note(principal(request), relationship_id, body)}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
+    @router.post("/relationships/{relationship_id}/calendar-links")
+    async def link_calendar_series(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+        try:
+            return {"relationship": service.link_calendar_series(
+                principal(request), relationship_id,
+                str(body.get("uid") or ""),
+                str(body.get("source_id") or ""),
+                str(body.get("label") or ""),
+            )}
+        except PeopleServiceError as exc:
+            raise _failure(exc) from exc
+
+    @router.delete("/relationships/{relationship_id}/calendar-links")
+    async def unlink_calendar_series(request: Request, relationship_id: str, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+        try:
+            return {"relationship": service.unlink_calendar_series(
+                principal(request), relationship_id,
+                str(body.get("uid") or ""),
+                str(body.get("source_id") or ""),
+            )}
         except PeopleServiceError as exc:
             raise _failure(exc) from exc
 

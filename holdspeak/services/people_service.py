@@ -21,6 +21,15 @@ class PeopleUnavailable(PeopleServiceError):
     """The encrypted sidecar is not available; never fall back to plaintext."""
 
 
+class SeriesAlreadyLinked(PeopleServiceError):
+    """Invariant P1: a calendar series is already linked to another relationship."""
+
+    def __init__(self, holder_id: str, holder_name: str) -> None:
+        self.holder_id = holder_id
+        self.holder_name = holder_name
+        super().__init__("series_already_linked")
+
+
 _VISIBILITIES = frozenset({"shared_intent", "leader_private"})
 _RELATIONSHIP_KINDS = frozenset({"direct_report", "peer", "extended"})
 _ENTRY_KINDS = frozenset({"one_on_one"})
@@ -340,6 +349,120 @@ class PeopleService:
             item = self._create("agenda_item", item_payload)
         return self._agenda_view(item)
 
+    # -- Calendar series links (D2) ------------------------------------------------
+
+    def link_calendar_series(
+        self,
+        principal: Any,
+        relationship_id: str,
+        uid: str,
+        source_id: str,
+        label: str,
+    ) -> dict[str, Any]:
+        """Link a calendar series to a relationship inside the encrypted payload.
+
+        Invariant P1: if ANY other relationship holds ``(uid, source_id)``,
+        refuse with :class:`SeriesAlreadyLinked` naming the holder.  Re-linking
+        the SAME relationship is idempotent (refreshes label and linked_at).
+        """
+        relationship = self._require_relationship(principal, relationship_id)
+        clean_uid = str(uid or "").strip()
+        clean_source = str(source_id or "").strip()
+        clean_label = str(label or "").strip()[:500]
+        if not clean_uid or not clean_source:
+            raise PeopleServiceError("people_calendar_link_required")
+
+        # P1: scan all relationships for an existing holder of (uid, source_id).
+        for other in self._list("relationship"):
+            other_id = str(other.get("id") or "")
+            if other_id == relationship_id:
+                continue
+            if str(other.get("state") or "") == "archived":
+                continue
+            for link in other.get("calendar_links") or []:
+                if isinstance(link, dict) and str(link.get("uid") or "") == clean_uid and str(link.get("source_id") or "") == clean_source:
+                    raise SeriesAlreadyLinked(
+                        holder_id=other_id,
+                        holder_name=str(other.get("display_name") or ""),
+                    )
+
+        # Idempotent: update existing or append.
+        now = _now()
+        links: list[dict[str, Any]] = [
+            dict(item) for item in relationship.get("calendar_links") or []
+            if isinstance(item, dict)
+        ]
+        found = False
+        for link in links:
+            if str(link.get("uid") or "") == clean_uid and str(link.get("source_id") or "") == clean_source:
+                link["label"] = clean_label
+                link["linked_at"] = now
+                found = True
+                break
+        if not found:
+            links.append({"uid": clean_uid, "source_id": clean_source, "label": clean_label, "linked_at": now})
+
+        value = dict(relationship)
+        value.update({"calendar_links": links, "updated_at": now})
+        return self._relationship_view(self._replace(relationship_id, value))
+
+    def unlink_calendar_series(
+        self,
+        principal: Any,
+        relationship_id: str,
+        uid: str,
+        source_id: str,
+    ) -> dict[str, Any]:
+        """Remove a calendar series link from a relationship.  Idempotent."""
+        relationship = self._require_relationship(principal, relationship_id)
+        clean_uid = str(uid or "").strip()
+        clean_source = str(source_id or "").strip()
+        if not clean_uid or not clean_source:
+            raise PeopleServiceError("people_calendar_link_required")
+        now = _now()
+        links = [
+            dict(item) for item in relationship.get("calendar_links") or []
+            if isinstance(item, dict)
+            and not (str(item.get("uid") or "") == clean_uid and str(item.get("source_id") or "") == clean_source)
+        ]
+        value = dict(relationship)
+        value.update({"calendar_links": links, "updated_at": now})
+        return self._relationship_view(self._replace(relationship_id, value))
+
+    def resolve_relationship_by_series(self, uid: str, source_id: str) -> dict[str, Any]:
+        """Find the relationship linked to a calendar series.
+
+        Readiness-guarded: a locked/absent store returns
+        ``{"state": "unavailable"}``, NEVER a bare no-match.  A ready store
+        with no link returns ``{"state": "ready", "relationship": None}``.
+        """
+        try:
+            state = self._store.readiness()
+            if str(getattr(state, "value", state)) != "ready":
+                return {"state": "unavailable"}
+        except Exception:
+            return {"state": "unavailable"}
+
+        clean_uid = str(uid or "").strip()
+        clean_source = str(source_id or "").strip()
+        if not clean_uid or not clean_source:
+            return {"state": "ready", "relationship": None}
+
+        try:
+            relationships = self._store.list(kind="relationship")
+        except Exception:
+            return {"state": "unavailable"}
+
+        for record in relationships:
+            if not isinstance(record, dict):
+                continue
+            if str(record.get("state") or "") == "archived":
+                continue
+            for link in record.get("calendar_links") or []:
+                if isinstance(link, dict) and str(link.get("uid") or "") == clean_uid and str(link.get("source_id") or "") == clean_source:
+                    return {"state": "ready", "relationship": self._relationship_view(record)}
+        return {"state": "ready", "relationship": None}
+
     # -- Follow-through projection -------------------------------------------------
 
     def list_cards(self, principal: Any, *, owner: str | None = None) -> list[FollowThroughCard]:
@@ -507,7 +630,7 @@ class PeopleService:
 
     @staticmethod
     def _relationship_view(record: dict[str, Any]) -> dict[str, Any]:
-        return {key: record.get(key) for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "project_refs", "state", "created_at", "updated_at")}
+        return {key: record.get(key) for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "project_refs", "calendar_links", "state", "created_at", "updated_at")}
 
     @staticmethod
     def _entry_view(record: dict[str, Any]) -> dict[str, Any]:
