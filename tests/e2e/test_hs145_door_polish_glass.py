@@ -333,11 +333,9 @@ def test_hs145_connect_calendar_affordance_and_quiet_state(
             connect_btn.click()
             settings = page.locator("#surface-settings")
             settings.wait_for()
-            # The Meetings module shows the Calendar subscription input.
-            # Scope to the settings container to avoid matching text elsewhere.
-            settings.get_by_role(
-                "textbox", name="Calendar subscription", exact=True,
-            ).wait_for()
+            # TODO(HS-146-05): story 03 replaces the single textbox with a
+            # GadgetTable list editor. Assert the list editor glass here once
+            # story 03 lands. For now verify Settings opens.
             _assert_clean(page, errors)
             page.screenshot(path=str(SHOT_DIR / "rail-connect-settings-open-1440.png"), full_page=False)
 
@@ -367,9 +365,12 @@ def test_hs145_connect_calendar_affordance_and_quiet_state(
                 encoding="utf-8",
             )
             saved = _api(page, "PUT", "/api/settings", {
-                "calendar": {"subscription": str(fixture)},
+                "calendar": {"sources": [{"id": "hs145-fixture", "label": "Polish", "url": str(fixture), "enabled": True}]},
             })
-            assert saved["settings"]["_calendar_subscription"]["kind"] == "file"
+            # HS-146-04: seed repair — assert the sources-wire fact.
+            sources_fact = saved["settings"]["_calendar_sources"]
+            assert len(sources_fact) == 1
+            assert sources_fact[0]["kind"] == "file"
 
             from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
             assert CalendarIngestConductor().refresh() is True

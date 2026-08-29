@@ -456,6 +456,7 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
     ("holdspeak/intel/engine.py", "MeetingIntel._chat_completion_text"): "L: the ONE non-streaming completion open",
     ("holdspeak/intel/engine.py", "MeetingIntel._chat_completion_stream"): "L: the ONE streaming completion open",
     ("holdspeak/intel/engine.py", "MeetingIntel.run_prompt"): "L: the canonical prompt leaf an adapter dispatches",
+    ("holdspeak/intel/engine.py", "MeetingIntel.run_prompt_messages"): "L: the multi-part (vision) prompt leaf the VisionPromptAdapter dispatches (HS-146-07)",
     ("holdspeak/intel/engine.py", "MeetingIntel._analyze_once"): "L: the analysis leaf an admitted meeting child dispatches",
     ("holdspeak/intel/engine.py", "MeetingIntel._analyze_stream"): "L: the streaming analysis leaf an admitted meeting child dispatches",
     ("holdspeak/intel/engine.py", "MeetingIntel.generate_title"): "L: the auto-title leaf an admitted child dispatches",
@@ -700,7 +701,9 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # (the queue worker plus its three DeferredIntelJob closures).
     # HS-143-10 moves the legacy issued-handle leaf behind its one precise
     # product façade; qualified ToolTurn execution remains foundation-owned.
-    assert len(sites) == 102
+    # HS-146-07 adds the one vision prompt leaf (run_prompt_messages), the
+    # multi-part sibling of run_prompt the VisionPromptAdapter dispatches.
+    assert len(sites) == 103
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
     assert counts["finding"] == 0

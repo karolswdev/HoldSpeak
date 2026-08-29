@@ -1,4 +1,4 @@
-"""Bounded background refresh of the one configured ICS projection (HS-144-02).
+"""Bounded background refresh of configured ICS projections (HS-144-02, HS-146-01).
 
 This conductor owns only calendar source I/O, projection replacement, and the
 existing kernel receipts that make failed or skipped untrusted input visible.
@@ -17,8 +17,13 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .calendar_ingest import MAX_FEED_BYTES, parse_calendar_bytes
-from .config import Config, calendar_subscription_revision, validate_calendar_subscription
-from .config.integrations import CALENDAR_REFRESH_SECONDS
+from .config import (
+    Config,
+    calendar_source_revision,
+    calendar_subscription_revision,
+    validate_calendar_subscription,
+)
+from .config.integrations import CALENDAR_REFRESH_SECONDS, CalendarSource, _source_label
 from .logging_config import get_logger
 
 
@@ -130,7 +135,7 @@ class CalendarSourceReader:
 
 
 class CalendarIngestConductor:
-    """Refresh the calendar projection at boot and then every fifteen minutes."""
+    """Refresh calendar projections at boot and then every fifteen minutes."""
 
     def __init__(
         self,
@@ -167,31 +172,58 @@ class CalendarIngestConductor:
         log.info("Calendar ingest conductor stopped")
 
     def refresh(self) -> bool:
-        """Perform one contained refresh; return whether a projection was applied."""
+        """Perform one contained refresh; return whether any projection was applied."""
         try:
             config = self._config_loader()
-            subscription = validate_calendar_subscription(config.calendar.subscription)
         except Exception as exc:
             self._write_refresh_failure("invalid_config", error_class="invalid_config")
             log.warning("Calendar configuration reload failed: %s", exc)
             return False
-        if not subscription:
+
+        sources = [s for s in config.calendar.sources if s.enabled]
+        if not sources:
             return False
 
-        revision = calendar_subscription_revision(subscription)
+        any_applied = False
+        enabled_ids = [s.id for s in sources]
+        for source in sources:
+            if self._refresh_source(source):
+                any_applied = True
+
         try:
-            raw = self._read_source(subscription)
+            self._get_db().calendar_events.delete_sources_not_in(enabled_ids)
+        except Exception as exc:
+            log.error("Calendar orphan cleanup failed: %s", exc)
+
+        return any_applied
+
+    def _refresh_source(self, source: CalendarSource) -> bool:
+        """Fetch, parse, and replace projection for one source."""
+        try:
+            url = validate_calendar_subscription(source.url)
+        except Exception as exc:
+            self._write_refresh_failure(
+                source.id, error_class="invalid_config"
+            )
+            log.warning("Calendar source %s validation failed: %s", source.id, exc)
+            return False
+        if not url:
+            return False
+
+        revision = calendar_source_revision(source.id, url)
+        try:
+            raw = self._read_source(url)
         except CalendarSourceError as exc:
             self._write_refresh_failure(
                 revision,
                 error_class=exc.error_class,
                 redirect_target=exc.redirect_target,
             )
-            log.warning("Calendar refresh source failure: %s", exc.error_class)
+            log.warning("Calendar refresh source failure (%s): %s", source.id, exc.error_class)
             return False
         except Exception as exc:
             self._write_refresh_failure(revision, error_class="calendar_source_unexpected")
-            log.exception("Calendar source reader failed unexpectedly: %s", exc)
+            log.exception("Calendar source reader failed unexpectedly (%s): %s", source.id, exc)
             return False
 
         now_epoch = self._clock()
@@ -202,16 +234,20 @@ class CalendarIngestConductor:
         )
         if not result.succeeded:
             self._write_refresh_failure(revision, error_class=result.feed_error or "calendar_feed_failed")
-            log.warning("Calendar feed parse failure: %s", result.feed_error)
+            log.warning("Calendar feed parse failure (%s): %s", source.id, result.feed_error)
             return False
 
         try:
             self._get_db().calendar_events.replace_projection(
-                revision, result.events, seen_at=now_epoch
+                revision,
+                result.events,
+                seen_at=now_epoch,
+                source_id=source.id,
+                source_label=_source_label(source),
             )
         except Exception as exc:
             self._write_refresh_failure(revision, error_class="calendar_projection_failed")
-            log.exception("Calendar projection replacement failed: %s", exc)
+            log.exception("Calendar projection replacement failed (%s): %s", source.id, exc)
             return False
         for skip in result.skips:
             self._write_event_skip(revision, skip.event_ref, skip.reason)

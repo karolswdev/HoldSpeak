@@ -17,8 +17,9 @@ export const AUDIO_SUFFIXES = [
   ".webm",
   ".mp4",
 ] as const;
+export const SCREENSHOT_SUFFIXES = [".png", ".jpg", ".jpeg", ".webp"] as const;
 
-export type GlassFileKind = "transcript" | "audio";
+export type GlassFileKind = "transcript" | "audio" | "screenshot";
 
 export function glassFileKind(name: string): GlassFileKind | null {
   const dot = name.lastIndexOf(".");
@@ -30,6 +31,9 @@ export function glassFileKind(name: string): GlassFileKind | null {
   if ((AUDIO_SUFFIXES as readonly string[]).includes(suffix)) {
     return "audio";
   }
+  if ((SCREENSHOT_SUFFIXES as readonly string[]).includes(suffix)) {
+    return "screenshot";
+  }
   return null;
 }
 
@@ -38,6 +42,6 @@ export function glassFileRefusal(name: string): string {
   const dot = name.lastIndexOf(".");
   const suffix = dot >= 0 ? name.slice(dot).toLowerCase() : "";
   return suffix
-    ? `Can't import ${suffix}: transcript (.vtt .srt .txt) or audio only`
-    : "Can't import a file without a type: transcript or audio only";
+    ? `Can't import ${suffix}: transcript (.vtt .srt .txt), audio, or screenshot (.png .jpg .webp) only`
+    : "Can't import a file without a type: transcript, audio, or screenshot only";
 }

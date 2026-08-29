@@ -25,7 +25,8 @@ TOOLS: list[dict[str, Any]] = [
         "name": "settings.update",
         "description": (
             "Update HoldSpeak settings with a partial patch. EGRESS: an HTTPS "
-            "calendar.subscription is fetched by the hub without credentials or headers; "
+            "calendar.sources is a list of {id, label, url, enabled} ICS sources, "
+            "each fetched by the hub without credentials or headers; "
             "intel_provider and intel_profile_id are retired routing controls; "
             "_placement inference assignments and secrets cannot be written through "
             "this tool. Echo _revision from settings.get for optimistic concurrency; omit it "

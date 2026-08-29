@@ -810,6 +810,26 @@
       ]
     },
     {
+      "path": "/api/calendar/snapshot",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.calendar_snapshot",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calendar/snapshot/confirm",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.calendar_snapshot",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/chains",
       "methods": [
         "GET"

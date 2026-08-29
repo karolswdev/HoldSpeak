@@ -3015,3 +3015,22 @@ button.surface-edit-in-place:hover {
   align-self: center;
   pointer-events: auto;
 }
+
+/* HS-146-03: calendar sources list editor — column proportions and
+   egress chip strip beneath the table. */
+.prefs-calendar-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+.prefs-calendar-sources .gadget-table-head,
+.prefs-calendar-sources .gadget-table-row {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 5fr) 32px max-content;
+}
+.prefs-calendar-egress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 0;
+}

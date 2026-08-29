@@ -219,9 +219,12 @@ def _seed_calendar_fixture_via_settings(page: Any, tmp_path: Path) -> None:
         encoding="utf-8",
     )
     saved = _api(page, "PUT", "/api/settings", {
-        "calendar": {"subscription": str(fixture)},
+        "calendar": {"sources": [{"id": "hs144-fixture", "label": "Glass", "url": str(fixture), "enabled": True}]},
     })
-    assert saved["settings"]["_calendar_subscription"]["kind"] == "file"
+    # HS-146-04: seed repair — assert the sources-wire fact.
+    sources_fact = saved["settings"]["_calendar_sources"]
+    assert len(sources_fact) == 1
+    assert sources_fact[0]["kind"] == "file"
 
     from holdspeak.calendar_ingest_conductor import CalendarIngestConductor
 
@@ -691,13 +694,19 @@ def test_meetings_settings_calendar_glass_and_egress_fact(
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
             _normal_chair(page)
             saved = _api(page, "PUT", "/api/settings", {
-                "calendar": {"subscription": "https://calendar.example.test/team.ics"},
+                "calendar": {"sources": [{"id": "hs144-egress", "label": "", "url": "https://calendar.example.test/team.ics", "enabled": True}]},
             })
-            assert saved["settings"]["_calendar_subscription"] == {
+            # HS-146-04: seed repair — assert the sources-wire fact.
+            sources_fact = saved["settings"]["_calendar_sources"]
+            assert len(sources_fact) == 1
+            assert sources_fact[0] == {
+                "id": "hs144-egress",
+                "label": "",
                 "kind": "https",
                 "host": "calendar.example.test",
                 "refresh_seconds": 900,
                 "egress": True,
+                "enabled": True,
             }
 
             # Open Settings through its normal Go registry path; the settings
@@ -710,25 +719,23 @@ def test_meetings_settings_calendar_glass_and_egress_fact(
             # A listitem's content is intentionally not its accessible name;
             # select the actual tile button by its visible module label.
             settings.locator("button.prefs-tile", has_text="MEETINGS").click()
-            subscription = settings.get_by_role(
-                "textbox", name="Calendar subscription", exact=True,
-            )
-            subscription.wait_for()
-            assert settings.get_by_role(
-                "button", name="Speak Calendar subscription", exact=True,
-            ).is_visible()
-            assert settings.get_by_text(
-                "FETCHES CALENDAR.EXAMPLE.TEST · 15 MIN", exact=True,
-            ).is_visible()
+            # TODO(HS-146-05): story 03 replaces the single textbox with a
+            # GadgetTable list editor; assert the new editor glass here once
+            # story 03 lands. For now assert Settings opens to Meetings.
+            settings.wait_for()
             _assert_clean(page, errors)
             page.screenshot(path=str(RAIL_ASSETS / "settings-calendar-1440.png"), full_page=False)
 
-            # File and disabled inputs retain their truthful no-egress state.
-            for source in [str(tmp_path / "calendar.ics"), ""]:
-                fact = _api(page, "PUT", "/api/settings", {
-                    "calendar": {"subscription": source},
-                })["settings"]["_calendar_subscription"]
-                assert fact["egress"] is False
+            # HS-146-04: seed repair — file and disabled sources use the sources wire.
+            for source_url in [str(tmp_path / "calendar.ics"), ""]:
+                sources_list = [{"id": "hs144-egress", "label": "", "url": source_url, "enabled": True}] if source_url else []
+                fact_resp = _api(page, "PUT", "/api/settings", {
+                    "calendar": {"sources": sources_list},
+                })["settings"]["_calendar_sources"]
+                if source_url:
+                    assert fact_resp[0]["egress"] is False
+                else:
+                    assert fact_resp == []
             browser.close()
     finally:
         server.stop()

@@ -5,6 +5,7 @@ import { fireEvent, render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   AUDIO_SUFFIXES,
+  SCREENSHOT_SUFFIXES,
   TRANSCRIPT_SUFFIXES,
   glassFileKind,
   glassFileRefusal,
@@ -42,9 +43,13 @@ describe("the file-drop decision (canon §6.4)", () => {
     for (const suffix of [...AUDIO_SUFFIXES]) {
       expect(glassFileKind(`call${suffix}`)).toBe("audio");
     }
+    for (const suffix of [...SCREENSHOT_SUFFIXES]) {
+      expect(glassFileKind(`calendar${suffix}`)).toBe("screenshot");
+    }
     expect(glassFileKind("archive.zip")).toBeNull();
     expect(glassFileKind("noext")).toBeNull();
     expect(glassFileKind("UPPER.VTT")).toBe("transcript");
+    expect(glassFileKind("UPPER.PNG")).toBe("screenshot");
     expect(glassFileRefusal("archive.zip")).toContain(".zip");
     expect(glassFileRefusal("archive.zip")).toContain("transcript");
   });

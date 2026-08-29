@@ -91,7 +91,24 @@ export type Macro = {
 
 /** SettingsCore */
 export type SecretState = { configured?: boolean; destination?: string };
-export type CalendarSettings = { subscription?: string };
+export type CalendarSource = {
+  id: string;
+  label: string;
+  url: string;
+  enabled: boolean;
+};
+export type CalendarSettings = { sources?: CalendarSource[] };
+export type CalendarSourceFact = {
+  id?: string;
+  kind?: "disabled" | "file" | "https" | "invalid";
+  host?: string | null;
+  refresh_seconds?: number | null;
+  egress?: boolean;
+  label?: string;
+  enabled?: boolean;
+};
+// HS-146-03 retirement: the single-source legacy fact kept for the walk
+// script and e2e seeds until story 04 retires them.
 export type CalendarSubscriptionFact = {
   kind?: "disabled" | "file" | "https" | "invalid";
   host?: string | null;
@@ -163,6 +180,7 @@ export interface SettingsResponse {
   _revision?: string;
   _secrets?: Record<string, SecretState>;
   _calendar_subscription?: CalendarSubscriptionFact;
+  _calendar_sources?: CalendarSourceFact[];
   calendar?: CalendarSettings;
   dictation?: DictationSettings;
   hotkey?: Record<string, unknown>;

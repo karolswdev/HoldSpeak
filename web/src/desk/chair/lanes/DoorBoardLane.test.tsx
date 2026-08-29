@@ -292,6 +292,62 @@ describe("DoorBoardLane", () => {
     expect(screen.queryByRole("button", { name: "Connect calendar" })).toBeNull();
   });
 
+  /* HS-146-04 — provenance chip rules. */
+  it("shows provenance chips on EVENT rows when >1 distinct source_id", async () => {
+    const multi: DoorProjection = {
+      ...projection,
+      upcoming: [
+        {
+          id: "cal-a", source: "calendar_event", target_ref: "calendar_event:cal-a",
+          title: "Work standup", starts_at: "2099-08-28T09:00:00Z", ends_at: "2099-08-28T09:30:00Z",
+          location: null, meeting_url: null, state: "scheduled",
+          source_id: "src-work", source_label: "Work",
+        },
+        {
+          id: "cal-b", source: "calendar_event", target_ref: "calendar_event:cal-b",
+          title: "Personal dentist", starts_at: "2099-08-28T11:00:00Z", ends_at: "2099-08-28T11:30:00Z",
+          location: null, meeting_url: null, state: "scheduled",
+          source_id: "src-personal", source_label: "Personal",
+        },
+        {
+          id: "rec-1", source: "scheduled_recording", target_ref: "scheduled_recording:rec-1",
+          title: "Some recording", starts_at: "2099-08-28T10:00:00Z", ends_at: "2099-08-28T10:30:00Z",
+          location: null, meeting_url: null, state: "idle",
+        },
+      ],
+    };
+    mockDoor(multi);
+    renderLane();
+    await screen.findByText("Work standup");
+    // Both EVENT rows carry their provenance chip text (uppercase).
+    expect(screen.getByText("WORK")).toBeInTheDocument();
+    expect(screen.getByText("PERSONAL")).toBeInTheDocument();
+    // The chips live inside the door-upcoming-provenance class.
+    const chips = document.querySelectorAll(".door-upcoming-provenance");
+    expect(chips).toHaveLength(2);
+    // The scheduled_recording row must NOT get a chip.
+    const recRow = document.querySelector('[data-upcoming-source="scheduled_recording"]');
+    expect(recRow?.querySelector(".door-upcoming-provenance")).toBeNull();
+  });
+
+  it("omits provenance chips when only 1 source_id exists", async () => {
+    const single: DoorProjection = {
+      ...projection,
+      upcoming: [
+        {
+          id: "cal-only", source: "calendar_event", target_ref: "calendar_event:cal-only",
+          title: "Only event", starts_at: "2099-08-28T09:00:00Z", ends_at: "2099-08-28T09:30:00Z",
+          location: null, meeting_url: null, state: "scheduled",
+          source_id: "src-one", source_label: "Work",
+        },
+      ],
+    };
+    mockDoor(single);
+    renderLane();
+    await screen.findByText("Only event");
+    expect(document.querySelectorAll(".door-upcoming-provenance")).toHaveLength(0);
+  });
+
   it("connect-calendar click opens Settings scoped to Meetings", async () => {
     const openSurfaceWindow = vi.spyOn(useSurfaceWindows.getState(), "openSurfaceWindow");
     const unconfigured: DoorProjection = {

@@ -18,7 +18,8 @@ Studio, and Settings are focused workrooms.
 - **[Getting Started](./GETTING_STARTED.md)**: install, grant permissions, and land
   your first hold-to-talk dictation in another app.
 - **[The Door](./USER_GUIDE.md#the-door)**: the post-first-value arrival.
-  Its board, upcoming rail, and calendar subscription.
+  Its board, upcoming rail, and multi-source calendar with per-source
+  provenance and screenshot import.
 - **[The Desk](./WEB_DESK.md)**: the Floor's spatial world, its objects, and
   every verb (create, open, file, record, ask, preview).
 - **[Desk memory](./DESK_MEMORY.md)**: the shared attention and receipt read

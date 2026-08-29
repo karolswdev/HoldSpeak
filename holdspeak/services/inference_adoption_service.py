@@ -60,6 +60,8 @@ ADOPTED_CAPABILITIES = (
     "background.cadence_draft",
     "decision.promotion_draft",
     "delivery.pr_review_draft",
+    # HS-146-07: calendar snapshot extraction via vision.
+    "calendar.snapshot_extract",
     # HS-143-10 placement adopters. Tool turns retain their separate qualified
     # evidence provider in ToolTurnFoundationService, so they are deliberately
     # absent here.

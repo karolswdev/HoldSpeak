@@ -484,17 +484,100 @@ names a lawful verb; choosing it invokes that verb and returns its Receipt in
 flow. Moving or completing a card is not a cosmetic board-position edit.
 
 The Door's **Upcoming** rail is one chronological timeline. **EVENT** rows
-come from the calendar subscription. **SCHEDULED RECORDING** rows name a
+come from your calendar sources. **SCHEDULED RECORDING** rows name a
 recording the hub will start. A calendar event is not a recording, and a
 schedule is not an invitation. The rail can be empty or contain only
 schedules. Meetings keeps live and recent meetings.
 
-At phone width, the compact **Go** menu opens applications. To add a calendar
-source, open **Settings → Meetings → Calendar** and set **Subscription** to a
-local ICS file path or HTTPS URL. The Door projects the next 14 days and
-refreshes the source at boot and every 15 minutes. An HTTPS subscription shows
-its fetch egress chip. See [Security & Privacy](SECURITY.md#4-egress-points-everywhere-data-can-leave-the-machine)
-for the source boundary.
+At phone width, the compact **Go** menu opens applications.
+
+### Calendars
+
+Your calendar lives in one or more ICS sources (file paths or HTTPS URLs).
+The Door's Upcoming rail projects the next 14 days from every enabled source
+into one timeline. The hub refreshes each source at boot and every 15 minutes;
+between refreshes the last good projection stays.
+
+#### Connecting your first calendar
+
+Two doors lead to the same place:
+
+1. **From the Door.** When no source is connected the rail reads
+   **No calendar connected.** and offers a **Connect calendar** button. It opens
+   **Settings, Meetings, Calendar**.
+2. **From Settings directly.** Open **Settings, Meetings, Calendar**. The
+   **Sources** table starts empty.
+
+Choose **+ ADD SOURCE**. A row appears with three fields: **LABEL**, **URL**,
+and **ON** (the enable toggle). Set **URL** to a local ICS file path or an
+HTTPS URL. Set **LABEL** to a short name you will recognize on the rail (for
+example "Work" or "Personal"). **ON** enables the source.
+
+A per-source egress chip appears below the table for every HTTPS source,
+stating the host the hub fetches. A local file source has no egress chip
+because nothing leaves the machine. See
+[Security & Privacy](SECURITY.md#4-egress-points-everywhere-data-can-leave-the-machine)
+for the wire posture.
+
+#### Adding a second source
+
+Choose **+ ADD SOURCE** again. Each source gets its own row in the table.
+Sources refresh independently: a broken source keeps its last good events on the
+rail while every healthy source refreshes normally.
+
+#### What the rail shows
+
+Each **EVENT** row shows the title, a **STARTS** time, and (when present) the
+location and meeting link. When more than one source is configured, each event
+row carries a provenance chip: a mono uppercase label naming the source (the
+label you gave it, falling back to the hostname of the URL, falling back to
+**LOCAL** for file sources). When only one source is connected the chip is
+omitted.
+
+If the same event appears in two feeds it shows twice, each with its own
+provenance chip. Cross-feed UIDs are not globally unique, so HoldSpeak does not
+merge duplicates silently.
+
+#### Breakage, refresh, and cleanup
+
+A source that fails to refresh (network error, timeout, malformed feed) retains
+its last good projection. The failure is a named receipt; healthy sources are
+never touched by a failed source.
+
+The refresh cadence is boot plus every 15 minutes. Disabling a source (clearing
+**ON**) removes its events from the rail at the next refresh tick. Removing a
+source (choosing **REMOVE?** on its row) does the same. Re-enabling a disabled
+source refetches it on the next tick.
+
+#### Importing from a calendar screenshot
+
+If your calendar lives behind a login (Outlook/O365) and has no public ICS
+feed, you can import a week by screenshot.
+
+1. Take a screenshot of the week view in your calendar app. PNG, JPEG, and
+   WebP are accepted; up to three screenshots of the same week can be merged.
+2. In **Settings, Meetings, Calendar**, choose **IMPORT SCREENSHOT** (or drop
+   the screenshot onto the Desk glass).
+3. The hub sends the image to the vision model assigned to the
+   `calendar.snapshot_extract` capability. If no vision model is assigned, the
+   import is refused with a named receipt. The egress badge on the extraction
+   result tells you where the screenshot went (local if the model runs on this
+   machine, cloud if it runs off it).
+4. A review window opens. The extracted events are editable: title, day, start
+   time, end time, and location. A **Week anchor** field at the top names the
+   Monday of the displayed week (YYYY-MM-DD format). The week anchor is never
+   silently guessed: if the vision model could not read a date header, the
+   field is empty and you must set it.
+5. Review the events and the anchor. Choose **CONFIRM** to write them, or close
+   the window to cancel (nothing is written).
+6. On confirm, the hub generates a local `.ics` file under
+   `~/.local/share/holdspeak/calendar-snapshots/` and registers it as a file
+   source labeled **O365 SNAPSHOT**. The generated `.ics` passes through the
+   same bounded parser every ICS source uses (the parser is the one trust
+   boundary; model output is treated as hostile input).
+7. The rail shows the imported events under the **O365 SNAPSHOT** provenance
+   chip. Importing a new screenshot for the same week replaces that source's
+   events.
 
 ## Schedule A Recording
 

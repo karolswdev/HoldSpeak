@@ -530,6 +530,25 @@
   border: 1px dashed var(--border);
   border-radius: var(--radius-sm);
 }
+/* HS-146-04 — provenance chip on EVENT rows when >1 calendar source. */
+.door-upcoming-provenance {
+  display: inline-block;
+  /* A grid child stretches by default; a chip hugs its label. */
+  justify-self: start;
+  width: max-content;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  grid-column: 2 / -1;
+}
 /* HS-145-02 — connect-calendar affordance on the empty rail. */
 .door-upcoming-empty--connect { justify-content: space-between; gap: var(--space-2); }
 @media (max-width: 640px) {

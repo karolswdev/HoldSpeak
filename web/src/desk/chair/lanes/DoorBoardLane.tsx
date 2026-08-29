@@ -46,6 +46,9 @@ export type DoorUpcomingItem = {
   location: string | null;
   meeting_url: string | null;
   state: string;
+  /* HS-146-04: rail provenance fields projected by _calendar_event_item. */
+  source_id?: string;
+  source_label?: string;
 };
 
 export type DoorProjection = {
@@ -242,7 +245,20 @@ function upcomingTitle(item: DoorUpcomingItem): string {
   return item.title.trim() || (item.source === "calendar_event" ? "Untitled event" : "Untitled scheduled recording");
 }
 
+/** HS-146-04: true when the upcoming list spans >1 distinct calendar source. */
+function hasMultipleSources(upcoming: DoorUpcomingItem[]): boolean {
+  const ids = new Set<string>();
+  for (const item of upcoming) {
+    if (item.source === "calendar_event" && item.source_id) {
+      ids.add(item.source_id);
+      if (ids.size > 1) return true;
+    }
+  }
+  return false;
+}
+
 function UpcomingRail({ upcoming, calendarConfigured }: { upcoming: DoorUpcomingItem[]; calendarConfigured: boolean }) {
+  const showChips = hasMultipleSources(upcoming);
   return (
     <section className="door-upcoming-rail" aria-labelledby="door-upcoming-title">
       <header className="door-upcoming-head">
@@ -260,6 +276,10 @@ function UpcomingRail({ upcoming, calendarConfigured }: { upcoming: DoorUpcoming
                 <span className="door-upcoming-kind">{upcomingKind(item)}</span>
                 <strong>{upcomingTitle(item)}</strong>
                 {time ? <span className="door-upcoming-time">STARTS {time}</span> : null}
+                {/* HS-146-04: provenance chip on EVENT rows when >1 source. */}
+                {showChips && item.source === "calendar_event" && item.source_label ? (
+                  <span className="door-upcoming-provenance">{item.source_label.toUpperCase()}</span>
+                ) : null}
                 {item.location ? <span className="door-upcoming-detail">{item.location}</span> : null}
                 {item.meeting_url ? (
                   <a className="door-upcoming-link" href={item.meeting_url} target="_blank" rel="noreferrer">

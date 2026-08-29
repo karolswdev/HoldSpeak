@@ -58,12 +58,15 @@ class DoorService:
         }
 
     def _calendar_configured(self) -> bool:
-        """HS-145-02: live config read — True iff a valid subscription exists."""
+        """HS-146-01: True iff at least one enabled source passes validation."""
         if self._config_loader is None:
             return False
         try:
             config = self._config_loader()
-            return bool(validate_calendar_subscription(config.calendar.subscription))
+            for source in config.calendar.sources:
+                if source.enabled and validate_calendar_subscription(source.url):
+                    return True
+            return False
         except Exception:
             return False
 
@@ -195,7 +198,11 @@ class DoorService:
 
     @staticmethod
     def _calendar_event_item(event: CalendarEvent) -> dict[str, Any]:
-        """Map the persisted projection into Story 01's reserved timeline row."""
+        """Map the persisted projection into Story 01's reserved timeline row.
+
+        HS-146-04: source_id and source_label are projected so the rail can
+        render provenance chips when >1 distinct source is configured.
+        """
         return {
             "id": event.id,
             "source": "calendar_event",
@@ -206,6 +213,8 @@ class DoorService:
             "location": event.location,
             "meeting_url": event.meeting_url,
             "state": "scheduled",
+            "source_id": event.source_id,
+            "source_label": event.source_label,
         }
 
     @staticmethod

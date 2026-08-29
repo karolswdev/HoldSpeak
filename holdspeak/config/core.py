@@ -23,6 +23,7 @@ from .device import DeviceConfig, MeshConfig, PresenceConfig, WakeWordConfig
 from .integrations import (
     CadenceConfig,
     CalendarConfig,
+    CalendarSource,
     RailsObserverConfig,
     TelegramConfig,
     ThoughtsConfig,
@@ -186,6 +187,24 @@ def migrate_legacy_endpoints(config: "Config", path: Optional[Path] = None, *, d
 # config files containing them load clean without error.
 
 
+def _coerce_calendar(data: dict) -> CalendarConfig:
+    """Build CalendarConfig with one-shot migration from old ``subscription`` key.
+
+    When the persisted shape is ``{subscription: str}`` (pre-146), mint a single
+    CalendarSource.  The old key is consumed; the next ``save()`` writes only
+    ``sources``.
+    """
+    if "sources" in data:
+        return CalendarConfig(sources=data["sources"])
+    old = str(data.get("subscription", "") or "").strip()
+    if old:
+        import uuid as _uuid
+        return CalendarConfig(sources=[
+            CalendarSource(id=str(_uuid.uuid4()), label="", url=old, enabled=True)
+        ])
+    return CalendarConfig()
+
+
 @dataclass
 class Config:
     """Main configuration container."""
@@ -270,9 +289,7 @@ class Config:
                 thoughts=_coerce(
                     ThoughtsConfig, data.get("thoughts", {}) or {}, section="thoughts"
                 ),
-                calendar=_coerce(
-                    CalendarConfig, data.get("calendar", {}) or {}, section="calendar"
-                ),
+                calendar=_coerce_calendar(data.get("calendar", {}) or {}),
             )
             # HS-112-01: the one-time legacy-endpoint migration runs only on
             # the real install's config (an explicit path is a test/tool

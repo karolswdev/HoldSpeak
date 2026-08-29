@@ -10,7 +10,7 @@ import type {
   SecretState,
   SettingsResponse,
   AuthorityPolicyResponse,
-  CalendarSubscriptionFact,
+  CalendarSourceFact,
 } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
@@ -30,6 +30,7 @@ import {
   StringGadget,
   type CycleOption,
 } from "../../desk/surface/gadgets";
+import { openSurface } from "../../desk/shell";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
 import { ModelsModule } from "./settingsModels";
@@ -116,20 +117,26 @@ export function projectPendingSettingsChanges(
   );
 }
 
-/** Render only the server's declared off-device calendar fact. */
-export function calendarEgressChipProps(
-  subscription: CalendarSubscriptionFact | undefined,
-): { label: string; title: string; scope: "cloud" } | null {
-  if (!subscription?.egress || !subscription.host || !subscription.refresh_seconds)
-    return null;
-  const minutes = Math.round(subscription.refresh_seconds / 60);
-  if (minutes < 1) return null;
-  const host = subscription.host.toUpperCase();
-  return {
-    label: `FETCHES ${host} · ${minutes} MIN`,
-    title: `Fetches calendar from ${subscription.host} every ${minutes} minutes. No credentials or headers are sent.`,
-    scope: "cloud",
-  };
+/** Render one egress chip per source with off-device reach. */
+export function calendarSourceEgressChips(
+  facts: CalendarSourceFact[] | undefined,
+): Array<{ id: string; label: string; title: string; scope: "cloud" }> {
+  if (!facts) return [];
+  const chips: Array<{ id: string; label: string; title: string; scope: "cloud" }> = [];
+  for (const fact of facts) {
+    if (!fact.egress || !fact.host || !fact.refresh_seconds || !fact.enabled) continue;
+    const minutes = Math.round(fact.refresh_seconds / 60);
+    if (minutes < 1) continue;
+    const host = fact.host.toUpperCase();
+    const name = fact.label ? fact.label.toUpperCase() : host;
+    chips.push({
+      id: fact.id ?? host,
+      label: `FETCHES ${name} · ${host} · ${minutes} MIN`,
+      title: `Fetches ${fact.label || fact.host} every ${minutes} minutes. No credentials or headers are sent.`,
+      scope: "cloud",
+    });
+  }
+  return chips;
 }
 
 /* HS-101 round 4 — the glass never wears wire keys: curated names
@@ -763,7 +770,23 @@ function SettingsFace({ hero, scope }: CoreProps) {
         );
       /* ── Meetings: pointer tile + calendar + actuators + RAW ── */
       case "meetings": {
-        const calendarEgress = calendarEgressChipProps(data._calendar_subscription);
+        const sourcesPath: string[] = ["calendar", "sources"];
+        const sources: Array<{
+          id: string;
+          label: string;
+          url: string;
+          enabled: boolean;
+        }> = (val(sourcesPath) as any[]) ?? [];
+        const egressChips = calendarSourceEgressChips(data._calendar_sources);
+        const patchSource = (
+          index: number,
+          patch: Record<string, unknown>,
+        ) => {
+          const next = sources.map((s, i) =>
+            i === index ? { ...s, ...patch } : s,
+          );
+          update(sourcesPath, next);
+        };
         return (
           <>
             <GadgetGroup label="Capture + export">
@@ -774,14 +797,95 @@ function SettingsFace({ hero, scope }: CoreProps) {
               </div>
             </GadgetGroup>
             <GadgetGroup label="Calendar">
-              <GadgetRow label="Subscription" highlight={hl(["calendar", "subscription"])}>
-                <StringGadget
-                  label="Calendar subscription"
-                  value={String(val(["calendar", "subscription"]) ?? "")}
-                  placeholder="ICS file path or HTTPS URL"
-                  onChange={(next) => update(["calendar", "subscription"], next)}
-                />
-                {calendarEgress ? <EgressChip {...calendarEgress} /> : null}
+              <GadgetRow wide label="Sources" highlight={hl(sourcesPath)}>
+                <div className="prefs-calendar-sources">
+                  <GadgetTable
+                    head={["LABEL", "URL", "ON"]}
+                    deleteLabel="REMOVE?"
+                    onDelete={(index) =>
+                      update(
+                        sourcesPath,
+                        sources.filter((_, row) => row !== index),
+                      )
+                    }
+                    onAdd={() =>
+                      update(sourcesPath, [
+                        ...sources,
+                        {
+                          id: crypto.randomUUID(),
+                          label: "",
+                          url: "",
+                          enabled: true,
+                        },
+                      ])
+                    }
+                    addLabel="+ ADD SOURCE"
+                    rowKey={(index) => sources[index]?.id ?? String(index)}
+                    rows={sources.map((entry, index) => [
+                      <StringGadget
+                        key="label"
+                        label={`Source ${index + 1} label`}
+                        value={entry.label ?? ""}
+                        placeholder="Work"
+                        onChange={(next) => patchSource(index, { label: next })}
+                      />,
+                      <StringGadget
+                        key="url"
+                        label={`Source ${index + 1} URL`}
+                        value={entry.url ?? ""}
+                        placeholder="ICS file or HTTPS URL"
+                        onChange={(next) => patchSource(index, { url: next })}
+                      />,
+                      <CheckGadget
+                        key="enabled"
+                        label={`Enable source ${index + 1}`}
+                        checked={entry.enabled ?? true}
+                        onChange={(next) =>
+                          patchSource(index, { enabled: next })
+                        }
+                      />,
+                    ])}
+                  />
+                  {egressChips.length > 0
+                    ? <div className="prefs-calendar-egress">
+                        {egressChips.map((chip) => (
+                          <EgressChip key={chip.id} {...chip} />
+                        ))}
+                      </div>
+                    : null}
+                  <Button
+                    dense
+                    onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file";
+                      input.accept = ".png,.jpg,.jpeg,.webp";
+                      input.multiple = true;
+                      input.onchange = async () => {
+                        const files = input.files;
+                        if (!files?.length) return;
+                        const body = new FormData();
+                        for (let i = 0; i < Math.min(files.length, 3); i++) {
+                          body.append("files", files[i]);
+                        }
+                        try {
+                          const result = await apiFetch<Record<string, unknown>>(
+                            "/api/calendar/snapshot",
+                            { method: "POST", body },
+                          );
+                          openSurface(
+                            "review-calendar-snapshot",
+                            JSON.stringify(result),
+                          );
+                        } catch {
+                          // Error surface handled by the review core
+                        }
+                      };
+                      input.click();
+                    }}
+                  >
+                    IMPORT SCREENSHOT
+                  </Button>
+                </div>
               </GadgetRow>
             </GadgetGroup>
             <GadgetGroup label="Actuators">

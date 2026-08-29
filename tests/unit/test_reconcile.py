@@ -95,6 +95,7 @@ def test_reconcile_adds_calendar_events_to_old_shape_without_touching_rows(
     """HS-144-02's additive calendar projection never rewrites old rows."""
     old_schema, substitutions = re.subn(
         r"\n-- HS-144-02: Calendar ingest is a replace-on-success ICS projection\.\n"
+        r"-- HS-146-01: source_id \+ source_label for multi-source plumbing\.\n"
         r"CREATE TABLE IF NOT EXISTS calendar_events \(.*?\n"
         r"ON calendar_events\(starts_at, id\);\n",
         "\n",
@@ -553,6 +554,54 @@ def test_fts_shadow_tables_excluded_from_reference() -> None:
         "segments_fts",
     ):
         assert fts_name not in ref, f"FTS virtual table {fts_name} should be excluded"
+
+
+# ── HS-146-01: calendar_events source_id + source_label column adds ──
+
+
+def test_reconcile_adds_source_columns_to_existing_calendar_events(
+    tmp_path: Path,
+) -> None:
+    """HS-146-01: source_id and source_label columns added to an existing DB with rows."""
+    old_schema = SCHEMA_SQL.replace(
+        "    subscription_revision TEXT NOT NULL,\n"
+        "    source_id TEXT NOT NULL DEFAULT '',\n"
+        "    source_label TEXT NOT NULL DEFAULT ''\n",
+        "    subscription_revision TEXT NOT NULL\n",
+    ).replace(
+        "ON calendar_events(source_id, uid, starts_at)",
+        "ON calendar_events(subscription_revision, uid, starts_at)",
+    )
+    assert "source_id" not in old_schema.split("calendar_events")[1].split(");")[0]
+    conn = sqlite3.connect(str(tmp_path / "old-calendar-columns.db"))
+    conn.row_factory = sqlite3.Row
+    try:
+        conn.executescript(old_schema)
+        conn.execute(
+            """INSERT INTO calendar_events
+               (id, uid, title, starts_at, ends_at, last_seen_at, subscription_revision)
+               VALUES ('ev1', 'uid1', 'Old event', '2026-08-27T10:00:00Z',
+                       '2026-08-27T11:00:00Z', 100.0, 'rev1')"""
+        )
+        conn.commit()
+
+        assert reconcile_schema(conn) is True
+
+        cols = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(calendar_events)").fetchall()
+        }
+        assert "source_id" in cols
+        assert "source_label" in cols
+
+        row = conn.execute(
+            "SELECT source_id, source_label, title FROM calendar_events WHERE id='ev1'"
+        ).fetchone()
+        assert row["source_id"] == ""
+        assert row["source_label"] == ""
+        assert row["title"] == "Old event"
+    finally:
+        conn.close()
 
 
 def test_fts_shadow_tables_not_altered(fresh_conn: sqlite3.Connection) -> None:
