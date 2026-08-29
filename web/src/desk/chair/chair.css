@@ -20,6 +20,25 @@
   min-height: calc(100dvh - var(--desk-snap-top) - var(--desk-snap-bottom));
 }
 
+/* HS-150-06 (owner catch) — the working band is law at EVERY height.
+   The populated Chair used to body-scroll at normal heights, sliding
+   lanes underneath the fixed dock and system bar; 144-04's containment
+   was gated to short screens on the premise that the normal-height
+   Chair fits all at once — a premise the four-lane Chair retired. The
+   Chair is capped to the band and the lane column owns its overflow;
+   the chrome never has content pass beneath it. */
+.chair:not(.chair-first-value) {
+  box-sizing: border-box;
+  height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
+  max-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
+}
+.chair:not(.chair-first-value) .chair-lanes {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-block: contain;
+}
+
 /* ── The capture hero slot (story 11 fills it with mic/record). ──── */
 .chair-hero {
   display: flex;
@@ -622,20 +641,9 @@
    Chair beneath the dock. The wider/normal-height Chair keeps its generous
    all-at-once scan. */
 @media (max-height: 720px) {
-  /* HS-144-04 — a populated short Chair remains a working-band surface, not
-     a page that runs beneath the fixed dock. The lane column owns overflow;
-     the regular-height Chair retains its generous all-at-once scan. */
-  .chair:not(.chair-first-value) {
-    box-sizing: border-box;
-    height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
-    max-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
-  }
-  .chair-lanes {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior-block: contain;
-  }
+  /* HS-144-04 — the chair-level containment moved to the base rules
+     (HS-150-06, every height); the short screen keeps its region caps so
+     each dense Door region stays independently browseable. */
   .door-board-viewport {
     max-block-size: min(30dvh, 14rem);
     overflow-y: auto;

@@ -276,6 +276,35 @@ def main() -> int:
                 np1.screenshot(path=str(SHOTS / "board-mapped-393.png"), full_page=True)
             finally:
                 n1.close()
+
+            # OWNER CATCH (2026-08-29): the working band is law at EVERY
+            # height. The desk body must never scroll — the lane column owns
+            # overflow, and nothing ever slides beneath the fixed dock.
+            for w, h, name in ((1440, 900, "1440"), (393, 852, "393")):
+                cc, cp = open_desk(width=w, height=h)
+                try:
+                    cp.locator('[data-testid="door-card-person-chip"]').first.wait_for(timeout=15000)
+                    probe = cp.evaluate(
+                        """() => {
+                          const doc = document.scrollingElement;
+                          const lanes = document.querySelector('.chair-lanes');
+                          const dock = document.querySelector('.desk-dock');
+                          lanes.scrollTop = lanes.scrollHeight;
+                          return {
+                            bodyScrolls: doc.scrollHeight > doc.clientHeight + 1,
+                            lanesScrollable: lanes.scrollHeight > lanes.clientHeight,
+                            lanesBottom: lanes.getBoundingClientRect().bottom,
+                            dockTop: dock ? dock.getBoundingClientRect().top : null,
+                          };
+                        }"""
+                    )
+                    if probe["bodyScrolls"]:
+                        failures.append(f"{name}: the desk BODY scrolls — content can pass beneath the dock ({probe})")
+                    if probe["dockTop"] is not None and probe["lanesBottom"] > probe["dockTop"] + 0.5:
+                        failures.append(f"{name}: the lane column runs beneath the dock ({probe})")
+                    cp.screenshot(path=str(SHOTS / f"band-contained-{name}.png"), full_page=False)
+                finally:
+                    cc.close()
             browser.close()
     finally:
         server.stop()

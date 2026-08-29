@@ -67,6 +67,19 @@ any LANE_ORDER id lacks a component. Same lesson, smaller: 03's
 5. My rig's own first draft asserted Marek SHOULD appear in person
    sections — wrong by the very law the phase defends; inverted into
    the standing no-inference assertion.
+6. **THE OWNER'S CATCH (post-close amendment):** the desk
+   body-scrolled beneath the fixed dock at normal heights — the
+   144-04 working-band containment was gated to short screens on a
+   premise the four-lane chair retired, compounded by the Chair's
+   54px band margin COLLAPSING through the shell and pushing the
+   document exactly 54px past the viewport. Orchestrator triage had
+   waved the exhibit's broken frames off as a screenshot artifact —
+   wrong, and now a recorded lesson ("screenshot artifact" is an
+   attribution claim; walk it). Fixed structurally (containment at
+   every height + flow-root on both shell roots), proven by a new
+   permanent containment leg in the walk (failed pre-fix at both
+   widths, green ×3 after), door-glass 9/9 re-green, the exhibit
+   re-shot clean.
 
 ## Close verification
 
