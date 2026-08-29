@@ -22,7 +22,10 @@ sidecar renders as silent emptiness on projections.
 
 - `HOLDSPEAK_PEOPLE_KEYSTORE_FILE=<path>`: when set, the People
   store keys from that file (create-on-first-use under the walk
-  HOME), bypassing the keychain entirely. Ignored when unset; the
+  HOME), bypassing the keychain entirely — and (counsel F4) uses an
+  ISOLATED sidecar path derived from the env world, refusing to
+  open or create the production sidecar at DEFAULT_PEOPLE_DB_PATH;
+  doctor warns if both worlds exist. Ignored when unset; the
   production keychain path byte-untouched; `doctor` reports LOUDLY
   when active.
 - L2: the Door's People-card projection and any People read

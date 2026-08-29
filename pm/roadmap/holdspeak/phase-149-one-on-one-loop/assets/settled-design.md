@@ -23,7 +23,10 @@ persisted.
 
 - **The L3 seam**: `HOLDSPEAK_PEOPLE_KEYSTORE_FILE=<path>` — when
   set, the People store uses a file-backed key at that path instead
-  of the macOS keychain. NEVER default; ignored when unset;
+  of the macOS keychain, AND (counsel F4) the sidecar path is
+  ISOLATED alongside it — the dev keystore NEVER opens or creates
+  the production sidecar at DEFAULT_PEOPLE_DB_PATH; doctor warns if
+  both worlds exist. NEVER default; ignored when unset;
   `doctor` reports LOUDLY when active ("People keystore:
   DEV FILE — not for real use"); the production path is untouched.
   Grounded in the two-dialog incident: macOS keychains are
@@ -56,7 +59,9 @@ persisted.
 - The picker lives on the RELATIONSHIP detail (PeopleCore): "Link
   calendar event…" lists upcoming events (title + next occurrence
   + source label); rows whose title contains the person's
-  display_name are suggested-first but NOTHING auto-links; the
+  display_name are suggested-first (counsel F10: the comparison is
+  in-memory, case-insensitive, NEVER logged or persisted — a UI
+  hint, not an inference) but NOTHING auto-links; the
   owner's click is the gesture; the stored evidence is the event's
   own title+uid (owner-selected textual evidence per the contract).
 - Unlink lives beside it (in-world, two-beat).
@@ -94,7 +99,15 @@ persisted.
   person's Prep lens (beside Record this — the Tuesday pair: prep
   it, record it).
 - MCP: `people.one_on_one.brief` (the grounding-bundle pattern,
-  families/people.py).
+  families/people.py). **Counsel MUST-FIX F6, law of this story:**
+  the tool gates on `access_mode() != "off"` via `_require_access`
+  AND filters to `shared_intent` visibility via the `_mcp_readable`
+  path (people.py:188, 276-281, 356-361 are the exact precedent) —
+  leader_private content NEVER crosses to an MCP client. F7: the
+  response carries the grounding bundle's `policy` block naming its
+  disclosure boundary. F11: the brief names the count of UN-linked
+  meetings in its window (manual recordings without
+  calendar_event_id) so the owner sees what it does not cover.
 - NEVER persisted; NEVER enters cadence_*/action_items/caches/
   exports (the 138 law verbatim); the deferred-138 "Cadence overlay
   categorically unsafe" ruling is respected — this is a read-time

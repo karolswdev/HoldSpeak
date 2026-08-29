@@ -30,7 +30,12 @@ now built in 02).
   **PREP** affordance beside Record this, opening the person's
   Prep lens — the Tuesday pair.
 - MCP `people.one_on_one.brief` (families/people.py, the
-  grounding-bundle pattern).
+  grounding-bundle pattern) — **counsel MUST-FIX F6**: gated via
+  `_require_access(write=False)` + `shared_intent`-only visibility
+  through `_mcp_readable` (the exact people.py:188/276-281/356-361
+  pattern); leader_private NEVER crosses. F7: the response carries
+  the `policy` disclosure block. F11: the brief names the count of
+  un-linked meetings in its window.
 - The meeting origin line (147 D7) extends with the resolved
   person when the sidecar is open.
 
@@ -46,11 +51,15 @@ now built in 02).
    agenda + last-linked-meeting action items, each traceable to
    its source store.
 2. PREP on the linked rail row opens the person's Prep lens in one
-   tap; Record this unaffected beside it.
+   tap; Record this unaffected beside it; PREP is ABSENT (not
+   erroring) when resolution is unavailable (counsel F8, pinned).
 3. The never-persist pin: brief generation writes ZERO rows
    anywhere (DB write-count spy on both stores).
 4. Locked sidecar → the brief refuses honestly (L2 vocabulary),
    never renders half-true.
+5. The F6 gate pinned: with access off → tool refuses; a
+   leader_private item NEVER appears in the tool response
+   (deliberate test with one planted private record).
 
 ## Test plan
 

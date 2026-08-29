@@ -19,8 +19,9 @@ its explicit gesture and its visible payoff.
 
 - PeopleCore relationship detail gains "Link calendar event…":
   upcoming events listed (title + next occurrence + source label),
-  display_name-matching rows suggested first, NOTHING auto-links —
-  the click is the gesture; in-world two-beat unlink beside it.
+  display_name-matching rows suggested first (in-memory,
+  case-insensitive, never logged/persisted — counsel F10), NOTHING
+  auto-links — the click is the gesture; in-world two-beat unlink beside it.
 - door_service projects `person_label` onto LINKED calendar event
   items (read-time via the 02 resolution; sidecar unavailable → no
   chip, Door never blocks); the rail row wears a quiet mono person

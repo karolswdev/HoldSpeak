@@ -81,8 +81,35 @@ started.
   relationship detail; read-time resolution everywhere (no person
   reference EVER in the plaintext DB); the brief never persisted;
   the commitment triad stays three. The owner may overrule any row.
-- **2026-08-29 — counsel design ruling:** recorded here when it
-  returns.
+- **2026-08-29 — counsel design ruling: RATIFY-WITH-CONCERNS —
+  "The design earns the owner's Tuesday."** ONE must-fix, absorbed
+  as story-04 law before any builder: the brief MCP tool gates on
+  access_mode + shared_intent visibility (F6 — the exact people.py
+  precedent; skipping it would be a REAL breach). Four should-fixes
+  absorbed: F1 (the gate emphasized), F4 (the dev keystore's
+  sidecar path is isolated, never the production path), F7 (the
+  policy disclosure block rides the brief), F8 (PREP suppressed
+  when resolution unavailable). The counsel also VERIFIED the
+  privacy boundary concretely: no Door cache, no Door WS
+  broadcast, the 138 observer redaction already covers the
+  projection path, meeting payloads carry zero person fields —
+  "lawful display", no leak path found.
+
+## Ledger (counsel, carried openly)
+
+- F2: if the brief EVER gains a persist path, the
+  _FollowThroughObserver redaction pattern must ride it (persist
+  is D7-forbidden this phase).
+- F5: (uid, source_id) linkage assumes per-source UID namespaces;
+  revisit P1 if cross-source dedupe ever lands (146 ruled no
+  dedupe — aligned today).
+- F10: title-match suggestions are in-memory UI hints, never
+  logged/persisted (folded into stories 03/04).
+- F11: manual recordings (null calendar_event_id) are excluded
+  from the brief's linked history; the brief names their count
+  (folded into story 04).
+- Source re-subscription dangles links; unlink/relink is the
+  honest recovery (auto-migration deliberately not built).
 
 ## Risk register
 
