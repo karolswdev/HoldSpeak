@@ -91,17 +91,30 @@
 .desk-next .desk-work-menu {
   z-index: var(--desk-z-popover);
 }
+/* HS-148-01: recessed separator — shadow + shine pair (the Amiga 2.0
+   bevel system: dark rule on top, light shine below). */
 .desk-next .desk-menu-sep {
   display: block;
-  height: 1px;
+  height: 0;
   margin: 5px 0;
-  background: var(--border);
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--bevel-light);
 }
+/* HS-148-01: the lane — fixed 16px column for glyphs, check marks,
+   and alignment spacers (the lane law: if ANY row in a panel has a
+   glyph/check, every row reserves this column). */
 .desk-next .desk-menu-glyph {
-  width: var(--size-icon-sm);
-  flex: none;
-  text-align: center;
+  width: 16px;
+  flex: 0 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-muted);
+}
+.desk-next .desk-menu-glyph svg {
+  width: 14px;
+  height: 14px;
 }
 .desk-next .desk-menu-label {
   flex: 1 1 auto;
@@ -110,8 +123,36 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* HS-148-01: drawn keycap wells — physical-key treatment adapted from
+   the shortcut sheet (chrome-menus.css:704-715), flush-right column. */
+.desk-next .desk-menu-keycaps {
+  margin-left: auto;
+  padding-left: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+.desk-next .desk-menu-well {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--desk-window-well);
+  box-shadow:
+    inset 0 0 0 1px var(--border-subtle),
+    inset 0 -1px 0 var(--shade-1);
+  color: var(--text);
+  font: 600 10px var(--font-mono);
+  line-height: 1;
+}
+/* Legacy single-kbd keycap (DeskMenuItem callers). */
 .desk-next .desk-menu-list .desk-menu-key,
-.desk-next .desk-menu-list kbd {
+.desk-next .desk-menu-list kbd:not(.desk-menu-well) {
   margin-left: auto;
   padding-left: 14px;
   border: 0;
@@ -123,8 +164,16 @@
 .desk-next .desk-menu-list button:hover kbd,
 .desk-next .desk-menu-list button:focus-visible kbd,
 .desk-next .desk-menu-list button:hover .desk-menu-glyph,
-.desk-next .desk-menu-list button:focus-visible .desk-menu-glyph {
+.desk-next .desk-menu-list button:focus-visible .desk-menu-glyph,
+.desk-next .desk-menu-list button:hover .desk-menu-well,
+.desk-next .desk-menu-list button:focus-visible .desk-menu-well {
   color: var(--text-on-accent);
+}
+/* HS-148-01: keycap wells invert cleanly on accent hover. */
+.desk-next .desk-menu-list button:hover .desk-menu-well,
+.desk-next .desk-menu-list button:focus-visible .desk-menu-well {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 .desk-next .desk-menu-submark {
   width: 12px;
@@ -140,15 +189,49 @@
 .desk-next .desk-menu-list button.is-subopen .desk-menu-submark {
   color: var(--text-on-accent);
 }
+/* HS-148-01: stipple ghosting — the Amiga stipple ERASED to background.
+   A checkerboard overlay in the panel's own ground color (var(--surface-3))
+   punches holes in the text + keycaps. Slight text mute under the stipple
+   so the composite reads. The stipple covers the item box only. */
 .desk-next .desk-menu-list .is-ghost {
-  color: var(--text-faint);
+  position: relative;
+  color: var(--text-muted);
   cursor: default;
+}
+.desk-next .desk-menu-list .is-ghost::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    var(--surface-3) 0% 25%, transparent 0% 50%
+  ) 0 0 / 4px 4px;
 }
 .desk-next .desk-menu-list .is-ghost:hover,
 .desk-next .desk-menu-list .is-ghost:focus-visible {
-  background: var(--surface-2);
-  color: var(--text-faint);
+  background: none;
+  color: var(--text-muted);
 }
+/* HS-148-01: ghost-reason collapse footer — one quiet hint for a uniform
+   panel instead of N per-row echoes. */
+.desk-next .desk-menu-ghost-hint {
+  display: block;
+  padding: 3px 10px 4px;
+  color: var(--text-faint);
+  font: 10px var(--font-mono);
+  letter-spacing: 0.02em;
+  border-top: 1px solid var(--border);
+}
+/* HS-148-02: root-attribute glyph gating.
+   "none" hides all glyphs everywhere; "launcher" hides only in verb panels;
+   "all" shows everywhere (no override needed — the lane renders by default). */
+.desk-next[data-menu-glyphs="none"] .desk-menu-glyph {
+  display: none;
+}
+.desk-next[data-menu-glyphs="launcher"] [data-menu-context="verb"] .desk-menu-glyph {
+  display: none;
+}
+
 .desk-next .desk-work-submenu {
   min-width: 168px;
 }

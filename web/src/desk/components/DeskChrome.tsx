@@ -23,13 +23,16 @@ import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { SYSTEM } from "../systemSprites";
 
 /** The mark menu's registry rows: the floor verbs, then the four
- * applications (the same go.* truth the Go menu and the dock speak). */
+ * applications (the same go.* truth the Go menu and the dock speak).
+ * HS-148-02: Open Intelligence / Open People join the app section. */
 const MARK_VERBS = ["desk.toggle-view", "desk.arrange", "desk.refresh"];
 const MARK_APPS = [
   "go.dictate",
   "go.review-meetings",
   "go.inspect-personas-and-coders",
   "go.configure-settings",
+  "desk.open-intelligence",
+  "desk.open-people",
 ];
 
 /** HS-100-11 — the attention bell: the approve-queue's badge lives in
@@ -189,6 +192,7 @@ export function DeskChrome({
                       type: "item",
                       id: v.id,
                       label: verbLabel(v, ctx),
+                      glyph: v.glyph,
                       keycap: v.key,
                       ghost: v.ghost(ctx),
                       onSelect: () => v.run(ctx),
@@ -210,6 +214,7 @@ export function DeskChrome({
                   entries={entries}
                   onClose={() => setMenuOpen(false)}
                   returnFocus={() => markRef.current?.focus()}
+                  menuContext="launcher"
                 />
               );
             })()}

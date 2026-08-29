@@ -842,10 +842,10 @@ its identity (the name edits in place), what it measures, where it is filed,
 where it came from, and, for Agents, a Runs on property you can change
 right there. The same card serves every kind.
 
-**The menu bar.** Desk, Object, and Go menus sit in the top bar. Object verbs
-follow your selection; a verb that cannot run right now stays visible with
-the reason beside it. Go reaches every application and tool, the same list
-the ⌘K search reaches.
+**The menu bar.** Desk, Object, Go, and Window menus sit in the top bar.
+Object verbs follow your selection; a verb that cannot run right now stays
+visible with the reason beside it. Go reaches every application and tool,
+the same list the ⌘K search reaches.
 
 The full written law for this grammar lives in
 [`web/ICON-DISCIPLINE.md`](../web/ICON-DISCIPLINE.md) and

@@ -14,7 +14,7 @@ import { defaultViewFor, useDesk } from "./store";
 import { openIntelligence } from "./intelligenceNavigation";
 import { openSurfaceOr } from "./shell";
 import { objectByRef } from "./world";
-import { DESK_TOOLS } from "./tools";
+import { DESK_TOOLS, KIND_GLYPH } from "./tools";
 import { usePalette, useShortcutSheet } from "./chromeState";
 import {
   closeFrontWindow,
@@ -53,6 +53,8 @@ export interface Verb {
   group?: string;
   /** ⌘-notation shortcut - BOUND by desk/keymap.ts (the one binder). */
   key?: string;
+  /** HS-148-02: unicode text-glyph for menus, deck, and palette. */
+  glyph?: string;
   /** false hides the verb from the ⌘K deck (default: shown). */
   palette?: boolean;
   /** Extra ⌘K match terms. */
@@ -169,6 +171,7 @@ export const VERBS: Verb[] = [
     scope: "floor",
     group: "new",
     key: "⌘N",
+    glyph: KIND_GLYPH.note,
     keywords: ["create", "write"],
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("note"),
@@ -180,6 +183,7 @@ export const VERBS: Verb[] = [
     scope: "floor",
     group: "new",
     key: "⌘⇧N",
+    glyph: KIND_GLYPH.decision,
     keywords: ["create", "adr", "architecture"],
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("decision"),
@@ -190,6 +194,7 @@ export const VERBS: Verb[] = [
     menu: "desk",
     scope: "floor",
     group: "new",
+    glyph: KIND_GLYPH.kb,
     keywords: ["create", "kb"],
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("kb"),
@@ -200,6 +205,7 @@ export const VERBS: Verb[] = [
     menu: "desk",
     scope: "floor",
     group: "new",
+    glyph: KIND_GLYPH.recipe,
     keywords: ["create", "recipe"],
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("recipe"),
@@ -210,6 +216,7 @@ export const VERBS: Verb[] = [
     menu: "desk",
     scope: "floor",
     group: "new",
+    glyph: KIND_GLYPH.workflow,
     keywords: ["create", "steps"],
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("workflow"),
@@ -220,6 +227,7 @@ export const VERBS: Verb[] = [
     menu: "desk",
     scope: "floor",
     group: "new",
+    glyph: KIND_GLYPH.workbench,
     keywords: ["create", "agent", "todo", "backlog"],
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("workbench"),
@@ -230,6 +238,7 @@ export const VERBS: Verb[] = [
     menu: "desk",
     scope: "floor",
     group: "new",
+    glyph: KIND_GLYPH.zone,
     keywords: ["create", "place"],
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("zone"),
@@ -308,6 +317,7 @@ export const VERBS: Verb[] = [
     menu: "desk",
     scope: "floor",
     group: "view",
+    glyph: "◆",
     keywords: ["brief", "follow-through", "receipts"],
     ghost: never,
     run: () => openIntelligence({ view: "brief" }),
@@ -318,6 +328,7 @@ export const VERBS: Verb[] = [
     menu: "desk",
     scope: "floor",
     group: "view",
+    glyph: "⊕",
     keywords: ["relationships", "1:1", "one on one", "management"],
     ghost: never,
     run: () => openSurfaceOr("open-people", "/", undefined),
@@ -355,11 +366,13 @@ export const VERBS: Verb[] = [
     run: () => openIntelligence({ view: "receipts", receiptQuery: "", whyOnly: true }),
   },
   // ── Object (selection-aware; ghosted with the reason) ───────────────
+  // HS-148-02: restrained verb glyphs so variant B is truthful.
   {
     id: "object.open",
     label: "Open",
     menu: "object",
     scope: "object",
+    glyph: "▷",
     ghost: needSelection,
     run: (ctx) => {
       const o = selected(ctx);
@@ -374,6 +387,7 @@ export const VERBS: Verb[] = [
     label: "Get Info",
     menu: "object",
     scope: "object",
+    glyph: "⊙",
     ghost: needSelection,
     run: (ctx) => {
       const o = selected(ctx);
@@ -385,6 +399,7 @@ export const VERBS: Verb[] = [
     label: "Ask this project",
     menu: "object",
     scope: "object",
+    glyph: "✦",
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select a Project";
@@ -403,6 +418,7 @@ export const VERBS: Verb[] = [
     label: "Ask AI",
     menu: "object",
     scope: "object",
+    glyph: "✦",
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
@@ -421,6 +437,7 @@ export const VERBS: Verb[] = [
     label: "Edit",
     menu: "object",
     scope: "object",
+    glyph: "✎",
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
@@ -437,6 +454,7 @@ export const VERBS: Verb[] = [
     menu: "object",
     scope: "object",
     key: "F2",
+    glyph: "⌶",
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
@@ -456,6 +474,7 @@ export const VERBS: Verb[] = [
     label: "Duplicate",
     menu: "object",
     scope: "object",
+    glyph: "⧉",
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
@@ -477,6 +496,7 @@ export const VERBS: Verb[] = [
     label: "Move to Zone",
     menu: "object",
     scope: "object",
+    glyph: "↦",
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
@@ -496,6 +516,7 @@ export const VERBS: Verb[] = [
     scope: "object",
     group: "danger",
     key: "Delete",
+    glyph: "⌫",
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
@@ -524,6 +545,7 @@ export const VERBS: Verb[] = [
     },
   },
   // ── Go (the applications - DESK_TOOLS is the data truth) ────────────
+  // HS-148-02: glyph and group flow from DESK_TOOLS (dock-parity).
   ...DESK_TOOLS.map((tool): Verb => {
     const binding = APP_BINDINGS[tool.action];
     return {
@@ -531,7 +553,8 @@ export const VERBS: Verb[] = [
       label: tool.label,
       menu: "go",
       scope: "go",
-      group: "launch",
+      group: tool.group,
+      glyph: tool.glyph,
       key: tool.action === "ask" ? "⌘I" : binding?.key,
       keywords: tool.description.toLocaleLowerCase().split(/\W+/).slice(0, 6),
       ghost: never,
@@ -576,7 +599,7 @@ export const VERBS: Verb[] = [
   },
   {
     id: "window.cycle-reverse",
-    label: "Cycle Windows (Reverse)",
+    label: "Cycle windows (reverse)",
     menu: "window",
     scope: "window",
     key: "⌃⇧`",
@@ -586,7 +609,7 @@ export const VERBS: Verb[] = [
   },
   {
     id: "window.snap-left",
-    label: "Snap Left",
+    label: "Snap left",
     menu: "window",
     scope: "window",
     group: "layout",
@@ -595,7 +618,7 @@ export const VERBS: Verb[] = [
   },
   {
     id: "window.snap-right",
-    label: "Snap Right",
+    label: "Snap right",
     menu: "window",
     scope: "window",
     group: "layout",

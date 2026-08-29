@@ -6,6 +6,9 @@
 // chrome cluster they inherited the z-30 stacking context and windows
 // (z-42) covered open menus. The OS's own voice draws OVER the programs
 // it hosts, always.
+// HS-148-01 — the D3 repair: bar-path menus autoFocus their first item
+// on intentional open (click/keyboard), NOT on hover-switch (which must
+// never steal focus from wherever the user is typing).
 import "./chrome-menus.css";
 import { useEffect, useRef, useState } from "react";
 import { useDesk } from "../store";
@@ -26,6 +29,9 @@ const MENUS: { id: MenuId; label: string }[] = [
 
 export function DeskMenuBar() {
   const [open, setOpen] = useState<MenuId | null>(null);
+  // HS-148-01: track whether the open was intentional (click/keyboard)
+  // vs hover-switch. Only intentional opens autoFocus the first item.
+  const [intentional, setIntentional] = useState(false);
   const barRef = useRef<HTMLElement | null>(null);
   const [at, setAt] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const selectedIds = useDesk((s) => s.selectedIds);
@@ -44,9 +50,10 @@ export function DeskMenuBar() {
     return () => document.removeEventListener("keydown", key, true);
   }, [open]);
 
-  const openMenu = (id: MenuId, el: HTMLElement) => {
+  const openMenu = (id: MenuId, el: HTMLElement, isIntentional: boolean) => {
     const r = el.getBoundingClientRect();
     setAt({ x: r.left, y: r.bottom });
+    setIntentional(isIntentional);
     setOpen(id);
   };
 
@@ -61,6 +68,7 @@ export function DeskMenuBar() {
         type: "item",
         id: v.id,
         label: verbLabel(v, ctx),
+        glyph: v.glyph,
         keycap: v.key,
         ghost: v.ghost(ctx),
         onSelect: () => v.run(ctx),
@@ -86,15 +94,18 @@ export function DeskMenuBar() {
             onPointerDown={(e) => {
               if (e.button !== 0) return;
               if (open === m.id) setOpen(null);
-              else openMenu(m.id, e.currentTarget);
+              else openMenu(m.id, e.currentTarget, true);
             }}
             onClick={(e) => {
               // Keyboard activation (Enter/Space) arrives as a click
               // with no preceding pointerdown.
               if (e.detail === 0 && open !== m.id)
-                openMenu(m.id, e.currentTarget);
+                openMenu(m.id, e.currentTarget, true);
             }}
-            onMouseEnter={(e) => open && openMenu(m.id, e.currentTarget)}
+            // HS-148-01: hover-switch is NOT intentional — no autoFocus.
+            onMouseEnter={(e) =>
+              open && openMenu(m.id, e.currentTarget, false)
+            }
           >
             {m.label}
           </button>
@@ -107,6 +118,8 @@ export function DeskMenuBar() {
               y={at.y}
               entries={entries(m.id)}
               onClose={() => setOpen(null)}
+              autoFocus={intentional}
+              menuContext={m.id === "go" ? "launcher" : "verb"}
             />
           )}
         </span>

@@ -21,7 +21,8 @@ import {
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
 import { useDesk, type PanelRect } from "../store";
-import { DeskMenuItem, DeskMenuList } from "./DeskMenu";
+import { WorkMenu } from "./DeskMenu";
+import { headMenuEntries } from "../windowMenuAdapter";
 import { DESK_WINDOW, DESK_Z } from "../../lib/tokens.gen";
 
 // -- Extracted modules (HS-117-04) --
@@ -899,46 +900,20 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         {actions}
       </header>
       {headMenu ? (
-        <DeskMenuList
+        <WorkMenu
           className="desk-head-menu"
           label={`${name} window menu`}
-          anchor="below"
-          style={{
-            left: Math.min(headMenu.x, window.innerWidth - 184),
-            top: Math.min(headMenu.y, window.innerHeight - 132),
-          }}
+          x={headMenu.x}
+          y={headMenu.y}
+          entries={headMenuEntries({
+            maximized,
+            compact,
+            requestMinimize,
+            toggleMaximize: () => useDesk.getState().toggleMaximizePanel(id),
+            requestClose,
+          })}
           onClose={() => setHeadMenu(null)}
-        >
-          <DeskMenuItem
-            glyph={<VerbGlyph kind="minimize" />}
-            onSelect={() => {
-              setHeadMenu(null);
-              requestMinimize();
-            }}
-          >
-            Minimize
-          </DeskMenuItem>
-          {!compact && (
-            <DeskMenuItem
-              glyph={<VerbGlyph kind={maximized ? "restore" : "maximize"} />}
-              onSelect={() => {
-                setHeadMenu(null);
-                useDesk.getState().toggleMaximizePanel(id);
-              }}
-            >
-              {maximized ? "Restore" : "Maximize"}
-            </DeskMenuItem>
-          )}
-          <DeskMenuItem
-            glyph={<VerbGlyph kind="close" />}
-            onSelect={() => {
-              setHeadMenu(null);
-              requestClose();
-            }}
-          >
-            Close
-          </DeskMenuItem>
-        </DeskMenuList>
+        />
       ) : null}
       {children}
       {!maxed && !compact ? win.grip : null}

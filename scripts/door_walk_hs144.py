@@ -43,7 +43,7 @@ DEFAULT_PAIRS_MD = ASSETS / "story-06-pairs.md"
 TOKEN = "hs144-06-cold-walk-token"
 FIXTURE_TEXT = "Typed first value — this remains editable and has note custody."
 FIXTURE_PREFIX = "HS144 WALK"
-ALL_LEGS = ("cold", "reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe")
+ALL_LEGS = ("cold", "reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe", "menus")
 
 
 class WalkAssertionError(AssertionError):
@@ -965,6 +965,117 @@ def leg_one_tap(reporter: Reporter, browser: Any, hub: Hub, out: Path, fixture_d
         context.close()
 
 
+def leg_menus(reporter: Reporter, browser: Any, hub: Hub, out: Path) -> None:
+    """HS-148: the menu grammar on real glass — glyph lane, keycap wells,
+    stipple + majority-collapse ghosting, the D3 keyboard repair, the
+    registry-derived head menu, and list-view context reachability (the
+    148 close-counsel ledger item the audit walk could not trigger)."""
+    context, page, errors = browser_context(browser, 1440, 900)
+    try:
+        go(page, hub)
+        normal_door(page)
+        # Go menu under the shipped default (launcher): lane + wells + D3.
+        page.get_by_role("button", name="Go", exact=True).first.click()
+        menu = page.locator('nav[role="menu"]').last
+        menu.wait_for(timeout=15000)
+        reporter.check("Go menu declares launcher context", menu.get_attribute("data-menu-context") == "launcher",
+                       scope='nav[role=menu] data-menu-context')
+        reporter.check("Go menu wears the glyph lane", menu.locator(".desk-menu-glyph").count() >= 13,
+                       f"glyph spans={menu.locator('.desk-menu-glyph').count()}", scope=".desk-menu-glyph lane law")
+        reporter.check("keycaps render as drawn wells", menu.locator(".desk-menu-well").count() >= 5,
+                       scope=".desk-menu-well keycap wells")
+        try:
+            page.wait_for_function(
+                "document.activeElement && document.activeElement.getAttribute('role') === 'menuitem'",
+                timeout=3000,
+            )
+            focused_role = "menuitem"
+        except Exception:  # noqa: BLE001 — the honest fail path
+            focused_role = page.evaluate("document.activeElement && document.activeElement.getAttribute('role')")
+        reporter.check("D3 repair: click-open focuses the first item", focused_role == "menuitem",
+                       f"activeElement role={focused_role}", scope="autoFocus on intentional bar open (3s poll)")
+        capture(reporter, page, out, "menus-go-after-1440.png", "the Go launcher: glyph lane + keycap wells + separator")
+        page.keyboard.press("Escape")
+
+        # Object menu (all ghosted): stipple + majority-collapse + visible keycaps.
+        page.get_by_role("button", name="Object", exact=True).first.click()
+        omenu = page.locator('nav[role="menu"]').last
+        omenu.wait_for(timeout=15000)
+        reporter.check("ghosted rows carry the stipple class", omenu.locator(".is-ghost").count() >= 8,
+                       f"is-ghost={omenu.locator('.is-ghost').count()}", scope=".is-ghost stipple law")
+        hint = omenu.locator(".desk-menu-ghost-hint")
+        reporter.check("majority ghost reason collapses to one footer",
+                       hint.count() == 1 and "Select an object" in hint.inner_text(),
+                       scope=".desk-menu-ghost-hint majority-collapse")
+        reporter.check("minority reason stays inline once",
+                       omenu.get_by_text("Select a Project", exact=False).count() == 1,
+                       scope="inline minority ghost reason")
+        reporter.check("keycaps stay visible when ghosted", omenu.locator(".is-ghost .desk-menu-well").count() >= 1,
+                       scope="ghosted keycap wells")
+        capture(reporter, page, out, "menus-object-after-1440.png", "stippled ghosts, one footer hint, wells alive")
+        page.keyboard.press("Escape")
+
+        # The registry-derived head menu on a real window.
+        page.get_by_role("button", name="Meetings", exact=True).first.click()
+        head = page.locator(".desk-pullout-head").first
+        head.wait_for(timeout=15000)
+        head.click(button="right")
+        hmenu = page.locator(".desk-head-menu, nav[role='menu']").last
+        hmenu.wait_for(timeout=15000)
+        reporter.check("head menu carries registry labels + keycaps",
+                       hmenu.get_by_text("Close window", exact=True).count() == 1
+                       and hmenu.locator(".desk-menu-well").count() >= 2,
+                       scope="registry-derived head menu (AA graduation)")
+        capture(reporter, page, out, "menus-head-after-1440.png", "the head menu from the one registry, wells included")
+        page.keyboard.press("Escape")
+    finally:
+        context.close()
+
+    # List-view context reachability (counsel ledger item).
+    lv_context, lv_page, lv_errors = browser_context(browser, 1440, 900)
+    try:
+        go(lv_page, hub)
+        normal_door(lv_page)
+        lv_page.get_by_role("button", name="Floor", exact=True).first.click()
+        row = lv_page.locator(".desk-list-face tbody tr").first
+        if row.count() == 0:
+            # Spatial view default: flip to list via the Desk menu.
+            lv_page.get_by_role("button", name="Desk", exact=True).first.click()
+            lv_page.locator('nav[role="menu"]').last.get_by_text("List view", exact=True).click()
+            row = lv_page.locator(".desk-list-face tbody tr").first
+        row.wait_for(timeout=15000)
+        # Zone rows do not wire the context menu; target the seeded Thought's
+        # OBJECT row by title (product truth, not a rig convenience).
+        obj_row = lv_page.locator(".desk-list-face tbody tr", has_text=f"{FIXTURE_PREFIX} active thought").first
+        obj_row.wait_for(timeout=15000)
+        obj_row.click(button="right")
+        cmenu = lv_page.locator('nav[role="menu"]').last
+        cmenu.wait_for(timeout=15000)
+        reporter.check("list-view context menu is reachable (ledger item closed)",
+                       cmenu.get_by_text("Get Info", exact=False).count() >= 1,
+                       scope="list-view row contextmenu")
+        capture(reporter, lv_page, out, "menus-listctx-after-1440.png", "list-view object context menu, reachable")
+        assert_clean(reporter, lv_page, lv_errors, "menus list-view leg")
+    finally:
+        lv_context.close()
+
+    # 393: the lone narrow menu wears the grammar.
+    n_context, n_page, n_errors = browser_context(browser, 393, 852)
+    try:
+        go(n_page, hub)
+        normal_door(n_page)
+        n_page.get_by_role("button", name="Go", exact=True).first.click()
+        nmenu = n_page.locator('nav[role="menu"]').last
+        nmenu.wait_for(timeout=15000)
+        reporter.check("393 Go wears lane + wells", nmenu.locator(".desk-menu-glyph").count() >= 13
+                       and nmenu.locator(".desk-menu-well").count() >= 5,
+                       scope="393 Go grammar")
+        capture(reporter, n_page, out, "menus-go-after-393.png", "the narrow launcher with the full grammar")
+        assert_clean(reporter, n_page, n_errors, "menus 393 leg")
+    finally:
+        n_context.close()
+
+
 def measured_tasks(reporter: Reporter, page: Any, ids: dict[str, str]) -> None:
     ledger = ClickLedger(reporter, "Tasks", "1", "settled populated Door after first-value handoff")
     door = normal_door(page)
@@ -1120,7 +1231,7 @@ def write_report(reporter: Reporter, out: Path, report_path: Path, json_path: Pa
         "paths": {"shots": str(out.relative_to(REPO)), "pairs_json": str(pairs_path.relative_to(REPO)), "pairs_md": str(pairs_md_path.relative_to(REPO))},
     }
     json_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    lines = ["# HS-144-06 — cold Door walk report", "", f"**Mode:** {'partial diagnostic walk' if partial else 'full cold walk'}", f"**Result:** {'PASS' if reporter.passed else 'FAIL'}", "", "## Leg results", "", "| Leg | Result | Timing / fact | Assertion scope |", "|---|---|---|---|"]
+    lines = ["# The cold Door walk report (born HS-144-06; nine legs as of HS-148)", "", f"**Mode:** {'partial diagnostic walk' if partial else 'full cold walk'}", f"**Result:** {'PASS' if reporter.passed else 'FAIL'}", "", "## Leg results", "", "| Leg | Result | Timing / fact | Assertion scope |", "|---|---|---|---|"]
     for name in ALL_LEGS:
         leg = reporter.legs.get(name)
         if leg is None:
@@ -1198,7 +1309,7 @@ def run_walk(args: argparse.Namespace) -> int:
             leg_cold(reporter, browser, hub, out)
 
         # Seeding never occurs until the actual first-value handoff has occurred.
-        needs_populated = any(leg in selected for leg in ("reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe"))
+        needs_populated = any(leg in selected for leg in ("reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe", "menus"))
         if needs_populated:
             if "cold" not in selected:
                 reporter.finding("partial walk bypassed cold first-value handoff; populated legs are diagnostic only")
@@ -1238,6 +1349,8 @@ def run_walk(args: argparse.Namespace) -> int:
             call("click-depth", lambda: leg_click_depth(reporter, browser, hub, ids))
         if "doorframe" in selected:
             call("doorframe", lambda: leg_doorframe(reporter, browser, hub, out))
+        if "menus" in selected:
+            call("menus", lambda: leg_menus(reporter, browser, hub, out))
     except Exception as error:  # noqa: BLE001
         name = reporter.current.name if reporter.current else "bootstrap"
         if reporter.current is None:
