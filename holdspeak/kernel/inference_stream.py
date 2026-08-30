@@ -290,3 +290,22 @@ def emit_thread_status_line(
         "thread_id": thread_id,
         "text": text,
     })
+
+
+def emit_thread_call_state(
+    broadcast: Callable[..., Any],
+    *,
+    thread_id: str,
+    state: str,
+) -> None:
+    """Broadcast ``thread_call_state`` on call mode transitions (HS-154-03).
+
+    ``state`` is one of: ``off``, ``listening``, ``thinking``, ``speaking``.
+    Only ``off`` / ``listening`` (the persisted ON/OFF) are emitted from the
+    server; ``thinking`` / ``speaking`` are derived client-side from the
+    existing turn-streaming and TTS state.
+    """
+    broadcast("thread_call_state", {
+        "thread_id": thread_id,
+        "state": state,
+    })

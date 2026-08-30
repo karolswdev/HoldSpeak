@@ -26,6 +26,7 @@ export interface ThreadWire {
   directory_id: string | null;
   parent_thread_id: string | null;
   status_line: string | null;
+  call_mode: number;
   mode: ThreadMode | null;
   token_in: number;
   token_out: number;
@@ -331,6 +332,7 @@ export async function getThread(id: string): Promise<ThreadDetail> {
     directory_id: d.directory_id != null ? String(d.directory_id) : null,
     parent_thread_id: d.parent_thread_id != null ? String(d.parent_thread_id) : null,
     status_line: d.status_line != null ? String(d.status_line) : null,
+    call_mode: Number(d.call_mode ?? 0),
     mode: d.mode && typeof d.mode === "object"
       ? { id: String((d.mode as Record<string, unknown>).id ?? ""),
           name: String((d.mode as Record<string, unknown>).name ?? ""),
@@ -395,6 +397,7 @@ export async function patchThread(
     title?: string;
     profile_override?: string;
     recipe_id?: string;
+    call_mode?: number;
     toggle_guardrail?: string;
     toggle_guardrail_enable?: boolean;
   },
@@ -564,6 +567,12 @@ export interface ThreadTurnDonePayload {
    * not as an object. */
   egress: string | null;
   stats: { prompt_tokens?: number; completion_tokens?: number; error?: string } | null;
+}
+
+/** HS-154-03: call mode state frame from the server. */
+export interface ThreadCallStatePayload {
+  thread_id: string;
+  state: "off" | "listening" | "thinking" | "speaking";
 }
 
 // ── zustand store ───────────────────────────────────────────────────

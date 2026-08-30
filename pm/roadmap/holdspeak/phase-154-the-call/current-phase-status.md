@@ -25,7 +25,7 @@ counsel M9/S6/R4; the TTS feasibility ruling supersedes RFC §6.8-B).
 |---|---|---|---|---|
 | HS-154-01 | The voice (browser default, kokoro-onnx extra, /api/tts) | done | [story-01-tts-route](./story-01-tts-route.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-154-02 | The ear (energy VAD hands-free loop) | done | [story-02-vad-loop](./story-02-vad-loop.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-154-03 | Call mode (threads.call_mode, chip, frame — M9) | backlog | [story-03-call-mode](./story-03-call-mode.md) | - |
+| HS-154-03 | Call mode (threads.call_mode, chip, frame — M9) | done | [story-03-call-mode](./story-03-call-mode.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-154-04 | Speaker glyph + auto-speak (S6 chunks, barge-in) | backlog | [story-04-speaker-glyph](./story-04-speaker-glyph.md) | - |
 | HS-154-05 | The walk and the close | backlog | [story-05-walk-and-close](./story-05-walk-and-close.md) | - |
 
@@ -44,7 +44,19 @@ and transcribe route) + `callLoopWiring.ts` (binds onSubmit to the
 composer's own `sendTurn` -- no parallel turn entrance). 11 vitest
 (callLoop) + 5 vitest (wiring) + 1 glass (call-loop turn visible at
 1440+393, zero overflow) pass. Web baseline zero BRANCH-NEW (1608 passed).
-Evidence captured. Next: story 03 (call mode).
+Evidence captured.
+
+HS-154-03 (call mode) delivered: additive `threads.call_mode` column
+with reconcile proof, PATCH toggle with 0/1 validation, `thread_call_state`
+frame (registered both sides, emitter + consumer proven by the frame
+registry fence), the CallChip component in the thread head (OFF /
+LISTENING / THINKING / SPEAKING; one click stops everything; keyboard
+reachable), real-coordinator proof (THINKING at turn start, LISTENING at
+turn done on call_mode=1 threads). 11 python + 21 thread_service + 11
+frame registry + 5 api_surface = 48 passed; 11 vitest (chip) + 5
+(wiring) + 10 (pullout) pass; 1 glass (call-chip at 1440+393, zero
+overflow); web baseline zero BRANCH-NEW (1619 passed). Evidence captured.
+Next: story 04 (speaker glyph + auto-speak).
 
 ## Active risks
 

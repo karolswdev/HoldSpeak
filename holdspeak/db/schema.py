@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 65  # informational; 64→65: delegated_at on action_items (HS-150-01)
+SCHEMA_VERSION = 66  # informational; 65→66: call_mode on threads (HS-154-03)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -3415,6 +3415,7 @@ CREATE TABLE IF NOT EXISTS threads (
     directory_id TEXT NOT NULL DEFAULT '',
     parent_thread_id TEXT NOT NULL DEFAULT '',
     status_line TEXT NOT NULL DEFAULT '',
+    call_mode INTEGER NOT NULL DEFAULT 0,
     token_in INTEGER NOT NULL DEFAULT 0,
     token_out INTEGER NOT NULL DEFAULT 0,
     created_at REAL NOT NULL,

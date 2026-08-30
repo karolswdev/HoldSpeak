@@ -935,6 +935,47 @@
   white-space: nowrap;
 }
 
+/* ── HS-154-03: Call chip ─────────────────────────────────────────── */
+
+.thread-call-chip {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.15));
+  border-radius: 2px;
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint, #888);
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.thread-call-chip:hover { color: var(--text-muted, #666); border-color: var(--text-faint, #888); }
+.thread-call-chip:focus-visible { outline: 2px solid var(--focus-ring, #4488ff); outline-offset: 1px; }
+
+.thread-call-chip--off { opacity: 0.7; }
+
+.thread-call-chip--listening {
+  color: var(--success-signal, #22c55e);
+  border-color: var(--success-signal, #22c55e);
+}
+
+.thread-call-chip--thinking {
+  color: var(--info-signal, #3b82f6);
+  border-color: var(--info-signal, #3b82f6);
+}
+
+.thread-call-chip--speaking {
+  color: var(--warning-signal, #f59e0b);
+  border-color: var(--warning-signal, #f59e0b);
+}
+
 /* ── HS-153-03: Guardrail row ──────────────────────────────────────── */
 
 .thread-guardrail-row {

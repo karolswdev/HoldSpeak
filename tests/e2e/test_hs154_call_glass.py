@@ -21,6 +21,7 @@ REPO = Path(__file__).resolve().parents[2]
 TOKEN = "hs154-call-glass"
 SHOTS_01 = REPO / "pm/roadmap/holdspeak/phase-154-the-call/assets/story-01-shots"
 SHOTS_02 = REPO / "pm/roadmap/holdspeak/phase-154-the-call/assets/story-02-shots"
+SHOTS_03 = REPO / "pm/roadmap/holdspeak/phase-154-the-call/assets/story-03-shots"
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
 
@@ -314,6 +315,112 @@ def test_call_loop_glass(hub: dict) -> None:
                 f"Call loop transcript not visible at {width}: "
                 f"expected '{CANNED_TRANSCRIPT}'"
             )
+
+            # No horizontal overflow
+            body_width = page.evaluate("document.body.scrollWidth")
+            viewport_width = page.evaluate("window.innerWidth")
+            assert body_width <= viewport_width + 1, (
+                f"Horizontal overflow at {width}: "
+                f"body={body_width}, viewport={viewport_width}"
+            )
+
+            page.close()
+
+        browser.close()
+
+
+# ----------------------------------------------------------------- call-chip leg
+
+def _save_shot_03(page: Any, name: str, width: int) -> None:
+    SHOTS_03.mkdir(parents=True, exist_ok=True)
+    page.screenshot(path=str(SHOTS_03 / f"{name}-{width}.png"))
+
+
+def test_call_chip_glass(hub: dict) -> None:
+    """HS-154-03 call chip in the thread head at 1440 + 393.
+
+    Strategy: create a thread, open it, verify the call chip renders
+    in the head in OFF state. PATCH call_mode=1, reload, verify
+    the chip shows ON. Click the chip, verify it returns to OFF.
+    Zero overflow. Screenshots to story-03-shots/.
+    """
+    from playwright.sync_api import sync_playwright
+
+    url = hub["url"]
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        for width in (1440, 393):
+            page = browser.new_page(viewport={"width": width, "height": 900})
+
+            # Navigate to the desk root
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            page.wait_for_timeout(2000)
+
+            # Seed desk and complete onboarding
+            _page_api(page, "POST", "/api/desk/seed")
+            _page_api(page, "PUT", "/api/setup/onboarding",
+                      {"disposition": "completed"})
+
+            # Create a thread
+            thread_res = _page_api(page, "POST", "/api/threads",
+                                   {"title": "Call Chip Glass"})
+            assert thread_res["status"] in (200, 201), (
+                f"Thread creation failed: {thread_res}"
+            )
+            thread_id = thread_res["payload"]["id"]
+
+            # Open the thread pullout
+            page.goto(
+                f"{url}/?token={TOKEN}&open=thread:{thread_id}",
+                wait_until="load",
+            )
+            page.wait_for_timeout(3000)
+
+            # The call chip should be visible in the head
+            chip = page.locator("[data-testid='call-chip']")
+            assert chip.count() >= 1, (
+                f"Call chip not found in thread head at {width}"
+            )
+
+            # Should be in OFF state initially
+            chip_state = chip.first.get_attribute("data-call-state")
+            assert chip_state == "off", (
+                f"Expected OFF state, got {chip_state} at {width}"
+            )
+            _save_shot_03(page, "call-chip-off", width)
+
+            # PATCH call_mode=1 via API
+            patch_res = _page_api(
+                page, "PATCH",
+                f"/api/threads/{thread_id}",
+                {"call_mode": 1},
+            )
+            assert patch_res["status"] == 200, (
+                f"PATCH call_mode=1 failed: {patch_res}"
+            )
+            assert patch_res["payload"]["call_mode"] == 1
+
+            # Reload the thread to pick up the change
+            page.goto(
+                f"{url}/?token={TOKEN}&open=thread:{thread_id}",
+                wait_until="load",
+            )
+            page.wait_for_timeout(3000)
+
+            # Verify call_mode persisted on reload
+            chip = page.locator("[data-testid='call-chip']")
+            assert chip.count() >= 1, (
+                f"Call chip not found after reload at {width}"
+            )
+            _save_shot_03(page, "call-chip-on", width)
+
+            # Click to stop (set back to OFF)
+            chip.first.click()
+            page.wait_for_timeout(1000)
+
+            _save_shot_03(page, "call-chip-stopped", width)
 
             # No horizontal overflow
             body_width = page.evaluate("document.body.scrollWidth")

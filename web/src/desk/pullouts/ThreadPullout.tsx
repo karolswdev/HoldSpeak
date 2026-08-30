@@ -49,11 +49,13 @@ import {
   type ToolRow,
   type ToolRowState,
   type GuardrailRow,
+  type ThreadCallStatePayload,
 } from "../threads";
 import { useDesk } from "../store";
 import { ThreadComposer, InlineEditor } from "../components/ThreadComposer";
 import { MicButton } from "../components/MicButton";
 import { ModeTabs } from "../components/ModeTabs";
+import { CallChip } from "../components/CallChip";
 import type { PulloutContentProps } from "./types";
 import "./thread-pullout.css";
 
@@ -1256,6 +1258,12 @@ function ThreadPulloutInner({
         if (p.thread_id !== threadId) return;
         void loadThread(threadId);
       }),
+      // HS-154-03: call state frame — reload thread to sync call_mode
+      subscribe("thread_call_state", (frame) => {
+        const p = frame.data as ThreadCallStatePayload;
+        if (p.thread_id !== threadId) return;
+        void loadThread(threadId);
+      }),
     ];
     return () => unsubs.forEach((u) => u());
   }, [threadId, subscribe]);
@@ -1596,6 +1604,12 @@ function ThreadPulloutInner({
                 {detail.thread.mode.name}
               </span>
             )}
+            <CallChip
+              threadId={threadId}
+              callMode={detail.thread?.call_mode ?? 0}
+              isStreaming={isStreaming}
+              onReload={() => void loadThread(threadId)}
+            />
             {egressLamp && <LampGadget on {...egressLamp} />}
             {(liveStatusLine || detail.thread?.status_line) && (
               <span className="thread-status-line">{liveStatusLine || detail.thread?.status_line}</span>

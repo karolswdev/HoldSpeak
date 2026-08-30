@@ -28,6 +28,7 @@ class Thread:
     directory_id: str
     parent_thread_id: str
     status_line: str
+    call_mode: int
     token_in: int
     token_out: int
     created_at: float
@@ -98,6 +99,7 @@ def _row_to_thread(row: Any) -> Thread:
         directory_id=str(row["directory_id"] or ""),
         parent_thread_id=str(row["parent_thread_id"] or ""),
         status_line=str(row["status_line"] or ""),
+        call_mode=int(row["call_mode"]) if "call_mode" in row.keys() else 0,
         token_in=int(row["token_in"]),
         token_out=int(row["token_out"]),
         created_at=float(row["created_at"]),
@@ -239,6 +241,7 @@ class ThreadRepository(BaseRepository):
         profile_override: Optional[str] = None,
         status_line: Optional[str] = None,
         recipe_id: Optional[str] = None,
+        call_mode: Optional[int] = None,
     ) -> Optional[Thread]:
         sets: list[str] = []
         params: list[Any] = []
@@ -254,6 +257,9 @@ class ThreadRepository(BaseRepository):
         if recipe_id is not None:
             sets.append("recipe_id=?")
             params.append(recipe_id)
+        if call_mode is not None:
+            sets.append("call_mode=?")
+            params.append(call_mode)
         if not sets:
             return self.get(thread_id)
         sets.append("updated_at=?")

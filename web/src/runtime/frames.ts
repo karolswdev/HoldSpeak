@@ -38,6 +38,7 @@ export const RUNTIME_FRAME_TYPES = [
   "scheduled_recording.stopped",
   "segment",
   "stopped",
+  "thread_call_state",
   "thread_compacted",
   "thread_delta",
   "thread_guardrail",
