@@ -47,6 +47,7 @@ The owner, on seeing DC-01 alone: "I was totally hoping for a holistic implement
 - 2026-08-29 - Phase scaffolded with `dw phase create` - keeps roadmap structure consistent - CLI.
 - 2026-08-30 - HS-152-03: `CHAT_PALETTE` (26 hands, 12.6 KB) is what a turn offers; `TOOL_NAMES` stays the gate's table - the 141-schema census (79 KB) overflows admission under the one-token-per-byte law - orchestrator; addendum in [assets/settled-design.md](./assets/settled-design.md).
 - 2026-08-30 - HS-152-03: `thread.profile_override` honored as an invocation-scoped next-run override before every admit (Phase 143 mechanism) - the assignment ledger stays the routing truth - orchestrator.
+- 2026-08-30 - METAL BANKED EARLY (for story 06 legs 1–2): `assets/story-03-hub-leg.py` LIVE against `.43` Qwen3.6-35B-A3B through a legacy LAN profile row (the production path; the 151 v2 seeding + injected engine is NOT the real path) — 10/10: native `tool_calls` → real `people.readiness` dispatch → receipt `tr-ba9ef02551cb`, part `sensitive=1`, override → `cloud` at admission. Payloads in `assets/story-03-hub-payloads-live/`. RULING: no `ToolQualification` eval is needed for `chat.turn` (it does not `require.structured_tools`; llama.cpp emits native tool_calls for Qwen3.6 — probed directly, 0.3 s). Story 06 drops that leg. Observed: the model paraphrases the People result into its answer — R2 (paraphrase laundering) is real and stays the DC-03 `egress-guard`.
 
 ## Decisions deferred
 

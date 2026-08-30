@@ -15,9 +15,9 @@ Modes:
                           runner's _engine_factory; it asks for
                           people.readiness on pass 1 and answers on pass 2,
                           and records every messages list it is handed.
-  LIVE (HS152_LIVE=1)     the local leg runs against .43 llama.cpp (the
-                          deployment must be tool-QUALIFIED or the model
-                          never emits tool_calls) -- story 06's metal leg.
+  LIVE (HS152_LIVE=1)     the local leg runs against .43 llama.cpp through a
+                          legacy LAN profile row; Qwen3.6 emits native tool_calls,
+                          no ToolQualification eval needed (probed 2026-08-30).
 
 Run:
   uv run python pm/roadmap/holdspeak/phase-152-the-hands/assets/story-03-hub-leg.py
@@ -35,7 +35,7 @@ from typing import Any
 
 REPO = Path(__file__).resolve().parents[5]
 HERE = Path(__file__).resolve().parent
-PAYLOADS = HERE / "story-03-hub-payloads"
+PAYLOADS = HERE / ("story-03-hub-payloads-live" if os.environ.get("HS152_LIVE") == "1" else "story-03-hub-payloads")
 LIVE = os.environ.get("HS152_LIVE") == "1"
 
 # Reuse the 151 metal helpers (capture server, hub_api, LAN seeding) verbatim.
@@ -133,9 +133,20 @@ def main() -> int:
 
         # ── local leg profile ──
         if LIVE:
+            # The production LAN path: a legacy openAI-compatible profile row
+            # (private endpoint -> boundary private_network); the hub's own
+            # engine factory builds the engine from the admitted revision.
             model = hs151.detect_model()
-            hs151.seed_lan_profile(db, hs151.LAN_BASE, model, profile_id="hs152-lan")
-            local_entry = "hs152-lan"
+            db.profiles.upsert(
+                profile_id="hs152-lan", name="HS-152 LAN (.43)", kind="openAICompatible",
+                base_url=hs151.LAN_BASE, model=model, context_limit=32768, requires_key=False,
+            )
+            InferenceAssignmentService(db).set_assignment(OWNER, {
+                "command_id": "hs152-assign-lan",
+                "expected_revision": 0,
+                "scope": {"kind": "capability", "capability_id": "chat.turn"},
+                "entries": [{"profile_id": "legacy-hs152-lan", "profile_revision": 1}],
+            })
             engine = None
             print(f"  LIVE .43 model: {model}", flush=True)
         else:
@@ -176,7 +187,7 @@ def main() -> int:
         people_part = tool_msgs[0]["parts"][0] if tool_msgs and tool_msgs[0]["parts"] else {}
         check(bool(people_part.get("sensitive")), "people.* result part is sensitive=1")
         people_text = str(people_part.get("text", ""))
-        check(asst.get("egress_scope") == "local", f"local egress ({asst.get('egress_scope')})")
+        check(asst.get("egress_scope") in ("local", "private_network"), f"local egress ({asst.get('egress_scope')})")
         if engine is not None:
             check(engine.tools_seen[0] > 0, f"tool palette reached the engine ({engine.tools_seen[0]} tools)")
             check(len(engine.calls) == 2, f"two passes ({len(engine.calls)})")
