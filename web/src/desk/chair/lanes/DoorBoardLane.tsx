@@ -35,6 +35,11 @@ export type DoorCard = {
   updated_at?: string;
   filing_status?: string;
   lawful_verbs?: DoorVerb[];
+  /* HS-150-02: person projection for mapped owner strings (only-when-present). */
+  person_label?: string;
+  person_relationship_id?: string;
+  delegated_at?: string | null;
+  created_at?: string | null;
 };
 
 export type DoorUpcomingItem = {
@@ -204,6 +209,22 @@ function updatedLabel(value: string | undefined): string | null {
   return `updated ${Math.floor(hours / 24)}d`;
 }
 
+/** HS-150-02: staleness from delegated_at ?? created_at. Fewest words, mono. */
+function stalenessLabel(card: DoorCard): string | null {
+  const ts = card.delegated_at || card.created_at;
+  if (!ts) return null;
+  const then = new Date(ts).getTime();
+  if (!Number.isFinite(then)) return null;
+  const days = Math.max(0, Math.floor((Date.now() - then) / 86_400_000));
+  return `waiting ${days}d`;
+}
+
+/** HS-150-02: reserved owner strings that never show the map affordance. */
+const RESERVED_OWNERS = new Set(["me", "remote", "you"]);
+function isReservedOwner(owner: string): boolean {
+  return RESERVED_OWNERS.has(owner.toLowerCase());
+}
+
 function cardFacts(card: DoorCard): string[] {
   if (card.source === "thought") {
     return [
@@ -214,7 +235,8 @@ function cardFacts(card: DoorCard): string[] {
   }
   return [
     sourceLabel(card.source),
-    card.owner ? `owner ${card.owner}` : "",
+    // HS-150-02: mapped cards render a person chip; show raw owner only for unmapped.
+    card.person_label ? "" : (card.owner ? `owner ${card.owner}` : ""),
     dueLabel(card.due) ?? "",
     typeof card.stale_score === "number" ? `age ${card.stale_score}` : "",
   ].filter(Boolean);
@@ -463,6 +485,116 @@ function UpcomingRail({ upcoming, calendarConfigured, onReload }: { upcoming: Do
   );
 }
 
+/** HS-150-02: header chip row for person filter (one per mapped person + EVERYONE). */
+type PickerRelationship = { id: string; display_name: string };
+
+function PersonChipRow({ cards, selectedPersonId, onSelect }: {
+  cards: DoorCard[];
+  selectedPersonId: string | null;
+  onSelect: (personId: string | null) => void;
+}) {
+  const people = new Map<string, string>();
+  for (const card of cards) {
+    if (card.person_relationship_id && card.person_label) {
+      people.set(card.person_relationship_id, card.person_label);
+    }
+  }
+  if (people.size === 0) return null;
+  return (
+    <div className="door-person-chips" data-testid="door-person-chip-row">
+      <button
+        type="button"
+        className={`door-person-chip-btn${!selectedPersonId ? " door-person-chip-active" : ""}`}
+        onClick={() => onSelect(null)}
+        data-testid="door-filter-everyone"
+      >
+        Everyone
+      </button>
+      {Array.from(people).map(([id, label]) => (
+        <button
+          key={id}
+          type="button"
+          className={`door-person-chip-btn${selectedPersonId === id ? " door-person-chip-active" : ""}`}
+          onClick={() => onSelect(selectedPersonId === id ? null : id)}
+          data-testid="door-filter-person"
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** HS-150-02: in-card map affordance -- picker of relationships, suggestion-first. */
+function MapPicker({
+  ownerString,
+  onMapped,
+  onCancel,
+}: {
+  ownerString: string;
+  onMapped: () => void;
+  onCancel: () => void;
+}) {
+  const [relationships, setRelationships] = useState<PickerRelationship[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    apiFetch<{ relationships?: PickerRelationship[] }>("/api/people/relationships")
+      .then((data) => { setRelationships(data.relationships ?? []); setLoading(false); })
+      .catch(() => { setLoading(false); setError("Could not load relationships"); });
+  }, []);
+
+  const map = async (relId: string) => {
+    setBusy(true);
+    setError("");
+    try {
+      await apiFetch(`/api/people/relationships/${encodeURIComponent(relId)}/owner-aliases`, {
+        method: "POST",
+        json: { alias: ownerString },
+      });
+      onMapped();
+    } catch (cause) {
+      setError(readableError(cause));
+      setBusy(false);
+    }
+  };
+
+  const folded = ownerString.toLowerCase();
+  const sorted = [...relationships].sort((a, b) => {
+    const aMatch = a.display_name.toLowerCase().includes(folded) || folded.includes(a.display_name.toLowerCase());
+    const bMatch = b.display_name.toLowerCase().includes(folded) || folded.includes(b.display_name.toLowerCase());
+    if (aMatch && !bMatch) return -1;
+    if (!aMatch && bMatch) return 1;
+    return a.display_name.localeCompare(b.display_name);
+  });
+
+  if (loading) return <div className="door-card-map-picker" data-testid="door-card-map-picker">Loading</div>;
+
+  return (
+    <div className="door-card-map-picker" data-testid="door-card-map-picker">
+      {error ? <span className="door-card-map-error">{error}</span> : null}
+      {sorted.length ? sorted.map((rel) => {
+        const isSuggested = rel.display_name.toLowerCase().includes(folded) || folded.includes(rel.display_name.toLowerCase());
+        return (
+          <button
+            key={rel.id}
+            type="button"
+            className="door-card-map-option"
+            disabled={busy}
+            onClick={() => void map(rel.id)}
+            data-testid="door-card-map-option"
+          >
+            {rel.display_name}{isSuggested ? " (suggested)" : ""}
+          </button>
+        );
+      }) : <span className="door-card-map-empty">No relationships</span>}
+      <Button dense variant="ghost" onClick={onCancel}>Cancel</Button>
+    </div>
+  );
+}
+
 export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
   const deskUpdatedAt = useDesk((state) => state.updatedAt);
   // The schedule slice remains its own writer. This is only a post-save
@@ -476,6 +608,9 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
   const [expanded, setExpanded] = useState<{ cardId: string; verbIndex: number } | null>(null);
   const [payloadValue, setPayloadValue] = useState("");
   const { attempt, receipt } = useWriteReceipt();
+  /* HS-150-02: person filter + map affordance state. */
+  const [filterPersonId, setFilterPersonId] = useState<string | null>(null);
+  const [mappingCardId, setMappingCardId] = useState<string | null>(null);
   /* HS-145-01: scroll-hint listener on the populated viewport. */
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -585,12 +720,16 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
       {peopleStateLabel(projection.people_store_state) ? (
         <div className="door-board-people-state" data-testid="door-people-state">{peopleStateLabel(projection.people_store_state)}</div>
       ) : null}
+      {/* HS-150-02: header person chips for filter. */}
+      <PersonChipRow cards={cards} selectedPersonId={filterPersonId} onSelect={setFilterPersonId} />
       {cards.length ? (
         <div className="door-board-hint-wrap">
         <div ref={viewportRef} className="door-board-viewport" tabIndex={0} aria-label="Door board, scroll horizontally for all columns">
           <div className="door-board-grid">
           {COLUMNS.map(({ id, label, count }) => {
-            const columnCards = projection.board[id] ?? [];
+            const columnCards = (projection.board[id] ?? []).filter(
+              (card) => !filterPersonId || card.person_relationship_id === filterPersonId,
+            );
             const displayedCount = count ? projection.counts[count] : null;
             return (
               <section key={id} className="door-board-column" aria-labelledby={`door-column-${id}`}>
@@ -603,6 +742,9 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
                 <div className="door-board-cards">
                   {columnCards.length ? columnCards.map((card) => {
                     const verbs = (card.lawful_verbs ?? []).filter(supportsDoorVerb);
+                    const peopleReady = projection.people_store_state === "ready";
+                    const showMap = peopleReady && card.owner && !card.person_label && !isReservedOwner(card.owner);
+                    const isMapping = mappingCardId === card.id;
                     return (
                       <article className="door-card" key={card.id}>
                         <button
@@ -614,7 +756,20 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
                           {card.body_preview ? <span>{card.body_preview}</span> : null}
                           <small>{cardFacts(card).join(" · ")}</small>
                         </button>
-                        {verbs.length ? (
+                        {/* HS-150-02: person chip for mapped owner (click filters). */}
+                        {card.person_label ? (
+                          <div className="door-card-person" data-testid="door-card-person-chip">
+                            <button
+                              type="button"
+                              className="door-card-person-btn"
+                              onClick={() => setFilterPersonId(card.person_relationship_id || null)}
+                            >
+                              {card.person_label}
+                            </button>
+                            {stalenessLabel(card) ? <span className="door-card-staleness" data-testid="door-card-staleness">{stalenessLabel(card)}</span> : null}
+                          </div>
+                        ) : null}
+                        {verbs.length || showMap ? (
                           <div className="door-card-actions" aria-label={`Actions for ${titleFor(card)}`}>
                             {verbs.map((verb, index) => {
                               const required = requiredPayload(verb);
@@ -660,6 +815,27 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
                                 </div>
                               );
                             })}
+                            {/* HS-150-02: map affordance on unmapped non-reserved owners. */}
+                            {showMap ? (
+                              <div className="door-card-action">
+                                {isMapping ? (
+                                  <MapPicker
+                                    ownerString={card.owner!}
+                                    onMapped={() => { setMappingCardId(null); void reload(); }}
+                                    onCancel={() => setMappingCardId(null)}
+                                  />
+                                ) : (
+                                  <Button
+                                    dense
+                                    variant="ghost"
+                                    data-testid="door-card-map-btn"
+                                    onClick={() => setMappingCardId(card.id)}
+                                  >
+                                    map&hellip;
+                                  </Button>
+                                )}
+                              </div>
+                            ) : null}
                           </div>
                         ) : null}
                       </article>

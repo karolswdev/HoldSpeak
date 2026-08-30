@@ -512,6 +512,38 @@ def _card_dict(card: Any) -> dict[str, Any]:
     return asdict(card)
 
 
+def _compose_brief_overlay_mcp(result: dict[str, Any], db: Any, principal: Principal) -> dict[str, Any]:
+    """HS-150-03: person_sections at the MCP adapter, gated by People access."""
+    from holdspeak.mcp.families.people import access_mode, build_people_service, _mcp_readable
+    from holdspeak.services.follow_through_service import FollowThroughService as _FT
+    from holdspeak.services.person_overlay import compose_person_overlay
+
+    # Gate: absent when People access is off.
+    try:
+        mode = access_mode()
+    except Exception:
+        mode = "off"
+    if mode == "off":
+        return result
+
+    people_svc = build_people_service()
+    follow_through = _FT(db)
+    brief_window = (result.get("period_start", ""), result.get("period_end", ""))
+
+    overlay = compose_person_overlay(brief_window, people_svc, follow_through, db, principal)
+
+    if overlay.get("state") == "ready":
+        # F6: filter sections to shared_intent-only via _mcp_readable pattern.
+        # Person overlay sections are manager-computed summaries (counts + dates),
+        # not encrypted records, so they pass through.  The underlying encrypted
+        # data was already filtered by the people_service layer.
+        result["person_sections"] = overlay.get("sections", [])
+    elif overlay.get("state") == "unavailable":
+        result["person_sections_state"] = "unavailable"
+
+    return result
+
+
 def _run(coro: Any) -> Any:
     try:
         asyncio.get_running_loop()
@@ -708,9 +740,13 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         )
     if name == "monday_brief.get":
         brief = monday_brief.generate(principal) if args.get("generate") else monday_brief.get_latest(principal)
-        return asdict(brief) if brief is not None else None
+        if brief is None:
+            return None
+        result = asdict(brief)
+        return _compose_brief_overlay_mcp(result, db, principal)
     if name == "monday_brief.generate":
-        return asdict(monday_brief.generate(principal))
+        result = asdict(monday_brief.generate(principal))
+        return _compose_brief_overlay_mcp(result, db, principal)
 
     # HS-136-02: scheduled recording CRUD + cancel-armed
     if name.startswith("scheduled_recording."):

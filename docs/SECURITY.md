@@ -209,8 +209,11 @@ Service); there is no production plaintext, file, config, or environment fallbac
 If that credential store is absent, locked, or mismatched, People fails closed.
 People content is excluded from the normal database, its safety backups, global
 FTS/Search/Ask/Memory, sync, exports/connectors, Cadence, generic MCP surfaces, and
-content-bearing logs. The People MCP adapter defaults to write capability for the local owner
-process. Leader-private content is always excluded
+content-bearing logs. The Monday Brief's per-person sections are composed at the
+adapter layer (HTTP route and MCP tool) after the persisted brief service returns;
+the persisted brief tables (`monday_briefs`, `monday_brief_items`) are plaintext
+and person-free by construction. The People MCP adapter defaults to write capability
+for the local owner process. Leader-private content is always excluded
 from MCP projections. The owner can set `HOLDSPEAK_MCP_PEOPLE_ACCESS=off` or
 `=read` to restrict; the hard boundary (encryption at rest, key custody,
 policy refusal matrix) does not loosen regardless of the access mode.

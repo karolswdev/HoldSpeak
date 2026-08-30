@@ -30,7 +30,17 @@ class SeriesAlreadyLinked(PeopleServiceError):
         super().__init__("series_already_linked")
 
 
+class OwnerAliasTaken(PeopleServiceError):
+    """Invariant P2: an owner alias is already linked to another relationship."""
+
+    def __init__(self, holder_id: str, holder_name: str) -> None:
+        self.holder_id = holder_id
+        self.holder_name = holder_name
+        super().__init__("owner_alias_taken")
+
+
 _VISIBILITIES = frozenset({"shared_intent", "leader_private"})
+_RESERVED_OWNER_ALIASES = frozenset({"me", "remote", "you"})
 _RELATIONSHIP_KINDS = frozenset({"direct_report", "peer", "extended"})
 _ENTRY_KINDS = frozenset({"one_on_one"})
 _RECORD_KINDS = frozenset({"request", "commitment", "grounding_note"})
@@ -491,7 +501,7 @@ class PeopleService:
 
                 # Open action items BY REFERENCE (never copied).
                 action_rows = conn.execute(
-                    """SELECT id, task, owner, due
+                    """SELECT id, task, owner, due, delegated_at
                        FROM action_items
                        WHERE meeting_id = ? AND status = 'pending'
                        ORDER BY created_at""",
@@ -503,6 +513,7 @@ class PeopleService:
                         "task": str(r["task"]),
                         "owner": r["owner"],
                         "due": r["due"],
+                        "delegated_at": r["delegated_at"],
                     }
                     for r in action_rows
                 ]
@@ -620,6 +631,113 @@ class PeopleService:
         value = dict(relationship)
         value.update({"calendar_links": links, "updated_at": now})
         return self._relationship_view(self._replace(relationship_id, value))
+
+    # -- Owner alias links (D1, HS-150-01) ----------------------------------------
+
+    def link_owner_alias(
+        self,
+        principal: Any,
+        relationship_id: str,
+        alias: str,
+    ) -> dict[str, Any]:
+        """Link an owner-string alias to a relationship inside the encrypted payload.
+
+        Invariant P2: if ANY other active relationship holds this alias
+        (case-insensitive compare in memory, store as given), refuse with
+        :class:`OwnerAliasTaken` naming the holder.  Re-linking the SAME
+        relationship is idempotent.  Reserved strings and empty/whitespace
+        are refused.
+        """
+        relationship = self._require_relationship(principal, relationship_id)
+        clean_alias = str(alias or "").strip()
+        if not clean_alias:
+            raise PeopleServiceError("owner_alias_required")
+        if clean_alias.casefold() in _RESERVED_OWNER_ALIASES:
+            raise PeopleServiceError("owner_alias_reserved")
+
+        # P2: scan all relationships for an existing holder (case-insensitive).
+        for other in self._list("relationship"):
+            other_id = str(other.get("id") or "")
+            if other_id == relationship_id:
+                continue
+            if str(other.get("state") or "") == "archived":
+                continue
+            for existing in other.get("owner_aliases") or []:
+                if str(existing).casefold() == clean_alias.casefold():
+                    raise OwnerAliasTaken(
+                        holder_id=other_id,
+                        holder_name=str(other.get("display_name") or ""),
+                    )
+
+        # Idempotent: if already present (case-insensitive), no-op.
+        aliases: list[str] = [
+            str(a) for a in relationship.get("owner_aliases") or []
+            if isinstance(a, str) and str(a).strip()
+        ]
+        if any(a.casefold() == clean_alias.casefold() for a in aliases):
+            return self._relationship_view(relationship)
+        aliases.append(clean_alias)
+
+        now = _now()
+        value = dict(relationship)
+        value.update({"owner_aliases": aliases, "updated_at": now})
+        return self._relationship_view(self._replace(relationship_id, value))
+
+    def unlink_owner_alias(
+        self,
+        principal: Any,
+        relationship_id: str,
+        alias: str,
+    ) -> dict[str, Any]:
+        """Remove an owner alias from a relationship.  Idempotent."""
+        relationship = self._require_relationship(principal, relationship_id)
+        clean_alias = str(alias or "").strip()
+        if not clean_alias:
+            raise PeopleServiceError("owner_alias_required")
+        now = _now()
+        aliases = [
+            str(a) for a in relationship.get("owner_aliases") or []
+            if isinstance(a, str) and str(a).strip()
+            and str(a).casefold() != clean_alias.casefold()
+        ]
+        value = dict(relationship)
+        value.update({"owner_aliases": aliases, "updated_at": now})
+        return self._relationship_view(self._replace(relationship_id, value))
+
+    def resolve_relationship_by_owner(self, owner_string: str) -> dict[str, Any]:
+        """Find the relationship whose owner_aliases contain this string.
+
+        Readiness-guarded: a locked/absent store returns
+        ``{"state": "unavailable"}``, NEVER a bare no-match.  A ready store
+        with no matching alias returns ``{"state": "ready", "relationship": None}``.
+        Case-insensitive compare in memory; never logged or persisted as comparison.
+        """
+        try:
+            state = self._store.readiness()
+            if str(getattr(state, "value", state)) != "ready":
+                return {"state": "unavailable"}
+        except Exception:
+            return {"state": "unavailable"}
+
+        clean = str(owner_string or "").strip()
+        if not clean:
+            return {"state": "ready", "relationship": None}
+
+        try:
+            relationships = self._store.list(kind="relationship")
+        except Exception:
+            return {"state": "unavailable"}
+
+        folded = clean.casefold()
+        for record in relationships:
+            if not isinstance(record, dict):
+                continue
+            if str(record.get("state") or "") == "archived":
+                continue
+            for alias in record.get("owner_aliases") or []:
+                if isinstance(alias, str) and alias.casefold() == folded:
+                    return {"state": "ready", "relationship": self._relationship_view(record)}
+        return {"state": "ready", "relationship": None}
 
     def resolve_relationship_by_series(self, uid: str, source_id: str) -> dict[str, Any]:
         """Find the relationship linked to a calendar series.
@@ -822,7 +940,7 @@ class PeopleService:
 
     @staticmethod
     def _relationship_view(record: dict[str, Any]) -> dict[str, Any]:
-        return {key: record.get(key) for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "project_refs", "calendar_links", "state", "created_at", "updated_at")}
+        return {key: record.get(key) for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "project_refs", "calendar_links", "owner_aliases", "state", "created_at", "updated_at")}
 
     @staticmethod
     def _entry_view(record: dict[str, Any]) -> dict[str, Any]:

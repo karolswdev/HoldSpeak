@@ -6,6 +6,11 @@
   min-height: 100vh;
   padding: 0;
   outline: 0;
+  /* HS-150-06 (owner catch): contain child block margins — the Chair's
+     working-band top margin used to COLLAPSE through desk-next/main/body,
+     pushing the whole document 54px past the viewport so the desk
+     body-scrolled beneath the fixed dock. */
+  display: flow-root;
 }
 .page-wrap {
   display: grid;

@@ -736,6 +736,7 @@ export function SurfaceLedgerRow({
   lineLabel,
   expands = true,
   children,
+  "data-testid": dataTestId,
 }: {
   /** The fixed leading time token (HH:MM). */
   time?: ReactNode;
@@ -757,12 +758,14 @@ export function SurfaceLedgerRow({
   expands?: boolean;
   /** The in-place expansion rendered while open. */
   children?: ReactNode;
+  "data-testid"?: string;
 }) {
   return (
     <li className="surface-ledger-row" data-open={open || undefined}>
       <button
         type="button"
         className="surface-ledger-line"
+        data-testid={dataTestId}
         aria-expanded={expands ? open || false : undefined}
         aria-label={lineLabel}
         onClick={onToggle}

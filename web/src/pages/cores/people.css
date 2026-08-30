@@ -32,4 +32,7 @@
 .people-next-header { color: var(--text-muted); font-family: var(--font-mono); font-size: var(--desk-surface-detail-size); letter-spacing: 0.04em; margin-bottom: 4px; }
 /* HS-149-03 — picker inline region. */
 .people-picker { margin-top: 8px; }
+/* HS-150-02 — owner alias add row (mirrors .people-new). */
+.people-alias-add { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.people-alias-add .gadget-string { flex: 1; min-width: 0; }
 @container surface (max-width: 559.9px) { .people-new, .people-agenda-add, .people-context-add, .people-project-link, .people-delegate, .people-satisfy { align-items: stretch; flex-wrap: wrap; } .people-new .gadget-string, .people-agenda-add .gadget-pad, .people-context-add .gadget-pad, .people-project-link > :first-child, .people-delegate > :first-child, .people-satisfy > :first-child { flex-basis: 100%; } .people-history-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -43,6 +43,8 @@ type Relationship = {
   open_request_count?: number;
   project_refs?: string[];
   calendar_links?: CalendarLink[] | null;
+  /* HS-150-02: owner aliases for the delegation lane. */
+  owner_aliases?: string[] | null;
 };
 type AgendaItem = { id: string; body: string; visibility: Visibility; state: string; rolled_from_id?: string | null };
 type Session = { id: string; occurred_at?: string; title?: string; agenda?: AgendaItem[] };
@@ -394,6 +396,50 @@ function CalendarLinkSection({ relationship, onRefresh, onProtectedFailure, upco
   </SurfaceSection>;
 }
 
+/** HS-150-02: owner aliases section on the Context lens, mirroring CalendarLinkSection. */
+function OwnerAliasSection({ relationship, onRefresh, onProtectedFailure }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void }) {
+  const [newAlias, setNewAlias] = useState("");
+  const [busy, setBusy] = useState(false);
+  const aliases = relationship.owner_aliases ?? [];
+
+  const addAlias = async () => {
+    const alias = newAlias.trim();
+    if (!alias) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/owner-aliases`, {
+        method: "POST",
+        json: { alias },
+      });
+      setNewAlias("");
+      onRefresh();
+    } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
+  };
+
+  const removeAlias = async (alias: string) => {
+    setBusy(true);
+    try {
+      await apiFetch(`/api/people/relationships/${encodeURIComponent(relationship.id)}/owner-aliases`, {
+        method: "DELETE",
+        json: { alias },
+      });
+      onRefresh();
+    } catch (cause) { onProtectedFailure(cause); } finally { setBusy(false); }
+  };
+
+  return <div data-testid="people-owner-aliases"><SurfaceSection label="Owner aliases">
+    {aliases.length ? <SurfaceRows>{aliases.map((alias) => <SurfaceRow
+      key={alias}
+      title={alias}
+      verbs={<ConfirmVerb label="Remove" confirmLabel="Remove?" busy={busy} onConfirm={() => void removeAlias(alias)} />}
+    />)}</SurfaceRows> : null}
+    <div className="people-alias-add" data-testid="people-alias-add">
+      <StringGadget mic={false} label="Owner alias" value={newAlias} onChange={setNewAlias} placeholder="Owner string" onKeyDown={(event: React.KeyboardEvent) => { if (event.key === "Enter") void addAlias(); }} />
+      <Button dense disabled={!newAlias.trim() || busy} onClick={() => void addAlias()}>Add</Button>
+    </div>
+  </SurfaceSection></div>;
+}
+
 function ContextLens({ relationship, onRefresh, onProtectedFailure, upcomingEvents = [] }: { relationship: RelationshipDetail; onRefresh(): void; onProtectedFailure(cause: unknown): void; upcomingEvents?: UpcomingEvent[] }) {
   const [topic, setTopic] = useState(""); const [body, setBody] = useState(""); const [visibility, setVisibility] = useState<Visibility>("leader_private"); const [busy, setBusy] = useState(false); const [projects, setProjects] = useState<Project[]>([]); const [projectId, setProjectId] = useState("");
   useEffect(() => { void apiFetch<{ projects?: Project[] }>("/api/projects").then((result) => { const rows = result.projects ?? []; setProjects(rows); setProjectId((current) => current || rows[0]?.id || ""); }).catch(onProtectedFailure); }, [relationship.id]);
@@ -403,6 +449,7 @@ function ContextLens({ relationship, onRefresh, onProtectedFailure, upcomingEven
   const linkedProjects = projects.filter((project) => relationship.project_refs?.includes(project.id));
   return <>
     <CalendarLinkSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} upcomingEvents={upcomingEvents} />
+    <OwnerAliasSection relationship={relationship} onRefresh={onRefresh} onProtectedFailure={onProtectedFailure} />
     <SurfaceSection label="Projects"><div className="people-project-link"><CycleGadget label="Project" value={projectId} onChange={setProjectId} options={projects.map((project) => ({ value: project.id, label: project.name }))} /><Button dense disabled={!projectId || relationship.project_refs?.includes(projectId)} onClick={() => void linkProject()}>Link</Button></div>{linkedProjects.length ? <SurfaceRows>{linkedProjects.map((project) => <SurfaceRow key={project.id} title={project.name} detail={project.description} onOpen={() => openSurfaceOr("open-project-memory", "/project-memory", `project:${project.id}`)} verbs={<Button dense variant="ghost" onClick={() => void unlinkProject(project.id)}>Unlink</Button>} />)}</SurfaceRows> : <SurfaceState empty emptyLabel="No linked projects" />}</SurfaceSection>
     <SurfaceSection label="Grounding notes"><div className="people-context-add"><StringGadget mic={false} label="Topic" value={topic} onChange={setTopic} placeholder="Topic (optional)" /><PadGadget mic={false} label="Grounding note" value={body} onChange={setBody} placeholder="Context worth remembering" rows={3} /><CycleGadget label="Visibility" value={visibility} onChange={(value) => setVisibility(value as Visibility)} options={[{ value: "leader_private", label: "Leader private" }, { value: "shared_intent", label: "Shared" }]} /><Button dense disabled={!body.trim() || busy} onClick={() => void add()}>Add note</Button></div>{!(relationship.notes ?? []).length ? <SurfaceState empty emptyLabel="No grounding notes" /> : <SurfaceRows>{(relationship.notes ?? []).map((note) => <SurfaceRow key={note.id} title={note.topic || note.body} detail={note.topic ? note.body : undefined} meta={note.visibility === "leader_private" ? "Leader private" : "Shared"} />)}</SurfaceRows>}</SurfaceSection>
   </>;

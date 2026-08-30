@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PeopleCore } from "../PeopleCore";
 
@@ -301,6 +301,61 @@ describe("PeopleCore HS-149-04 Prep lens", () => {
     expect(screen.getByText("Review docs (Ewa)")).toBeTruthy();
     expect(screen.getByText("Approved RFC")).toBeTruthy();
     expect(screen.getByTestId("prep-unlinked-count")).toHaveTextContent("3 unlinked meetings in this window");
+  });
+
+  it("renders Owner aliases section on the Context lens with add and two-beat remove", async () => {
+    const fetchSpy = vi.fn(async (input: string, opts?: { method?: string; body?: string }) => {
+      const handlers: Record<string, () => Response> = {
+        "/api/people/readiness": () => json({ readiness: "ready", store: "encrypted" }),
+        "/api/people/relationships": () => json({ relationships: [{ id: "r1", display_name: "Ewa", relationship_kind: "direct_report" }] }),
+        "/api/people/relationships/r1": () => json({ relationship: { id: "r1", display_name: "Ewa", calendar_links: [], owner_aliases: ["Ewa S.", "ES"] } }),
+        "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
+        "/api/projects": () => json({ projects: [] }),
+        "/api/door": () => json({ upcoming: [] }),
+      };
+      if (String(input).includes("owner-aliases") && opts?.method === "POST") {
+        return json({ relationship: { id: "r1", display_name: "Ewa", owner_aliases: ["Ewa S.", "ES", "E."] } });
+      }
+      if (String(input).includes("owner-aliases") && opts?.method === "DELETE") {
+        return json({ relationship: { id: "r1", display_name: "Ewa", owner_aliases: ["ES"] } });
+      }
+      const handler = handlers[String(input)];
+      if (!handler) throw new Error(`Unexpected request: ${String(input)}`);
+      return handler();
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+    render(<PeopleCore scope="people:r1" />);
+    await waitFor(() => expect(screen.getByRole("tab", { name: "Context" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+    // Section renders with existing aliases
+    const section = await screen.findByTestId("people-owner-aliases");
+    expect(section).toBeTruthy();
+    expect(within(section).getByText("Ewa S.")).toBeTruthy();
+    expect(within(section).getByText("ES")).toBeTruthy();
+    // Add flow: type + click Add (scoped to the alias section)
+    const addArea = within(section).getByTestId("people-alias-add");
+    const addInput = addArea.querySelector("input")!;
+    fireEvent.change(addInput, { target: { value: "E." } });
+    fireEvent.click(within(addArea).getByRole("button", { name: "Add" }));
+    await waitFor(() => {
+      const postCalls = fetchSpy.mock.calls.filter(([url, opts]: [string, { method?: string }?]) =>
+        String(url).includes("owner-aliases") && opts?.method === "POST"
+      );
+      expect(postCalls).toHaveLength(1);
+      const body = JSON.parse(postCalls[0][1]?.body as string);
+      expect(body.alias).toBe("E.");
+    });
+    // Remove flow: two-beat (scoped to the alias section)
+    const removeBtn = within(section).getAllByRole("button", { name: "Remove" })[0];
+    fireEvent.click(removeBtn);
+    const confirmBtn = await within(section).findByRole("button", { name: "Remove?" });
+    fireEvent.click(confirmBtn);
+    await waitFor(() => {
+      const deleteCalls = fetchSpy.mock.calls.filter(([url, opts]: [string, { method?: string }?]) =>
+        String(url).includes("owner-aliases") && opts?.method === "DELETE"
+      );
+      expect(deleteCalls).toHaveLength(1);
+    });
   });
 
   it("opens Prep lens directly via scope focus", async () => {

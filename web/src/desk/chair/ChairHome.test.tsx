@@ -145,12 +145,12 @@ describe("Chair/Floor toggle state", () => {
 describe("ChairHome lane registry composition", () => {
   beforeEach(resetChairState);
 
-  it("renders the Door registry slot and leaves activeWork empty", () => {
+  it("renders the Door and Brief registry slots and leaves activeWork empty", () => {
     render(<ChairHome />);
     expect(screen.getByTestId("chair")).toBeInTheDocument();
     expect(screen.getByTestId("chair-lanes")).toBeInTheDocument();
     expect(screen.getByTestId("chair-lanes").querySelector('[data-lane="door"]')).toBeTruthy();
-    expect(screen.getByTestId("chair-lanes").querySelector('[data-lane="brief"]')).toBeNull();
+    expect(screen.getByTestId("chair-lanes").querySelector('[data-lane="brief"]')).toBeTruthy();
     expect(screen.getByTestId("chair-lanes").querySelector('[data-lane="follow-through"]')).toBeNull();
     expect(screen.getByTestId("chair-active-work")).toBeEmptyDOMElement();
   });

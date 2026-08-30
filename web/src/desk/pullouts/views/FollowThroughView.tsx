@@ -32,6 +32,11 @@ type FollowThroughCard = {
   /** Opaque People relationship ref supplied only by the Follow-through API. */
   target_ref?: string | null;
   provenance: Provenance | null;
+  /** HS-150-07: person projection for mapped owner strings (route-adapter enrichment). */
+  person_label?: string;
+  person_relationship_id?: string;
+  delegated_at?: string | null;
+  created_at?: string | null;
 };
 
 type FollowThroughBoard = Record<Lane, FollowThroughCard[]>;
@@ -74,6 +79,16 @@ function sourceFor(card: FollowThroughCard): { glyph: string; label: string } {
   if (card.source === "people_commitment") return { glyph: "♧", label: "people" };
   if (card.source === "decision") return { glyph: "◇", label: "decision" };
   return { glyph: "⌁", label: "meeting" };
+}
+
+/** HS-150-07: staleness from delegated_at ?? created_at (same logic as DoorBoardLane). */
+function stalenessLabel(card: FollowThroughCard): string | null {
+  const ts = card.delegated_at || card.created_at;
+  if (!ts) return null;
+  const then = new Date(ts).getTime();
+  if (!Number.isFinite(then)) return null;
+  const days = Math.max(0, Math.floor((Date.now() - then) / 86_400_000));
+  return `waiting ${days}d`;
 }
 
 function tomorrow(): string {
@@ -214,9 +229,16 @@ export function FollowThroughView({
                       lineLabel={`${card.text}. ${source.label} follow-through.`}
                       cells={
                         <>
-                          <span className="follow-through-owner" title={card.owner ?? "Unassigned"}>
-                            {initials(card.owner)}
-                          </span>
+                          {card.person_label ? (
+                            <span className="follow-through-owner follow-through-person-chip" title={card.owner ?? "Unassigned"} data-testid="follow-through-person-chip">
+                              {card.person_label}
+                              {stalenessLabel(card) ? <span className="follow-through-staleness" data-testid="follow-through-staleness">{stalenessLabel(card)}</span> : null}
+                            </span>
+                          ) : (
+                            <span className="follow-through-owner" title={card.owner ?? "Unassigned"}>
+                              {initials(card.owner)}
+                            </span>
+                          )}
                           <span
                             className="follow-through-due"
                             data-overdue={overdue || undefined}

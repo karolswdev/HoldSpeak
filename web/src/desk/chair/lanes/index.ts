@@ -4,12 +4,14 @@
 // 300ms fallback owns the all-blank case).
 import type { ComponentType } from "react";
 import type { LaneId, LaneProps } from "../laneContract";
+import { BriefLane } from "./BriefLane";
 import { DoorBoardLane } from "./DoorBoardLane";
 import { MeetingsLane } from "./MeetingsLane";
 import { AgentsLane } from "./AgentsLane";
 
 export const LANE_COMPONENTS: Partial<Record<LaneId, ComponentType<LaneProps>>> = {
   door: DoorBoardLane,
+  brief: BriefLane, // HS-150-03
   meetings: MeetingsLane, // HS-135-09
   agents: AgentsLane, // HS-135-10
 };
