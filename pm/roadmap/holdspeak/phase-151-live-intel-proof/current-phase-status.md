@@ -1,6 +1,6 @@
 # Phase 151 — The Live Intelligence Proof
 
-**Status:** in progress (2/6).
+**Status:** in progress (3/6).
 
 **Last updated:** 2026-08-30.
 
@@ -63,7 +63,7 @@ Branch `feat/hs151-live-intel-proof` from main `3a37e484`.
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-151-01 | The honest dispatch (structured output + the wiring recipe) | done | [story-01](./story-01-honest-dispatch.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-151-02 | The named-owner intel (the prompt learns people) | ready | [story-02](./story-02-named-owners.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-151-02 | The named-owner intel (the prompt learns people) | done | [story-02](./story-02-named-owners.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-151-03 | The headless metal proof (control vs treatment) | ready | [story-03](./story-03-metal-proof.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-151-04 | The vision proof (the snapshot adapter on real metal) | done | [story-04](./story-04-vision-proof.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-151-05 | The record book | ready | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
@@ -71,7 +71,18 @@ Branch `feat/hs151-live-intel-proof` from main `3a37e484`.
 
 ## Where we are
 
-**2/6.** HS-151-01 (the honest dispatch) is DONE — the first
+**3/6.** HS-151-02 (the named-owner intel) is DONE — the
+person-blind prompt dies: intel now names owners when the
+transcript does (Me/Remote declared the ONLY reserved tokens,
+counsel M3 verbatim), the schema constant and prompt updated
+together, and the canary round-trips "Ewa" and "Jan Kowalski"
+through the pin server into pending action_items rows verbatim.
+The interplay pins prove the 150 contract holds untouched: named
+owners map through the real gesture, reserved strings refuse.
+Counsel's verification stands — every downstream consumer treats
+owner as opaque; only the prompt/schema changed. Next: story 03
+(the headless metal proof) — both its dependencies are now on the
+tree. Earlier — **2/6.** HS-151-01 (the honest dispatch) is DONE — the first
 latent defect dies: cloud intel now sends request-level
 structured output built from INTEL_SCHEMA, the ONE source of
 truth the prompt stringifies, the response_format wraps, and the
