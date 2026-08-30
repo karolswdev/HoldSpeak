@@ -819,23 +819,33 @@ class ThreadService:
                         continue
 
                     # -- Derive text from result payload --
+                    # HS-152-05: apply the byte cap (the executor already
+                    # set result.truncated when the raw payload exceeded it)
+                    from .thread_tools import TOOL_RESULT_BYTE_CAP, _truncate_utf8
                     result_text = (
                         json.dumps(result.payload, default=str)
                         if result.payload is not None
                         else ""
                     )
+                    if result.truncated:
+                        result_text = _truncate_utf8(result_text, TOOL_RESULT_BYTE_CAP)
 
                     # -- Persist tool-role message --
                     tool_msg = self._threads.append_message(
                         thread_id, role="tool", parent_id=assistant_msg_id,
                     )
+                    part_meta: dict[str, Any] = {
+                        "kind": result.kind,
+                        "receipt_id": result.receipt_id,
+                    }
+                    if result.truncated:
+                        part_meta["truncated"] = True
+                        part_meta["original_bytes"] = result.original_bytes
                     self._threads.append_part(
                         tool_msg.id, kind="text", text=result_text,
                         tool_call_id=call_id,
                         sensitive=result.sensitive,
-                        meta_json=json.dumps(
-                            {"kind": result.kind, "receipt_id": result.receipt_id},
-                            separators=(",", ":")),
+                        meta_json=json.dumps(part_meta, separators=(",", ":")),
                     )
 
                     # -- Emit thread_tool_result --
@@ -855,6 +865,15 @@ class ThreadService:
                         summary=result_text[:200] if result_text else "",
                         sensitive=result.sensitive,
                     )
+
+                    # -- HS-152-05: thread.set_status — broadcast after dispatch --
+                    if name == "thread.set_status" and not is_error:
+                        status_text = str(handle.args.get("text", ""))
+                        emit_thread_status_line(
+                            self._broadcast,
+                            thread_id=thread_id,
+                            text=status_text,
+                        )
 
                     # -- D3 hook: collect sensitive result text --
                     if result.sensitive and result_text:
@@ -929,6 +948,21 @@ class ThreadService:
         token_out = int(stats.get("completion_tokens", 0))
         if token_in or token_out:
             self._threads.add_token_totals(thread_id, token_in=token_in, token_out=token_out)
+
+        # -- HS-152-05: emit persisted status_line before turn_done so the
+        #    client clears the transient "Processing..." and falls back to the
+        #    correct value. Only when tool calls happened (tool_executor exists).
+        if tool_executor is not None:
+            try:
+                thread_row = self._threads.get(thread_id)
+                persisted_status = thread_row.status_line if thread_row else ""
+            except Exception:
+                persisted_status = ""
+            emit_thread_status_line(
+                self._broadcast,
+                thread_id=thread_id,
+                text=persisted_status,
+            )
 
         # -- Broadcast thread_turn_done --
         done_stats = dict(stats)

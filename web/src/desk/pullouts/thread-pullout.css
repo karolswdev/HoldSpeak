@@ -698,3 +698,146 @@
   max-width: 100%;
   box-sizing: border-box;
 }
+
+/* HS-152-05 nit: boolean checkbox aligned with its label, not centred */
+.thread-elicitation-field--boolean {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.thread-elicitation-boolean {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.thread-elicitation-boolean input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* ── Per-kind result renderers (HS-152-05) ──────────────────────────── */
+
+/* Result block: always visible on receipted rows */
+.thread-result-block {
+  margin-top: 4px;
+}
+
+.thread-result-summary {
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--text-faint);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 100%;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+/* Truncated tag (HS-152-05 D3) */
+.thread-result-truncated {
+  display: inline-block;
+  font-size: 9px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--warn-signal, #f59e0b);
+  padding: 0 4px;
+  border-radius: 2px;
+  background: rgba(245, 158, 11, 0.1);
+  margin-bottom: 4px;
+}
+
+/* Meeting glyph (matches MeetingsLane) */
+.thread-result-glyph {
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+/* Board */
+.thread-result-board {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.thread-result-board-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.thread-result-board-col {
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--text-muted);
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: var(--wash-1, rgba(128, 128, 128, 0.06));
+}
+
+/* Note */
+.thread-result-note-title {
+  font-size: var(--desk-surface-body-size, 13px);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+/* Key/value table (unknown kind) */
+.thread-result-table {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.thread-result-table-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  min-width: 0;
+}
+
+.thread-result-table-key {
+  color: var(--text-faint);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.thread-result-table-val {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Shared */
+.thread-result-label {
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.thread-result-detail {
+  font-size: var(--desk-surface-detail-size, 12px);
+  color: var(--text-faint);
+  margin-left: 6px;
+}
+
+.thread-result-more {
+  font-size: var(--desk-surface-detail-size, 12px);
+  color: var(--text-faint);
+  padding-left: 8px;
+  font-style: italic;
+}

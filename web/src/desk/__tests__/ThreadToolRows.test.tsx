@@ -603,3 +603,425 @@ describe("ThreadPullout tool rows", () => {
     expect(toolRow.textContent).toContain("tool_execution_failed");
   });
 });
+
+// ── HS-152-05: per-kind result renderer tests ──────────────────────
+
+describe("HS-152-05 per-kind renderers", () => {
+  it("meeting kind renders MeetingResultView", () => {
+    seedStore([makeMsg()]);
+    useThreadStore.setState({
+      toolRows: {
+        "t-1": {
+          "call-mtg": {
+            callId: "call-mtg",
+            messageId: "msg-1",
+            name: "meeting.get",
+            toolClass: "evidence_read",
+            argsHead: "{}",
+            state: "receipted",
+            decisionRequired: false,
+            receiptId: "tr-mtg1234",
+            outcome: "succeeded",
+            kind: "meeting",
+            payload: { id: "m1", title: "Standup", started_at: "2026-08-29T09:00:00Z", participants: ["a", "b"] },
+          },
+        },
+      },
+    });
+    renderPullout();
+    expect(screen.getByTestId("result-meeting")).toBeTruthy();
+    expect(screen.getByTestId("result-meeting").textContent).toContain("Standup");
+    expect(screen.getByTestId("raw-fold")).toBeTruthy();
+  });
+
+  it("person kind renders PersonResultView", () => {
+    seedStore([makeMsg()]);
+    useThreadStore.setState({
+      toolRows: {
+        "t-1": {
+          "call-prs": {
+            callId: "call-prs",
+            messageId: "msg-1",
+            name: "people.readiness",
+            toolClass: "evidence_read",
+            argsHead: "{}",
+            state: "receipted",
+            decisionRequired: false,
+            receiptId: "tr-prs1234",
+            outcome: "succeeded",
+            kind: "person",
+            sensitive: true,
+            payload: { relationships: [{ id: "r1", display_name: "Alice", readiness_state: "green" }] },
+          },
+        },
+      },
+    });
+    renderPullout();
+    expect(screen.getByTestId("result-person")).toBeTruthy();
+    expect(screen.getByTestId("result-person").textContent).toContain("Alice");
+    expect(screen.getByTestId("result-person").textContent).toContain("GREEN");
+    expect(screen.getByTestId("raw-fold")).toBeTruthy();
+  });
+
+  it("board kind renders BoardResultView", () => {
+    seedStore([makeMsg()]);
+    useThreadStore.setState({
+      toolRows: {
+        "t-1": {
+          "call-brd": {
+            callId: "call-brd",
+            messageId: "msg-1",
+            name: "door.get",
+            toolClass: "evidence_read",
+            argsHead: "{}",
+            state: "receipted",
+            decisionRequired: false,
+            receiptId: "tr-brd1234",
+            outcome: "succeeded",
+            kind: "board",
+            payload: { cards: [{ id: "c1", text: "Fix the widget", continuity_state: "active" }, { id: "c2", text: "Review PR", continuity_state: "overdue" }] },
+          },
+        },
+      },
+    });
+    renderPullout();
+    expect(screen.getByTestId("result-board")).toBeTruthy();
+    expect(screen.getByTestId("result-board").textContent).toContain("Fix the widget");
+    expect(screen.getByTestId("result-board").textContent).toContain("ACTIVE");
+    expect(screen.getByTestId("raw-fold")).toBeTruthy();
+  });
+
+  it("note kind renders NoteResultView with Material (single)", () => {
+    seedStore([makeMsg()]);
+    useThreadStore.setState({
+      toolRows: {
+        "t-1": {
+          "call-note": {
+            callId: "call-note",
+            messageId: "msg-1",
+            name: "desk.get",
+            toolClass: "evidence_read",
+            argsHead: '{"kind":"notes"}',
+            state: "receipted",
+            decisionRequired: false,
+            receiptId: "tr-note1234",
+            outcome: "succeeded",
+            kind: "note",
+            payload: { title: "My Note", body_markdown: "Some **bold** content" },
+          },
+        },
+      },
+    });
+    renderPullout();
+    expect(screen.getByTestId("result-note")).toBeTruthy();
+    expect(screen.getByTestId("result-note").textContent).toContain("My Note");
+    expect(screen.getByTestId("raw-fold")).toBeTruthy();
+  });
+
+  it("note kind renders NoteResultView with array (desk.list)", () => {
+    seedStore([makeMsg()]);
+    // desk.list(notes) returns a plain array, stored as payload
+    useThreadStore.setState({
+      toolRows: {
+        "t-1": {
+          "call-note-list": {
+            callId: "call-note-list",
+            messageId: "msg-1",
+            name: "desk.list",
+            toolClass: "evidence_read",
+            argsHead: '{"kind":"notes"}',
+            state: "receipted",
+            decisionRequired: false,
+            receiptId: "tr-notelist1234",
+            outcome: "succeeded",
+            kind: "note",
+            // Array payload (desk.list returns plain array)
+            payload: [
+              { id: "n1", title: "Glass note", body_markdown: "Bold content" },
+              { id: "n2", title: "Second note", body_markdown: "More content" },
+            ] as unknown as Record<string, unknown>,
+          },
+        },
+      },
+    });
+    renderPullout();
+    expect(screen.getByTestId("result-note")).toBeTruthy();
+    expect(screen.getByTestId("result-note").textContent).toContain("Glass note");
+    expect(screen.getByTestId("result-note").textContent).toContain("Second note");
+    expect(screen.getByTestId("raw-fold")).toBeTruthy();
+  });
+
+  it("decision kind renders DecisionResultView", () => {
+    seedStore([makeMsg()]);
+    useThreadStore.setState({
+      toolRows: {
+        "t-1": {
+          "call-dec": {
+            callId: "call-dec",
+            messageId: "msg-1",
+            name: "decision_record.get",
+            toolClass: "evidence_read",
+            argsHead: "{}",
+            state: "receipted",
+            decisionRequired: false,
+            receiptId: "tr-dec1234",
+            outcome: "succeeded",
+            kind: "decision",
+            payload: { title: "Use React", outcome: "approved", rationale: "Best fit for the team" },
+          },
+        },
+      },
+    });
+    renderPullout();
+    expect(screen.getByTestId("result-decision")).toBeTruthy();
+    expect(screen.getByTestId("result-decision").textContent).toContain("Use React");
+    expect(screen.getByTestId("result-decision").textContent).toContain("APPROVED");
+    expect(screen.getByTestId("raw-fold")).toBeTruthy();
+  });
+
+  it("unknown/data kind renders KeyValueTable", () => {
+    seedStore([makeMsg()]);
+    useThreadStore.setState({
+      toolRows: {
+        "t-1": {
+          "call-data": {
+            callId: "call-data",
+            messageId: "msg-1",
+            name: "desk.list",
+            toolClass: "evidence_read",
+            argsHead: "{}",
+            state: "receipted",
+            decisionRequired: false,
+            receiptId: "tr-data1234",
+            outcome: "succeeded",
+            kind: "data",
+            payload: { count: 5, kind: "notes" },
+          },
+        },
+      },
+    });
+    renderPullout();
+    expect(screen.getByTestId("result-table")).toBeTruthy();
+    expect(screen.getByTestId("result-table").textContent).toContain("count");
+    expect(screen.getByTestId("result-table").textContent).toContain("5");
+    expect(screen.getByTestId("raw-fold")).toBeTruthy();
+  });
+
+  it("RAW fold is present on all receipted rows", () => {
+    seedStore([makeMsg()]);
+    useThreadStore.setState({
+      toolRows: {
+        "t-1": {
+          "call-raw": {
+            callId: "call-raw",
+            messageId: "msg-1",
+            name: "desk.list",
+            toolClass: "evidence_read",
+            argsHead: "{}",
+            state: "receipted",
+            decisionRequired: false,
+            receiptId: "tr-raw1234",
+            outcome: "succeeded",
+            kind: "data",
+            summary: '{"items":[]}',
+          },
+        },
+      },
+    });
+    renderPullout();
+    expect(screen.getByTestId("raw-fold")).toBeTruthy();
+    expect(screen.getByTestId("raw-fold").textContent).toContain("RAW");
+  });
+
+  it("receipted row without payload shows summary text", () => {
+    seedStore([makeMsg()]);
+    useThreadStore.setState({
+      toolRows: {
+        "t-1": {
+          "call-sum": {
+            callId: "call-sum",
+            messageId: "msg-1",
+            name: "desk.list",
+            toolClass: "evidence_read",
+            argsHead: "{}",
+            state: "receipted",
+            decisionRequired: false,
+            receiptId: "tr-sum1234",
+            outcome: "succeeded",
+            kind: "data",
+            summary: '{"items":[1,2,3]}',
+          },
+        },
+      },
+    });
+    renderPullout();
+    expect(screen.getByTestId("result-summary")).toBeTruthy();
+    expect(screen.getByTestId("result-summary").textContent).toContain('{"items":[1,2,3]}');
+  });
+});
+
+// ── HS-152-05: error taxonomy — every code renders its row ─────────
+
+describe("HS-152-05 error taxonomy codes", () => {
+  const errorCodes = [
+    "tool_execution_failed",
+    "tool_timeout",
+    "tool_denied",
+    "pass_cap_reached",
+    "tool_unknown",
+  ];
+
+  for (const code of errorCodes) {
+    it(`renders error row for ${code}`, () => {
+      seedStore([makeMsg()]);
+      const isDenied = code === "tool_denied";
+      useThreadStore.setState({
+        toolRows: {
+          "t-1": {
+            [`call-err-${code}`]: {
+              callId: `call-err-${code}`,
+              messageId: "msg-1",
+              name: "desk.create",
+              toolClass: "effect_proposal",
+              argsHead: "{}",
+              state: isDenied ? "denied" : "failed",
+              decisionRequired: false,
+              error: code,
+            },
+          },
+        },
+      });
+      renderPullout();
+      const row = screen.getByTestId("tool-row");
+      expect(row.textContent).toContain(isDenied ? "DENIED" : "FAILED");
+      expect(screen.getByTestId("error-code")).toBeTruthy();
+      expect(screen.getByTestId("error-code").textContent).toBe(code);
+    });
+  }
+});
+
+// ── HS-152-05: status line tests ───────────────────────────────────
+
+describe("HS-152-05 status line", () => {
+  it("persisted status_line shown in the head", () => {
+    const detail: ThreadDetail = {
+      thread: {
+        id: "t-1",
+        title: "Test Thread",
+        recipe_id: null,
+        profile_override: null,
+        directory_id: null,
+        parent_thread_id: null,
+        status_line: "Preparing your brief...",
+        token_in: 100,
+        token_out: 50,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        last_turn_at: null,
+      },
+      messages: [makeMsg()],
+      siblings: {},
+      refs: [],
+    };
+    useThreadStore.setState({ threads: { "t-1": detail }, buffers: {}, loading: {} });
+    const { container } = renderPullout();
+    const statusEl = container.querySelector(".thread-status-line");
+    expect(statusEl).toBeTruthy();
+    expect(statusEl!.textContent).toBe("Preparing your brief...");
+  });
+
+  it("live status line takes precedence over persisted", () => {
+    const detail: ThreadDetail = {
+      thread: {
+        id: "t-1",
+        title: "Test Thread",
+        recipe_id: null,
+        profile_override: null,
+        directory_id: null,
+        parent_thread_id: null,
+        status_line: "Old status",
+        token_in: 0,
+        token_out: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        last_turn_at: null,
+      },
+      messages: [makeMsg()],
+      siblings: {},
+      refs: [],
+    };
+    useThreadStore.setState({
+      threads: { "t-1": detail },
+      buffers: {},
+      loading: {},
+      statusLines: { "t-1": "Processing (pass 2)..." },
+    });
+    const { container } = renderPullout();
+    const statusEl = container.querySelector(".thread-status-line");
+    expect(statusEl).toBeTruthy();
+    expect(statusEl!.textContent).toBe("Processing (pass 2)...");
+  });
+
+  it("status line cleared on applyStatusLine with empty text", () => {
+    useThreadStore.setState({
+      statusLines: { "t-1": "Processing..." },
+    });
+    useThreadStore.getState().applyStatusLine({ thread_id: "t-1", text: "" });
+    expect(useThreadStore.getState().statusLines["t-1"]).toBe("");
+  });
+});
+
+// ── HS-152-05: hydration extracts payload from tool-role parts ─────
+
+describe("HS-152-05 hydration with payload", () => {
+  it("hydrateToolRows parses tool-role part text as payload", () => {
+    seedStore([
+      makeMsg({
+        id: "asst-h5",
+        role: "assistant",
+        parts: [
+          {
+            id: "p-tc-h5",
+            messageId: "asst-h5",
+            ordinal: 0,
+            kind: "tool_call",
+            text: "",
+            sensitive: false,
+            metaJson: {
+              id: "call-h5",
+              name: "meeting.get",
+              arguments: "{}",
+              class: "evidence_read",
+              state: "admitted",
+            },
+          },
+        ],
+      }),
+      makeMsg({
+        id: "tool-h5",
+        role: "tool",
+        parentId: "asst-h5",
+        parts: [
+          {
+            id: "p-tr-h5",
+            messageId: "tool-h5",
+            ordinal: 0,
+            kind: "text",
+            text: '{"id":"m1","title":"Daily Standup","started_at":"2026-08-29T09:00:00Z"}',
+            sensitive: false,
+            toolCallId: "call-h5",
+            metaJson: { kind: "meeting", receipt_id: "tr-hydrate-h5" },
+          },
+        ],
+      }),
+    ]);
+
+    useThreadStore.getState().hydrateToolRows("t-1");
+    const row = useThreadStore.getState().toolRows["t-1"]?.["call-h5"];
+    expect(row).toBeTruthy();
+    expect(row!.kind).toBe("meeting");
+    expect(row!.payload).toBeTruthy();
+    expect(row!.payload!.title).toBe("Daily Standup");
+    expect(row!.summary).toBeTruthy();
+  });
+});

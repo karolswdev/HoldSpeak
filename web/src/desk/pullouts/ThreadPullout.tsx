@@ -5,8 +5,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   SurfaceState,
+  SurfaceRows,
+  SurfaceRow,
 } from "../surface/Surface";
 import { Material } from "../surface/Material";
+import { intelBadge } from "../chair/lanes/MeetingsLane";
 import { LampGadget } from "../surface/gadgets";
 import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 import { boundaryEgressLamp, egressScopeLamp, type EgressLamp } from "../inferenceEgress";
@@ -146,10 +149,12 @@ function ElicitationForm({
         const label = String(prop.title ?? key);
         const isReq = required.includes(key);
         return (
-          <div key={key} className="thread-elicitation-field">
-            <label className="thread-elicitation-label">
-              {label}{isReq ? " *" : ""}
-            </label>
+          <div key={key} className={`thread-elicitation-field${type === "boolean" ? " thread-elicitation-field--boolean" : ""}`}>
+            {type !== "boolean" && (
+              <label className="thread-elicitation-label">
+                {label}{isReq ? " *" : ""}
+              </label>
+            )}
             {enumVals ? (
               <select
                 className="thread-elicitation-select"
@@ -162,11 +167,14 @@ function ElicitationForm({
                 ))}
               </select>
             ) : type === "boolean" ? (
-              <input
-                type="checkbox"
-                checked={Boolean(values[key])}
-                onChange={(e) => handleChange(key, e.target.checked)}
-              />
+              <label className="thread-elicitation-boolean">
+                <input
+                  type="checkbox"
+                  checked={Boolean(values[key])}
+                  onChange={(e) => handleChange(key, e.target.checked)}
+                />
+                <span className="thread-elicitation-label">{label}{isReq ? " *" : ""}</span>
+              </label>
             ) : type === "number" || type === "integer" ? (
               <input
                 type="number"
@@ -203,6 +211,286 @@ function ElicitationForm({
           Decline
         </button>
       </div>
+    </div>
+  );
+}
+
+// ── Per-kind result renderers (HS-152-05) ──────────────────────────
+// Thin projection wrappers using the same Surface primitives (SurfaceRow,
+// SurfaceRows, Material) that DoorBoardLane, MeetingsLane, DecisionPullout,
+// and the People overlay build on. The full components cannot be imported
+// directly because they depend on useDesk, apiFetch, useSurfaceWindows,
+// and router context. These projections render the data the tool returned.
+
+/** Meeting chip: SurfaceRow with title, date, intel badge — the same
+ *  visual vocabulary as MeetingsLane (ChairLane + intelBadge). */
+function MeetingResultView({ data }: { data: Record<string, unknown> }) {
+  const meetings = Array.isArray(data.meetings) ? data.meetings : null;
+  const items = meetings ?? [data];
+  return (
+    <div data-testid="result-meeting">
+      <SurfaceRows>
+        {items.slice(0, 8).map((m: Record<string, unknown>, i: number) => {
+          const title = String(m.title ?? m.name ?? "Meeting");
+          const date = m.started_at ?? m.created_at;
+          const badge = intelBadge(m.intel_status as string | undefined);
+          return (
+            <SurfaceRow
+              key={String(m.id ?? i)}
+              glyph={<span className="thread-result-glyph">{"▣"}</span>}
+              title={title}
+              detail={date ? String(date).slice(0, 16) : undefined}
+              meta={badge}
+            />
+          );
+        })}
+      </SurfaceRows>
+      {items.length > 8 && <div className="thread-result-more">+{items.length - 8} more</div>}
+    </div>
+  );
+}
+
+/** People card projection: display name + readiness ONLY, never ledger text.
+ *  Uses SurfaceRow like the People overlay's relationship grid. */
+function PersonResultView({ data }: { data: Record<string, unknown> }) {
+  const relationships = Array.isArray(data.relationships) ? data.relationships : null;
+  const items = relationships ?? [data];
+  return (
+    <div data-testid="result-person">
+      <SurfaceRows>
+        {items.slice(0, 8).map((r: Record<string, unknown>, i: number) => {
+          const displayName = String(r.display_name ?? r.name ?? "Person");
+          const readiness = String(r.readiness_state ?? r.readiness ?? "");
+          return (
+            <SurfaceRow
+              key={String(r.id ?? i)}
+              title={displayName}
+              meta={readiness ? readiness.toUpperCase() : undefined}
+            />
+          );
+        })}
+      </SurfaceRows>
+      {items.length > 8 && <div className="thread-result-more">+{items.length - 8} more</div>}
+    </div>
+  );
+}
+
+/** Board projection: card titles grouped by column, using the same
+ *  column/card vocabulary as DoorBoardLane. */
+function BoardResultView({ data }: { data: Record<string, unknown> }) {
+  // door.get returns {board: {overdue: [...], now: [...], ...}, counts: {...}}
+  const board = data.board as Record<string, unknown[]> | undefined;
+  const cards = Array.isArray(data.cards) ? data.cards : null;
+  const counts = data.counts as Record<string, number> | undefined;
+
+  if (board && typeof board === "object") {
+    const columnNames = Object.keys(board);
+    return (
+      <div className="thread-result-board" data-testid="result-board">
+        {counts && (
+          <div className="thread-result-board-summary">
+            {Object.entries(counts).filter(([, v]) => v > 0).map(([k, v]) => (
+              <span key={k} className="thread-result-board-col">{k}: {v}</span>
+            ))}
+          </div>
+        )}
+        <SurfaceRows>
+          {columnNames.flatMap((col) =>
+            (Array.isArray(board[col]) ? board[col] : []).slice(0, 3).map((card: unknown, i: number) => {
+              const c = card as Record<string, unknown>;
+              return (
+                <SurfaceRow
+                  key={String(c.id ?? `${col}-${i}`)}
+                  title={String(c.text ?? c.title ?? "Card")}
+                  detail={String(c.owner ?? "")}
+                  meta={col.toUpperCase()}
+                />
+              );
+            }),
+          )}
+        </SurfaceRows>
+      </div>
+    );
+  }
+  // follow_through.board returns {cards: [...]}
+  if (cards) {
+    return (
+      <div className="thread-result-board" data-testid="result-board">
+        <SurfaceRows>
+          {cards.slice(0, 8).map((card: unknown, i: number) => {
+            const c = card as Record<string, unknown>;
+            return (
+              <SurfaceRow
+                key={String(c.id ?? i)}
+                title={String(c.text ?? c.title ?? "Card")}
+                detail={String(c.owner ?? "")}
+                meta={String(c.continuity_state ?? "").toUpperCase()}
+              />
+            );
+          })}
+        </SurfaceRows>
+        {cards.length > 8 && <div className="thread-result-more">+{cards.length - 8} more</div>}
+      </div>
+    );
+  }
+  return <KeyValueTable data={data} />;
+}
+
+/** Note: renders through Material (the existing markdown renderer),
+ *  same as DecisionPullout uses for decision body sections.
+ *  desk.list(notes) returns a plain array; desk.get returns a single object. */
+function NoteResultView({ data }: { data: Record<string, unknown> }) {
+  // desk.list returns a plain array (JSON array at top level)
+  const items: Array<Record<string, unknown>> | null = Array.isArray(data)
+    ? (data as unknown as Array<Record<string, unknown>>)
+    : Array.isArray(data.items)
+      ? (data.items as Array<Record<string, unknown>>)
+      : null;
+  if (items) {
+    if (items.length === 0) {
+      return <div data-testid="result-note"><span className="thread-result-detail">(no notes)</span></div>;
+    }
+    return (
+      <div data-testid="result-note">
+        <SurfaceRows>
+          {items.slice(0, 8).map((n: Record<string, unknown>, i: number) => {
+            const title = String(n.title ?? n.name ?? "Note");
+            const body = String(n.body_markdown ?? n.body ?? n.text ?? "");
+            return (
+              <SurfaceRow
+                key={String(n.id ?? i)}
+                title={title}
+                detail={body.slice(0, 60) || undefined}
+              />
+            );
+          })}
+        </SurfaceRows>
+        {items.length > 8 && <div className="thread-result-more">+{items.length - 8} more</div>}
+      </div>
+    );
+  }
+  // Single note (desk.get)
+  const body = String(data.body_markdown ?? data.body ?? data.text ?? data.content ?? "");
+  const title = String(data.title ?? data.name ?? "");
+  return (
+    <div data-testid="result-note">
+      {title && <div className="thread-result-note-title">{title}</div>}
+      {body ? <Material>{body}</Material> : <span className="thread-result-detail">(empty)</span>}
+    </div>
+  );
+}
+
+/** Decision card projection: title, lifecycle/outcome, rationale head.
+ *  Uses the same layout as DecisionPullout's desk-decision-card section. */
+function DecisionResultView({ data }: { data: Record<string, unknown> }) {
+  const records = Array.isArray(data.records) ? data.records : null;
+  const items = records ?? [data];
+  return (
+    <div data-testid="result-decision">
+      <SurfaceRows>
+        {items.slice(0, 8).map((r: Record<string, unknown>, i: number) => {
+          const title = String(r.title ?? r.decision_text ?? r.decision ?? "Decision");
+          const lifecycle = String(r.lifecycle ?? r.outcome ?? r.status ?? "");
+          return (
+            <SurfaceRow
+              key={String(r.id ?? i)}
+              title={title}
+              meta={lifecycle ? lifecycle.toUpperCase() : undefined}
+              detail={r.rationale ? String(r.rationale).slice(0, 80) : undefined}
+            />
+          );
+        })}
+      </SurfaceRows>
+      {items.length > 8 && <div className="thread-result-more">+{items.length - 8} more</div>}
+    </div>
+  );
+}
+
+/** Unknown kind: key/value table (the fallback for unrecognized result shapes). */
+function KeyValueTable({ data }: { data: Record<string, unknown> }) {
+  const entries = Object.entries(data).filter(
+    ([, v]) => v !== null && v !== undefined && typeof v !== "object",
+  ).slice(0, 20);
+  const objectEntries = Object.entries(data).filter(
+    ([, v]) => v !== null && typeof v === "object",
+  );
+  return (
+    <div className="thread-result-table" data-testid="result-table">
+      {entries.map(([k, v]) => (
+        <div key={k} className="thread-result-table-row">
+          <span className="thread-result-table-key">{k}</span>
+          <span className="thread-result-table-val">{String(v)}</span>
+        </div>
+      ))}
+      {objectEntries.length > 0 && (
+        <div className="thread-result-table-row">
+          <span className="thread-result-table-key">+{objectEntries.length} object{objectEntries.length !== 1 ? "s" : ""}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** RAW fold: collapsed JSON for any receipted row, always visible. */
+function RawFold({ payload, summary }: { payload?: Record<string, unknown>; summary?: string }) {
+  const text = payload ? JSON.stringify(payload, null, 2) : (summary || "");
+  if (!text) return null;
+  return (
+    <details className="thread-raw-fold" data-testid="raw-fold">
+      <summary className="thread-raw-toggle">{"RAW ▸"}</summary>
+      <pre className="thread-raw-content">{text}</pre>
+    </details>
+  );
+}
+
+/** Dispatch to the right renderer based on kind. Always shows something
+ *  for a receipted row: the per-kind view, the key/value table, or at
+ *  minimum the summary text + RAW fold. */
+function ToolResultRenderer({ row }: { row: ToolRow }) {
+  if (row.state !== "receipted") return null;
+  const kind = row.kind ?? "data";
+  const data = row.payload;
+  const truncated = row.payload?.truncated === true;
+
+  // Without payload, show summary text + RAW fold
+  if (!data) {
+    return (
+      <div className="thread-result-block" data-testid="result-block">
+        {row.summary && (
+          <div className="thread-result-summary" data-testid="result-summary">{row.summary}</div>
+        )}
+        <RawFold summary={row.summary} />
+      </div>
+    );
+  }
+
+  let renderer: React.ReactNode = null;
+  switch (kind) {
+    case "meeting":
+      renderer = <MeetingResultView data={data} />;
+      break;
+    case "person":
+      renderer = <PersonResultView data={data} />;
+      break;
+    case "board":
+      renderer = <BoardResultView data={data} />;
+      break;
+    case "note":
+      renderer = <NoteResultView data={data} />;
+      break;
+    case "decision":
+      renderer = <DecisionResultView data={data} />;
+      break;
+    default:
+      renderer = <KeyValueTable data={data} />;
+      break;
+  }
+
+  return (
+    <div className="thread-result-block" data-testid="result-block">
+      {truncated && <span className="thread-result-truncated">TRUNCATED</span>}
+      {renderer}
+      <RawFold payload={data} />
     </div>
   );
 }
@@ -313,8 +601,11 @@ function ToolRowView({
 
       {/* Error display */}
       {(row.state === "failed" || row.state === "denied") && row.error && (
-        <div className="thread-tool-error-code">{row.error}</div>
+        <div className="thread-tool-error-code" data-testid="error-code">{row.error}</div>
       )}
+
+      {/* HS-152-05: per-kind result renderer + RAW fold */}
+      <ToolResultRenderer row={row} />
     </div>
   );
 }
@@ -820,7 +1111,7 @@ function ThreadPulloutInner({
           />
         ) : (
           <div className="thread-messages">
-            {detail.messages.map((msg) => {
+            {detail.messages.filter((m) => m.role !== "tool").map((msg) => {
               // Siblings: server returns { message_id: [position(1-based), total] }.
               const sibData = detail.siblings[msg.id];
               const sibPosition = Array.isArray(sibData) ? Number(sibData[0]) : 1;

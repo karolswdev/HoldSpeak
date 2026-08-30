@@ -134,6 +134,10 @@ export interface ToolRow {
   summary?: string;
   sensitive?: boolean;
   error?: string;
+  /** HS-152-05: structured result payload for per-kind renderers.
+   * Populated on hydration from the tool-role message part text (full JSON).
+   * Not available on live frames — renderers fall back to summary. */
+  payload?: Record<string, unknown>;
 }
 
 // ── Tool frame payloads (HS-152-04) ────────────────────────────────
@@ -665,6 +669,9 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
       },
       buffers: newBuffers,
     }));
+    // HS-152-05: refresh thread metadata (status_line, tokens) and hydrate
+    // tool rows with full payloads from persisted parts (fire-and-forget).
+    void get().loadThread(thread_id);
   },
 
   async reconcile(threadId) {
@@ -753,7 +760,7 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
     const existing = get().toolRows[thread_id]?.[call_id];
     if (!existing) return;
 
-    const isError = ["tool_execution_failed", "tool_denied", "tool_timeout", "cancelled", "error"].includes(kind);
+    const isError = ["tool_execution_failed", "tool_denied", "tool_timeout", "pass_cap_reached", "tool_unknown", "cancelled", "error"].includes(kind);
     const newState: ToolRowState = kind === "tool_denied"
       ? "denied"
       : isError
@@ -807,18 +814,38 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
 
     const rows: Record<string, ToolRow> = {};
 
-    // Build a map of tool_call_id -> result metadata from tool-role messages
-    const resultMap: Record<string, { kind: string; receiptId: string; sensitive: boolean }> = {};
+    // Build a map of tool_call_id -> result metadata + payload from tool-role messages
+    const resultMap: Record<string, {
+      kind: string;
+      receiptId: string;
+      sensitive: boolean;
+      payload?: Record<string, unknown>;
+      summary?: string;
+    }> = {};
     for (const msg of detail.messages) {
       if (msg.role !== "tool") continue;
       for (const part of msg.parts) {
         const tcId = part.toolCallId;
         const meta = part.metaJson;
         if (tcId && meta) {
+          // HS-152-05: parse the tool-role part text as JSON for the result payload
+          let parsedPayload: Record<string, unknown> | undefined;
+          if (part.text) {
+            try {
+              const parsed = JSON.parse(part.text);
+              if (parsed && typeof parsed === "object") {
+                parsedPayload = parsed as Record<string, unknown>;
+              }
+            } catch {
+              // Not valid JSON — leave payload undefined
+            }
+          }
           resultMap[tcId] = {
             kind: String(meta.kind ?? "data"),
             receiptId: String(meta.receipt_id ?? ""),
             sensitive: part.sensitive,
+            payload: parsedPayload,
+            summary: part.text ? part.text.slice(0, 200) : undefined,
           };
         }
       }
@@ -858,6 +885,8 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
             sensitive: result.sensitive,
             outcome: isError ? "failed" : "succeeded",
             ...(isError ? { error: result.kind } : {}),
+            ...(result.payload ? { payload: result.payload } : {}),
+            ...(result.summary ? { summary: result.summary } : {}),
           } : {}),
         };
       }
