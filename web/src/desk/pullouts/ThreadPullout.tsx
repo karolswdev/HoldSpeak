@@ -42,8 +42,10 @@ import {
   type ThreadToolPendingPayload,
   type ThreadToolResultPayload,
   type ThreadStatusLinePayload,
+  type ThreadGuardrailPayload,
   type ToolRow,
   type ToolRowState,
+  type GuardrailRow,
 } from "../threads";
 import { useDesk } from "../store";
 import { ThreadComposer, InlineEditor } from "../components/ThreadComposer";
@@ -53,6 +55,7 @@ import "./thread-pullout.css";
 
 // HS-152-04: stable empty refs for zustand selectors (avoid infinite re-render).
 const EMPTY_TOOL_ROWS: Record<string, ToolRow> = {};
+const EMPTY_GUARDRAIL_ROWS: Record<string, GuardrailRow> = {};
 
 // ── StreamingMaterial ────────────────────────────────────────────────
 // Append-safe wrapper: renders the live text cheaply while streaming,
@@ -496,6 +499,49 @@ function ToolResultRenderer({ row }: { row: ToolRow }) {
   );
 }
 
+// ── Guardrail row (HS-153-03) ─────────────────────────────────────
+function GuardrailRowView({ row }: { row: GuardrailRow }) {
+  const hasViolations = row.violations.length > 0;
+  const hasWarnings = row.warnings.length > 0;
+  const [rawOpen, setRawOpen] = useState(false);
+
+  if (!hasViolations && !hasWarnings) return null;
+
+  return (
+    <div
+      className={`thread-guardrail-row ${hasViolations ? "has-violations" : "has-warnings"}`}
+      data-testid="guardrail-row"
+    >
+      <div className="thread-guardrail-head">
+        <span className="thread-guardrail-glyph">{hasViolations ? "⛔" : "⚠"}</span>
+        <span className="thread-guardrail-label">
+          {hasViolations ? "Guardrail violation" : "Guardrail warning"}
+        </span>
+      </div>
+      {row.violations.map((v, i) => (
+        <div key={`v-${i}`} className="thread-guardrail-violation" data-testid="guardrail-violation">
+          {v}
+        </div>
+      ))}
+      {row.warnings.map((w, i) => (
+        <div key={`w-${i}`} className="thread-guardrail-warning" data-testid="guardrail-warning">
+          {w}
+        </div>
+      ))}
+      {row.raw && (
+        <details
+          className="thread-guardrail-raw"
+          open={rawOpen}
+          onToggle={(e) => setRawOpen((e.target as HTMLDetailsElement).open)}
+        >
+          <summary>RAW</summary>
+          <pre>{JSON.stringify(row.raw, null, 2)}</pre>
+        </details>
+      )}
+    </div>
+  );
+}
+
 // ── Tool row (HS-152-04) ───────────────────────────────────────────
 function ToolRowView({
   row,
@@ -559,15 +605,18 @@ function ToolRowView({
         </div>
       )}
 
-      {/* Decision box: Allow once / Allow always / Deny */}
+      {/* Decision box: Allow once / Allow always / Deny
+           HS-153-03: when defaultDecision === "deny", Deny gets primary styling
+           and autoFocus; otherwise Allow once is primary. */}
       {row.state === "awaiting_decision" && (
-        <div className="thread-tool-decision-box" data-testid="decision-box">
+        <div className="thread-tool-decision-box" data-testid="decision-box" data-default-decision={row.defaultDecision || "allow"}>
           <div className="thread-tool-decision-actions">
             <button
               type="button"
-              className="desk-chip is-primary"
+              className={`desk-chip ${row.defaultDecision === "deny" ? "quiet" : "is-primary"}`}
               onClick={() => onDecide(row.callId, "approve")}
               data-testid="allow-once"
+              autoFocus={row.defaultDecision !== "deny"}
             >
               Allow once
             </button>
@@ -581,9 +630,10 @@ function ToolRowView({
             </button>
             <button
               type="button"
-              className="desk-chip quiet"
+              className={`desk-chip ${row.defaultDecision === "deny" ? "is-primary" : "quiet"}`}
               onClick={() => onDecide(row.callId, "deny")}
               data-testid="deny"
+              autoFocus={row.defaultDecision === "deny"}
             >
               Deny
             </button>
@@ -625,6 +675,7 @@ function MessageRow({
   toolRows,
   threadId,
   onDecide,
+  guardrailRow,
 }: {
   msg: ThreadMessage;
   bufferText: string;
@@ -640,6 +691,8 @@ function MessageRow({
   toolRows?: ToolRow[];
   threadId: string;
   onDecide: (callId: string, decision: "approve" | "deny", opts?: { always?: boolean; answer?: unknown }) => void;
+  /** HS-153-03: guardrail evaluation row for this message. */
+  guardrailRow?: GuardrailRow;
 }) {
   const crashed = isCrashed(msg);
   const hasError = msg.errorJson !== null && !msg.streaming;
@@ -761,6 +814,9 @@ function MessageRow({
         </details>
       )}
 
+      {/* HS-153-03: guardrail row (before tool rows) */}
+      {guardrailRow && <GuardrailRowView row={guardrailRow} />}
+
       {/* HS-152-04: tool rows */}
       {toolRows && toolRows.length > 0 && (
         <div className="thread-tool-rows">
@@ -845,8 +901,9 @@ function ThreadPulloutInner({
   const {
     loadThread, applyTurnStarted, applyDelta, applyTurnDone, reconcile,
     getBufferText, applyToolPending, applyToolResult, applyStatusLine,
-    decideOptimistic, setMode,
+    decideOptimistic, setMode, applyGuardrail,
   } = useThreadStore.getState();
+  const guardrailRowsForThread = useThreadStore((s) => s.guardrailRows[threadId] ?? EMPTY_GUARDRAIL_ROWS);
 
   const { attempt, receipt } = useWriteReceipt();
   const { subscribe, state: busState } = useRuntimeBus();
@@ -918,6 +975,12 @@ function ThreadPulloutInner({
         const p = frame.data as ThreadStatusLinePayload;
         if (p.thread_id !== threadId) return;
         applyStatusLine(p);
+      }),
+      // HS-153-03: guardrail evaluation frame
+      subscribe("thread_guardrail", (frame) => {
+        const p = frame.data as ThreadGuardrailPayload;
+        if (p.thread_id !== threadId) return;
+        applyGuardrail(p);
       }),
     ];
     return () => unsubs.forEach((u) => u());
@@ -1134,6 +1197,10 @@ function ThreadPulloutInner({
               const msgToolRows = msg.role === "assistant"
                 ? Object.values(threadToolRows).filter((r) => r.messageId === msg.id)
                 : undefined;
+              // HS-153-03: guardrail row for this message
+              const msgGuardrailRow = msg.role === "assistant"
+                ? guardrailRowsForThread[msg.id]
+                : undefined;
               return (
                 <MessageRow
                   key={msg.id}
@@ -1149,6 +1216,7 @@ function ThreadPulloutInner({
                   toolRows={msgToolRows}
                   threadId={threadId}
                   onDecide={handleDecide}
+                  guardrailRow={msgGuardrailRow}
                 />
               );
             })}
@@ -1175,6 +1243,10 @@ function ThreadPulloutInner({
           }}
           onNewThread={handleNewThread}
           onModeSelect={(recipeId) => void setMode(threadId, recipeId)}
+          onToggleGuardrail={(guardrailId) => {
+            // HS-153-03: toggle via PATCH /api/threads/:id/guardrail
+            void patchThread(threadId, { toggle_guardrail: guardrailId });
+          }}
           currentMode={detail.thread?.mode ?? null}
           streaming={isStreaming}
           lastAssistantId={lastAssistant?.id ?? null}

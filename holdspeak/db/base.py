@@ -48,9 +48,14 @@ class BaseRepository:
             parsed = json.loads(raw)
         except Exception:
             return []
-        if not isinstance(parsed, list):
-            return []
-        return parsed
+        if isinstance(parsed, list):
+            return parsed
+        # HS-153-03: tools_json may be an object {"tools": [...], "guardrails": [...]}.
+        # Return the "tools" list in that case.
+        if isinstance(parsed, dict) and "tools" in parsed:
+            tools = parsed["tools"]
+            return list(tools) if isinstance(tools, list) else []
+        return []
 
     def _json_loads_dict(self, raw: object) -> dict[str, Any]:
         if not isinstance(raw, str) or not raw:

@@ -21,14 +21,14 @@ Modes, prompts, guardrails, annotations, compaction and Door-backed todo on the 
 |---|---|---|---|---|
 | HS-153-01 | Modes as recipes (kind, seeds, allow-lists, mode tabs) | done | [story-01-modes](./story-01-modes.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-153-02 | Prompts and slash verbs (notes tagged prompt, arguments) | done | [story-02-prompts-slash](./story-02-prompts-slash.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-153-03 | Guardrails (chat.guardrail, seeds, the advisory row) | backlog | [story-03-guardrails](./story-03-guardrails.md) | - |
+| HS-153-03 | Guardrails (chat.guardrail, seeds, the advisory row) | done | [story-03-guardrails](./story-03-guardrails.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-153-04 | Annotations (selection popover, draft parts, mic) | backlog | [story-04-annotations](./story-04-annotations.md) | - |
 | HS-153-05 | Compaction and todo (chat.compact cut row, door.add_item) | backlog | [story-05-compact-todo](./story-05-compact-todo.md) | - |
 | HS-153-06 | The walk and the close | backlog | [story-06-walk-and-close](./story-06-walk-and-close.md) | - |
 
 ## Where we are
 
-HS-153-01 DONE, HS-153-02 DONE. Story 02: two-stage slash completion in ThreadComposer (command stage + argument stage in one popover), R3 rule (/ only at line start), 10 slash commands each mapped to a registered verb id, /mode calls setMode, /prompt inserts the note body, /tools shows palette info, /todo /compact /guardrail show "not yet" with TODO hooks for stories 03/05. Second seed prompt added (1:1 prep). Backend test: 9 tests for list_by_tag(json_each). Vitest: 46 tests (completeSlash pure function, verb mapping, component behavior). Glass: 2 legs (modes + slash) at 1440+393, zero overflow. Three real-path defects found (Playwright/React controlled input, focus loss after JS setter, bundle staleness).
+HS-153-01 DONE, HS-153-02 DONE, HS-153-03 code + tests delivered (awaiting flip). Story 03: guardrail notes (YAML front matter in body_markdown), two seeds (effect-guard + egress-guard), per-mode enablement (Chase: both, Desk: egress-guard, Draft/Plan: none), guardrail admission ONCE per pass in the tool loop (after tool_calls extracted, before per-call admission), thread_guardrail frame + guardrail part persisted, default_decision on pending frames (deny when violation + non-yolo), guardrail failure = warning row (never blocks), /guardrail verb wired to toggle on the mode recipe, GuardrailRowView renderer (violations red, warnings amber, RAW fold), decision box honours defaultDecision. Two defects found: CHECK constraint on thread_message_parts.kind needed extending; zustand infinite re-render from unstable empty object in guardrailRows selector. 24 unit tests (all green), 123 scoped tests green, vitest 37/37 green, web baseline zero branch-new.
 
 ## Active risks
 

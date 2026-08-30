@@ -433,6 +433,119 @@ def _rebuild_action_items_for_nullable_meeting_id(conn: sqlite3.Connection) -> b
     return True
 
 
+def _thread_parts_kind_set(sql: str) -> set[str]:
+    """Extract the closed kind vocabulary from thread_message_parts DDL."""
+    match = re.search(
+        r"\bkind\s+TEXT\s+NOT\s+NULL\s+CHECK\s*\(\s*kind\s+IN\s*\(([^)]*)\)",
+        sql,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if match is None:
+        return set()
+    return set(re.findall(r"'([^']+)'", match.group(1)))
+
+
+def _rebuild_thread_message_parts_for_kind_drift(conn: sqlite3.Connection) -> bool:
+    """Widen the thread_message_parts kind CHECK to include guardrail kinds (HS-153-03).
+
+    The pattern mirrors ``_rebuild_kernel_parent_runs_for_kind_drift``:
+    detect the live kind set vs the canonical DDL, copy rows into the
+    canonical shape under a SAVEPOINT, preserve indexes/triggers/FTS, log once.
+    """
+    live = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='thread_message_parts'"
+    ).fetchone()
+    if live is None or not isinstance(live[0], str):
+        return False
+
+    # Build canonical DDL from SCHEMA_SQL
+    reference = sqlite3.connect(":memory:")
+    try:
+        reference.executescript(SCHEMA_SQL)
+        canonical_row = reference.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='thread_message_parts'"
+        ).fetchone()
+        if canonical_row is None:
+            return False
+        canonical_ddl = str(canonical_row[0])
+        canonical_kinds = _thread_parts_kind_set(canonical_ddl)
+        canonical_columns = [
+            str(row[1]) for row in reference.execute("PRAGMA table_info('thread_message_parts')")
+        ]
+    finally:
+        reference.close()
+
+    live_kinds = _thread_parts_kind_set(str(live[0]))
+    if not live_kinds:
+        return False
+    if canonical_kinds <= live_kinds:
+        return False  # live DDL already has all canonical kinds
+
+    # Collect dependents (indexes, triggers, FTS triggers that reference this table)
+    dependents = conn.execute(
+        """SELECT type, name, sql FROM sqlite_master
+             WHERE (
+                    (tbl_name='thread_message_parts' AND type IN ('index','trigger'))
+                 OR (type='trigger' AND sql LIKE '%thread_message_parts%')
+             ) AND sql IS NOT NULL
+             ORDER BY CASE type WHEN 'index' THEN 0 ELSE 1 END, name"""
+    ).fetchall()
+    live_columns = {
+        str(row[1]) for row in conn.execute("PRAGMA table_info('thread_message_parts')")
+    }
+    columns = [col for col in canonical_columns if col in live_columns]
+    if not columns:
+        raise RuntimeError("thread_message_parts has no copyable columns")
+
+    replacement = "thread_message_parts__reconcile_replacement"
+    if conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (replacement,)
+    ).fetchone() is not None:
+        raise RuntimeError("thread_message_parts replacement table already exists")
+
+    replacement_ddl, substitutions = re.subn(
+        r"^CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:\"thread_message_parts\"|thread_message_parts)",
+        f"CREATE TABLE {_quoted(replacement)}",
+        canonical_ddl,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    if substitutions != 1:
+        raise RuntimeError("canonical thread_message_parts DDL cannot be renamed")
+
+    nested = conn.in_transaction
+    foreign_keys = int(conn.execute("PRAGMA foreign_keys").fetchone()[0])
+    if not nested and foreign_keys:
+        conn.execute("PRAGMA foreign_keys=OFF")
+    conn.execute("SAVEPOINT thread_message_parts_kind_rebuild")
+    try:
+        conn.execute(replacement_ddl)
+        copied = ", ".join(_quoted(col) for col in columns)
+        conn.execute(
+            f"INSERT INTO {_quoted(replacement)} ({copied}) "
+            f"SELECT {copied} FROM {_quoted('thread_message_parts')}"
+        )
+        for kind, name, _sql in dependents:
+            if str(kind) == "trigger":
+                conn.execute(f"DROP TRIGGER IF EXISTS {_quoted(str(name))}")
+        conn.execute("DROP TABLE thread_message_parts")
+        conn.execute(
+            f"ALTER TABLE {_quoted(replacement)} RENAME TO thread_message_parts"
+        )
+        for _kind, _name, sql in dependents:
+            conn.execute(str(sql))
+        conn.execute("RELEASE SAVEPOINT thread_message_parts_kind_rebuild")
+    except Exception:
+        conn.execute("ROLLBACK TO SAVEPOINT thread_message_parts_kind_rebuild")
+        conn.execute("RELEASE SAVEPOINT thread_message_parts_kind_rebuild")
+        raise
+    finally:
+        if not nested and foreign_keys:
+            conn.execute("PRAGMA foreign_keys=ON")
+    log.info("thread_message_parts: kind CHECK widened for guardrail kinds (HS-153-03 table rebuild)")
+    return True
+
+
 def _refresh_tool_turn_lifecycle_guards(conn: sqlite3.Connection) -> bool:
     """Upgrade A2's blanket immutability guards to the fenced A3/A4 lifecycle.
 
@@ -511,6 +624,7 @@ def reconcile_schema(
     intel_queue_rebuilt = _rebuild_legacy_intel_queue_tables(conn)
     parent_kind_rebuilt = _rebuild_kernel_parent_runs_for_kind_drift(conn)
     action_items_rebuilt = _rebuild_action_items_for_nullable_meeting_id(conn)
+    thread_parts_rebuilt = _rebuild_thread_message_parts_for_kind_drift(conn)
 
     # ── 1b. Add missing columns to EXISTING tables first (HS-152-06) ────
     # SCHEMA_SQL carries `CREATE INDEX IF NOT EXISTS` statements over

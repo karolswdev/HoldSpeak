@@ -66,6 +66,9 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "stopped",                  # the meeting stopped
     "thread_delta",             # a streaming token/reasoning delta for a thread turn
                                 # payload: {thread_id, message_id, ordinal, kind, text, seq}
+    "thread_guardrail",         # a guardrail evaluation completed (HS-153-03)
+                                # payload: {thread_id, message_id, violations, warnings,
+                                #           guardrails, raw}
     "thread_status_line",       # in-progress turn status text (HS-152-01)
                                 # payload: {thread_id, text}
     "thread_tool_pending",      # a tool call awaits resolution (HS-152-01)

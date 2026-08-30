@@ -26,6 +26,7 @@ from ..kernel.inference_stream import (
     Delta,
     StreamCadence,
     emit_thread_delta,
+    emit_thread_guardrail,
     emit_thread_status_line,
     emit_thread_tool_pending,
     emit_thread_tool_result,
@@ -53,6 +54,24 @@ _CHAT_PASS_CAP = 10
 
 # Per-tool execution deadline in seconds (HS-152-01 M5).
 _TOOL_DEADLINE_S = 30.0
+
+# HS-153-03: guardrail admission timeout in seconds.
+_GUARDRAIL_TIMEOUT_S = 10.0
+
+
+def _guardrail_matches(tool_name: str, trigger_tools: list[str]) -> bool:
+    """Check if a tool name matches any trigger pattern.
+
+    Patterns can be exact names or prefix patterns like ``people.*``.
+    """
+    for pattern in trigger_tools:
+        if pattern.endswith(".*"):
+            prefix = pattern[:-2]
+            if tool_name.startswith(prefix + ".") or tool_name == prefix:
+                return True
+        elif tool_name == pattern:
+            return True
+    return False
 
 
 class _ToolExecutorAggregator:
@@ -678,6 +697,96 @@ class ThreadService:
                     # Safety: tool_calls received but no executor.
                     break
 
+                # -- HS-153-03: Guardrail admission (ONCE per pass) --
+                # Run before the per-call admission loop.  The guardrail
+                # evaluates all pending calls in one batch.
+                guardrail_violations: dict[str, list[str]] = {}  # tool_name -> violations
+                guardrail_result: dict[str, Any] | None = None
+                guardrail_ran = False
+                try:
+                    from .thread_modes import guardrails_for_thread as _gft
+                    active_guardrails = _gft(self._db, thread_id)
+                except Exception:
+                    active_guardrails = []
+
+                if active_guardrails and tool_calls_this_pass:
+                    # Check if any pending call matches a guardrail's trigger_tools
+                    pending_names = [str(tc.get("name", "")) for tc in tool_calls_this_pass]
+                    matched_guardrails = []
+                    for g in active_guardrails:
+                        triggers = g.get("trigger_tools", [])
+                        for pname in pending_names:
+                            if _guardrail_matches(pname, triggers):
+                                matched_guardrails.append(g)
+                                break
+
+                    if matched_guardrails:
+                        guardrail_ran = True
+                        try:
+                            guardrail_result = self._run_guardrail_admission(
+                                principal=principal,
+                                thread_id=thread_id,
+                                assistant_msg_id=assistant_msg_id,
+                                payload=payload,
+                                tool_calls=tool_calls_this_pass,
+                                guardrails=matched_guardrails,
+                                sensitive_texts=sensitive_texts,
+                                egress_scope=egress_scope,
+                                timeout_s=_GUARDRAIL_TIMEOUT_S,
+                            )
+                            # Map violations to tool names
+                            if guardrail_result:
+                                for v in guardrail_result.get("violations", []):
+                                    v_str = str(v)
+                                    for pname in pending_names:
+                                        if pname in v_str or _guardrail_matches(pname, [t for g in matched_guardrails for t in g.get("trigger_tools", [])]):
+                                            guardrail_violations.setdefault(pname, []).append(v_str)
+                                # Emit thread_guardrail frame
+                                emit_thread_guardrail(
+                                    self._broadcast,
+                                    thread_id=thread_id,
+                                    message_id=assistant_msg_id,
+                                    violations=guardrail_result.get("violations", []),
+                                    warnings=guardrail_result.get("warnings", []),
+                                    guardrails=[g["id"] for g in matched_guardrails],
+                                    raw=guardrail_result,
+                                )
+                                # Persist guardrail part on the assistant message
+                                self._threads.append_part(
+                                    assistant_msg_id,
+                                    kind="guardrail",
+                                    meta_json=json.dumps({
+                                        "violations": guardrail_result.get("violations", []),
+                                        "warnings": guardrail_result.get("warnings", []),
+                                        "guardrails": [g["id"] for g in matched_guardrails],
+                                    }, separators=(",", ":")),
+                                )
+                        except Exception as guardrail_exc:
+                            # Guardrail failure = warning row, never a block
+                            emit_thread_status_line(
+                                self._broadcast,
+                                thread_id=thread_id,
+                                text="Guardrail evaluation failed",
+                            )
+                            self._threads.append_part(
+                                assistant_msg_id,
+                                kind="guardrail_failed",
+                                meta_json=json.dumps({
+                                    "error": str(guardrail_exc),
+                                    "guardrails": [g["id"] for g in matched_guardrails],
+                                }, separators=(",", ":")),
+                            )
+                            # Emit a thread_guardrail frame with empty results
+                            emit_thread_guardrail(
+                                self._broadcast,
+                                thread_id=thread_id,
+                                message_id=assistant_msg_id,
+                                violations=[],
+                                warnings=[],
+                                guardrails=[g["id"] for g in matched_guardrails],
+                                raw={"error": str(guardrail_exc)},
+                            )
+
                 assistant_tc_openai: list[dict[str, Any]] = []
                 new_tool_msgs: list[dict[str, Any]] = []
 
@@ -732,6 +841,16 @@ class ThreadService:
                             separators=(",", ":")),
                     )
 
+                    # -- HS-153-03: compute default_decision from guardrail --
+                    tc_default_decision: str | None = None
+                    if guardrail_ran and guardrail_result is not None:
+                        violated = name in guardrail_violations
+                        control_mode = self._control_mode_fn()
+                        if violated and control_mode != "yolo":
+                            tc_default_decision = "deny"
+                        else:
+                            tc_default_decision = "allow"
+
                     # -- Emit thread_tool_pending --
                     emit_thread_tool_pending(
                         self._broadcast,
@@ -743,6 +862,7 @@ class ThreadService:
                         tool_class=handle.tool_class,
                         decision_required=(handle.state == "awaiting_decision"),
                         elicitation=getattr(handle, "elicitation", None),
+                        default_decision=tc_default_decision,
                     )
 
                     # -- Resolve: admitted -> execute; held -> wait then execute or deny --
@@ -1273,6 +1393,94 @@ class ThreadService:
         result = {**payload, "messages": redacted_messages}
         result.pop("_sensitive_texts", None)
         return result
+
+    # ── HS-153-03: Guardrail admission ──────────────────────────────
+
+    def _run_guardrail_admission(
+        self,
+        *,
+        principal: Principal,
+        thread_id: str,
+        assistant_msg_id: str,
+        payload: dict[str, Any],
+        tool_calls: list[dict[str, Any]],
+        guardrails: list[dict[str, Any]],
+        sensitive_texts: list[str],
+        egress_scope: str,
+        timeout_s: float = _GUARDRAIL_TIMEOUT_S,
+    ) -> dict[str, Any]:
+        """Run the guardrail admission ONCE for all pending calls.
+
+        Composes the payload (last N messages + pending calls + guardrail
+        instructions), applies the M1 redactor for cloud routes, and
+        invokes ``thread_practice.run_guardrail`` with a timeout.
+
+        Returns ``{violations: [...], warnings: [...]}``.
+        Raises on timeout or engine error (caller catches and emits
+        ``guardrail_failed``).
+        """
+        from .thread_practice import run_guardrail
+
+        # Build the guardrail payload: last N message contents
+        messages = list(payload.get("messages", []))
+        # Use the smallest N from the guardrails
+        n_messages = min(g.get("n_messages", 6) for g in guardrails)
+        recent_messages = messages[-n_messages:] if len(messages) > n_messages else messages
+
+        # Pending calls: names + argument heads
+        pending_calls = [
+            {"name": str(tc.get("name", "")), "arguments_head": str(tc.get("arguments", "{}"))[:200]}
+            for tc in tool_calls
+        ]
+
+        # Compose guardrail instruction from all matched guardrails
+        combined_instruction = "\n\n".join(
+            f"[{g['title']}]: {g['instruction']}" for g in guardrails
+        )
+
+        guardrail_config = {
+            "instruction": combined_instruction,
+            "trigger_tools": list({
+                t for g in guardrails for t in g.get("trigger_tools", [])
+            }),
+        }
+
+        # Apply M1 redactor: if egress is cloud, redact sensitive texts
+        guardrail_messages = list(recent_messages)
+        if egress_scope in ("cloud", "external_service") and sensitive_texts:
+            for i, msg in enumerate(guardrail_messages):
+                if not isinstance(msg, dict):
+                    continue
+                content = str(msg.get("content", ""))
+                for st in sensitive_texts:
+                    if st and st in content:
+                        content = content.replace(st, _PEOPLE_REDACTION)
+                guardrail_messages[i] = {**msg, "content": content}
+
+        # Run with timeout via asyncio.to_thread + wait_for
+        import asyncio
+
+        async def _run_with_timeout() -> dict[str, Any]:
+            result = await asyncio.wait_for(
+                asyncio.to_thread(
+                    run_guardrail,
+                    self._broker,
+                    principal,
+                    thread_id,
+                    guardrail_messages,
+                    pending_calls,
+                    guardrail_config,
+                ),
+                timeout=timeout_s,
+            )
+            return result
+
+        # We're already in a background thread; create a new event loop
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(_run_with_timeout())
+        finally:
+            loop.close()
 
     # ── Assembler (counsel M1) ──────────────────────────────────────
 

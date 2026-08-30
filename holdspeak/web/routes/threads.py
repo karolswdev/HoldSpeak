@@ -117,6 +117,16 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
         if body is None:
             return JSONResponse({"error": "expected a JSON object"}, status_code=400)
         try:
+            # HS-153-03: toggle_guardrail toggles a guardrail on the thread's mode recipe.
+            toggle_guardrail_id = body.get("toggle_guardrail")
+            if toggle_guardrail_id:
+                from holdspeak.services.thread_modes import toggle_guardrail_on_mode
+                svc = _service()
+                thread = svc._db.threads.get(thread_id)
+                if thread and thread.recipe_id:
+                    toggle_guardrail_on_mode(
+                        svc._db, thread.recipe_id, str(toggle_guardrail_id), enable=True,
+                    )
             result = _service().patch(
                 thread_id,
                 title=body.get("title"),

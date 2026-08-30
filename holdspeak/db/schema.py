@@ -3453,7 +3453,7 @@ CREATE TABLE IF NOT EXISTS thread_message_parts (
     id TEXT PRIMARY KEY,
     message_id TEXT NOT NULL REFERENCES thread_messages(id),
     ordinal INTEGER NOT NULL,
-    kind TEXT NOT NULL CHECK (kind IN ('text','reasoning','tool_call','attachment','annotation')),
+    kind TEXT NOT NULL CHECK (kind IN ('text','reasoning','tool_call','attachment','annotation','guardrail','guardrail_failed')),
     text TEXT,
     tool_call_id TEXT NOT NULL DEFAULT '',
     attachment_ref TEXT NOT NULL DEFAULT '',

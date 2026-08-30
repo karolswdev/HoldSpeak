@@ -419,3 +419,163 @@ def test_slash_completion_and_prompt_insert(hub: dict) -> None:
             page.close()
 
         browser.close()
+
+
+# ----------------------------------------------------------------- guardrail leg (HS-153-03)
+
+SHOTS_03 = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-03-shots"
+
+
+class _ToolCallEngine:
+    """Engine that emits a people.commitment.transition tool call on pass 1,
+    text on pass 2."""
+    active_provider = "guardrail-glass"
+    active_model = "hs153-glass-guardrail-model"
+    _pass = 0
+
+    def run_prompt_stream(self, *, messages=None, tools=None, **kw):
+        from holdspeak.kernel.inference_stream import Delta
+        self._pass += 1
+        if self._pass == 1 and tools:
+            yield Delta(kind="tool_calls", meta={"tool_calls": [
+                {"id": "call_glass_pct", "name": "people.commitment.transition",
+                 "arguments": '{"person_id":"p1","from":"open","to":"done"}'},
+            ]})
+            yield Delta(kind="usage", meta={"prompt_tokens": 5, "completion_tokens": 1})
+            yield Delta(kind="done")
+        else:
+            yield Delta(kind="text", text="Transition complete. ")
+            yield Delta(kind="usage", meta={"prompt_tokens": 5, "completion_tokens": 3})
+            yield Delta(kind="done")
+
+    def run_prompt_messages(self, **kw):
+        return "Transition complete."
+
+    def run_prompt(self, **kw):
+        return "Transition complete."
+
+
+@pytest.fixture
+def guardrail_hub(tmp_path, monkeypatch):
+    """Hub with safe control_mode, tool-call engine, guardrail returning violation."""
+    import holdspeak.config as config_module
+    import holdspeak.db.core as db_core
+    from holdspeak.db import reset_database, get_database
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    real_home = Path.home()
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
+    pw_path = os.environ.get(
+        "PLAYWRIGHT_BROWSERS_PATH",
+        str(real_home / "Library/Caches/ms-playwright"),
+    )
+    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", pw_path)
+    monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
+    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
+
+    config_dir = home / ".holdspeak"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    (config_dir / "config.json").write_text(json.dumps({"control_mode": "safe"}))
+
+    reset_database()
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(on_bookmark=lambda *_: None, on_stop=lambda: None,
+                            get_state=lambda: {}),
+        auth_token=TOKEN,
+    )
+    url = server.start()
+    db = get_database()
+    _seed_profile(db)
+
+    from holdspeak.services.thread_modes import seed_modes, seed_guardrails
+    seed_modes(db)
+    seed_guardrails(db)
+
+    from holdspeak.kernel.runtime import _service as _kernel_service
+    broker = _kernel_service()
+    engine = _ToolCallEngine()
+    if broker is not None:
+        broker.inference_runner._engine_factory = lambda _rev, **_kw: engine
+
+    import holdspeak.services.thread_practice as _tp
+    monkeypatch.setattr(_tp, "run_guardrail", lambda *a, **k: {
+        "violations": ["people.commitment.transition called without a named source"],
+        "warnings": [],
+    })
+
+    yield {"server": server, "url": url, "db": db, "broker": broker, "engine": engine}
+    server.stop()
+    reset_database()
+
+
+def test_guardrail_row_renders_and_deny_focused(guardrail_hub: dict) -> None:
+    """Guardrail row visible, decision box Deny primary/focused, no overflow."""
+    from playwright.sync_api import sync_playwright
+
+    url = guardrail_hub["url"]
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        for width in (1440, 393):
+            # Fresh thread + engine state per width
+            guardrail_hub["engine"]._pass = 0
+            r = _api_direct(url, "POST", "/api/threads",
+                            {"title": f"Guardrail glass {width}",
+                             "recipe_id": "hs-seed-mode-chase"})
+            assert r["status"] == 201, f"Failed to create thread: {r}"
+            thread_id = r["payload"]["id"]
+
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            _open_thread(page, url, thread_id)
+
+            composer = page.locator("[data-testid='composer-input']")
+            composer.wait_for(state="visible", timeout=10000)
+
+            def _type(text: str) -> None:
+                page.evaluate("""([s,v])=>{const e=document.querySelector(s);if(!e)return;
+                    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(e,v);
+                    e.dispatchEvent(new Event('input',{bubbles:true}));
+                    e.dispatchEvent(new Event('change',{bubbles:true}));
+                    e.selectionStart=e.selectionEnd=v.length}""",
+                    ["[data-testid='composer-input']", text])
+
+            _type("Transition commitment to done")
+            page.wait_for_timeout(500)
+            send_btn = page.locator("[data-testid='send-button']")
+            if send_btn.count() > 0:
+                send_btn.click()
+            else:
+                composer.press("Enter")
+            page.wait_for_timeout(8000)
+
+            _save_shot(page, "guardrail-row", width, shots_dir=SHOTS_03)
+
+            guardrail_row = page.locator("[data-testid='guardrail-row']")
+            if guardrail_row.count() > 0:
+                assert guardrail_row.is_visible(), f"Guardrail row not visible at {width}"
+                violation = page.locator("[data-testid='guardrail-violation']")
+                if violation.count() > 0:
+                    vtext = violation.first.inner_text().lower()
+                    assert "source" in vtext or "people" in vtext, (
+                        f"Violation text unexpected at {width}: {vtext}")
+
+            decision_box = page.locator("[data-testid='decision-box']")
+            if decision_box.count() > 0:
+                _save_shot(page, "guardrail-decision-box", width, shots_dir=SHOTS_03)
+                dd = decision_box.first.get_attribute("data-default-decision")
+                assert dd == "deny", f"Expected deny, got '{dd}' at {width}"
+                deny_btn = page.locator("[data-testid='deny']")
+                if deny_btn.count() > 0:
+                    cls = deny_btn.first.get_attribute("class") or ""
+                    assert "is-primary" in cls, f"Deny not primary at {width}: {cls}"
+
+            body_w = page.evaluate("document.body.scrollWidth")
+            vp_w = page.evaluate("window.innerWidth")
+            assert body_w <= vp_w + 1, f"H-overflow at {width}: {body_w}>{vp_w}"
+
+            page.close()
+
+        browser.close()

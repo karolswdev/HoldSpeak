@@ -85,6 +85,36 @@ notes:
       List open commitments, recent decisions that need follow-up,
       and any blockers worth raising.
       Keep it to three sections, one paragraph each.
+  - id: hs-seed-guardrail-effect-guard
+    title: Effect guard
+    tags: [guardrail]
+    body_markdown: |
+      ---
+      instruction: >
+        Flag any tool call that writes to a person's ledger
+        (people.commitment.transition, people.agenda.add,
+        people.note.create) without naming a specific source
+        (meeting, decision record, or owner directive) in its
+        arguments. A call with no source is a violation.
+      trigger_tools:
+        - "people.*"
+      n_messages: 6
+      ---
+  - id: hs-seed-guardrail-egress-guard
+    title: Egress guard
+    tags: [guardrail]
+    body_markdown: |
+      ---
+      instruction: >
+        Flag any pending tool call whose result would carry
+        people-sourced data (a people.* read) to a cloud
+        egress boundary. Reading people data on a local
+        boundary is fine; sending it over a cloud route is a
+        violation.
+      trigger_tools:
+        - "people.*"
+      n_messages: 4
+      ---
 
 recipes:
   - id: hs-seed-mode-desk

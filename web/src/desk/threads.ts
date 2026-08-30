@@ -146,6 +146,19 @@ export interface ToolRow {
    * Populated on hydration from the tool-role message part text (full JSON).
    * Not available on live frames — renderers fall back to summary. */
   payload?: Record<string, unknown>;
+  /** HS-153-03: guardrail-determined default decision.
+   * "deny" when a violation names this call and control_mode != yolo;
+   * "allow" otherwise; undefined when no guardrail ran. */
+  defaultDecision?: "deny" | "allow";
+}
+
+/** HS-153-03: guardrail evaluation row (in-flow, beside tool rows). */
+export interface GuardrailRow {
+  messageId: string;
+  violations: string[];
+  warnings: string[];
+  guardrails: string[];
+  raw?: Record<string, unknown>;
 }
 
 // ── Tool frame payloads (HS-152-04) ────────────────────────────────
@@ -159,6 +172,18 @@ export interface ThreadToolPendingPayload {
   class: string;
   decision_required: boolean;
   elicitation?: Record<string, unknown>;
+  /** HS-153-03: guardrail-determined default decision. */
+  default_decision?: "deny" | "allow";
+}
+
+/** HS-153-03: guardrail evaluation frame payload. */
+export interface ThreadGuardrailPayload {
+  thread_id: string;
+  message_id: string;
+  violations: string[];
+  warnings: string[];
+  guardrails: string[];
+  raw?: Record<string, unknown>;
 }
 
 export interface ThreadToolResultPayload {
@@ -505,6 +530,8 @@ export interface ThreadStoreState {
   toolRows: Record<string, Record<string, ToolRow>>;
   /** HS-152-04: live status line per thread. */
   statusLines: Record<string, string>;
+  /** HS-153-03: guardrail rows keyed by thread id -> message id. */
+  guardrailRows: Record<string, Record<string, GuardrailRow>>;
 }
 
 export interface ThreadStoreActions {
@@ -540,6 +567,8 @@ export interface ThreadStoreActions {
   hydrateToolRows(threadId: string): void;
   /** HS-153-01: Set the active mode for a thread (optimistic + PATCH + GET). */
   setMode(threadId: string, recipeId: string): Promise<void>;
+  /** HS-153-03: Apply a thread_guardrail frame. */
+  applyGuardrail(payload: ThreadGuardrailPayload): void;
 }
 
 export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set, get) => ({
@@ -549,6 +578,7 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
   focusMessageId: null,
   toolRows: {},
   statusLines: {},
+  guardrailRows: {},
 
   async loadThread(id) {
     set((s) => ({ loading: { ...s.loading, [id]: true } }));
@@ -760,6 +790,7 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
       state,
       decisionRequired,
       ...(payload.elicitation ? { elicitation: payload.elicitation } : {}),
+      ...(payload.default_decision ? { defaultDecision: payload.default_decision } : {}),
     };
 
     set((s) => ({
@@ -936,5 +967,24 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
       // Revert on failure — reload the thread to get the real state.
       await get().loadThread(threadId);
     }
+  },
+
+  // ── HS-153-03: guardrail actions ──────────────────────────────────
+
+  applyGuardrail(payload) {
+    const { thread_id, message_id, violations, warnings, guardrails, raw } = payload;
+    const row: GuardrailRow = {
+      messageId: message_id,
+      violations: violations || [],
+      warnings: warnings || [],
+      guardrails: guardrails || [],
+      ...(raw ? { raw } : {}),
+    };
+    set((s) => ({
+      guardrailRows: {
+        ...s.guardrailRows,
+        [thread_id]: { ...(s.guardrailRows[thread_id] || {}), [message_id]: row },
+      },
+    }));
   },
 }));

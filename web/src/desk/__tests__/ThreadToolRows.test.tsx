@@ -34,6 +34,7 @@ afterEach(() => {
     focusMessageId: null,
     toolRows: {},
     statusLines: {},
+    guardrailRows: {},
   });
 });
 
@@ -1023,5 +1024,201 @@ describe("HS-152-05 hydration with payload", () => {
     expect(row!.payload).toBeTruthy();
     expect(row!.payload!.title).toBe("Daily Standup");
     expect(row!.summary).toBeTruthy();
+  });
+});
+
+
+// ── HS-153-03: Guardrail row + decision box defaultDecision ────────
+
+describe("HS-153-03 guardrail row rendering", () => {
+  it("renders guardrail row with violation text", () => {
+    const msg = makeMsg({ streaming: false });
+    seedStore([msg]);
+    // Inject a guardrail row for this message
+    useThreadStore.setState({
+      guardrailRows: {
+        "t-1": {
+          "msg-1": {
+            messageId: "msg-1",
+            violations: ["people.commitment.transition called without source"],
+            warnings: [],
+            guardrails: ["hs-seed-guardrail-effect-guard"],
+          },
+        },
+      },
+    });
+    renderPullout();
+
+    const guardrailRow = screen.queryByTestId("guardrail-row");
+    expect(guardrailRow).toBeTruthy();
+    const violation = screen.queryByTestId("guardrail-violation");
+    expect(violation).toBeTruthy();
+    expect(violation!.textContent).toContain("without source");
+  });
+
+  it("renders guardrail warning with amber styling", () => {
+    const msg = makeMsg({ streaming: false });
+    seedStore([msg]);
+    useThreadStore.setState({
+      guardrailRows: {
+        "t-1": {
+          "msg-1": {
+            messageId: "msg-1",
+            violations: [],
+            warnings: ["broad scope detected"],
+            guardrails: ["hs-seed-guardrail-egress-guard"],
+          },
+        },
+      },
+    });
+    renderPullout();
+
+    const guardrailRow = screen.queryByTestId("guardrail-row");
+    expect(guardrailRow).toBeTruthy();
+    expect(guardrailRow!.classList.contains("has-warnings")).toBe(true);
+    expect(guardrailRow!.classList.contains("has-violations")).toBe(false);
+    const warning = screen.queryByTestId("guardrail-warning");
+    expect(warning).toBeTruthy();
+    expect(warning!.textContent).toContain("broad scope");
+  });
+
+  it("renders RAW fold with raw data", () => {
+    const msg = makeMsg({ streaming: false });
+    seedStore([msg]);
+    useThreadStore.setState({
+      guardrailRows: {
+        "t-1": {
+          "msg-1": {
+            messageId: "msg-1",
+            violations: ["test violation"],
+            warnings: [],
+            guardrails: ["g1"],
+            raw: { violations: ["test violation"], warnings: [] },
+          },
+        },
+      },
+    });
+    renderPullout();
+
+    const details = screen.queryByText("RAW");
+    expect(details).toBeTruthy();
+  });
+
+  it("does not render guardrail row when no violations and no warnings", () => {
+    const msg = makeMsg({ streaming: false });
+    seedStore([msg]);
+    useThreadStore.setState({
+      guardrailRows: {
+        "t-1": {
+          "msg-1": {
+            messageId: "msg-1",
+            violations: [],
+            warnings: [],
+            guardrails: ["g1"],
+          },
+        },
+      },
+    });
+    renderPullout();
+
+    const guardrailRow = screen.queryByTestId("guardrail-row");
+    expect(guardrailRow).toBeNull();
+  });
+});
+
+describe("HS-153-03 decision box defaultDecision", () => {
+  it("Deny button is primary when defaultDecision is deny", () => {
+    const msg = makeMsg({ streaming: false });
+    seedStore([msg]);
+    // Set up a tool row with defaultDecision: deny and awaiting_decision state
+    useThreadStore.setState({
+      toolRows: {
+        "t-1": {
+          "call-deny-test": {
+            callId: "call-deny-test",
+            messageId: "msg-1",
+            name: "people.commitment.transition",
+            toolClass: "effect_proposal",
+            argsHead: "{}",
+            state: "awaiting_decision",
+            decisionRequired: true,
+            defaultDecision: "deny",
+          },
+        },
+      },
+    });
+    renderPullout();
+
+    const decisionBox = screen.queryByTestId("decision-box");
+    expect(decisionBox).toBeTruthy();
+    expect(decisionBox!.getAttribute("data-default-decision")).toBe("deny");
+
+    const denyBtn = screen.queryByTestId("deny");
+    expect(denyBtn).toBeTruthy();
+    expect(denyBtn!.classList.contains("is-primary")).toBe(true);
+
+    const allowBtn = screen.queryByTestId("allow-once");
+    expect(allowBtn).toBeTruthy();
+    expect(allowBtn!.classList.contains("is-primary")).toBe(false);
+  });
+
+  it("Allow-once button is primary when defaultDecision is allow (default)", () => {
+    const msg = makeMsg({ streaming: false });
+    seedStore([msg]);
+    useThreadStore.setState({
+      toolRows: {
+        "t-1": {
+          "call-allow-test": {
+            callId: "call-allow-test",
+            messageId: "msg-1",
+            name: "desk.create",
+            toolClass: "effect_proposal",
+            argsHead: "{}",
+            state: "awaiting_decision",
+            decisionRequired: true,
+            defaultDecision: "allow",
+          },
+        },
+      },
+    });
+    renderPullout();
+
+    const decisionBox = screen.queryByTestId("decision-box");
+    expect(decisionBox).toBeTruthy();
+    expect(decisionBox!.getAttribute("data-default-decision")).toBe("allow");
+
+    const allowBtn = screen.queryByTestId("allow-once");
+    expect(allowBtn).toBeTruthy();
+    expect(allowBtn!.classList.contains("is-primary")).toBe(true);
+
+    const denyBtn = screen.queryByTestId("deny");
+    expect(denyBtn).toBeTruthy();
+    expect(denyBtn!.classList.contains("is-primary")).toBe(false);
+  });
+
+  it("Allow-once is primary when no defaultDecision is set", () => {
+    const msg = makeMsg({ streaming: false });
+    seedStore([msg]);
+    useThreadStore.setState({
+      toolRows: {
+        "t-1": {
+          "call-none-test": {
+            callId: "call-none-test",
+            messageId: "msg-1",
+            name: "desk.update",
+            toolClass: "effect_proposal",
+            argsHead: "{}",
+            state: "awaiting_decision",
+            decisionRequired: true,
+            // no defaultDecision
+          },
+        },
+      },
+    });
+    renderPullout();
+
+    const allowBtn = screen.queryByTestId("allow-once");
+    expect(allowBtn).toBeTruthy();
+    expect(allowBtn!.classList.contains("is-primary")).toBe(true);
   });
 });

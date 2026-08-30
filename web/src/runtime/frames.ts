@@ -39,6 +39,7 @@ export const RUNTIME_FRAME_TYPES = [
   "segment",
   "stopped",
   "thread_delta",
+  "thread_guardrail",
   "thread_status_line",
   "thread_tool_pending",
   "thread_tool_result",

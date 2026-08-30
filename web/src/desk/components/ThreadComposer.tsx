@@ -340,6 +340,8 @@ export interface ThreadComposerProps {
   onNewThread: () => void;
   /** Set the thread's mode (calls setMode from threads.ts). */
   onModeSelect?: (recipeId: string) => void;
+  /** HS-153-03: Toggle a guardrail on/off for the thread's mode. */
+  onToggleGuardrail?: (guardrailId: string) => void;
   /** The current thread's mode, used by /tools to show the palette. */
   currentMode?: { id: string; name: string } | null;
   /** Whether a turn is streaming. */
@@ -359,6 +361,7 @@ export function ThreadComposer({
   onFork,
   onNewThread,
   onModeSelect,
+  onToggleGuardrail,
   currentMode,
   streaming,
   lastAssistantId,
@@ -658,13 +661,26 @@ export function ThreadComposer({
           addSystemRow("Compact: not yet available (coming in HS-153-05)");
           break;
         case "guardrail":
-          // TODO(HS-153-03): wire to backend; for now show "not yet" in-flow
           setDraft("");
-          addSystemRow("Guardrail: not yet available (coming in HS-153-03)");
+          if (!currentMode) {
+            addSystemRow("Bind a mode first (use /mode)");
+          } else if (arg && onToggleGuardrail) {
+            const guardrail = guardrails.find(
+              (g) => g.title.toLowerCase() === arg.toLowerCase(),
+            );
+            if (guardrail) {
+              onToggleGuardrail(guardrail.id);
+              addSystemRow(`Guardrail toggled: ${guardrail.title}`);
+            } else {
+              addSystemRow(`Unknown guardrail: ${arg}`);
+            }
+          } else {
+            addSystemRow("Usage: /guardrail <name>");
+          }
           break;
       }
     },
-    [lastAssistantId, onKeep, onFork, onStop, onNewThread, onModeSelect, modes, prompts, currentMode, addSystemRow],
+    [lastAssistantId, onKeep, onFork, onStop, onNewThread, onModeSelect, onToggleGuardrail, modes, prompts, guardrails, currentMode, addSystemRow],
   );
 
   const pickSlashItem = useCallback(
