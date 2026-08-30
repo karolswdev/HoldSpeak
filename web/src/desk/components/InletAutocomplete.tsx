@@ -4,6 +4,10 @@
  * Triggered by `@` in the inlet text field. Filters zones by
  * case-insensitive prefix match, up to 8 results. Arrow keys
  * navigate, Enter/Tab selects, Escape dismisses.
+ *
+ * HS-150-06: extended generically to support any primitive kind
+ * (meeting, note, artifact, decision, person) via AutocompleteItem.
+ * Zone-only callers are unchanged.
  */
 import { useEffect, useRef, type KeyboardEvent } from "react";
 import type { Directory } from "../../lib/primitives";
@@ -14,6 +18,59 @@ import "./inlet-autocomplete.css";
 
 const ZONE_ICON = PRIMITIVES.directory.icon;
 const MAX_MATCHES = 8;
+
+// ── HS-150-06: generic autocomplete item ────────────────────────────
+
+/** A kind-tagged autocomplete row. Zones, meetings, notes, decisions,
+ *  artifacts, and people all conform to this shape. */
+export interface AutocompleteItem {
+  id: string;
+  kind: string;
+  name: string;
+  nameNormalized: string;
+  detail?: string;
+}
+
+/** Text glyphs for each kind in the autocomplete list. */
+const AC_GLYPH: Record<string, string> = {
+  zone: "◰",     // ◰
+  meeting: "●",  // ●
+  note: "▤",     // ▤
+  decision: "◈", // ◈
+  artifact: "▣", // ▣
+  person: "⊕",   // ⊕
+};
+
+/** Filter generic items by case-insensitive prefix match, sorted, max 8. */
+export function filterItems(query: string, items: AutocompleteItem[]): AutocompleteItem[] {
+  const lower = query.toLowerCase();
+  const matches = items.filter((it) =>
+    it.nameNormalized.startsWith(lower),
+  );
+  matches.sort((a, b) => a.name.localeCompare(b.name));
+  return matches.slice(0, MAX_MATCHES);
+}
+
+/** Build a ResolvedRef from a generic AutocompleteItem. */
+export function itemToRef(item: AutocompleteItem): ResolvedRef {
+  return {
+    name: item.name,
+    id: item.id,
+    ref: `${item.kind}:${item.id}`,
+    kind: item.kind,
+  };
+}
+
+/** Convert a Directory to an AutocompleteItem. */
+export function directoryToItem(d: Directory): AutocompleteItem {
+  return {
+    id: d.id,
+    kind: "zone",
+    name: d.name,
+    nameNormalized: d.nameNormalized,
+    detail: `${d.memberIds.length} ${d.memberIds.length === 1 ? "item" : "items"}`,
+  };
+}
 
 /** Boundary check: start of string, space, or punctuation. */
 const BOUNDARY_CHARS = new Set([
@@ -143,16 +200,30 @@ function ZoneGlyph() {
 }
 
 export interface InletAutocompleteProps {
-  /** All available zones. */
-  zones: Directory[];
-  /** Current filtered matches. */
-  matches: Directory[];
+  /** All available zones (zone-only mode, backward compat). */
+  zones?: Directory[];
+  /** Current filtered zone matches (zone-only mode). */
+  matches?: Directory[];
   /** Currently selected index (keyboard navigation). */
   selectedIndex: number;
-  /** Called when user selects a zone. */
-  onSelect: (zone: Directory) => void;
+  /** Called when user selects a zone (zone-only mode). */
+  onSelect?: (zone: Directory) => void;
   /** Called to update selected index. */
   onSelectedIndexChange: (index: number) => void;
+  /** HS-150-06: generic item matches (replaces zone matches when provided). */
+  allMatches?: AutocompleteItem[];
+  /** HS-150-06: called when a generic item is selected. */
+  onSelectItem?: (item: AutocompleteItem) => void;
+  /** HS-150-06: custom empty label (default: "No zones match"). */
+  emptyLabel?: string;
+}
+
+/** Kind-glyph rendered as a text span. */
+function KindGlyph({ kind }: { kind: string }) {
+  const ch = AC_GLYPH[kind] ?? "?";
+  return (
+    <span className="inlet-ac-kind-glyph" aria-hidden="true">{ch}</span>
+  );
 }
 
 export function InletAutocomplete({
@@ -161,19 +232,35 @@ export function InletAutocomplete({
   selectedIndex,
   onSelect,
   onSelectedIndexChange,
+  allMatches,
+  onSelectItem,
+  emptyLabel,
 }: InletAutocompleteProps) {
   const listRef = useRef<HTMLDivElement>(null);
 
   // Scroll the selected item into view.
   useEffect(() => {
     if (!listRef.current) return;
-    const selected = listRef.current.querySelector("[data-selected]");
-    if (selected) {
-      selected.scrollIntoView({ block: "nearest" });
+    const sel = listRef.current.querySelector("[data-selected]");
+    if (sel) {
+      sel.scrollIntoView({ block: "nearest" });
     }
   }, [selectedIndex]);
 
-  if (matches.length === 0) {
+  // HS-150-06: generic items mode
+  if (allMatches) {
+    if (allMatches.length === 0) {
+      return (
+        <div
+          id="wb-inlet-listbox"
+          className="inlet-autocomplete"
+          ref={listRef}
+          role="listbox"
+        >
+          <span className="inlet-autocomplete-empty">{emptyLabel ?? "No matches"}</span>
+        </div>
+      );
+    }
     return (
       <div
         id="wb-inlet-listbox"
@@ -181,7 +268,36 @@ export function InletAutocomplete({
         ref={listRef}
         role="listbox"
       >
-        <span className="inlet-autocomplete-empty">No zones match</span>
+        <SurfaceRows>
+          {allMatches.map((item, i) => (
+            <SurfaceRow
+              key={`${item.kind}:${item.id}`}
+              id={`wb-inlet-option-${item.kind}-${item.id}`}
+              role="option"
+              ariaSelected={i === selectedIndex}
+              glyph={item.kind === "zone" ? <ZoneGlyph /> : <KindGlyph kind={item.kind} />}
+              title={item.name}
+              detail={item.detail}
+              selected={i === selectedIndex}
+              onOpen={() => onSelectItem?.(item)}
+            />
+          ))}
+        </SurfaceRows>
+      </div>
+    );
+  }
+
+  // Zone-only mode (backward compat)
+  const zoneMatches = matches ?? [];
+  if (zoneMatches.length === 0) {
+    return (
+      <div
+        id="wb-inlet-listbox"
+        className="inlet-autocomplete"
+        ref={listRef}
+        role="listbox"
+      >
+        <span className="inlet-autocomplete-empty">{emptyLabel ?? "No zones match"}</span>
       </div>
     );
   }
@@ -194,7 +310,7 @@ export function InletAutocomplete({
       role="listbox"
     >
       <SurfaceRows>
-        {matches.map((zone, i) => (
+        {zoneMatches.map((zone, i) => (
           <SurfaceRow
             key={zone.id}
             id={`wb-inlet-option-${zone.id}`}
@@ -204,7 +320,7 @@ export function InletAutocomplete({
             title={zone.name}
             detail={`${zone.memberIds.length} ${zone.memberIds.length === 1 ? "item" : "items"}`}
             selected={i === selectedIndex}
-            onOpen={() => onSelect(zone)}
+            onOpen={() => onSelect?.(zone)}
           />
         ))}
       </SurfaceRows>

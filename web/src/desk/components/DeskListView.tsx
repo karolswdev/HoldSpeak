@@ -38,6 +38,7 @@ const BAND_LABEL: Record<string, string> = {
   coder: "CODER SESSIONS",
   artifact: "ARTIFACTS",
   project: "PROJECTS",
+  thread: "THREADS",
 };
 
 type ListSortKey = "name" | "kind" | "zone" | "attention";

@@ -31,6 +31,7 @@ const ORDER = [
   "meeting",
   "note",
   "decision",
+  "thread",
   "kb",
   "project",
   "recipe",

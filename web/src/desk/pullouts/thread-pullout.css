@@ -1,0 +1,422 @@
+/* HS-150-05 — Thread pullout styling. Signal Workbench material model:
+ * no nested cards, hairline sections, opaque window material. */
+
+/* The body is a scrolling flex child inside the pullout card's column.
+   flex: 1 + min-height: 0 lets it shrink and scroll; the SurfaceFooter
+   (the composer) stays pinned below it, never overflowing the frame. */
+.thread-pullout-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ── Head ────────────────────────────────────────────────────────────── */
+
+.thread-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--surface-line, rgba(128, 128, 128, 0.15));
+}
+
+.thread-title {
+  all: unset;
+  cursor: text;
+  font: inherit;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 2px 0;
+  min-height: 22px;
+}
+
+.thread-title:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--surface-line, rgba(128, 128, 128, 0.3));
+}
+
+.thread-title-input {
+  all: unset;
+  font: inherit;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: var(--surface-input-bg, rgba(128, 128, 128, 0.08));
+  min-height: 22px;
+}
+
+.thread-head-instruments {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--surface-quiet, rgba(128, 128, 128, 0.7));
+}
+
+.thread-status-line {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Messages ────────────────────────────────────────────────────────── */
+
+.thread-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+}
+
+.thread-row {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--surface-line, rgba(128, 128, 128, 0.08));
+}
+
+.thread-row-label {
+  font-size: 11px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--surface-quiet, rgba(128, 128, 128, 0.7));
+  margin-bottom: 4px;
+}
+
+.thread-row-user .thread-row-body {
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.thread-row-assistant .thread-row-body {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.thread-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.thread-row-receipt {
+  font-size: 10px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--surface-quiet, rgba(128, 128, 128, 0.5));
+}
+
+/* ── Streaming ───────────────────────────────────────────────────────── */
+
+.thread-streaming-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.thread-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 14px;
+  background: var(--surface-quiet, rgba(128, 128, 128, 0.5));
+  vertical-align: text-bottom;
+  animation: thread-blink 1s step-end infinite;
+}
+
+@keyframes thread-blink {
+  50% { opacity: 0; }
+}
+
+.thread-row-streaming {
+  border-left: 2px solid var(--accent, #3b82f6);
+}
+
+/* ── Error / Crashed ─────────────────────────────────────────────────── */
+
+.thread-row-error {
+  border-left: 2px solid var(--error, #ef4444);
+}
+
+.thread-row-error-body,
+.thread-row-crashed-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.thread-error-label,
+.thread-crash-label {
+  font-size: 11px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--error, #ef4444);
+}
+
+.thread-row-crashed {
+  border-left: 2px solid var(--warning, #f59e0b);
+}
+
+.thread-crash-label {
+  color: var(--warning, #f59e0b);
+}
+
+/* ── RAW fold ────────────────────────────────────────────────────────── */
+
+.thread-raw-fold {
+  margin-top: 4px;
+  border: 1px solid var(--surface-line, rgba(128, 128, 128, 0.12));
+  border-radius: 3px;
+}
+
+.thread-raw-toggle {
+  cursor: pointer;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--surface-quiet, rgba(128, 128, 128, 0.5));
+}
+
+.thread-raw-content {
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+  color: var(--surface-quiet, rgba(128, 128, 128, 0.6));
+}
+
+/* ── Row actions ─────────────────────────────────────────────────────── */
+
+.thread-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+/* ── Sibling picker ──────────────────────────────────────────────────── */
+
+.thread-sibling-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.thread-sibling-nav {
+  all: unset;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--surface-quiet, rgba(128, 128, 128, 0.6));
+}
+
+.thread-sibling-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.thread-sibling-count {
+  color: var(--surface-quiet, rgba(128, 128, 128, 0.5));
+}
+
+/* ── Composer (HS-150-06) ─────────────────────────────────────────────── */
+
+.thread-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.thread-composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.thread-composer-input {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  border: 1px solid var(--surface-line, rgba(128, 128, 128, 0.2));
+  border-radius: 4px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 14px;
+  background: var(--surface-input-bg, rgba(128, 128, 128, 0.05));
+  color: inherit;
+  min-height: 22px;
+  max-height: 120px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.thread-composer-input:focus {
+  outline: 1px solid var(--accent, #3b82f6);
+}
+
+/* ── Ref chips ───────────────────────────────────────────────────────── */
+
+.thread-composer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.thread-ref-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--surface-input-bg, rgba(128, 128, 128, 0.1));
+  border: 1px solid var(--surface-line, rgba(128, 128, 128, 0.15));
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 100%;
+}
+
+.thread-ref-chip-kind {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.thread-ref-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.thread-ref-chip-remove {
+  all: unset;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--surface-quiet, rgba(128, 128, 128, 0.5));
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.thread-ref-chip-remove:hover {
+  color: var(--error, #ef4444);
+}
+
+/* ── Autocomplete anchor (positions above the field) ─────────────────── */
+
+.thread-composer-ac-anchor {
+  position: relative;
+}
+
+.thread-composer-ac-anchor .inlet-autocomplete {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--desk-z-popover, 100);
+  background: var(--surface-2, #fff);
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.2));
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* ── Slash command palette ────────────────────────────────────────────── */
+
+.thread-slash-palette {
+  min-width: 160px;
+}
+
+/* ── Inline editor (edit-and-resend / fork) ──────────────────────────── */
+
+.thread-inline-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.thread-inline-editor-input {
+  width: 100%;
+  resize: none;
+  border: 1px solid var(--accent, #3b82f6);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 14px;
+  background: var(--surface-input-bg, rgba(128, 128, 128, 0.05));
+  color: inherit;
+  min-height: 22px;
+  max-height: 120px;
+  box-sizing: border-box;
+}
+
+.thread-inline-editor-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* ── User row editable ───────────────────────────────────────────────── */
+
+.thread-row-body-editable {
+  cursor: pointer;
+}
+
+.thread-row-body-editable:hover {
+  background: var(--surface-input-bg, rgba(128, 128, 128, 0.05));
+  border-radius: 3px;
+}
+
+/* ── Kind glyph in autocomplete ──────────────────────────────────────── */
+
+.inlet-ac-kind-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+/* ── Token meter ─────────────────────────────────────────────────────── */
+
+.thread-token-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.thread-token-count {
+  font-size: 10px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  letter-spacing: 0.04em;
+  color: var(--surface-quiet, rgba(128, 128, 128, 0.5));
+}

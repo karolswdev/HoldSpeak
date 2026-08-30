@@ -67,6 +67,7 @@ function resetStore() {
       workbench: [{ kind: "workbench", id: "wb1", name: "WB", createdAt: "" }],
       intelligence: [{ kind: "intelligence", id: "desk", name: "Intelligence" }],
       people: [{ kind: "people", id: "people", name: "People" }],
+      thread: [],
     },
   });
 }

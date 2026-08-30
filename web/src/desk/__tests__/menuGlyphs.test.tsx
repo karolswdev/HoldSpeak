@@ -46,6 +46,7 @@ describe("glyph population (HS-148-02)", () => {
       "desk.new-workflow": "workflow",
       "desk.new-workbench": "workbench",
       "desk.new-zone": "zone",
+      "desk.new-thread": "thread",
     };
     for (const v of creates) {
       const kind = kindMap[v.id];

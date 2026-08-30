@@ -44,7 +44,8 @@ export type PrimitiveKind =
   | "repository"
   | "workbench"
   | "intelligence"
-  | "people";
+  | "people"
+  | "thread";
 
 /** How a primitive kind opens on the Desk (HS-117-16). */
 export type SurfaceDeclaration =
@@ -358,6 +359,24 @@ export interface PeopleDesk {
   name: string;
 }
 
+/** A persistent desk chat thread (HS-150-05). Lives in the hub's SQLite,
+ * streamed over the runtime bus, never in localStorage. */
+export interface Thread {
+  kind: "thread";
+  id: string;
+  title: string;
+  recipeId?: string | null;
+  profileOverride?: string | null;
+  directoryId?: string | null;
+  parentThreadId?: string | null;
+  statusLine?: string | null;
+  tokenIn: number;
+  tokenOut: number;
+  createdAt: string;
+  updatedAt: string;
+  lastTurnAt?: string | null;
+}
+
 export type Primitive = (
   | Meeting
   | Artifact
@@ -378,6 +397,7 @@ export type Primitive = (
   | Workbench
   | Intelligence
   | PeopleDesk
+  | Thread
 ) & { spriteState?: string | null };
 
 /**
@@ -568,6 +588,17 @@ export const PRIMITIVES = {
     authorable: false,
     surface: { type: "surface", surfaceKey: "open-people" },
   },
+  thread: {
+    kind: "thread",
+    label: "Thread",
+    plural: "Threads",
+    syncClass: "content",
+    blurb: "A persistent desk chat with streaming turns and receipts.",
+    // speech-ribbon: two overlapping speech bubbles (24x24 stroke path)
+    icon: "M3 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-4l-3 3v-3H5a2 2 0 0 1-2-2zM7 15v2a2 2 0 0 0 2 2h4l3 3v-3h3a2 2 0 0 0 2-2v-6",
+    authorable: true,
+    surface: { type: "pullout" },
+  },
   layout: {
     kind: "layout",
     label: "Layout",
@@ -601,6 +632,7 @@ export type PrimitiveMap = {
   workbench: Workbench;
   intelligence: Intelligence;
   people: PeopleDesk;
+  thread: Thread;
 };
 
 /** Look up the surface declaration for a kind (HS-117-16). */
@@ -620,7 +652,7 @@ export type Agent = Persona;
 
 /** Order of the Desk's primitive sections, grouped by sync class. */
 export const DESK_GROUPS = [
-  { label: "Content", kinds: ["meeting", "artifact", "note", "decision"] },
+  { label: "Content", kinds: ["meeting", "artifact", "note", "decision", "thread"] },
   { label: "Capabilities", kinds: ["recipe", "chain", "workflow", "workbench"] },
   { label: "Organization", kinds: ["directory", "kb", "project", "repository"] },
   { label: "Live", kinds: ["coder"] },

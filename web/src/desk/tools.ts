@@ -136,6 +136,7 @@ export const KIND_GLYPH: Record<string, string> = {
   workflow: "⟁",   // triangle with dots — a flow graph
   workbench: "⊞",  // boxed plus — a compound workspace
   zone: "◰",       // square with upper-left quadrant — a region
+  thread: "◬",     // triangle with left half — a speech ribbon
 };
 
 export const KIND_LABEL: Record<string, string> = {
@@ -149,4 +150,5 @@ export const KIND_LABEL: Record<string, string> = {
   recipe: "Agent",
   workbench: "Workbench",
   workflow: "Workflow",
+  thread: "Thread",
 };

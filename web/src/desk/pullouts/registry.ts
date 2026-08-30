@@ -15,6 +15,8 @@ import { CoderPullout } from "./CoderPullout";
 import { DirectoryPullout } from "./DirectoryPullout";
 import { IntelligencePullout } from "./IntelligencePullout";
 import { FallbackPullout } from "./FallbackPullout";
+import { ThreadPullout } from "./ThreadPullout";
+import { PeoplePullout } from "./PeoplePullout";
 
 /**
  * Pullout-capable kinds use their own content. Window and surface kinds are
@@ -32,13 +34,14 @@ export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent> = {
   workflow: WorkflowPullout,
   coder: CoderPullout,
   directory: DirectoryPullout,
+  thread: ThreadPullout,
   project: FallbackPullout,
   repository: FallbackPullout,
   roadmap: FallbackPullout,
   story: FallbackPullout,
   workbench: FallbackPullout,
   intelligence: IntelligencePullout,
-  people: FallbackPullout,
+  people: PeoplePullout,
   game: FallbackPullout,
   layout: FallbackPullout,
 } satisfies Record<PrimitiveKind, PulloutContent>;

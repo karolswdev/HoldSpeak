@@ -77,6 +77,7 @@ const DELETABLE = new Set([
   "directory",
   "chain",
   "workflow",
+  "thread",
 ]);
 const DUPLICABLE = new Set([
   "note",
@@ -242,6 +243,22 @@ export const VERBS: Verb[] = [
     keywords: ["create", "place"],
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("zone"),
+  },
+  {
+    id: "desk.new-thread",
+    label: "New Thread",
+    menu: "desk",
+    scope: "floor",
+    group: "new",
+    glyph: KIND_GLYPH.thread,
+    keywords: ["create", "chat", "conversation"],
+    ghost: never,
+    run: async () => {
+      const { createThread } = await import("./threads");
+      const t = await createThread({});
+      useDesk.getState().openPullout(`thread:${t.id}`);
+      void useDesk.getState().refresh();
+    },
   },
   // ── Desk: the floor verbs ───────────────────────────────────────────
   {
@@ -430,6 +447,30 @@ export const VERBS: Verb[] = [
       const desk = useDesk.getState();
       desk.setSelected([`${o.kind}:${o.id}`]);
       desk.openAsk();
+    },
+  },
+  {
+    id: "object.continue-in-thread",
+    label: "Continue in thread",
+    menu: "object",
+    scope: "object",
+    glyph: KIND_GLYPH.thread,
+    keywords: ["chat", "thread", "conversation"],
+    ghost: (ctx) => {
+      const o = selected(ctx);
+      if (!o) return "Select an object";
+      const threadable = new Set(["meeting", "note", "artifact", "decision", "recipe", "people"]);
+      return threadable.has(o.kind) ? null : "Not threadable";
+    },
+    run: async (ctx) => {
+      const o = selected(ctx);
+      if (!o) return;
+      const { createThread } = await import("./threads");
+      const t = await createThread({
+        seed_refs: [{ ref_kind: o.kind, ref_id: o.id }],
+      });
+      useDesk.getState().openPullout(`thread:${t.id}`);
+      void useDesk.getState().refresh();
     },
   },
   {

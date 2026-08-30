@@ -95,6 +95,8 @@ export function primitiveUpdateUrl(kind: string, id: string): string | null {
     workbench: `/api/workbenches/${encodeURIComponent(id)}`,
     // HS-132-07 — the rename route this story added to the hub.
     meeting: `/api/meetings/${encodeURIComponent(id)}`,
+    // HS-150-05 — thread rename via PATCH.
+    thread: `/api/threads/${encodeURIComponent(id)}`,
   } satisfies Partial<Record<PrimitiveKind, string>>;
   return (urls as Partial<Record<string, string>>)[kind] ?? null;
 }
