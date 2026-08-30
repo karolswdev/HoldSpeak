@@ -1,8 +1,8 @@
 # HANDOVER — the Desk Chat port, mid-flight (written 2026-08-30, 04:15)
 
 For the next agent. The previous session hit its context ceiling
-mid-Phase-152. Read this whole file, then `git status` — there is
-UNCOMMITTED builder work in the tree (see §4). Worktree:
+mid-Phase-152. Read this whole file, then `git status` (the tree was clean at
+handover; §4 maps what landed). Worktree:
 `/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port`,
 branch `worktree-warpdrv-chat-port`, **PR #507**.
 
@@ -23,8 +23,7 @@ branch `worktree-warpdrv-chat-port`, **PR #507**.
   LAW: `git fetch` + check `origin/main` README "Current phase" and
   `ls pm/roadmap/holdspeak | tail` BEFORE numbering a phase.
 - **Phase 152 The Hands (DC-02): 2/6 committed** (02 the gate
-  `be973104`, 01 the loop — evidence captured 80 passed, flip done, the
-  commit is the FIRST thing to do, see §4). Remaining: 03 People fence
+  `be973104`; 01 the loop `d44f8d74`, 80 passed). Remaining: 03 People fence
   (M1/M2 — the loop already accumulates `_sensitive_texts` and marks
   people results sensitive; story 03 = the real-coordinator pins + metal
   leg 2), 04 pending box + elicitation UI (`threads.ts`,
@@ -33,8 +32,8 @@ branch `worktree-warpdrv-chat-port`, **PR #507**.
   (the truth table in D2 is law).
 - **Phase 153 The Practice: chartered** (`assets/settled-design.md`,
   `audit-census.md`, six stories scaffolded; story bodies NOT yet
-  written — write them from the settled design before building). Two
-  builders were mid-flight when the session ended (§4).
+  written — write them from the settled design before building). Both
+  data-layer builders landed and are committed (§4).
 - **Phase 154 The Call: reserved.** FEASIBILITY RULING (orchestrator,
   from the research): PyTorch `kokoro` needs Python <3.13 (we run
   3.13); `kokoro-onnx` works (MIT, weights Apache-2.0, RTF 0.6 on
@@ -83,28 +82,18 @@ for both, `comm -23`). Last diff on `36757847`: zero branch-new. Web:
 - Builders that finish early and are resumed >4× lose their transcript;
   spawn fresh with a full brief.
 
-## 4. UNCOMMITTED WORK IN THE TREE (verify before committing)
+## 4. What landed at handover (all committed)
 
 Run `git status --short` — it should be clean except untracked scratch. What was landed at handover:
-- **HS-152-01 (the loop) — READY TO COMMIT**: `holdspeak/services/thread_service.py`,
-  `holdspeak/services/thread_tool_protocol.py`, `holdspeak/kernel/inference_stream.py`,
-  `holdspeak/realtime_frames.py`, `web/src/runtime/frames.ts`,
-  `tests/unit/test_thread_tool_loop.py`, `holdspeak/services/thread_tools.py`
-  (+1 line: `door.add_item` classified), `pm/…/phase-152-the-hands/{story-01,evidence-story-01,current-phase-status}.md`.
-  Commit: `git add` those, `.githooks/dw contract new --story HS-152-01
-  --tests-capture pm/roadmap/holdspeak/phase-152-the-hands/evidence-story-01.md`,
-  flip boxes, commit.
+- **HS-152-01 (the loop)** — committed `d44f8d74` (files: thread_service.py pass loop, thread_tool_protocol.py, inference_stream.py emitters, the three frames + web mirror, test_thread_tool_loop.py).
 - **Phase 153 builders' work — BOTH LANDED GREEN AND COMMITTED** (`9cb769a9` modes/prompts, and the door/capabilities commit after it) — kept here as the map of what exists:
   (a) modes+prompts data layer — `recipes.kind`, `holdspeak/services/thread_modes.py`,
   seeds in `holdspeak/seeds/fresh-desk.yaml`, notes `?tag=` query,
   `tests/unit/test_thread_modes.py`; (b) `door.add_item` + `DoorService.add_item`
   + `action_items` source columns + capabilities `chat.guardrail`/`chat.compact`
   + `holdspeak/services/thread_practice.py` + backfill `chat-practice-assignments`
-  + `tests/unit/test_hs153_practice_capabilities.py` + 143 ledgers. Run
-  their scoped tests + the three 143 fences + `tests/unit/test_one_path_census.py`
-  before committing anything; the census currently flags
-  `thread_practice.py:47/83` runner entrances as unregistered — the
-  capabilities builder was told to add the rows.
+  + `tests/unit/test_hs153_practice_capabilities.py` + 143 ledgers. Census rows for
+  `thread_practice.py` runner entrances are in place (122 scoped passed).
 - `pm/roadmap/holdspeak/phase-153-the-practice/` story bodies are
   scaffolds (write them from D1–D6) — commit with the 153 charter.
 
@@ -120,6 +109,6 @@ tool count arithmetic (`len(TOOLS)` is truth). Shot exhibit for 151:
 https://claude.ai/code/artifact/5f8ffe8d-63cb-45fa-8c67-6e6d4a655705 —
 make one per phase before asking the merge word.
 
-Go: commit 152-01, finish 152 (03→04→05→06), then 153, 154, 155 —
+Go: finish 152 (03→04→05→06), then 153, 154, 155 —
 each with counsel-close, glass, metal, and an honest sweep. The owner
 wants the whole port; deliver it.
