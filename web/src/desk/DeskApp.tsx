@@ -15,7 +15,7 @@ import { DeskListView } from "./components/DeskListView";
 import { DeskChrome } from "./components/DeskChrome";
 import { EmptyDesk } from "./components/EmptyDesk";
 import { RecordOrb } from "./components/RecordOrb";
-import { PersonaChat } from "./components/PersonaChat";
+import { useChatImport } from "./hooks/useChatImport";
 import { MissionControlConveyor } from "./components/MissionControlConveyor";
 import { SessionPullout, PanePicker } from "./components/SessionPullout";
 import { DeliveryBoard } from "./components/DeliveryBoard";
@@ -53,7 +53,6 @@ function menuGlyphsVariant(): string {
 export default function DeskApp() {
   const items = useDesk((s) => s.items);
   const updatedAt = useDesk((s) => s.updatedAt);
-  const chatPersonaId = useDesk((s) => s.chatPersonaId);
   const roadmapWindows = useDesk((s) => s.roadmapWindows);
   const repositoryWindows = useDesk((s) => s.repositoryWindows);
   const workbenchWindows = useDesk((s) => s.workbenchWindows);
@@ -116,6 +115,9 @@ export default function DeskApp() {
     void useProjections.getState().refresh(true);
   }, [refreshDesk]);
 
+  // HS-150-07: one-time import of localStorage chat threads.
+  useChatImport();
+
   const total = Object.values(items).reduce((n, l) => n + l.length, 0);
   const empty = updatedAt !== null && total === 0;
 
@@ -174,7 +176,7 @@ export default function DeskApp() {
       {!arrivalRequired && !showFloor && chairOpenCards.map((pullout) => (
         <Pullout key={pullout.id} o={pullout.object!} origin={pullout.origin} />
       ))}
-      {!arrivalRequired && chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
+      {/* PersonaChat retired by HS-150-07; threads pullout is the one chat surface. */}
       {!arrivalRequired && <DeskToolInspector />}
       {!arrivalRequired && <MissionControlConveyor />}
       {!arrivalRequired && <DeliveryBoard />}

@@ -1,23 +1,42 @@
 import { SurfaceFooter } from "../surface/SurfaceFooter";
-/** Recipe (Persona) pullout content (HS-117-15). */
+/** Recipe (Persona) pullout content (HS-117-15).
+ * HS-150-07: "Chat with" retired; "Continue in thread" creates/opens a
+ * thread bound to the recipe via POST /api/threads {recipe_id}. */
+import { useState } from "react";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
+import { createThread } from "../threads";
+import { useWriteReceipt } from "../hooks/useWriteReceipt";
 import { DeskFilingStrip } from "../components/DeskFilingStrip";
 import { AgentAvatar } from "../components/AgentAvatar";
 import { Material } from "../surface/Material";
 import { FoldGadget } from "../surface/gadgets";
+import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 import { INLINE_EDITOR_CONTENT } from "./editors";
 import { CapabilitySection } from "./shared/CapabilitySection";
 import type { PulloutContentProps } from "./types";
 
 export function RecipePullout({ object: o }: PulloutContentProps) {
   const editing = useDesk((s) => s.editingId === o.id);
-  const { openChat, openEditor, closeEditor } = useDesk.getState();
+  const { openEditor, closeEditor, openPullout, refresh } = useDesk.getState();
+  const [threadBusy, setThreadBusy] = useState(false);
+  const { attempt, receipt } = useWriteReceipt();
   if (o.ref.kind !== "recipe") return null;
   const ir = o.ref;
   const Content = INLINE_EDITOR_CONTENT[o.kind];
   const resourceRef = qualifiedRef(o.kind, o.id);
+
+  const continueInThread = async () => {
+    if (threadBusy) return;
+    setThreadBusy(true);
+    await attempt("open thread", async () => {
+      const t = await createThread({ recipe_id: o.id });
+      openPullout(`thread:${t.id}`);
+      void refresh();
+    });
+    setThreadBusy(false);
+  };
 
   return (
     <>
@@ -36,10 +55,21 @@ export function RecipePullout({ object: o }: PulloutContentProps) {
             <button
               type="button"
               className="desk-chip is-primary desk-pullout-agent-chat"
-              onClick={() => openChat(o.id)}
+              disabled={threadBusy}
+              onClick={() => void continueInThread()}
             >
-              Chat with {o.title}
+              {threadBusy ? "Opening..." : "Continue in thread"}
             </button>
+            <ContextualAssignment
+              label="Thread assignment"
+              capabilityId="chat.turn"
+              scope={{
+                kind: "subject",
+                subject_kind: "recipe",
+                subject_id: o.id,
+                capability_id: "chat.turn",
+              }}
+            />
             {ir.systemPrompt ? (
               <FoldGadget title="Instructions">
                 <Material>{String(ir.systemPrompt)}</Material>
@@ -54,7 +84,7 @@ export function RecipePullout({ object: o }: PulloutContentProps) {
           />
         </>}
       </div>
-      <SurfaceFooter verbs={editing ? <>
+      <SurfaceFooter receipt={receipt} verbs={editing ? <>
         <button type="button" className="desk-chip quiet" onClick={closeEditor}>Cancel</button>
         <button type="button" className="desk-chip is-primary" onClick={closeEditor}>Save</button>
       </> : <> <button

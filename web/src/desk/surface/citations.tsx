@@ -27,6 +27,21 @@ export function openSourceRef(ref: string) {
     openSurfaceOr("review-meetings", "/history", ref);
     return;
   }
+  // Thread search hits carry a fragment: thread:<id>#<message_id>.
+  // Parse the fragment, set the focus message in the store, and open the
+  // pullout at the thread level (without the fragment).
+  if (ref.startsWith("thread:")) {
+    const hashIdx = ref.indexOf("#");
+    if (hashIdx > 0) {
+      const messageId = ref.slice(hashIdx + 1);
+      const threadRef = ref.slice(0, hashIdx);
+      void import("../threads").then((m) =>
+        m.useThreadStore.getState().setFocusMessage(messageId),
+      );
+      openPrimitive(threadRef);
+      return;
+    }
+  }
   openPrimitive(ref);
 }
 

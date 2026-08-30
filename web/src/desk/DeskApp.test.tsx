@@ -69,7 +69,7 @@ vi.mock("./components/DeskListView", () => ({ DeskListView: marker("desk-list") 
 vi.mock("./components/DeskChrome", () => ({ DeskChrome: marker("desk-chrome") }));
 vi.mock("./components/EmptyDesk", () => ({ EmptyDesk: marker("empty-desk") }));
 vi.mock("./components/RecordOrb", () => ({ RecordOrb: marker("record-orb") }));
-vi.mock("./components/PersonaChat", () => ({ PersonaChat: marker("persona-chat") }));
+vi.mock("./hooks/useChatImport", () => ({ useChatImport: () => ({ receipt: "" }) }));
 vi.mock("./components/MissionControlConveyor", () => ({ MissionControlConveyor: marker("mission-control") }));
 vi.mock("./components/SessionPullout", () => ({
   SessionPullout: marker("session-pullout"),

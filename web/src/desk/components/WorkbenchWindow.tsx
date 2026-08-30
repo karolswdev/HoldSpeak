@@ -32,7 +32,31 @@ import { useUndoReceipt } from "../hooks/useUndoReceipt";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useWriteReceipt, type WriteAttempt } from "../hooks/useWriteReceipt";
 import { boundaryEgressLamp } from "../inferenceEgress";
-import { keepReply } from "../chat";
+import { apiRequest } from "../../lib/api";
+
+/** HS-150-07: inlined from the retired chat.ts — recipe keep is not a thread
+ * operation; the /api/recipes/{id}/keep route lives on independently. */
+async function keepReply(
+  recipeId: string,
+  question: string,
+  output: string,
+): Promise<string | null> {
+  try {
+    const res = await apiRequest(
+      `/api/recipes/${encodeURIComponent(recipeId)}/keep`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, output }),
+      },
+    );
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => ({}));
+    return data.artifact_id ? String(data.artifact_id) : null;
+  } catch {
+    return null;
+  }
+}
 import {
   emptyGrounding,
   groundingIsEmpty,

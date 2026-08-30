@@ -16,7 +16,7 @@ TOOLS: list[dict[str, Any]] = [
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "Search query."},
-                "kind": {"type": "string", "description": "Optional kind filter."},
+                "kind": {"type": "string", "description": "Optional kind filter (decision, artifact, note, thread)."},
                 "project_id": {"type": "string", "description": "Optional project filter."},
                 "time_from": {"type": "string", "description": "Optional ISO-8601 start bound."},
                 "time_to": {"type": "string", "description": "Optional ISO-8601 end bound."},
