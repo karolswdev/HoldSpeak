@@ -124,8 +124,10 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
                 svc = _service()
                 thread = svc._db.threads.get(thread_id)
                 if thread and thread.recipe_id:
+                    # S2 fix: read enable from body, default True for backward compat.
+                    enable = body.get("toggle_guardrail_enable", True)
                     toggle_guardrail_on_mode(
-                        svc._db, thread.recipe_id, str(toggle_guardrail_id), enable=True,
+                        svc._db, thread.recipe_id, str(toggle_guardrail_id), enable=bool(enable),
                     )
             result = _service().patch(
                 thread_id,

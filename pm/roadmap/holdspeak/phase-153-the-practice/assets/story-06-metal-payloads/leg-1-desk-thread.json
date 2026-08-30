@@ -1,0 +1,75 @@
+{
+  "id": "th_e01bff75a3c0",
+  "title": "HS-153-06 Leg 1 mode",
+  "recipe_id": "hs-seed-mode-desk",
+  "profile_override": "",
+  "directory_id": "",
+  "token_in": 5,
+  "token_out": 3,
+  "created_at": 1788115439.319254,
+  "updated_at": 1788115439.4270878,
+  "last_turn_at": 1788115439.333083,
+  "mode": {
+    "id": "hs-seed-mode-desk",
+    "name": "Desk",
+    "avatar": "#6B7280"
+  },
+  "messages": [
+    {
+      "id": "tm_99291ec6afee",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_1ddbc6aa8ef1",
+          "kind": "text",
+          "text": "Show me the current state of my desk.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115439.320674,
+      "updated_at": 1788115439.3212092,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_4bdcc7ce6f3e",
+      "role": "assistant",
+      "parent_id": "tm_99291ec6afee",
+      "streaming": false,
+      "receipt_id": "ire_3f72ee3bdf60026a086ae66e4bcd15f5",
+      "egress_scope": "local",
+      "model_id": "hs153-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 3,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_86e0624f48da",
+          "kind": "text",
+          "text": "Desk mode response. No actions taken.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115439.333083,
+      "updated_at": 1788115439.42674,
+      "completed_at": 1788115439.42674,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

@@ -221,6 +221,20 @@ describe("completeSlash (pure)", () => {
     expect(result!.command?.id).toBe("guardrail");
     expect(result!.items.map((i) => i.label)).toContain("Effect guard");
   });
+
+  it("returns guardrail arguments for /guardrail on e (S2)", () => {
+    const result = completeSlash("/guardrail on e", 15, CTX);
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("argument");
+    expect(result!.command?.id).toBe("guardrail");
+  });
+
+  it("returns guardrail arguments for /guardrail off e (S2)", () => {
+    const result = completeSlash("/guardrail off e", 16, CTX);
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("argument");
+    expect(result!.command?.id).toBe("guardrail");
+  });
 });
 
 describe("isSlashAtLineStart", () => {
@@ -552,4 +566,5 @@ describe("slash command palette via composer", () => {
     expect(screen.getByTestId("thread-system-row")).toBeInTheDocument();
     expect(screen.getByTestId("thread-system-row").textContent).toContain("Compacting");
   });
+
 });

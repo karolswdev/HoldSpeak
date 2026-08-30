@@ -1,0 +1,142 @@
+{
+  "id": "th_21f813a2912a",
+  "title": "HS-153-06 Leg 3 annotation",
+  "recipe_id": "hs-seed-mode-desk",
+  "profile_override": "",
+  "directory_id": "",
+  "token_in": 10,
+  "token_out": 6,
+  "created_at": 1788115442.682003,
+  "updated_at": 1788115443.346123,
+  "last_turn_at": 1788115443.2478669,
+  "mode": {
+    "id": "hs-seed-mode-desk",
+    "name": "Desk",
+    "avatar": "#6B7280"
+  },
+  "messages": [
+    {
+      "id": "tm_d7c26fd5b18b",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_3cc376556cbb",
+          "kind": "text",
+          "text": "Summarize my upcoming week.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115442.684602,
+      "updated_at": 1788115442.685617,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_a67323a64658",
+      "role": "assistant",
+      "parent_id": "tm_d7c26fd5b18b",
+      "streaming": false,
+      "receipt_id": "ire_38f9a6d2662219b7723b105469469ef5",
+      "egress_scope": "local",
+      "model_id": "hs153-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 3,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_a8c00863ad5a",
+          "kind": "text",
+          "text": "Desk mode response. No actions taken.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115442.7032242,
+      "updated_at": 1788115442.7965481,
+      "completed_at": 1788115442.7965481,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_7a5c41d55c0b",
+      "role": "user",
+      "parent_id": "tm_a67323a64658",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_c76c03cbb828",
+          "kind": "annotation",
+          "text": "The owner annotated: \u00abDesk mode response. No actions\u00bb \u2014 This needs more detail",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "anchor_message_id": "tm_a67323a64658",
+            "comment": "This needs more detail",
+            "quote": "Desk mode response. No actions",
+            "source": "owner"
+          }
+        },
+        {
+          "id": "tp_76e3e103ae09",
+          "kind": "text",
+          "text": "Please elaborate on Monday.",
+          "ordinal": 1,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115443.222767,
+      "updated_at": 1788115443.2300951,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_e626601d1d4a",
+      "role": "assistant",
+      "parent_id": "tm_7a5c41d55c0b",
+      "streaming": false,
+      "receipt_id": "ire_e084ea49065c3284b9eb44a0acccc5f4",
+      "egress_scope": "local",
+      "model_id": "hs153-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 3,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_e2523d7544eb",
+          "kind": "text",
+          "text": "Desk mode response. No actions taken.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115443.2478669,
+      "updated_at": 1788115443.345819,
+      "completed_at": 1788115443.345819,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

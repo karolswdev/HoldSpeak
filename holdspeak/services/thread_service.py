@@ -553,28 +553,16 @@ class ThreadService:
 
         from .thread_practice import run_compact
 
-        # Determine egress scope from the latest assistant message on this
-        # thread so the M1 redactor can be applied before the compact engine
-        # sees the payload.
-        egress_scope = ""
-        for msg in reversed(path):
-            if msg.role == "assistant" and msg.egress_scope:
-                egress_scope = msg.egress_scope
-                break
-
-        redacted_messages = list(messages_for_compact)
-        if egress_scope in ("cloud", "external_service") and sensitive_texts:
-            for i, msg_dict in enumerate(redacted_messages):
-                content = str(msg_dict.get("content", ""))
-                for st in sensitive_texts:
-                    if st and st in content:
-                        content = content.replace(st, _PEOPLE_REDACTION)
-                redacted_messages[i] = {**msg_dict, "content": content}
+        # HS-153 close counsel M1: pass sensitive_texts to run_compact so it
+        # can resolve the chat.compact capability's OWN boundary and apply
+        # M1 redaction on that boundary, not the thread's chat.turn egress.
+        compact_messages = list(messages_for_compact)
 
         try:
             result = await asyncio.to_thread(
                 run_compact, self._broker, principal, thread_id,
-                redacted_messages,
+                compact_messages,
+                sensitive_texts=sensitive_texts,
             )
             summary = result.get("summary", "")
         except Exception as exc:
@@ -1070,13 +1058,31 @@ class ThreadService:
                                 egress_scope=egress_scope,
                                 timeout_s=_GUARDRAIL_TIMEOUT_S,
                             )
-                            # Map violations to tool names
+                            # Map violations to tool names (S1 fix: per-call).
+                            # If the violation text names a specific pending
+                            # tool, only that tool carries the violation.
+                            # Fall back to trigger-pattern matching only when
+                            # NO pending tool is named in the violation text.
                             if guardrail_result:
+                                all_triggers = [
+                                    t for g in matched_guardrails
+                                    for t in g.get("trigger_tools", [])
+                                ]
                                 for v in guardrail_result.get("violations", []):
                                     v_str = str(v)
-                                    for pname in pending_names:
-                                        if pname in v_str or _guardrail_matches(pname, [t for g in matched_guardrails for t in g.get("trigger_tools", [])]):
+                                    named = [
+                                        pname for pname in pending_names
+                                        if pname in v_str
+                                    ]
+                                    if named:
+                                        for pname in named:
                                             guardrail_violations.setdefault(pname, []).append(v_str)
+                                    else:
+                                        # Generic violation: apply to all
+                                        # trigger-matching pending calls.
+                                        for pname in pending_names:
+                                            if _guardrail_matches(pname, all_triggers):
+                                                guardrail_violations.setdefault(pname, []).append(v_str)
                                 # Emit thread_guardrail frame
                                 emit_thread_guardrail(
                                     self._broadcast,
@@ -1781,17 +1787,10 @@ class ThreadService:
             }),
         }
 
-        # Apply M1 redactor: if egress is cloud, redact sensitive texts
+        # HS-153 close counsel M1: pass sensitive_texts through to
+        # run_guardrail, which resolves the chat.guardrail capability's OWN
+        # boundary and applies M1 redaction on that boundary.
         guardrail_messages = list(recent_messages)
-        if egress_scope in ("cloud", "external_service") and sensitive_texts:
-            for i, msg in enumerate(guardrail_messages):
-                if not isinstance(msg, dict):
-                    continue
-                content = str(msg.get("content", ""))
-                for st in sensitive_texts:
-                    if st and st in content:
-                        content = content.replace(st, _PEOPLE_REDACTION)
-                guardrail_messages[i] = {**msg, "content": content}
 
         # Run with timeout via asyncio.to_thread + wait_for
         import asyncio
@@ -1806,6 +1805,7 @@ class ThreadService:
                     guardrail_messages,
                     pending_calls,
                     guardrail_config,
+                    sensitive_texts=sensitive_texts,
                 ),
                 timeout=timeout_s,
             )

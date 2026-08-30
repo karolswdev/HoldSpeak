@@ -1686,9 +1686,10 @@ function ThreadPulloutInner({
           }}
           onNewThread={handleNewThread}
           onModeSelect={(recipeId) => void setMode(threadId, recipeId)}
-          onToggleGuardrail={(guardrailId) => {
+          onToggleGuardrail={(guardrailId, enable) => {
             // HS-153-03: toggle via PATCH /api/threads/:id/guardrail
-            void patchThread(threadId, { toggle_guardrail: guardrailId });
+            // S2: pass enable boolean so /guardrail off works.
+            void patchThread(threadId, { toggle_guardrail: guardrailId, toggle_guardrail_enable: enable });
           }}
           currentMode={detail.thread?.mode ?? null}
           streaming={isStreaming}

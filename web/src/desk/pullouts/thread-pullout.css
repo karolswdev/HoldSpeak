@@ -594,7 +594,7 @@
   padding: 0 4px;
   border-radius: 2px;
   background: var(--warn-signal, #f59e0b);
-  color: #fff;
+  color: var(--badge-text, #fff);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.06em;

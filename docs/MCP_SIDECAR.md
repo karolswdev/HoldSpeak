@@ -87,6 +87,12 @@ model-invoking). Model selection is never an Ask-side MCP control.
 active Thoughts, and a mixed upcoming timeline of calendar events (from all
 enabled ICS sources, with per-source provenance when more than one source is
 configured) and scheduled recordings, plus matching server-derived counts.
+`door.add_item` creates an action item on the Door. It is an effect tool
+(`effect_proposal`); in safe or neutral mode the call is held for the
+decision box. An item created from a thread carries
+`source_type='thread'` and `source_ref` pointing at the originating
+message; the Door card shows a "from a thread" provenance chip.
+
 Door has no MCP resource. Its
 Follow-Through People overlay respects `HOLDSPEAK_MCP_PEOPLE_ACCESS` and is
 safely empty when that encrypted disclosure capability is unavailable or off.

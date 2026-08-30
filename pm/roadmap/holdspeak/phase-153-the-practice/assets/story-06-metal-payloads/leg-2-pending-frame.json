@@ -1,0 +1,13 @@
+{
+  "type": "thread_tool_pending",
+  "data": {
+    "thread_id": "th_b8281a2a5360",
+    "message_id": "tm_ac05c6020dce",
+    "call_id": "call_chase2_pct",
+    "name": "people.commitment.transition",
+    "args_head": "{\"card_id\": \"people:f5cd7748-708f-4c4d-8526-102998637902\", \"verb\": \"complete\"}",
+    "class": "effect_proposal",
+    "decision_required": true,
+    "default_decision": "deny"
+  }
+}

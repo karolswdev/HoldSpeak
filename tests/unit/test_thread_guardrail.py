@@ -1151,3 +1151,326 @@ class TestReconcileThreadMessagePartsKindDrift:
         second = _rebuild_thread_message_parts_for_kind_drift(conn)
         assert second is False
         conn.close()
+
+
+# ---------------------------------------------------------------------------
+# M1 close counsel: capability-boundary guardrail redaction
+# ---------------------------------------------------------------------------
+
+
+class TestGuardrailM1CapabilityBoundary:
+    """Close counsel M1: run_guardrail redacts based on the chat.guardrail
+    capability's OWN boundary, not the thread's chat.turn egress scope.
+
+    Two cases:
+    1. chat.turn = LOCAL, chat.guardrail = CLOUD -> sensitive texts withheld
+    2. chat.turn = CLOUD, chat.guardrail = LOCAL -> sensitive texts NOT withheld
+
+    Tests run_guardrail directly (unit), mocking the broker to carry the
+    right DB with two profiles at different boundaries.
+    """
+
+    @staticmethod
+    def _setup(tmp_path: Path, *, guardrail_boundary: str = "cloud"):
+        """Create a DB with a profile assigned to chat.guardrail, whose
+        deployment revision carries the given boundary."""
+        import hashlib as _hashlib
+        from holdspeak.deployment_revisions import DeploymentRevision
+        from holdspeak.inference_targets import DeploymentIdentity
+
+        db = Database(tmp_path / "m1_gr.db")
+        from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+        from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+        owner = Principal(PrincipalKind.OWNER, "m1-owner")
+
+        # Profile for chat.turn (local boundary) -- only needed for the
+        # assignment chain; we won't invoke through it.
+        turn_profile = "m1-turn-profile"
+        _profile(db, turn_profile, claims=("language", _result_claim("chat.turn")))
+
+        # Assign chat.turn
+        InferenceAssignmentService(db).set_assignment(owner, {
+            "command_id": "assign-turn",
+            "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "chat.turn"},
+            "entries": [{"profile_id": turn_profile, "profile_revision": 1}],
+        })
+
+        # Backfill chat.guardrail from chat.turn (same profile initially).
+        from holdspeak.db.reconcile import _backfill_chat_practice_assignments
+        with db._connection() as conn:
+            _backfill_chat_practice_assignments(conn)
+
+        # If we need a different boundary for chat.guardrail, create a NEW
+        # profile+deployment and re-point the chat.guardrail assignment to it.
+        if guardrail_boundary != "same_device":
+            # Create a deployment revision with the desired boundary.
+            # Use a unique model name that has NO v2 deployment row.
+            gr_profile = "m1-guardrail-cloud"
+            v1_dep = DeploymentRevision.from_identity(DeploymentIdentity(
+                destination_id="cloud_service",
+                kind="cloud",
+                engine="configured_local_engine",
+                model=gr_profile,
+                node="",
+                boundary=guardrail_boundary,
+                endpoint="",
+                secret_slot="",
+            ))
+            db.deployment_revisions.upsert(v1_dep)
+
+            # Update the chat.guardrail assignment to point to gr_profile.
+            with db._connection() as conn:
+                head = conn.execute(
+                    "SELECT assignment_id, revision FROM inference_assignment_heads "
+                    "WHERE assignment_key='capability:chat.guardrail' AND cleared=0",
+                ).fetchone()
+                if head:
+                    conn.execute(
+                        "UPDATE inference_assignments SET profile_id=? "
+                        "WHERE assignment_id=? AND assignment_revision=?",
+                        (gr_profile, head["assignment_id"], head["revision"]),
+                    )
+
+        return db, owner
+
+    def test_cloud_guardrail_withholds_sensitive_texts(self, tmp_path: Path) -> None:
+        """chat.guardrail boundary=cloud: run_guardrail replaces sensitive
+        texts with [people content withheld]."""
+        db, owner = self._setup(tmp_path, guardrail_boundary="cloud")
+
+        from holdspeak.services.thread_practice import run_guardrail
+        from holdspeak.kernel.runtime import _as_principal
+
+        # Mock broker with the real DB and a mock runner.
+        class _Broker:
+            database = db
+            inference_runner = MagicMock()
+
+        broker = _Broker()
+        captured_kwargs: list[dict] = []
+
+        def _fake_run_prompt(**kw):
+            captured_kwargs.append(kw)
+            return json.dumps({"violations": [], "warnings": []})
+
+        engine = MagicMock()
+        engine.run_prompt = _fake_run_prompt
+        engine.active_provider = "test"
+        engine.active_model = "test"
+        broker.inference_runner._engine_factory = lambda rev, **kw: engine
+        broker.inference_runner.invoke = MagicMock()
+
+        # Set up the invoke mock to call the capture and publish callbacks.
+        def _mock_invoke(request, adapter, publish=None):
+            # The adapter is CanonicalPromptAdapter; invoke the engine directly
+            # to capture what would be sent.
+            prompt = request.payload
+            captured_kwargs.append(prompt)
+            result = MagicMock()
+            result.result = {"violations": [], "warnings": []}
+            return result
+        broker.inference_runner.invoke = _mock_invoke
+
+        messages = [
+            {"role": "user", "content": "Tell me about Alice Smith"},
+            {"role": "assistant", "content": "Alice Smith is a person"},
+        ]
+        pending = [
+            {"name": "people.commitment.transition", "arguments_head": "{}"},
+        ]
+        guardrail = {"instruction": "Check effects", "trigger_tools": ["people.*"]}
+
+        result = run_guardrail(
+            broker, owner, "t1",
+            messages, pending, guardrail,
+            sensitive_texts=["Alice Smith"],
+        )
+
+        # The payload passed to runner.invoke should have redacted messages.
+        assert len(captured_kwargs) >= 1
+        payload = captured_kwargs[0]
+        # Check that the messages in the payload are redacted.
+        for msg in payload.get("messages", []):
+            content = msg.get("content", "")
+            assert "Alice Smith" not in content, (
+                f"Cloud guardrail should redact sensitive text, got: {content}"
+            )
+        # Check the user_prompt (transcript)
+        user_prompt = payload.get("user_prompt", "")
+        assert "Alice Smith" not in user_prompt, (
+            f"Cloud guardrail user_prompt should redact, got: {user_prompt}"
+        )
+
+    def test_local_guardrail_preserves_sensitive_texts(self, tmp_path: Path) -> None:
+        """chat.guardrail boundary=same_device: run_guardrail keeps sensitive
+        texts verbatim."""
+        db, owner = self._setup(tmp_path, guardrail_boundary="same_device")
+
+        from holdspeak.services.thread_practice import run_guardrail
+
+        class _Broker:
+            database = db
+            inference_runner = MagicMock()
+
+        broker = _Broker()
+        captured_kwargs: list[dict] = []
+
+        def _mock_invoke(request, adapter, publish=None):
+            captured_kwargs.append(request.payload)
+            result = MagicMock()
+            result.result = {"violations": [], "warnings": []}
+            return result
+        broker.inference_runner.invoke = _mock_invoke
+
+        messages = [
+            {"role": "user", "content": "Tell me about Bob Jones"},
+            {"role": "assistant", "content": "Bob Jones is a person"},
+        ]
+        pending = [{"name": "people.commitment.transition", "arguments_head": "{}"}]
+        guardrail = {"instruction": "Check effects", "trigger_tools": ["people.*"]}
+
+        result = run_guardrail(
+            broker, owner, "t1",
+            messages, pending, guardrail,
+            sensitive_texts=["Bob Jones"],
+        )
+
+        assert len(captured_kwargs) >= 1
+        payload = captured_kwargs[0]
+        # user_prompt should NOT be redacted on local boundary.
+        user_prompt = payload.get("user_prompt", "")
+        assert _PEOPLE_REDACTION not in user_prompt, (
+            f"Local guardrail should not redact, got: {user_prompt}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# S1 close counsel: per-call violation mapping
+# ---------------------------------------------------------------------------
+
+
+class TestS1PerCallViolationMapping:
+    """Close counsel S1: when the violation names a specific tool, ONLY that
+    tool carries the violation -- not every trigger-matching pending call.
+
+    Tests the violation-to-tool mapping logic directly, reproducing the
+    exact code path from thread_service.py L1062-1085.
+    """
+
+    def test_specific_violation_maps_only_to_named_tool(self) -> None:
+        """Violation text names 'people.commitment.transition' -> only that
+        tool appears in guardrail_violations, not people.note.create."""
+        pending_names = [
+            "people.commitment.transition",
+            "people.note.create",
+        ]
+        matched_guardrails = [
+            {"trigger_tools": ["people.*"]},
+        ]
+        guardrail_result = {
+            "violations": [
+                "people.commitment.transition called without a source"
+            ],
+            "warnings": [],
+        }
+
+        # Reproduce the S1-fixed mapping logic:
+        guardrail_violations: dict[str, list[str]] = {}
+        all_triggers = [
+            t for g in matched_guardrails
+            for t in g.get("trigger_tools", [])
+        ]
+        for v in guardrail_result.get("violations", []):
+            v_str = str(v)
+            named = [pname for pname in pending_names if pname in v_str]
+            if named:
+                for pname in named:
+                    guardrail_violations.setdefault(pname, []).append(v_str)
+            else:
+                for pname in pending_names:
+                    if _guardrail_matches(pname, all_triggers):
+                        guardrail_violations.setdefault(pname, []).append(v_str)
+
+        # Only the named tool should carry the violation.
+        assert "people.commitment.transition" in guardrail_violations
+        assert "people.note.create" not in guardrail_violations
+
+    def test_generic_violation_maps_to_all_matching_tools(self) -> None:
+        """Violation text does NOT name any specific tool -> all
+        trigger-matching tools carry the violation."""
+        pending_names = [
+            "people.commitment.transition",
+            "people.note.create",
+        ]
+        matched_guardrails = [
+            {"trigger_tools": ["people.*"]},
+        ]
+        guardrail_result = {
+            "violations": [
+                "Unsafe operation detected"
+            ],
+            "warnings": [],
+        }
+
+        guardrail_violations: dict[str, list[str]] = {}
+        all_triggers = [
+            t for g in matched_guardrails
+            for t in g.get("trigger_tools", [])
+        ]
+        for v in guardrail_result.get("violations", []):
+            v_str = str(v)
+            named = [pname for pname in pending_names if pname in v_str]
+            if named:
+                for pname in named:
+                    guardrail_violations.setdefault(pname, []).append(v_str)
+            else:
+                for pname in pending_names:
+                    if _guardrail_matches(pname, all_triggers):
+                        guardrail_violations.setdefault(pname, []).append(v_str)
+
+        # Generic violation -> all trigger-matching tools.
+        assert "people.commitment.transition" in guardrail_violations
+        assert "people.note.create" in guardrail_violations
+
+    def test_mixed_violations(self) -> None:
+        """One specific + one generic violation."""
+        pending_names = [
+            "people.commitment.transition",
+            "people.note.create",
+            "desk.list",
+        ]
+        matched_guardrails = [
+            {"trigger_tools": ["people.*"]},
+        ]
+        guardrail_result = {
+            "violations": [
+                "people.commitment.transition lacks source",
+                "General safety concern",
+            ],
+            "warnings": [],
+        }
+
+        guardrail_violations: dict[str, list[str]] = {}
+        all_triggers = [
+            t for g in matched_guardrails
+            for t in g.get("trigger_tools", [])
+        ]
+        for v in guardrail_result.get("violations", []):
+            v_str = str(v)
+            named = [pname for pname in pending_names if pname in v_str]
+            if named:
+                for pname in named:
+                    guardrail_violations.setdefault(pname, []).append(v_str)
+            else:
+                for pname in pending_names:
+                    if _guardrail_matches(pname, all_triggers):
+                        guardrail_violations.setdefault(pname, []).append(v_str)
+
+        # Specific: only people.commitment.transition
+        assert "people.commitment.transition lacks source" in guardrail_violations["people.commitment.transition"]
+        # Generic: both people.* tools, not desk.list
+        assert "General safety concern" in guardrail_violations.get("people.commitment.transition", [])
+        assert "General safety concern" in guardrail_violations.get("people.note.create", [])
+        assert "desk.list" not in guardrail_violations

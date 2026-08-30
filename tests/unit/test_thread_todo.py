@@ -376,3 +376,58 @@ class TestTodoProvenance:
         card = thread_cards[0]
         assert card.provenance.thread_id == "tm_abc123"
         assert card.provenance.available is True
+
+
+class TestActionItemsListingDefect:
+    """HS-153-06: list_action_items and get_action_item must return
+    thread-sourced items whose meeting_id is NULL.
+
+    Before the fix, the INNER JOIN on meetings excluded NULL meeting_id rows.
+    """
+
+    def test_list_action_items_includes_thread_sourced(self, tmp_path: Path) -> None:
+        hub = _hub(tmp_path, control_mode="yolo")
+        try:
+            db = hub["db"]
+            # Insert a thread-sourced action item directly (NULL meeting_id).
+            with db._connection() as conn:
+                conn.execute(
+                    """INSERT INTO action_items
+                       (id, meeting_id, task, owner, due, status, review_state,
+                        created_at, source_type, source_ref)
+                       VALUES (?, NULL, ?, NULL, NULL, 'open', 'accepted', ?, ?, ?)""",
+                    ("ai_list_test", "Thread task", "2026-08-30T00:00:00",
+                     "thread", "thread:tm_list"),
+                )
+
+            items = db.meetings.list_action_items(include_completed=True)
+            thread_items = [it for it in items if it.source_type == "thread"]
+            assert len(thread_items) >= 1, (
+                f"Expected thread-sourced item in list, got {len(thread_items)}"
+            )
+            assert thread_items[0].meeting_id == ""
+            assert thread_items[0].source_ref == "thread:tm_list"
+        finally:
+            _cleanup(hub)
+
+    def test_get_action_item_finds_thread_sourced(self, tmp_path: Path) -> None:
+        hub = _hub(tmp_path, control_mode="yolo")
+        try:
+            db = hub["db"]
+            with db._connection() as conn:
+                conn.execute(
+                    """INSERT INTO action_items
+                       (id, meeting_id, task, owner, due, status, review_state,
+                        created_at, source_type, source_ref)
+                       VALUES (?, NULL, ?, NULL, NULL, 'open', 'accepted', ?, ?, ?)""",
+                    ("ai_get_test", "Find me", "2026-08-30T00:00:00",
+                     "thread", "thread:tm_get"),
+                )
+
+            item = db.meetings.get_action_item("ai_get_test")
+            assert item is not None, "get_action_item returned None for thread-sourced item"
+            assert item.task == "Find me"
+            assert item.source_type == "thread"
+            assert item.meeting_id == ""
+        finally:
+            _cleanup(hub)

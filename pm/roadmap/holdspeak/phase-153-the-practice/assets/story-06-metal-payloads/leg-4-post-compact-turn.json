@@ -1,0 +1,263 @@
+{
+  "id": "th_417a0e49d632",
+  "title": "HS-153-06 Leg 4 compact",
+  "recipe_id": "hs-seed-mode-desk",
+  "profile_override": "",
+  "directory_id": "",
+  "token_in": 20,
+  "token_out": 12,
+  "created_at": 1788115443.7733078,
+  "updated_at": 1788115445.535975,
+  "last_turn_at": 1788115445.44237,
+  "mode": {
+    "id": "hs-seed-mode-desk",
+    "name": "Desk",
+    "avatar": "#6B7280"
+  },
+  "messages": [
+    {
+      "id": "tm_d57c91b7833c",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_e7ff74160b28",
+          "kind": "text",
+          "text": "Tell me about project management.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115443.7763689,
+      "updated_at": 1788115443.777519,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_2fc1cbd6daa0",
+      "role": "assistant",
+      "parent_id": "tm_d57c91b7833c",
+      "streaming": false,
+      "receipt_id": "ire_1f3959977a829ec757bc2e98b9501fb7",
+      "egress_scope": "local",
+      "model_id": "hs153-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 3,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_44a10f970221",
+          "kind": "text",
+          "text": "Desk mode response. No actions taken.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115443.797982,
+      "updated_at": 1788115443.8936808,
+      "completed_at": 1788115443.8936808,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_2355f7562ba1",
+      "role": "user",
+      "parent_id": "tm_2fc1cbd6daa0",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_8255eeffe3c7",
+          "kind": "text",
+          "text": "What are the best practices?",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115444.310215,
+      "updated_at": 1788115444.328449,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_a4907a882bdb",
+      "role": "assistant",
+      "parent_id": "tm_2355f7562ba1",
+      "streaming": false,
+      "receipt_id": "ire_f2167db9248f2404d979af2686b0311a",
+      "egress_scope": "local",
+      "model_id": "hs153-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 3,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_6e12b31e7b63",
+          "kind": "text",
+          "text": "Desk mode response. No actions taken.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115444.3571641,
+      "updated_at": 1788115444.4685729,
+      "completed_at": 1788115444.4685729,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_00f3e0be322a",
+      "role": "user",
+      "parent_id": "tm_a4907a882bdb",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_47f9f13bb3c3",
+          "kind": "text",
+          "text": "Give me a specific example.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115444.8732328,
+      "updated_at": 1788115444.874584,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_d46066df15a6",
+      "role": "assistant",
+      "parent_id": "tm_00f3e0be322a",
+      "streaming": false,
+      "receipt_id": "ire_627c28a60adbf9fe6e476396f588dad4",
+      "egress_scope": "local",
+      "model_id": "hs153-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 3,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_e87391372580",
+          "kind": "text",
+          "text": "Desk mode response. No actions taken.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115444.886773,
+      "updated_at": 1788115444.981471,
+      "completed_at": 1788115444.981471,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_42a0ef00e4df",
+      "role": "system",
+      "parent_id": "tm_d46066df15a6",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": {
+        "compaction": true,
+        "cut_at": "tm_d46066df15a6",
+        "count": 6
+      },
+      "parts": [
+        {
+          "id": "tp_865ebf0cff39",
+          "kind": "text",
+          "text": "Summary of the earlier conversation.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115445.41794,
+      "updated_at": 1788115445.4192362,
+      "completed_at": 1788115445.4192362,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_0fdf52cdae6f",
+      "role": "user",
+      "parent_id": "tm_42a0ef00e4df",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_3d1f87ae7a71",
+          "kind": "text",
+          "text": "What was the summary?",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115445.4241762,
+      "updated_at": 1788115445.424889,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_634c73df0dd9",
+      "role": "assistant",
+      "parent_id": "tm_0fdf52cdae6f",
+      "streaming": false,
+      "receipt_id": "ire_acc482f7b21916e24b46f2f4b9cbfc39",
+      "egress_scope": "local",
+      "model_id": "hs153-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 3,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_264b230d99c7",
+          "kind": "text",
+          "text": "Desk mode response. No actions taken.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115445.44237,
+      "updated_at": 1788115445.5356002,
+      "completed_at": 1788115445.5356002,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

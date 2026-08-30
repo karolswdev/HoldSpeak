@@ -1,0 +1,14 @@
+{
+  "id": "tp_c76c03cbb828",
+  "kind": "annotation",
+  "text": "The owner annotated: \u00abDesk mode response. No actions\u00bb \u2014 This needs more detail",
+  "ordinal": 0,
+  "sensitive": false,
+  "draft": true,
+  "meta_json": {
+    "source": "owner",
+    "quote": "Desk mode response. No actions",
+    "comment": "This needs more detail",
+    "anchor_message_id": "tm_a67323a64658"
+  }
+}

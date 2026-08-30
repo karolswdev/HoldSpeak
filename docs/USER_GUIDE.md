@@ -850,6 +850,81 @@ JSON payload. A TRUNCATED tag appears when the result exceeded the
 `thread.set_status` writes the status line shown under the thread
 title in the pullout head.
 
+### Modes
+
+Bind a mode to steer the thread's tool palette and system prompt. Four
+built-in modes ship as seeds:
+
+| Mode | Tools |
+|---|---|
+| **Desk** | Evidence reads, candidate builder (no effects) |
+| **Chase** | Desk + People effects, follow-through, `door.add_item` |
+| **Draft** | No tools (writing model only) |
+| **Plan** | `thought.*` reads, `door.get`, `memory.search`, `decision_record.*` reads |
+
+Mode tabs render above the composer. Click a tab to bind; click the
+active tab to unbind. A mode change applies from the next turn.
+
+### Saved prompts
+
+A prompt is a Note tagged `prompt`. `/prompt <name>` inserts the note
+body at the caret. Seed prompts ship with the desk (Weekly update,
+1:1 prep).
+
+### Guardrails
+
+A guardrail is a Note tagged `guardrail` with a YAML front matter
+block (instruction, trigger tools, N messages). Two seeds ship:
+`effect-guard` (flags an effect touching a person's ledger without a
+named source) and `egress-guard` (flags cloud egress of a `people.*`
+read).
+
+Guardrails are enabled per mode. The guardrail assignment runs once
+per tool-requesting pass, before the per-call admission. It returns
+violations and warnings rendered as a row above the pending-tool
+box. It never auto-denies; in safe mode a violation flips the decision
+box default to Deny. `/guardrail <name>` toggles a guardrail on the
+thread's mode.
+
+### Annotations
+
+Select text in any assistant part to open an in-flow popover (comment
+field with mic). Save adds an annotation chip above the composer.
+Chips are draft parts on a pending user message; Send promotes them
+with the next turn as a prefix ("The owner annotated: ..."). Chips
+survive a reload.
+
+### Compaction
+
+`/compact` summarises earlier turns into a cut marker. The assembler
+includes only the summary and what follows. A cut marker row renders
+in the pullout with a RAW fold showing the summary text. Earlier
+messages fold behind a toggle.
+
+### Todo
+
+`/todo <text>` writes an action item to the Door with
+`source_type='thread'`. The Door card shows a "from a thread" chip
+that opens the thread pullout.
+
+### Slash commands
+
+`/` at the start of a line opens the verb palette. Mid-line `/` types
+a literal slash.
+
+| Command | Action |
+|---|---|
+| `/mode <name>` | Bind or switch the thread's mode |
+| `/prompt <name>` | Insert a saved prompt at the caret |
+| `/tools` | List the mode's tool palette |
+| `/guardrail <name>` | Toggle a guardrail on the mode |
+| `/todo <text>` | Write an action item to the Door |
+| `/compact` | Summarise earlier turns behind a cut |
+| `/keep` | Keep the last reply as a Note |
+| `/fork` | Branch the conversation |
+| `/stop` | Stop a running turn |
+| `/new` | Start a new thread |
+
 ## Schedule A Recording
 
 You can set the hub to start a recording on its own at a time you choose.

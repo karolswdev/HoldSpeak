@@ -1,0 +1,75 @@
+{
+  "id": "th_a0415693a7f9",
+  "title": "HS-153-06 Leg 1 draft",
+  "recipe_id": "hs-seed-mode-draft",
+  "profile_override": "",
+  "directory_id": "",
+  "token_in": 5,
+  "token_out": 3,
+  "created_at": 1788115440.3883572,
+  "updated_at": 1788115440.488621,
+  "last_turn_at": 1788115440.404215,
+  "mode": {
+    "id": "hs-seed-mode-draft",
+    "name": "Draft",
+    "avatar": "#9333EA"
+  },
+  "messages": [
+    {
+      "id": "tm_5493b6f2c855",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_3a35445ad4bb",
+          "kind": "text",
+          "text": "Write a short poem.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115440.3921652,
+      "updated_at": 1788115440.393524,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_7a52c25495f8",
+      "role": "assistant",
+      "parent_id": "tm_5493b6f2c855",
+      "streaming": false,
+      "receipt_id": "ire_7f04ce599b4c7167b66b7515d1c85af7",
+      "egress_scope": "local",
+      "model_id": "hs153-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 3,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_15e96b167d51",
+          "kind": "text",
+          "text": "Draft mode: just text.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115440.404215,
+      "updated_at": 1788115440.488292,
+      "completed_at": 1788115440.488292,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

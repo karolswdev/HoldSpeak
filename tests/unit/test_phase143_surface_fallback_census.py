@@ -53,6 +53,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/db/reconcile.py", "_backfill_chat_route_assignments"): ("additive data backfill; no route selection", "150-02"),
     ("holdspeak/services/inference_assignment_service.py", "_resolve"): ("canonical sparse assignment resolver", "143-04"),
     ("holdspeak/services/inference_adoption_service.py", "_validate_parentless_local_preload_route"): ("closed parentless speech preload cross-bind", "143-08"),
+    ("holdspeak/services/thread_practice.py", "_resolve_deployment_revision"): ("capability assignment resolver for chat.guardrail/chat.compact deployment revision lookup", "153-03"),
     ("holdspeak/speech_session/session.py", "_routed_session_validation_plan"): ("inert validation/history carrier for fully-adopted sessions; no route selection", "143-08"),
     ("holdspeak/services/inference_route_plan_service.py", "_insert_route"): ("canonical immutable route-plan persistence", "143-05"),
     ("holdspeak/services/inference_route_plan_service.py", "_resolve_entries"): ("canonical frozen route-leg resolver", "143-05"),
@@ -111,7 +112,7 @@ CAMEL_POINTER_TOKENS = ("inferenceTargetId", "intelProfileId", "profileId", "res
 RUNS_ON_PICKER_SURFACE = re.compile(
     r"(?:import\s*\{\s*RunsOnPicker\s*\}|export\s+function\s+RunsOnPicker)"
 )
-STORY_RE = re.compile(r"^(?:143-(?:0[1-9]|1[0-4])|150-0[1-9])$")  # HS-151-02: widen for Phase 151 entries
+STORY_RE = re.compile(r"^(?:143-(?:0[1-9]|1[0-4])|150-0[1-9]|153-0[1-6])$")  # HS-153-06: widen for Phase 153 entries
 
 # Story 06 retired every client-owned Swift retry/fallback execution site. The
 # scanner remains as a zero-regression fence: legacy wire strings may survive in

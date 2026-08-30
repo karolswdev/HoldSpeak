@@ -195,9 +195,12 @@ export function completeSlash(
       .filter((p) => p.title.toLowerCase().includes(argQuery))
       .map((p) => ({ id: p.id, label: p.title }));
   } else if (cmd.id === "guardrail") {
-    // /guardrail on|off <name> — for now just show guardrail names
+    // S2: strip "on " or "off " prefix from the arg query before matching.
+    let grQuery = argQuery;
+    if (grQuery.startsWith("on ")) grQuery = grQuery.slice(3);
+    else if (grQuery.startsWith("off ")) grQuery = grQuery.slice(4);
     argItems = ctx.guardrails
-      .filter((g) => g.title.toLowerCase().includes(argQuery))
+      .filter((g) => g.title.toLowerCase().includes(grQuery))
       .map((g) => ({ id: g.id, label: g.title }));
   }
   // /todo takes freeform text, no completions needed
@@ -343,7 +346,7 @@ export interface ThreadComposerProps {
   /** Set the thread's mode (calls setMode from threads.ts). */
   onModeSelect?: (recipeId: string) => void;
   /** HS-153-03: Toggle a guardrail on/off for the thread's mode. */
-  onToggleGuardrail?: (guardrailId: string) => void;
+  onToggleGuardrail?: (guardrailId: string, enable: boolean) => void;
   /** The current thread's mode, used by /tools to show the palette. */
   currentMode?: { id: string; name: string } | null;
   /** Whether a turn is streaming. */
@@ -697,17 +700,28 @@ export function ThreadComposer({
           if (!currentMode) {
             addSystemRow("Bind a mode first (use /mode)");
           } else if (arg && onToggleGuardrail) {
+            // S2: parse "on|off <name>" prefix
+            let enable = true;
+            let guardrailName = arg;
+            const lower = arg.toLowerCase();
+            if (lower.startsWith("on ")) {
+              enable = true;
+              guardrailName = arg.slice(3).trim();
+            } else if (lower.startsWith("off ")) {
+              enable = false;
+              guardrailName = arg.slice(4).trim();
+            }
             const guardrail = guardrails.find(
-              (g) => g.title.toLowerCase() === arg.toLowerCase(),
+              (g) => g.title.toLowerCase() === guardrailName.toLowerCase(),
             );
             if (guardrail) {
-              onToggleGuardrail(guardrail.id);
-              addSystemRow(`Guardrail toggled: ${guardrail.title}`);
+              onToggleGuardrail(guardrail.id, enable);
+              addSystemRow(`Guardrail ${enable ? "enabled" : "disabled"}: ${guardrail.title}`);
             } else {
-              addSystemRow(`Unknown guardrail: ${arg}`);
+              addSystemRow(`Unknown guardrail: ${guardrailName}`);
             }
           } else {
-            addSystemRow("Usage: /guardrail <name>");
+            addSystemRow("Usage: /guardrail on|off <name>");
           }
           break;
       }

@@ -548,3 +548,149 @@ class TestRealCoordinatorCompact:
 
         finally:
             self._cleanup(hub)
+
+
+# ---------------------------------------------------------------------------
+# M1 close counsel: capability-boundary compact redaction
+# ---------------------------------------------------------------------------
+
+
+class TestCompactM1CapabilityBoundary:
+    """Close counsel M1: run_compact redacts based on the chat.compact
+    capability's OWN boundary, not the thread's chat.turn egress scope.
+
+    Tests run_compact directly (unit), mocking the broker to carry the
+    right DB with a profile at the requested boundary.
+    """
+
+    @staticmethod
+    def _setup(tmp_path: Path, *, compact_boundary: str = "cloud"):
+        """Create a DB with chat.compact assigned to a profile whose
+        deployment revision carries the given boundary."""
+        from holdspeak.deployment_revisions import DeploymentRevision
+        from holdspeak.inference_targets import DeploymentIdentity
+        from unittest.mock import MagicMock
+
+        db = Database(tmp_path / "m1_cp.db")
+        from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+        from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+        owner = Principal(PrincipalKind.OWNER, "m1-compact-owner")
+
+        turn_profile = "m1-cp-turn"
+        _profile(db, turn_profile, claims=("language", _result_claim("chat.turn")))
+        InferenceAssignmentService(db).set_assignment(owner, {
+            "command_id": "assign-turn",
+            "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "chat.turn"},
+            "entries": [{"profile_id": turn_profile, "profile_revision": 1}],
+        })
+        from holdspeak.db.reconcile import _backfill_chat_practice_assignments
+        with db._connection() as conn:
+            _backfill_chat_practice_assignments(conn)
+
+        if compact_boundary != "same_device":
+            cp_profile = "m1-compact-cloud"
+            v1_dep = DeploymentRevision.from_identity(DeploymentIdentity(
+                destination_id="cloud_service",
+                kind="cloud",
+                engine="configured_local_engine",
+                model=cp_profile,
+                node="",
+                boundary=compact_boundary,
+                endpoint="",
+                secret_slot="",
+            ))
+            db.deployment_revisions.upsert(v1_dep)
+            with db._connection() as conn:
+                head = conn.execute(
+                    "SELECT assignment_id, revision FROM inference_assignment_heads "
+                    "WHERE assignment_key='capability:chat.compact' AND cleared=0",
+                ).fetchone()
+                if head:
+                    conn.execute(
+                        "UPDATE inference_assignments SET profile_id=? "
+                        "WHERE assignment_id=? AND assignment_revision=?",
+                        (cp_profile, head["assignment_id"], head["revision"]),
+                    )
+
+        return db, owner
+
+    def test_cloud_compact_withholds_sensitive_texts(self, tmp_path: Path) -> None:
+        """chat.compact boundary=cloud: run_compact replaces sensitive
+        texts with [people content withheld]."""
+        db, owner = self._setup(tmp_path, compact_boundary="cloud")
+
+        from holdspeak.services.thread_practice import run_compact
+
+        class _Broker:
+            database = db
+            inference_runner = MagicMock()
+
+        broker = _Broker()
+        captured: list[dict] = []
+
+        def _mock_invoke(request, adapter, publish=None):
+            captured.append(request.payload)
+            result = MagicMock()
+            result.result = {"summary": "A summary."}
+            return result
+        broker.inference_runner.invoke = _mock_invoke
+
+        messages = [
+            {"role": "user", "content": "Tell me about Alice Smith"},
+            {"role": "assistant", "content": "Alice Smith is important"},
+        ]
+
+        result = run_compact(
+            broker, owner, "t1", messages,
+            sensitive_texts=["Alice Smith"],
+        )
+
+        assert len(captured) >= 1
+        payload = captured[0]
+        user_prompt = payload.get("user_prompt", "")
+        assert "Alice Smith" not in user_prompt, (
+            f"Cloud compact should redact, got: {user_prompt}"
+        )
+        assert _PEOPLE_REDACTION in user_prompt, (
+            f"Expected redaction marker, got: {user_prompt}"
+        )
+
+    def test_local_compact_preserves_sensitive_texts(self, tmp_path: Path) -> None:
+        """chat.compact boundary=same_device: run_compact keeps sensitive
+        texts verbatim."""
+        db, owner = self._setup(tmp_path, compact_boundary="same_device")
+
+        from holdspeak.services.thread_practice import run_compact
+
+        class _Broker:
+            database = db
+            inference_runner = MagicMock()
+
+        broker = _Broker()
+        captured: list[dict] = []
+
+        def _mock_invoke(request, adapter, publish=None):
+            captured.append(request.payload)
+            result = MagicMock()
+            result.result = {"summary": "A summary."}
+            return result
+        broker.inference_runner.invoke = _mock_invoke
+
+        messages = [
+            {"role": "user", "content": "Tell me about Bob Jones"},
+            {"role": "assistant", "content": "Bob Jones is important"},
+        ]
+
+        result = run_compact(
+            broker, owner, "t1", messages,
+            sensitive_texts=["Bob Jones"],
+        )
+
+        assert len(captured) >= 1
+        payload = captured[0]
+        user_prompt = payload.get("user_prompt", "")
+        assert _PEOPLE_REDACTION not in user_prompt, (
+            f"Local compact should not redact, got: {user_prompt}"
+        )

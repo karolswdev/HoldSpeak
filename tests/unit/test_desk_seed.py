@@ -82,14 +82,19 @@ def _snapshot(db: Database) -> dict:
 def test_fresh_db_seeds_exactly_the_manifest(db) -> None:
     report = apply_seed(db)
     assert report.manifest == DEFAULT_SEED
-    assert report.applied == {"directories": 6, "notes": 7, "kbs": 1, "recipes": 4}
+    assert report.applied == {"directories": 6, "notes": 10, "kbs": 1, "recipes": 4}
     assert report.profiles_seeded == report.workbenches_seeded == 0
     assert report.filed == 6
 
     snap = _snapshot(db)
     assert dict((i, n) for i, n, _ in snap["directories"]) == ZONES
     assert {n.id: n.title for n in db.notes.list()} == {
-        START_HERE: "Start here", "hs-seed-prompt-weekly-update": "Weekly update", **CONTEXT_NOTES,
+        START_HERE: "Start here",
+        "hs-seed-prompt-weekly-update": "Weekly update",
+        "hs-seed-prompt-one-on-one-prep": "1:1 prep",
+        "hs-seed-guardrail-effect-guard": "Effect guard",
+        "hs-seed-guardrail-egress-guard": "Egress guard",
+        **CONTEXT_NOTES,
     }
     kb = db.kbs.get(EVERYDAY_CONTEXT)
     assert kb is not None and kb.name == "Everyday context"
@@ -164,7 +169,7 @@ def test_retry_completes_new_relationships_without_mutating_partial_desk(db) -> 
 
     report = apply_seed(db)
 
-    assert report.applied == {"notes": 2, "kbs": 1, "recipes": 4}
+    assert report.applied == {"notes": 5, "kbs": 1, "recipes": 4}
     assert report.filed == 1
     kb = db.kbs.get(EVERYDAY_CONTEXT)
     assert kb is not None and set(kb.member_ids) == {
@@ -189,10 +194,10 @@ def test_seed_route_applies_the_packaged_manifest(client, db) -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert body["success"] is True
-    assert body["applied"] == {"directories": 6, "notes": 7, "kbs": 1, "recipes": 4}
+    assert body["applied"] == {"directories": 6, "notes": 10, "kbs": 1, "recipes": 4}
     assert body["profiles_seeded"] == body["workbenches_seeded"] == 0
     assert body["filed"] == 6
-    assert body["total"] == 18
+    assert body["total"] == 21
     assert {d.id for d in db.directories.list()} == set(ZONES)
 
 
@@ -245,8 +250,11 @@ def test_reset_tombstones_clutter_and_reseeds(db) -> None:
     assert membership is not None and membership.deleted is True
 
     assert {d.id for d in db.directories.list()} == set(ZONES)
-    assert {n.id for n in db.notes.list()} == {START_HERE, "hs-seed-prompt-weekly-update", *CONTEXT_NOTES}
-    assert report.seed is not None and report.seed.total == 18
+    assert {n.id for n in db.notes.list()} == {
+        START_HERE, "hs-seed-prompt-weekly-update", "hs-seed-prompt-one-on-one-prep",
+        "hs-seed-guardrail-effect-guard", "hs-seed-guardrail-egress-guard", *CONTEXT_NOTES,
+    }
+    assert report.seed is not None and report.seed.total == 21
 
 
 def test_reset_force_restores_edited_and_tombstoned_packaged_objects(db) -> None:
@@ -261,7 +269,7 @@ def test_reset_force_restores_edited_and_tombstoned_packaged_objects(db) -> None
     report = reset_desk(db)
 
     assert report.seed is not None and report.seed.applied == {
-        "directories": 6, "notes": 7, "kbs": 1, "recipes": 4,
+        "directories": 6, "notes": 10, "kbs": 1, "recipes": 4,
     }
     assert db.notes.get("hs-seed-about-me").title == "About me"
     assert db.notes.get("hs-seed-meeting-preferences") is not None
@@ -296,8 +304,8 @@ def test_reset_route_names_the_counts(client, db) -> None:
     assert body["tombstoned_total"] == 8
     assert body["tombstoned"]["directories"] == 1
     assert body["tombstoned"]["workbenches"] == 1
-    assert body["seeded"] == {"directories": 6, "notes": 7, "kbs": 1, "recipes": 4}
-    assert body["seeded_total"] == 18
+    assert body["seeded"] == {"directories": 6, "notes": 10, "kbs": 1, "recipes": 4}
+    assert body["seeded_total"] == 21
     assert body["profiles_seeded"] == 0
     assert body["profiles_adopted"] == {}
     assert body["filed"] == 6
