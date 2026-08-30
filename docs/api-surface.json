@@ -4858,6 +4858,14 @@
       ]
     },
     {
+      "path": "/api/threads/{thread_id}/decide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": []
+    },
+    {
       "path": "/api/threads/{thread_id}/keep",
       "methods": [
         "POST"

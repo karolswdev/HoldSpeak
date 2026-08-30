@@ -62,6 +62,14 @@
       "type": "boolean",
       "description": "Per-device zone-context hint; persisted + re-emitted by the hub since Phase 77 (db v7)"
     },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "",
+        "mode"
+      ],
+      "description": "Empty for an ordinary recipe; mode for a built-in or owner-authored Thread mode."
+    },
     "created_at": {
       "type": "string",
       "format": "date-time"

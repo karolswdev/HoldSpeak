@@ -168,14 +168,14 @@
 }
 
 .thread-row-streaming {
-  border-left: 2px solid var(--accent, #3b82f6);
+  box-shadow: inset 2px 0 0 var(--accent, #3b82f6);
 }
 
 /* ── Error / Crashed ─────────────────────────────────────────────────── */
 /* (4) CRASHED: Retry primary; error: severity label + message */
 
 .thread-row-error {
-  border-left: 2px solid var(--danger-signal, #ef4444);
+  box-shadow: inset 2px 0 0 var(--danger-signal, #ef4444);
 }
 
 .thread-row-error-body {
@@ -201,7 +201,7 @@
 }
 
 .thread-row-crashed {
-  border-left: 2px solid var(--warn-signal, #f59e0b);
+  box-shadow: inset 2px 0 0 var(--warn-signal, #f59e0b);
 }
 
 .thread-row-crashed-body {

@@ -34,10 +34,14 @@ export class ApplicationBoundary extends Component<
 
   render(): ReactNode {
     if (!this.state.failed) return this.props.children;
+    const reason = this.state.failure?.message || "no renderer response was available";
     return (
       <section className="desk-application-error" role="alert">
         <strong>{this.props.label} stopped</strong>
-        <p>{this.state.failure?.message || "The application could not draw."}</p>
+        <p>
+          {this.props.label} failed here because {reason}. Your other Desk work
+          remains open. Reload the application.
+        </p>
         <button type="button" className="desk-chip" onClick={this.retry}>
           Reload application
         </button>

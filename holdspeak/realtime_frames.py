@@ -26,6 +26,8 @@ Web consumers (``web/src/``, tests excluded — a test is not a consumer)
   ``useRuntimeFrame<T>("frame_type")``
   ``frame.type === "frame_type"``
   ``["a", "b"].includes(frame.type)``
+  ``const <NAME>_FRAME_TYPES = ["a", "b"] as const`` — a typed frame set
+  consumed by a subscription loop
 """
 
 from __future__ import annotations
@@ -139,6 +141,11 @@ _CONSUME_PATTERNS = (
 _INCLUDES_FRAME_TYPE = re.compile(
     r"\[([^\]]*)\]\s*\.includes\(\s*frame\.type", re.S
 )
+_CONSUMED_FRAME_TYPE_SET = re.compile(
+    r"(?:export\s+)?const\s+[A-Z][A-Z0-9_]*_FRAME_TYPES\s*=\s*"
+    r"\[([^\]]*)\]\s*as\s+const",
+    re.S,
+)
 _QUOTED = re.compile(r'"([a-z_][a-z0-9_.]*)"')
 
 
@@ -180,6 +187,10 @@ def scan_consumers(root: Path | None = None) -> dict[str, list[str]]:
                     f"{rel}:{_line_of(text, match.start())}"
                 )
         for match in _INCLUDES_FRAME_TYPE.finditer(text):
+            line = _line_of(text, match.start())
+            for name in _QUOTED.findall(match.group(1)):
+                found.setdefault(name, []).append(f"{rel}:{line}")
+        for match in _CONSUMED_FRAME_TYPE_SET.finditer(text):
             line = _line_of(text, match.start())
             for name in _QUOTED.findall(match.group(1)):
                 found.setdefault(name, []).append(f"{rel}:{line}")

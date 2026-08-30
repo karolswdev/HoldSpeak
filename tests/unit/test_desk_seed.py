@@ -43,6 +43,14 @@ CONTEXT_NOTES = {
     "hs-seed-meeting-preferences": "Meeting preferences",
 }
 EVERYDAY_CONTEXT = "hs-seed-everyday-context"
+PROMPT_NOTE = "hs-seed-prompt-weekly-update"
+MODE_RECIPES = {
+    "hs-seed-mode-desk",
+    "hs-seed-mode-chase",
+    "hs-seed-mode-draft",
+    "hs-seed-mode-plan",
+}
+SEED_COUNTS = {"directories": 6, "notes": 7, "kbs": 1, "recipes": 4}
 
 
 @pytest.fixture
@@ -82,14 +90,14 @@ def _snapshot(db: Database) -> dict:
 def test_fresh_db_seeds_exactly_the_manifest(db) -> None:
     report = apply_seed(db)
     assert report.manifest == DEFAULT_SEED
-    assert report.applied == {"directories": 6, "notes": 6, "kbs": 1}
+    assert report.applied == SEED_COUNTS
     assert report.profiles_seeded == report.workbenches_seeded == 0
     assert report.filed == 6
 
     snap = _snapshot(db)
     assert dict((i, n) for i, n, _ in snap["directories"]) == ZONES
     assert {n.id: n.title for n in db.notes.list()} == {
-        START_HERE: "Start here", **CONTEXT_NOTES,
+        START_HERE: "Start here", PROMPT_NOTE: "Weekly update", **CONTEXT_NOTES,
     }
     kb = db.kbs.get(EVERYDAY_CONTEXT)
     assert kb is not None and kb.name == "Everyday context"
@@ -97,7 +105,8 @@ def test_fresh_db_seeds_exactly_the_manifest(db) -> None:
     assert {
         row.resource_ref for row in db.knowledge_memberships.list_for_knowledge(EVERYDAY_CONTEXT)
     } == set(kb.member_ids)
-    assert snap["recipes"] == snap["chains"] == snap["workflows"] == []
+    assert set(snap["recipes"]) == MODE_RECIPES
+    assert snap["chains"] == snap["workflows"] == []
     assert db.profiles.list() == db.workbenches.list() == []
 
 
@@ -163,7 +172,7 @@ def test_retry_completes_new_relationships_without_mutating_partial_desk(db) -> 
 
     report = apply_seed(db)
 
-    assert report.applied == {"notes": 1, "kbs": 1}
+    assert report.applied == {"notes": 2, "kbs": 1, "recipes": 4}
     assert report.filed == 1
     kb = db.kbs.get(EVERYDAY_CONTEXT)
     assert kb is not None and set(kb.member_ids) == {
@@ -188,10 +197,10 @@ def test_seed_route_applies_the_packaged_manifest(client, db) -> None:
     assert resp.status_code == 200
     body = resp.json()
     assert body["success"] is True
-    assert body["applied"] == {"directories": 6, "notes": 6, "kbs": 1}
+    assert body["applied"] == SEED_COUNTS
     assert body["profiles_seeded"] == body["workbenches_seeded"] == 0
     assert body["filed"] == 6
-    assert body["total"] == 13
+    assert body["total"] == 18
     assert {d.id for d in db.directories.list()} == set(ZONES)
 
 
@@ -244,8 +253,9 @@ def test_reset_tombstones_clutter_and_reseeds(db) -> None:
     assert membership is not None and membership.deleted is True
 
     assert {d.id for d in db.directories.list()} == set(ZONES)
-    assert {n.id for n in db.notes.list()} == {START_HERE, *CONTEXT_NOTES}
-    assert report.seed is not None and report.seed.total == 13
+    assert {n.id for n in db.notes.list()} == {START_HERE, PROMPT_NOTE, *CONTEXT_NOTES}
+    assert {recipe.id for recipe in db.recipes.list()} == MODE_RECIPES
+    assert report.seed is not None and report.seed.total == 18
 
 
 def test_reset_force_restores_edited_and_tombstoned_packaged_objects(db) -> None:
@@ -259,9 +269,7 @@ def test_reset_force_restores_edited_and_tombstoned_packaged_objects(db) -> None
 
     report = reset_desk(db)
 
-    assert report.seed is not None and report.seed.applied == {
-        "directories": 6, "notes": 6, "kbs": 1,
-    }
+    assert report.seed is not None and report.seed.applied == SEED_COUNTS
     assert db.notes.get("hs-seed-about-me").title == "About me"
     assert db.notes.get("hs-seed-meeting-preferences") is not None
     assert db.kbs.get(EVERYDAY_CONTEXT).name == "Everyday context"
@@ -295,8 +303,8 @@ def test_reset_route_names_the_counts(client, db) -> None:
     assert body["tombstoned_total"] == 8
     assert body["tombstoned"]["directories"] == 1
     assert body["tombstoned"]["workbenches"] == 1
-    assert body["seeded"] == {"directories": 6, "notes": 6, "kbs": 1}
-    assert body["seeded_total"] == 13
+    assert body["seeded"] == SEED_COUNTS
+    assert body["seeded_total"] == 18
     assert body["profiles_seeded"] == 0
     assert body["profiles_adopted"] == {}
     assert body["filed"] == 6
