@@ -25,6 +25,10 @@ the exhibit.
    live mic captures real speech; stop → the production queue →
    .43 intel → real named owners on the Door → map → brief. The
    orchestrator drives and shoots; the owner just presses play.
+   COUNSEL M6: the evidence header states verbatim "simulated
+   meeting (played recording), real capture path (live mic), real
+   transcription (mlx-whisper), real intel (.43)" — never "real
+   meeting".
    Scheduled with the owner — the phase HOLDS at 5/6 until they
    have their minutes.
 3. Close sweep DETACHED, both baselines, readable/capture pairing,

@@ -32,8 +32,12 @@ charter: 4/4 events off a week grid — metal-probes.md).
    start / end / title — the rig knows what it drew); the week
    anchor honest (never guessed); refusal paths still refuse by
    name with no vision-capable profile assigned (the 146 grammar).
-3. Frames: review window populated, rail with the snapshot chips.
-4. The two 146 counsel-ledger riders close or re-ledger honestly
+3. COUNSEL S2: a refusal leg — a non-calendar image (blank/noise)
+   must yield zero events or a named refusal on the real model;
+   COUNSEL L2: record Qwythos's JSON reliability as a finding
+   (8081 has no schema pin).
+4. Frames: review window populated, rail with the snapshot chips.
+5. The two 146 counsel-ledger riders close or re-ledger honestly
    (422 surfacing; vision pre-filter) — verify on this real path.
 
 ### Out

@@ -32,8 +32,10 @@ gesture → chips/staleness → brief person sections.
    brief People.
 3. TREATMENT assertions (shape, never exact strings): intel_status
    ready; ≥1 action_items row with review_state=pending; owners
-   grounded in the transcript (the rig checks each non-reserved
-   owner string appears in the segments text); the Door shows them
+   grounded in the transcript (COUNSEL M5: each non-reserved
+   owner string appears as a case-insensitive SUBSTRING of the full
+   transcript text; an ungrounded owner is RECORDED as a finding,
+   never a rig failure); the Door shows them
    UNASSIGNED; accept + map one real owner via the REAL gestures
    (API); chips + staleness appear; the brief People section
    carries the mapped person. Frames at each beat.
@@ -48,6 +50,8 @@ gesture → chips/staleness → brief person sections.
 
 ## Acceptance criteria
 
+0. Intel legs run bounded (counsel L3: ~15 min timeout) and
+   detached where the tool window demands.
 1. Rig green ×2 + stamped capture; control-vs-treatment artifacts
    in evidence; frames.
 2. Every owner asserted grounded; zero seeded intel anywhere.

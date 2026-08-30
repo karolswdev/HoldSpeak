@@ -101,6 +101,35 @@ real latent defects before a single story ran.
   action_items rows / intel_snapshots / board JSON / brief
   sections / frames.
 
+- **2026-08-30 — counsel design ruling: RATIFY-WITH-CONCERNS
+  ("the charter is thorough; the pre-charter probes de-risked the
+  scariest unknowns"). SIX must-fixes ABSORBED into the story specs
+  before any builder:** M1 the response_format-400 fallback is a
+  NAMED signal → a SECOND admitted child (the dictation runtime's
+  ProviderCompatibilityRetry pattern; never two physical requests
+  under one receipt — counsel verified the egress warrant shape is
+  untouched by the new kwarg); M2 ONE schema source of truth in
+  parsing.py (prompt stringifies it, response_format wraps it, the
+  adapter references it); M3 the prompt declares Me/Remote as the
+  ONLY reserved tokens, all others literal names; M4 the schema
+  constant carries the named-owner shape from story 01, story 02
+  updates prompt+constant together; M5 the grounded-owner
+  assertion is case-insensitive SUBSTRING (an ungrounded owner is
+  a recorded finding, not a rig failure); M6 the attended-leg
+  evidence header states verbatim "simulated meeting (played
+  recording), real capture path, real transcription, real intel"
+  — never "real meeting". Should-fixes absorbed: S1 the pin test
+  also proves the _extract_json line-recovery heuristic; S2 the
+  vision rig exercises the refusal path (a non-calendar image →
+  zero events or a named refusal). Counsel also VERIFIED: every
+  downstream owner consumer treats owner as an opaque string (no
+  Me|Remote assumption anywhere — lanes, overlay, aftercare,
+  exports, cadence all safe); intel-disabled is the correct
+  control; the import door shares zero DNA with sync/push (the ban
+  is grep-enforceable). Ledgered: L1 identity churn (charter),
+  L2 8081 JSON reliability recorded as a finding, L3 a bounded
+  intel timeout (~15 min) at builder discretion.**
+
 ## Risk register
 
 - The resident 8080 server is the owner's — proofs never restart

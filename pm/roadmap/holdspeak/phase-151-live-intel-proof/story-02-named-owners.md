@@ -24,7 +24,11 @@ the manager suite's whole point.
    `"owner": "<person's name as spoken>|Me|Remote|null"` with one
    tight instruction line: name the owner ONLY when the transcript
    names them; Me = the speaker/leader; Remote = the counterpart;
-   null when unclear. No other prompt changes.
+   null when unclear. COUNSEL M3: the prompt states Me/Remote are
+   the ONLY reserved tokens — every other string is a literal
+   person name. COUNSEL M4: prompt and the story-01 schema
+   constant update TOGETHER (one shape, all consumers). No other
+   prompt changes.
 2. Parsing pins for the messy reality (_coerce_action_items):
    names pass through verbatim (strip only); "null"/""/None → None
    (already); NEW pins for "Me"/"Remote" casing variants arriving

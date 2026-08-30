@@ -28,7 +28,14 @@ has no fresh-HOME recipe — the P55 harness kwargs are dead.
    owner, due} / summary — read the shape from parsing.py, keep
    ONE source of truth). Local provider untouched. Honest
    degradation: an endpoint that 400s on response_format retries
-   ONCE without it (named signal, receipted) — never silently.
+   ONCE without it — COUNSEL M1: via a NAMED signal and a SECOND
+   admitted child (the ProviderCompatibilityRetry pattern,
+   runtime_openai_compatible.py:159-162 is the model); never two
+   physical requests under one receipt. COUNSEL M2: the schema is
+   ONE constant in parsing.py — the prompt stringifies it, the
+   response_format wraps it, the adapter references it. COUNSEL
+   M4: the constant carries the named-owner shape
+   (owner: string|null) from the start.
 2. A schema-pinned-server regression pin: a stub OpenAI-compatible
    server that mimics the pin (returns {"line"} for bare requests,
    honors request-level json_schema) — the test reproduces the
