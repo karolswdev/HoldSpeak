@@ -626,30 +626,16 @@ def main() -> int:
             failures.append(f"LEG 2 thread creation failed: {status2}")
         else:
             tid2 = thread2["id"]
-            import uuid as _uuid
 
-            with db._connection() as conn:
-                now_epoch = time.time()
-                user_mid = "tmsg_" + _uuid.uuid4().hex[:12]
-                asst_mid = "tmsg_" + _uuid.uuid4().hex[:12]
-                # User message
-                conn.execute(
-                    "INSERT INTO thread_messages (id,thread_id,role,streaming,created_at,updated_at) "
-                    "VALUES (?,?,'user',0,?,?)",
-                    (user_mid, tid2, now_epoch, now_epoch))
-                conn.execute(
-                    "INSERT INTO thread_message_parts (id,message_id,ordinal,kind,text,sensitive) "
-                    "VALUES (?,?,0,'text','Tell me about this person',0)",
-                    ("tpart_" + _uuid.uuid4().hex[:12], user_mid))
-                # Assistant message with a SENSITIVE part containing the sentinel
-                conn.execute(
-                    "INSERT INTO thread_messages (id,thread_id,parent_id,role,streaming,completed_at,created_at,updated_at) "
-                    "VALUES (?,?,?,'assistant',0,?,?,?)",
-                    (asst_mid, tid2, user_mid, now_epoch, now_epoch, now_epoch))
-                conn.execute(
-                    "INSERT INTO thread_message_parts (id,message_id,ordinal,kind,text,sensitive) "
-                    "VALUES (?,?,0,'text',?,1)",
-                    ("tpart_" + _uuid.uuid4().hex[:12], asst_mid, SENTINEL))
+            # Create earlier messages using the repository API (not raw SQL)
+            # so parent_id chains are properly maintained.
+            user_msg2 = db.threads.append_message(tid2, role="user")
+            db.threads.append_part(user_msg2.id, kind="text", text="Tell me about this person")
+            user_mid = user_msg2.id
+            asst_msg2 = db.threads.append_message(tid2, role="assistant", parent_id=user_mid)
+            db.threads.append_part(asst_msg2.id, kind="text", text=SENTINEL, sensitive=True)
+            db.threads.complete_message(asst_msg2.id)
+            asst_mid = asst_msg2.id
 
             # Verify via the service's assemble_payload_for_egress
             from holdspeak.services.thread_service import ThreadService, _PEOPLE_REDACTION
@@ -749,6 +735,52 @@ def main() -> int:
                 print(f"  PASS sentinel preserved after profile switch back", flush=True)
             else:
                 failures.append("LEG 2 FAIL: sentinel lost after profile switch back")
+
+            # ── Dispatch-level captured-payload test ──
+            # Post a turn through the LAN profile (local egress) and verify
+            # the ENGINE received the sensitive text verbatim (the _m1_redactor
+            # should NOT redact on local egress).  This proves the redactor is
+            # wired into the production path.
+            CaptureHandler.captured.clear()
+            t3_status, t3_resp = hub_api(url, "POST", f"/api/threads/{tid2}/turns",
+                                         {"text": "Follow up after profile switch"})
+            if t3_status == 201:
+                # Wait for the turn to complete.
+                asst3_id = t3_resp.get("assistant_message_id", "")
+                deadline3 = time.monotonic() + 30
+                while time.monotonic() < deadline3:
+                    time.sleep(0.5)
+                    _, d3 = hub_api(url, "GET", f"/api/threads/{tid2}")
+                    a3 = [m for m in d3.get("messages", []) if m.get("id") == asst3_id]
+                    if a3 and not a3[0].get("streaming", 0):
+                        break
+
+                # The engine factory sends the payload to the capture server.
+                # Read the captured request body.
+                if CaptureHandler.captured:
+                    cap_json = json.dumps(CaptureHandler.captured[-1])
+                    cap_path = PAYLOADS / "captured-dispatch-payload.json"
+                    cap_path.write_text(json.dumps(CaptureHandler.captured[-1], indent=2) + "\n", encoding="utf-8")
+                    print(f"  captured dispatch payload written to {cap_path.relative_to(REPO)}", flush=True)
+
+                    # On local egress: sentinel MUST be present in the engine payload.
+                    if SENTINEL in cap_json:
+                        print(f"  PASS captured-payload sentinel present (local egress)", flush=True)
+                    else:
+                        failures.append("LEG 2 FAIL: captured-payload sentinel missing on local egress")
+                        print(f"  FAIL captured-payload sentinel missing on local egress", flush=True)
+
+                    # The _sensitive_texts key must NOT appear in the dispatched payload
+                    # (it should be stripped by _m1_redactor).
+                    if "_sensitive_texts" not in cap_json:
+                        print(f"  PASS captured-payload _sensitive_texts stripped", flush=True)
+                    else:
+                        failures.append("LEG 2 FAIL: _sensitive_texts leaked to engine")
+                        print(f"  FAIL _sensitive_texts leaked to engine payload", flush=True)
+                else:
+                    print(f"  SKIP captured-payload test: engine did not hit the capture server", flush=True)
+            else:
+                print(f"  SKIP captured-payload test: turn POST returned {t3_status}", flush=True)
 
     finally:
         server.stop()

@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from ... import db as hsdb
 from ...principals import Principal, PrincipalKind
 from ...services.errors import ServiceError, ValidationError
-from ...services.thread_service import ThreadService
+from ...services.thread_service import ThreadService, _UNSET
 from ..context import WebContext
 from ..runtime_support import error_500
 from ...logging_config import get_logger
@@ -31,6 +31,25 @@ async def _json_body(request: Request) -> dict[str, Any] | None:
         return body if isinstance(body, dict) else None
     except Exception:
         return None
+
+
+def _normalize_refs(raw: Any) -> list[str] | None:
+    """Accept refs as ``["kind:id", ...]`` OR ``[{ref_kind, ref_id}, ...]``.
+
+    The composer sends the object shape; the CLI may send strings.  Normalize
+    both to qualified ``"kind:id"`` strings for ``start_turn``.
+    """
+    if not isinstance(raw, list):
+        return None
+    result: list[str] = []
+    for item in raw:
+        if isinstance(item, str):
+            result.append(item)
+        elif isinstance(item, dict) and item.get("ref_kind") and item.get("ref_id"):
+            result.append(f"{item['ref_kind']}:{item['ref_id']}")
+        elif isinstance(item, dict) and item.get("kind") and item.get("id"):
+            result.append(f"{item['kind']}:{item['id']}")
+    return result or None
 
 
 def build_threads_router(ctx: WebContext) -> APIRouter:
@@ -139,8 +158,8 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
                 _principal(request),
                 thread_id,
                 str(body.get("text") or ""),
-                refs=body.get("refs") if isinstance(body.get("refs"), list) else None,
-                parent_id=body.get("parent_id"),
+                refs=_normalize_refs(body.get("refs")),
+                parent_id=body.get("parent_id") if "parent_id" in body else _UNSET,
             )
             return JSONResponse(result, status_code=201)
         except ValidationError as exc:

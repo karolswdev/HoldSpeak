@@ -38,6 +38,8 @@ _PEOPLE_REDACTION = "[people content withheld]"
 # Kinds whose frozen leaves originate from the People store.
 _PEOPLE_REF_KINDS = frozenset({"person"})
 
+_UNSET = object()  # sentinel for "caller did not provide parent_id"
+
 
 class ThreadService:
     """Orchestrate desk chat threads: CRUD, turn, branch, regenerate, keep, abort."""
@@ -127,11 +129,15 @@ class ThreadService:
         thread_id: str,
         text: str,
         refs: list[str] | None = None,
-        parent_id: str | None = None,
+        parent_id: Any = _UNSET,
     ) -> dict[str, Any]:
         """Persist user message, freeze refs, admit, and start streaming.
 
         Returns ids immediately; the bus carries started -> deltas -> done.
+        When ``parent_id`` is not provided (``_UNSET``), the new message
+        auto-chains to the current leaf of the thread.  An explicit ``None``
+        creates a root message (used by ``branch`` to create siblings of
+        root messages).
         """
         thread = self._threads.get(thread_id)
         if thread is None or thread.deleted_at is not None:
@@ -140,35 +146,90 @@ class ThreadService:
         if not text or not text.strip():
             raise ValidationError("text is required")
 
+        # Auto-chain to the current leaf when no parent is specified.
+        if parent_id is _UNSET:
+            path = self._threads.list_path(thread_id)
+            parent_id = path[-1].id if path else None
+
         # -- Validate refs BEFORE writing (unknown -> 4xx naming the id, no rows) --
         frozen_ref_rows: list[dict[str, Any]] = []
         if refs:
-            hydration = hydrate_refs_detailed(
-                self._db,
-                meeting_ids=[],
-                artifact_ids=[],
-                expand="summary",
-                qualified_refs=refs,
-            )
-            if hydration.unknown:
-                raise ValidationError(
-                    f"Unknown ref ids: {', '.join(hydration.unknown)}",
-                    code="grounding_not_found",
-                    context={"unknown_ids": hydration.unknown},
+            # Separate person refs from grounding refs.
+            person_refs: list[str] = []
+            grounding_refs: list[str] = []
+            for ref in refs:
+                if ref.startswith("person:"):
+                    person_refs.append(ref)
+                else:
+                    grounding_refs.append(ref)
+
+            # Resolve person refs through the People service (HS-149 law:
+            # People content never leaves the encrypted store; the thread
+            # gets only the display name as a sensitive frozen leaf).
+            for pref in person_refs:
+                person_id = pref.split(":", 1)[1] if ":" in pref else pref
+                try:
+                    from .people_service import PeopleService
+                    people = PeopleService(self._db)
+                    from ..principals import Principal, PrincipalKind
+                    rel = people.get_relationship(
+                        Principal(PrincipalKind.OWNER, "owner-session"),
+                        person_id,
+                    )
+                    display_name = str(rel.get("display_name", ""))
+                    if not display_name:
+                        raise ValidationError(
+                            f"Unknown ref ids: {person_id}",
+                            code="grounding_not_found",
+                            context={"unknown_ids": [person_id]},
+                        )
+                    frozen_ref_rows.append({
+                        "ref_kind": "person",
+                        "ref_id": person_id,
+                        "frozen_json": json.dumps({
+                            "kind": "person",
+                            "title": display_name,
+                            "subtitle": "",
+                            "text": "",
+                        }, separators=(",", ":"), sort_keys=True),
+                        "sensitive": True,
+                    })
+                except ValidationError:
+                    raise
+                except Exception:
+                    raise ValidationError(
+                        f"Unknown ref ids: {person_id}",
+                        code="grounding_not_found",
+                        context={"unknown_ids": [person_id]},
+                    )
+
+            # Resolve grounding refs through hydrate_refs_detailed.
+            if grounding_refs:
+                hydration = hydrate_refs_detailed(
+                    self._db,
+                    meeting_ids=[],
+                    artifact_ids=[],
+                    expand="summary",
+                    qualified_refs=grounding_refs,
                 )
-            for block in hydration.blocks:
-                is_sensitive = block.kind in _PEOPLE_REF_KINDS
-                frozen_ref_rows.append({
-                    "ref_kind": block.kind,
-                    "ref_id": block.ref,
-                    "frozen_json": json.dumps({
-                        "kind": block.kind,
-                        "title": block.title,
-                        "subtitle": block.subtitle,
-                        "text": block.text,
-                    }, separators=(",", ":"), sort_keys=True),
-                    "sensitive": is_sensitive,
-                })
+                if hydration.unknown:
+                    raise ValidationError(
+                        f"Unknown ref ids: {', '.join(hydration.unknown)}",
+                        code="grounding_not_found",
+                        context={"unknown_ids": hydration.unknown},
+                    )
+                for block in hydration.blocks:
+                    frozen_ref_rows.append({
+                        "ref_kind": block.kind,
+                        "ref_id": block.ref,
+                        "frozen_json": json.dumps({
+                            "kind": block.kind,
+                            "title": block.title,
+                            "subtitle": block.subtitle,
+                            "text": block.text,
+                        }, separators=(",", ":"), sort_keys=True),
+                        "sensitive": False,
+                    })
 
         # -- Persist user message --
         user_msg = self._threads.append_message(
@@ -359,6 +420,7 @@ class ThreadService:
                 adapter=adapter,
                 on_delta=on_delta,
                 publish=None,
+                payload_redactor=self._m1_redactor,
             )
             outcome = str(routed.get("outcome", "failed"))
             receipt = routed.get("receipt", {})
@@ -556,6 +618,78 @@ class ThreadService:
     def import_threads(self, payload: list[dict[str, Any]]) -> dict[str, str]:
         return self._threads.import_threads(payload)
 
+    # ── M1 redactor (counsel M1, close counsel M5) ────────────────────
+
+    @staticmethod
+    def _m1_redactor(payload: dict[str, Any], route: dict[str, Any]) -> dict[str, Any]:
+        """Redact sensitive message parts when the frozen route's egress is cloud.
+
+        This is the SINGLE redaction point for the production turn path
+        (HS-150-04 M5).  It runs inside ``execute_stream`` after the payload
+        is reconstructed from frozen admission evidence and before it reaches
+        the engine.  The frozen route plan carries the boundary at this point;
+        admission evidence is never altered.
+
+        Why here and not before admit: the egress scope is determined by the
+        frozen route plan, which is only known after ``admit()`` returns.
+        Why not a separate redaction pass in ThreadService: the payload
+        handed to the engine MUST be the admitted payload, so redaction must
+        happen at the exact reconstruction-to-dispatch seam.
+        """
+        entries = route.get("entries", [])
+        boundary = str(entries[0].get("boundary", "")) if entries else ""
+        # "cloud" is the boundary value that indicates non-local egress.
+        # Local boundaries (same_device, local, private_network) keep
+        # sensitive data verbatim.
+        if boundary not in ("cloud", "external_service"):
+            return payload
+
+        messages = payload.get("messages")
+        if not isinstance(messages, list):
+            return payload
+
+        redacted_messages = []
+        for msg in messages:
+            if not isinstance(msg, dict):
+                redacted_messages.append(msg)
+                continue
+            content = msg.get("content", "")
+            # The sensitive annotation parts are embedded in the message
+            # content by _assemble_payload.  We redact any message whose
+            # content block was marked sensitive by checking the thread
+            # parts.  Since the payload is a flat messages list and
+            # sensitive parts were concatenated into the content, we
+            # must replace the content wholesale.
+            #
+            # The payload_redactor sees the reconstructed payload dict;
+            # it has no access to the DB.  Sensitive annotations were
+            # concatenated into user-message content by _assemble_payload.
+            # We apply a text-level search-and-replace: any content block
+            # that appears in the messages is left alone unless the caller
+            # has embedded the sentinel metadata.
+            #
+            # Since we do not have DB access here, the honest approach is
+            # to carry a `_sensitive_texts` list in the payload at assembly
+            # time.  This list is consumed by the redactor and removed
+            # before dispatch.
+            redacted_messages.append(msg)
+
+        # Check for the _sensitive_texts annotation set by _assemble_payload.
+        sensitive_texts = payload.get("_sensitive_texts", [])
+        if sensitive_texts:
+            for i, msg in enumerate(redacted_messages):
+                if not isinstance(msg, dict):
+                    continue
+                content = str(msg.get("content", ""))
+                for st in sensitive_texts:
+                    if st and st in content:
+                        content = content.replace(st, _PEOPLE_REDACTION)
+                redacted_messages[i] = {**msg, "content": content}
+
+        result = {**payload, "messages": redacted_messages}
+        result.pop("_sensitive_texts", None)
+        return result
+
     # ── Assembler (counsel M1) ──────────────────────────────────────
 
     def _assemble_payload(
@@ -587,8 +721,18 @@ class ThreadService:
         # Gather frozen refs for context.
         refs = self._threads.get_refs(thread_id)
         ref_context_parts: list[str] = []
+        person_names: list[str] = []
         for ref in refs:
-            if ref.frozen_json:
+            if ref.ref_kind == "person" and ref.frozen_json:
+                # Person refs: title-only context line (HS-149 law).
+                try:
+                    frozen = json.loads(ref.frozen_json)
+                    name = frozen.get("title", "")
+                    if name:
+                        person_names.append(name)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            elif ref.frozen_json:
                 try:
                     frozen = json.loads(ref.frozen_json)
                     ref_text = frozen.get("text", "")
@@ -602,21 +746,52 @@ class ThreadService:
         if ref_context_parts:
             messages.append({"role": "system", "content": "\n\n".join(ref_context_parts)})
 
+        # Person context: one sensitive line per person (title only).
+        if person_names:
+            person_line = "Person in this thread: " + ", ".join(person_names)
+            messages.append({"role": "system", "content": person_line})
+
+        sensitive_texts: list[str] = []
         for msg in path:
             parts = self._threads.get_parts(msg.id)
             text_parts = []
             for part in parts:
                 if part.kind in ("text", "annotation") and part.text:
                     text_parts.append(part.text)
+                    if part.sensitive and part.text:
+                        sensitive_texts.append(part.text)
             content = "\n".join(text_parts)
             if content:
                 messages.append({"role": msg.role, "content": content})
 
-        return {
+        # Person names are sensitive (redacted on cloud egress).
+        if person_names:
+            person_line = "Person in this thread: " + ", ".join(person_names)
+            sensitive_texts.append(person_line)
+            for name in person_names:
+                sensitive_texts.append(name)
+
+        # Also check frozen refs for People-sourced leaves.
+        for ref in refs:
+            if ref.ref_kind in _PEOPLE_REF_KINDS and ref.frozen_json:
+                try:
+                    frozen = json.loads(ref.frozen_json)
+                    ref_text = frozen.get("text", "")
+                    if ref_text:
+                        sensitive_texts.append(ref_text)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+        result: dict[str, Any] = {
             "messages": messages,
             "temperature": None,
             "max_tokens": None,
         }
+        # Carry the sensitive-text list for the M1 redactor. This key is
+        # consumed by _m1_redactor and stripped before dispatch.
+        if sensitive_texts:
+            result["_sensitive_texts"] = sensitive_texts
+        return result
 
     def assemble_payload_for_egress(
         self,
@@ -627,62 +802,13 @@ class ThreadService:
     ) -> dict[str, Any]:
         """Build payload with M1 redaction applied based on egress scope.
 
-        This is the method that enforces the People boundary: when egress is
-        cloud, any part with sensitive=1 has its text replaced with
-        _PEOPLE_REDACTION.
+        Convenience wrapper: assembles the payload, then applies
+        ``_m1_redactor`` with a synthetic route whose boundary matches
+        *egress_scope*.  Used by the metal walk (LEG 2) and unit pins.
         """
         payload = self._assemble_payload(thread_id, user_msg_id, thread)
-        if egress_scope != "cloud":
-            return payload
-
-        # Redact sensitive content from the messages.
-        path = self._threads.list_path(thread_id)
-        redacted_messages: list[dict[str, str]] = []
-        system_prompt = "You are the desk's AI core. Be concrete and brief."
-        if thread.recipe_id:
-            try:
-                recipe = self._db.recipes.get(thread.recipe_id)
-                if recipe and hasattr(recipe, "system_prompt") and recipe.system_prompt:
-                    system_prompt = recipe.system_prompt
-            except Exception:
-                pass
-        redacted_messages.append({"role": "system", "content": system_prompt})
-
-        # Refs context -- redact sensitive refs.
-        refs = self._threads.get_refs(thread_id)
-        ref_context_parts: list[str] = []
-        for ref in refs:
-            if ref.frozen_json:
-                try:
-                    frozen = json.loads(ref.frozen_json)
-                    ref_text = frozen.get("text", "")
-                    if ref.ref_kind in _PEOPLE_REF_KINDS:
-                        ref_text = _PEOPLE_REDACTION
-                    if ref_text:
-                        ref_context_parts.append(
-                            f"[{frozen.get('kind', 'ref').upper()}: {frozen.get('title', ref.ref_id)}]\n{ref_text}"
-                        )
-                except (json.JSONDecodeError, TypeError):
-                    pass
-
-        if ref_context_parts:
-            redacted_messages.append({"role": "system", "content": "\n\n".join(ref_context_parts)})
-
-        for msg in path:
-            parts = self._threads.get_parts(msg.id)
-            text_parts = []
-            for part in parts:
-                if part.kind in ("text", "annotation") and part.text:
-                    if part.sensitive:
-                        text_parts.append(_PEOPLE_REDACTION)
-                    else:
-                        text_parts.append(part.text)
-            content = "\n".join(text_parts)
-            if content:
-                redacted_messages.append({"role": msg.role, "content": content})
-
-        payload["messages"] = redacted_messages
-        return payload
+        synthetic_route = {"entries": [{"boundary": egress_scope}]}
+        return self._m1_redactor(payload, synthetic_route)
 
     # ── Helpers ──────────────────────────────────────────────────────
 

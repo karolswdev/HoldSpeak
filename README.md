@@ -67,8 +67,8 @@ comes back as typed, reviewable artifacts:
 
 Launch `holdspeak` and the browser opens on the Desk: everything the two
 modes produce, living as objects in one spatial world. Meetings, notes,
-Knowledge, Agents, and their Artifacts appear on the Desk as working
-icons that carry their state (member counts, freshness, needs-you);
+Knowledge, Agents, Threads, and their Artifacts appear on the Desk as
+working icons that carry their state (member counts, freshness, needs-you);
 Zones are drawers that open into remembering windows; drop an object
 onto an Agent or a Knowledge crystal and the named verb under the
 cursor says exactly what release does; right-click anything for Info.
@@ -143,6 +143,14 @@ reload, each reply wears the badge for where that turn actually ran, and any
 reply can be kept on the Desk as an Artifact. The attach control rides the
 chat composer too, so a conversation can be grounded on the meetings it is
 about.
+
+**Threads.** Open a new Thread from the Desk or choose **Continue in thread**
+on any object to seed it as a reference. Type or dictate with the mic, attach
+`@`-references to meetings, notes, or people, and press Send. The reply
+streams token by token over the bus; each turn wears one egress badge and one
+receipt. Stop a running turn, branch it (`< n/m >`), or keep any reply as a
+Note or Artifact. Threads live in the hub's SQLite (never the browser), so
+desk search finds them alongside everything else.
 
 **Set up models.** Open **Settings, Models** to make models available in Model
 Library, check their readiness, and choose compatible model lists in Assignments.
@@ -456,7 +464,7 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 ## MCP sidecar
 
 The MCP sidecar (`holdspeak-mcp`) is the desk's programmable surface over
-stdio. It exposes 135 tools across 30 families and 29 default, non-owner
+stdio. It exposes 138 tools across 30 families and 29 default, non-owner
 resources, so any MCP client can read and drive the desk without the web UI.
 The Door family adds one aggregate read tool, `door.get`, with no new resource.
 

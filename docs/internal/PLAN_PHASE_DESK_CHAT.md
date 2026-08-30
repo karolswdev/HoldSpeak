@@ -1,7 +1,8 @@
 # Phase DC-01: The Desk Chat — porting the warpdrv chat experience into HoldSpeak
 
-> **Status:** plan filed 2026-08-29; awaits owner ratification. Backlog
-> candidate **AF** in `pm/roadmap/holdspeak/BACKLOG.md` is the handoff row.
+> **Status:** DC-01 shipped as Phase 150 (pending owner merge); DC-02+
+> unchartered. Backlog candidate **AF** in `pm/roadmap/holdspeak/BACKLOG.md`
+> is the handoff row.
 >
 > **Reference:** [mikjee/warpdrv](https://github.com/mikjee/warpdrv) —
 > "LLAMA.cpp Server Manager + Chat + Tools", ~83k LOC, **AGPL-3.0**.
@@ -519,3 +520,23 @@ can set — is warpdrv's (mikjee, AGPL-3.0). This plan re-implements those
 ideas against HoldSpeak's own Apache-2.0 machinery and records the
 influence here so the credit is not lost when the code never resembles
 theirs.
+
+## 17. What DC-01 actually shipped vs the plan
+
+Phase 150 (8 stories) implemented the DC-01 slice. Deltas from this plan:
+
+- **No file attachments.** The composer accepts `@`-references to desk
+  objects; file upload is deferred to DC-02.
+- **No SSE endpoint.** Streaming uses the existing WebSocket bus
+  (`thread_turn_started`, `thread_delta`, `thread_turn_done` frames),
+  not the Server-Sent Events fan-out the plan's `§6.3` sketched.
+- **`recipe.chat` retired, not removed.** The MCP tool still exists but
+  returns a structured retirement error directing callers to `chat.turn`.
+  The HTTP route redirects to the Thread surface.
+- **`execute_stream` lives on the coordinator.** The streaming loop is
+  a method on `ThreadService`, not a standalone executor, because the
+  coordinator already owns admission and the bus broadcast.
+- **Four glass-found defects fixed in-round.** CRASHED detection
+  threshold (10 s), branch sibling ordering (newest-first), reconnect
+  reconciliation (refetch on bus reconnect), and FTS trigger exclusion
+  of deleted messages.

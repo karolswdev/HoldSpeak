@@ -4068,9 +4068,7 @@
         "POST"
       ],
       "module": "web.routes.primitives.recipes",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel",
@@ -4755,6 +4753,116 @@
         "PATCH"
       ],
       "module": "web.routes.primitives.thoughts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads/import",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads/{thread_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads/{thread_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads/{thread_id}",
+      "methods": [
+        "PATCH"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads/{thread_id}/abort",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads/{thread_id}/branch",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads/{thread_id}/keep",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads/{thread_id}/regenerate",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads/{thread_id}/turns",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
       "consumers": [
         "web"
       ]

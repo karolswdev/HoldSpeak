@@ -1,12 +1,8 @@
-"""The persona chat turn on the hub (HS-83-02, the web parity of the iPad's
-`recipeReply`).
+"""Tests for the /api/recipes/{id}/chat thread alias (HS-150-04).
 
-``POST /api/recipes/{id}/chat`` assembles ONE turn — the persona's standing
-context (manual + the KB honesty block), HSM-15-12 grounding hydrated from the
-canonical store, the last 12 turns, the question — runs it on the recipe's
-profile-or-default engine, answers with the turn's honest egress, and persists
-NOTHING. ``POST /api/recipes/{id}/keep`` mints the run-born artifact only when
-the human says keep.
+The route creates/reuses a thread bound to the recipe and starts a turn.
+Retired RecipeService.chat()-specific tests (body assembly, grounding,
+KB honesty) were deleted — those behaviours no longer exist.
 """
 from __future__ import annotations
 
@@ -18,7 +14,6 @@ from fastapi.testclient import TestClient
 
 import holdspeak.db as hsdb
 from holdspeak.db import Database, reset_database
-from holdspeak.meeting_session import MeetingState, TranscriptSegment
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.web.context import WebContext
@@ -30,20 +25,12 @@ def env(tmp_path, monkeypatch):
     reset_database()
     db = Database(tmp_path / "holdspeak.db")
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
-    # HS-132-09: the hub's local deployment is a REAL file, so readiness, the
-    # advertised model, and the model this turn's receipt names all come from
-    # ONE configured artifact. The suite used to stub
-    # `web.routes.sync._hub_model_name` to a constant, which the chat route then
-    # injected as `default_model` — the receipt printed the hub's configured
-    # MEETING placement no matter where the turn actually ran.
     hub_model = tmp_path / "HubModel-9B.gguf"
     hub_model.touch()
     monkeypatch.setattr(
         "holdspeak.intel.providers.configured_local_meeting_model_path",
         lambda: str(hub_model),
     )
-    # This legacy local profile is a real default assignment, not a transport
-    # fallback. Blank Recipe selection inherits only from this canonical row.
     db.profiles.upsert(
         profile_id="chat-default", name="Chat default", kind="onDevice",
         model_file=str(hub_model),
@@ -63,115 +50,33 @@ def env(tmp_path, monkeypatch):
     reset_database()
 
 
-class _FakeIntel:
-    active_provider = "local"
-    active_model = "HubModel-9B"
-
-    def __init__(self):
-        self.captured = {}
-
-    def run_prompt(self, *, system_prompt, user_prompt, temperature=None, max_tokens=None):
-        self.captured["system_prompt"] = system_prompt
-        self.captured["user_prompt"] = user_prompt
-        return "SPOKEN"
-
-
 def _seed_persona(db, *, kb_id=None, manual="The team is three engineers."):
     db.recipes.upsert(
-        recipe_id="recipe_scout", name="Scout", avatar="🦊", role="digs for the facts",
+        recipe_id="recipe_scout", name="Scout", avatar="\U0001f98a", role="digs for the facts",
         system_prompt="You are a sharp researcher.", user_template="{input}",
         manual_context=manual, kb_id=kb_id,
     )
 
 
-def test_chat_requires_question_and_a_real_persona(env) -> None:
+def test_chat_alias_requires_text(env) -> None:
+    """The alias requires non-blank text (question or text field)."""
     db, client = env
     _seed_persona(db)
-    # The question gate is first (cheap check before any lookup)...
     assert client.post("/api/recipes/recipe_scout/chat", json={}).status_code == 400
     assert client.post("/api/recipes/recipe_scout/chat", json={"question": "  "}).status_code == 400
-    # ...then the persona must be real.
-    assert client.post("/api/recipes/ghost/chat", json={"question": "hi"}).status_code == 404
+    assert client.post("/api/recipes/recipe_scout/chat", json={"text": ""}).status_code == 400
 
 
-def test_chat_assembles_the_turn_and_persists_nothing(env, monkeypatch) -> None:
-    """The envelope, block by block: [CONTEXT] (manual + hydrated KB),
-    [GROUNDING] (refs hydrated from the store), [CONVERSATION SO FAR]
-    (12-turn window), [USER]. The role rides the system channel."""
-    db, client = env
-    db.notes.upsert(note_id="note_kb", title="Mesh sync owner",
-                    body_markdown="Karol owns the mesh sync review.")
-    db.kbs.upsert(kb_id="kb_mesh", name="Mesh", member_ids=["note:note_kb"])
-    _seed_persona(db, kb_id="kb_mesh")
-    db.meetings.save_meeting(MeetingState(
-        id="m_chat", started_at=datetime(2026, 7, 6, 10, 0, 0), title="Q3 kickoff",
-        segments=[TranscriptSegment(text="The codename is BLUE LANTERN.",
-                                    speaker="Karol", start_time=0.0, end_time=3.0)],
-    ))
+# HS-150-04: test_chat_assembles_the_turn_and_persists_nothing DELETED —
+# tested RecipeService.chat() body shape (block assembly, output, egress,
+# context_ids); the alias creates a thread+turn, none of those apply.
 
-    fake = _FakeIntel()
-    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
-    # FROZEN revision, so the same double is installed on the engine class too.
-    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
-    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: fake)
+# HS-150-04: test_chat_kb_honesty_marker_when_nothing_hydrates DELETED —
+# tested RecipeService.chat() KB honesty marker in user_prompt.
 
-    history = [{"role": "you", "text": f"turn {i}"} for i in range(10)] + [
-        {"role": "agent", "text": "an earlier answer"},
-        {"role": "you", "text": "the 12th visible turn"},
-        {"role": "you", "text": "the 13th visible turn"},
-    ]
-    before = len(db.plugins.list_run_artifacts())
-    resp = client.post("/api/recipes/recipe_scout/chat", json={
-        "question": "What is the codename?",
-        "history": history,
-        "grounding": {"meeting_ids": ["m_chat"], "expand": "full"},
-    })
-    assert resp.status_code == 200
-    body = resp.json()
-
-    assert fake.captured["system_prompt"] == "You are a sharp researcher."
-    up = fake.captured["user_prompt"]
-    # Block order: context → grounding → conversation → user.
-    assert up.index("[CONTEXT]") < up.index("[GROUNDING]") < up.index("[CONVERSATION SO FAR]") < up.index("[USER]")
-    assert "The team is three engineers." in up
-    assert "[KB: Mesh]" in up and "Karol owns the mesh sync review." in up
-    assert "[MEETING: Q3 kickoff — 2026-07-06]" in up and "BLUE LANTERN" in up
-    # The 13-turn history windows to 12: the oldest turn falls off.
-    assert "turn 0" not in up and "turn 1" in up
-    assert "User: the 13th visible turn" in up and "Scout: an earlier answer" in up
-    assert up.rstrip().endswith("Reply as Scout.")
-
-    assert body["output"] == "SPOKEN"
-    assert body["egress"] == {"scope": "local"}
-    assert body["model"] == "HubModel-9B"
-    assert body["context_ids"] == ["m_chat"]
-    assert body["context_titles"] == ["Q3 kickoff"]
-    assert body["grounding"]["expand"] == "full"
-    # A chat turn persists NOTHING — harvest is the human's judgment.
-    assert len(db.plugins.list_run_artifacts()) == before
-
-
-def test_chat_kb_honesty_marker_when_nothing_hydrates(env, monkeypatch) -> None:
-    db, client = env
-    db.kbs.upsert(kb_id="kb_empty", name="Ghost shelf", member_ids=["note:missing"])
-    _seed_persona(db, kb_id="kb_empty", manual="")
-    fake = _FakeIntel()
-    # HS-131-13: an admitted `this_machine` child builds `MeetingIntel` from its
-    # FROZEN revision, so the same double is installed on the engine class too.
-    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **_kw: fake)
-    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: fake)
-    assert client.post("/api/recipes/recipe_scout/chat", json={"question": "hi"}).status_code == 200
-    assert "[KB: Ghost shelf — no hydrated members]" in fake.captured["user_prompt"]
-
-
-def test_chat_grounding_refuses_unknown_ids(env) -> None:
-    db, client = env
-    _seed_persona(db)
-    resp = client.post("/api/recipes/recipe_scout/chat", json={
-        "question": "hi", "grounding": {"meeting_ids": ["ghost_m"]},
-    })
-    assert resp.status_code == 400
-    assert resp.json()["unknown_ids"] == ["ghost_m"]
+# HS-150-04: test_chat_grounding_refuses_unknown_ids DELETED —
+# the alias does not accept a grounding body; ref refusal is tested via
+# ThreadService.start_turn(refs=...) in test_thread_service.py.
 
 
 def test_keep_mints_the_run_born_artifact(env) -> None:

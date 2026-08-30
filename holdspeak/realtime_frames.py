@@ -82,18 +82,6 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
 #: Frames the hub emits that no web surface listens for, WITH the reason.
 #: Every entry here is a deliberate, named exception — never a silent one.
 EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
-    "thread_delta": (
-        "HS-150-03: the streaming seam emits deltas; the web consumer "
-        "arrives in HS-150-05 (ThreadPullout)."
-    ),
-    "thread_turn_done": (
-        "HS-150-03: the streaming seam emits turn-done; the web consumer "
-        "arrives in HS-150-05 (ThreadPullout)."
-    ),
-    "thread_turn_started": (
-        "HS-150-03: the streaming seam emits turn-started; the web consumer "
-        "arrives in HS-150-05 (ThreadPullout)."
-    ),
     "wake_armed": (
         "Dormant desktop wake-word leg: arming is a host-side hotkey window "
         "with no web affordance; the web consumes only its result "

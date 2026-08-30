@@ -1601,6 +1601,7 @@ class RoutedInferenceCoordinator:
         before_physical_dispatch: Callable[[str, str, int], None] | None = None,
         parent_context: Any = None,
         planned_node: str = "",
+        payload_redactor: Callable[[dict, Mapping[str, Any]], dict] | None = None,
     ) -> dict[str, Any]:
         """Streaming twin of ``execute`` (HS-150-04).
 
@@ -1608,6 +1609,13 @@ class RoutedInferenceCoordinator:
         receipt attestation, disposition) but calls
         ``InferenceRunner.invoke_stream`` and forwards each ``Delta`` to
         *on_delta*, returning the same result shape at the end.
+
+        *payload_redactor*, when provided, is called with ``(payload, route)``
+        after the payload is reconstructed from frozen evidence and before it
+        is handed to the InvocationRequest / runner.  The frozen route plan's
+        boundary is known at this point, so the redactor can apply
+        egress-dependent transformations (e.g. People M1 redaction on cloud
+        egress).  The admission evidence itself is never altered.
         """
         if self._broker is None:
             raise ServiceError(
@@ -1679,6 +1687,12 @@ class RoutedInferenceCoordinator:
                 int(reservation["route_leg_ordinal"]),
             )
             payload = dict(serialized["payload"])
+            # HS-150-04 M5: apply caller-supplied redaction AFTER the payload
+            # is reconstructed from frozen evidence and BEFORE it reaches the
+            # engine.  The frozen route plan (``route``) carries the boundary
+            # the redactor needs.  Admission evidence is never altered.
+            if payload_redactor is not None:
+                payload = payload_redactor(payload, route)
             captured: dict[str, Any] = {}
 
             def project(value: Any) -> str:

@@ -3,13 +3,12 @@
  * reasoning folded behind RAW, error row in-flow, CRASHED + Retry, sibling
  * picker, receipt short-id), foot (ThreadComposer — story 06). */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SurfaceFooter } from "../surface/SurfaceFooter";
 import {
-  SurfaceSection,
   SurfaceState,
 } from "../surface/Surface";
 import { Material } from "../surface/Material";
 import { LampGadget } from "../surface/gadgets";
+import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 import { boundaryEgressLamp, egressScopeLamp, type EgressLamp } from "../inferenceEgress";
 
 /** The server stores the boundary name (e.g. "same_device") in egress_scope,
@@ -206,7 +205,7 @@ function MessageRow({
           <span className="thread-crash-label">CRASHED</span>
           <button
             type="button"
-            className="desk-chip"
+            className="desk-chip is-primary"
             onClick={() => onRetry(msg.id)}
           >
             Retry
@@ -216,7 +215,8 @@ function MessageRow({
 
       {hasError && (
         <div className="thread-row-error-body">
-          <span className="thread-error-label">
+          <span className="thread-error-severity">ERROR</span>
+          <span className="thread-error-message">
             {typeof msg.errorJson?.error === "string"
               ? msg.errorJson.error
               : "Turn failed"}
@@ -512,16 +512,29 @@ function ThreadPulloutInner({
               )}
             </span>
           </div>
+          {/* HS-150 assignment control — replaces PersonaChat's recipe.chat
+              ContextualAssignment. Scoped to the recipe when the thread is
+              recipe-bound; hidden for bare threads (no subject). */}
+          {detail.thread?.recipe_id && (
+            <ContextualAssignment
+              label="Thread assignment"
+              capabilityId="chat.turn"
+              scope={{
+                kind: "subject",
+                subject_kind: "recipe",
+                subject_id: detail.thread.recipe_id,
+                capability_id: "chat.turn",
+              }}
+            />
+          )}
         </div>
 
         {/* Body: turn rows */}
         {detail.messages.length === 0 ? (
           <SurfaceState
             empty
-            emptyLabel="No turns yet"
-            emptyGlyph="..."
-            actionLabel="Start a conversation"
-            onAction={() => undefined}
+            emptyLabel="No turns"
+            emptyGlyph={"▬"}
           />
         ) : (
           <div className="thread-messages">
@@ -549,26 +562,24 @@ function ThreadPulloutInner({
         )}
       </div>
 
-      <SurfaceFooter
-        receipt={receipt}
-        verbs={
-          <ThreadComposer
-            onSend={handleSend}
-            onStop={handleStop}
-            onKeep={handleKeep}
-            onFork={(messageId) => {
-              // Fork from slash command: needs an inline editor; for now
-              // branch with the same pattern as the row's fork button.
-              // The slash /fork opens the latest assistant row's editor.
-              void handleBranch(messageId, "");
-            }}
-            onNewThread={handleNewThread}
-            streaming={isStreaming}
-            lastAssistantId={lastAssistant?.id ?? null}
-            restoreFocus={restoreFocus}
-          />
-        }
-      />
+      {/* The foot is a direct flex child of the window shell (not
+          SurfaceFooter, which is a 36px bar). The composer needs its
+          full height to render the textarea + mic + Send/Stop. */}
+      <div className="thread-foot">
+        {receipt}
+        <ThreadComposer
+          onSend={handleSend}
+          onStop={handleStop}
+          onKeep={handleKeep}
+          onFork={(messageId) => {
+            void handleBranch(messageId, "");
+          }}
+          onNewThread={handleNewThread}
+          streaming={isStreaming}
+          lastAssistantId={lastAssistant?.id ?? null}
+          restoreFocus={restoreFocus}
+        />
+      </div>
     </>
   );
 }

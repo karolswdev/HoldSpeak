@@ -217,9 +217,10 @@ id.
 ### memory (1 tool)
 
 `memory.search` queries the long-horizon memory store with optional kind,
-project, time, and pagination filters.
+project, time, and pagination filters. Valid kinds are `decision`, `artifact`,
+`note`, and `thread`.
 
-### people (11 tools)
+### people (14 tools)
 
 The encrypted People ledger defaults to `write` for the local owner process.
 `people.readiness` is content-free and also works while access is explicitly

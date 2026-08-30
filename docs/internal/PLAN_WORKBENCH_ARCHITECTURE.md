@@ -336,7 +336,7 @@ lamp on the result (LOCAL green, LAN amber, CLOUD red). Article III.
 
 A result can be "kept" — minted as a desk artifact. The Keep verb
 uses the same `/api/ask/keep` or `/api/recipes/{id}/keep` endpoint
-that PersonaChat uses. The artifact appears on the desk as a
+that a Thread uses. The artifact appears on the desk as a
 first-class object. The result's provenance (which workbench, which
 item, which run, which model, which egress) travels with it.
 

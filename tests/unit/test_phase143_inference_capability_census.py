@@ -101,7 +101,7 @@ holdspeak/kernel/inference_runner.py:329|InferenceRunner._attempt_stream|_issue_
 holdspeak/kernel/inference_runner.py:614|InferenceRunner._attempt|_issue_dispatch_context|call
 holdspeak/kernel/inference_runner.py:81|InferenceRunner.__init__|build_intel_for_revision|ref
 holdspeak/kernel/prompt_adapter.py:15|CanonicalPromptAdapter.dispatch|run_prompt|call
-holdspeak/kernel/prompt_adapter.py:57|StreamingPromptAdapter.dispatch|run_prompt|call
+holdspeak/kernel/prompt_adapter.py:64|StreamingPromptAdapter.dispatch|run_prompt|call
 holdspeak/main.py:765|_run_meeting_mode|transcribe|call
 holdspeak/main.py:774|_run_meeting_mode|transcribe|call
 holdspeak/meeting_import.py:313|_transcribe_import_windows|transcribe|call
@@ -420,7 +420,7 @@ holdspeak/kernel/inference_runner.py:81|InferenceRunner.__init__|build_intel_for
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.prompt_adapter", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/kernel/prompt_adapter.py:15|CanonicalPromptAdapter.dispatch|run_prompt|call
-holdspeak/kernel/prompt_adapter.py:57|StreamingPromptAdapter.dispatch|run_prompt|call
+holdspeak/kernel/prompt_adapter.py:64|StreamingPromptAdapter.dispatch|run_prompt|call
 """),
     _group(ProposedRoute("internal.speech.runtime_assembly", "speech_session", "InferenceRunner context-gated adapter"), """
 holdspeak/commands/dictation.py:166|_cmd_dry_run|build_pipeline|call

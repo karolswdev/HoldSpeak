@@ -14,5 +14,8 @@
     }
   ],
   "temperature": null,
-  "max_tokens": null
+  "max_tokens": null,
+  "_sensitive_texts": [
+    "METAL-LEG-SENSITIVE-PERSON-DATA-d8f2a"
+  ]
 }

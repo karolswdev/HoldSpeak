@@ -40,6 +40,7 @@ Use these guides when you are ready for more than the first sentence:
 | Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts | Dashboard and `/history` |
 | iPad app | Drives both modes from another device over the hub's HTTP API: dictate into the desk, read a meeting back with its artifacts and sources, approve a proposal, browse the archive | [Companions](#companions) |
 | AIPI-Lite companion | Portable ESPHome device for meeting controls, status, and spoken replies to waiting Claude/Codex sessions | [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md), `/companion` |
+| Threads | Multi-turn streamed conversations grounded on desk material with `@`-refs, receipts, and search | The Desk, **Continue in thread** on any object |
 | AI setup | Chooses a Thought AI from OpenRouter presets, local GGUF/llama.cpp, or a custom compatible provider; MLX remains available for writing and dictation | Settings → Models |
 
 ## Develop a thought
@@ -718,6 +719,49 @@ doctor prints: "People keystore: WARN: DEV FILE keystore at <path>. not for real
 use" with a fix: "Unset HOLDSPEAK_PEOPLE_KEYSTORE_FILE for production use. The
 file keystore is for development and testing only." If both the production
 sidecar and the dev sidecar exist, doctor warns: "BOTH WORLDS EXIST."
+
+## Threads
+
+A Thread is a multi-turn conversation that lives on the Desk as a first-class
+object. Unlike the old one-shot Ask loop, a Thread persists in the hub's
+SQLite, streams token by token, and can be grounded on desk material through
+`@`-references.
+
+### Start a Thread
+
+Open a new Thread from the Desk menu or choose **Continue in thread** on any
+desk object (a meeting, a note, a person, a decision). The object becomes a
+frozen reference: its content at the moment you ask is what the model sees.
+
+### The composer
+
+The Thread composer sits at the foot of the pullout. Type or tap the mic
+(click-to-toggle, never hold-to-talk). `@` opens the reference picker:
+meetings, notes, artifacts, decisions, and people by title. Each picked
+reference appears as a chip above the field. Enter sends, Shift+Enter inserts
+a newline, Esc stops a running turn. The Send button flips to Stop while the
+model is streaming.
+
+### Streaming, receipts, and egress
+
+Each assistant turn streams over the WebSocket bus. One egress badge and one
+receipt appear per turn. The badge names where the turn ran (this device, a
+private endpoint, or an external service). A turn that errors shows its
+failure in flow, never overlapping the UI. A turn whose stream stalls
+(no update for 10 s) renders as CRASHED with a Retry verb.
+
+### Branch, keep, and search
+
+Edit a past user message or regenerate an assistant reply to create a branch.
+The pullout shows siblings as `< n/m >`. Keep any reply as a Note or Artifact
+with its provenance recorded. Desk search federates Threads alongside meetings,
+notes, and decisions through `memory.search` (kind `thread`).
+
+### People boundary
+
+When a Thread references a People record, those parts are marked sensitive.
+If the thread's model assignment resolves to a cloud endpoint, the assembler
+redacts sensitive content before it reaches the provider.
 
 ## Schedule A Recording
 

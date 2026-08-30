@@ -108,7 +108,7 @@ aliases. "Posture" is GROUNDING §4's lens.
 | DeskMenuBar | Jobs 1-3 / working | **keep** | HS-105-05: the registry's browsable face; ghosts with the reason; Go pinned to the shelf's truth. |
 | SystemShade | Jobs 1-3 / reviewing | **keep** | The attention bell's shade: what happened while away, verbs inline; the Phase-104 gate cards land here. |
 | GlassDropLayer | Jobs 1-3 / working | **keep** | The through-the-glass drop seam (HS-101 B7): world objects hand into DOM wells; joined by the HS-105-02 matrix on the world side. |
-| PersonaChat | Job 3 / working | **re-shape + rename** | Vocabulary + never live-walked; the chat belongs inside the agent surface. |
+| ThreadPullout (was PersonaChat) | Job 3 / working | **re-shape + rename** | Vocabulary + never live-walked; shipped as Threads (Phase 150). |
 | AskPanel | Job 4 / working | **keep (fix copy)** | Trace C's hero. Fix: "intel" vocabulary, path leak, and the refusal must point at its fix. |
 | GroundingSection | Job 4 | **keep** | Receipts for what rode the ask — Article IV made visible. |
 | MicButton | Job 1 everywhere | **keep (fix the silent null)** | Voice-mic-on-every-input is standing owner doctrine; silently vanishing on insecure origins is an Article VI violation — render disabled WITH the reason. |
@@ -175,9 +175,9 @@ leading.
 6. **Arrival noise**: Setup/EmptyDesk/FirstWords stack checklists at
    the exact moment the product must show its two modes (owner verdict
    2026-07-17).
-7. **Job 3's front door never live-passed**: PersonaChat and the coder
-   session pull-out have no live walk on record — the most-built seam
-   (steering) has the least-proven glass.
+7. **Job 3's front door never live-passed**: the Thread pullout (formerly
+   PersonaChat) and the coder session pull-out have no live walk on record
+   (Thread walked in Phase 150).
 
 ## 6. The materials spike, judged as input
 

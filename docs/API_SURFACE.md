@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 543 (plus static mounts). iOS-consumed: 89. Web-consumed: 421.
+Routes: 554 (plus static mounts). iOS-consumed: 89. Web-consumed: 431.
 
 ## device_audio_ws
 
@@ -685,7 +685,7 @@ Routes: 543 (plus static mounts). iOS-consumed: 89. Web-consumed: 421.
 | DELETE | `/api/recipes/{recipe_id}` | web |
 | GET | `/api/recipes/{recipe_id}` | web |
 | PUT | `/api/recipes/{recipe_id}` | web |
-| POST | `/api/recipes/{recipe_id}/chat` | web |
+| POST | `/api/recipes/{recipe_id}/chat` | server only |
 | POST | `/api/recipes/{recipe_id}/invocations/{invocation_id}/cancel` | server only |
 | POST | `/api/recipes/{recipe_id}/keep` | web |
 | POST | `/api/recipes/{recipe_id}/run` | ios, web |
@@ -964,3 +964,19 @@ Routes: 543 (plus static mounts). iOS-consumed: 89. Web-consumed: 421.
 | Method | Path | Consumers |
 |---|---|---|
 | WS | `/ws` | ios, web |
+
+## web.routes.threads
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/threads` | web |
+| POST | `/api/threads` | web |
+| POST | `/api/threads/import` | web |
+| DELETE | `/api/threads/{thread_id}` | web |
+| GET | `/api/threads/{thread_id}` | web |
+| PATCH | `/api/threads/{thread_id}` | web |
+| POST | `/api/threads/{thread_id}/abort` | web |
+| POST | `/api/threads/{thread_id}/branch` | web |
+| POST | `/api/threads/{thread_id}/keep` | web |
+| POST | `/api/threads/{thread_id}/regenerate` | web |
+| POST | `/api/threads/{thread_id}/turns` | web |

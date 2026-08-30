@@ -1,9 +1,12 @@
 /* HS-150-05 — Thread pullout styling. Signal Workbench material model:
- * no nested cards, hairline sections, opaque window material. */
+ * opaque, beveled, 2px radius, mono labels. Reuses desk tokens
+ * (--desk-type-primary-size 15px, --desk-surface-body-size 13px,
+ * --desk-surface-detail-size 12px, --desk-surface-label-size 11px).
+ * Colors: --text, --text-muted, --text-faint. Font: var(--font-mono). */
 
 /* The body is a scrolling flex child inside the pullout card's column.
-   flex: 1 + min-height: 0 lets it shrink and scroll; the SurfaceFooter
-   (the composer) stays pinned below it, never overflowing the frame. */
+   flex: 1 + min-height: 0 lets it shrink and scroll; the foot stays
+   pinned below, never overflowing the frame. */
 .thread-pullout-body {
   display: flex;
   flex-direction: column;
@@ -15,48 +18,58 @@
 }
 
 /* ── Head ────────────────────────────────────────────────────────────── */
+/* (1) title loudest; lamp + meter as quiet secondary material, one line */
 
 .thread-head {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--surface-line, rgba(128, 128, 128, 0.15));
+  border-bottom: 1px solid var(--border, rgba(128, 128, 128, 0.15));
 }
 
 .thread-title {
   all: unset;
   cursor: text;
-  font: inherit;
+  font-family: var(--font-display, inherit);
   font-weight: 600;
-  font-size: 15px;
-  padding: 2px 0;
-  min-height: 22px;
+  font-size: var(--desk-type-primary-size, 15px);
+  line-height: 1.3;
+  color: var(--text);
+  padding: 1px 0;
+  min-height: 20px;
 }
 
 .thread-title:hover {
   text-decoration: underline;
-  text-decoration-color: var(--surface-line, rgba(128, 128, 128, 0.3));
+  text-decoration-color: var(--border, rgba(128, 128, 128, 0.3));
+  text-underline-offset: 3px;
 }
 
 .thread-title-input {
   all: unset;
-  font: inherit;
+  font-family: var(--font-display, inherit);
   font-weight: 600;
-  font-size: 15px;
-  padding: 2px 4px;
-  border-radius: 3px;
-  background: var(--surface-input-bg, rgba(128, 128, 128, 0.08));
-  min-height: 22px;
+  font-size: var(--desk-type-primary-size, 15px);
+  line-height: 1.3;
+  color: var(--text);
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: var(--desk-window-well, rgba(128, 128, 128, 0.08));
+  box-shadow: var(--desk-window-etch, inset 0 1px 2px rgba(0,0,0,.12));
+  min-height: 20px;
 }
 
 .thread-head-instruments {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 11px;
+  gap: 6px;
+  font-size: var(--desk-surface-label-size, 11px);
   font-family: var(--font-mono, ui-monospace, monospace);
-  color: var(--surface-quiet, rgba(128, 128, 128, 0.7));
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 
 .thread-status-line {
@@ -76,42 +89,60 @@
 }
 
 .thread-row {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--surface-line, rgba(128, 128, 128, 0.08));
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.08));
 }
 
+/* ── User row ────────────────────────────────────────────────────────── */
+
 .thread-row-label {
-  font-size: 11px;
+  font-size: var(--desk-surface-label-size, 11px);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--surface-quiet, rgba(128, 128, 128, 0.7));
-  margin-bottom: 4px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 3px;
 }
 
 .thread-row-user .thread-row-body {
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--desk-surface-body-size, 13px);
+  line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
+  color: var(--text);
 }
+
+/* ── Assistant row ───────────────────────────────────────────────────── */
 
 .thread-row-assistant .thread-row-body {
-  font-size: 14px;
+  font-size: var(--desk-surface-body-size, 13px);
   line-height: 1.6;
+  color: var(--text);
 }
 
+/* (2) provenance line: model quiet, receipt de-emphasized, lamp last */
 .thread-row-head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 4px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--desk-surface-label-size, 11px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.thread-row-head .thread-row-label {
+  margin-bottom: 0;
+  color: var(--text-muted);
 }
 
 .thread-row-receipt {
-  font-size: 10px;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  color: var(--surface-quiet, rgba(128, 128, 128, 0.5));
+  color: var(--text-faint);
+  font-weight: 400;
+  letter-spacing: 0.04em;
 }
 
 /* ── Streaming ───────────────────────────────────────────────────────── */
@@ -119,13 +150,15 @@
 .thread-streaming-text {
   white-space: pre-wrap;
   word-break: break-word;
+  font-size: var(--desk-surface-body-size, 13px);
+  line-height: 1.6;
 }
 
 .thread-cursor {
   display: inline-block;
-  width: 6px;
-  height: 14px;
-  background: var(--surface-quiet, rgba(128, 128, 128, 0.5));
+  width: 5px;
+  height: 13px;
+  background: var(--text-faint);
   vertical-align: text-bottom;
   animation: thread-blink 1s step-end infinite;
 }
@@ -139,73 +172,115 @@
 }
 
 /* ── Error / Crashed ─────────────────────────────────────────────────── */
+/* (4) CRASHED: Retry primary; error: severity label + message */
 
 .thread-row-error {
-  border-left: 2px solid var(--error, #ef4444);
+  border-left: 2px solid var(--danger-signal, #ef4444);
 }
 
-.thread-row-error-body,
+.thread-row-error-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.thread-error-severity {
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--danger-signal, #ef4444);
+}
+
+.thread-error-message {
+  font-size: var(--desk-surface-detail-size, 12px);
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
+.thread-row-crashed {
+  border-left: 2px solid var(--warn-signal, #f59e0b);
+}
+
 .thread-row-crashed-body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 0;
+  padding: 6px 0;
 }
 
-.thread-error-label,
 .thread-crash-label {
-  font-size: 11px;
+  font-size: var(--desk-surface-label-size, 11px);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--error, #ef4444);
-}
-
-.thread-row-crashed {
-  border-left: 2px solid var(--warning, #f59e0b);
-}
-
-.thread-crash-label {
-  color: var(--warning, #f59e0b);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--warn-signal, #f59e0b);
 }
 
 /* ── RAW fold ────────────────────────────────────────────────────────── */
 
 .thread-raw-fold {
-  margin-top: 4px;
-  border: 1px solid var(--surface-line, rgba(128, 128, 128, 0.12));
-  border-radius: 3px;
+  margin-top: 6px;
+  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.12));
+  border-radius: 2px;
 }
 
 .thread-raw-toggle {
   cursor: pointer;
-  padding: 2px 8px;
+  padding: 3px 8px;
   font-size: 10px;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-weight: 600;
   letter-spacing: 0.06em;
-  color: var(--surface-quiet, rgba(128, 128, 128, 0.5));
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 
 .thread-raw-content {
   padding: 4px 8px;
-  font-size: 12px;
+  font-size: var(--desk-surface-detail-size, 12px);
   font-family: var(--font-mono, ui-monospace, monospace);
   white-space: pre-wrap;
   word-break: break-word;
   max-height: 200px;
   overflow-y: auto;
-  color: var(--surface-quiet, rgba(128, 128, 128, 0.6));
+  color: var(--text-faint);
 }
 
 /* ── Row actions ─────────────────────────────────────────────────────── */
+/* (3) secondary-verb toolbar: lighter border, smaller mono, grouped */
 
 .thread-row-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 4px;
+  gap: 0;
+  margin-top: 6px;
   flex-wrap: wrap;
+}
+
+.desk-next .thread-row-actions .desk-chip.quiet {
+  font-size: 10px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  height: 22px;
+  padding: 0 7px;
+  border-color: var(--border-subtle, rgba(128,128,128,.12));
+  box-shadow: none;
+  color: var(--text-faint);
+}
+
+.desk-next .thread-row-actions .desk-chip.quiet + .desk-chip.quiet {
+  margin-left: -1px;
+}
+
+.desk-next .thread-row-actions .desk-chip.quiet:hover {
+  color: var(--text);
+  border-color: var(--accent);
 }
 
 /* ── Sibling picker ──────────────────────────────────────────────────── */
@@ -214,7 +289,7 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  font-size: 12px;
+  font-size: var(--desk-surface-detail-size, 12px);
   font-family: var(--font-mono, ui-monospace, monospace);
 }
 
@@ -224,7 +299,7 @@
   padding: 0 4px;
   font-size: 14px;
   line-height: 1;
-  color: var(--surface-quiet, rgba(128, 128, 128, 0.6));
+  color: var(--text-faint);
 }
 
 .thread-sibling-nav:disabled {
@@ -233,7 +308,21 @@
 }
 
 .thread-sibling-count {
-  color: var(--surface-quiet, rgba(128, 128, 128, 0.5));
+  color: var(--text-faint);
+}
+
+/* ── Foot (composer container) ────────────────────────────────────────── */
+/* A direct flex child of the window shell, pinned at the bottom. */
+.thread-foot {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--border, rgba(128, 128, 128, 0.15));
+  background: var(--surface-2, rgba(128, 128, 128, 0.04));
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* ── Composer (HS-150-06) ─────────────────────────────────────────────── */
@@ -248,10 +337,11 @@
   position: relative;
 }
 
+/* (5) at 393: no resize handle, tight spacing, chips wrap */
 .thread-composer-row {
   display: flex;
   align-items: flex-end;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -261,12 +351,13 @@
   flex: 1;
   min-width: 0;
   resize: none;
-  border: 1px solid var(--surface-line, rgba(128, 128, 128, 0.2));
-  border-radius: 4px;
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.2));
+  border-radius: 2px;
   padding: 6px 8px;
-  font: inherit;
-  font-size: 14px;
-  background: var(--surface-input-bg, rgba(128, 128, 128, 0.05));
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--desk-surface-body-size, 13px);
+  background: var(--desk-window-well, rgba(128, 128, 128, 0.05));
+  box-shadow: var(--desk-window-etch, inset 0 1px 2px rgba(0,0,0,.12));
   color: inherit;
   min-height: 22px;
   max-height: 120px;
@@ -276,6 +367,7 @@
 
 .thread-composer-input:focus {
   outline: 1px solid var(--accent, #3b82f6);
+  outline-offset: -1px;
 }
 
 /* ── Ref chips ───────────────────────────────────────────────────────── */
@@ -292,18 +384,20 @@
   align-items: center;
   gap: 3px;
   padding: 2px 6px;
-  border-radius: 3px;
-  background: var(--surface-input-bg, rgba(128, 128, 128, 0.1));
-  border: 1px solid var(--surface-line, rgba(128, 128, 128, 0.15));
-  font-size: 12px;
+  border-radius: 2px;
+  background: var(--wash-1, rgba(128, 128, 128, 0.06));
+  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.12));
+  font-size: var(--desk-surface-detail-size, 12px);
   line-height: 1.4;
   max-width: 100%;
 }
 
 .thread-ref-chip-kind {
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 11px;
-  opacity: 0.6;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
 }
 
 .thread-ref-chip-name {
@@ -318,13 +412,13 @@
   cursor: pointer;
   font-size: 11px;
   font-family: var(--font-mono, ui-monospace, monospace);
-  color: var(--surface-quiet, rgba(128, 128, 128, 0.5));
+  color: var(--text-faint);
   padding: 0 2px;
   line-height: 1;
 }
 
 .thread-ref-chip-remove:hover {
-  color: var(--error, #ef4444);
+  color: var(--danger-signal, #ef4444);
 }
 
 /* ── Autocomplete anchor (positions above the field) ─────────────────── */
@@ -339,10 +433,10 @@
   left: 0;
   right: 0;
   z-index: var(--desk-z-popover, 100);
-  background: var(--surface-2, #fff);
+  background: var(--desk-window-fill, #fff);
   border: 1px solid var(--border, rgba(128, 128, 128, 0.2));
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   max-height: 200px;
   overflow-y: auto;
 }
@@ -366,11 +460,12 @@
   width: 100%;
   resize: none;
   border: 1px solid var(--accent, #3b82f6);
-  border-radius: 4px;
+  border-radius: 2px;
   padding: 6px 8px;
-  font: inherit;
-  font-size: 14px;
-  background: var(--surface-input-bg, rgba(128, 128, 128, 0.05));
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--desk-surface-body-size, 13px);
+  background: var(--desk-window-well, rgba(128, 128, 128, 0.05));
+  box-shadow: var(--desk-window-etch, inset 0 1px 2px rgba(0,0,0,.12));
   color: inherit;
   min-height: 22px;
   max-height: 120px;
@@ -386,11 +481,13 @@
 
 .thread-row-body-editable {
   cursor: pointer;
+  border-radius: 2px;
+  padding: 1px 2px;
+  margin: -1px -2px;
 }
 
 .thread-row-body-editable:hover {
-  background: var(--surface-input-bg, rgba(128, 128, 128, 0.05));
-  border-radius: 3px;
+  background: var(--wash-1, rgba(128, 128, 128, 0.05));
 }
 
 /* ── Kind glyph in autocomplete ──────────────────────────────────────── */
@@ -418,5 +515,5 @@
   font-size: 10px;
   font-family: var(--font-mono, ui-monospace, monospace);
   letter-spacing: 0.04em;
-  color: var(--surface-quiet, rgba(128, 128, 128, 0.5));
+  color: var(--text-faint);
 }

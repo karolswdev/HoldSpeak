@@ -81,7 +81,7 @@ class FakeAdoptionService:
             "operation_request_plan": {"id": "orp_test"},
         }
 
-    def execute_stream(self, principal, *, execution_id, adapter, on_delta, publish=None):
+    def execute_stream(self, principal, *, execution_id, adapter, on_delta, publish=None, payload_redactor=None):
         from holdspeak.kernel.inference_stream import Delta
         if self._fail:
             raise ServiceError("provider_failed", "Test failure")
@@ -119,7 +119,7 @@ class FakeCloudAdoptionService(FakeAdoptionService):
             "operation_request_plan": {"id": "orp_cloud"},
         }
 
-    def execute_stream(self, principal, *, execution_id, adapter, on_delta, publish=None):
+    def execute_stream(self, principal, *, execution_id, adapter, on_delta, publish=None, payload_redactor=None):
         from holdspeak.kernel.inference_stream import Delta
         words = self._output.split(" ")
         for i, word in enumerate(words):
@@ -283,7 +283,7 @@ def test_abort_semantics(db, broadcast_fn, broadcasts) -> None:
             return SlowAdoptionService()
 
     class SlowAdoptionService(FakeAdoptionService):
-        def execute_stream(self, principal, *, execution_id, adapter, on_delta, publish=None):
+        def execute_stream(self, principal, *, execution_id, adapter, on_delta, publish=None, payload_redactor=None):
             from holdspeak.kernel.inference_stream import Delta
             # Signal entry, then poll for cancellation (simulates a cooperative
             # streaming loop that checks the cancel event frequently).
@@ -704,5 +704,168 @@ def test_graceful_degradation_run_prompt_only_engine(tmp_path: Path) -> None:
 
         server.stop()
     finally:
+        os.environ["HOME"] = old_home
+        reset_database()
+
+
+# ---------------------------------------------------------------------------
+# M5 pin: real coordinator + cloud/local egress + sensitive part
+# ---------------------------------------------------------------------------
+
+_M5_SENTINEL = "SENSITIVE-DATA-SSN-999-88-7777-SALARY-200K"
+
+
+def _m5_rig(tmp_path: Path, *, boundary: str):
+    """Boot a real hub, seed a profile, override boundary, seed a sensitive
+    part in an earlier assistant message, return (svc, captured, server, tid, old_home).
+    """
+    import os
+    import tempfile
+    import holdspeak.config as config_module
+    import holdspeak.db.core as db_core
+    from holdspeak.db import reset_database, get_database
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    home = Path(tempfile.mkdtemp(prefix=f"hs150-m5-{boundary}-"))
+    old_home = os.environ.get("HOME", "")
+    os.environ["HOME"] = str(home)
+    config_module.CONFIG_FILE = home / ".holdspeak" / "config.json"
+    db_core.DEFAULT_DB_PATH = home / "holdspeak.db"
+    reset_database()
+
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=lambda *_: None,
+            on_stop=lambda: None,
+            get_state=lambda: {},
+        ),
+    )
+    server.start()
+    db = get_database()
+
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from holdspeak.kernel.inference_stream import Delta
+
+    # Seed profile. The profile always admits with same_device boundary
+    # (the _profile helper creates local deployments). For the cloud boundary
+    # test, we patch the frozen route plan entries AFTER admit returns.
+    profile_id = f"m5-{boundary}"
+    _profile(db, profile_id, claims=("language", _result_claim("chat.turn")))
+    InferenceAssignmentService(db).set_assignment(OWNER, {
+        "command_id": f"m5-assign-{boundary}",
+        "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "chat.turn"},
+        "entries": [{"profile_id": profile_id, "profile_revision": 1}],
+    })
+
+    from holdspeak.kernel.runtime import _service as _kernel_service
+    broker = _kernel_service()
+    runner = broker.inference_runner
+
+    captured_payloads: list[dict] = []
+
+    class _CapturingEngine:
+        active_provider = "m5-capture"
+        active_model = "m5-model"
+        def run_prompt_stream(self, *, messages=None, **kw):
+            captured_payloads.append({"messages": list(messages or [])})
+            yield Delta(kind="text", text="response ")
+            yield Delta(kind="done")
+        def run_prompt_messages(self, *, messages=None, **kw):
+            captured_payloads.append({"messages": list(messages or [])})
+            return "response"
+        def run_prompt(self, *, system_prompt="", user_prompt="", **kw):
+            return "response"
+
+    runner._engine_factory = lambda _rev, **_kw: _CapturingEngine()
+
+    broadcasts_local: list[tuple[str, Any]] = []
+    svc = ThreadService(
+        db, broadcast=lambda t, d: broadcasts_local.append((t, d)), broker=broker,
+    )
+
+    # Override _m1_redactor so it uses the TEST's desired boundary instead
+    # of whatever the frozen route plan carries (always same_device from
+    # _profile). This proves the redactor IS called in the pipeline and
+    # correctly redacts/preserves based on the boundary it receives.
+    original_redactor = ThreadService._m1_redactor
+
+    @staticmethod
+    def _boundary_override_redactor(payload, route):
+        patched_route = {**route, "entries": [{"boundary": boundary}]}
+        return original_redactor(payload, patched_route)
+
+    svc._m1_redactor = _boundary_override_redactor
+
+    # Create thread with an earlier turn that has a sensitive part.
+    thread = svc.create(title=f"M5 {boundary} test")
+    tid = thread["id"]
+    user_msg = db.threads.append_message(tid, role="user")
+    db.threads.append_part(user_msg.id, kind="text", text="Tell me about the person")
+    asst_msg = db.threads.append_message(tid, role="assistant", parent_id=user_msg.id)
+    db.threads.append_part(asst_msg.id, kind="text", text=_M5_SENTINEL, sensitive=True)
+    db.threads.complete_message(asst_msg.id)
+
+    return svc, captured_payloads, server, tid, old_home
+
+
+def test_m5_cloud_egress_redacts_sensitive_in_engine_payload(tmp_path: Path) -> None:
+    """M5 pin: start_turn through the REAL coordinator with cloud boundary.
+    The engine must receive [people content withheld], NOT the sentinel."""
+    from holdspeak.db import reset_database
+
+    svc, captured, server, tid, old_home = _m5_rig(tmp_path, boundary="cloud")
+    try:
+        result = asyncio.run(svc.start_turn(OWNER, tid, "Follow up"))
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            msg = svc._threads.get_message(result["assistant_message_id"])
+            if msg and not msg.streaming:
+                break
+            time.sleep(0.2)
+        else:
+            pytest.fail("Turn did not complete")
+
+        assert len(captured) >= 1, "Engine was never called"
+        engine_json = json.dumps(captured[0])
+        assert _M5_SENTINEL not in engine_json, (
+            f"Sentinel leaked to engine on cloud egress: {engine_json[:200]}"
+        )
+        assert _PEOPLE_REDACTION in engine_json, (
+            f"Redaction marker missing from engine payload: {engine_json[:200]}"
+        )
+        server.stop()
+    finally:
+        import os
+        os.environ["HOME"] = old_home
+        reset_database()
+
+
+def test_m5_local_egress_preserves_sensitive_verbatim(tmp_path: Path) -> None:
+    """M5 pin: start_turn through the REAL coordinator with local boundary.
+    The engine must receive the sentinel verbatim."""
+    from holdspeak.db import reset_database
+
+    svc, captured, server, tid, old_home = _m5_rig(tmp_path, boundary="same_device")
+    try:
+        result = asyncio.run(svc.start_turn(OWNER, tid, "Follow up"))
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            msg = svc._threads.get_message(result["assistant_message_id"])
+            if msg and not msg.streaming:
+                break
+            time.sleep(0.2)
+        else:
+            pytest.fail("Turn did not complete")
+
+        assert len(captured) >= 1, "Engine was never called"
+        engine_json = json.dumps(captured[0])
+        assert _M5_SENTINEL in engine_json, (
+            f"Sentinel missing from engine on local egress: {engine_json[:200]}"
+        )
+        server.stop()
+    finally:
+        import os
         os.environ["HOME"] = old_home
         reset_database()

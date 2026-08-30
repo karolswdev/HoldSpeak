@@ -139,11 +139,29 @@ def open_desk(browser: Any, url: str, width: int = 1440, height: int = 900) -> t
 def open_thread(page: Any, url: str, thread_id: str, wait_ms: int = 2500) -> None:
     """Open a thread pullout via the DeskApp's ?open= URL parameter."""
     page.goto(f"{url}/?token={TOKEN}&open=thread:{thread_id}", wait_until="load")
-    page.wait_for_timeout(wait_ms)
+    # Wait for the pullout to actually appear instead of a static timeout.
+    try:
+        page.locator(".thread-pullout-body, .thread-head").first.wait_for(timeout=12000)
+    except Exception:
+        pass  # Caller checks for the selector and reports the finding.
+    page.wait_for_timeout(500)  # Let React settle.
 
 
 def no_h_overflow(page: Any) -> bool:
     return bool(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"))
+
+
+def foot_inside_card(page: Any) -> bool:
+    """Assert the thread composer foot sits inside the pullout card border."""
+    return bool(page.evaluate("""() => {
+        const foot = document.querySelector('.thread-foot');
+        const card = foot && foot.closest('.desk-window-shell');
+        if (!foot || !card) return false;
+        const fb = foot.getBoundingClientRect();
+        const cb = card.getBoundingClientRect();
+        // foot bottom must not exceed card bottom (2px tolerance for borders)
+        return fb.bottom <= cb.bottom + 2 && fb.right <= cb.right + 2;
+    }"""))
 
 
 def shot(page: Any, name: str, claim: str) -> Path:
@@ -265,6 +283,10 @@ def main() -> int:
                         shot(page, f"thread-done-no-receipt-{suffix}.png", f"done, no receipt at {width}")
                         failures.append(f"receipt not visible at {width}")
 
+                    # Foot must be inside the card (not overflowing below).
+                    if not foot_inside_card(page):
+                        failures.append(f"composer foot overflows card at {width}")
+
                     if width == 393 and not no_h_overflow(page):
                         failures.append("horizontal overflow at 393 after populated thread")
                 finally:
@@ -310,7 +332,7 @@ def main() -> int:
                 try:
                     fresh = api(page, "POST", "/api/threads", {"title": "Empty Thread"})
                     open_thread(page, url, fresh.get("id", ""))
-                    if page.locator("text=No turns yet").count() > 0:
+                    if page.locator("text=No turns").count() > 0:
                         shot(page, f"thread-empty-fresh-{suffix}.png", f"empty state at {width}")
                     else:
                         shot(page, f"thread-fresh-{suffix}.png", f"fresh thread at {width}")
