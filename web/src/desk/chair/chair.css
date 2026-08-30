@@ -385,7 +385,7 @@
   width: 28px;
   display: none;
   pointer-events: none;
-  z-index: 1;
+  z-index: var(--desk-z-local);
 }
 .door-board-hint-wrap::before {
   left: 0;

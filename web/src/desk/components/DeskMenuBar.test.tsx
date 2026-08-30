@@ -15,11 +15,11 @@ describe("DeskMenuBar", () => {
 
     expect(
       container.querySelector('[data-menu-id="go"]'),
-    ).toContainElement(screen.getByRole("button", { name: "Go", exact: true }));
+    ).toContainElement(screen.getByRole("button", { name: /^Go$/ }));
     expect(container.querySelectorAll("[data-menu-id]")).toHaveLength(4);
 
     // A keyboard click exercises the title's existing Enter/Space path.
-    fireEvent.click(screen.getByRole("button", { name: "Go", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: /^Go$/ }));
     const menu = screen.getByRole("menu", { name: "Go menu" });
     expect(menu).toBeVisible();
     fireEvent.click(screen.getByRole("menuitem", { name: /Meetings/ }));

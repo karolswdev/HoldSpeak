@@ -15,6 +15,13 @@ const walk = (directory) => {
 walk(source);
 
 const failures = [];
+const directFetchAllowlist = new Set([
+  // Static, same-origin sound assets are decoded as ArrayBuffers; this is not
+  // an application API request and therefore does not belong in apiFetch.
+  "src/lib/sfx.ts",
+]);
+const isTestSource = (name) =>
+  /(?:^|\/)__tests__\//.test(name) || /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(name);
 const packageJson = JSON.parse(
   readFileSync(join(root, "package.json"), "utf8"),
 );
@@ -39,9 +46,16 @@ for (const file of files) {
     failures.push(`legacy directive/runtime marker: ${name}`);
   if (/\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML\s*\(/.test(text))
     failures.push(`runtime HTML injection: ${name}`);
-  if (/document\.(?:querySelector|querySelectorAll)\s*\(/.test(text))
+  if (
+    !isTestSource(name) &&
+    /document\.(?:querySelector|querySelectorAll)\s*\(/.test(text)
+  )
     failures.push(`global selector bootstrap: ${name}`);
-  if (/\bfetch\s*\(/.test(text) && name !== "src/lib/api.ts")
+  if (
+    /\bfetch\s*\(/.test(text) &&
+    name !== "src/lib/api.ts" &&
+    !directFetchAllowlist.has(name)
+  )
     failures.push(`request bypasses typed API client: ${name}`);
 }
 

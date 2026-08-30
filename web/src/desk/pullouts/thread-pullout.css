@@ -436,7 +436,7 @@
   background: var(--desk-window-fill, #fff);
   border: 1px solid var(--border, rgba(128, 128, 128, 0.2));
   border-radius: 2px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--shadow-ink-1) 53%, transparent);
   max-height: 200px;
   overflow-y: auto;
 }

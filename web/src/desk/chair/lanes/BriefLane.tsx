@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
+import { clearWriteFailure, reportWriteFailure } from "../../hooks/useWriteReceipt";
 import { refreshIntelligenceAttention, untriagedBriefItems } from "../../intelligenceAttention";
 import { openIntelligence } from "../../intelligenceNavigation";
 import {
@@ -107,6 +108,7 @@ export function BriefLane({
         method: "POST",
         json: { state: next },
       });
+      clearWriteFailure();
       setShelf((prev) => {
         const updated = { ...prev };
         if (next === null) delete updated[itemId];
@@ -114,9 +116,12 @@ export function BriefLane({
         return updated;
       });
       refreshIntelligenceAttention();
-    } catch {
-      // Verb failure: the full Intelligence surface reports through the
-      // write-receipt channel; the lane stays quiet.
+    } catch (cause) {
+      reportWriteFailure(
+        next === null ? "clear brief triage" : `${next} brief item`,
+        cause,
+        () => void doShelf(itemId, state),
+      );
     } finally {
       setBusyItemId(null);
     }

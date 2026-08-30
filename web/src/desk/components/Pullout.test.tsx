@@ -33,7 +33,11 @@ describe("Pullout Thought ownership routing", () => {
 
   it("leaves an ordinary Note in the ordinary editor", async () => {
     useDesk.setState({ profiles: [], closePullout: vi.fn() });
-    vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "ordinary", eligibility: "eligible", reason: null, note: { id: "note-1", title: "Owned Note", body_markdown: "Body", tags: [], revision: 1 } });
+    vi.mocked(thoughtForNote).mockResolvedValue({
+      ownership: "ordinary",
+      note: { id: "note-1", title: "Owned Note", body_markdown: "Body", tags: [] },
+      source_precondition: { content_sha256: "sha-note-1", last_modified: "now" },
+    });
     render(<Pullout o={object} />);
 
     expect(await screen.findByText("Ordinary Note editor")).toBeInTheDocument();

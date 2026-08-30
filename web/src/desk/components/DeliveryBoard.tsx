@@ -308,7 +308,7 @@ function CompanionRepoConfig() {
 
   const update = (value: unknown) => {
     const nextMeeting = { ...meeting, companion_github_repo: value };
-    const nextData = { ...data, meeting: nextMeeting };
+    const nextData: Record<string, unknown> = { ...data, meeting: nextMeeting };
     setData(nextData);
     setRefusal("");
     revisionRef.current = nextData._revision as string | undefined;

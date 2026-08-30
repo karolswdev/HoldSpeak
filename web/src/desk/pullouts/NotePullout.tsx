@@ -416,7 +416,10 @@ export function NotePullout({
       <SurfaceFooter receipt={editing ? null : completionReceipt ? <>Done</> : copyReceipt} verbs={editing && thought ? <div className="thought-completion-verbs">
         <button type="button" className="desk-chip quiet thought-completion-secondary thought-editor-cancel" onClick={closeEditor}>Cancel</button>
         <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={finishing} onClick={() => void complete()}>{finishing ? "Finishing…" : "Finish Thought"}</button>
-      </div> : thought ? <>
+      </div> : editing ? <>
+        <button type="button" className="desk-chip quiet" onClick={closeEditor}>Cancel</button>
+        <button type="button" className="desk-chip is-primary" onClick={closeEditor}>Save</button>
+      </> : thought ? <>
         {thought.state === "completed" ? <>
           <div className="thought-completion-verbs"><button type="button" className="desk-chip quiet thought-completion-secondary" onClick={() => void copy(body)}>Copy</button>
           <button type="button" className="desk-chip is-primary thought-completion-primary" disabled={finishing} onClick={() => void resume()}>{finishing ? "Resuming…" : "Resume refining"}</button></div>

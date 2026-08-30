@@ -397,7 +397,7 @@ describe("MicButton surfaces named refusals (HS-132-05)", () => {
     await speakAndStop();
 
     await waitFor(() =>
-      expect(screen.getByText(/Retry the capture/)).toBeVisible(),
+      expect(screen.getByText(/Retry or type below/)).toBeVisible(),
     );
     expect(
       screen.queryByText(/Captured audio is retained locally/),

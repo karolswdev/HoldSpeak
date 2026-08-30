@@ -2,7 +2,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-const apiFetch = vi.fn(async () => ({
+const apiFetch = vi.fn(async (_path: string, _init?: unknown) => ({
   _revision: "rev-1",
   meeting: {
     mic_device: "Built-in Microphone",

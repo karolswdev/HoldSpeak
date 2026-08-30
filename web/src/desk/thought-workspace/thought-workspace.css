@@ -24,7 +24,7 @@
 .desk-next .thought-workspace-restart {
   position: absolute;
   inset: 40px 0 0;
-  z-index: 4;
+  z-index: var(--desk-z-local);
   background: color-mix(in srgb, var(--desk-window-fill) 96%, transparent);
 }
 

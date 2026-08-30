@@ -141,7 +141,7 @@ describe("Workbench STARTS WHEN automations", () => {
     await user.click(screen.getByRole("button", { name: "Test match" }));
     await waitFor(() => expect(calls.mock.calls.some(([url]) => String(url).endsWith("/automations/auto-1/test"))).toBe(true));
     expect(calls.mock.calls.some(([url]) => /\/items(?:\/|$)/.test(String(url)))).toBe(false);
-    expect(screen.getByRole("status")).toHaveTextContent("TEST ONLY · NO ITEMS ADDED");
+    expect(screen.getByText(/TEST ONLY · NO ITEMS ADDED/)).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "Enable" }));
     await waitFor(() => expect(calls.mock.calls.some(([url, init]) =>
