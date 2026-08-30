@@ -1,9 +1,7 @@
 # Phase 151 — The Live Intelligence Proof
 
-**Status:** in progress (5/7) — the attended leg descended a
-four-defect admission ladder (#7-#10) and chartered its rider
-(HS-151-07); the close holds for the rider + the attended replay +
-the owner's word.
+**Status:** in progress (6/7) — the rider is DONE; the close holds
+for the attended replay + the owner's shot verdict + merge word.
 
 **Last updated:** 2026-08-30.
 
@@ -71,11 +69,23 @@ Branch `feat/hs151-live-intel-proof` from main `3a37e484`.
 | HS-151-04 | The vision proof (the snapshot adapter on real metal) | done | [story-04](./story-04-vision-proof.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-151-05 | The record book | done | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-151-06 | The walk, the attended leg, and the close | in-progress | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-151-07 | The fired-session admission (the attended leg's rider) | ready | [story-07](./story-07-fired-session-admission.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-151-07 | The fired-session admission (the attended leg's rider) | done | [story-07](./story-07-fired-session-admission.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**5/6.** HS-151-05 (the record book) is DONE — the metal truth
+**6/7.** HS-151-07 (the fired-session admission) is DONE — the
+attended leg's four-defect ladder ends at bedrock, fixed: the
+meeting admission pre-checks the speech head (counsel-ruled,
+~30 lines, one file, bundle service untouched); absent → honest
+record_only with the reason and repair named, never a silent empty
+transcript; present → the full four-route bundle for OWNER and the
+new SERVICE scheduled-recording lane alike. Six pins green (95
+focused under the orchestrator's hand). The startup speech
+migration confirmed as the head's lawful source on any
+whisper-capable HOME. Defects #7-#10 all landed or ledgered with
+receipts. Remaining: the attended REPLAY through the whole fixed
+chain, then story 06's close.
+Earlier — **5/6.** HS-151-05 (the record book) is DONE — the metal truth
 reads cold: MODELS.md speaks the INTEL_SCHEMA shape and the
 Me/Remote-only reserved law verbatim from parsing.py; the
 architecture doc gained the structured-output and Design-A
@@ -256,6 +266,24 @@ real latent defects before a single story ran.
   "re-analyze" gesture is a future arc); L3 the dialect set has no
   TTL (same accepted shape as HS-131-10); L4 the remote
   DeploymentRevision kind hardcoding.
+
+- **2026-08-30 — focused counsel (HS-151-07): RATIFIED — the
+  admission pre-checks the speech head.** The meeting admission
+  probes for a capability:speech.transcribe assignment head before
+  declaring routes; absent → transcription+preload EXCLUDED from
+  the bundle (which stays all-or-nothing for what it is given),
+  raw capture continues, and the refusal is VISIBLE
+  (transcription_status="record_only",
+  reason_code=transcription_no_speech_assignment, the repair
+  named) — Design-A spirit at the live bundle. The capability-only
+  seam was REJECTED on evidence (it also requires a head — it only
+  narrows scope); triggering the speech migration from the meeting
+  path rejected as coupling. Six pins (P1-P6). ALL of tonight's
+  groundwork KEPT (SERVICE principal, sealed scheduled-recording@1,
+  the wiring, the fire contract). Open follow-through: P1/P3
+  assume the SPEECH MIGRATION creates the head on configured
+  HOMEs — the builder must find/trigger that mechanism for the
+  attended HOME or surface the gap honestly.
 
 ## Risk register
 
