@@ -191,6 +191,13 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/calendar_snapshot_service.py:592|extract_via_router|call": ProposedRoute(
         "calendar.snapshot_extract", "services.calendar_snapshot_service", "InferenceRunner direct dispatch fallback (routed path preferred when assigned)",
     ),
+    # HS-153-03/05: chat practice capabilities (guardrail + compaction).
+    "holdspeak/services/thread_practice.py:47|run_guardrail|call": ProposedRoute(
+        "chat.guardrail", "services.thread_practice", "InferenceRunner admitted child",
+    ),
+    "holdspeak/services/thread_practice.py:83|run_compact|call": ProposedRoute(
+        "chat.compact", "services.thread_practice", "InferenceRunner admitted child",
+    ),
 }
 
 
@@ -293,7 +300,7 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     ),
     # HS-151-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115
     # no longer call RecipeService.chat — they return a 410 retired error.
-    "holdspeak/web/routes/primitives/recipes.py:100|build_recipes_router.api_run_recipe|run": ProposedRoute(
+    "holdspeak/web/routes/primitives/recipes.py:103|build_recipes_router.api_run_recipe|run": ProposedRoute(
         "recipe.run", "web.routes.primitives.recipes", "RecipeService semantic caller",
     ),
 }

@@ -59,7 +59,9 @@ class RecipeService:
         register(broker.projection_stager)
         self._runner = broker.inference_runner
 
-    def list_recipes(self, principal: Principal) -> list[dict[str, Any]]:
+    def list_recipes(self, principal: Principal, *, kind: str | None = None) -> list[dict[str, Any]]:
+        if kind is not None:
+            return [self._payload(principal, record) for record in self._db.recipes.list_by_kind(kind)]
         return [self._payload(principal, record) for record in self._db.recipes.list()]
 
     def get_recipe(self, principal: Principal, recipe_id: str) -> dict[str, Any]:
@@ -359,4 +361,4 @@ class RecipeService:
     @staticmethod
     def _recipe_fields(body: dict[str, Any], existing: Any = None) -> dict[str, Any]:
         value = lambda key, default: body[key] if key in body else default
-        return {"name": str(value("name", existing.name if existing else "")), "avatar": str(value("avatar", existing.avatar if existing else "")), "role": str(value("role", existing.role if existing else "")), "system_prompt": str(value("system_prompt", existing.system_prompt if existing else "")), "user_template": str(value("user_template", existing.user_template if existing else "")), "tools": list(value("tools", existing.tools if existing else [])), "kb_id": value("kb_id", existing.kb_id if existing else None) or None, "profile_id": value("profile_id", existing.profile_id if existing else None) or None, "manual_context": str(value("manual_context", existing.manual_context if existing else "")), "use_zone_context": bool(value("use_zone_context", existing.use_zone_context if existing else False))}
+        return {"name": str(value("name", existing.name if existing else "")), "avatar": str(value("avatar", existing.avatar if existing else "")), "role": str(value("role", existing.role if existing else "")), "system_prompt": str(value("system_prompt", existing.system_prompt if existing else "")), "user_template": str(value("user_template", existing.user_template if existing else "")), "tools": list(value("tools", existing.tools if existing else [])), "kb_id": value("kb_id", existing.kb_id if existing else None) or None, "profile_id": value("profile_id", existing.profile_id if existing else None) or None, "manual_context": str(value("manual_context", existing.manual_context if existing else "")), "use_zone_context": bool(value("use_zone_context", existing.use_zone_context if existing else False)), "kind": str(value("kind", existing.kind if existing else ""))}

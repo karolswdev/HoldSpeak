@@ -166,6 +166,22 @@ class NoteRepository(BaseRepository):
                 ).fetchall()
         return [self._row(r) for r in rows]
 
+    def list_by_tag(self, tag: str, *, include_deleted: bool = False, limit: int = 500) -> list[NoteRecord]:
+        """List notes that contain ``tag`` in their tags_json array (json_each)."""
+        bounded = max(1, min(int(limit), 2000))
+        clean_tag = str(tag or "").strip()
+        if not clean_tag:
+            return []
+        with self._connection() as conn:
+            clause = "" if include_deleted else "AND n.deleted = 0 "
+            rows = conn.execute(
+                f"SELECT DISTINCT n.* FROM notes n, json_each(n.tags_json) t "
+                f"WHERE t.value = ? {clause}"
+                f"ORDER BY n.updated_at DESC LIMIT ?",
+                (clean_tag, bounded),
+            ).fetchall()
+        return [self._row(r) for r in rows]
+
     def delete(self, note_id: str) -> bool:
         """Tombstone a note (deleted=1). Returns True if a row was affected."""
         clean_id = str(note_id or "").strip()
@@ -489,6 +505,7 @@ class RecipeRepository(BaseRepository):
         profile_id: Optional[str] = None,
         manual_context: str = "",
         use_zone_context: bool = False,
+        kind: str = "",
         last_modified: Optional[str] = None,
         deleted: bool = False,
         created_at: Optional[str] = None,
@@ -506,8 +523,8 @@ class RecipeRepository(BaseRepository):
                 """
                 INSERT INTO recipes (id, name, avatar, role, system_prompt, user_template,
                                     tools_json, kb_id, profile_id, manual_context,
-                                    use_zone_context, created_at, last_modified, deleted)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                    use_zone_context, kind, created_at, last_modified, deleted)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = excluded.name,
                     avatar = excluded.avatar,
@@ -519,6 +536,7 @@ class RecipeRepository(BaseRepository):
                     profile_id = excluded.profile_id,
                     manual_context = excluded.manual_context,
                     use_zone_context = excluded.use_zone_context,
+                    kind = excluded.kind,
                     last_modified = excluded.last_modified,
                     deleted = excluded.deleted
                 """,
@@ -534,6 +552,7 @@ class RecipeRepository(BaseRepository):
                     str(profile_id).strip() if profile_id else None,
                     str(manual_context or ""),
                     1 if use_zone_context else 0,
+                    str(kind or ""),
                     created,
                     last_modified or now,
                     1 if deleted else 0,
@@ -583,6 +602,22 @@ class RecipeRepository(BaseRepository):
             cur = conn.execute("DELETE FROM recipes WHERE id = ?", (str(recipe_id).strip(),))
             return bool(cur.rowcount and cur.rowcount > 0)
 
+    def list_by_kind(self, kind: str, *, include_deleted: bool = False, limit: int = 500) -> list[RecipeRecord]:
+        """List recipes filtered by kind (e.g. 'mode')."""
+        bounded = max(1, min(int(limit), 2000))
+        with self._connection() as conn:
+            if include_deleted:
+                rows = conn.execute(
+                    "SELECT * FROM recipes WHERE kind = ? ORDER BY name ASC LIMIT ?",
+                    (str(kind), bounded),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM recipes WHERE deleted = 0 AND kind = ? ORDER BY name ASC LIMIT ?",
+                    (str(kind), bounded),
+                ).fetchall()
+        return [self._row(r) for r in rows]
+
     def _row(self, row: Any) -> RecipeRecord:
         return RecipeRecord(
             id=row["id"],
@@ -596,6 +631,7 @@ class RecipeRepository(BaseRepository):
             profile_id=row["profile_id"] if "profile_id" in row.keys() else None,
             manual_context=str(row["manual_context"] or "") if "manual_context" in row.keys() else "",
             use_zone_context=bool(row["use_zone_context"]) if "use_zone_context" in row.keys() else False,
+            kind=str(row["kind"] or "") if "kind" in row.keys() else "",
             created_at=row["created_at"],
             last_modified=row["last_modified"],
             deleted=bool(row["deleted"]),

@@ -39,6 +39,9 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/recipes")
     async def api_list_recipes(request: Request) -> Any:
         try:
+            kind = request.query_params.get("kind")
+            if kind is not None:
+                return JSONResponse({"recipes": _svc().list_recipes(_principal(request), kind=kind)})
             return JSONResponse({"recipes": _svc().list_recipes(_principal(request))})
         except Exception as exc:
             return error_500(exc, log, "Failed to list recipes")

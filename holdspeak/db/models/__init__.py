@@ -668,6 +668,7 @@ class RecipeRecord:
     # Phase 77 — the iPad-authored pinned context, first-class on the hub.
     manual_context: str = ""
     use_zone_context: bool = False
+    kind: str = ""   # HS-153-01: '' = ordinary recipe, 'mode' = thread mode
     created_at: str = ""
     last_modified: str = ""
     deleted: bool = False
@@ -685,6 +686,7 @@ class RecipeRecord:
             "profile_id": self.profile_id,
             "manual_context": self.manual_context,
             "use_zone_context": self.use_zone_context,
+            "kind": self.kind,
             "created_at": self.created_at,
             "last_modified": self.last_modified,
             "deleted": self.deleted,

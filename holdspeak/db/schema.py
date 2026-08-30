@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS bookmarks (
 -- Action Items (first-class entity for cross-meeting tracking)
 CREATE TABLE IF NOT EXISTS action_items (
     id TEXT PRIMARY KEY,
-    meeting_id TEXT NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    meeting_id TEXT REFERENCES meetings(id) ON DELETE CASCADE,
     task TEXT NOT NULL,
     owner TEXT,
     due TEXT,
@@ -107,7 +107,9 @@ CREATE TABLE IF NOT EXISTS action_items (
     source_timestamp REAL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     completed_at TEXT,
-    delegated_at TEXT
+    delegated_at TEXT,
+    source_type TEXT NOT NULL DEFAULT 'meeting',
+    source_ref TEXT NOT NULL DEFAULT ''
 );
 
 -- Topics extracted from meetings
@@ -1228,6 +1230,8 @@ CREATE TABLE IF NOT EXISTS recipes (
     -- (ends the loss HS-72-01 documented in the Swift tolerant decode).
     manual_context TEXT NOT NULL DEFAULT '',
     use_zone_context INTEGER NOT NULL DEFAULT 0,
+    -- HS-153-01: a mode is a recipe with kind='mode'; ordinary recipes keep ''.
+    kind TEXT NOT NULL DEFAULT '' CHECK(kind IN ('', 'mode')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
     deleted INTEGER NOT NULL DEFAULT 0

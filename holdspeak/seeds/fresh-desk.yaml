@@ -69,6 +69,36 @@ notes:
       - Capture: [example: decisions, actions, open questions]
       - Follow-up format: [example: ]
       - People to include: [example: ]
+  - id: hs-seed-prompt-weekly-update
+    title: Weekly update
+    tags: [prompt]
+    body_markdown: |
+      Summarize what happened this week.
+      Focus on decisions made, commitments moved, and open questions.
+      One paragraph per topic, no filler.
+      End with what needs attention next week.
+
+recipes:
+  - id: hs-seed-mode-desk
+    name: Desk
+    avatar: "#6B7280"
+    kind: mode
+    system_prompt: "You have read access to the full desk. Observe and inform, never act."
+  - id: hs-seed-mode-chase
+    name: Chase
+    avatar: "#2563EB"
+    kind: mode
+    system_prompt: "You can read the desk and act on people and follow-through. Move work forward."
+  - id: hs-seed-mode-draft
+    name: Draft
+    avatar: "#9333EA"
+    kind: mode
+    system_prompt: "Write freely. No tools, no context lookups, just composition."
+  - id: hs-seed-mode-plan
+    name: Plan
+    avatar: "#059669"
+    kind: mode
+    system_prompt: "Reflect on decisions, thoughts, and memory. Plan, do not execute."
 
 kbs:
   - id: hs-seed-everyday-context
