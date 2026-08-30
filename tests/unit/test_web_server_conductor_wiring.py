@@ -24,6 +24,17 @@ def live_server(tmp_path, monkeypatch):
     from holdspeak.db import reset_database
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
+    # The conductor is a PROCESS-GLOBAL singleton created once; under
+    # xdist another hub test in this worker may have wired it already,
+    # leaving stale start/stop fns from a dead server. Reset it so THIS
+    # server's startup wires fresh (the exact fragility this pin guards).
+    import holdspeak.scheduled_recording_conductor as src
+    if src._conductor is not None:
+        try:
+            src._conductor.stop()
+        except Exception:
+            pass
+        src._conductor = None
     monkeypatch.setattr(config_module, "CONFIG_FILE", tmp_path / "config.json")
     monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
     reset_database()

@@ -129,6 +129,10 @@ def wire(
             raise
 
     # 2. Create a deployment revision + artifact + deployment head for binding.
+    #    HS-151-06 defect: from_artifact previously hardcoded kind="this_device"
+    #    and endpoint="" — the engine factory mapped this_device to onDevice which
+    #    looked for a local model file, not a remote endpoint. The .43 metal
+    #    endpoint is a private_endpoint (openAICompatible) with a real URL.
     deployment = DeploymentRevision.from_artifact(
         destination_id="metal",
         engine="openai_compatible",
@@ -141,6 +145,9 @@ def wire(
         architecture="transformer",
         context_ceiling=32768,
         capability_sha256=str(manifest["sha256"]),
+        kind="private_endpoint",
+        boundary="private_network",
+        endpoint=base_url,
     )
     db.deployment_revisions.upsert(deployment)
 

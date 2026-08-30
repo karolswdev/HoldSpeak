@@ -1261,6 +1261,8 @@ class ModelProfileService:
                     manifest_sha256=values["manifest_sha256"], format=values["format"],
                     architecture=values["architecture"], context_ceiling=values["context_ceiling"],
                     capability_sha256=values["capability_sha256"],
+                    kind=values["kind"], boundary=values["boundary"],
+                    endpoint=values["endpoint"], secret_slot=values["secret_slot"],
                 )
             else:
                 raise ValueError("unknown deployment schema")

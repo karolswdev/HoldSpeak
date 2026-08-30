@@ -1,7 +1,7 @@
 # Phase 151 — The Live Intelligence Proof
 
-**Status:** in progress (6/7) — the rider is DONE; the close holds
-for the attended replay + the owner's shot verdict + merge word.
+**Status:** COMPLETE (7/7) — holding for the owner's shot verdict
+and merge word.
 
 **Last updated:** 2026-08-30.
 
@@ -68,12 +68,28 @@ Branch `feat/hs151-live-intel-proof` from main `3a37e484`.
 | HS-151-03 | The headless metal proof (control vs treatment) | done | [story-03](./story-03-metal-proof.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-151-04 | The vision proof (the snapshot adapter on real metal) | done | [story-04](./story-04-vision-proof.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-151-05 | The record book | done | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-151-06 | The walk, the attended leg, and the close | in-progress | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-151-06 | The walk, the attended leg, and the close | done | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-151-07 | The fired-session admission (the attended leg's rider) | done | [story-07](./story-07-fired-session-admission.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**6/7.** HS-151-07 (the fired-session admission) is DONE — the
+**7/7 — PHASE 151 COMPLETE, holding for the owner.** THE ATTENDED
+LEG IS GREEN: the owner's chosen 1:1 recording played at the
+machine, the real [Record this] tap, the conductor's fire ADMITTED
+under the delegated SERVICE lane, 22 real segments from the live
+mic, and the 35B's summary describing the actual conversation —
+with the no-named-owner finding recorded honestly. Two independent
+end-to-end runs (the finisher's fully green; the orchestrator's
+green with one transient deferred refusal re-driven to ready
+through the production queue). The fourteen-take ladder produced
+defects #7–#13 — including live capture broken for EVERY fresh
+install and the fire wiring dead since HS-136-01 — all fixed and
+pinned; the close-counsel ADDENDUM ratified every delta (zero
+must/should-fix). Post-ladder sweep: 11 inherited + 5 dispositioned
+= zero unresolved branch-new; web checker baseline-exact verbatim.
+THIRTEEN latent defects for the phase. final-summary.md is the exit
+record. The branch HOLDS for the owner: shot verdict + merge word.
+Earlier — **6/7.** HS-151-07 (the fired-session admission) is DONE — the
 attended leg's four-defect ladder ends at bedrock, fixed: the
 meeting admission pre-checks the speech head (counsel-ruled,
 ~30 lines, one file, bundle service untouched); absent → honest
@@ -284,6 +300,21 @@ real latent defects before a single story ran.
   assume the SPEECH MIGRATION creates the head on configured
   HOMEs — the builder must find/trigger that mechanism for the
   attended HOME or surface the gap honestly.
+
+- **2026-08-30 — close-counsel ADDENDUM (the ladder deltas):
+  RATIFY-WITH-CONCERNS, ZERO must-fix, ZERO should-fix.** All
+  seven ladder fixes ruled correctly jointed and pinned: the
+  conductor contract (the guarded __self__ pending-seam reach
+  SOUND), the SERVICE lane LAWFUL under the bounded-delegation
+  ruling and the 131/143 authority laws (no extra capabilities, no
+  extra egress vs an owner session), the HS-151-07 pins accounted
+  (P1-P4 explicit, P5/P6 proxy-by-green-suite), the finisher's
+  three fixes each at the correct joint (frozen_preload_material
+  mirroring the speech shape; parent_operation_id; the deployment
+  kind params closing defect #6), the DB-path grep CLEAN repo-wide,
+  the stop-handoff routes=0 BENIGN by design. Ledgered: the stale
+  on_start type annotation (cosmetic); the inlined provenance
+  cross-check duplication (maintainability).
 
 ## Risk register
 

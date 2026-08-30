@@ -244,13 +244,18 @@ def main() -> int:
                     raise RuntimeError("no meeting")
                 note(f"meeting finalized: {meeting_id}")
 
-                # 7. REAL intel: wait for the production queue + .43.
+                # 7. REAL intel: drive the production queue (same pattern as
+                #    story-03-rig.py) then wait for .43 to finish.
+                from holdspeak.intel_queue import drain_intel_queue
+                intel_drained = drain_intel_queue(max_jobs=10)
+                note(f"drain_intel_queue: {intel_drained} jobs processed")
                 intel_ready = False
                 deadline = time.time() + 900
                 while time.time() < deadline:
                     detail = api(page, "GET", f"/api/meetings/{meeting_id}")
                     meeting = detail.get("meeting") or detail
-                    status = meeting.get("intel_status")
+                    raw_status = meeting.get("intel_status")
+                    status = raw_status.get("state") if isinstance(raw_status, dict) else raw_status
                     if status == "ready":
                         intel_ready = True
                         break

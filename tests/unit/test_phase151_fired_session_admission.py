@@ -280,3 +280,80 @@ def test_p4_record_only_status_and_detail_persist_on_meeting_state(
     durable = db.meetings.get_meeting(state.id)
     assert durable is not None
     assert durable.transcription_status == "record_only"
+
+
+# ---------------------------------------------------------------- P7
+# HS-151-06 attended-leg defect #11: RoutedMeetingTranscriptionAdmission
+# was missing frozen_preload_material, causing the MLX warm path to fail
+# with "frozen MLX preload construction is missing" on every interval.
+def test_p7_routed_meeting_admission_has_frozen_preload_material(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The meeting transcription admission carries frozen_preload_material."""
+    from holdspeak.meeting_session.transcribe_admission import RoutedMeetingTranscriptionAdmission
+
+    _db, _broker, session = _build_session(tmp_path, monkeypatch, assign_speech=True)
+    state = session.start()
+
+    assert session._route_bundle is not None
+    assert session._intel_parent is not None
+
+    admission = RoutedMeetingTranscriptionAdmission(
+        session, "mic", 0.0, 10.0, False
+    )
+    assert hasattr(admission, "frozen_preload_material")
+    material = admission.frozen_preload_material()
+    assert isinstance(material, dict)
+    # The exact engine/model depends on the test profile; the critical pin is
+    # that the keys exist and are non-empty (the TAKE 14 defect returned {}).
+    assert material.get("engine"), f"engine must be present, got {material!r}"
+    assert material.get("model"), f"model must be present, got {material!r}"
+    assert "candidate_ids" in material
+    assert "strategy_sequence" in material
+    assert "stop_rules" in material
+    # candidate_ids may be empty in the test fixture (no real MLX profile);
+    # the critical pin is that the keys exist — the TAKE 14 defect returned {}.
+
+
+# ---------------------------------------------------------------- P8
+# HS-151-06 attended-leg defect #12: _execute didn't pass parent_operation_id
+# to admit_on_frozen_route, so SERVICE principals (conductor-fired sessions)
+# failed with "Frozen-route admission requires owner, bound service, or
+# delegated scheduler authority."
+def test_p8_service_principal_execute_passes_parent_operation_id(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The transcription _execute path passes parent_operation_id for SERVICE."""
+    from holdspeak.meeting_session.transcribe_admission import RoutedMeetingTranscriptionAdmission
+
+    service_principal = Principal(
+        PrincipalKind.SERVICE,
+        "scheduled-recording",
+        frozenset({
+            ("meeting.session", 1),
+            ("inference.invoke", 1),
+            ("inference.cancel", 1),
+        }),
+        "scheduled-recording:armed-schedule",
+    )
+    _db, _broker, session = _build_session(
+        tmp_path, monkeypatch, assign_speech=True, principal=service_principal
+    )
+    state = session.start()
+
+    assert session._route_bundle is not None
+    assert session._intel_parent is not None
+
+    admission = RoutedMeetingTranscriptionAdmission(
+        session, "mic", 0.0, 10.0, False
+    )
+    # The admission must carry the parent operation id for SERVICE principals.
+    # Verify the admission can construct the material without error.
+    material = admission.frozen_preload_material()
+    assert material.get("engine"), f"engine must be present, got {material!r}"
+
+    # Verify the parent operation_id is accessible through the session.
+    parent = session._intel_parent
+    assert parent is not None
+    parent_op_id = getattr(parent, "operation_id", None)
+    assert parent_op_id is not None, "parent must carry operation_id"

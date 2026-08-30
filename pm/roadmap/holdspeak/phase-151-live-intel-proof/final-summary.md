@@ -18,7 +18,7 @@ genuine intelligence instead of test fixtures. A screenshot of a
 locked-down O365 week goes through the same honesty: a real vision
 model reads it 4/4 and the events ride the rail.
 
-## The six latent defects real metal found (the phase's argument)
+## The thirteen latent defects real metal found (the phase's argument)
 
 | # | Defect | Fate |
 |---|---|---|
@@ -27,10 +27,21 @@ model reads it 4/4 and the events ride the rail.
 | 3 | The snapshot adapter had never met a markdown fence — a real model's PERFECT extraction refused as unreadable_screenshot | FIXED (04): fence-strip per house precedent, three-direction pin |
 | 4 | Multi-window audio import broken in production — every 30s+ recording died on idempotency_payload_mismatch (the legacy admission never learned models are reusable across windows) | FIXED (03): loaded_artifact_reusable on TranscriptionAdmission |
 | 5 | Core intel HARD-FAILED when an optional plugin capability couldn't freeze an assignment — one wired model yielded ZERO intel for every meeting | FIXED (03, focused-counsel-ruled Design A): unassignable meeting.plugin.* members skip WITH the plugin_chain_skipped receipt; core capabilities stay terminal; the binder stays strict |
-| 6 | DeploymentRevision.from_artifact hardcodes kind="this_device" for remote endpoints | RECORDED (ledger) |
+| 6 | DeploymentRevision.from_artifact hardcodes kind="this_device" for remote endpoints | FIXED (06 ladder, #13 below closes it) |
+| 7 | The conductor fire wiring referenced an out-of-scope name since HS-136-01 — every production scheduled-recording fire died on a NameError under a precedence-swallowed guard | FIXED (06): the routes' own contract + the wired-lambda pin |
+| 8 | The lambdas probed runtime-private names the callbacks contract never carried — the fire silently no-opped | FIXED with #7 |
+| 9 | SCHEDULER principals can never hold a parent route bundle — fired recordings captured audio and dropped every transcription interval | FIXED (06): the wake-shaped SERVICE lane + the sealed scheduled-recording@1 policy |
+| 10 | Live sessions could not freeze speech.transcribe on ANY head-less HOME — owner included; fresh-install meetings persisted EMPTY, silently | FIXED (07, focused-counsel-ruled): the admission pre-check + honest record_only |
+| 11 | RoutedMeetingTranscriptionAdmission never implemented frozen_preload_material — every routed meeting transcription interval failed silently | FIXED (06 finisher) + P7/P8 pins |
+| 12 | admit_on_frozen_route call sites omitted parent_operation_id — SERVICE-admitted children refused | FIXED (06 finisher) |
+| 13 | The wire path's remote deployments dressed as this_device (closes #6) + the wire script wrote to a DATABASE THE HUB NEVER OPENS (~/.holdspeak vs DEFAULT_DB_PATH) — the story-03 "cross-process invisibility" demystified | FIXED (06) |
 
-Every one of these lived happily under green seeded tests. That is
-the phase's thesis, proven six times.
+Every one of these lived happily under green seeded tests — and
+the last seven were found by ONE leg: the owner played a YouTube
+1:1 at the machine and the product's entire fired-capture chain
+turned out never to have worked. Fourteen takes descended the
+ladder layer by layer; the fifteenth ran green end-to-end. That is
+the phase's thesis, proven thirteen times.
 
 ## The arc
 
@@ -61,10 +72,18 @@ its first outing.
   tails; sync/push appears in NEITHER rig (grep-verified).
 - Close sweep (both baselines): see evidence-story-06.
 - Close counsel: see the decision log.
-- THE ATTENDED LEG: see evidence-story-06 — the honesty header per
-  counsel M6: simulated meeting (played recording), real capture
-  path (live mic), real transcription (mlx-whisper), real intel
-  (.43).
+- THE ATTENDED LEG, GREEN: 22 real segments of the owner's chosen
+  recording ("Sample one on one meeting with Ms. Rachel Peller and
+  Dr. Peter Bakken") transcribed from the LIVE MIC through the
+  production conductor's fire; the 35B's summary describes the
+  actual conversation (the Wisconsin Early Childhood Association
+  grant; the "color of the day" tradition); one grounded action
+  item; the no-named-owner finding recorded honestly instead of
+  faked. The honesty header on every artifact per counsel M6:
+  simulated meeting (played recording), real capture path (live
+  mic), real transcription (mlx-whisper), real intel (.43).
+  The full fourteen-take forensic ladder is in the phase log and
+  the commit messages — the leg's failures ARE its product.
 
 ## The consolidated ledger (owner-visible)
 
@@ -74,8 +93,8 @@ its first outing.
 | disabled_plugins is dispatch-time only; claim-time planning ignores it (Design A makes the failure mode moot; the setting's semantics stand) | counsel-deferred, ruled at close |
 | project_detector unconditionally in every chain | counsel-deferred, ruled at close |
 | no_assignment terminal at settlement (a later-wired user's errored jobs) | counsel-deferred, ruled at close |
-| The wire-script cross-process DB visibility oddity (worked around in-process; needs a crisp repro) | ledger |
-| DeploymentRevision remote-kind hardcoding (defect #6) | ledger |
+| The stop-handoff "routes=0" observation (live windows execute; displaced work enqueues regardless; deferred processes) | ledger, counsel-addendum question |
+| Live intelligence now runs under the delegated SERVICE lane for fired recordings (the owner armed the schedule) | counsel-addendum question |
 | Action-item identity churn (sha256(task:owner)) + the 8081 server dies on reboot (runbook carries the relaunch line) | carried |
 
 ## Owner gates
