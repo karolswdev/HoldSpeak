@@ -427,6 +427,8 @@ class MeetingIntel:
         *,
         temperature: float,
         max_tokens: int,
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | None = None,
     ) -> "Iterator[Delta]":
         """Yield typed ``Delta`` objects from the active provider.
 
@@ -434,6 +436,12 @@ class MeetingIntel:
         to ``text``, ``delta.reasoning_content`` (when present) maps to
         ``reasoning``, the final ``usage`` chunk maps to ``usage``, then
         ``done``.  Errors become ``error`` deltas.
+
+        When *tools* is provided, ``choice.delta.tool_calls[]`` chunks are
+        parsed (OpenAI streaming shape: index, id on first chunk,
+        function.name on first chunk, function.arguments fragments).
+        Per-fragment ``tool_call_delta`` deltas and one finalized
+        ``tool_calls`` delta (before ``done``) are emitted.
 
         OpenAI SDK shape: ``stream_options={"include_usage": True}`` requests
         a final chunk whose ``usage`` field carries the token counts (not all
@@ -446,14 +454,22 @@ class MeetingIntel:
 
         self._ensure_model_loaded()
 
+        # Tool-call accumulator: index -> {id, name, arguments_parts}.
+        tc_accum: dict[int, dict[str, Any]] = {}
+
         if self._active_provider == "local":
             assert self._llm is not None
-            stream_iter = self._llm.create_chat_completion(
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                stream=True,
-            )
+            local_kwargs: dict[str, Any] = {
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "stream": True,
+            }
+            if tools is not None:
+                local_kwargs["tools"] = tools
+            if tool_choice is not None:
+                local_kwargs["tool_choice"] = tool_choice
+            stream_iter = self._llm.create_chat_completion(**local_kwargs)
             usage_seen = False
             for chunk in stream_iter:
                 try:
@@ -469,6 +485,37 @@ class MeetingIntel:
                     reasoning = delta_obj.get("reasoning_content")
                     if reasoning:
                         yield Delta(kind="reasoning", text=str(reasoning))
+                    # Tool calls (llama.cpp / Qwen emits OpenAI-format
+                    # tool_calls when tools is passed).
+                    raw_tcs = delta_obj.get("tool_calls")
+                    if raw_tcs and isinstance(raw_tcs, list):
+                        for tc_item in raw_tcs:
+                            if not isinstance(tc_item, dict):
+                                continue
+                            idx = tc_item.get("index", 0)
+                            tc_id = tc_item.get("id")
+                            fn = tc_item.get("function") or {}
+                            fn_name = fn.get("name")
+                            fn_args = fn.get("arguments", "")
+                            # Defensively handle complete JSON object.
+                            if not isinstance(fn_args, str):
+                                import json as _json
+                                fn_args = _json.dumps(fn_args)
+                            if idx not in tc_accum:
+                                tc_accum[idx] = {"id": tc_id or "", "name": fn_name or "", "arguments_parts": []}
+                            else:
+                                if tc_id:
+                                    tc_accum[idx]["id"] = tc_id
+                                if fn_name:
+                                    tc_accum[idx]["name"] = fn_name
+                            if fn_args:
+                                tc_accum[idx]["arguments_parts"].append(fn_args)
+                            yield Delta(kind="tool_call_delta", meta={
+                                "index": idx,
+                                "id": tc_id or "",
+                                "name": fn_name or "",
+                                "arguments_fragment": fn_args,
+                            })
                     # llama.cpp: usage/timings on the last chunk.
                     usage_data = chunk.get("usage")
                     timings = chunk.get("timings")
@@ -483,6 +530,12 @@ class MeetingIntel:
                             yield Delta(kind="usage", meta=meta)
                 except Exception:
                     continue
+            # Emit finalized tool_calls before done.
+            if tc_accum:
+                yield Delta(kind="tool_calls", meta={"tool_calls": [
+                    {"id": entry["id"], "name": entry["name"], "arguments": "".join(entry["arguments_parts"])}
+                    for entry in (tc_accum[i] for i in sorted(tc_accum))
+                ]})
             yield Delta(kind="done")
             return
 
@@ -497,6 +550,10 @@ class MeetingIntel:
             "stream_options": {"include_usage": True},
             **_token_budget_kwargs(endpoint_key, max_tokens),
         }
+        if tools is not None:
+            base_kwargs["tools"] = tools
+        if tool_choice is not None:
+            base_kwargs["tool_choice"] = tool_choice
         if self.cloud_reasoning_effort:
             base_kwargs["reasoning_effort"] = self.cloud_reasoning_effort
         if self.cloud_store:
@@ -553,9 +610,44 @@ class MeetingIntel:
                 reasoning = getattr(delta_obj, "reasoning_content", None)
                 if reasoning:
                     yield Delta(kind="reasoning", text=str(reasoning))
+
+                # Tool calls (OpenAI streaming shape).
+                raw_tcs = getattr(delta_obj, "tool_calls", None)
+                if raw_tcs:
+                    for tc_item in raw_tcs:
+                        idx = getattr(tc_item, "index", 0)
+                        tc_id = getattr(tc_item, "id", None) or ""
+                        fn = getattr(tc_item, "function", None)
+                        fn_name = getattr(fn, "name", None) or "" if fn else ""
+                        fn_args = getattr(fn, "arguments", None) or "" if fn else ""
+                        # Defensively handle complete JSON object.
+                        if not isinstance(fn_args, str):
+                            import json as _json
+                            fn_args = _json.dumps(fn_args)
+                        if idx not in tc_accum:
+                            tc_accum[idx] = {"id": tc_id, "name": fn_name, "arguments_parts": []}
+                        else:
+                            if tc_id:
+                                tc_accum[idx]["id"] = tc_id
+                            if fn_name:
+                                tc_accum[idx]["name"] = fn_name
+                        if fn_args:
+                            tc_accum[idx]["arguments_parts"].append(fn_args)
+                        yield Delta(kind="tool_call_delta", meta={
+                            "index": idx,
+                            "id": tc_id,
+                            "name": fn_name,
+                            "arguments_fragment": fn_args,
+                        })
             except Exception:
                 continue
 
+        # Emit finalized tool_calls before done.
+        if tc_accum:
+            yield Delta(kind="tool_calls", meta={"tool_calls": [
+                {"id": entry["id"], "name": entry["name"], "arguments": "".join(entry["arguments_parts"])}
+                for entry in (tc_accum[i] for i in sorted(tc_accum))
+            ]})
         yield Delta(kind="done")
 
     def run_prompt_stream(
@@ -564,12 +656,18 @@ class MeetingIntel:
         messages: list[dict[str, Any]],
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | None = None,
     ) -> "Iterator[Delta]":
         """Stream typed ``Delta`` objects from a freeform prompt.
 
         The streaming twin of ``run_prompt_messages``.  The thread service
         adapter (HS-151-04) calls this; it does not assemble system prompts
         itself -- the caller pre-builds the message array.
+
+        When *tools*/*tool_choice* are provided they are forwarded to the
+        provider; the stream may then carry ``tool_call_delta`` and
+        ``tool_calls`` deltas (see ``Delta`` docstring for the shape).
         """
         from ..kernel.inference_stream import Delta
 
@@ -578,6 +676,8 @@ class MeetingIntel:
                 messages,
                 temperature=self.temperature if temperature is None else temperature,
                 max_tokens=self.max_tokens if max_tokens is None else max_tokens,
+                tools=tools,
+                tool_choice=tool_choice,
             )
         except (MeetingIntelError, *CONTROL_SIGNALS):
             raise

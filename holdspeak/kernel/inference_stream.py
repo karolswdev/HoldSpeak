@@ -20,12 +20,21 @@ class Delta:
     """One streaming event from the provider.
 
     kind:
-        ``"text"``      — a content token (``text`` carries it).
-        ``"reasoning"`` — a reasoning/chain-of-thought token.
-        ``"usage"``     — terminal usage stats (``meta`` carries
-                          ``prompt_tokens``, ``completion_tokens``, etc.).
-        ``"done"``      — the stream ended normally (``text`` is empty).
-        ``"error"``     — the provider raised (``text`` carries the message).
+        ``"text"``            — a content token (``text`` carries it).
+        ``"reasoning"``       — a reasoning/chain-of-thought token.
+        ``"tool_call_delta"`` — one tool-call streaming fragment (``meta``
+                                carries ``index``, ``id`` (first chunk only),
+                                ``name`` (first chunk only), and
+                                ``arguments_fragment``).
+        ``"tool_calls"``      — finalized tool-call list, emitted once at
+                                stream end when any tool call was accumulated,
+                                BEFORE ``done`` (``meta["tool_calls"]`` is
+                                ``[{id, name, arguments}, ...]`` where
+                                ``arguments`` is a JSON string).
+        ``"usage"``           — terminal usage stats (``meta`` carries
+                                ``prompt_tokens``, ``completion_tokens``, etc.).
+        ``"done"``            — the stream ended normally (``text`` is empty).
+        ``"error"``           — the provider raised (``text`` carries the message).
     """
     kind: str
     text: str = ""

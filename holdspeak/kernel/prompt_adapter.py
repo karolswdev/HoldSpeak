@@ -94,6 +94,11 @@ class StreamingPromptAdapter:
         path when the engine lacks ``run_prompt_stream``, yielding one text
         Delta with the complete output followed by a done Delta (HS-151-04:
         graceful degradation for engines injected via ``_engine_factory``).
+
+        When *tools*/*tool_choice* are present in the payload they are
+        forwarded to the engine; the sealed ``dispatch`` return shape
+        stays ``{output, provider, model}`` -- tool_calls travel on the
+        Delta stream only (same rule as usage).
         """
         from .inference_stream import Delta
 
@@ -106,11 +111,17 @@ class StreamingPromptAdapter:
             yield Delta(kind="done")
             return
 
-        for delta in engine.run_prompt_stream(
-            messages=payload["messages"],
-            temperature=payload.get("temperature"),
-            max_tokens=payload.get("max_tokens"),
-        ):
+        stream_kwargs: dict[str, Any] = {
+            "messages": payload["messages"],
+            "temperature": payload.get("temperature"),
+            "max_tokens": payload.get("max_tokens"),
+        }
+        if payload.get("tools") is not None:
+            stream_kwargs["tools"] = payload["tools"]
+        if payload.get("tool_choice") is not None:
+            stream_kwargs["tool_choice"] = payload["tool_choice"]
+
+        for delta in engine.run_prompt_stream(**stream_kwargs):
             if self._is_cancelled(cancellation):
                 return
             yield delta

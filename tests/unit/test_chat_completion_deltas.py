@@ -373,3 +373,358 @@ def test_existing_str_stream_untouched() -> None:
     # Existing caller gets plain strings.
     assert all(isinstance(p, str) for p in pieces)
     assert pieces == ["Hello", " world"]
+
+
+# ---------------------------------------------------------------- tool-call helpers
+
+
+def _fake_openai_tool_call_chunk(
+    *,
+    index: int = 0,
+    tool_call_id: str | None = None,
+    name: str | None = None,
+    arguments: str = "",
+    content: str | None = None,
+    finish_reason: str | None = None,
+) -> SimpleNamespace:
+    """Simulate an OpenAI SDK ChatCompletionChunk with tool_calls."""
+    tc_fn = SimpleNamespace(name=name, arguments=arguments)
+    tc = SimpleNamespace(index=index, id=tool_call_id, function=tc_fn)
+    delta = SimpleNamespace(
+        content=content,
+        reasoning_content=None,
+        tool_calls=[tc],
+    )
+    choice = SimpleNamespace(delta=delta, finish_reason=finish_reason)
+    return SimpleNamespace(choices=[choice], usage=None)
+
+
+def _fake_llamacpp_tool_call_chunk(
+    *,
+    index: int = 0,
+    tool_call_id: str | None = None,
+    name: str | None = None,
+    arguments: str | dict = "",
+) -> dict[str, Any]:
+    """Simulate a llama.cpp streaming chunk with tool_calls (dict-based)."""
+    tc: dict[str, Any] = {"index": index, "function": {}}
+    if tool_call_id is not None:
+        tc["id"] = tool_call_id
+    if name is not None:
+        tc["function"]["name"] = name
+    tc["function"]["arguments"] = arguments
+    return {"choices": [{"delta": {"tool_calls": [tc]}}]}
+
+
+# ---------------------------------------------------------------- tool-call tests
+
+
+def test_openai_two_tool_calls_interleaved_by_index() -> None:
+    """OpenAI-shape: two tool calls interleaved by index, accumulated correctly."""
+    from holdspeak.intel.engine import MeetingIntel
+
+    chunks = [
+        # Tool call 0 starts.
+        _fake_openai_tool_call_chunk(index=0, tool_call_id="call_abc", name="get_weather", arguments='{"lo'),
+        _fake_openai_tool_call_chunk(index=0, arguments='cation": "NYC"}'),
+        # Tool call 1 starts while 0 is still going.
+        _fake_openai_tool_call_chunk(index=1, tool_call_id="call_def", name="get_time", arguments='{"tz"'),
+        _fake_openai_tool_call_chunk(index=1, arguments=': "UTC"}'),
+        # Final usage chunk.
+        SimpleNamespace(
+            choices=[],
+            usage=SimpleNamespace(prompt_tokens=30, completion_tokens=20, total_tokens=50),
+        ),
+    ]
+
+    engine = MeetingIntel.__new__(MeetingIntel)
+    engine._active_provider = "cloud"
+    engine.cloud_model = "test-model"
+    engine.cloud_base_url = "http://localhost:8080"
+    engine.cloud_reasoning_effort = None
+    engine.cloud_store = False
+    engine.temperature = 0.7
+    engine.max_tokens = 1024
+    engine._openai_client = MagicMock()
+    engine._remote_completion = MagicMock(return_value=iter(chunks))
+    engine._ensure_model_loaded = lambda: None
+
+    deltas = list(engine._chat_completion_deltas(
+        [{"role": "user", "content": "weather and time"}],
+        temperature=0.7,
+        max_tokens=1024,
+        tools=[{"type": "function", "function": {"name": "get_weather"}}],
+    ))
+
+    # tool_call_delta deltas.
+    tc_deltas = [d for d in deltas if d.kind == "tool_call_delta"]
+    assert len(tc_deltas) == 4
+    assert tc_deltas[0].meta["index"] == 0
+    assert tc_deltas[0].meta["id"] == "call_abc"
+    assert tc_deltas[0].meta["name"] == "get_weather"
+    assert tc_deltas[0].meta["arguments_fragment"] == '{"lo'
+    assert tc_deltas[2].meta["index"] == 1
+    assert tc_deltas[2].meta["id"] == "call_def"
+    assert tc_deltas[2].meta["name"] == "get_time"
+
+    # Finalized tool_calls delta.
+    tc_finals = [d for d in deltas if d.kind == "tool_calls"]
+    assert len(tc_finals) == 1
+    tool_calls = tc_finals[0].meta["tool_calls"]
+    assert len(tool_calls) == 2
+    assert tool_calls[0]["id"] == "call_abc"
+    assert tool_calls[0]["name"] == "get_weather"
+    assert tool_calls[0]["arguments"] == '{"location": "NYC"}'
+    assert tool_calls[1]["id"] == "call_def"
+    assert tool_calls[1]["name"] == "get_time"
+    assert tool_calls[1]["arguments"] == '{"tz": "UTC"}'
+
+    # tool_calls is before done.
+    assert deltas[-1].kind == "done"
+    assert deltas[-2].kind == "tool_calls" or deltas[-2].kind == "usage"
+
+
+def test_llamacpp_single_tool_call() -> None:
+    """llama.cpp-shape: single tool call with dict-based chunks."""
+    from holdspeak.intel.engine import MeetingIntel
+
+    chunks = [
+        _fake_llamacpp_tool_call_chunk(
+            index=0,
+            tool_call_id="call_local",
+            name="search",
+            arguments='{"query": "test"}',
+        ),
+        _fake_llamacpp_chunk(
+            usage={"prompt_tokens": 10, "completion_tokens": 5},
+        ),
+    ]
+
+    engine = MeetingIntel.__new__(MeetingIntel)
+    engine._active_provider = "local"
+    engine._llm = MagicMock()
+    engine._llm.create_chat_completion = MagicMock(return_value=iter(chunks))
+    engine._ensure_model_loaded = lambda: None
+
+    deltas = list(engine._chat_completion_deltas(
+        [{"role": "user", "content": "search for test"}],
+        temperature=0.7,
+        max_tokens=1024,
+        tools=[{"type": "function", "function": {"name": "search"}}],
+    ))
+
+    tc_deltas = [d for d in deltas if d.kind == "tool_call_delta"]
+    assert len(tc_deltas) == 1
+    assert tc_deltas[0].meta["name"] == "search"
+    assert tc_deltas[0].meta["arguments_fragment"] == '{"query": "test"}'
+
+    tc_finals = [d for d in deltas if d.kind == "tool_calls"]
+    assert len(tc_finals) == 1
+    assert tc_finals[0].meta["tool_calls"][0]["arguments"] == '{"query": "test"}'
+
+    # Verify tools were forwarded to create_chat_completion.
+    call_kwargs = engine._llm.create_chat_completion.call_args
+    assert call_kwargs[1].get("tools") is not None or call_kwargs.kwargs.get("tools") is not None
+
+    assert deltas[-1].kind == "done"
+
+
+def test_llamacpp_tool_call_arguments_as_json_object() -> None:
+    """llama.cpp defensively handles arguments as a complete JSON object (not string)."""
+    from holdspeak.intel.engine import MeetingIntel
+
+    chunks = [
+        _fake_llamacpp_tool_call_chunk(
+            index=0,
+            tool_call_id="call_obj",
+            name="lookup",
+            arguments={"key": "value"},  # dict, not string
+        ),
+    ]
+
+    engine = MeetingIntel.__new__(MeetingIntel)
+    engine._active_provider = "local"
+    engine._llm = MagicMock()
+    engine._llm.create_chat_completion = MagicMock(return_value=iter(chunks))
+    engine._ensure_model_loaded = lambda: None
+
+    deltas = list(engine._chat_completion_deltas(
+        [{"role": "user", "content": "lookup"}],
+        temperature=0.7,
+        max_tokens=1024,
+        tools=[{"type": "function", "function": {"name": "lookup"}}],
+    ))
+
+    tc_finals = [d for d in deltas if d.kind == "tool_calls"]
+    assert len(tc_finals) == 1
+    import json
+    # Should be valid JSON string.
+    parsed = json.loads(tc_finals[0].meta["tool_calls"][0]["arguments"])
+    assert parsed == {"key": "value"}
+
+
+def test_text_then_tool_calls() -> None:
+    """OpenAI-shape: text content followed by tool calls in the same stream."""
+    from holdspeak.intel.engine import MeetingIntel
+
+    chunks = [
+        _fake_openai_chunk(content="Let me help with that."),
+        _fake_openai_tool_call_chunk(index=0, tool_call_id="call_123", name="do_thing", arguments='{"x": 1}'),
+    ]
+
+    engine = MeetingIntel.__new__(MeetingIntel)
+    engine._active_provider = "cloud"
+    engine.cloud_model = "test-model"
+    engine.cloud_base_url = "http://localhost:8080"
+    engine.cloud_reasoning_effort = None
+    engine.cloud_store = False
+    engine.temperature = 0.7
+    engine.max_tokens = 1024
+    engine._openai_client = MagicMock()
+    engine._remote_completion = MagicMock(return_value=iter(chunks))
+    engine._ensure_model_loaded = lambda: None
+
+    deltas = list(engine._chat_completion_deltas(
+        [{"role": "user", "content": "do it"}],
+        temperature=0.7,
+        max_tokens=1024,
+        tools=[{"type": "function", "function": {"name": "do_thing"}}],
+    ))
+
+    text_deltas = [d for d in deltas if d.kind == "text"]
+    assert len(text_deltas) == 1
+    assert text_deltas[0].text == "Let me help with that."
+
+    tc_finals = [d for d in deltas if d.kind == "tool_calls"]
+    assert len(tc_finals) == 1
+    assert tc_finals[0].meta["tool_calls"][0]["name"] == "do_thing"
+
+    assert deltas[-1].kind == "done"
+
+
+def test_no_tools_request_unchanged() -> None:
+    """When no tools are passed, stream behaves identically to before."""
+    from holdspeak.intel.engine import MeetingIntel
+
+    chunks = [
+        _fake_openai_chunk(content="normal response"),
+    ]
+
+    engine = MeetingIntel.__new__(MeetingIntel)
+    engine._active_provider = "cloud"
+    engine.cloud_model = "test-model"
+    engine.cloud_base_url = "http://localhost:8080"
+    engine.cloud_reasoning_effort = None
+    engine.cloud_store = False
+    engine.temperature = 0.7
+    engine.max_tokens = 1024
+    engine._openai_client = MagicMock()
+    engine._remote_completion = MagicMock(return_value=iter(chunks))
+    engine._ensure_model_loaded = lambda: None
+
+    deltas = list(engine._chat_completion_deltas(
+        [{"role": "user", "content": "hi"}],
+        temperature=0.7,
+        max_tokens=1024,
+        # No tools parameter.
+    ))
+
+    # No tool_call_delta or tool_calls deltas.
+    assert not any(d.kind.startswith("tool_call") for d in deltas)
+    text_deltas = [d for d in deltas if d.kind == "text"]
+    assert len(text_deltas) == 1
+    assert text_deltas[0].text == "normal response"
+    assert deltas[-1].kind == "done"
+
+
+def test_streaming_prompt_adapter_forwards_tools() -> None:
+    """StreamingPromptAdapter.dispatch_stream forwards tools/tool_choice to the engine."""
+    import threading
+    from holdspeak.kernel.prompt_adapter import StreamingPromptAdapter
+    from holdspeak.kernel.inference_stream import Delta
+
+    fake_deltas = [
+        Delta(kind="tool_call_delta", meta={"index": 0, "id": "c1", "name": "fn", "arguments_fragment": '{"a":1}'}),
+        Delta(kind="tool_calls", meta={"tool_calls": [{"id": "c1", "name": "fn", "arguments": '{"a":1}'}]}),
+        Delta(kind="done"),
+    ]
+
+    engine = MagicMock()
+    engine.run_prompt_stream = MagicMock(return_value=iter(fake_deltas))
+
+    adapter = StreamingPromptAdapter()
+    payload = {
+        "messages": [{"role": "user", "content": "use tools"}],
+        "tools": [{"type": "function", "function": {"name": "fn"}}],
+        "tool_choice": "auto",
+    }
+    cancellation = threading.Event()
+
+    result = list(adapter.dispatch_stream(engine, payload, cancellation))
+    assert len(result) == 3
+    assert result[0].kind == "tool_call_delta"
+    assert result[1].kind == "tool_calls"
+    assert result[2].kind == "done"
+
+    # Verify tools/tool_choice were forwarded.
+    call_kwargs = engine.run_prompt_stream.call_args
+    assert call_kwargs.kwargs.get("tools") is not None
+    assert call_kwargs.kwargs.get("tool_choice") == "auto"
+
+
+def test_streaming_prompt_adapter_dispatch_sealed_output() -> None:
+    """StreamingPromptAdapter.dispatch returns sealed {output, provider, model} -- no tool_calls."""
+    import threading
+    from holdspeak.kernel.prompt_adapter import StreamingPromptAdapter
+
+    engine = MagicMock()
+    engine.run_prompt_messages = MagicMock(return_value="the answer")
+    engine.active_provider = "cloud"
+    engine.active_model = "test-model"
+
+    adapter = StreamingPromptAdapter()
+    payload = {
+        "messages": [{"role": "user", "content": "hi"}],
+        "tools": [{"type": "function", "function": {"name": "fn"}}],
+    }
+    cancellation = threading.Event()
+
+    result = adapter.dispatch(engine, payload, cancellation)
+    assert set(result.keys()) == {"output", "provider", "model"}
+    assert "tool_calls" not in result
+
+
+def test_openai_finish_reason_tool_calls_tolerated() -> None:
+    """Providers that emit finish_reason='tool_calls' are handled correctly."""
+    from holdspeak.intel.engine import MeetingIntel
+
+    chunks = [
+        _fake_openai_tool_call_chunk(
+            index=0, tool_call_id="call_fr", name="action",
+            arguments='{"done": true}', finish_reason="tool_calls",
+        ),
+    ]
+
+    engine = MeetingIntel.__new__(MeetingIntel)
+    engine._active_provider = "cloud"
+    engine.cloud_model = "test-model"
+    engine.cloud_base_url = "http://localhost:8080"
+    engine.cloud_reasoning_effort = None
+    engine.cloud_store = False
+    engine.temperature = 0.7
+    engine.max_tokens = 1024
+    engine._openai_client = MagicMock()
+    engine._remote_completion = MagicMock(return_value=iter(chunks))
+    engine._ensure_model_loaded = lambda: None
+
+    deltas = list(engine._chat_completion_deltas(
+        [{"role": "user", "content": "act"}],
+        temperature=0.7,
+        max_tokens=1024,
+        tools=[{"type": "function", "function": {"name": "action"}}],
+    ))
+
+    tc_finals = [d for d in deltas if d.kind == "tool_calls"]
+    assert len(tc_finals) == 1
+    assert tc_finals[0].meta["tool_calls"][0]["name"] == "action"
+    assert deltas[-1].kind == "done"
