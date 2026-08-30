@@ -1174,6 +1174,8 @@ function ThreadPulloutInner({
             void handleBranch(messageId, "");
           }}
           onNewThread={handleNewThread}
+          onModeSelect={(recipeId) => void setMode(threadId, recipeId)}
+          currentMode={detail.thread?.mode ?? null}
           streaming={isStreaming}
           lastAssistantId={lastAssistant?.id ?? null}
           restoreFocus={restoreFocus}

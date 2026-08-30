@@ -77,6 +77,14 @@ notes:
       Focus on decisions made, commitments moved, and open questions.
       One paragraph per topic, no filler.
       End with what needs attention next week.
+  - id: hs-seed-prompt-one-on-one-prep
+    title: 1:1 prep
+    tags: [prompt]
+    body_markdown: |
+      Prepare for my next 1:1.
+      List open commitments, recent decisions that need follow-up,
+      and any blockers worth raising.
+      Keep it to three sections, one paragraph each.
 
 recipes:
   - id: hs-seed-mode-desk

@@ -904,6 +904,20 @@
   line-height: 1;
 }
 
+/* System row (in-flow slash command feedback, HS-153-02) */
+.thread-system-row {
+  padding: 4px 12px;
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--text-muted, #888);
+  border-top: 1px solid var(--border, rgba(128, 128, 128, 0.15));
+}
+
+.thread-system-row-text {
+  display: block;
+  line-height: 1.3;
+}
+
 /* Mode badge in the pullout head */
 .thread-mode-badge {
   display: inline-flex;

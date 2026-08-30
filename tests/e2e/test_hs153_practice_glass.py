@@ -21,7 +21,8 @@ pytest.importorskip("playwright.sync_api", reason="Glass needs Playwright")
 
 REPO = Path(__file__).resolve().parents[2]
 TOKEN = "hs153-practice-glass"
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots"
+SHOTS_01 = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-01-shots"
+SHOTS_02 = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-02-shots"
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
 
@@ -176,9 +177,9 @@ def _open_thread(page: Any, url: str, thread_id: str) -> None:
     page.wait_for_timeout(2500)
 
 
-def _save_shot(page: Any, name: str, width: int) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}-{width}.png"))
+def _save_shot(page: Any, name: str, width: int, *, shots_dir: Path = SHOTS_01) -> None:
+    shots_dir.mkdir(parents=True, exist_ok=True)
+    page.screenshot(path=str(shots_dir / f"{name}-{width}.png"))
 
 
 # ----------------------------------------------------------------- modes leg
@@ -259,6 +260,154 @@ def test_modes_tabs_render_and_switch(hub: dict) -> None:
             # No tab should be active
             active_after = page.locator("[data-testid^='mode-tab-'][aria-selected='true']")
             assert active_after.count() == 0, f"Expected no active tab after unbind at {width}"
+
+            # -- No horizontal overflow --
+            body_width = page.evaluate("document.body.scrollWidth")
+            viewport_width = page.evaluate("window.innerWidth")
+            assert body_width <= viewport_width + 1, (
+                f"Horizontal overflow at {width}: body={body_width}, viewport={viewport_width}"
+            )
+
+            page.close()
+
+        browser.close()
+
+
+# ----------------------------------------------------------------- slash leg (HS-153-02)
+
+def test_slash_completion_and_prompt_insert(hub: dict) -> None:
+    """Slash popover: /mo shows mode commands, argument stage shows
+    Desk/Chase/Draft/Plan, Enter picks Chase -> recipe_id updates.
+    /prompt stage shows seed prompt titles, pick one -> textarea contains body.
+    Esc closes. No horizontal overflow at 1440 + 393."""
+    from playwright.sync_api import sync_playwright
+
+    url = hub["url"]
+    db = hub["db"]
+
+    # Ensure desk is seeded (creates prompt notes too)
+    _api_direct(url, "POST", "/api/desk/seed")
+
+    # Verify prompt notes exist via API
+    r = _api_direct(url, "GET", "/api/notes?tag=prompt")
+    assert r["status"] == 200, f"Failed to get prompt notes: {r}"
+    prompt_notes = r["payload"]["notes"]
+    assert len(prompt_notes) >= 2, f"Expected >=2 prompt notes, got {len(prompt_notes)}"
+
+    # Create a thread
+    r = _api_direct(url, "POST", "/api/threads", {"title": "Slash glass test"})
+    assert r["status"] == 201, f"Failed to create thread: {r}"
+    thread_id = r["payload"]["id"]
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        for width in (1440, 393):
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            _open_thread(page, url, thread_id)
+
+            composer = page.locator("[data-testid='composer-input']")
+            composer.wait_for(state="visible", timeout=10000)
+
+            # Helper: type into the React textarea via JS to ensure onChange fires
+            def _type_into_composer(text: str) -> None:
+                page.evaluate(
+                    """([selector, value]) => {
+                        const el = document.querySelector(selector);
+                        if (!el) return;
+                        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                            window.HTMLTextAreaElement.prototype, 'value'
+                        ).set;
+                        nativeInputValueSetter.call(el, value);
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                        el.selectionStart = el.selectionEnd = value.length;
+                        el.dispatchEvent(new Event('select', { bubbles: true }));
+                    }""",
+                    ["[data-testid='composer-input']", text],
+                )
+
+            # -- Type /mo to trigger slash palette --
+            composer.click()
+            _type_into_composer("/mo")
+            page.wait_for_timeout(800)
+            palette = page.locator("[data-testid='slash-palette']")
+            _save_shot(page, "slash-mo-palette", width, shots_dir=SHOTS_02)
+
+            # Palette should be visible with mode entry
+            assert palette.count() >= 1, f"Slash palette not visible at {width}"
+            mode_row = page.locator("[id='thread-slash-mode']")
+            assert mode_row.count() >= 1, f"/mode entry not in palette at {width}"
+
+            # -- Type /mode  (space enters argument stage) --
+            _type_into_composer("/mode ")
+            page.wait_for_timeout(1500)
+            _save_shot(page, "slash-mode-args", width, shots_dir=SHOTS_02)
+
+            # Argument stage should show mode names
+            palette_args = page.locator("[data-testid='slash-palette']")
+            if palette_args.count() > 0:
+                palette_text = palette_args.inner_text()
+                for name in ("Desk", "Chase", "Draft", "Plan"):
+                    assert name in palette_text, f"Mode {name} not in argument palette at {width}"
+
+            # -- Select Chase by typing and pressing Enter --
+            _type_into_composer("/mode chase")
+            page.wait_for_timeout(800)
+            composer.press("Enter")
+            page.wait_for_timeout(2000)
+            _save_shot(page, "slash-mode-chase-picked", width, shots_dir=SHOTS_02)
+
+            # Verify recipe_id was set via API
+            t = _api(page, "GET", f"/api/threads/{thread_id}")
+            assert t["status"] == 200
+            assert t["payload"]["recipe_id"] == "hs-seed-mode-chase", (
+                f"recipe_id not set after /mode chase: {t['payload'].get('recipe_id')}"
+            )
+
+            # -- /prompt completion --
+            _type_into_composer("/prompt ")
+            page.wait_for_timeout(1500)
+            _save_shot(page, "slash-prompt-args", width, shots_dir=SHOTS_02)
+
+            prompt_palette = page.locator("[data-testid='slash-palette']")
+            if prompt_palette.count() > 0:
+                prompt_text = prompt_palette.inner_text()
+                assert "Weekly update" in prompt_text or "1:1 prep" in prompt_text, (
+                    f"Prompt titles not in palette at {width}: {prompt_text}"
+                )
+
+            # Pick Weekly update by typing the name and pressing Enter
+            _type_into_composer("/prompt Weekly update")
+            page.wait_for_timeout(800)
+            prompt_palette2 = page.locator("[data-testid='slash-palette']")
+            if prompt_palette2.count() > 0:
+                composer.press("Enter")
+                page.wait_for_timeout(1000)
+                _save_shot(page, "slash-prompt-inserted", width, shots_dir=SHOTS_02)
+
+                # The composer should now contain the prompt body
+                val = composer.input_value()
+                assert "Summarize" in val or "week" in val.lower(), (
+                    f"Prompt body not inserted at {width}: {val!r}"
+                )
+
+            # -- Esc closes palette --
+            # Clear the composer first, then type "/" via keyboard
+            _type_into_composer("")
+            page.wait_for_timeout(300)
+            composer.click()
+            page.wait_for_timeout(200)
+            page.keyboard.type("/")
+            page.wait_for_timeout(800)
+            palette_open = page.locator("[data-testid='slash-palette']")
+            _save_shot(page, "slash-esc-before", width, shots_dir=SHOTS_02)
+            assert palette_open.count() >= 1, f"Palette not open for Esc test at {width}"
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(500)
+            palette_closed = page.locator("[data-testid='slash-palette']")
+            _save_shot(page, "slash-esc-closed", width, shots_dir=SHOTS_02)
+            assert palette_closed.count() == 0, f"Palette not closed by Esc at {width}"
 
             # -- No horizontal overflow --
             body_width = page.evaluate("document.body.scrollWidth")

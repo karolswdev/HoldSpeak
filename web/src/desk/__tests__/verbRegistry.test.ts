@@ -5,9 +5,10 @@
  * died), the floor verbs exist, and the keymap's bound set is exactly
  * the verbs that declare a key. */
 import { describe, expect, it } from "vitest";
-import { VERBS, menuVerbs, verbLabel, verbsFor } from "../verbRegistry";
+import { VERBS, menuVerbs, verbLabel, verbsFor, verbById } from "../verbRegistry";
 import { DESK_TOOLS } from "../tools";
 import { registerSurface } from "../shell";
+import { THREAD_SLASH_COMMANDS } from "../components/ThreadComposer";
 
 const CTX = { selectedRef: null };
 
@@ -19,7 +20,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
     expect(ids).toContain("object.ask");
     for (const v of VERBS) {
       expect(verbLabel(v, CTX).length).toBeGreaterThan(0);
-      expect(["floor", "object", "go", "window", "system"]).toContain(v.scope);
+      expect(["floor", "object", "go", "window", "system", "thread"]).toContain(v.scope);
       if (v.menu) expect(["desk", "object", "go", "window"]).toContain(v.menu);
     }
   });
@@ -109,5 +110,13 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
   it("the view toggle names the OTHER view", () => {
     const toggle = VERBS.find((v) => v.id === "desk.toggle-view")!;
     expect(["List view", "Spatial view"]).toContain(verbLabel(toggle, CTX));
+  });
+
+  it("every THREAD_SLASH_COMMANDS entry has a registered verb id (HS-153-02)", () => {
+    for (const cmd of THREAD_SLASH_COMMANDS) {
+      const verb = verbById(cmd.verbId);
+      expect(verb, `verb ${cmd.verbId} not found for slash command /${cmd.id}`).toBeDefined();
+      expect(verb!.scope).toBe("thread");
+    }
   });
 });

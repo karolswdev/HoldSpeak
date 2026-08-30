@@ -20,7 +20,7 @@ Modes, prompts, guardrails, annotations, compaction and Door-backed todo on the 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-153-01 | Modes as recipes (kind, seeds, allow-lists, mode tabs) | done | [story-01-modes](./story-01-modes.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-153-02 | Prompts and slash verbs (notes tagged prompt, arguments) | backlog | [story-02-prompts-slash](./story-02-prompts-slash.md) | - |
+| HS-153-02 | Prompts and slash verbs (notes tagged prompt, arguments) | done | [story-02-prompts-slash](./story-02-prompts-slash.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-153-03 | Guardrails (chat.guardrail, seeds, the advisory row) | backlog | [story-03-guardrails](./story-03-guardrails.md) | - |
 | HS-153-04 | Annotations (selection popover, draft parts, mic) | backlog | [story-04-annotations](./story-04-annotations.md) | - |
 | HS-153-05 | Compaction and todo (chat.compact cut row, door.add_item) | backlog | [story-05-compact-todo](./story-05-compact-todo.md) | - |
@@ -28,7 +28,7 @@ Modes, prompts, guardrails, annotations, compaction and Door-backed todo on the 
 
 ## Where we are
 
-HS-153-01 (Modes as recipes) implementation complete: palette seam unified through `ThreadService._palette_for`, mode tabs in the composer, PATCH/GET recipe_id + resolved mode, glass at 1440+393. Three real-path defects found and fixed (default-to-Desk was wrong for unbound threads, executor re-resolved palette independently, Draft empty-tools array caused executor spin-up). Awaiting orchestrator flip and full suite run.
+HS-153-01 DONE, HS-153-02 DONE. Story 02: two-stage slash completion in ThreadComposer (command stage + argument stage in one popover), R3 rule (/ only at line start), 10 slash commands each mapped to a registered verb id, /mode calls setMode, /prompt inserts the note body, /tools shows palette info, /todo /compact /guardrail show "not yet" with TODO hooks for stories 03/05. Second seed prompt added (1:1 prep). Backend test: 9 tests for list_by_tag(json_each). Vitest: 46 tests (completeSlash pure function, verb mapping, component behavior). Glass: 2 legs (modes + slash) at 1440+393, zero overflow. Three real-path defects found (Playwright/React controlled input, focus loss after JS setter, bundle staleness).
 
 ## Active risks
 
