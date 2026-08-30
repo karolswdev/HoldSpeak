@@ -3715,6 +3715,26 @@
       ]
     },
     {
+      "path": "/api/people/relationships/{relationship_id}/owner-aliases",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/people/relationships/{relationship_id}/owner-aliases",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/people/relationships/{relationship_id}/projects/{project_id}",
       "methods": [
         "DELETE"

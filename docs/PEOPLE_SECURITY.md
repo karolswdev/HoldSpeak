@@ -7,9 +7,15 @@ different custody contract from HoldSpeak's normal, plaintext local database.
 
 - **Manual and notes-only.** Relationships, 1:1 agenda/private prep, requests, and
   explicit manager commitments are entered by the local owner. The calendar series
-  link is a deliberate owner gesture (encrypted, inside the relationship payload);
-  resolution is read-time only and the plaintext database never stores a person
-  reference. The 1:1 brief is computed in memory and never persisted.
+  link and the owner alias are both deliberate owner gestures (encrypted, inside
+  the relationship payload); resolution is read-time only and the plaintext database
+  never stores a person reference. The 1:1 brief is computed in memory and never
+  persisted. The Monday Brief's per-person sections (`person_sections`) are composed
+  at the HTTP route and MCP adapter layer after the persisted brief service returns;
+  the `MondayBrief` dataclass and its `monday_briefs`/`monday_brief_items` tables
+  never carry person content. The `holdspeak://briefs/latest` MCP resource serves
+  the person-free dataclass by construction. The MCP adapter gates
+  `person_sections` on `access_mode()`: absent when the mode is `off`.
   There is no People audio, transcript import, speaker identity binding, or
   automatic extraction.
 - **Encrypted before persistence.** Sensitive values are serialized as canonical

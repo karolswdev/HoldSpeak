@@ -20,6 +20,25 @@
   min-height: calc(100dvh - var(--desk-snap-top) - var(--desk-snap-bottom));
 }
 
+/* HS-150-06 (owner catch) — the working band is law at EVERY height.
+   The populated Chair used to body-scroll at normal heights, sliding
+   lanes underneath the fixed dock and system bar; 144-04's containment
+   was gated to short screens on the premise that the normal-height
+   Chair fits all at once — a premise the four-lane Chair retired. The
+   Chair is capped to the band and the lane column owns its overflow;
+   the chrome never has content pass beneath it. */
+.chair:not(.chair-first-value) {
+  box-sizing: border-box;
+  height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
+  max-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
+}
+.chair:not(.chair-first-value) .chair-lanes {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-block: contain;
+}
+
 /* ── The capture hero slot (story 11 fills it with mic/record). ──── */
 .chair-hero {
   display: flex;
@@ -317,6 +336,9 @@
 /* ── HS-144-03 — Door board: one contained workbench rail. ───────── */
 @media (min-width: 1200px) {
   .chair-lane[data-lane="door"] { grid-column: 1 / -1; }
+  /* HS-150-06: the Door spans first, so lanes pair (2,3), (4,5), … —
+     a dangling EVEN last lane is the orphan and spans the band. */
+  .chair-lane:last-child:nth-child(even) { grid-column: 1 / -1; }
 }
 .door-board-section { min-width: 0; }
 .door-board-summary {
@@ -619,20 +641,9 @@
    Chair beneath the dock. The wider/normal-height Chair keeps its generous
    all-at-once scan. */
 @media (max-height: 720px) {
-  /* HS-144-04 — a populated short Chair remains a working-band surface, not
-     a page that runs beneath the fixed dock. The lane column owns overflow;
-     the regular-height Chair retains its generous all-at-once scan. */
-  .chair:not(.chair-first-value) {
-    box-sizing: border-box;
-    height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
-    max-height: calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom));
-  }
-  .chair-lanes {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior-block: contain;
-  }
+  /* HS-144-04 — the chair-level containment moved to the base rules
+     (HS-150-06, every height); the short screen keeps its region caps so
+     each dense Door region stays independently browseable. */
   .door-board-viewport {
     max-block-size: min(30dvh, 14rem);
     overflow-y: auto;
@@ -644,6 +655,92 @@
     overscroll-behavior-block: contain;
   }
 }
+/* HS-150-02 -- person chip row (header filter), card-level person chip, staleness, map affordance. */
+.door-person-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
+}
+.door-person-chip-btn {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.door-person-chip-btn:hover { background: var(--wash-1); }
+.door-person-chip-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.door-card-person {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 var(--space-2) var(--space-1);
+}
+.door-card-person-btn {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.door-card-person-btn:hover { background: var(--wash-1); }
+.door-card-staleness {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+.door-card-map-picker {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-1) 0;
+}
+.door-card-map-option {
+  display: block;
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--desk-surface-detail-size);
+  text-align: left;
+  cursor: pointer;
+}
+.door-card-map-option:hover { background: var(--wash-1); }
+.door-card-map-option:disabled { opacity: 0.5; cursor: default; }
+.door-card-map-error {
+  color: var(--danger, #c53030);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+}
+.door-card-map-empty {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  padding: var(--space-1);
+}
+
 @media (max-width: 480px) {
   .door-board-grid { grid-template-columns: repeat(5, minmax(224px, 1fr)); min-width: 1120px; }
   .door-card-open strong { white-space: normal; }

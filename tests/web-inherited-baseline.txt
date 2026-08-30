@@ -1,0 +1,31 @@
+# Web-inherited failure baseline
+#
+# Each line is a vitest test identifier (file > describe > test) known to
+# fail on main and verified byte-identical across phases 148-149.
+# The checker (scripts/check_web_baseline.py) diffs a live run against
+# this list and speaks the sweep vocabulary: baseline-subset/exact,
+# zero branch-new.
+#
+# Rules:
+#   ADD    — only with byte-identical-to-main proof + provenance comment
+#   REMOVE — only with the healing commit named in the removal commit msg
+#
+# See tests/WEB_BASELINE.md for the full protocol.
+
+# HS-132-05 — MicButton: retention claim guard (byte-identical to main through 148-149)
+src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+
+# HS-129-08 — InlineEditor: note editing in pullout (byte-identical to main through 148-149)
+src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+
+# HS-129-06 — containerQueryLaw: viewport-width media exceptions (byte-identical to main through 148-149)
+src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+
+# chat: turn wire egress placement (byte-identical to main through 148-149)
+
+# HS-132-06 — writeReceiptGuard: bare-catch write guard (byte-identical to main through 148-149)
+src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+
+# workbenchAutomations: STARTS WHEN trigger test (byte-identical to main through 148-149)
+src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+# 2026-08-30 Phase 151 (The Desk Chat): the chat.test.ts line was REMOVED — that test was deleted with web/src/desk/chat.ts (threads replaced the localStorage chat).

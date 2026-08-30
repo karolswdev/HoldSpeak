@@ -71,6 +71,10 @@
 /* ── the arrival chrome (HS-73-02): floating clusters, no header stack ── */
 .desk-next {
   min-height: 100vh;
+  /* HS-150-06 (owner catch): contain the Chair's working-band margins —
+     collapsing through this root pushed the document past the viewport,
+     so the desk body-scrolled beneath the fixed dock. */
+  display: flow-root;
 }
 .desk-next .desk-world {
   min-height: calc(100vh - 40px);

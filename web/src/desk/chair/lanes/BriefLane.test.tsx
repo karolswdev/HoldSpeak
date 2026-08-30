@@ -281,16 +281,33 @@ describe("BriefLane", () => {
 
   // -- empty state honest ---------------------------------------------------
 
-  it("renders nothing when brief is null", async () => {
+  it("renders Generate affordance when brief is null (D4 fold)", async () => {
     mockBrief(null);
-    const { container } = renderLane();
+    renderLane();
     await waitFor(() => {
-      // Loading spinner disappears.
       expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
     });
-    // No lane content rendered.
-    expect(container.querySelector(".surface-section")).toBeNull();
-    expect(screen.queryByText("things waiting")).not.toBeInTheDocument();
+    // D4: the lane leads with the act -- a Generate button, never null.
+    expect(screen.getByTestId("brief-lane-act")).toBeInTheDocument();
+    expect(screen.getByLabelText("Generate your brief")).toBeInTheDocument();
+  });
+
+  it("Generate affordance fires the generate endpoint", async () => {
+    mockBrief(null);
+    renderLane();
+    await waitFor(() => {
+      expect(screen.getByLabelText("Generate your brief")).toBeInTheDocument();
+    });
+    // Click generate; the mock will return briefWithItems.
+    apiFetch.mockImplementation((path: string) => {
+      if (path === "/api/brief/generate") return Promise.resolve(briefWithItems);
+      if (path === "/api/brief/latest") return Promise.resolve(null);
+      return Promise.resolve({});
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText("Generate your brief"));
+    });
+    expect(apiFetch).toHaveBeenCalledWith("/api/brief/generate", { method: "POST" });
   });
 
   it("renders nothing when brief is empty", async () => {

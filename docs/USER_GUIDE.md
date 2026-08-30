@@ -706,6 +706,65 @@ The People MCP capability defaults to write for the local owner process. Set
 `HOLDSPEAK_MCP_PEOPLE_ACCESS=read` to reduce it or `=off` to disable it before
 the sidecar starts.
 
+### Map a person to the Door board
+
+A Door board card has an owner string, the name extracted from the meeting. If you
+manage people and want to know who is waiting on whom, you can map an owner string
+to a relationship once and the board remembers.
+
+On a card whose owner is not yet mapped (and is not one of the reserved strings
+"me", "remote", or "you"), the card shows a **map...** button. Choose it and a
+picker lists your relationships. Rows whose display name overlaps with the owner
+string sort first and show **(suggested)**; that hint is in-memory only, never
+logged. Your click is the map.
+
+You can also map from the relationship side. Open a relationship, switch to the
+**Context** lens, and find the **Owner aliases** section. Type the owner string
+and choose **Add**. Each alias shows a two-beat **Remove** / **Remove?** verb.
+
+One person per alias: mapping an alias already held by another relationship refuses
+and names the holder. Re-mapping the same person is a no-op. Reserved strings are
+refused by name.
+
+### Person chips, filter, and staleness
+
+Once a card's owner is mapped, a quiet mono chip with the person's name appears on
+the card. Click the chip to filter the board to that person. The board header
+carries one chip per mapped person plus **Everyone** to clear the filter.
+
+Beside the person chip, a staleness label reads **waiting Nd** (for example,
+"waiting 3d"). The number counts days since the card's `delegated_at` timestamp
+(the moment the owner last changed) or its `created_at` if no delegation has
+happened. Zero is "waiting 0d". The Intelligence Follow-Through view (the deep
+room) wears the same person chip and staleness label for mapped owners.
+
+### The chief-of-staff brief
+
+The Monday Brief gains a People section when you have mapped relationships with
+open signals. Choose **Brief** from the Door header (or open the Intelligence
+Brief view). When no brief exists yet, the lane shows **Generate your brief**.
+
+The People section shows one row per relationship that has at least one signal:
+
+- **They owe N** and staleness in days: the count of open board cards whose owner
+  matches any of this person's aliases.
+- **You owe N**: your open commitments to this person (from the encrypted store).
+- **N agenda**: open agenda items from their 1:1 sessions (encrypted).
+- **Next: title**: the next linked calendar event from this person's series.
+
+Choose a person row to expand it. Two verbs appear in the footer:
+
+- **Add to 1:1 agenda**: creates an open agenda item through the existing People
+  agenda authority (a real encrypted write, not a UI-only mark).
+- **Open person**: opens the relationship in People.
+
+Nothing about people is persisted in the brief. The People section is computed at
+read time by `compose_person_overlay`, called at the HTTP route and MCP adapter
+after the persisted brief service returns. The `MondayBrief` dataclass never
+carries a `person_sections` field. The `holdspeak://briefs/latest` MCP resource
+serves the person-free dataclass by construction. When the encrypted sidecar is
+unavailable, the brief shows **People sidecar unavailable** instead of silence.
+
 ### The dev keystore (walk and test only)
 
 Set `HOLDSPEAK_PEOPLE_KEYSTORE_FILE` to a file path to bypass the OS credential

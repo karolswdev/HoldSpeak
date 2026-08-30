@@ -404,15 +404,21 @@ class MeetingRepository(BaseRepository):
             elif reviewed_at in (None, ""):
                 reviewed_at = datetime.now().isoformat()
 
+            now_iso = datetime.now().isoformat()
             conn.execute("""
                 INSERT INTO action_items
                 (id, meeting_id, task, owner, due, status, review_state, reviewed_at,
-                 source_timestamp, created_at, completed_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 source_timestamp, created_at, completed_at, delegated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     meeting_id = excluded.meeting_id,
                     task = excluded.task,
-                    owner = excluded.owner,
+                    owner = CASE
+                        WHEN excluded.owner IS NULL AND action_items.owner IS NULL THEN action_items.owner
+                        WHEN excluded.owner IS NOT NULL AND action_items.owner IS NOT NULL
+                             AND excluded.owner = action_items.owner THEN action_items.owner
+                        ELSE excluded.owner
+                    END,
                     due = excluded.due,
                     source_timestamp = excluded.source_timestamp,
                     status = CASE
@@ -430,6 +436,12 @@ class MeetingRepository(BaseRepository):
                     reviewed_at = CASE
                         WHEN excluded.review_state = 'pending' THEN action_items.reviewed_at
                         ELSE excluded.reviewed_at
+                    END,
+                    delegated_at = CASE
+                        WHEN excluded.owner IS NULL AND action_items.owner IS NULL THEN action_items.delegated_at
+                        WHEN excluded.owner IS NOT NULL AND action_items.owner IS NOT NULL
+                             AND excluded.owner = action_items.owner THEN action_items.delegated_at
+                        ELSE ?
                     END
             """, (
                 item_id,
@@ -443,6 +455,8 @@ class MeetingRepository(BaseRepository):
                 source_timestamp,
                 created_at,
                 completed_at,
+                None,
+                now_iso,
             ))
 
     def get_meeting(self, meeting_id: str) -> Optional["MeetingState"]:
@@ -582,6 +596,7 @@ class MeetingRepository(BaseRepository):
                 'source_timestamp': r['source_timestamp'],
                 'created_at': r['created_at'],
                 'completed_at': r['completed_at'],
+                'delegated_at': r['delegated_at'],
             })
 
         return IntelSnapshot(
@@ -871,6 +886,7 @@ class MeetingRepository(BaseRepository):
             created_at=datetime.fromisoformat(row['created_at']),
             completed_at=datetime.fromisoformat(row['completed_at']) if row['completed_at'] else None,
             reviewed_at=datetime.fromisoformat(row['reviewed_at']) if row['reviewed_at'] else None,
+            delegated_at=row['delegated_at'] if row['delegated_at'] else None,
         )
 
     def get_action_item(self, item_id: str) -> Optional[ActionItemSummary]:
@@ -938,7 +954,17 @@ class MeetingRepository(BaseRepository):
 
         clean_owner = owner.strip() if isinstance(owner, str) else owner
         clean_due = due.strip() if isinstance(due, str) else due
+        now_iso = datetime.now().isoformat()
         with self._connection() as conn:
+            # SELECT-compare: stamp delegated_at only when owner actually changes.
+            existing = conn.execute(
+                "SELECT owner FROM action_items WHERE id = ?", (item_id,)
+            ).fetchone()
+            owner_changed = False
+            if existing is not None:
+                old_owner = existing["owner"] if isinstance(existing, dict) else existing[0]
+                new_owner = clean_owner or None
+                owner_changed = (old_owner or None) != (new_owner or None)
             result = conn.execute(
                 """
                 UPDATE action_items
@@ -946,14 +972,17 @@ class MeetingRepository(BaseRepository):
                     owner = ?,
                     due = ?,
                     review_state = 'accepted',
-                    reviewed_at = ?
+                    reviewed_at = ?,
+                    delegated_at = CASE WHEN ? THEN ? ELSE delegated_at END
                 WHERE id = ?
                 """,
                 (
                     clean_task,
                     clean_owner or None,
                     clean_due or None,
-                    datetime.now().isoformat(),
+                    now_iso,
+                    owner_changed,
+                    now_iso,
                     item_id,
                 ),
             )

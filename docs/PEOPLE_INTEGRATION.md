@@ -92,6 +92,88 @@ boundary (`visibility: shared_intent_only`, `inference: client_owned`,
 7. The MCP adapter applies `_mcp_readable` visibility before any linked material
    reaches an MCP client.
 
+## Deliberate association: the owner alias (FULFILLED)
+
+The owner alias is the second sanctioned deliberate association between a People
+relationship and a HoldSpeak data source. It satisfies rules 1 through 7 below
+and is the second shipped association path in this delivery.
+
+**The gesture.** Two surfaces carry the gesture:
+
+1. On a Door board card whose owner string is not yet mapped and is not a reserved
+   string, the card shows a **map...** button. Choosing it opens a picker listing
+   relationships; rows whose display name contains the owner string (or the reverse)
+   are sorted first and tagged **(suggested)** (case-insensitive, in-memory only,
+   never logged or persisted). The owner's click is the association gesture.
+2. On the relationship detail, the Context lens shows an **Owner aliases** section
+   (beside the Calendar series section). An inline field and **Add** button let the
+   owner type a string manually. Each existing alias shows with a two-beat
+   **Remove** / **Remove?** verb.
+
+**The link.** The association is an `owner_aliases` entry (a string) inside the
+relationship's encrypted payload. The link is string-level: one alias covers every
+past and future occurrence of that owner string on the Door board. Invariant P2
+enforces one person per alias; linking an alias already held by another relationship
+refuses by naming the holder (`owner_alias_taken`). Re-linking the same person is
+idempotent. Unlinking is a first-class verb on both surfaces. Reserved strings
+("me", "remote", "you") are refused by name (`owner_alias_reserved`); empty and
+whitespace-only strings are refused (`owner_alias_required`). The alias is stored
+as given; comparison is casefold in memory, never logged.
+
+**Resolution.** `resolve_relationship_by_owner(owner_string)` in `people_service`
+queries the encrypted store at read time. It is readiness-guarded: a locked or
+absent sidecar returns `{"state": "unavailable"}`, never an empty match. The
+plaintext database never stores a person reference (the 138 law). Resolution
+projects a `person_label` and `person_relationship_id` on mapped Door board cards
+via the request-scoped owner person index built inside `door_service`.
+
+**The board projection.** Mapped cards show a quiet person chip with the person's
+display name. Clicking the chip filters the board to that person. Unmapped and
+reserved-owner cards render exactly as before. A `waiting Nd` staleness label
+computed from `delegated_at` (the timestamp when ownership last changed) or
+`created_at` (the card's birth) appears beside the person chip. The board header
+carries one chip per mapped person present on the board plus an **Everyone** chip
+that clears the filter. `delegated_at` is stamped on action_items only when the
+owner string value actually changes (a SQL CASE guard at both the intel upsert
+and the edit path).
+
+**The follow-through route adapter.** The `/api/follow-through/board` HTTP route
+enriches the service result with `person_label` and `person_relationship_id` for
+mapped owner strings at the route adapter layer (`holdspeak/web/routes/follow_through.py`).
+The `FollowThroughService.board()` method stays person-free for observers and the
+MCP `follow_through.board` tool. When the sidecar is unavailable, enrichment
+degrades to the plain board silently.
+
+**The brief overlay.** `compose_person_overlay` builds per-relationship sections
+at read time. For each relationship with mapped aliases, it counts THEY-OWE cards
+(board cards whose owner matches any alias), YOU-OWE (open encrypted commitments),
+agenda backlog (encrypted), and the next linked 1:1 (from calendar series). These
+sections live only in the adapter response (the HTTP route and MCP tool); the
+persisted `MondayBrief` dataclass never carries a `person_sections` field, and the
+`holdspeak://briefs/latest` MCP resource serves the person-free dataclass by
+construction. When the sidecar is unavailable, the overlay returns the L2 honesty
+line ("People sidecar unavailable"), never silence.
+
+**MCP boundary.** The `monday_brief.get` MCP tool composes `person_sections` at
+its adapter, gated: absent when `access_mode() == "off"`. The overlay sections are
+manager-computed summaries (counts and dates), not encrypted records; the underlying
+encrypted data was already filtered by the people_service layer.
+
+**Compliance with the integration contract:**
+
+1. The picker proposes candidates from owner-selected textual evidence only (the
+   owner string on the card, or the string the owner types manually).
+2. The owner's click is the explicit gesture; nothing auto-maps.
+3. The link itself (`owner_aliases`) lives inside the encrypted People payload.
+4. The Door board exposes only an opaque person chip (`person_label`); the
+   plaintext database never stores a person reference.
+5. Voice embeddings, speaking time, sentiment, attendance, calendar frequency,
+   and message volume are never used as identity or relationship signals.
+6. Unlinking is complete and auditable; it removes the alias from the encrypted
+   payload without deleting either the board card or the relationship.
+7. The MCP adapter applies `access_mode` gating before any linked material
+   reaches an MCP client.
+
 ### Deferred: meeting participants
 
 Meeting-participant association (identifying a meeting participant as an existing

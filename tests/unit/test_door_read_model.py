@@ -625,3 +625,157 @@ def test_person_label_memoization_single_resolve_per_series(db: Database, tmp_pa
     assert all(item["person_label"] == "Jan" for item in calendar_events)
     # Pin: exactly one call per distinct (uid, source_id), not per event.
     assert spy.call_count == 1
+
+
+# ── HS-150-02: board owner person projection ──────────────────────────
+
+
+def test_board_card_carries_person_label_for_mapped_owner(db: Database, tmp_path: Path) -> None:
+    """HS-150-02: mapped owner string -> person_label + person_relationship_id on card."""
+    from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
+
+    store = EncryptedPeopleStore(tmp_path / "people-mapped.sqlite3", MemoryKeyStore())
+    store.initialize()
+    people = PeopleService(store)
+    rel = people.create_relationship(OWNER, {"display_name": "Ewa"})
+    people.link_owner_alias(OWNER, rel["id"], "Ewa")
+
+    _insert_action(db, "mapped-card", owner="Ewa")
+
+    projection = _door(db, people_service=people).get(OWNER)
+
+    all_cards = [
+        card
+        for lane in ["now", "waiting", "unassigned", "overdue"]
+        for card in projection["board"][lane]
+    ]
+    card = next(c for c in all_cards if c["id"] == "mapped-card")
+    assert card["person_label"] == "Ewa"
+    assert card["person_relationship_id"] == rel["id"]
+
+
+def test_board_card_unmapped_owner_has_no_person_fields(db: Database, tmp_path: Path) -> None:
+    """HS-150-02: unmapped owner string -> no person_label, byte-identical to today."""
+    from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
+
+    store = EncryptedPeopleStore(tmp_path / "people-unmapped.sqlite3", MemoryKeyStore())
+    store.initialize()
+    people = PeopleService(store)
+
+    _insert_action(db, "unmapped-card", owner="Stranger")
+
+    projection = _door(db, people_service=people).get(OWNER)
+
+    all_cards = [
+        card
+        for lane in ["now", "waiting", "unassigned", "overdue"]
+        for card in projection["board"][lane]
+    ]
+    card = next(c for c in all_cards if c["id"] == "unmapped-card")
+    assert "person_label" not in card
+    assert "person_relationship_id" not in card
+
+
+def test_board_person_projection_absent_when_sidecar_unavailable(db: Database) -> None:
+    """HS-150-02: unavailable sidecar -> no person fields, no crash."""
+    people = PeopleService(UnavailablePeopleStore())
+    _insert_action(db, "unavail-card", owner="Ada")
+
+    projection = _door(db, people_service=people).get(OWNER)
+
+    all_cards = [
+        card
+        for lane in ["now", "waiting", "unassigned", "overdue"]
+        for card in projection["board"][lane]
+    ]
+    card = next(c for c in all_cards if c["id"] == "unavail-card")
+    assert "person_label" not in card
+    assert "person_relationship_id" not in card
+
+
+def test_board_person_index_memoizes_one_resolve_per_owner_string(
+    db: Database, tmp_path: Path,
+) -> None:
+    """HS-150-02: multiple cards with same owner -> one resolve call."""
+    from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
+    from unittest.mock import patch
+
+    store = EncryptedPeopleStore(tmp_path / "people-memo-owner.sqlite3", MemoryKeyStore())
+    store.initialize()
+    people = PeopleService(store)
+    rel = people.create_relationship(OWNER, {"display_name": "Ada"})
+    people.link_owner_alias(OWNER, rel["id"], "Ada")
+
+    _insert_action(db, "card-1", owner="Ada")
+    _insert_action(db, "card-2", owner="Ada")
+    _insert_action(db, "card-3", owner="Grace")
+
+    with patch.object(
+        people, "resolve_relationship_by_owner",
+        wraps=people.resolve_relationship_by_owner,
+    ) as spy:
+        _door(db, people_service=people).get(OWNER)
+
+    # One call per distinct owner string: "Ada" and "Grace".
+    assert spy.call_count == 2
+
+
+def test_board_card_carries_created_at_for_staleness(db: Database) -> None:
+    """HS-150-02: action cards carry created_at for client-side staleness computation."""
+    today = date.today()
+    _insert_action(db, "staleness-card", owner="Ada", due=(today + timedelta(days=5)).isoformat())
+    # Set created_at on the action
+    with db._connection() as conn:
+        conn.execute(
+            "UPDATE action_items SET created_at = ? WHERE id = ?",
+            ("2026-08-25T10:00:00", "staleness-card"),
+        )
+
+    projection = _door(db).get(OWNER)
+
+    all_cards = [
+        card
+        for lane in ["now", "waiting", "unassigned", "overdue"]
+        for card in projection["board"][lane]
+    ]
+    card = next(c for c in all_cards if c["id"] == "staleness-card")
+    assert card["created_at"] == "2026-08-25T10:00:00"
+
+
+def test_observer_redaction_swallows_person_projection_fields(db: Database, tmp_path: Path) -> None:
+    """HS-150-02 pin: pipeline_events result_summary carries NO person fields after a board call."""
+    from holdspeak.people import EncryptedPeopleStore, MemoryKeyStore
+    from holdspeak.services.observer import PipelineEvent
+
+    store = EncryptedPeopleStore(tmp_path / "people-redact.sqlite3", MemoryKeyStore())
+    store.initialize()
+    people = PeopleService(store)
+    rel = people.create_relationship(OWNER, {"display_name": "Secret"})
+    people.link_owner_alias(OWNER, rel["id"], "Alice")
+
+    _insert_action(db, "secret-card", owner="Alice")
+
+    collected: list[PipelineEvent] = []
+
+    class _Collector:
+        def on_event(self, event: PipelineEvent) -> None:
+            collected.append(event)
+
+    ft = FollowThroughService(db, observer=_Collector(), people_projection=people)
+    board = ft.board(OWNER)
+
+    # The board itself has the mapped card.
+    all_cards = board.now + board.waiting + board.unassigned + board.overdue
+    alice_card = next((c for c in all_cards if c.owner == "Alice"), None)
+    assert alice_card is not None
+
+    # The observed event has the board result redacted.
+    board_events = [
+        e for e in collected
+        if e.service == "FollowThroughService" and e.method == "board"
+    ]
+    assert len(board_events) == 1
+    assert board_events[0].result_summary == '{"board":"redacted"}'
+    # No person fields in the redacted summary.
+    assert "Secret" not in board_events[0].result_summary
+    assert "person_label" not in board_events[0].result_summary

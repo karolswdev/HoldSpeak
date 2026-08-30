@@ -269,6 +269,8 @@ def test_people_mcp_catalogue_is_closed_and_does_not_offer_forbidden_operations(
         "people.commitment.transition",
         "people.calendar.link",
         "people.calendar.unlink",
+        "people.owner_alias.link",
+        "people.owner_alias.unlink",
     }
     assert not any(
         fragment in name

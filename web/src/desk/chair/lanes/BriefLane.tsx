@@ -62,6 +62,7 @@ export function BriefLane({
   const [error, setError] = useState("");
   const [shelf, setShelf] = useState<Record<string, ShelfState>>({});
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -80,6 +81,20 @@ export function BriefLane({
   useEffect(() => {
     void load();
   }, [load]);
+
+  const generateBrief = useCallback(async () => {
+    setGenerating(true);
+    setError("");
+    try {
+      const data = await apiFetch<MondayBrief>("/api/brief/generate", { method: "POST" });
+      setBrief(data);
+      setShelf(data?.shelf ?? {});
+    } catch (cause) {
+      setError(readableError(cause));
+    } finally {
+      setGenerating(false);
+    }
+  }, []);
 
   // -- shelf verbs (reused from BriefView) --------------------------------
 
@@ -113,7 +128,28 @@ export function BriefLane({
   if (error && !brief) {
     return <SurfaceState error={error} onRetry={() => void load()} />;
   }
-  if (!brief || brief.is_empty) return null;
+  if (!brief) {
+    return (
+      <SurfaceSection label="BRIEF">
+        <div
+          className="brief-lane-act"
+          role="status"
+          data-testid="brief-lane-act"
+        >
+          <button
+            type="button"
+            className="brief-lane-act-generate"
+            onClick={() => void generateBrief()}
+            disabled={generating}
+            aria-label="Generate your brief"
+          >
+            {generating ? "Generating..." : "Generate your brief"}
+          </button>
+        </div>
+      </SurfaceSection>
+    );
+  }
+  if (brief.is_empty) return null;
 
   // Flatten all items in section order (changed, broke, waiting, decisions).
   const allItems = SECTIONS.flatMap(({ id }) => brief.sections[id] ?? []);

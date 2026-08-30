@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import re
 import uuid
 from dataclasses import dataclass, field
 from typing import Any
@@ -12,6 +13,26 @@ from holdspeak.services.observer import NullObserver, PipelineObserver, observe_
 
 
 _SECTIONS = ("changed", "broke", "waiting", "decisions")
+_PATH_FRAGMENT = re.compile(r'[/\\](?:\w+[/\\]){1,}[\w.]+')
+
+
+def _sanitize_detail(args_summary: str) -> str | None:
+    """Truncate raw args_summary to a summary-level detail.
+
+    HS-150-03 D2: raw filesystem paths from observer arguments must never
+    enter monday_brief_items.  The detail becomes the event/method name from
+    the JSON keys, stripping path-valued fragments.
+    """
+    if args_summary == "{}":
+        return None
+    # Strip any string that looks like a filesystem path.
+    cleaned = _PATH_FRAGMENT.sub("<path>", args_summary)
+    # If everything was a path, collapse to None.
+    if cleaned.strip() in ("{}", "", '{"": "<path>"}'):
+        return None
+    return cleaned
+
+
 _CHANGE_METHOD_MARKERS = (
     "create",
     "update",
@@ -231,13 +252,13 @@ class MondayBriefService:
         items: list[BriefItem] = []
         for events in groups.values():
             first = events[0]
-            args_summary = str(first["args_summary"])
+            detail = _sanitize_detail(str(first["args_summary"]))
             items.append(
                 BriefItem(
                     id=f"brief-item-{uuid.uuid4().hex}",
                     section="changed",
                     text=f"{first['service']}.{first['method']}",
-                    detail=args_summary if args_summary != "{}" else None,
+                    detail=detail,
                     source_ref=(
                         f"pipeline:{first['correlation_id']}"
                         if first["correlation_id"]

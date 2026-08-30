@@ -14,6 +14,7 @@ from typing import Any, Mapping
 from holdspeak.people import PeopleOperation, PeoplePolicy, Visibility, production_people_store
 from holdspeak.principals import Principal
 from holdspeak.services.people_service import (
+    OwnerAliasTaken,
     PeopleService,
     PeopleServiceError,
     SeriesAlreadyLinked,
@@ -180,6 +181,28 @@ TOOLS: list[dict[str, Any]] = [
         },
         ["relationship_id", "uid", "source_id"],
     ),
+    _tool(
+        "people.owner_alias.link",
+        _BOUNDARY
+        + "Link an owner-string alias to a relationship. The alias maps a free-text owner string "
+        "from action items to this person. Invariant P2: an alias held by another person refuses "
+        "with owner_alias_taken. Reserved strings (Me, Remote, you) are refused.",
+        {
+            "relationship_id": {"type": "string", "description": "Opaque relationship identifier."},
+            "alias": {"type": "string", "description": "The exact owner string to map."},
+        },
+        ["relationship_id", "alias"],
+    ),
+    _tool(
+        "people.owner_alias.unlink",
+        _BOUNDARY
+        + "Remove an owner-string alias from a relationship. Idempotent.",
+        {
+            "relationship_id": {"type": "string", "description": "Opaque relationship identifier."},
+            "alias": {"type": "string", "description": "The owner string alias to remove."},
+        },
+        ["relationship_id", "alias"],
+    ),
 ]
 
 
@@ -307,6 +330,18 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             _required_id(arguments, "uid"),
             _required_id(arguments, "source_id"),
         )
+    if name == "people.owner_alias.link":
+        return service.link_owner_alias(
+            principal,
+            _required_id(arguments, "relationship_id"),
+            str(arguments.get("alias") or ""),
+        )
+    if name == "people.owner_alias.unlink":
+        return service.unlink_owner_alias(
+            principal,
+            _required_id(arguments, "relationship_id"),
+            str(arguments.get("alias") or ""),
+        )
     raise LookupError(name)
 
 
@@ -351,7 +386,7 @@ def _shared_relationship(detail: dict[str, Any]) -> dict[str, Any]:
         key: detail.get(key)
         for key in (
             "id", "display_name", "relationship_kind", "role_context", "timezone",
-            "cadence", "project_refs", "calendar_links", "state", "created_at", "updated_at",
+            "cadence", "project_refs", "calendar_links", "owner_aliases", "state", "created_at", "updated_at",
         )
     }
     sessions = []
@@ -419,7 +454,7 @@ def _grounding_bundle(detail: dict[str, Any]) -> dict[str, Any]:
     return {
         "relationship": {
             key: detail.get(key)
-            for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "project_refs", "calendar_links")
+            for key in ("id", "display_name", "relationship_kind", "role_context", "timezone", "cadence", "project_refs", "calendar_links", "owner_aliases")
         },
         "grounding": {
             "notes": list(detail.get("notes") or []),

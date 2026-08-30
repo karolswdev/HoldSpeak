@@ -21,6 +21,16 @@ type BriefSection = "changed" | "broke" | "waiting" | "decisions";
 
 type ShelfState = "acknowledged" | "deferred";
 
+interface PersonSection {
+  relationship_id: string;
+  display_name: string;
+  they_owe_count: number;
+  stalest_age_days: number | null;
+  you_owe_count: number;
+  agenda_backlog: number;
+  next_one_on_one: { event_id: string; title: string; starts_at: string } | null;
+}
+
 type MondayBrief = {
   id: string;
   headline: string;
@@ -28,6 +38,9 @@ type MondayBrief = {
   is_empty: boolean;
   /** HS-132-08 — durable triage, read back with the brief itself. */
   shelf?: Record<string, ShelfState>;
+  /** HS-150-03 — person overlay (adapter-composed, NEVER persisted). */
+  person_sections?: PersonSection[];
+  person_sections_state?: string;
 };
 
 const GROUPS: ReadonlyArray<{ id: BriefSection; label: string }> = [
@@ -52,6 +65,8 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const [shelving, setShelving] = useState(false);
   const [narrow, setNarrow] = useState(false);
   const [openGroup, setOpenGroup] = useState<BriefSection | null>("changed");
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [addingAgenda, setAddingAgenda] = useState(false);
   const { attempt, receipt } = useWriteReceipt();
 
   useEffect(() => {
@@ -97,6 +112,52 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   const selected = GROUPS.flatMap(({ id }) => brief?.sections[id] ?? []).find(
     (item) => item.id === selectedId,
   );
+  const selectedPerson = brief?.person_sections?.find(
+    (p) => p.relationship_id === selectedPersonId,
+  );
+
+  // HS-150-03: "Add to 1:1 agenda" resolves the person's open 1:1 session
+  // or creates one via the existing create path, then adds the agenda item.
+  const addToAgenda = async (personId: string) => {
+    setAddingAgenda(true);
+    try {
+      // Step 1: Find or create an open 1:1 session for this relationship.
+      const sessionsResp = await apiFetch<{ one_on_ones: Array<{ id: string; state: string }> }>(
+        `/api/people/relationships/${encodeURIComponent(personId)}/one-on-ones`,
+      );
+      let sessionId: string | undefined;
+      const openSession = sessionsResp.one_on_ones?.find(
+        (s) => s.state !== "closed",
+      );
+      if (openSession) {
+        sessionId = openSession.id;
+      } else {
+        const created = await apiFetch<{ one_on_one: { id: string } }>(
+          `/api/people/relationships/${encodeURIComponent(personId)}/one-on-ones`,
+          { method: "POST", json: { visibility: "shared_intent" } },
+        );
+        sessionId = created.one_on_one.id;
+      }
+      // Step 2: Add agenda item through the existing authority.
+      await apiFetch(
+        `/api/people/one-on-ones/${encodeURIComponent(sessionId)}/agenda`,
+        {
+          method: "POST",
+          json: {
+            body: `Follow up from brief`,
+            visibility: "shared_intent",
+            state: "open",
+            source: { kind: "brief" },
+          },
+        },
+      );
+      refreshIntelligenceAttention();
+    } catch {
+      // Failure reported via the general error channel.
+    } finally {
+      setAddingAgenda(false);
+    }
+  };
   // HS-132-08 — triage is a write, not React state: it rides the durable
   // shelf so Acknowledge/Defer survive reload and the pullout closing, and it
   // reports a refusal through the one write-receipt channel.
@@ -197,6 +258,49 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
           );
         })}
       </div>
+      {brief.person_sections && brief.person_sections.length > 0 ? (
+        <div className="intelligence-brief-person-sections" data-testid="person-sections">
+          <FoldGadget
+            title="People"
+            token={String(brief.person_sections.length).padStart(2, "0")}
+            open={true}
+            onToggle={() => {}}
+            className="intelligence-brief-group intelligence-brief-group-people"
+          >
+            <ul className="intelligence-brief-rows">
+              {brief.person_sections.map((person) => {
+                const signals: string[] = [];
+                if (person.they_owe_count > 0) {
+                  const age = person.stalest_age_days != null ? ` (${person.stalest_age_days}d)` : "";
+                  signals.push(`They owe ${person.they_owe_count}${age}`);
+                }
+                if (person.you_owe_count > 0) signals.push(`You owe ${person.you_owe_count}`);
+                if (person.agenda_backlog > 0) signals.push(`${person.agenda_backlog} agenda`);
+                if (person.next_one_on_one) signals.push(`Next: ${person.next_one_on_one.title || "1:1"}`);
+                const isOpen = selectedPersonId === person.relationship_id;
+                return (
+                  <SurfaceLedgerRow
+                    key={person.relationship_id}
+                    primary={person.display_name}
+                    open={isOpen}
+                    onToggle={() => setSelectedPersonId(isOpen ? null : person.relationship_id)}
+                    lineLabel={`Person: ${person.display_name}`}
+                    data-testid={`person-row-${person.relationship_id}`}
+                  >
+                    <div className="intelligence-brief-item-detail intelligence-brief-person-detail" data-testid={`person-signals-${person.relationship_id}`}>
+                      {signals.map((s, i) => <p key={i}>{s}</p>)}
+                    </div>
+                  </SurfaceLedgerRow>
+                );
+              })}
+            </ul>
+          </FoldGadget>
+        </div>
+      ) : brief.person_sections_state === "unavailable" ? (
+        <div className="intelligence-brief-person-unavailable" data-testid="person-sections-unavailable">
+          People sidecar unavailable
+        </div>
+      ) : null}
     </>
   );
 
@@ -211,36 +315,61 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
       <SurfaceFooter
         receipt={
           receipt ??
-          (selected ? `SELECTED · ${sourceLabel(selected.source_ref ?? selected.id)}` : undefined)
+          (selectedPerson
+            ? `PERSON · ${selectedPerson.display_name}`
+            : selected
+              ? `SELECTED · ${sourceLabel(selected.source_ref ?? selected.id)}`
+              : undefined)
         }
         verbs={
-          <>
-            <Button
-              dense
-              disabled={!selected || shelving}
-              aria-pressed={selectedId ? shelf[selectedId] === "acknowledged" : undefined}
-              onClick={() => void setShelfState("acknowledged")}
-            >
-              Acknowledge
-            </Button>
-            <Button
-              dense
-              variant="ghost"
-              disabled={!selected || shelving}
-              aria-pressed={selectedId ? shelf[selectedId] === "deferred" : undefined}
-              onClick={() => void setShelfState("deferred")}
-            >
-              Defer
-            </Button>
-            <Button
-              dense
-              variant="ghost"
-              disabled={!selected}
-              onClick={() => selected && openSurfaceOr("dictate", "/dictation", selected.source_ref ?? undefined)}
-            >
-              Speak
-            </Button>
-          </>
+          selectedPerson ? (
+            <>
+              <Button
+                dense
+                disabled={addingAgenda}
+                onClick={() => void addToAgenda(selectedPerson.relationship_id)}
+                data-testid="verb-add-agenda"
+              >
+                Add to 1:1 agenda
+              </Button>
+              <Button
+                dense
+                variant="ghost"
+                onClick={() => openSurfaceOr("people", "/people", selectedPerson.relationship_id)}
+                data-testid="verb-open-person"
+              >
+                Open person
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                dense
+                disabled={!selected || shelving}
+                aria-pressed={selectedId ? shelf[selectedId] === "acknowledged" : undefined}
+                onClick={() => void setShelfState("acknowledged")}
+              >
+                Acknowledge
+              </Button>
+              <Button
+                dense
+                variant="ghost"
+                disabled={!selected || shelving}
+                aria-pressed={selectedId ? shelf[selectedId] === "deferred" : undefined}
+                onClick={() => void setShelfState("deferred")}
+              >
+                Defer
+              </Button>
+              <Button
+                dense
+                variant="ghost"
+                disabled={!selected}
+                onClick={() => selected && openSurfaceOr("dictate", "/dictation", selected.source_ref ?? undefined)}
+              >
+                Speak
+              </Button>
+            </>
+          )
         }
       />
     </>
