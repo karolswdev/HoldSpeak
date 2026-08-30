@@ -1,8 +1,9 @@
 """HS-154 -- The Call glass tests.
 
-Real hub: Settings TTS block renders at 1440 and 393,
+Real hub + fake engine: Settings TTS block renders at 1440 and 393,
 no horizontal overflow. Extra-off shows install instruction, not a
-dead switch. API assertions are the hard proof.
+dead switch. API assertions are the hard proof. Speaker glyph renders
+on assistant rows with real streamed text, click invokes TTS.
 
 Skips cleanly if Playwright browsers are absent.
 """
@@ -22,8 +23,31 @@ TOKEN = "hs154-call-glass"
 SHOTS_01 = REPO / "pm/roadmap/holdspeak/phase-154-the-call/assets/story-01-shots"
 SHOTS_02 = REPO / "pm/roadmap/holdspeak/phase-154-the-call/assets/story-02-shots"
 SHOTS_03 = REPO / "pm/roadmap/holdspeak/phase-154-the-call/assets/story-03-shots"
+SHOTS_04 = REPO / "pm/roadmap/holdspeak/phase-154-the-call/assets/story-04-shots"
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
+
+
+# ----------------------------------------------------------------- fake engine
+
+class _TextEngine:
+    """Minimal engine that returns text (no tool calls).
+    Copied from test_hs153_practice_glass.py so turns produce a real
+    assistant row the speaker glyph can attach to."""
+    active_provider = "text-glass"
+    active_model = "hs154-glass-model"
+
+    def run_prompt_stream(self, *, messages=None, tools=None, **kw):
+        from holdspeak.kernel.inference_stream import Delta
+        yield Delta(kind="text", text="Glass test response from the fake engine. ")
+        yield Delta(kind="usage", meta={"prompt_tokens": 5, "completion_tokens": 5})
+        yield Delta(kind="done")
+
+    def run_prompt_messages(self, **kw):
+        return "Glass test response from the fake engine."
+
+    def run_prompt(self, **kw):
+        return '{"summary": "Summary of the earlier conversation."}'
 
 
 # ----------------------------------------------------------------- profile seed
@@ -39,13 +63,19 @@ def _seed_profile(db: Any) -> None:
         "scope": {"kind": "global"},
         "entries": [{"profile_id": pid, "profile_revision": 1}],
     })
+    # chat.turn-scoped assignment so the engine resolves for turns.
+    InferenceAssignmentService(db).set_assignment(OWNER, {
+        "command_id": "hs154-glass-assign-turn", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "chat.turn"},
+        "entries": [{"profile_id": pid, "profile_revision": 1}],
+    })
 
 
 # ----------------------------------------------------------------- hub fixture
 
 @pytest.fixture
 def hub(tmp_path, monkeypatch):
-    """Boot an in-process hub with yolo control_mode."""
+    """Boot an in-process hub with yolo control_mode and fake text engine."""
     import holdspeak.config as config_module
     import holdspeak.db.core as db_core
     from holdspeak.db import reset_database, get_database
@@ -83,10 +113,19 @@ def hub(tmp_path, monkeypatch):
     db = get_database()
     _seed_profile(db)
 
+    # Wire the fake engine so turns produce real assistant rows.
+    from holdspeak.kernel.runtime import _service as _kernel_service
+    broker = _kernel_service()
+    engine = _TextEngine()
+    if broker is not None:
+        broker.inference_runner._engine_factory = lambda _rev, **_kw: engine
+
     yield {
         "server": server,
         "url": url,
         "db": db,
+        "broker": broker,
+        "engine": engine,
     }
     server.stop()
     reset_database()
@@ -421,6 +460,162 @@ def test_call_chip_glass(hub: dict) -> None:
             page.wait_for_timeout(1000)
 
             _save_shot_03(page, "call-chip-stopped", width)
+
+            # No horizontal overflow
+            body_width = page.evaluate("document.body.scrollWidth")
+            viewport_width = page.evaluate("window.innerWidth")
+            assert body_width <= viewport_width + 1, (
+                f"Horizontal overflow at {width}: "
+                f"body={body_width}, viewport={viewport_width}"
+            )
+
+            page.close()
+
+        browser.close()
+
+
+# ----------------------------------------------------------------- speak leg
+
+def _save_shot_04(page: Any, name: str, width: int) -> None:
+    SHOTS_04.mkdir(parents=True, exist_ok=True)
+    page.screenshot(path=str(SHOTS_04 / f"{name}-{width}.png"))
+
+
+def test_speaker_glyph_glass(hub: dict) -> None:
+    """HS-154-04 speaker glyph on assistant rows at 1440 + 393.
+
+    Strategy: create a thread, send a user turn via the API (the hub's
+    fake engine streams real text back), open the thread, auto-wait for
+    the speaker glyph to appear on the finished assistant row. Click the
+    glyph, assert data-speaking flips to "true" and the page-level
+    speechSynthesis stub recorded an utterance. Click again to stop.
+    Both widths, zero overflow.
+    """
+    from playwright.sync_api import sync_playwright, expect
+
+    url = hub["url"]
+
+    # Seed desk and onboarding once (shared across widths)
+    _api_direct(url, "POST", "/api/desk/seed")
+    _api_direct(url, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+
+    # Create a thread and send a turn (the fake engine writes text)
+    thread_res = _api_direct(url, "POST", "/api/threads",
+                             {"title": "Speaker Glyph Glass"})
+    assert thread_res["status"] == 201, f"Thread creation failed: {thread_res}"
+    thread_id = thread_res["payload"]["id"]
+
+    turn_res = _api_direct(url, "POST", f"/api/threads/{thread_id}/turns",
+                           {"text": "Tell me something interesting"})
+    assert turn_res["status"] in (200, 201), f"Turn send failed: {turn_res}"
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        for width in (1440, 393):
+            page = browser.new_page(viewport={"width": width, "height": 900})
+
+            # Stub speechSynthesis at the page level -- this is a stub
+            # of the BROWSER API, not a hook in OUR code.
+            # Use Object.defineProperty because headless Chromium may
+            # define the native speechSynthesis as non-writable, and a
+            # plain assignment silently fails.
+            page.add_init_script("""
+                window._ttsUtterances = [];
+                window._ttsSpeaking = false;
+
+                const stubSynth = {
+                    speak(u) {
+                        window._ttsUtterances.push(u.text);
+                        window._ttsSpeaking = true;
+                        setTimeout(() => {
+                            window._ttsSpeaking = false;
+                            if (u.onend) u.onend(new Event('end'));
+                        }, 200);
+                    },
+                    cancel() { window._ttsSpeaking = false; },
+                    getVoices() {
+                        return [{
+                            lang: 'en-US', name: 'Stub',
+                            localService: true, default: true,
+                            voiceURI: 'stub',
+                        }];
+                    },
+                    pending: false,
+                    speaking: false,
+                    paused: false,
+                    onvoiceschanged: null,
+                    addEventListener() {},
+                    removeEventListener() {},
+                    dispatchEvent() {},
+                };
+
+                const StubUtterance = class {
+                    constructor(text) {
+                        this.text = text || '';
+                        this.onend = null;
+                        this.onerror = null;
+                        this.voice = null;
+                    }
+                };
+
+                try {
+                    Object.defineProperty(window, 'speechSynthesis', {
+                        value: stubSynth, writable: true, configurable: true,
+                    });
+                } catch(e) {
+                    window.speechSynthesis = stubSynth;
+                }
+                try {
+                    Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+                        value: StubUtterance, writable: true, configurable: true,
+                    });
+                } catch(e) {
+                    window.SpeechSynthesisUtterance = StubUtterance;
+                }
+            """)
+
+            # Open the thread pullout (turn already sent above)
+            page.goto(
+                f"{url}/?token={TOKEN}&open=thread:{thread_id}",
+                wait_until="load",
+            )
+
+            # -- The glyph MUST appear (auto-wait, no blind sleep) --
+            first_glyph = page.locator("[data-testid='speaker-glyph']").first
+            expect(first_glyph).to_be_visible(timeout=15000)
+
+            _save_shot_04(page, "speaker-glyph-present", width)
+
+            # Initially not speaking
+            assert first_glyph.get_attribute("data-speaking") == "false", (
+                f"Glyph should not be speaking initially at {width}"
+            )
+
+            # -- Click to replay --
+            first_glyph.click()
+
+            # The stub's speak() fires synchronously; the state update
+            # may need a frame. Use auto-wait on the attribute.
+            expect(first_glyph).to_have_attribute(
+                "data-speaking", "true", timeout=3000,
+            )
+            _save_shot_04(page, "speaker-glyph-speaking", width)
+
+            # The page stub must have recorded at least one utterance
+            utterances = page.evaluate("window._ttsUtterances")
+            assert len(utterances) >= 1, (
+                f"Expected at least one TTS utterance at {width}, "
+                f"got {len(utterances)}"
+            )
+
+            # -- Click again to stop --
+            first_glyph.click()
+            # After the stub's 200ms auto-end + stop, state returns to idle.
+            expect(first_glyph).to_have_attribute(
+                "data-speaking", "false", timeout=3000,
+            )
+            _save_shot_04(page, "speaker-glyph-stopped", width)
 
             # No horizontal overflow
             body_width = page.evaluate("document.body.scrollWidth")

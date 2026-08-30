@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { onStateChange as ttsOnStateChange, stop as ttsStop, type TtsState } from "../../lib/tts";
 import { wireCallLoop, type CallLoopWiring } from "../callLoopWiring";
+import { bargeIn as autoSpeakBargeIn } from "../autoSpeak";
 import { patchThread } from "../threads";
 
 // ── types ────────────────────────────────────────────────────────────
@@ -73,6 +74,12 @@ export function CallChip({ threadId, callMode, isStreaming, onReload }: CallChip
           // Error surfaces through the existing in-flow error row;
           // the chip does not render errors itself.
         },
+        // HS-154-04: barge-in — when the owner starts talking, stop TTS.
+        (loopState) => {
+          if (loopState === "transcribing") {
+            autoSpeakBargeIn();
+          }
+        },
       );
       loopRef.current = loop;
       void loop.start();
@@ -102,7 +109,8 @@ export function CallChip({ threadId, callMode, isStreaming, onReload }: CallChip
       });
     } else {
       // Stop everything in any non-OFF state.
-      ttsStop();
+      // HS-154-04: barge-in also blocks further auto-speak enqueues.
+      autoSpeakBargeIn();
       if (loopRef.current) {
         loopRef.current.stop();
         loopRef.current = null;

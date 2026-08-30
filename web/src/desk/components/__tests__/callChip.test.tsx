@@ -9,26 +9,41 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, act } from "@testing-library/react";
 
 // ---- mocks (must come before component import) ----
+// autoSpeak.ts calls onStateChange at module top level, so all
+// mock backing stores need vi.hoisted() to survive the hoist.
 
-const mockPatchThread = vi.fn().mockResolvedValue({});
+const {
+  mockPatchThread, ttsState, mockTtsStop,
+  mockLoopStart, mockLoopStop, mockBargeIn,
+} = vi.hoisted(() => ({
+  mockPatchThread: vi.fn().mockResolvedValue({}),
+  ttsState: { callback: null as ((s: string) => void) | null },
+  mockTtsStop: vi.fn(),
+  mockLoopStart: vi.fn().mockResolvedValue(undefined),
+  mockLoopStop: vi.fn(),
+  mockBargeIn: vi.fn(),
+}));
+
 vi.mock("../../threads", () => ({
   patchThread: (...args: unknown[]) => mockPatchThread(...args),
 }));
 
 // TTS mock
-let ttsStateCallback: ((s: string) => void) | null = null;
-const mockTtsStop = vi.fn();
 vi.mock("../../../lib/tts", () => ({
   onStateChange: (cb: (s: string) => void) => {
-    ttsStateCallback = cb;
-    return () => { ttsStateCallback = null; };
+    ttsState.callback = cb;
+    return () => { ttsState.callback = null; };
   },
   stop: (...args: unknown[]) => mockTtsStop(...args),
 }));
 
+// autoSpeak mock (CallChip now imports it for barge-in)
+vi.mock("../../autoSpeak", () => ({
+  bargeIn: (...args: unknown[]) => mockBargeIn(...args),
+  onStateChange: () => () => {},
+}));
+
 // Call loop wiring mock
-const mockLoopStart = vi.fn().mockResolvedValue(undefined);
-const mockLoopStop = vi.fn();
 vi.mock("../../callLoopWiring", () => ({
   wireCallLoop: () => ({
     start: () => mockLoopStart(),
@@ -48,10 +63,11 @@ describe("CallChip", () => {
   beforeEach(() => {
     mockPatchThread.mockClear();
     mockTtsStop.mockClear();
+    mockBargeIn.mockClear();
     mockLoopStart.mockClear();
     mockLoopStop.mockClear();
     onReload.mockClear();
-    ttsStateCallback = null;
+    ttsState.callback = null;
   });
 
   afterEach(() => {
@@ -83,7 +99,7 @@ describe("CallChip", () => {
     render(<CallChip threadId={THREAD_ID} callMode={1} isStreaming={false} />);
     // Simulate TTS speaking
     act(() => {
-      ttsStateCallback?.("speaking");
+      ttsState.callback?.("speaking");
     });
     const chip = screen.getByTestId("call-chip");
     expect(chip.getAttribute("data-call-state")).toBe("speaking");
@@ -97,7 +113,8 @@ describe("CallChip", () => {
     const chip = screen.getByTestId("call-chip");
     fireEvent.click(chip);
 
-    expect(mockTtsStop).toHaveBeenCalled();
+    // HS-154-04: click now calls bargeIn() (which internally calls tts.stop)
+    expect(mockBargeIn).toHaveBeenCalled();
     expect(mockLoopStop).toHaveBeenCalled();
     expect(mockPatchThread).toHaveBeenCalledWith(THREAD_ID, { call_mode: 0 });
   });
@@ -109,7 +126,7 @@ describe("CallChip", () => {
     const chip = screen.getByTestId("call-chip");
     fireEvent.click(chip);
 
-    expect(mockTtsStop).toHaveBeenCalled();
+    expect(mockBargeIn).toHaveBeenCalled();
     expect(mockLoopStop).toHaveBeenCalled();
     expect(mockPatchThread).toHaveBeenCalledWith(THREAD_ID, { call_mode: 0 });
   });
@@ -120,12 +137,12 @@ describe("CallChip", () => {
     );
     // Simulate TTS speaking
     act(() => {
-      ttsStateCallback?.("speaking");
+      ttsState.callback?.("speaking");
     });
     const chip = screen.getByTestId("call-chip");
     fireEvent.click(chip);
 
-    expect(mockTtsStop).toHaveBeenCalled();
+    expect(mockBargeIn).toHaveBeenCalled();
     expect(mockLoopStop).toHaveBeenCalled();
     expect(mockPatchThread).toHaveBeenCalledWith(THREAD_ID, { call_mode: 0 });
   });
