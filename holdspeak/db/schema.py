@@ -3522,4 +3522,16 @@ BEGIN
     FROM thread_message_parts p
     WHERE p.message_id = NEW.id AND p.text IS NOT NULL;
 END;
+
+-- HS-152-02: Per-thread tool policy — append-only, newest wins, never updated.
+CREATE TABLE IF NOT EXISTS thread_tool_policy (
+    id TEXT PRIMARY KEY,
+    thread_id TEXT NOT NULL REFERENCES threads(id),
+    tool_name TEXT NOT NULL,
+    decision TEXT NOT NULL CHECK (decision IN ('allow','ask','deny')),
+    set_at REAL NOT NULL,
+    deleted_at REAL
+);
+CREATE INDEX IF NOT EXISTS idx_thread_tool_policy_thread_tool
+ON thread_tool_policy(thread_id, tool_name, set_at DESC);
 """

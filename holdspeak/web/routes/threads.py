@@ -250,4 +250,47 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to import threads")
 
+    # ── Tool decision (HS-152-02) ──────────────────────────────────
+
+    @router.post("/api/threads/{thread_id}/decide")
+    async def api_decide_tool(thread_id: str, request: Request) -> Any:
+        """Resolve a held tool call: approve or deny, with optional answer."""
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        call_id = str(body.get("call_id") or "")
+        decision = str(body.get("decision") or "")
+        if not call_id or decision not in ("approve", "deny"):
+            return JSONResponse(
+                {"error": "call_id and decision (approve|deny) are required"},
+                status_code=400,
+            )
+        answer = body.get("answer")
+        try:
+            svc = _service()
+            # The executor is wired by the loop builder (story 01);
+            # this route resolves a pending decision through it.
+            executor = getattr(svc, "_tool_executor", None)
+            if executor is None:
+                return JSONResponse(
+                    {"error": "tool_executor_unavailable", "code": "tool_executor_unavailable"},
+                    status_code=503,
+                )
+            handle = executor._handles.get(call_id)
+            if handle is None or handle.thread_id != thread_id:
+                return JSONResponse(
+                    {"error": "tool_call_not_found", "code": "tool_call_not_found"},
+                    status_code=404,
+                )
+            executor.decide(handle, decision, answer=answer)
+            return JSONResponse({
+                "call_id": call_id,
+                "decision": decision,
+                "state": handle.state,
+            })
+        except ValueError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to decide tool call")
+
     return router

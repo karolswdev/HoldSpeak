@@ -695,3 +695,41 @@ class ThreadRepository(BaseRepository):
             result[import_hash] = thread.id
 
         return result
+
+    # ── Tool policy (HS-152-02) ────────────────────────────────────
+
+    def set_tool_policy(
+        self,
+        thread_id: str,
+        tool_name: str,
+        decision: str,
+    ) -> dict[str, Any]:
+        """Append one policy row (allow/ask/deny). Newest wins, never updated."""
+        if decision not in ("allow", "ask", "deny"):
+            raise ValueError(f"Invalid tool policy decision: {decision}")
+        row_id = _new_id("ttp")
+        now = time.time()
+        with self._connection() as conn:
+            conn.execute(
+                """INSERT INTO thread_tool_policy
+                   (id, thread_id, tool_name, decision, set_at)
+                   VALUES (?,?,?,?,?)""",
+                (row_id, str(thread_id), str(tool_name), decision, now),
+            )
+        return {"id": row_id, "thread_id": thread_id, "tool_name": tool_name,
+                "decision": decision, "set_at": now}
+
+    def effective_tool_policy(
+        self,
+        thread_id: str,
+        tool_name: str,
+    ) -> Optional[str]:
+        """Return the newest non-deleted policy decision, or None (unset)."""
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT decision FROM thread_tool_policy "
+                "WHERE thread_id=? AND tool_name=? AND deleted_at IS NULL "
+                "ORDER BY set_at DESC LIMIT 1",
+                (str(thread_id), str(tool_name)),
+            ).fetchone()
+        return str(row["decision"]) if row else None
