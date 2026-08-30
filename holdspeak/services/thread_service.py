@@ -1,8 +1,13 @@
-"""Thread orchestration service (HS-151-04).
+"""Thread orchestration service (HS-151-04, HS-152-01 pass loop).
 
 Ties a user's words to a receipted, streamed assistant message.  The one place
 a turn is assembled and admitted, and the one place the People boundary is
 enforced at message level (counsel M1).
+
+HS-152-01 adds the pass loop: the model may call the desk's MCP tools
+(up to 10 passes); each tool call is resolved through the truth table
+(ThreadToolExecutor from thread_tools.py), and the result is injected
+into the next pass's payload.
 """
 from __future__ import annotations
 
@@ -21,6 +26,9 @@ from ..kernel.inference_stream import (
     Delta,
     StreamCadence,
     emit_thread_delta,
+    emit_thread_status_line,
+    emit_thread_tool_pending,
+    emit_thread_tool_result,
     emit_thread_turn_done,
     emit_thread_turn_started,
 )
@@ -40,6 +48,44 @@ _PEOPLE_REF_KINDS = frozenset({"person"})
 
 _UNSET = object()  # sentinel for "caller did not provide parent_id"
 
+# Maximum tool passes for a chat turn (HS-152-01 D1).
+_CHAT_PASS_CAP = 10
+
+# Per-tool execution deadline in seconds (HS-152-01 M5).
+_TOOL_DEADLINE_S = 30.0
+
+
+class _ToolExecutorAggregator:
+    """Class-level view across concurrent per-turn tool executors.
+
+    The ``/decide`` route (HS-152-02) accesses ``svc._tool_executor``
+    and looks up handles by ``call_id``; this aggregator merges handles
+    from all active executors so concurrent turns coexist.
+    """
+
+    def __init__(self) -> None:
+        self._executors: dict[str, Any] = {}  # assistant_msg_id -> executor
+
+    @property
+    def _handles(self) -> dict[str, Any]:
+        merged: dict[str, Any] = {}
+        for ex in self._executors.values():
+            merged.update(ex._handles)
+        return merged
+
+    def decide(self, handle: Any, decision: str, answer: Any = None) -> None:
+        for ex in self._executors.values():
+            if handle.call_id in ex._handles:
+                ex.decide(handle, decision, answer)
+                return
+        raise ValueError(f"No active executor for call {handle.call_id}")
+
+    def register(self, msg_id: str, executor: Any) -> None:
+        self._executors[msg_id] = executor
+
+    def unregister(self, msg_id: str) -> None:
+        self._executors.pop(msg_id, None)
+
 
 class ThreadService:
     """Orchestrate desk chat threads: CRUD, turn, branch, regenerate, keep, abort."""
@@ -49,16 +95,23 @@ class ThreadService:
     # POST /abort can cancel a turn started by POST /turns.
     _active_turns: dict[str, threading.Event] = {}
 
+    # Class-level aggregator for the /decide route (HS-152-02).
+    _tool_executor: _ToolExecutorAggregator = _ToolExecutorAggregator()
+
     def __init__(
         self,
         db: Database,
         *,
         broadcast: Callable[[str, Any], None],
         broker: Any = None,
+        tool_dispatch_fn: Callable[..., Any] | None = None,
+        control_mode_fn: Callable[[], str] | None = None,
     ) -> None:
         self._db = db
         self._broadcast = broadcast
         self._broker = broker
+        self._tool_dispatch_fn = tool_dispatch_fn
+        self._control_mode_fn = control_mode_fn or (lambda: "yolo")
 
     @property
     def _threads(self) -> ThreadRepository:
@@ -332,6 +385,7 @@ class ThreadService:
                 cancel_event=cancel_event,
                 egress_scope=egress_scope,
                 payload=payload,
+                turn_operation_id=invocation_id,
             ),
             daemon=True,
         )
@@ -354,6 +408,7 @@ class ThreadService:
         cancel_event: threading.Event,
         egress_scope: str,
         payload: dict[str, Any],
+        turn_operation_id: str = "",
     ) -> None:
         """Sync function that runs in a background thread.
 
@@ -361,13 +416,61 @@ class ThreadService:
         ``InferenceRunner.invoke_stream`` internally.  Each text delta is
         emitted as a ``thread_delta`` frame (frame-per-delta for text);
         persistence uses ``StreamCadence`` (flush every 500 chars or 2 s).
+
+        HS-152-01: when a tool executor is available the method runs a
+        pass loop (up to ``_CHAT_PASS_CAP`` passes).  Each pass streams
+        via ``execute_stream`` with ``tools`` in the payload.  When the
+        model emits ``tool_calls``, each call is resolved through the
+        executor, persisted, and the result is injected into the next
+        pass's payload.  When no ``tool_calls`` arrive, the text is the
+        answer and the turn is done.
         """
+        # -- Compose the per-turn tool executor if the dispatch seam is wired --
+        tool_executor: Any = None
+        tool_schemas: list[dict[str, Any]] = []
+        if self._tool_dispatch_fn is not None:
+            from .thread_tools import ThreadToolExecutor, tool_schemas_for, TOOL_NAMES
+
+            tool_executor = ThreadToolExecutor(
+                self._db,
+                dispatch_fn=self._tool_dispatch_fn,
+                principal=principal,
+                control_mode_fn=self._control_mode_fn,
+                broker=self._broker,
+            )
+            tool_schemas = tool_schemas_for(TOOL_NAMES)
+            ThreadService._tool_executor.register(assistant_msg_id, tool_executor)
+
+        max_passes = _CHAT_PASS_CAP if tool_executor is not None else 1
+
         cadence = StreamCadence()
         seq = 0
         part_id: str | None = None
         stats: dict[str, Any] = {}
         outcome = "succeeded"
         receipt_id = ""
+        error_code = ""
+
+        # D3 hook: sensitive text accumulator across passes (counsel M1).
+        sensitive_texts: list[str] = list(payload.get("_sensitive_texts", []))
+
+        # OpenAI-format messages accumulated across passes for tool exchange.
+        tool_exchange_messages: list[dict[str, Any]] = []
+
+        current_execution_id = admitted["execution"]["id"]
+
+        # Per-pass list of tool calls captured from tool_calls deltas.
+        tool_calls_this_pass: list[dict[str, Any]] = []
+
+        # Decision events for held tool calls (HS-152-01 M5).
+        decision_events: dict[str, threading.Event] = {}
+
+        if tool_executor is not None:
+            def _on_decided(call_id: str) -> None:
+                ev = decision_events.get(call_id)
+                if ev is not None:
+                    ev.set()
+            tool_executor.on_decided = _on_decided
 
         def on_delta(delta: Delta) -> None:
             nonlocal seq, part_id, stats
@@ -407,6 +510,9 @@ class ThreadService:
                 )
                 seq += 1
 
+            elif delta.kind == "tool_calls":
+                tool_calls_this_pass.extend(delta.meta.get("tool_calls", []))
+
             elif delta.kind == "usage":
                 stats = dict(delta.meta)
 
@@ -414,56 +520,323 @@ class ThreadService:
                 stats["error"] = delta.text
 
         try:
-            routed = self._broker.inference_adoption_service.execute_stream(
-                principal,
-                execution_id=admitted["execution"]["id"],
-                adapter=adapter,
-                on_delta=on_delta,
-                publish=None,
-                payload_redactor=self._m1_redactor,
-            )
-            outcome = str(routed.get("outcome", "failed"))
-            receipt = routed.get("receipt", {})
-            # The route execution receipt uses "execution_id" as its identifier.
-            receipt_id = str(
-                receipt.get("execution_id", "")
-                or receipt.get("id", "")
-                or ""
-            )
-            # When the runner catches an engine exception before the first
-            # delta, on_delta is never called so stats["error"] is unset.
-            # The routed dict carries the error from InvocationOutcome.
-            routed_error = str(routed.get("error", "") or "")
-            if outcome == "failed" and routed_error and not stats.get("error"):
-                stats["error"] = routed_error
+            for pass_num in range(max_passes + 1):
+                # -- Cap check: 11th tool request --
+                if pass_num == max_passes:
+                    error_code = "pass_cap_reached"
+                    outcome = "failed"
+                    stats.setdefault("error", f"Tool pass cap reached (max {max_passes})")
+                    break
+
+                # -- Abort check (M5) --
+                if cancel_event.is_set():
+                    outcome = "aborted"
+                    break
+
+                # -- Build payload for this pass --
+                pass_payload = dict(payload)
+                if tool_exchange_messages:
+                    msgs = list(pass_payload.get("messages", []))
+                    msgs.extend(tool_exchange_messages)
+                    pass_payload["messages"] = msgs
+
+                # Inject tool schemas
+                if tool_schemas:
+                    pass_payload["tools"] = tool_schemas
+
+                # Inject sensitive texts for M1 redactor (D3 accumulator)
+                if sensitive_texts:
+                    pass_payload["_sensitive_texts"] = list(sensitive_texts)
+
+                # -- For pass > 0: re-admit with the updated payload --
+                if pass_num > 0:
+                    try:
+                        new_inv = f"chat_turn_{uuid.uuid4().hex}"
+                        new_admitted = self._broker.inference_adoption_service.admit(
+                            principal,
+                            command_id=f"admit-{new_inv}",
+                            capability_id="chat.turn",
+                            operation_id=new_inv,
+                            payload=pass_payload,
+                            invocation_id=new_inv,
+                            reserved_output_tokens=512,
+                        )
+                        current_execution_id = new_admitted["execution"]["id"]
+                    except Exception as exc:
+                        outcome = "failed"
+                        stats["error"] = f"Re-admission failed: {exc}"
+                        error_code = "execute_stream_failed"
+                        break
+
+                    emit_thread_status_line(
+                        self._broadcast,
+                        thread_id=thread_id,
+                        text=f"Processing (pass {pass_num + 1})...",
+                    )
+
+                # -- Reset per-pass state --
+                tool_calls_this_pass.clear()
+
+                # -- Stream this pass --
+                routed = self._broker.inference_adoption_service.execute_stream(
+                    principal,
+                    execution_id=current_execution_id,
+                    adapter=adapter,
+                    on_delta=on_delta,
+                    publish=None,
+                    payload_redactor=self._m1_redactor,
+                )
+
+                # -- No tool calls: text answer, done --
+                if not tool_calls_this_pass:
+                    outcome = str(routed.get("outcome", "failed"))
+                    receipt = routed.get("receipt", {})
+                    receipt_id = str(
+                        receipt.get("execution_id", "")
+                        or receipt.get("id", "")
+                        or ""
+                    )
+                    routed_error = str(routed.get("error", "") or "")
+                    if outcome == "failed" and routed_error and not stats.get("error"):
+                        stats["error"] = routed_error
+                    break
+
+                # -- Tool calls: resolve each through the executor --
+                if tool_executor is None:
+                    # Safety: tool_calls received but no executor.
+                    break
+
+                assistant_tc_openai: list[dict[str, Any]] = []
+                new_tool_msgs: list[dict[str, Any]] = []
+
+                for tc in tool_calls_this_pass:
+                    call_id = str(tc.get("id", ""))
+                    name = str(tc.get("name", ""))
+                    args_str = str(tc.get("arguments", "{}"))
+                    args_head = args_str[:80]
+
+                    # -- Admit through the executor --
+                    tc_dict = {"id": call_id, "name": name, "arguments": args_str}
+                    try:
+                        handle = tool_executor.admit(
+                            turn_operation_id, thread_id, tc_dict,
+                        )
+                    except ValueError:
+                        # Unknown tool (fail-closed classification)
+                        self._threads.append_part(
+                            assistant_msg_id, kind="tool_call",
+                            tool_call_id=call_id,
+                            meta_json=json.dumps(
+                                {"id": call_id, "name": name, "arguments": args_str,
+                                 "class": "unknown", "state": "error"},
+                                separators=(",", ":")),
+                        )
+                        err_text = json.dumps({"error": "tool_unknown", "name": name})
+                        tool_msg = self._threads.append_message(
+                            thread_id, role="tool", parent_id=assistant_msg_id,
+                        )
+                        self._threads.append_part(
+                            tool_msg.id, kind="text", text=err_text,
+                            tool_call_id=call_id,
+                        )
+                        assistant_tc_openai.append({
+                            "id": call_id, "type": "function",
+                            "function": {"name": name, "arguments": args_str},
+                        })
+                        new_tool_msgs.append({
+                            "role": "tool", "tool_call_id": call_id,
+                            "content": err_text,
+                        })
+                        error_code = "tool_unknown"
+                        continue
+
+                    # -- Persist tool_call part on the assistant message --
+                    self._threads.append_part(
+                        assistant_msg_id, kind="tool_call",
+                        tool_call_id=call_id,
+                        meta_json=json.dumps(
+                            {"id": call_id, "name": name, "arguments": args_str,
+                             "class": handle.tool_class, "state": handle.state},
+                            separators=(",", ":")),
+                    )
+
+                    # -- Emit thread_tool_pending --
+                    emit_thread_tool_pending(
+                        self._broadcast,
+                        thread_id=thread_id,
+                        message_id=assistant_msg_id,
+                        call_id=call_id,
+                        name=name,
+                        args_head=args_head,
+                        tool_class=handle.tool_class,
+                        decision_required=(handle.state == "awaiting_decision"),
+                        elicitation=getattr(handle, "elicitation", None),
+                    )
+
+                    # -- Resolve: admitted -> execute; held -> wait then execute or deny --
+                    result = None
+
+                    if handle.state == "denied":
+                        from .thread_tools import ToolResult
+                        result = ToolResult(
+                            name=name, kind="tool_denied",
+                            payload={"error": "tool_denied"},
+                            bytes=0, receipt_id="", sensitive=False,
+                        )
+
+                    elif handle.state == "awaiting_decision":
+                        # Block until decide() is called from /decide route
+                        ev = threading.Event()
+                        decision_events[call_id] = ev
+                        deadline = time.monotonic() + _TOOL_DEADLINE_S
+                        while not ev.is_set() and not cancel_event.is_set():
+                            remaining = deadline - time.monotonic()
+                            if remaining <= 0:
+                                break
+                            ev.wait(timeout=min(0.1, remaining))
+                        decision_events.pop(call_id, None)
+
+                        if cancel_event.is_set():
+                            outcome = "aborted"
+                            break
+
+                        if not ev.is_set():
+                            # Timeout
+                            from .thread_tools import ToolResult
+                            result = ToolResult(
+                                name=name, kind="tool_timeout",
+                                payload={"error": "tool_timeout"},
+                                bytes=0, receipt_id="", sensitive=False,
+                            )
+                            error_code = "tool_timeout"
+                        elif handle.state == "admitted":
+                            pass  # fall through to execute below
+                        elif handle.state == "denied":
+                            from .thread_tools import ToolResult
+                            result = ToolResult(
+                                name=name, kind="tool_denied",
+                                payload={"error": "tool_denied"},
+                                bytes=0, receipt_id="", sensitive=False,
+                            )
+
+                    # Execute admitted calls
+                    if result is None and handle.state == "admitted":
+                        if cancel_event.is_set():
+                            outcome = "aborted"
+                            break
+                        emit_thread_status_line(
+                            self._broadcast,
+                            thread_id=thread_id,
+                            text=f"Running {name}...",
+                        )
+                        result = tool_executor.execute(handle)
+                        # Check cancel after execution (M5: discard in-flight)
+                        if cancel_event.is_set():
+                            outcome = "aborted"
+                            break
+
+                    if result is None:
+                        continue
+
+                    # -- Derive text from result payload --
+                    result_text = (
+                        json.dumps(result.payload, default=str)
+                        if result.payload is not None
+                        else ""
+                    )
+
+                    # -- Persist tool-role message --
+                    tool_msg = self._threads.append_message(
+                        thread_id, role="tool", parent_id=assistant_msg_id,
+                    )
+                    self._threads.append_part(
+                        tool_msg.id, kind="text", text=result_text,
+                        tool_call_id=call_id,
+                        sensitive=result.sensitive,
+                        meta_json=json.dumps(
+                            {"kind": result.kind, "receipt_id": result.receipt_id},
+                            separators=(",", ":")),
+                    )
+
+                    # -- Emit thread_tool_result --
+                    is_error = result.kind in (
+                        "tool_execution_failed", "tool_denied",
+                        "tool_timeout", "cancelled", "error",
+                    )
+                    emit_thread_tool_result(
+                        self._broadcast,
+                        thread_id=thread_id,
+                        message_id=assistant_msg_id,
+                        call_id=call_id,
+                        name=name,
+                        receipt_id=result.receipt_id,
+                        outcome="failed" if is_error else "succeeded",
+                        kind=result.kind,
+                        summary=result_text[:200] if result_text else "",
+                        sensitive=result.sensitive,
+                    )
+
+                    # -- D3 hook: collect sensitive result text --
+                    if result.sensitive and result_text:
+                        sensitive_texts.append(result_text)
+
+                    # -- Accumulate OpenAI-format messages for next pass --
+                    assistant_tc_openai.append({
+                        "id": call_id, "type": "function",
+                        "function": {"name": name, "arguments": args_str},
+                    })
+                    if result.kind == "tool_denied":
+                        content = json.dumps({"error": "tool_denied"})
+                    elif is_error:
+                        content = json.dumps({"error": result.kind})
+                    else:
+                        content = result_text
+                    new_tool_msgs.append({
+                        "role": "tool", "tool_call_id": call_id,
+                        "content": content,
+                    })
+
+                # end for tc in tool_calls_this_pass
+
+                if outcome == "aborted":
+                    break
+
+                if assistant_tc_openai:
+                    tool_exchange_messages.append({
+                        "role": "assistant",
+                        "tool_calls": assistant_tc_openai,
+                    })
+                    tool_exchange_messages.extend(new_tool_msgs)
+
+            # end for pass_num
 
         except Exception as exc:
             outcome = "failed"
             stats["error"] = str(exc)
             from ..logging_config import get_logger
-            get_logger("thread_service").warning("execute_stream failed: %s", exc)
+            get_logger("thread_service").warning("pass loop failed: %s", exc)
 
-        # Flush any remaining buffered text.
+        # -- Flush any remaining buffered text --
         if part_id is not None and cadence.finish():
             pending = cadence.pending
             self._threads.extend_part_text(part_id, pending)
             cadence.mark_flushed()
 
-        # Complete the message.
+        # -- Complete the message --
         stats_json = json.dumps(stats, separators=(",", ":"), sort_keys=True) if stats else ""
         if cancel_event.is_set():
             self._threads.abort_message(assistant_msg_id)
             outcome = "aborted"
             receipt_id = "indeterminate"
         else:
-            # Persist error_json when the turn failed (defect 2: engine raises
-            # before first delta).
             error_json_str = ""
-            if outcome in ("failed", "indeterminate") and stats.get("error"):
-                error_json_str = json.dumps(
-                    {"error": str(stats["error"])},
-                    separators=(",", ":"),
-                )
+            if outcome in ("failed", "indeterminate") and (stats.get("error") or error_code):
+                error_obj: dict[str, str] = {}
+                if error_code:
+                    error_obj["code"] = error_code
+                if stats.get("error"):
+                    error_obj["error"] = str(stats["error"])
+                error_json_str = json.dumps(error_obj, separators=(",", ":"))
             self._threads.complete_message(
                 assistant_msg_id,
                 receipt_id=receipt_id,
@@ -471,18 +844,18 @@ class ThreadService:
                 error_json=error_json_str,
             )
 
-        # Update token totals.
+        # -- Update token totals --
         token_in = int(stats.get("prompt_tokens", 0))
         token_out = int(stats.get("completion_tokens", 0))
         if token_in or token_out:
             self._threads.add_token_totals(thread_id, token_in=token_in, token_out=token_out)
 
-        # Broadcast thread_turn_done -- include error details when failed.
+        # -- Broadcast thread_turn_done --
         done_stats = dict(stats)
-        if outcome in ("failed", "indeterminate") and stats.get("error"):
+        if outcome in ("failed", "indeterminate") and (stats.get("error") or error_code):
             done_stats["error"] = {
-                "code": "execute_stream_failed",
-                "message": str(stats["error"]),
+                "code": error_code or "execute_stream_failed",
+                "message": str(stats.get("error", "")),
             }
         emit_thread_turn_done(
             self._broadcast,
@@ -494,7 +867,9 @@ class ThreadService:
             stats=done_stats,
         )
 
-        # Clean up active turn.
+        # -- Clean up --
+        if tool_executor is not None:
+            ThreadService._tool_executor.unregister(assistant_msg_id)
         self._active_turns.pop(assistant_msg_id, None)
 
     # ── Abort ───────────────────────────────────────────────────────

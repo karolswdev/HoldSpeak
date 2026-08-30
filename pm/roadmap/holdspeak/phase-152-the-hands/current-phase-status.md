@@ -25,7 +25,7 @@ The owner, on seeing DC-01 alone: "I was totally hoping for a holistic implement
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-152-01 | The tool loop (passes, tool_call parts, frames, abort) | in-progress | [story-01-tool-loop](./story-01-tool-loop.md) | - |
+| HS-152-01 | The tool loop (passes, tool_call parts, frames, abort) | done | [story-01-tool-loop](./story-01-tool-loop.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-152-02 | The gate (thread_tool_policy, the truth table, kernel children) | done | [story-02-gate](./story-02-gate.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-152-03 | The People fence (sensitive results, multi-pass redaction) | backlog | [story-03-people-fence](./story-03-people-fence.md) | - |
 | HS-152-04 | The pending box (decision + elicitation rows, decide route) | backlog | [story-04-pending-box](./story-04-pending-box.md) | - |

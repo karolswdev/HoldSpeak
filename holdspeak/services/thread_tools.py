@@ -191,6 +191,7 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "inference_assignment.summary":             ("evidence_read",   False),
     # --- door family ---
     "door.get": ("evidence_read", False),
+    "door.add_item": ("effect_proposal", False),  # HS-153-05: thread todo → Door
 }
 
 # Public accessors

@@ -19,6 +19,12 @@ Modes, prompts, guardrails, annotations, compaction and Door-backed todo on the 
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
+| HS-153-01 | Modes as recipes (kind, seeds, allow-lists, mode tabs) | backlog | [story-01-modes](./story-01-modes.md) | - |
+| HS-153-02 | Prompts and slash verbs (notes tagged prompt, arguments) | backlog | [story-02-prompts-slash](./story-02-prompts-slash.md) | - |
+| HS-153-03 | Guardrails (chat.guardrail, seeds, the advisory row) | backlog | [story-03-guardrails](./story-03-guardrails.md) | - |
+| HS-153-04 | Annotations (selection popover, draft parts, mic) | backlog | [story-04-annotations](./story-04-annotations.md) | - |
+| HS-153-05 | Compaction and todo (chat.compact cut row, door.add_item) | backlog | [story-05-compact-todo](./story-05-compact-todo.md) | - |
+| HS-153-06 | The walk and the close | backlog | [story-06-walk-and-close](./story-06-walk-and-close.md) | - |
 
 ## Where we are
 

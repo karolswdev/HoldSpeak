@@ -66,6 +66,14 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "stopped",                  # the meeting stopped
     "thread_delta",             # a streaming token/reasoning delta for a thread turn
                                 # payload: {thread_id, message_id, ordinal, kind, text, seq}
+    "thread_status_line",       # in-progress turn status text (HS-152-01)
+                                # payload: {thread_id, text}
+    "thread_tool_pending",      # a tool call awaits resolution (HS-152-01)
+                                # payload: {thread_id, message_id, call_id, name, args_head,
+                                #           class, decision_required, elicitation?}
+    "thread_tool_result",       # a tool call completed (HS-152-01)
+                                # payload: {thread_id, message_id, call_id, name, receipt_id,
+                                #           outcome, kind, summary, sensitive}
     "thread_turn_done",         # a thread turn completed (succeeded, aborted, or errored)
                                 # payload: {thread_id, message_id, receipt_id, outcome, egress, stats}
     "thread_turn_started",      # a thread turn began streaming
@@ -82,6 +90,18 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
 #: Frames the hub emits that no web surface listens for, WITH the reason.
 #: Every entry here is a deliberate, named exception — never a silent one.
 EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
+    "thread_status_line": (
+        "DC-02 story 05 wires the status line renderer; until then the "
+        "loop emits this frame and the web ignores it."
+    ),
+    "thread_tool_pending": (
+        "DC-02 story 04 wires the pending box UI; until then the loop "
+        "emits this frame and the web ignores it."
+    ),
+    "thread_tool_result": (
+        "DC-02 story 04 wires the result renderer UI; until then the loop "
+        "emits this frame and the web ignores it."
+    ),
     "wake_armed": (
         "Dormant desktop wake-word leg: arming is a host-side hotkey window "
         "with no web affordance; the web consumes only its result "

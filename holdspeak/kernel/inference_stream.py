@@ -172,3 +172,73 @@ def emit_thread_turn_done(
         "egress": egress,
         "stats": stats,
     })
+
+
+# --------------------------------------------------------- tool loop frames (HS-152-01)
+
+
+def emit_thread_tool_pending(
+    broadcast: Callable[..., Any],
+    *,
+    thread_id: str,
+    message_id: str,
+    call_id: str,
+    name: str,
+    args_head: str,
+    tool_class: str,
+    decision_required: bool,
+    elicitation: dict[str, Any] | None = None,
+) -> None:
+    """Broadcast ``thread_tool_pending`` when a tool call awaits resolution."""
+    payload: dict[str, Any] = {
+        "thread_id": thread_id,
+        "message_id": message_id,
+        "call_id": call_id,
+        "name": name,
+        "args_head": args_head,
+        "class": tool_class,
+        "decision_required": decision_required,
+    }
+    if elicitation is not None:
+        payload["elicitation"] = elicitation
+    broadcast("thread_tool_pending", payload)
+
+
+def emit_thread_tool_result(
+    broadcast: Callable[..., Any],
+    *,
+    thread_id: str,
+    message_id: str,
+    call_id: str,
+    name: str,
+    receipt_id: str,
+    outcome: str,
+    kind: str,
+    summary: str,
+    sensitive: bool,
+) -> None:
+    """Broadcast ``thread_tool_result`` when a tool call has completed."""
+    broadcast("thread_tool_result", {
+        "thread_id": thread_id,
+        "message_id": message_id,
+        "call_id": call_id,
+        "name": name,
+        "receipt_id": receipt_id,
+        "outcome": outcome,
+        "kind": kind,
+        "summary": summary,
+        "sensitive": sensitive,
+    })
+
+
+def emit_thread_status_line(
+    broadcast: Callable[..., Any],
+    *,
+    thread_id: str,
+    text: str,
+) -> None:
+    """Broadcast ``thread_status_line`` for in-progress turn status."""
+    broadcast("thread_status_line", {
+        "thread_id": thread_id,
+        "text": text,
+    })
