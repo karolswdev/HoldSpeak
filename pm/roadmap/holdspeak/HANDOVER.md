@@ -126,8 +126,15 @@ tool count arithmetic (`len(TOOLS)` is truth). Shot exhibit for 151:
 https://claude.ai/code/artifact/5f8ffe8d-63cb-45fa-8c67-6e6d4a655705 —
 make one per phase before asking the merge word.
 
-Go: 152 AND 153 are done and holding for the owner (153 The Practice
-COMPLETE 6/6 — modes, prompts+slash, guardrails, annotations,
+Go (2026-08-30 night, post-#511-merge): the port lives on MAIN
+(fb2d1082) with the platform reset. **Phase 154 The Call COMPLETE 5/5
+on PR #513** (feat/desk-chat-the-call) — voice/ear/call-mode/glyph/walk;
+counsel RATIFY-W-C, M1+S1–S4 fixed in-round; metal DRY 5/5 + LIVE 5/5;
+exhibit https://claude.ai/code/artifact/bc5bb869-3817-4b96-8936-b128cdb1b7a3;
+HOLDING for the owner's attended voice leg (it holds the merge word).
+Next: Phase 155 The Crew (chartered, in main) on a fresh branch off
+main after #513 merges. Earlier: 152 AND 153 were done and holding (153
+The Practice COMPLETE 6/6 — modes, prompts+slash, guardrails, annotations,
 compact+todo, walk+close; counsel RATIFY-W-C, M1+S1–S3 fixed in-round;
 metal LIVE 6/6 on .43; NEW LAW: the .43 llama.cpp server runs a DEFAULT
 dictation grammar — free text is forced into {"line":…}; the engine now

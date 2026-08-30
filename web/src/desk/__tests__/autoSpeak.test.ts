@@ -300,3 +300,79 @@ describe("isCallActive", () => {
     expect(isCallActive()).toBe(false);
   });
 });
+
+// ---- S1: double-speak guard (wasAutoSpoken) ----
+
+describe("S1: wasAutoSpoken double-speak guard", () => {
+  it("feeding the same turn's deltas twice enqueues sentences only once", () => {
+    setCallActive(true);
+
+    // First pass: stream a full sentence
+    feedDelta("msg-dup", "This is a sentence long enough to pass. ");
+    expect(mockEnqueueSentence).toHaveBeenCalledTimes(1);
+
+    // Simulate the guard the caller should use: wasAutoSpoken blocks the second pass
+    expect(wasAutoSpoken("msg-dup")).toBe(true);
+
+    // Second pass (simulating reconnect replay): if caller checks wasAutoSpoken,
+    // it should NOT feed again. Demonstrate the guard works:
+    mockEnqueueSentence.mockClear();
+    if (!wasAutoSpoken("msg-dup")) {
+      feedDelta("msg-dup", "This is a sentence long enough to pass. ");
+    }
+    // No additional enqueues
+    expect(mockEnqueueSentence).not.toHaveBeenCalled();
+  });
+
+  it("wasAutoSpoken returns false for turns never spoken", () => {
+    expect(wasAutoSpoken("msg-never")).toBe(false);
+  });
+});
+
+// ---- S4: sets cleared on call end ----
+
+describe("S4: bargedTurns and autoSpokenTurns cleanup", () => {
+  it("clears both sets on setCallActive(false)", () => {
+    setCallActive(true);
+
+    // Accumulate entries in both sets
+    feedDelta("msg-s4-1", "A sentence that is long enough to go. ");
+    expect(wasAutoSpoken("msg-s4-1")).toBe(true);
+
+    feedDelta("msg-s4-2", "Beginning of ");
+    bargeIn(); // adds msg-s4-2 to bargedTurns
+
+    // Turn call mode off
+    setCallActive(false);
+
+    // Both sets should be cleared
+    expect(wasAutoSpoken("msg-s4-1")).toBe(false);
+
+    // Verify bargedTurns is cleared: re-enable, feed same id, should NOT be blocked
+    setCallActive(true);
+    mockEnqueueSentence.mockClear();
+    feedDelta("msg-s4-2", "Sentence that is long enough to speak. ");
+    expect(mockEnqueueSentence).toHaveBeenCalled();
+  });
+
+  it("caps set growth beyond 100 entries", () => {
+    setCallActive(true);
+
+    // Feed 105 different turns, each producing at least one sentence
+    for (let i = 0; i < 105; i++) {
+      const id = `msg-cap-${i}`;
+      feedDelta(id, "A sentence that is definitely long enough to pass the minimum. ");
+      flushTurn(id);
+    }
+
+    // The most recent IDs should still be tracked
+    expect(wasAutoSpoken("msg-cap-104")).toBe(true);
+    // The oldest IDs should have been pruned
+    // (some from the first batch should be gone; at least the total is bounded)
+    let count = 0;
+    for (let i = 0; i < 105; i++) {
+      if (wasAutoSpoken(`msg-cap-${i}`)) count++;
+    }
+    expect(count).toBeLessThanOrEqual(100);
+  });
+});

@@ -1,0 +1,16 @@
+[
+  {
+    "type": "thread_call_state",
+    "data": {
+      "thread_id": "th_3292b58e2975",
+      "state": "thinking"
+    }
+  },
+  {
+    "type": "thread_call_state",
+    "data": {
+      "thread_id": "th_3292b58e2975",
+      "state": "listening"
+    }
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "id": "th_3292b58e2975",
+  "title": "HS-154-05 Leg 1 call_mode",
+  "recipe_id": "hs-seed-mode-desk",
+  "profile_override": "",
+  "directory_id": "",
+  "call_mode": 0,
+  "token_in": 0,
+  "token_out": 0,
+  "created_at": 1788132166.422482,
+  "updated_at": 1788132166.422482,
+  "last_turn_at": null,
+  "mode": {
+    "id": "hs-seed-mode-desk",
+    "name": "Desk",
+    "avatar": "#6B7280"
+  },
+  "messages": [],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

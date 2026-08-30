@@ -1225,7 +1225,8 @@ function ThreadPulloutInner({
         if (p.thread_id !== threadId) return;
         applyDelta(p);
         // HS-154-04: feed text deltas to auto-speak (not reasoning).
-        if (p.kind === "text") {
+        // S1: guard against reconnect-replayed deltas for already-spoken turns.
+        if (p.kind === "text" && !wasAutoSpoken(p.message_id)) {
           autoSpeakFeedDelta(p.message_id, p.text);
         }
       }),

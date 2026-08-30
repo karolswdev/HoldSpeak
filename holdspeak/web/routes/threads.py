@@ -131,7 +131,16 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
                     )
             # HS-154-03: call_mode toggle (0 or 1).
             raw_call_mode = body.get("call_mode")
-            call_mode_val = int(raw_call_mode) if raw_call_mode is not None else None
+            # S2: non-numeric call_mode -> 400, not 500.
+            call_mode_val = None
+            if raw_call_mode is not None:
+                try:
+                    call_mode_val = int(raw_call_mode)
+                except (ValueError, TypeError):
+                    return JSONResponse(
+                        {"error": "invalid_call_mode", "detail": "call_mode must be an integer"},
+                        status_code=400,
+                    )
             result = _service().patch(
                 thread_id,
                 title=body.get("title"),

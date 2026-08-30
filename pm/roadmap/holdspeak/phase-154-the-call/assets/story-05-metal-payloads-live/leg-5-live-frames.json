@@ -1,0 +1,256 @@
+[
+  {
+    "type": "thread_turn_started",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "user_message_id": "tm_fe5e6edc1539",
+      "model_id": "hs154-lan",
+      "egress": "local"
+    }
+  },
+  {
+    "type": "thread_call_state",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "state": "thinking"
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": "Why",
+      "seq": 0
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " did",
+      "seq": 1
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " the",
+      "seq": 2
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " scare",
+      "seq": 3
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": "crow",
+      "seq": 4
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " win",
+      "seq": 5
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " an",
+      "seq": 6
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " award",
+      "seq": 7
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": "?",
+      "seq": 8
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": "\n\n",
+      "seq": 9
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": "Because",
+      "seq": 10
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " he",
+      "seq": 11
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " was",
+      "seq": 12
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " outstanding",
+      "seq": 13
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " in",
+      "seq": 14
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " his",
+      "seq": 15
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " field",
+      "seq": 16
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": "!",
+      "seq": 17
+    }
+  },
+  {
+    "type": "thread_delta",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "ordinal": 0,
+      "kind": "text",
+      "text": " \ud83c\udf3e",
+      "seq": 18
+    }
+  },
+  {
+    "type": "thread_status_line",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "text": ""
+    }
+  },
+  {
+    "type": "thread_turn_done",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "message_id": "tm_7796fc04868a",
+      "receipt_id": "ire_38f811d399f299c538d2742e7f6fb719",
+      "outcome": "succeeded",
+      "egress": "local",
+      "stats": {
+        "prompt_tokens": 0,
+        "completion_tokens": 0
+      }
+    }
+  },
+  {
+    "type": "thread_call_state",
+    "data": {
+      "thread_id": "th_dab64f188dee",
+      "state": "listening"
+    }
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "status": 400,
+  "body": {
+    "error": "call_mode must be 0 or 1, got 2",
+    "code": "invalid_call_mode"
+  }
+}

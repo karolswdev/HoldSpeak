@@ -197,4 +197,141 @@ describe("tts seam", () => {
       // After unsub, no more notifications
     });
   });
+
+  describe("M1: server-voice Audio stoppable by stop()", () => {
+    it("stop() pauses the server-voice Audio element and transitions to idle", async () => {
+      _setPreferServer(true);
+
+      // Mock fetch to return a valid audio blob quickly
+      const fakeBlob = new Blob(["fake-audio"], { type: "audio/wav" });
+      const origFetch = globalThis.fetch;
+      vi.stubGlobal("fetch", vi.fn(() =>
+        Promise.resolve(new Response(fakeBlob, { status: 200 })),
+      ));
+
+      // Mock Audio constructor to track pause calls
+      const mockPause = vi.fn();
+      let mockAudioInstance: Record<string, unknown> | null = null;
+      class MockAudio {
+        src = "";
+        currentTime = 0;
+        onended: ((e: Event) => void) | null = null;
+        onerror: ((e: Event) => void) | null = null;
+        play = vi.fn(() => Promise.resolve());
+        pause = mockPause;
+        constructor(_url?: string) {
+          if (_url) this.src = _url;
+          mockAudioInstance = this as unknown as Record<string, unknown>;
+        }
+      }
+      vi.stubGlobal("Audio", MockAudio);
+
+      // Mock URL.createObjectURL / revokeObjectURL
+      const origCreate = URL.createObjectURL;
+      const origRevoke = URL.revokeObjectURL;
+      URL.createObjectURL = vi.fn(() => "blob:fake-url");
+      URL.revokeObjectURL = vi.fn();
+
+      // Start speaking via server path
+      speak("Server test");
+
+      // Wait for the Audio element to be "playing"
+      await vi.waitFor(() => {
+        expect(mockAudioInstance).not.toBeNull();
+        expect((mockAudioInstance as Record<string, unknown>).play).toBeDefined();
+        const playFn = (mockAudioInstance as Record<string, unknown>).play as ReturnType<typeof vi.fn>;
+        expect(playFn).toHaveBeenCalled();
+      }, { timeout: 2000 });
+
+      // Now call stop() — it must pause the server audio element
+      stop();
+
+      expect(mockPause).toHaveBeenCalled();
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:fake-url");
+      expect(getState()).toBe("idle");
+
+      // Restore
+      URL.createObjectURL = origCreate;
+      URL.revokeObjectURL = origRevoke;
+      vi.stubGlobal("fetch", origFetch);
+    });
+  });
+
+  describe("S3: pickVoice prefers local-only voices", () => {
+    it("selects a local English voice over a non-local one", async () => {
+      const localVoice = {
+        lang: "en-US",
+        name: "Local English",
+        localService: true,
+        default: false,
+        voiceURI: "local-en",
+      } as SpeechSynthesisVoice;
+      const cloudVoice = {
+        lang: "en-US",
+        name: "Cloud English",
+        localService: false,
+        default: true,
+        voiceURI: "cloud-en",
+      } as SpeechSynthesisVoice;
+
+      mockSynth.synth.getVoices.mockReturnValue([cloudVoice, localVoice]);
+
+      speak("Voice preference test");
+      await vi.waitFor(() => {
+        expect(mockSynth.synth.speak).toHaveBeenCalled();
+      }, { timeout: 1000 });
+
+      const utterance = mockSynth.synth.speak.mock.calls[0][0] as SpeechSynthesisUtterance;
+      expect(utterance.voice).toBe(localVoice);
+    });
+
+    it("returns null voice (no crash) when only non-local voices exist", async () => {
+      const cloudVoice = {
+        lang: "en-US",
+        name: "Cloud Only",
+        localService: false,
+        default: true,
+        voiceURI: "cloud-only",
+      } as SpeechSynthesisVoice;
+
+      mockSynth.synth.getVoices.mockReturnValue([cloudVoice]);
+
+      // Speak should still work (null voice = browser default)
+      speak("Fallback test");
+      await vi.waitFor(() => {
+        expect(mockSynth.synth.speak).toHaveBeenCalled();
+      }, { timeout: 1000 });
+
+      const utterance = mockSynth.synth.speak.mock.calls[0][0] as SpeechSynthesisUtterance;
+      // voice should be null (no local voice to select)
+      expect(utterance.voice).toBeNull();
+    });
+
+    it("selects a local non-English voice when no local English exists", async () => {
+      const localFr = {
+        lang: "fr-FR",
+        name: "Local French",
+        localService: true,
+        default: false,
+        voiceURI: "local-fr",
+      } as SpeechSynthesisVoice;
+      const cloudEn = {
+        lang: "en-US",
+        name: "Cloud English",
+        localService: false,
+        default: true,
+        voiceURI: "cloud-en",
+      } as SpeechSynthesisVoice;
+
+      mockSynth.synth.getVoices.mockReturnValue([cloudEn, localFr]);
+
+      speak("Non-English local test");
+      await vi.waitFor(() => {
+        expect(mockSynth.synth.speak).toHaveBeenCalled();
+      }, { timeout: 1000 });
+
+      const utterance = mockSynth.synth.speak.mock.calls[0][0] as SpeechSynthesisUtterance;
+      expect(utterance.voice).toBe(localFr);
+    });
+  });
 });

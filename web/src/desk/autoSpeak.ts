@@ -69,12 +69,29 @@ onStateChange((s) => {
 
 // ── public API ────────────────────────────────────────────────────
 
+/** S4: cap per-session set growth — keep only the last N turn IDs. */
+const MAX_TRACKED_TURNS = 100;
+
+function capSet(s: Set<string>): void {
+  if (s.size <= MAX_TRACKED_TURNS) return;
+  const excess = s.size - MAX_TRACKED_TURNS;
+  let i = 0;
+  for (const v of s) {
+    if (i >= excess) break;
+    s.delete(v);
+    i++;
+  }
+}
+
 /** Set whether auto-speak is active (call mode ON/OFF). */
 export function setCallActive(active: boolean): void {
   callActive = active;
   if (!active) {
     buffer = "";
     currentMessageId = null;
+    // S4: clear tracking sets on call end — stale IDs serve no purpose.
+    bargedTurns.clear();
+    autoSpokenTurns.clear();
   }
 }
 
@@ -103,6 +120,8 @@ export function feedDelta(messageId: string, text: string): void {
     autoSpokenTurns.add(messageId);
     activeSpeakerId = messageId;
   }
+  // S4: cap set growth during long sessions.
+  capSet(autoSpokenTurns);
   buffer = remainder;
 }
 
@@ -111,6 +130,7 @@ export function flushTurn(messageId: string): void {
   if (currentMessageId === messageId && buffer.trim() && !bargedTurns.has(messageId)) {
     enqueueSentence(buffer.trim());
     autoSpokenTurns.add(messageId);
+    capSet(autoSpokenTurns);
     activeSpeakerId = messageId;
   }
   buffer = "";
@@ -123,6 +143,7 @@ export function flushTurn(messageId: string): void {
 export function bargeIn(): void {
   if (currentMessageId) {
     bargedTurns.add(currentMessageId);
+    capSet(bargedTurns);
   }
   stop();
   buffer = "";

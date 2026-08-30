@@ -34,6 +34,10 @@ let preferServer = false;
 const queue: string[] = [];
 let draining = false;
 
+/** M1: module-level Audio ref so stop() can pause server-voice playback. */
+let currentAudio: HTMLAudioElement | null = null;
+let currentAudioUrl: string | null = null;
+
 // ---- state machine ----
 
 function setState(next: TtsState): void {
@@ -77,20 +81,20 @@ async function probeServer(): Promise<void> {
 
 // ---- browser voice ----
 
-/** Pick the best local voice: prefer a local English voice, fall back to first. */
+/** S3: Pick the best local voice. Only localService voices are eligible
+ *  (Art. III zero-egress). If none exist, return null — speakBrowser
+ *  handles null voice gracefully (uses the browser default, which may
+ *  be cloud-backed; the caller can choose to skip). */
 function pickVoice(): SpeechSynthesisVoice | null {
   if (typeof speechSynthesis === "undefined") return null;
   const voices = speechSynthesis.getVoices();
   if (!voices.length) return null;
-  // Prefer local English voices
+  // S3: only local voices — never select a cloud-backed voice.
   const local = voices.filter((v) => v.localService);
+  if (!local.length) return null;
   const localEn = local.filter((v) => v.lang.startsWith("en"));
   if (localEn.length) return localEn[0];
-  if (local.length) return local[0];
-  // Fall back to any English voice
-  const anyEn = voices.filter((v) => v.lang.startsWith("en"));
-  if (anyEn.length) return anyEn[0];
-  return voices[0];
+  return local[0];
 }
 
 function speakBrowser(text: string): Promise<void> {
@@ -153,17 +157,29 @@ async function speakServer(text: string): Promise<boolean> {
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
 
-      audio.onended = () => {
+      // M1: hold module-level ref so stop() can pause this element.
+      currentAudio = audio;
+      currentAudioUrl = url;
+
+      const cleanup = () => {
+        if (currentAudio === audio) {
+          currentAudio = null;
+          currentAudioUrl = null;
+        }
         URL.revokeObjectURL(url);
+      };
+
+      audio.onended = () => {
+        cleanup();
         resolve(true);
       };
       audio.onerror = () => {
-        URL.revokeObjectURL(url);
+        cleanup();
         resolve(false);
       };
 
       audio.play().catch(() => {
-        URL.revokeObjectURL(url);
+        cleanup();
         resolve(false);
       });
     });
@@ -195,6 +211,16 @@ export function enqueueSentence(text: string): void {
 export function stop(): void {
   queue.length = 0;
   draining = false;
+  // M1: stop server-voice Audio element.
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    if (currentAudioUrl) {
+      URL.revokeObjectURL(currentAudioUrl);
+      currentAudioUrl = null;
+    }
+    currentAudio = null;
+  }
   if (typeof speechSynthesis !== "undefined") {
     speechSynthesis.cancel();
   }
@@ -243,6 +269,8 @@ export function _resetForTest(): void {
   serverModelReady = false;
   preferServer = false;
   listeners.clear();
+  currentAudio = null;
+  currentAudioUrl = null;
 }
 
 /** Override server preference (tests only). */

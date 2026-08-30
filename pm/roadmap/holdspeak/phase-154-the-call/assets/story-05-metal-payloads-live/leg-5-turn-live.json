@@ -1,0 +1,76 @@
+{
+  "id": "th_dab64f188dee",
+  "title": "HS-154-05 Leg 5 grammar LIVE",
+  "recipe_id": "hs-seed-mode-desk",
+  "profile_override": "",
+  "directory_id": "",
+  "call_mode": 1,
+  "token_in": 0,
+  "token_out": 0,
+  "created_at": 1788132169.3385448,
+  "updated_at": 1788132169.667259,
+  "last_turn_at": 1788132169.667259,
+  "mode": {
+    "id": "hs-seed-mode-desk",
+    "name": "Desk",
+    "avatar": "#6B7280"
+  },
+  "messages": [
+    {
+      "id": "tm_fe5e6edc1539",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_451b8d097b68",
+          "kind": "text",
+          "text": "Tell me a short joke.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788132169.650959,
+      "updated_at": 1788132169.6523871,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_7796fc04868a",
+      "role": "assistant",
+      "parent_id": "tm_fe5e6edc1539",
+      "streaming": false,
+      "receipt_id": "ire_38f811d399f299c538d2742e7f6fb719",
+      "egress_scope": "local",
+      "model_id": "hs154-lan",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0
+      },
+      "parts": [
+        {
+          "id": "tp_765aebc6aad0",
+          "kind": "text",
+          "text": "Why did the scarecrow win an award?\n\nBecause he was outstanding in his field! \ud83c\udf3e",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788132169.667259,
+      "updated_at": 1788132172.21327,
+      "completed_at": 1788132172.21327,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

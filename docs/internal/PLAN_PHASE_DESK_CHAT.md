@@ -1,8 +1,8 @@
 # Phase DC-01: The Desk Chat — porting the warpdrv chat experience into HoldSpeak
 
 > **Status:** DC-01 shipped as Phase 151; DC-02 shipped as Phase 152
-> The Hands; DC-03 shipped as Phase 153 The Practice; DC-04+
-> unchartered. Backlog candidate **AF** in
+> The Hands; DC-03 shipped as Phase 153 The Practice; DC-04 shipped
+> as Phase 154 The Call; DC-05+ unchartered. Backlog candidate **AF** in
 > `pm/roadmap/holdspeak/BACKLOG.md` is the handoff row.
 >
 > **Reference:** [mikjee/warpdrv](https://github.com/mikjee/warpdrv) —
@@ -338,6 +338,8 @@ row; Submit/Decline resolve the operation. No new admission path.
   vision-capable assignment (146's `vision=True` refusal law applies).
 
 ### 6.8 The Call (DC-04)
+
+> **Status:** SHIPPED as Phase 154 The Call.
 
 - **TTS:** Kokoro (Apache-2.0). Two options; recommend **B**:
   A) `kokoro-js` in the browser (ONNX, ~300 MB first load, no server work);
