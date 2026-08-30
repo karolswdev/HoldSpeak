@@ -104,6 +104,66 @@ export interface ThreadPart {
   kind: PartKind;
   text: string;
   sensitive: boolean;
+  metaJson?: Record<string, unknown>;
+  toolCallId?: string;
+}
+
+// ── Tool row model (HS-152-04) ─────────────────────────────────────
+
+export type ToolRowState =
+  | "pending"
+  | "awaiting_decision"
+  | "elicitation"
+  | "running"
+  | "receipted"
+  | "failed"
+  | "denied";
+
+export interface ToolRow {
+  callId: string;
+  messageId: string;
+  name: string;
+  toolClass: string;
+  argsHead: string;
+  state: ToolRowState;
+  decisionRequired: boolean;
+  elicitation?: Record<string, unknown>;
+  receiptId?: string;
+  outcome?: string;
+  kind?: string;
+  summary?: string;
+  sensitive?: boolean;
+  error?: string;
+}
+
+// ── Tool frame payloads (HS-152-04) ────────────────────────────────
+
+export interface ThreadToolPendingPayload {
+  thread_id: string;
+  message_id: string;
+  call_id: string;
+  name: string;
+  args_head: string;
+  class: string;
+  decision_required: boolean;
+  elicitation?: Record<string, unknown>;
+}
+
+export interface ThreadToolResultPayload {
+  thread_id: string;
+  message_id: string;
+  call_id: string;
+  name: string;
+  receipt_id: string;
+  outcome: string;
+  kind: string;
+  summary: string;
+  sensitive: boolean;
+}
+
+export interface ThreadStatusLinePayload {
+  thread_id: string;
+  text: string;
 }
 
 export interface ThreadRef {
@@ -165,6 +225,12 @@ function toMessage(w: Record<string, unknown>): ThreadMessage {
         kind: (p.kind as PartKind) ?? "text",
         text: String(p.text ?? ""),
         sensitive: p.sensitive === 1 || p.sensitive === true,
+        ...(p.meta_json && typeof p.meta_json === "object"
+          ? { metaJson: p.meta_json as Record<string, unknown> }
+          : {}),
+        ...(p.tool_call_id
+          ? { toolCallId: String(p.tool_call_id) }
+          : {}),
       })),
   };
 }
@@ -336,6 +402,27 @@ export async function importThreads(
   });
 }
 
+/** HS-152-04: Resolve a held tool call. */
+export async function decideToolCall(
+  threadId: string,
+  callId: string,
+  decision: "approve" | "deny",
+  opts?: { always?: boolean; answer?: unknown },
+): Promise<Record<string, unknown>> {
+  return apiFetch<Record<string, unknown>>(
+    `/api/threads/${encodeURIComponent(threadId)}/decide`,
+    {
+      method: "POST",
+      json: {
+        call_id: callId,
+        decision,
+        ...(opts?.always ? { always: true } : {}),
+        ...(opts?.answer !== undefined ? { answer: opts.answer } : {}),
+      },
+    },
+  );
+}
+
 // ── streaming buffer ────────────────────────────────────────────────
 
 export interface StreamingBuffer {
@@ -397,6 +484,10 @@ export interface ThreadStoreState {
   loading: Record<string, boolean>;
   /** Message id to scroll/focus when opening a thread from search. */
   focusMessageId: string | null;
+  /** HS-152-04: tool rows keyed by thread id -> call id. */
+  toolRows: Record<string, Record<string, ToolRow>>;
+  /** HS-152-04: live status line per thread. */
+  statusLines: Record<string, string>;
 }
 
 export interface ThreadStoreActions {
@@ -420,6 +511,16 @@ export interface ThreadStoreActions {
    * so the UI flips from Stop to Send immediately without waiting for
    * the bus frame. */
   markAborted(threadId: string): void;
+  /** HS-152-04: Apply a thread_tool_pending frame. */
+  applyToolPending(payload: ThreadToolPendingPayload): void;
+  /** HS-152-04: Apply a thread_tool_result frame. */
+  applyToolResult(payload: ThreadToolResultPayload): void;
+  /** HS-152-04: Apply a thread_status_line frame. */
+  applyStatusLine(payload: ThreadStatusLinePayload): void;
+  /** HS-152-04: Optimistically decide a tool call, reconcile on result. */
+  decideOptimistic(threadId: string, callId: string, decision: "approve" | "deny"): void;
+  /** HS-152-04: Hydrate tool rows from persisted parts after load. */
+  hydrateToolRows(threadId: string): void;
 }
 
 export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set, get) => ({
@@ -427,6 +528,8 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
   buffers: {},
   loading: {},
   focusMessageId: null,
+  toolRows: {},
+  statusLines: {},
 
   async loadThread(id) {
     set((s) => ({ loading: { ...s.loading, [id]: true } }));
@@ -436,6 +539,8 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
         threads: { ...s.threads, [id]: detail },
         loading: { ...s.loading, [id]: false },
       }));
+      // HS-152-04: hydrate tool rows from persisted parts
+      get().hydrateToolRows(id);
     } catch {
       set((s) => ({ loading: { ...s.loading, [id]: false } }));
     }
@@ -608,5 +713,160 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
       threads: { ...s.threads, [threadId]: { ...detail, messages } },
       buffers: newBuffers,
     }));
+  },
+
+  // ── HS-152-04: tool row actions ──────────────────────────────────
+
+  applyToolPending(payload) {
+    const { thread_id, call_id, message_id, name, args_head } = payload;
+    const toolClass = payload["class"] || "";
+    const decisionRequired = payload.decision_required;
+    const hasElicitation = !!payload.elicitation;
+
+    const state: ToolRowState = hasElicitation
+      ? "elicitation"
+      : decisionRequired
+        ? "awaiting_decision"
+        : "pending";
+
+    const row: ToolRow = {
+      callId: call_id,
+      messageId: message_id,
+      name,
+      toolClass,
+      argsHead: args_head,
+      state,
+      decisionRequired,
+      ...(payload.elicitation ? { elicitation: payload.elicitation } : {}),
+    };
+
+    set((s) => ({
+      toolRows: {
+        ...s.toolRows,
+        [thread_id]: { ...(s.toolRows[thread_id] || {}), [call_id]: row },
+      },
+    }));
+  },
+
+  applyToolResult(payload) {
+    const { thread_id, call_id, receipt_id, outcome, kind, summary, sensitive } = payload;
+    const existing = get().toolRows[thread_id]?.[call_id];
+    if (!existing) return;
+
+    const isError = ["tool_execution_failed", "tool_denied", "tool_timeout", "cancelled", "error"].includes(kind);
+    const newState: ToolRowState = kind === "tool_denied"
+      ? "denied"
+      : isError
+        ? "failed"
+        : "receipted";
+
+    const updated: ToolRow = {
+      ...existing,
+      state: newState,
+      receiptId: receipt_id,
+      outcome,
+      kind,
+      summary,
+      sensitive,
+      ...(isError ? { error: kind } : {}),
+    };
+
+    set((s) => ({
+      toolRows: {
+        ...s.toolRows,
+        [thread_id]: { ...(s.toolRows[thread_id] || {}), [call_id]: updated },
+      },
+    }));
+  },
+
+  applyStatusLine(payload) {
+    const { thread_id, text } = payload;
+    set((s) => ({
+      statusLines: { ...s.statusLines, [thread_id]: text },
+    }));
+  },
+
+  decideOptimistic(threadId, callId, decision) {
+    const existing = get().toolRows[threadId]?.[callId];
+    if (!existing) return;
+
+    const newState: ToolRowState = decision === "approve" ? "running" : "denied";
+    const updated: ToolRow = { ...existing, state: newState };
+
+    set((s) => ({
+      toolRows: {
+        ...s.toolRows,
+        [threadId]: { ...(s.toolRows[threadId] || {}), [callId]: updated },
+      },
+    }));
+  },
+
+  hydrateToolRows(threadId) {
+    const detail = get().threads[threadId];
+    if (!detail) return;
+
+    const rows: Record<string, ToolRow> = {};
+
+    // Build a map of tool_call_id -> result metadata from tool-role messages
+    const resultMap: Record<string, { kind: string; receiptId: string; sensitive: boolean }> = {};
+    for (const msg of detail.messages) {
+      if (msg.role !== "tool") continue;
+      for (const part of msg.parts) {
+        const tcId = part.toolCallId;
+        const meta = part.metaJson;
+        if (tcId && meta) {
+          resultMap[tcId] = {
+            kind: String(meta.kind ?? "data"),
+            receiptId: String(meta.receipt_id ?? ""),
+            sensitive: part.sensitive,
+          };
+        }
+      }
+    }
+
+    // Extract tool_call parts from assistant messages
+    for (const msg of detail.messages) {
+      if (msg.role !== "assistant") continue;
+      for (const part of msg.parts) {
+        if (part.kind !== "tool_call" || !part.metaJson) continue;
+        const meta = part.metaJson;
+        const callId = String(meta.id ?? "");
+        if (!callId) continue;
+
+        const result = resultMap[callId];
+        const isError = result && ["tool_execution_failed", "tool_denied", "tool_timeout", "cancelled", "error"].includes(result.kind);
+
+        let state: ToolRowState;
+        if (result) {
+          state = result.kind === "tool_denied" ? "denied" : isError ? "failed" : "receipted";
+        } else {
+          const serverState = String(meta.state ?? "");
+          state = serverState === "awaiting_decision" ? "awaiting_decision" : "pending";
+        }
+
+        rows[callId] = {
+          callId,
+          messageId: msg.id,
+          name: String(meta.name ?? ""),
+          toolClass: String(meta["class"] ?? ""),
+          argsHead: String(meta.arguments ?? "").slice(0, 80),
+          state,
+          decisionRequired: !result && String(meta.state ?? "") === "awaiting_decision",
+          ...(result ? {
+            receiptId: result.receiptId,
+            kind: result.kind,
+            sensitive: result.sensitive,
+            outcome: isError ? "failed" : "succeeded",
+            ...(isError ? { error: result.kind } : {}),
+          } : {}),
+        };
+      }
+    }
+
+    if (Object.keys(rows).length > 0) {
+      set((s) => ({
+        toolRows: { ...s.toolRows, [threadId]: { ...(s.toolRows[threadId] || {}), ...rows } },
+      }));
+    }
   },
 }));

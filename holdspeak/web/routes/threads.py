@@ -266,6 +266,7 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
                 status_code=400,
             )
         answer = body.get("answer")
+        always = bool(body.get("always", False))
         try:
             svc = _service()
             # The executor is wired by the loop builder (story 01);
@@ -282,10 +283,16 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
                     {"error": "tool_call_not_found", "code": "tool_call_not_found"},
                     status_code=404,
                 )
+            # HS-152-04: Allow-always writes an "allow" policy row BEFORE
+            # deciding so that future calls to the same tool auto-admit.
+            if always and decision == "approve":
+                db = _database()
+                db.threads.set_tool_policy(thread_id, handle.name, "allow")
             executor.decide(handle, decision, answer=answer)
             return JSONResponse({
                 "call_id": call_id,
                 "decision": decision,
+                "always": always,
                 "state": handle.state,
             })
         except ValueError as exc:

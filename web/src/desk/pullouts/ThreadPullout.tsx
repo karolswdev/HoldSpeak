@@ -31,15 +31,24 @@ import {
   branchThread,
   regenerateThread,
   createThread,
+  decideToolCall,
   type ThreadMessage,
   type ThreadDeltaPayload,
   type ThreadTurnStartedPayload,
   type ThreadTurnDonePayload,
+  type ThreadToolPendingPayload,
+  type ThreadToolResultPayload,
+  type ThreadStatusLinePayload,
+  type ToolRow,
+  type ToolRowState,
 } from "../threads";
 import { useDesk } from "../store";
 import { ThreadComposer, InlineEditor } from "../components/ThreadComposer";
 import type { PulloutContentProps } from "./types";
 import "./thread-pullout.css";
+
+// HS-152-04: stable empty refs for zustand selectors (avoid infinite re-render).
+const EMPTY_TOOL_ROWS: Record<string, ToolRow> = {};
 
 // ── StreamingMaterial ────────────────────────────────────────────────
 // Append-safe wrapper: renders the live text cheaply while streaming,
@@ -99,6 +108,217 @@ function SiblingPicker({
   );
 }
 
+// ── Tool class glyphs (HS-152-04) ──────────────────────────────────
+const CLASS_GLYPHS: Record<string, string> = {
+  evidence_read: "R",
+  candidate_builder: "B",
+  effect_proposal: "E",
+};
+
+// ── Elicitation form (HS-152-04) ───────────────────────────────────
+// Renders a minimal JSON-Schema form for string/number/boolean/enum fields.
+function ElicitationForm({
+  schema,
+  onSubmit,
+  onDecline,
+}: {
+  schema: Record<string, unknown>;
+  onSubmit: (answer: Record<string, unknown>) => void;
+  onDecline: () => void;
+}) {
+  const properties = (schema.properties ?? {}) as Record<string, Record<string, unknown>>;
+  const required = (schema.required ?? []) as string[];
+  const prompt = String(schema.prompt ?? schema.description ?? "");
+  const [values, setValues] = useState<Record<string, unknown>>({});
+
+  const fields = Object.entries(properties);
+
+  const handleChange = (key: string, value: unknown) => {
+    setValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  return (
+    <div className="thread-elicitation-form" data-testid="elicitation-form">
+      {prompt && <div className="thread-elicitation-prompt">{prompt}</div>}
+      {fields.map(([key, prop]) => {
+        const type = String(prop.type ?? "string");
+        const enumVals = Array.isArray(prop.enum) ? prop.enum : null;
+        const label = String(prop.title ?? key);
+        const isReq = required.includes(key);
+        return (
+          <div key={key} className="thread-elicitation-field">
+            <label className="thread-elicitation-label">
+              {label}{isReq ? " *" : ""}
+            </label>
+            {enumVals ? (
+              <select
+                className="thread-elicitation-select"
+                value={String(values[key] ?? "")}
+                onChange={(e) => handleChange(key, e.target.value)}
+              >
+                <option value="">--</option>
+                {enumVals.map((v: unknown) => (
+                  <option key={String(v)} value={String(v)}>{String(v)}</option>
+                ))}
+              </select>
+            ) : type === "boolean" ? (
+              <input
+                type="checkbox"
+                checked={Boolean(values[key])}
+                onChange={(e) => handleChange(key, e.target.checked)}
+              />
+            ) : type === "number" || type === "integer" ? (
+              <input
+                type="number"
+                className="thread-elicitation-input"
+                value={String(values[key] ?? "")}
+                onChange={(e) => handleChange(key, Number(e.target.value))}
+              />
+            ) : (
+              <input
+                type="text"
+                className="thread-elicitation-input"
+                value={String(values[key] ?? "")}
+                onChange={(e) => handleChange(key, e.target.value)}
+              />
+            )}
+          </div>
+        );
+      })}
+      <div className="thread-tool-decision-actions">
+        <button
+          type="button"
+          className="desk-chip is-primary"
+          onClick={() => onSubmit(values)}
+          data-testid="elicitation-submit"
+        >
+          Submit
+        </button>
+        <button
+          type="button"
+          className="desk-chip quiet"
+          onClick={onDecline}
+          data-testid="elicitation-decline"
+        >
+          Decline
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Tool row (HS-152-04) ───────────────────────────────────────────
+function ToolRowView({
+  row,
+  threadId,
+  onDecide,
+}: {
+  row: ToolRow;
+  threadId: string;
+  onDecide: (callId: string, decision: "approve" | "deny", opts?: { always?: boolean; answer?: unknown }) => void;
+}) {
+  const classGlyph = CLASS_GLYPHS[row.toolClass] || "?";
+  const receiptShort = row.receiptId && row.receiptId.length > 4
+    ? row.receiptId.slice(-4)
+    : row.receiptId || null;
+
+  const stateLabel: Record<ToolRowState, string> = {
+    pending: "PENDING",
+    awaiting_decision: "HELD",
+    elicitation: "QUESTION",
+    running: "RUNNING",
+    receipted: "DONE",
+    failed: "FAILED",
+    denied: "DENIED",
+  };
+
+  const stateClass: Record<ToolRowState, string> = {
+    pending: "",
+    awaiting_decision: "thread-tool-held",
+    elicitation: "thread-tool-held",
+    running: "thread-tool-running",
+    receipted: "",
+    failed: "thread-tool-error",
+    denied: "thread-tool-error",
+  };
+
+  return (
+    <div
+      className={`thread-tool-row ${stateClass[row.state] || ""}`}
+      data-testid="tool-row"
+      data-call-id={row.callId}
+      data-tool-state={row.state}
+    >
+      <div className="thread-tool-row-head">
+        <span className="thread-tool-class-glyph" title={row.toolClass}>{classGlyph}</span>
+        <span className="thread-tool-name">{row.name}</span>
+        <span className="thread-tool-state">{stateLabel[row.state]}</span>
+        {row.sensitive && (
+          <span className="thread-tool-people-badge" data-testid="people-badge">PEOPLE</span>
+        )}
+        {receiptShort && (
+          <span className="thread-tool-receipt">{"····"}{receiptShort}</span>
+        )}
+        {row.outcome && row.state === "receipted" && (
+          <span className="thread-tool-outcome">{row.outcome}</span>
+        )}
+      </div>
+
+      {row.argsHead && (
+        <div className="thread-tool-args-head" title={row.argsHead}>
+          {row.argsHead.length > 60 ? row.argsHead.slice(0, 60) + "..." : row.argsHead}
+        </div>
+      )}
+
+      {/* Decision box: Allow once / Allow always / Deny */}
+      {row.state === "awaiting_decision" && (
+        <div className="thread-tool-decision-box" data-testid="decision-box">
+          <div className="thread-tool-decision-actions">
+            <button
+              type="button"
+              className="desk-chip is-primary"
+              onClick={() => onDecide(row.callId, "approve")}
+              data-testid="allow-once"
+            >
+              Allow once
+            </button>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              onClick={() => onDecide(row.callId, "approve", { always: true })}
+              data-testid="allow-always"
+            >
+              Allow always
+            </button>
+            <button
+              type="button"
+              className="desk-chip quiet"
+              onClick={() => onDecide(row.callId, "deny")}
+              data-testid="deny"
+            >
+              Deny
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Elicitation form */}
+      {row.state === "elicitation" && row.elicitation && (
+        <ElicitationForm
+          schema={row.elicitation}
+          onSubmit={(answer) => onDecide(row.callId, "approve", { answer })}
+          onDecline={() => onDecide(row.callId, "deny")}
+        />
+      )}
+
+      {/* Error display */}
+      {(row.state === "failed" || row.state === "denied") && row.error && (
+        <div className="thread-tool-error-code">{row.error}</div>
+      )}
+    </div>
+  );
+}
+
 // ── Message row ─────────────────────────────────────────────────────
 function MessageRow({
   msg,
@@ -110,6 +330,9 @@ function MessageRow({
   onRetry,
   onKeep,
   onBranch,
+  toolRows,
+  threadId,
+  onDecide,
 }: {
   msg: ThreadMessage;
   bufferText: string;
@@ -121,6 +344,10 @@ function MessageRow({
   onKeep: (messageId: string, as: "note" | "artifact") => void;
   /** Branch from this message: edit-and-resend (user row) or fork (assistant row). */
   onBranch: (messageId: string, text: string) => void;
+  /** HS-152-04: tool rows for this message. */
+  toolRows?: ToolRow[];
+  threadId: string;
+  onDecide: (callId: string, decision: "approve" | "deny", opts?: { always?: boolean; answer?: unknown }) => void;
 }) {
   const crashed = isCrashed(msg);
   const hasError = msg.errorJson !== null && !msg.streaming;
@@ -242,6 +469,20 @@ function MessageRow({
         </details>
       )}
 
+      {/* HS-152-04: tool rows */}
+      {toolRows && toolRows.length > 0 && (
+        <div className="thread-tool-rows">
+          {toolRows.map((row) => (
+            <ToolRowView
+              key={row.callId}
+              row={row}
+              threadId={threadId}
+              onDecide={onDecide}
+            />
+          ))}
+        </div>
+      )}
+
       <div className="thread-row-actions">
         <SiblingPicker
           position={siblingPosition}
@@ -307,8 +548,13 @@ function ThreadPulloutInner({
   const detail = useThreadStore((s) => s.threads[threadId]);
   const buffers = useThreadStore((s) => s.buffers);
   const loading = useThreadStore((s) => s.loading[threadId]);
-  const { loadThread, applyTurnStarted, applyDelta, applyTurnDone, reconcile, getBufferText } =
-    useThreadStore.getState();
+  const threadToolRows = useThreadStore((s) => s.toolRows[threadId] ?? EMPTY_TOOL_ROWS);
+  const liveStatusLine = useThreadStore((s) => s.statusLines[threadId] ?? "");
+  const {
+    loadThread, applyTurnStarted, applyDelta, applyTurnDone, reconcile,
+    getBufferText, applyToolPending, applyToolResult, applyStatusLine,
+    decideOptimistic,
+  } = useThreadStore.getState();
 
   const { attempt, receipt } = useWriteReceipt();
   const { subscribe, state: busState } = useRuntimeBus();
@@ -333,7 +579,7 @@ function ThreadPulloutInner({
     if (bodyRef.current) {
       bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
     }
-  }, [detail?.messages.length, buffers]);
+  }, [detail?.messages.length, buffers, threadToolRows]);
 
   // Subscribe to bus frames for this thread
   useEffect(() => {
@@ -355,6 +601,31 @@ function ThreadPulloutInner({
         // HS-151-06: restore focus to the composer after turn_done
         setRestoreFocus(true);
         requestAnimationFrame(() => setRestoreFocus(false));
+      }),
+      // HS-152-04: tool frames
+      subscribe("thread_tool_pending", (frame) => {
+        const p = frame.data as ThreadToolPendingPayload;
+        if (p.thread_id !== threadId) return;
+        applyToolPending(p);
+        // Scroll the tool row into view when a decision is required
+        if (p.decision_required || p.elicitation) {
+          requestAnimationFrame(() => {
+            const row = bodyRef.current?.querySelector(
+              `[data-call-id="${p.call_id}"]`,
+            );
+            if (row) row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          });
+        }
+      }),
+      subscribe("thread_tool_result", (frame) => {
+        const p = frame.data as ThreadToolResultPayload;
+        if (p.thread_id !== threadId) return;
+        applyToolResult(p);
+      }),
+      subscribe("thread_status_line", (frame) => {
+        const p = frame.data as ThreadStatusLinePayload;
+        if (p.thread_id !== threadId) return;
+        applyStatusLine(p);
       }),
     ];
     return () => unsubs.forEach((u) => u());
@@ -421,6 +692,17 @@ function ThreadPulloutInner({
       );
     },
     [threadId, attempt],
+  );
+
+  /** HS-152-04: decide a held tool call. */
+  const handleDecide = useCallback(
+    async (callId: string, decision: "approve" | "deny", opts?: { always?: boolean; answer?: unknown }) => {
+      decideOptimistic(threadId, callId, decision);
+      await attempt("decide", () =>
+        decideToolCall(threadId, callId, decision, opts),
+      );
+    },
+    [threadId, attempt, decideOptimistic],
   );
 
   /** HS-151-06: create a new thread (/ new verb). */
@@ -501,8 +783,8 @@ function ThreadPulloutInner({
           )}
           <div className="thread-head-instruments">
             {egressLamp && <LampGadget on {...egressLamp} />}
-            {detail.thread?.status_line && (
-              <span className="thread-status-line">{detail.thread?.status_line}</span>
+            {(liveStatusLine || detail.thread?.status_line) && (
+              <span className="thread-status-line">{liveStatusLine || detail.thread?.status_line}</span>
             )}
             <span className="thread-token-meter">
               {tokenIn + tokenOut > 0 && (
@@ -543,6 +825,10 @@ function ThreadPulloutInner({
               const sibData = detail.siblings[msg.id];
               const sibPosition = Array.isArray(sibData) ? Number(sibData[0]) : 1;
               const sibTotal = Array.isArray(sibData) ? Number(sibData[1]) : 1;
+              // HS-152-04: collect tool rows for this message
+              const msgToolRows = msg.role === "assistant"
+                ? Object.values(threadToolRows).filter((r) => r.messageId === msg.id)
+                : undefined;
               return (
                 <MessageRow
                   key={msg.id}
@@ -555,6 +841,9 @@ function ThreadPulloutInner({
                   onRetry={handleRetry}
                   onKeep={handleKeep}
                   onBranch={handleBranch}
+                  toolRows={msgToolRows}
+                  threadId={threadId}
+                  onDecide={handleDecide}
                 />
               );
             })}

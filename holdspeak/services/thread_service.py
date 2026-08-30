@@ -762,6 +762,59 @@ class ThreadService:
                             outcome = "aborted"
                             break
 
+                        # HS-152-04: elicitation — the tool returned
+                        # {"elicit": {schema, prompt}}; the executor set
+                        # handle.state = awaiting_decision and stored the
+                        # schema. Re-emit pending with elicitation, wait
+                        # for the user's answer, then re-execute.
+                        if result is not None and result.kind == "elicitation":
+                            emit_thread_tool_pending(
+                                self._broadcast,
+                                thread_id=thread_id,
+                                message_id=assistant_msg_id,
+                                call_id=call_id,
+                                name=name,
+                                args_head=args_head,
+                                tool_class=handle.tool_class,
+                                decision_required=True,
+                                elicitation=result.elicitation,
+                            )
+                            # Block for user answer
+                            ev2 = threading.Event()
+                            decision_events[call_id] = ev2
+                            deadline2 = time.monotonic() + _TOOL_DEADLINE_S
+                            while not ev2.is_set() and not cancel_event.is_set():
+                                remaining2 = deadline2 - time.monotonic()
+                                if remaining2 <= 0:
+                                    break
+                                ev2.wait(timeout=min(0.1, remaining2))
+                            decision_events.pop(call_id, None)
+
+                            if cancel_event.is_set():
+                                outcome = "aborted"
+                                break
+
+                            if not ev2.is_set():
+                                from .thread_tools import ToolResult as _TR
+                                result = _TR(
+                                    name=name, kind="tool_timeout",
+                                    payload={"error": "tool_timeout"},
+                                    bytes=0, receipt_id="", sensitive=False,
+                                )
+                            elif handle.state == "admitted":
+                                # Re-execute with the answer
+                                result = tool_executor.execute(handle)
+                                if cancel_event.is_set():
+                                    outcome = "aborted"
+                                    break
+                            elif handle.state == "denied":
+                                from .thread_tools import ToolResult as _TR
+                                result = _TR(
+                                    name=name, kind="tool_denied",
+                                    payload={"error": "tool_denied"},
+                                    bytes=0, receipt_id="", sensitive=False,
+                                )
+
                     if result is None:
                         continue
 
@@ -1308,6 +1361,10 @@ class ThreadService:
                     "text": p.text,
                     "ordinal": p.ordinal,
                     "sensitive": p.sensitive,
+                    **({"meta_json": json.loads(p.meta_json)}
+                       if p.meta_json else {}),
+                    **({"tool_call_id": p.tool_call_id}
+                       if p.tool_call_id else {}),
                 }
                 for p in parts
             ],
