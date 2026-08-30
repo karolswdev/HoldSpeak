@@ -407,6 +407,39 @@ class MeetingWebServer:
         self._duration_task = None
         self._started.clear()
 
+    def _conductor_start_meeting(
+        self, principal, title, calendar_event_id=None
+    ):
+        """The scheduled-recording fire → the SAME start contract the routes
+        use (HS-151-06; see the wiring comment at the conductor startup).
+
+        The pending title/calendar seam (HS-147-04) lives on the RUNTIME
+        (web_runtime.py:176-177), reachable as the bound ``on_start``
+        method's owner. A harness callbacks bundle without ``on_start``
+        lawfully no-ops — never raises.
+        """
+        on_start = getattr(self._callbacks, "on_start", None)
+        if not callable(on_start):
+            return None
+        owner = getattr(on_start, "__self__", None)
+        if owner is not None and hasattr(owner, "pending_title"):
+            owner.pending_title = title
+            owner.pending_calendar_event_id = calendar_event_id or None
+        try:
+            return on_start(principal=principal)
+        except TypeError:
+            # The contract's minimal shape is zero-arg (WebRuntimeCallbacks
+            # declares Callable[[], Any]); mirror the routes' fallback.
+            return on_start()
+
+    def _conductor_stop_meeting(self):
+        """Deadline auto-stop → ``on_meeting_stop`` (the fallback-free stop,
+        meeting_glue.py:509-510). Missing on a harness bundle → no-op."""
+        on_meeting_stop = getattr(self._callbacks, "on_meeting_stop", None)
+        if not callable(on_meeting_stop):
+            return None
+        return on_meeting_stop()
+
     def _start_mesh_advertising(self) -> None:
         """Advertise this server on the LAN (HSM-15-10), best-effort.
 
@@ -994,22 +1027,26 @@ class MeetingWebServer:
                     set_broadcast as sr_set_broadcast,
                 )
                 sr_set_broadcast(lambda t, d: self.broadcast(t, d))
+                # HS-151-06 (the attended leg's catch): this wiring was born
+                # broken in HS-136-01 and no production fire ever succeeded —
+                # the lambdas referenced an out-of-scope `callbacks` name AND
+                # probed runtime-private method names (`_start_meeting`) that
+                # the WebRuntimeCallbacks contract never carries; the
+                # `if hasattr(...)` guards parsed INSIDE the lambda bodies
+                # (conditional-expression precedence), so boot never raised
+                # and every fire died or silently no-opped. Every prior walk
+                # wired its own harness callbacks and never exercised this
+                # path. The conductor now speaks the SAME contract the routes
+                # do: `on_start(principal=...)` with the pending-title/
+                # calendar seam set on the bound method's owner (the
+                # runtime), and `on_meeting_stop()` which IS the
+                # fallback-free stop (meeting_glue.py:509-510).
                 start_scheduled_recording_conductor(
                     voice_floor_fn=lambda: self.voice_session.active_owner
                     if hasattr(self, "voice_session")
                     else None,
-                    start_meeting_fn=lambda principal, title, calendar_event_id=None: (
-                        setattr(callbacks, "pending_title", title) or  # type: ignore[func-returns-value]
-                        setattr(callbacks, "pending_calendar_event_id", calendar_event_id or None) or  # type: ignore[func-returns-value]
-                        callbacks._start_meeting(principal=principal)
-                    )
-                    if hasattr(callbacks, "_start_meeting")
-                    else None,
-                    stop_meeting_fn=lambda: callbacks._stop_active_meeting(
-                        allow_runtime_fallback=False
-                    )
-                    if hasattr(callbacks, "_stop_active_meeting")
-                    else None,
+                    start_meeting_fn=self._conductor_start_meeting,
+                    stop_meeting_fn=self._conductor_stop_meeting,
                 )
             except Exception as e:
                 log.error(f"scheduled recording conductor startup failed: {e}")

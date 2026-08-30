@@ -467,7 +467,7 @@ class ScheduledRecordingConductor:
                     self._advance_after_terminal(db, sched, "refused", receipt_id)
                     return
 
-            # Fire! (I5: kernel-admitted with SCHEDULER principal)
+            # Fire! (I5: kernel-admitted; SERVICE principal per HS-151-06 — see _fire)
             self._fire(db, sched)
 
     def _fire(self, db: Any, sched: Any) -> None:
@@ -477,9 +477,29 @@ class ScheduledRecordingConductor:
         side-effects (I7 -- durable before observable).
         """
         schedule_id = sched.id
+        # HS-151-06 (the attended leg's catch): SCHEDULER can NEVER hold a
+        # parent route bundle — the Phase-D validator admits only OWNER or
+        # SERVICE (inference_parent_route_bundle_service.py:261), so a fired
+        # recording captured audio but every transcription interval dropped
+        # and the meeting persisted EMPTY. The wake precedent (Sol Amendment
+        # 4, speech_session/session.py:144-152) is the lawful shape for
+        # ambient capture: a narrow SERVICE identity whose authority basis is
+        # what the owner ALREADY configured — here, the armed schedule (the
+        # bounded-delegation ruling: enabling a schedule approves its exact
+        # work until disabled; every run still gets admission + receipt).
+        # The identity/basis/operations must EXACTLY match the sealed
+        # "scheduled-recording@1" policy (inference_service_route_policy.py);
+        # the schedule id rides the receipts and the bundle command_id, never
+        # the principal (sealed policies are keyed on fixed identities).
         principal = Principal(
-            PrincipalKind.SCHEDULER,
-            f"scheduled-recording-conductor:{schedule_id}",
+            PrincipalKind.SERVICE,
+            "scheduled-recording",
+            frozenset({
+                ("meeting.session", 1),
+                ("inference.invoke", 1),
+                ("inference.cancel", 1),
+            }),
+            "scheduled-recording:armed-schedule",
         )
 
         now = self._clock()

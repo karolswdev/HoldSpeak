@@ -31,6 +31,17 @@ PROFILE_ID = "metal-intel"
 DEFAULT_BASE_URL = "http://192.168.1.43:8080/v1"
 DEFAULT_MODEL = "qwen3.6-35b"
 CAPABILITY_ID = "meeting.deferred_analysis"
+# HS-151-06: the sealed SERVICE policy for conductor-fired recordings is
+# default-deny — it consumes only EXACT owner-configured capability
+# assignments (no inheritance), so the live-session members need their own
+# bindings alongside the deferred one. All four are language capabilities
+# the same completion endpoint serves.
+MEETING_CAPABILITY_IDS = (
+    "meeting.deferred_analysis",
+    "meeting.live_analysis",
+    "meeting.bookmark_label",
+    "meeting.auto_title",
+)
 
 
 def _canonical(value: object) -> str:
@@ -66,8 +77,10 @@ def wire(
     from holdspeak.services.model_profile_service import ModelProfileService
 
     registry = process_inference_capability_registry()
-    capability = registry.require(CAPABILITY_ID)
-    result_claim = f"result_schema:{capability.output_schema_sha256}"
+    result_claims = sorted({
+        f"result_schema:{registry.require(cid).output_schema_sha256}"
+        for cid in MEETING_CAPABILITY_IDS
+    })
 
     # The database lives in the target HOME.
     db_path = home / ".holdspeak" / "holdspeak.db"
@@ -81,7 +94,7 @@ def wire(
     actions: list[str] = []
 
     # 1. Create the v2 profile (idempotent via expected_revision CAS).
-    manifest = _manifest("language", "structured_output", result_claim)
+    manifest = _manifest("language", "structured_output", *result_claims)
     # Label and presentation must not contain URLs (private material check).
     # The artifact_id is the identity the v2 profile and deployment share.
     artifact_id = f"artifact-{PROFILE_ID}"
@@ -207,23 +220,25 @@ def wire(
         else:
             raise
 
-    # 4. Set the capability assignment for meeting.deferred_analysis.
-    try:
-        assignments.set_assignment(
-            owner,
-            {
-                "command_id": f"wire-metal-{CAPABILITY_ID}",
-                "expected_revision": 0,
-                "scope": {"kind": "capability", "capability_id": CAPABILITY_ID},
-                "entries": [{"profile_id": PROFILE_ID, "profile_revision": 1}],
-            },
-        )
-        actions.append(f"assigned '{PROFILE_ID}' to '{CAPABILITY_ID}'")
-    except Exception as exc:
-        if "revision_conflict" in str(getattr(exc, "code", "")):
-            actions.append(f"assignment for '{CAPABILITY_ID}' already exists (idempotent)")
-        else:
-            raise
+    # 4. Set the capability assignments for every meeting capability the
+    #    endpoint serves (exact bindings — the SERVICE policy inherits nothing).
+    for cid in MEETING_CAPABILITY_IDS:
+        try:
+            assignments.set_assignment(
+                owner,
+                {
+                    "command_id": f"wire-metal-{cid}",
+                    "expected_revision": 0,
+                    "scope": {"kind": "capability", "capability_id": cid},
+                    "entries": [{"profile_id": PROFILE_ID, "profile_revision": 1}],
+                },
+            )
+            actions.append(f"assigned '{PROFILE_ID}' to '{cid}'")
+        except Exception as exc:
+            if "revision_conflict" in str(getattr(exc, "code", "")):
+                actions.append(f"assignment for '{cid}' already exists (idempotent)")
+            else:
+                raise
 
     # 5. Also set up the legacy v1 profile for the effective_intel_cloud path.
     db.profiles.upsert(

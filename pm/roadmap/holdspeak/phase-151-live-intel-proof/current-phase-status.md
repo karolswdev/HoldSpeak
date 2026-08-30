@@ -1,6 +1,9 @@
 # Phase 151 — The Live Intelligence Proof
 
-**Status:** in progress (5/6) — sweep + counsel COMPLETE and clean; the close holds ONLY for the owner's attended leg + shot verdict + merge word.
+**Status:** in progress (5/7) — the attended leg descended a
+four-defect admission ladder (#7-#10) and chartered its rider
+(HS-151-07); the close holds for the rider + the attended replay +
+the owner's word.
 
 **Last updated:** 2026-08-30.
 
@@ -68,6 +71,7 @@ Branch `feat/hs151-live-intel-proof` from main `3a37e484`.
 | HS-151-04 | The vision proof (the snapshot adapter on real metal) | done | [story-04](./story-04-vision-proof.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-151-05 | The record book | done | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-151-06 | The walk, the attended leg, and the close | in-progress | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-151-07 | The fired-session admission (the attended leg's rider) | ready | [story-07](./story-07-fired-session-admission.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
