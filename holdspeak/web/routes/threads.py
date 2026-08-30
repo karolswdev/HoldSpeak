@@ -63,17 +63,9 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
         )
 
     def _service() -> ThreadService:
-        # The kernel broker is the module-level runtime service (the same
-        # authority web_server.py hands the projection reaper); it is NOT an
-        # attribute of the Database. The story-08 rig caught the getattr
-        # fallback handing every HTTP turn a None broker.
-        from ...kernel.runtime import _service as _kernel_service
-        broadcast = ctx.broadcast or (lambda t, d: None)
-        return ThreadService(
-            _database(),
-            broadcast=broadcast,
-            broker=_kernel_service(),
-        )
+        # One factory shared with the recipe chat alias (HS-151-04).
+        from ._thread_factory import thread_service_from_ctx
+        return thread_service_from_ctx(ctx)
 
     def _error(exc: ServiceError) -> JSONResponse:
         payload = dict(exc.context)
