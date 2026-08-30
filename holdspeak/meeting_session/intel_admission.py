@@ -113,6 +113,21 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
             log.warning("meeting session refused: %s", PRINCIPAL_REQUIRED)
             return False
         requested = tuple(self._requested_remote_device_ids)
+        # HS-151-07: probe whether a speech.transcribe assignment head exists
+        # BEFORE declaring routes.  A fresh HOME without the speech migration
+        # (or one whose migration recorded an issue) has no head; the bundle
+        # excludes transcription + preload and surfaces honest record_only.
+        from ..services.inference_assignment_service import InferenceAssignmentService
+
+        broker = self._intel_broker()
+        has_speech_head = False
+        try:
+            with broker.database._connection() as conn:
+                has_speech_head = InferenceAssignmentService._head(
+                    conn, "capability:speech.transcribe"
+                ) is not None
+        except Exception:
+            pass
         interval_count = int(
             (SESSION_DEADLINE_SECONDS + TRANSCRIPTION_INTERVAL_SECONDS - 1)
             // TRANSCRIPTION_INTERVAL_SECONDS
@@ -130,28 +145,38 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
             "source_key": "transcription",
             "candidate_material": [],
             "strategy_sequence": ["derive-from-frozen-transcription"],
-        }
-        budget_groups = (
+        } if has_speech_head else None
+        intel_routes: list[dict[str, str]] = [
+            {"key": "live-analysis", "capability_id": ROUTE_LIVE_ANALYSIS, "invocation_id": self._state.id},
+            {"key": "bookmark-label", "capability_id": ROUTE_BOOKMARK_LABEL, "invocation_id": self._state.id},
+            {"key": "auto-title", "capability_id": ROUTE_AUTO_TITLE, "invocation_id": self._state.id},
+        ]
+        if has_speech_head:
+            intel_routes.append(
+                {"key": "transcription", "capability_id": "speech.transcribe", "invocation_id": self._state.id},
+            )
+        budget_groups_list: list[dict[str, object]] = [
             {
                 "id": "meeting-intelligence",
                 "allocation": SESSION_CHILD_BUDGET,
                 "member_keys": ["live-analysis", "bookmark-label", "auto-title"],
             },
-            {
+        ]
+        if has_speech_head:
+            budget_groups_list.append({
                 "id": "meeting-transcription",
                 "allocation": transcription_budget,
                 "member_keys": ["transcription"],
-            },
-            {
+            })
+            budget_groups_list.append({
                 "id": "meeting-preload",
                 "allocation": preload_budget,
                 "member_keys": ["preload"],
-            },
-        )
+            })
+        budget_groups = tuple(budget_groups_list)
         try:
             from ..services.inference_parent_route_bundle_service import InferenceParentRouteBundleService
 
-            broker = self._intel_broker()
             deadline = time.time() + SESSION_DEADLINE_SECONDS
             started = InferenceParentRouteBundleService(
                 broker, broker.inference_adoption_service
@@ -172,12 +197,7 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
                     ],
                 },
                 deadline_at=deadline,
-                routes=(
-                    {"key": "live-analysis", "capability_id": ROUTE_LIVE_ANALYSIS, "invocation_id": self._state.id},
-                    {"key": "bookmark-label", "capability_id": ROUTE_BOOKMARK_LABEL, "invocation_id": self._state.id},
-                    {"key": "auto-title", "capability_id": ROUTE_AUTO_TITLE, "invocation_id": self._state.id},
-                    {"key": "transcription", "capability_id": "speech.transcribe", "invocation_id": self._state.id},
-                ),
+                routes=tuple(intel_routes),
                 budget_groups=budget_groups,
                 derived_preload=preload_declaration,
                 requested_remote_device_ids=requested,
@@ -192,6 +212,22 @@ class IntelAdmissionMixin(IntelRoutedChildMixin, TranscribeAdmissionMixin):
             return False
         self._intel_parent = started["parent"]
         self._route_bundle = started["bundle"]
+        # HS-151-07: when the speech head was absent the bundle carries no
+        # transcription member and no derived preload.  Raw capture continues
+        # and the degradation is visible on the meeting state.
+        if not has_speech_head:
+            self._record_only({
+                "family": "speech-recognition-route-assignments",
+                "reason_code": "transcription_no_speech_assignment",
+                "repair": "repair_audio_model_lifecycle",
+            })
+            log.info(
+                "meeting intelligence bundle admitted (intel-only, no speech head): "
+                "parent=%s bundle=%s transcription_status=record_only",
+                self._intel_parent.operation_id,
+                self._route_bundle["id"],
+            )
+            return True
         evidence = next(iter(self._route_bundle.get("derived_preloads", ())), None)
         if not isinstance(evidence, Mapping):
             self._refuse_session(

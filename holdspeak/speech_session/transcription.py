@@ -79,6 +79,18 @@ class TranscriptionAdmission:
     #: replay of the first.
     utterance_ref: str = ""
 
+    def loaded_artifact_reusable(self, impl: Any) -> bool:
+        """Within a legacy session, a loaded model is always reusable.
+
+        The routed admission cross-validates the deployment revision and
+        provenance; the legacy admission has no route bundles, so a model
+        loaded under THIS session's preload children is reusable for all
+        remaining windows.  Without this, ``ensure_loaded`` re-runs the
+        preload for every transcription window and the kernel refuses the
+        second attempt as ``idempotency_payload_mismatch`` (HS-151-03).
+        """
+        return any(outcome == "succeeded" for _, outcome in self.preloads)
+
     @property
     def outer_context(self) -> Any:
         return None if self.parent is None else self.parent.context

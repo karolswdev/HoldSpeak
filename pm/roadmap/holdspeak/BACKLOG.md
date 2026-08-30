@@ -8,9 +8,12 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-08-30 — candidate **AF** DC-01 GRADUATED and shipped as
-Phase 151 in one sitting (see the AF disposition); DC-02–05 stay parked.
-Earlier — candidate **AF. The Desk Chat**
+**Last updated:** 2026-08-30 — candidate **AF** Desk Chat graduated through
+Phase 152, while the handover-menu candidate [Live Intelligence Proof](./phase-151-live-intel-proof/current-phase-status.md)
+also graduated and completed 7/7. Those parallel branches independently reused
+the Phase 151 number; their historical paths remain intact and PR #511
+consolidates both workstreams. DC-03–05 stay parked. Earlier — candidate
+**AF. The Desk Chat**
 filed with its full RFC
 ([`docs/internal/PLAN_PHASE_DESK_CHAT.md`](../../../docs/internal/PLAN_PHASE_DESK_CHAT.md)):
 the warpdrv chat grammar (threads, streamed parts, kernel-admitted

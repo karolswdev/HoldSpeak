@@ -53,8 +53,8 @@ ROUTING_RESOLVER_NAMES = frozenset({
 # authority.  A new resolver or a late read cannot silently evade Story 01 by
 # looking like a harmless helper in a new module.
 ROUTING_RESOLVER_DEFINITIONS = {
-    "holdspeak/deployment_revisions.py:202:resolve_workbench_deployment_revision",
-    "holdspeak/deployment_revisions.py:224:resolve_deployment_revision",
+    "holdspeak/deployment_revisions.py:206:resolve_workbench_deployment_revision",
+    "holdspeak/deployment_revisions.py:228:resolve_deployment_revision",
     "holdspeak/inference_targets.py:550:resolve_placement",
     "holdspeak/inference_targets.py:496:resolve_inference_target",
     "holdspeak/inference_targets.py:590:resolve_thought_placement",
@@ -62,11 +62,11 @@ ROUTING_RESOLVER_DEFINITIONS = {
 }
 
 ROUTING_RESOLVER_REFERENCES = {
-    "holdspeak/deployment_revisions.py:205:import:resolve_inference_target",
-    "holdspeak/deployment_revisions.py:214:ref:resolve_inference_target",
+    "holdspeak/deployment_revisions.py:209:import:resolve_inference_target",
+    "holdspeak/deployment_revisions.py:218:ref:resolve_inference_target",
     "holdspeak/inference_targets.py:584:ref:resolve_inference_target",
     "holdspeak/inference_targets.py:601:ref:resolve_placement",
-    "holdspeak/intel/__init__.py:60:import:resolve_meeting_placement",
+    "holdspeak/intel/__init__.py:63:import:resolve_meeting_placement",
     "holdspeak/intel/providers.py:193:ref:resolve_meeting_placement",
     "holdspeak/intel/providers.py:235:ref:resolve_meeting_placement",
     "holdspeak/intel/providers.py:337:ref:resolve_meeting_placement",
@@ -74,7 +74,7 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/kernel/inference_invoke.py:10:import:resolve_deployment_revision",
     "holdspeak/kernel/inference_invoke.py:92:ref:resolve_deployment_revision",
     "holdspeak/kernel/inference_runner.py:13:import:resolve_deployment_revision",
-    "holdspeak/kernel/inference_runner.py:844:ref:resolve_deployment_revision",
+    "holdspeak/kernel/inference_runner.py:851:ref:resolve_deployment_revision",
     "holdspeak/services/ask_service.py:307:import:resolve_placement",
     "holdspeak/services/ask_service.py:308:ref:resolve_placement",
     "holdspeak/services/inference_setup_service.py:184:ref:resolve_inference_target",

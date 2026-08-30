@@ -36,6 +36,7 @@ from .parsing import (
     _extract_json,
     _extract_openai_message_text,
     _json_only_messages,
+    intel_response_format,
 )
 from .providers import (
     _effective_cloud_api_key,
@@ -55,15 +56,28 @@ log = get_logger("intel")
 #: instead of the old hidden second `.create` under one receipt.
 _COMPAT_MAX_COMPLETION_TOKENS: set[str] = set()
 
+#: HS-151-01 (counsel M1): endpoint keys that answered ``response_format`` with
+#: a 400 and therefore require bare prompts without structured output.  Same
+#: pattern as ``_COMPAT_MAX_COMPLETION_TOKENS``: the first attempt learns the
+#: dialect and raises a NAMED signal, the runner admits a SECOND child that
+#: omits ``response_format`` on its first (and only) physical request.
+_COMPAT_NO_RESPONSE_FORMAT: set[str] = set()
+
 
 def endpoint_speaks_max_completion_tokens(endpoint_key: str) -> bool:
     """Whether this endpoint has already rejected ``max_tokens`` in this process."""
     return str(endpoint_key) in _COMPAT_MAX_COMPLETION_TOKENS
 
 
+def endpoint_rejects_response_format(endpoint_key: str) -> bool:
+    """Whether this endpoint has already rejected ``response_format`` in this process."""
+    return str(endpoint_key) in _COMPAT_NO_RESPONSE_FORMAT
+
+
 def forget_endpoint_dialects() -> None:
     """Drop every learned dialect (tests; a new process starts empty anyway)."""
     _COMPAT_MAX_COMPLETION_TOKENS.clear()
+    _COMPAT_NO_RESPONSE_FORMAT.clear()
 
 
 def _token_budget_kwargs(endpoint_key: str, max_tokens: int) -> dict[str, object]:
@@ -78,6 +92,18 @@ def _compat_signal(exc: BaseException) -> BaseException:
     return ProviderCompatibilityRetry("max_completion_tokens", str(exc))
 
 
+def _response_format_compat_signal(exc: BaseException) -> BaseException:
+    """The typed signal for an endpoint that rejects response_format."""
+    return ProviderCompatibilityRetry("no_response_format", str(exc))
+
+
+def _response_format_kwargs(endpoint_key: str) -> dict[str, object]:
+    """The response_format parameter, omitted when the endpoint rejects it."""
+    if endpoint_rejects_response_format(endpoint_key):
+        return {}
+    return {"response_format": intel_response_format()}
+
+
 def _compatibility_retry(endpoint_key: str, exc: BaseException) -> bool:
     """True when the ONE named dialect fallback applies to this failure.
 
@@ -89,6 +115,31 @@ def _compatibility_retry(endpoint_key: str, exc: BaseException) -> bool:
     if endpoint_speaks_max_completion_tokens(endpoint_key):
         return False  # already speaking the dialect: this is a real failure
     _COMPAT_MAX_COMPLETION_TOKENS.add(str(endpoint_key))
+    return True
+
+
+def _response_format_compatibility_retry(endpoint_key: str, exc: BaseException) -> bool:
+    """True when the endpoint 400'd on ``response_format`` (HS-151-01, counsel M1).
+
+    Same shape as ``_compatibility_retry``: records the dialect so the next
+    admitted child omits ``response_format`` on its first request, and a second
+    rejection is a genuine failure.
+    """
+    status = _extract_status_code(exc)
+    if status != 400:
+        return False
+    msg = str(exc).lower()
+    if "response_format" not in msg and "json_schema" not in msg:
+        return False
+    if endpoint_rejects_response_format(endpoint_key):
+        return False  # already speaking the dialect: this is a real failure
+    _COMPAT_NO_RESPONSE_FORMAT.add(str(endpoint_key))
+    # HS-151-06 close counsel S1: the downgrade lasts the process lifetime —
+    # it must be visible in the log, never silent.
+    log.warning(
+        "Endpoint %s rejected response_format; omitting structured output "
+        "for the rest of this process", endpoint_key,
+    )
     return True
 
 
@@ -266,6 +317,7 @@ class MeetingIntel:
         *,
         temperature: float,
         max_tokens: int,
+        response_format: Optional[dict[str, Any]] = None,
     ) -> str:
         self._ensure_model_loaded()
 
@@ -298,6 +350,10 @@ class MeetingIntel:
             "extra_body": {"thinking": False},
             **_token_budget_kwargs(endpoint_key, max_tokens),
         }
+        # HS-151-01: request-level structured output, omitted when the endpoint
+        # has already rejected it in this process (the compat signal pattern).
+        if response_format is not None and not endpoint_rejects_response_format(endpoint_key):
+            base_kwargs["response_format"] = response_format
         if self.cloud_reasoning_effort:
             base_kwargs["reasoning_effort"] = self.cloud_reasoning_effort
         if self.cloud_store:
@@ -313,6 +369,11 @@ class MeetingIntel:
         except Exception as exc:
             if _compatibility_retry(endpoint_key, exc):
                 raise _compat_signal(exc) from exc
+            # HS-151-01 (counsel M1): a 400 naming response_format is a dialect
+            # mismatch, not a provider failure.  Record the endpoint's dialect and
+            # raise the named signal for a second admitted child WITHOUT response_format.
+            if response_format is not None and _response_format_compatibility_retry(endpoint_key, exc):
+                raise _response_format_compat_signal(exc) from exc
             _endpoint_health.record_failure(endpoint_key)
             if _extract_status_code(exc) == 429:
                 raise ProviderKnownNoGenerationTransient() from exc
@@ -340,6 +401,7 @@ class MeetingIntel:
         *,
         temperature: float,
         max_tokens: int,
+        response_format: Optional[dict[str, Any]] = None,
     ) -> Iterator[str]:
         """Stream text deltas from the active provider (local GGUF OR cloud).
 
@@ -382,6 +444,9 @@ class MeetingIntel:
             "stream": True,
             **_token_budget_kwargs(endpoint_key, max_tokens),
         }
+        # HS-151-01: structured output for streaming (same compat-signal pattern).
+        if response_format is not None and not endpoint_rejects_response_format(endpoint_key):
+            base_kwargs["response_format"] = response_format
         if self.cloud_reasoning_effort:
             base_kwargs["reasoning_effort"] = self.cloud_reasoning_effort
         if self.cloud_store:
@@ -395,6 +460,8 @@ class MeetingIntel:
         except Exception as exc:
             if _compatibility_retry(endpoint_key, exc):
                 raise _compat_signal(exc) from exc
+            if response_format is not None and _response_format_compatibility_retry(endpoint_key, exc):
+                raise _response_format_compat_signal(exc) from exc
             if _extract_status_code(exc) == 429:
                 raise ProviderKnownNoGenerationTransient() from exc
             if _extract_status_code(exc) in {401, 403}:
@@ -756,6 +823,7 @@ class MeetingIntel:
                 messages,
                 temperature=self.temperature,
                 max_tokens=self.max_tokens,
+                response_format=intel_response_format(),
             )
         except (MeetingIntelError, *CONTROL_SIGNALS):
             raise
@@ -828,7 +896,8 @@ class MeetingIntel:
 
         try:
             for piece in self._chat_completion_stream(
-                messages, temperature=self.temperature, max_tokens=self.max_tokens
+                messages, temperature=self.temperature, max_tokens=self.max_tokens,
+                response_format=intel_response_format(),
             ):
                 raw_parts.append(piece)
                 yield piece

@@ -1,0 +1,79 @@
+{
+  "rig": "HS-151-03",
+  "timestamp": "2026-08-30T03:07:14.080660+00:00",
+  "wav": "meeting-pylon-incident-warroom.wav",
+  "wav_reason": "meeting-pylon-incident-warroom.wav: 4 action items with 3 distinct named owners (Priya, Wei, Jordan) explicitly assigned in the transcript; the harshest test for named-owner extraction",
+  "treatment": {
+    "leg": "treatment",
+    "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs151-treatment-gn06t70i",
+    "wav": "/Users/karol/dev/tools/HoldSpeak/dogfood/_audio/meeting-pylon-incident-warroom.wav",
+    "failures": [],
+    "findings": [],
+    "timings": {
+      "transcription_seconds": 10.1,
+      "intel_seconds": 9.1
+    },
+    "model_output": {
+      "intel_detail": "Meeting intelligence ready.",
+      "summary": "The team reviewed the Pi 204 incident where a week-long silent failure of the ACME certificate renewal, caused by an I-198 network policy change, led to a 38-minute customer outage due to expired TLS certificates. Mitigation involved a manual certificate reissue, which violated runbook protocols but was justified. Key takeaways include the lack of alerts for certificate expiry headroom and synthetic tests for the ACME path. Action items include CREO adding a 14-day expiry alert, Me implementing synthetic CI tests and updating runbooks, and completing the post-mortem by Thursday.",
+      "action_items": [
+        {
+          "id": "action_0e1f21f46e6e1c8adc64b605",
+          "task": "Add alert on certificate expiry headroom at 14 days",
+          "owner": "CREO",
+          "review_state": "pending",
+          "due": null
+        },
+        {
+          "id": "action_100bb17010218051b7a54a25",
+          "task": "Add synthetic Acme path CI test that runs on any network policy change",
+          "owner": "Me",
+          "review_state": "pending",
+          "due": null
+        },
+        {
+          "id": "action_12b89bf6a8cc1592098a112b",
+          "task": "Update cert renewal runbook with brake glass reissue procedure",
+          "owner": "Me",
+          "review_state": "pending",
+          "due": "Thursday"
+        },
+        {
+          "id": "action_440877cf5f997ac7240b6c4c",
+          "task": "Write post-mortem doc",
+          "owner": "Me",
+          "review_state": "pending",
+          "due": "Thursday"
+        }
+      ],
+      "owners_verbatim": [
+        "CREO",
+        "Me",
+        "Me",
+        "Me"
+      ],
+      "board_unassigned_count": 4,
+      "brief_person_sections": [
+        {
+          "relationship_id": "54751053-10c6-4b85-84de-471529a448c1",
+          "display_name": "CREO",
+          "they_owe_count": 1,
+          "stalest_age_days": 0,
+          "you_owe_count": 0,
+          "agenda_backlog": 0,
+          "next_one_on_one": null
+        }
+      ]
+    }
+  },
+  "control": {
+    "leg": "control",
+    "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs151-control-lqjy2wey",
+    "wav": "/Users/karol/dev/tools/HoldSpeak/dogfood/_audio/meeting-pylon-incident-warroom.wav",
+    "failures": [],
+    "findings": []
+  },
+  "all_failures": [],
+  "all_findings": [],
+  "pass": true
+}

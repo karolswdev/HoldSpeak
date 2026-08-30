@@ -301,11 +301,17 @@ For local-first capture plus remote intel on your LAN:
 **Action Items**
 ```
 Task: Document API endpoints
-Owner: Me
+Owner: Ewa
 Due: Friday
 Status: pending
 Review: pending (needs review)
 ```
+
+The `owner` field is a literal person name as spoken in the transcript, or one
+of two reserved tokens: `Me` (the speaker or leader) and `Remote` (the
+counterpart). `null` means no owner was identified. Every other string is a
+literal name. Extracted items land with `review_state: pending` in the
+**Unassigned** column on the Door board.
 
 **Summary**
 - Concise overview of the meeting
