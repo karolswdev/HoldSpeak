@@ -1,0 +1,112 @@
+{
+  "id": "th_d080cb9ccf20",
+  "title": "HS-152-06 door effect",
+  "recipe_id": "",
+  "profile_override": "",
+  "directory_id": "",
+  "token_in": 3670,
+  "token_out": 27,
+  "created_at": 1788072340.190578,
+  "updated_at": 1788072345.317621,
+  "last_turn_at": 1788072343.378597,
+  "messages": [
+    {
+      "id": "tm_69170ef5bf6f",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_00978fe21fba",
+          "kind": "text",
+          "text": "Add an action item to my Door: 'Ship the Hands demo' due 2026-09-04. Use the door tool.",
+          "ordinal": 0,
+          "sensitive": false
+        }
+      ],
+      "created_at": 1788072340.2005901,
+      "updated_at": 1788072340.201567,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_7051fa615870",
+      "role": "assistant",
+      "parent_id": "tm_69170ef5bf6f",
+      "streaming": false,
+      "receipt_id": "ire_574f21bec0c8350fd80e707b4c0ec592",
+      "egress_scope": "private_network",
+      "model_id": "legacy-hs152-lan",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 27,
+        "prompt_tokens": 3670,
+        "total_tokens": 3697
+      },
+      "parts": [
+        {
+          "id": "tp_4900e205086c",
+          "kind": "tool_call",
+          "text": null,
+          "ordinal": 0,
+          "sensitive": false,
+          "meta_json": {
+            "id": "HGpuF8klVomgobbuSCMoE2RDvkSiIlwh",
+            "name": "door.add_item",
+            "arguments": "{\"task\":\"Ship the Hands demo\",\"due\":\"2026-09-04\"}",
+            "class": "effect_proposal",
+            "state": "admitted"
+          },
+          "tool_call_id": "HGpuF8klVomgobbuSCMoE2RDvkSiIlwh"
+        },
+        {
+          "id": "tp_6808678ac34e",
+          "kind": "text",
+          "text": "Action item added to your Door: \"Ship the Hands demo\" due 2026-09-04.",
+          "ordinal": 1,
+          "sensitive": false
+        }
+      ],
+      "created_at": 1788072340.211552,
+      "updated_at": 1788072345.316473,
+      "completed_at": 1788072345.316473,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_fdaf1dbdcd69",
+      "role": "tool",
+      "parent_id": "tm_7051fa615870",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_4bd6d8a35160",
+          "kind": "text",
+          "text": "{\"id\": \"ai_f02761ff1f204a518fd6b4ee5f32f12d\", \"task\": \"Ship the Hands demo\", \"owner\": null, \"due\": \"2026-09-04\", \"status\": \"open\", \"source_type\": \"thread\", \"source_ref\": \"\"}",
+          "ordinal": 0,
+          "sensitive": false,
+          "meta_json": {
+            "kind": "data",
+            "receipt_id": "tr-5a3ea08aece0"
+          },
+          "tool_call_id": "HGpuF8klVomgobbuSCMoE2RDvkSiIlwh"
+        }
+      ],
+      "created_at": 1788072343.378597,
+      "updated_at": 1788072343.3794172,
+      "completed_at": null,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": []
+}

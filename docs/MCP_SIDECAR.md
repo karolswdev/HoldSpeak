@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-141 tools across 30 families. The default non-owner discovery lists 29
+142 tools across 31 families. The default non-owner discovery lists 29
 resources; the owner discovery lists 32 because access filtering admits 16
 static resources and 16 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -57,7 +57,7 @@ default.
 
 ## Tool families
 
-The 141 tools are organized into domain families. Each tool follows the
+The 142 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -81,7 +81,7 @@ inference path and returns the answer with its receipt. `ask.cancel` cancels an
 in-flight invocation. `ask.keep` persists an answer as a desk artifact (not
 model-invoking). Model selection is never an Ask-side MCP control.
 
-### door (1 tool)
+### door (2 tools)
 
 `door.get` returns one closed, read-only Dashboard Door aggregate: the board,
 active Thoughts, and a mixed upcoming timeline of calendar events (from all
@@ -90,6 +90,11 @@ configured) and scheduled recordings, plus matching server-derived counts.
 Door has no MCP resource. Its
 Follow-Through People overlay respects `HOLDSPEAK_MCP_PEOPLE_ACCESS` and is
 safely empty when that encrypted disclosure capability is unavailable or off.
+
+### thread (1 tool)
+
+`thread.set_status` writes the thread's persistent status line (shown in the
+pullout head) and returns the written value. The text is persisted across turns.
 
 ### inference (1 tool)
 

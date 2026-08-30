@@ -323,6 +323,25 @@ class ThreadService:
         # Assemble the payload (assembler law).
         payload = self._assemble_payload(thread_id, user_msg.id, thread)
 
+        # HS-152-03: the tool palette rides INSIDE the admitted payload.
+        # ``execute_stream`` replays the payload frozen at admission, so a
+        # palette injected only in the pass loop never reaches pass 1 on
+        # the real path (the fake-adoption loop tests could not see this).
+        if self._tool_dispatch_fn is not None:
+            from .thread_tools import tool_schemas_for, CHAT_PALETTE
+
+            payload["tools"] = tool_schemas_for(CHAT_PALETTE)
+
+        # HS-152-03: the thread's model pick is honored at admission.
+        profile_override = str(getattr(thread, "profile_override", "") or "")
+        if profile_override:
+            await asyncio.to_thread(
+                self._apply_profile_override,
+                principal,
+                invocation_id=invocation_id,
+                profile_override=profile_override,
+            )
+
         # Admit through the adoption service.
         admitted = await asyncio.to_thread(
             self._broker.inference_adoption_service.admit,
@@ -386,6 +405,7 @@ class ThreadService:
                 egress_scope=egress_scope,
                 payload=payload,
                 turn_operation_id=invocation_id,
+                profile_override=profile_override,
             ),
             daemon=True,
         )
@@ -409,6 +429,7 @@ class ThreadService:
         egress_scope: str,
         payload: dict[str, Any],
         turn_operation_id: str = "",
+        profile_override: str = "",
     ) -> None:
         """Sync function that runs in a background thread.
 
@@ -429,7 +450,7 @@ class ThreadService:
         tool_executor: Any = None
         tool_schemas: list[dict[str, Any]] = []
         if self._tool_dispatch_fn is not None:
-            from .thread_tools import ThreadToolExecutor, tool_schemas_for, TOOL_NAMES
+            from .thread_tools import ThreadToolExecutor, tool_schemas_for, CHAT_PALETTE
 
             tool_executor = ThreadToolExecutor(
                 self._db,
@@ -438,7 +459,7 @@ class ThreadService:
                 control_mode_fn=self._control_mode_fn,
                 broker=self._broker,
             )
-            tool_schemas = tool_schemas_for(TOOL_NAMES)
+            tool_schemas = tool_schemas_for(CHAT_PALETTE)
             ThreadService._tool_executor.register(assistant_msg_id, tool_executor)
 
         max_passes = _CHAT_PASS_CAP if tool_executor is not None else 1
@@ -552,6 +573,12 @@ class ThreadService:
                 if pass_num > 0:
                     try:
                         new_inv = f"chat_turn_{uuid.uuid4().hex}"
+                        if profile_override:
+                            self._apply_profile_override(
+                                principal,
+                                invocation_id=new_inv,
+                                profile_override=profile_override,
+                            )
                         new_admitted = self._broker.inference_adoption_service.admit(
                             principal,
                             command_id=f"admit-{new_inv}",
@@ -735,27 +762,90 @@ class ThreadService:
                             outcome = "aborted"
                             break
 
+                        # HS-152-04: elicitation — the tool returned
+                        # {"elicit": {schema, prompt}}; the executor set
+                        # handle.state = awaiting_decision and stored the
+                        # schema. Re-emit pending with elicitation, wait
+                        # for the user's answer, then re-execute.
+                        if result is not None and result.kind == "elicitation":
+                            emit_thread_tool_pending(
+                                self._broadcast,
+                                thread_id=thread_id,
+                                message_id=assistant_msg_id,
+                                call_id=call_id,
+                                name=name,
+                                args_head=args_head,
+                                tool_class=handle.tool_class,
+                                decision_required=True,
+                                elicitation=result.elicitation,
+                            )
+                            # Block for user answer
+                            ev2 = threading.Event()
+                            decision_events[call_id] = ev2
+                            deadline2 = time.monotonic() + _TOOL_DEADLINE_S
+                            while not ev2.is_set() and not cancel_event.is_set():
+                                remaining2 = deadline2 - time.monotonic()
+                                if remaining2 <= 0:
+                                    break
+                                ev2.wait(timeout=min(0.1, remaining2))
+                            decision_events.pop(call_id, None)
+
+                            if cancel_event.is_set():
+                                outcome = "aborted"
+                                break
+
+                            if not ev2.is_set():
+                                from .thread_tools import ToolResult as _TR
+                                result = _TR(
+                                    name=name, kind="tool_timeout",
+                                    payload={"error": "tool_timeout"},
+                                    bytes=0, receipt_id="", sensitive=False,
+                                )
+                            elif handle.state == "admitted":
+                                # Re-execute with the answer
+                                result = tool_executor.execute(handle)
+                                if cancel_event.is_set():
+                                    outcome = "aborted"
+                                    break
+                            elif handle.state == "denied":
+                                from .thread_tools import ToolResult as _TR
+                                result = _TR(
+                                    name=name, kind="tool_denied",
+                                    payload={"error": "tool_denied"},
+                                    bytes=0, receipt_id="", sensitive=False,
+                                )
+
                     if result is None:
                         continue
 
                     # -- Derive text from result payload --
+                    # HS-152-05: apply the byte cap (the executor already
+                    # set result.truncated when the raw payload exceeded it)
+                    from .thread_tools import TOOL_RESULT_BYTE_CAP, _truncate_utf8
                     result_text = (
                         json.dumps(result.payload, default=str)
                         if result.payload is not None
                         else ""
                     )
+                    if result.truncated:
+                        result_text = _truncate_utf8(result_text, TOOL_RESULT_BYTE_CAP)
 
                     # -- Persist tool-role message --
                     tool_msg = self._threads.append_message(
                         thread_id, role="tool", parent_id=assistant_msg_id,
                     )
+                    part_meta: dict[str, Any] = {
+                        "kind": result.kind,
+                        "receipt_id": result.receipt_id,
+                    }
+                    if result.truncated:
+                        part_meta["truncated"] = True
+                        part_meta["original_bytes"] = result.original_bytes
                     self._threads.append_part(
                         tool_msg.id, kind="text", text=result_text,
                         tool_call_id=call_id,
                         sensitive=result.sensitive,
-                        meta_json=json.dumps(
-                            {"kind": result.kind, "receipt_id": result.receipt_id},
-                            separators=(",", ":")),
+                        meta_json=json.dumps(part_meta, separators=(",", ":")),
                     )
 
                     # -- Emit thread_tool_result --
@@ -775,6 +865,15 @@ class ThreadService:
                         summary=result_text[:200] if result_text else "",
                         sensitive=result.sensitive,
                     )
+
+                    # -- HS-152-05: thread.set_status — broadcast after dispatch --
+                    if name == "thread.set_status" and not is_error:
+                        status_text = str(handle.args.get("text", ""))
+                        emit_thread_status_line(
+                            self._broadcast,
+                            thread_id=thread_id,
+                            text=status_text,
+                        )
 
                     # -- D3 hook: collect sensitive result text --
                     if result.sensitive and result_text:
@@ -849,6 +948,21 @@ class ThreadService:
         token_out = int(stats.get("completion_tokens", 0))
         if token_in or token_out:
             self._threads.add_token_totals(thread_id, token_in=token_in, token_out=token_out)
+
+        # -- HS-152-05: emit persisted status_line before turn_done so the
+        #    client clears the transient "Processing..." and falls back to the
+        #    correct value. Only when tool calls happened (tool_executor exists).
+        if tool_executor is not None:
+            try:
+                thread_row = self._threads.get(thread_id)
+                persisted_status = thread_row.status_line if thread_row else ""
+            except Exception:
+                persisted_status = ""
+            emit_thread_status_line(
+                self._broadcast,
+                thread_id=thread_id,
+                text=persisted_status,
+            )
 
         # -- Broadcast thread_turn_done --
         done_stats = dict(stats)
@@ -993,6 +1107,54 @@ class ThreadService:
     def import_threads(self, payload: list[dict[str, Any]]) -> dict[str, str]:
         return self._threads.import_threads(payload)
 
+    # ── profile_override → next-run override (HS-152-03) ─────────────
+
+    def _override_entries(self, profile_override: str) -> list[dict[str, Any]]:
+        """Resolve a thread's ``profile_override`` to assignment entries.
+
+        A v2 model profile pins its newest revision; a legacy ``profiles``
+        row (the hosted / OpenAI-compatible path) pins ``legacy-<id>@1``.
+        Unknown ids resolve to nothing -- the assignment stays in charge.
+        """
+        pid = str(profile_override or "").strip()
+        if not pid:
+            return []
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT MAX(revision) AS revision FROM model_profile_revisions WHERE profile_id=?",
+                (pid,),
+            ).fetchone()
+            if row is not None and row["revision"] is not None:
+                return [{"profile_id": pid, "profile_revision": int(row["revision"])}]
+            legacy = conn.execute(
+                "SELECT id FROM profiles WHERE id=? AND deleted=0",
+                (pid.removeprefix("legacy-"),),
+            ).fetchone()
+        if legacy is not None:
+            return [{"profile_id": "legacy-" + str(legacy["id"]), "profile_revision": 1}]
+        return []
+
+    def _apply_profile_override(
+        self, principal: Principal, *, invocation_id: str, profile_override: str,
+    ) -> None:
+        """Honor ``thread.profile_override`` for ONE admission.
+
+        The thread row stores the owner's pick; routing truth stays the
+        assignment ledger, so the pick is written as an invocation-scoped
+        next-run override right before admit (the Phase 143 mechanism), and
+        every pass of a tool turn re-applies it for its own invocation.
+        """
+        entries = self._override_entries(profile_override)
+        if not entries or self._broker is None:
+            return
+        self._broker.inference_adoption_service.apply_next_run_override(
+            principal,
+            command_id=f"override-{invocation_id}",
+            invocation_id=invocation_id,
+            capability_id="chat.turn",
+            entries=entries,
+        )
+
     # ── M1 redactor (counsel M1, close counsel M5) ────────────────────
 
     @staticmethod
@@ -1016,12 +1178,14 @@ class ThreadService:
         # "cloud" is the boundary value that indicates non-local egress.
         # Local boundaries (same_device, local, private_network) keep
         # sensitive data verbatim.
+        # The sentinel key is bookkeeping for THIS seam; it never travels
+        # to an engine on any boundary (close counsel S2).
         if boundary not in ("cloud", "external_service"):
-            return payload
+            return {k: v for k, v in payload.items() if k != "_sensitive_texts"}
 
         messages = payload.get("messages")
         if not isinstance(messages, list):
-            return payload
+            return {k: v for k, v in payload.items() if k != "_sensitive_texts"}
 
         redacted_messages = []
         for msg in messages:
@@ -1233,6 +1397,10 @@ class ThreadService:
                     "text": p.text,
                     "ordinal": p.ordinal,
                     "sensitive": p.sensitive,
+                    **({"meta_json": json.loads(p.meta_json)}
+                       if p.meta_json else {}),
+                    **({"tool_call_id": p.tool_call_id}
+                       if p.tool_call_id else {}),
                 }
                 for p in parts
             ],

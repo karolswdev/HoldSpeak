@@ -512,6 +512,19 @@ def reconcile_schema(
     parent_kind_rebuilt = _rebuild_kernel_parent_runs_for_kind_drift(conn)
     action_items_rebuilt = _rebuild_action_items_for_nullable_meeting_id(conn)
 
+    # ── 1b. Add missing columns to EXISTING tables first (HS-152-06) ────
+    # SCHEMA_SQL carries `CREATE INDEX IF NOT EXISTS` statements over
+    # columns that were added to canonical tables after a database was
+    # born (e.g. scheduled_recordings(calendar_event_id), Phase 136).
+    # SQLite validates a new index's columns at creation, so running the
+    # script before the additive column reconcile strands every older
+    # database with "no such column" — the owner's real desk included.
+    # HS-142-02 special-cased one such index below; this pass closes the
+    # class: columns first, then the script.
+    pre_columns_added = _add_missing_columns(conn, existing_only=True)
+    if pre_columns_added:
+        log.info("Reconcile: pre-pass added %d column(s) before SCHEMA_SQL", len(pre_columns_added))
+
     # ── 2. Create any missing tables / indexes / triggers ──────────────
     conn.executescript(SCHEMA_SQL)
     tool_turn_guards_refreshed = _refresh_tool_turn_lifecycle_guards(conn)
@@ -524,6 +537,8 @@ def reconcile_schema(
     }
     tables_created = post_tables - pre_tables
     shape_changed = bool(tables_created) or intel_queue_rebuilt or parent_kind_rebuilt or action_items_rebuilt or tool_turn_guards_refreshed
+    if pre_columns_added:
+        shape_changed = True
     if tables_created:
         log.info("Reconcile: created tables %s", sorted(tables_created))
 
@@ -709,10 +724,12 @@ def _alter_column_sql(table: str, col: dict) -> str:
     return " ".join(parts)
 
 
-def _add_missing_columns(conn: sqlite3.Connection) -> list[str]:
+def _add_missing_columns(conn: sqlite3.Connection, *, existing_only: bool = False) -> list[str]:
     """For each canonical table, ALTER-in any columns the live DB lacks.
 
     Returns a list of ALTER statements executed (empty if nothing changed).
+    With ``existing_only`` (the pre-SCHEMA_SQL pass) a table that does not
+    exist yet is simply skipped — the script creates it whole.
     """
     reference = _build_reference_schema()
     executed: list[str] = []
@@ -724,6 +741,8 @@ def _add_missing_columns(conn: sqlite3.Connection) -> list[str]:
             (table,),
         ).fetchone()
         if not exists:
+            if existing_only:
+                continue
             # Table does not exist -- step 1 should have created it.  If it
             # still doesn't exist something unusual is going on; skip rather
             # than crash.

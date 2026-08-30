@@ -4863,7 +4863,9 @@
         "POST"
       ],
       "module": "web.routes.threads",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/threads/{thread_id}/keep",

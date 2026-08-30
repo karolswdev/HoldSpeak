@@ -22,14 +22,22 @@ branch `worktree-warpdrv-chat-port`, **PR #507**.
   sibling session shipped its own Phase 150 (Delegation+Monday, PR #508).
   LAW: `git fetch` + check `origin/main` README "Current phase" and
   `ls pm/roadmap/holdspeak | tail` BEFORE numbering a phase.
-- **Phase 152 The Hands (DC-02): 2/6 committed** (02 the gate
-  `be973104`; 01 the loop `d44f8d74`, 80 passed). Remaining: 03 People fence
-  (M1/M2 — the loop already accumulates `_sensitive_texts` and marks
-  people results sensitive; story 03 = the real-coordinator pins + metal
-  leg 2), 04 pending box + elicitation UI (`threads.ts`,
-  `ThreadPullout.tsx`; frames exist), 05 renderers + `thread.set_status`
-  tool, 06 walk. Settled design: `phase-152-the-hands/assets/settled-design.md`
-  (the truth table in D2 is law).
+- **Phase 152 The Hands (DC-02): COMPLETE 6/6, holding for the owner's
+  shot verdict + merge word.** Exhibit
+  https://claude.ai/code/artifact/cf089f7c-3d39-4eff-9322-23a8b4ddfb97.
+  Read each story's §"What shipped" before touching the loop — every
+  story found real-path defects the fake-adoption tests hid (03: five;
+  04: Allow-always + elicitation answers; 05: tool-role rows rendered as
+  assistant rows + the missing 32 KB cap; 06: the owner's real-DB
+  reconcile blocker, modes counted as CREW, practice capabilities gating
+  the Thoughts & notes starter). Laws added: `CHAT_PALETTE` ≠ census;
+  `profile_override` = invocation next-run override; `chat.turn` needs NO
+  `ToolQualification` (llama.cpp emits native tool_calls for Qwen3.6);
+  the LIVE metal path = a LEGACY `profiles` row (the 151 v2 seeding +
+  injected engine is NOT the real path); `chat.guardrail`/`chat.compact`
+  = group `chat_practice`, visibility `internal`. Rigs:
+  `assets/story-03-hub-leg.py` (DRY / `HS152_LIVE=1`), the two glass
+  files, the door walk `leg_thread`, `assets/counsel-close.md`.
 - **Phase 153 The Practice: chartered** (`assets/settled-design.md`,
   `audit-census.md`, six stories scaffolded; story bodies NOT yet
   written — write them from the settled design before building). Both
@@ -109,6 +117,10 @@ tool count arithmetic (`len(TOOLS)` is truth). Shot exhibit for 151:
 https://claude.ai/code/artifact/5f8ffe8d-63cb-45fa-8c67-6e6d4a655705 —
 make one per phase before asking the merge word.
 
-Go: finish 152 (03→04→05→06), then 153, 154, 155 —
-each with counsel-close, glass, metal, and an honest sweep. The owner
-wants the whole port; deliver it.
+Go: 152 is done and holding for the owner; next is 153 The Practice
+(six story bodies written from D1–D6, `fb5cc17d`; both data-layer
+groundwork commits landed — verify with scoped tests first), then 154,
+155 — each with counsel-close, glass, metal, and an honest sweep (the
+name-diff recipe in §2; `pytest -n auto` collects nothing in the
+sandbox, use `-n 4`/`-n 6`; NEVER run pytest un-isolated — it opens the
+owner's real DB). The owner wants the whole port; deliver it.

@@ -1037,6 +1037,11 @@ def builtin_capability_definitions() -> tuple[InferenceCapabilityDefinition, ...
     the server route/controller law.
     """
     thought = ("thoughts_notes", "Thoughts & notes")
+    # HS-152-06: the Thread's second-model capabilities (structured output,
+    # a structured retry policy) live in their OWN group so the Thoughts &
+    # notes starter bundle keeps admitting a plain local model and the
+    # group's retry-policy intersection stays the plain one.
+    practice = ("chat_practice", "Chat practice")
     writing = ("writing_dictation", "Writing & dictation")
     speech = ("speech_recognition", "Speech recognition")
     meetings = ("meetings", "Meetings")
@@ -1070,12 +1075,8 @@ def builtin_capability_definitions() -> tuple[InferenceCapabilityDefinition, ...
         # survives only in the chat-route-assignments backfill family, never in
         # the sealed registry.
         _capability("chat.turn", "Desk chat", *thought, "Answer one desk chat turn with admitted context and grounding.", operation="chat.turn", output_kind="chat_turn_answer", minimum_context_tokens=4096, fallback_dispositions=text_fallback, source_module="holdspeak.services.thread_service"),
-        # Group assignments need a non-empty retry-policy intersection. These
-        # structured chat jobs share the Thoughts & notes text policy, just as
-        # thought.interview already does; their result-schema claims still
-        # enforce structured-output compatibility independently.
-        _capability("chat.guardrail", "Chat guardrail", *thought, "Evaluate pending tool calls against an admitted guardrail.", operation="chat.guardrail", output_kind="guardrail_evaluation", structured_output=True, minimum_context_tokens=2048, fallback_dispositions=structured_fallback, source_module="holdspeak.services.thread_practice"),
-        _capability("chat.compact", "Chat compaction", *thought, "Summarize a chat thread prefix for compaction.", operation="chat.compact", output_kind="compaction_summary", structured_output=True, minimum_context_tokens=4096, fallback_dispositions=structured_fallback, source_module="holdspeak.services.thread_practice"),
+        _capability("chat.guardrail", "Chat guardrail", *practice, "Evaluate pending tool calls against an admitted guardrail.", operation="chat.guardrail", output_kind="guardrail_evaluation", structured_output=True, minimum_context_tokens=2048, policy="retry.structured.standard", fallback_dispositions=structured_fallback, visibility="internal", source_module="holdspeak.services.thread_practice"),
+        _capability("chat.compact", "Chat compaction", *practice, "Summarize a chat thread prefix for compaction.", operation="chat.compact", output_kind="compaction_summary", structured_output=True, minimum_context_tokens=4096, policy="retry.structured.standard", fallback_dispositions=structured_fallback, visibility="internal", source_module="holdspeak.services.thread_practice"),
         _capability("voice.reference_resolve", "Voice reference resolution", *agents, "Resolve a spoken reference against bounded Workbench context.", operation="voice.reference.resolve", output_kind="reference_resolution", minimum_context_tokens=2048, fallback_dispositions=text_fallback, source_module="holdspeak.services.workbench_service"),
         _capability("sequence.step", "Sequence step", *agents, "Run one typed Sequence step using its saved recipe definition.", operation="sequence.step", origin="saved_definition", output_kind="sequence_step_output", minimum_context_tokens=4096, fallback_dispositions=text_fallback, source_module="holdspeak.services.sequence_workflow_service"),
         _capability("workflow.node", "Workflow node", *agents, "Run one typed Workflow model node.", operation="workflow.node", output_kind="workflow_node_output", minimum_context_tokens=4096, fallback_dispositions=text_fallback, source_module="holdspeak.services.sequence_workflow_service"),

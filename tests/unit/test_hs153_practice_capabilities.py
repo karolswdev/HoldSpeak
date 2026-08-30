@@ -26,7 +26,7 @@ def test_chat_guardrail_seals_in_registry() -> None:
     definition = registry.require("chat.guardrail")
     assert definition.id == "chat.guardrail"
     assert definition.label == "Chat guardrail"
-    assert definition.group_id == "thoughts_notes"
+    assert definition.group_id == "chat_practice"  # HS-152-06: own group; the Thoughts & notes starter stays plain
     assert definition.output_kind == "guardrail_evaluation"
     assert definition.source_module == "holdspeak.services.thread_practice"
     assert definition.requires.structured_output is True
@@ -41,7 +41,7 @@ def test_chat_compact_seals_in_registry() -> None:
     definition = registry.require("chat.compact")
     assert definition.id == "chat.compact"
     assert definition.label == "Chat compaction"
-    assert definition.group_id == "thoughts_notes"
+    assert definition.group_id == "chat_practice"  # HS-152-06: own group; the Thoughts & notes starter stays plain
     assert definition.output_kind == "compaction_summary"
     assert definition.source_module == "holdspeak.services.thread_practice"
     assert definition.requires.structured_output is True
@@ -54,7 +54,7 @@ def test_chat_guardrail_is_assignable() -> None:
         retry_policies=builtin_retry_policy_definitions(),
     )
     definition = registry.require("chat.guardrail")
-    assert definition.owner_visibility == "owner"
+    assert definition.owner_visibility == "internal"  # HS-152-06: backfilled from chat.turn; not a roster row
 
 
 def test_chat_compact_is_assignable() -> None:
@@ -64,29 +64,29 @@ def test_chat_compact_is_assignable() -> None:
         retry_policies=builtin_retry_policy_definitions(),
     )
     definition = registry.require("chat.compact")
-    assert definition.owner_visibility == "owner"
+    assert definition.owner_visibility == "internal"  # HS-152-06: backfilled from chat.turn; not a roster row
 
 
-def test_chat_guardrail_grouped_with_chat_turn() -> None:
-    """chat.guardrail is in the same group as chat.turn."""
+def test_chat_guardrail_in_the_practice_group() -> None:
+    """chat.guardrail lives in its own practice group beside chat.turn (HS-152-06)."""
     registry = InferenceCapabilityRegistry.compose(
         capabilities=builtin_capability_definitions(),
         retry_policies=builtin_retry_policy_definitions(),
     )
     guardrail = registry.require("chat.guardrail")
     turn = registry.require("chat.turn")
-    assert guardrail.group_id == turn.group_id
+    assert (guardrail.group_id, turn.group_id) == ("chat_practice", "thoughts_notes")
 
 
-def test_chat_compact_grouped_with_chat_turn() -> None:
-    """chat.compact is in the same group as chat.turn."""
+def test_chat_compact_in_the_practice_group() -> None:
+    """chat.compact lives in its own practice group beside chat.turn (HS-152-06)."""
     registry = InferenceCapabilityRegistry.compose(
         capabilities=builtin_capability_definitions(),
         retry_policies=builtin_retry_policy_definitions(),
     )
     compact = registry.require("chat.compact")
     turn = registry.require("chat.turn")
-    assert compact.group_id == turn.group_id
+    assert (compact.group_id, turn.group_id) == ("chat_practice", "thoughts_notes")
 
 
 # ── Backfill tests ────────────────────────────────────────────────────────

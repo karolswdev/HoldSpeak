@@ -822,6 +822,34 @@ When a Thread references a People record, those parts are marked sensitive.
 If the thread's model assignment resolves to a cloud endpoint, the assembler
 redacts sensitive content before it reaches the provider.
 
+### The Thread has hands
+
+During a turn the model may call the desk's own tools. Each call
+renders as a tool row: name, class glyph, arguments head, state.
+
+In yolo mode every call executes immediately and the row shows DONE
+with a receipt short-id. In safe mode, effect tools are held. Three
+verbs appear:
+
+- **Allow once.** Executes this call. No policy row written.
+- **Allow always.** Writes a per-thread policy row so future calls
+  to the same tool auto-admit. No "Never" is offered.
+- **Deny.** Refuses this call only. No row written.
+
+A tool may ask a question mid-call (elicitation). The row renders a
+JSON-Schema form: string, number, boolean, and enum fields. Submit
+sends the answer; Decline refuses.
+
+Results from `people.*` tools carry a PEOPLE badge. These parts are
+marked sensitive and never leave the machine on a cloud turn.
+
+Every receipted row carries a collapsed **RAW** fold with the full
+JSON payload. A TRUNCATED tag appears when the result exceeded the
+32 KB byte cap.
+
+`thread.set_status` writes the status line shown under the thread
+title in the pullout head.
+
 ## Schedule A Recording
 
 You can set the hub to start a recording on its own at a time you choose.

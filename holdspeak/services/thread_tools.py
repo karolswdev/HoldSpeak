@@ -192,10 +192,39 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     # --- door family ---
     "door.get": ("evidence_read", False),
     "door.add_item": ("effect_proposal", False),  # HS-153-05: thread todo → Door
+    # --- thread family (HS-152-05) ---
+    "thread.set_status": ("effect_proposal", False),
 }
 
 # Public accessors
 TOOL_NAMES: frozenset[str] = frozenset(_TOOL_CLASSES)
+
+# HS-152-03: the palette a chat turn OFFERS the model.  ``TOOL_NAMES`` stays
+# the gate's classification table (any call the model makes is resolved
+# against it); the palette is what rides inside the admitted payload.  The
+# full 141-schema census is ~79 KB, and the admission law reserves one
+# token per byte -- it overflowed a 32k context at admission before a
+# single message was sent.  DC-02 offers the desk-facing hands; DC-03
+# modes narrow (or widen) this per recipe.
+CHAT_PALETTE: frozenset[str] = frozenset({
+    # the desk
+    "desk.list", "desk.get", "desk.create", "desk.update", "desk.snapshot",
+    "zone.list_members", "zone.file", "zone.unfile",
+    "memory.search",
+    # the door + the week
+    "door.get", "door.add_item",
+    "monday_brief.get",
+    # meetings + what came out of them
+    "meeting.list", "meeting.get",
+    "follow_through.board", "follow_through.complete", "follow_through.commit_decision",
+    "decision_record.list", "decision_record.search", "decision_record.get",
+    # people (every result sensitive at birth -- the fence)
+    "people.readiness", "people.relationship.list", "people.relationship.get",
+    "people.one_on_one.brief", "people.agenda.add", "people.note.create",
+    # thread family (HS-152-05)
+    "thread.set_status",
+})
+assert CHAT_PALETTE <= TOOL_NAMES, sorted(CHAT_PALETTE - TOOL_NAMES)
 
 
 def tool_class(name: str) -> str:
@@ -212,6 +241,30 @@ def tool_sensitive(name: str) -> bool:
     if entry is None:
         raise ValueError(f"Unclassified tool: {name}")
     return entry[1]
+
+
+# ---------------------------------------------------------------------------
+# Semantic kind derivation (HS-152-05)
+# ---------------------------------------------------------------------------
+
+def derive_result_kind(name: str, args: dict[str, Any] | None = None) -> str:
+    """Derive a semantic kind from the tool name for per-kind result rendering.
+
+    Called in ONE place (``ThreadToolExecutor.execute``) after a successful
+    dispatch.  Error and mutation overrides happen in the caller.
+    """
+    if name.startswith("meeting."):
+        return "meeting"
+    if name.startswith("people."):
+        return "person"
+    if name in ("door.get", "follow_through.board"):
+        return "board"
+    if name in ("desk.list", "desk.get", "desk.create", "desk.update"):
+        if args and str(args.get("kind", "")) == "notes":
+            return "note"
+    if name.startswith("decision_record.") or name == "decision.supersede":
+        return "decision"
+    return "data"
 
 
 # ---------------------------------------------------------------------------
@@ -313,6 +366,23 @@ class ToolCallHandle:
     _cancel: Optional[threading.Event] = None
 
 
+# HS-152-05: tool result byte cap.  The tool-role message content the
+# model sees and the persisted part text are both truncated at this
+# boundary (UTF-8 safe).  The meta_json carries {"truncated": true,
+# "original_bytes": N} when truncation fires.
+TOOL_RESULT_BYTE_CAP = 32_768
+
+
+def _truncate_utf8(text: str, cap: int) -> str:
+    """Truncate *text* to at most *cap* bytes at a UTF-8 boundary."""
+    encoded = text.encode("utf-8")
+    if len(encoded) <= cap:
+        return text
+    # Walk back from cap to find a valid UTF-8 boundary
+    truncated = encoded[:cap]
+    return truncated.decode("utf-8", errors="ignore")
+
+
 @dataclass(frozen=True)
 class ToolResult:
     """The closed result of one tool execution."""
@@ -323,6 +393,8 @@ class ToolResult:
     receipt_id: str
     sensitive: bool
     elicitation: Optional[dict[str, Any]] = None
+    truncated: bool = False
+    original_bytes: int = 0
 
 
 class ThreadToolExecutor:
@@ -524,25 +596,35 @@ class ThreadToolExecutor:
                     elicitation=result["elicit"],
                 )
 
-            # Compute result size
+            # Compute result size and apply byte cap
             payload_json = json.dumps(result, default=str) if result is not None else "{}"
             result_bytes = len(payload_json.encode("utf-8"))
+            was_truncated = result_bytes > TOOL_RESULT_BYTE_CAP
+            if was_truncated:
+                payload_json = _truncate_utf8(payload_json, TOOL_RESULT_BYTE_CAP)
+                result_bytes = len(payload_json.encode("utf-8"))
 
-            # Determine kind from the result
-            kind = "data"
-            if isinstance(result, dict):
-                if "error" in result:
-                    kind = "error"
-                elif result.get("deleted"):
-                    kind = "mutation"
+            # Determine kind: error/mutation overrides, else semantic from tool name
+            if isinstance(result, dict) and "error" in result:
+                kind = "error"
+            elif isinstance(result, dict) and result.get("deleted"):
+                kind = "mutation"
+            else:
+                kind = derive_result_kind(handle.name, handle.args)
 
             handle.state = "completed"
             handle.receipt_id = receipt_id
+
+            original_bytes = len(
+                json.dumps(result, default=str).encode("utf-8")
+            ) if was_truncated else result_bytes
 
             return ToolResult(
                 name=handle.name, kind=kind, payload=result,
                 bytes=result_bytes, receipt_id=receipt_id,
                 sensitive=handle.sensitive,
+                truncated=was_truncated,
+                original_bytes=original_bytes if was_truncated else 0,
             )
 
         except Exception as exc:
@@ -561,11 +643,14 @@ class ThreadToolExecutor:
 
 __all__ = [
     "TOOL_NAMES",
+    "TOOL_RESULT_BYTE_CAP",
     "ThreadToolExecutor",
     "ToolCallHandle",
     "ToolResult",
+    "derive_result_kind",
     "resolve_tool_decision",
     "tool_class",
     "tool_schemas_for",
     "tool_sensitive",
+    "CHAT_PALETTE",
 ]
