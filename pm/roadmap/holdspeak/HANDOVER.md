@@ -85,7 +85,7 @@ for both, `comm -23`). Last diff on `36757847`: zero branch-new. Web:
 
 ## 4. UNCOMMITTED WORK IN THE TREE (verify before committing)
 
-Run `git status --short`. Expected:
+Run `git status --short` — it should be clean except untracked scratch. What was landed at handover:
 - **HS-152-01 (the loop) — READY TO COMMIT**: `holdspeak/services/thread_service.py`,
   `holdspeak/services/thread_tool_protocol.py`, `holdspeak/kernel/inference_stream.py`,
   `holdspeak/realtime_frames.py`, `web/src/runtime/frames.ts`,
@@ -94,7 +94,7 @@ Run `git status --short`. Expected:
   Commit: `git add` those, `.githooks/dw contract new --story HS-152-01
   --tests-capture pm/roadmap/holdspeak/phase-152-the-hands/evidence-story-01.md`,
   flip boxes, commit.
-- **Phase 153 builders' WIP (two opus workers, may be partial)**:
+- **Phase 153 builders' work — BOTH LANDED GREEN AND COMMITTED** (`9cb769a9` modes/prompts, and the door/capabilities commit after it) — kept here as the map of what exists:
   (a) modes+prompts data layer — `recipes.kind`, `holdspeak/services/thread_modes.py`,
   seeds in `holdspeak/seeds/fresh-desk.yaml`, notes `?tag=` query,
   `tests/unit/test_thread_modes.py`; (b) `door.add_item` + `DoorService.add_item`

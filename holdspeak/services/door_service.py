@@ -1,6 +1,7 @@
 """The Dashboard Door's composed, transport-neutral read model."""
 from __future__ import annotations
 
+import uuid
 from dataclasses import asdict
 from datetime import datetime, time, timedelta, timezone
 from typing import TYPE_CHECKING, Any, Callable
@@ -23,6 +24,7 @@ class DoorService:
         scheduled_recordings: ScheduledRecordingRepository,
         calendar_events: CalendarEventRepository,
         *,
+        db: Any = None,
         clock: Callable[[], datetime] | None = None,
         config_loader: Callable[[], Any] | None = None,
         people_service: PeopleService | None = None,
@@ -31,9 +33,63 @@ class DoorService:
         self._refinement_thought_service = refinement_thought_service
         self._scheduled_recordings = scheduled_recordings
         self._calendar_events = calendar_events
+        self._db = db
         self._clock = clock or (lambda: datetime.now().astimezone())
         self._config_loader = config_loader
         self._people_service = people_service
+
+    def add_item(
+        self,
+        principal: Any,
+        task: str,
+        *,
+        owner: str | None = None,
+        due: str | None = None,
+        source_type: str = "meeting",
+        source_ref: str = "",
+    ) -> dict[str, Any]:
+        """Add an action item to the Door (HS-153-05).
+
+        Returns the created action item as a dict.
+        """
+        if self._db is None:
+            raise RuntimeError("DoorService requires a db for add_item")
+        if not task or not task.strip():
+            from .errors import ServiceError
+            raise ServiceError(
+                "door_add_item_invalid",
+                "Task text must not be empty.",
+                context={"status": 400},
+            )
+        item_id = "ai_" + uuid.uuid4().hex
+        now = datetime.now().isoformat()
+        delegated_at = now if owner else None
+        with self._db._connection() as conn:
+            conn.execute(
+                """INSERT INTO action_items
+                   (id, meeting_id, task, owner, due, status, review_state,
+                    created_at, delegated_at, source_type, source_ref)
+                   VALUES (?, NULL, ?, ?, ?, 'open', 'accepted', ?, ?, ?, ?)""",
+                (
+                    item_id,
+                    task.strip(),
+                    owner,
+                    due,
+                    now,
+                    delegated_at,
+                    source_type,
+                    source_ref,
+                ),
+            )
+        return {
+            "id": item_id,
+            "task": task.strip(),
+            "owner": owner,
+            "due": due,
+            "status": "open",
+            "source_type": source_type,
+            "source_ref": source_ref,
+        }
 
     def get(self, principal: Any) -> dict[str, Any]:
         now = self._clock()

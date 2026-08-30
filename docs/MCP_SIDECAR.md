@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-140 tools across 30 families. The default non-owner discovery lists 29
+141 tools across 30 families. The default non-owner discovery lists 29
 resources; the owner discovery lists 32 because access filtering admits 16
 static resources and 16 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
