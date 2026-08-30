@@ -1,6 +1,6 @@
 # Phase 151 — The Live Intelligence Proof
 
-**Status:** in progress (3/6).
+**Status:** in progress (4/6).
 
 **Last updated:** 2026-08-30.
 
@@ -64,14 +64,31 @@ Branch `feat/hs151-live-intel-proof` from main `3a37e484`.
 | --- | --- | --- | --- | --- |
 | HS-151-01 | The honest dispatch (structured output + the wiring recipe) | done | [story-01](./story-01-honest-dispatch.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-151-02 | The named-owner intel (the prompt learns people) | done | [story-02](./story-02-named-owners.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-151-03 | The headless metal proof (control vs treatment) | in-progress | [story-03](./story-03-metal-proof.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-151-03 | The headless metal proof (control vs treatment) | done | [story-03](./story-03-metal-proof.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-151-04 | The vision proof (the snapshot adapter on real metal) | done | [story-04](./story-04-vision-proof.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-151-05 | The record book | ready | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-151-06 | The walk, the attended leg, and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-**3/6.** HS-151-02 (the named-owner intel) is DONE — the
+**4/6, ALL FEATURE STORIES DONE.** HS-151-03 (the headless metal
+proof) is DONE — THE LOOP IS REAL for the first time in the
+product's history: real WAV → real mlx-whisper → the real import
+door → the production queue (with the counsel-ruled Design-A skip
+freezing only what resolves, receipted) → the REAL pinned resident
+server → real pending action items on the Door → the real triage +
+map gestures → the brief's People section; control leg all-zero on
+the same audio; sync/push nowhere; extraction ~8 s on the 35B. The
+messy-reality record is in the evidence verbatim (the TTS voice
+transcribed the owner as "CREO" and the model grounded honestly in
+what it heard; owners drift between runs — the shape-grounded
+assertion law vindicated). The story shipped THREE product fixes
+counsel-ruled or precedent-clean: the multi-window import
+idempotency defect, the Design-A claim skip with all five pins,
+and (recorded, not fixed) the remote DeploymentRevision kind
+hardcoding. Six latent defects total now found by real metal.
+Remaining: the record book (05), the walk + the ATTENDED leg +
+close (06). Earlier — **3/6.** HS-151-02 (the named-owner intel) is DONE — the
 person-blind prompt dies: intel now names owners when the
 transcript does (Me/Remote declared the ONLY reserved tokens,
 counsel M3 verbatim), the schema constant and prompt updated

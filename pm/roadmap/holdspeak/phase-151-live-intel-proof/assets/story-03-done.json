@@ -1,0 +1,79 @@
+{
+  "rig": "HS-151-03",
+  "timestamp": "2026-08-30T02:57:19.602492+00:00",
+  "wav": "meeting-pylon-incident-warroom.wav",
+  "wav_reason": "meeting-pylon-incident-warroom.wav: 4 action items with 3 distinct named owners (Priya, Wei, Jordan) explicitly assigned in the transcript; the harshest test for named-owner extraction",
+  "treatment": {
+    "leg": "treatment",
+    "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs151-treatment-flu0f7j1",
+    "wav": "/Users/karol/dev/tools/HoldSpeak/dogfood/_audio/meeting-pylon-incident-warroom.wav",
+    "failures": [],
+    "findings": [],
+    "timings": {
+      "transcription_seconds": 10.1,
+      "intel_seconds": 9.6
+    },
+    "model_output": {
+      "intel_detail": "Meeting intelligence ready.",
+      "summary": "The team reviewed the Pi 204 incident where a week-long silent failure of the ACME certificate renewal, caused by a network policy change blocking the HTTP-01 solver path, led to a 38-minute customer outage due to expired TLS certificates. The mitigation involved an unauthorized manual reissue ('brake glass'). Key takeaways include the lack of alerts for certificate expiry headroom and missing synthetic tests for the ACME path. Action items include CREO implementing a 14-day expiry alert and a CI synthetic test, while Me updates the runbook and writes the post-mortem by Thursday.",
+      "action_items": [
+        {
+          "id": "action_fb0be69a65e4cccf092ba63b",
+          "task": "Add alert on certificate expiry headroom at 14 days",
+          "owner": "CREO",
+          "review_state": "pending",
+          "due": null
+        },
+        {
+          "id": "action_04c4947cca74b83ef183cb55",
+          "task": "Add synthetic Acme path CI test that runs on any network policy change",
+          "owner": "CREO",
+          "review_state": "pending",
+          "due": null
+        },
+        {
+          "id": "action_fa81ae0e6a4f06377196e18d",
+          "task": "Update cert renewal runbook with the brake glass reissue procedure",
+          "owner": "Me",
+          "review_state": "pending",
+          "due": "Thursday"
+        },
+        {
+          "id": "action_1ca785280d32e40da0462ad8",
+          "task": "Write post-mortem doc noting brake glass was justified and identifying risks",
+          "owner": "Me",
+          "review_state": "pending",
+          "due": "Thursday"
+        }
+      ],
+      "owners_verbatim": [
+        "CREO",
+        "CREO",
+        "Me",
+        "Me"
+      ],
+      "board_unassigned_count": 4,
+      "brief_person_sections": [
+        {
+          "relationship_id": "9cfeae03-156f-4922-9740-9d3beb51008c",
+          "display_name": "CREO",
+          "they_owe_count": 2,
+          "stalest_age_days": 0,
+          "you_owe_count": 0,
+          "agenda_backlog": 0,
+          "next_one_on_one": null
+        }
+      ]
+    }
+  },
+  "control": {
+    "leg": "control",
+    "home": "/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/hs151-control-m2h9rxyx",
+    "wav": "/Users/karol/dev/tools/HoldSpeak/dogfood/_audio/meeting-pylon-incident-warroom.wav",
+    "failures": [],
+    "findings": []
+  },
+  "all_failures": [],
+  "all_findings": [],
+  "pass": true
+}

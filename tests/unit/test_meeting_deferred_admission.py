@@ -2187,3 +2187,202 @@ def test_stop_fences_live_bundle_before_return_and_rejects_late_ready(tmp_path, 
     session._set_intel_status("ready", "late physical result")
     assert final.intel_status == "queued"
     assert "queued for deferred processing" in str(final.intel_status_detail).lower()
+
+
+# ----------------------------------------------------------------- HS-151-03
+# Plugin-assignment-skip tests: a plugin capability with NO assignment is
+# excluded with a receipt at claim planning, not a terminal refusal.
+
+
+def _assign_deferred_queue_routes_partial(
+    db: Database,
+    *,
+    skip_plugin_ids: frozenset[str],
+) -> None:
+    """Like ``_assign_deferred_queue_routes`` but OMITS assignments for
+    specific plugin capabilities, simulating a user who wired one model
+    for core analysis but not for every installed plugin.
+    """
+    from holdspeak.inference_capabilities import process_inference_capability_registry
+
+    all_capabilities = (
+        "meeting.deferred_analysis",
+        "meeting.bookmark_label",
+        "meeting.auto_title",
+        *(
+            capability_id
+            for capability_id in process_inference_capability_registry().capability_ids
+            if capability_id.startswith("meeting.plugin.")
+        ),
+    )
+    assigned = [
+        c for c in all_capabilities
+        if not any(c == f"meeting.plugin.{pid}" for pid in skip_plugin_ids)
+    ]
+    _profile(
+        db,
+        "deferred-queue-model",
+        claims=(
+            "language", "structured_output", "meeting_plugin",
+            *(_result_claim(item) for item in assigned),
+        ),
+        modalities=("language", "text"),
+    )
+    assignments = InferenceAssignmentService(db)
+    for ordinal, capability in enumerate(assigned, 1):
+        assignments.set_assignment(
+            OWNER,
+            {
+                "command_id": f"deferred-queue-assignment-{ordinal}",
+                "expected_revision": 0,
+                "scope": {"kind": "capability", "capability_id": capability},
+                "entries": [{"profile_id": "deferred-queue-model", "profile_revision": 1}],
+            },
+        )
+
+
+def _queue_rig_partial_assignments(
+    tmp_path: Path,
+    monkeypatch,
+    *,
+    plugins: tuple[str, ...],
+    chain: tuple[str, ...],
+    skip_plugin_ids: frozenset[str],
+):
+    """Like ``_queue_rig`` but uses partial assignments (some plugins skipped)."""
+    db = Database(tmp_path / "queue.db")
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
+    monkeypatch.setattr("holdspeak.intel_queue.get_database", lambda *a, **k: db)
+    _assign_deferred_queue_routes_partial(db, skip_plugin_ids=skip_plugin_ids)
+    broker = _configure(db)
+    engine = FakeIntel()
+    host = FakeHost(plugins)
+
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
+    monkeypatch.setattr("holdspeak.meeting_plugins.build_bound_meeting_plugin_host", lambda: host)
+    monkeypatch.setattr(
+        "holdspeak.plugins.router.preview_route_from_transcript",
+        lambda **kwargs: _Route(chain),
+    )
+    requests = _observe(broker, monkeypatch)
+    return db, broker, engine, host, requests
+
+
+def test_unassigned_plugin_excluded_with_receipt_core_analysis_succeeds(
+    tmp_path, monkeypatch
+):
+    """HS-151-03: a plugin capability with NO assignment is skipped, not terminal.
+
+    The MIR router routes ``project_detector`` and ``requirements_extractor``.
+    Only ``requirements_extractor`` has an assignment. The claim should:
+    - exclude ``project_detector`` with a ``plugin_chain_skipped`` receipt
+    - freeze only ``requirements_extractor`` as a member
+    - base analysis succeeds and meeting becomes ready
+    """
+    db, broker, engine, host, requests = _queue_rig_partial_assignments(
+        tmp_path, monkeypatch,
+        plugins=("project_detector", "requirements_extractor"),
+        chain=("project_detector", "requirements_extractor"),
+        skip_plugin_ids=frozenset({"project_detector"}),
+    )
+    state = _queued_meeting(db, "m-skip-plugin")
+
+    from holdspeak.intel_queue import process_next_intel_job
+
+    assert process_next_intel_job() is True
+
+    # The claim should succeed with base analysis + the ONE assigned plugin.
+    parents = _parents(db, PARENT_KIND)
+    assert len(parents) == 1
+    parent = parents[0]
+    assert parent["state"] == "SUCCEEDED"
+
+    # Base analysis + requirements_extractor = 2 children (project_detector skipped).
+    children = _children(db, parent["operation_id"])
+    assert len(children) == 2
+    assert len(requests) == 2
+    assert host.executed == ["requirements_extractor"]
+
+    # The meeting reaches ready.
+    refreshed = db.meetings.get_meeting(state.id)
+    assert refreshed is not None
+    assert refreshed.intel_status == "ready"
+    assert refreshed.intel is not None
+    assert refreshed.intel.summary == "The team reviewed the budget."
+
+    # The skipped plugin is recorded in the frozen descriptor.
+    with db._connection() as conn:
+        job = conn.execute(
+            "SELECT displaced_work FROM intel_jobs WHERE meeting_id=?",
+            (state.id,),
+        ).fetchone()
+    descriptor = json.loads(job["displaced_work"])
+    route = descriptor.get("plugin_route", {})
+    skipped = route.get("plugin_chain_skipped", [])
+    assert len(skipped) == 1
+    assert skipped[0]["plugin_id"] == "project_detector"
+    assert skipped[0]["reason"] == "no_assignment"
+
+
+def test_core_capability_missing_assignment_remains_terminal(
+    tmp_path, monkeypatch
+):
+    """HS-151-03 Pin 3: core capabilities (meeting.deferred_analysis) missing
+    an assignment remain a terminal refusal -- only meeting.plugin.* may skip.
+    """
+    # Create a rig with NO assignment for meeting.deferred_analysis itself.
+    db = Database(tmp_path / "queue-core-missing.db")
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    monkeypatch.setattr("holdspeak.db.get_database", lambda *a, **k: db)
+    monkeypatch.setattr("holdspeak.intel_queue.get_database", lambda *a, **k: db)
+    # Assign only plugins, NOT core capabilities.
+    from holdspeak.inference_capabilities import process_inference_capability_registry
+    plugin_capabilities = [
+        cid for cid in process_inference_capability_registry().capability_ids
+        if cid.startswith("meeting.plugin.")
+    ]
+    all_to_assign = plugin_capabilities  # deliberately omit deferred_analysis
+    _profile(
+        db,
+        "deferred-queue-model",
+        claims=(
+            "language", "structured_output", "meeting_plugin",
+            *(_result_claim(item) for item in all_to_assign),
+        ),
+        modalities=("language", "text"),
+    )
+    assignments = InferenceAssignmentService(db)
+    for ordinal, capability in enumerate(all_to_assign, 1):
+        assignments.set_assignment(
+            OWNER,
+            {
+                "command_id": f"core-missing-assignment-{ordinal}",
+                "expected_revision": 0,
+                "scope": {"kind": "capability", "capability_id": capability},
+                "entries": [{"profile_id": "deferred-queue-model", "profile_revision": 1}],
+            },
+        )
+    broker = _configure(db)
+    engine = FakeIntel()
+    host = FakeHost(())
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", lambda **kwargs: engine)
+    monkeypatch.setattr("holdspeak.intel.providers._configured_engine", lambda: engine)
+    monkeypatch.setattr("holdspeak.meeting_plugins.build_bound_meeting_plugin_host", lambda: host)
+    monkeypatch.setattr(
+        "holdspeak.plugins.router.preview_route_from_transcript",
+        lambda **kwargs: _Route(()),
+    )
+    state = _queued_meeting(db, "m-core-missing")
+
+    from holdspeak.intel_queue import process_next_intel_job
+
+    # The claim should fail -- core capability missing is terminal.
+    result = process_next_intel_job()
+    assert result is True  # progress was made (job settled as error)
+
+    # Meeting should be in error, NOT ready.
+    refreshed = db.meetings.get_meeting(state.id)
+    assert refreshed is not None
+    assert refreshed.intel_status == "error"
