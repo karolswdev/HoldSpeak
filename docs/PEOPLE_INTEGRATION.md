@@ -137,6 +137,13 @@ that clears the filter. `delegated_at` is stamped on action_items only when the
 owner string value actually changes (a SQL CASE guard at both the intel upsert
 and the edit path).
 
+**The follow-through route adapter.** The `/api/follow-through/board` HTTP route
+enriches the service result with `person_label` and `person_relationship_id` for
+mapped owner strings at the route adapter layer (`holdspeak/web/routes/follow_through.py`).
+The `FollowThroughService.board()` method stays person-free for observers and the
+MCP `follow_through.board` tool. When the sidecar is unavailable, enrichment
+degrades to the plain board silently.
+
 **The brief overlay.** `compose_person_overlay` builds per-relationship sections
 at read time. For each relationship with mapped aliases, it counts THEY-OWE cards
 (board cards whose owner matches any alias), YOU-OWE (open encrypted commitments),

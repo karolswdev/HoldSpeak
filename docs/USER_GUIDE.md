@@ -734,7 +734,8 @@ carries one chip per mapped person plus **Everyone** to clear the filter.
 Beside the person chip, a staleness label reads **waiting Nd** (for example,
 "waiting 3d"). The number counts days since the card's `delegated_at` timestamp
 (the moment the owner last changed) or its `created_at` if no delegation has
-happened. Zero is "waiting 0d".
+happened. Zero is "waiting 0d". The Intelligence Follow-Through view (the deep
+room) wears the same person chip and staleness label for mapped owners.
 
 ### The chief-of-staff brief
 

@@ -498,6 +498,32 @@
   line-height: 1;
 }
 
+/* HS-150-07: person chip for mapped owners (same grammar as the Door). */
+.follow-through-person-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  height: auto;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  place-items: unset;
+}
+
+.follow-through-staleness {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
 .follow-through-due {
   min-width: 3.75rem;
   color: var(--text-faint);

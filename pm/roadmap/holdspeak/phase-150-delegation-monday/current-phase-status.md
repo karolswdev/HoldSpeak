@@ -1,6 +1,6 @@
 # Phase 150 — Delegation + the Chief-of-Staff Brief
 
-**Status:** complete (6/6) — holding for the owner's shot verdict
+**Status:** complete (7/7) — holding for the owner's shot verdict
 and merge word.
 
 **Last updated:** 2026-08-29.
@@ -56,10 +56,31 @@ NON-NEGOTIABLE this phase (two arcs carried it).
 | HS-150-04 | The web-inherited baseline (the debt rider) | done | [story-04](./story-04-web-baseline.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-150-05 | The record book | done | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-150-06 | The walk and the close | done | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-150-07 | The one-door reckoning (owner-ordered rider) | done | [story-07](./story-07-one-door-reckoning.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**6/6 — PHASE 150 COMPLETE, holding for the owner.** HS-150-06
+**7/7 — PHASE 150 COMPLETE (with the owner-ordered rider), holding
+for the owner.** HS-150-07 (the one-door reckoning) closed the
+entry-point sprawl the owner called out: the census-based ruling —
+Door board = triage door, Intelligence Follow-through = the deep
+room (NOT retired; it holds provenance quotes, receipts/decision
+jumps, and the overdue drill) — with the deep room now wearing the
+SAME person grammar (chip + `waiting Nd` for mapped owners, bare
+initials for unmapped) composed at the route adapter per the
+ratified 150 pattern (service, observers, and the MCP board all
+person-free, pinned four ways). The true orphan
+(FollowThroughLane, unimported since 144) is DELETED with grep
+proof, and the orchestrator-authored orphan guard
+(test_web_surface_orphans.py) is proven both directions — red on
+the pre-delete tree naming exactly the orphan, green after — so
+the sat-unmounted-for-six-phases class is dead. One frame shows
+both rooms rendering the same cards in the same grammar
+(story-07-shots). 393 honest absence recorded: the pullout host
+does not operate at narrow at all (pre-existing; probed —
+navigate event no-ops, menus hidden; joins the 149 reachability
+ledger family).
+Earlier — **6/6 — PHASE 150 COMPLETE, holding for the owner.** HS-150-06
 closed it: the phase walk (assets/walk-rig.py) green ×2 + a third
 run under the final geometry, with the stamped capture — the
 persisted boundary WALKED (person_sections in the response; the
@@ -206,6 +227,20 @@ builds in its parallel lane. Earlier — chartered 0/6.
   assertions prove what the evidence claims; Tuesday
   ("a manager's daily operating picture, not a one-time setup")
   and joy both PASS. The six ledger items are recorded below.
+
+- **2026-08-29 — owner order (the rider):** after the exhibit, the
+  owner asked whether other entry points reach the same
+  functionalities and ordered the sprawl nipped in the bud. The
+  census found a second true orphan (FollowThroughLane, unimported
+  since 144) and one live era mismatch (the Intelligence
+  Follow-through deep room renders owners as bare initials).
+  RULED: the Door board = the triage door; Intelligence
+  Follow-through = the deep room (NOT retired — census shows it
+  holds provenance quotes, receipts/decision jumps, and the
+  overdue drill the board lacks); the deep room learns the person
+  grammar via route-adapter composition (the ratified 150
+  pattern); the orphan dies with grep proof; an orphan-component
+  guard kills the class. Chartered as HS-150-07.
 
 ## Ledger (counsel, carried openly)
 
