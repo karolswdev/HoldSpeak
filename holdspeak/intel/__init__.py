@@ -49,6 +49,8 @@ from .models import (  # noqa: E402
     _generate_action_item_id,
 )
 from .parsing import (  # noqa: E402
+    INTEL_JSON_SCHEMA,
+    INTEL_SCHEMA,
     _coerce_action_items,
     _coerce_str_list,
     _describe_cloud_exception,
@@ -56,6 +58,7 @@ from .parsing import (  # noqa: E402
     _extract_openai_message_text,
     _extract_status_code,
     _json_only_messages,
+    intel_response_format,
 )
 from .providers import (  # noqa: E402
     _effective_cloud_api_key,
@@ -80,6 +83,8 @@ __all__ = [
     "DEFAULT_INTEL_CLOUD_TIMEOUT_SECONDS",
     "DEFAULT_INTEL_MODEL_PATH",
     "DEFAULT_INTEL_PROVIDER",
+    "INTEL_JSON_SCHEMA",
+    "INTEL_SCHEMA",
     "IntelResult",
     "Llama",
     "MeetingIntel",
@@ -104,6 +109,7 @@ __all__ = [
     "get_intel_runtime_status",
     "get_local_intel_runtime_status",
     "intel_egress_posture",
+    "intel_response_format",
     "log",
     "resolve_intel_provider",
     "resolve_llm_capability",

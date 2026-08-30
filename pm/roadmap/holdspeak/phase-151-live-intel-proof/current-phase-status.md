@@ -1,6 +1,6 @@
 # Phase 151 — The Live Intelligence Proof
 
-**Status:** in progress (1/6).
+**Status:** in progress (2/6).
 
 **Last updated:** 2026-08-30.
 
@@ -62,7 +62,7 @@ Branch `feat/hs151-live-intel-proof` from main `3a37e484`.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-151-01 | The honest dispatch (structured output + the wiring recipe) | in-progress | [story-01](./story-01-honest-dispatch.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-151-01 | The honest dispatch (structured output + the wiring recipe) | done | [story-01](./story-01-honest-dispatch.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-151-02 | The named-owner intel (the prompt learns people) | ready | [story-02](./story-02-named-owners.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-151-03 | The headless metal proof (control vs treatment) | ready | [story-03](./story-03-metal-proof.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-151-04 | The vision proof (the snapshot adapter on real metal) | done | [story-04](./story-04-vision-proof.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -71,7 +71,22 @@ Branch `feat/hs151-live-intel-proof` from main `3a37e484`.
 
 ## Where we are
 
-**1/6.** HS-151-04 (the vision proof) is DONE — the snapshot
+**2/6.** HS-151-01 (the honest dispatch) is DONE — the first
+latent defect dies: cloud intel now sends request-level
+structured output built from INTEL_SCHEMA, the ONE source of
+truth the prompt stringifies, the response_format wraps, and the
+adapter references (named-owner shape from birth). The pin-server
+regression test reproduces the owner's real server's {"line"}
+swallow against the old shape and proves the new one; the
+response_format-400 fallback is a NAMED signal and a SECOND
+admitted child (the max_completion_tokens compat pattern — never
+two physical requests under one receipt); the _extract_json
+line-recovery heuristic proven still live. scripts/
+wire_metal_intel.py wires a fresh HOME through the REAL adoption
+machinery (resolve-proof pinned; first live fire in story 03).
+Census drift (18 entries) remapped 1:1 by the orchestrator with
+dual attribution; the builder stopped at the red guard per the
+law. Earlier — **1/6.** HS-151-04 (the vision proof) is DONE — the snapshot
 adapter met a real vision model for the first time and the 146
 "no real-vision-model probe" ledger line CLOSES: the truth image
 4/4 with the anchor EXACT (visible_header, never guessed); the
