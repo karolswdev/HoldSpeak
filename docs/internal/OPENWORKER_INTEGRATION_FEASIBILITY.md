@@ -1,8 +1,32 @@
 # OpenWorker → HoldSpeak integration feasibility
 
-**Status:** study, 2026-07-26. Not a plan; a decision aid.
+**Status:** historical study, 2026-07-26; revalidated 2026-08-30. Not a
+plan; a decision aid.
 **Read this if:** you are deciding which OpenWorker ideas deserve HoldSpeak
 stories, and how they must be reshaped to survive the Constitution.
+
+## 2026-08-30 revalidation
+
+This document is retained as research provenance from PR #387, not as a
+current inventory of HoldSpeak. Its product judgments remain useful, but the
+original “HoldSpeak today” statements are pinned to commit `8e2ea2f5` and
+must not be read as claims about current `main`.
+
+| Recommendation | Current disposition |
+|---|---|
+| Proposal-shaped approvals and exact grant scopes | **Partial.** The kernel, Gate/SystemShade, receipts, and egress vocabulary now exist. One presentation and revocation dialect remains valuable. |
+| Durable parked-ask Inbox | **Still open.** Parking belongs to the durable kernel; the Desk window must register through the DeskOS application manifest, not own another queue. |
+| Turn-grouped, resumable conversation | **Shipped/advancing in PR #507.** Threads replace PersonaChat and add persisted messages, streaming, branching, receipts, and tool-turn groundwork. References below to PersonaChat are therefore historical. |
+| MCP | **Partial.** HoldSpeak now ships an MCP server sidecar with broad tool coverage. The proposed fail-closed external MCP client is a separate, still-open capability; the original “no MCP” statement is obsolete. |
+| Descriptor-driven connectors | **Partial.** Connector manifests exist; descriptor breadth, inbound behavior, and per-tool governance remain open. |
+| Cadence as continuable autonomous runs | **Still open/deferred.** Cadence remains pressure, scoring, and nudging. It should consume the settled Workbench/resource/consent platform rather than create a parallel runner. |
+| Scoped agent memory | **Partial.** Thread memory, Knowledge, grounding, and project memory now cover more of the need; any new memory scope must use canonical resource contracts. |
+| Chat-centric shell, modal scrims, Tauri replacement, cloud broker dependency | **Rejected, unchanged.** DeskOS remains the frame. |
+
+The current platform work is tracked by #510. Inbox, Connectors, Cadence,
+Trust, and Threads are consumers and forcing functions for one application
+manifest, compositor, command contract, and resource cache; they are not a
+reason to fold unrelated backend feature phases into that platform reset.
 
 ## Sources studied
 
