@@ -851,6 +851,31 @@ always on and no longer user-configurable):
 }
 ```
 
+### Named owners in action items
+
+When the transcript names people, intelligence extracts their names verbatim
+into the `owner` field of each action item. Two tokens are reserved: **Me**
+(the speaker or meeting leader) and **Remote** (the counterpart). Every other
+owner string is a literal person name as the model heard it in the transcript.
+An action item whose owner is unclear gets `null`.
+
+Extracted items land in the **Pending** review state in the **Unassigned**
+column on the Door board. From there the triage loop is: review the item,
+accept or dismiss it, and (for items with a named owner) map the owner string
+to a People relationship. Mapping is a one-time gesture per alias. Once mapped,
+the card wears a person chip, a staleness label, and the board filters by
+person. The Monday Brief's People section aggregates the same signals per
+relationship.
+
+Owner strings can drift between model runs (for example, "Ewa S." vs "Ewa", or
+a TTS-synthesized recording transcribing a name as something phonetically
+similar). Multiple aliases per person is the designed answer: add each variant
+in the relationship's **Owner aliases** section.
+
+On a reference 35B model (Qwen3.6-35B-A3B on cpu-moe), extraction takes
+approximately 8 seconds. Transcription of a two-minute audio file takes
+approximately 10 seconds with mlx-whisper.
+
 ## Project Memory
 
 A meeting earns its keep when the decision is still easy to find after the

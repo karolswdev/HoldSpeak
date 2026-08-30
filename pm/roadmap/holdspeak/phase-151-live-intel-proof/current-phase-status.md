@@ -1,6 +1,6 @@
 # Phase 151 — The Live Intelligence Proof
 
-**Status:** in progress (4/6).
+**Status:** in progress (5/6) — the close holds for the owner's attended leg.
 
 **Last updated:** 2026-08-30.
 
@@ -66,12 +66,25 @@ Branch `feat/hs151-live-intel-proof` from main `3a37e484`.
 | HS-151-02 | The named-owner intel (the prompt learns people) | done | [story-02](./story-02-named-owners.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-151-03 | The headless metal proof (control vs treatment) | done | [story-03](./story-03-metal-proof.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-151-04 | The vision proof (the snapshot adapter on real metal) | done | [story-04](./story-04-vision-proof.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-151-05 | The record book | ready | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-151-05 | The record book | done | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-151-06 | The walk, the attended leg, and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
-**4/6, ALL FEATURE STORIES DONE.** HS-151-03 (the headless metal
+**5/6.** HS-151-05 (the record book) is DONE — the metal truth
+reads cold: MODELS.md speaks the INTEL_SCHEMA shape and the
+Me/Remote-only reserved law verbatim from parsing.py; the
+architecture doc gained the structured-output and Design-A
+sections; USER_GUIDE walks the named-owner triage loop with
+latencies from evidence, not hope; and
+docs/internal/OPERATOR_METAL_INTEL.md graduates the probe record
+into a real runbook (the pin fact + do-not-touch law, the 8081
+relaunch line, never-download-to-the-box, wire_metal_intel usage).
+Guards unfiltered 33/33 twice (builder + orchestrator). Only 06
+remains — the walk graduation and sweep run headless next; the
+ATTENDED leg (the owner plays their 1:1 recording at the real mic)
+is the one moment that waits for a human.
+Earlier — **4/6, ALL FEATURE STORIES DONE.** HS-151-03 (the headless metal
 proof) is DONE — THE LOOP IS REAL for the first time in the
 product's history: real WAV → real mlx-whisper → the real import
 door → the production queue (with the counsel-ruled Design-A skip
