@@ -32,8 +32,9 @@ def test_dictation_is_one_typed_section_graph() -> None:
     # Journal/Blocks are wings in the WINDOW HEAD, and every former
     # config tab stacks behind the one gear door. No tab wall.
     page = _page()
-    surfaces = (_REPO / "web/src/desk/components/SurfaceWindows.tsx").read_text()
-    assert '"Speak"' in surfaces
+    applications = (_REPO / "web/src/desk/applications.ts").read_text()
+    assert 'action: "dictate"' in applications
+    assert 'label: "Speak"' in applications
     for wing in ("speak", "journal", "blocks"):
         assert f'id: "{wing}"' in page
     for door_section in ("<Readiness />", "<Memory />", "<Knowledge />",
