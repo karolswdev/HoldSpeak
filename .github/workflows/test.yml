@@ -136,7 +136,7 @@ jobs:
     env:
       # Several real-hub fixtures isolate HOME. Keep browser discovery
       # independent from that application-data sandbox.
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/ms-playwright
+      PLAYWRIGHT_BROWSERS_PATH: /tmp/holdspeak-playwright-browsers
 
     steps:
       - name: Checkout code
