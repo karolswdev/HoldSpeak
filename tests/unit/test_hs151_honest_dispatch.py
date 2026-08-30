@@ -643,7 +643,7 @@ class TestWireMetalIntelBinderResolve:
             from holdspeak.principals import Principal, PrincipalKind
             from holdspeak.meeting_session.deferred_bound import PARENT_KIND, queue_service_principal
 
-            db_path = home / ".holdspeak" / "holdspeak.db"
+            db_path = home / ".local" / "share" / "holdspeak" / "holdspeak.db"
             db = Database(db_path)
             assignments = InferenceAssignmentService(db)
             plans = InferenceRoutePlanService(db)

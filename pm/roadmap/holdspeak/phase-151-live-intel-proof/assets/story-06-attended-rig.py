@@ -60,6 +60,24 @@ def main() -> int:
         print(wired.stdout[-2000:], wired.stderr[-2000:])
         return 1
 
+    # 1a2. Run the production startup migration BEFORE boot so the
+    #      speech.transcribe head exists in the same pre-boot commit set
+    #      as the wire's meeting heads (the cross-process JOIN gotcha:
+    #      post-boot writes from another process may be invisible to the
+    #      hub's long-lived resolution connection).
+    mig = subprocess.run(
+        [sys.executable, "-c",
+         "from pathlib import Path; import os; "
+         "from holdspeak.db import Database; "
+         "from holdspeak.kernel.runtime import _configure; "
+         "db = Database(); "
+         "_configure(db); print('speech migration ran')"],
+        capture_output=True, text=True, env=os.environ.copy(), cwd=str(REPO),
+    )
+    note(f"speech pre-boot migration: rc={mig.returncode} {mig.stdout.strip()[-80:]} {mig.stderr.strip()[-200:]}")
+    if mig.returncode != 0:
+        return 1
+
     # 1b. Seed the calendar BEFORE boot — "Boot is an actual refresh"
     #     (calendar_ingest_conductor._loop): a configured source at boot
     #     is ingested within seconds, the lawful Tuesday state. The event

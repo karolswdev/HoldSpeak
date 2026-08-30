@@ -82,8 +82,13 @@ def wire(
         for cid in MEETING_CAPABILITY_IDS
     })
 
-    # The database lives in the target HOME.
-    db_path = home / ".holdspeak" / "holdspeak.db"
+    # The database lives at the PRODUCT's default path in the target HOME
+    # (~/.local/share/holdspeak/holdspeak.db — db/core.py DEFAULT_DB_PATH).
+    # HS-151-06 defect: this script previously hardcoded ~/.holdspeak/ —
+    # a parallel file the hub never opens; every wire write was invisible
+    # to the running product (the story-03 "cross-process invisibility"
+    # was THIS, demystified).
+    db_path = home / ".local" / "share" / "holdspeak" / "holdspeak.db"
     db_path.parent.mkdir(parents=True, exist_ok=True)
     db = Database(db_path)
 
