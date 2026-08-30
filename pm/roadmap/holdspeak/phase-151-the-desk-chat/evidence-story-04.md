@@ -19,22 +19,22 @@
 =============================== warnings summary ===============================
 .venv/lib/python3.14/site-packages/_pytest/config/__init__.py:1464
   /Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/.venv/lib/python3.14/site-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: asyncio_default_fixture_loop_scope
-  
+
     self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
 
 .venv/lib/python3.14/site-packages/_pytest/config/__init__.py:1464
   /Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/.venv/lib/python3.14/site-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: asyncio_mode
-  
+
     self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
 
 .venv/lib/python3.14/site-packages/_pytest/config/__init__.py:1464
   /Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/.venv/lib/python3.14/site-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout
-  
+
     self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
 
 .venv/lib/python3.14/site-packages/_pytest/config/__init__.py:1464
   /Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/.venv/lib/python3.14/site-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout_method
-  
+
     self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
