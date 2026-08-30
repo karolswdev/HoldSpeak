@@ -8,7 +8,18 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-08-29 (two entries. First, the record made
+**Last updated:** 2026-08-30 (the HANDOVER-menu candidate "the
+Live Intelligence Proof" (149 handover §3C, never a lettered row
+here — recorded now so the container stays "all of them")
+GRADUATES as [Phase 151 — The Live Intelligence
+Proof](./phase-151-live-intel-proof/current-phase-status.md)
+(CHARTERED 0/6): the record→transcribe→intel→Door→brief loop on
+real metal, the un-deferred vision probe (8081 stood up and proven
+at charter), and the two latent defects the pre-charter probes
+found (the bare cloud dispatch; the person-blind intel prompt).
+Sibling menu candidates JIRA Desk Sync (§3B) and Desk Chat
+(PR #507) remain live and unlettered here.)
+Earlier: 2026-08-29 (two entries. First, the record made
 honest retroactively per the owner's catch: **Event → one-tap
 record** never had a row here — it lived only in the Phase 146
 handover menu as the twice-deferred "rail's natural next verb" —
