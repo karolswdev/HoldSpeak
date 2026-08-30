@@ -64,7 +64,7 @@ Branch `feat/hs151-live-intel-proof` from main `3a37e484`.
 | --- | --- | --- | --- | --- |
 | HS-151-01 | The honest dispatch (structured output + the wiring recipe) | done | [story-01](./story-01-honest-dispatch.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-151-02 | The named-owner intel (the prompt learns people) | done | [story-02](./story-02-named-owners.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-151-03 | The headless metal proof (control vs treatment) | ready | [story-03](./story-03-metal-proof.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-151-03 | The headless metal proof (control vs treatment) | in-progress | [story-03](./story-03-metal-proof.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-151-04 | The vision proof (the snapshot adapter on real metal) | done | [story-04](./story-04-vision-proof.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-151-05 | The record book | ready | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-151-06 | The walk, the attended leg, and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
@@ -176,6 +176,26 @@ real latent defects before a single story ran.
   L2 8081 JSON reliability recorded as a finding, L3 a bounded
   intel timeout (~15 min) at builder discretion.**
 
+- **2026-08-30 — focused counsel (the Gap-2 claim fix):
+  RATIFY-WITH-AMENDMENTS, Design A** — skip-unassignable-plugin-
+  with-receipt at CLAIM PLANNING. Grounded in the C2 precedent
+  ("disabled plugins remain frozen bundle members at claim time
+  and resolve skipped at execution") and the dispatch path's
+  existing containment vocabulary (skipped/refused/error while
+  core analysis survives). Five pins: fix in
+  _plan_installed_plugin_members (probe each plugin capability via
+  the binder's own resolution; exclude on no_assignment), the skip
+  RECORDED in the frozen route metadata (never silent), core
+  capabilities NEVER skip (terminal stays terminal), the binder's
+  prepare stays strict and untouched, router.py's chain stays
+  honest. Config-absent boundary preserved (the probe reads
+  persisted assignment heads only). Rejected: a claim-time
+  disabled_plugins gate (violates the Config-absent principle and
+  doesn't fix assignment-absence), wiring-side burden, chain
+  surgery. Deferred to close counsel: project_detector's always-on
+  status; binder defense-in-depth; whether no_assignment should be
+  terminal at settlement.
+
 ## Risk register
 
 - The resident 8080 server is the owner's — proofs never restart
@@ -185,6 +205,11 @@ real latent defects before a single story ran.
 - Real model output is nondeterministic even at temp 0 across
   llama.cpp versions — proofs assert SHAPE and grounded content
   (owners that appear in the transcript), never exact strings.
+- Story-03's found-defect ledger (beyond the fixed ones): the
+  wire-script cross-process DB visibility oddity (worked around
+  in-process in the rig; needs a crisp repro before it earns a
+  fix); disabled_plugins being dispatch-only remains a product
+  truth the close counsel sees.
 - Messy owner reality ("Ewa S." vs "Ewa"; "myself"/"I" are not
   reserved): multiple aliases per person is the designed answer;
   the walk records what the real model actually emits.
