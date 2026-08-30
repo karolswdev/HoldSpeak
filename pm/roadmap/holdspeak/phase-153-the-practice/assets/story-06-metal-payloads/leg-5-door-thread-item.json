@@ -1,0 +1,17 @@
+{
+  "id": "ai_e8da37dc75ec4f37955bcbec47618139",
+  "task": "Review the 153 design with the owner",
+  "owner": null,
+  "due": null,
+  "status": "open",
+  "review_state": "accepted",
+  "source_timestamp": null,
+  "meeting_id": "",
+  "meeting_title": null,
+  "meeting_date": null,
+  "created_at": "2026-08-30T12:44:06.512518",
+  "completed_at": null,
+  "reviewed_at": null,
+  "source_type": "thread",
+  "source_ref": "thread:tm_a152d066d7d2"
+}

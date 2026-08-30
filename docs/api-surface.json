@@ -4848,7 +4848,37 @@
       ]
     },
     {
+      "path": "/api/threads/{thread_id}/annotations",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads/{thread_id}/annotations/{part_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/threads/{thread_id}/branch",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads/{thread_id}/compact",
       "methods": [
         "POST"
       ],
@@ -4879,6 +4909,16 @@
     },
     {
       "path": "/api/threads/{thread_id}/regenerate",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.threads",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/threads/{thread_id}/todo",
       "methods": [
         "POST"
       ],

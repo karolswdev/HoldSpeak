@@ -1,0 +1,265 @@
+{
+  "id": "th_5c4fd1ebe34c",
+  "title": "HS-153-06 Leg 4 compact",
+  "recipe_id": "hs-seed-mode-desk",
+  "profile_override": "",
+  "directory_id": "",
+  "token_in": 0,
+  "token_out": 0,
+  "created_at": 1788120314.786467,
+  "updated_at": 1788120368.7511308,
+  "last_turn_at": 1788120368.7511308,
+  "mode": {
+    "id": "hs-seed-mode-desk",
+    "name": "Desk",
+    "avatar": "#6B7280"
+  },
+  "messages": [
+    {
+      "id": "tm_b5e82fb7267d",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_d48006d62415",
+          "kind": "text",
+          "text": "Tell me about project management.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788120314.789398,
+      "updated_at": 1788120314.790538,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_a75850cd6d55",
+      "role": "assistant",
+      "parent_id": "tm_b5e82fb7267d",
+      "streaming": false,
+      "receipt_id": "ire_3e7c2a4c58a0356a4615261b4f8869be",
+      "egress_scope": "local",
+      "model_id": "hs153-lan",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0
+      },
+      "parts": [
+        {
+          "id": "tp_d8184ca63347",
+          "kind": "text",
+          "text": "To understand how project management is structured in this system, I'll check the current state of the Follow-Through board, which serves as the primary hub for tracking tasks, projects, and their statuses.\n\nHere\u2019s what I found regarding project management in your system:\n\n### Follow-Through Board\nThe board is completely empty across all categories:\n- **Now**: No active items\n- **Waiting**: No pending items  \n- **Unassigned**: No unassigned items\n- **Overdue**: No overdue items\n\n### Project Structure\nLooking at the desk snapshot, I don\u2019t see any formal projects or workbenches set up yet. The system has:\n- **6 directories** (Inbox, Decisions, Meetings, Personal, Reference, Work) that could serve as organizational structure\n- **10 notes** including seed templates for priorities, 1:1 prep, weekly updates, and guardrails\n- **No decisions** recorded yet\n- **No workflows** or **chains** configured\n\n### Key Observations\nYour project management infrastructure appears to be in a fresh/start state. The foundational elements are there (directories for organization, prompt templates for updates and meetings), but no actual project work has been initiated or tracked.\n\nIf you're looking to establish project management practices, you might consider:\n1. Setting up the Follow-Through board with active items\n2. Creating decision records for key choices\n3. Defining workflows for recurring processes\n4. Using the existing weekly update template to start tracking progress\n\nWould you like help setting up any specific project management structure?",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        },
+        {
+          "id": "tp_fa93845d3937",
+          "kind": "tool_call",
+          "text": null,
+          "ordinal": 1,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "id": "eixOpiG5snWyLaHHfFxrV65xkKub8c4K",
+            "name": "follow_through.board",
+            "arguments": "{}",
+            "class": "evidence_read",
+            "state": "admitted"
+          },
+          "tool_call_id": "eixOpiG5snWyLaHHfFxrV65xkKub8c4K"
+        },
+        {
+          "id": "tp_6dddcae997c0",
+          "kind": "tool_call",
+          "text": null,
+          "ordinal": 2,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "id": "RRKrHBrJQPDtjrGkMqu5fmTNzHf8nQZb",
+            "name": "desk.snapshot",
+            "arguments": "{}",
+            "class": "evidence_read",
+            "state": "admitted"
+          },
+          "tool_call_id": "RRKrHBrJQPDtjrGkMqu5fmTNzHf8nQZb"
+        }
+      ],
+      "created_at": 1788120314.81048,
+      "updated_at": 1788120333.992198,
+      "completed_at": 1788120333.992198,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_2d8c4ac9d4d6",
+      "role": "tool",
+      "parent_id": "tm_a75850cd6d55",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_e45c0a9d51c1",
+          "kind": "text",
+          "text": "{\"notes\": [{\"id\": \"hs-seed-start-here\", \"title\": \"Start here\", \"body_markdown\": \"These drawers and notes are yours to edit, rename, move, or delete.\\n\\nEveryday context is never automatically included in an AI request. Attach it in Ask, or select it for an Agent, only when you want it used.\\n\\nNormal Desk sync continues to follow your existing device-pairing choices.\\n\", \"tags\": [], \"created_at\": \"2026-08-30T20:03:57Z\", \"updated_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-about-me\", \"title\": \"About me\", \"body_markdown\": \"What would be useful to share when you explicitly attach this context?\\n\\n- Name or form of address: [example: ]\\n- Work or life context: [example: ]\\n\", \"tags\": [], \"created_at\": \"2026-08-30T20:03:57Z\", \"updated_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-current-priorities\", \"title\": \"Current priorities\", \"body_markdown\": \"What deserves attention right now?\\n\\n- Priority: [example: ]\\n- Why it matters: [example: ]\\n- Next step: [example: ]\\n\", \"tags\": [], \"created_at\": \"2026-08-30T20:03:57Z\", \"updated_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-how-i-like-help\", \"title\": \"How I like help\", \"body_markdown\": \"How should help be shaped when you explicitly attach this context?\\n\\n- Tone: [example: direct, warm, concise]\\n- Useful format: [example: bullets, draft, checklist]\\n- Avoid: [example: ]\\n\", \"tags\": [], \"created_at\": \"2026-08-30T20:03:57Z\", \"updated_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-people-vocabulary\", \"title\": \"People & vocabulary\", \"body_markdown\": \"Which names, terms, or abbreviations would be useful to explain?\\n\\n- Name or team: [example: ]\\n- Term or abbreviation: [example: ]\\n- Meaning: [example: ]\\n\", \"tags\": [], \"created_at\": \"2026-08-30T20:03:57Z\", \"updated_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-meeting-preferences\", \"title\": \"Meeting preferences\", \"body_markdown\": \"What would make a meeting record useful?\\n\\n- Capture: [example: decisions, actions, open questions]\\n- Follow-up format: [example: ]\\n- People to include: [example: ]\\n\", \"tags\": [], \"created_at\": \"2026-08-30T20:03:57Z\", \"updated_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-prompt-weekly-update\", \"title\": \"Weekly update\", \"body_markdown\": \"Summarize what happened this week.\\nFocus on decisions made, commitments moved, and open questions.\\nOne paragraph per topic, no filler.\\nEnd with what needs attention next week.\\n\", \"tags\": [\"prompt\"], \"created_at\": \"2026-08-30T20:03:57Z\", \"updated_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-prompt-one-on-one-prep\", \"title\": \"1:1 prep\", \"body_markdown\": \"Prepare for my next 1:1.\\nList open commitments, recent decisions that need follow-up,\\nand any blockers worth raising.\\nKeep it to three sections, one paragraph each.\\n\", \"tags\": [\"prompt\"], \"created_at\": \"2026-08-30T20:03:57Z\", \"updated_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-guardrail-effect-guard\", \"title\": \"Effect guard\", \"body_markdown\": \"---\\ninstruction: >\\n  Flag any tool call that writes to a person's ledger\\n  (people.commitment.transition, people.agenda.add,\\n  people.note.create) without naming a specific source\\n  (meeting, decision record, or owner directive) in its\\n  arguments. A call with no source is a violation.\\ntrigger_tools:\\n  - \\\"people.*\\\"\\nn_messages: 6\\n---\\n\", \"tags\": [\"guardrail\"], \"created_at\": \"2026-08-30T20:03:56Z\", \"updated_at\": \"2026-08-30T20:03:56Z\", \"last_modified\": \"2026-08-30T20:03:56Z\", \"deleted\": false}, {\"id\": \"hs-seed-guardrail-egress-guard\", \"title\": \"Egress guard\", \"body_markdown\": \"---\\ninstruction: >\\n  Flag any pending tool call whose result would carry\\n  people-sourced data (a people.* read) to a cloud\\n  egress boundary. Reading people data on a local\\n  boundary is fine; sending it over a cloud route is a\\n  violation.\\ntrigger_tools:\\n  - \\\"people.*\\\"\\nn_messages: 4\\n---\\n\", \"tags\": [\"guardrail\"], \"created_at\": \"2026-08-30T20:03:56Z\", \"updated_at\": \"2026-08-30T20:03:56Z\", \"last_modified\": \"2026-08-30T20:03:56Z\", \"deleted\": false}], \"decisions\": [], \"directories\": [{\"id\": \"hs-seed-decisions\", \"name\": \"Decisions\", \"name_normalized\": \"decisions\", \"parent_id\": null, \"created_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-inbox\", \"name\": \"Inbox\", \"name_normalized\": \"inbox\", \"parent_id\": null, \"created_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-meetings\", \"name\": \"Meetings\", \"name_normalized\": \"meetings\", \"parent_id\": null, \"created_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-personal\", \"name\": \"Personal\", \"name_normalized\": \"personal\", \"parent_id\": null, \"created_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-reference\", \"name\": \"Reference\", \"name_normalized\": \"reference\", \"parent_id\": null, \"created_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}, {\"id\": \"hs-seed-work\", \"name\": \"Work\", \"name_normalized\": \"work\", \"parent_id\": null, \"created_at\": \"2026-08-30T20:03:57Z\", \"last_modified\": \"2026-08-30T20:03:57Z\", \"deleted\": false}], \"workflows\": [], \"chains\": [], \"profiles\": [{\"id\": \"hs153-lan\", \"name\": \"HS-153 LAN (.43)\", \"kind\": \"openAICompatible\", \"model_file\": \"\", \"base_url\": \"http://192.168.1.43:8080/v1\", \"model\": \"Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf\", \"node\": \"\", \"context_limit\": 32768, \"requires_key\": false, \"created_at\": \"2026-08-30T20:03:56Z\", \"last_modified\": \"2026-08-30T20:03:56Z\", \"deleted\": false}, {\"id\": \"hs153-cloud\", \"name\": \"HS-153 cloud (capture)\", \"kind\": \"openAICompatible\", \"model_file\": \"\", \"base_url\": \"http://cloud.example.test:52151/v1\", \"model\": \"capture-model\", \"node\": \"\", \"context_limit\": 32768, \"requires_key\": false, \"created_at\": \"2026-08-30T20:03:56Z\", \"last_modified\": \"2026-08-30T20:03:56Z\", \"deleted\": false}], \"workbenches\": []}",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "kind": "data",
+            "receipt_id": "tr-4e9e27b12e99"
+          },
+          "tool_call_id": "RRKrHBrJQPDtjrGkMqu5fmTNzHf8nQZb"
+        }
+      ],
+      "created_at": 1788120319.314991,
+      "updated_at": 1788120319.3156512,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_40343c88770a",
+      "role": "user",
+      "parent_id": "tm_2d8c4ac9d4d6",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_bf3816275ccd",
+          "kind": "text",
+          "text": "What are the best practices?",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788120334.2173061,
+      "updated_at": 1788120334.219393,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_fffbf4631c17",
+      "role": "assistant",
+      "parent_id": "tm_40343c88770a",
+      "streaming": false,
+      "receipt_id": "ire_50b036c52d5d1c3e97f5e7990bc7da22",
+      "egress_scope": "local",
+      "model_id": "hs153-lan",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0
+      },
+      "parts": [
+        {
+          "id": "tp_bcb7fa1013bc",
+          "kind": "text",
+          "text": "Based on your setup and the available tools, here are project management best practices tailored to this system:\n\n## **Foundation Practices**\n\n### 1. **Use the Follow-Through Board Proactively**\n- Populate it with actual work items as soon as they arise\n- Assign clear owners to every item\n- Keep \"Now\" lane focused on current priorities (ideally \u22643-5 items)\n- Use \"Waiting\" to track dependencies without losing visibility\n\n### 2. **Leverage Decision Records**\nYour system has no decisions yet, but this is where you should capture:\n- **Why** choices were made, not just what was decided\n- Include sources (meetings, data, stakeholder input)\n- This creates institutional memory and reduces re-deciding\n\n### 3. **Establish Meeting Discipline**\nYou have meeting tracking tools but no meetings recorded. Best practice:\n- Always create a meeting record (even for informal 1:1s)\n- Capture decisions and action items in real-time\n- Export to markdown when useful for sharing\n\n## **Process Practices**\n\n### 4. **Weekly Update Cadence**\nYou have the \"weekly update\" prompt template ready. Use it:\n- Summarize what actually happened (decisions, commitments moved)\n- Flag open questions that need attention\n- End with clear priorities for next week\n- Share proactively rather than waiting to be asked\n\n### 5. **Priority Management**\nYour \"current priorities\" note is empty. Best practice:\n- Limit to 3-5 active priorities at once\n- Each should have: what, why it matters, next step\n- Revisit and update weekly\n- Be ruthless about dropping items that lose relevance\n\n### 6. **Contextual AI Usage**\nYour \"How I like help\" and \"People & vocabulary\" notes are templates. Best practice:\n- Fill these out and attach relevant context when needed\n- Don't rely on automatic context inclusion (you've disabled it intentionally)\n- Use grounding references to connect AI responses to specific meetings/decisions\n\n## **Governance Practices**\n\n### 7. **Respect Your Guards**\nYou have \"effect guard\" and \"egress guard\" enabled:\n- Never create commitments/agenda items without proper source attribution\n- Keep people-sourced data local (don't send over cloud boundaries)\n- These protect you from unverified actions and data leaks\n\n### 8. **Directory Structure**\nYour 6 directories are set up well. Best practice:\n- \"Inbox\" for capture, not organization\n- \"Decisions\" for final choices with context\n- \"Meetings\" for records and follow-ups\n- \"Work\" for project artifacts and progress\n- \"Reference\" for reusable templates and guides\n- \"Personal\" for private notes that don't fit elsewhere\n\n### 9. **Workflow Automation**\nYou have no workflows or chains yet. Consider:\n- Creating simple workflows for recurring processes (weekly reviews, onboarding)\n- Starting small with automated checklists before building complex chains\n- Using the prompt templates you already have as seeds\n\n## **Common Pitfalls to Avoid**\n\n- **Accumulating \"Now\" items**: Keep the active lane tight\n- **Unattributed decisions**: Always capture why something was chosen\n- **Skipping meeting records**: Even quick conversations deserve documentation\n- **Over-relying on memory**: Your system exists because human memory is fallible\n- **Ignoring overdue items**: If it's in \"overdue,\" it needs immediate attention or removal\n\nWould you like to start implementing any of these practices? I can help you populate the Follow-Through board, create your first decision records, or set up a weekly update process.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788120334.245955,
+      "updated_at": 1788120362.48333,
+      "completed_at": 1788120362.48333,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_bb02d726672d",
+      "role": "user",
+      "parent_id": "tm_fffbf4631c17",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_a20924bdf848",
+          "kind": "text",
+          "text": "Give me a specific example.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788120362.857167,
+      "updated_at": 1788120362.8609312,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_e51676169578",
+      "role": "assistant",
+      "parent_id": "tm_bb02d726672d",
+      "streaming": false,
+      "receipt_id": "ire_878461cdbcb848ee98700d12c0684718",
+      "egress_scope": "local",
+      "model_id": "hs153-lan",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [],
+      "created_at": 1788120362.885476,
+      "updated_at": 1788120362.913302,
+      "completed_at": 1788120362.913302,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_0354dbc8340d",
+      "role": "system",
+      "parent_id": "tm_e51676169578",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": {
+        "compaction": true,
+        "cut_at": "tm_e51676169578",
+        "count": 6
+      },
+      "parts": [
+        {
+          "id": "tp_e90a98f51c6a",
+          "kind": "text",
+          "text": "The user asked for an explanation of project management, a review of best practices, and then requested a specific example, but the assistant's response ended after providing best practices without delivering the requested example.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788120368.7511308,
+      "updated_at": 1788120368.755096,
+      "completed_at": 1788120368.755096,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {
+    "tm_2d8c4ac9d4d6": [
+      2,
+      2
+    ]
+  },
+  "refs": [],
+  "draft_annotations": []
+}

@@ -1,0 +1,13 @@
+{
+  "type": "thread_tool_pending",
+  "data": {
+    "thread_id": "th_23d7d9528d23",
+    "message_id": "tm_2889ec22e433",
+    "call_id": "YdGpbBh1gOxWUFTqoGwbJfFL30bLg42f",
+    "name": "people.commitment.transition",
+    "args_head": "{\"commitment_id\":\"people:b1f66308-19b4-4357-951f-8add435caba8\",\"verb\":\"done\"}",
+    "class": "effect_proposal",
+    "decision_required": true,
+    "default_decision": "deny"
+  }
+}

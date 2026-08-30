@@ -51,6 +51,7 @@ function seedStore(messages: ThreadMessage[], siblings: Record<string, string[]>
       directory_id: null,
       parent_thread_id: null,
       status_line: null,
+      mode: null,
       token_in: 100,
       token_out: 50,
       created_at: new Date().toISOString(),
@@ -60,6 +61,7 @@ function seedStore(messages: ThreadMessage[], siblings: Record<string, string[]>
     messages,
     siblings,
     refs: [],
+    draftAnnotations: [],
   };
   useThreadStore.setState({ threads: { "t-1": detail }, buffers: {}, loading: {} });
 }

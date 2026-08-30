@@ -11,6 +11,13 @@ import { apiFetch } from "../lib/api";
 
 // ── wire types (snake_case from the hub) ──────────────────────────────
 
+/** HS-153-01: resolved mode from the server (recipe with kind='mode'). */
+export interface ThreadMode {
+  id: string;
+  name: string;
+  avatar: string;
+}
+
 export interface ThreadWire {
   id: string;
   title: string;
@@ -19,6 +26,7 @@ export interface ThreadWire {
   directory_id: string | null;
   parent_thread_id: string | null;
   status_line: string | null;
+  mode: ThreadMode | null;
   token_in: number;
   token_out: number;
   created_at: string;
@@ -138,6 +146,19 @@ export interface ToolRow {
    * Populated on hydration from the tool-role message part text (full JSON).
    * Not available on live frames — renderers fall back to summary. */
   payload?: Record<string, unknown>;
+  /** HS-153-03: guardrail-determined default decision.
+   * "deny" when a violation names this call and control_mode != yolo;
+   * "allow" otherwise; undefined when no guardrail ran. */
+  defaultDecision?: "deny" | "allow";
+}
+
+/** HS-153-03: guardrail evaluation row (in-flow, beside tool rows). */
+export interface GuardrailRow {
+  messageId: string;
+  violations: string[];
+  warnings: string[];
+  guardrails: string[];
+  raw?: Record<string, unknown>;
 }
 
 // ── Tool frame payloads (HS-152-04) ────────────────────────────────
@@ -151,6 +172,18 @@ export interface ThreadToolPendingPayload {
   class: string;
   decision_required: boolean;
   elicitation?: Record<string, unknown>;
+  /** HS-153-03: guardrail-determined default decision. */
+  default_decision?: "deny" | "allow";
+}
+
+/** HS-153-03: guardrail evaluation frame payload. */
+export interface ThreadGuardrailPayload {
+  thread_id: string;
+  message_id: string;
+  violations: string[];
+  warnings: string[];
+  guardrails: string[];
+  raw?: Record<string, unknown>;
 }
 
 export interface ThreadToolResultPayload {
@@ -258,6 +291,8 @@ export interface ThreadDetail {
   messages: ThreadMessage[];
   siblings: Record<string, string[]>;
   refs: ThreadRef[];
+  /** HS-153-04: draft annotation parts from the server. */
+  draftAnnotations: DraftAnnotation[];
 }
 
 export async function createThread(opts: {
@@ -296,6 +331,11 @@ export async function getThread(id: string): Promise<ThreadDetail> {
     directory_id: d.directory_id != null ? String(d.directory_id) : null,
     parent_thread_id: d.parent_thread_id != null ? String(d.parent_thread_id) : null,
     status_line: d.status_line != null ? String(d.status_line) : null,
+    mode: d.mode && typeof d.mode === "object"
+      ? { id: String((d.mode as Record<string, unknown>).id ?? ""),
+          name: String((d.mode as Record<string, unknown>).name ?? ""),
+          avatar: String((d.mode as Record<string, unknown>).avatar ?? "") }
+      : null,
     token_in: Number(d.token_in ?? 0),
     token_out: Number(d.token_out ?? 0),
     created_at: wireTimestamp(d.created_at),
@@ -330,12 +370,34 @@ export async function getThread(id: string): Promise<ThreadDetail> {
   const rawRefs = Array.isArray(d.refs) ? d.refs : [];
   const refs = rawRefs.map((r: unknown) => toRef(r as Record<string, unknown>));
 
-  return { thread, messages, siblings, refs };
+  // HS-153-04: parse draft annotations from the server response.
+  const rawAnnotations = Array.isArray(d.draft_annotations) ? d.draft_annotations : [];
+  const draftAnnotations: DraftAnnotation[] = rawAnnotations.map((a: unknown) => {
+    const ann = a as Record<string, unknown>;
+    return {
+      id: String(ann.id ?? ""),
+      kind: String(ann.kind ?? "annotation"),
+      text: ann.text != null ? String(ann.text) : null,
+      ordinal: Number(ann.ordinal ?? 0),
+      sensitive: Boolean(ann.sensitive),
+      ...(ann.meta_json && typeof ann.meta_json === "object"
+        ? { meta_json: ann.meta_json as DraftAnnotation["meta_json"] }
+        : {}),
+    };
+  });
+
+  return { thread, messages, siblings, refs, draftAnnotations };
 }
 
 export async function patchThread(
   id: string,
-  patch: { title?: string; profile_override?: string },
+  patch: {
+    title?: string;
+    profile_override?: string;
+    recipe_id?: string;
+    toggle_guardrail?: string;
+    toggle_guardrail_enable?: boolean;
+  },
 ): Promise<ThreadWire> {
   return apiFetch<ThreadWire>(`/api/threads/${encodeURIComponent(id)}`, {
     method: "PATCH",
@@ -427,6 +489,42 @@ export async function decideToolCall(
   );
 }
 
+// ── annotations (HS-153-04) ─────────────────────────────────────────
+
+export interface DraftAnnotation {
+  id: string;
+  kind: string;
+  text: string | null;
+  ordinal: number;
+  sensitive: boolean;
+  meta_json?: {
+    source: string;
+    quote: string;
+    comment: string;
+    anchor_message_id: string;
+  };
+}
+
+export async function addAnnotation(
+  threadId: string,
+  body: { message_id: string; quote: string; comment: string },
+): Promise<DraftAnnotation> {
+  return apiFetch<DraftAnnotation>(
+    `/api/threads/${encodeURIComponent(threadId)}/annotations`,
+    { method: "POST", json: body },
+  );
+}
+
+export async function deleteAnnotation(
+  threadId: string,
+  partId: string,
+): Promise<void> {
+  await apiFetch(
+    `/api/threads/${encodeURIComponent(threadId)}/annotations/${encodeURIComponent(partId)}`,
+    { method: "DELETE" },
+  );
+}
+
 // ── streaming buffer ────────────────────────────────────────────────
 
 export interface StreamingBuffer {
@@ -492,6 +590,10 @@ export interface ThreadStoreState {
   toolRows: Record<string, Record<string, ToolRow>>;
   /** HS-152-04: live status line per thread. */
   statusLines: Record<string, string>;
+  /** HS-153-03: guardrail rows keyed by thread id -> message id. */
+  guardrailRows: Record<string, Record<string, GuardrailRow>>;
+  /** HS-153-04: draft annotations keyed by thread id. */
+  draftAnnotations: Record<string, DraftAnnotation[]>;
 }
 
 export interface ThreadStoreActions {
@@ -525,6 +627,10 @@ export interface ThreadStoreActions {
   decideOptimistic(threadId: string, callId: string, decision: "approve" | "deny"): void;
   /** HS-152-04: Hydrate tool rows from persisted parts after load. */
   hydrateToolRows(threadId: string): void;
+  /** HS-153-01: Set the active mode for a thread (optimistic + PATCH + GET). */
+  setMode(threadId: string, recipeId: string): Promise<void>;
+  /** HS-153-03: Apply a thread_guardrail frame. */
+  applyGuardrail(payload: ThreadGuardrailPayload): void;
 }
 
 export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set, get) => ({
@@ -534,6 +640,8 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
   focusMessageId: null,
   toolRows: {},
   statusLines: {},
+  guardrailRows: {},
+  draftAnnotations: {},
 
   async loadThread(id) {
     set((s) => ({ loading: { ...s.loading, [id]: true } }));
@@ -542,6 +650,11 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
       set((s) => ({
         threads: { ...s.threads, [id]: detail },
         loading: { ...s.loading, [id]: false },
+        // HS-153-04: hydrate draft annotations from server response.
+        draftAnnotations: {
+          ...s.draftAnnotations,
+          [id]: detail.draftAnnotations ?? [],
+        },
       }));
       // HS-152-04: hydrate tool rows from persisted parts
       get().hydrateToolRows(id);
@@ -745,6 +858,7 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
       state,
       decisionRequired,
       ...(payload.elicitation ? { elicitation: payload.elicitation } : {}),
+      ...(payload.default_decision ? { defaultDecision: payload.default_decision } : {}),
     };
 
     set((s) => ({
@@ -897,5 +1011,48 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
         toolRows: { ...s.toolRows, [threadId]: { ...(s.toolRows[threadId] || {}), ...rows } },
       }));
     }
+  },
+
+  async setMode(threadId, recipeId) {
+    // Optimistic: update the thread's recipe_id in the store immediately.
+    const detail = get().threads[threadId];
+    if (detail) {
+      set((s) => ({
+        threads: {
+          ...s.threads,
+          [threadId]: {
+            ...detail,
+            thread: { ...detail.thread, recipe_id: recipeId || null },
+          },
+        },
+      }));
+    }
+    // PATCH the thread, then GET to confirm (reconciles the resolved mode).
+    try {
+      await patchThread(threadId, { recipe_id: recipeId });
+      await get().loadThread(threadId);
+    } catch {
+      // Revert on failure — reload the thread to get the real state.
+      await get().loadThread(threadId);
+    }
+  },
+
+  // ── HS-153-03: guardrail actions ──────────────────────────────────
+
+  applyGuardrail(payload) {
+    const { thread_id, message_id, violations, warnings, guardrails, raw } = payload;
+    const row: GuardrailRow = {
+      messageId: message_id,
+      violations: violations || [],
+      warnings: warnings || [],
+      guardrails: guardrails || [],
+      ...(raw ? { raw } : {}),
+    };
+    set((s) => ({
+      guardrailRows: {
+        ...s.guardrailRows,
+        [thread_id]: { ...(s.guardrailRows[thread_id] || {}), [message_id]: row },
+      },
+    }));
   },
 }));

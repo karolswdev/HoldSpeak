@@ -39,6 +39,14 @@ export type DoorCard = {
   person_relationship_id?: string;
   delegated_at?: string | null;
   created_at?: string | null;
+  /* HS-153-05: thread provenance for action items sourced from a chat thread. */
+  provenance?: {
+    thread_id?: string | null;
+    available?: boolean;
+    meeting_id?: string | null;
+    segment_text?: string | null;
+    segment_speaker?: string | null;
+  };
 };
 
 export type DoorUpcomingItem = {
@@ -767,6 +775,17 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
                             </button>
                             {stalenessLabel(card) ? <span className="door-card-staleness" data-testid="door-card-staleness">{stalenessLabel(card)}</span> : null}
                           </div>
+                        ) : null}
+                        {/* HS-153-05: thread provenance chip */}
+                        {card.provenance?.thread_id ? (
+                          <button
+                            type="button"
+                            className="door-card-provenance-chip"
+                            data-testid="door-card-thread-chip"
+                            onClick={() => useDesk.getState().openPullout(`thread:${card.provenance!.thread_id}`)}
+                          >
+                            from a thread
+                          </button>
                         ) : null}
                         {verbs.length || showMap ? (
                           <div className="door-card-actions" aria-label={`Actions for ${titleFor(card)}`}>

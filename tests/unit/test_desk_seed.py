@@ -44,13 +44,18 @@ CONTEXT_NOTES = {
 }
 EVERYDAY_CONTEXT = "hs-seed-everyday-context"
 PROMPT_NOTE = "hs-seed-prompt-weekly-update"
+PRACTICE_NOTES = {
+    "hs-seed-prompt-one-on-one-prep": "1:1 prep",
+    "hs-seed-guardrail-effect-guard": "Effect guard",
+    "hs-seed-guardrail-egress-guard": "Egress guard",
+}
 MODE_RECIPES = {
     "hs-seed-mode-desk",
     "hs-seed-mode-chase",
     "hs-seed-mode-draft",
     "hs-seed-mode-plan",
 }
-SEED_COUNTS = {"directories": 6, "notes": 7, "kbs": 1, "recipes": 4}
+SEED_COUNTS = {"directories": 6, "notes": 10, "kbs": 1, "recipes": 4}
 
 
 @pytest.fixture
@@ -97,7 +102,10 @@ def test_fresh_db_seeds_exactly_the_manifest(db) -> None:
     snap = _snapshot(db)
     assert dict((i, n) for i, n, _ in snap["directories"]) == ZONES
     assert {n.id: n.title for n in db.notes.list()} == {
-        START_HERE: "Start here", PROMPT_NOTE: "Weekly update", **CONTEXT_NOTES,
+        START_HERE: "Start here",
+        PROMPT_NOTE: "Weekly update",
+        **PRACTICE_NOTES,
+        **CONTEXT_NOTES,
     }
     kb = db.kbs.get(EVERYDAY_CONTEXT)
     assert kb is not None and kb.name == "Everyday context"
@@ -172,7 +180,7 @@ def test_retry_completes_new_relationships_without_mutating_partial_desk(db) -> 
 
     report = apply_seed(db)
 
-    assert report.applied == {"notes": 2, "kbs": 1, "recipes": 4}
+    assert report.applied == {"notes": 5, "kbs": 1, "recipes": 4}
     assert report.filed == 1
     kb = db.kbs.get(EVERYDAY_CONTEXT)
     assert kb is not None and set(kb.member_ids) == {
@@ -200,7 +208,7 @@ def test_seed_route_applies_the_packaged_manifest(client, db) -> None:
     assert body["applied"] == SEED_COUNTS
     assert body["profiles_seeded"] == body["workbenches_seeded"] == 0
     assert body["filed"] == 6
-    assert body["total"] == 18
+    assert body["total"] == 21
     assert {d.id for d in db.directories.list()} == set(ZONES)
 
 
@@ -253,9 +261,11 @@ def test_reset_tombstones_clutter_and_reseeds(db) -> None:
     assert membership is not None and membership.deleted is True
 
     assert {d.id for d in db.directories.list()} == set(ZONES)
-    assert {n.id for n in db.notes.list()} == {START_HERE, PROMPT_NOTE, *CONTEXT_NOTES}
+    assert {n.id for n in db.notes.list()} == {
+        START_HERE, PROMPT_NOTE, *PRACTICE_NOTES, *CONTEXT_NOTES,
+    }
     assert {recipe.id for recipe in db.recipes.list()} == MODE_RECIPES
-    assert report.seed is not None and report.seed.total == 18
+    assert report.seed is not None and report.seed.total == 21
 
 
 def test_reset_force_restores_edited_and_tombstoned_packaged_objects(db) -> None:
@@ -304,7 +314,7 @@ def test_reset_route_names_the_counts(client, db) -> None:
     assert body["tombstoned"]["directories"] == 1
     assert body["tombstoned"]["workbenches"] == 1
     assert body["seeded"] == SEED_COUNTS
-    assert body["seeded_total"] == 18
+    assert body["seeded_total"] == 21
     assert body["profiles_seeded"] == 0
     assert body["profiles_adopted"] == {}
     assert body["filed"] == 6
@@ -329,31 +339,41 @@ def test_seed_and_reset_are_owner_verbs(client) -> None:
     assert required_right("POST", "/api/desk/reset") is PrincipalRight.OWNER
 
 
-def test_unauthenticated_gets_the_named_refusal() -> None:
+def test_unauthenticated_gets_the_named_refusal(db, monkeypatch) -> None:
     from unittest.mock import MagicMock
 
+    import holdspeak.kernel.runtime as kernel_runtime
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=MagicMock(return_value={"timestamp": 1.0, "label": "x"}),
-            on_stop=MagicMock(return_value={"status": "stopped"}),
-            get_state=MagicMock(
-                return_value={"id": "t", "duration": 1, "bookmarks": []}
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+    kernel_runtime._shutdown()
+    kernel_runtime._broker = None
+    kernel_runtime._database_id = None
+    try:
+        server = MeetingWebServer(
+            WebRuntimeCallbacks(
+                on_bookmark=MagicMock(return_value={"timestamp": 1.0, "label": "x"}),
+                on_stop=MagicMock(return_value={"status": "stopped"}),
+                get_state=MagicMock(
+                    return_value={"id": "t", "duration": 1, "bookmarks": []}
+                ),
             ),
-        ),
-        host="0.0.0.0",
-        auth_token="s3cret",
-    )
-    edge = TestClient(server.app)
-    edge.headers.pop("x-holdspeak-token", None)
-    for path in ("/api/desk/seed", "/api/desk/reset"):
-        refused = edge.post(path)
-        assert refused.status_code == 401
-        body = refused.json()
-        assert body["error"] == "principal_right_required"
-        assert body["principal"] == "none"
-        assert body["missing_right"] == "owner"
+            host="0.0.0.0",
+            auth_token="s3cret",
+        )
+        edge = TestClient(server.app)
+        edge.headers.pop("x-holdspeak-token", None)
+        for path in ("/api/desk/seed", "/api/desk/reset"):
+            refused = edge.post(path)
+            assert refused.status_code == 401
+            body = refused.json()
+            assert body["error"] == "principal_right_required"
+            assert body["principal"] == "none"
+            assert body["missing_right"] == "owner"
+    finally:
+        kernel_runtime._shutdown()
+        kernel_runtime._broker = None
+        kernel_runtime._database_id = None
 
 
 def test_manifest_ships_in_the_package() -> None:

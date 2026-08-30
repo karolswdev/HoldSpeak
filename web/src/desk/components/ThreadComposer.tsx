@@ -1,4 +1,8 @@
-/** HS-151-06 — Thread composer: textarea + MicButton + @-refs + / verbs.
+/** HS-151-06 / HS-153-02 — Thread composer: textarea + MicButton + @-refs + / verbs.
+ *
+ * HS-153-02: two-stage slash completion (command → argument), R3 rule
+ * (/ only at line start), mode/prompt/tools/todo/compact/guardrail verbs,
+ * each mapped to a registered verb id.
  *
  * Laws: Art. IV (voice arms, never fires), Art. VII (no modals),
  * mic on every text input, Signal Workbench material. */
@@ -65,17 +69,27 @@ function RefChipRow({
 
 export interface SlashCommand {
   id: string;
+  /** Registered verb id in verbRegistry.ts. */
+  verbId: string;
   label: string;
   glyph: string;
+  /** Whether this command takes an argument (enters second stage). */
+  hasArg?: boolean;
 }
 
-/** The thread's / commands. These run the same handlers already wired
- * in ThreadPullout; the composer just provides the trigger. */
+/** The thread's / commands. Every entry maps to a registered verb id.
+ * Commands with `hasArg` enter the second completion stage. */
 export const THREAD_SLASH_COMMANDS: SlashCommand[] = [
-  { id: "keep", label: "Keep as note", glyph: "▤" },
-  { id: "fork", label: "Fork from here", glyph: "◬" },
-  { id: "stop", label: "Stop generation", glyph: "■" },
-  { id: "new", label: "New thread", glyph: "◬" },
+  { id: "keep", verbId: "thread.keep", label: "Keep as note", glyph: "▤" },
+  { id: "fork", verbId: "thread.fork", label: "Fork from here", glyph: "◬" },
+  { id: "stop", verbId: "thread.stop", label: "Stop generation", glyph: "■" },
+  { id: "new", verbId: "thread.new", label: "New thread", glyph: "◬" },
+  { id: "mode", verbId: "thread.mode", label: "Switch mode", glyph: "◎", hasArg: true },
+  { id: "prompt", verbId: "thread.prompt", label: "Insert prompt", glyph: "▤", hasArg: true },
+  { id: "tools", verbId: "thread.tools", label: "Show tools", glyph: "⚙" },
+  { id: "todo", verbId: "thread.todo", label: "Add todo", glyph: "◻", hasArg: true },
+  { id: "compact", verbId: "thread.compact", label: "Compact thread", glyph: "⊟" },
+  { id: "guardrail", verbId: "thread.guardrail", label: "Toggle guardrail", glyph: "⊘", hasArg: true },
 ];
 
 export function filterSlashCommands(query: string): SlashCommand[] {
@@ -83,6 +97,186 @@ export function filterSlashCommands(query: string): SlashCommand[] {
   return THREAD_SLASH_COMMANDS.filter(
     (c) => c.id.startsWith(lower) || c.label.toLowerCase().includes(lower),
   );
+}
+
+// ── two-stage slash completion (pure, unit-testable) ────────────────
+
+export interface SlashCompletionItem {
+  id: string;
+  label: string;
+  detail?: string;
+  glyph?: string;
+}
+
+export interface SlashCompletion {
+  stage: "command" | "argument";
+  /** The slash command being completed (only set for argument stage). */
+  command?: SlashCommand;
+  /** The argument query (only set for argument stage). */
+  argQuery?: string;
+  items: SlashCompletionItem[];
+  /** The range in the input to replace when an item is picked. */
+  replaceRange: { start: number; end: number };
+}
+
+export interface SlashCompletionContext {
+  /** Available mode names (from fetchModes cache). */
+  modes: Array<{ id: string; name: string }>;
+  /** Available prompt note titles + bodies (from /api/notes?tag=prompt). */
+  prompts: Array<{ id: string; title: string; body: string }>;
+  /** Available guardrail note titles (from /api/notes?tag=guardrail). */
+  guardrails: Array<{ id: string; title: string }>;
+}
+
+/** R3: / triggers only at column 0 of a line (start-of-text or after \n). */
+export function isSlashAtLineStart(text: string, cursor: number): boolean {
+  // Find the slash position: the last / before or at cursor on the current line
+  const beforeCursor = text.slice(0, cursor);
+  const lastNewline = beforeCursor.lastIndexOf("\n");
+  const lineStart = lastNewline + 1;
+  // The slash must be at lineStart
+  return text[lineStart] === "/";
+}
+
+/** Pure function: given the full input text, cursor position, and context,
+ * compute what the slash popover should show. Returns null when no slash
+ * popover should be open. */
+export function completeSlash(
+  text: string,
+  cursor: number,
+  ctx: SlashCompletionContext,
+): SlashCompletion | null {
+  // Find the current line's start
+  const beforeCursor = text.slice(0, cursor);
+  const lastNewline = beforeCursor.lastIndexOf("\n");
+  const lineStart = lastNewline + 1;
+
+  // R3: / only at line start
+  if (text[lineStart] !== "/") return null;
+
+  const lineContent = text.slice(lineStart, cursor);
+  // lineContent is "/<something>"
+
+  // Check for a space — indicates possible second stage
+  const spaceIdx = lineContent.indexOf(" ");
+
+  if (spaceIdx === -1) {
+    // First stage: filtering commands
+    const query = lineContent.slice(1); // strip the /
+    const matches = THREAD_SLASH_COMMANDS.filter(
+      (c) => c.id.startsWith(query.toLowerCase()) || c.label.toLowerCase().includes(query.toLowerCase()),
+    );
+    return {
+      stage: "command",
+      items: matches.map((c) => ({
+        id: c.id,
+        label: `/${c.id}`,
+        detail: c.label,
+        glyph: c.glyph,
+      })),
+      replaceRange: { start: lineStart, end: cursor },
+    };
+  }
+
+  // Second stage: the command name is before the space
+  const cmdName = lineContent.slice(1, spaceIdx).toLowerCase();
+  const cmd = THREAD_SLASH_COMMANDS.find((c) => c.id === cmdName);
+  if (!cmd || !cmd.hasArg) return null;
+
+  const argQuery = lineContent.slice(spaceIdx + 1).toLowerCase();
+  let argItems: SlashCompletionItem[] = [];
+
+  if (cmd.id === "mode") {
+    argItems = ctx.modes
+      .filter((m) => m.name.toLowerCase().includes(argQuery))
+      .map((m) => ({ id: m.id, label: m.name }));
+  } else if (cmd.id === "prompt") {
+    argItems = ctx.prompts
+      .filter((p) => p.title.toLowerCase().includes(argQuery))
+      .map((p) => ({ id: p.id, label: p.title }));
+  } else if (cmd.id === "guardrail") {
+    // S2: strip "on " or "off " prefix from the arg query before matching.
+    let grQuery = argQuery;
+    if (grQuery.startsWith("on ")) grQuery = grQuery.slice(3);
+    else if (grQuery.startsWith("off ")) grQuery = grQuery.slice(4);
+    argItems = ctx.guardrails
+      .filter((g) => g.title.toLowerCase().includes(grQuery))
+      .map((g) => ({ id: g.id, label: g.title }));
+  }
+  // /todo takes freeform text, no completions needed
+
+  return {
+    stage: "argument",
+    command: cmd,
+    argQuery: lineContent.slice(spaceIdx + 1),
+    items: argItems,
+    replaceRange: { start: lineStart, end: cursor },
+  };
+}
+
+// ── notes loader (lazy, cached) ────────────────────────────────────
+
+export interface PromptNote {
+  id: string;
+  title: string;
+  body: string;
+}
+
+let _promptCache: PromptNote[] | null = null;
+let _promptFetching = false;
+
+export async function loadPromptNotes(): Promise<PromptNote[]> {
+  if (_promptCache) return _promptCache;
+  if (_promptFetching) return [];
+  _promptFetching = true;
+  try {
+    const data = await apiFetch<{ notes?: Array<Record<string, unknown>> }>(
+      "/api/notes?tag=prompt",
+    );
+    const notes = data.notes ?? [];
+    _promptCache = notes
+      .filter((n) => n.title && !n.deleted)
+      .map((n) => ({
+        id: String(n.id ?? ""),
+        title: String(n.title ?? ""),
+        body: String(n.body_markdown ?? ""),
+      }));
+    return _promptCache;
+  } catch {
+    return [];
+  } finally {
+    _promptFetching = false;
+  }
+}
+
+export function resetPromptCache(): void {
+  _promptCache = null;
+}
+
+let _guardrailCache: Array<{ id: string; title: string }> | null = null;
+let _guardrailFetching = false;
+
+export async function loadGuardrailNotes(): Promise<Array<{ id: string; title: string }>> {
+  if (_guardrailCache) return _guardrailCache;
+  if (_guardrailFetching) return [];
+  _guardrailFetching = true;
+  try {
+    const data = await apiFetch<{ notes?: Array<Record<string, unknown>> }>(
+      "/api/notes?tag=guardrail",
+    );
+    const notes = data.notes ?? [];
+    _guardrailCache = notes
+      .filter((n) => n.title && !n.deleted)
+      .map((n) => ({
+        id: String(n.id ?? ""),
+        title: String(n.title ?? ""),
+      }));
+    return _guardrailCache;
+  } catch {
+    return [];
+  } finally {
+    _guardrailFetching = false;
+  }
 }
 
 // ── people loader (lazy, cached) ────────────────────────────────────
@@ -120,9 +314,25 @@ async function loadPeople(): Promise<AutocompleteItem[]> {
   }
 }
 
+// ── system-style row (in-flow status messages) ──────────────────────
+
+export interface SystemRowProps {
+  text: string;
+}
+
+function SystemRow({ text }: SystemRowProps) {
+  return (
+    <div className="thread-system-row" data-testid="thread-system-row">
+      <span className="thread-system-row-text">{text}</span>
+    </div>
+  );
+}
+
 // ── composer ────────────────────────────────────────────────────────
 
 export interface ThreadComposerProps {
+  /** The thread id — needed by /compact and /todo verbs (HS-153-05). */
+  threadId: string;
   /** Send a turn with text + refs. */
   onSend: (text: string, refs: Array<{ ref_kind: string; ref_id: string }>) => void;
   /** Abort the running turn. */
@@ -133,6 +343,12 @@ export interface ThreadComposerProps {
   onFork: (messageId: string) => void;
   /** Create a new thread (runs the desk.new-thread verb). */
   onNewThread: () => void;
+  /** Set the thread's mode (calls setMode from threads.ts). */
+  onModeSelect?: (recipeId: string) => void;
+  /** HS-153-03: Toggle a guardrail on/off for the thread's mode. */
+  onToggleGuardrail?: (guardrailId: string, enable: boolean) => void;
+  /** The current thread's mode, used by /tools to show the palette. */
+  currentMode?: { id: string; name: string } | null;
   /** Whether a turn is streaming. */
   streaming: boolean;
   /** The latest assistant message id (for keep/fork targets). */
@@ -144,11 +360,15 @@ export interface ThreadComposerProps {
 }
 
 export function ThreadComposer({
+  threadId,
   onSend,
   onStop,
   onKeep,
   onFork,
   onNewThread,
+  onModeSelect,
+  onToggleGuardrail,
+  currentMode,
   streaming,
   lastAssistantId,
   restoreFocus,
@@ -166,11 +386,18 @@ export function ThreadComposer({
   const [acIndex, setAcIndex] = useState(0);
   const [acAtPos, setAcAtPos] = useState(-1);
 
-  // slash command state
+  // slash command state (two-stage)
   const [slashOpen, setSlashOpen] = useState(false);
-  const [slashQuery, setSlashQuery] = useState("");
-  const [slashMatches, setSlashMatches] = useState<SlashCommand[]>([]);
+  const [slashCompletion, setSlashCompletion] = useState<SlashCompletion | null>(null);
   const [slashIndex, setSlashIndex] = useState(0);
+
+  // system message rows (in-flow feedback from slash commands)
+  const [systemRows, setSystemRows] = useState<string[]>([]);
+
+  // cached context for slash argument completion
+  const [modes, setModes] = useState<Array<{ id: string; name: string }>>([]);
+  const [prompts, setPrompts] = useState<PromptNote[]>([]);
+  const [guardrails, setGuardrails] = useState<Array<{ id: string; title: string }>>([]);
 
   // people items (loaded lazily)
   const [people, setPeople] = useState<AutocompleteItem[]>([]);
@@ -211,6 +438,46 @@ export function ThreadComposer({
     void loadPeople().then((p) => setPeople(p));
   }, [people]);
 
+  // Load modes for /mode completion (reuse ModeTabs fetchModes cache)
+  const loadModesOnce = useCallback(() => {
+    if (modes.length > 0) return;
+    void apiFetch<{ recipes?: Array<Record<string, unknown>> }>(
+      "/api/recipes?kind=mode",
+    ).then((data) => {
+      const recipes = data.recipes ?? [];
+      const SEED_ORDER = [
+        "hs-seed-mode-desk",
+        "hs-seed-mode-chase",
+        "hs-seed-mode-draft",
+        "hs-seed-mode-plan",
+      ];
+      const rank = (id: string): number => {
+        const i = SEED_ORDER.indexOf(id);
+        return i === -1 ? SEED_ORDER.length : i;
+      };
+      const items = recipes
+        .filter((r) => r.name && !r.deleted)
+        .map((r) => ({
+          id: String(r.id ?? ""),
+          name: String(r.name ?? ""),
+        }));
+      items.sort((a, b) => rank(a.id) - rank(b.id) || a.name.localeCompare(b.name));
+      setModes(items);
+    }).catch(() => {});
+  }, [modes.length]);
+
+  // Load prompts for /prompt completion
+  const loadPromptsOnce = useCallback(() => {
+    if (prompts.length > 0) return;
+    void loadPromptNotes().then((p) => setPrompts(p));
+  }, [prompts.length]);
+
+  // Load guardrails for /guardrail completion
+  const loadGuardrailsOnce = useCallback(() => {
+    if (guardrails.length > 0) return;
+    void loadGuardrailNotes().then((g) => setGuardrails(g));
+  }, [guardrails.length]);
+
   // ── focus return after turn_done (double-rAF precedent) ──────────
   useEffect(() => {
     if (!restoreFocus) return;
@@ -233,18 +500,25 @@ export function ThreadComposer({
   // ── update autocomplete on draft/cursor change ───────────────────
   const updateAutocomplete = useCallback(
     (text: string, cursor: number) => {
-      // Check for slash command at start of field
-      if (text.startsWith("/")) {
-        const q = text.slice(1, cursor);
-        const matches = filterSlashCommands(q);
+      // Two-stage slash completion (R3: / only at line start)
+      const completion = completeSlash(text, cursor, { modes, prompts, guardrails });
+      if (completion && completion.items.length > 0) {
         setSlashOpen(true);
-        setSlashQuery(q);
-        setSlashMatches(matches);
+        setSlashCompletion(completion);
         setSlashIndex(0);
         setAcOpen(false);
+
+        // Lazy-load argument data when entering second stage
+        if (completion.stage === "command") {
+          // Pre-load for when the user picks a command with args
+          loadModesOnce();
+          loadPromptsOnce();
+          loadGuardrailsOnce();
+        }
         return;
       }
       setSlashOpen(false);
+      setSlashCompletion(null);
 
       // Check for @ trigger
       const atPos = findAtTrigger(text, cursor);
@@ -261,7 +535,7 @@ export function ThreadComposer({
         setAcOpen(false);
       }
     },
-    [primitiveItems, acQuery, loadPeopleOnce],
+    [primitiveItems, acQuery, loadPeopleOnce, modes, prompts, guardrails, loadModesOnce, loadPromptsOnce, loadGuardrailsOnce],
   );
 
   // ── handlers ─────────────────────────────────────────────────────
@@ -317,32 +591,202 @@ export function ThreadComposer({
     [acAtPos, addChip, draft],
   );
 
-  const runSlashCommand = useCallback(
-    (cmd: SlashCommand) => {
-      setDraft("");
+  const addSystemRow = useCallback((text: string) => {
+    setSystemRows((prev) => [...prev, text]);
+  }, []);
+
+  const executeSlashCommand = useCallback(
+    (cmdId: string, arg?: string) => {
       setSlashOpen(false);
-      switch (cmd.id) {
+      setSlashCompletion(null);
+
+      switch (cmdId) {
         case "keep":
+          setDraft("");
           if (lastAssistantId) onKeep(lastAssistantId, "note");
           break;
         case "fork":
+          setDraft("");
           if (lastAssistantId) onFork(lastAssistantId);
           break;
         case "stop":
+          setDraft("");
           onStop();
           break;
         case "new":
+          setDraft("");
           onNewThread();
+          break;
+        case "mode":
+          setDraft("");
+          if (arg && onModeSelect) {
+            // Find the mode by name
+            const mode = modes.find((m) => m.name.toLowerCase() === arg.toLowerCase());
+            if (mode) {
+              onModeSelect(mode.id);
+            }
+          }
+          break;
+        case "prompt":
+          if (arg) {
+            const prompt = prompts.find((p) => p.title.toLowerCase() === arg.toLowerCase());
+            if (prompt) {
+              // Insert the prompt body at the caret (replace the slash command line)
+              setDraft(prompt.body);
+              // Focus and move cursor to end
+              requestAnimationFrame(() => {
+                const ta = textareaRef.current;
+                if (ta) {
+                  ta.focus();
+                  ta.setSelectionRange(prompt.body.length, prompt.body.length);
+                }
+              });
+            }
+          }
+          break;
+        case "tools":
+          setDraft("");
+          if (currentMode) {
+            addSystemRow(`Current palette: ${currentMode.name} mode tools`);
+          } else {
+            addSystemRow("Current palette: default (no mode bound)");
+          }
+          break;
+        case "todo":
+          setDraft("");
+          if (!arg) {
+            addSystemRow("Usage: /todo <text>");
+          } else {
+            void (async () => {
+              try {
+                const result = await apiFetch<{ status: string; error?: string }>(
+                  `/api/threads/${threadId}/todo`,
+                  { method: "POST", json: { text: arg } },
+                );
+                if (result.status === "ok") {
+                  addSystemRow(`Todo added: ${arg}`);
+                } else {
+                  addSystemRow(`Todo failed: ${result.error || "unknown"}`);
+                }
+              } catch (err) {
+                addSystemRow(`Todo failed: ${err instanceof Error ? err.message : "unknown error"}`);
+              }
+            })();
+          }
+          break;
+        case "compact":
+          setDraft("");
+          void (async () => {
+            try {
+              addSystemRow("Compacting thread...");
+              const result = await apiFetch<{ status: string; error?: string }>(
+                `/api/threads/${threadId}/compact`,
+                { method: "POST" },
+              );
+              if (result.status === "failed") {
+                addSystemRow(`Compact failed: ${result.error || "unknown error"}`);
+              }
+            } catch (err) {
+              addSystemRow(`Compact failed: ${err instanceof Error ? err.message : "unknown error"}`);
+            }
+          })();
+          break;
+        case "guardrail":
+          setDraft("");
+          if (!currentMode) {
+            addSystemRow("Bind a mode first (use /mode)");
+          } else if (arg && onToggleGuardrail) {
+            // S2: parse "on|off <name>" prefix
+            let enable = true;
+            let guardrailName = arg;
+            const lower = arg.toLowerCase();
+            if (lower.startsWith("on ")) {
+              enable = true;
+              guardrailName = arg.slice(3).trim();
+            } else if (lower.startsWith("off ")) {
+              enable = false;
+              guardrailName = arg.slice(4).trim();
+            }
+            const guardrail = guardrails.find(
+              (g) => g.title.toLowerCase() === guardrailName.toLowerCase(),
+            );
+            if (guardrail) {
+              onToggleGuardrail(guardrail.id, enable);
+              addSystemRow(`Guardrail ${enable ? "enabled" : "disabled"}: ${guardrail.title}`);
+            } else {
+              addSystemRow(`Unknown guardrail: ${guardrailName}`);
+            }
+          } else {
+            addSystemRow("Usage: /guardrail on|off <name>");
+          }
           break;
       }
     },
-    [lastAssistantId, onKeep, onFork, onStop, onNewThread],
+    [threadId, lastAssistantId, onKeep, onFork, onStop, onNewThread, onModeSelect, onToggleGuardrail, modes, prompts, guardrails, currentMode, addSystemRow],
+  );
+
+  const pickSlashItem = useCallback(
+    (item: SlashCompletionItem) => {
+      if (!slashCompletion) return;
+
+      if (slashCompletion.stage === "command") {
+        const cmd = THREAD_SLASH_COMMANDS.find((c) => c.id === item.id);
+        if (!cmd) return;
+
+        if (cmd.hasArg) {
+          // Transition to second stage: replace the current text with "/cmd "
+          const beforeSlash = draft.slice(0, slashCompletion.replaceRange.start);
+          const afterCursor = draft.slice(slashCompletion.replaceRange.end);
+          const newText = `${beforeSlash}/${cmd.id} ${afterCursor}`;
+          const newCursor = beforeSlash.length + cmd.id.length + 2; // after "/cmd "
+          setDraft(newText);
+
+          // Lazy-load data for argument stage
+          if (cmd.id === "mode") loadModesOnce();
+          if (cmd.id === "prompt") loadPromptsOnce();
+          if (cmd.id === "guardrail") loadGuardrailsOnce();
+
+          // Update slash completion for the new text
+          requestAnimationFrame(() => {
+            const ta = textareaRef.current;
+            if (ta) {
+              ta.focus();
+              ta.setSelectionRange(newCursor, newCursor);
+            }
+            // Re-run completion
+            const nextCompletion = completeSlash(newText, newCursor, { modes, prompts, guardrails });
+            if (nextCompletion) {
+              setSlashCompletion(nextCompletion);
+              setSlashIndex(0);
+            }
+          });
+        } else {
+          // No argument: execute immediately
+          executeSlashCommand(cmd.id);
+        }
+      } else if (slashCompletion.stage === "argument" && slashCompletion.command) {
+        // Argument picked: execute the command with the chosen arg
+        executeSlashCommand(slashCompletion.command.id, item.label);
+      }
+    },
+    [slashCompletion, draft, executeSlashCommand, modes, prompts, guardrails, loadModesOnce, loadPromptsOnce, loadGuardrailsOnce],
   );
 
   const handleSend = useCallback(async () => {
     if (!draft.trim() || sending) return;
-    setSending(true);
     const text = draft.trim();
+    // HS-153-05: intercept freeform-arg slash commands (e.g. /todo, /compact)
+    // that never enter the palette's argument stage because they have no completions.
+    const slashMatch = /^\/(\w+)(?:\s+(.*))?$/.exec(text);
+    if (slashMatch) {
+      const cmdName = slashMatch[1].toLowerCase();
+      const cmd = THREAD_SLASH_COMMANDS.find((c) => c.id === cmdName);
+      if (cmd) {
+        executeSlashCommand(cmdName, slashMatch[2]?.trim());
+        return;
+      }
+    }
+    setSending(true);
     const refs = chips.map((c) => ({
       ref_kind: c.ref.kind,
       ref_id: c.ref.id,
@@ -351,15 +795,15 @@ export function ThreadComposer({
     setChips([]);
     onSend(text, refs);
     setSending(false);
-  }, [draft, sending, chips, onSend]);
+  }, [draft, sending, chips, onSend, executeSlashCommand]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
       // Slash command palette navigation
-      if (slashOpen && slashMatches.length > 0) {
+      if (slashOpen && slashCompletion && slashCompletion.items.length > 0) {
         if (e.key === "ArrowDown") {
           e.preventDefault();
-          setSlashIndex((i) => Math.min(i + 1, slashMatches.length - 1));
+          setSlashIndex((i) => Math.min(i + 1, slashCompletion.items.length - 1));
           return;
         }
         if (e.key === "ArrowUp") {
@@ -369,17 +813,18 @@ export function ThreadComposer({
         }
         if (e.key === "Enter") {
           e.preventDefault();
-          runSlashCommand(slashMatches[slashIndex]);
+          pickSlashItem(slashCompletion.items[slashIndex]);
           return;
         }
         if (e.key === "Tab" && !e.shiftKey) {
           e.preventDefault();
-          runSlashCommand(slashMatches[slashIndex]);
+          pickSlashItem(slashCompletion.items[slashIndex]);
           return;
         }
         if (e.key === "Escape") {
           e.preventDefault();
           setSlashOpen(false);
+          setSlashCompletion(null);
           return;
         }
       }
@@ -433,7 +878,7 @@ export function ThreadComposer({
     },
     [
       slashOpen,
-      slashMatches,
+      slashCompletion,
       slashIndex,
       acOpen,
       acMatches,
@@ -442,7 +887,7 @@ export function ThreadComposer({
       onStop,
       handleSend,
       selectAutocompleteItem,
-      runSlashCommand,
+      pickSlashItem,
     ],
   );
 
@@ -456,6 +901,11 @@ export function ThreadComposer({
 
   return (
     <div className="thread-composer" data-testid="thread-composer">
+      {/* System rows (in-flow feedback from slash commands) */}
+      {systemRows.map((text, i) => (
+        <SystemRow key={i} text={text} />
+      ))}
+
       {/* Ref chips above the field */}
       {chips.length > 0 && (
         <div className="thread-composer-chips" data-testid="composer-chips">
@@ -480,24 +930,24 @@ export function ThreadComposer({
             emptyLabel="No matches"
           />
         )}
-        {slashOpen && slashMatches.length > 0 && (
+        {slashOpen && slashCompletion && slashCompletion.items.length > 0 && (
           <div
             className="inlet-autocomplete thread-slash-palette"
             role="listbox"
             data-testid="slash-palette"
           >
             <SurfaceRows>
-              {slashMatches.map((cmd, i) => (
+              {slashCompletion.items.map((item, i) => (
                 <SurfaceRow
-                  key={cmd.id}
-                  id={`thread-slash-${cmd.id}`}
+                  key={item.id}
+                  id={`thread-slash-${item.id}`}
                   role="option"
                   ariaSelected={i === slashIndex}
-                  glyph={<span className="inlet-ac-kind-glyph">{cmd.glyph}</span>}
-                  title={`/${cmd.id}`}
-                  detail={cmd.label}
+                  glyph={item.glyph ? <span className="inlet-ac-kind-glyph">{item.glyph}</span> : undefined}
+                  title={item.label}
+                  detail={item.detail}
                   selected={i === slashIndex}
-                  onOpen={() => runSlashCommand(cmd)}
+                  onOpen={() => pickSlashItem(item)}
                 />
               ))}
             </SurfaceRows>

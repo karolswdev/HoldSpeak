@@ -47,6 +47,7 @@ function seedThread(threadId: string, messages: ThreadMessage[] = []): void {
           directory_id: null,
           parent_thread_id: null,
           status_line: null,
+          mode: null,
           token_in: 0,
           token_out: 0,
           created_at: new Date().toISOString(),
@@ -56,6 +57,7 @@ function seedThread(threadId: string, messages: ThreadMessage[] = []): void {
         messages,
         siblings: {},
         refs: [],
+        draftAnnotations: [],
       },
     },
     buffers: {},
@@ -353,6 +355,7 @@ describe("reconnect reconcile", () => {
         directory_id: null,
         parent_thread_id: null,
         status_line: null,
+        mode: null,
         token_in: 10,
         token_out: 20,
         created_at: new Date().toISOString(),
@@ -362,6 +365,7 @@ describe("reconnect reconcile", () => {
       messages: [],
       siblings: {},
       refs: [],
+      draftAnnotations: [],
     };
 
     // The server returns a FLAT response: thread fields at root, plus

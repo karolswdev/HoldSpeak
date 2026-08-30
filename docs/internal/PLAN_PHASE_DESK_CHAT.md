@@ -1,7 +1,8 @@
 # Phase DC-01: The Desk Chat — porting the warpdrv chat experience into HoldSpeak
 
 > **Status:** DC-01 shipped as Phase 151; DC-02 shipped as Phase 152
-> The Hands; DC-03+ unchartered. Backlog candidate **AF** in
+> The Hands; DC-03 shipped as Phase 153 The Practice; DC-04+
+> unchartered. Backlog candidate **AF** in
 > `pm/roadmap/holdspeak/BACKLOG.md` is the handoff row.
 >
 > **Reference:** [mikjee/warpdrv](https://github.com/mikjee/warpdrv) —
@@ -278,6 +279,8 @@ row; Submit/Decline resolve the operation. No new admission path.
 
 ### 6.5 Modes, prompts, guardrails (DC-03)
 
+> **Status:** SHIPPED as Phase 153 The Practice.
+
 - **Mode** = `{name, colour, prompt_ref, allowed_tools[], allowed_recipes[],
   guardrail_ids[]}` stored as a Recipe of kind `mode` (recipes already hold
   `system_prompt`, `tools_json`, `profile_id`). Built-ins seeded (the
@@ -299,6 +302,8 @@ row; Submit/Decline resolve the operation. No new admission path.
   belt over braces).
 
 ### 6.6 Slash commands, annotations, compaction, todo (DC-03)
+
+> **Status:** SHIPPED as Phase 153 The Practice.
 
 - `/` in the composer opens the verb registry filtered to thread verbs:
   `/compact`, `/mode <m>`, `/prompt <p>`, `/keep`, `/fork`, `/todo`,

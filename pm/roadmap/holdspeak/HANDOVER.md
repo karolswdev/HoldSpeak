@@ -38,10 +38,19 @@ branch `worktree-warpdrv-chat-port`, **PR #507**.
   = group `chat_practice`, visibility `internal`. Rigs:
   `assets/story-03-hub-leg.py` (DRY / `HS152_LIVE=1`), the two glass
   files, the door walk `leg_thread`, `assets/counsel-close.md`.
-- **Phase 153 The Practice: chartered** (`assets/settled-design.md`,
-  `audit-census.md`, six stories scaffolded; story bodies NOT yet
-  written — write them from the settled design before building). Both
-  data-layer builders landed and are committed (§4).
+- **Phase 153 The Practice: COMPLETE 6/6** (01 modes `d2c88d0d`, 02
+  slash/prompts `102904a6`, 03 guardrails `5fadacad`, 04 annotations
+  `3934cb70`, 05 compact/todo `2c9a6e5b`, 06 walk+close). Counsel
+  RATIFY-W-C; M1 (practice capabilities must redact on their OWN
+  resolved boundary, not chat.turn's) + S1–S3 fixed in-round. Metal DRY
+  6/6 + LIVE 6/6 on .43. Exhibit:
+  https://claude.ai/code/artifact/33bb0b5b-1c78-4f8f-977d-258f7cb81d64.
+  LAWS added: the .43 server runs a DEFAULT dictation grammar — engine
+  sends `grammar:""` on non-tool custom-endpoint calls (probe with curl
+  before blaming the model); CHECK constraints never reach existing DBs
+  (reconcile kind-drift rebuild for `thread_message_parts`); mocked
+  entrances hide dead runners (`run_guardrail`/`run_compact` were dead
+  through the real runner until 05).
 - **Phase 154 The Call: reserved.** FEASIBILITY RULING (orchestrator,
   from the research): PyTorch `kokoro` needs Python <3.13 (we run
   3.13); `kokoro-onnx` works (MIT, weights Apache-2.0, RTF 0.6 on
@@ -117,10 +126,13 @@ tool count arithmetic (`len(TOOLS)` is truth). Shot exhibit for 151:
 https://claude.ai/code/artifact/5f8ffe8d-63cb-45fa-8c67-6e6d4a655705 —
 make one per phase before asking the merge word.
 
-Go: 152 is done and holding for the owner; next is 153 The Practice
-(six story bodies written from D1–D6, `fb5cc17d`; both data-layer
-groundwork commits landed — verify with scoped tests first), then 154,
-155 — each with counsel-close, glass, metal, and an honest sweep (the
+Go: 152 AND 153 are done and holding for the owner (153 The Practice
+COMPLETE 6/6 — modes, prompts+slash, guardrails, annotations,
+compact+todo, walk+close; counsel RATIFY-W-C, M1+S1–S3 fixed in-round;
+metal LIVE 6/6 on .43; NEW LAW: the .43 llama.cpp server runs a DEFAULT
+dictation grammar — free text is forced into {"line":…}; the engine now
+sends grammar:"" on non-tool custom-endpoint calls; probe with a trivial
+curl before blaming the model). Next is 154 The Call, then 155 — each with counsel-close, glass, metal, and an honest sweep (the
 name-diff recipe in §2; `pytest -n auto` collects nothing in the
 sandbox, use `-n 4`/`-n 6`; NEVER run pytest un-isolated — it opens the
 owner's real DB). The owner wants the whole port; deliver it.

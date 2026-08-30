@@ -1,0 +1,192 @@
+{
+  "id": "th_e01bff75a3c0",
+  "title": "HS-153-06 Leg 1 mode",
+  "recipe_id": "hs-seed-mode-chase",
+  "profile_override": "",
+  "directory_id": "",
+  "token_in": 10,
+  "token_out": 6,
+  "created_at": 1788115439.319254,
+  "updated_at": 1788115440.064543,
+  "last_turn_at": 1788115439.9674811,
+  "mode": {
+    "id": "hs-seed-mode-chase",
+    "name": "Chase",
+    "avatar": "#2563EB"
+  },
+  "messages": [
+    {
+      "id": "tm_99291ec6afee",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_1ddbc6aa8ef1",
+          "kind": "text",
+          "text": "Show me the current state of my desk.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115439.320674,
+      "updated_at": 1788115439.3212092,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_4bdcc7ce6f3e",
+      "role": "assistant",
+      "parent_id": "tm_99291ec6afee",
+      "streaming": false,
+      "receipt_id": "ire_3f72ee3bdf60026a086ae66e4bcd15f5",
+      "egress_scope": "local",
+      "model_id": "hs153-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 3,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_86e0624f48da",
+          "kind": "text",
+          "text": "Desk mode response. No actions taken.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115439.333083,
+      "updated_at": 1788115439.42674,
+      "completed_at": 1788115439.42674,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_2f8a414e0564",
+      "role": "user",
+      "parent_id": "tm_4bdcc7ce6f3e",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_f2a14afa87f6",
+          "kind": "text",
+          "text": "Move Alice's commitment to complete.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115439.849983,
+      "updated_at": 1788115439.8504908,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_dcadd71cf53a",
+      "role": "assistant",
+      "parent_id": "tm_2f8a414e0564",
+      "streaming": false,
+      "receipt_id": "ire_49281579d0f150b9c10b692c97987dad",
+      "egress_scope": "local",
+      "model_id": "hs153-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 3,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_5c1c868c9064",
+          "kind": "guardrail",
+          "text": null,
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "violations": [
+              "people.commitment.transition called without a named source"
+            ],
+            "warnings": [],
+            "guardrails": [
+              "hs-seed-guardrail-effect-guard",
+              "hs-seed-guardrail-egress-guard"
+            ]
+          }
+        },
+        {
+          "id": "tp_f12a2652675c",
+          "kind": "tool_call",
+          "text": null,
+          "ordinal": 1,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "id": "call_chase_pct",
+            "name": "people.commitment.transition",
+            "arguments": "{\"card_id\": \"PLACEHOLDER\", \"verb\": \"complete\"}",
+            "class": "effect_proposal",
+            "state": "admitted"
+          },
+          "tool_call_id": "call_chase_pct"
+        },
+        {
+          "id": "tp_b1fadafc0853",
+          "kind": "text",
+          "text": "Commitment transition done.",
+          "ordinal": 2,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115439.863341,
+      "updated_at": 1788115440.0642471,
+      "completed_at": 1788115440.0642471,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_2036eec9e172",
+      "role": "tool",
+      "parent_id": "tm_dcadd71cf53a",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_c18e6a161a30",
+          "kind": "text",
+          "text": "{\"error\": \"people_mcp_identifier_required\"}",
+          "ordinal": 0,
+          "sensitive": true,
+          "draft": false,
+          "meta_json": {
+            "kind": "tool_execution_failed",
+            "receipt_id": ""
+          },
+          "tool_call_id": "call_chase_pct"
+        }
+      ],
+      "created_at": 1788115439.9674811,
+      "updated_at": 1788115439.9679239,
+      "completed_at": null,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

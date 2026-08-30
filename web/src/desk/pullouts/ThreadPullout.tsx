@@ -35,6 +35,8 @@ import {
   regenerateThread,
   createThread,
   decideToolCall,
+  addAnnotation,
+  deleteAnnotation,
   type ThreadMessage,
   type ThreadDeltaPayload,
   type ThreadTurnStartedPayload,
@@ -42,16 +44,23 @@ import {
   type ThreadToolPendingPayload,
   type ThreadToolResultPayload,
   type ThreadStatusLinePayload,
+  type ThreadGuardrailPayload,
+  type DraftAnnotation,
   type ToolRow,
   type ToolRowState,
+  type GuardrailRow,
 } from "../threads";
 import { useDesk } from "../store";
 import { ThreadComposer, InlineEditor } from "../components/ThreadComposer";
+import { MicButton } from "../components/MicButton";
+import { ModeTabs } from "../components/ModeTabs";
 import type { PulloutContentProps } from "./types";
 import "./thread-pullout.css";
 
 // HS-152-04: stable empty refs for zustand selectors (avoid infinite re-render).
 const EMPTY_TOOL_ROWS: Record<string, ToolRow> = {};
+const EMPTY_GUARDRAIL_ROWS: Record<string, GuardrailRow> = {};
+const EMPTY_DRAFT_ANNOTATIONS: DraftAnnotation[] = [];
 
 // ── StreamingMaterial ────────────────────────────────────────────────
 // Append-safe wrapper: renders the live text cheaply while streaming,
@@ -495,6 +504,49 @@ function ToolResultRenderer({ row }: { row: ToolRow }) {
   );
 }
 
+// ── Guardrail row (HS-153-03) ─────────────────────────────────────
+function GuardrailRowView({ row }: { row: GuardrailRow }) {
+  const hasViolations = row.violations.length > 0;
+  const hasWarnings = row.warnings.length > 0;
+  const [rawOpen, setRawOpen] = useState(false);
+
+  if (!hasViolations && !hasWarnings) return null;
+
+  return (
+    <div
+      className={`thread-guardrail-row ${hasViolations ? "has-violations" : "has-warnings"}`}
+      data-testid="guardrail-row"
+    >
+      <div className="thread-guardrail-head">
+        <span className="thread-guardrail-glyph">{hasViolations ? "⛔" : "⚠"}</span>
+        <span className="thread-guardrail-label">
+          {hasViolations ? "Guardrail violation" : "Guardrail warning"}
+        </span>
+      </div>
+      {row.violations.map((v, i) => (
+        <div key={`v-${i}`} className="thread-guardrail-violation" data-testid="guardrail-violation">
+          {v}
+        </div>
+      ))}
+      {row.warnings.map((w, i) => (
+        <div key={`w-${i}`} className="thread-guardrail-warning" data-testid="guardrail-warning">
+          {w}
+        </div>
+      ))}
+      {row.raw && (
+        <details
+          className="thread-guardrail-raw"
+          open={rawOpen}
+          onToggle={(e) => setRawOpen((e.target as HTMLDetailsElement).open)}
+        >
+          <summary>RAW</summary>
+          <pre>{JSON.stringify(row.raw, null, 2)}</pre>
+        </details>
+      )}
+    </div>
+  );
+}
+
 // ── Tool row (HS-152-04) ───────────────────────────────────────────
 function ToolRowView({
   row,
@@ -558,15 +610,18 @@ function ToolRowView({
         </div>
       )}
 
-      {/* Decision box: Allow once / Allow always / Deny */}
+      {/* Decision box: Allow once / Allow always / Deny
+           HS-153-03: when defaultDecision === "deny", Deny gets primary styling
+           and autoFocus; otherwise Allow once is primary. */}
       {row.state === "awaiting_decision" && (
-        <div className="thread-tool-decision-box" data-testid="decision-box">
+        <div className="thread-tool-decision-box" data-testid="decision-box" data-default-decision={row.defaultDecision || "allow"}>
           <div className="thread-tool-decision-actions">
             <button
               type="button"
-              className="desk-chip is-primary"
+              className={`desk-chip ${row.defaultDecision === "deny" ? "quiet" : "is-primary"}`}
               onClick={() => onDecide(row.callId, "approve")}
               data-testid="allow-once"
+              autoFocus={row.defaultDecision !== "deny"}
             >
               Allow once
             </button>
@@ -580,9 +635,10 @@ function ToolRowView({
             </button>
             <button
               type="button"
-              className="desk-chip quiet"
+              className={`desk-chip ${row.defaultDecision === "deny" ? "is-primary" : "quiet"}`}
               onClick={() => onDecide(row.callId, "deny")}
               data-testid="deny"
+              autoFocus={row.defaultDecision === "deny"}
             >
               Deny
             </button>
@@ -610,6 +666,269 @@ function ToolRowView({
   );
 }
 
+// ── Annotation popover (HS-153-04) ──────────────────────────────────
+
+function AnnotationPopover({
+  anchorRect,
+  quoteText,
+  onSave,
+  onCancel,
+}: {
+  anchorRect: { top: number; left: number; width: number; bottom: number };
+  quoteText: string;
+  onSave: (comment: string) => void;
+  onCancel: () => void;
+}) {
+  const [comment, setComment] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        onCancel();
+      }
+    };
+    document.addEventListener("keydown", handler, true);
+    return () => document.removeEventListener("keydown", handler, true);
+  }, [onCancel]);
+
+  const quoteHead = quoteText.length > 40 ? quoteText.slice(0, 40) + "..." : quoteText;
+
+  return (
+    <div
+      ref={popoverRef}
+      className="thread-annotation-popover"
+      data-testid="annotation-popover"
+      style={{
+        position: "absolute",
+        top: anchorRect.bottom + 4,
+        left: Math.max(0, anchorRect.left),
+        zIndex: 100,
+      }}
+    >
+      <div className="thread-annotation-quote-head" title={quoteText}>
+        {quoteHead}
+      </div>
+      <div className="thread-annotation-input-row">
+        <input
+          ref={inputRef}
+          type="text"
+          className="thread-annotation-comment-input"
+          data-testid="annotation-comment-input"
+          placeholder="Comment"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && comment.trim()) {
+              e.preventDefault();
+              onSave(comment.trim());
+            }
+          }}
+        />
+        <MicButton
+          onText={(text) => setComment((prev) => (prev ? prev + " " + text : text))}
+          label="Dictate comment"
+        />
+      </div>
+      <div className="thread-annotation-actions">
+        <button
+          type="button"
+          className="desk-chip is-primary"
+          data-testid="annotation-save"
+          disabled={!comment.trim()}
+          onClick={() => onSave(comment.trim())}
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          className="desk-chip quiet"
+          data-testid="annotation-cancel"
+          onClick={onCancel}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Annotation chips (HS-153-04) ────────────────────────────────────
+
+function AnnotationChips({
+  annotations,
+  onRemove,
+}: {
+  annotations: DraftAnnotation[];
+  onRemove: (partId: string) => void;
+}) {
+  if (annotations.length === 0) return null;
+  return (
+    <div className="thread-annotation-chips" data-testid="annotation-chips">
+      {annotations.map((a) => {
+        const quote = a.meta_json?.quote ?? "";
+        const head = quote.length > 30 ? quote.slice(0, 30) + "..." : quote;
+        return (
+          <span key={a.id} className="thread-annotation-chip" data-testid="annotation-chip">
+            <span className="thread-annotation-chip-text">{head}</span>
+            <button
+              type="button"
+              className="thread-annotation-chip-remove"
+              data-testid="annotation-chip-remove"
+              aria-label="Remove annotation"
+              onClick={() => onRemove(a.id)}
+            >
+              x
+            </button>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── HS-153-05: compaction cut marker ────────────────────────────────
+function CompactionCutMarker({ msg }: { msg: ThreadMessage }) {
+  const stats = msg.statsJson as { compaction: boolean; cut_at: string; count: number } | null;
+  const summaryText = msg.parts.filter((p) => p.kind === "text").map((p) => p.text).join("");
+  const count = stats?.count ?? 0;
+
+  return (
+    <div className="thread-compact-cut" data-testid="compact-cut-marker" data-message-id={msg.id}>
+      <div className="thread-compact-cut-label">
+        compacted · {count} message{count !== 1 ? "s" : ""}
+      </div>
+      {summaryText && (
+        <details className="thread-raw-fold" data-testid="raw-fold">
+          <summary className="thread-raw-toggle">{"RAW ▸"}</summary>
+          <pre className="thread-raw-content">{summaryText}</pre>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function CompactFailedRow({ msg }: { msg: ThreadMessage }) {
+  const text = msg.parts.filter((p) => p.kind === "text").map((p) => p.text).join("");
+  return (
+    <div className="thread-compact-failed" data-testid="compact-failed-row" data-message-id={msg.id}>
+      <span className="thread-compact-failed-label">compact failed</span>
+      {text && <span className="thread-compact-failed-text">{text}</span>}
+    </div>
+  );
+}
+
+// ── HS-153-05: message list with compaction fold ────────────────────
+function ThreadMessageList({
+  messages,
+  siblings,
+  threadToolRows,
+  guardrailRowsForThread,
+  getBufferText,
+  threadId,
+  loadThread,
+  handleRetry,
+  handleKeep,
+  handleBranch,
+  handleDecide,
+}: {
+  messages: ThreadMessage[];
+  siblings: Record<string, string[]>;
+  threadToolRows: Record<string, ToolRow>;
+  guardrailRowsForThread: Record<string, GuardrailRow>;
+  getBufferText: (id: string) => string;
+  threadId: string;
+  loadThread: (id: string) => Promise<void>;
+  handleRetry: (messageId: string) => void;
+  handleKeep: (messageId: string, as: "note" | "artifact") => void;
+  handleBranch: (messageId: string, text: string) => void;
+  handleDecide: (callId: string, decision: "approve" | "deny", opts?: { always?: boolean; answer?: unknown }) => void;
+}) {
+  const [earlierExpanded, setEarlierExpanded] = useState(false);
+
+  const filtered = messages.filter((m) => m.role !== "tool");
+
+  // Find the latest compaction cut index.
+  let cutIndex = -1;
+  for (let i = filtered.length - 1; i >= 0; i--) {
+    if (filtered[i].role === "system" && (filtered[i].statsJson as Record<string, unknown> | null)?.compaction) {
+      cutIndex = i;
+      break;
+    }
+  }
+
+  const beforeCut = cutIndex > 0 ? filtered.slice(0, cutIndex) : [];
+  const fromCut = cutIndex >= 0 ? filtered.slice(cutIndex) : filtered;
+
+  function renderMsg(msg: ThreadMessage) {
+    // Compaction cut marker row.
+    if (msg.role === "system" && (msg.statsJson as Record<string, unknown> | null)?.compaction) {
+      return <CompactionCutMarker key={msg.id} msg={msg} />;
+    }
+    // Compact-failed warning row.
+    if (msg.role === "system" && (msg.statsJson as Record<string, unknown> | null)?.compact_failed) {
+      return <CompactFailedRow key={msg.id} msg={msg} />;
+    }
+
+    const sibData = siblings[msg.id];
+    const sibPosition = Array.isArray(sibData) ? Number(sibData[0]) : 1;
+    const sibTotal = Array.isArray(sibData) ? Number(sibData[1]) : 1;
+    const msgToolRows = msg.role === "assistant"
+      ? Object.values(threadToolRows).filter((r) => r.messageId === msg.id)
+      : undefined;
+    const msgGuardrailRow = msg.role === "assistant"
+      ? guardrailRowsForThread[msg.id]
+      : undefined;
+    return (
+      <MessageRow
+        key={msg.id}
+        msg={msg}
+        bufferText={getBufferText(msg.id)}
+        siblingPosition={sibPosition}
+        siblingTotal={sibTotal}
+        onSiblingPrev={() => void loadThread(threadId)}
+        onSiblingNext={() => void loadThread(threadId)}
+        onRetry={handleRetry}
+        onKeep={handleKeep}
+        onBranch={handleBranch}
+        toolRows={msgToolRows}
+        threadId={threadId}
+        onDecide={handleDecide}
+        guardrailRow={msgGuardrailRow}
+      />
+    );
+  }
+
+  return (
+    <div className="thread-messages">
+      {beforeCut.length > 0 && (
+        <div className="thread-earlier-fold" data-testid="earlier-messages-fold">
+          <button
+            type="button"
+            className="thread-earlier-toggle"
+            onClick={() => setEarlierExpanded(!earlierExpanded)}
+          >
+            {earlierExpanded ? "Hide" : `${beforeCut.length} earlier message${beforeCut.length !== 1 ? "s" : ""}`}
+          </button>
+          {earlierExpanded && (
+            <div className="thread-earlier-messages">
+              {beforeCut.map(renderMsg)}
+            </div>
+          )}
+        </div>
+      )}
+      {fromCut.map(renderMsg)}
+    </div>
+  );
+}
+
 // ── Message row ─────────────────────────────────────────────────────
 function MessageRow({
   msg,
@@ -624,6 +943,7 @@ function MessageRow({
   toolRows,
   threadId,
   onDecide,
+  guardrailRow,
 }: {
   msg: ThreadMessage;
   bufferText: string;
@@ -639,6 +959,8 @@ function MessageRow({
   toolRows?: ToolRow[];
   threadId: string;
   onDecide: (callId: string, decision: "approve" | "deny", opts?: { always?: boolean; answer?: unknown }) => void;
+  /** HS-153-03: guardrail evaluation row for this message. */
+  guardrailRow?: GuardrailRow;
 }) {
   const crashed = isCrashed(msg);
   const hasError = msg.errorJson !== null && !msg.streaming;
@@ -760,6 +1082,9 @@ function MessageRow({
         </details>
       )}
 
+      {/* HS-153-03: guardrail row (before tool rows) */}
+      {guardrailRow && <GuardrailRowView row={guardrailRow} />}
+
       {/* HS-152-04: tool rows */}
       {toolRows && toolRows.length > 0 && (
         <div className="thread-tool-rows">
@@ -844,8 +1169,9 @@ function ThreadPulloutInner({
   const {
     loadThread, applyTurnStarted, applyDelta, applyTurnDone, reconcile,
     getBufferText, applyToolPending, applyToolResult, applyStatusLine,
-    decideOptimistic,
+    decideOptimistic, setMode, applyGuardrail,
   } = useThreadStore.getState();
+  const guardrailRowsForThread = useThreadStore((s) => s.guardrailRows[threadId] ?? EMPTY_GUARDRAIL_ROWS);
 
   const { attempt, receipt } = useWriteReceipt();
   const { subscribe, state: busState } = useRuntimeBus();
@@ -918,6 +1244,18 @@ function ThreadPulloutInner({
         if (p.thread_id !== threadId) return;
         applyStatusLine(p);
       }),
+      // HS-153-03: guardrail evaluation frame
+      subscribe("thread_guardrail", (frame) => {
+        const p = frame.data as ThreadGuardrailPayload;
+        if (p.thread_id !== threadId) return;
+        applyGuardrail(p);
+      }),
+      // HS-153-05: compaction frame — refresh thread to get the cut row
+      subscribe("thread_compacted", (frame) => {
+        const p = frame.data as { thread_id: string };
+        if (p.thread_id !== threadId) return;
+        void loadThread(threadId);
+      }),
     ];
     return () => unsubs.forEach((u) => u());
   }, [threadId, subscribe]);
@@ -941,6 +1279,10 @@ function ThreadPulloutInner({
 
   const handleSend = useCallback(
     (text: string, refs: Array<{ ref_kind: string; ref_id: string }>) => {
+      // HS-153-04: clear draft annotations optimistically on send (they are promoted server-side).
+      useThreadStore.setState((s) => ({
+        draftAnnotations: { ...s.draftAnnotations, [threadId]: [] },
+      }));
       void attempt("send turn", () =>
         sendTurn(threadId, { text, refs: refs.length > 0 ? refs : undefined }),
       );
@@ -1005,6 +1347,174 @@ function ThreadPulloutInner({
 
   const isStreaming = detail?.messages.some((m) => m.streaming) ?? false;
 
+  // HS-153-04: annotation popover state
+  const draftAnnotations = useThreadStore((s) => s.draftAnnotations[threadId] ?? EMPTY_DRAFT_ANNOTATIONS);
+  const [annotationPopover, setAnnotationPopover] = useState<{
+    rect: { top: number; left: number; width: number; bottom: number };
+    quote: string;
+    messageId: string;
+  } | null>(null);
+  // Keep a ref to the setter so checkSelection never captures a stale one.
+  const setPopoverRef = useRef(setAnnotationPopover);
+  setPopoverRef.current = setAnnotationPopover;
+
+  // Selection detection: show popover on text selection in assistant rows
+  const checkSelection = useCallback(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+      return;
+    }
+    // Guard: don't open while focus is inside an input/textarea/contenteditable
+    const active = document.activeElement;
+    if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as HTMLElement).isContentEditable)) {
+      return;
+    }
+    // Check if the selection is inside an assistant text part
+    const range = sel.getRangeAt(0);
+    const container = range.commonAncestorContainer;
+    const el = container instanceof Element ? container : container.parentElement;
+    if (!el) return;
+    const row = el.closest?.("[data-message-id]");
+    if (!row) return;
+    const msgId = row.getAttribute("data-message-id");
+    if (!msgId) return;
+    // Only assistant rows with class thread-row-assistant
+    if (!row.classList.contains("thread-row-assistant")) return;
+    // Only text parts (the row body); check if the element or any ancestor
+    // up to the row is the row body itself.
+    const rowBody = row.querySelector(".thread-row-body");
+    if (!rowBody) return;
+    // Walk from el upward to check containment (handles shadow DOM edge cases).
+    let inBody = false;
+    let walk: Element | null = el;
+    while (walk && walk !== row) {
+      if (walk === rowBody) { inBody = true; break; }
+      walk = walk.parentElement;
+    }
+    if (!inBody) return;
+
+    const quote = sel.toString().trim();
+    if (!quote) return;
+    const rect = range.getBoundingClientRect();
+    const parentRect = bodyRef.current?.getBoundingClientRect() ?? { top: 0, left: 0 };
+    setPopoverRef.current({
+      rect: {
+        top: rect.top - parentRect.top + (bodyRef.current?.scrollTop ?? 0),
+        left: rect.left - parentRect.left,
+        width: rect.width,
+        bottom: rect.bottom - parentRect.top + (bodyRef.current?.scrollTop ?? 0),
+      },
+      quote,
+      messageId: msgId,
+    });
+  }, []);
+
+  // mouseup on the body opens the popover when a selection exists in
+  // assistant text.  Attached as a native DOM listener (not React synthetic)
+    // Open the popover on selectionchange when a non-empty selection
+  // lies inside an assistant text part. selectionchange fires AFTER
+  // the browser finalizes the selection (unlike mouseup which fires
+  // before for multi-click gestures), so it works reliably for both
+  // single-drag and triple-click.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const handler = () => {
+      // Debounce: selectionchange fires many times during a drag.
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        checkSelection();
+      }, 80);
+    };
+    document.addEventListener("selectionchange", handler);
+    return () => {
+      document.removeEventListener("selectionchange", handler);
+      if (timer) clearTimeout(timer);
+    };
+  }, [checkSelection]);
+
+  // Callback ref: sets bodyRef.current when the body div mounts.
+  const bodyCallbackRef = useCallback((node: HTMLDivElement | null) => {
+    bodyRef.current = node;
+  }, []);
+
+  // Dismiss popover when clicking outside it (not on selectionchange,
+  // because clicking the comment input collapses the text selection).
+  useEffect(() => {
+    if (!annotationPopover) return;
+    const onMouseDown = (e: MouseEvent) => {
+      const popoverEl = bodyRef.current?.querySelector("[data-testid='annotation-popover']");
+      if (popoverEl && popoverEl.contains(e.target as Node)) return;
+      // Clicked outside the popover -- dismiss.
+      setAnnotationPopover(null);
+    };
+    // Use capture to fire before the click can open a new popover.
+    document.addEventListener("mousedown", onMouseDown, true);
+    return () => document.removeEventListener("mousedown", onMouseDown, true);
+  }, [annotationPopover]);
+
+  // `a` key opens the annotation popover when text is selected (keyboard route)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      if (e.key === "a" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const sel = window.getSelection();
+        if (sel && !sel.isCollapsed && sel.toString().trim()) {
+          e.preventDefault();
+          checkSelection();
+        }
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [checkSelection]);
+
+  const handleAnnotationSave = useCallback(
+    async (comment: string) => {
+      if (!annotationPopover) return;
+      try {
+        const result = await addAnnotation(threadId, {
+          message_id: annotationPopover.messageId,
+          quote: annotationPopover.quote,
+          comment,
+        });
+        // Optimistic add to store
+        useThreadStore.setState((s) => ({
+          draftAnnotations: {
+            ...s.draftAnnotations,
+            [threadId]: [...(s.draftAnnotations[threadId] ?? []), result],
+          },
+        }));
+      } catch {
+        // Rollback: reload
+        void loadThread(threadId);
+      }
+      setAnnotationPopover(null);
+      window.getSelection()?.removeAllRanges();
+    },
+    [annotationPopover, threadId, loadThread],
+  );
+
+  const handleAnnotationRemove = useCallback(
+    async (partId: string) => {
+      // Optimistic remove
+      useThreadStore.setState((s) => ({
+        draftAnnotations: {
+          ...s.draftAnnotations,
+          [threadId]: (s.draftAnnotations[threadId] ?? []).filter((a) => a.id !== partId),
+        },
+      }));
+      try {
+        await deleteAnnotation(threadId, partId);
+      } catch {
+        // Rollback: reload
+        void loadThread(threadId);
+      }
+    },
+    [threadId, loadThread],
+  );
+
   // Token meter — guard against detail or detail.thread being absent.
   const tokenIn = detail?.thread?.token_in ?? 0;
   const tokenOut = detail?.thread?.token_out ?? 0;
@@ -1041,7 +1551,7 @@ function ThreadPulloutInner({
 
   return (
     <>
-      <div className="desk-pullout-body desk-surface-body thread-pullout-body" ref={bodyRef}>
+      <div className="desk-pullout-body desk-surface-body thread-pullout-body" ref={bodyCallbackRef}>
         {/* Head: title, egress, status, token meter */}
         <div className="thread-head">
           {editingTitle ? (
@@ -1073,6 +1583,19 @@ function ThreadPulloutInner({
             </button>
           )}
           <div className="thread-head-instruments">
+            {detail.thread?.mode && (
+              <span
+                className="thread-mode-badge"
+                data-testid="mode-badge"
+                style={{ borderColor: detail.thread.mode.avatar }}
+              >
+                <span
+                  className="thread-mode-dot"
+                  style={{ backgroundColor: detail.thread.mode.avatar }}
+                />
+                {detail.thread.mode.name}
+              </span>
+            )}
             {egressLamp && <LampGadget on {...egressLamp} />}
             {(liveStatusLine || detail.thread?.status_line) && (
               <span className="thread-status-line">{liveStatusLine || detail.thread?.status_line}</span>
@@ -1110,35 +1633,31 @@ function ThreadPulloutInner({
             emptyGlyph={"▬"}
           />
         ) : (
-          <div className="thread-messages">
-            {detail.messages.filter((m) => m.role !== "tool").map((msg) => {
-              // Siblings: server returns { message_id: [position(1-based), total] }.
-              const sibData = detail.siblings[msg.id];
-              const sibPosition = Array.isArray(sibData) ? Number(sibData[0]) : 1;
-              const sibTotal = Array.isArray(sibData) ? Number(sibData[1]) : 1;
-              // HS-152-04: collect tool rows for this message
-              const msgToolRows = msg.role === "assistant"
-                ? Object.values(threadToolRows).filter((r) => r.messageId === msg.id)
-                : undefined;
-              return (
-                <MessageRow
-                  key={msg.id}
-                  msg={msg}
-                  bufferText={getBufferText(msg.id)}
-                  siblingPosition={sibPosition}
-                  siblingTotal={sibTotal}
-                  onSiblingPrev={() => void loadThread(threadId)}
-                  onSiblingNext={() => void loadThread(threadId)}
-                  onRetry={handleRetry}
-                  onKeep={handleKeep}
-                  onBranch={handleBranch}
-                  toolRows={msgToolRows}
-                  threadId={threadId}
-                  onDecide={handleDecide}
-                />
-              );
-            })}
-          </div>
+          <ThreadMessageList
+            messages={detail.messages}
+            siblings={detail.siblings}
+            threadToolRows={threadToolRows}
+            guardrailRowsForThread={guardrailRowsForThread}
+            getBufferText={getBufferText}
+            threadId={threadId}
+            loadThread={loadThread}
+            handleRetry={handleRetry}
+            handleKeep={handleKeep}
+            handleBranch={handleBranch}
+            handleDecide={handleDecide}
+          />
+        )}
+        {/* HS-153-04: annotation popover anchored to selection */}
+        {annotationPopover && (
+          <AnnotationPopover
+            anchorRect={annotationPopover.rect}
+            quoteText={annotationPopover.quote}
+            onSave={(comment) => void handleAnnotationSave(comment)}
+            onCancel={() => {
+              setAnnotationPopover(null);
+              window.getSelection()?.removeAllRanges();
+            }}
+          />
         )}
       </div>
 
@@ -1146,8 +1665,19 @@ function ThreadPulloutInner({
           SurfaceFooter, which is a 36px bar). The composer needs its
           full height to render the textarea + mic + Send/Stop. */}
       <div className="thread-foot">
+        <ModeTabs
+          activeMode={detail.thread?.mode ?? null}
+          onSelect={(recipeId) => void setMode(threadId, recipeId)}
+          disabled={isStreaming}
+        />
         {receipt}
+        {/* HS-153-04: annotation chips above the composer */}
+        <AnnotationChips
+          annotations={draftAnnotations}
+          onRemove={handleAnnotationRemove}
+        />
         <ThreadComposer
+          threadId={threadId}
           onSend={handleSend}
           onStop={handleStop}
           onKeep={handleKeep}
@@ -1155,6 +1685,13 @@ function ThreadPulloutInner({
             void handleBranch(messageId, "");
           }}
           onNewThread={handleNewThread}
+          onModeSelect={(recipeId) => void setMode(threadId, recipeId)}
+          onToggleGuardrail={(guardrailId, enable) => {
+            // HS-153-03: toggle via PATCH /api/threads/:id/guardrail
+            // S2: pass enable boolean so /guardrail off works.
+            void patchThread(threadId, { toggle_guardrail: guardrailId, toggle_guardrail_enable: enable });
+          }}
+          currentMode={detail.thread?.mode ?? null}
           streaming={isStreaming}
           lastAssistantId={lastAssistant?.id ?? null}
           restoreFocus={restoreFocus}

@@ -188,8 +188,14 @@ def emit_thread_tool_pending(
     tool_class: str,
     decision_required: bool,
     elicitation: dict[str, Any] | None = None,
+    default_decision: str | None = None,
 ) -> None:
-    """Broadcast ``thread_tool_pending`` when a tool call awaits resolution."""
+    """Broadcast ``thread_tool_pending`` when a tool call awaits resolution.
+
+    HS-153-03: ``default_decision`` is ``"deny"`` when a guardrail violation
+    names the call and control_mode != yolo; ``"allow"`` otherwise; ``None``
+    when no guardrail ran.
+    """
     payload: dict[str, Any] = {
         "thread_id": thread_id,
         "message_id": message_id,
@@ -201,6 +207,8 @@ def emit_thread_tool_pending(
     }
     if elicitation is not None:
         payload["elicitation"] = elicitation
+    if default_decision is not None:
+        payload["default_decision"] = default_decision
     broadcast("thread_tool_pending", payload)
 
 
@@ -228,6 +236,46 @@ def emit_thread_tool_result(
         "kind": kind,
         "summary": summary,
         "sensitive": sensitive,
+    })
+
+
+def emit_thread_guardrail(
+    broadcast: Callable[..., Any],
+    *,
+    thread_id: str,
+    message_id: str,
+    violations: list[str],
+    warnings: list[str],
+    guardrails: list[str],
+    raw: dict[str, Any] | None = None,
+) -> None:
+    """Broadcast ``thread_guardrail`` when a guardrail evaluation completes (HS-153-03)."""
+    payload: dict[str, Any] = {
+        "thread_id": thread_id,
+        "message_id": message_id,
+        "violations": violations,
+        "warnings": warnings,
+        "guardrails": guardrails,
+    }
+    if raw is not None:
+        payload["raw"] = raw
+    broadcast("thread_guardrail", payload)
+
+
+def emit_thread_compacted(
+    broadcast: Callable[..., Any],
+    *,
+    thread_id: str,
+    message_id: str,
+    cut_at: str,
+    count: int,
+) -> None:
+    """Broadcast ``thread_compacted`` when a compaction cut is committed (HS-153-05)."""
+    broadcast("thread_compacted", {
+        "thread_id": thread_id,
+        "message_id": message_id,
+        "cut_at": cut_at,
+        "count": count,
     })
 
 

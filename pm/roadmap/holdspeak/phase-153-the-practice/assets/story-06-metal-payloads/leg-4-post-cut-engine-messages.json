@@ -1,0 +1,14 @@
+[
+  {
+    "content": "You have read access to the full desk. Observe and inform, never act.",
+    "role": "system"
+  },
+  {
+    "content": "Summary of the earlier conversation.",
+    "role": "system"
+  },
+  {
+    "content": "What was the summary?",
+    "role": "user"
+  }
+]

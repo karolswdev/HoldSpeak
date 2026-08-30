@@ -1,0 +1,13 @@
+{
+  "status": "ok",
+  "result": {
+    "id": "ai_51bb835a8e6646d5b53b7361488967b1",
+    "task": "Review the 153 design with the owner",
+    "owner": null,
+    "due": null,
+    "status": "open",
+    "source_type": "thread",
+    "source_ref": "thread:tm_d4319e2f0656"
+  },
+  "receipt_id": "tr-0e8c0c251a91"
+}

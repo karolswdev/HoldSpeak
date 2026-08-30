@@ -634,7 +634,20 @@ class MeetingService:
 
     @staticmethod
     def _action_item_payload(item: Any) -> dict[str, Any]:
-        return {"id": item.id, "task": item.task, "owner": item.owner, "due": item.due, "status": item.status, "review_state": item.review_state, "source_timestamp": item.source_timestamp, "meeting_id": item.meeting_id, "meeting_title": item.meeting_title, "meeting_date": item.meeting_date.isoformat(), "created_at": item.created_at.isoformat(), "completed_at": item.completed_at.isoformat() if item.completed_at else None, "reviewed_at": item.reviewed_at.isoformat() if item.reviewed_at else None}
+        # HS-153-06: meeting_date may be datetime.min for thread-sourced items
+        # (no meeting); serialise as None in that case.
+        meeting_date_iso = (
+            item.meeting_date.isoformat()
+            if item.meeting_date and item.meeting_date != datetime.min
+            else None
+        )
+        result = {"id": item.id, "task": item.task, "owner": item.owner, "due": item.due, "status": item.status, "review_state": item.review_state, "source_timestamp": item.source_timestamp, "meeting_id": item.meeting_id, "meeting_title": item.meeting_title, "meeting_date": meeting_date_iso, "created_at": item.created_at.isoformat(), "completed_at": item.completed_at.isoformat() if item.completed_at else None, "reviewed_at": item.reviewed_at.isoformat() if item.reviewed_at else None}
+        # HS-153-06: thread-sourced items carry source_type and source_ref.
+        if getattr(item, "source_type", None):
+            result["source_type"] = item.source_type
+        if getattr(item, "source_ref", None):
+            result["source_ref"] = item.source_ref
+        return result
 
     @staticmethod
     def _callback_payload(result: Any) -> dict[str, Any] | Any | None:

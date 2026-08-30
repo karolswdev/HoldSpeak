@@ -66,8 +66,13 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "scheduled_recording.stopped",   # a scheduled capture stopped (auto-stop or manual)
     "segment",                  # one finalized transcript segment
     "stopped",                  # the meeting stopped
+    "thread_compacted",          # a compaction cut was committed (HS-153-05)
+                                # payload: {thread_id, message_id, cut_at, count}
     "thread_delta",             # a streaming token/reasoning delta for a thread turn
                                 # payload: {thread_id, message_id, ordinal, kind, text, seq}
+    "thread_guardrail",         # a guardrail evaluation completed (HS-153-03)
+                                # payload: {thread_id, message_id, violations, warnings,
+                                #           guardrails, raw}
     "thread_status_line",       # in-progress turn status text (HS-152-01)
                                 # payload: {thread_id, text}
     "thread_tool_pending",      # a tool call awaits resolution (HS-152-01)

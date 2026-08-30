@@ -12,11 +12,18 @@ class CanonicalPromptAdapter:
     connector_id = "inference-provider"
 
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: threading.Event) -> dict[str, str]:
+        # HS-153-06: forward response_format when the payload carries it
+        # (structured_output capabilities like chat.guardrail / chat.compact).
+        run_kwargs: dict[str, Any] = {
+            "system_prompt": str(payload["system_prompt"]),
+            "user_prompt": str(payload["user_prompt"]),
+            "temperature": payload.get("temperature"),
+            "max_tokens": payload.get("max_tokens"),
+        }
+        if payload.get("response_format") is not None:
+            run_kwargs["response_format"] = payload["response_format"]
         return {"output": str(engine.run_prompt(
-            system_prompt=str(payload["system_prompt"]),
-            user_prompt=str(payload["user_prompt"]),
-            temperature=payload.get("temperature"),
-            max_tokens=payload.get("max_tokens"),
+            **run_kwargs,
         )), "provider": str(getattr(engine, "active_provider", "")),
             # HS-132-09: `active_model` is the ENGINE's report of what it loaded,
             # and every provider this adapter is handed now defines it

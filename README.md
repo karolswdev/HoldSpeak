@@ -152,6 +152,13 @@ receipt. Stop a running turn, branch it (`< n/m >`), or keep any reply as a
 Note or Artifact. Threads live in the hub's SQLite (never the browser), so
 desk search finds them alongside everything else.
 
+Bind a mode (Desk, Chase, Draft, Plan, or your own) to steer what tools
+the thread may call and how it speaks. Save prompts and guardrails as Notes
+(tags `prompt`, `guardrail`); `/prompt` inserts, `/guardrail` toggles. Select
+assistant text to annotate by voice (chips above the composer, promoted with
+the next turn). `/compact` summarises earlier turns behind a cut marker.
+`/todo` writes an action item to the Door with thread provenance.
+
 **Set up models.** Open **Settings, Models** to make models available in Model
 Library, check their readiness, and choose compatible model lists in Assignments.
 

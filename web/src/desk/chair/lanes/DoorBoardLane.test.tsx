@@ -933,4 +933,54 @@ describe("DoorBoardLane", () => {
       expect(screen.getAllByTestId("door-card-map-btn").length).toBeGreaterThanOrEqual(1);
     });
   });
+
+  /* HS-153-05 — thread provenance chip on Door cards. */
+  describe("thread provenance chip", () => {
+    it("renders 'from a thread' chip when provenance.thread_id is set", async () => {
+      mockDoor({
+        ...projection,
+        board: {
+          ...projection.board,
+          now: [{
+            id: "ai_thread1",
+            text: "Buy the cake",
+            source: "action_item",
+            target_ref: "action_item:ai_thread1",
+            provenance: { thread_id: "t-123", available: true },
+            lawful_verbs: [],
+          }],
+        },
+      });
+      renderLane();
+      const chip = await screen.findByTestId("door-card-thread-chip");
+      expect(chip).toBeInTheDocument();
+      expect(chip.textContent?.toLowerCase()).toContain("from a thread");
+    });
+
+    it("omits chip when provenance has no thread_id", async () => {
+      mockDoor({
+        ...projection,
+        board: {
+          ...projection.board,
+          now: [{
+            id: "ai_meeting1",
+            text: "Review budget",
+            source: "action_item",
+            target_ref: "action_item:ai_meeting1",
+            provenance: { available: true },
+            lawful_verbs: [],
+          }],
+        },
+      });
+      renderLane();
+      await screen.findByText("Review budget");
+      expect(screen.queryByTestId("door-card-thread-chip")).toBeNull();
+    });
+
+    it("omits chip when provenance is absent", async () => {
+      renderLane();
+      await screen.findByText("Ship Door");
+      expect(screen.queryByTestId("door-card-thread-chip")).toBeNull();
+    });
+  });
 });

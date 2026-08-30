@@ -289,6 +289,26 @@ class MeetingIntel:
         """Backward-compatible alias for older tests/callers."""
         self._ensure_runtime_loaded()
 
+    def _extra_body(self, *, has_tools: bool = False) -> dict[str, Any]:
+        """Build the ``extra_body`` dict for the OpenAI client.
+
+        HS-153-06: llama.cpp servers may run with a default grammar (e.g. the
+        dictation ``{"line": ...}`` schema) that forces every free-text
+        completion through it.  Sending ``grammar: ""`` clears the server-side
+        default so the model generates unconstrained text (or follows an
+        explicit ``response_format``).  The override is sent ONLY for custom
+        endpoints (``self.cloud_base_url`` is set) — the real OpenAI API
+        rejects unknown fields in ``extra_body``.
+
+        When *has_tools* is True, the override is NOT sent — tool calls
+        carry their own constrained-decoding grammar, and ``grammar: ""``
+        would clear it.
+        """
+        body: dict[str, Any] = {"thinking": False}
+        if self.cloud_base_url and not has_tools:
+            body["grammar"] = ""
+        return body
+
     def _cloud_endpoint_key(self) -> str:
         """HS-103-04: the breaker's identity for this engine's cloud
         endpoint — the base URL when self-hosted, else the model name (the
@@ -323,11 +343,15 @@ class MeetingIntel:
 
         if self._active_provider == "local":
             assert self._llm is not None
-            response = self._llm.create_chat_completion(
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
+            local_kwargs: dict[str, Any] = {
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            }
+            # HS-153-06: pass response_format for structured_output capabilities.
+            if response_format is not None:
+                local_kwargs["response_format"] = response_format
+            response = self._llm.create_chat_completion(**local_kwargs)
             raw = (
                 response.get("choices", [{}])[0]
                 .get("message", {})
@@ -347,7 +371,7 @@ class MeetingIntel:
             "model": self.cloud_model,
             "messages": messages,
             "temperature": temperature,
-            "extra_body": {"thinking": False},
+            "extra_body": self._extra_body(),
             **_token_budget_kwargs(endpoint_key, max_tokens),
         }
         # HS-151-01: request-level structured output, omitted when the endpoint
@@ -440,7 +464,7 @@ class MeetingIntel:
             "model": self.cloud_model,
             "messages": messages,
             "temperature": temperature,
-            "extra_body": {"thinking": False},
+            "extra_body": self._extra_body(),
             "stream": True,
             **_token_budget_kwargs(endpoint_key, max_tokens),
         }
@@ -612,7 +636,7 @@ class MeetingIntel:
             "model": self.cloud_model,
             "messages": messages,
             "temperature": temperature,
-            "extra_body": {"thinking": False},
+            "extra_body": self._extra_body(has_tools=tools is not None),
             "stream": True,
             "stream_options": {"include_usage": True},
             **_token_budget_kwargs(endpoint_key, max_tokens),
@@ -759,6 +783,7 @@ class MeetingIntel:
         user_prompt: str,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        response_format: Optional[dict[str, Any]] = None,
     ) -> str:
         """Run a freeform chat completion and return the raw text.
 
@@ -766,7 +791,9 @@ class MeetingIntel:
         on the hub: a persona's `system_prompt` + rendered `user_template` go in,
         the model's text comes out, through the same local/cloud provider plumbing
         the meeting intel engine already uses (so a persona honours the user's
-        configured endpoint). No JSON coercion — personas produce free text.
+        configured endpoint). No JSON coercion by default -- personas produce free
+        text. Pass *response_format* (e.g. ``{"type": "json_object"}``) when a
+        structured_output capability needs constrained decoding (HS-153-06).
         """
         from ..constitutional_context import constitutional_system_message
         constitutional = constitutional_system_message()
@@ -781,6 +808,7 @@ class MeetingIntel:
                 messages,
                 temperature=self.temperature if temperature is None else temperature,
                 max_tokens=self.max_tokens if max_tokens is None else max_tokens,
+                response_format=response_format,
             )
         except (MeetingIntelError, *CONTROL_SIGNALS):
             # The dialect signal is the runner's to act on: swallowing it here

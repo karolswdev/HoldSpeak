@@ -33,6 +33,8 @@ class ActionItemSummary(Serializable):
     completed_at: Optional[datetime]
     reviewed_at: Optional[datetime]
     delegated_at: Optional[str] = None
+    source_type: Optional[str] = None  # HS-153-06: 'thread' for /todo items
+    source_ref: Optional[str] = None   # HS-153-06: 'thread:<msg_id>'
 
 
 @dataclass

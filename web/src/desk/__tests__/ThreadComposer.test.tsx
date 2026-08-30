@@ -1,12 +1,17 @@
-/** HS-151-06 — ThreadComposer tests: keys, chips, verb filter, Send/Stop, mic never sends. */
+/** HS-151-06 / HS-153-02 — ThreadComposer tests: keys, chips, verb filter,
+ * Send/Stop, mic never sends, two-stage slash completion, R3 line-start rule,
+ * completeSlash pure function, verb registry mapping. */
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import {
   ThreadComposer,
   InlineEditor,
   filterSlashCommands,
+  completeSlash,
+  isSlashAtLineStart,
   THREAD_SLASH_COMMANDS,
   type ThreadComposerProps,
+  type SlashCompletionContext,
 } from "../components/ThreadComposer";
 import {
   filterItems,
@@ -14,7 +19,6 @@ import {
   directoryToItem,
   type AutocompleteItem,
 } from "../components/InletAutocomplete";
-
 // ── mock dependencies ──────────────────────────────────────────────
 
 vi.mock("../../lib/api", () => ({
@@ -62,6 +66,11 @@ vi.mock("../tools", () => ({
     zone: "Z",
     thread: "T",
   },
+  KIND_LABEL: {},
+  DESK_TOOLS: [
+    { href: "/dictation", label: "Speak", description: "Voice typing.", glyph: "V", action: "dictate", group: "app" },
+    { href: "/ask", label: "Ask AI", description: "Ask.", glyph: "A", action: "ask", group: "app" },
+  ],
 }));
 
 vi.mock("../components/MicButton", () => ({
@@ -104,6 +113,7 @@ vi.mock("../surface/Surface", () => ({
 
 function renderComposer(overrides: Partial<ThreadComposerProps> = {}) {
   const props: ThreadComposerProps = {
+    threadId: "t-1",
     onSend: vi.fn(),
     onStop: vi.fn(),
     onKeep: vi.fn(),
@@ -116,7 +126,132 @@ function renderComposer(overrides: Partial<ThreadComposerProps> = {}) {
   return { ...render(<ThreadComposer {...props} />), props };
 }
 
-// ── unit tests: filterSlashCommands ─────────────────────────────────
+// ── unit tests: completeSlash (pure function) ───────────────────────
+
+const CTX: SlashCompletionContext = {
+  modes: [
+    { id: "hs-seed-mode-desk", name: "Desk" },
+    { id: "hs-seed-mode-chase", name: "Chase" },
+    { id: "hs-seed-mode-draft", name: "Draft" },
+    { id: "hs-seed-mode-plan", name: "Plan" },
+  ],
+  prompts: [
+    { id: "p1", title: "Weekly update", body: "Summarize this week." },
+    { id: "p2", title: "1:1 prep", body: "Prepare for 1:1." },
+  ],
+  guardrails: [
+    { id: "g1", title: "Effect guard" },
+  ],
+};
+
+describe("completeSlash (pure)", () => {
+  it("returns command completions for /", () => {
+    const result = completeSlash("/", 1, CTX);
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("command");
+    expect(result!.items.length).toBe(THREAD_SLASH_COMMANDS.length);
+  });
+
+  it("filters commands: /mo -> mode", () => {
+    const result = completeSlash("/mo", 3, CTX);
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("command");
+    expect(result!.items.map((i) => i.id)).toContain("mode");
+    expect(result!.items.map((i) => i.id)).not.toContain("keep");
+  });
+
+  it("returns mode arguments for /mode d", () => {
+    const result = completeSlash("/mode d", 7, CTX);
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("argument");
+    expect(result!.command?.id).toBe("mode");
+    const labels = result!.items.map((i) => i.label);
+    expect(labels).toContain("Desk");
+    expect(labels).toContain("Draft");
+    expect(labels).not.toContain("Chase");
+    expect(labels).not.toContain("Plan");
+  });
+
+  it("returns all modes for /mode (empty arg)", () => {
+    const result = completeSlash("/mode ", 6, CTX);
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("argument");
+    expect(result!.items.length).toBe(4);
+  });
+
+  it("returns prompt arguments for /prompt w", () => {
+    const result = completeSlash("/prompt w", 9, CTX);
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("argument");
+    expect(result!.command?.id).toBe("prompt");
+    const labels = result!.items.map((i) => i.label);
+    expect(labels).toContain("Weekly update");
+    expect(labels).not.toContain("1:1 prep");
+  });
+
+  it("returns prompt arguments for /prompt (empty arg)", () => {
+    const result = completeSlash("/prompt ", 8, CTX);
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("argument");
+    expect(result!.items.length).toBe(2);
+  });
+
+  it("returns null for mid-line /", () => {
+    const result = completeSlash("hello /mode", 11, CTX);
+    expect(result).toBeNull();
+  });
+
+  it("returns completions for / at start of second line", () => {
+    const text = "first line\n/mo";
+    const result = completeSlash(text, text.length, CTX);
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("command");
+    expect(result!.items.map((i) => i.id)).toContain("mode");
+  });
+
+  it("returns null for commands without hasArg when followed by space", () => {
+    const result = completeSlash("/tools ", 7, CTX);
+    expect(result).toBeNull();
+  });
+
+  it("returns guardrail arguments for /guardrail e", () => {
+    const result = completeSlash("/guardrail e", 12, CTX);
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("argument");
+    expect(result!.command?.id).toBe("guardrail");
+    expect(result!.items.map((i) => i.label)).toContain("Effect guard");
+  });
+
+  it("returns guardrail arguments for /guardrail on e (S2)", () => {
+    const result = completeSlash("/guardrail on e", 15, CTX);
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("argument");
+    expect(result!.command?.id).toBe("guardrail");
+  });
+
+  it("returns guardrail arguments for /guardrail off e (S2)", () => {
+    const result = completeSlash("/guardrail off e", 16, CTX);
+    expect(result).not.toBeNull();
+    expect(result!.stage).toBe("argument");
+    expect(result!.command?.id).toBe("guardrail");
+  });
+});
+
+describe("isSlashAtLineStart", () => {
+  it("true for / at start of text", () => {
+    expect(isSlashAtLineStart("/mode", 1)).toBe(true);
+  });
+
+  it("true for / at start of second line", () => {
+    expect(isSlashAtLineStart("hello\n/mode", 7)).toBe(true);
+  });
+
+  it("false for mid-line /", () => {
+    expect(isSlashAtLineStart("hello /mode", 7)).toBe(false);
+  });
+});
+
+// ── unit tests: filterSlashCommands (backward compat) ──────────────
 
 describe("filterSlashCommands", () => {
   it("returns all commands for empty query", () => {
@@ -137,6 +272,22 @@ describe("filterSlashCommands", () => {
 
   it("returns empty for no match", () => {
     expect(filterSlashCommands("zzz")).toHaveLength(0);
+  });
+});
+
+// ── verb id well-formedness ─────────────────────────────────────────
+
+describe("slash command verb ids", () => {
+  it("every THREAD_SLASH_COMMANDS entry has a non-empty verbId starting with thread.", () => {
+    for (const cmd of THREAD_SLASH_COMMANDS) {
+      expect(cmd.verbId).toBeTruthy();
+      expect(cmd.verbId.startsWith("thread."), `/${cmd.id} verbId should start with thread., got ${cmd.verbId}`).toBe(true);
+    }
+  });
+
+  it("all verb ids are unique", () => {
+    const ids = THREAD_SLASH_COMMANDS.map((c) => c.verbId);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
 
@@ -381,4 +532,39 @@ describe("slash command palette via composer", () => {
     fireEvent.keyDown(input, { key: "Enter" });
     expect(props.onNewThread).toHaveBeenCalled();
   });
+
+  it("mid-line / does NOT open slash palette", () => {
+    renderComposer();
+    const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: "hello /mode" } });
+    expect(screen.queryByTestId("slash-palette")).not.toBeInTheDocument();
+  });
+
+  it("Esc closes slash palette", () => {
+    renderComposer();
+    const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: "/" } });
+    expect(screen.getByTestId("slash-palette")).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(screen.queryByTestId("slash-palette")).not.toBeInTheDocument();
+  });
+
+  it("/tools shows system row about palette", () => {
+    renderComposer({ currentMode: { id: "m1", name: "Chase" } });
+    const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: "/tools" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(screen.getByTestId("thread-system-row")).toBeInTheDocument();
+    expect(screen.getByTestId("thread-system-row").textContent).toContain("Chase");
+  });
+
+  it("/compact fires the compact API and shows system row", () => {
+    renderComposer();
+    const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: "/compact" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(screen.getByTestId("thread-system-row")).toBeInTheDocument();
+    expect(screen.getByTestId("thread-system-row").textContent).toContain("Compacting");
+  });
+
 });

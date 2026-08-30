@@ -25,7 +25,9 @@ from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..kernel.inference_stream import (
     Delta,
     StreamCadence,
+    emit_thread_compacted,
     emit_thread_delta,
+    emit_thread_guardrail,
     emit_thread_status_line,
     emit_thread_tool_pending,
     emit_thread_tool_result,
@@ -53,6 +55,24 @@ _CHAT_PASS_CAP = 10
 
 # Per-tool execution deadline in seconds (HS-152-01 M5).
 _TOOL_DEADLINE_S = 30.0
+
+# HS-153-03: guardrail admission timeout in seconds.
+_GUARDRAIL_TIMEOUT_S = 10.0
+
+
+def _guardrail_matches(tool_name: str, trigger_tools: list[str]) -> bool:
+    """Check if a tool name matches any trigger pattern.
+
+    Patterns can be exact names or prefix patterns like ``people.*``.
+    """
+    for pattern in trigger_tools:
+        if pattern.endswith(".*"):
+            prefix = pattern[:-2]
+            if tool_name.startswith(prefix + ".") or tool_name == prefix:
+                return True
+        elif tool_name == pattern:
+            return True
+    return False
 
 
 class _ToolExecutorAggregator:
@@ -117,6 +137,23 @@ class ThreadService:
     def _threads(self) -> ThreadRepository:
         return self._db.threads
 
+    def _palette_for(self, thread_id: str) -> frozenset[str] | None:
+        """Resolve the tool palette for a thread at admission time.
+
+        Returns None when no mode is bound (caller uses CHAT_PALETTE).
+        Returns the mode's allow-list intersected with TOOL_NAMES when bound.
+        Draft (empty allow-list) returns an empty frozenset -- the caller
+        must omit the ``tools`` key entirely so the pass loop runs one
+        pass (no tool schemas).
+
+        HS-153-01: ONE helper used by both ``start_turn`` (initial
+        payload) and ``_run_streaming_turn`` (per-pass payload).
+        A mid-turn PATCH does not change the in-flight palette -- the
+        palette is resolved once at admission for the turn.
+        """
+        from .thread_modes import palette_for
+        return palette_for(self._db, thread_id)
+
     # ── Thread CRUD ─────────────────────────────────────────────────
 
     def create(
@@ -148,15 +185,30 @@ class ThreadService:
             raise ServiceError("thread_not_found", f"Thread {thread_id} not found", context={"status": 404})
         result = self._thread_dict(thread)
         path = self._threads.list_path(thread_id)
-        result["messages"] = [self._message_dict(m) for m in path]
+        # HS-153-04: filter out the draft message from the transcript.
+        visible_path = [m for m in path if not self._threads.is_draft_message(m.id)]
+        result["messages"] = [self._message_dict(m) for m in visible_path]
         # Build siblings map: message_id -> (n, m).
         siblings_map: dict[str, list[int]] = {}
-        for m in path:
+        for m in visible_path:
             n, total = self._threads.siblings(m.id)
             if total > 1:
                 siblings_map[m.id] = [n, total]
         result["siblings"] = siblings_map
         result["refs"] = [self._ref_dict(r) for r in self._threads.get_refs(thread_id)]
+        # HS-153-04: expose draft annotations for the composer chips.
+        draft_parts = self._threads.draft_parts(thread_id)
+        result["draft_annotations"] = [
+            {
+                "id": p.id,
+                "kind": p.kind,
+                "text": p.text,
+                "ordinal": p.ordinal,
+                "sensitive": p.sensitive,
+                **({"meta_json": json.loads(p.meta_json)} if p.meta_json else {}),
+            }
+            for p in draft_parts
+        ]
         return result
 
     def patch(
@@ -165,8 +217,30 @@ class ThreadService:
         *,
         title: Optional[str] = None,
         profile_override: Optional[str] = None,
+        recipe_id: Optional[str] = None,
     ) -> dict[str, Any]:
-        thread = self._threads.patch(thread_id, title=title, profile_override=profile_override)
+        # HS-153-01: validate recipe_id -- empty string unbinds; non-empty
+        # must reference a kind='mode' recipe (400 otherwise).
+        if recipe_id is not None and recipe_id != "":
+            recipe = self._db.recipes.get(recipe_id)
+            if recipe is None:
+                raise ValidationError(
+                    f"Unknown recipe: {recipe_id}",
+                    code="recipe_not_found",
+                    context={"status": 400},
+                )
+            if recipe.kind != "mode":
+                raise ValidationError(
+                    f"Recipe {recipe_id} is not a mode (kind={recipe.kind!r})",
+                    code="recipe_not_mode",
+                    context={"status": 400},
+                )
+        thread = self._threads.patch(
+            thread_id,
+            title=title,
+            profile_override=profile_override,
+            recipe_id=recipe_id,
+        )
         if thread is None:
             raise ServiceError("thread_not_found", f"Thread {thread_id} not found", context={"status": 404})
         return self._thread_dict(thread)
@@ -284,13 +358,25 @@ class ThreadService:
                         "sensitive": False,
                     })
 
-        # -- Persist user message --
-        user_msg = self._threads.append_message(
-            thread_id,
-            role="user",
-            parent_id=parent_id,
-        )
-        self._threads.append_part(user_msg.id, kind="text", text=text)
+        # -- Persist user message (HS-153-04: promote draft if present) --
+        draft_msg = self._threads.draft_message_for(thread_id)
+        if draft_msg is not None:
+            # Promote the draft message: set draft=0 on existing annotation
+            # parts and append the typed text AFTER the annotations.
+            # The annotation parts already carry their prefix text (set by
+            # the POST route); _assemble_payload concatenates all text +
+            # annotation parts, so we only need to append the typed text
+            # as a plain text part — no separate prefix construction.
+            self._threads.promote_drafts(draft_msg.id)
+            self._threads.append_part(draft_msg.id, kind="text", text=text)
+            user_msg = draft_msg
+        else:
+            user_msg = self._threads.append_message(
+                thread_id,
+                role="user",
+                parent_id=parent_id,
+            )
+            self._threads.append_part(user_msg.id, kind="text", text=text)
 
         # -- Freeze refs with sensitive marking --
         if frozen_ref_rows:
@@ -323,14 +409,17 @@ class ThreadService:
         # Assemble the payload (assembler law).
         payload = self._assemble_payload(thread_id, user_msg.id, thread)
 
-        # HS-152-03: the tool palette rides INSIDE the admitted payload.
-        # ``execute_stream`` replays the payload frozen at admission, so a
-        # palette injected only in the pass loop never reaches pass 1 on
-        # the real path (the fake-adoption loop tests could not see this).
+        # HS-152-03 + HS-153-01: the tool palette rides INSIDE the admitted
+        # payload.  Resolved once at admission so a mid-turn PATCH does not
+        # change the in-flight palette (the "next turn" rule).
+        # Draft (empty palette) = no ``tools`` key → one pass, no tools.
         if self._tool_dispatch_fn is not None:
             from .thread_tools import tool_schemas_for, CHAT_PALETTE
 
-            payload["tools"] = tool_schemas_for(CHAT_PALETTE)
+            palette = self._palette_for(thread_id)
+            effective_palette = palette if palette is not None else CHAT_PALETTE
+            if effective_palette:
+                payload["tools"] = tool_schemas_for(effective_palette)
 
         # HS-152-03: the thread's model pick is honored at admission.
         profile_override = str(getattr(thread, "profile_override", "") or "")
@@ -417,6 +506,302 @@ class ThreadService:
             "assistant_message_id": assistant_msg.id,
         }
 
+    # ── Compaction (HS-153-05) ──────────────────────────────────────
+
+    async def compact_thread(
+        self, principal: Principal, thread_id: str,
+    ) -> dict[str, Any]:
+        """Compact a thread: summarize the prefix via chat.compact, create a cut row.
+
+        The cut row is a ``system`` message with
+        ``stats_json = {"compaction": true, "cut_at": <msg_id>, "count": N}``
+        and a text part carrying the summary.  The assembler includes only that
+        row and what follows it.
+        """
+        thread = self._threads.get(thread_id)
+        if not thread:
+            raise ValidationError(
+                "Thread not found", code="thread_not_found",
+            )
+
+        path = self._threads.list_path(thread_id)
+
+        content_messages = [m for m in path if m.role in ("user", "assistant")]
+        if len(content_messages) < 2:
+            raise ValidationError(
+                "Not enough messages to compact", code="compact_too_short",
+            )
+
+        any_sensitive = False
+        sensitive_texts: list[str] = []
+        messages_for_compact: list[dict[str, str]] = []
+        for msg in content_messages:
+            parts = self._threads.get_parts(msg.id)
+            text_parts: list[str] = []
+            for part in parts:
+                if part.kind in ("text", "annotation") and part.text:
+                    text_parts.append(part.text)
+                    if part.sensitive:
+                        any_sensitive = True
+                        sensitive_texts.append(part.text)
+            content = "\n".join(text_parts)
+            if content:
+                messages_for_compact.append({"role": msg.role, "content": content})
+
+        cut_at = content_messages[-1].id
+        count = len(content_messages)
+
+        from .thread_practice import run_compact
+
+        # HS-153 close counsel M1: pass sensitive_texts to run_compact so it
+        # can resolve the chat.compact capability's OWN boundary and apply
+        # M1 redaction on that boundary, not the thread's chat.turn egress.
+        compact_messages = list(messages_for_compact)
+
+        try:
+            result = await asyncio.to_thread(
+                run_compact, self._broker, principal, thread_id,
+                compact_messages,
+                sensitive_texts=sensitive_texts,
+            )
+            summary = result.get("summary", "")
+        except Exception as exc:
+            fail_msg = self._threads.append_message(
+                thread_id, role="system",
+                parent_id=path[-1].id if path else None,
+            )
+            self._threads.append_part(
+                fail_msg.id, kind="text",
+                text=f"Compaction failed: {exc}",
+            )
+            self._threads.complete_message(
+                fail_msg.id,
+                stats_json=json.dumps({"compact_failed": True}),
+            )
+            return {
+                "status": "failed",
+                "error": str(exc),
+                "message_id": fail_msg.id,
+            }
+
+        if not summary:
+            fail_msg = self._threads.append_message(
+                thread_id, role="system",
+                parent_id=path[-1].id if path else None,
+            )
+            self._threads.append_part(
+                fail_msg.id, kind="text",
+                text="Compaction returned empty summary",
+            )
+            self._threads.complete_message(
+                fail_msg.id,
+                stats_json=json.dumps({"compact_failed": True}),
+            )
+            return {
+                "status": "failed",
+                "error": "empty_summary",
+                "message_id": fail_msg.id,
+            }
+
+        compact_msg = self._threads.append_message(
+            thread_id, role="system",
+            parent_id=path[-1].id if path else None,
+        )
+        self._threads.append_part(
+            compact_msg.id, kind="text",
+            text=summary,
+            sensitive=any_sensitive,
+        )
+        self._threads.complete_message(
+            compact_msg.id,
+            stats_json=json.dumps({
+                "compaction": True,
+                "cut_at": cut_at,
+                "count": count,
+            }),
+        )
+
+        emit_thread_compacted(
+            self._broadcast,
+            thread_id=thread_id,
+            message_id=compact_msg.id,
+            cut_at=cut_at,
+            count=count,
+        )
+
+        return {
+            "status": "ok",
+            "message_id": compact_msg.id,
+            "cut_at": cut_at,
+            "count": count,
+            "summary": summary,
+        }
+
+    # ── Todo (HS-153-05) ────────────────────────────────────────────
+
+    async def todo_from_thread(
+        self,
+        principal: Principal,
+        thread_id: str,
+        text: str,
+    ) -> dict[str, Any]:
+        """Execute ``/todo`` through the same ThreadToolExecutor path a model
+        call takes for ``door.add_item``.  Receipt row + result part are
+        persisted exactly like a turn's tool call.
+        """
+        thread = self._threads.get(thread_id)
+        if not thread:
+            raise ValidationError("Thread not found", code="thread_not_found")
+        if not text or not text.strip():
+            raise ValidationError("Todo text must not be empty", code="todo_empty")
+
+        path = self._threads.list_path(thread_id)
+
+        latest_content = None
+        for msg in reversed(path):
+            if msg.role in ("user", "assistant"):
+                latest_content = msg
+                break
+        source_ref = (
+            f"thread:{latest_content.id}" if latest_content
+            else f"thread:{thread_id}"
+        )
+
+        if self._tool_dispatch_fn is None:
+            raise ValidationError(
+                "Tool dispatch not configured", code="no_tool_dispatch",
+            )
+
+        todo_msg = self._threads.append_message(
+            thread_id, role="system",
+            parent_id=path[-1].id if path else None,
+        )
+
+        from .thread_tools import ThreadToolExecutor
+
+        executor = ThreadToolExecutor(
+            self._db,
+            dispatch_fn=self._tool_dispatch_fn,
+            principal=principal,
+            control_mode_fn=self._control_mode_fn,
+            broker=self._broker,
+        )
+
+        call_dict: dict[str, Any] = {
+            "id": f"todo_{uuid.uuid4().hex[:12]}",
+            "name": "door.add_item",
+            "arguments": {
+                "task": text.strip(),
+                "source_type": "thread",
+                "source_ref": source_ref,
+            },
+        }
+        operation_id = f"todo_{thread_id}_{uuid.uuid4().hex[:8]}"
+        handle = executor.admit(operation_id, thread_id, call_dict)
+
+        if handle.state == "awaiting_decision":
+            emit_thread_tool_pending(
+                self._broadcast,
+                thread_id=thread_id,
+                message_id=todo_msg.id,
+                call_id=handle.call_id,
+                name="door.add_item",
+                args_head=f"THREAD_TOOL door.add_item: {text.strip()[:80]}",
+                tool_class=handle.tool_class,
+                decision_required=True,
+            )
+
+            ev = threading.Event()
+
+            def _on_decided(call_id: str) -> None:
+                if call_id == handle.call_id:
+                    ev.set()
+
+            executor.on_decided = _on_decided
+            ThreadService._tool_executor.register(todo_msg.id, executor)
+
+            try:
+                ev.wait(timeout=_TOOL_DEADLINE_S)
+                if not ev.is_set():
+                    self._threads.append_part(
+                        todo_msg.id, kind="text",
+                        text="Todo: decision timeout",
+                    )
+                    self._threads.complete_message(
+                        todo_msg.id,
+                        stats_json=json.dumps({"todo_timeout": True}),
+                    )
+                    return {"status": "timeout"}
+
+                if handle.state == "denied":
+                    self._threads.append_part(
+                        todo_msg.id, kind="text",
+                        text="Todo: denied by owner",
+                    )
+                    self._threads.complete_message(
+                        todo_msg.id,
+                        stats_json=json.dumps({"todo_denied": True}),
+                    )
+                    return {"status": "denied"}
+            finally:
+                ThreadService._tool_executor.unregister(todo_msg.id)
+
+        result = executor.execute(handle)
+
+        self._threads.append_part(
+            todo_msg.id, kind="tool_call",
+            tool_call_id=handle.call_id,
+            meta_json=json.dumps({
+                "id": handle.call_id,
+                "name": "door.add_item",
+                "arguments": json.dumps(call_dict["arguments"]),
+                "class": handle.tool_class,
+                "state": handle.state,
+            }, separators=(",", ":")),
+        )
+
+        result_text = (
+            json.dumps(result.payload, default=str)
+            if result.payload else "{}"
+        )
+        tool_msg = self._threads.append_message(
+            thread_id, role="tool", parent_id=todo_msg.id,
+        )
+        part_meta = {
+            "name": "door.add_item",
+            "kind": result.kind,
+            "receipt_id": result.receipt_id,
+        }
+        self._threads.append_part(
+            tool_msg.id, kind="text", text=result_text,
+            tool_call_id=handle.call_id,
+            meta_json=json.dumps(part_meta, separators=(",", ":")),
+        )
+        self._threads.complete_message(todo_msg.id)
+
+        is_error = result.kind in (
+            "tool_execution_failed", "tool_denied",
+            "tool_timeout", "cancelled", "error",
+        )
+        emit_thread_tool_result(
+            self._broadcast,
+            thread_id=thread_id,
+            message_id=todo_msg.id,
+            call_id=handle.call_id,
+            name="door.add_item",
+            receipt_id=result.receipt_id,
+            outcome="failed" if is_error else "succeeded",
+            kind=result.kind,
+            summary=result_text[:200],
+            sensitive=result.sensitive,
+        )
+
+        return {
+            "status": "ok" if not is_error else "failed",
+            "result": result.payload,
+            "receipt_id": result.receipt_id,
+        }
+
     def _run_streaming_turn(
         self,
         *,
@@ -447,10 +832,13 @@ class ThreadService:
         answer and the turn is done.
         """
         # -- Compose the per-turn tool executor if the dispatch seam is wired --
+        # HS-153-01: the palette is resolved from the payload, which was
+        # frozen at admission (start_turn).  Draft = no tools key = no
+        # executor (one pass, text only).
         tool_executor: Any = None
         tool_schemas: list[dict[str, Any]] = []
-        if self._tool_dispatch_fn is not None:
-            from .thread_tools import ThreadToolExecutor, tool_schemas_for, CHAT_PALETTE
+        if self._tool_dispatch_fn is not None and "tools" in payload:
+            from .thread_tools import ThreadToolExecutor
 
             tool_executor = ThreadToolExecutor(
                 self._db,
@@ -459,7 +847,7 @@ class ThreadService:
                 control_mode_fn=self._control_mode_fn,
                 broker=self._broker,
             )
-            tool_schemas = tool_schemas_for(CHAT_PALETTE)
+            tool_schemas = list(payload["tools"])
             ThreadService._tool_executor.register(assistant_msg_id, tool_executor)
 
         max_passes = _CHAT_PASS_CAP if tool_executor is not None else 1
@@ -633,6 +1021,114 @@ class ThreadService:
                     # Safety: tool_calls received but no executor.
                     break
 
+                # -- HS-153-03: Guardrail admission (ONCE per pass) --
+                # Run before the per-call admission loop.  The guardrail
+                # evaluates all pending calls in one batch.
+                guardrail_violations: dict[str, list[str]] = {}  # tool_name -> violations
+                guardrail_result: dict[str, Any] | None = None
+                guardrail_ran = False
+                try:
+                    from .thread_modes import guardrails_for_thread as _gft
+                    active_guardrails = _gft(self._db, thread_id)
+                except Exception:
+                    active_guardrails = []
+
+                if active_guardrails and tool_calls_this_pass:
+                    # Check if any pending call matches a guardrail's trigger_tools
+                    pending_names = [str(tc.get("name", "")) for tc in tool_calls_this_pass]
+                    matched_guardrails = []
+                    for g in active_guardrails:
+                        triggers = g.get("trigger_tools", [])
+                        for pname in pending_names:
+                            if _guardrail_matches(pname, triggers):
+                                matched_guardrails.append(g)
+                                break
+
+                    if matched_guardrails:
+                        guardrail_ran = True
+                        try:
+                            guardrail_result = self._run_guardrail_admission(
+                                principal=principal,
+                                thread_id=thread_id,
+                                assistant_msg_id=assistant_msg_id,
+                                payload=payload,
+                                tool_calls=tool_calls_this_pass,
+                                guardrails=matched_guardrails,
+                                sensitive_texts=sensitive_texts,
+                                egress_scope=egress_scope,
+                                timeout_s=_GUARDRAIL_TIMEOUT_S,
+                            )
+                            # Map violations to tool names (S1 fix: per-call).
+                            # If the violation text names a specific pending
+                            # tool, only that tool carries the violation.
+                            # Fall back to trigger-pattern matching only when
+                            # NO pending tool is named in the violation text.
+                            if guardrail_result:
+                                all_triggers = [
+                                    t for g in matched_guardrails
+                                    for t in g.get("trigger_tools", [])
+                                ]
+                                for v in guardrail_result.get("violations", []):
+                                    v_str = str(v)
+                                    named = [
+                                        pname for pname in pending_names
+                                        if pname in v_str
+                                    ]
+                                    if named:
+                                        for pname in named:
+                                            guardrail_violations.setdefault(pname, []).append(v_str)
+                                    else:
+                                        # Generic violation: apply to all
+                                        # trigger-matching pending calls.
+                                        for pname in pending_names:
+                                            if _guardrail_matches(pname, all_triggers):
+                                                guardrail_violations.setdefault(pname, []).append(v_str)
+                                # Emit thread_guardrail frame
+                                emit_thread_guardrail(
+                                    self._broadcast,
+                                    thread_id=thread_id,
+                                    message_id=assistant_msg_id,
+                                    violations=guardrail_result.get("violations", []),
+                                    warnings=guardrail_result.get("warnings", []),
+                                    guardrails=[g["id"] for g in matched_guardrails],
+                                    raw=guardrail_result,
+                                )
+                                # Persist guardrail part on the assistant message
+                                self._threads.append_part(
+                                    assistant_msg_id,
+                                    kind="guardrail",
+                                    meta_json=json.dumps({
+                                        "violations": guardrail_result.get("violations", []),
+                                        "warnings": guardrail_result.get("warnings", []),
+                                        "guardrails": [g["id"] for g in matched_guardrails],
+                                    }, separators=(",", ":")),
+                                )
+                        except Exception as guardrail_exc:
+                            # Guardrail failure = warning row, never a block
+                            emit_thread_status_line(
+                                self._broadcast,
+                                thread_id=thread_id,
+                                text="Guardrail evaluation failed",
+                            )
+                            self._threads.append_part(
+                                assistant_msg_id,
+                                kind="guardrail_failed",
+                                meta_json=json.dumps({
+                                    "error": str(guardrail_exc),
+                                    "guardrails": [g["id"] for g in matched_guardrails],
+                                }, separators=(",", ":")),
+                            )
+                            # Emit a thread_guardrail frame with empty results
+                            emit_thread_guardrail(
+                                self._broadcast,
+                                thread_id=thread_id,
+                                message_id=assistant_msg_id,
+                                violations=[],
+                                warnings=[],
+                                guardrails=[g["id"] for g in matched_guardrails],
+                                raw={"error": str(guardrail_exc)},
+                            )
+
                 assistant_tc_openai: list[dict[str, Any]] = []
                 new_tool_msgs: list[dict[str, Any]] = []
 
@@ -687,6 +1183,16 @@ class ThreadService:
                             separators=(",", ":")),
                     )
 
+                    # -- HS-153-03: compute default_decision from guardrail --
+                    tc_default_decision: str | None = None
+                    if guardrail_ran and guardrail_result is not None:
+                        violated = name in guardrail_violations
+                        control_mode = self._control_mode_fn()
+                        if violated and control_mode != "yolo":
+                            tc_default_decision = "deny"
+                        else:
+                            tc_default_decision = "allow"
+
                     # -- Emit thread_tool_pending --
                     emit_thread_tool_pending(
                         self._broadcast,
@@ -698,6 +1204,7 @@ class ThreadService:
                         tool_class=handle.tool_class,
                         decision_required=(handle.state == "awaiting_decision"),
                         elicitation=getattr(handle, "elicitation", None),
+                        default_decision=tc_default_decision,
                     )
 
                     # -- Resolve: admitted -> execute; held -> wait then execute or deny --
@@ -1229,6 +1736,88 @@ class ThreadService:
         result.pop("_sensitive_texts", None)
         return result
 
+    # ── HS-153-03: Guardrail admission ──────────────────────────────
+
+    def _run_guardrail_admission(
+        self,
+        *,
+        principal: Principal,
+        thread_id: str,
+        assistant_msg_id: str,
+        payload: dict[str, Any],
+        tool_calls: list[dict[str, Any]],
+        guardrails: list[dict[str, Any]],
+        sensitive_texts: list[str],
+        egress_scope: str,
+        timeout_s: float = _GUARDRAIL_TIMEOUT_S,
+    ) -> dict[str, Any]:
+        """Run the guardrail admission ONCE for all pending calls.
+
+        Composes the payload (last N messages + pending calls + guardrail
+        instructions), applies the M1 redactor for cloud routes, and
+        invokes ``thread_practice.run_guardrail`` with a timeout.
+
+        Returns ``{violations: [...], warnings: [...]}``.
+        Raises on timeout or engine error (caller catches and emits
+        ``guardrail_failed``).
+        """
+        from .thread_practice import run_guardrail
+
+        # Build the guardrail payload: last N message contents
+        messages = list(payload.get("messages", []))
+        # Use the smallest N from the guardrails
+        n_messages = min(g.get("n_messages", 6) for g in guardrails)
+        recent_messages = messages[-n_messages:] if len(messages) > n_messages else messages
+
+        # Pending calls: names + argument heads
+        pending_calls = [
+            {"name": str(tc.get("name", "")), "arguments_head": str(tc.get("arguments", "{}"))[:200]}
+            for tc in tool_calls
+        ]
+
+        # Compose guardrail instruction from all matched guardrails
+        combined_instruction = "\n\n".join(
+            f"[{g['title']}]: {g['instruction']}" for g in guardrails
+        )
+
+        guardrail_config = {
+            "instruction": combined_instruction,
+            "trigger_tools": list({
+                t for g in guardrails for t in g.get("trigger_tools", [])
+            }),
+        }
+
+        # HS-153 close counsel M1: pass sensitive_texts through to
+        # run_guardrail, which resolves the chat.guardrail capability's OWN
+        # boundary and applies M1 redaction on that boundary.
+        guardrail_messages = list(recent_messages)
+
+        # Run with timeout via asyncio.to_thread + wait_for
+        import asyncio
+
+        async def _run_with_timeout() -> dict[str, Any]:
+            result = await asyncio.wait_for(
+                asyncio.to_thread(
+                    run_guardrail,
+                    self._broker,
+                    principal,
+                    thread_id,
+                    guardrail_messages,
+                    pending_calls,
+                    guardrail_config,
+                    sensitive_texts=sensitive_texts,
+                ),
+                timeout=timeout_s,
+            )
+            return result
+
+        # We're already in a background thread; create a new event loop
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(_run_with_timeout())
+        finally:
+            loop.close()
+
     # ── Assembler (counsel M1) ──────────────────────────────────────
 
     def _assemble_payload(
@@ -1255,6 +1844,21 @@ class ThreadService:
 
         # Build messages from the leaf path.
         path = self._threads.list_path(thread_id)
+
+        # HS-153-05: compaction cut — include only messages from the latest
+        # compaction row onward (the summary + what follows).
+        compact_cut_idx = None
+        for i, msg in enumerate(path):
+            if msg.role == "system" and msg.stats_json:
+                try:
+                    stats = json.loads(msg.stats_json)
+                    if stats.get("compaction"):
+                        compact_cut_idx = i
+                except (json.JSONDecodeError, TypeError):
+                    pass
+        if compact_cut_idx is not None:
+            path = path[compact_cut_idx:]
+
         messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
 
         # Gather frozen refs for context.
@@ -1292,6 +1896,9 @@ class ThreadService:
 
         sensitive_texts: list[str] = []
         for msg in path:
+            # HS-153-04: skip the draft message from the payload.
+            if self._threads.is_draft_message(msg.id):
+                continue
             parts = self._threads.get_parts(msg.id)
             text_parts = []
             for part in parts:
@@ -1352,6 +1959,13 @@ class ThreadService:
     # ── Helpers ──────────────────────────────────────────────────────
 
     def _thread_dict(self, thread: Any) -> dict[str, Any]:
+        # HS-153-01: resolve the mode for GET responses.
+        from .thread_modes import mode_for_thread
+        mode = mode_for_thread(self._db, thread.id)
+        mode_dict = (
+            {"id": mode.id, "name": mode.name, "avatar": mode.avatar}
+            if mode is not None else None
+        )
         return {
             "id": thread.id,
             "title": thread.title,
@@ -1363,6 +1977,7 @@ class ThreadService:
             "created_at": thread.created_at,
             "updated_at": thread.updated_at,
             "last_turn_at": thread.last_turn_at,
+            "mode": mode_dict,
         }
 
     def _message_dict(self, msg: Any) -> dict[str, Any]:
@@ -1397,6 +2012,7 @@ class ThreadService:
                     "text": p.text,
                     "ordinal": p.ordinal,
                     "sensitive": p.sensitive,
+                    "draft": p.draft,
                     **({"meta_json": json.loads(p.meta_json)}
                        if p.meta_json else {}),
                     **({"tool_call_id": p.tool_call_id}

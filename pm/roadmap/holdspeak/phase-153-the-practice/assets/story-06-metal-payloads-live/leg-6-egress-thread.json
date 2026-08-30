@@ -1,0 +1,138 @@
+{
+  "id": "th_71b6e4a48b4b",
+  "title": "HS-153-06 Leg 6 egress",
+  "recipe_id": "hs-seed-mode-desk",
+  "profile_override": "hs153-cloud",
+  "directory_id": "",
+  "token_in": 0,
+  "token_out": 0,
+  "created_at": 1788120382.658818,
+  "updated_at": 1788120386.467106,
+  "last_turn_at": 1788120386.467106,
+  "mode": {
+    "id": "hs-seed-mode-desk",
+    "name": "Desk",
+    "avatar": "#6B7280"
+  },
+  "messages": [
+    {
+      "id": "tm_5fd9ee9067cb",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_152abb3b17a5",
+          "kind": "text",
+          "text": "Call the tool people.readiness with no arguments. Just call the tool, nothing else.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788120382.972382,
+      "updated_at": 1788120382.976744,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_fa559e657bcf",
+      "role": "assistant",
+      "parent_id": "tm_5fd9ee9067cb",
+      "streaming": false,
+      "receipt_id": "ire_e88411c8a815ae8df868ac6e1f2f99d6",
+      "egress_scope": "local",
+      "model_id": "hs153-cloud",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0
+      },
+      "parts": [
+        {
+          "id": "tp_1a746d1a6515",
+          "kind": "guardrail",
+          "text": null,
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "violations": [
+              "The pending tool call 'people.readiness' requests people-sourced data which would be transmitted to a cloud egress boundary in violation of the egress guard rule."
+            ],
+            "warnings": [],
+            "guardrails": [
+              "hs-seed-guardrail-egress-guard"
+            ]
+          }
+        },
+        {
+          "id": "tp_5c9f79c8a127",
+          "kind": "tool_call",
+          "text": null,
+          "ordinal": 1,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "id": "vTEKjVNcssZYpw6r0KSuro4pxP6OCEAe",
+            "name": "people.readiness",
+            "arguments": "{}",
+            "class": "evidence_read",
+            "state": "admitted"
+          },
+          "tool_call_id": "vTEKjVNcssZYpw6r0KSuro4pxP6OCEAe"
+        },
+        {
+          "id": "tp_cf55e9532ac9",
+          "kind": "text",
+          "text": "The people.readiness tool has been called and returned the following status:\n\n- **Readiness**: ready\n- **State**: ready  \n- **Store**: encrypted\n- **Sync**: local_only\n- **Capture**: notes_only\n- **Access**: write\n- **Disclosure**: shared_intent_only\n\nThis indicates that the People MCP capability is fully operational with encrypted storage, local-only synchronization, and read/write access (though disclosure is limited to shared-intent material only).",
+          "ordinal": 2,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788120383.015551,
+      "updated_at": 1788120389.539655,
+      "completed_at": 1788120389.539655,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_2dda8090354f",
+      "role": "tool",
+      "parent_id": "tm_fa559e657bcf",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_6de7ec4781a5",
+          "kind": "text",
+          "text": "{\"readiness\": \"ready\", \"state\": \"ready\", \"store\": \"encrypted\", \"sync\": \"local_only\", \"capture\": \"notes_only\", \"access\": \"write\", \"disclosure\": \"shared_intent_only\"}",
+          "ordinal": 0,
+          "sensitive": true,
+          "draft": false,
+          "meta_json": {
+            "kind": "person",
+            "receipt_id": "tr-312bf5506817"
+          },
+          "tool_call_id": "vTEKjVNcssZYpw6r0KSuro4pxP6OCEAe"
+        }
+      ],
+      "created_at": 1788120386.467106,
+      "updated_at": 1788120386.4703841,
+      "completed_at": null,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

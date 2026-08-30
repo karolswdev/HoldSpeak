@@ -1,0 +1,22 @@
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You have read access to the full desk. Observe and inform, never act."
+    },
+    {
+      "role": "user",
+      "content": "Check the People store readiness."
+    },
+    {
+      "role": "assistant",
+      "content": "People data checked."
+    },
+    {
+      "role": "tool",
+      "content": "[people content withheld]"
+    }
+  ],
+  "temperature": null,
+  "max_tokens": null
+}

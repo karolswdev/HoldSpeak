@@ -1,0 +1,13 @@
+{
+  "type": "thread_tool_pending",
+  "data": {
+    "thread_id": "th_71b6e4a48b4b",
+    "message_id": "tm_fa559e657bcf",
+    "call_id": "vTEKjVNcssZYpw6r0KSuro4pxP6OCEAe",
+    "name": "people.readiness",
+    "args_head": "{}",
+    "class": "evidence_read",
+    "decision_required": false,
+    "default_decision": "deny"
+  }
+}
