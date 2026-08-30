@@ -17,6 +17,22 @@ branch `worktree-warpdrv-chat-port`, **PR #507**.
 
 ## 1. Where it stands
 
+**MERGE VEHICLE CHANGED (2026-08-30 night, owner ruling):** PR **#511**
+(`feat/deskos-platform-revolution`, the DeskOS platform reset) has
+absorbed this arc and **supersedes #507 as the merge vehicle**. Verified
+mechanically, not from the PR body: `e941d003` (the Phase 153 close) is
+a literal ancestor of #511's head (`07a6e62b`); the entire desk-chat
+surface is byte-identical there except benign platform-reset deltas
+(compositor store swap, composer import cleanup, engine.py ADDS #512's
+response_format compat — the `.43` `grammar:""` override survives); the
+153 scoped set ran green ON #511's HEAD (178 python + 77 vitest; their
+branch adds `@tanstack/react-query` — run `npm --prefix web install`
+first). **LAW: do not build the port further on
+`worktree-warpdrv-chat-port`. Charter Phase 154 on a branch off #511's
+head (or off main once #511 merges), and rebase/verify against the
+platform reset (compositor-owned windows, `useDesk.openSurfaceWindow`,
+TanStack Query on server resources).**
+
 - **Phase 151 The Thread (DC-01): COMPLETE 8/8**, merged with main
   (`1c9e4d02`), close counsel M5 fixed. Renumbered 150→151 because the
   sibling session shipped its own Phase 150 (Delegation+Monday, PR #508).
