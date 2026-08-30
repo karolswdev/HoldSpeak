@@ -16,6 +16,7 @@ import { openSurfaceOr } from "./shell";
 import { objectByRef } from "./world";
 import { DESK_TOOLS, KIND_GLYPH } from "./tools";
 import { applicationForAction } from "./applications";
+import { primitiveCan } from "../lib/primitives";
 import { usePalette, useShortcutSheet } from "./chromeState";
 import {
   closeFrontWindow,
@@ -68,34 +69,6 @@ export interface Verb {
 export function verbLabel(v: Verb, ctx: VerbContext): string {
   return typeof v.label === "function" ? v.label(ctx) : v.label;
 }
-
-const EDITABLE = new Set(["note", "kb", "recipe", "workflow"]);
-const DELETABLE = new Set([
-  "note",
-  "decision",
-  "kb",
-  "recipe",
-  "directory",
-  "chain",
-  "workflow",
-  "thread",
-]);
-const DUPLICABLE = new Set([
-  "note",
-  "decision",
-  "kb",
-  "recipe",
-  "workflow",
-  "workbench",
-]);
-const ASKABLE = new Set([
-  "note",
-  "kb",
-  "recipe",
-  "meeting",
-  "artifact",
-  "workflow",
-]);
 
 function selected(ctx: VerbContext) {
   if (!ctx.selectedRef) return null;
@@ -430,11 +403,11 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
-      return ASKABLE.has(o.kind) ? null : "Ask unavailable";
+      return primitiveCan(o.kind, "ask") ? null : "Ask unavailable";
     },
     run: (ctx) => {
       const o = selected(ctx);
-      if (!o || !ASKABLE.has(o.kind)) return;
+      if (!o || !primitiveCan(o.kind, "ask")) return;
       const desk = useDesk.getState();
       desk.setSelected([`${o.kind}:${o.id}`]);
       desk.openAsk();
@@ -473,7 +446,7 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
-      return EDITABLE.has(o.kind) ? null : "Not editable";
+      return primitiveCan(o.kind, "edit") ? null : "Not editable";
     },
     run: (ctx) => {
       const o = selected(ctx);
@@ -490,7 +463,7 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
-      return o.kind === "directory" || EDITABLE.has(o.kind)
+      return primitiveCan(o.kind, "rename")
         ? null
         : "Not renameable";
     },
@@ -498,7 +471,7 @@ export const VERBS: Verb[] = [
       const o = selected(ctx);
       if (!o) return;
       if (o.kind === "directory") useDesk.getState().setRenamingZone(o.id);
-      else if (EDITABLE.has(o.kind)) useDesk.getState().openEditor(o.id, ctx.origin);
+      else if (primitiveCan(o.kind, "rename")) useDesk.getState().openEditor(o.id, ctx.origin);
     },
   },
   {
@@ -510,11 +483,11 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
-      return DUPLICABLE.has(o.kind) ? null : "Cannot duplicate";
+      return primitiveCan(o.kind, "duplicate") ? null : "Cannot duplicate";
     },
     run: (ctx) => {
       const o = selected(ctx);
-      if (!o || !DUPLICABLE.has(o.kind)) return;
+      if (!o || !primitiveCan(o.kind, "duplicate")) return;
       const overrides = duplicateOverrides(o);
       if (!overrides) return;
       void useDesk.getState().createPrimitive(
@@ -552,11 +525,11 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
-      return DELETABLE.has(o.kind) ? null : "Cannot delete";
+      return primitiveCan(o.kind, "delete") ? null : "Cannot delete";
     },
     run: (ctx) => {
       const o = selected(ctx);
-      if (!o || !DELETABLE.has(o.kind) || typeof window === "undefined") return;
+      if (!o || !primitiveCan(o.kind, "delete") || typeof window === "undefined") return;
       window.dispatchEvent(
         new CustomEvent(OBJECT_DELETE_REQUEST, { detail: { ref: ctx.selectedRef } }),
       );
