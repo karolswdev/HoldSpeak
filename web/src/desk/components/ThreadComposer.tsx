@@ -328,6 +328,8 @@ function SystemRow({ text }: SystemRowProps) {
 // ── composer ────────────────────────────────────────────────────────
 
 export interface ThreadComposerProps {
+  /** The thread id — needed by /compact and /todo verbs (HS-153-05). */
+  threadId: string;
   /** Send a turn with text + refs. */
   onSend: (text: string, refs: Array<{ ref_kind: string; ref_id: string }>) => void;
   /** Abort the running turn. */
@@ -355,6 +357,7 @@ export interface ThreadComposerProps {
 }
 
 export function ThreadComposer({
+  threadId,
   onSend,
   onStop,
   onKeep,
@@ -651,14 +654,43 @@ export function ThreadComposer({
           }
           break;
         case "todo":
-          // TODO(HS-153-05): wire to backend; for now show "not yet" in-flow
           setDraft("");
-          addSystemRow("Todo: not yet available (coming in HS-153-05)");
+          if (!arg) {
+            addSystemRow("Usage: /todo <text>");
+          } else {
+            void (async () => {
+              try {
+                const result = await apiFetch<{ status: string; error?: string }>(
+                  `/api/threads/${threadId}/todo`,
+                  { method: "POST", json: { text: arg } },
+                );
+                if (result.status === "ok") {
+                  addSystemRow(`Todo added: ${arg}`);
+                } else {
+                  addSystemRow(`Todo failed: ${result.error || "unknown"}`);
+                }
+              } catch (err) {
+                addSystemRow(`Todo failed: ${err instanceof Error ? err.message : "unknown error"}`);
+              }
+            })();
+          }
           break;
         case "compact":
-          // TODO(HS-153-05): wire to backend; for now show "not yet" in-flow
           setDraft("");
-          addSystemRow("Compact: not yet available (coming in HS-153-05)");
+          void (async () => {
+            try {
+              addSystemRow("Compacting thread...");
+              const result = await apiFetch<{ status: string; error?: string }>(
+                `/api/threads/${threadId}/compact`,
+                { method: "POST" },
+              );
+              if (result.status === "failed") {
+                addSystemRow(`Compact failed: ${result.error || "unknown error"}`);
+              }
+            } catch (err) {
+              addSystemRow(`Compact failed: ${err instanceof Error ? err.message : "unknown error"}`);
+            }
+          })();
           break;
         case "guardrail":
           setDraft("");
@@ -680,7 +712,7 @@ export function ThreadComposer({
           break;
       }
     },
-    [lastAssistantId, onKeep, onFork, onStop, onNewThread, onModeSelect, onToggleGuardrail, modes, prompts, guardrails, currentMode, addSystemRow],
+    [threadId, lastAssistantId, onKeep, onFork, onStop, onNewThread, onModeSelect, onToggleGuardrail, modes, prompts, guardrails, currentMode, addSystemRow],
   );
 
   const pickSlashItem = useCallback(
@@ -732,8 +764,19 @@ export function ThreadComposer({
 
   const handleSend = useCallback(async () => {
     if (!draft.trim() || sending) return;
-    setSending(true);
     const text = draft.trim();
+    // HS-153-05: intercept freeform-arg slash commands (e.g. /todo, /compact)
+    // that never enter the palette's argument stage because they have no completions.
+    const slashMatch = /^\/(\w+)(?:\s+(.*))?$/.exec(text);
+    if (slashMatch) {
+      const cmdName = slashMatch[1].toLowerCase();
+      const cmd = THREAD_SLASH_COMMANDS.find((c) => c.id === cmdName);
+      if (cmd) {
+        executeSlashCommand(cmdName, slashMatch[2]?.trim());
+        return;
+      }
+    }
+    setSending(true);
     const refs = chips.map((c) => ({
       ref_kind: c.ref.kind,
       ref_id: c.ref.id,
@@ -742,7 +785,7 @@ export function ThreadComposer({
     setChips([]);
     onSend(text, refs);
     setSending(false);
-  }, [draft, sending, chips, onSend]);
+  }, [draft, sending, chips, onSend, executeSlashCommand]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {

@@ -395,6 +395,37 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to add annotation")
 
+    # ── HS-153-05: compaction + todo ─────────────────────────────────
+
+    @router.post("/api/threads/{thread_id}/compact")
+    async def api_compact_thread(thread_id: str, request: Request) -> Any:
+        try:
+            result = await _service().compact_thread(_principal(request), thread_id)
+            return result
+        except (ServiceError, ValidationError) as exc:
+            return _error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to compact thread")
+
+    @router.post("/api/threads/{thread_id}/todo")
+    async def api_todo(thread_id: str, request: Request) -> Any:
+        body = await _json_body(request)
+        text = str((body or {}).get("text", "")).strip()
+        if not text:
+            return JSONResponse(
+                {"error": "todo_empty", "message": "Text is required"},
+                status_code=400,
+            )
+        try:
+            result = await _service().todo_from_thread(
+                _principal(request), thread_id, text,
+            )
+            return result
+        except (ServiceError, ValidationError) as exc:
+            return _error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to add todo")
+
     @router.delete("/api/threads/{thread_id}/annotations/{part_id}")
     async def api_delete_annotation(thread_id: str, part_id: str, request: Request) -> Any:
         """Delete a draft annotation part."""

@@ -113,6 +113,7 @@ vi.mock("../surface/Surface", () => ({
 
 function renderComposer(overrides: Partial<ThreadComposerProps> = {}) {
   const props: ThreadComposerProps = {
+    threadId: "t-1",
     onSend: vi.fn(),
     onStop: vi.fn(),
     onKeep: vi.fn(),
@@ -543,12 +544,12 @@ describe("slash command palette via composer", () => {
     expect(screen.getByTestId("thread-system-row").textContent).toContain("Chase");
   });
 
-  it("/compact shows not-yet system row", () => {
+  it("/compact fires the compact API and shows system row", () => {
     renderComposer();
     const input = screen.getByTestId("composer-input") as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: "/compact" } });
     fireEvent.keyDown(input, { key: "Enter" });
     expect(screen.getByTestId("thread-system-row")).toBeInTheDocument();
-    expect(screen.getByTestId("thread-system-row").textContent).toContain("not yet");
+    expect(screen.getByTestId("thread-system-row").textContent).toContain("Compacting");
   });
 });

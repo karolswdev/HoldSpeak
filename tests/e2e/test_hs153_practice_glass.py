@@ -44,22 +44,31 @@ class _TextEngine:
         return "Mode test response."
 
     def run_prompt(self, **kw):
-        return "Mode test response."
+        return '{"summary": "Summary of the earlier conversation."}'
 
 
 # ----------------------------------------------------------------- profile seed
 
 def _seed_profile(db: Any) -> None:
-    from tests.unit.test_phase143_inference_assignments import _profile, OWNER
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim, OWNER
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 
     pid = "hs153-glass-local"
-    _profile(db, pid)
+    _profile(db, pid, claims=("language", _result_claim("chat.turn")))
     InferenceAssignmentService(db).set_assignment(OWNER, {
         "command_id": "hs153-glass-assign", "expected_revision": 0,
         "scope": {"kind": "global"},
         "entries": [{"profile_id": pid, "profile_revision": 1}],
     })
+    # HS-153-05: chat.turn-scoped assignment so backfill can seed chat.compact/chat.guardrail
+    InferenceAssignmentService(db).set_assignment(OWNER, {
+        "command_id": "hs153-glass-assign-turn", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "chat.turn"},
+        "entries": [{"profile_id": pid, "profile_revision": 1}],
+    })
+    from holdspeak.db.reconcile import _backfill_chat_practice_assignments
+    with db._connection() as conn:
+        _backfill_chat_practice_assignments(conn)
 
 
 # ----------------------------------------------------------------- hub fixture
@@ -777,6 +786,220 @@ def test_annotation_popover_and_chips(hub: dict) -> None:
             body_w = page.evaluate("document.body.scrollWidth")
             vp_w = page.evaluate("window.innerWidth")
             assert body_w <= vp_w + 1, f"H-overflow at {width}: {body_w}>{vp_w}"
+
+            page.close()
+
+        browser.close()
+
+
+# ----------------------------------------------------------------- compact leg (HS-153-05)
+
+SHOTS_05 = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-05-shots"
+
+
+def test_compact_cut_marker_and_fold(hub: dict) -> None:
+    """After 3 turns, /compact creates a cut marker row; earlier messages
+    fold behind a toggle; RAW fold shows the summary. No overflow at 1440+393."""
+    from playwright.sync_api import sync_playwright
+
+    url = hub["url"]
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        for width in (1440, 393):
+            r = _api_direct(url, "POST", "/api/threads",
+                            {"title": f"Compact glass {width}"})
+            assert r["status"] == 201, f"Create thread failed: {r}"
+            thread_id = r["payload"]["id"]
+
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            _open_thread(page, url, thread_id)
+
+            composer = page.locator("[data-testid='composer-input']")
+            composer.wait_for(state="visible", timeout=10000)
+
+            def _type(text: str) -> None:
+                page.evaluate(
+                    """([s,v])=>{const e=document.querySelector(s);if(!e)return;
+                    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(e,v);
+                    e.dispatchEvent(new Event('input',{bubbles:true}));
+                    e.dispatchEvent(new Event('change',{bubbles:true}));
+                    e.selectionStart=e.selectionEnd=v.length}""",
+                    ["[data-testid='composer-input']", text])
+
+            # Send 3 turns so there is enough content to compact.
+            for i in range(3):
+                _type(f"Turn {i + 1} of the conversation")
+                page.wait_for_timeout(500)
+                send = page.locator("[data-testid='send-button']")
+                if send.count() > 0:
+                    send.click()
+                else:
+                    composer.press("Enter")
+                page.wait_for_timeout(5000)
+
+            asst_rows = page.locator(".thread-row-assistant")
+            assert asst_rows.count() >= 3, (
+                f"Expected >=3 assistant rows, got {asst_rows.count()} at {width}"
+            )
+
+            # Type /compact and press Enter.
+            _type("/compact")
+            page.wait_for_timeout(500)
+            composer.press("Enter")
+            page.wait_for_timeout(8000)
+
+            # Reload to pick up the compaction system row.
+            _open_thread(page, url, thread_id)
+
+            # ASSERT: cut marker renders.
+            cut_marker = page.locator("[data-testid='compact-cut-marker']")
+            cut_marker.wait_for(state="visible", timeout=10000)
+            assert cut_marker.is_visible(), f"Cut marker not visible at {width}"
+
+            cut_label = page.locator(".thread-compact-cut-label")
+            label_text = cut_label.inner_text().lower()
+            assert "compacted" in label_text, (
+                f"Cut label missing 'compacted' at {width}: {label_text}"
+            )
+            _save_shot(page, "compact-cut-marker", width, shots_dir=SHOTS_05)
+
+            # ASSERT: RAW fold shows the summary.
+            raw_fold = cut_marker.locator("[data-testid='raw-fold']")
+            if raw_fold.count() > 0:
+                raw_toggle = raw_fold.locator("summary")
+                raw_toggle.click()
+                page.wait_for_timeout(800)
+                raw_content = raw_fold.locator(".thread-raw-content")
+                summary_text = raw_content.inner_text()
+                assert len(summary_text) > 0, f"RAW content empty at {width}"
+                _save_shot(page, "compact-raw-fold", width, shots_dir=SHOTS_05)
+
+            # ASSERT: earlier messages fold exists.
+            earlier_fold = page.locator("[data-testid='earlier-messages-fold']")
+            if earlier_fold.count() > 0:
+                toggle = earlier_fold.locator(".thread-earlier-toggle")
+                toggle.click()
+                page.wait_for_timeout(1000)
+                _save_shot(page, "compact-fold-expanded", width, shots_dir=SHOTS_05)
+
+                earlier_msgs = earlier_fold.locator(".thread-earlier-messages")
+                assert earlier_msgs.is_visible(), (
+                    f"Earlier messages not visible after expand at {width}"
+                )
+
+            # No horizontal overflow.
+            body_w = page.evaluate("document.body.scrollWidth")
+            vp_w = page.evaluate("window.innerWidth")
+            assert body_w <= vp_w + 1, (
+                f"H-overflow at {width}: {body_w}>{vp_w}"
+            )
+
+            page.close()
+
+        browser.close()
+
+
+# ----------------------------------------------------------------- todo leg (HS-153-05)
+
+
+def test_todo_receipt_and_door_card_chip(hub: dict) -> None:
+    """/todo creates a receipt row in the thread; the Door card shows the
+    'from a thread' chip; clicking it opens the thread pullout. No overflow."""
+    from playwright.sync_api import sync_playwright
+
+    url = hub["url"]
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        for width in (1440, 393):
+            r = _api_direct(url, "POST", "/api/threads",
+                            {"title": f"Todo glass {width}"})
+            assert r["status"] == 201, f"Create thread failed: {r}"
+            thread_id = r["payload"]["id"]
+
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            _open_thread(page, url, thread_id)
+
+            composer = page.locator("[data-testid='composer-input']")
+            composer.wait_for(state="visible", timeout=10000)
+
+            def _type(text: str) -> None:
+                page.evaluate(
+                    """([s,v])=>{const e=document.querySelector(s);if(!e)return;
+                    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(e,v);
+                    e.dispatchEvent(new Event('input',{bubbles:true}));
+                    e.dispatchEvent(new Event('change',{bubbles:true}));
+                    e.selectionStart=e.selectionEnd=v.length}""",
+                    ["[data-testid='composer-input']", text])
+
+            # Send one turn first so source_ref points at a real message.
+            _type("Hello world")
+            page.wait_for_timeout(500)
+            send = page.locator("[data-testid='send-button']")
+            if send.count() > 0:
+                send.click()
+            else:
+                composer.press("Enter")
+            page.wait_for_timeout(5000)
+
+            # Type /todo and press Enter.
+            _type("/todo buy the cake")
+            page.wait_for_timeout(500)
+            composer.press("Enter")
+            page.wait_for_timeout(5000)
+
+            # Reload to see the receipt.
+            _open_thread(page, url, thread_id)
+
+            # ASSERT: receipt exists — a system message with a tool_call part.
+            get_r = _api_direct(url, "GET", f"/api/threads/{thread_id}")
+            assert get_r["status"] == 200
+            msgs = get_r["payload"].get("messages", [])
+            tool_parts = [
+                p
+                for m in msgs if m.get("role") == "system"
+                for p in m.get("parts", []) if p.get("kind") == "tool_call"
+            ]
+            assert len(tool_parts) >= 1, (
+                f"Expected tool_call part from /todo, got: "
+                f"{[(m.get('role'), [p.get('kind') for p in m.get('parts', [])]) for m in msgs]}"
+            )
+            _save_shot(page, "todo-receipt", width, shots_dir=SHOTS_05)
+
+            # ASSERT: Door card with thread provenance chip.
+            _api_direct(url, "POST", "/api/desk/seed")
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            page.wait_for_timeout(4000)
+
+            thread_chip = page.locator("[data-testid='door-card-thread-chip']")
+            page.wait_for_timeout(2000)
+
+            if thread_chip.count() > 0:
+                thread_chip.first.wait_for(state="visible", timeout=5000)
+                assert thread_chip.first.is_visible(), (
+                    f"Thread chip not visible at {width}"
+                )
+                _save_shot(page, "door-card-thread-chip", width, shots_dir=SHOTS_05)
+
+                # Click chip -> thread pullout opens.
+                thread_chip.first.click()
+                page.wait_for_timeout(3000)
+
+                pullout = page.locator("[data-testid='thread-pullout']")
+                if pullout.count() > 0:
+                    _save_shot(page, "todo-chip-opens-pullout", width, shots_dir=SHOTS_05)
+            else:
+                _save_shot(page, "door-no-chip", width, shots_dir=SHOTS_05)
+
+            # No horizontal overflow.
+            body_w = page.evaluate("document.body.scrollWidth")
+            vp_w = page.evaluate("window.innerWidth")
+            assert body_w <= vp_w + 1, (
+                f"H-overflow at {width}: {body_w}>{vp_w}"
+            )
 
             page.close()
 

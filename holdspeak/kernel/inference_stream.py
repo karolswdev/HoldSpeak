@@ -262,6 +262,23 @@ def emit_thread_guardrail(
     broadcast("thread_guardrail", payload)
 
 
+def emit_thread_compacted(
+    broadcast: Callable[..., Any],
+    *,
+    thread_id: str,
+    message_id: str,
+    cut_at: str,
+    count: int,
+) -> None:
+    """Broadcast ``thread_compacted`` when a compaction cut is committed (HS-153-05)."""
+    broadcast("thread_compacted", {
+        "thread_id": thread_id,
+        "message_id": message_id,
+        "cut_at": cut_at,
+        "count": count,
+    })
+
+
 def emit_thread_status_line(
     broadcast: Callable[..., Any],
     *,

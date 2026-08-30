@@ -25,6 +25,7 @@ from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..kernel.inference_stream import (
     Delta,
     StreamCadence,
+    emit_thread_compacted,
     emit_thread_delta,
     emit_thread_guardrail,
     emit_thread_status_line,
@@ -503,6 +504,314 @@ class ThreadService:
             "thread_id": thread_id,
             "user_message_id": user_msg.id,
             "assistant_message_id": assistant_msg.id,
+        }
+
+    # ── Compaction (HS-153-05) ──────────────────────────────────────
+
+    async def compact_thread(
+        self, principal: Principal, thread_id: str,
+    ) -> dict[str, Any]:
+        """Compact a thread: summarize the prefix via chat.compact, create a cut row.
+
+        The cut row is a ``system`` message with
+        ``stats_json = {"compaction": true, "cut_at": <msg_id>, "count": N}``
+        and a text part carrying the summary.  The assembler includes only that
+        row and what follows it.
+        """
+        thread = self._threads.get(thread_id)
+        if not thread:
+            raise ValidationError(
+                "Thread not found", code="thread_not_found",
+            )
+
+        path = self._threads.list_path(thread_id)
+
+        content_messages = [m for m in path if m.role in ("user", "assistant")]
+        if len(content_messages) < 2:
+            raise ValidationError(
+                "Not enough messages to compact", code="compact_too_short",
+            )
+
+        any_sensitive = False
+        sensitive_texts: list[str] = []
+        messages_for_compact: list[dict[str, str]] = []
+        for msg in content_messages:
+            parts = self._threads.get_parts(msg.id)
+            text_parts: list[str] = []
+            for part in parts:
+                if part.kind in ("text", "annotation") and part.text:
+                    text_parts.append(part.text)
+                    if part.sensitive:
+                        any_sensitive = True
+                        sensitive_texts.append(part.text)
+            content = "\n".join(text_parts)
+            if content:
+                messages_for_compact.append({"role": msg.role, "content": content})
+
+        cut_at = content_messages[-1].id
+        count = len(content_messages)
+
+        from .thread_practice import run_compact
+
+        # Determine egress scope from the latest assistant message on this
+        # thread so the M1 redactor can be applied before the compact engine
+        # sees the payload.
+        egress_scope = ""
+        for msg in reversed(path):
+            if msg.role == "assistant" and msg.egress_scope:
+                egress_scope = msg.egress_scope
+                break
+
+        redacted_messages = list(messages_for_compact)
+        if egress_scope in ("cloud", "external_service") and sensitive_texts:
+            for i, msg_dict in enumerate(redacted_messages):
+                content = str(msg_dict.get("content", ""))
+                for st in sensitive_texts:
+                    if st and st in content:
+                        content = content.replace(st, _PEOPLE_REDACTION)
+                redacted_messages[i] = {**msg_dict, "content": content}
+
+        try:
+            result = await asyncio.to_thread(
+                run_compact, self._broker, principal, thread_id,
+                redacted_messages,
+            )
+            summary = result.get("summary", "")
+        except Exception as exc:
+            fail_msg = self._threads.append_message(
+                thread_id, role="system",
+                parent_id=path[-1].id if path else None,
+            )
+            self._threads.append_part(
+                fail_msg.id, kind="text",
+                text=f"Compaction failed: {exc}",
+            )
+            self._threads.complete_message(
+                fail_msg.id,
+                stats_json=json.dumps({"compact_failed": True}),
+            )
+            return {
+                "status": "failed",
+                "error": str(exc),
+                "message_id": fail_msg.id,
+            }
+
+        if not summary:
+            fail_msg = self._threads.append_message(
+                thread_id, role="system",
+                parent_id=path[-1].id if path else None,
+            )
+            self._threads.append_part(
+                fail_msg.id, kind="text",
+                text="Compaction returned empty summary",
+            )
+            self._threads.complete_message(
+                fail_msg.id,
+                stats_json=json.dumps({"compact_failed": True}),
+            )
+            return {
+                "status": "failed",
+                "error": "empty_summary",
+                "message_id": fail_msg.id,
+            }
+
+        compact_msg = self._threads.append_message(
+            thread_id, role="system",
+            parent_id=path[-1].id if path else None,
+        )
+        self._threads.append_part(
+            compact_msg.id, kind="text",
+            text=summary,
+            sensitive=any_sensitive,
+        )
+        self._threads.complete_message(
+            compact_msg.id,
+            stats_json=json.dumps({
+                "compaction": True,
+                "cut_at": cut_at,
+                "count": count,
+            }),
+        )
+
+        emit_thread_compacted(
+            self._broadcast,
+            thread_id=thread_id,
+            message_id=compact_msg.id,
+            cut_at=cut_at,
+            count=count,
+        )
+
+        return {
+            "status": "ok",
+            "message_id": compact_msg.id,
+            "cut_at": cut_at,
+            "count": count,
+            "summary": summary,
+        }
+
+    # ── Todo (HS-153-05) ────────────────────────────────────────────
+
+    async def todo_from_thread(
+        self,
+        principal: Principal,
+        thread_id: str,
+        text: str,
+    ) -> dict[str, Any]:
+        """Execute ``/todo`` through the same ThreadToolExecutor path a model
+        call takes for ``door.add_item``.  Receipt row + result part are
+        persisted exactly like a turn's tool call.
+        """
+        thread = self._threads.get(thread_id)
+        if not thread:
+            raise ValidationError("Thread not found", code="thread_not_found")
+        if not text or not text.strip():
+            raise ValidationError("Todo text must not be empty", code="todo_empty")
+
+        path = self._threads.list_path(thread_id)
+
+        latest_content = None
+        for msg in reversed(path):
+            if msg.role in ("user", "assistant"):
+                latest_content = msg
+                break
+        source_ref = (
+            f"thread:{latest_content.id}" if latest_content
+            else f"thread:{thread_id}"
+        )
+
+        if self._tool_dispatch_fn is None:
+            raise ValidationError(
+                "Tool dispatch not configured", code="no_tool_dispatch",
+            )
+
+        todo_msg = self._threads.append_message(
+            thread_id, role="system",
+            parent_id=path[-1].id if path else None,
+        )
+
+        from .thread_tools import ThreadToolExecutor
+
+        executor = ThreadToolExecutor(
+            self._db,
+            dispatch_fn=self._tool_dispatch_fn,
+            principal=principal,
+            control_mode_fn=self._control_mode_fn,
+            broker=self._broker,
+        )
+
+        call_dict: dict[str, Any] = {
+            "id": f"todo_{uuid.uuid4().hex[:12]}",
+            "name": "door.add_item",
+            "arguments": {
+                "task": text.strip(),
+                "source_type": "thread",
+                "source_ref": source_ref,
+            },
+        }
+        operation_id = f"todo_{thread_id}_{uuid.uuid4().hex[:8]}"
+        handle = executor.admit(operation_id, thread_id, call_dict)
+
+        if handle.state == "awaiting_decision":
+            emit_thread_tool_pending(
+                self._broadcast,
+                thread_id=thread_id,
+                message_id=todo_msg.id,
+                call_id=handle.call_id,
+                name="door.add_item",
+                args_head=f"THREAD_TOOL door.add_item: {text.strip()[:80]}",
+                tool_class=handle.tool_class,
+                decision_required=True,
+            )
+
+            ev = threading.Event()
+
+            def _on_decided(call_id: str) -> None:
+                if call_id == handle.call_id:
+                    ev.set()
+
+            executor.on_decided = _on_decided
+            ThreadService._tool_executor.register(todo_msg.id, executor)
+
+            try:
+                ev.wait(timeout=_TOOL_DEADLINE_S)
+                if not ev.is_set():
+                    self._threads.append_part(
+                        todo_msg.id, kind="text",
+                        text="Todo: decision timeout",
+                    )
+                    self._threads.complete_message(
+                        todo_msg.id,
+                        stats_json=json.dumps({"todo_timeout": True}),
+                    )
+                    return {"status": "timeout"}
+
+                if handle.state == "denied":
+                    self._threads.append_part(
+                        todo_msg.id, kind="text",
+                        text="Todo: denied by owner",
+                    )
+                    self._threads.complete_message(
+                        todo_msg.id,
+                        stats_json=json.dumps({"todo_denied": True}),
+                    )
+                    return {"status": "denied"}
+            finally:
+                ThreadService._tool_executor.unregister(todo_msg.id)
+
+        result = executor.execute(handle)
+
+        self._threads.append_part(
+            todo_msg.id, kind="tool_call",
+            tool_call_id=handle.call_id,
+            meta_json=json.dumps({
+                "id": handle.call_id,
+                "name": "door.add_item",
+                "arguments": json.dumps(call_dict["arguments"]),
+                "class": handle.tool_class,
+                "state": handle.state,
+            }, separators=(",", ":")),
+        )
+
+        result_text = (
+            json.dumps(result.payload, default=str)
+            if result.payload else "{}"
+        )
+        tool_msg = self._threads.append_message(
+            thread_id, role="tool", parent_id=todo_msg.id,
+        )
+        part_meta = {
+            "name": "door.add_item",
+            "kind": result.kind,
+            "receipt_id": result.receipt_id,
+        }
+        self._threads.append_part(
+            tool_msg.id, kind="text", text=result_text,
+            tool_call_id=handle.call_id,
+            meta_json=json.dumps(part_meta, separators=(",", ":")),
+        )
+        self._threads.complete_message(todo_msg.id)
+
+        is_error = result.kind in (
+            "tool_execution_failed", "tool_denied",
+            "tool_timeout", "cancelled", "error",
+        )
+        emit_thread_tool_result(
+            self._broadcast,
+            thread_id=thread_id,
+            message_id=todo_msg.id,
+            call_id=handle.call_id,
+            name="door.add_item",
+            receipt_id=result.receipt_id,
+            outcome="failed" if is_error else "succeeded",
+            kind=result.kind,
+            summary=result_text[:200],
+            sensitive=result.sensitive,
+        )
+
+        return {
+            "status": "ok" if not is_error else "failed",
+            "result": result.payload,
+            "receipt_id": result.receipt_id,
         }
 
     def _run_streaming_turn(
@@ -1535,6 +1844,21 @@ class ThreadService:
 
         # Build messages from the leaf path.
         path = self._threads.list_path(thread_id)
+
+        # HS-153-05: compaction cut — include only messages from the latest
+        # compaction row onward (the summary + what follows).
+        compact_cut_idx = None
+        for i, msg in enumerate(path):
+            if msg.role == "system" and msg.stats_json:
+                try:
+                    stats = json.loads(msg.stats_json)
+                    if stats.get("compaction"):
+                        compact_cut_idx = i
+                except (json.JSONDecodeError, TypeError):
+                    pass
+        if compact_cut_idx is not None:
+            path = path[compact_cut_idx:]
+
         messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
 
         # Gather frozen refs for context.

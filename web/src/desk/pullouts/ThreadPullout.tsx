@@ -794,6 +794,141 @@ function AnnotationChips({
   );
 }
 
+// ── HS-153-05: compaction cut marker ────────────────────────────────
+function CompactionCutMarker({ msg }: { msg: ThreadMessage }) {
+  const stats = msg.statsJson as { compaction: boolean; cut_at: string; count: number } | null;
+  const summaryText = msg.parts.filter((p) => p.kind === "text").map((p) => p.text).join("");
+  const count = stats?.count ?? 0;
+
+  return (
+    <div className="thread-compact-cut" data-testid="compact-cut-marker" data-message-id={msg.id}>
+      <div className="thread-compact-cut-label">
+        compacted · {count} message{count !== 1 ? "s" : ""}
+      </div>
+      {summaryText && (
+        <details className="thread-raw-fold" data-testid="raw-fold">
+          <summary className="thread-raw-toggle">{"RAW ▸"}</summary>
+          <pre className="thread-raw-content">{summaryText}</pre>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function CompactFailedRow({ msg }: { msg: ThreadMessage }) {
+  const text = msg.parts.filter((p) => p.kind === "text").map((p) => p.text).join("");
+  return (
+    <div className="thread-compact-failed" data-testid="compact-failed-row" data-message-id={msg.id}>
+      <span className="thread-compact-failed-label">compact failed</span>
+      {text && <span className="thread-compact-failed-text">{text}</span>}
+    </div>
+  );
+}
+
+// ── HS-153-05: message list with compaction fold ────────────────────
+function ThreadMessageList({
+  messages,
+  siblings,
+  threadToolRows,
+  guardrailRowsForThread,
+  getBufferText,
+  threadId,
+  loadThread,
+  handleRetry,
+  handleKeep,
+  handleBranch,
+  handleDecide,
+}: {
+  messages: ThreadMessage[];
+  siblings: Record<string, string[]>;
+  threadToolRows: Record<string, ToolRow>;
+  guardrailRowsForThread: Record<string, GuardrailRow>;
+  getBufferText: (id: string) => string;
+  threadId: string;
+  loadThread: (id: string) => Promise<void>;
+  handleRetry: (messageId: string) => void;
+  handleKeep: (messageId: string, as: "note" | "artifact") => void;
+  handleBranch: (messageId: string, text: string) => void;
+  handleDecide: (callId: string, decision: "approve" | "deny", opts?: { always?: boolean; answer?: unknown }) => void;
+}) {
+  const [earlierExpanded, setEarlierExpanded] = useState(false);
+
+  const filtered = messages.filter((m) => m.role !== "tool");
+
+  // Find the latest compaction cut index.
+  let cutIndex = -1;
+  for (let i = filtered.length - 1; i >= 0; i--) {
+    if (filtered[i].role === "system" && (filtered[i].statsJson as Record<string, unknown> | null)?.compaction) {
+      cutIndex = i;
+      break;
+    }
+  }
+
+  const beforeCut = cutIndex > 0 ? filtered.slice(0, cutIndex) : [];
+  const fromCut = cutIndex >= 0 ? filtered.slice(cutIndex) : filtered;
+
+  function renderMsg(msg: ThreadMessage) {
+    // Compaction cut marker row.
+    if (msg.role === "system" && (msg.statsJson as Record<string, unknown> | null)?.compaction) {
+      return <CompactionCutMarker key={msg.id} msg={msg} />;
+    }
+    // Compact-failed warning row.
+    if (msg.role === "system" && (msg.statsJson as Record<string, unknown> | null)?.compact_failed) {
+      return <CompactFailedRow key={msg.id} msg={msg} />;
+    }
+
+    const sibData = siblings[msg.id];
+    const sibPosition = Array.isArray(sibData) ? Number(sibData[0]) : 1;
+    const sibTotal = Array.isArray(sibData) ? Number(sibData[1]) : 1;
+    const msgToolRows = msg.role === "assistant"
+      ? Object.values(threadToolRows).filter((r) => r.messageId === msg.id)
+      : undefined;
+    const msgGuardrailRow = msg.role === "assistant"
+      ? guardrailRowsForThread[msg.id]
+      : undefined;
+    return (
+      <MessageRow
+        key={msg.id}
+        msg={msg}
+        bufferText={getBufferText(msg.id)}
+        siblingPosition={sibPosition}
+        siblingTotal={sibTotal}
+        onSiblingPrev={() => void loadThread(threadId)}
+        onSiblingNext={() => void loadThread(threadId)}
+        onRetry={handleRetry}
+        onKeep={handleKeep}
+        onBranch={handleBranch}
+        toolRows={msgToolRows}
+        threadId={threadId}
+        onDecide={handleDecide}
+        guardrailRow={msgGuardrailRow}
+      />
+    );
+  }
+
+  return (
+    <div className="thread-messages">
+      {beforeCut.length > 0 && (
+        <div className="thread-earlier-fold" data-testid="earlier-messages-fold">
+          <button
+            type="button"
+            className="thread-earlier-toggle"
+            onClick={() => setEarlierExpanded(!earlierExpanded)}
+          >
+            {earlierExpanded ? "Hide" : `${beforeCut.length} earlier message${beforeCut.length !== 1 ? "s" : ""}`}
+          </button>
+          {earlierExpanded && (
+            <div className="thread-earlier-messages">
+              {beforeCut.map(renderMsg)}
+            </div>
+          )}
+        </div>
+      )}
+      {fromCut.map(renderMsg)}
+    </div>
+  );
+}
+
 // ── Message row ─────────────────────────────────────────────────────
 function MessageRow({
   msg,
@@ -1114,6 +1249,12 @@ function ThreadPulloutInner({
         const p = frame.data as ThreadGuardrailPayload;
         if (p.thread_id !== threadId) return;
         applyGuardrail(p);
+      }),
+      // HS-153-05: compaction frame — refresh thread to get the cut row
+      subscribe("thread_compacted", (frame) => {
+        const p = frame.data as { thread_id: string };
+        if (p.thread_id !== threadId) return;
+        void loadThread(threadId);
       }),
     ];
     return () => unsubs.forEach((u) => u());
@@ -1492,40 +1633,19 @@ function ThreadPulloutInner({
             emptyGlyph={"▬"}
           />
         ) : (
-          <div className="thread-messages">
-            {detail.messages.filter((m) => m.role !== "tool").map((msg) => {
-              // Siblings: server returns { message_id: [position(1-based), total] }.
-              const sibData = detail.siblings[msg.id];
-              const sibPosition = Array.isArray(sibData) ? Number(sibData[0]) : 1;
-              const sibTotal = Array.isArray(sibData) ? Number(sibData[1]) : 1;
-              // HS-152-04: collect tool rows for this message
-              const msgToolRows = msg.role === "assistant"
-                ? Object.values(threadToolRows).filter((r) => r.messageId === msg.id)
-                : undefined;
-              // HS-153-03: guardrail row for this message
-              const msgGuardrailRow = msg.role === "assistant"
-                ? guardrailRowsForThread[msg.id]
-                : undefined;
-              return (
-                <MessageRow
-                  key={msg.id}
-                  msg={msg}
-                  bufferText={getBufferText(msg.id)}
-                  siblingPosition={sibPosition}
-                  siblingTotal={sibTotal}
-                  onSiblingPrev={() => void loadThread(threadId)}
-                  onSiblingNext={() => void loadThread(threadId)}
-                  onRetry={handleRetry}
-                  onKeep={handleKeep}
-                  onBranch={handleBranch}
-                  toolRows={msgToolRows}
-                  threadId={threadId}
-                  onDecide={handleDecide}
-                  guardrailRow={msgGuardrailRow}
-                />
-              );
-            })}
-          </div>
+          <ThreadMessageList
+            messages={detail.messages}
+            siblings={detail.siblings}
+            threadToolRows={threadToolRows}
+            guardrailRowsForThread={guardrailRowsForThread}
+            getBufferText={getBufferText}
+            threadId={threadId}
+            loadThread={loadThread}
+            handleRetry={handleRetry}
+            handleKeep={handleKeep}
+            handleBranch={handleBranch}
+            handleDecide={handleDecide}
+          />
         )}
         {/* HS-153-04: annotation popover anchored to selection */}
         {annotationPopover && (
@@ -1557,6 +1677,7 @@ function ThreadPulloutInner({
           onRemove={handleAnnotationRemove}
         />
         <ThreadComposer
+          threadId={threadId}
           onSend={handleSend}
           onStop={handleStop}
           onKeep={handleKeep}

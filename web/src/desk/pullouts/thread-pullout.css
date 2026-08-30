@@ -1095,3 +1095,59 @@
 .thread-annotation-chip-remove:hover {
   color: var(--text, inherit);
 }
+
+/* ── HS-153-05: compaction cut marker + earlier fold ────────────── */
+
+.thread-compact-cut {
+  border-top: 1px solid var(--border-subtle, #333);
+  border-bottom: 1px solid var(--border-subtle, #333);
+  padding: 6px 12px;
+  color: var(--text-muted, #888);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--desk-surface-sm-size, 11px);
+}
+
+.thread-compact-cut-label {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.thread-compact-failed {
+  padding: 4px 12px;
+  color: var(--text-muted, #888);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--desk-surface-sm-size, 11px);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.thread-compact-failed-label {
+  color: var(--accent, #f5a623);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.thread-earlier-fold {
+  padding: 4px 12px;
+}
+
+.thread-earlier-toggle {
+  all: unset;
+  cursor: pointer;
+  color: var(--text-muted, #888);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--desk-surface-sm-size, 11px);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.thread-earlier-toggle:hover {
+  color: var(--accent, #0af);
+}
+
+.thread-earlier-messages {
+  opacity: 0.7;
+}
