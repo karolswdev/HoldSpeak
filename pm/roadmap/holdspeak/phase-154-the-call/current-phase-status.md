@@ -23,7 +23,7 @@ counsel M9/S6/R4; the TTS feasibility ruling supersedes RFC §6.8-B).
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-154-01 | The voice (browser default, kokoro-onnx extra, /api/tts) | backlog | [story-01-tts-route](./story-01-tts-route.md) | - |
+| HS-154-01 | The voice (browser default, kokoro-onnx extra, /api/tts) | done | [story-01-tts-route](./story-01-tts-route.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-154-02 | The ear (energy VAD hands-free loop) | backlog | [story-02-vad-loop](./story-02-vad-loop.md) | - |
 | HS-154-03 | Call mode (threads.call_mode, chip, frame — M9) | backlog | [story-03-call-mode](./story-03-call-mode.md) | - |
 | HS-154-04 | Speaker glyph + auto-speak (S6 chunks, barge-in) | backlog | [story-04-speaker-glyph](./story-04-speaker-glyph.md) | - |
@@ -31,10 +31,13 @@ counsel M9/S6/R4; the TTS feasibility ruling supersedes RFC §6.8-B).
 
 ## Where we are
 
-Chartered 2026-08-30 from the settled design (assets/settled-design.md)
-on the superseding merge vehicle (PR #511). Building starts once #511's
-own CI settles; the port is already proven on its head (178 python +
-77 vitest).
+HS-154-01 (the voice) delivered: the ONE client TTS seam (`tts.ts`), the
+server route family (`/api/tts/status`, `/api/tts`, `/api/tts/download`),
+the `holdspeak[tts]` optional extra in pyproject.toml, and the Settings
+TTS block in the Sounds module. 10 python tests + 9 vitest + 2 glass
+(1440+393 zero overflow) pass. API surface regenerated (564 routes, +3).
+Web baseline zero BRANCH-NEW. Evidence captured. Not yet flipped to done.
+Next: story 02 (the ear).
 
 ## Active risks
 

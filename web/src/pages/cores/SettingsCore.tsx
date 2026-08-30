@@ -34,6 +34,7 @@ import { openSurface } from "../../desk/shell";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
 import { ModelsModule } from "./settingsModels";
+import { TtsSettingsBlock } from "./settingsTts";
 import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
 import { ContextualAssignment } from "./ContextualAssignment";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
@@ -766,6 +767,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               {check(["presence", "enabled"], "Presence")}
               {check(["presence", "mascot"], "Mascot")}
             </GadgetGroup>
+            <TtsSettingsBlock />
           </>
         );
       /* ── Meetings: pointer tile + calendar + actuators + RAW ── */

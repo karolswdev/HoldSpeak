@@ -4938,6 +4938,36 @@
       ]
     },
     {
+      "path": "/api/tts",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.tts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/tts/download",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.tts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/tts/status",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.tts",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/workbench-templates",
       "methods": [
         "GET"
