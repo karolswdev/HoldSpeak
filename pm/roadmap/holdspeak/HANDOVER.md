@@ -22,14 +22,20 @@ branch `worktree-warpdrv-chat-port`, **PR #507**.
   sibling session shipped its own Phase 150 (Delegation+Monday, PR #508).
   LAW: `git fetch` + check `origin/main` README "Current phase" and
   `ls pm/roadmap/holdspeak | tail` BEFORE numbering a phase.
-- **Phase 152 The Hands (DC-02): 2/6 committed** (02 the gate
-  `be973104`; 01 the loop `d44f8d74`, 80 passed). Remaining: 03 People fence
-  (M1/M2 — the loop already accumulates `_sensitive_texts` and marks
-  people results sensitive; story 03 = the real-coordinator pins + metal
-  leg 2), 04 pending box + elicitation UI (`threads.ts`,
-  `ThreadPullout.tsx`; frames exist), 05 renderers + `thread.set_status`
-  tool, 06 walk. Settled design: `phase-152-the-hands/assets/settled-design.md`
-  (the truth table in D2 is law).
+- **Phase 152 The Hands (DC-02): 3/6 committed** (02 the gate
+  `be973104`; 01 the loop `d44f8d74`; 03 the People fence `872a36c6`).
+  Story 03 drove the REAL path and found the loop inert on the hub —
+  five fixes (handless `_thread_factory`, palette injected after
+  admission, runner dropping `tool_calls`, 79 KB census overflowing
+  admission → `CHAT_PALETTE`, decorative `profile_override` → next-run
+  override); read `story-03-people-fence.md` §"What shipped" and the
+  settled-design addendum BEFORE touching the loop. Remaining: 04
+  pending box + elicitation UI (`threads.ts`, `ThreadPullout.tsx`;
+  frames exist), 05 renderers + `thread.set_status` tool, 06 walk (`.43`
+  must be tool-QUALIFIED; the hub leg `assets/story-03-hub-leg.py` has
+  an `HS152_LIVE=1` mode). Settled design:
+  `phase-152-the-hands/assets/settled-design.md` (the truth table in D2
+  is law; the 03 addendum rules the palette).
 - **Phase 153 The Practice: chartered** (`assets/settled-design.md`,
   `audit-census.md`, six stories scaffolded; story bodies NOT yet
   written — write them from the settled design before building). Both
