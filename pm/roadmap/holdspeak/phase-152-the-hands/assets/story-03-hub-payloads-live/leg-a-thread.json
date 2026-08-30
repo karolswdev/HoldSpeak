@@ -1,17 +1,17 @@
 {
-  "id": "th_98a7ce44438c",
+  "id": "th_7c3711c72c9c",
   "title": "HS-152-03 fence",
   "recipe_id": "",
   "profile_override": "",
   "directory_id": "",
-  "token_in": 3472,
-  "token_out": 30,
-  "created_at": 1788068093.863001,
-  "updated_at": 1788068108.045383,
-  "last_turn_at": 1788068106.4418838,
+  "token_in": 3586,
+  "token_out": 9,
+  "created_at": 1788072333.824437,
+  "updated_at": 1788072338.674691,
+  "last_turn_at": 1788072337.4851751,
   "messages": [
     {
-      "id": "tm_40f9cbd8f5ec",
+      "id": "tm_87bd03a9434f",
       "role": "user",
       "parent_id": null,
       "streaming": false,
@@ -22,65 +22,65 @@
       "stats_json": null,
       "parts": [
         {
-          "id": "tp_ccd188d9ad3f",
+          "id": "tp_9323e1260515",
           "kind": "text",
           "text": "Is the People store ready?",
           "ordinal": 0,
           "sensitive": false
         }
       ],
-      "created_at": 1788068093.865636,
-      "updated_at": 1788068093.866583,
+      "created_at": 1788072333.82753,
+      "updated_at": 1788072333.832389,
       "completed_at": null,
       "aborted_at": null
     },
     {
-      "id": "tm_96a311b898cf",
+      "id": "tm_9f1262fdfda5",
       "role": "assistant",
-      "parent_id": "tm_40f9cbd8f5ec",
+      "parent_id": "tm_87bd03a9434f",
       "streaming": false,
-      "receipt_id": "ire_4d4fd064ab0719f2294ac5e59ebe6239",
+      "receipt_id": "ire_114fa363240702c61bf1875681b4fc9d",
       "egress_scope": "private_network",
       "model_id": "legacy-hs152-lan",
       "error_json": null,
       "stats_json": {
-        "completion_tokens": 30,
-        "prompt_tokens": 3472,
-        "total_tokens": 3502
+        "completion_tokens": 9,
+        "prompt_tokens": 3586,
+        "total_tokens": 3595
       },
       "parts": [
         {
-          "id": "tp_8cbd72d9a32f",
+          "id": "tp_e631a06b88ca",
           "kind": "tool_call",
           "text": null,
           "ordinal": 0,
           "sensitive": false,
           "meta_json": {
-            "id": "hVUxlIDKOGTArv0KfpnqiFEkp3GTG1Z3",
+            "id": "UHWDI1bZ0c4Qtz4Es43paAsQEUFr54qx",
             "name": "people.readiness",
             "arguments": "{}",
             "class": "evidence_read",
             "state": "admitted"
           },
-          "tool_call_id": "hVUxlIDKOGTArv0KfpnqiFEkp3GTG1Z3"
+          "tool_call_id": "UHWDI1bZ0c4Qtz4Es43paAsQEUFr54qx"
         },
         {
-          "id": "tp_0a314dd25f87",
+          "id": "tp_b69e7907b875",
           "kind": "text",
-          "text": "The People store is currently unconfigured. It has local-only sync and notes-only capture capabilities, with write access enabled for shared-intent material.",
+          "text": "The People store is currently unconfigured.",
           "ordinal": 1,
           "sensitive": false
         }
       ],
-      "created_at": 1788068093.8760488,
-      "updated_at": 1788068108.044943,
-      "completed_at": 1788068108.044943,
+      "created_at": 1788072333.8605509,
+      "updated_at": 1788072338.674242,
+      "completed_at": 1788072338.674242,
       "aborted_at": null
     },
     {
-      "id": "tm_c3e69f461afd",
+      "id": "tm_0d3f19b0a36c",
       "role": "tool",
-      "parent_id": "tm_96a311b898cf",
+      "parent_id": "tm_9f1262fdfda5",
       "streaming": false,
       "receipt_id": "",
       "egress_scope": "",
@@ -89,20 +89,20 @@
       "stats_json": null,
       "parts": [
         {
-          "id": "tp_92e70f623553",
+          "id": "tp_b2902ebcad66",
           "kind": "text",
           "text": "{\"readiness\": \"unconfigured\", \"state\": \"unconfigured\", \"store\": \"absent\", \"sync\": \"local_only\", \"capture\": \"notes_only\", \"reason_code\": \"people_store_unconfigured\", \"access\": \"write\", \"disclosure\": \"shared_intent_only\"}",
           "ordinal": 0,
           "sensitive": true,
           "meta_json": {
-            "kind": "data",
-            "receipt_id": "tr-ba9ef02551cb"
+            "kind": "person",
+            "receipt_id": "tr-a23161eca4fe"
           },
-          "tool_call_id": "hVUxlIDKOGTArv0KfpnqiFEkp3GTG1Z3"
+          "tool_call_id": "UHWDI1bZ0c4Qtz4Es43paAsQEUFr54qx"
         }
       ],
-      "created_at": 1788068106.4418838,
-      "updated_at": 1788068106.442485,
+      "created_at": 1788072337.4851751,
+      "updated_at": 1788072337.486148,
       "completed_at": null,
       "aborted_at": null
     }

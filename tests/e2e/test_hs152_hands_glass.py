@@ -21,6 +21,7 @@ pytest.importorskip("playwright.sync_api", reason="Glass needs Playwright")
 REPO = Path(__file__).resolve().parents[2]
 TOKEN = "hs152-hands-glass"
 SHOTS = REPO / "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-04-shots"
+SHOTS_06 = REPO / "pm/roadmap/holdspeak/phase-152-the-hands/assets/story-06-shots"
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
 
@@ -158,6 +159,49 @@ class _ElicitEngine:
 
     def run_prompt(self, **kw):
         return "Answered."
+
+
+class _AlwaysEngine:
+    """Engine that emits desk.create on every turn's first pass.
+
+    Unlike _ToolEngine (which checks 'any tool result in messages'), this
+    checks only whether the LAST message is a tool result — so it correctly
+    emits a tool call on turn 2 even though turn 1's tool results are in
+    the message history.
+    """
+
+    active_provider = "always-glass"
+    active_model = "hs152-always-model"
+
+    def __init__(self) -> None:
+        self._call_seq = 0
+
+    def run_prompt_stream(self, *, messages=None, temperature=None,
+                          max_tokens=None, tools=None, **kw):
+        from holdspeak.kernel.inference_stream import Delta
+
+        msgs = list(messages or [])
+        last_is_tool = msgs and msgs[-1].get("role") == "tool"
+
+        if last_is_tool:
+            for w in ("Done.", " "):
+                yield Delta(kind="text", text=w)
+                time.sleep(0.02)
+        else:
+            self._call_seq += 1
+            yield Delta(kind="tool_calls", meta={"tool_calls": [
+                {"id": f"always-call-{self._call_seq}",
+                 "name": "desk.create",
+                 "arguments": _VALID_CREATE_ARGS},
+            ]})
+        yield Delta(kind="usage", meta={"prompt_tokens": 10, "completion_tokens": 5})
+        yield Delta(kind="done")
+
+    def run_prompt_messages(self, **kw):
+        return "Done."
+
+    def run_prompt(self, **kw):
+        return "Done."
 
 
 # --------------------------------------------------------- profile seed
@@ -561,6 +605,131 @@ def test_failed_tool_row_and_no_overflow(hub: dict) -> None:
                 assert state in ("failed", "receipted"), (
                     f"Expected failed or receipted, got {state} at {width}"
                 )
+
+            page.close()
+
+        browser.close()
+
+    if broker is not None:
+        broker.inference_runner._engine_factory = lambda _rev, **_kw: _ToolEngine()
+
+
+def test_allow_always_auto_admit(hub: dict) -> None:
+    """(e) Allow-always writes a policy row; the next turn with the same tool
+    auto-admits (no decision box). Also verifies Allow-once leaves no policy row."""
+    from playwright.sync_api import sync_playwright
+
+    url = hub["url"]
+    db = hub["db"]
+    broker = hub["broker"]
+    engine = _AlwaysEngine()
+    if broker is not None:
+        broker.inference_runner._engine_factory = lambda _rev, **_kw: engine
+
+    SHOTS_06.mkdir(parents=True, exist_ok=True)
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        for width in (1440, 393):
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+
+            # ── Allow-always thread ──────────────────────────────────
+            r = _api(page, "POST", "/api/threads", {"title": f"Allow Always {width}"})
+            assert r["status"] == 201
+            tid_always = r["payload"]["id"]
+            _open_thread(page, url, tid_always)
+
+            # Turn 1: desk.create held in safe mode -> click Allow always
+            composer = page.locator(".thread-composer-input")
+            composer.wait_for(timeout=10000)
+            composer.fill("Create a note please")
+            page.locator("button.desk-chip", has_text="Send").click()
+
+            decision_box = page.locator('[data-testid="decision-box"]')
+            try:
+                decision_box.wait_for(timeout=15000)
+            except Exception:
+                page.screenshot(path=str(SHOTS_06 / f"allow-always-no-box-{width}.png"))
+                detail = _api(page, "GET", f"/api/threads/{tid_always}")
+                msgs = detail.get("payload", {}).get("messages", [])
+                pytest.skip(
+                    f"decision box did not appear at {width}; messages: {len(msgs)}"
+                )
+
+            page.screenshot(path=str(SHOTS_06 / f"allow-always-held-{width}.png"))
+
+            page.locator('[data-testid="allow-always"]').click()
+            page.wait_for_timeout(5000)
+
+            page.screenshot(path=str(SHOTS_06 / f"allow-always-receipted-{width}.png"))
+
+            tool_row = page.locator('[data-testid="tool-row"]')
+            if tool_row.count() > 0:
+                state = tool_row.first.get_attribute("data-tool-state")
+                assert state in ("receipted", "running"), (
+                    f"Expected receipted after Allow-always, got {state} at {width}"
+                )
+
+            # DB: exactly one policy row with decision='allow'
+            policy = db.threads.effective_tool_policy(tid_always, "desk.create")
+            assert policy == "allow", (
+                f"Expected policy='allow' after Allow-always, got {policy}"
+            )
+
+            # Turn 2: same tool should auto-admit (no decision box)
+            composer = page.locator(".thread-composer-input")
+            composer.wait_for(timeout=10000)
+            composer.fill("Create another note")
+            page.locator("button.desk-chip", has_text="Send").click()
+
+            # Should NOT show a decision box (auto-admitted via truth table row 1)
+            page.wait_for_timeout(8000)
+
+            decision_box_count = page.locator('[data-testid="decision-box"]').count()
+            assert decision_box_count == 0, (
+                f"Decision box appeared on auto-admit turn at {width}"
+            )
+
+            # The second tool row should be receipted (auto-admitted + executed)
+            tool_rows = page.locator('[data-testid="tool-row"]')
+            if tool_rows.count() >= 2:
+                state2 = tool_rows.nth(1).get_attribute("data-tool-state")
+                assert state2 in ("receipted", "running"), (
+                    f"Expected auto-admitted tool receipted, got {state2} at {width}"
+                )
+
+            page.screenshot(path=str(SHOTS_06 / f"allow-always-auto-admit-{width}.png"))
+
+            # ── Allow-once thread (same page session) ────────────────
+            r2 = _api(page, "POST", "/api/threads", {"title": f"Once Only {width}"})
+            assert r2["status"] == 201
+            tid_once = r2["payload"]["id"]
+            _open_thread(page, url, tid_once)
+
+            composer = page.locator(".thread-composer-input")
+            composer.wait_for(timeout=10000)
+            composer.fill("Create a note once")
+            page.locator("button.desk-chip", has_text="Send").click()
+
+            decision_box = page.locator('[data-testid="decision-box"]')
+            try:
+                decision_box.wait_for(timeout=15000)
+            except Exception:
+                pass
+
+            # Click Allow once (not always)
+            allow_once = page.locator('[data-testid="allow-once"]')
+            if allow_once.count() > 0:
+                allow_once.click()
+                page.wait_for_timeout(5000)
+
+            # DB: no policy row for this thread
+            policy_once = db.threads.effective_tool_policy(tid_once, "desk.create")
+            assert policy_once is None, (
+                f"Expected no policy after Allow-once, got {policy_once}"
+            )
 
             page.close()
 

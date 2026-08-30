@@ -283,6 +283,15 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
                     {"error": "tool_call_not_found", "code": "tool_call_not_found"},
                     status_code=404,
                 )
+            # HS-152-06 (close counsel S1): a decision lands once. A second
+            # POST for a call that is no longer held is a conflict, not a
+            # mutation of a dead handle.
+            if handle.state != "awaiting_decision":
+                return JSONResponse(
+                    {"error": "tool_call_not_pending", "code": "tool_call_not_pending",
+                     "state": handle.state},
+                    status_code=409,
+                )
             # HS-152-04: Allow-always writes an "allow" policy row BEFORE
             # deciding so that future calls to the same tool auto-admit.
             if always and decision == "approve":

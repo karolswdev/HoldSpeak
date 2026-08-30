@@ -1,8 +1,8 @@
 # Phase DC-01: The Desk Chat — porting the warpdrv chat experience into HoldSpeak
 
-> **Status:** DC-01 shipped as Phase 151 (pending owner merge); DC-02+
-> unchartered. Backlog candidate **AF** in `pm/roadmap/holdspeak/BACKLOG.md`
-> is the handoff row.
+> **Status:** DC-01 shipped as Phase 151; DC-02 shipped as Phase 152
+> The Hands; DC-03+ unchartered. Backlog candidate **AF** in
+> `pm/roadmap/holdspeak/BACKLOG.md` is the handoff row.
 >
 > **Reference:** [mikjee/warpdrv](https://github.com/mikjee/warpdrv) —
 > "LLAMA.cpp Server Manager + Chat + Tools", ~83k LOC, **AGPL-3.0**.
@@ -244,6 +244,8 @@ turn's `aborted_at` and an `indeterminate` receipt.
 
 ### 6.4 The tool loop on the kernel (DC-02)
 
+> **Status:** SHIPPED as Phase 152 The Hands.
+
 warpdrv: `executePass()` streams → finalize tool calls → resolve permission
 → execute → recurse (≤10 passes) or halt `PENDING_APPROVAL`; resume after
 the user's decision.
@@ -318,6 +320,8 @@ row; Submit/Decline resolve the operation. No new admission path.
   list.
 
 ### 6.7 Status line, search, attachments
+
+> `set_current_status` SHIPPED as Phase 152 The Hands (the `thread` MCP family, 142 tools / 31 families).
 
 - `set_current_status` → `threads.status_line`, shown under the window
   title (one line, no prose).

@@ -212,6 +212,39 @@ def main() -> int:
             check(_PEOPLE_REDACTION in joined, "cloud payload carries [people content withheld]")
             check(people_text not in joined, "cloud payload carries NO People bytes")
             check("_sensitive_texts" not in json.dumps(cloud_msgs), "no sentinel key leaks")
+
+        # ── Leg C (LIVE only): a door.* EFFECT with a receipt + a control turn ──
+        if engine is None:
+            print("\n== LEG C: door.add_item effect on .43 (receipt) + control (no tool) ==", flush=True)
+            st, thread3 = hub_api(url, "POST", "/api/threads", {"title": "HS-152-06 door effect"})
+            tid3 = thread3["id"]
+            st, turn3 = hub_api(url, "POST", f"/api/threads/{tid3}/turns", {
+                "text": "Add an action item to my Door: 'Ship the Hands demo' due 2026-09-04. Use the door tool.",
+            })
+            check(st == 201, f"POST /turns (effect) -> {st}")
+            detail3 = _wait_turn(url, tid3, turn3["assistant_message_id"], timeout=120)
+            (PAYLOADS / "leg-c-thread.json").write_text(json.dumps(detail3, indent=2) + "\n")
+            asst3 = [m for m in detail3["messages"] if m.get("id") == turn3["assistant_message_id"]][0]
+            calls3 = [p for p in asst3["parts"] if p["kind"] == "tool_call"]
+            names3 = [str((p.get("meta_json") or {}).get("name", "")) for p in calls3]
+            check("door.add_item" in names3, f"the model reached for door.add_item ({names3})")
+            tool3 = [m for m in detail3["messages"] if m.get("role") == "tool"]
+            metas3 = [(m["parts"][0].get("meta_json") or {}) for m in tool3 if m.get("parts")]
+            ok3 = [mm for mm in metas3 if mm.get("receipt_id") and mm.get("kind") not in (
+                "tool_execution_failed", "tool_denied", "tool_timeout", "tool_unknown")]
+            check(bool(ok3), f"the effect ran with a receipt ({[mm.get('receipt_id') for mm in metas3]})")
+            with db._connection() as conn:
+                row = conn.execute(
+                    "SELECT id, source_type, source_ref FROM action_items WHERE source_type='thread' ORDER BY rowid DESC LIMIT 1",
+                ).fetchone()
+            check(row is not None, f"an action_items row with source_type='thread' exists ({dict(row) if row else None})")
+
+            st, thread4 = hub_api(url, "POST", "/api/threads", {"title": "HS-152-06 control"})
+            st, turn4 = hub_api(url, "POST", f"/api/threads/{thread4['id']}/turns", {"text": "Reply with exactly: hello desk"})
+            detail4 = _wait_turn(url, thread4["id"], turn4["assistant_message_id"], timeout=120)
+            asst4 = [m for m in detail4["messages"] if m.get("id") == turn4["assistant_message_id"]][0]
+            check(not [p for p in asst4["parts"] if p["kind"] == "tool_call"], "control turn: no tool call")
+            check(any(p["kind"] == "text" and p.get("text") for p in asst4["parts"]), "control turn: text answer")
     finally:
         server.stop()
 

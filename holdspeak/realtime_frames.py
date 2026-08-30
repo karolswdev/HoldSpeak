@@ -90,18 +90,6 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
 #: Frames the hub emits that no web surface listens for, WITH the reason.
 #: Every entry here is a deliberate, named exception — never a silent one.
 EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
-    "thread_status_line": (
-        "DC-02 story 05 wires the status line renderer; until then the "
-        "loop emits this frame and the web ignores it."
-    ),
-    "thread_tool_pending": (
-        "DC-02 story 04 wires the pending box UI; until then the loop "
-        "emits this frame and the web ignores it."
-    ),
-    "thread_tool_result": (
-        "DC-02 story 04 wires the result renderer UI; until then the loop "
-        "emits this frame and the web ignores it."
-    ),
     "wake_armed": (
         "Dormant desktop wake-word leg: arming is a host-side hotkey window "
         "with no web affordance; the web consumes only its result "

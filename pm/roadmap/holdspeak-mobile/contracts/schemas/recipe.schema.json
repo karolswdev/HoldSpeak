@@ -27,6 +27,11 @@
     "avatar": {
       "type": "string"
     },
+    "kind": {
+      "type": "string",
+      "enum": ["", "mode"],
+      "description": "HS-153-01: '' = an ordinary recipe; 'mode' = a Thread mode (allow-list + voice) bound through threads.recipe_id"
+    },
     "role": {
       "type": "string"
     },

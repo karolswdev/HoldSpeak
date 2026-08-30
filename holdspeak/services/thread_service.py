@@ -1178,12 +1178,14 @@ class ThreadService:
         # "cloud" is the boundary value that indicates non-local egress.
         # Local boundaries (same_device, local, private_network) keep
         # sensitive data verbatim.
+        # The sentinel key is bookkeeping for THIS seam; it never travels
+        # to an engine on any boundary (close counsel S2).
         if boundary not in ("cloud", "external_service"):
-            return payload
+            return {k: v for k, v in payload.items() if k != "_sensitive_texts"}
 
         messages = payload.get("messages")
         if not isinstance(messages, list):
-            return payload
+            return {k: v for k, v in payload.items() if k != "_sensitive_texts"}
 
         redacted_messages = []
         for msg in messages:

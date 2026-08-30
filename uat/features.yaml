@@ -15,7 +15,7 @@ source:
   inventory: pm/roadmap/holdspeak-uat/phase-2-the-inventory/directory/_raw-inventory-rows.json
   additions: uat/feature-additions.yaml
   phase_index: pm/roadmap/holdspeak/README.md
-  phases_total: 113
+  phases_total: 120
 features:
 - key: activity.candidates.meeting
   title: Activity-derived meeting candidates
@@ -4310,4 +4310,18 @@ phase_map:
   '140':
   - internal/no-uat-surface
   '141':
+  - internal/no-uat-surface
+  '142':
+  - internal/no-uat-surface
+  '143':
+  - internal/no-uat-surface
+  '150':
+  - internal/no-uat-surface
+  '152':
+  - internal/no-uat-surface
+  '153':
+  - internal/no-uat-surface
+  '154':
+  - internal/no-uat-surface
+  '155':
   - internal/no-uat-surface

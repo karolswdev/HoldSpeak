@@ -87,7 +87,7 @@ def test_door_get_is_discoverable_with_a_closed_versioned_schema() -> None:
         tool for tool in response["result"]["tools"] if tool["name"].startswith("door.")
     ]
 
-    assert [tool["name"] for tool in door_tools] == ["door.get"]
+    assert [tool["name"] for tool in door_tools] == ["door.get", "door.add_item"]
     assert door_tools[0]["inputSchema"] == {
         "$id": "holdspeak://mcp/door.get@1",
         "type": "object",
