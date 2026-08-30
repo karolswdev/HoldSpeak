@@ -20,15 +20,17 @@ import { primitiveCan } from "../lib/primitives";
 import { usePalette, useShortcutSheet } from "./chromeState";
 import {
   closeFrontWindow,
-  cycleWindows,
-  cycleWindowsReverse,
   focusOrRestoreApp,
-  maximizeFrontWindow,
   minimizeFrontWindow,
   openWindowCount,
+} from "./components/window/windowRegistry";
+import {
+  cycleWindows,
+  cycleWindowsReverse,
+  maximizeFrontWindow,
   snapFrontWindow,
-  toggleExpose,
-} from "./components/DeskWindow";
+} from "./components/window/windowCommands";
+import { toggleExpose } from "./components/window/Expose";
 
 export type MenuId = "desk" | "object" | "go" | "window";
 export type VerbScope = "floor" | "object" | "go" | "window" | "system";

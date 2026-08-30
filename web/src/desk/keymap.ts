@@ -62,17 +62,10 @@ export function matchKey(e: KeyboardEvent, spec: KeySpec): boolean {
   return e.key.toLocaleLowerCase() === spec.key;
 }
 
-// Resolved LAZILY: keymap sits inside the verbRegistry/DeskWindow
-// import cycle, so VERBS is not initialized at this module's init.
-let boundCache: { verb: Verb; spec: KeySpec }[] | null = null;
-function bound(): { verb: Verb; spec: KeySpec }[] {
-  if (!boundCache)
-    boundCache = VERBS.flatMap((verb) => {
-      const spec = verb.key ? parseKey(verb.key) : null;
-      return spec ? [{ verb, spec }] : [];
-    });
-  return boundCache;
-}
+const BOUND_VERBS: { verb: Verb; spec: KeySpec }[] = VERBS.flatMap((verb) => {
+  const spec = verb.key ? parseKey(verb.key) : null;
+  return spec ? [{ verb, spec }] : [];
+});
 
 export function keyContext(): VerbContext {
   const ids = useDesk.getState().selectedIds;
@@ -82,7 +75,7 @@ export function keyContext(): VerbContext {
 /** The one handler (exported for tests). Returns the verb it ran. */
 export function dispatchKey(e: KeyboardEvent): Verb | null {
   if (e.repeat) return null;
-  for (const { verb, spec } of bound()) {
+  for (const { verb, spec } of BOUND_VERBS) {
     if (!matchKey(e, spec)) continue;
     if ((TYPING_GUARDED.has(spec.key) || spec.plain) && typing(e.target))
       return null;
