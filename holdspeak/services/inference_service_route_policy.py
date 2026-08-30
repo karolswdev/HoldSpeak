@@ -225,6 +225,37 @@ def builtin_service_route_policy_registry(
                 allowed_boundaries=("local", "mesh", "private_network", "cloud"),
             ),
             ServiceRoutePolicyDefinition(
+                # HS-151-06 (the attended leg's catch): a conductor-fired
+                # recording is ambient capture the owner ALREADY authorized by
+                # arming the schedule (the bounded-delegation ruling; the I5
+                # invariant), exactly as wake capture's authority is its
+                # configured wake. Without this entry SCHEDULER-then-SERVICE
+                # fires were refused and every scheduled recording persisted
+                # EMPTY — audio captured, all transcription intervals dropped.
+                # Same members the OWNER meeting session freezes
+                # (meeting_session/intel_admission.py:161-183).
+                id="scheduled-recording@1",
+                revision=1,
+                service_identity="scheduled-recording",
+                authority_basis="scheduled-recording:armed-schedule",
+                parent_kind="meeting.session",
+                allowed_operations=frozenset(
+                    {
+                        ("meeting.session", 1),
+                        ("inference.invoke", 1),
+                        ("inference.cancel", 1),
+                    }
+                ),
+                capability_ids=(
+                    "meeting.live_analysis",
+                    "meeting.bookmark_label",
+                    "meeting.auto_title",
+                    "speech.transcribe",
+                    "speech.preload",
+                ),
+                allowed_boundaries=("local", "mesh", "private_network", "cloud"),
+            ),
+            ServiceRoutePolicyDefinition(
                 id="rails-observer@1",
                 revision=1,
                 service_identity="rails-observer",

@@ -369,44 +369,8 @@ def test_naming_the_genuinely_loaded_model_is_accepted(rig, tmp_path, monkeypatc
     assert exc.value.context["available_models"] == ["Hub-Local-8B"]
 
 
-def test_recipe_run_and_chat_agree_on_the_model(rig, tmp_path, monkeypatch) -> None:
-    """One agent, one target, one model name — from both Recipe verbs.
-
-    Chat used to take a transport-injected `default_model` (the hub describer)
-    that `run` never saw, so the same agent printed two different models.
-    """
-    from holdspeak.services.recipe_service import RecipeService
-
-    db, broker = rig
-    _hub_local(db, tmp_path, monkeypatch)
-    # The old fixture relied on the retired ambient hub placement. Give this
-    # blank Recipe an actual canonical global default pointing at the same
-    # local artifact whose loaded model the test fences.
-    db.profiles.upsert(
-        profile_id="recipe-hub", name="Recipe hub", kind="onDevice",
-        model_file=str(tmp_path / "Hub-Local-8B.gguf"),
-    )
-    InferenceAssignmentService(db).set_assignment(
-        OWNER,
-        {
-            "command_id": "recipe-model-honesty-default",
-            "expected_revision": 0,
-            "scope": {"kind": "global"},
-            "entries": [{"profile_id": "legacy-recipe-hub"}],
-        },
-    )
-    db.recipes.upsert(
-        recipe_id="recipe_scout", name="Scout", system_prompt="You are Scout.",
-        user_template="{input}",
-    )
-    service = RecipeService(db, broker=broker)
-
-    ran = asyncio.run(service.run(OWNER, "recipe_scout", input="go"))
-    chatted = asyncio.run(service.chat(OWNER, "recipe_scout", question="go"))
-
-    assert ran["actual_placement"]["model"] == "Hub-Local-8B"
-    assert chatted["model"] == "Hub-Local-8B"
-    assert chatted["actual_placement"]["model"] == ran["actual_placement"]["model"]
+# HS-151-04: test_recipe_run_and_chat_agree_on_the_model DELETED —
+# recipe.chat retired; model honesty is proven by recipe.run alone.
 
 
 def test_manifest_row_equals_what_the_paired_device_would_load(

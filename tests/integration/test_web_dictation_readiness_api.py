@@ -368,14 +368,15 @@ def test_dictation_runtime_docs_route_serves_setup_page() -> None:
     assert response.status_code == 200
     assert '<div id="root"></div>' in response.text
     source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/RuntimeDocsCore.tsx").read_text()
-    # HS-95-08: the title rides the window chrome (the SURFACES table).
-    surfaces = (
+    # HS-95-08: application identity and aliases ride the one DeskOS manifest.
+    applications = (
         Path(__file__).resolve().parents[2]
-        / "web/src/desk/components/SurfaceWindows.tsx"
+        / "web/src/desk/applications.ts"
     ).read_text()
     # HS-100-10: the guide is Settings' Guide wing; the old surface key
     # rides an alias so deep links land.
-    assert '"read-runtime-docs": { target: "configure-settings"' in surfaces
+    assert 'action: "configure-settings"' in applications
+    assert '{ key: "read-runtime-docs", scope: "guide" }' in applications
     assert "dictation-mlx" in source and "dictation-llama" in source
     assert "OpenAI-compatible endpoint" in source
 

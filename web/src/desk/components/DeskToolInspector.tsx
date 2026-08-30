@@ -8,7 +8,7 @@ import {
   effectClassLabel,
   humanizeWireValue,
 } from "../../lib/productLanguage";
-import { modelChatId } from "../chat";
+import { createThread } from "../threads";
 import { contextualIntegrationActions } from "../contextual";
 import { useProjections } from "../projections";
 import { useDesk } from "../store";
@@ -86,7 +86,7 @@ export function DeskToolInspector() {
   const items = useDesk((state) => state.items);
   const models = useDesk((state) => state.models);
   const selectedIds = useDesk((state) => state.selectedIds);
-  const { closeToolInspector, openPullout, openChat } = useDesk.getState();
+  const { closeToolInspector, openPullout, refresh } = useDesk.getState();
   const [projectResources, setProjectResources] = useState<
     Array<{ resource_ref: string; relationship: string }>
   >([]);
@@ -330,9 +330,9 @@ export function DeskToolInspector() {
                 type="button"
                 className="desk-chip"
                 disabled={!target.readiness.available}
-                onClick={() => openChat(modelChatId(target.model))}
+                onClick={() => void createThread({ title: target.model, profile_override: target.model }).then((t) => { openPullout(`thread:${t.id}`); void refresh(); })}
               >
-                Chat with {target.model}
+                Continue in thread
               </button>
             ) : null}
             <button

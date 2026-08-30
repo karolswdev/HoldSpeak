@@ -69,6 +69,74 @@ notes:
       - Capture: [example: decisions, actions, open questions]
       - Follow-up format: [example: ]
       - People to include: [example: ]
+  - id: hs-seed-prompt-weekly-update
+    title: Weekly update
+    tags: [prompt]
+    body_markdown: |
+      Summarize what happened this week.
+      Focus on decisions made, commitments moved, and open questions.
+      One paragraph per topic, no filler.
+      End with what needs attention next week.
+  - id: hs-seed-prompt-one-on-one-prep
+    title: 1:1 prep
+    tags: [prompt]
+    body_markdown: |
+      Prepare for my next 1:1.
+      List open commitments, recent decisions that need follow-up,
+      and any blockers worth raising.
+      Keep it to three sections, one paragraph each.
+  - id: hs-seed-guardrail-effect-guard
+    title: Effect guard
+    tags: [guardrail]
+    body_markdown: |
+      ---
+      instruction: >
+        Flag any tool call that writes to a person's ledger
+        (people.commitment.transition, people.agenda.add,
+        people.note.create) without naming a specific source
+        (meeting, decision record, or owner directive) in its
+        arguments. A call with no source is a violation.
+      trigger_tools:
+        - "people.*"
+      n_messages: 6
+      ---
+  - id: hs-seed-guardrail-egress-guard
+    title: Egress guard
+    tags: [guardrail]
+    body_markdown: |
+      ---
+      instruction: >
+        Flag any pending tool call whose result would carry
+        people-sourced data (a people.* read) to a cloud
+        egress boundary. Reading people data on a local
+        boundary is fine; sending it over a cloud route is a
+        violation.
+      trigger_tools:
+        - "people.*"
+      n_messages: 4
+      ---
+
+recipes:
+  - id: hs-seed-mode-desk
+    name: Desk
+    avatar: "#6B7280"
+    kind: mode
+    system_prompt: "You have read access to the full desk. Observe and inform, never act."
+  - id: hs-seed-mode-chase
+    name: Chase
+    avatar: "#2563EB"
+    kind: mode
+    system_prompt: "You can read the desk and act on people and follow-through. Move work forward."
+  - id: hs-seed-mode-draft
+    name: Draft
+    avatar: "#9333EA"
+    kind: mode
+    system_prompt: "Write freely. No tools, no context lookups, just composition."
+  - id: hs-seed-mode-plan
+    name: Plan
+    avatar: "#059669"
+    kind: mode
+    system_prompt: "Reflect on decisions, thoughts, and memory. Plan, do not execute."
 
 kbs:
   - id: hs-seed-everyday-context

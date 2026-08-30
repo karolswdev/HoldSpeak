@@ -36,6 +36,7 @@ from .parsing import (
     _extract_json,
     _extract_openai_message_text,
     _json_only_messages,
+    intel_response_format,
 )
 from .providers import (
     _effective_cloud_api_key,
@@ -55,15 +56,28 @@ log = get_logger("intel")
 #: instead of the old hidden second `.create` under one receipt.
 _COMPAT_MAX_COMPLETION_TOKENS: set[str] = set()
 
+#: HS-151-01 (counsel M1): endpoint keys that answered ``response_format`` with
+#: a 400 and therefore require bare prompts without structured output.  Same
+#: pattern as ``_COMPAT_MAX_COMPLETION_TOKENS``: the first attempt learns the
+#: dialect and raises a NAMED signal, the runner admits a SECOND child that
+#: omits ``response_format`` on its first (and only) physical request.
+_COMPAT_NO_RESPONSE_FORMAT: set[str] = set()
+
 
 def endpoint_speaks_max_completion_tokens(endpoint_key: str) -> bool:
     """Whether this endpoint has already rejected ``max_tokens`` in this process."""
     return str(endpoint_key) in _COMPAT_MAX_COMPLETION_TOKENS
 
 
+def endpoint_rejects_response_format(endpoint_key: str) -> bool:
+    """Whether this endpoint has already rejected ``response_format`` in this process."""
+    return str(endpoint_key) in _COMPAT_NO_RESPONSE_FORMAT
+
+
 def forget_endpoint_dialects() -> None:
     """Drop every learned dialect (tests; a new process starts empty anyway)."""
     _COMPAT_MAX_COMPLETION_TOKENS.clear()
+    _COMPAT_NO_RESPONSE_FORMAT.clear()
 
 
 def _token_budget_kwargs(endpoint_key: str, max_tokens: int) -> dict[str, object]:
@@ -78,6 +92,18 @@ def _compat_signal(exc: BaseException) -> BaseException:
     return ProviderCompatibilityRetry("max_completion_tokens", str(exc))
 
 
+def _response_format_compat_signal(exc: BaseException) -> BaseException:
+    """The typed signal for an endpoint that rejects response_format."""
+    return ProviderCompatibilityRetry("no_response_format", str(exc))
+
+
+def _response_format_kwargs(endpoint_key: str) -> dict[str, object]:
+    """The response_format parameter, omitted when the endpoint rejects it."""
+    if endpoint_rejects_response_format(endpoint_key):
+        return {}
+    return {"response_format": intel_response_format()}
+
+
 def _compatibility_retry(endpoint_key: str, exc: BaseException) -> bool:
     """True when the ONE named dialect fallback applies to this failure.
 
@@ -89,6 +115,31 @@ def _compatibility_retry(endpoint_key: str, exc: BaseException) -> bool:
     if endpoint_speaks_max_completion_tokens(endpoint_key):
         return False  # already speaking the dialect: this is a real failure
     _COMPAT_MAX_COMPLETION_TOKENS.add(str(endpoint_key))
+    return True
+
+
+def _response_format_compatibility_retry(endpoint_key: str, exc: BaseException) -> bool:
+    """True when the endpoint 400'd on ``response_format`` (HS-151-01, counsel M1).
+
+    Same shape as ``_compatibility_retry``: records the dialect so the next
+    admitted child omits ``response_format`` on its first request, and a second
+    rejection is a genuine failure.
+    """
+    status = _extract_status_code(exc)
+    if status != 400:
+        return False
+    msg = str(exc).lower()
+    if "response_format" not in msg and "json_schema" not in msg:
+        return False
+    if endpoint_rejects_response_format(endpoint_key):
+        return False  # already speaking the dialect: this is a real failure
+    _COMPAT_NO_RESPONSE_FORMAT.add(str(endpoint_key))
+    # HS-151-06 close counsel S1: the downgrade lasts the process lifetime —
+    # it must be visible in the log, never silent.
+    log.warning(
+        "Endpoint %s rejected response_format; omitting structured output "
+        "for the rest of this process", endpoint_key,
+    )
     return True
 
 
@@ -238,6 +289,26 @@ class MeetingIntel:
         """Backward-compatible alias for older tests/callers."""
         self._ensure_runtime_loaded()
 
+    def _extra_body(self, *, has_tools: bool = False) -> dict[str, Any]:
+        """Build the ``extra_body`` dict for the OpenAI client.
+
+        HS-153-06: llama.cpp servers may run with a default grammar (e.g. the
+        dictation ``{"line": ...}`` schema) that forces every free-text
+        completion through it.  Sending ``grammar: ""`` clears the server-side
+        default so the model generates unconstrained text (or follows an
+        explicit ``response_format``).  The override is sent ONLY for custom
+        endpoints (``self.cloud_base_url`` is set) — the real OpenAI API
+        rejects unknown fields in ``extra_body``.
+
+        When *has_tools* is True, the override is NOT sent — tool calls
+        carry their own constrained-decoding grammar, and ``grammar: ""``
+        would clear it.
+        """
+        body: dict[str, Any] = {"thinking": False}
+        if self.cloud_base_url and not has_tools:
+            body["grammar"] = ""
+        return body
+
     def _cloud_endpoint_key(self) -> str:
         """HS-103-04: the breaker's identity for this engine's cloud
         endpoint — the base URL when self-hosted, else the model name (the
@@ -266,16 +337,21 @@ class MeetingIntel:
         *,
         temperature: float,
         max_tokens: int,
+        response_format: Optional[dict[str, Any]] = None,
     ) -> str:
         self._ensure_model_loaded()
 
         if self._active_provider == "local":
             assert self._llm is not None
-            response = self._llm.create_chat_completion(
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
+            local_kwargs: dict[str, Any] = {
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            }
+            # HS-153-06: pass response_format for structured_output capabilities.
+            if response_format is not None:
+                local_kwargs["response_format"] = response_format
+            response = self._llm.create_chat_completion(**local_kwargs)
             raw = (
                 response.get("choices", [{}])[0]
                 .get("message", {})
@@ -295,9 +371,13 @@ class MeetingIntel:
             "model": self.cloud_model,
             "messages": messages,
             "temperature": temperature,
-            "extra_body": {"thinking": False},
+            "extra_body": self._extra_body(),
             **_token_budget_kwargs(endpoint_key, max_tokens),
         }
+        # HS-151-01: request-level structured output, omitted when the endpoint
+        # has already rejected it in this process (the compat signal pattern).
+        if response_format is not None and not endpoint_rejects_response_format(endpoint_key):
+            base_kwargs["response_format"] = response_format
         if self.cloud_reasoning_effort:
             base_kwargs["reasoning_effort"] = self.cloud_reasoning_effort
         if self.cloud_store:
@@ -313,6 +393,11 @@ class MeetingIntel:
         except Exception as exc:
             if _compatibility_retry(endpoint_key, exc):
                 raise _compat_signal(exc) from exc
+            # HS-151-01 (counsel M1): a 400 naming response_format is a dialect
+            # mismatch, not a provider failure.  Record the endpoint's dialect and
+            # raise the named signal for a second admitted child WITHOUT response_format.
+            if response_format is not None and _response_format_compatibility_retry(endpoint_key, exc):
+                raise _response_format_compat_signal(exc) from exc
             _endpoint_health.record_failure(endpoint_key)
             if _extract_status_code(exc) == 429:
                 raise ProviderKnownNoGenerationTransient() from exc
@@ -340,6 +425,7 @@ class MeetingIntel:
         *,
         temperature: float,
         max_tokens: int,
+        response_format: Optional[dict[str, Any]] = None,
     ) -> Iterator[str]:
         """Stream text deltas from the active provider (local GGUF OR cloud).
 
@@ -378,10 +464,13 @@ class MeetingIntel:
             "model": self.cloud_model,
             "messages": messages,
             "temperature": temperature,
-            "extra_body": {"thinking": False},
+            "extra_body": self._extra_body(),
             "stream": True,
             **_token_budget_kwargs(endpoint_key, max_tokens),
         }
+        # HS-151-01: structured output for streaming (same compat-signal pattern).
+        if response_format is not None and not endpoint_rejects_response_format(endpoint_key):
+            base_kwargs["response_format"] = response_format
         if self.cloud_reasoning_effort:
             base_kwargs["reasoning_effort"] = self.cloud_reasoning_effort
         if self.cloud_store:
@@ -395,6 +484,8 @@ class MeetingIntel:
         except Exception as exc:
             if _compatibility_retry(endpoint_key, exc):
                 raise _compat_signal(exc) from exc
+            if response_format is not None and _response_format_compatibility_retry(endpoint_key, exc):
+                raise _response_format_compat_signal(exc) from exc
             if _extract_status_code(exc) == 429:
                 raise ProviderKnownNoGenerationTransient() from exc
             if _extract_status_code(exc) in {401, 403}:
@@ -421,6 +512,270 @@ class MeetingIntel:
             if piece:
                 yield str(piece)
 
+    def _chat_completion_deltas(
+        self,
+        messages: list[dict[str, Any]],
+        *,
+        temperature: float,
+        max_tokens: int,
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | None = None,
+    ) -> "Iterator[Delta]":
+        """Yield typed ``Delta`` objects from the active provider.
+
+        The typed twin of ``_chat_completion_stream``: ``delta.content`` maps
+        to ``text``, ``delta.reasoning_content`` (when present) maps to
+        ``reasoning``, the final ``usage`` chunk maps to ``usage``, then
+        ``done``.  Errors become ``error`` deltas.
+
+        When *tools* is provided, ``choice.delta.tool_calls[]`` chunks are
+        parsed (OpenAI streaming shape: index, id on first chunk,
+        function.name on first chunk, function.arguments fragments).
+        Per-fragment ``tool_call_delta`` deltas and one finalized
+        ``tool_calls`` delta (before ``done``) are emitted.
+
+        OpenAI SDK shape: ``stream_options={"include_usage": True}`` requests
+        a final chunk whose ``usage`` field carries the token counts (not all
+        endpoints support it -- tolerate absence).
+
+        llama.cpp shape: the last chunk carries ``timings`` (and sometimes
+        ``usage``) in the root object -- both are read and merged.
+        """
+        from ..kernel.inference_stream import Delta
+
+        self._ensure_model_loaded()
+
+        # Tool-call accumulator: index -> {id, name, arguments_parts}.
+        tc_accum: dict[int, dict[str, Any]] = {}
+
+        if self._active_provider == "local":
+            assert self._llm is not None
+            local_kwargs: dict[str, Any] = {
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "stream": True,
+            }
+            if tools is not None:
+                local_kwargs["tools"] = tools
+            if tool_choice is not None:
+                local_kwargs["tool_choice"] = tool_choice
+            stream_iter = self._llm.create_chat_completion(**local_kwargs)
+            usage_seen = False
+            for chunk in stream_iter:
+                try:
+                    choice0 = (chunk.get("choices") or [{}])[0]
+                    delta_obj = choice0.get("delta") or {}
+                    # Text content.
+                    piece = delta_obj.get("content")
+                    if piece is None:
+                        piece = choice0.get("text")
+                    if piece:
+                        yield Delta(kind="text", text=str(piece))
+                    # Reasoning content (llama.cpp may not emit this).
+                    reasoning = delta_obj.get("reasoning_content")
+                    if reasoning:
+                        yield Delta(kind="reasoning", text=str(reasoning))
+                    # Tool calls (llama.cpp / Qwen emits OpenAI-format
+                    # tool_calls when tools is passed).
+                    raw_tcs = delta_obj.get("tool_calls")
+                    if raw_tcs and isinstance(raw_tcs, list):
+                        for tc_item in raw_tcs:
+                            if not isinstance(tc_item, dict):
+                                continue
+                            idx = tc_item.get("index", 0)
+                            tc_id = tc_item.get("id")
+                            fn = tc_item.get("function") or {}
+                            fn_name = fn.get("name")
+                            fn_args = fn.get("arguments", "")
+                            # Defensively handle complete JSON object.
+                            if not isinstance(fn_args, str):
+                                import json as _json
+                                fn_args = _json.dumps(fn_args)
+                            if idx not in tc_accum:
+                                tc_accum[idx] = {"id": tc_id or "", "name": fn_name or "", "arguments_parts": []}
+                            else:
+                                if tc_id:
+                                    tc_accum[idx]["id"] = tc_id
+                                if fn_name:
+                                    tc_accum[idx]["name"] = fn_name
+                            if fn_args:
+                                tc_accum[idx]["arguments_parts"].append(fn_args)
+                            yield Delta(kind="tool_call_delta", meta={
+                                "index": idx,
+                                "id": tc_id or "",
+                                "name": fn_name or "",
+                                "arguments_fragment": fn_args,
+                            })
+                    # llama.cpp: usage/timings on the last chunk.
+                    usage_data = chunk.get("usage")
+                    timings = chunk.get("timings")
+                    if usage_data or timings:
+                        meta: dict[str, Any] = {}
+                        if usage_data and isinstance(usage_data, dict):
+                            meta.update(usage_data)
+                        if timings and isinstance(timings, dict):
+                            meta.setdefault("timings", timings)
+                        if meta:
+                            usage_seen = True
+                            yield Delta(kind="usage", meta=meta)
+                except Exception:
+                    continue
+            # Emit finalized tool_calls before done.
+            if tc_accum:
+                yield Delta(kind="tool_calls", meta={"tool_calls": [
+                    {"id": entry["id"], "name": entry["name"], "arguments": "".join(entry["arguments_parts"])}
+                    for entry in (tc_accum[i] for i in sorted(tc_accum))
+                ]})
+            yield Delta(kind="done")
+            return
+
+        assert self._openai_client is not None
+        endpoint_key = self._cloud_endpoint_key()
+        base_kwargs: dict[str, object] = {
+            "model": self.cloud_model,
+            "messages": messages,
+            "temperature": temperature,
+            "extra_body": self._extra_body(has_tools=tools is not None),
+            "stream": True,
+            "stream_options": {"include_usage": True},
+            **_token_budget_kwargs(endpoint_key, max_tokens),
+        }
+        if tools is not None:
+            base_kwargs["tools"] = tools
+        if tool_choice is not None:
+            base_kwargs["tool_choice"] = tool_choice
+        if self.cloud_reasoning_effort:
+            base_kwargs["reasoning_effort"] = self.cloud_reasoning_effort
+        if self.cloud_store:
+            base_kwargs["store"] = True
+
+        try:
+            stream_iter = self._remote_completion(
+                self._openai_client.chat.completions.create, base_kwargs,
+            )
+        except Exception as exc:
+            if _compatibility_retry(endpoint_key, exc):
+                raise _compat_signal(exc) from exc
+            if _extract_status_code(exc) == 429:
+                raise ProviderKnownNoGenerationTransient() from exc
+            if _extract_status_code(exc) in {401, 403}:
+                raise ProviderPermissionDenied() from exc
+            if _extract_status_code(exc) == 404:
+                raise ProviderPermanentNoGeneration() from exc
+            yield Delta(kind="error", text=str(
+                _describe_cloud_exception(
+                    exc, model=self.cloud_model,
+                    base_url=self.cloud_base_url,
+                )
+            ))
+            return
+
+        for chunk in stream_iter:
+            try:
+                # OpenAI SDK: the final chunk with stream_options has
+                # choices=[] and usage set.
+                usage_obj = getattr(chunk, "usage", None)
+                if usage_obj is not None:
+                    meta = {}
+                    for field in ("prompt_tokens", "completion_tokens", "total_tokens"):
+                        val = getattr(usage_obj, field, None)
+                        if val is not None:
+                            meta[field] = val
+                    if meta:
+                        yield Delta(kind="usage", meta=meta)
+
+                choices = getattr(chunk, "choices", None) or []
+                if not choices:
+                    continue
+                delta_obj = getattr(choices[0], "delta", None)
+                if delta_obj is None:
+                    continue
+
+                # Text content.
+                piece = getattr(delta_obj, "content", None)
+                if piece:
+                    yield Delta(kind="text", text=str(piece))
+
+                # Reasoning content (OpenRouter/DeepSeek/o-series).
+                reasoning = getattr(delta_obj, "reasoning_content", None)
+                if reasoning:
+                    yield Delta(kind="reasoning", text=str(reasoning))
+
+                # Tool calls (OpenAI streaming shape).
+                raw_tcs = getattr(delta_obj, "tool_calls", None)
+                if raw_tcs:
+                    for tc_item in raw_tcs:
+                        idx = getattr(tc_item, "index", 0)
+                        tc_id = getattr(tc_item, "id", None) or ""
+                        fn = getattr(tc_item, "function", None)
+                        fn_name = getattr(fn, "name", None) or "" if fn else ""
+                        fn_args = getattr(fn, "arguments", None) or "" if fn else ""
+                        # Defensively handle complete JSON object.
+                        if not isinstance(fn_args, str):
+                            import json as _json
+                            fn_args = _json.dumps(fn_args)
+                        if idx not in tc_accum:
+                            tc_accum[idx] = {"id": tc_id, "name": fn_name, "arguments_parts": []}
+                        else:
+                            if tc_id:
+                                tc_accum[idx]["id"] = tc_id
+                            if fn_name:
+                                tc_accum[idx]["name"] = fn_name
+                        if fn_args:
+                            tc_accum[idx]["arguments_parts"].append(fn_args)
+                        yield Delta(kind="tool_call_delta", meta={
+                            "index": idx,
+                            "id": tc_id,
+                            "name": fn_name,
+                            "arguments_fragment": fn_args,
+                        })
+            except Exception:
+                continue
+
+        # Emit finalized tool_calls before done.
+        if tc_accum:
+            yield Delta(kind="tool_calls", meta={"tool_calls": [
+                {"id": entry["id"], "name": entry["name"], "arguments": "".join(entry["arguments_parts"])}
+                for entry in (tc_accum[i] for i in sorted(tc_accum))
+            ]})
+        yield Delta(kind="done")
+
+    def run_prompt_stream(
+        self,
+        *,
+        messages: list[dict[str, Any]],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        tools: list[dict[str, Any]] | None = None,
+        tool_choice: str | None = None,
+    ) -> "Iterator[Delta]":
+        """Stream typed ``Delta`` objects from a freeform prompt.
+
+        The streaming twin of ``run_prompt_messages``.  The thread service
+        adapter (HS-151-04) calls this; it does not assemble system prompts
+        itself -- the caller pre-builds the message array.
+
+        When *tools*/*tool_choice* are provided they are forwarded to the
+        provider; the stream may then carry ``tool_call_delta`` and
+        ``tool_calls`` deltas (see ``Delta`` docstring for the shape).
+        """
+        from ..kernel.inference_stream import Delta
+
+        try:
+            yield from self._chat_completion_deltas(
+                messages,
+                temperature=self.temperature if temperature is None else temperature,
+                max_tokens=self.max_tokens if max_tokens is None else max_tokens,
+                tools=tools,
+                tool_choice=tool_choice,
+            )
+        except (MeetingIntelError, *CONTROL_SIGNALS):
+            raise
+        except Exception as exc:
+            log.error(f"Streaming prompt failed: {exc}", exc_info=True)
+            yield Delta(kind="error", text=str(exc))
+
     def run_prompt(
         self,
         *,
@@ -428,6 +783,7 @@ class MeetingIntel:
         user_prompt: str,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        response_format: Optional[dict[str, Any]] = None,
     ) -> str:
         """Run a freeform chat completion and return the raw text.
 
@@ -435,7 +791,9 @@ class MeetingIntel:
         on the hub: a persona's `system_prompt` + rendered `user_template` go in,
         the model's text comes out, through the same local/cloud provider plumbing
         the meeting intel engine already uses (so a persona honours the user's
-        configured endpoint). No JSON coercion — personas produce free text.
+        configured endpoint). No JSON coercion by default -- personas produce free
+        text. Pass *response_format* (e.g. ``{"type": "json_object"}``) when a
+        structured_output capability needs constrained decoding (HS-153-06).
         """
         from ..constitutional_context import constitutional_system_message
         constitutional = constitutional_system_message()
@@ -450,6 +808,7 @@ class MeetingIntel:
                 messages,
                 temperature=self.temperature if temperature is None else temperature,
                 max_tokens=self.max_tokens if max_tokens is None else max_tokens,
+                response_format=response_format,
             )
         except (MeetingIntelError, *CONTROL_SIGNALS):
             # The dialect signal is the runner's to act on: swallowing it here
@@ -492,6 +851,7 @@ class MeetingIntel:
                 messages,
                 temperature=self.temperature,
                 max_tokens=self.max_tokens,
+                response_format=intel_response_format(),
             )
         except (MeetingIntelError, *CONTROL_SIGNALS):
             raise
@@ -564,7 +924,8 @@ class MeetingIntel:
 
         try:
             for piece in self._chat_completion_stream(
-                messages, temperature=self.temperature, max_tokens=self.max_tokens
+                messages, temperature=self.temperature, max_tokens=self.max_tokens,
+                response_format=intel_response_format(),
             ):
                 raw_parts.append(piece)
                 yield piece

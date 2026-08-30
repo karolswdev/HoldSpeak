@@ -1,5 +1,12 @@
 import "./workbench-config.css";
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
 import type {
@@ -32,7 +39,31 @@ import { useUndoReceipt } from "../hooks/useUndoReceipt";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useWriteReceipt, type WriteAttempt } from "../hooks/useWriteReceipt";
 import { boundaryEgressLamp } from "../inferenceEgress";
-import { keepReply } from "../chat";
+import { apiRequest } from "../../lib/api";
+
+/** HS-151-07: inlined from the retired chat.ts — recipe keep is not a thread
+ * operation; the /api/recipes/{id}/keep route lives on independently. */
+async function keepReply(
+  recipeId: string,
+  question: string,
+  output: string,
+): Promise<string | null> {
+  try {
+    const res = await apiRequest(
+      `/api/recipes/${encodeURIComponent(recipeId)}/keep`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, output }),
+      },
+    );
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => ({}));
+    return data.artifact_id ? String(data.artifact_id) : null;
+  } catch {
+    return null;
+  }
+}
 import {
   emptyGrounding,
   groundingIsEmpty,
@@ -73,7 +104,7 @@ import {
 } from "../surface/Surface";
 import { Material } from "../surface/Material";
 import { SurfaceWings, type WingSpec } from "../surface/wings";
-import { useRuntimeBus } from "../../runtime/RuntimeBus";
+import { useRuntimeBus, type RuntimeFrame } from "../../runtime/RuntimeBus";
 import { workbenchVoiceGrammar } from "../voice/grammars/workbench";
 import type { VoiceProposal } from "../voice/grammar";
 import { humanTime } from "../surface/format";
@@ -86,6 +117,15 @@ import {
 } from "./InletAutocomplete";
 import { WorkbenchAutomations } from "./WorkbenchAutomations";
 import { WorkbenchResourceful } from "./WorkbenchResourceful";
+import {
+  WORKBENCH_RUN_FRAME_TYPES,
+  initialWorkbenchRunState,
+  isWorkbenchRunActive,
+  planWorkbenchRunFrame,
+  workbenchRunReducer,
+  workbenchRunRequestFailure,
+} from "./workbench/runLifecycle";
+import { WorkbenchRunsWing } from "./workbench/WorkbenchRunsWing";
 
 /* ── schedule presets ───────────────────────────────────────────────── */
 
@@ -942,8 +982,12 @@ export function WorkbenchWindow({
   const [newPriority, setNewPriority] = useState(3);
   const [grounding, setGrounding] = useState<GroundingSelection>(emptyGrounding);
   const [groundingRefs, setGroundingRefs] = useState<ResolvedRef[]>([]);
-  const [running, setRunning] = useState(false);
-  const [runProgress, setRunProgress] = useState<{ index: number; total: number } | null>(null);
+  const [runLifecycle, dispatchRun] = useReducer(
+    workbenchRunReducer,
+    initialWorkbenchRunState,
+  );
+  const running = isWorkbenchRunActive(runLifecycle);
+  const runProgress = runLifecycle.progress;
   const [activeWing, setActiveWing] = useState("items");
   const [openRunId, setOpenRunId] = useState<string | null>(null);
   const [voiceProposal, setVoiceProposal] = useState<VoiceProposal | null>(null);
@@ -1092,53 +1136,40 @@ export function WorkbenchWindow({
   const bus = useRuntimeBus();
 
   useEffect(() => {
-    const d = (frame: { data: unknown }) => frame.data as Record<string, any> | undefined;
-    const unsubs = [
-      bus.subscribe("workbench.run_start", (frame) => {
-        const ev = d(frame);
-        if (ev?.workbench_id !== workbenchId) return;
-        setRunning(true);
-        setRunProgress({ index: 0, total: ev.item_count || 0 });
-      }),
-      bus.subscribe("workbench.item_claimed", (frame) => {
-        const ev = d(frame);
-        if (ev?.workbench_id !== workbenchId) return;
-        setRunProgress({ index: ev.index || 0, total: ev.total || 0 });
-        void load();
-      }),
-      bus.subscribe("workbench.item_done", (frame) => {
-        const ev = d(frame);
-        if (ev?.workbench_id !== workbenchId) return;
-        setRunProgress({ index: ev.index || 0, total: ev.total || 0 });
-        void load();
-      }),
-      bus.subscribe("workbench.item_failed", (frame) => {
-        const ev = d(frame);
-        if (ev?.workbench_id !== workbenchId) return;
-        setRunProgress({ index: ev.index || 0, total: ev.total || 0 });
-        void load();
-      }),
-      bus.subscribe("workbench.run_complete", (frame) => {
-        const ev = d(frame);
-        if (ev?.workbench_id !== workbenchId) return;
-        clearRunTimeout();
-        setRunning(false);
-        setRunProgress(null);
-        void load();
-        void loadRuns();
-        void loadMemory();
-      }),
-    ];
+    const handleRunFrame = (frame: RuntimeFrame) => {
+      const plan = planWorkbenchRunFrame(workbenchId, frame);
+      if (!plan) return;
+      if (plan.clearRequestTimeout) clearRunTimeout();
+      dispatchRun(plan.action);
+      if (plan.refresh.detail) load();
+      if (plan.refresh.runs) loadRuns();
+      if (plan.refresh.memory) loadMemory();
+    };
+    const unsubs = WORKBENCH_RUN_FRAME_TYPES.map((type) =>
+      bus.subscribe(type, handleRunFrame),
+    );
     return () => unsubs.forEach((u) => u());
   }, [bus, workbenchId, load, loadRuns, loadMemory, clearRunTimeout]);
+
+  useEffect(() => {
+    if (runLifecycle.phase !== "reconciling") return;
+    if (detailHook.loading || runsHook.loading || memoryHook.loading) return;
+    dispatchRun({ type: "reconciled" });
+  }, [
+    runLifecycle.phase,
+    detailHook.loading,
+    runsHook.loading,
+    memoryHook.loading,
+  ]);
 
   // Reconnect-safe: detect in-progress run from item states
   useEffect(() => {
     if (!detail) return;
-    const hasClaimed = detail.items.some((i) => i.status === "claimed");
-    if (hasClaimed && !running) setRunning(true);
-    if (!hasClaimed && running && !runProgress) setRunning(false);
-  }, [detail, running, runProgress]);
+    dispatchRun({
+      type: "detail_observed",
+      hasClaimedItem: detail.items.some((i) => i.status === "claimed"),
+    });
+  }, [detail]);
 
   /* ── mutations ──────────────────────────────────────────────────── */
 
@@ -1220,25 +1251,24 @@ export function WorkbenchWindow({
 
   const triggerRun = async () => {
     clearRunTimeout();
-    setRunning(true);
     const pendingCount = detail?.items.filter((i) => i.status === "pending").length || 0;
-    setRunProgress({ index: 0, total: pendingCount });
+    dispatchRun({ type: "start_requested", total: pendingCount });
     const timeout = window.setTimeout(() => {
       if (runTimeoutRef.current !== timeout) return;
       runTimeoutRef.current = null;
-      setRunning(false);
-      setRunProgress(null);
+      dispatchRun({ type: "request_timed_out" });
     }, 60_000);
     runTimeoutRef.current = timeout;
     const result = await write("RUN", () => triggerWorkbenchRun(workbenchId));
     if (result.ok) {
+      clearRunTimeout();
+      dispatchRun({ type: "request_succeeded" });
       load();
       loadRuns();
       return;
     }
     clearRunTimeout();
-    setRunning(false);
-    setRunProgress(null);
+    dispatchRun(workbenchRunRequestFailure(result.reason));
   };
 
   /* ── voice command handler ─────────────────────────────────────── */
@@ -1772,72 +1802,17 @@ export function WorkbenchWindow({
 
         {/* ── runs wing ────────────────────────────────────────────── */}
         {activeWing === "runs" ? (
-          <div className="wb-runs-wing">
-            <SurfaceLedger
-              count={`${runs.length} RUNS`}
-            >
-              {runs.length === 0 ? (
-                // HS-132-07 — the empty ledger names the state it is in and
-                // offers the step that ends it: bind an agent, or run.
-                <SurfaceState
-                  empty
-                  emptyLabel={isConfigured ? "No runs yet" : "No agent bound"}
-                  emptyGlyph="○"
-                  actionLabel={isConfigured ? "Run now" : "Bind an agent"}
-                  onAction={
-                    isConfigured
-                      ? running
-                        ? undefined
-                        : () => void triggerRun()
-                      : () => setConfigOpen(true)
-                  }
-                />
-              ) : null}
-              {runs.map((run) => {
-                const runLamp = boundaryEgressLamp(run.egress_boundary);
-                const statusChip = run.status === "completed"
-                  ? { label: "COMPLETED", tone: "ok" }
-                  : run.status === "running"
-                    ? { label: "RUNNING", tone: "warn" }
-                    : { label: "FAILED", tone: "fail" };
-                return (
-                  <SurfaceLedgerRow
-                    key={run.id}
-                    time={humanTime(run.started_at)}
-                    primary={
-                      <>
-                        {run.items_completed}/{run.items_attempted} done
-                        {run.items_failed ? ` · ${run.items_failed} failed` : ""}
-                        {" · "}
-                        {runLamp.label}
-                        {run.model ? ` · ${run.model}` : ""}
-                      </>
-                    }
-                    cells={
-                      <span className="desk-chip" data-tone={statusChip.tone}>
-                        {statusChip.label}
-                      </span>
-                    }
-                    open={openRunId === run.id}
-                    onToggle={() =>
-                      setOpenRunId(openRunId === run.id ? null : run.id)
-                    }
-                  >
-                    <div className="wb-run-detail">
-                      <dl className="surface-facts">
-                        <div><dt>egress</dt><dd>{runLamp.label}</dd></div>
-                        <div><dt>model</dt><dd>{run.model || "—"}</dd></div>
-                        <div><dt>tokens</dt><dd>{run.total_tokens.toLocaleString()}</dd></div>
-                        {run.completed_at ? (
-                          <div><dt>completed</dt><dd>{humanTime(run.completed_at)}</dd></div>
-                        ) : null}
-                      </dl>
-                    </div>
-                  </SurfaceLedgerRow>
-                );
-              })}
-            </SurfaceLedger>
-          </div>
+          <WorkbenchRunsWing
+            runs={runs}
+            configured={isConfigured}
+            running={running}
+            openRunId={openRunId}
+            onToggleRun={(runId) =>
+              setOpenRunId(openRunId === runId ? null : runId)
+            }
+            onRun={() => void triggerRun()}
+            onBindAgent={() => setConfigOpen(true)}
+          />
         ) : null}
 
         {/* ── memory wing ──────────────────────────────────────────── */}

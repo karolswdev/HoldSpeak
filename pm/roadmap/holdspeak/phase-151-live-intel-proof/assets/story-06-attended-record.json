@@ -1,0 +1,62 @@
+{
+ "honesty_header": "simulated meeting (played recording), real capture path (live mic), real transcription (mlx-whisper), real intel (.43)",
+ "clip": "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/5ce49957-4ec2-4c69-803c-324206b30a97/scratchpad/attended-clip.wav",
+ "events": [
+  {
+   "t": 1788078905.281891,
+   "msg": "wire_metal_intel: rc=0"
+  },
+  {
+   "t": 1788078905.498177,
+   "msg": "speech pre-boot migration: rc=0 speech migration ran "
+  },
+  {
+   "t": 1788078905.545495,
+   "msg": "calendar pre-seed: rc=0 seeded "
+  },
+  {
+   "t": 1788078907.582973,
+   "msg": "hub up: http://127.0.0.1:49971?token=gJp2pdp_HhnQWq1OZCsyX3fGSKXqhnYN"
+  },
+  {
+   "t": 1788078911.612232,
+   "msg": "armed via the real [Record this] tap"
+  },
+  {
+   "t": 1788079038.321289,
+   "msg": "recording FIRED \u2014 pressing play on the owner's 1:1"
+  },
+  {
+   "t": 1788079249.304106,
+   "msg": "clip finished; waiting for the auto-stop + finalize"
+  },
+  {
+   "t": 1788079279.487797,
+   "msg": "meeting finalized: 2077d996"
+  },
+  {
+   "t": 1788079285.8947048,
+   "msg": "drain_intel_queue: 1 jobs processed"
+  },
+  {
+   "t": 1788079285.905983,
+   "msg": "intel ready: 1 action items; summary: The speaker (Me) and Peter discussed their recent daily routines, noting a trend of sleeping later than usual. They shared personal updates, including Peter's w"
+  },
+  {
+   "t": 1788079288.938974,
+   "msg": "FINDING: no named (non-reserved) owner emitted this run \u2014 recorded honestly"
+  }
+ ],
+ "intel_ready": true,
+ "segment_count": 22,
+ "transcript_sample": "Play with it and see how it goes. So, Peter, help me about your day. Do you want to just start? your day? Do you want to just start from there and we'll ease into it? Yeah, I mean, these days getting up later than I'm used to. to. I think that's kind of common for people. You know, it just these days it gets harder even to remember when I was doing. I had a couple hours ago, but I know part of it was trying to get caught up with the Supreme Court ruling last night. It's quite disappointing and kind of. It's quite disappointing and kind of confusing for folks. Have the furnace or our air condit",
+ "summary": "The speaker (Me) and Peter discussed their recent daily routines, noting a trend of sleeping later than usual. They shared personal updates, including Peter's work on a grant for the Wisconsin Early Childhood Association and his household's 'color of the day' tradition. The conversation highlighted shared experiences with higher anxiety, disrupted sleep patterns due to late-night activities, and the challenges of managing different schedules within their respective households.",
+ "action_items": [
+  {
+   "task": "Check furnace or air conditioning for the year",
+   "owner": "Me",
+   "due": null
+  }
+ ],
+ "failures": []
+}

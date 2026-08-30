@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are the desk's AI core. Be concrete and brief."
+    },
+    {
+      "role": "user",
+      "content": "Tell me about this person"
+    },
+    {
+      "role": "assistant",
+      "content": "[people content withheld]"
+    }
+  ],
+  "temperature": null,
+  "max_tokens": null
+}

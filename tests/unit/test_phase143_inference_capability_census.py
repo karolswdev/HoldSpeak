@@ -64,23 +64,27 @@ holdspeak/inference_targets.py:700|build_intel_for_revision|_engine_for_revision
 holdspeak/inference_targets.py:727|_engine_for_revision|MeetingIntel|call
 holdspeak/inference_targets.py:734|_engine_for_revision|local_pinned_meeting_intel|call
 holdspeak/inference_targets.py:754|_engine_for_revision|build_meeting_intel_for_profile|call
-holdspeak/intel/engine.py:178|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
-holdspeak/intel/engine.py:210|MeetingIntel._ensure_local_model_loaded|Llama|call
-holdspeak/intel/engine.py:229|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
-holdspeak/intel/engine.py:234|MeetingIntel._ensure_runtime_loaded|_ensure_openai_client_loaded|call
-holdspeak/intel/engine.py:239|MeetingIntel._ensure_model_loaded|_ensure_runtime_loaded|call
-holdspeak/intel/engine.py:274|MeetingIntel._chat_completion_text|create_chat_completion|call
-holdspeak/intel/engine.py:312|MeetingIntel._chat_completion_text|_remote_completion|call
-holdspeak/intel/engine.py:312|MeetingIntel._chat_completion_text|chat.completions.create|ref
-holdspeak/intel/engine.py:356|MeetingIntel._chat_completion_stream|create_chat_completion|call
-holdspeak/intel/engine.py:394|MeetingIntel._chat_completion_stream|_remote_completion|call
-holdspeak/intel/engine.py:394|MeetingIntel._chat_completion_stream|chat.completions.create|ref
-holdspeak/intel/engine.py:449|MeetingIntel.run_prompt|_chat_completion_text|call
-holdspeak/intel/engine.py:477|MeetingIntel.run_prompt_messages|_chat_completion_text|call
-holdspeak/intel/engine.py:491|MeetingIntel._analyze_once|_chat_completion_text|call
-holdspeak/intel/engine.py:566|MeetingIntel._analyze_stream|_chat_completion_stream|call
-holdspeak/intel/engine.py:635|MeetingIntel.generate_title|_chat_completion_text|call
-holdspeak/intel/engine.py:710|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
+holdspeak/intel/engine.py:229|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
+holdspeak/intel/engine.py:261|MeetingIntel._ensure_local_model_loaded|Llama|call
+holdspeak/intel/engine.py:280|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
+holdspeak/intel/engine.py:285|MeetingIntel._ensure_runtime_loaded|_ensure_openai_client_loaded|call
+holdspeak/intel/engine.py:290|MeetingIntel._ensure_model_loaded|_ensure_runtime_loaded|call
+holdspeak/intel/engine.py:354|MeetingIntel._chat_completion_text|create_chat_completion|call
+holdspeak/intel/engine.py:392|MeetingIntel._chat_completion_text|_remote_completion|call
+holdspeak/intel/engine.py:392|MeetingIntel._chat_completion_text|chat.completions.create|ref
+holdspeak/intel/engine.py:442|MeetingIntel._chat_completion_stream|create_chat_completion|call
+holdspeak/intel/engine.py:483|MeetingIntel._chat_completion_stream|_remote_completion|call
+holdspeak/intel/engine.py:483|MeetingIntel._chat_completion_stream|chat.completions.create|ref
+holdspeak/intel/engine.py:563|MeetingIntel._chat_completion_deltas|create_chat_completion|call
+holdspeak/intel/engine.py:654|MeetingIntel._chat_completion_deltas|_remote_completion|call
+holdspeak/intel/engine.py:655|MeetingIntel._chat_completion_deltas|chat.completions.create|ref
+holdspeak/intel/engine.py:766|MeetingIntel.run_prompt_stream|_chat_completion_deltas|call
+holdspeak/intel/engine.py:807|MeetingIntel.run_prompt|_chat_completion_text|call
+holdspeak/intel/engine.py:836|MeetingIntel.run_prompt_messages|_chat_completion_text|call
+holdspeak/intel/engine.py:850|MeetingIntel._analyze_once|_chat_completion_text|call
+holdspeak/intel/engine.py:926|MeetingIntel._analyze_stream|_chat_completion_stream|call
+holdspeak/intel/engine.py:996|MeetingIntel.generate_title|_chat_completion_text|call
+holdspeak/intel/engine.py:1071|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
 holdspeak/intel/mesh_relay.py:252|MeshRelayIntel._chat_completion_text|run_prompt|call
 holdspeak/intel/providers.py:239|_configured_engine|MeshRelayIntel|call
 holdspeak/intel/providers.py:251|_configured_engine|MeetingIntel|call
@@ -93,18 +97,20 @@ holdspeak/intel/providers.py:842|_profile_engine|MeetingIntel|call
 holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
 holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
 holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
-holdspeak/kernel/inference_runner.py:261|InferenceRunner._attempt|_issue_dispatch_context|call
-holdspeak/kernel/inference_runner.py:74|InferenceRunner.__init__|build_intel_for_revision|ref
-holdspeak/kernel/prompt_adapter.py:14|CanonicalPromptAdapter.dispatch|run_prompt|call
+holdspeak/kernel/inference_runner.py:329|InferenceRunner._attempt_stream|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py:621|InferenceRunner._attempt|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py:81|InferenceRunner.__init__|build_intel_for_revision|ref
+holdspeak/kernel/prompt_adapter.py:25|CanonicalPromptAdapter.dispatch|run_prompt|call
+holdspeak/kernel/prompt_adapter.py:71|StreamingPromptAdapter.dispatch|run_prompt|call
 holdspeak/main.py:765|_run_meeting_mode|transcribe|call
 holdspeak/main.py:774|_run_meeting_mode|transcribe|call
 holdspeak/meeting_import.py:313|_transcribe_import_windows|transcribe|call
 holdspeak/meeting_session/deferred_bound.py:93|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
 holdspeak/meeting_session/deferred_bound.py:105|bound_auto_title_dispatch.call|generate_title|call
 holdspeak/meeting_session/deferred_bound.py:114|bound_analysis_dispatch.call|analyze|call
-holdspeak/meeting_session/intel_routed_children.py:199|IntelRoutedChildMixin._admitted_live_window.call|analyze|call
-holdspeak/meeting_session/intel_routed_children.py:244|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/intel_routed_children.py:274|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
+holdspeak/meeting_session/intel_routed_children.py:200|IntelRoutedChildMixin._admitted_live_window.call|analyze|call
+holdspeak/meeting_session/intel_routed_children.py:245|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/intel_routed_children.py:275|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
 holdspeak/meeting_session/transcribe_loop.py:84|TranscribeLoopMixin._transcribe_audio|transcribe|call
 holdspeak/plugins/dictation/assembly.py:330|_try_build_runtime|MeshRelayRuntime|call
 holdspeak/plugins/dictation/builtin/intent_router.py:170|IntentRouter.run|classify|call
@@ -182,8 +188,16 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     ),
     # HS-146-07: the snapshot adapter's direct-dispatch fallback (the ask
     # template) when no calendar.snapshot_extract assignment exists.
-    "holdspeak/services/calendar_snapshot_service.py:592|extract_via_router|call": ProposedRoute(
+    "holdspeak/services/calendar_snapshot_service.py:604|extract_via_router|call": ProposedRoute(
         "calendar.snapshot_extract", "services.calendar_snapshot_service", "InferenceRunner direct dispatch fallback (routed path preferred when assigned)",
+    ),
+    # HS-153-03/05: chat practice capabilities (guardrail + compaction).
+    # HS-153-06: line numbers shifted by M1 redaction + response_format + robust parser additions.
+    "holdspeak/services/thread_practice.py:222|run_guardrail|call": ProposedRoute(
+        "chat.guardrail", "services.thread_practice", "InferenceRunner admitted child",
+    ),
+    "holdspeak/services/thread_practice.py:347|run_compact|call": ProposedRoute(
+        "chat.compact", "services.thread_practice", "InferenceRunner admitted child",
     ),
 }
 
@@ -285,14 +299,10 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     "holdspeak/mcp/tools.py:641|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
-    "holdspeak/mcp/tools.py:645|dispatch|chat": ProposedRoute(
-        "recipe.chat", "mcp.tools", "RecipeService semantic caller",
-    ),
-    "holdspeak/web/routes/primitives/recipes.py:100|build_recipes_router.api_run_recipe|run": ProposedRoute(
+    # HS-151-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115
+    # no longer call RecipeService.chat — they return a 410 retired error.
+    "holdspeak/web/routes/primitives/recipes.py:103|build_recipes_router.api_run_recipe|run": ProposedRoute(
         "recipe.run", "web.routes.primitives.recipes", "RecipeService semantic caller",
-    ),
-    "holdspeak/web/routes/primitives/recipes.py:115|build_recipes_router.api_chat_recipe|chat": ProposedRoute(
-        "recipe.chat", "web.routes.primitives.recipes", "RecipeService semantic caller",
     ),
 }
 
@@ -371,23 +381,27 @@ holdspeak/inference_targets.py:734|_engine_for_revision|local_pinned_meeting_int
 holdspeak/inference_targets.py:754|_engine_for_revision|build_meeting_intel_for_profile|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "intel.engine", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/intel/engine.py:178|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
-holdspeak/intel/engine.py:210|MeetingIntel._ensure_local_model_loaded|Llama|call
-holdspeak/intel/engine.py:229|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
-holdspeak/intel/engine.py:234|MeetingIntel._ensure_runtime_loaded|_ensure_openai_client_loaded|call
-holdspeak/intel/engine.py:239|MeetingIntel._ensure_model_loaded|_ensure_runtime_loaded|call
-holdspeak/intel/engine.py:274|MeetingIntel._chat_completion_text|create_chat_completion|call
-holdspeak/intel/engine.py:312|MeetingIntel._chat_completion_text|_remote_completion|call
-holdspeak/intel/engine.py:312|MeetingIntel._chat_completion_text|chat.completions.create|ref
-holdspeak/intel/engine.py:356|MeetingIntel._chat_completion_stream|create_chat_completion|call
-holdspeak/intel/engine.py:394|MeetingIntel._chat_completion_stream|_remote_completion|call
-holdspeak/intel/engine.py:394|MeetingIntel._chat_completion_stream|chat.completions.create|ref
-holdspeak/intel/engine.py:449|MeetingIntel.run_prompt|_chat_completion_text|call
-holdspeak/intel/engine.py:477|MeetingIntel.run_prompt_messages|_chat_completion_text|call
-holdspeak/intel/engine.py:491|MeetingIntel._analyze_once|_chat_completion_text|call
-holdspeak/intel/engine.py:566|MeetingIntel._analyze_stream|_chat_completion_stream|call
-holdspeak/intel/engine.py:635|MeetingIntel.generate_title|_chat_completion_text|call
-holdspeak/intel/engine.py:710|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
+holdspeak/intel/engine.py:229|MeetingIntel._ensure_openai_client_loaded|OpenAI|call
+holdspeak/intel/engine.py:261|MeetingIntel._ensure_local_model_loaded|Llama|call
+holdspeak/intel/engine.py:280|MeetingIntel._ensure_runtime_loaded|_ensure_local_model_loaded|call
+holdspeak/intel/engine.py:285|MeetingIntel._ensure_runtime_loaded|_ensure_openai_client_loaded|call
+holdspeak/intel/engine.py:290|MeetingIntel._ensure_model_loaded|_ensure_runtime_loaded|call
+holdspeak/intel/engine.py:354|MeetingIntel._chat_completion_text|create_chat_completion|call
+holdspeak/intel/engine.py:392|MeetingIntel._chat_completion_text|_remote_completion|call
+holdspeak/intel/engine.py:392|MeetingIntel._chat_completion_text|chat.completions.create|ref
+holdspeak/intel/engine.py:442|MeetingIntel._chat_completion_stream|create_chat_completion|call
+holdspeak/intel/engine.py:483|MeetingIntel._chat_completion_stream|_remote_completion|call
+holdspeak/intel/engine.py:483|MeetingIntel._chat_completion_stream|chat.completions.create|ref
+holdspeak/intel/engine.py:563|MeetingIntel._chat_completion_deltas|create_chat_completion|call
+holdspeak/intel/engine.py:654|MeetingIntel._chat_completion_deltas|_remote_completion|call
+holdspeak/intel/engine.py:655|MeetingIntel._chat_completion_deltas|chat.completions.create|ref
+holdspeak/intel/engine.py:766|MeetingIntel.run_prompt_stream|_chat_completion_deltas|call
+holdspeak/intel/engine.py:807|MeetingIntel.run_prompt|_chat_completion_text|call
+holdspeak/intel/engine.py:836|MeetingIntel.run_prompt_messages|_chat_completion_text|call
+holdspeak/intel/engine.py:850|MeetingIntel._analyze_once|_chat_completion_text|call
+holdspeak/intel/engine.py:926|MeetingIntel._analyze_stream|_chat_completion_stream|call
+holdspeak/intel/engine.py:996|MeetingIntel.generate_title|_chat_completion_text|call
+holdspeak/intel/engine.py:1071|MeetingIntel.generate_bookmark_label_with_context|_chat_completion_text|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "intel.mesh_relay", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/intel/mesh_relay.py:252|MeshRelayIntel._chat_completion_text|run_prompt|call
@@ -408,11 +422,13 @@ holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
 holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.inference_runner", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/kernel/inference_runner.py:261|InferenceRunner._attempt|_issue_dispatch_context|call
-holdspeak/kernel/inference_runner.py:74|InferenceRunner.__init__|build_intel_for_revision|ref
+holdspeak/kernel/inference_runner.py:329|InferenceRunner._attempt_stream|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py:621|InferenceRunner._attempt|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py:81|InferenceRunner.__init__|build_intel_for_revision|ref
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.prompt_adapter", "InferenceRunner gateway/context-gated adapter"), """
-holdspeak/kernel/prompt_adapter.py:14|CanonicalPromptAdapter.dispatch|run_prompt|call
+holdspeak/kernel/prompt_adapter.py:25|CanonicalPromptAdapter.dispatch|run_prompt|call
+holdspeak/kernel/prompt_adapter.py:71|StreamingPromptAdapter.dispatch|run_prompt|call
 """),
     _group(ProposedRoute("internal.speech.runtime_assembly", "speech_session", "InferenceRunner context-gated adapter"), """
 holdspeak/commands/dictation.py:166|_cmd_dry_run|build_pipeline|call
@@ -434,17 +450,17 @@ holdspeak/web/routes/dictation/_helpers.py:787|_run_dictation_dry_run_text|build
 """),
     _group(ProposedRoute("meeting.auto_title", "meeting_session", "InferenceRunner admitted child"), """
 holdspeak/meeting_session/deferred_bound.py:105|bound_auto_title_dispatch.call|generate_title|call
-holdspeak/meeting_session/intel_routed_children.py:274|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
+holdspeak/meeting_session/intel_routed_children.py:275|IntelRoutedChildMixin._admitted_auto_title.call|generate_title|call
 """),
     _group(ProposedRoute("meeting.bookmark_label", "meeting_session", "InferenceRunner admitted child"), """
 holdspeak/meeting_session/deferred_bound.py:93|bound_bookmark_label_dispatch.call|generate_bookmark_label_with_context|call
-holdspeak/meeting_session/intel_routed_children.py:244|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
+holdspeak/meeting_session/intel_routed_children.py:245|IntelRoutedChildMixin._admitted_bookmark_label.call|generate_bookmark_label_with_context|call
 """),
     _group(ProposedRoute("meeting.deferred_analysis", "meeting_session", "InferenceRunner admitted child"), """
 holdspeak/meeting_session/deferred_bound.py:114|bound_analysis_dispatch.call|analyze|call
 """),
     _group(ProposedRoute("meeting.live_analysis", "meeting_session", "InferenceRunner admitted child"), """
-holdspeak/meeting_session/intel_routed_children.py:199|IntelRoutedChildMixin._admitted_live_window.call|analyze|call
+holdspeak/meeting_session/intel_routed_children.py:200|IntelRoutedChildMixin._admitted_live_window.call|analyze|call
 """),
     _group(ProposedRoute("project_doc.suggest_update", "project_doc_suggestions", "InferenceRunner admitted child"), """
 holdspeak/project_doc_suggestions.py:72|suggest_project_doc_update|rewrite|ref
@@ -531,7 +547,10 @@ def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
         f"stale={sorted(EXPECTED_CALL_SITES - live)}"
     )
     # HS-146-07 adds the one vision prompt leaf (run_prompt_messages).
-    assert len(live) == 103
+    # HS-151-02/D3: streaming seam adds _chat_completion_deltas (3 sites)
+    # and _attempt_stream (1 site); line shifts update 6 existing sites.
+    # HS-151-04: +1 StreamingPromptAdapter.dispatch run_prompt fallback, +1 line shift
+    assert len(live) == 109
 
 
 def test_phase143_every_product_runner_entrance_has_one_owner() -> None:

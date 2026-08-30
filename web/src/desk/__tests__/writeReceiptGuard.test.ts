@@ -17,7 +17,7 @@ const sources = import.meta.glob<string>("/src/desk/**/*.{ts,tsx}", {
 const READ_PREFIX = /^(fetch|load|get|list|resolve|read|use)/;
 
 /** Modules whose exports are hub calls. */
-const API_MODULE = /(^|\/)api$|lib\/api|\/chat$|repository|settingsWrite|store$/;
+const API_MODULE = /(^|\/)api$|lib\/api|\/threads$|repository|settingsWrite|store$/;
 
 function stripComments(source: string): string {
   return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");

@@ -24,6 +24,7 @@ describe("resetDesk / seedDesk (HS-112-03)", () => {
   it("names every ghost layout key the survey found", () => {
     expect([...GHOST_LAYOUT_KEYS]).toEqual([
       "hs.diorama.pos",
+      "hs.desk.workspace.v1",
       "hs.desk.panels",
       "hs.desk.zonew",
       "hs.desk.zone-views",

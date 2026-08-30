@@ -304,9 +304,18 @@ def _plan_installed_plugin_members(
     derive the deterministic MIR route, then stores IDs/revisions/schemas and
     route metadata without retaining transcript bytes.  Config and a live host
     are intentionally absent from this boundary.
+
+    HS-151-03 (counsel RATIFY): a ``meeting.plugin.*`` capability whose
+    assignment cannot be frozen is EXCLUDED with a receipt
+    (``plugin_chain_skipped``), never a terminal refusal.  Core capabilities
+    (``meeting.deferred_analysis``, ``meeting.bookmark_label``,
+    ``meeting.auto_title``) remain strict -- a missing assignment is still
+    terminal.  The probe uses the SAME ``resolve_route_plan_for_feature``
+    path the binder uses, reading persisted assignment heads only.
     """
     from ..inference_capabilities import process_inference_capability_registry
     from ..plugins.router import preview_route_from_transcript
+    from ..services.errors import ValidationError as _SvcValidationError
 
     rows = conn.execute(
         "SELECT text,speaker FROM segments WHERE meeting_id=? ORDER BY start_time,id",
@@ -322,6 +331,7 @@ def _plan_installed_plugin_members(
     ).to_dict()
     registry = process_inference_capability_registry()
     members: list[dict[str, Any]] = []
+    skipped: list[dict[str, str]] = []
     for plugin_id in decision.get("plugin_chain") or []:
         plugin_id = str(plugin_id).strip()
         capability_id = f"meeting.plugin.{plugin_id}"
@@ -332,6 +342,19 @@ def _plan_installed_plugin_members(
             or definition.id != capability_id
         ):
             raise ValueError(f"installed plugin capability is not exact: {plugin_id}")
+        # HS-151-03: probe assignment reachability BEFORE freezing.
+        if not _plugin_assignment_reachable(capability_id):
+            skipped.append({
+                "plugin_id": plugin_id,
+                "capability_id": capability_id,
+                "reason": "no_assignment",
+            })
+            log.info(
+                "Plugin %s excluded from bound claim: no model assignment "
+                "can be frozen (HS-151-03 skip-with-receipt)",
+                plugin_id,
+            )
+            continue
         canonical = definition.canonical_dict()
         members.append(
             {
@@ -343,7 +366,8 @@ def _plan_installed_plugin_members(
                 "output_schema": dict(canonical["output_schema"]),
             }
         )
-    route = {
+    skipped_ids = {item["plugin_id"] for item in skipped}
+    route: dict[str, Any] = {
         "profile": str(decision.get("profile") or "balanced"),
         "threshold": float(decision.get("threshold") or 0.0),
         "active_intents": [str(item) for item in decision.get("active_intents") or []],
@@ -351,9 +375,48 @@ def _plan_installed_plugin_members(
             str(key): float(value)
             for key, value in dict(decision.get("intent_scores") or {}).items()
         },
-        "plugin_chain": [str(item) for item in decision.get("plugin_chain") or []],
+        # HS-151-03: the frozen chain excludes skipped plugins so the
+        # execution path never encounters a member-missing refusal.
+        "plugin_chain": [
+            str(item)
+            for item in decision.get("plugin_chain") or []
+            if str(item) not in skipped_ids
+        ],
     }
+    if skipped:
+        route["plugin_chain_skipped"] = skipped
     return tuple(members), route
+
+
+def _plugin_assignment_reachable(capability_id: str) -> bool:
+    """Probe whether a plugin capability has a freezable assignment.
+
+    Uses the SAME ``resolve_route_plan_for_feature`` path the binder uses,
+    reading persisted assignment heads only (no Config, no live host).
+    Returns False on ``no_assignment``; any other refusal propagates.
+    """
+    from ..kernel.runtime import _service
+    from ..meeting_session.deferred_bound import PARENT_KIND, queue_service_principal
+    from ..services.errors import ValidationError as _SvcValidationError
+    from ..services.inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
+
+    broker = _service()
+    plans = broker.inference_adoption_service.plans
+    principal = queue_service_principal()
+    try:
+        plans.resolve_route_plan_for_feature(
+            ROUTE_PLANNING_AUTHORITY,
+            feature_principal=principal,
+            parent_kind=PARENT_KIND,
+            capability_id=capability_id,
+            invocation_id="probe",
+            deadline_at=time.time() + 300.0,
+        )
+        return True
+    except _SvcValidationError as exc:
+        if getattr(exc, "code", None) == "no_assignment":
+            return False
+        raise
 
 
 class IntelRepository(BaseRepository):

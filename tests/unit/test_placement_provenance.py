@@ -138,20 +138,10 @@ def test_recipe_run_rejects_legacy_invocation_selector(recipe_rig):
     assert raised.value.code == "inference_legacy_selector_retired"
 
 
-def test_recipe_chat_canonical_subject_assignment(recipe_rig):
-    _db, service = recipe_rig
-    result = asyncio.run(service.chat(OWNER, "r1", question="hello", workbench_id="wb_target"))
-    assert result["profile_id"] == "agent_target"
-    assert result["inference_target"]["profile_id"] == "agent_target"
-    assert set(result["placement"]) == {"route_plan_id", "route_plan_sha256"}
-    assert result["route_execution_receipt"]["outcome"] == "succeeded"
-
-
-def test_recipe_chat_rejects_legacy_invocation_selector(recipe_rig):
-    _db, service = recipe_rig
-    with pytest.raises(ValidationError, match="Legacy model selectors") as raised:
-        asyncio.run(service.chat(OWNER, "r1", question="hello", inference_target_id="wb_target"))
-    assert raised.value.code == "inference_legacy_selector_retired"
+# HS-151-04: test_recipe_chat_canonical_subject_assignment and
+# test_recipe_chat_rejects_legacy_invocation_selector DELETED.
+# They tested RecipeService.chat() which is permanently retired
+# (recipe.chat replaced by chat.turn in HS-151-02).
 
 
 # ---------------------------------------------------------------------------

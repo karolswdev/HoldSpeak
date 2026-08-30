@@ -8,7 +8,18 @@ flips to "scaffolded" then "shipped".
 Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
-**Last updated:** 2026-08-29 (two entries. First, the record made
+**Last updated:** 2026-08-30 — candidate **AF** Desk Chat graduated through
+Phase 152, while the handover-menu candidate [Live Intelligence Proof](./phase-151-live-intel-proof/current-phase-status.md)
+also graduated and completed 7/7. Those parallel branches independently reused
+the Phase 151 number; their historical paths remain intact and PR #511
+consolidates both workstreams. DC-03–05 stay parked. Earlier — candidate
+**AF. The Desk Chat**
+filed with its full RFC
+([`docs/internal/PLAN_PHASE_DESK_CHAT.md`](../../../docs/internal/PLAN_PHASE_DESK_CHAT.md)):
+the warpdrv chat grammar (threads, streamed parts, kernel-admitted
+tool loop, modes/guardrails/annotations, voice call, subthreads)
+ported as capabilities onto HoldSpeak's own machinery — five
+phases, DC-01 The Thread first. Earlier the same day (two entries. First, the record made
 honest retroactively per the owner's catch: **Event → one-tap
 record** never had a row here — it lived only in the Phase 146
 handover menu as the twice-deferred "rail's natural next verb" —
@@ -921,3 +932,77 @@ Open questions for the charter: which vision assignment (local .43
 capability vs cloud with badge); multi-screenshot stitching for
 overflowing weeks; whether the review step reuses the Thought/refine
 surface or gets a small dedicated one.
+
+---
+
+### AF. The Desk Chat — the warpdrv chat experience, ported as capabilities — **DC-01 GRADUATED → [Phase 151 — The Thread](./phase-151-the-desk-chat/current-phase-status.md)** (plan: [`docs/internal/PLAN_PHASE_DESK_CHAT.md`](../../../docs/internal/PLAN_PHASE_DESK_CHAT.md)); DC-02 The Hands, DC-03 The Practice, DC-04 The Call, DC-05 The Crew stay parked here
+
+**Disposition (2026-08-30):** the owner said "Let's impl it!" the same day the plan
+was filed; Phase 151 chartered DC-01 (eight stories) and shipped it in one
+sitting — the persisted thread ledger, `chat.turn` replacing `recipe.chat`,
+the streaming seam inside the frozen-plan envelope, the turn route with
+message-level People redaction at the coordinator's payload reconstruction
+(close counsel M5), the Thread primitive + pullout + composer on the Desk,
+threads as desk memory, the localStorage chat retired. Proven on real metal
+(`.43` llama.cpp: first delta 0.98 s / 0.93 s over the bus) and on glass
+(rig at 1440 + 393). DC-02+ remain candidates; the RFC §4.1 table is their
+charter seed. The original filing, for the record:
+
+Owner direction (2026-08-29): "how could we, realistically, port the
+chat feature that warpdrv is based on into HoldSpeak? Basically,
+augment HoldSpeak with the abilities this chat interface and features
+really present themselves." The full RFC lives in the plan doc above;
+this entry is the backlog handoff.
+
+The short answer: no code moves (warpdrv is AGPL-3.0, HoldSpeak is
+Apache-2.0) — the *grammar* moves onto machinery the desk already
+owns. Roughly two-thirds of warpdrv's chat stack already exists here
+under other names: the kernel's tool-turn lifecycle IS its approval
+loop (with receipts), the Intelligence Router IS its server/preset
+picker, the 82-tool MCP server IS its `warpmcp` (except ours knows
+meetings, people, decisions and the Door), the WebSocket bus IS its
+SSE fan-out, the FTS memory corpora ARE its workspace RAG, the
+click-to-toggle mic IS its dictation. What HoldSpeak genuinely lacks
+is small and named: a persisted thread/message model (today's chat is
+`localStorage` only), token streaming end to end (the provider layer
+returns blobs), a Thread primitive on the Desk, the chat-side tool
+loop wired to the kernel, and TTS.
+
+Five phases, each its own arc: **DC-01 The Thread** (tables,
+streamed turns over the router, Thread primitive + pullout, composer
+with mic/@-refs/attachments, branch on edit, Keep, FTS; ~8 stories,
+one open-throttle arc) → **DC-02 The Hands** (model tool calls as
+kernel tool turns over the in-process MCP families; receipt box in
+yolo, Allow-once/always/Deny in safe; elicitation as a kernel
+decision; desk-kind result renderers; status line) → **DC-03 The
+Practice** (slash verbs on the registry, modes as recipes,
+guardrails as a second cheaper assignment, annotations by voice,
+`/compact`, todo = action items on the Door) → **DC-04 The Call**
+(Kokoro TTS server-side, VAD, voice-call mode with visible state) →
+**DC-05 The Crew** (subthreads on the conductor's run loop,
+parent↔child notifications). NOT ported: llama-server lifecycle,
+checkpoints, proxy, code graph, shell/file tools, nested thread
+folders, sampler editors, external `mcp.json` client (optional
+rider), Tauri/Chakra/assistant-ui.
+
+Value-era fit: a chat is worth building only as a chat OVER the desk
+— "what did I promise Ania last 1:1, is it done?", "draft Monday's
+note from this week's three meetings", "move Tuesday's two open
+items onto Marek's ledger" — answered in one thread, every effect
+admitted and receipted, talkable on a walk. Feeds candidate A
+(delegation lane) and W (Jira notes become groundable refs).
+
+*Lands on:* `holdspeak/db/schema.py` (one additive block: `threads`,
+`thread_messages`, `thread_message_parts`, `thread_refs`,
+`thread_tool_policy`, FTS), `holdspeak/intel/providers.py` +
+`InferenceRunner.run_stream` (the streaming seam),
+`holdspeak/realtime_frames.py` (+3 frames), the sealed capability
+registry (`chat.turn`, later `chat.guardrail`/`chat.compact`/
+`chat.subthread`), `holdspeak/web/routes/threads.py` (new),
+`web/src/lib/primitives.ts` + `web/src/desk/pullouts/ThreadPullout.tsx`
+(new), the verb registry; retires `web/src/desk/chat.ts`.
+
+**Open questions for the charter (§14 of the plan):** window vs.
+pinned wing; yolo default for effect tools in chat; DC-03 before or
+after DC-04; Kokoro server-side vs in-browser; any external MCP server
+wanted on day one.

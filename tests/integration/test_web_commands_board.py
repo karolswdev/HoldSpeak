@@ -41,12 +41,13 @@ def test_commands_route_serves_board(client: TestClient) -> None:
     assert '<div id="root"></div>' in res.text
     source = (Path(__file__).resolve().parents[2] / "web/src/pages/cores/CommandsCore.tsx").read_text()
     assert "Command board" in source
-    # HS-95-04: the eyebrow rides the window chrome (the SURFACES table).
-    surfaces = (
+    # Application identity and chrome now come from the one DeskOS manifest.
+    applications = (
         Path(__file__).resolve().parents[2]
-        / "web/src/desk/components/SurfaceWindows.tsx"
+        / "web/src/desk/applications.ts"
     ).read_text()
-    assert '"Voice commands"' in surfaces
+    assert 'action: "configure-commands"' in applications
+    assert 'eyebrow: "Voice commands"' in applications
     assert "/api/commands/test" in source and "/api/settings" in source
 
 

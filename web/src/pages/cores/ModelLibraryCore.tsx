@@ -184,7 +184,7 @@ export function ModelLibraryCore() {
       await finish(() => addDetectedModel(selected.id.slice("detected:".length)));
       return;
     }
-    setFace(selected.source === "provider" ? "hosted" : "choices");
+    setFace(action === "Connect" || selected.source === "provider" ? "hosted" : "choices");
   // `finish` deliberately stays locally stable enough for a keyboard action;
   // it only closes over setters and `reload`.
   // eslint-disable-next-line react-hooks/exhaustive-deps

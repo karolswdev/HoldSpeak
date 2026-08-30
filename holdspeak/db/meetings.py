@@ -844,12 +844,16 @@ class MeetingRepository(BaseRepository):
         meeting_id: Optional[str] = None,
         owner: Optional[str] = None,
     ) -> list[ActionItemSummary]:
-        """List action items with optional filters."""
+        """List action items with optional filters.
+
+        HS-153-06 fix: LEFT JOIN so thread-sourced items (meeting_id=NULL)
+        are included in the listing.
+        """
         with self._connection() as conn:
             query = """
                 SELECT a.*, m.title as meeting_title, m.started_at as meeting_date
                 FROM action_items a
-                JOIN meetings m ON a.meeting_id = m.id
+                LEFT JOIN meetings m ON a.meeting_id = m.id
                 WHERE 1=1
             """
             params: list[Any] = []
@@ -871,7 +875,12 @@ class MeetingRepository(BaseRepository):
             ]
 
     def _row_to_action_item_summary(self, row: sqlite3.Row) -> ActionItemSummary:
-        """Convert a DB row to ActionItemSummary."""
+        """Convert a DB row to ActionItemSummary.
+
+        HS-153-06 fix: handle NULL meeting_id / meeting_date from LEFT JOIN
+        (thread-sourced action items have no meeting).
+        """
+        meeting_date_raw = row['meeting_date']
         return ActionItemSummary(
             id=row['id'],
             task=row['task'],
@@ -879,24 +888,29 @@ class MeetingRepository(BaseRepository):
             due=row['due'],
             status=row['status'],
             review_state=row['review_state'] or "pending",
-            meeting_id=row['meeting_id'],
+            meeting_id=row['meeting_id'] or "",
             meeting_title=row['meeting_title'],
-            meeting_date=datetime.fromisoformat(row['meeting_date']),
+            meeting_date=datetime.fromisoformat(meeting_date_raw) if meeting_date_raw else datetime.min,
             source_timestamp=row['source_timestamp'],
             created_at=datetime.fromisoformat(row['created_at']),
             completed_at=datetime.fromisoformat(row['completed_at']) if row['completed_at'] else None,
             reviewed_at=datetime.fromisoformat(row['reviewed_at']) if row['reviewed_at'] else None,
             delegated_at=row['delegated_at'] if row['delegated_at'] else None,
+            source_type=row['source_type'] if 'source_type' in row.keys() else None,
+            source_ref=row['source_ref'] if 'source_ref' in row.keys() else None,
         )
 
     def get_action_item(self, item_id: str) -> Optional[ActionItemSummary]:
-        """Get a single action item by ID, including meeting metadata."""
+        """Get a single action item by ID, including meeting metadata.
+
+        HS-153-06 fix: LEFT JOIN so thread-sourced items are findable.
+        """
         with self._connection() as conn:
             row = conn.execute(
                 """
                 SELECT a.*, m.title as meeting_title, m.started_at as meeting_date
                 FROM action_items a
-                JOIN meetings m ON a.meeting_id = m.id
+                LEFT JOIN meetings m ON a.meeting_id = m.id
                 WHERE a.id = ?
                 """,
                 (item_id,),

@@ -22,10 +22,10 @@ src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts not
 src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
 
 # chat: turn wire egress placement (byte-identical to main through 148-149)
-src/desk/__tests__/chat.test.ts > the turn wire > posts question + the 12-turn tail + grounding refs; returns the honest egress
 
 # HS-132-06 — writeReceiptGuard: bare-catch write guard (byte-identical to main through 148-149)
 src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
 
 # workbenchAutomations: STARTS WHEN trigger test (byte-identical to main through 148-149)
 src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger
+# 2026-08-30 Phase 151 (The Desk Chat): the chat.test.ts line was REMOVED — that test was deleted with web/src/desk/chat.ts (threads replaced the localStorage chat).

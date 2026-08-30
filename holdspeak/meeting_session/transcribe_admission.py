@@ -63,6 +63,98 @@ class RoutedMeetingTranscriptionAdmission:
     # Design note §Orchestrator amendment (2026-08-22): P=1 trims the prior
     # per-candidate ceremony under the owner scope ruling.
     single_preload_sequence = True
+    last_preload_receipt: Mapping[str, Any] | None = None
+
+    def _preload_evidence(self) -> Mapping[str, Any] | None:
+        """The derived preload evidence for the speech.preload member."""
+        bundle = getattr(self.session, "_route_bundle", None) or {}
+        preload = self._member("speech.preload")
+        if preload is None:
+            return None
+        return next(
+            (
+                item for item in bundle.get("derived_preloads", ())
+                if item.get("preload_route_plan_id") == preload.get("route_plan_id")
+            ),
+            None,
+        )
+
+    def frozen_preload_material(self) -> Mapping[str, Any]:
+        """The frozen MLX preload evidence the transcriber lifecycle must match."""
+        evidence = self._preload_evidence()
+        if evidence is None:
+            return {}
+        return {
+            "engine": str(evidence["engine"]),
+            "model": str(evidence["model"]),
+            "language": str(evidence["language"]),
+            "candidate_ids": [str(item["id"]) for item in evidence["candidate_material"]],
+            "strategy_sequence": [str(item) for item in evidence["strategy_sequence"]],
+            "stop_rules": [str(item) for item in evidence["stop_rules"]],
+        }
+
+    def loaded_artifact_reusable(self, impl: Any) -> bool:
+        """Skip reload when the impl already carries matching provenance."""
+        evidence = self._preload_evidence()
+        if evidence is None:
+            return False
+        provenance = getattr(impl, "_holdspeak_preload_provenance", None)
+        if not isinstance(provenance, Mapping):
+            return False
+        material = self.frozen_preload_material()
+        deployment_revision_id = str(evidence["deployment_revision_id"])
+        if (
+            str(provenance.get("deployment_revision_id") or "") != deployment_revision_id
+            or str(provenance.get("engine") or "") != material.get("engine", "")
+            or str(provenance.get("model") or "") != material.get("model", "")
+            or str(provenance.get("language") or "auto") != str(material.get("language") or "auto")
+        ):
+            return False
+        # The exact durable-receipt cross-check from the speech session:
+        # an execution_id and route_plan_id must both be present.
+        execution_id = str(provenance.get("execution_id") or "")
+        route_plan_id = str(provenance.get("route_plan_id") or "")
+        if not execution_id or not route_plan_id:
+            return False
+        broker = self.session._intel_broker()
+        with broker.database._connection() as conn:
+            row = conn.execute(
+                """SELECT e.terminal_outcome, e.winning_attempt_id,
+                          p.capability_id, r.deployment_revision_id
+                     FROM inference_route_executions e
+                     JOIN inference_operation_route_request_plans o
+                       ON o.id = e.operation_plan_id
+                     JOIN inference_route_plans p ON p.id = o.route_plan_id
+                     JOIN inference_route_plan_entries r
+                       ON r.plan_id = p.id
+                    WHERE e.id = ? AND p.id = ?
+                      AND r.route_leg_ordinal = 1""",
+                (execution_id, route_plan_id),
+            ).fetchone()
+        return bool(
+            row is not None
+            and str(row["terminal_outcome"] or "") == "succeeded"
+            and str(row["winning_attempt_id"] or "")
+            and str(row["capability_id"] or "") == "speech.preload"
+            and str(row["deployment_revision_id"] or "") == deployment_revision_id
+        )
+
+    def record_loaded_artifact(self, impl: Any, receipt: Mapping[str, Any]) -> None:
+        """Stamp provenance on the impl after a successful preload."""
+        if str(receipt.get("outcome") or "") != "succeeded":
+            return
+        evidence = self._preload_evidence()
+        preload = self._member("speech.preload")
+        if evidence is None or preload is None:
+            return
+        impl._holdspeak_preload_provenance = {
+            "deployment_revision_id": str(evidence["deployment_revision_id"]),
+            "engine": str(evidence["engine"]),
+            "model": str(evidence["model"]),
+            "language": str(evidence["language"]),
+            "execution_id": str(receipt.get("execution_id") or ""),
+            "route_plan_id": str(preload["route_plan_id"]),
+        }
 
     def _member(self, capability: str) -> Mapping[str, Any] | None:
         bundle = getattr(self.session, "_route_bundle", None) or {}
@@ -127,6 +219,7 @@ class RoutedMeetingTranscriptionAdmission:
             operation_id=operation_id,
             payload=dict(material),
             reserved_output_tokens=reserved_output_tokens,
+            parent_operation_id=getattr(parent, "operation_id", None),
         )
         from ..services.inference_semantic_adapters import adapter_for
 
@@ -225,6 +318,7 @@ class RoutedMeetingTranscriptionAdmission:
                     self.session.intel_principal,
                     deployment_revision_id=str(evidence["deployment_revision_id"]),
                 )
+        self.last_preload_receipt = routed.get("receipt")
         return SimpleNamespace(outcome=str(routed["outcome"])), routed.get("result")
 
 

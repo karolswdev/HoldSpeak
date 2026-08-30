@@ -120,7 +120,7 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
   // or creates one via the existing create path, then adds the agenda item.
   const addToAgenda = async (personId: string) => {
     setAddingAgenda(true);
-    try {
+    await attempt("add to 1:1 agenda", async () => {
       // Step 1: Find or create an open 1:1 session for this relationship.
       const sessionsResp = await apiFetch<{ one_on_ones: Array<{ id: string; state: string }> }>(
         `/api/people/relationships/${encodeURIComponent(personId)}/one-on-ones`,
@@ -152,11 +152,8 @@ export function BriefView({ header, onOpenFollowThrough }: { header: ReactNode; 
         },
       );
       refreshIntelligenceAttention();
-    } catch {
-      // Failure reported via the general error channel.
-    } finally {
-      setAddingAgenda(false);
-    }
+    });
+    setAddingAgenda(false);
   };
   // HS-132-08 — triage is a write, not React state: it rides the durable
   // shelf so Acknowledge/Defer survive reload and the pullout closing, and it

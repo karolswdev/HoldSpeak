@@ -66,7 +66,7 @@ ADOPTED_CAPABILITIES = (
     # evidence provider in ToolTurnFoundationService, so they are deliberately
     # absent here.
     "recipe.run",
-    "recipe.chat",
+    "chat.turn",  # HS-151-02: replaces retired recipe.chat
     "workbench.item",
     "voice.reference_resolve",
     "sequence.step",
@@ -1590,6 +1590,203 @@ class RoutedInferenceCoordinator:
                 }
             execution = self.controller._execution(None, execution_id)
 
+    def execute_stream(
+        self,
+        principal: Principal,
+        *,
+        execution_id: str,
+        adapter: Any,
+        on_delta: Any,
+        publish: Callable[[Any, Mapping[str, Any]], str] | None = None,
+        before_physical_dispatch: Callable[[str, str, int], None] | None = None,
+        parent_context: Any = None,
+        planned_node: str = "",
+        payload_redactor: Callable[[dict, Mapping[str, Any]], dict] | None = None,
+    ) -> dict[str, Any]:
+        """Streaming twin of ``execute`` (HS-151-04).
+
+        Identical admitted-execution bookkeeping (frozen plan, attempt rows,
+        receipt attestation, disposition) but calls
+        ``InferenceRunner.invoke_stream`` and forwards each ``Delta`` to
+        *on_delta*, returning the same result shape at the end.
+
+        *payload_redactor*, when provided, is called with ``(payload, route)``
+        after the payload is reconstructed from frozen evidence and before it
+        is handed to the InvocationRequest / runner.  The frozen route plan's
+        boundary is known at this point, so the redactor can apply
+        egress-dependent transformations (e.g. People M1 redaction on cloud
+        egress).  The admission evidence itself is never altered.
+        """
+        if self._broker is None:
+            raise ServiceError(
+                "inference_adoption_runner_missing",
+                "Production execution requires a composed broker",
+            )
+        runner = self._broker.inference_runner
+        runtime = getattr(runner, "_routed_attempt_runtime", None)
+        if runtime is None or getattr(runtime, "_controller", None) is not self.controller:
+            raise ServiceError(
+                "inference_adoption_runtime_misconfigured",
+                "The process-owned routed runtime is not composed",
+            )
+        execution = self.controller._execution(None, execution_id)
+        receipt_authority = INFERENCE_FALLBACK_AUTHORITY
+        operation = self.plans.get_operation_request_plan(
+            ROUTE_PLANNING_AUTHORITY, execution["operation_plan_id"]
+        )
+        route = self.plans.get_route_plan(
+            ROUTE_PLANNING_AUTHORITY, operation["route_plan_id"]
+        )
+        frozen_definition = self._frozen_capability_definition(str(route["id"]))
+        if execution["state"] in {"terminal", "stopped"}:
+            receipt = self.controller.get_route_execution_receipt(
+                receipt_authority, execution_id=execution_id
+            )
+            replay: dict[str, Any] = {
+                "outcome": receipt["outcome"],
+                "result": self._durable_winner_result(receipt),
+                "receipt": receipt,
+            }
+            if receipt["outcome"] == "succeeded":
+                winning = self._winning_reservation(
+                    execution_id, str(receipt.get("winning_attempt_id") or "")
+                )
+                replay["winning_reservation"] = winning
+                self._publish_winner_if_unstaged(publish, replay["result"], winning)
+            return replay
+        frozen_deadline = datetime.fromisoformat(
+            str(route["deadline_at"]).replace("Z", "+00:00")
+        ).timestamp()
+        next_attempt = int(execution.get("attempts_reserved") or 0) + 1
+        while True:
+            effect = self.controller.reserve_next_attempt(
+                INFERENCE_FALLBACK_AUTHORITY,
+                command_id=f"reserve-{execution_id}-{next_attempt}",
+                execution_id=execution_id,
+            )
+            next_attempt += 1
+            reservation = effect["reservation"]
+            if reservation is None:
+                receipt = self.controller.get_route_execution_receipt(
+                    receipt_authority, execution_id=execution_id
+                )
+                replay = {
+                    "outcome": receipt["outcome"],
+                    "result": self._durable_winner_result(receipt),
+                    "receipt": receipt,
+                }
+                if receipt["outcome"] == "succeeded":
+                    winning = self._winning_reservation(
+                        execution_id, str(receipt.get("winning_attempt_id") or "")
+                    )
+                    replay["winning_reservation"] = winning
+                    self._publish_winner_if_unstaged(publish, replay["result"], winning)
+                return replay
+            serialized = self.evidence.serialized_request(
+                operation["admission_evidence_ref"],
+                int(reservation["route_leg_ordinal"]),
+            )
+            payload = dict(serialized["payload"])
+            # HS-151-04 M5: apply caller-supplied redaction AFTER the payload
+            # is reconstructed from frozen evidence and BEFORE it reaches the
+            # engine.  The frozen route plan (``route``) carries the boundary
+            # the redactor needs.  Admission evidence is never altered.
+            if payload_redactor is not None:
+                payload = payload_redactor(payload, route)
+            captured: dict[str, Any] = {}
+
+            def project(value: Any) -> str:
+                try:
+                    self._validate_frozen_result(frozen_definition, value)
+                except Exception as exc:
+                    from ..kernel.provider_signals import InferenceInvalidTypedOutput
+                    raise InferenceInvalidTypedOutput() from exc
+                captured["value"] = value
+                result_json, result_sha = _canonical(value), _sha256(value)
+                producer_result_ref = (
+                    f"inference-result:{reservation['child_invocation_id']}/{result_sha}"
+                )
+                with self._db._connection() as conn:
+                    conn.execute("BEGIN IMMEDIATE")
+                    prior = conn.execute(
+                        "SELECT * FROM inference_adoption_attempt_results WHERE attempt_id=?",
+                        (str(reservation["attempt_id"]),),
+                    ).fetchone()
+                    if prior is None:
+                        conn.execute(
+                            "INSERT INTO inference_adoption_attempt_results VALUES (?,?,?,?,?,?)",
+                            (
+                                str(reservation["attempt_id"]),
+                                str(reservation["child_invocation_id"]),
+                                producer_result_ref,
+                                result_json,
+                                result_sha,
+                                _now(),
+                            ),
+                        )
+                    elif (
+                        str(prior["child_invocation_id"]) != str(reservation["child_invocation_id"])
+                        or str(prior["producer_result_ref"]) != producer_result_ref
+                        or str(prior["result_json"]) != result_json
+                        or str(prior["result_sha256"]) != result_sha
+                    ):
+                        raise ConflictError("Attempt result changed.", code="inference_adoption_result_integrity_invalid")
+                return producer_result_ref
+
+            request = InvocationRequest(
+                str(reservation["deployment_revision_id"]),
+                ServiceContract.for_payload(
+                    str(serialized["contract"]),
+                    str(serialized["contract_revision"]),
+                    payload,
+                ),
+                frozen_deadline,
+                payload,
+                str(reservation["child_invocation_id"]),
+                parent_operation_id=str(
+                    getattr(parent_context, "operation_id", "") or ""
+                ),
+                attempt_ordinal=int(reservation["physical_attempt_ordinal"]),
+                route_attempt_reservation=reservation,
+                before_physical_dispatch=before_physical_dispatch,
+            )
+            from ..kernel.runtime import _as_principal
+
+            with _as_principal(principal):
+                runner_outcome = runner.invoke_stream(
+                    request, adapter, on_delta=on_delta,
+                    publish=project, parent_context=parent_context,
+                    planned_node=planned_node,
+                )
+            receipt = self.controller.get_route_execution_receipt(
+                receipt_authority, execution_id=execution_id
+            )
+            if receipt["outcome"] == "succeeded":
+                winning = self._winning_reservation(
+                    execution_id, str(receipt.get("winning_attempt_id") or "")
+                )
+                value = self._durable_winner_result(receipt)
+                if value is None:
+                    raise ConflictError(
+                        "Winner result is missing.",
+                        code="inference_adoption_result_integrity_invalid",
+                    )
+                self._publish_winner_if_unstaged(publish, value, winning)
+                return {
+                    "outcome": "succeeded",
+                    "result": value,
+                    "receipt": receipt,
+                    "winning_reservation": winning,
+                }
+            if receipt["state"] == "terminal":
+                return {
+                    "outcome": receipt["outcome"],
+                    "result": None,
+                    "receipt": receipt,
+                    "error": str(getattr(runner_outcome, "error", "") or ""),
+                }
+            execution = self.controller._execution(None, execution_id)
+
     def recover_route_executions(
         self, *, execution_id: str | None = None, parent_operation_id: str | None = None,
     ) -> dict[str, int]:
@@ -2643,7 +2840,7 @@ class RoutedInferenceCoordinator:
             })
             if value:
                 profile = entry_for(value)
-                for capability_id in ("recipe.run", "recipe.chat", "sequence.step"):
+                for capability_id in ("recipe.run", "chat.turn", "sequence.step"):  # HS-151-02: recipe.chat → chat.turn
                     subject_entries.append({
                         "subject_kind": "recipe", "subject_id": str(recipe.id),
                         "capability_id": capability_id, "entry": profile,

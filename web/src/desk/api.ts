@@ -25,6 +25,7 @@ import type {
   Repository,
   Roadmap,
   Story,
+  Thread,
   Workbench,
   Workflow,
 } from "../lib/primitives";
@@ -148,6 +149,7 @@ export const EMPTY_ITEMS = {
   people: [
     { kind: "people", id: "people", name: "People" } satisfies PeopleDesk,
   ],
+  thread: [],
   game: [],
   layout: [],
 } satisfies TypedItems;
@@ -405,6 +407,26 @@ export const fromWireWorkflow = (w: unknown): Workflow | null => {
   };
 };
 
+export const fromWireThread = (t: unknown): Thread | null => {
+  const id = wireString(t, "id");
+  if (!id) { warnMissingId("thread", t, "id"); return null; }
+  return {
+    kind: "thread",
+    id,
+    title: wireString(t, "title", "Thread"),
+    recipeId: wireStringOrNull(t, "recipe_id"),
+    profileOverride: wireStringOrNull(t, "profile_override"),
+    directoryId: wireStringOrNull(t, "directory_id"),
+    parentThreadId: wireStringOrNull(t, "parent_thread_id"),
+    statusLine: wireStringOrNull(t, "status_line"),
+    tokenIn: wireNumber(t, "token_in"),
+    tokenOut: wireNumber(t, "token_out"),
+    createdAt: wireString(t, "created_at"),
+    updatedAt: wireString(t, "updated_at"),
+    lastTurnAt: wireStringOrNull(t, "last_turn_at"),
+  };
+};
+
 const fromWireMeeting = (m: unknown): Meeting | null => {
   const id = wireString(m, "id");
   if (!id) { warnMissingId("meeting", m, "id"); return null; }
@@ -484,7 +506,7 @@ export const fromCoderStatus = (data: unknown): Coder[] =>
 /** The subset of PrimitiveKind that has a wire endpoint and a fromWire mapper. */
 type WireKind = Exclude<
   PrimitiveKind,
-  "game" | "layout" | "story" | "intelligence" | "people"
+  "game" | "layout" | "story" | "intelligence" | "people" | "thread"
 >;
 
 /** Compile-time completeness guard: adding a new WireKind without a mapper
@@ -654,6 +676,15 @@ export async function loadAll(): Promise<LoadResult> {
       .catch(() => {
         models = []; /* older hub = honest empty door */
       }),
+    // HS-151-05: threads load from the thread API.
+    apiFetch<Record<string, unknown>>("/api/threads")
+      .then((d) => {
+        items.thread = wireArray(d, "threads")
+          .map(fromWireThread)
+          .filter((x): x is Thread => x !== null);
+        status.thread = "live";
+      })
+      .catch((e) => fail("thread", "Threads", e)),
     fetchRoadmaps()
       .then((roadmaps) => {
         items.roadmap = roadmaps.map((r) => fromWireRoadmap(r)).filter((r): r is Roadmap => r !== null);

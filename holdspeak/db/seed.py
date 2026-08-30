@@ -214,6 +214,15 @@ def apply_seed(
             continue
         db.directory_memberships.upsert(primitive_id=ref, directory_id=directory_id)
         report.filed += 1
+
+    # HS-153-01: ensure mode presets exist on every hub, including pre-existing
+    # DBs that were created before modes were added to the seed manifest.
+    from ..services.thread_modes import seed_modes, seed_guardrails
+    seed_modes(db)
+
+    # HS-153-03: ensure guardrail note presets exist.
+    seed_guardrails(db)
+
     return report
 
 
@@ -284,9 +293,12 @@ def _apply_item(
         db.recipes.upsert(
             recipe_id=item_id,
             name=str(item.get("name") or ""),
+            avatar=str(item.get("avatar") or ""),
             role=str(item.get("role") or ""),
             system_prompt=str(item.get("system_prompt") or ""),
             user_template=str(item.get("user_template") or ""),
+            tools=[str(t) for t in item.get("tools") or []],
+            kind=str(item.get("kind") or ""),
         )
     elif section == "chains":
         db.chains.upsert(

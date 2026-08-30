@@ -1,0 +1,23 @@
+{
+  "model": "capture-model",
+  "messages": [
+    {
+      "content": "You are the desk's AI core. Be concrete and brief.",
+      "role": "system"
+    },
+    {
+      "content": "Tell me about this person",
+      "role": "user"
+    },
+    {
+      "content": "METAL-LEG-SENSITIVE-PERSON-DATA-d8f2a",
+      "role": "assistant"
+    },
+    {
+      "content": "Follow up after profile switch",
+      "role": "user"
+    }
+  ],
+  "stream": true,
+  "max_tokens": 512
+}

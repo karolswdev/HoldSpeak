@@ -1,0 +1,139 @@
+{
+  "id": "th_ef0689b6c901",
+  "title": "HS-153-06 Leg 5 todo",
+  "recipe_id": "hs-seed-mode-desk",
+  "profile_override": "",
+  "directory_id": "",
+  "token_in": 5,
+  "token_out": 3,
+  "created_at": 1788115445.963844,
+  "updated_at": 1788115446.5138009,
+  "last_turn_at": 1788115446.5138009,
+  "mode": {
+    "id": "hs-seed-mode-desk",
+    "name": "Desk",
+    "avatar": "#6B7280"
+  },
+  "messages": [
+    {
+      "id": "tm_a1a6f4ce944f",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_6ce66e786f9f",
+          "kind": "text",
+          "text": "Remind me about the design review.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115445.9671302,
+      "updated_at": 1788115445.9683142,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_a152d066d7d2",
+      "role": "assistant",
+      "parent_id": "tm_a1a6f4ce944f",
+      "streaming": false,
+      "receipt_id": "ire_14f68e3357287d1d282bd70293c7b876",
+      "egress_scope": "local",
+      "model_id": "hs153-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 3,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_6fcc7f10e063",
+          "kind": "text",
+          "text": "Desk mode response. No actions taken.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115445.989436,
+      "updated_at": 1788115446.0855958,
+      "completed_at": 1788115446.0855958,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_3f5e2c768542",
+      "role": "system",
+      "parent_id": "tm_a152d066d7d2",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_0ec5b4f1bd02",
+          "kind": "tool_call",
+          "text": null,
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "id": "todo_35ddd2d9a1d1",
+            "name": "door.add_item",
+            "arguments": "{\"task\": \"Review the 153 design with the owner\", \"source_type\": \"thread\", \"source_ref\": \"thread:tm_a152d066d7d2\"}",
+            "class": "effect_proposal",
+            "state": "completed"
+          },
+          "tool_call_id": "todo_35ddd2d9a1d1"
+        }
+      ],
+      "created_at": 1788115446.505405,
+      "updated_at": 1788115446.5150778,
+      "completed_at": 1788115446.5150778,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_e65091889fd7",
+      "role": "tool",
+      "parent_id": "tm_3f5e2c768542",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_21b14611cea8",
+          "kind": "text",
+          "text": "{\"id\": \"ai_e8da37dc75ec4f37955bcbec47618139\", \"task\": \"Review the 153 design with the owner\", \"owner\": null, \"due\": null, \"status\": \"open\", \"source_type\": \"thread\", \"source_ref\": \"thread:tm_a152d066d7d2\"}",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "name": "door.add_item",
+            "kind": "data",
+            "receipt_id": "tr-0d212ab8d2dc"
+          },
+          "tool_call_id": "todo_35ddd2d9a1d1"
+        }
+      ],
+      "created_at": 1788115446.5138009,
+      "updated_at": 1788115446.514645,
+      "completed_at": null,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

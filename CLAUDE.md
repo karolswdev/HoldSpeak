@@ -77,6 +77,11 @@ disagrees with one of these, canon wins:
   (pytest-timeout, thread method), so a hanging test dies with a stack
   trace naming it instead of stalling the run at 98% forever. A test that
   legitimately needs longer declares `@pytest.mark.timeout(...)`.
+- Web-unit inherited baseline:
+  `uv run python scripts/check_web_baseline.py --run` — runs the desk
+  vitest suite and diffs its failures against
+  `tests/web-inherited-baseline.txt` (BASELINE-MATCHED / BRANCH-NEW /
+  HEALED; exit 0 only with zero branch-new). See `tests/WEB_BASELINE.md`.
 
 The `Tests ran` rule (PMO contract §3) requires you to actually run
 the relevant tests via these commands and read the output before

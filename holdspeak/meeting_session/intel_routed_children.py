@@ -158,6 +158,7 @@ class IntelRoutedChildMixin:
                     operation_id=operation_id,
                     payload=dict(material),
                     reserved_output_tokens=512,
+                    parent_operation_id=getattr(parent, "operation_id", None),
                 )
                 routed = self._intel_broker().inference_adoption_service.execute(
                     self.intel_principal,

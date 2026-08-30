@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 import socket
-from typing import Optional
+from typing import Any, Optional
 
 from ..logging_config import get_logger
 from .models import ActionItem, DEFAULT_CLOUD_BASE_URL
@@ -13,15 +13,67 @@ from .models import ActionItem, DEFAULT_CLOUD_BASE_URL
 log = get_logger("intel")
 
 
-def _json_only_messages(transcript: str) -> list[dict[str, str]]:
-    schema = {
-        "topics": ["<short topic>", "..."],
-        "action_items": [
-            {"task": "<task>", "owner": "Me|Remote|null", "due": "<date or null>"},
-        ],
-        "summary": "<short summary>",
+# HS-151-01 (counsel M2+M4): ONE schema constant — the prompt stringifies it,
+# the response_format wraps it, the semantic adapter references it.  Carries
+# the named-owner shape from the start (owner: string|null).
+INTEL_SCHEMA: dict[str, Any] = {
+    "topics": ["<short topic>"],
+    "action_items": [
+        {
+            "task": "<task>",
+            "owner": "<person's name as spoken>|Me|Remote|null",
+            "due": "<date or null>",
+        },
+    ],
+    "summary": "<short summary>",
+}
+
+# The JSON Schema used by the OpenAI response_format payload.  Derived once
+# from the INTEL_SCHEMA constant so prompt and structured-output always agree.
+INTEL_JSON_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "topics": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "action_items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "task": {"type": "string"},
+                    "owner": {"type": ["string", "null"]},
+                    "due": {"type": ["string", "null"]},
+                },
+                "required": ["task", "owner", "due"],
+                "additionalProperties": False,
+            },
+        },
+        "summary": {"type": "string"},
+    },
+    "required": ["topics", "action_items", "summary"],
+    "additionalProperties": False,
+}
+
+
+def intel_response_format() -> dict[str, Any]:
+    """Build the OpenAI ``response_format`` payload from the ONE schema constant.
+
+    Returns the ``{type: "json_schema", json_schema: {name, strict, schema}}``
+    dict ready to pass as ``response_format=`` to ``chat.completions.create``.
+    """
+    return {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "meeting_intel",
+            "strict": True,
+            "schema": INTEL_JSON_SCHEMA,
+        },
     }
 
+
+def _json_only_messages(transcript: str) -> list[dict[str, str]]:
     return [
         {
             "role": "system",
@@ -38,7 +90,11 @@ def _json_only_messages(transcript: str) -> list[dict[str, str]]:
             "content": (
                 "Analyze this transcript and extract meeting intelligence.\n\n"
                 "Output JSON with this exact shape:\n"
-                f"{json.dumps(schema, ensure_ascii=False)}\n\n"
+                f"{json.dumps(INTEL_SCHEMA, ensure_ascii=False)}\n\n"
+                "For action_items owner: name the owner ONLY when the transcript names them. "
+                "Use the person's name as spoken in the transcript. "
+                "Me = the speaker/leader; Remote = the counterpart; null when unclear. "
+                "Me and Remote are the ONLY reserved tokens — every other string is a literal person name.\n\n"
                 "Transcript:\n"
                 f"{transcript}\n"
             ),

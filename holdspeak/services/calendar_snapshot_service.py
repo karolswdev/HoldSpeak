@@ -99,13 +99,25 @@ class ExtractionResult:
     error: str | None = None
 
 
+def _strip_code_fence(text: str) -> str:
+    """Strip markdown code fences wrapping a JSON payload (HS-151-04).
+
+    Real vision models (Qwythos-9B proven on metal) habitually wrap JSON
+    output in ```json ... ``` fences.  Mirrors the existing precedent in
+    project_doc_suggestions._strip_code_fence and voice_resolver.
+    """
+    match = re.match(r"^\s*```(?:json)?\s*(.*?)\s*```\s*$", text, flags=re.DOTALL)
+    return match.group(1).strip() if match else text
+
+
 def parse_extraction_json(raw: str) -> ExtractionResult:
     """Parse and validate the model's extraction JSON.
 
     Returns a named refusal for unreadable screenshots; never empty success.
     """
     try:
-        data = json.loads(raw)
+        cleaned = _strip_code_fence(raw.strip())
+        data = json.loads(cleaned)
     except (json.JSONDecodeError, TypeError):
         return ExtractionResult(
             anchor_date=None,

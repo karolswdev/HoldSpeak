@@ -15,6 +15,9 @@ beforeEach(() => {
     panelOrder: [],
     panelMin: [],
     panelMax: [],
+    windowsById: {},
+    zoneWindows: [],
+    zoneViewPrefs: {},
   });
 });
 
@@ -181,16 +184,17 @@ describe("HS-103-01: Reset Layout clears an open window's rect too", () => {
   });
 });
 
-describe("the lifecycle store + hs.desk.panels persistence", () => {
+describe("the lifecycle store + versioned workspace persistence", () => {
   it("round-trips rects + order + max through one slot; min stays out (HS-97-03)", () => {
     useDesk.getState().setPanelRect("a", { x: 10, y: 20, w: 400, h: 300 }, true);
     useDesk.getState().minimizePanel("a");
     useDesk.getState().toggleMaximizePanel("b");
-    const raw = JSON.parse(localStorage.getItem("hs.desk.panels") || "{}");
-    expect(raw.rects.a).toEqual({ x: 10, y: 20, w: 400, h: 300 });
-    expect(raw.min).toBeUndefined();
-    expect(raw.order).toEqual(["b"]);
-    expect(raw.max).toEqual(["b"]);
+    const raw = JSON.parse(localStorage.getItem("hs.desk.workspace.v1") || "{}");
+    expect(raw.rects).toBeUndefined();
+    expect(raw.panel.rects.a).toEqual({ x: 10, y: 20, w: 400, h: 300 });
+    expect(raw.panel.min).toBeUndefined();
+    expect(raw.panel.order).toEqual(["b"]);
+    expect(raw.panel.max).toEqual(["b"]);
     expect(useDesk.getState().panelMin).toEqual(["a"]);
   });
 
@@ -199,9 +203,9 @@ describe("the lifecycle store + hs.desk.panels persistence", () => {
     useDesk.getState().restorePanel("a");
     useDesk.getState().toggleMaximizePanel("b");
     useDesk.getState().toggleMaximizePanel("b");
-    const raw = JSON.parse(localStorage.getItem("hs.desk.panels") || "{}");
-    expect(raw.min).toBeUndefined();
-    expect(raw.max).toEqual([]);
+    const raw = JSON.parse(localStorage.getItem("hs.desk.workspace.v1") || "{}");
+    expect(raw.panel.min).toBeUndefined();
+    expect(raw.panel.max).toEqual([]);
   });
 
   it("focus order still raises the last-touched window", () => {
@@ -211,19 +215,14 @@ describe("the lifecycle store + hs.desk.panels persistence", () => {
     expect(useDesk.getState().panelOrder).toEqual(["b", "a"]);
   });
 
-  it("accepts the Phase 93 flat rect shape on load", async () => {
+  it("hard-cuts the retired Phase 93 panel slot", async () => {
     localStorage.setItem(
       "hs.desk.panels",
       JSON.stringify({ legacy: { x: 1, y: 2, w: 300, h: 200 } }),
     );
     vi.resetModules();
     const fresh = await import("../store");
-    expect(fresh.useDesk.getState().panelRects.legacy).toEqual({
-      x: 1,
-      y: 2,
-      w: 300,
-      h: 200,
-    });
+    expect(fresh.useDesk.getState().panelRects.legacy).toBeUndefined();
     expect(fresh.useDesk.getState().panelMin).toEqual([]);
   });
 });

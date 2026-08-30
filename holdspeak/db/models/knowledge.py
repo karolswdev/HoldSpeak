@@ -116,6 +116,7 @@ class RecipeRecord(Serializable):
     # Phase 77 -- the iPad-authored pinned context, first-class on the hub.
     manual_context: str = ""
     use_zone_context: bool = False
+    kind: str = ""   # HS-153-01: '' = ordinary recipe, 'mode' = thread mode
     created_at: str = ""
     last_modified: str = ""
     deleted: bool = False

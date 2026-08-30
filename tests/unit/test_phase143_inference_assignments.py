@@ -631,7 +631,13 @@ def test_selected_group_starter_is_hash_bound_atomic_and_replay_safe(
     db: Database,
 ) -> None:
     _profile(
-        db, "starter-model", claims=("language", _result_claim("thought.interview"))
+        db,
+        "starter-model",
+        claims=(
+            "language",
+            _result_claim("thought.interview"),
+            _result_claim("chat.guardrail"),
+        ),
     )
     service = InferenceAssignmentService(db)
     groups = [
@@ -874,7 +880,13 @@ def test_legacy_boundary_uses_actual_adapter_and_paired_unknown_fails_closed(
 
 def test_group_retry_policy_is_exact_member_intersection(db: Database) -> None:
     _profile(
-        db, "policy-model", claims=("language", _result_claim("thought.interview"))
+        db,
+        "policy-model",
+        claims=(
+            "language",
+            _result_claim("thought.interview"),
+            _result_claim("chat.guardrail"),
+        ),
     )
     service = InferenceAssignmentService(db)
     valid = service.set_assignment(

@@ -420,7 +420,7 @@ describe("NotePullout adoption recovery", () => {
 
   it("keeps the catalog behind Browse and searches through the server", async () => {
     vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: { ...ownedThought, attachments: [] } });
-    vi.mocked(listThoughtContext).mockImplementation(async (_id, input) => input.view === "browse" || input.query
+    vi.mocked(listThoughtContext).mockImplementation(async (_id, input) => input?.view === "browse" || input?.query
       ? { attachments: [], pinned: compactContext.pinned as any, recent: [], results: [{ ref: "note:launch", kind: "note", title: "Launch notes", leaf_count: 1, state: "current" }], next_cursor: null }
       : compactContext as any);
     useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });

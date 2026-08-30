@@ -42,6 +42,7 @@ const EXPECTED: Record<PrimitiveKind, string | null> = {
   layout: "Named by the desk layout",
   intelligence: "Named by the desk",
   people: "Named by the People surface",
+  thread: null,
 };
 
 describe("HS-132-07 rename honesty", () => {

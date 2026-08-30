@@ -1,0 +1,152 @@
+{
+  "id": "th_7c3711c72c9c",
+  "title": "HS-152-03 fence",
+  "recipe_id": "",
+  "profile_override": "hs152-cloud",
+  "directory_id": "",
+  "token_in": 3586,
+  "token_out": 9,
+  "created_at": 1788072333.824437,
+  "updated_at": 1788072338.757777,
+  "last_turn_at": 1788072338.757777,
+  "messages": [
+    {
+      "id": "tm_87bd03a9434f",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_9323e1260515",
+          "kind": "text",
+          "text": "Is the People store ready?",
+          "ordinal": 0,
+          "sensitive": false
+        }
+      ],
+      "created_at": 1788072333.82753,
+      "updated_at": 1788072333.832389,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_9f1262fdfda5",
+      "role": "assistant",
+      "parent_id": "tm_87bd03a9434f",
+      "streaming": false,
+      "receipt_id": "ire_114fa363240702c61bf1875681b4fc9d",
+      "egress_scope": "private_network",
+      "model_id": "legacy-hs152-lan",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 9,
+        "prompt_tokens": 3586,
+        "total_tokens": 3595
+      },
+      "parts": [
+        {
+          "id": "tp_e631a06b88ca",
+          "kind": "tool_call",
+          "text": null,
+          "ordinal": 0,
+          "sensitive": false,
+          "meta_json": {
+            "id": "UHWDI1bZ0c4Qtz4Es43paAsQEUFr54qx",
+            "name": "people.readiness",
+            "arguments": "{}",
+            "class": "evidence_read",
+            "state": "admitted"
+          },
+          "tool_call_id": "UHWDI1bZ0c4Qtz4Es43paAsQEUFr54qx"
+        },
+        {
+          "id": "tp_b69e7907b875",
+          "kind": "text",
+          "text": "The People store is currently unconfigured.",
+          "ordinal": 1,
+          "sensitive": false
+        }
+      ],
+      "created_at": 1788072333.8605509,
+      "updated_at": 1788072338.674242,
+      "completed_at": 1788072338.674242,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_0d3f19b0a36c",
+      "role": "tool",
+      "parent_id": "tm_9f1262fdfda5",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_b2902ebcad66",
+          "kind": "text",
+          "text": "{\"readiness\": \"unconfigured\", \"state\": \"unconfigured\", \"store\": \"absent\", \"sync\": \"local_only\", \"capture\": \"notes_only\", \"reason_code\": \"people_store_unconfigured\", \"access\": \"write\", \"disclosure\": \"shared_intent_only\"}",
+          "ordinal": 0,
+          "sensitive": true,
+          "meta_json": {
+            "kind": "person",
+            "receipt_id": "tr-a23161eca4fe"
+          },
+          "tool_call_id": "UHWDI1bZ0c4Qtz4Es43paAsQEUFr54qx"
+        }
+      ],
+      "created_at": 1788072337.4851751,
+      "updated_at": 1788072337.486148,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_9606dc22a928",
+      "role": "user",
+      "parent_id": "tm_0d3f19b0a36c",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_d18cb6dc2a2d",
+          "kind": "text",
+          "text": "And now on the cloud?",
+          "ordinal": 0,
+          "sensitive": false
+        }
+      ],
+      "created_at": 1788072338.746012,
+      "updated_at": 1788072338.746757,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_ccfe9ea1bb8c",
+      "role": "assistant",
+      "parent_id": "tm_9606dc22a928",
+      "streaming": false,
+      "receipt_id": "ire_01d7c59e20ed0fa64451f7868641dc1e",
+      "egress_scope": "cloud",
+      "model_id": "legacy-hs152-cloud",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [],
+      "created_at": 1788072338.757777,
+      "updated_at": 1788072339.974585,
+      "completed_at": 1788072339.974585,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": []
+}

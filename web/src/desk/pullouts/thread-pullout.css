@@ -1,0 +1,1153 @@
+/* HS-151-05 — Thread pullout styling. Signal Workbench material model:
+ * opaque, beveled, 2px radius, mono labels. Reuses desk tokens
+ * (--desk-type-primary-size 15px, --desk-surface-body-size 13px,
+ * --desk-surface-detail-size 12px, --desk-surface-label-size 11px).
+ * Colors: --text, --text-muted, --text-faint. Font: var(--font-mono). */
+
+/* The body is a scrolling flex child inside the pullout card's column.
+   flex: 1 + min-height: 0 lets it shrink and scroll; the foot stays
+   pinned below, never overflowing the frame. */
+.thread-pullout-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ── Head ────────────────────────────────────────────────────────────── */
+/* (1) title loudest; lamp + meter as quiet secondary material, one line */
+
+.thread-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border, rgba(128, 128, 128, 0.15));
+}
+
+.thread-title {
+  all: unset;
+  cursor: text;
+  font-family: var(--font-display, inherit);
+  font-weight: 600;
+  font-size: var(--desk-type-primary-size, 15px);
+  line-height: 1.3;
+  color: var(--text);
+  padding: 1px 0;
+  min-height: 20px;
+}
+
+.thread-title:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--border, rgba(128, 128, 128, 0.3));
+  text-underline-offset: 3px;
+}
+
+.thread-title-input {
+  all: unset;
+  font-family: var(--font-display, inherit);
+  font-weight: 600;
+  font-size: var(--desk-type-primary-size, 15px);
+  line-height: 1.3;
+  color: var(--text);
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: var(--desk-window-well, rgba(128, 128, 128, 0.08));
+  box-shadow: var(--desk-window-etch, inset 0 1px 2px rgba(0,0,0,.12));
+  min-height: 20px;
+}
+
+.thread-head-instruments {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.thread-status-line {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Messages ────────────────────────────────────────────────────────── */
+
+.thread-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+}
+
+.thread-row {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.08));
+}
+
+/* ── User row ────────────────────────────────────────────────────────── */
+
+.thread-row-label {
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 3px;
+}
+
+.thread-row-user .thread-row-body {
+  font-size: var(--desk-surface-body-size, 13px);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+}
+
+/* ── Assistant row ───────────────────────────────────────────────────── */
+
+.thread-row-assistant .thread-row-body {
+  font-size: var(--desk-surface-body-size, 13px);
+  line-height: 1.6;
+  color: var(--text);
+}
+
+/* (2) provenance line: model quiet, receipt de-emphasized, lamp last */
+.thread-row-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--desk-surface-label-size, 11px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.thread-row-head .thread-row-label {
+  margin-bottom: 0;
+  color: var(--text-muted);
+}
+
+.thread-row-receipt {
+  color: var(--text-faint);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+/* ── Streaming ───────────────────────────────────────────────────────── */
+
+.thread-streaming-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: var(--desk-surface-body-size, 13px);
+  line-height: 1.6;
+}
+
+.thread-cursor {
+  display: inline-block;
+  width: 5px;
+  height: 13px;
+  background: var(--text-faint);
+  vertical-align: text-bottom;
+  animation: thread-blink 1s step-end infinite;
+}
+
+@keyframes thread-blink {
+  50% { opacity: 0; }
+}
+
+.thread-row-streaming {
+  box-shadow: inset 2px 0 0 var(--accent, #3b82f6);
+}
+
+/* ── Error / Crashed ─────────────────────────────────────────────────── */
+/* (4) CRASHED: Retry primary; error: severity label + message */
+
+.thread-row-error {
+  box-shadow: inset 2px 0 0 var(--danger-signal, #ef4444);
+}
+
+.thread-row-error-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.thread-error-severity {
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--danger-signal, #ef4444);
+}
+
+.thread-error-message {
+  font-size: var(--desk-surface-detail-size, 12px);
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
+.thread-row-crashed {
+  box-shadow: inset 2px 0 0 var(--warn-signal, #f59e0b);
+}
+
+.thread-row-crashed-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.thread-crash-label {
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--warn-signal, #f59e0b);
+}
+
+/* ── RAW fold ────────────────────────────────────────────────────────── */
+
+.thread-raw-fold {
+  margin-top: 6px;
+  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.12));
+  border-radius: 2px;
+}
+
+.thread-raw-toggle {
+  cursor: pointer;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.thread-raw-content {
+  padding: 4px 8px;
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+  color: var(--text-faint);
+}
+
+/* ── Row actions ─────────────────────────────────────────────────────── */
+/* (3) secondary-verb toolbar: lighter border, smaller mono, grouped */
+
+.thread-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.desk-next .thread-row-actions .desk-chip.quiet {
+  font-size: 10px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  height: 22px;
+  padding: 0 7px;
+  border-color: var(--border-subtle, rgba(128,128,128,.12));
+  box-shadow: none;
+  color: var(--text-faint);
+}
+
+.desk-next .thread-row-actions .desk-chip.quiet + .desk-chip.quiet {
+  margin-left: -1px;
+}
+
+.desk-next .thread-row-actions .desk-chip.quiet:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+/* ── Sibling picker ──────────────────────────────────────────────────── */
+
+.thread-sibling-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.thread-sibling-nav {
+  all: unset;
+  cursor: pointer;
+  padding: 0 4px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-faint);
+}
+
+.thread-sibling-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.thread-sibling-count {
+  color: var(--text-faint);
+}
+
+/* ── Foot (composer container) ────────────────────────────────────────── */
+/* A direct flex child of the window shell, pinned at the bottom. */
+.thread-foot {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--border, rgba(128, 128, 128, 0.15));
+  background: var(--surface-2, rgba(128, 128, 128, 0.04));
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Composer (HS-151-06) ─────────────────────────────────────────────── */
+
+.thread-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* (5) at 393: no resize handle, tight spacing, chips wrap */
+.thread-composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.thread-composer-input {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.2));
+  border-radius: 2px;
+  padding: 6px 8px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--desk-surface-body-size, 13px);
+  background: var(--desk-window-well, rgba(128, 128, 128, 0.05));
+  box-shadow: var(--desk-window-etch, inset 0 1px 2px rgba(0,0,0,.12));
+  color: inherit;
+  min-height: 22px;
+  max-height: 120px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.thread-composer-input:focus {
+  outline: 1px solid var(--accent, #3b82f6);
+  outline-offset: -1px;
+}
+
+/* ── Ref chips ───────────────────────────────────────────────────────── */
+
+.thread-composer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.thread-ref-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: var(--wash-1, rgba(128, 128, 128, 0.06));
+  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.12));
+  font-size: var(--desk-surface-detail-size, 12px);
+  line-height: 1.4;
+  max-width: 100%;
+}
+
+.thread-ref-chip-kind {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
+.thread-ref-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.thread-ref-chip-remove {
+  all: unset;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--text-faint);
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.thread-ref-chip-remove:hover {
+  color: var(--danger-signal, #ef4444);
+}
+
+/* ── Autocomplete anchor (positions above the field) ─────────────────── */
+
+.thread-composer-ac-anchor {
+  position: relative;
+}
+
+.thread-composer-ac-anchor .inlet-autocomplete {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--desk-z-popover, 100);
+  background: var(--desk-window-fill, #fff);
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.2));
+  border-radius: 2px;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--shadow-ink-1) 53%, transparent);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* ── Slash command palette ────────────────────────────────────────────── */
+
+.thread-slash-palette {
+  min-width: 160px;
+}
+
+/* ── Inline editor (edit-and-resend / fork) ──────────────────────────── */
+
+.thread-inline-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.thread-inline-editor-input {
+  width: 100%;
+  resize: none;
+  border: 1px solid var(--accent, #3b82f6);
+  border-radius: 2px;
+  padding: 6px 8px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--desk-surface-body-size, 13px);
+  background: var(--desk-window-well, rgba(128, 128, 128, 0.05));
+  box-shadow: var(--desk-window-etch, inset 0 1px 2px rgba(0,0,0,.12));
+  color: inherit;
+  min-height: 22px;
+  max-height: 120px;
+  box-sizing: border-box;
+}
+
+.thread-inline-editor-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* ── User row editable ───────────────────────────────────────────────── */
+
+.thread-row-body-editable {
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 1px 2px;
+  margin: -1px -2px;
+}
+
+.thread-row-body-editable:hover {
+  background: var(--wash-1, rgba(128, 128, 128, 0.05));
+}
+
+/* ── Kind glyph in autocomplete ──────────────────────────────────────── */
+
+.inlet-ac-kind-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+/* ── Token meter ─────────────────────────────────────────────────────── */
+
+.thread-token-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.thread-token-count {
+  font-size: 10px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+/* ── Tool rows (HS-152-04) ──────────────────────────────────────────── */
+
+.thread-tool-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 4px;
+}
+
+.thread-tool-row {
+  padding: 6px 8px;
+  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.12));
+  border-radius: 2px;
+  margin-top: 4px;
+  background: var(--wash-1, rgba(128, 128, 128, 0.03));
+}
+
+.thread-tool-held {
+  border-left: 2px solid var(--accent, #3b82f6);
+}
+
+.thread-tool-running {
+  border-left: 2px solid var(--accent, #3b82f6);
+  opacity: 0.85;
+}
+
+.thread-tool-error {
+  border-left: 2px solid var(--danger-signal, #ef4444);
+}
+
+.thread-tool-row-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--desk-surface-label-size, 11px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.thread-tool-class-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--wash-1, rgba(128, 128, 128, 0.08));
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.thread-tool-name {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.thread-tool-state {
+  color: var(--text-faint);
+  font-weight: 400;
+  flex-shrink: 0;
+}
+
+.thread-tool-people-badge {
+  display: inline-flex;
+  padding: 0 4px;
+  border-radius: 2px;
+  background: var(--warn-signal, #f59e0b);
+  color: var(--text-on-accent);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.thread-tool-receipt {
+  color: var(--text-faint);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.thread-tool-outcome {
+  color: var(--text-faint);
+  font-weight: 400;
+  flex-shrink: 0;
+}
+
+.thread-tool-args-head {
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--text-faint);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* ── Decision box ───────────────────────────────────────────────────── */
+
+.thread-tool-decision-box {
+  margin-top: 6px;
+}
+
+.thread-tool-decision-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.thread-tool-decision-actions .desk-chip {
+  font-size: 10px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  height: 24px;
+  padding: 0 8px;
+}
+
+/* ── Error code ─────────────────────────────────────────────────────── */
+
+.thread-tool-error-code {
+  margin-top: 4px;
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--danger-signal, #ef4444);
+}
+
+/* ── Elicitation form ───────────────────────────────────────────────── */
+
+.thread-elicitation-form {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.thread-elicitation-prompt {
+  font-size: var(--desk-surface-body-size, 13px);
+  color: var(--text-muted);
+}
+
+.thread-elicitation-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.thread-elicitation-label {
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.thread-elicitation-input,
+.thread-elicitation-select {
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.2));
+  border-radius: 2px;
+  padding: 4px 6px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--desk-surface-body-size, 13px);
+  background: var(--desk-window-well, rgba(128, 128, 128, 0.05));
+  box-shadow: var(--desk-window-etch, inset 0 1px 2px rgba(0,0,0,.12));
+  color: inherit;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* HS-152-05 nit: boolean checkbox aligned with its label, not centred */
+.thread-elicitation-field--boolean {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.thread-elicitation-boolean {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.thread-elicitation-boolean input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* ── Per-kind result renderers (HS-152-05) ──────────────────────────── */
+
+/* Result block: always visible on receipted rows */
+.thread-result-block {
+  margin-top: 4px;
+}
+
+.thread-result-summary {
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--text-faint);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 100%;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+/* Truncated tag (HS-152-05 D3) */
+.thread-result-truncated {
+  display: inline-block;
+  font-size: 9px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--warn-signal, #f59e0b);
+  padding: 0 4px;
+  border-radius: 2px;
+  background: var(--warn-soft);
+  margin-bottom: 4px;
+}
+
+/* Meeting glyph (matches MeetingsLane) */
+.thread-result-glyph {
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+/* Board */
+.thread-result-board {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.thread-result-board-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.thread-result-board-col {
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--text-muted);
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: var(--wash-1, rgba(128, 128, 128, 0.06));
+}
+
+/* Note */
+.thread-result-note-title {
+  font-size: var(--desk-surface-body-size, 13px);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+/* Key/value table (unknown kind) */
+.thread-result-table {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.thread-result-table-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  min-width: 0;
+}
+
+.thread-result-table-key {
+  color: var(--text-faint);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.thread-result-table-val {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Shared */
+.thread-result-label {
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.thread-result-detail {
+  font-size: var(--desk-surface-detail-size, 12px);
+  color: var(--text-faint);
+  margin-left: 6px;
+}
+
+.thread-result-more {
+  font-size: var(--desk-surface-detail-size, 12px);
+  color: var(--text-faint);
+  padding-left: 8px;
+  font-style: italic;
+}
+
+/* ── HS-153-01: Mode tabs ─────────────────────────────────────────────── */
+
+.thread-mode-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.thread-mode-tabs::-webkit-scrollbar { display: none; }
+
+.thread-mode-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.15));
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #888);
+  transition: background 0.1s, border-color 0.1s;
+}
+.thread-mode-tab:hover:not(:disabled) {
+  background: var(--surface-hover, rgba(128, 128, 128, 0.08));
+}
+.thread-mode-tab:focus-visible {
+  outline: 2px solid var(--focus-ring, #4f8ff7);
+  outline-offset: -1px;
+}
+.thread-mode-tab:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.thread-mode-tab--active {
+  background: var(--surface-selected, rgba(128, 128, 128, 0.12));
+  border-color: var(--text-muted, #888);
+  color: var(--text, #e0e0e0);
+  font-weight: 600;
+}
+
+.thread-mode-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.thread-mode-label {
+  line-height: 1;
+}
+
+/* System row (in-flow slash command feedback, HS-153-02) */
+.thread-system-row {
+  padding: 4px 12px;
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--text-muted, #888);
+  border-top: 1px solid var(--border, rgba(128, 128, 128, 0.15));
+}
+
+.thread-system-row-text {
+  display: block;
+  line-height: 1.3;
+}
+
+/* Mode badge in the pullout head */
+.thread-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.15));
+  border-radius: 2px;
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #888);
+  white-space: nowrap;
+}
+
+/* ── HS-153-03: Guardrail row ──────────────────────────────────────── */
+
+.thread-guardrail-row {
+  padding: 6px 8px;
+  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.12));
+  border-radius: 2px;
+  margin-top: 4px;
+  background: var(--wash-1, rgba(128, 128, 128, 0.03));
+}
+
+.thread-guardrail-row.has-violations {
+  border-left: 2px solid var(--danger-signal, #ef4444);
+}
+
+.thread-guardrail-row.has-warnings {
+  border-left: 2px solid var(--warning-signal, #f59e0b);
+}
+
+.thread-guardrail-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.thread-guardrail-glyph {
+  font-size: 12px;
+}
+
+.thread-guardrail-violation {
+  font-size: 12px;
+  color: var(--danger-signal, #ef4444);
+  padding: 2px 0;
+}
+
+.thread-guardrail-warning {
+  font-size: 12px;
+  color: var(--warning-signal, #f59e0b);
+  padding: 2px 0;
+}
+
+.thread-guardrail-raw {
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.thread-guardrail-raw summary {
+  cursor: pointer;
+  color: var(--text-muted, #888);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.thread-guardrail-raw pre {
+  margin: 4px 0 0;
+  padding: 4px 6px;
+  background: var(--wash-2, rgba(128, 128, 128, 0.06));
+  border-radius: 2px;
+  font-size: 10px;
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Annotation popover + chips (HS-153-04) ───────────────────────── */
+
+.thread-annotation-popover {
+  background: var(--desk-window-fill);
+  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.12));
+  border-left: 2px solid var(--accent, #4488ff);
+  border-radius: 2px;
+  padding: 8px;
+  min-width: 240px;
+  max-width: 360px;
+  color: var(--text);
+  box-shadow: 0 6px 18px var(--shadow-ink-1);
+}
+
+.thread-annotation-quote-head {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size, 11px);
+  color: var(--text-muted, #888);
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-annotation-input-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.thread-annotation-comment-input {
+  flex: 1;
+  padding: 4px 6px;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size, 12px);
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.2));
+  border-radius: 2px;
+  background: var(--desk-window-well);
+  color: var(--text);
+  outline: none;
+}
+
+.thread-annotation-comment-input:focus {
+  border-color: var(--accent, #4488ff);
+}
+
+.thread-annotation-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.thread-annotation-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 8px 0;
+}
+
+.thread-annotation-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  background: var(--wash-2, rgba(128, 128, 128, 0.08));
+  border-radius: 3px;
+  max-width: 200px;
+}
+
+.thread-annotation-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-annotation-chip-remove {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  color: var(--text-muted, #888);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.thread-annotation-chip-remove:hover {
+  color: var(--text, inherit);
+}
+
+/* ── HS-153-05: compaction cut marker + earlier fold ────────────── */
+
+.thread-compact-cut {
+  border-top: 1px solid var(--border-subtle, #333);
+  border-bottom: 1px solid var(--border-subtle, #333);
+  padding: 6px 12px;
+  color: var(--text-muted, #888);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--desk-surface-sm-size, 11px);
+}
+
+.thread-compact-cut-label {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.thread-compact-failed {
+  padding: 4px 12px;
+  color: var(--text-muted, #888);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--desk-surface-sm-size, 11px);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.thread-compact-failed-label {
+  color: var(--accent, #f5a623);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.thread-earlier-fold {
+  padding: 4px 12px;
+}
+
+.thread-earlier-toggle {
+  all: unset;
+  cursor: pointer;
+  color: var(--text-muted, #888);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--desk-surface-sm-size, 11px);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.thread-earlier-toggle:hover {
+  color: var(--accent, #0af);
+}
+
+.thread-earlier-messages {
+  opacity: 0.7;
+}

@@ -43,12 +43,15 @@ def rig(tmp_path: Path) -> tuple[Database, RecipeService]:
     return db, RecipeService(db, broker=broker)
 
 
-def test_recipe_subject_assignment_beats_divergent_global_for_run_and_chat(rig: tuple[Database, RecipeService]) -> None:
+# HS-151-04: test_recipe_subject_assignment_beats_divergent_global_for_run_and_chat
+# DELETED — recipe.chat retired; the law is proven by recipe.run alone below.
+
+
+def test_recipe_subject_assignment_beats_divergent_global_for_run(rig: tuple[Database, RecipeService]) -> None:
     _db, service = rig
     run = asyncio.run(service.run(OWNER, "r1", input="hello"))
-    chat = asyncio.run(service.chat(OWNER, "r1", question="hello"))
-    assert run["profile_id"] == chat["profile_id"] == "recipe-primary"
-    assert run["placement"]["route_plan_id"] and chat["placement"]["route_plan_sha256"]
+    assert run["profile_id"] == "recipe-primary"
+    assert run["placement"]["route_plan_id"]
     assert run["route_execution_receipt"]["outcome"] == "succeeded"
 
 

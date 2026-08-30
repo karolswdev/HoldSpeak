@@ -40,6 +40,7 @@ Use these guides when you are ready for more than the first sentence:
 | Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts | Dashboard and `/history` |
 | iPad app | Drives both modes from another device over the hub's HTTP API: dictate into the desk, read a meeting back with its artifacts and sources, approve a proposal, browse the archive | [Companions](#companions) |
 | AIPI-Lite companion | Portable ESPHome device for meeting controls, status, and spoken replies to waiting Claude/Codex sessions | [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md), `/companion` |
+| Threads | Multi-turn streamed conversations grounded on desk material with `@`-refs, receipts, and search | The Desk, **Continue in thread** on any object |
 | AI setup | Chooses a Thought AI from OpenRouter presets, local GGUF/llama.cpp, or a custom compatible provider; MLX remains available for writing and dictation | Settings → Models |
 
 ## Develop a thought
@@ -778,6 +779,152 @@ use" with a fix: "Unset HOLDSPEAK_PEOPLE_KEYSTORE_FILE for production use. The
 file keystore is for development and testing only." If both the production
 sidecar and the dev sidecar exist, doctor warns: "BOTH WORLDS EXIST."
 
+## Threads
+
+A Thread is a multi-turn conversation that lives on the Desk as a first-class
+object. Unlike the old one-shot Ask loop, a Thread persists in the hub's
+SQLite, streams token by token, and can be grounded on desk material through
+`@`-references.
+
+### Start a Thread
+
+Open a new Thread from the Desk menu or choose **Continue in thread** on any
+desk object (a meeting, a note, a person, a decision). The object becomes a
+frozen reference: its content at the moment you ask is what the model sees.
+
+### The composer
+
+The Thread composer sits at the foot of the pullout. Type or tap the mic
+(click-to-toggle, never hold-to-talk). `@` opens the reference picker:
+meetings, notes, artifacts, decisions, and people by title. Each picked
+reference appears as a chip above the field. Enter sends, Shift+Enter inserts
+a newline, Esc stops a running turn. The Send button flips to Stop while the
+model is streaming.
+
+### Streaming, receipts, and egress
+
+Each assistant turn streams over the WebSocket bus. One egress badge and one
+receipt appear per turn. The badge names where the turn ran (this device, a
+private endpoint, or an external service). A turn that errors shows its
+failure in flow, never overlapping the UI. A turn whose stream stalls
+(no update for 10 s) renders as CRASHED with a Retry verb.
+
+### Branch, keep, and search
+
+Edit a past user message or regenerate an assistant reply to create a branch.
+The pullout shows siblings as `< n/m >`. Keep any reply as a Note or Artifact
+with its provenance recorded. Desk search federates Threads alongside meetings,
+notes, and decisions through `memory.search` (kind `thread`).
+
+### People boundary
+
+When a Thread references a People record, those parts are marked sensitive.
+If the thread's model assignment resolves to a cloud endpoint, the assembler
+redacts sensitive content before it reaches the provider.
+
+### The Thread has hands
+
+During a turn the model may call the desk's own tools. Each call
+renders as a tool row: name, class glyph, arguments head, state.
+
+In yolo mode every call executes immediately and the row shows DONE
+with a receipt short-id. In safe mode, effect tools are held. Three
+verbs appear:
+
+- **Allow once.** Executes this call. No policy row written.
+- **Allow always.** Writes a per-thread policy row so future calls
+  to the same tool auto-admit. No "Never" is offered.
+- **Deny.** Refuses this call only. No row written.
+
+A tool may ask a question mid-call (elicitation). The row renders a
+JSON-Schema form: string, number, boolean, and enum fields. Submit
+sends the answer; Decline refuses.
+
+Results from `people.*` tools carry a PEOPLE badge. These parts are
+marked sensitive and never leave the machine on a cloud turn.
+
+Every receipted row carries a collapsed **RAW** fold with the full
+JSON payload. A TRUNCATED tag appears when the result exceeded the
+32 KB byte cap.
+
+`thread.set_status` writes the status line shown under the thread
+title in the pullout head.
+
+### Modes
+
+Bind a mode to steer the thread's tool palette and system prompt. Four
+built-in modes ship as seeds:
+
+| Mode | Tools |
+|---|---|
+| **Desk** | Evidence reads, candidate builder (no effects) |
+| **Chase** | Desk + People effects, follow-through, `door.add_item` |
+| **Draft** | No tools (writing model only) |
+| **Plan** | `thought.*` reads, `door.get`, `memory.search`, `decision_record.*` reads |
+
+Mode tabs render above the composer. Click a tab to bind; click the
+active tab to unbind. A mode change applies from the next turn.
+
+### Saved prompts
+
+A prompt is a Note tagged `prompt`. `/prompt <name>` inserts the note
+body at the caret. Seed prompts ship with the desk (Weekly update,
+1:1 prep).
+
+### Guardrails
+
+A guardrail is a Note tagged `guardrail` with a YAML front matter
+block (instruction, trigger tools, N messages). Two seeds ship:
+`effect-guard` (flags an effect touching a person's ledger without a
+named source) and `egress-guard` (flags cloud egress of a `people.*`
+read).
+
+Guardrails are enabled per mode. The guardrail assignment runs once
+per tool-requesting pass, before the per-call admission. It returns
+violations and warnings rendered as a row above the pending-tool
+box. It never auto-denies; in safe mode a violation flips the decision
+box default to Deny. `/guardrail <name>` toggles a guardrail on the
+thread's mode.
+
+### Annotations
+
+Select text in any assistant part to open an in-flow popover (comment
+field with mic). Save adds an annotation chip above the composer.
+Chips are draft parts on a pending user message; Send promotes them
+with the next turn as a prefix ("The owner annotated: ..."). Chips
+survive a reload.
+
+### Compaction
+
+`/compact` summarises earlier turns into a cut marker. The assembler
+includes only the summary and what follows. A cut marker row renders
+in the pullout with a RAW fold showing the summary text. Earlier
+messages fold behind a toggle.
+
+### Todo
+
+`/todo <text>` writes an action item to the Door with
+`source_type='thread'`. The Door card shows a "from a thread" chip
+that opens the thread pullout.
+
+### Slash commands
+
+`/` at the start of a line opens the verb palette. Mid-line `/` types
+a literal slash.
+
+| Command | Action |
+|---|---|
+| `/mode <name>` | Bind or switch the thread's mode |
+| `/prompt <name>` | Insert a saved prompt at the caret |
+| `/tools` | List the mode's tool palette |
+| `/guardrail <name>` | Toggle a guardrail on the mode |
+| `/todo <text>` | Write an action item to the Door |
+| `/compact` | Summarise earlier turns behind a cut |
+| `/keep` | Keep the last reply as a Note |
+| `/fork` | Branch the conversation |
+| `/stop` | Stop a running turn |
+| `/new` | Start a new thread |
+
 ## Schedule A Recording
 
 You can set the hub to start a recording on its own at a time you choose.
@@ -850,6 +997,31 @@ always on and no longer user-configurable):
   }
 }
 ```
+
+### Named owners in action items
+
+When the transcript names people, intelligence extracts their names verbatim
+into the `owner` field of each action item. Two tokens are reserved: **Me**
+(the speaker or meeting leader) and **Remote** (the counterpart). Every other
+owner string is a literal person name as the model heard it in the transcript.
+An action item whose owner is unclear gets `null`.
+
+Extracted items land in the **Pending** review state in the **Unassigned**
+column on the Door board. From there the triage loop is: review the item,
+accept or dismiss it, and (for items with a named owner) map the owner string
+to a People relationship. Mapping is a one-time gesture per alias. Once mapped,
+the card wears a person chip, a staleness label, and the board filters by
+person. The Monday Brief's People section aggregates the same signals per
+relationship.
+
+Owner strings can drift between model runs (for example, "Ewa S." vs "Ewa", or
+a TTS-synthesized recording transcribing a name as something phonetically
+similar). Multiple aliases per person is the designed answer: add each variant
+in the relationship's **Owner aliases** section.
+
+On a reference 35B model (Qwen3.6-35B-A3B on cpu-moe), extraction takes
+approximately 8 seconds. Transcription of a two-minute audio file takes
+approximately 10 seconds with mlx-whisper.
 
 ## Project Memory
 

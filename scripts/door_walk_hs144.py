@@ -43,7 +43,7 @@ DEFAULT_PAIRS_MD = ASSETS / "story-06-pairs.md"
 TOKEN = "hs144-06-cold-walk-token"
 FIXTURE_TEXT = "Typed first value — this remains editable and has note custody."
 FIXTURE_PREFIX = "HS144 WALK"
-ALL_LEGS = ("cold", "reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe", "menus")
+ALL_LEGS = ("cold", "reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe", "menus", "thread")
 
 
 class WalkAssertionError(AssertionError):
@@ -158,11 +158,12 @@ class ClickLedger:
 class Hub:
     """A child MeetingWebServer with no seed and a walk-only environment."""
 
-    def __init__(self, port: int, home: Path, env: dict[str, str]) -> None:
+    def __init__(self, port: int, home: Path, env: dict[str, str], *, tool_engine: bool = False) -> None:
         self.port = port
         self.home = home
         self.env = env
         self.url = f"http://127.0.0.1:{port}"
+        self.tool_engine = tool_engine
         self.proc: subprocess.Popen[str] | None = None
         self.log_path: Path | None = None
         self._log_handle: Any = None
@@ -170,8 +171,11 @@ class Hub:
     def start(self, out: Path) -> None:
         self.log_path = out / "hub.log"
         self._log_handle = self.log_path.open("w", encoding="utf-8")
+        cmd = [sys.executable, str(Path(__file__).resolve()), "serve", "--port", str(self.port), "--token", TOKEN]
+        if self.tool_engine:
+            cmd.append("--tool-engine")
         self.proc = subprocess.Popen(
-            [sys.executable, str(Path(__file__).resolve()), "serve", "--port", str(self.port), "--token", TOKEN],
+            cmd,
             cwd=str(REPO), env=self.env, stdout=self._log_handle, stderr=subprocess.STDOUT, text=True,
         )
         print(f"  HUB  HOME={self.home}", flush=True)
@@ -277,7 +281,76 @@ def isolated_environment(root: Path) -> tuple[Path, dict[str, str]]:
     return home, env
 
 
-def serve(port: int, token: str) -> int:
+class _WalkToolEngine:
+    """HS-152-06: fake engine for the thread Hands leg.
+
+    Emits desk.list (evidence_read) or desk.create (effect_proposal)
+    depending on the user message text, then answers with text after
+    the tool result arrives.
+    """
+
+    active_provider = "walk-tool-engine"
+    active_model = "walk-tool-model"
+
+    def run_prompt_stream(self, *, messages=None, temperature=None,
+                          max_tokens=None, tools=None, **kw):
+        from holdspeak.kernel.inference_stream import Delta
+
+        msgs = list(messages or [])
+        has_tool_result = any(m.get("role") == "tool" for m in msgs)
+        if has_tool_result:
+            for w in ("Here", "are", "the", "results."):
+                yield Delta(kind="text", text=w + " ")
+                time.sleep(0.01)
+        else:
+            user_text = ""
+            for m in reversed(msgs):
+                if m.get("role") == "user":
+                    content = m.get("content", "")
+                    user_text = str(content) if not isinstance(content, list) else str(content)
+                    break
+            if "create" in user_text.lower():
+                yield Delta(kind="tool_calls", meta={"tool_calls": [
+                    {"id": "walk-create-1", "name": "desk.create",
+                     "arguments": json.dumps({"kind": "notes", "data": {
+                         "title": f"{FIXTURE_PREFIX} walk tool note",
+                         "body_markdown": "Created by the walk engine."}})},
+                ]})
+            else:
+                yield Delta(kind="tool_calls", meta={"tool_calls": [
+                    {"id": "walk-list-1", "name": "desk.list",
+                     "arguments": json.dumps({"kind": "notes"})},
+                ]})
+        yield Delta(kind="usage", meta={"prompt_tokens": 10, "completion_tokens": 5})
+        yield Delta(kind="done")
+
+    def run_prompt_messages(self, **kw):
+        return "Here are the results."
+
+    def run_prompt(self, **kw):
+        return "Here are the results."
+
+
+def _seed_tool_engine() -> None:
+    """Seed a local profile + assignment + fake engine in the serve child."""
+    from holdspeak.db import get_database
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim, OWNER
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    from holdspeak.kernel.runtime import _service as _kernel_service
+
+    db = get_database()
+    _profile(db, "walk-tool-local", claims=("language", _result_claim("chat.turn")))
+    InferenceAssignmentService(db).set_assignment(OWNER, {
+        "command_id": "walk-tool-assign", "expected_revision": 0,
+        "scope": {"kind": "capability", "capability_id": "chat.turn"},
+        "entries": [{"profile_id": "walk-tool-local", "profile_revision": 1}],
+    })
+    engine = _WalkToolEngine()
+    _kernel_service().inference_runner._engine_factory = lambda _rev, **_kw: engine
+    print("  TOOL-ENGINE  seeded profile + assignment + fake engine", flush=True)
+
+
+def serve(port: int, token: str, tool_engine: bool = False) -> int:
     """Child entrypoint: unseeded real hub.  No DeskService.seed call exists here."""
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
@@ -286,6 +359,8 @@ def serve(port: int, token: str) -> int:
         host="127.0.0.1", port=port, auth_token=token,
     )
     url = server.start()
+    if tool_engine:
+        _seed_tool_engine()
     print(f"HUB_READY {url}", flush=True)
     stop = False
 
@@ -1076,6 +1151,287 @@ def leg_menus(reporter: Reporter, browser: Any, hub: Hub, out: Path) -> None:
         n_context.close()
 
 
+def _wait_tool_row_state(page: Any, state: str, timeout: float = 20000) -> bool:
+    """Poll until at least one tool row reaches the given data-tool-state."""
+    try:
+        page.locator(f'[data-testid="tool-row"][data-tool-state="{state}"]').first.wait_for(timeout=timeout)
+        return True
+    except Exception:
+        return False
+
+
+def _wait_turn_done_api(hub: Hub, tid: str, aid: str, timeout: float = 30.0) -> dict[str, Any]:
+    """Poll the thread detail API until the assistant message stops streaming."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        _, detail = hub.api("GET", f"/api/threads/{tid}")
+        for m in detail.get("messages", []):
+            if m.get("id") == aid and not m.get("streaming"):
+                return detail
+        time.sleep(0.3)
+    return {}
+
+
+def leg_thread(reporter: Reporter, browser: Any, hub: Hub, out: Path) -> None:
+    """HS-151 + HS-152: thread creation via context menu, then HS-152 Hands:
+    yolo tool call (desk.list -> auto-admit -> receipted with result block + RAW),
+    safe-mode tool call (desk.create -> held -> Allow once -> receipted).
+    """
+    THREAD_SHOTS = REPO / "pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-walk-shots"
+    THREAD_SHOTS.mkdir(parents=True, exist_ok=True)
+
+    # ── Part 1: HS-151 context-menu thread creation (unchanged) ──────
+    context, page, errors = browser_context(browser, 1440, 900)
+    try:
+        go(page, hub)
+        normal_door(page)
+
+        note_title = f"{FIXTURE_PREFIX} active thought"
+        page.get_by_role("button", name="Floor", exact=True).first.click()
+        row = page.locator(".desk-list-face tbody tr").first
+        if row.count() == 0:
+            page.get_by_role("button", name="Desk", exact=True).first.click()
+            page.locator('nav[role="menu"]').last.get_by_text("List view", exact=True).click()
+            page.wait_for_timeout(1000)
+
+        obj_row = page.locator(".desk-list-face tbody tr", has_text=note_title).first
+        try:
+            obj_row.wait_for(timeout=15000)
+        except Exception:
+            pass
+        reporter.check(
+            "thread leg: source note row visible in list view",
+            obj_row.count() >= 1,
+            f"looked for {note_title!r} in .desk-list-face tbody tr",
+            scope="list-view object row for context menu",
+        )
+        capture(reporter, page, THREAD_SHOTS, "thread-list-view-1440.png",
+                "list view with the fixture note row visible")
+
+        obj_row.click(button="right")
+        cmenu = page.locator('nav[role="menu"]').last
+        cmenu.wait_for(timeout=15000)
+        capture(reporter, page, THREAD_SHOTS, "thread-context-menu-1440.png",
+                "context menu on the fixture note row")
+
+        thread_entry = cmenu.get_by_text("Continue in thread", exact=True)
+        reporter.check(
+            "thread leg: 'Continue in thread' verb present in context menu",
+            thread_entry.count() >= 1,
+            scope="list-view object row contextmenu",
+        )
+
+        thread_entry.click()
+        page.wait_for_timeout(2500)
+
+        thread_head = page.locator(".thread-head")
+        reporter.check(
+            "thread leg: thread pullout opens after Continue in thread",
+            thread_head.count() >= 1,
+            scope=".thread-head after Continue in thread verb",
+        )
+        capture(reporter, page, THREAD_SHOTS, "thread-pullout-opened-1440.png",
+                "thread pullout opened from Continue in thread verb")
+
+        composer = page.locator(".thread-composer-input")
+        reporter.check(
+            "thread leg: composer visible in thread pullout",
+            composer.count() >= 1,
+            scope=".thread-composer-input in thread pullout",
+        )
+
+        threads_status, threads_resp = hub.api("GET", "/api/threads")
+        thread_list = threads_resp.get("threads", []) if isinstance(threads_resp, dict) else []
+        reporter.check(
+            "thread leg: at least one thread exists after verb",
+            len(thread_list) >= 1,
+            f"thread count={len(thread_list)}",
+            scope="GET /api/threads",
+        )
+
+        if thread_list:
+            newest_tid = thread_list[0].get("id", "")
+            detail_status, detail = hub.api("GET", f"/api/threads/{newest_tid}")
+            refs = detail.get("refs", [])
+            has_seed_ref = any(r.get("ref_kind") in ("note", "seed") for r in refs)
+            reporter.check(
+                "thread leg: thread carries seed ref from the source note",
+                has_seed_ref,
+                f"refs={refs}",
+                scope=f"GET /api/threads/{newest_tid} refs",
+            )
+
+        assert_clean(reporter, page, errors, "thread 1440 (context-menu)")
+    finally:
+        context.close()
+
+    # ── Part 2: HS-152 Hands — yolo tool call (desk.list) ────────────
+    # Default control_mode is yolo; the walk's fake engine emits desk.list
+    # which is evidence_read → auto-admitted → receipted.
+
+    for width, height in ((1440, 900), (393, 852)):
+        context, page, errors = browser_context(browser, width, height)
+        try:
+            # Create a fresh thread for the yolo leg.
+            create_status, create_resp = hub.api("POST", "/api/threads", {"title": "Walk yolo tool"})
+            reporter.check(
+                f"thread yolo {width}: thread created",
+                create_status == 201 and bool(create_resp.get("id")),
+                f"status={create_status}",
+                scope="POST /api/threads",
+            )
+            yolo_tid = create_resp.get("id", "")
+
+            # Seed desk + onboarding, then navigate to the thread.
+            hub.api("POST", "/api/desk/seed")
+            hub.api("PUT", "/api/setup/onboarding", {"disposition": "completed"})
+            go(page, hub, f"/?open=thread:{yolo_tid}")
+            page.wait_for_timeout(2000)
+
+            # Send a turn that triggers desk.list.
+            yolo_composer = page.locator(".thread-composer-input")
+            try:
+                yolo_composer.wait_for(timeout=10000)
+            except Exception:
+                pass
+            reporter.check(
+                f"thread yolo {width}: composer visible",
+                yolo_composer.count() >= 1,
+                scope=".thread-composer-input",
+            )
+            yolo_composer.fill("List my notes")
+            page.locator("button.desk-chip", has_text="Send").click()
+
+            # Wait for the tool row to reach receipted (yolo auto-admits desk.list).
+            receipted = _wait_tool_row_state(page, "receipted", timeout=25000)
+            reporter.check(
+                f"thread yolo {width}: tool row reaches DONE (receipted)",
+                receipted,
+                scope='[data-testid="tool-row"][data-tool-state="receipted"]',
+            )
+
+            # Assert the receipt short-id is present.
+            receipt_el = page.locator(".thread-tool-receipt")
+            reporter.check(
+                f"thread yolo {width}: receipt short-id visible",
+                receipt_el.count() >= 1,
+                scope=".thread-tool-receipt",
+            )
+
+            # Assert the result block with note content exists.
+            result_block = page.locator('[data-testid="result-block"]')
+            reporter.check(
+                f"thread yolo {width}: result block rendered",
+                result_block.count() >= 1,
+                scope='[data-testid="result-block"]',
+            )
+
+            # Assert the RAW fold is present.
+            raw_fold = page.locator('[data-testid="raw-fold"]')
+            reporter.check(
+                f"thread yolo {width}: RAW fold present",
+                raw_fold.count() >= 1,
+                scope='[data-testid="raw-fold"]',
+            )
+
+            capture(reporter, page, out, f"thread-yolo-receipted-{width}.png",
+                    f"yolo desk.list receipted with result block + RAW at {width}px")
+
+            assert_clean(reporter, page, errors, f"thread yolo {width}")
+        finally:
+            context.close()
+
+    # ── Part 3: HS-152 Hands — safe-mode tool call (desk.create) ─────
+    # Switch control_mode to safe, then drive desk.create (effect_proposal →
+    # held → decision box → Allow once → receipted).
+
+    cm_status, cm_resp = hub.api("PUT", "/api/authority/control-mode", {"control_mode": "safe"})
+    reporter.check(
+        "thread safe: control_mode switched to safe",
+        cm_status == 200,
+        f"status={cm_status} resp={str(cm_resp)[:200]}",
+        scope="PUT /api/authority/control-mode",
+    )
+
+    for width, height in ((1440, 900), (393, 852)):
+        context, page, errors = browser_context(browser, width, height)
+        try:
+            create_status, create_resp = hub.api("POST", "/api/threads", {"title": "Walk safe tool"})
+            reporter.check(
+                f"thread safe {width}: thread created",
+                create_status == 201 and bool(create_resp.get("id")),
+                f"status={create_status}",
+                scope="POST /api/threads",
+            )
+            safe_tid = create_resp.get("id", "")
+
+            hub.api("POST", "/api/desk/seed")
+            hub.api("PUT", "/api/setup/onboarding", {"disposition": "completed"})
+            go(page, hub, f"/?open=thread:{safe_tid}")
+            page.wait_for_timeout(2000)
+
+            safe_composer = page.locator(".thread-composer-input")
+            try:
+                safe_composer.wait_for(timeout=10000)
+            except Exception:
+                pass
+            safe_composer.fill("Create a note for me")
+            page.locator("button.desk-chip", has_text="Send").click()
+
+            # Wait for the decision box (effect_proposal held in safe mode).
+            decision_box = page.locator('[data-testid="decision-box"]')
+            box_appeared = False
+            try:
+                decision_box.wait_for(timeout=25000)
+                box_appeared = True
+            except Exception:
+                pass
+            reporter.check(
+                f"thread safe {width}: decision box renders",
+                box_appeared,
+                scope='[data-testid="decision-box"]',
+            )
+            if box_appeared:
+                # Verify all three verbs are present.
+                reporter.check(
+                    f"thread safe {width}: Allow once verb present",
+                    page.locator('[data-testid="allow-once"]').count() >= 1,
+                    scope='[data-testid="allow-once"]',
+                )
+                reporter.check(
+                    f"thread safe {width}: Allow always verb present",
+                    page.locator('[data-testid="allow-always"]').count() >= 1,
+                    scope='[data-testid="allow-always"]',
+                )
+                reporter.check(
+                    f"thread safe {width}: Deny verb present",
+                    page.locator('[data-testid="deny"]').count() >= 1,
+                    scope='[data-testid="deny"]',
+                )
+                capture(reporter, page, out, f"thread-safe-held-{width}.png",
+                        f"safe desk.create held with decision box at {width}px")
+
+                # Click Allow once.
+                page.locator('[data-testid="allow-once"]').click()
+
+                # Wait for receipted.
+                receipted = _wait_tool_row_state(page, "receipted", timeout=25000)
+                reporter.check(
+                    f"thread safe {width}: Allow once -> tool row receipted",
+                    receipted,
+                    scope='[data-testid="tool-row"][data-tool-state="receipted"]',
+                )
+                capture(reporter, page, out, f"thread-safe-receipted-{width}.png",
+                        f"safe desk.create receipted after Allow once at {width}px")
+
+            assert_clean(reporter, page, errors, f"thread safe {width}")
+        finally:
+            context.close()
+
+    # Restore control_mode to yolo for any subsequent legs.
+    hub.api("PUT", "/api/authority/control-mode", {"control_mode": "yolo"})
+
+
 def measured_tasks(reporter: Reporter, page: Any, ids: dict[str, str]) -> None:
     ledger = ClickLedger(reporter, "Tasks", "1", "settled populated Door after first-value handoff")
     door = normal_door(page)
@@ -1292,7 +1648,7 @@ def run_walk(args: argparse.Namespace) -> int:
     home, env = isolated_environment(root)
     fixture_dir = root / "fixtures"
     fixture_dir.mkdir()
-    hub = Hub(free_port(), home, env)
+    hub = Hub(free_port(), home, env, tool_engine="thread" in selected)
     browser: Any = None
     ids: dict[str, str] = {}
     try:
@@ -1309,7 +1665,7 @@ def run_walk(args: argparse.Namespace) -> int:
             leg_cold(reporter, browser, hub, out)
 
         # Seeding never occurs until the actual first-value handoff has occurred.
-        needs_populated = any(leg in selected for leg in ("reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe", "menus"))
+        needs_populated = any(leg in selected for leg in ("reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe", "menus", "thread"))
         if needs_populated:
             if "cold" not in selected:
                 reporter.finding("partial walk bypassed cold first-value handoff; populated legs are diagnostic only")
@@ -1351,6 +1707,8 @@ def run_walk(args: argparse.Namespace) -> int:
             call("doorframe", lambda: leg_doorframe(reporter, browser, hub, out))
         if "menus" in selected:
             call("menus", lambda: leg_menus(reporter, browser, hub, out))
+        if "thread" in selected:
+            call("thread", lambda: leg_thread(reporter, browser, hub, out))
     except Exception as error:  # noqa: BLE001
         name = reporter.current.name if reporter.current else "bootstrap"
         if reporter.current is None:
@@ -1404,6 +1762,7 @@ def parse_args() -> argparse.Namespace:
     serve_parser = subparsers.add_parser("serve", help="child: start unseeded isolated hub")
     serve_parser.add_argument("--port", type=int, required=True)
     serve_parser.add_argument("--token", required=True)
+    serve_parser.add_argument("--tool-engine", action="store_true", help="seed a fake tool engine for the thread Hands leg")
     subparsers.add_parser("refresh-calendar", help="child: run production CalendarIngestConductor.refresh")
     parser.add_argument("--out", default=str(DEFAULT_OUT), help="durable screenshot directory")
     parser.add_argument("--report", default=str(DEFAULT_REPORT), help="machine-written Markdown report")
@@ -1419,7 +1778,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     if args.mode == "serve":
-        return serve(args.port, args.token)
+        return serve(args.port, args.token, tool_engine=args.tool_engine)
     if args.mode == "refresh-calendar":
         return refresh_calendar()
     return run_walk(args)

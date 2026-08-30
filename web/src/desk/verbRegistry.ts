@@ -15,21 +15,25 @@ import { openIntelligence } from "./intelligenceNavigation";
 import { openSurfaceOr } from "./shell";
 import { objectByRef } from "./world";
 import { DESK_TOOLS, KIND_GLYPH } from "./tools";
+import { applicationForAction } from "./applications";
+import { primitiveCan } from "../lib/primitives";
 import { usePalette, useShortcutSheet } from "./chromeState";
 import {
   closeFrontWindow,
-  cycleWindows,
-  cycleWindowsReverse,
   focusOrRestoreApp,
-  maximizeFrontWindow,
   minimizeFrontWindow,
   openWindowCount,
+} from "./components/window/windowRegistry";
+import {
+  cycleWindows,
+  cycleWindowsReverse,
+  maximizeFrontWindow,
   snapFrontWindow,
-  toggleExpose,
-} from "./components/DeskWindow";
+} from "./components/window/windowCommands";
+import { toggleExpose } from "./components/window/Expose";
 
 export type MenuId = "desk" | "object" | "go" | "window";
-export type VerbScope = "floor" | "object" | "go" | "window" | "system";
+export type VerbScope = "floor" | "object" | "go" | "window" | "system" | "thread";
 
 export interface VerbContext {
   /** The single selected object ref, when exactly one is selected. */
@@ -67,33 +71,6 @@ export interface Verb {
 export function verbLabel(v: Verb, ctx: VerbContext): string {
   return typeof v.label === "function" ? v.label(ctx) : v.label;
 }
-
-const EDITABLE = new Set(["note", "kb", "recipe", "workflow"]);
-const DELETABLE = new Set([
-  "note",
-  "decision",
-  "kb",
-  "recipe",
-  "directory",
-  "chain",
-  "workflow",
-]);
-const DUPLICABLE = new Set([
-  "note",
-  "decision",
-  "kb",
-  "recipe",
-  "workflow",
-  "workbench",
-]);
-const ASKABLE = new Set([
-  "note",
-  "kb",
-  "recipe",
-  "meeting",
-  "artifact",
-  "workflow",
-]);
 
 function selected(ctx: VerbContext) {
   if (!ctx.selectedRef) return null;
@@ -149,16 +126,6 @@ function currentView(): "list" | "spatial" {
 
 /** The four applications carry ⌘1-⌘4 and a window id the keymap can
  * focus/restore instead of re-opening (the HS-101 B8 behavior). */
-const APP_BINDINGS: Record<
-  string,
-  { key: string; windowId: string } | undefined
-> = {
-  dictate: { key: "⌘1", windowId: "surface-dictation" },
-  "review-meetings": { key: "⌘2", windowId: "surface-meetings" },
-  "inspect-personas-and-coders": { key: "⌘3", windowId: "surface-companion" },
-  "configure-settings": { key: "⌘4", windowId: "surface-settings" },
-};
-
 const needWindow = (): string | null =>
   openWindowCount() > 0 ? null : "No window open";
 
@@ -242,6 +209,22 @@ export const VERBS: Verb[] = [
     keywords: ["create", "place"],
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("zone"),
+  },
+  {
+    id: "desk.new-thread",
+    label: "New Thread",
+    menu: "desk",
+    scope: "floor",
+    group: "new",
+    glyph: KIND_GLYPH.thread,
+    keywords: ["create", "chat", "conversation"],
+    ghost: never,
+    run: async () => {
+      const { createThread } = await import("./threads");
+      const t = await createThread({});
+      useDesk.getState().openPullout(`thread:${t.id}`);
+      void useDesk.getState().refresh();
+    },
   },
   // ── Desk: the floor verbs ───────────────────────────────────────────
   {
@@ -422,14 +405,38 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
-      return ASKABLE.has(o.kind) ? null : "Ask unavailable";
+      return primitiveCan(o.kind, "ask") ? null : "Ask unavailable";
     },
     run: (ctx) => {
       const o = selected(ctx);
-      if (!o || !ASKABLE.has(o.kind)) return;
+      if (!o || !primitiveCan(o.kind, "ask")) return;
       const desk = useDesk.getState();
       desk.setSelected([`${o.kind}:${o.id}`]);
       desk.openAsk();
+    },
+  },
+  {
+    id: "object.continue-in-thread",
+    label: "Continue in thread",
+    menu: "object",
+    scope: "object",
+    glyph: KIND_GLYPH.thread,
+    keywords: ["chat", "thread", "conversation"],
+    ghost: (ctx) => {
+      const o = selected(ctx);
+      if (!o) return "Select an object";
+      const threadable = new Set(["meeting", "note", "artifact", "decision", "recipe", "people"]);
+      return threadable.has(o.kind) ? null : "Not threadable";
+    },
+    run: async (ctx) => {
+      const o = selected(ctx);
+      if (!o) return;
+      const { createThread } = await import("./threads");
+      const t = await createThread({
+        seed_refs: [{ ref_kind: o.kind, ref_id: o.id }],
+      });
+      useDesk.getState().openPullout(`thread:${t.id}`);
+      void useDesk.getState().refresh();
     },
   },
   {
@@ -441,7 +448,7 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
-      return EDITABLE.has(o.kind) ? null : "Not editable";
+      return primitiveCan(o.kind, "edit") ? null : "Not editable";
     },
     run: (ctx) => {
       const o = selected(ctx);
@@ -458,7 +465,7 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
-      return o.kind === "directory" || EDITABLE.has(o.kind)
+      return primitiveCan(o.kind, "rename")
         ? null
         : "Not renameable";
     },
@@ -466,7 +473,7 @@ export const VERBS: Verb[] = [
       const o = selected(ctx);
       if (!o) return;
       if (o.kind === "directory") useDesk.getState().setRenamingZone(o.id);
-      else if (EDITABLE.has(o.kind)) useDesk.getState().openEditor(o.id, ctx.origin);
+      else if (primitiveCan(o.kind, "rename")) useDesk.getState().openEditor(o.id, ctx.origin);
     },
   },
   {
@@ -478,11 +485,11 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
-      return DUPLICABLE.has(o.kind) ? null : "Cannot duplicate";
+      return primitiveCan(o.kind, "duplicate") ? null : "Cannot duplicate";
     },
     run: (ctx) => {
       const o = selected(ctx);
-      if (!o || !DUPLICABLE.has(o.kind)) return;
+      if (!o || !primitiveCan(o.kind, "duplicate")) return;
       const overrides = duplicateOverrides(o);
       if (!overrides) return;
       void useDesk.getState().createPrimitive(
@@ -520,11 +527,11 @@ export const VERBS: Verb[] = [
     ghost: (ctx) => {
       const o = selected(ctx);
       if (!o) return "Select an object";
-      return DELETABLE.has(o.kind) ? null : "Cannot delete";
+      return primitiveCan(o.kind, "delete") ? null : "Cannot delete";
     },
     run: (ctx) => {
       const o = selected(ctx);
-      if (!o || !DELETABLE.has(o.kind) || typeof window === "undefined") return;
+      if (!o || !primitiveCan(o.kind, "delete") || typeof window === "undefined") return;
       window.dispatchEvent(
         new CustomEvent(OBJECT_DELETE_REQUEST, { detail: { ref: ctx.selectedRef } }),
       );
@@ -547,7 +554,11 @@ export const VERBS: Verb[] = [
   // ── Go (the applications - DESK_TOOLS is the data truth) ────────────
   // HS-148-02: glyph and group flow from DESK_TOOLS (dock-parity).
   ...DESK_TOOLS.map((tool): Verb => {
-    const binding = APP_BINDINGS[tool.action];
+    const application = applicationForAction(tool.action);
+    const binding =
+      application?.shortcut && application.windowId
+        ? { key: application.shortcut, windowId: application.windowId }
+        : undefined;
     return {
       id: `go.${tool.action}`,
       label: tool.label,
@@ -652,6 +663,95 @@ export const VERBS: Verb[] = [
     keywords: ["keys", "help"],
     ghost: never,
     run: () => useShortcutSheet.getState().toggle(),
+  },
+  // ── Thread slash verbs (HS-153-02) ─────────────────────────────────
+  // These are the verb-ids for the ThreadComposer's / commands.
+  // The composer owns the trigger; the pullout owns the handler.
+  {
+    id: "thread.keep",
+    label: "Keep as note",
+    scope: "thread",
+    palette: false,
+    ghost: never,
+    run: () => {},
+  },
+  {
+    id: "thread.fork",
+    label: "Fork from here",
+    scope: "thread",
+    palette: false,
+    ghost: never,
+    run: () => {},
+  },
+  {
+    id: "thread.stop",
+    label: "Stop generation",
+    scope: "thread",
+    palette: false,
+    ghost: never,
+    run: () => {},
+  },
+  {
+    id: "thread.new",
+    label: "New thread",
+    scope: "thread",
+    palette: false,
+    ghost: never,
+    run: () => {},
+  },
+  {
+    id: "thread.mode",
+    label: "Switch mode",
+    scope: "thread",
+    palette: false,
+    keywords: ["desk", "chase", "draft", "plan"],
+    ghost: never,
+    run: () => {},
+  },
+  {
+    id: "thread.prompt",
+    label: "Insert prompt",
+    scope: "thread",
+    palette: false,
+    keywords: ["saved", "template"],
+    ghost: never,
+    run: () => {},
+  },
+  {
+    id: "thread.tools",
+    label: "Show tools",
+    scope: "thread",
+    palette: false,
+    keywords: ["palette", "capabilities"],
+    ghost: never,
+    run: () => {},
+  },
+  {
+    id: "thread.todo",
+    label: "Add todo",
+    scope: "thread",
+    palette: false,
+    keywords: ["task", "action"],
+    ghost: never,
+    run: () => {},
+  },
+  {
+    id: "thread.compact",
+    label: "Compact thread",
+    scope: "thread",
+    palette: false,
+    keywords: ["summarize", "compress"],
+    ghost: never,
+    run: () => {},
+  },
+  {
+    id: "thread.guardrail",
+    label: "Toggle guardrail",
+    scope: "thread",
+    palette: false,
+    keywords: ["guard", "safety"],
+    ghost: never,
+    run: () => {},
   },
 ];
 

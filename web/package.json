@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "bundle:gate": "node scripts/check-bundle.mjs",
     "preview": "vite preview",
     "shots": "vite build && node scripts/shoot.mjs",
     "test:desk": "vitest run src/desk --maxWorkers=2",
@@ -16,7 +17,7 @@
     "tokens": "node scripts/generate-tokens.cjs",
     "tokens:check": "node scripts/generate-tokens.cjs --check",
     "tokens:gate": "node scripts/validate-tokens.cjs",
-    "check": "npm run tokens:check && npm run tokens:gate && npm run guard:architecture && npm run typecheck && npm run test:web && npm run build"
+    "check": "npm run tokens:check && npm run tokens:gate && npm run guard:architecture && npm run typecheck && npm run test:web && npm run build && npm run bundle:gate"
   },
   "devDependencies": {
     "@fontsource/inter": "^5.2.8",
@@ -25,6 +26,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^22.20.1",
     "@vitejs/plugin-react": "^4.7.0",
     "axe-core": "^4.12.1",
     "jsdom": "^26.1.0",
@@ -42,6 +44,7 @@
     "@codemirror/language-data": "^6.5.2",
     "@codemirror/state": "^6.7.1",
     "@codemirror/view": "^6.43.7",
+    "@tanstack/react-query": "^5.102.8",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@use-gesture/react": "^10.3.1",

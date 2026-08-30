@@ -17,6 +17,7 @@ import {
 import { humanTime } from "../surface/format";
 import { MeetingConflictRecovery } from "../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../meetings/MeetingIntelRecovery";
+import { ThreadsSection } from "./shared/ThreadsSection";
 import type { PulloutContentProps } from "./types";
 
 interface MeetingDetail {
@@ -154,6 +155,7 @@ export function MeetingPullout({ object: o, onClose }: PulloutContentProps) {
             <SurfaceRows>{artifacts.map(artifactRow)}</SurfaceRows>
           </section>
         )}
+        <ThreadsSection refId={o.id} />
         <DeskFilingStrip
           objectRef={resourceRef}
           objectKind={o.kind}

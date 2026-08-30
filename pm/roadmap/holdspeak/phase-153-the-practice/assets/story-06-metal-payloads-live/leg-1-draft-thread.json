@@ -1,0 +1,75 @@
+{
+  "id": "th_64ef1065fe84",
+  "title": "HS-153-06 Leg 1 draft",
+  "recipe_id": "hs-seed-mode-draft",
+  "profile_override": "",
+  "directory_id": "",
+  "token_in": 0,
+  "token_out": 0,
+  "created_at": 1788120260.3452249,
+  "updated_at": 1788120260.368333,
+  "last_turn_at": 1788120260.368333,
+  "mode": {
+    "id": "hs-seed-mode-draft",
+    "name": "Draft",
+    "avatar": "#9333EA"
+  },
+  "messages": [
+    {
+      "id": "tm_a14add8def79",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_6b047975e0aa",
+          "kind": "text",
+          "text": "Write a short poem.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788120260.3563259,
+      "updated_at": 1788120260.3591769,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_4fc7aae999e8",
+      "role": "assistant",
+      "parent_id": "tm_a14add8def79",
+      "streaming": false,
+      "receipt_id": "ire_99d7e4a68a3a74866edcf3874b1851be",
+      "egress_scope": "local",
+      "model_id": "hs153-lan",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0
+      },
+      "parts": [
+        {
+          "id": "tp_fdd5d312156b",
+          "kind": "text",
+          "text": "The sun dips low behind the hills,\nA spill of gold on quiet rills.\nThe wind forgets its morning song,\nAnd lingers where the shadows belong.\n\nOne star wakes in the deepening blue,\nTo watch the world drift off to you,\nWhile silence wraps the earth like wool,\nIn twilight\u2019s soft and violet pull.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788120260.368333,
+      "updated_at": 1788120262.8648162,
+      "completed_at": 1788120262.8648162,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

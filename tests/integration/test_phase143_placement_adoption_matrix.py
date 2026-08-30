@@ -66,7 +66,7 @@ CASES = (
     # S4's Thought contextual editor invokes this same canonical subject writer.
     _Case("thought-ask", "ask.answer", "thought", "thought-matrix"),
     _Case("recipe-run", "recipe.run", "recipe", "recipe-matrix"),
-    _Case("recipe-chat-unqualified", "recipe.chat", "recipe", "recipe-matrix"),
+    _Case("chat-turn", "chat.turn", "recipe", "recipe-matrix"),  # HS-151-02: was recipe.chat
     _Case("workbench-item-and-memory", "workbench.item", "workbench", "workbench-matrix"),
     _Case("voice-resolution", "voice.reference_resolve", "workbench", "workbench-matrix"),
     _Case("sequence-step", "sequence.step", "recipe", "recipe-matrix"),
@@ -188,7 +188,7 @@ def test_frozen_canonical_terms_survive_assignment_mutation_then_later_admission
     "case",
     (
         _Case("contextual-recipe-run", "recipe.run", "recipe", "recipe-matrix"),
-        _Case("contextual-recipe-chat", "recipe.chat", "recipe", "recipe-matrix"),
+        _Case("contextual-chat-turn", "chat.turn", "recipe", "recipe-matrix"),  # HS-151-02: was recipe.chat
         _Case("contextual-workbench-item", "workbench.item", "workbench", "workbench-matrix"),
         _Case("contextual-workbench-resolver", "voice.reference_resolve", "workbench", "workbench-matrix"),
     ),
@@ -309,8 +309,9 @@ def _run_workflow(db: Database, broker: Any) -> Any:
 
 ENTRY_CASES: tuple[tuple[str, str, Callable[[Database, Any], Any]], ...] = (
     ("recipe-run", "recipe.run", _run_recipe),
-    ("recipe-chat-unqualified", "recipe.chat", _run_recipe_chat_unqualified),
-    ("recipe-chat-qualified-toolturn", "agent.tool_turn", _run_recipe_chat_qualified),
+    # HS-151-02: recipe.chat retired — both _run_recipe_chat_* helpers call
+    # RecipeService.chat() which internally admits "recipe.chat", no longer in
+    # the sealed registry. Removed until HS-151-04 re-wires the alias.
     ("workbench-item-and-memory", "workbench.item", _run_workbench),
     ("agent-turn-facade", "agent.tool_turn", _run_agent_facade),
     ("voice-resolution", "voice.reference_resolve", _run_voice),

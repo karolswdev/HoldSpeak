@@ -64,8 +64,8 @@ const seededRecipes = {
 };
 
 function mockApis(
-  coders = seededCoders,
-  recipes = seededRecipes,
+  coders: unknown = seededCoders,
+  recipes: unknown = seededRecipes,
 ) {
   apiFetch.mockImplementation((path: string) => {
     if (path === "/api/coders/status") return Promise.resolve(coders);

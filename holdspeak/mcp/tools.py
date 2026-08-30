@@ -640,9 +640,14 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         options = _data(args.get("options"))
         return _run(recipes.run(principal, str(args.get("recipe_id") or ""), input=str(args.get("input") or ""), **{key: options[key] for key in allowed if key in options}))
     if name == "recipe.chat":
-        allowed = ("history", "grounding", "egress_context")
-        options = _data(args.get("options"))
-        return _run(recipes.chat(principal, str(args.get("recipe_id") or ""), question=str(args.get("question") or ""), **{key: options[key] for key in allowed if key in options}))
+        # HS-151-02: recipe.chat RETIRED. The tool definition stays so tool
+        # counts documented elsewhere remain stable; the body returns the
+        # retired error.
+        return {
+            "error": "recipe_chat_retired",
+            "replacement": "POST /api/threads/{id}/turns",
+            "reason": "HS-151-04 lands the thread alias",
+        }
     if name == "zone.file":
         return primitives.file_member(principal, str(args.get("directory_id") or ""), str(args.get("primitive_id") or ""))
     if name == "zone.unfile":

@@ -26,6 +26,8 @@ Web consumers (``web/src/``, tests excluded — a test is not a consumer)
   ``useRuntimeFrame<T>("frame_type")``
   ``frame.type === "frame_type"``
   ``["a", "b"].includes(frame.type)``
+  ``const <NAME>_FRAME_TYPES = ["a", "b"] as const`` — a typed frame set
+  consumed by a subscription loop
 """
 
 from __future__ import annotations
@@ -64,6 +66,25 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "scheduled_recording.stopped",   # a scheduled capture stopped (auto-stop or manual)
     "segment",                  # one finalized transcript segment
     "stopped",                  # the meeting stopped
+    "thread_compacted",          # a compaction cut was committed (HS-153-05)
+                                # payload: {thread_id, message_id, cut_at, count}
+    "thread_delta",             # a streaming token/reasoning delta for a thread turn
+                                # payload: {thread_id, message_id, ordinal, kind, text, seq}
+    "thread_guardrail",         # a guardrail evaluation completed (HS-153-03)
+                                # payload: {thread_id, message_id, violations, warnings,
+                                #           guardrails, raw}
+    "thread_status_line",       # in-progress turn status text (HS-152-01)
+                                # payload: {thread_id, text}
+    "thread_tool_pending",      # a tool call awaits resolution (HS-152-01)
+                                # payload: {thread_id, message_id, call_id, name, args_head,
+                                #           class, decision_required, elicitation?}
+    "thread_tool_result",       # a tool call completed (HS-152-01)
+                                # payload: {thread_id, message_id, call_id, name, receipt_id,
+                                #           outcome, kind, summary, sensitive}
+    "thread_turn_done",         # a thread turn completed (succeeded, aborted, or errored)
+                                # payload: {thread_id, message_id, receipt_id, outcome, egress, stats}
+    "thread_turn_started",      # a thread turn began streaming
+                                # payload: {thread_id, message_id, user_message_id, model_id, egress}
     "wake_armed",               # the wake word armed its capture window
     "wake_preview",             # a wake capture is held for preview
     "workbench.item_claimed",   # a run took an item
@@ -113,6 +134,11 @@ _CONSUME_PATTERNS = (
 _INCLUDES_FRAME_TYPE = re.compile(
     r"\[([^\]]*)\]\s*\.includes\(\s*frame\.type", re.S
 )
+_CONSUMED_FRAME_TYPE_SET = re.compile(
+    r"(?:export\s+)?const\s+[A-Z][A-Z0-9_]*_FRAME_TYPES\s*=\s*"
+    r"\[([^\]]*)\]\s*as\s+const",
+    re.S,
+)
 _QUOTED = re.compile(r'"([a-z_][a-z0-9_.]*)"')
 
 
@@ -154,6 +180,10 @@ def scan_consumers(root: Path | None = None) -> dict[str, list[str]]:
                     f"{rel}:{_line_of(text, match.start())}"
                 )
         for match in _INCLUDES_FRAME_TYPE.finditer(text):
+            line = _line_of(text, match.start())
+            for name in _QUOTED.findall(match.group(1)):
+                found.setdefault(name, []).append(f"{rel}:{line}")
+        for match in _CONSUMED_FRAME_TYPE_SET.finditer(text):
             line = _line_of(text, match.start())
             for name in _QUOTED.findall(match.group(1)):
                 found.setdefault(name, []).append(f"{rel}:{line}")

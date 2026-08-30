@@ -226,3 +226,20 @@
     transform: none;
   }
 }
+
+.desk-application-error {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: var(--space-2);
+  min-block-size: 140px;
+  padding: var(--space-4);
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--danger-signal);
+}
+
+.desk-application-error p {
+  margin: 0;
+  color: var(--muted);
+}

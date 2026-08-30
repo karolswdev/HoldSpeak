@@ -5,10 +5,7 @@ import { EMPTY_ITEMS } from "../../../desk/api";
 import { kindInfo } from "../../../desk/infoContract";
 import { VERBS } from "../../../desk/verbRegistry";
 import { PRIMITIVES, type Primitive } from "../../../lib/primitives";
-import {
-  SurfaceWindows,
-  useSurfaceWindows,
-} from "../../../desk/components/SurfaceWindows";
+import { SurfaceWindows } from "../../../desk/components/SurfaceWindows";
 import { __resetSurfaces, openSurface } from "../../../desk/shell";
 import { useDesk } from "../../../desk/store";
 import { WingSlotContext } from "../../../desk/surface/wings";
@@ -84,8 +81,8 @@ function response(url: string) {
 
 beforeEach(() => {
   apiFetch.mockImplementation((url: string) => Promise.resolve(response(url)));
-  useSurfaceWindows.setState({ open: {} });
   useDesk.setState({
+    windowsById: {},
     items: { ...EMPTY_ITEMS },
     projects: [],
     inferenceTargets: [],
@@ -219,9 +216,8 @@ describe("Project Memory", () => {
     render(<SurfaceWindows />);
     expect(openSurface("open-project-memory", "project:p1")).toBe(true);
     await waitFor(() =>
-      expect(useSurfaceWindows.getState().open["open-project-memory"]).toBe(
-        "project:p1",
-      ),
+      expect(useDesk.getState().windowsById["surface-project-memory"]?.scope)
+        .toBe("project:p1"),
     );
   });
 });

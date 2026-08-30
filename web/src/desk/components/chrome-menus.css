@@ -172,8 +172,8 @@
 /* HS-148-01: keycap wells invert cleanly on accent hover. */
 .desk-next .desk-menu-list button:hover .desk-menu-well,
 .desk-next .desk-menu-list button:focus-visible .desk-menu-well {
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  background: var(--bevel-light);
+  box-shadow: inset 0 0 0 1px var(--gleam-3);
 }
 .desk-next .desk-menu-submark {
   width: 12px;

@@ -38,7 +38,7 @@ describe("recordingSlice", () => {
   });
 
   it("leaves a refused stop retryable, then idles only after the retry lands", async () => {
-    request.mockRejectedValueOnce(new TypeError("offline")).mockResolvedValueOnce({});
+    request.mockRejectedValueOnce(new TypeError("offline")).mockResolvedValueOnce(new Response());
     const state = makeSlice();
     (state as unknown as { recording: string }).recording = "recording";
 
@@ -58,7 +58,7 @@ describe("recordingSlice", () => {
   });
 
   it("returns a refused start to idle and retries the same start into recording", async () => {
-    request.mockRejectedValueOnce(new TypeError("offline")).mockResolvedValueOnce({});
+    request.mockRejectedValueOnce(new TypeError("offline")).mockResolvedValueOnce(new Response());
     const state = makeSlice();
 
     await state.startRecording();

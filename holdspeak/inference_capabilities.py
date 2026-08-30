@@ -1037,6 +1037,11 @@ def builtin_capability_definitions() -> tuple[InferenceCapabilityDefinition, ...
     the server route/controller law.
     """
     thought = ("thoughts_notes", "Thoughts & notes")
+    # HS-152-06: the Thread's second-model capabilities (structured output,
+    # a structured retry policy) live in their OWN group so the Thoughts &
+    # notes starter bundle keeps admitting a plain local model and the
+    # group's retry-policy intersection stays the plain one.
+    practice = ("chat_practice", "Chat practice")
     writing = ("writing_dictation", "Writing & dictation")
     speech = ("speech_recognition", "Speech recognition")
     meetings = ("meetings", "Meetings")
@@ -1066,7 +1071,12 @@ def builtin_capability_definitions() -> tuple[InferenceCapabilityDefinition, ...
         _capability("agent.code", "Agent code", *agents, "Produce a bounded code-oriented agent result without effect authority.", operation="agent.code", output_kind="code_proposal", minimum_context_tokens=8192, fallback_dispositions=text_fallback, source_module="holdspeak.plugins.intelligence"),
         _capability("workbench.item", "Workbench item", *agents, "Run one admitted Workbench item.", operation="workbench.item", output_kind="workbench_item_output", minimum_context_tokens=8192, fallback_dispositions=text_fallback, source_module="holdspeak.services.workbench_runner"),
         _capability("recipe.run", "Recipe run", *agents, "Run one saved recipe with rendered input.", operation="recipe.run", origin="saved_definition", output_kind="recipe_output", minimum_context_tokens=4096, fallback_dispositions=text_fallback, source_module="holdspeak.services.recipe_service"),
-        _capability("recipe.chat", "Recipe chat", *agents, "Continue one recipe conversation with admitted grounding.", operation="recipe.chat", origin="saved_definition", output_kind="recipe_chat_answer", minimum_context_tokens=8192, fallback_dispositions=text_fallback, source_module="holdspeak.services.recipe_service"),
+        # HS-151-02: recipe.chat RETIRED into chat.turn. The capability id
+        # survives only in the chat-route-assignments backfill family, never in
+        # the sealed registry.
+        _capability("chat.turn", "Desk chat", *thought, "Answer one desk chat turn with admitted context and grounding.", operation="chat.turn", output_kind="chat_turn_answer", minimum_context_tokens=4096, fallback_dispositions=text_fallback, source_module="holdspeak.services.thread_service"),
+        _capability("chat.guardrail", "Chat guardrail", *practice, "Evaluate pending tool calls against an admitted guardrail.", operation="chat.guardrail", output_kind="guardrail_evaluation", structured_output=True, minimum_context_tokens=2048, policy="retry.structured.standard", fallback_dispositions=structured_fallback, visibility="internal", source_module="holdspeak.services.thread_practice"),
+        _capability("chat.compact", "Chat compaction", *practice, "Summarize a chat thread prefix for compaction.", operation="chat.compact", output_kind="compaction_summary", structured_output=True, minimum_context_tokens=4096, policy="retry.structured.standard", fallback_dispositions=structured_fallback, visibility="internal", source_module="holdspeak.services.thread_practice"),
         _capability("voice.reference_resolve", "Voice reference resolution", *agents, "Resolve a spoken reference against bounded Workbench context.", operation="voice.reference.resolve", output_kind="reference_resolution", minimum_context_tokens=2048, fallback_dispositions=text_fallback, source_module="holdspeak.services.workbench_service"),
         _capability("sequence.step", "Sequence step", *agents, "Run one typed Sequence step using its saved recipe definition.", operation="sequence.step", origin="saved_definition", output_kind="sequence_step_output", minimum_context_tokens=4096, fallback_dispositions=text_fallback, source_module="holdspeak.services.sequence_workflow_service"),
         _capability("workflow.node", "Workflow node", *agents, "Run one typed Workflow model node.", operation="workflow.node", output_kind="workflow_node_output", minimum_context_tokens=4096, fallback_dispositions=text_fallback, source_module="holdspeak.services.sequence_workflow_service"),

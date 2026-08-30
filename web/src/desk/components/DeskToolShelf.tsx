@@ -15,7 +15,7 @@ import { createPortal } from "react-dom";
 import { openSurface } from "../shell";
 import { SYSTEM } from "../systemSprites";
 import { qualifiedRef } from "../api";
-import { modelChatId } from "../chat";
+import { createThread } from "../threads";
 import {
   contextualCapabilityActions,
   contextualCoderSessions,
@@ -124,7 +124,7 @@ export function DeskToolShelf() {
   const setup = useDesk((state) => state.setup);
   const selectedIds = useDesk((state) => state.selectedIds);
   const openPullout = useDesk((state) => state.openPullout);
-  const openChat = useDesk((state) => state.openChat);
+  const refresh = useDesk((state) => state.refresh);
   const openToolInspector = useDesk((state) => state.openToolInspector);
   const diveInto = useDesk((state) => state.diveInto);
   const integrations = setup?.trust?.destinations ?? [];
@@ -348,7 +348,7 @@ export function DeskToolShelf() {
         label: model.name,
         kind: "MODEL",
         terms: "model",
-        run: () => openChat(modelChatId(model.name)),
+        run: () => void createThread({ title: model.name, profile_override: model.name }).then((t) => { openPullout(`thread:${t.id}`); void refresh(); }),
       });
 
     // ── rank, cut, and settle into section bands ──
@@ -394,8 +394,8 @@ export function DeskToolShelf() {
     launchers,
     models,
     normalized,
-    openChat,
     openPullout,
+    refresh,
     openToolInspector,
     projects,
     recents,

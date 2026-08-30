@@ -5,25 +5,20 @@
 // minimal cluster (DeskChrome); a fresh desk shows the guiding empty state.
 // HS-135-06: the Chair is HOME at `/`. The spatial floor stays intact
 // behind a dock button (counsel ruling B.Q1).
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { defaultViewFor, useDesk } from "./store";
 import { useChairState } from "./chairState";
 import { ChairHome } from "./chair";
-import { Atmosphere } from "./gl/Atmosphere";
-import { WorldStage } from "./gl/WorldStage";
 import { DeskListView } from "./components/DeskListView";
 import { DeskChrome } from "./components/DeskChrome";
 import { EmptyDesk } from "./components/EmptyDesk";
 import { RecordOrb } from "./components/RecordOrb";
-import { PersonaChat } from "./components/PersonaChat";
+import { useChatImport } from "./hooks/useChatImport";
 import { MissionControlConveyor } from "./components/MissionControlConveyor";
 import { SessionPullout, PanePicker } from "./components/SessionPullout";
 import { DeliveryBoard } from "./components/DeliveryBoard";
 import { DeliveryDossierWindow } from "./components/DeliveryDossierWindow";
 import { DeliveryTerminalWindow } from "./components/DeliveryTerminalWindow";
-import { RoadmapWindow } from "./components/RoadmapWindow";
-import { RepoWindow } from "./components/RepoWindow";
-import { WorkbenchWindow } from "./components/WorkbenchWindow";
 import { NewWorkbenchChooser } from "./components/NewWorkbenchChooser";
 import { ScheduleCreateWindow } from "./components/ScheduleCreateWindow";
 import { AttentionDrawer } from "./components/AttentionDrawer";
@@ -35,10 +30,35 @@ import { SurfaceWindows } from "./components/SurfaceWindows";
 import { TrustWindow } from "./components/TrustWindow";
 import { InlineEditor } from "./components/InlineEditor";
 import { Pullout } from "./components/Pullout";
+import { ApplicationBoundary } from "./components/ApplicationBoundary";
 import { objectByRef } from "./world";
 import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
 import "./desk.css";
+
+// The Chair is HOME. Floor/GL and object-specific heavyweight windows cross
+// an actual user-open boundary before their code enters the Desk runtime.
+const Atmosphere = lazy(() =>
+  import("./gl/Atmosphere").then((module) => ({ default: module.Atmosphere })),
+);
+const WorldStage = lazy(() =>
+  import("./gl/WorldStage").then((module) => ({ default: module.WorldStage })),
+);
+const RoadmapWindow = lazy(() =>
+  import("./components/RoadmapWindow").then((module) => ({
+    default: module.RoadmapWindow,
+  })),
+);
+const RepoWindow = lazy(() =>
+  import("./components/RepoWindow").then((module) => ({
+    default: module.RepoWindow,
+  })),
+);
+const WorkbenchWindow = lazy(() =>
+  import("./components/WorkbenchWindow").then((module) => ({
+    default: module.WorkbenchWindow,
+  })),
+);
 
 /** HS-148-02: the root attribute gate for the glyph column.
  * Reads from localStorage so story-03's rig can flip it;
@@ -53,7 +73,6 @@ function menuGlyphsVariant(): string {
 export default function DeskApp() {
   const items = useDesk((s) => s.items);
   const updatedAt = useDesk((s) => s.updatedAt);
-  const chatPersonaId = useDesk((s) => s.chatPersonaId);
   const roadmapWindows = useDesk((s) => s.roadmapWindows);
   const repositoryWindows = useDesk((s) => s.repositoryWindows);
   const workbenchWindows = useDesk((s) => s.workbenchWindows);
@@ -116,6 +135,9 @@ export default function DeskApp() {
     void useProjections.getState().refresh(true);
   }, [refreshDesk]);
 
+  // HS-151-07: one-time import of localStorage chat threads.
+  useChatImport();
+
   const total = Object.values(items).reduce((n, l) => n + l.length, 0);
   const empty = updatedAt !== null && total === 0;
 
@@ -143,7 +165,13 @@ export default function DeskApp() {
   return (
     <div className="desk-next" id="desk-next" data-menu-glyphs={menuGlyphsVariant()}>
       {/* GL layers render only when the spatial floor is active. */}
-      {showFloor && <Atmosphere />}
+      {showFloor && (
+        <ApplicationBoundary label="Floor atmosphere">
+          <Suspense fallback={null}>
+            <Atmosphere />
+          </Suspense>
+        </ApplicationBoundary>
+      )}
       {showFloor && <GlassDropLayer />}
       {!arrivalRequired && <DeskChrome showDailyStarts={!empty} />}
       {showFloor ? (
@@ -153,7 +181,11 @@ export default function DeskApp() {
           "list" ? (
           <DeskListView />
         ) : (
-          <WorldStage />
+          <ApplicationBoundary label="Floor">
+            <Suspense fallback={null}>
+              <WorldStage />
+            </Suspense>
+          </ApplicationBoundary>
         )
       ) : (
         <ChairHome arrivalRequired={arrivalRequired} />
@@ -174,20 +206,32 @@ export default function DeskApp() {
       {!arrivalRequired && !showFloor && chairOpenCards.map((pullout) => (
         <Pullout key={pullout.id} o={pullout.object!} origin={pullout.origin} />
       ))}
-      {!arrivalRequired && chatPersonaId && <PersonaChat personaId={chatPersonaId} />}
+      {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}
       {!arrivalRequired && <DeskToolInspector />}
       {!arrivalRequired && <MissionControlConveyor />}
       {!arrivalRequired && <DeliveryBoard />}
       {!arrivalRequired && <DeliveryDossierWindow />}
       {!arrivalRequired && <DeliveryTerminalWindow />}
       {!arrivalRequired && roadmapWindows.map((roadmap) => (
-        <RoadmapWindow key={roadmap.slug} slug={roadmap.slug} origin={roadmap.origin} />
+        <ApplicationBoundary key={roadmap.slug} label="Roadmap">
+          <Suspense fallback={null}>
+              <RoadmapWindow slug={roadmap.slug} origin={roadmap.origin} />
+          </Suspense>
+        </ApplicationBoundary>
       ))}
       {!arrivalRequired && repositoryWindows.map((repository) => (
-        <RepoWindow key={repository.id} repositoryId={repository.id} origin={repository.origin} />
+        <ApplicationBoundary key={repository.id} label="Repository">
+          <Suspense fallback={null}>
+              <RepoWindow repositoryId={repository.id} origin={repository.origin} />
+          </Suspense>
+        </ApplicationBoundary>
       ))}
       {!arrivalRequired && workbenchWindows.map((wb) => (
-        <WorkbenchWindow key={wb.id} workbenchId={wb.id} origin={wb.origin} />
+        <ApplicationBoundary key={wb.id} label="Workbench">
+          <Suspense fallback={null}>
+              <WorkbenchWindow workbenchId={wb.id} origin={wb.origin} />
+          </Suspense>
+        </ApplicationBoundary>
       ))}
       {!arrivalRequired && <NewWorkbenchChooser />}
       {!arrivalRequired && <ScheduleCreateWindow />}

@@ -535,13 +535,13 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
 .desk-next .thought-used-context { margin: 8px 0; }
 .thought-context-overlay {
   position: fixed;
-  z-index: 10000;
+  z-index: var(--z-toast);
   inset: 0;
   pointer-events: none;
 }
 .desk-next section.thought-context-picker {
   position: fixed;
-  z-index: 80;
+  z-index: var(--desk-z-dock);
   pointer-events: auto;
   width: min(420px, 100%);
   max-height: min(570px, calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom) - 24px));
@@ -549,7 +549,7 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   padding: 14px 16px 16px;
   border: 1px solid var(--border-strong, var(--border));
   background: var(--desk-window-fill);
-  box-shadow: var(--desk-window-etch), 0 14px 38px rgb(0 0 0 / .34);
+  box-shadow: var(--desk-window-etch), 0 14px 38px var(--shadow-ink-1);
   display: block;
 }
 .desk-next .thought-context-picker-head {
@@ -596,7 +596,7 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   border: 1px solid var(--border-strong);
   background: var(--desk-window-well);
   color: var(--text-faint);
-  box-shadow: inset 1px 1px rgb(0 0 0 / .28);
+  box-shadow: inset 1px 1px var(--desk-window-well);
 }
 .desk-next .thought-context-search input {
   width: 100%;

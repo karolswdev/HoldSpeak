@@ -26,6 +26,7 @@ export const EDITOR_LABELS: Record<PrimitiveKind, string> = {
   workbench: "Workbench",
   intelligence: "Intelligence",
   people: "People",
+  thread: "Thread",
   game: "Game",
   layout: "Layout",
 } satisfies Record<PrimitiveKind, string>;
@@ -48,6 +49,7 @@ export const INLINE_EDITOR_CONTENT: Record<PrimitiveKind, InlineEditorContent | 
   workbench: null,
   intelligence: null,
   people: null,
+  thread: null,
   game: null,
   layout: null,
 } satisfies Record<PrimitiveKind, InlineEditorContent | null>;

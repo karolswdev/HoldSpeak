@@ -39,6 +39,9 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/recipes")
     async def api_list_recipes(request: Request) -> Any:
         try:
+            kind = request.query_params.get("kind")
+            if kind is not None:
+                return JSONResponse({"recipes": _svc().list_recipes(_principal(request), kind=kind)})
             return JSONResponse({"recipes": _svc().list_recipes(_principal(request))})
         except Exception as exc:
             return error_500(exc, log, "Failed to list recipes")
@@ -110,28 +113,34 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/recipes/{recipe_id}/chat")
     async def api_chat_recipe(recipe_id: str, request: Request) -> Any:
+        # HS-151-04: recipe.chat is now an alias that creates/reuses a thread
+        # bound to this recipe and starts a turn with the body's text.
+        from .._thread_factory import thread_service_from_ctx
+        from ....db import get_database
         body = await _json_body(request) or {}
+        text = str(body.get("text") or body.get("question") or "")
+        if not text.strip():
+            return JSONResponse({"error": "text is required"}, status_code=400)
+        db = get_database()
+        thread_svc = thread_service_from_ctx(ctx)
+        # Reuse newest non-deleted thread with this recipe_id, or create one.
+        existing = [t for t in db.threads.list(limit=50) if t.recipe_id == recipe_id]
+        if existing:
+            thread_id = existing[0].id
+        else:
+            created = thread_svc.create(recipe_id=recipe_id, title=recipe_id)
+            thread_id = created["id"]
         try:
-            result = await _svc().chat(
-                _principal(request), recipe_id,
-                question=str(body.get("question") or ""),
-                history=body.get("history") if isinstance(body.get("history"), list) else [],
-                grounding=body.get("grounding"),
-                inference_target_id=body.get("inference_target_id"),
-                broadcast=_broadcast,
-                # HS-132-09: no `default_model`. The transport used to inject the
-                # hub's configured-placement model name here, which the receipt
-                # then printed for a turn that ran somewhere else entirely.
+            result = await thread_svc.start_turn(
+                _principal(request), thread_id, text,
             )
-            return JSONResponse(result)
+            return JSONResponse(result, status_code=201)
         except ValidationError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
-        except NotFound:
-            return JSONResponse({"error": f"Unknown Agent: {recipe_id}"}, status_code=404)
         except ServiceError as exc:
             return _service_error(exc)
         except Exception as exc:
-            return error_500(exc, log, "Failed to chat with recipe")
+            return error_500(exc, log, "Failed to chat via recipe alias")
 
     @router.post("/api/recipes/{recipe_id}/keep")
     async def api_keep_recipe_reply(recipe_id: str, request: Request) -> Any:

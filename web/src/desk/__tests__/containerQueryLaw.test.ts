@@ -19,12 +19,15 @@ const cssSources = import.meta.glob<string>("/src/**/*.css", {
 });
 
 const viewportWidthMediaAllowlist = new Set([
+  "/src/desk/chair/chair.css", // Chair is shell furniture around its lanes
   "/src/desk/components/attention.css",
   "/src/desk/components/chrome-menus.css",
   "/src/desk/components/dock.css",
   "/src/desk/components/list-view.css", // desk-floor shell chip
+  "/src/desk/components/pullout.css", // fixed mobile thought-context sheet
   "/src/desk/components/session-pullout.css",
   "/src/desk/pullouts/intelligence.css", // phone sheet shell
+  "/src/desk/thought-workspace/thought-workspace.css", // full-viewport mobile workspace shell
   "/src/styles/react-app.css", // route shell
 ]);
 

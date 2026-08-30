@@ -117,9 +117,16 @@ export function openPrimitive(ref: string): void {
   shellNavigate?.(`/?open=${encodeURIComponent(ref)}`);
 }
 
-/** Open a Persona's chat window (the one chat surface). */
+/** Open a thread bound to a recipe (HS-151-07: replaces the retired PersonaChat). */
 export function openPersona(personaId: string): void {
-  void import("./store").then((m) => m.useDesk.getState().openChat(personaId));
+  void import("./threads").then((m) =>
+    m.createThread({ recipe_id: personaId }).then((t) =>
+      import("./store").then((s) => {
+        s.useDesk.getState().openPullout(`thread:${t.id}`);
+        void s.useDesk.getState().refresh();
+      }),
+    ),
+  );
 }
 
 /** Open a Coder session's window (the one session surface). */

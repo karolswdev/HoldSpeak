@@ -226,7 +226,7 @@ describe("ThoughtWorkspaceWindow", () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection({
       workspace_state: "named_failure",
       actions: { primary: { kind: "refine" }, state: [{ kind: "refine" }], ambient: ["complete"] },
-      terminal_status: { category: "retryable", code: "engine_busy", message: "The engine was busy." },
+      terminal_status: { category: "retryable", code: "engine_busy", retryable: true, message: "The engine was busy." },
     }));
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
     expect(await screen.findByRole("button", { name: "Try again" })).toHaveClass("thought-state-primary");
@@ -237,7 +237,11 @@ describe("ThoughtWorkspaceWindow", () => {
     const foreignThought = { ...thought, aggregate_revision: 4, working_revision: 3, working_note: { ...thought.working_note, body_markdown: "Foreign authority" } };
     const foreign = projection({ thought: foreignThought, workspace_cursor: { ...cursor, hub_id: "hub-2", aggregate_revision: 4, continuity_revision: 1 } });
     vi.mocked(thoughtWorkbench).mockResolvedValueOnce(projection());
-    vi.mocked(refineThought).mockResolvedValue({ thought: foreignThought, workbench: foreign });
+    vi.mocked(refineThought).mockResolvedValue({
+      thought: foreignThought,
+      continuity: { state: "reserved", invocation_id: "rinv-foreign" },
+      workbench: foreign,
+    });
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
     fireEvent.click(await screen.findByRole("button", { name: "Ask AI" }));
 

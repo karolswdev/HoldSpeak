@@ -1,7 +1,7 @@
 // HS-105-03 — a drawer opens into a REAL desk window (the Workbench
 // drawer rule): the desk stays visible, several zone windows coexist,
 // and THE WINDOW REMEMBERS — rect (the panel system), view, and sort
-// (`hs.desk.zone-views`). Icons view speaks the world's cell contract;
+// (the versioned Desk workspace). Icons view speaks the world's cell contract;
 // List view is the shared DeskSortableTable density altitude.
 import { useMemo, useState } from "react";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)

@@ -24,7 +24,7 @@
 .desk-next .thought-workspace-restart {
   position: absolute;
   inset: 40px 0 0;
-  z-index: 4;
+  z-index: var(--desk-z-local);
   background: color-mix(in srgb, var(--desk-window-fill) 96%, transparent);
 }
 
@@ -166,13 +166,14 @@
 
 .desk-next .thought-document-body .cm-line {
   padding-left: 10px;
-  border-left: 2px solid transparent;
+  box-shadow: inset 2px 0 0 transparent;
 }
 
 .desk-next .thought-document-body .cm-thought-answer-reveal {
-  border-left: 2px solid var(--ok);
   background: color-mix(in srgb, var(--ok) 10%, transparent);
-  box-shadow: -10px 0 0 color-mix(in srgb, var(--ok) 12%, transparent);
+  box-shadow:
+    inset 2px 0 0 var(--ok),
+    -10px 0 0 color-mix(in srgb, var(--ok) 12%, transparent);
 }
 
 .desk-next .thought-document-meta,
@@ -244,8 +245,8 @@
 }
 
 .desk-next .thought-interview {
-  border-left: 1px solid var(--border-strong);
   background: color-mix(in srgb, var(--surface-2) 82%, var(--bg));
+  box-shadow: inset 1px 0 0 var(--border-strong);
 }
 
 .desk-next .thought-interview > header {

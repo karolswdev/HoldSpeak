@@ -99,7 +99,7 @@ class AgentTurnService:
         lease_terms = {
             "schema": "TurnCapabilityLease@1", "lease_id": f"lease-{lease_id}", "nonce": f"nonce-{lease_id}",
             "epoch": 1, "parent_turn_id": turn_id, "owner_principal_id": principal.identity,
-            "deployment_revision": "route-frozen", "operation_kind": "recipe.chat", "operation_revision": "1",
+            "deployment_revision": "route-frozen", "operation_kind": "chat.turn", "operation_revision": "1",  # HS-151-02: recipe.chat retired
             "owner_intent_receipt_id": None, "policy_revision": "recipe-qualified-manifest-1",
             "capabilities": [{
                 "capability_id": descriptor.capability_id, "capability_revision": descriptor.revision,

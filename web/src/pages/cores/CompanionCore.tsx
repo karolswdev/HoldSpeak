@@ -53,7 +53,8 @@ export function CompanionCore({ hero }: CoreProps) {
   const recipes = useResource<RecipesResponse>("/api/recipes", {});
   const coders = useResource<CodersStatusResponse>("/api/coders/status", {});
   const recipeRows = asRows(recipes.data, ["recipes"]).filter(
-    (row) => !row.deleted,
+    // Thread modes (kind='mode', HS-153-01) are practices, not crew.
+    (row) => !row.deleted && (row as Record<string, unknown>).kind !== "mode",
   );
   const allSessions = asRows(
     coders.data.agent?.sessions,

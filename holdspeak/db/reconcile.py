@@ -323,6 +323,229 @@ def _rebuild_kernel_parent_runs_for_kind_drift(conn: sqlite3.Connection) -> bool
     return True
 
 
+def _rebuild_action_items_for_nullable_meeting_id(conn: sqlite3.Connection) -> bool:
+    """Make ``action_items.meeting_id`` nullable (HS-153-05).
+
+    SQLite cannot ALTER a column to drop NOT NULL.  We copy the durable rows
+    into the canonical table shape (which declares ``meeting_id`` without
+    NOT NULL), swap it in, and recreate every stored index/trigger owned by
+    the table.  The trigger condition is semantic: if the live DDL already
+    omits ``NOT NULL`` on ``meeting_id``, this is a no-op.
+    """
+    live = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='action_items'"
+    ).fetchone()
+    if live is None or not isinstance(live[0], str):
+        return False  # table does not exist yet; SCHEMA_SQL will create it
+    live_sql = str(live[0]).upper()
+    # Detect the specific pattern: MEETING_ID TEXT NOT NULL
+    # If NOT NULL is absent, no rebuild needed.
+    if "MEETING_ID" not in live_sql:
+        return False  # unlikely; table has no meeting_id column at all
+    # Heuristic: find the MEETING_ID column clause and check for NOT NULL.
+    # Split the DDL into column clauses; look at the one containing MEETING_ID.
+    needs_rebuild = False
+    for clause in live_sql.split(","):
+        if "MEETING_ID" in clause and "NOT NULL" in clause:
+            needs_rebuild = True
+            break
+    if not needs_rebuild:
+        return False
+
+    # Build canonical DDL from SCHEMA_SQL.
+    reference = sqlite3.connect(":memory:")
+    try:
+        reference.executescript(SCHEMA_SQL)
+        canonical_row = reference.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='action_items'"
+        ).fetchone()
+        if canonical_row is None:
+            return False
+        canonical_ddl = str(canonical_row[0])
+        canonical_columns = [
+            str(row[1]) for row in reference.execute("PRAGMA table_info('action_items')")
+        ]
+    finally:
+        reference.close()
+
+    # Collect dependents (indexes, triggers that reference this table).
+    dependents = conn.execute(
+        """SELECT type, name, sql FROM sqlite_master
+             WHERE (
+                    (tbl_name='action_items' AND type IN ('index','trigger'))
+                 OR (type='trigger' AND sql LIKE '%action_items%')
+             ) AND sql IS NOT NULL
+             ORDER BY CASE type WHEN 'index' THEN 0 ELSE 1 END, name"""
+    ).fetchall()
+    live_columns = {
+        str(row[1]) for row in conn.execute("PRAGMA table_info('action_items')")
+    }
+    columns = [col for col in canonical_columns if col in live_columns]
+    if not columns:
+        raise RuntimeError("action_items has no copyable columns")
+
+    replacement = "action_items__reconcile_replacement"
+    if conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (replacement,)
+    ).fetchone() is not None:
+        raise RuntimeError("action_items replacement table already exists")
+
+    replacement_ddl, substitutions = re.subn(
+        r"^CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:\"action_items\"|action_items)",
+        f"CREATE TABLE {_quoted(replacement)}",
+        canonical_ddl,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    if substitutions != 1:
+        raise RuntimeError("canonical action_items DDL cannot be renamed")
+
+    nested = conn.in_transaction
+    foreign_keys = int(conn.execute("PRAGMA foreign_keys").fetchone()[0])
+    if not nested and foreign_keys:
+        conn.execute("PRAGMA foreign_keys=OFF")
+    conn.execute("SAVEPOINT action_items_nullable_meeting_id")
+    try:
+        conn.execute(replacement_ddl)
+        copied = ", ".join(_quoted(col) for col in columns)
+        conn.execute(
+            f"INSERT INTO {_quoted(replacement)} ({copied}) "
+            f"SELECT {copied} FROM {_quoted('action_items')}"
+        )
+        for kind, name, _sql in dependents:
+            if str(kind) == "trigger":
+                conn.execute(f"DROP TRIGGER {_quoted(str(name))}")
+        conn.execute("DROP TABLE action_items")
+        conn.execute(
+            f"ALTER TABLE {_quoted(replacement)} RENAME TO action_items"
+        )
+        for _kind, _name, sql in dependents:
+            conn.execute(str(sql))
+        conn.execute("RELEASE SAVEPOINT action_items_nullable_meeting_id")
+    except Exception:
+        conn.execute("ROLLBACK TO SAVEPOINT action_items_nullable_meeting_id")
+        conn.execute("RELEASE SAVEPOINT action_items_nullable_meeting_id")
+        raise
+    finally:
+        if not nested and foreign_keys:
+            conn.execute("PRAGMA foreign_keys=ON")
+    log.info("action_items: meeting_id relaxed to nullable (HS-153-05 table rebuild)")
+    return True
+
+
+def _thread_parts_kind_set(sql: str) -> set[str]:
+    """Extract the closed kind vocabulary from thread_message_parts DDL."""
+    match = re.search(
+        r"\bkind\s+TEXT\s+NOT\s+NULL\s+CHECK\s*\(\s*kind\s+IN\s*\(([^)]*)\)",
+        sql,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if match is None:
+        return set()
+    return set(re.findall(r"'([^']+)'", match.group(1)))
+
+
+def _rebuild_thread_message_parts_for_kind_drift(conn: sqlite3.Connection) -> bool:
+    """Widen the thread_message_parts kind CHECK to include guardrail kinds (HS-153-03).
+
+    The pattern mirrors ``_rebuild_kernel_parent_runs_for_kind_drift``:
+    detect the live kind set vs the canonical DDL, copy rows into the
+    canonical shape under a SAVEPOINT, preserve indexes/triggers/FTS, log once.
+    """
+    live = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='thread_message_parts'"
+    ).fetchone()
+    if live is None or not isinstance(live[0], str):
+        return False
+
+    # Build canonical DDL from SCHEMA_SQL
+    reference = sqlite3.connect(":memory:")
+    try:
+        reference.executescript(SCHEMA_SQL)
+        canonical_row = reference.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='thread_message_parts'"
+        ).fetchone()
+        if canonical_row is None:
+            return False
+        canonical_ddl = str(canonical_row[0])
+        canonical_kinds = _thread_parts_kind_set(canonical_ddl)
+        canonical_columns = [
+            str(row[1]) for row in reference.execute("PRAGMA table_info('thread_message_parts')")
+        ]
+    finally:
+        reference.close()
+
+    live_kinds = _thread_parts_kind_set(str(live[0]))
+    if not live_kinds:
+        return False
+    if canonical_kinds <= live_kinds:
+        return False  # live DDL already has all canonical kinds
+
+    # Collect dependents (indexes, triggers, FTS triggers that reference this table)
+    dependents = conn.execute(
+        """SELECT type, name, sql FROM sqlite_master
+             WHERE (
+                    (tbl_name='thread_message_parts' AND type IN ('index','trigger'))
+                 OR (type='trigger' AND sql LIKE '%thread_message_parts%')
+             ) AND sql IS NOT NULL
+             ORDER BY CASE type WHEN 'index' THEN 0 ELSE 1 END, name"""
+    ).fetchall()
+    live_columns = {
+        str(row[1]) for row in conn.execute("PRAGMA table_info('thread_message_parts')")
+    }
+    columns = [col for col in canonical_columns if col in live_columns]
+    if not columns:
+        raise RuntimeError("thread_message_parts has no copyable columns")
+
+    replacement = "thread_message_parts__reconcile_replacement"
+    if conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (replacement,)
+    ).fetchone() is not None:
+        raise RuntimeError("thread_message_parts replacement table already exists")
+
+    replacement_ddl, substitutions = re.subn(
+        r"^CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:\"thread_message_parts\"|thread_message_parts)",
+        f"CREATE TABLE {_quoted(replacement)}",
+        canonical_ddl,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    if substitutions != 1:
+        raise RuntimeError("canonical thread_message_parts DDL cannot be renamed")
+
+    nested = conn.in_transaction
+    foreign_keys = int(conn.execute("PRAGMA foreign_keys").fetchone()[0])
+    if not nested and foreign_keys:
+        conn.execute("PRAGMA foreign_keys=OFF")
+    conn.execute("SAVEPOINT thread_message_parts_kind_rebuild")
+    try:
+        conn.execute(replacement_ddl)
+        copied = ", ".join(_quoted(col) for col in columns)
+        conn.execute(
+            f"INSERT INTO {_quoted(replacement)} ({copied}) "
+            f"SELECT {copied} FROM {_quoted('thread_message_parts')}"
+        )
+        for kind, name, _sql in dependents:
+            if str(kind) == "trigger":
+                conn.execute(f"DROP TRIGGER IF EXISTS {_quoted(str(name))}")
+        conn.execute("DROP TABLE thread_message_parts")
+        conn.execute(
+            f"ALTER TABLE {_quoted(replacement)} RENAME TO thread_message_parts"
+        )
+        for _kind, _name, sql in dependents:
+            conn.execute(str(sql))
+        conn.execute("RELEASE SAVEPOINT thread_message_parts_kind_rebuild")
+    except Exception:
+        conn.execute("ROLLBACK TO SAVEPOINT thread_message_parts_kind_rebuild")
+        conn.execute("RELEASE SAVEPOINT thread_message_parts_kind_rebuild")
+        raise
+    finally:
+        if not nested and foreign_keys:
+            conn.execute("PRAGMA foreign_keys=ON")
+    log.info("thread_message_parts: kind CHECK widened for guardrail kinds (HS-153-03 table rebuild)")
+    return True
+
+
 def _refresh_tool_turn_lifecycle_guards(conn: sqlite3.Connection) -> bool:
     """Upgrade A2's blanket immutability guards to the fenced A3/A4 lifecycle.
 
@@ -395,11 +618,26 @@ def reconcile_schema(
         )
     }
 
-    # These two immutable vocabulary/primary-key shape changes cannot be
+    # These immutable vocabulary/primary-key shape changes cannot be
     # expressed as ALTER TABLE. Rebuild before SCHEMA_SQL recreates canonical
     # indexes and triggers around their replacement tables.
     intel_queue_rebuilt = _rebuild_legacy_intel_queue_tables(conn)
     parent_kind_rebuilt = _rebuild_kernel_parent_runs_for_kind_drift(conn)
+    action_items_rebuilt = _rebuild_action_items_for_nullable_meeting_id(conn)
+    thread_parts_rebuilt = _rebuild_thread_message_parts_for_kind_drift(conn)
+
+    # ── 1b. Add missing columns to EXISTING tables first (HS-152-06) ────
+    # SCHEMA_SQL carries `CREATE INDEX IF NOT EXISTS` statements over
+    # columns that were added to canonical tables after a database was
+    # born (e.g. scheduled_recordings(calendar_event_id), Phase 136).
+    # SQLite validates a new index's columns at creation, so running the
+    # script before the additive column reconcile strands every older
+    # database with "no such column" — the owner's real desk included.
+    # HS-142-02 special-cased one such index below; this pass closes the
+    # class: columns first, then the script.
+    pre_columns_added = _add_missing_columns(conn, existing_only=True)
+    if pre_columns_added:
+        log.info("Reconcile: pre-pass added %d column(s) before SCHEMA_SQL", len(pre_columns_added))
 
     # ── 2. Create any missing tables / indexes / triggers ──────────────
     conn.executescript(SCHEMA_SQL)
@@ -412,7 +650,9 @@ def reconcile_schema(
         )
     }
     tables_created = post_tables - pre_tables
-    shape_changed = bool(tables_created) or intel_queue_rebuilt or parent_kind_rebuilt or tool_turn_guards_refreshed
+    shape_changed = bool(tables_created) or intel_queue_rebuilt or parent_kind_rebuilt or action_items_rebuilt or tool_turn_guards_refreshed
+    if pre_columns_added:
+        shape_changed = True
     if tables_created:
         log.info("Reconcile: created tables %s", sorted(tables_created))
 
@@ -598,10 +838,12 @@ def _alter_column_sql(table: str, col: dict) -> str:
     return " ".join(parts)
 
 
-def _add_missing_columns(conn: sqlite3.Connection) -> list[str]:
+def _add_missing_columns(conn: sqlite3.Connection, *, existing_only: bool = False) -> list[str]:
     """For each canonical table, ALTER-in any columns the live DB lacks.
 
     Returns a list of ALTER statements executed (empty if nothing changed).
+    With ``existing_only`` (the pre-SCHEMA_SQL pass) a table that does not
+    exist yet is simply skipped — the script creates it whole.
     """
     reference = _build_reference_schema()
     executed: list[str] = []
@@ -613,6 +855,8 @@ def _add_missing_columns(conn: sqlite3.Connection) -> list[str]:
             (table,),
         ).fetchone()
         if not exists:
+            if existing_only:
+                continue
             # Table does not exist -- step 1 should have created it.  If it
             # still doesn't exist something unusual is going on; skip rather
             # than crash.
@@ -663,3 +907,204 @@ def _apply_data_backfills(conn: sqlite3.Connection) -> None:
         "Memory index rebuild: "
         + ", ".join(f"{key}={value}" for key, value in memory_counts.items())
     )
+
+    # ── chat-route-assignments (HS-151-02) ─────────────────────────────
+    # Copy the assignment chain from recipe.chat to chat.turn. If no
+    # recipe.chat chain exists, copy from ask.answer instead. Idempotent:
+    # an existing chat.turn chain is never overwritten.
+    _backfill_chat_route_assignments(conn)
+
+    # ── chat-practice-assignments (HS-153-03/05) ─────────────────────
+    # Copy the chat.turn chain to chat.guardrail and chat.compact so the
+    # owner can independently assign a cheaper model.  Idempotent.
+    _backfill_chat_practice_assignments(conn)
+
+
+def _backfill_chat_route_assignments(conn: sqlite3.Connection) -> None:
+    """Family ``chat-route-assignments`` (HS-151-02).
+
+    Copies an existing global capability assignment chain to ``chat.turn``.
+    Source precedence: ``recipe.chat`` first, then ``ask.answer``.
+    Idempotent: a second run is a no-op; an existing ``chat.turn`` chain
+    is never overwritten.
+    """
+    import uuid as _uuid
+
+    TARGET_KEY = "capability:chat.turn"
+    existing = conn.execute(
+        "SELECT 1 FROM inference_assignment_heads WHERE assignment_key=?",
+        (TARGET_KEY,),
+    ).fetchone()
+    if existing is not None:
+        return  # chat.turn already assigned; never overwrite
+
+    source_key: str | None = None
+    for candidate in ("capability:recipe.chat", "capability:ask.answer"):
+        row = conn.execute(
+            "SELECT assignment_id, revision FROM inference_assignment_heads "
+            "WHERE assignment_key=? AND cleared=0",
+            (candidate,),
+        ).fetchone()
+        if row is not None:
+            source_key = candidate
+            break
+
+    if source_key is None:
+        return  # no source chain to copy
+
+    src_assignment_id, src_revision = row[0], row[1]
+    rev_row = conn.execute(
+        "SELECT scope_kind, scope_id, subject_kind, selector_kind, "
+        "capability_id, group_id, retry_policy_id, payload_json, sha256, "
+        "created_at FROM inference_assignment_revisions "
+        "WHERE assignment_id=? AND revision=?",
+        (src_assignment_id, src_revision),
+    ).fetchone()
+    if rev_row is None:
+        return  # orphan head; nothing to copy
+
+    entries = conn.execute(
+        "SELECT profile_id, profile_revision, profile_schema_version, ordinal "
+        "FROM inference_assignments "
+        "WHERE assignment_id=? AND assignment_revision=?",
+        (src_assignment_id, src_revision),
+    ).fetchall()
+    if not entries:
+        return  # empty chain
+
+    new_id = "ia_" + _uuid.uuid4().hex
+    new_revision = 1
+    created_at = rev_row[9]
+
+    conn.execute(
+        """INSERT INTO inference_assignment_revisions
+           (assignment_id, revision, assignment_key, scope_kind, scope_id,
+            subject_kind, selector_kind, capability_id, group_id,
+            retry_policy_id, payload_json, sha256, created_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (
+            new_id, new_revision, TARGET_KEY,
+            "global",  # scope_kind
+            "",         # scope_id
+            "",         # subject_kind
+            "capability",  # selector_kind
+            "chat.turn",   # capability_id
+            "",         # group_id
+            rev_row[6],  # retry_policy_id
+            rev_row[7],  # payload_json
+            rev_row[8],  # sha256
+            created_at,
+        ),
+    )
+    conn.execute(
+        """INSERT INTO inference_assignment_heads
+           (assignment_key, assignment_id, revision, cleared, updated_at)
+           VALUES (?,?,?,0,?)""",
+        (TARGET_KEY, new_id, new_revision, created_at),
+    )
+    for entry in entries:
+        conn.execute(
+            """INSERT INTO inference_assignments
+               (id, assignment_id, assignment_revision, profile_id,
+                profile_revision, profile_schema_version, ordinal)
+               VALUES (?,?,?,?,?,?,?)""",
+            (
+                f"{new_id}:{new_revision}:{entry[3]}",
+                new_id, new_revision,
+                entry[0], entry[1], entry[2], entry[3],
+            ),
+        )
+    log.info(
+        "chat-route-assignments backfill: copied %s to chat.turn (%d entries)",
+        source_key, len(entries),
+    )
+
+
+def _backfill_chat_practice_assignments(conn: sqlite3.Connection) -> None:
+    """Family ``chat-practice-assignments`` (HS-153-03/05).
+
+    Copies the existing ``chat.turn`` assignment chain to ``chat.guardrail``
+    and ``chat.compact`` once.  Idempotent: existing chains are never
+    overwritten.  Runs after ``_backfill_chat_route_assignments`` so the
+    ``chat.turn`` chain is guaranteed to exist when a source is available.
+    """
+    import uuid as _uuid
+
+    SOURCE_KEY = "capability:chat.turn"
+    TARGETS = ("chat.guardrail", "chat.compact")
+
+    source_row = conn.execute(
+        "SELECT assignment_id, revision FROM inference_assignment_heads "
+        "WHERE assignment_key=? AND cleared=0",
+        (SOURCE_KEY,),
+    ).fetchone()
+    if source_row is None:
+        return  # no chat.turn chain to copy
+
+    src_assignment_id, src_revision = source_row[0], source_row[1]
+    rev_row = conn.execute(
+        "SELECT scope_kind, scope_id, subject_kind, selector_kind, "
+        "capability_id, group_id, retry_policy_id, payload_json, sha256, "
+        "created_at FROM inference_assignment_revisions "
+        "WHERE assignment_id=? AND revision=?",
+        (src_assignment_id, src_revision),
+    ).fetchone()
+    if rev_row is None:
+        return
+
+    entries = conn.execute(
+        "SELECT profile_id, profile_revision, profile_schema_version, ordinal "
+        "FROM inference_assignments "
+        "WHERE assignment_id=? AND assignment_revision=?",
+        (src_assignment_id, src_revision),
+    ).fetchall()
+    if not entries:
+        return
+
+    for target_cap in TARGETS:
+        target_key = f"capability:{target_cap}"
+        existing = conn.execute(
+            "SELECT 1 FROM inference_assignment_heads WHERE assignment_key=?",
+            (target_key,),
+        ).fetchone()
+        if existing is not None:
+            continue  # never overwrite
+
+        new_id = "ia_" + _uuid.uuid4().hex
+        new_revision = 1
+        created_at = rev_row[9]
+
+        conn.execute(
+            """INSERT INTO inference_assignment_revisions
+               (assignment_id, revision, assignment_key, scope_kind, scope_id,
+                subject_kind, selector_kind, capability_id, group_id,
+                retry_policy_id, payload_json, sha256, created_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                new_id, new_revision, target_key,
+                "global", "", "", "capability", target_cap, "",
+                rev_row[6], rev_row[7], rev_row[8], created_at,
+            ),
+        )
+        conn.execute(
+            """INSERT INTO inference_assignment_heads
+               (assignment_key, assignment_id, revision, cleared, updated_at)
+               VALUES (?,?,?,0,?)""",
+            (target_key, new_id, new_revision, created_at),
+        )
+        for entry in entries:
+            conn.execute(
+                """INSERT INTO inference_assignments
+                   (id, assignment_id, assignment_revision, profile_id,
+                    profile_revision, profile_schema_version, ordinal)
+                   VALUES (?,?,?,?,?,?,?)""",
+                (
+                    f"{new_id}:{new_revision}:{entry[3]}",
+                    new_id, new_revision,
+                    entry[0], entry[1], entry[2], entry[3],
+                ),
+            )
+        log.info(
+            "chat-practice-assignments backfill: copied chat.turn to %s (%d entries)",
+            target_cap, len(entries),
+        )

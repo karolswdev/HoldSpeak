@@ -50,6 +50,13 @@ from .calendar_events import (  # noqa: F401
     CalendarEvent,
     CalendarEventRepository,
 )
+from .threads import (  # noqa: F401
+    Thread,
+    ThreadMessage,
+    ThreadMessagePart,
+    ThreadRef,
+    ThreadRepository,
+)
 from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401
 from .core import *  # noqa: F401,F403
 from .reconcile import reconcile_schema  # noqa: F401

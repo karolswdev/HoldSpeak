@@ -58,6 +58,8 @@ class CardProvenance:
     segment_start: float | None
     moment: dict[str, Any] | None
     available: bool
+    # HS-153-05: thread provenance for action items sourced from a chat thread.
+    thread_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -179,6 +181,8 @@ class FollowThroughService:
                     meeting_id=action["meeting_id"],
                     source_timestamp=action["source_timestamp"],
                     decision_id=action["decision_id"],
+                    source_type=action["source_type"] if "source_type" in action.keys() else "meeting",
+                    source_ref=action["source_ref"] if "source_ref" in action.keys() else "",
                 ),
                 delegated_at=action["delegated_at"],
                 created_at=action["created_at"] if action["created_at"] else None,
@@ -458,12 +462,29 @@ class FollowThroughService:
         meeting_id: Any,
         source_timestamp: Any,
         decision_id: Any,
+        source_type: str = "meeting",
+        source_ref: str = "",
     ) -> CardProvenance:
         """Return only a repository-verified source moment for a board card.
 
         A missing, stale, or malformed source is deliberately represented as
         unavailable rather than inferred from neighbouring meeting data.
         """
+        # HS-153-05: thread-sourced action items carry thread provenance
+        # instead of meeting-moment provenance.
+        if source_type == "thread" and source_ref:
+            # source_ref is 'thread:<id>'
+            thread_id = source_ref.removeprefix("thread:")
+            return CardProvenance(
+                meeting_id=None,
+                segment_text=None,
+                segment_speaker=None,
+                segment_start=None,
+                moment=None,
+                available=True,
+                thread_id=thread_id,
+            )
+
         unavailable = CardProvenance(
             meeting_id=str(meeting_id) if meeting_id else None,
             segment_text=None,

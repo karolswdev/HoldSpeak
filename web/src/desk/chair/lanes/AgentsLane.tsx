@@ -99,8 +99,12 @@ export function AgentsLane({
         apiFetch<RecipesResponse>("/api/recipes"),
       ]);
       setSessions(extractSessions(codersRes));
+      // A Thread mode is a recipe with kind='mode' (HS-153-01); it is a
+      // practice, not a crew member — the lane counts personas only.
       const recipes = (recipesRes.recipes ?? []).filter(
-        (r) => !(r as Record<string, unknown>).deleted,
+        (r) =>
+          !(r as Record<string, unknown>).deleted &&
+          (r as Record<string, unknown>).kind !== "mode",
       );
       setCrewCount(recipes.length);
     } catch (cause) {

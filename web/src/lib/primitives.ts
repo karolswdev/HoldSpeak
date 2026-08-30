@@ -44,7 +44,8 @@ export type PrimitiveKind =
   | "repository"
   | "workbench"
   | "intelligence"
-  | "people";
+  | "people"
+  | "thread";
 
 /** How a primitive kind opens on the Desk (HS-117-16). */
 export type SurfaceDeclaration =
@@ -52,6 +53,14 @@ export type SurfaceDeclaration =
   | { type: "window"; windowKey: string }
   | { type: "surface"; surfaceKey: string }
   | { type: "none" };
+
+/** Object-level Desk commands supported by a primitive kind. */
+export type PrimitiveCapability =
+  | "ask"
+  | "edit"
+  | "rename"
+  | "duplicate"
+  | "delete";
 
 /** Static metadata for each kind — drives the type-legible Desk language. */
 export interface PrimitiveDescriptor {
@@ -66,6 +75,8 @@ export interface PrimitiveDescriptor {
   icon: string;
   /** Whether the web Desk can author this primitive today. */
   authorable: boolean;
+  /** Object verbs derive their availability from this one declaration. */
+  capabilities: readonly PrimitiveCapability[];
   /** How this kind opens on the desk: pullout card, dedicated window,
    * whole-page surface, or none (HS-117-16). */
   surface: SurfaceDeclaration;
@@ -358,6 +369,24 @@ export interface PeopleDesk {
   name: string;
 }
 
+/** A persistent desk chat thread (HS-151-05). Lives in the hub's SQLite,
+ * streamed over the runtime bus, never in localStorage. */
+export interface Thread {
+  kind: "thread";
+  id: string;
+  title: string;
+  recipeId?: string | null;
+  profileOverride?: string | null;
+  directoryId?: string | null;
+  parentThreadId?: string | null;
+  statusLine?: string | null;
+  tokenIn: number;
+  tokenOut: number;
+  createdAt: string;
+  updatedAt: string;
+  lastTurnAt?: string | null;
+}
+
 export type Primitive = (
   | Meeting
   | Artifact
@@ -378,6 +407,7 @@ export type Primitive = (
   | Workbench
   | Intelligence
   | PeopleDesk
+  | Thread
 ) & { spriteState?: string | null };
 
 /**
@@ -393,6 +423,7 @@ export const PRIMITIVES = {
     blurb: "A captured conversation with transcript and intelligence.",
     icon: "M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8l-5 4z",
     authorable: false,
+    capabilities: ["ask"],
     surface: { type: "pullout" },
   },
   artifact: {
@@ -404,6 +435,7 @@ export const PRIMITIVES = {
       "A synthesized output (summary, decisions, actions …) from a meeting.",
     icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h6",
     authorable: false,
+    capabilities: ["ask"],
     surface: { type: "pullout" },
   },
   note: {
@@ -414,6 +446,7 @@ export const PRIMITIVES = {
     blurb: "A free-standing markdown note you write anywhere.",
     icon: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z",
     authorable: true,
+    capabilities: ["ask", "edit", "rename", "duplicate", "delete"],
     surface: { type: "pullout" },
   },
   decision: {
@@ -424,6 +457,7 @@ export const PRIMITIVES = {
     blurb: "Architecture decision record",
     icon: "M5 3h14v18H5zM8 8h8M8 12h8M8 16h5",
     authorable: true,
+    capabilities: ["duplicate", "delete"],
     surface: { type: "pullout" },
   },
   directory: {
@@ -435,6 +469,7 @@ export const PRIMITIVES = {
     // an open folder holding contents (24×24 stroke path)
     icon: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 11h18",
     authorable: true,
+    capabilities: ["rename", "delete"],
     surface: { type: "pullout" },
   },
   kb: {
@@ -445,6 +480,7 @@ export const PRIMITIVES = {
     blurb: "A named collection of material used to ground answers.",
     icon: "M2 7l10-4 10 4-10 4zM2 7v10l10 4 10-4V7M2 12l10 4 10-4",
     authorable: true,
+    capabilities: ["ask", "edit", "rename", "duplicate", "delete"],
     surface: { type: "pullout" },
   },
   project: {
@@ -455,6 +491,7 @@ export const PRIMITIVES = {
     blurb: "A body of work with meetings, decisions, and cited memory.",
     icon: "M4 4h16v16H4zM8 2v4M16 2v4M8 10h8M8 14h5",
     authorable: false,
+    capabilities: [],
     surface: { type: "surface", surfaceKey: "open-project-memory" },
   },
   repository: {
@@ -465,6 +502,7 @@ export const PRIMITIVES = {
     blurb: "A registered git repository with files, pull requests, and issues.",
     icon: "M4 3h16v18H4zM8 7h8M8 11h8M8 15h5",
     authorable: true,
+    capabilities: [],
     surface: { type: "window", windowKey: "RepositoryWindow" },
   },
   recipe: {
@@ -475,6 +513,7 @@ export const PRIMITIVES = {
     blurb: "Saved instructions, tools, and Knowledge for reusable work.",
     icon: "M12 8V4H8M4 8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2zM9 13h.01M15 13h.01M9 17h6",
     authorable: true,
+    capabilities: ["ask", "edit", "rename", "duplicate", "delete"],
     surface: { type: "pullout" },
   },
   chain: {
@@ -486,6 +525,7 @@ export const PRIMITIVES = {
       "An advanced linear Workflow whose output flows through ordered steps.",
     icon: "M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1",
     authorable: true,
+    capabilities: ["delete"],
     surface: { type: "pullout" },
   },
   workflow: {
@@ -496,6 +536,7 @@ export const PRIMITIVES = {
     blurb: "Saved multi-step behavior that runs on selected material.",
     icon: "M6 3v12M18 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 15a9 9 0 0 0 9 9",
     authorable: true,
+    capabilities: ["ask", "edit", "rename", "duplicate", "delete"],
     surface: { type: "pullout" },
   },
   coder: {
@@ -506,6 +547,7 @@ export const PRIMITIVES = {
     blurb: "A live Claude or Codex session. Answer the coder by voice.",
     icon: "M16 18l6-6-6-6M8 6l-6 6 6 6",
     authorable: false,
+    capabilities: [],
     surface: { type: "pullout" },
   },
   game: {
@@ -516,6 +558,7 @@ export const PRIMITIVES = {
     blurb: "A Desk game stored only on this device.",
     icon: "M6 12h4M8 10v4M15 13h.01M18 11h.01M17.32 5H6.68a4 4 0 0 0-3.98 3.59L2 14a3 3 0 0 0 5.4 1.8L8 15h8l.6.8A3 3 0 0 0 22 14l-.7-5.41A4 4 0 0 0 17.32 5z",
     authorable: false,
+    capabilities: [],
     surface: { type: "none" },
   },
   roadmap: {
@@ -526,6 +569,7 @@ export const PRIMITIVES = {
     blurb: "Delivery Workbench project",
     icon: "M4 4h16v16H4zM7 8h10M7 12h7M7 16h10",
     authorable: false,
+    capabilities: [],
     surface: { type: "window", windowKey: "RoadmapWindow" },
   },
   story: {
@@ -536,6 +580,7 @@ export const PRIMITIVES = {
     blurb: "Delivery story card",
     icon: "M6 3h12v18H6zM9 8h6M9 12h6M9 16h4",
     authorable: false,
+    capabilities: [],
     surface: { type: "none" },
   },
   workbench: {
@@ -546,6 +591,7 @@ export const PRIMITIVES = {
     blurb: "An agent workbench with a schedule, targets, and items.",
     icon: "M3 6h18M3 6v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6M3 6l3-3h12l3 3M8 10h8M8 14h5",
     authorable: true,
+    capabilities: ["duplicate"],
     surface: { type: "window", windowKey: "WorkbenchWindow" },
   },
   intelligence: {
@@ -556,6 +602,7 @@ export const PRIMITIVES = {
     blurb: "A desk-wide brief, follow-through, and receipt view.",
     icon: "M4 4h16v16H4zM8 8h8M8 12h5M8 16h3",
     authorable: false,
+    capabilities: [],
     surface: { type: "pullout" },
   },
   people: {
@@ -566,7 +613,20 @@ export const PRIMITIVES = {
     blurb: "Management relationships and 1:1 follow-through.",
     icon: "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6M2 21v-2a5 5 0 0 1 10 0v2M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6M13 21v-2a5 5 0 0 1 9-3.87",
     authorable: false,
+    capabilities: [],
     surface: { type: "surface", surfaceKey: "open-people" },
+  },
+  thread: {
+    kind: "thread",
+    label: "Thread",
+    plural: "Threads",
+    syncClass: "content",
+    blurb: "A persistent desk chat with streaming turns and receipts.",
+    // speech-ribbon: two overlapping speech bubbles (24x24 stroke path)
+    icon: "M3 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-4l-3 3v-3H5a2 2 0 0 1-2-2zM7 15v2a2 2 0 0 0 2 2h4l3 3v-3h3a2 2 0 0 0 2-2v-6",
+    authorable: true,
+    capabilities: ["delete"],
+    surface: { type: "pullout" },
   },
   layout: {
     kind: "layout",
@@ -576,6 +636,7 @@ export const PRIMITIVES = {
     blurb: "Per-device card positions. Never synced.",
     icon: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z",
     authorable: false,
+    capabilities: [],
     surface: { type: "none" },
   },
 } as const satisfies Record<PrimitiveKind, PrimitiveDescriptor>;
@@ -601,11 +662,21 @@ export type PrimitiveMap = {
   workbench: Workbench;
   intelligence: Intelligence;
   people: PeopleDesk;
+  thread: Thread;
 };
 
 /** Look up the surface declaration for a kind (HS-117-16). */
 export function surfaceOf(kind: PrimitiveKind): PrimitiveDescriptor["surface"] {
   return PRIMITIVES[kind].surface;
+}
+
+export function primitiveCan(
+  kind: PrimitiveKind,
+  capability: PrimitiveCapability,
+): boolean {
+  return (PRIMITIVES[kind].capabilities as readonly PrimitiveCapability[]).includes(
+    capability,
+  );
 }
 
 /** Extract a display label from any primitive (title or name, whichever exists). */
@@ -620,7 +691,7 @@ export type Agent = Persona;
 
 /** Order of the Desk's primitive sections, grouped by sync class. */
 export const DESK_GROUPS = [
-  { label: "Content", kinds: ["meeting", "artifact", "note", "decision"] },
+  { label: "Content", kinds: ["meeting", "artifact", "note", "decision", "thread"] },
   { label: "Capabilities", kinds: ["recipe", "chain", "workflow", "workbench"] },
   { label: "Organization", kinds: ["directory", "kb", "project", "repository"] },
   { label: "Live", kinds: ["coder"] },

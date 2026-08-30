@@ -816,7 +816,8 @@ def _drive_cadence(tmp_path, monkeypatch) -> SurfaceRun:
 SURFACE_DRIVERS: dict[str, Callable[[Any, Any], SurfaceRun]] = {
     "Ask": _drive_ask,
     "Recipe run": _drive_recipe_run,
-    "Recipe chat": _drive_recipe_chat,
+    # HS-151-02: "Recipe chat" removed — recipe.chat retired from registry;
+    # RecipeService.chat() unavailable until HS-151-04 rewires the alias.
     "Sequence": _drive_sequence,
     "Workflow": _drive_workflow,
     "manual Workbench": _drive_workbench_manual,
@@ -836,13 +837,13 @@ SURFACE_DRIVERS: dict[str, Callable[[Any, Any], SurfaceRun]] = {
 #: its seat here rather than riding in unproven. The other two families that story
 #: closed added no surface: both were DELETED as duplicates of a surface already
 #: below (Decision promotion, Delivery review).
-assert len(SURFACE_DRIVERS) == 16, "every named surface form is proven here; none may be collapsed"
+assert len(SURFACE_DRIVERS) == 15, "every named surface form is proven here; none may be collapsed (HS-151-02: Recipe chat retired)"
 
 #: Which admission shape each surface uses. Module-level (rather than buried in
 #: the sanity test below) because ``test_one_path_provenance.py`` imports these
 #: to cross-check the DECLARED shape against the shape the stored row actually
 #: shows — the two files cannot drift apart without one of them failing.
-ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run", "Recipe chat"})
+ROOT_SHAPED_SURFACES = frozenset({"Ask", "Recipe run"})  # HS-151-02: Recipe chat removed
 CHILD_SHAPED_SURFACES = frozenset({
     "Sequence", "Workflow", "manual Workbench", "scheduled Workbench",
     "memory writeback", "Rails", "Decision promotion", "Delivery review", "voice",

@@ -85,7 +85,7 @@ def test_retired_shapes_refuse_before_mcp_dispatch(monkeypatch) -> None:
         ("sequence.run", {"chain_id": "chain", "inference_target_id": "retired"}),
         ("workflow.run", {"workflow_id": "workflow", "inference_target_id": "retired"}),
         ("recipe.run", {"recipe_id": "recipe", "options": {"inference_target_id": "retired"}}),
-        ("recipe.chat", {"recipe_id": "recipe", "question": "no", "options": {"inference_target_id": "retired"}}),
+        # HS-151-02: recipe.chat retired — returns 410 before argument validation.
         ("workbench.create", {"name": "No", "fields": {"profile_id": "retired"}}),
         ("workbench.update", {"workbench_id": "wb", "fields": {"resolver_profile_id": "retired"}}),
     ):
@@ -142,7 +142,9 @@ def test_pipeline_tools_dispatch_through_mcp_protocol(monkeypatch) -> None:
     assert call("recipe.list", {}) == [{"id": "recipe"}]
     assert call("recipe.get", {"recipe_id": "recipe"})["id"] == "recipe"
     assert call("recipe.run", {"recipe_id": "recipe", "input": "go", "options": {"max_tokens": 10}})["max_tokens"] == 10
-    assert call("recipe.chat", {"recipe_id": "recipe", "question": "why", "options": {"egress_context": {"source": "mcp"}}})["egress_context"] == {"source": "mcp"}
+    # HS-151-02: recipe.chat retired — tool returns retired error instead
+    # of dispatching to RecipeService.chat.
+    assert call("recipe.chat", {"recipe_id": "recipe", "question": "why"})["error"] == "recipe_chat_retired"
     assert call("zone.file", {"directory_id": "dir", "primitive_id": "note:1"})["directory_id"] == "dir"
     assert call("zone.unfile", {"directory_id": "dir", "primitive_id": "note:1"}) == {"deleted": True, "id": "note:1"}
     assert call("zone.list_members", {"directory_id": "dir"}) == [{"directory_id": "dir"}]

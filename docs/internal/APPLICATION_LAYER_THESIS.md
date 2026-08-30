@@ -64,8 +64,8 @@ opening face.
 sessions first with their asked-question and the answer composer
 (voice, typed, or drafted) one verb away; then running, then idle.
 **Wings:** *Delivery* (the rails-as-receipts board + dossiers) and
-*Chat* (the agent conversation, today's PersonaChat, inside the app
-where it belongs).
+*Threads* (the multi-turn conversation, inside the app where it
+belongs).
 **The door:** agent/recipe configuration, factory defaults.
 **Dies here:** the roster-first CompanionCore; the "Personas" word
 everywhere in the glass.
@@ -136,7 +136,7 @@ retired.
 |---|---|
 | Dictation (9 tabs) | → **Speak** (headline + 2 wings + door) |
 | Meetings + Live meeting | → **Meetings** (one app, record is a wing) |
-| Personas and coders + PersonaChat + SessionPullout | → **Agents** |
+| Personas and coders + Threads (was PersonaChat) + SessionPullout | → **Agents** |
 | Settings + integrations aliases + Runtime guide + Setup | → **Settings** |
 | Studio | **killed** |
 | Workbench | demoted to a tool (search-reachable) |

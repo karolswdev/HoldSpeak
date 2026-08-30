@@ -1,0 +1,139 @@
+{
+  "id": "th_b8281a2a5360",
+  "title": "HS-153-06 Leg 2 guardrail",
+  "recipe_id": "hs-seed-mode-chase",
+  "profile_override": "",
+  "directory_id": "",
+  "token_in": 5,
+  "token_out": 1,
+  "created_at": 1788115440.938018,
+  "updated_at": 1788115441.500931,
+  "last_turn_at": 1788115441.40176,
+  "mode": {
+    "id": "hs-seed-mode-chase",
+    "name": "Chase",
+    "avatar": "#2563EB"
+  },
+  "messages": [
+    {
+      "id": "tm_065efcc5d42a",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_87cd985bd006",
+          "kind": "text",
+          "text": "Move this person's commitment to complete. Do not specify any source.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115441.2496152,
+      "updated_at": 1788115441.252268,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_ac05c6020dce",
+      "role": "assistant",
+      "parent_id": "tm_065efcc5d42a",
+      "streaming": false,
+      "receipt_id": "ire_4cf473592d1641def3718e674e8f88bb",
+      "egress_scope": "local",
+      "model_id": "hs153-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 1,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_e5e3d892c96f",
+          "kind": "guardrail",
+          "text": null,
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "violations": [
+              "people.commitment.transition called without a named source"
+            ],
+            "warnings": [],
+            "guardrails": [
+              "hs-seed-guardrail-effect-guard",
+              "hs-seed-guardrail-egress-guard"
+            ]
+          }
+        },
+        {
+          "id": "tp_d4b347b08a59",
+          "kind": "tool_call",
+          "text": null,
+          "ordinal": 1,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "id": "call_chase2_pct",
+            "name": "people.commitment.transition",
+            "arguments": "{\"card_id\": \"people:f5cd7748-708f-4c4d-8526-102998637902\", \"verb\": \"complete\"}",
+            "class": "effect_proposal",
+            "state": "awaiting_decision"
+          },
+          "tool_call_id": "call_chase2_pct"
+        },
+        {
+          "id": "tp_aef22892e438",
+          "kind": "text",
+          "text": "Done.",
+          "ordinal": 2,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788115441.28736,
+      "updated_at": 1788115441.500591,
+      "completed_at": 1788115441.500591,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_19e2afe0b2d5",
+      "role": "tool",
+      "parent_id": "tm_ac05c6020dce",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_5c1324ba7dc5",
+          "kind": "text",
+          "text": "{\"error\": \"tool_denied\"}",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false,
+          "meta_json": {
+            "kind": "tool_denied",
+            "receipt_id": ""
+          },
+          "tool_call_id": "call_chase2_pct"
+        }
+      ],
+      "created_at": 1788115441.40176,
+      "updated_at": 1788115441.4022772,
+      "completed_at": null,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

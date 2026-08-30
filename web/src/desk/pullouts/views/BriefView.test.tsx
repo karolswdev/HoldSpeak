@@ -35,7 +35,13 @@ vi.mock("../../shell", () => ({
 }));
 
 vi.mock("../../hooks/useWriteReceipt", () => ({
-  useWriteReceipt: () => ({ attempt: vi.fn().mockResolvedValue({ ok: true }), receipt: null }),
+  useWriteReceipt: () => ({
+    attempt: vi.fn(async (_verb: string, run: () => Promise<unknown>) => ({
+      ok: true,
+      value: await run(),
+    })),
+    receipt: null,
+  }),
 }));
 
 // ---------------------------------------------------------------------------
@@ -177,13 +183,15 @@ describe("BriefView person sections", () => {
     });
 
     // Verify it called the sessions endpoint first, then the agenda endpoint.
-    expect(apiFetch).toHaveBeenCalledWith(
-      "/api/people/relationships/rel-ewa/one-on-ones",
-    );
-    expect(apiFetch).toHaveBeenCalledWith(
-      "/api/people/one-on-ones/session-1/agenda",
-      expect.objectContaining({ method: "POST" }),
-    );
+    await waitFor(() => {
+      expect(apiFetch).toHaveBeenCalledWith(
+        "/api/people/relationships/rel-ewa/one-on-ones",
+      );
+      expect(apiFetch).toHaveBeenCalledWith(
+        "/api/people/one-on-ones/session-1/agenda",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
   });
 
   it("'Open person' calls openSurfaceOr with people focus", async () => {

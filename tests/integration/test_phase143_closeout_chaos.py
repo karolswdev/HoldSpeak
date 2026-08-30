@@ -162,8 +162,13 @@ def _set_tool_assignment(
     })
 
 
-@pytest.mark.timeout(30)
-def test_one_restart_cross_product_preserves_frozen_recipe_receipt_library_and_assignment_truth(
+# HS-151-04: test_one_restart_cross_product_preserves_frozen_recipe_receipt_library_and_assignment_truth
+# DELETED. It tested RecipeService.chat() which is permanently retired
+# (recipe.chat replaced by chat.turn in HS-151-02). The restart cross-product
+# invariant is exercised by test_recipe_run_restart_preserves_truth below.
+
+
+def _deleted_one_restart_cross_product_preserves_frozen_recipe_receipt_library_and_assignment_truth(  # noqa: E501
     tmp_path: Path,
 ) -> None:
     """A logical hub crash/restart has one durable truth, never a second router.

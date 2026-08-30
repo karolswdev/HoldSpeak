@@ -191,10 +191,10 @@ Every continued or fallback model route must remain tool-qualified. The
 controller's closed disposition rules govern whether it continues, falls back,
 settles, stops, or becomes indeterminate.
 
-`recipe.chat` is the first adopter. It probes the `agent.tool_turn` route and
-uses the narrow Agent turn facade only when that route is ready. Its persisted
-`RecipeRecord.tools` list is not route authority. There is no broad model
-`call_tool` transport.
+`chat.turn` (formerly `recipe.chat`, retired in Phase 151) is the first
+adopter. It probes the `agent.tool_turn` route and uses the narrow Agent turn
+facade only when that route is ready. There is no broad model `call_tool`
+transport.
 
 The extension preserves the same division of labour as ordinary routed work.
 The parent bundle freezes the candidate model route before the turn begins. The
@@ -204,7 +204,51 @@ child, and route receipt. A tool child is a separate broker operation with its
 own admissibility and receipt. The controller, rather than a provider response,
 orders those facts and determines the next lawful action.
 
-## 10. One-way migration and the census/sync fences
+## 10. Request-level structured output (meeting intelligence)
+
+Meeting intelligence sends a `response_format` of type `json_schema` on every
+cloud or endpoint request. The schema is derived from `INTEL_SCHEMA` in
+`holdspeak/intel/parsing.py` and wrapped by `intel_response_format()` into the
+OpenAI-compatible `{type: "json_schema", json_schema: {name, strict, schema}}`
+envelope. Both the prompt and the response_format reference the same constant.
+
+The schema carries the named-owner shape: `owner` is `string | null`, where the
+string is a literal person name as spoken in the transcript, or one of two
+reserved tokens (`Me`, `Remote`). Downstream consumers treat `owner` as an
+opaque string. Only the prompt and the schema constant define the reserved set.
+
+When an endpoint rejects `response_format` with HTTP 400, the engine records
+the dialect in `_COMPAT_NO_RESPONSE_FORMAT` (the same pattern as the
+`max_completion_tokens` dialect set) and raises a `ProviderCompatibilityRetry`
+signal with reason `"no_response_format"`. The runner turns this into a second
+admitted child whose request omits `response_format`. The first child's receipt
+records the 400; the second child gets one physical request and its own receipt.
+`forget_endpoint_dialects()` clears both dialect sets (used in tests; a fresh
+process starts empty). The prompt's JSON instruction and the `_extract_json`
+recovery heuristic remain the safety net when structured output is absent.
+
+## 11. Plugin capability skip at claim planning (Design A)
+
+`_plan_installed_plugin_members` in `holdspeak/db/intel.py` freezes the
+installed plugin set from the composed capability registry. A plugin capability
+whose assignment cannot be frozen (the probe returns `no_assignment` from
+`resolve_route_plan_for_feature`) is excluded from the bound claim with a
+receipt (`plugin_chain_skipped`), never a terminal refusal. Core capabilities
+(`meeting.deferred_analysis`, `meeting.bookmark_label`, `meeting.auto_title`)
+remain strict: a missing assignment is terminal.
+
+The skip is recorded in the frozen route metadata under `plugin_chain_skipped`,
+an array of `{plugin_id, capability_id, reason}` entries. The frozen
+`plugin_chain` excludes skipped plugins so the execution path never encounters
+a member-missing refusal. The binder's `prepare` stays strict and untouched,
+and `router.py`'s chain stays honest (it sees only what was frozen).
+
+The probe uses `resolve_route_plan_for_feature` through the same path the
+binder uses, reading persisted assignment heads only (no Config, no live host).
+`_plugin_assignment_reachable` returns `False` on `no_assignment`; any other
+validation error propagates.
+
+## 12. One-way migration and the census/sync fences
 
 A migration reads known legacy bytes once, writes exact canonical assignments
 and source proof in one transaction, then commits a family marker. After that
@@ -227,7 +271,7 @@ state, receipt attestations, acquisition, readiness, probes, and invocations.
 forbidden buckets so an old or hostile peer receives a refusal rather than a
 partial replica.
 
-## 11. Owner surfaces and transport parity
+## 13. Owner surfaces and transport parity
 
 | Owner question | Canonical service | HTTP and MCP twin |
 |---|---|---|

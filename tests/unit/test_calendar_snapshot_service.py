@@ -134,6 +134,51 @@ class TestParseExtractionJson:
         assert len(result.events) == 1
 
 
+# ── Code-fence tolerance (HS-151-04, real-model finding) ───────────────
+
+
+class TestCodeFenceStripping:
+    """Real vision models (Qwythos-9B proven on metal) wrap JSON in markdown
+    code fences.  parse_extraction_json must strip them transparently."""
+
+    # The fixture is the REAL 713-char output shape captured from 8081.
+    FENCED_REAL = '```json\n{\n  "anchor_date": "2026-09-01",\n  "anchor_confidence": "visible_header",\n  "events": [\n    {\n      "title": "Team planning",\n      "weekday": "monday",\n      "start_time": "11:00",\n      "end_time": "12:00",\n      "location": null\n    },\n    {\n      "title": "1:1 w/ Ewa",\n      "weekday": "tuesday",\n      "start_time": "09:00",\n      "end_time": "09:30",\n      "location": null\n    }\n  ]\n}\n```'
+
+    def test_fenced_json_parses_to_events(self):
+        result = parse_extraction_json(self.FENCED_REAL)
+        assert result.error is None
+        assert result.anchor_date == "2026-09-01"
+        assert result.anchor_confidence == "visible_header"
+        assert len(result.events) == 2
+        assert result.events[0].title == "Team planning"
+        assert result.events[0].weekday == "monday"
+        assert result.events[1].title == "1:1 w/ Ewa"
+
+    def test_bare_json_still_parses(self):
+        """No regression: unfenced JSON still works."""
+        raw = json.dumps({
+            "anchor_date": "2026-09-01",
+            "anchor_confidence": "visible_header",
+            "events": [
+                {
+                    "title": "Standup",
+                    "weekday": "monday",
+                    "start_time": "09:00",
+                    "end_time": "09:30",
+                },
+            ],
+        })
+        result = parse_extraction_json(raw)
+        assert result.error is None
+        assert len(result.events) == 1
+
+    def test_garbage_still_refuses(self):
+        """Genuinely unparseable payload still refuses by name."""
+        result = parse_extraction_json("```json\nnot valid json\n```")
+        assert result.error == "unreadable_screenshot"
+        assert result.events == []
+
+
 # ── ICS round-trip through the REAL parser ──────────────────────────────
 
 

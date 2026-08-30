@@ -29,6 +29,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/dictation_telemetry.py", "_fallback_category"): ("lexical/degraded telemetry, never model fallback", "143-07"),
     ("holdspeak/inference_targets.py", "_profile_key_present"): ("profile credential readiness", "143-03"),
     ("holdspeak/intel/engine.py", "_compatibility_retry"): ("provider dialect attempt; separate admitted physical child", "143-06"),
+    ("holdspeak/intel/engine.py", "_response_format_compatibility_retry"): ("provider dialect attempt (structured output); separate admitted physical child", "151-01"),
     ("holdspeak/intel/engine.py", "_resolved_model_path"): ("immutable local artifact read", "143-03"),
     ("holdspeak/intel/providers.py", "_lookup_profile_record"): ("legacy profile lookup", "143-03"),
     ("holdspeak/intel/providers.py", "_apply_runtime_profile"): ("legacy profile-shaped runtime construction", "143-03"),
@@ -50,8 +51,10 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/model_library_service.py", "_profile_row"): ("server-owned library availability projection", "143-12"),
     ("holdspeak/services/model_library_service.py", "_target_matches"): ("private provider adapter comparison", "143-12"),
     ("holdspeak/web/routes/primitives/profiles.py", "_library_private_target"): ("retired legacy target side-door refusal", "143-12"),
+    ("holdspeak/db/reconcile.py", "_backfill_chat_route_assignments"): ("additive data backfill; no route selection", "150-02"),
     ("holdspeak/services/inference_assignment_service.py", "_resolve"): ("canonical sparse assignment resolver", "143-04"),
     ("holdspeak/services/inference_adoption_service.py", "_validate_parentless_local_preload_route"): ("closed parentless speech preload cross-bind", "143-08"),
+    ("holdspeak/services/thread_practice.py", "_resolve_deployment_revision"): ("capability assignment resolver for chat.guardrail/chat.compact deployment revision lookup", "153-03"),
     ("holdspeak/speech_session/session.py", "_routed_session_validation_plan"): ("inert validation/history carrier for fully-adopted sessions; no route selection", "143-08"),
     ("holdspeak/services/inference_route_plan_service.py", "_insert_route"): ("canonical immutable route-plan persistence", "143-05"),
     ("holdspeak/services/inference_route_plan_service.py", "_resolve_entries"): ("canonical frozen route-leg resolver", "143-05"),
@@ -110,7 +113,9 @@ CAMEL_POINTER_TOKENS = ("inferenceTargetId", "intelProfileId", "profileId", "res
 RUNS_ON_PICKER_SURFACE = re.compile(
     r"(?:import\s*\{\s*RunsOnPicker\s*\}|export\s+function\s+RunsOnPicker)"
 )
-STORY_RE = re.compile(r"^143-(?:0[1-9]|1[0-4])$")
+# HS-151-06: later phases lawfully add classified decisions — the owner
+# is any phase-story id (originally 143-only).
+STORY_RE = re.compile(r"^\d{2,3}-\d{2}$")
 
 # Story 06 retired every client-owned Swift retry/fallback execution site. The
 # scanner remains as a zero-regression fence: legacy wire strings may survive in

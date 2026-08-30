@@ -2,6 +2,7 @@
 // demoted product path walks home and opens its desk window at the right
 // scope (Constitution, Article I: features do not own routes).
 import { Suspense, useEffect, useState } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -12,6 +13,7 @@ import {
   decodeWorkroomContext,
   workroomSubjectId,
 } from "./workrooms/context";
+import { deskQueryClient } from "./lib/queryClient";
 
 /** A demoted route: queue the window open (it fires the moment the desk
  * registers the surface), then land on the desk. */
@@ -47,25 +49,27 @@ export function App() {
     setShellNavigator((href) => navigate(href));
   }, [navigate]);
   return (
-    <AppShell>
-      <ErrorBoundary>
-        <Suspense fallback={<SurfaceState loading />}>
-          <Routes>
-            {PRODUCT_ROUTES.map(({ path, component: Component }) => (
-              <Route key={path} path={path} element={<Component />} />
-            ))}
-            {DEMOTED_ROUTES.map((route) => (
-              <Route
-                key={route.path}
-                path={route.path}
-                element={<SurfaceRedirect route={route} />}
-              />
-            ))}
-            <Route path="/desk" element={<Navigate to="/" replace />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </ErrorBoundary>
-    </AppShell>
+    <QueryClientProvider client={deskQueryClient}>
+      <AppShell>
+        <ErrorBoundary>
+          <Suspense fallback={<SurfaceState loading />}>
+            <Routes>
+              {PRODUCT_ROUTES.map(({ path, component: Component }) => (
+                <Route key={path} path={path} element={<Component />} />
+              ))}
+              {DEMOTED_ROUTES.map((route) => (
+                <Route
+                  key={route.path}
+                  path={route.path}
+                  element={<SurfaceRedirect route={route} />}
+                />
+              ))}
+              <Route path="/desk" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
+      </AppShell>
+    </QueryClientProvider>
   );
 }

@@ -62,7 +62,7 @@ export function MeetingsConfig() {
 
   const update = (key: string, value: unknown) => {
     const nextMeeting = { ...meeting, [key]: value };
-    const nextData = { ...data, meeting: nextMeeting };
+    const nextData: Record<string, unknown> = { ...data, meeting: nextMeeting };
     setData(nextData);
     revisionRef.current = nextData._revision as string | undefined;
     clearTimeout(saveTimer.current);

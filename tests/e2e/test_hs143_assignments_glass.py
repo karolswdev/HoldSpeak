@@ -389,17 +389,17 @@ def test_s5_recipe_and_workbench_contextual_assignments_are_pre_scoped_and_acces
                 "url": request.url, "post_data": request.post_data,
             }) if request.url.endswith("/api/inference/assignments/editor") else None)
 
-            # Recipe chat uses the durable Recipe id + recipe.chat pair.
+            # Recipe thread uses the durable Recipe id + chat.turn pair.
             _open_desk_surface(page, url, "/companion")
             page.get_by_role("button", name="S5 Recipe\nOK", exact=True).click()
-            recipe_context = page.locator("[data-capability='recipe.chat']")
+            recipe_context = page.locator("[data-capability='chat.turn']")
             recipe_context.wait_for()
             assert recipe_context.get_by_text("Uses global · S5 Subject First", exact=True).count() == 1
             assert recipe_context.locator("select").count() == 0
             page.screenshot(path=str(SHOTS / f"recipe-chat-context-{width}.png"), full_page=False)
             recipe_change = recipe_context.get_by_role("button", name="Change")
             recipe_change.click()
-            recipe_sheet = page.get_by_label("Chat assignment")
+            recipe_sheet = page.get_by_label("Thread assignment")
             recipe_sheet.wait_for()
             assert recipe_sheet.get_by_role("radiogroup", name="Compatible models").count() == 1
             # Screen-reader-visible names and roving radio state are live facts.
@@ -462,7 +462,7 @@ def test_s5_recipe_and_workbench_contextual_assignments_are_pre_scoped_and_acces
             resolver_context.get_by_role("status").filter(has_text="Next run").wait_for()
 
             bodies = [entry["post_data"] or "" for entry in requests]
-            assert any('"subject_kind":"recipe"' in body and '"capability_id":"recipe.chat"' in body for body in bodies)
+            assert any('"subject_kind":"recipe"' in body and '"capability_id":"chat.turn"' in body for body in bodies)
             assert any('"subject_kind":"workbench"' in body and '"capability_id":"workbench.item"' in body for body in bodies)
             assert any('"subject_kind":"workbench"' in body and '"capability_id":"voice.reference_resolve"' in body for body in bodies)
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")

@@ -10,6 +10,27 @@ env:
   UV_SYSTEM_PYTHON: 1
 
 jobs:
+  web-quality:
+    name: DeskOS Web Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Run the complete DeskOS contract
+        working-directory: web
+        run: |
+          npm ci --no-audit --no-fund
+          npm run check
+
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -112,6 +133,10 @@ jobs:
   e2e-tests:
     name: E2E Tests (macOS)
     runs-on: macos-14  # Apple Silicon
+    env:
+      # Several real-hub fixtures isolate HOME. Keep browser discovery
+      # independent from that application-data sandbox.
+      PLAYWRIGHT_BROWSERS_PATH: /tmp/holdspeak-playwright-browsers
 
     steps:
       - name: Checkout code

@@ -53,8 +53,8 @@ ROUTING_RESOLVER_NAMES = frozenset({
 # authority.  A new resolver or a late read cannot silently evade Story 01 by
 # looking like a harmless helper in a new module.
 ROUTING_RESOLVER_DEFINITIONS = {
-    "holdspeak/deployment_revisions.py:202:resolve_workbench_deployment_revision",
-    "holdspeak/deployment_revisions.py:224:resolve_deployment_revision",
+    "holdspeak/deployment_revisions.py:206:resolve_workbench_deployment_revision",
+    "holdspeak/deployment_revisions.py:228:resolve_deployment_revision",
     "holdspeak/inference_targets.py:550:resolve_placement",
     "holdspeak/inference_targets.py:496:resolve_inference_target",
     "holdspeak/inference_targets.py:590:resolve_thought_placement",
@@ -62,11 +62,11 @@ ROUTING_RESOLVER_DEFINITIONS = {
 }
 
 ROUTING_RESOLVER_REFERENCES = {
-    "holdspeak/deployment_revisions.py:205:import:resolve_inference_target",
-    "holdspeak/deployment_revisions.py:214:ref:resolve_inference_target",
+    "holdspeak/deployment_revisions.py:209:import:resolve_inference_target",
+    "holdspeak/deployment_revisions.py:218:ref:resolve_inference_target",
     "holdspeak/inference_targets.py:584:ref:resolve_inference_target",
     "holdspeak/inference_targets.py:601:ref:resolve_placement",
-    "holdspeak/intel/__init__.py:60:import:resolve_meeting_placement",
+    "holdspeak/intel/__init__.py:63:import:resolve_meeting_placement",
     "holdspeak/intel/providers.py:193:ref:resolve_meeting_placement",
     "holdspeak/intel/providers.py:235:ref:resolve_meeting_placement",
     "holdspeak/intel/providers.py:337:ref:resolve_meeting_placement",
@@ -74,7 +74,7 @@ ROUTING_RESOLVER_REFERENCES = {
     "holdspeak/kernel/inference_invoke.py:10:import:resolve_deployment_revision",
     "holdspeak/kernel/inference_invoke.py:92:ref:resolve_deployment_revision",
     "holdspeak/kernel/inference_runner.py:13:import:resolve_deployment_revision",
-    "holdspeak/kernel/inference_runner.py:491:ref:resolve_deployment_revision",
+    "holdspeak/kernel/inference_runner.py:851:ref:resolve_deployment_revision",
     "holdspeak/services/ask_service.py:307:import:resolve_placement",
     "holdspeak/services/ask_service.py:308:ref:resolve_placement",
     "holdspeak/services/inference_setup_service.py:184:ref:resolve_inference_target",
@@ -115,7 +115,7 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/config/integrations.py:191:inference_target_id",
     "holdspeak/config/meeting.py:145:intel_profile_id",
     "holdspeak/config/meeting.py:144:intel_profile_id",
-    "holdspeak/db/models/__init__.py:1124:resolver_profile_id",
+    "holdspeak/db/models/__init__.py:1126:resolver_profile_id",
     "holdspeak/db/models/workbench.py:139:resolver_profile_id",
     "holdspeak/services/inference_setup_service.py:644:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:649:inference_target_id",
@@ -144,7 +144,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/commands/doctor.py:488:profile_id", "holdspeak/commands/doctor.py:787:profile_id",
         "holdspeak/commands/doctor.py:795:profile_id", "holdspeak/commands/doctor.py:809:profile_id",
         "holdspeak/commands/doctor.py:934:profile_id",
-        "holdspeak/db/models/__init__.py:684:profile_id", "holdspeak/inference_targets.py:161:profile_id",
+        "holdspeak/db/models/__init__.py:686:profile_id", "holdspeak/inference_targets.py:161:profile_id",
         "holdspeak/services/ask_service.py:318:profile_id",
         "holdspeak/services/inference_setup_service.py:653:profile_id", "holdspeak/services/settings_service.py:103:profile_id",
         "holdspeak/setup_status.py:151:profile_id",
@@ -156,9 +156,9 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/inference_assignment_service.py:1788:profile_id",
     }},
     **{site: "migration source" for site in {
-        "holdspeak/db/models/__init__.py:1122:profile_id",
+        "holdspeak/db/models/__init__.py:1125:profile_id",
         "holdspeak/db/models/workbench.py:138:profile_id",
-        "holdspeak/services/recipe_service.py:362:profile_id",
+        "holdspeak/services/recipe_service.py:364:profile_id",
         "holdspeak/services/workbench_service.py:561:profile_id",
     }},
     **{site: "credential/provider identity" for site in {

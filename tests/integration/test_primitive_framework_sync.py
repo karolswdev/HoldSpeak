@@ -49,8 +49,9 @@ from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 NOTE_KEYS = {"id", "title", "body_markdown", "tags",
              "created_at", "updated_at", "last_modified", "deleted"}
 AGENT_KEYS = {"id", "name", "avatar", "role", "system_prompt", "user_template",
-              "tools", "kb_id", "profile_id", "created_at", "last_modified", "deleted",
+              "tools", "kb_id", "profile_id", "kind", "created_at", "last_modified", "deleted",
     "manual_context", "use_zone_context",  # v7 (Phase 77): the pinned context rides the wire
+    "kind",  # Phase 153: ordinary recipes and thread modes share this record.
 }
 KB_KEYS = {"id", "name", "member_ids", "created_at", "last_modified", "deleted"}
 META_KEYS = {"id", "kind", "last_modified", "deleted"}

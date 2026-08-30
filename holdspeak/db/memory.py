@@ -8,7 +8,7 @@ from typing import Any, Iterable, Optional
 
 from .base import BaseRepository
 
-_KIND_ORDER = {"decision": 0, "artifact": 1, "note": 2}
+_KIND_ORDER = {"decision": 0, "artifact": 1, "note": 2, "thread": 3}
 _VALID_KINDS = frozenset(_KIND_ORDER)
 _WORD = re.compile(r"\w+", re.UNICODE)
 _QUERY_STOPWORDS = frozenset(
@@ -136,6 +136,10 @@ class MemoryRepository(BaseRepository):
                 )
             if "note" in selected:
                 by_kind["note"] = self._note_rows(
+                    conn, expression, project, start, end
+                )
+            if "thread" in selected:
+                by_kind["thread"] = self._thread_rows(
                     conn, expression, project, start, end
                 )
 
@@ -290,6 +294,49 @@ class MemoryRepository(BaseRepository):
                 FROM notes_memory_fts JOIN notes n ON n.id=notes_memory_fts.source_id
                 WHERE {' AND '.join(clauses)}
                 ORDER BY bm25 ASC,n.updated_at DESC,n.id ASC""",
+            params,
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    @staticmethod
+    def _thread_rows(conn, match, project, start, end) -> list[dict[str, Any]]:
+        clauses = ["thread_messages_fts MATCH ?"]
+        params: list[Any] = [match]
+        # Threads are not project-scoped; project filter is a no-op.
+        if start:
+            clauses.append("t.updated_at>=CAST(strftime('%s',?) AS REAL)")
+            params.append(start)
+        if end:
+            clauses.append("t.updated_at<=CAST(strftime('%s',?) AS REAL)")
+            params.append(end)
+        # FTS auxiliary functions (bm25, snippet) must be computed in the
+        # same query level as the MATCH, so pre-compute them in the first
+        # CTE and then window-rank over the materialized column.
+        rows = conn.execute(
+            f"""WITH base AS (
+                    SELECT t.id thread_id, t.title, m.id message_id,
+                           datetime(t.updated_at,'unixepoch') occurred_at,
+                           bm25(thread_messages_fts,1.0) bm25_val,
+                           snippet(thread_messages_fts,-1,'<mark>','</mark>',' … ',24) snippet
+                    FROM thread_messages_fts
+                    JOIN thread_message_parts p ON p.rowid=thread_messages_fts.rowid
+                    JOIN thread_messages m ON m.id=p.message_id
+                    JOIN threads t ON t.id=m.thread_id
+                    WHERE {' AND '.join(clauses)}
+                      AND m.deleted_at IS NULL
+                      AND t.deleted_at IS NULL
+                ),
+                ranked AS (
+                    SELECT *, ROW_NUMBER() OVER (
+                        PARTITION BY thread_id ORDER BY bm25_val
+                    ) rn FROM base
+                )
+                SELECT 'thread' kind,
+                       'thread:'||thread_id||'#'||message_id source_ref,
+                       title,snippet,occurred_at,NULL project_id,
+                       bm25_val bm25
+                FROM ranked WHERE rn=1
+                ORDER BY bm25 ASC,occurred_at DESC,thread_id ASC""",
             params,
         ).fetchall()
         return [dict(row) for row in rows]

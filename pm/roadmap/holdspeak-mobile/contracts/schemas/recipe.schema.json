@@ -27,6 +27,11 @@
     "avatar": {
       "type": "string"
     },
+    "kind": {
+      "type": "string",
+      "enum": ["", "mode"],
+      "description": "HS-153-01: '' = an ordinary recipe; 'mode' = a Thread mode (allow-list + voice) bound through threads.recipe_id"
+    },
     "role": {
       "type": "string"
     },
@@ -61,6 +66,14 @@
     "use_zone_context": {
       "type": "boolean",
       "description": "Per-device zone-context hint; persisted + re-emitted by the hub since Phase 77 (db v7)"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "",
+        "mode"
+      ],
+      "description": "Empty for an ordinary recipe; mode for a built-in or owner-authored Thread mode."
     },
     "created_at": {
       "type": "string",

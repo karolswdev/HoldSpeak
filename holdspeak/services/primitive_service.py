@@ -29,7 +29,9 @@ class PrimitiveService:
 
     # ── Notes ────────────────────────────────────────────────────────────
 
-    def list_notes(self, principal: Principal) -> list[dict[str, Any]]:
+    def list_notes(self, principal: Principal, *, tag: str | None = None) -> list[dict[str, Any]]:
+        if tag is not None:
+            return [n.to_dict() for n in self._db.notes.list_by_tag(tag)]
         return [n.to_dict() for n in self._db.notes.list()]
 
     def get_note(self, principal: Principal, note_id: str) -> dict[str, Any]:

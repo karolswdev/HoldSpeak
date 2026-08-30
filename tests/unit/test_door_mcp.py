@@ -87,7 +87,7 @@ def test_door_get_is_discoverable_with_a_closed_versioned_schema() -> None:
         tool for tool in response["result"]["tools"] if tool["name"].startswith("door.")
     ]
 
-    assert [tool["name"] for tool in door_tools] == ["door.get"]
+    assert [tool["name"] for tool in door_tools] == ["door.get", "door.add_item"]
     assert door_tools[0]["inputSchema"] == {
         "$id": "holdspeak://mcp/door.get@1",
         "type": "object",
@@ -95,6 +95,9 @@ def test_door_get_is_discoverable_with_a_closed_versioned_schema() -> None:
         "required": [],
         "additionalProperties": False,
     }
+    assert door_tools[1]["inputSchema"]["$id"] == "holdspeak://mcp/door.add_item@1"
+    assert door_tools[1]["inputSchema"]["required"] == ["task"]
+    assert door_tools[1]["inputSchema"]["additionalProperties"] is False
     resources = server.handle_message({"jsonrpc": "2.0", "id": 2, "method": "resources/list"})
     assert resources is not None
     assert all(

@@ -37,6 +37,9 @@ def build_notes_router(ctx: WebContext) -> APIRouter:
     @router.get("/api/notes")
     async def api_list_notes(request: Request) -> Any:
         try:
+            tag = request.query_params.get("tag")
+            if tag is not None:
+                return JSONResponse({"notes": _svc().list_notes(_principal(request), tag=tag)})
             return JSONResponse({"notes": _svc().list_notes(_principal(request))})
         except Exception as exc:
             return error_500(exc, log, "Failed to list notes")

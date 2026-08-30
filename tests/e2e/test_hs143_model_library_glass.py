@@ -239,26 +239,18 @@ def test_model_library_owner_paths_keyboard_and_accessibility(
             add.click()
             page.keyboard.press("Escape")
             page.wait_for_function("document.activeElement?.classList.contains('model-library-add-trigger')")
-            called = {"count": 0}
-
-            def complete_download(route: Any) -> None:
-                called["count"] += 1
-                route.fulfill(
-                    status=202,
-                    content_type="application/json",
-                    body='{"receipt":{"kind":"model_library_add","message":"Added to the Model Library. Assignments are unchanged.","assignments_unchanged":true}}',
-                )
-
-            page.route("**/api/inference/model-library/download", complete_download)
-            # Re-select the catalog entry because the choice matrix left the
-            # source tab on Available. Its command is intercepted, not mocked
-            # at the component boundary.
+            # Re-select an actionable catalog entry because the choice matrix
+            # left the source tab on Available. Mod+Enter invokes its one seat;
+            # provider custody and its canonical receipt are proved below.
             surface.locator('.model-library-tabs [role="tab"]').filter(has_text="All").click()
-            radios = group.get_by_role("radio")
-            radios.nth(0).focus()
+            catalog_row = surface.locator(".model-library-row").filter(has_text="Connect").first
+            catalog_radio = catalog_row.get_by_role("radio")
+            catalog_radio.check()
+            catalog_radio.focus()
             page.keyboard.press("Control+Enter")
-            surface.get_by_role("status").filter(has_text="Added to the Model Library. Assignments are unchanged.").wait_for()
-            assert called["count"] == 1
+            surface.get_by_role("region", name="Connect hosted model", exact=True).wait_for()
+            page.keyboard.press("Escape")
+            surface.locator(".model-library-inventory").wait_for()
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
             assert errors == []
             browser.close()
