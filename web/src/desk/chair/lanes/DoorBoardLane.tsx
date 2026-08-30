@@ -5,7 +5,6 @@ import { openIntelligence } from "../../intelligenceNavigation";
 import { useWriteReceipt } from "../../hooks/useWriteReceipt";
 import { StringGadget } from "../../surface/gadgets";
 import { SurfaceSection, SurfaceState } from "../../surface/Surface";
-import { useSurfaceWindows } from "../../components/SurfaceWindows";
 import { openSurfaceOr } from "../../shell";
 import { useDesk } from "../../store";
 import type { LaneProps } from "../laneContract";
@@ -474,7 +473,7 @@ function UpcomingRail({ upcoming, calendarConfigured, onReload }: { upcoming: Do
       ) : !calendarConfigured ? (
         <div className="door-upcoming-empty door-upcoming-empty--connect">
           <span>No calendar connected.</span>
-          <Button dense variant="ghost" onClick={() => useSurfaceWindows.getState().openSurfaceWindow("configure-settings", "meetings")}>
+          <Button dense variant="ghost" onClick={() => useDesk.getState().openSurfaceWindow("configure-settings", "meetings")}>
             Connect calendar
           </Button>
         </div>

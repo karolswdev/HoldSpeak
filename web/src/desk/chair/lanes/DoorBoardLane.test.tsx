@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DoorBoardLane, commandForDoorVerb, computeScrollHint, type DoorProjection } from "./DoorBoardLane";
-import { useSurfaceWindows } from "../../components/SurfaceWindows";
 import { useDesk } from "../../store";
 
 const apiFetch = vi.hoisted(() => vi.fn());
@@ -351,7 +350,7 @@ describe("DoorBoardLane", () => {
   });
 
   it("connect-calendar click opens Settings scoped to Meetings", async () => {
-    const openSurfaceWindow = vi.spyOn(useSurfaceWindows.getState(), "openSurfaceWindow");
+    const openSurfaceWindow = vi.spyOn(useDesk.getState(), "openSurfaceWindow");
     const unconfigured: DoorProjection = {
       ...projection,
       upcoming: [],

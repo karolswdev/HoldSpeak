@@ -23,6 +23,17 @@ export interface PanelRect {
   h: number;
 }
 
+/** Normalized lifecycle metadata for a first-class Desk application window.
+ * Static applications migrate first; dynamic object-window adapters can join
+ * this registry without creating another writable lifecycle store. */
+export interface WindowInstance {
+  id: string;
+  kind: "surface";
+  applicationKey: string;
+  scope: string | null;
+  persistence: "workspace";
+}
+
 /** HS-93-08 -- the semantic list mode is the SAME Desk, keyboard-first. */
 export type DeskView = "spatial" | "list";
 
@@ -33,10 +44,11 @@ export interface ZoneViewPref {
   dir: "asc" | "desc";
 }
 
-/** HS-112-03 -- every localStorage key that layouts the desk by object
- * id; a reset sweeps them all (the pre-charter survey's ghost list). */
+/** Every current/retired layout key reset must sweep. Only workspace.v1 is
+ * read for window lifecycle; the older keys remain here solely for cleanup. */
 export const GHOST_LAYOUT_KEYS = [
   "hs.diorama.pos",
+  "hs.desk.workspace.v1",
   "hs.desk.panels",
   "hs.desk.zonew",
   "hs.desk.zone-views",
@@ -119,12 +131,10 @@ export interface DeskState {
    * open/close motion flies to). Order is open order; the panel order
    * decides stacking. */
   pullouts: { id: string; origin: { x: number; y: number } | null }[];
-  /** HS-105-03 -- open zone windows (drawers opened into real desk
-   * windows). They coexist like pullouts and persist across reload
-   * (`hs.desk.zone-windows`, the HS-103-01 restoration rule). */
+  /** Open zone windows (drawers opened into real desk windows). They coexist
+   * like pullouts and persist in the versioned workspace document. */
   zoneWindows: { id: string; origin: { x: number; y: number } | null }[];
-  /** Per-zone remembered expression: view + sort (`hs.desk.zone-views`).
-   * The window remembers -- that is what makes it a window. */
+  /** Per-zone remembered expression in the workspace: the window remembers. */
   zoneViewPrefs: Record<string, ZoneViewPref>;
   /** HS-105-04 -- open Info cards (transient inspection windows; they
    * coexist but do not persist across reload). Ref is `kind:id`, bare
@@ -181,6 +191,8 @@ export interface DeskState {
   panelMin: string[];
   /** Maximized windows (full stage; the saved rect is kept), persisted. */
   panelMax: string[];
+  /** Normalized, compositor-owned application windows keyed by window id. */
+  windowsById: Record<string, WindowInstance>;
   /** HS-93-08 -- which expression of the Desk renders (spatial or list). */
   viewMode: DeskView | "unset";
 
@@ -232,6 +244,11 @@ export interface DeskState {
   closeRepositoryWindow(id: string): void;
   openWorkbenchWindow(id: string, origin?: { x: number; y: number }): void;
   closeWorkbenchWindow(id: string): void;
+  /** Open/focus or close a first-class application through the compositor. */
+  openSurfaceWindow(key: string, scope?: string): void;
+  closeSurfaceWindow(key: string): void;
+  /** Recovery-only arrival clears application windows without touching layout. */
+  clearSurfaceWindows(): void;
   /** Open the pre-persistence workbench chooser (no record created yet). */
   openNewWorkbenchChooser(origin?: { x: number; y: number }): void;
   /** Dismiss the pre-persistence workbench chooser. */

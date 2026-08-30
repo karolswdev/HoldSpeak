@@ -657,6 +657,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => ({
       panelOrder: [],
       panelMin: [],
       panelMax: [],
+      windowsById: {},
       pullouts: [],
       zoneWindows: [],
       zoneViewPrefs: {},

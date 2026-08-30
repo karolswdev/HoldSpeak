@@ -32,6 +32,7 @@ const ACTIONABLE_LAUNCHERS = new Set(["attention", "delivery-board"]);
 export function Dock({ center }: { center?: ReactNode } = {}) {
   const panelMin = useDesk((s) => s.panelMin);
   const panelOrder = useDesk((s) => s.panelOrder);
+  const windowsById = useDesk((s) => s.windowsById);
   const windows = useOpenWindows();
   const launchers = useLaunchers();
   // HS-111-07 — the HS-101 B8 keyboard grammar (Cmd+1-Cmd+4, Cmd+W, Cmd+M, Ctrl+`,
@@ -86,7 +87,12 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     >
       {DOCK_APPLICATIONS.map((application) => {
         const win = windows.find((w) => w.id === application.windowId);
-        const minimized = win ? panelMin.includes(application.windowId) : false;
+        // Mounted DOM refs are runtime detail; the compositor owns whether a
+        // hosted application is open. Intelligence is not yet a hosted surface.
+        const running = application.surface
+          ? Boolean(windowsById[application.windowId])
+          : Boolean(win);
+        const minimized = running && panelMin.includes(application.windowId);
         const badge =
           application.windowId === "intelligence:desk"
             ? intelligenceBadge
@@ -98,15 +104,15 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             type="button"
             className={
               "desk-dock-launch desk-dock-app" +
-              (win ? " is-run" : "") +
-              (win && application.windowId === front && !minimized ? " is-front" : "") +
+              (running ? " is-run" : "") +
+              (running && application.windowId === front && !minimized ? " is-front" : "") +
               (overdue ? " is-attention" : "")
             }
             aria-label={badge ? `${application.label}, ${overdue ? `${badge} overdue` : "brief ready"}` : application.label}
             onClick={() => {
               const s = useDesk.getState();
-              if (win && minimized) s.restorePanel(application.windowId);
-              else if (win) s.focusPanel(application.windowId);
+              if (running && minimized) s.restorePanel(application.windowId);
+              else if (running) s.focusPanel(application.windowId);
               else if (application.dock.launch === "intelligence")
                 openIntelligence({ view: "brief" });
               else
@@ -115,7 +121,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 );
             }}
             onContextMenu={(e) => {
-              if (!win) return;
+              if (!running) return;
               e.preventDefault();
               setChipMenu({
                 id: application.windowId,
@@ -123,7 +129,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 x: e.clientX,
                 y: e.clientY,
                 minimized,
-                close: win.close,
+                close: win?.close ?? (() => useDesk.getState().closeSurfaceWindow(application.action)),
               });
             }}
           >

@@ -1,7 +1,12 @@
 /** Compositor slice (HS-117-02): panel geometry, stacking order,
  * minimize/maximize, and all six window arrays. */
 import { assertNever } from "../assertNever";
-import type { DeskState, PanelRect, SliceCreator, ZoneViewPref } from "./types";
+import type { DeskState, PanelRect, SliceCreator } from "./types";
+import { SURFACE_APPLICATIONS } from "../applications";
+import {
+  loadDeskWorkspace,
+  saveDeskWorkspace,
+} from "./workspaceStorage";
 import {
   ZONE_WINDOW_CONFIG,
   INFO_WINDOW_CONFIG,
@@ -10,24 +15,11 @@ import {
   WORKBENCH_WINDOW_CONFIG,
   makeOpenWindow,
   makeCloseWindow,
-  windowInitialState,
 } from "./windowFactory";
 
 // ---- localStorage persistence -------------------------------------------
 
-const PANEL_KEY = "hs.desk.panels";
 const PANEL_ORDER_LIMIT = 100;
-const ZONE_VIEWS_KEY = "hs.desk.zone-views";
-
-const isPanelId = (value: unknown): value is string =>
-  typeof value === "string" && /^[A-Za-z0-9:_-]+$/.test(value);
-
-const isPanelRect = (value: unknown): value is PanelRect => {
-  if (!value || typeof value !== "object") return false;
-  const rect = value as PanelRect;
-  return [rect.x, rect.y, rect.w, rect.h].every(Number.isFinite) &&
-    rect.w > 0 && rect.h > 0;
-};
 
 function compactPanelOrder(order: string[]): string[] {
   const unique = Array.from(new Set(order));
@@ -36,68 +28,33 @@ function compactPanelOrder(order: string[]): string[] {
     : unique;
 }
 
-interface PanelLayout {
+export interface PanelLayout {
   rects: Record<string, PanelRect>;
   order: string[];
   max: string[];
 }
 
 export function loadPanelLayout(): PanelLayout {
-  try {
-    const raw: unknown = JSON.parse(localStorage.getItem(PANEL_KEY) || "{}") || {};
-    const layout = raw as { rects?: unknown; order?: unknown; max?: unknown };
-    const source = raw && typeof raw === "object" && layout.rects ? layout.rects : raw;
-    const rects = Object.fromEntries(
-      Object.entries(source && typeof source === "object" ? source : {}).filter(
-        ([id, rect]) => isPanelId(id) && isPanelRect(rect),
-      ),
-    ) as Record<string, PanelRect>;
-    const order = compactPanelOrder(
-      (Array.isArray(layout.order) ? layout.order : []).filter(
-        (value): value is string => isPanelId(value),
-      ),
-    );
-    const max = Array.from(
-      new Set(
-        (Array.isArray(layout.max) ? layout.max : []).filter(
-          (value): value is string => isPanelId(value),
-        ),
-      ),
-    );
-    return { rects, order, max };
-  } catch {
-    return { rects: {}, order: [], max: [] };
-  }
-}
-
-function savePanelLayout(
-  rects: Record<string, PanelRect>,
-  keep: string[],
-  order: string[],
-  max: string[],
-) {
-  try {
-    const out: Record<string, PanelRect> = {};
-    for (const id of keep) if (rects[id]) out[id] = rects[id];
-    localStorage.setItem(PANEL_KEY, JSON.stringify({ rects: out, order, max }));
-  } catch {
-    /* storage may be unavailable; arranging just won't persist */
-  }
-}
-
-function loadZoneViewPrefs(): Record<string, ZoneViewPref> {
-  try {
-    const raw = localStorage.getItem(ZONE_VIEWS_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, ZoneViewPref>) : {};
-  } catch {
-    return {};
-  }
+  return loadDeskWorkspace().panel;
 }
 
 // ---- pre-computed initial values ----------------------------------------
 
-const initialPanelLayout = loadPanelLayout();
+const initialWorkspace = loadDeskWorkspace();
+const initialPanelLayout = initialWorkspace.panel;
 const initialPanelRects = initialPanelLayout.rects;
+const surfaceByAction = new Map(
+  SURFACE_APPLICATIONS.map((application) => [application.action, application]),
+);
+const surfaceByWindowId = new Map(
+  SURFACE_APPLICATIONS.map((application) => [application.windowId, application]),
+);
+const initialWindowsById = Object.fromEntries(
+  Object.entries(initialWorkspace.windowsById).filter(([id, instance]) => {
+    const application = surfaceByWindowId.get(id);
+    return application?.action === instance.applicationKey;
+  }),
+);
 
 // ---- factory-generated open/close functions -----------------------------
 
@@ -121,6 +78,7 @@ export type CompositorSlice = Pick<
   | "panelOrder"
   | "panelMin"
   | "panelMax"
+  | "windowsById"
   | "pullouts"
   | "zoneWindows"
   | "zoneViewPrefs"
@@ -144,6 +102,9 @@ export type CompositorSlice = Pick<
   | "closeWorkbenchWindow"
   | "openNewWorkbenchChooser"
   | "closeNewWorkbenchChooser"
+  | "openSurfaceWindow"
+  | "closeSurfaceWindow"
+  | "clearSurfaceWindows"
   | "setPanelRect"
   | "resetPanelRect"
   | "focusPanel"
@@ -161,9 +122,10 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   panelOrder: initialPanelLayout.order,
   panelMin: [],
   panelMax: initialPanelLayout.max,
+  windowsById: initialWindowsById,
   pullouts: [],
-  zoneWindows: windowInitialState(ZONE_WINDOW_CONFIG),
-  zoneViewPrefs: loadZoneViewPrefs(),
+  zoneWindows: initialWorkspace.zoneWindows.map((id) => ({ id, origin: null })),
+  zoneViewPrefs: initialWorkspace.zoneViewPrefs,
   infoWindows: [],
   roadmapWindows: [],
   repositoryWindows: [],
@@ -234,6 +196,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   },
   closeZoneWindow(id) {
     closeZone(id, set, get);
+    saveDeskWorkspace(get());
   },
   openInfoWindow(ref, origin) {
     openInfo(ref, origin, set, get);
@@ -266,6 +229,44 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     set({ newWorkbenchChooser: null });
   },
 
+  // ---- static applications (one normalized lifecycle authority) --------
+
+  openSurfaceWindow(key, scope) {
+    const application = surfaceByAction.get(key);
+    if (!application) {
+      console.warn(`openSurfaceWindow: unknown application "${key}"`);
+      return;
+    }
+    const instance = {
+      id: application.windowId,
+      kind: "surface" as const,
+      applicationKey: application.action,
+      scope: scope ?? null,
+      persistence: "workspace" as const,
+    };
+    set({
+      windowsById: {
+        ...get().windowsById,
+        [application.windowId]: instance,
+      },
+    });
+    get().focusPanel(application.windowId);
+    if (application.surface.maximized && !get().panelMax.includes(application.windowId))
+      get().toggleMaximizePanel(application.windowId);
+  },
+  closeSurfaceWindow(key) {
+    const application = surfaceByAction.get(key) ?? surfaceByWindowId.get(key);
+    if (!application) return;
+    const { [application.windowId]: _closed, ...windowsById } = get().windowsById;
+    set({ windowsById });
+    get().retirePanel(application.windowId);
+    saveDeskWorkspace(get());
+  },
+  clearSurfaceWindows() {
+    set({ windowsById: {} });
+    saveDeskWorkspace(get());
+  },
+
   // ---- zone view prefs --------------------------------------------------
 
   setZoneViewPref(id, pref) {
@@ -276,11 +277,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     };
     const next = { ...get().zoneViewPrefs, [id]: { ...current, ...pref } };
     set({ zoneViewPrefs: next });
-    try {
-      localStorage.setItem(ZONE_VIEWS_KEY, JSON.stringify(next));
-    } catch {
-      /* storage may be unavailable */
-    }
+    saveDeskWorkspace(get());
   },
 
   // ---- panel geometry ---------------------------------------------------
@@ -292,14 +289,13 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
         ? [...get().panelSaved, id]
         : get().panelSaved;
     set({ panelRects, panelSaved });
-    if (persist)
-      savePanelLayout(panelRects, panelSaved, get().panelOrder, get().panelMax);
+    if (persist) saveDeskWorkspace(get());
   },
   resetPanelRect(id) {
     const { [id]: _dropped, ...rest } = get().panelRects;
     const panelSaved = get().panelSaved.filter((x) => x !== id);
     set({ panelRects: rest, panelSaved });
-    savePanelLayout(rest, panelSaved, get().panelOrder, get().panelMax);
+    saveDeskWorkspace(get());
   },
   focusPanel(id) {
     const order = compactPanelOrder([
@@ -307,7 +303,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
       id,
     ]);
     set({ panelOrder: order });
-    savePanelLayout(get().panelRects, get().panelSaved, order, get().panelMax);
+    saveDeskWorkspace(get());
   },
   presentPanel(id) {
     if (get().panelOrder.includes(id)) return;
@@ -317,7 +313,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     if (!get().panelOrder.includes(id)) return;
     const order = get().panelOrder.filter((x) => x !== id);
     set({ panelOrder: order });
-    savePanelLayout(get().panelRects, get().panelSaved, order, get().panelMax);
+    saveDeskWorkspace(get());
   },
   minimizePanel(id) {
     if (get().panelMin.includes(id)) return;
@@ -330,7 +326,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
       id,
     ]);
     set({ panelMin, panelOrder: order });
-    savePanelLayout(get().panelRects, get().panelSaved, order, get().panelMax);
+    saveDeskWorkspace(get());
   },
   toggleMaximizePanel(id) {
     const has = get().panelMax.includes(id);
@@ -342,7 +338,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
       id,
     ]);
     set({ panelMax, panelOrder: order });
-    savePanelLayout(get().panelRects, get().panelSaved, order, panelMax);
+    saveDeskWorkspace(get());
   },
   resetLayout() {
     set({
@@ -352,7 +348,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
       panelMin: [],
       panelMax: [],
     });
-    savePanelLayout({}, [], [], []);
+    saveDeskWorkspace(get());
   },
 });
 

@@ -2,7 +2,7 @@
 // beside the object layout, focus raises without destroying siblings, and
 // the one Record verb reduces runtime frames in the store.
 import { beforeEach, describe, expect, it } from "vitest";
-import { loadPanelLayout, useDesk } from "../store";
+import { DESK_WORKSPACE_STORAGE_KEY, loadPanelLayout, useDesk } from "../store";
 
 describe("desk windows", () => {
   beforeEach(() => {
@@ -11,6 +11,11 @@ describe("desk windows", () => {
       panelRects: {},
       panelSaved: [],
       panelOrder: [],
+      panelMin: [],
+      panelMax: [],
+      windowsById: {},
+      zoneWindows: [],
+      zoneViewPrefs: {},
       pullouts: [],
       editingId: null,
       askOpen: false,
@@ -23,11 +28,11 @@ describe("desk windows", () => {
     const rect = { x: 40, y: 80, w: 400, h: 480 };
     useDesk.getState().setPanelRect("ask", rect);
     expect(useDesk.getState().panelRects.ask).toEqual(rect);
-    expect(localStorage.getItem("hs.desk.panels")).toBeNull();
+    expect(localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY)).toBeNull();
 
     useDesk.getState().setPanelRect("ask", rect, true);
     expect(
-      JSON.parse(localStorage.getItem("hs.desk.panels") || "{}").rects?.ask,
+      JSON.parse(localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY) || "{}").panel?.rects?.ask,
     ).toEqual(rect);
   });
 
@@ -39,7 +44,7 @@ describe("desk windows", () => {
     useDesk.getState().resetPanelRect("ask");
     expect(useDesk.getState().panelRects.ask).toBeUndefined();
     expect(
-      JSON.parse(localStorage.getItem("hs.desk.panels") || "{}").rects?.ask,
+      JSON.parse(localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY) || "{}").panel?.rects?.ask,
     ).toBeUndefined();
     // The other panel's ephemeral rect is untouched.
     expect(useDesk.getState().panelRects.pullout).toBeDefined();
@@ -56,9 +61,9 @@ describe("desk windows", () => {
     useDesk.getState().focusPanel("ask");
     useDesk.getState().focusPanel("pullout");
     useDesk.getState().minimizePanel("ask");
-    const raw = JSON.parse(localStorage.getItem("hs.desk.panels") || "{}");
-    expect(raw.order).toEqual(["ask", "pullout"]);
-    expect(raw.min).toBeUndefined();
+    const raw = JSON.parse(localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY) || "{}");
+    expect(raw.panel.order).toEqual(["ask", "pullout"]);
+    expect(raw.panel.min).toBeUndefined();
     expect(useDesk.getState().panelMin).toEqual(["ask"]);
   });
 
@@ -80,7 +85,7 @@ describe("desk windows", () => {
     expect(useDesk.getState().panelOrder).toEqual(["pullout", "ask"]);
   });
 
-  it("a legacy layout payload (with min) loads and is tolerated", () => {
+  it("does not migrate the retired panel payload", () => {
     localStorage.setItem(
       "hs.desk.panels",
       JSON.stringify({
@@ -90,9 +95,9 @@ describe("desk windows", () => {
       }),
     );
     const loaded = loadPanelLayout();
-    expect(loaded.rects.ask).toBeDefined();
+    expect(loaded.rects.ask).toBeUndefined();
     expect(loaded.order).toEqual([]);
-    expect(loaded.max).toEqual(["pullout"]);
+    expect(loaded.max).toEqual([]);
     expect("min" in loaded).toBe(false);
   });
 

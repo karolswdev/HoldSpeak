@@ -5,7 +5,7 @@
 // container every window renders through: one chrome (icon · title ·
 // actions · minimize/maximize/close), a children content slot, lifecycle
 // state in the store (`panelMin`/`panelMax`, persisted in the same
-// `hs.desk.panels` slot as the rects), and the phone's bottom-sheet form.
+// versioned workspace document as the rects), and the phone's bottom-sheet form.
 // The hook is module-private on purpose: windows do not hand-wire physics.
 //
 // HS-117-04 — decomposed into focused modules under `window/`. This file

@@ -53,6 +53,8 @@ function resetStore() {
     panelOrder: [],
     panelMin: [],
     panelMax: [],
+    windowsById: {},
+    zoneViewPrefs: {},
     editingId: null,
     selectedIds: [],
     recording: "idle",
@@ -186,7 +188,7 @@ describe("store split: panel persistence round-trip", () => {
   });
 
   it("loadPanelLayout returns valid structure even with empty storage", () => {
-    localStorage.removeItem("hs.desk.panels");
+    localStorage.removeItem("hs.desk.workspace.v1");
     const layout = loadPanelLayout();
     expect(layout.rects).toBeDefined();
     expect(layout.order).toBeDefined();
@@ -310,6 +312,7 @@ describe("store split: resetDesk sweeps ghost layout keys", () => {
 
   it("GHOST_LAYOUT_KEYS includes the canonical set", () => {
     expect(GHOST_LAYOUT_KEYS).toContain("hs.diorama.pos");
+    expect(GHOST_LAYOUT_KEYS).toContain("hs.desk.workspace.v1");
     expect(GHOST_LAYOUT_KEYS).toContain("hs.desk.panels");
     expect(GHOST_LAYOUT_KEYS).toContain("hs.desk.zonew");
     expect(GHOST_LAYOUT_KEYS).toContain("hs.desk.zone-views");

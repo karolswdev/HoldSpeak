@@ -29,6 +29,9 @@ beforeEach(() => {
     panelOrder: [],
     panelMin: [],
     panelMax: [],
+    windowsById: {},
+    zoneWindows: [],
+    zoneViewPrefs: {},
   });
 });
 
@@ -114,7 +117,7 @@ describe("the dock", () => {
     expect(s.panelMin).toEqual([]);
     expect(s.panelMax).toEqual([]);
     expect(
-      JSON.parse(localStorage.getItem("hs.desk.panels") || "{}"),
+      JSON.parse(localStorage.getItem("hs.desk.workspace.v1") || "{}").panel,
     ).toEqual({ rects: {}, order: [], max: [] });
   });
 });

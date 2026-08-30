@@ -7,7 +7,15 @@ import { useDesk } from "../../store";
 describe("zone windows (HS-105-03)", () => {
   beforeEach(() => {
     localStorage.clear();
-    useDesk.setState({ zoneWindows: [], zoneViewPrefs: {} });
+    useDesk.setState({
+      zoneWindows: [],
+      zoneViewPrefs: {},
+      windowsById: {},
+      panelRects: {},
+      panelSaved: [],
+      panelOrder: [],
+      panelMax: [],
+    });
   });
 
   it("opens as a coexisting window and persists the open set", () => {
@@ -19,7 +27,7 @@ describe("zone windows (HS-105-03)", () => {
       "z2",
     ]);
     expect(
-      JSON.parse(localStorage.getItem("hs.desk.zone-windows") || "[]"),
+      JSON.parse(localStorage.getItem("hs.desk.workspace.v1") || "{}").zoneWindows,
     ).toEqual(["z1", "z2"]);
     // Reopening focuses, never duplicates.
     useDesk.getState().openZoneWindow("z1");
@@ -32,7 +40,7 @@ describe("zone windows (HS-105-03)", () => {
     useDesk.getState().closeZoneWindow("z1");
     expect(useDesk.getState().zoneWindows.map((w) => w.id)).toEqual(["z2"]);
     expect(
-      JSON.parse(localStorage.getItem("hs.desk.zone-windows") || "[]"),
+      JSON.parse(localStorage.getItem("hs.desk.workspace.v1") || "{}").zoneWindows,
     ).toEqual(["z2"]);
   });
 
@@ -44,8 +52,8 @@ describe("zone windows (HS-105-03)", () => {
     expect(prefs.z1).toEqual({ view: "list", sort: "modified", dir: "desc" });
     expect(prefs.z2.view).toBe("icons");
     const saved = JSON.parse(
-      localStorage.getItem("hs.desk.zone-views") || "{}",
-    );
+      localStorage.getItem("hs.desk.workspace.v1") || "{}",
+    ).zoneViewPrefs;
     expect(saved.z1.sort).toBe("modified");
   });
 });

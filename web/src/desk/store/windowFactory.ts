@@ -1,7 +1,7 @@
 /** Generic window factory for the five structurally identical window types
- * (HS-117-02). Each config produces open/close methods and the initial
- * state array. Pullouts stay hand-written (custom close with optional id,
- * dispatch routing). */
+ * (HS-117-02). Each config produces open/close methods. Persistence belongs
+ * to the compositor's versioned workspace document, never to a window type.
+ * Pullouts stay hand-written (custom close with optional id, dispatch routing). */
 import type { DeskState, PanelRect } from "./types";
 import { play as sfx } from "../../lib/sfx";
 
@@ -13,8 +13,6 @@ export interface WindowTypeConfig<K extends string> {
   key: K;
   /** Panel id prefix: "zone:" | "info:" | ... */
   panelPrefix: string;
-  /** localStorage key for persistence (null = transient). */
-  persistKey: string | null;
   /** Extra logic on open (e.g. workbench default sizing). */
   onOpen?: (
     value: string,
@@ -27,50 +25,7 @@ type WindowEntry<K extends string> = Record<K, string> & {
   origin: { x: number; y: number } | null;
 };
 
-// ---- persistence helpers ------------------------------------------------
-
-function loadPersistedWindows<K extends string>(
-  persistKey: string | null,
-  key: K,
-): WindowEntry<K>[] {
-  if (!persistKey) return [];
-  try {
-    const raw = localStorage.getItem(persistKey);
-    const ids = raw ? (JSON.parse(raw) as string[]) : [];
-    return Array.isArray(ids)
-      ? ids
-          .filter((v) => typeof v === "string")
-          .map((id) => ({ [key]: id, origin: null }) as unknown as WindowEntry<K>)
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-function persistWindows<K extends string>(
-  persistKey: string | null,
-  open: WindowEntry<K>[],
-  key: K,
-): void {
-  if (!persistKey) return;
-  try {
-    localStorage.setItem(
-      persistKey,
-      JSON.stringify(open.map((w) => w[key])),
-    );
-  } catch {
-    /* storage may be unavailable */
-  }
-}
-
 // ---- factory ------------------------------------------------------------
-
-/** Build the initial state value for one window type. */
-export function windowInitialState<K extends string>(
-  config: WindowTypeConfig<K>,
-): WindowEntry<K>[] {
-  return loadPersistedWindows(config.persistKey, config.key);
-}
 
 /** Build the open method for one window type. */
 export function makeOpenWindow<K extends string>(
@@ -89,7 +44,6 @@ export function makeOpenWindow<K extends string>(
       const entry = { [config.key]: value, origin: origin ?? null } as unknown as WindowEntry<K>;
       const next = [...open, entry];
       set({ [config.field]: next } as unknown as Partial<DeskState>);
-      if (config.persistKey) persistWindows(config.persistKey, next, config.key);
       if (config.onOpen) config.onOpen(value, get, set);
       sfx("latch");
     }
@@ -111,7 +65,6 @@ export function makeCloseWindow<K extends string>(
     const next = prev.filter((w) => w[config.key] !== value);
     if (next.length < prev.length) sfx("latch");
     set({ [config.field]: next } as unknown as Partial<DeskState>);
-    if (config.persistKey) persistWindows(config.persistKey, next, config.key);
   };
 }
 
@@ -121,35 +74,30 @@ export const ZONE_WINDOW_CONFIG: WindowTypeConfig<"id"> = {
   field: "zoneWindows",
   key: "id",
   panelPrefix: "zone:",
-  persistKey: "hs.desk.zone-windows",
 };
 
 export const INFO_WINDOW_CONFIG: WindowTypeConfig<"ref"> = {
   field: "infoWindows",
   key: "ref",
   panelPrefix: "info:",
-  persistKey: null,
 };
 
 export const ROADMAP_WINDOW_CONFIG: WindowTypeConfig<"slug"> = {
   field: "roadmapWindows",
   key: "slug",
   panelPrefix: "roadmap:",
-  persistKey: null,
 };
 
 export const REPOSITORY_WINDOW_CONFIG: WindowTypeConfig<"id"> = {
   field: "repositoryWindows",
   key: "id",
   panelPrefix: "repository:",
-  persistKey: null,
 };
 
 export const WORKBENCH_WINDOW_CONFIG: WindowTypeConfig<"id"> = {
   field: "workbenchWindows",
   key: "id",
   panelPrefix: "workbench:",
-  persistKey: null,
   onOpen(value: string, get: () => DeskState, set: (partial: Partial<DeskState>) => void) {
     const panelId = `workbench:${value}`;
     if (!get().panelRects[panelId]) {

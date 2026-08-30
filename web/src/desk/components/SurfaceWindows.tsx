@@ -11,7 +11,6 @@ import {
   type LazyExoticComponent,
   type ReactNode,
 } from "react";
-import { create } from "zustand";
 import {
   DESK_APPLICATION_ALIASES,
   SURFACE_APPLICATIONS,
@@ -27,6 +26,7 @@ import { DeskWindowFrame } from "./DeskWindow";
 import { FootSlotContext } from "../surface/foot";
 import { WingSlotContext } from "../surface/wings";
 import type { CoreProps } from "../../pages/cores/core-types";
+import { ApplicationBoundary } from "./ApplicationBoundary";
 
 export interface SurfaceRow {
   key: string;
@@ -54,53 +54,6 @@ const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS.map((application) => ({
   Core: lazy(application.surface.load),
 }));
 
-/** HS-103-01 — which surface windows were open survives a reload, the
- * same manual-localStorage shape `store.ts` already uses for positions
- * and panel rects (own key: this store is the sole writer). */
-const OPEN_KEY = "hs.desk.open-windows";
-
-function loadOpenWindows(): Record<string, string | null> {
-  try {
-    return JSON.parse(localStorage.getItem(OPEN_KEY) || "{}") || {};
-  } catch {
-    return {};
-  }
-}
-
-function saveOpenWindows(open: Record<string, string | null>) {
-  try {
-    localStorage.setItem(OPEN_KEY, JSON.stringify(open));
-  } catch {
-    /* storage may be unavailable; the open set just won't persist */
-  }
-}
-
-interface SurfaceState {
-  open: Record<string, string | null>;
-  openSurfaceWindow(key: string, scope?: string): void;
-  closeSurfaceWindow(key: string): void;
-  clearSurfaceWindows(): void;
-}
-
-export const useSurfaceWindows = create<SurfaceState>((set, get) => ({
-  open: loadOpenWindows(),
-  openSurfaceWindow(key, scope) {
-    const open = { ...get().open, [key]: scope ?? null };
-    set({ open });
-    saveOpenWindows(open);
-  },
-  closeSurfaceWindow(key) {
-    const { [key]: _dropped, ...rest } = get().open;
-    set({ open: rest });
-    saveOpenWindows(rest);
-  },
-  clearSurfaceWindows() {
-    const open = {};
-    set({ open });
-    saveOpenWindows(open);
-  },
-}));
-
 /** Alias keys open an existing window with a default scope (e.g. the
  * shelf's Integrations entry is the Settings window scoped to
  * integrations). */
@@ -115,7 +68,7 @@ export function SurfaceWindows({
       no persisted Desk windows competing on glass. */
   firstValueRecoveryOnly?: boolean;
 } = {}) {
-  const open = useSurfaceWindows((s) => s.open);
+  const windowsById = useDesk((s) => s.windowsById);
   const items = useDesk((s) => s.items);
   const [ready, setReady] = useState(!firstValueRecoveryOnly);
   // `ready` is first-value paint recovery. This separate fact names the
@@ -130,25 +83,21 @@ export function SurfaceWindows({
     // The persisted open set belongs to the normal Desk. Hide it before this
     // recovery-only mount becomes paintable; FirstWords can still open Setup
     // after the registry below is ready.
-    if (firstValueRecoveryOnly) useSurfaceWindows.getState().clearSurfaceWindows();
+    if (firstValueRecoveryOnly) useDesk.getState().clearSurfaceWindows();
     setReady(true);
   }, [firstValueRecoveryOnly]);
 
   useEffect(() => {
     const offs = rows.map((row) =>
       registerSurface(row.key, (scope) => {
-        useSurfaceWindows.getState().openSurfaceWindow(row.key, scope);
-        if (row.maximized && !useDesk.getState().panelMax.includes(row.id))
-          useDesk.getState().toggleMaximizePanel(row.id);
+        useDesk.getState().openSurfaceWindow(row.key, scope);
       }),
     );
     const aliasOffs = Object.entries(DESK_APPLICATION_ALIASES)
       .filter(([, alias]) => rows.some((row) => row.key === alias.target))
       .map(([key, alias]) =>
         registerSurface(key, (scope) =>
-          useSurfaceWindows
-            .getState()
-            .openSurfaceWindow(alias.target, scope ?? alias.scope),
+          useDesk.getState().openSurfaceWindow(alias.target, scope ?? alias.scope),
         ),
       );
     // This runs only after every normal row and applicable alias is present in
@@ -176,13 +125,13 @@ export function SurfaceWindows({
       }
     >
       {rows.map((row) => {
-        const isOpen = row.key in open;
-        if (!isOpen) return null;
+        const instance = windowsById[row.id];
+        if (!instance || instance.applicationKey !== row.key) return null;
         return (
           <SurfaceWindowHost
             key={row.id}
             row={row}
-            scope={open[row.key] ?? undefined}
+            scope={instance.scope ?? undefined}
             items={items}
           />
         );
@@ -216,7 +165,7 @@ export function SurfaceWindowHost({
       wings={wings}
       open
       unmountOnMinimize
-      onClose={() => useSurfaceWindows.getState().closeSurfaceWindow(row.key)}
+      onClose={() => useDesk.getState().closeSurfaceWindow(row.key)}
       className={
         row.key === "configure-settings"
           ? "desk-surface-window desk-settings-window"
@@ -226,16 +175,18 @@ export function SurfaceWindowHost({
       <FootSlotContext.Provider value={foot}>
         <div className="desk-surface-body">
           <WingSlotContext.Provider value={setWings}>
-            <Suspense fallback={<p className="quiet">…</p>}>
-              <row.Core
-                scope={scope}
-                scopeLabel={
-                  scope
-                    ? (objectByRef(items, scope)?.title ?? undefined)
-                    : undefined
-                }
-              />
-            </Suspense>
+            <ApplicationBoundary label={row.title}>
+              <Suspense fallback={<p className="quiet">…</p>}>
+                <row.Core
+                  scope={scope}
+                  scopeLabel={
+                    scope
+                      ? (objectByRef(items, scope)?.title ?? undefined)
+                      : undefined
+                  }
+                />
+              </Suspense>
+            </ApplicationBoundary>
           </WingSlotContext.Provider>
         </div>
         <footer
