@@ -98,7 +98,7 @@ holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
 holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
 holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
 holdspeak/kernel/inference_runner.py:329|InferenceRunner._attempt_stream|_issue_dispatch_context|call
-holdspeak/kernel/inference_runner.py:614|InferenceRunner._attempt|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py:621|InferenceRunner._attempt|_issue_dispatch_context|call
 holdspeak/kernel/inference_runner.py:81|InferenceRunner.__init__|build_intel_for_revision|ref
 holdspeak/kernel/prompt_adapter.py:15|CanonicalPromptAdapter.dispatch|run_prompt|call
 holdspeak/kernel/prompt_adapter.py:64|StreamingPromptAdapter.dispatch|run_prompt|call
@@ -422,7 +422,7 @@ holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.inference_runner", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/kernel/inference_runner.py:329|InferenceRunner._attempt_stream|_issue_dispatch_context|call
-holdspeak/kernel/inference_runner.py:614|InferenceRunner._attempt|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py:621|InferenceRunner._attempt|_issue_dispatch_context|call
 holdspeak/kernel/inference_runner.py:81|InferenceRunner.__init__|build_intel_for_revision|ref
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.prompt_adapter", "InferenceRunner gateway/context-gated adapter"), """

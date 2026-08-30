@@ -1,6 +1,6 @@
 # Phase 152 - The Desk Chat — The Hands (DC-02)
 
-**Last updated:** 2026-08-29.
+**Last updated:** 2026-08-30 (HS-152-03 done — the Hands are live on the hub).
 
 ## Goal
 
@@ -27,14 +27,14 @@ The owner, on seeing DC-01 alone: "I was totally hoping for a holistic implement
 |---|---|---|---|---|
 | HS-152-01 | The tool loop (passes, tool_call parts, frames, abort) | done | [story-01-tool-loop](./story-01-tool-loop.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-152-02 | The gate (thread_tool_policy, the truth table, kernel children) | done | [story-02-gate](./story-02-gate.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-152-03 | The People fence (sensitive results, multi-pass redaction) | backlog | [story-03-people-fence](./story-03-people-fence.md) | - |
+| HS-152-03 | The People fence (sensitive results, multi-pass redaction) | done | [story-03-people-fence](./story-03-people-fence.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-152-04 | The pending box (decision + elicitation rows, decide route) | backlog | [story-04-pending-box](./story-04-pending-box.md) | - |
 | HS-152-05 | The renderers and the status line | backlog | [story-05-renderers](./story-05-renderers.md) | - |
 | HS-152-06 | The walk and the close | backlog | [story-06-walk-and-close](./story-06-walk-and-close.md) | - |
 
 ## Where we are
 
-**Chartered — 0/6.** Engine tool-call streaming (tools= + tool_call deltas) is building ahead of story 01; story 02 (the gate) builds in parallel.
+**3/6 — the Hands are live on the hub.** Story 01 the loop, 02 the gate, 03 the People fence (real coordinator + real hub over HTTP, 15/15). Story 03's honest real-path drive found and fixed four latent defects the fake-adoption loop tests hid (a handless hub ThreadService, a palette injected after admission, the runner dropping `tool_calls`, a 79 KB census overflowing admission) plus DC-01's decorative `profile_override` (now a lawful next-run override). Next: 04 the pending box, 05 renderers + `thread.set_status`, 06 the walk (`.43` must be tool-qualified first).
 
 ## Active risks
 
@@ -45,6 +45,8 @@ The owner, on seeing DC-01 alone: "I was totally hoping for a holistic implement
 ## Decisions made (this phase)
 
 - 2026-08-29 - Phase scaffolded with `dw phase create` - keeps roadmap structure consistent - CLI.
+- 2026-08-30 - HS-152-03: `CHAT_PALETTE` (26 hands, 12.6 KB) is what a turn offers; `TOOL_NAMES` stays the gate's table - the 141-schema census (79 KB) overflows admission under the one-token-per-byte law - orchestrator; addendum in [assets/settled-design.md](./assets/settled-design.md).
+- 2026-08-30 - HS-152-03: `thread.profile_override` honored as an invocation-scoped next-run override before every admit (Phase 143 mechanism) - the assignment ledger stays the routing truth - orchestrator.
 
 ## Decisions deferred
 

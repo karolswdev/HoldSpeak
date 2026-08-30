@@ -197,6 +197,31 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
 # Public accessors
 TOOL_NAMES: frozenset[str] = frozenset(_TOOL_CLASSES)
 
+# HS-152-03: the palette a chat turn OFFERS the model.  ``TOOL_NAMES`` stays
+# the gate's classification table (any call the model makes is resolved
+# against it); the palette is what rides inside the admitted payload.  The
+# full 141-schema census is ~79 KB, and the admission law reserves one
+# token per byte -- it overflowed a 32k context at admission before a
+# single message was sent.  DC-02 offers the desk-facing hands; DC-03
+# modes narrow (or widen) this per recipe.
+CHAT_PALETTE: frozenset[str] = frozenset({
+    # the desk
+    "desk.list", "desk.get", "desk.create", "desk.update", "desk.snapshot",
+    "zone.list_members", "zone.file", "zone.unfile",
+    "memory.search",
+    # the door + the week
+    "door.get", "door.add_item",
+    "monday_brief.get",
+    # meetings + what came out of them
+    "meeting.list", "meeting.get",
+    "follow_through.board", "follow_through.complete", "follow_through.commit_decision",
+    "decision_record.list", "decision_record.search", "decision_record.get",
+    # people (every result sensitive at birth -- the fence)
+    "people.readiness", "people.relationship.list", "people.relationship.get",
+    "people.one_on_one.brief", "people.agenda.add", "people.note.create",
+})
+assert CHAT_PALETTE <= TOOL_NAMES, sorted(CHAT_PALETTE - TOOL_NAMES)
+
 
 def tool_class(name: str) -> str:
     """Return the tool's class or raise ValueError (fail-closed)."""
@@ -568,4 +593,5 @@ __all__ = [
     "tool_class",
     "tool_schemas_for",
     "tool_sensitive",
+    "CHAT_PALETTE",
 ]

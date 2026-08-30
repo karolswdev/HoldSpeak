@@ -382,6 +382,13 @@ class InferenceRunner:
                     elif delta.kind == "reasoning":
                         first_delta_seen = True
                         on_delta(delta)
+                    elif delta.kind == "tool_calls":
+                        # HS-152-03: the finalized tool-call list is a
+                        # first-class delta (it is the whole answer of a
+                        # tool pass); dropping it here silenced the Hands
+                        # on the real path.
+                        first_delta_seen = True
+                        on_delta(delta)
                     elif delta.kind == "usage":
                         usage_meta = dict(delta.meta)
                         on_delta(delta)

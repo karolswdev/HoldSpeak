@@ -126,3 +126,27 @@ seeds that qualification honestly (an eval against the real model).
 
 ## Recorded (not fixing): R1 adaptive cap later; R2 paraphrase
 laundering = DC-03 guardrail; "Deny always" not offered.
+
+## Addendum (HS-152-03, 2026-08-30) — the palette, the override, the runner
+
+Ruled by the orchestrator from what the real path showed:
+
+- **Palette ≠ census.** D2's "allowed palette = every class" stands as
+  the GATE's table (`TOOL_NAMES`: any call the model makes is classified
+  and resolved). What a turn OFFERS is `CHAT_PALETTE` (26 desk-facing
+  hands: desk/zone/memory, door/monday, meeting/follow-through/decision
+  records, six People reads+adds). The full 141-schema census is 79 KB
+  and the admission law reserves one token per byte — it overflowed a
+  32k context at admission. DC-03 modes widen or narrow the palette per
+  recipe; the census is not a palette.
+- **The palette rides inside the admitted payload.** `execute_stream`
+  replays frozen admission evidence; anything injected after admit never
+  reaches pass 1.
+- **`tool_calls` is a first-class delta** in `InferenceRunner._attempt_stream`
+  (forwarded like text/reasoning; sets `first_delta_seen`).
+- **`thread.profile_override` is honored at admission** as an
+  invocation-scoped next-run override (`apply_next_run_override`) —
+  per invocation, so every pass of a tool turn re-applies it. The
+  assignment ledger stays the routing truth; the thread row is the pick.
+- **The hub's ThreadService has hands**: `_thread_factory.py` wires
+  `mcp.tools.dispatch` + `Config.control_mode`.

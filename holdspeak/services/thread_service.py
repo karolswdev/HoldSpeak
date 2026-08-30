@@ -323,6 +323,25 @@ class ThreadService:
         # Assemble the payload (assembler law).
         payload = self._assemble_payload(thread_id, user_msg.id, thread)
 
+        # HS-152-03: the tool palette rides INSIDE the admitted payload.
+        # ``execute_stream`` replays the payload frozen at admission, so a
+        # palette injected only in the pass loop never reaches pass 1 on
+        # the real path (the fake-adoption loop tests could not see this).
+        if self._tool_dispatch_fn is not None:
+            from .thread_tools import tool_schemas_for, CHAT_PALETTE
+
+            payload["tools"] = tool_schemas_for(CHAT_PALETTE)
+
+        # HS-152-03: the thread's model pick is honored at admission.
+        profile_override = str(getattr(thread, "profile_override", "") or "")
+        if profile_override:
+            await asyncio.to_thread(
+                self._apply_profile_override,
+                principal,
+                invocation_id=invocation_id,
+                profile_override=profile_override,
+            )
+
         # Admit through the adoption service.
         admitted = await asyncio.to_thread(
             self._broker.inference_adoption_service.admit,
@@ -386,6 +405,7 @@ class ThreadService:
                 egress_scope=egress_scope,
                 payload=payload,
                 turn_operation_id=invocation_id,
+                profile_override=profile_override,
             ),
             daemon=True,
         )
@@ -409,6 +429,7 @@ class ThreadService:
         egress_scope: str,
         payload: dict[str, Any],
         turn_operation_id: str = "",
+        profile_override: str = "",
     ) -> None:
         """Sync function that runs in a background thread.
 
@@ -429,7 +450,7 @@ class ThreadService:
         tool_executor: Any = None
         tool_schemas: list[dict[str, Any]] = []
         if self._tool_dispatch_fn is not None:
-            from .thread_tools import ThreadToolExecutor, tool_schemas_for, TOOL_NAMES
+            from .thread_tools import ThreadToolExecutor, tool_schemas_for, CHAT_PALETTE
 
             tool_executor = ThreadToolExecutor(
                 self._db,
@@ -438,7 +459,7 @@ class ThreadService:
                 control_mode_fn=self._control_mode_fn,
                 broker=self._broker,
             )
-            tool_schemas = tool_schemas_for(TOOL_NAMES)
+            tool_schemas = tool_schemas_for(CHAT_PALETTE)
             ThreadService._tool_executor.register(assistant_msg_id, tool_executor)
 
         max_passes = _CHAT_PASS_CAP if tool_executor is not None else 1
@@ -552,6 +573,12 @@ class ThreadService:
                 if pass_num > 0:
                     try:
                         new_inv = f"chat_turn_{uuid.uuid4().hex}"
+                        if profile_override:
+                            self._apply_profile_override(
+                                principal,
+                                invocation_id=new_inv,
+                                profile_override=profile_override,
+                            )
                         new_admitted = self._broker.inference_adoption_service.admit(
                             principal,
                             command_id=f"admit-{new_inv}",
@@ -992,6 +1019,54 @@ class ThreadService:
 
     def import_threads(self, payload: list[dict[str, Any]]) -> dict[str, str]:
         return self._threads.import_threads(payload)
+
+    # ── profile_override → next-run override (HS-152-03) ─────────────
+
+    def _override_entries(self, profile_override: str) -> list[dict[str, Any]]:
+        """Resolve a thread's ``profile_override`` to assignment entries.
+
+        A v2 model profile pins its newest revision; a legacy ``profiles``
+        row (the hosted / OpenAI-compatible path) pins ``legacy-<id>@1``.
+        Unknown ids resolve to nothing -- the assignment stays in charge.
+        """
+        pid = str(profile_override or "").strip()
+        if not pid:
+            return []
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT MAX(revision) AS revision FROM model_profile_revisions WHERE profile_id=?",
+                (pid,),
+            ).fetchone()
+            if row is not None and row["revision"] is not None:
+                return [{"profile_id": pid, "profile_revision": int(row["revision"])}]
+            legacy = conn.execute(
+                "SELECT id FROM profiles WHERE id=? AND deleted=0",
+                (pid.removeprefix("legacy-"),),
+            ).fetchone()
+        if legacy is not None:
+            return [{"profile_id": "legacy-" + str(legacy["id"]), "profile_revision": 1}]
+        return []
+
+    def _apply_profile_override(
+        self, principal: Principal, *, invocation_id: str, profile_override: str,
+    ) -> None:
+        """Honor ``thread.profile_override`` for ONE admission.
+
+        The thread row stores the owner's pick; routing truth stays the
+        assignment ledger, so the pick is written as an invocation-scoped
+        next-run override right before admit (the Phase 143 mechanism), and
+        every pass of a tool turn re-applies it for its own invocation.
+        """
+        entries = self._override_entries(profile_override)
+        if not entries or self._broker is None:
+            return
+        self._broker.inference_adoption_service.apply_next_run_override(
+            principal,
+            command_id=f"override-{invocation_id}",
+            invocation_id=invocation_id,
+            capability_id="chat.turn",
+            entries=entries,
+        )
 
     # ── M1 redactor (counsel M1, close counsel M5) ────────────────────
 

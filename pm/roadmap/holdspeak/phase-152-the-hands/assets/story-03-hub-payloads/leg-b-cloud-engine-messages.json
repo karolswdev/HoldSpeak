@@ -1,0 +1,22 @@
+[
+  {
+    "content": "You are the desk's AI core. Be concrete and brief.",
+    "role": "system"
+  },
+  {
+    "content": "Is the People store ready?",
+    "role": "user"
+  },
+  {
+    "content": "Store checked. ",
+    "role": "assistant"
+  },
+  {
+    "content": "[people content withheld]",
+    "role": "tool"
+  },
+  {
+    "content": "And now on the cloud?",
+    "role": "user"
+  }
+]

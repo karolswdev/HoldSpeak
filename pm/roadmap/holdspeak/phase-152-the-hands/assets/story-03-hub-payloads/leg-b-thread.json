@@ -1,0 +1,149 @@
+{
+  "id": "th_f557951e38d3",
+  "title": "HS-152-03 fence",
+  "recipe_id": "",
+  "profile_override": "hs152-cloud",
+  "directory_id": "",
+  "token_in": 10,
+  "token_out": 4,
+  "created_at": 1788065805.04345,
+  "updated_at": 1788065805.3539999,
+  "last_turn_at": 1788065805.275952,
+  "messages": [
+    {
+      "id": "tm_ee69a7d45f74",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_0bfd45b5666b",
+          "kind": "text",
+          "text": "Is the People store ready?",
+          "ordinal": 0,
+          "sensitive": false
+        }
+      ],
+      "created_at": 1788065805.045873,
+      "updated_at": 1788065805.046714,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_9e1834ce3354",
+      "role": "assistant",
+      "parent_id": "tm_ee69a7d45f74",
+      "streaming": false,
+      "receipt_id": "ire_6b0a58b186ca060f284fbe8682b9dd56",
+      "egress_scope": "local",
+      "model_id": "hs152-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 2,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_7018a2261dc9",
+          "kind": "tool_call",
+          "text": null,
+          "ordinal": 0,
+          "sensitive": false
+        },
+        {
+          "id": "tp_8ea9391b28a5",
+          "kind": "text",
+          "text": "Store checked. ",
+          "ordinal": 1,
+          "sensitive": false
+        }
+      ],
+      "created_at": 1788065805.057018,
+      "updated_at": 1788065805.237068,
+      "completed_at": 1788065805.237068,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_4dc25b4120c6",
+      "role": "tool",
+      "parent_id": "tm_9e1834ce3354",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_c87958440779",
+          "kind": "text",
+          "text": "{\"readiness\": \"unconfigured\", \"state\": \"unconfigured\", \"store\": \"absent\", \"sync\": \"local_only\", \"capture\": \"notes_only\", \"reason_code\": \"people_store_unconfigured\", \"access\": \"write\", \"disclosure\": \"shared_intent_only\"}",
+          "ordinal": 0,
+          "sensitive": true
+        }
+      ],
+      "created_at": 1788065805.1458912,
+      "updated_at": 1788065805.146452,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_ce1578bd2873",
+      "role": "user",
+      "parent_id": "tm_4dc25b4120c6",
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_4baa16decfeb",
+          "kind": "text",
+          "text": "And now on the cloud?",
+          "ordinal": 0,
+          "sensitive": false
+        }
+      ],
+      "created_at": 1788065805.266198,
+      "updated_at": 1788065805.266795,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_f66ec70a8f4c",
+      "role": "assistant",
+      "parent_id": "tm_ce1578bd2873",
+      "streaming": false,
+      "receipt_id": "ire_31496fd58d367131aca513921e0d614d",
+      "egress_scope": "cloud",
+      "model_id": "legacy-hs152-cloud",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 2,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_2abc5f802cd3",
+          "kind": "text",
+          "text": "Store checked. ",
+          "ordinal": 0,
+          "sensitive": false
+        }
+      ],
+      "created_at": 1788065805.275952,
+      "updated_at": 1788065805.3537102,
+      "completed_at": 1788065805.3537102,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": []
+}

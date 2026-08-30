@@ -17,9 +17,17 @@ def thread_service_from_ctx(ctx: WebContext) -> Any:
     from ...kernel.runtime import _service as _kernel_service
     from ...services.thread_service import ThreadService
 
+    from ...config import Config
+    from ...mcp.tools import dispatch as mcp_dispatch
+
     broadcast = ctx.broadcast or (lambda t, d: None)
     return ThreadService(
         get_database(),
         broadcast=broadcast,
         broker=_kernel_service(),
+        # HS-152-03: the Hands are live on the hub.  Execution = the
+        # in-process MCP dispatch (settled design D2); the posture the
+        # truth table reads is the desk's own control_mode.
+        tool_dispatch_fn=mcp_dispatch,
+        control_mode_fn=lambda: Config.load().control_mode,
     )
