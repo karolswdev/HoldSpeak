@@ -133,6 +133,10 @@ jobs:
   e2e-tests:
     name: E2E Tests (macOS)
     runs-on: macos-14  # Apple Silicon
+    env:
+      # Several real-hub fixtures isolate HOME. Keep browser discovery
+      # independent from that application-data sandbox.
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/ms-playwright
 
     steps:
       - name: Checkout code

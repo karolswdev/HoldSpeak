@@ -122,6 +122,21 @@ describe("ModelLibraryCore", () => {
     expect(download).toHaveBeenCalledWith("quick", 7);
   });
 
+  it("routes a hosted catalog Connect seat directly into provider setup", async () => {
+    getLibrary.mockResolvedValue(projection([{
+      id: "catalog:hosted-quick",
+      source: "catalog",
+      label: "Hosted Quick",
+      status: "available",
+      detail: { format: "api", catalog_revision: 7 },
+      repair: null,
+      selected_action: "Connect",
+    }]));
+    render(<ModelLibraryCore />);
+    fireEvent.click(await screen.findByRole("button", { name: "Connect" }));
+    expect(await screen.findByRole("region", { name: "Connect hosted model" })).toBeInTheDocument();
+  });
+
   it("keeps radio selection inert, restores Add focus, and maps Mod+Enter to the sole action", async () => {
     render(<ModelLibraryCore />);
     const group = await screen.findByRole("radiogroup", { name: "Model Library" });

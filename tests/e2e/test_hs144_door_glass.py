@@ -335,7 +335,13 @@ def test_hs144_door_populated_glass_action_refusal_and_shots(
             assert meetings.get_by_text("Door Glass Recording", exact=True).count() == 0
             agents = page.locator('[data-lane="agents"]')
             agents.get_by_text("No sessions", exact=True).wait_for()
-            assert agents.get_by_role("heading", name="AGENTS · CREW 0 · BLOCKED 0", exact=True).is_visible()
+            recipes = _api(page, "GET", "/api/recipes").get("recipes", [])
+            crew_count = sum(1 for recipe in recipes if not recipe.get("deleted"))
+            assert agents.get_by_role(
+                "heading",
+                name=f"AGENTS · CREW {crew_count} · BLOCKED 0",
+                exact=True,
+            ).is_visible()
 
             # At desk width the five-column Door is one workbench rail. It must
             # fit without a concealed fifth column or a horizontal scroll affordance.
