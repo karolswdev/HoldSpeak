@@ -1,4 +1,4 @@
-/** HS-150-05 — the Thread data layer: typed API client for the D4 contract
+/** HS-151-05 — the Thread data layer: typed API client for the D4 contract
  * (POST /api/threads, GET list/get, PATCH, DELETE, /turns, /abort, /branch,
  * /regenerate, /keep, /import) and a zustand slice holding threads by id,
  * message path + siblings map + refs, per-message streaming buffer.

@@ -1,10 +1,10 @@
-# HS-150-07 - Search, list and retirement (FTS corpus, list view, Threads rows, chat.ts import + delete)
+# HS-151-07 - Search, list and retirement (FTS corpus, list view, Threads rows, chat.ts import + delete)
 
 - **Project:** holdspeak
 - **Phase:** 150
 - **Status:** done
-- **Depends on:** HS-150-01, HS-150-05
-- **Unblocks:** HS-150-08
+- **Depends on:** HS-151-01, HS-151-05
+- **Unblocks:** HS-151-08
 - **Owner:** unassigned
 
 ## Problem

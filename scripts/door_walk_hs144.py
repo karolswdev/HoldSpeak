@@ -1086,7 +1086,7 @@ def leg_thread(reporter: Reporter, browser: Any, hub: Hub, out: Path) -> None:
     created with the correct seed ref via the API. The streamed-answer flow is
     proven by story-08-rig.py and story-08-metal.py which inject a fake engine.
     """
-    THREAD_SHOTS = REPO / "pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-walk-shots"
+    THREAD_SHOTS = REPO / "pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-walk-shots"
     THREAD_SHOTS.mkdir(parents=True, exist_ok=True)
 
     context, page, errors = browser_context(browser, 1440, 900)

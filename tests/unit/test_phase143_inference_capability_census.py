@@ -291,7 +291,7 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     "holdspeak/mcp/tools.py:609|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
-    # HS-150-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115
+    # HS-151-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115
     # no longer call RecipeService.chat — they return a 410 retired error.
     "holdspeak/web/routes/primitives/recipes.py:100|build_recipes_router.api_run_recipe|run": ProposedRoute(
         "recipe.run", "web.routes.primitives.recipes", "RecipeService semantic caller",
@@ -539,9 +539,9 @@ def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
         f"stale={sorted(EXPECTED_CALL_SITES - live)}"
     )
     # HS-146-07 adds the one vision prompt leaf (run_prompt_messages).
-    # HS-150-02/D3: streaming seam adds _chat_completion_deltas (3 sites)
+    # HS-151-02/D3: streaming seam adds _chat_completion_deltas (3 sites)
     # and _attempt_stream (1 site); line shifts update 6 existing sites.
-    # HS-150-04: +1 StreamingPromptAdapter.dispatch run_prompt fallback, +1 line shift
+    # HS-151-04: +1 StreamingPromptAdapter.dispatch run_prompt fallback, +1 line shift
     assert len(live) == 109
 
 

@@ -1,6 +1,6 @@
-# Evidence - HS-150-01
+# Evidence - HS-151-01
 
-- **Story:** HS-150-01 - The thread ledger (schema + repository + import)
+- **Story:** HS-151-01 - The thread ledger (schema + repository + import)
 - **Status:** done
 - **Date:** 2026-08-29
 

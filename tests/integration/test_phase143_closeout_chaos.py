@@ -162,9 +162,9 @@ def _set_tool_assignment(
     })
 
 
-# HS-150-04: test_one_restart_cross_product_preserves_frozen_recipe_receipt_library_and_assignment_truth
+# HS-151-04: test_one_restart_cross_product_preserves_frozen_recipe_receipt_library_and_assignment_truth
 # DELETED. It tested RecipeService.chat() which is permanently retired
-# (recipe.chat replaced by chat.turn in HS-150-02). The restart cross-product
+# (recipe.chat replaced by chat.turn in HS-151-02). The restart cross-product
 # invariant is exercised by test_recipe_run_restart_preserves_truth below.
 
 

@@ -110,7 +110,7 @@ def build_recipes_router(ctx: WebContext) -> APIRouter:
 
     @router.post("/api/recipes/{recipe_id}/chat")
     async def api_chat_recipe(recipe_id: str, request: Request) -> Any:
-        # HS-150-04: recipe.chat is now an alias that creates/reuses a thread
+        # HS-151-04: recipe.chat is now an alias that creates/reuses a thread
         # bound to this recipe and starts a turn with the body's text.
         from ....db import get_database
         from ....services.thread_service import ThreadService

@@ -571,7 +571,7 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 150 — The Desk Chat: The Thread (DC-01)**](./phase-150-the-desk-chat/current-phase-status.md)
+**Current phase:** [**Phase 151 — The Desk Chat: The Thread (DC-01)**](./phase-151-the-desk-chat/current-phase-status.md)
 — **COMPLETE (6/6, 2026-08-29), UNPUSHED-PENDING-OWNER (branch pushed, PR up, merge HELD).** The value era's keystone delivered in one day: the owner links a 1:1 series once (the explicit picker gesture over owner-selected evidence) and the desk carries their week — the rail reads EVENT · 1:1 w/ Ewa · Record this · PREP · [Ewa]; PREP opens the read-time brief (YOU OWE / THEIR AGENDA / LAST 1:1s by reference / the honest unlinked count); the meeting resolves to the person; nothing ever touches the plaintext DB, the brief never persists, leader-private never crosses to MCP (planted-secret proven). Born from the two-dialog keychain incident: story 01's dev keystore seam makes populated-People walking headless forever (spy-proven zero keychain calls). Close counsel RATIFY-WITH-CONCERNS ("The phase earns the owner's Tuesday") with its one borderline-must-fix — the person_label observer leak into plaintext pipeline_events — FIXED IN-ROUND via the 138 redaction pattern. Walk ×3 green; sweep zero unresolved branch-new. Holding for the owner's shot verdict + merge word. Originally chartered the same day:
 one explicit encrypted series-link (relationship ↔ calendar uid+source)
 makes the whole 144–147 flywheel person-aware — the rail knows who the
@@ -1009,7 +1009,7 @@ canon, canon wins.
 | 141 | From Thought to Work: preserve rough speech, develop it through one owner-triggered grounded question at a time, then freeze typed local or GitHub-backed outcomes on the existing authority and receipt spine. | in-progress (6/9) | [phase-141-from-thought-to-work](./phase-141-from-thought-to-work/) |
 | 142 | Make AI capability, runtime, artifact, route, and readiness truth server-owned before adding acquisition or new execution paths. | active | [phase-142-inference-instrument](./phase-142-inference-instrument/) |
 | 143 | Route every AI workload through one server-owned capability assignment to reusable model profiles, with ordered qualified fallbacks, frozen execution truth, and the Model Library + Assignments owner system. | in-progress (7/14) | [phase-143-intelligence-router](./phase-143-intelligence-router/) |
-| 150 | Persisted, streamed, kernel-receipted conversation over the desk: the Thread primitive. | not-started | [phase-150-the-desk-chat](./phase-150-the-desk-chat/) |
+| 150 | Persisted, streamed, kernel-receipted conversation over the desk: the Thread primitive. | not-started | [phase-151-the-desk-chat](./phase-151-the-desk-chat/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 

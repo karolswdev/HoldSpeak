@@ -369,7 +369,7 @@ def test_naming_the_genuinely_loaded_model_is_accepted(rig, tmp_path, monkeypatc
     assert exc.value.context["available_models"] == ["Hub-Local-8B"]
 
 
-# HS-150-04: test_recipe_run_and_chat_agree_on_the_model DELETED —
+# HS-151-04: test_recipe_run_and_chat_agree_on_the_model DELETED —
 # recipe.chat retired; model honesty is proven by recipe.run alone.
 
 

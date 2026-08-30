@@ -1,4 +1,4 @@
-// HS-150-07 — one-time chat import: imports once, removes key, leaves key on failure.
+// HS-151-07 — one-time chat import: imports once, removes key, leaves key on failure.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const store = new Map<string, string>();

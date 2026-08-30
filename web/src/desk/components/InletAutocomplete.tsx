@@ -5,7 +5,7 @@
  * case-insensitive prefix match, up to 8 results. Arrow keys
  * navigate, Enter/Tab selects, Escape dismisses.
  *
- * HS-150-06: extended generically to support any primitive kind
+ * HS-151-06: extended generically to support any primitive kind
  * (meeting, note, artifact, decision, person) via AutocompleteItem.
  * Zone-only callers are unchanged.
  */
@@ -19,7 +19,7 @@ import "./inlet-autocomplete.css";
 const ZONE_ICON = PRIMITIVES.directory.icon;
 const MAX_MATCHES = 8;
 
-// ── HS-150-06: generic autocomplete item ────────────────────────────
+// ── HS-151-06: generic autocomplete item ────────────────────────────
 
 /** A kind-tagged autocomplete row. Zones, meetings, notes, decisions,
  *  artifacts, and people all conform to this shape. */
@@ -210,11 +210,11 @@ export interface InletAutocompleteProps {
   onSelect?: (zone: Directory) => void;
   /** Called to update selected index. */
   onSelectedIndexChange: (index: number) => void;
-  /** HS-150-06: generic item matches (replaces zone matches when provided). */
+  /** HS-151-06: generic item matches (replaces zone matches when provided). */
   allMatches?: AutocompleteItem[];
-  /** HS-150-06: called when a generic item is selected. */
+  /** HS-151-06: called when a generic item is selected. */
   onSelectItem?: (item: AutocompleteItem) => void;
-  /** HS-150-06: custom empty label (default: "No zones match"). */
+  /** HS-151-06: custom empty label (default: "No zones match"). */
   emptyLabel?: string;
 }
 
@@ -247,7 +247,7 @@ export function InletAutocomplete({
     }
   }, [selectedIndex]);
 
-  // HS-150-06: generic items mode
+  // HS-151-06: generic items mode
   if (allMatches) {
     if (allMatches.length === 0) {
       return (

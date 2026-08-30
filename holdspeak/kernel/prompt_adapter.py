@@ -31,7 +31,7 @@ class CanonicalPromptAdapter:
 
 
 class StreamingPromptAdapter:
-    """Streaming dispatch adapter for thread turns (HS-150-03).
+    """Streaming dispatch adapter for thread turns (HS-151-03).
 
     Calls ``engine.run_prompt_stream(messages=..., temperature=..., max_tokens=...)``
     and yields ``Delta`` objects, checking the cancellation Event between chunks.
@@ -92,7 +92,7 @@ class StreamingPromptAdapter:
 
         Falls back to the non-streaming ``run_prompt`` / ``run_prompt_messages``
         path when the engine lacks ``run_prompt_stream``, yielding one text
-        Delta with the complete output followed by a done Delta (HS-150-04:
+        Delta with the complete output followed by a done Delta (HS-151-04:
         graceful degradation for engines injected via ``_engine_factory``).
         """
         from .inference_stream import Delta

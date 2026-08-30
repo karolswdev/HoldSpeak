@@ -1,4 +1,4 @@
-"""HS-150-08 shot rig -- the Thread glass exhibit.
+"""HS-151-08 shot rig -- the Thread glass exhibit.
 
 Boots the hub in-process in an isolated HOME, injects a FAKE streaming engine
 via the runner's engine factory, seeds one profile so the chat.turn assignment
@@ -11,7 +11,7 @@ occlusion tell; assert no horizontal overflow at 393; print findings;
 exit non-zero on any failure.
 
 Run:
-  uv run python pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-rig.py
+  uv run python pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-rig.py
 """
 from __future__ import annotations
 
@@ -23,8 +23,8 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parents[5]
-SHOTS = REPO / "pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots"
-TOKEN = "hs150-glass"
+SHOTS = REPO / "pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots"
+TOKEN = "hs151-glass"
 
 
 # ----------------------------------------------------------------- fake engine
@@ -33,7 +33,7 @@ class FakeStreamingEngine:
     """Yields >=20 word deltas with a 40 ms gap (so streaming is visible)."""
 
     active_provider = "fake-local"
-    active_model = "hs150-fake-model"
+    active_model = "hs151-fake-model"
 
     def __init__(self, *, fail_before_delta: bool = False):
         self._fail_before_delta = fail_before_delta
@@ -84,10 +84,10 @@ def seed_profile_and_assignment(db: Any) -> None:
     from tests.unit.test_phase143_inference_assignments import _profile, OWNER
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 
-    profile_id = "hs150-rig-local"
+    profile_id = "hs151-rig-local"
     _profile(db, profile_id)
     InferenceAssignmentService(db).set_assignment(OWNER, {
-        "command_id": "hs150-rig-assign",
+        "command_id": "hs151-rig-assign",
         "expected_revision": 0,
         "scope": {"kind": "global"},
         "entries": [{"profile_id": profile_id, "profile_revision": 1}],
@@ -182,7 +182,7 @@ def main() -> int:
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
     real_home = os.environ.get("HOME", str(Path.home()))
-    home = Path(tempfile.mkdtemp(prefix="hs150-rig-"))
+    home = Path(tempfile.mkdtemp(prefix="hs151-rig-"))
     os.environ["HOME"] = str(home)
     # Honor a pre-set browsers path (CLAUDE.md law: the isolated HOME hides
     # the cache); derive from the real HOME only when none was given.

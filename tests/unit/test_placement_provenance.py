@@ -138,10 +138,10 @@ def test_recipe_run_rejects_legacy_invocation_selector(recipe_rig):
     assert raised.value.code == "inference_legacy_selector_retired"
 
 
-# HS-150-04: test_recipe_chat_canonical_subject_assignment and
+# HS-151-04: test_recipe_chat_canonical_subject_assignment and
 # test_recipe_chat_rejects_legacy_invocation_selector DELETED.
 # They tested RecipeService.chat() which is permanently retired
-# (recipe.chat replaced by chat.turn in HS-150-02).
+# (recipe.chat replaced by chat.turn in HS-151-02).
 
 
 # ---------------------------------------------------------------------------

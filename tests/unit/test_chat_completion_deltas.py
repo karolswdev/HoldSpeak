@@ -1,4 +1,4 @@
-"""HS-150-03: _chat_completion_deltas yields typed Delta objects.
+"""HS-151-03: _chat_completion_deltas yields typed Delta objects.
 
 Tests use recorded chunk objects for both OpenAI SDK and llama.cpp shapes,
 without touching the network.

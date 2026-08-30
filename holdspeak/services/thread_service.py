@@ -1,4 +1,4 @@
-"""Thread orchestration service (HS-150-04).
+"""Thread orchestration service (HS-151-04).
 
 Ties a user's words to a receipted, streamed assistant message.  The one place
 a turn is assembled and admitted, and the one place the People boundary is
@@ -625,7 +625,7 @@ class ThreadService:
         """Redact sensitive message parts when the frozen route's egress is cloud.
 
         This is the SINGLE redaction point for the production turn path
-        (HS-150-04 M5).  It runs inside ``execute_stream`` after the payload
+        (HS-151-04 M5).  It runs inside ``execute_stream`` after the payload
         is reconstructed from frozen admission evidence and before it reaches
         the engine.  The frozen route plan carries the boundary at this point;
         admission evidence is never altered.

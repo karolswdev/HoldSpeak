@@ -1,6 +1,6 @@
-# Evidence - HS-150-05
+# Evidence - HS-151-05
 
-- **Story:** HS-150-05 - The Thread on the Desk (primitive, verbs, ThreadPullout, streaming renderer)
+- **Story:** HS-151-05 - The Thread on the Desk (primitive, verbs, ThreadPullout, streaming renderer)
 - **Status:** done
 - **Date:** 2026-08-29
 
@@ -408,3 +408,11 @@ parts) were found ONLY on real Chromium and fixed in-round; the
 composer overflow and the zero-parts CRASHED row likewise. The
 `window.prompt` fork placeholder was replaced by 06's inline editor
 (Art. VII). Shots: assets/story-08-shots/ (both widths).
+
+
+> Merge note (2026-08-30): the phase was RENUMBERED 150 → 151 (the sibling
+> session shipped Phase 150 — Delegation + Monday — first) and this phase's
+> web-baseline rider (`scripts/web_baseline_check.py`,
+> `tests/fixtures/web-inherited-baseline.txt`) was folded into main's
+> `scripts/check_web_baseline.py` + `tests/web-inherited-baseline.txt`. The
+> captured output above predates both renames.

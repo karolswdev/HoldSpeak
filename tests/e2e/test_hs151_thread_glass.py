@@ -1,4 +1,4 @@
-"""HS-150-08 -- Thread glass tests.
+"""HS-151-08 -- Thread glass tests.
 
 Same flow as the story-08 rig but as pytest: deltas arrive progressively,
 the done row has a receipt id, abort mid-stream flips Send->Stop->Send
@@ -19,7 +19,7 @@ import pytest
 pytest.importorskip("playwright.sync_api", reason="Thread glass needs Playwright")
 
 REPO = Path(__file__).resolve().parents[2]
-TOKEN = "hs150-thread-glass"
+TOKEN = "hs151-thread-glass"
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
 
@@ -30,7 +30,7 @@ class FakeStreamingEngine:
     """Engine that yields text word-by-word with 40 ms gaps."""
 
     active_provider = "fake-local"
-    active_model = "hs150-fake"
+    active_model = "hs151-fake"
 
     def __init__(self, *, fail: bool = False, slow: bool = False):
         self._fail = fail
@@ -86,10 +86,10 @@ def _seed_profile(db: Any) -> None:
     from tests.unit.test_phase143_inference_assignments import _profile, OWNER
     from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 
-    pid = "hs150-glass-local"
+    pid = "hs151-glass-local"
     _profile(db, pid)
     InferenceAssignmentService(db).set_assignment(OWNER, {
-        "command_id": "hs150-glass-assign", "expected_revision": 0,
+        "command_id": "hs151-glass-assign", "expected_revision": 0,
         "scope": {"kind": "global"},
         "entries": [{"profile_id": pid, "profile_revision": 1}],
     })

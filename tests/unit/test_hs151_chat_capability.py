@@ -1,4 +1,4 @@
-"""HS-150-02 — chat.turn capability registration + backfill tests."""
+"""HS-151-02 — chat.turn capability registration + backfill tests."""
 from __future__ import annotations
 
 import sqlite3

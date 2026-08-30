@@ -1,4 +1,4 @@
-/** HS-150-06 — ThreadComposer tests: keys, chips, verb filter, Send/Stop, mic never sends. */
+/** HS-151-06 — ThreadComposer tests: keys, chips, verb filter, Send/Stop, mic never sends. */
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import {

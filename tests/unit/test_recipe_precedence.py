@@ -43,7 +43,7 @@ def rig(tmp_path: Path) -> tuple[Database, RecipeService]:
     return db, RecipeService(db, broker=broker)
 
 
-# HS-150-04: test_recipe_subject_assignment_beats_divergent_global_for_run_and_chat
+# HS-151-04: test_recipe_subject_assignment_beats_divergent_global_for_run_and_chat
 # DELETED — recipe.chat retired; the law is proven by recipe.run alone below.
 
 

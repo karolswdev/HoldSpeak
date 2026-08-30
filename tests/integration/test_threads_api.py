@@ -1,4 +1,4 @@
-"""HS-150-04 — Thread API integration tests via FastAPI TestClient.
+"""HS-151-04 — Thread API integration tests via FastAPI TestClient.
 
 Tests the HTTP routes (CRUD + turn + abort + branch + regenerate + keep + import)
 through the real app, with broadcasts captured via monkeypatch.

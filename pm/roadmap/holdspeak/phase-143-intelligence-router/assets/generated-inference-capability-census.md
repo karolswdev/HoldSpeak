@@ -2,7 +2,7 @@
 
 **Story:** HSEGHS001HS104-143-01
 
-**Regenerated:** 2026-08-29 on `feat/hs150-the-desk-chat` (HS-150-02)
+**Regenerated:** 2026-08-29 on `feat/hs151-the-desk-chat` (HS-151-02)
 
 This is the checked-in baseline for the Phase 143 route migration. Its
 machine-readable fixture is
@@ -121,7 +121,7 @@ routes it. A synthetic new Ask/Recipe caller is a fail-closed test mutation.
 | `mcp/families/ask.py:134`, `web/routes/primitives/ask.py:49` | `ask.answer` | Ask transports |
 | `services/refinement_coordinator.py:419` | `thought.interview` (question-or-synthesis result branch) | refinement coordinator |
 | `mcp/tools.py:609`, `web/routes/primitives/recipes.py:100` | `recipe.run` | Recipe transports |
-<!-- HS-150-02: recipe.chat retired — callers return 410; no semantic entry -->
+<!-- HS-151-02: recipe.chat retired — callers return 410; no semantic entry -->
 | `services/sequence_workflow_service.py:133` | `sequence.step` | Sequence service |
 | `services/sequence_workflow_service.py:186` | `workflow.node` | Workflow service |
 

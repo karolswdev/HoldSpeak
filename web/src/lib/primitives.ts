@@ -359,7 +359,7 @@ export interface PeopleDesk {
   name: string;
 }
 
-/** A persistent desk chat thread (HS-150-05). Lives in the hub's SQLite,
+/** A persistent desk chat thread (HS-151-05). Lives in the hub's SQLite,
  * streamed over the runtime bus, never in localStorage. */
 export interface Thread {
   kind: "thread";

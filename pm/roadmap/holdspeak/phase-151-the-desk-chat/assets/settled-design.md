@@ -1,4 +1,4 @@
-# Phase 150 settled design — The Thread (DC-01)
+# Phase 151 settled design — The Thread (DC-01)
 
 The design-beat spec. Ruled by the orchestrator 2026-08-29 from the
 seam census ([audit-census.md](./audit-census.md)) and one Opus

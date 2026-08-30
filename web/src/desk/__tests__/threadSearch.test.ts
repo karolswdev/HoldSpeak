@@ -1,4 +1,4 @@
-// HS-150-07 — search result opening: thread hits open the pullout at
+// HS-151-07 — search result opening: thread hits open the pullout at
 // the matched message (parse thread:<id>#<message_id>).
 import { describe, expect, it, vi, beforeEach } from "vitest";
 

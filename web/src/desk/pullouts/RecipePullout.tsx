@@ -1,6 +1,6 @@
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Recipe (Persona) pullout content (HS-117-15).
- * HS-150-07: "Chat with" retired; "Continue in thread" creates/opens a
+ * HS-151-07: "Chat with" retired; "Continue in thread" creates/opens a
  * thread bound to the recipe via POST /api/threads {recipe_id}. */
 import { useState } from "react";
 import { useDesk } from "../store";

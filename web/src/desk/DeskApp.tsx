@@ -115,7 +115,7 @@ export default function DeskApp() {
     void useProjections.getState().refresh(true);
   }, [refreshDesk]);
 
-  // HS-150-07: one-time import of localStorage chat threads.
+  // HS-151-07: one-time import of localStorage chat threads.
   useChatImport();
 
   const total = Object.values(items).reduce((n, l) => n + l.length, 0);
@@ -176,7 +176,7 @@ export default function DeskApp() {
       {!arrivalRequired && !showFloor && chairOpenCards.map((pullout) => (
         <Pullout key={pullout.id} o={pullout.object!} origin={pullout.origin} />
       ))}
-      {/* PersonaChat retired by HS-150-07; threads pullout is the one chat surface. */}
+      {/* PersonaChat retired by HS-151-07; threads pullout is the one chat surface. */}
       {!arrivalRequired && <DeskToolInspector />}
       {!arrivalRequired && <MissionControlConveyor />}
       {!arrivalRequired && <DeliveryBoard />}

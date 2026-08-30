@@ -1,4 +1,4 @@
-"""HS-150-01: Thread ledger repository tests.
+"""HS-151-01: Thread ledger repository tests.
 
 Covers: tree/leaf path, siblings n/m, soft-delete removes from FTS via trigger,
 extend_part_text append-only, freeze_refs, token totals, import idempotency,

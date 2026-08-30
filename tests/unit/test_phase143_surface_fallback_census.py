@@ -111,7 +111,7 @@ CAMEL_POINTER_TOKENS = ("inferenceTargetId", "intelProfileId", "profileId", "res
 RUNS_ON_PICKER_SURFACE = re.compile(
     r"(?:import\s*\{\s*RunsOnPicker\s*\}|export\s+function\s+RunsOnPicker)"
 )
-STORY_RE = re.compile(r"^(?:143-(?:0[1-9]|1[0-4])|150-0[1-9])$")  # HS-150-02: widen for Phase 150 entries
+STORY_RE = re.compile(r"^(?:143-(?:0[1-9]|1[0-4])|150-0[1-9])$")  # HS-151-02: widen for Phase 151 entries
 
 # Story 06 retired every client-owned Swift retry/fallback execution site. The
 # scanner remains as a zero-regression fence: legacy wire strings may survive in

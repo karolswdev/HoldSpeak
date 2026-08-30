@@ -1,10 +1,10 @@
-# HS-150-01 - The thread ledger (schema + repository + import)
+# HS-151-01 - The thread ledger (schema + repository + import)
 
 - **Project:** holdspeak
 - **Phase:** 150
 - **Status:** done
 - **Depends on:** none
-- **Unblocks:** HS-150-02, HS-150-04, HS-150-07
+- **Unblocks:** HS-151-02, HS-151-04, HS-151-07
 - **Owner:** unassigned
 
 ## Problem
@@ -33,7 +33,7 @@ index — additive, soft-delete, reconcile-safe (settled-design D1).
   regenerated; reconcile proven idempotent on a fresh DB and on a
   COPY of a real v64 DB.
 - `POST /api/threads/import` server half (dedup by `import_hash` ref
-  row, counsel S2) — the web half is HS-150-07.
+  row, counsel S2) — the web half is HS-151-07.
 
 ### Out
 

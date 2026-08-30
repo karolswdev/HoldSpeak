@@ -1,10 +1,10 @@
-# HS-150-06 - The composer (mic, @-refs, send/stop, / verbs)
+# HS-151-06 - The composer (mic, @-refs, send/stop, / verbs)
 
 - **Project:** holdspeak
 - **Phase:** 150
 - **Status:** done
-- **Depends on:** HS-150-05
-- **Unblocks:** HS-150-08
+- **Depends on:** HS-151-05
+- **Unblocks:** HS-151-08
 - **Owner:** unassigned
 
 ## Problem

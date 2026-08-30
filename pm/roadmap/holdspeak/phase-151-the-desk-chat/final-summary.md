@@ -1,4 +1,4 @@
-# Phase 150 — The Desk Chat: The Thread (DC-01) — final summary
+# Phase 151 — The Desk Chat: The Thread (DC-01) — final summary
 
 **Closed 2026-08-30 (8/8) in one sitting from the plan's filing.** The
 branch holds for the owner's shot verdict and merge word (PR #507, which
@@ -45,8 +45,11 @@ because every byte lives in the hub's SQLite, never in a browser.
   thread from a Door object → pullout with the ref chip → turn).
 - **Close sweep:** 6988 passed; 14 branch-new reds all dispositioned
   (fixed / rewritten / deleted with reason) — see evidence-story-08.
-- **Web baseline:** `tests/fixtures/web-inherited-baseline.txt` (5 names)
-  + `scripts/web_baseline_check.py`, the handover §3.D debt rider.
+- **Web baseline:** the handover §3.D rider — built here as
+  `scripts/web_baseline_check.py`, then FOLDED at merge into the sibling
+  Phase 150 (Delegation + Monday) instrument that landed first:
+  `scripts/check_web_baseline.py` + `tests/web-inherited-baseline.txt`
+  (its `chat.test.ts` line removed: this phase deleted that test).
 - **AGPL:** `git grep -i warpdrv` hits only the plan and this record.
 
 ## What the proof caught (the arc's scar list)

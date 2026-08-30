@@ -1,6 +1,6 @@
-# Evidence - HS-150-03
+# Evidence - HS-151-03
 
-- **Story:** HS-150-03 - The streaming seam (invoke_stream + typed deltas + frames)
+- **Story:** HS-151-03 - The streaming seam (invoke_stream + typed deltas + frames)
 - **Status:** done
 - **Date:** 2026-08-29
 

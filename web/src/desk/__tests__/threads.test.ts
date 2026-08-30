@@ -1,4 +1,4 @@
-/** HS-150-05 — Thread store tests: delta application by seq, dedup,
+/** HS-151-05 — Thread store tests: delta application by seq, dedup,
  * out-of-order drop, crash rule, reconnect reconcile. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {

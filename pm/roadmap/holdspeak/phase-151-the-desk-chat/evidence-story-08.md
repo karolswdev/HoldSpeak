@@ -1,6 +1,6 @@
-# Evidence - HS-150-08
+# Evidence - HS-151-08
 
-- **Story:** HS-150-08 - The walk and the close (real metal, glass, docs, counsel)
+- **Story:** HS-151-08 - The walk and the close (real metal, glass, docs, counsel)
 - **Status:** done
 - **Date:** 2026-08-29
 
@@ -8,17 +8,17 @@
 
 ### Captured run — 2026-08-29T22:39:15Z
 
-- **Command:** `env HOME=/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/1d7c5de7-eeec-4b6e-927e-186a731078fc/scratchpad/homerig PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run python pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-rig.py`
+- **Command:** `env HOME=/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/1d7c5de7-eeec-4b6e-927e-186a731078fc/scratchpad/homerig PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run python pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-rig.py`
 - **Cwd:** .
 - **Exit code:** 1
 - **Index-tree:** 1350df8cfbfb24cf9cafe827d85bc7f377de06a0
 
 ```text
 Traceback (most recent call last):
-  File "/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-rig.py", line 415, in <module>
+  File "/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-rig.py", line 415, in <module>
     raise SystemExit(main())
                      ~~~~^^
-  File "/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-rig.py", line 199, in main
+  File "/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-rig.py", line 199, in main
     browser = pw.chromium.launch(headless=True)
   File "/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/.venv/lib/python3.14/site-packages/playwright/sync_api/_generated.py", line 14568, in launch
     self._sync(
@@ -58,7 +58,7 @@ playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at 
 
 ### Captured run — 2026-08-29T22:40:21Z
 
-- **Command:** `uv run python pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-rig.py`
+- **Command:** `uv run python pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-rig.py`
 - **Cwd:** .
 - **Exit code:** 1
 - **Index-tree:** 1350df8cfbfb24cf9cafe827d85bc7f377de06a0
@@ -66,23 +66,23 @@ playwright._impl._errors.Error: BrowserType.launch: Executable doesn't exist at 
 ```text
 
 == LEG: populated thread ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-missing-1440.png -- pullout not found at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-missing-393.png -- pullout not found at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-missing-1440.png -- pullout not found at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-missing-393.png -- pullout not found at 393
 
 == LEG: branch + sibling picker ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-after-branch-1440.png -- after branch, no sibling picker
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-after-branch-1440.png -- after branch, no sibling picker
 
 == LEG: empty state ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-fresh-1440.png -- fresh thread at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-fresh-393.png -- fresh thread at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-fresh-1440.png -- fresh thread at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-fresh-393.png -- fresh thread at 393
 
 == LEG: error state ==
 
 == LEG: CRASHED + Retry ==
 Failed to get thread: could not convert string to float: '2026-08-29T22:39:57Z'
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-stale-streaming-1440.png -- stale streaming row
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-stale-streaming-1440.png -- stale streaming row
 Failed to get thread: could not convert string to float: '2026-08-29T22:39:57Z'
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-crashed-393.png -- CRASHED at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-crashed-393.png -- CRASHED at 393
 
 == FINDINGS ==
 FINDING  SELECTOR NEEDED: .thread-pullout-body/.thread-head not found at 1440 after ?open=thread:<id>
@@ -91,13 +91,13 @@ FINDING  sibling picker not visible after branch
 FINDING  composer not found for error state
 FINDING  CRASHED row not visible for streaming=1 row 60s old
 
-shots=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots
+shots=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots
 failures=5
 ```
 
 ### Captured run — 2026-08-29T22:52:29Z
 
-- **Command:** `uv run python pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-rig.py`
+- **Command:** `uv run python pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-rig.py`
 - **Cwd:** .
 - **Exit code:** 1
 - **Index-tree:** 1350df8cfbfb24cf9cafe827d85bc7f377de06a0
@@ -105,27 +105,27 @@ failures=5
 ```text
 
 == LEG: populated thread ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-empty-1440.png -- empty thread at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-mid-stream-1440.png -- mid-stream at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-done-no-receipt-1440.png -- done, no receipt at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-empty-393.png -- empty thread at 393
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-mid-stream-393.png -- mid-stream at 393
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-done-no-receipt-393.png -- done, no receipt at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-empty-1440.png -- empty thread at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-mid-stream-1440.png -- mid-stream at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-done-no-receipt-1440.png -- done, no receipt at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-empty-393.png -- empty thread at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-mid-stream-393.png -- mid-stream at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-done-no-receipt-393.png -- done, no receipt at 393
 
 == LEG: branch + sibling picker ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-sibling-picker-1440.png -- sibling picker n/m
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-sibling-picker-1440.png -- sibling picker n/m
 
 == LEG: empty state ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-empty-fresh-1440.png -- empty state at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-empty-fresh-393.png -- empty state at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-empty-fresh-1440.png -- empty state at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-empty-fresh-393.png -- empty state at 393
 
 == LEG: error state ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-after-error-send-1440.png -- after error send
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-error-393.png -- error at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-after-error-send-1440.png -- after error send
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-error-393.png -- error at 393
 
 == LEG: CRASHED + Retry ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-stale-streaming-1440.png -- stale streaming row
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-crashed-393.png -- CRASHED at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-stale-streaming-1440.png -- stale streaming row
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-crashed-393.png -- CRASHED at 393
 
 == FINDINGS ==
 FINDING  receipt not visible at 1440
@@ -133,13 +133,13 @@ FINDING  receipt not visible at 393
 FINDING  error row not visible after engine error
 FINDING  CRASHED row not visible for streaming=1 row 60s old
 
-shots=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots
+shots=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots
 failures=4
 ```
 
 ### Captured run — 2026-08-29T23:37:07Z
 
-- **Command:** `uv run python pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-rig.py`
+- **Command:** `uv run python pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-rig.py`
 - **Cwd:** .
 - **Exit code:** 1
 - **Index-tree:** 1350df8cfbfb24cf9cafe827d85bc7f377de06a0
@@ -147,39 +147,39 @@ failures=4
 ```text
 
 == LEG: populated thread ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-empty-1440.png -- empty thread at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-mid-stream-1440.png -- mid-stream at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-done-1440.png -- done with receipt at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-empty-393.png -- empty thread at 393
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-mid-stream-393.png -- mid-stream at 393
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-done-393.png -- done with receipt at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-empty-1440.png -- empty thread at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-mid-stream-1440.png -- mid-stream at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-done-1440.png -- done with receipt at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-empty-393.png -- empty thread at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-mid-stream-393.png -- mid-stream at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-done-393.png -- done with receipt at 393
 
 == LEG: branch + sibling picker ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-sibling-picker-1440.png -- sibling picker n/m
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-sibling-picker-1440.png -- sibling picker n/m
 
 == LEG: empty state ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-empty-fresh-1440.png -- empty state at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-empty-fresh-393.png -- empty state at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-empty-fresh-1440.png -- empty state at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-empty-fresh-393.png -- empty state at 393
 
 == LEG: error state ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-after-error-send-1440.png -- after error send
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-error-393.png -- error at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-after-error-send-1440.png -- after error send
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-error-393.png -- error at 393
 
 == LEG: CRASHED + Retry ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-stale-streaming-1440.png -- stale streaming row
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-crashed-393.png -- CRASHED at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-stale-streaming-1440.png -- stale streaming row
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-crashed-393.png -- CRASHED at 393
 
 == FINDINGS ==
 FINDING  error row not visible after engine error
 FINDING  CRASHED row not visible for streaming=1 row 60s old
 
-shots=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots
+shots=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots
 failures=2
 ```
 
 ### Captured run — 2026-08-29T23:38:44Z
 
-- **Command:** `uv run python pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal.py`
+- **Command:** `uv run python pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal.py`
 - **Cwd:** .
 - **Exit code:** 0
 - **Index-tree:** 1350df8cfbfb24cf9cafe827d85bc7f377de06a0
@@ -203,25 +203,25 @@ failures=2
   CONTROL Ask: text_len=19 receipt=rcpt_b8b wall=1.261s
 
 == LEG 2: People boundary under profile switch ==
-  cloud payload written to pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal-payloads/cloud-egress-payload.json
+  cloud payload written to pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal-payloads/cloud-egress-payload.json
   PASS sentinel absent from cloud payload
   PASS redaction marker present in cloud payload
-  local payload written to pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal-payloads/local-egress-payload.json
+  local payload written to pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal-payloads/local-egress-payload.json
   PASS sentinel preserved in local payload
-  profile_override set to hs150-metal-cloud
-  profile_override restored to hs150-metal-lan
+  profile_override set to hs151-metal-cloud
+  profile_override restored to hs151-metal-lan
   PASS sentinel preserved after profile switch back
 
 == FINDINGS ==
 
-payloads=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal-payloads
+payloads=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal-payloads
 mode=REAL
 failures=0
 ```
 
 ### Captured run — 2026-08-29T23:48:48Z
 
-- **Command:** `uv run python pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal.py`
+- **Command:** `uv run python pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal.py`
 - **Cwd:** .
 - **Exit code:** 0
 - **Index-tree:** 1350df8cfbfb24cf9cafe827d85bc7f377de06a0
@@ -245,18 +245,18 @@ failures=0
   CONTROL Ask: text_len=57 receipt=rcpt_a4c wall=1.491s
 
 == LEG 2: People boundary under profile switch ==
-  cloud payload written to pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal-payloads/cloud-egress-payload.json
+  cloud payload written to pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal-payloads/cloud-egress-payload.json
   PASS sentinel absent from cloud payload
   PASS redaction marker present in cloud payload
-  local payload written to pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal-payloads/local-egress-payload.json
+  local payload written to pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal-payloads/local-egress-payload.json
   PASS sentinel preserved in local payload
-  profile_override set to hs150-metal-cloud
-  profile_override restored to hs150-metal-lan
+  profile_override set to hs151-metal-cloud
+  profile_override restored to hs151-metal-lan
   PASS sentinel preserved after profile switch back
 
 == FINDINGS ==
 
-payloads=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal-payloads
+payloads=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal-payloads
 mode=REAL
 failures=0
 ```
@@ -682,7 +682,7 @@ question = 'What changed?', grounding = None
 
 ### Captured run — 2026-08-30T00:58:13Z
 
-- **Command:** `uv run python pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal.py`
+- **Command:** `uv run python pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal.py`
 - **Cwd:** .
 - **Exit code:** 0
 - **Index-tree:** 3e836471f04bbce9e9ef828886dd784345cb04bb
@@ -706,26 +706,26 @@ question = 'What changed?', grounding = None
   CONTROL Ask: text_len=884 receipt=rcpt_175 wall=4.741s
 
 == LEG 2: People boundary under profile switch ==
-  cloud payload written to pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal-payloads/cloud-egress-payload.json
+  cloud payload written to pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal-payloads/cloud-egress-payload.json
   PASS sentinel absent from cloud payload
   PASS redaction marker present in cloud payload
-  local payload written to pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal-payloads/local-egress-payload.json
+  local payload written to pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal-payloads/local-egress-payload.json
   PASS sentinel preserved in local payload
-  profile_override set to hs150-metal-cloud
-  profile_override restored to hs150-metal-lan
+  profile_override set to hs151-metal-cloud
+  profile_override restored to hs151-metal-lan
   PASS sentinel preserved after profile switch back
   SKIP captured-payload test: engine did not hit the capture server
 
 == FINDINGS ==
 
-payloads=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal-payloads
+payloads=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal-payloads
 mode=REAL
 failures=0
 ```
 
 ### Captured run — 2026-08-30T00:58:58Z
 
-- **Command:** `uv run pytest -q tests/unit/test_thread_repository.py tests/unit/test_thread_service.py tests/integration/test_threads_api.py tests/unit/test_inference_runner_stream.py tests/unit/test_chat_completion_deltas.py tests/unit/test_stream_cadence.py tests/unit/test_realtime_frame_registry.py tests/unit/test_hs150_chat_capability.py tests/unit/test_memory_search_threads.py tests/unit/test_phase143_inference_capability_census.py tests/unit/test_phase143_routing_authority_census.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_one_path_census.py tests/unit/test_one_path_provenance.py tests/unit/test_api_surface.py tests/unit/test_web_routes_recipe_chat.py tests/unit/test_recipe_precedence.py tests/unit/test_receipt_model_honesty.py`
+- **Command:** `uv run pytest -q tests/unit/test_thread_repository.py tests/unit/test_thread_service.py tests/integration/test_threads_api.py tests/unit/test_inference_runner_stream.py tests/unit/test_chat_completion_deltas.py tests/unit/test_stream_cadence.py tests/unit/test_realtime_frame_registry.py tests/unit/test_hs151_chat_capability.py tests/unit/test_memory_search_threads.py tests/unit/test_phase143_inference_capability_census.py tests/unit/test_phase143_routing_authority_census.py tests/unit/test_phase143_surface_fallback_census.py tests/unit/test_one_path_census.py tests/unit/test_one_path_provenance.py tests/unit/test_api_surface.py tests/unit/test_web_routes_recipe_chat.py tests/unit/test_recipe_precedence.py tests/unit/test_receipt_model_honesty.py`
 - **Cwd:** .
 - **Exit code:** 0
 - **Index-tree:** 3e836471f04bbce9e9ef828886dd784345cb04bb
@@ -739,7 +739,7 @@ failures=0
 
 ### Captured run — 2026-08-30T01:30:38Z
 
-- **Command:** `uv run python pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-rig.py`
+- **Command:** `uv run python pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-rig.py`
 - **Cwd:** .
 - **Exit code:** 0
 - **Index-tree:** 3e836471f04bbce9e9ef828886dd784345cb04bb
@@ -747,37 +747,37 @@ failures=0
 ```text
 
 == LEG: populated thread ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-empty-1440.png -- empty thread at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-mid-stream-1440.png -- mid-stream at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-done-1440.png -- done with receipt at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-empty-393.png -- empty thread at 393
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-mid-stream-393.png -- mid-stream at 393
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-done-393.png -- done with receipt at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-empty-1440.png -- empty thread at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-mid-stream-1440.png -- mid-stream at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-done-1440.png -- done with receipt at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-empty-393.png -- empty thread at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-mid-stream-393.png -- mid-stream at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-done-393.png -- done with receipt at 393
 
 == LEG: branch + sibling picker ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-sibling-picker-1440.png -- sibling picker n/m
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-sibling-picker-1440.png -- sibling picker n/m
 
 == LEG: empty state ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-empty-fresh-1440.png -- empty state at 1440
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-empty-fresh-393.png -- empty state at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-empty-fresh-1440.png -- empty state at 1440
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-empty-fresh-393.png -- empty state at 393
 
 == LEG: error state ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-error-1440.png -- error state, in-flow error row
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-error-393.png -- error at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-error-1440.png -- error state, in-flow error row
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-error-393.png -- error at 393
 
 == LEG: CRASHED + Retry ==
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-crashed-1440.png -- CRASHED + Retry
-  SHOT  pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots/thread-crashed-393.png -- CRASHED at 393
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-crashed-1440.png -- CRASHED + Retry
+  SHOT  pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots/thread-crashed-393.png -- CRASHED at 393
 
 == FINDINGS ==
 
-shots=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-shots
+shots=/Users/karol/dev/tools/HoldSpeak/.claude/worktrees/warpdrv-chat-port/pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-shots
 failures=0
 ```
 
 ### Captured run — 2026-08-30T01:32:00Z
 
-- **Command:** `uv run pytest -q tests/e2e/test_hs150_thread_glass.py tests/e2e/test_hs143_assignments_glass.py`
+- **Command:** `uv run pytest -q tests/e2e/test_hs151_thread_glass.py tests/e2e/test_hs143_assignments_glass.py`
 - **Cwd:** .
 - **Exit code:** 1
 - **Index-tree:** 3e836471f04bbce9e9ef828886dd784345cb04bb
@@ -1151,7 +1151,7 @@ OK — no new regressions.
 
 ### Captured run — 2026-08-30T01:34:55Z
 
-- **Command:** `env PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_hs150_thread_glass.py tests/e2e/test_hs143_assignments_glass.py`
+- **Command:** `env PLAYWRIGHT_BROWSERS_PATH=/Users/karol/Library/Caches/ms-playwright uv run pytest -q tests/e2e/test_hs151_thread_glass.py tests/e2e/test_hs143_assignments_glass.py`
 - **Cwd:** .
 - **Exit code:** 0
 - **Index-tree:** 3e836471f04bbce9e9ef828886dd784345cb04bb
@@ -1330,3 +1330,11 @@ which ran while the rig, e2e and walk were booting hubs beside the
 sweep; alone under isolated HOME it passes (capture above, 1 passed in
 3.33 s) — a contention flake, recorded, not a defect. Zero unresolved
 branch-new.**
+
+
+> Merge note (2026-08-30): the phase was RENUMBERED 150 → 151 (the sibling
+> session shipped Phase 150 — Delegation + Monday — first) and this phase's
+> web-baseline rider (`scripts/web_baseline_check.py`,
+> `tests/fixtures/web-inherited-baseline.txt`) was folded into main's
+> `scripts/check_web_baseline.py` + `tests/web-inherited-baseline.txt`. The
+> captured output above predates both renames.

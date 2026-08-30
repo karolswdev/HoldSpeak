@@ -1,4 +1,4 @@
-/** HS-150-05 — Thread pullout content: head (in-place title, egress lamp,
+/** HS-151-05 — Thread pullout content: head (in-place title, egress lamp,
  * status line, token meter), body (user/assistant rows with StreamingMaterial,
  * reasoning folded behind RAW, error row in-flow, CRASHED + Retry, sibling
  * picker, receipt short-id), foot (ThreadComposer — story 06). */
@@ -318,7 +318,7 @@ function ThreadPulloutInner({
   const [titleDraft, setTitleDraft] = useState(initialTitle);
   const titleRef = useRef<HTMLInputElement>(null);
 
-  // HS-150-06: track turn_done for focus restore
+  // HS-151-06: track turn_done for focus restore
   const [restoreFocus, setRestoreFocus] = useState(false);
 
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -352,7 +352,7 @@ function ThreadPulloutInner({
         const p = frame.data as ThreadTurnDonePayload;
         if (p.thread_id !== threadId) return;
         applyTurnDone(p);
-        // HS-150-06: restore focus to the composer after turn_done
+        // HS-151-06: restore focus to the composer after turn_done
         setRestoreFocus(true);
         requestAnimationFrame(() => setRestoreFocus(false));
       }),
@@ -413,7 +413,7 @@ function ThreadPulloutInner({
     [threadId, attempt],
   );
 
-  /** HS-150-06: branch from a message (edit-and-resend + fork). No modal. */
+  /** HS-151-06: branch from a message (edit-and-resend + fork). No modal. */
   const handleBranch = useCallback(
     async (messageId: string, text: string) => {
       await attempt("branch", () =>
@@ -423,7 +423,7 @@ function ThreadPulloutInner({
     [threadId, attempt],
   );
 
-  /** HS-150-06: create a new thread (/ new verb). */
+  /** HS-151-06: create a new thread (/ new verb). */
   const handleNewThread = useCallback(async () => {
     const t = await createThread({});
     useDesk.getState().openPullout(`thread:${t.id}`);

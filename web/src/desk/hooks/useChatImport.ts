@@ -1,4 +1,4 @@
-/** HS-150-07 — one-time import of localStorage chat threads.
+/** HS-151-07 — one-time import of localStorage chat threads.
  *
  * On first Desk load, if `localStorage['hs.desk.chats']` exists, call
  * `POST /api/threads/import` with its payload, then remove the key.

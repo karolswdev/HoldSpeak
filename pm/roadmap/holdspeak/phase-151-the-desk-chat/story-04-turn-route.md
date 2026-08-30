@@ -1,10 +1,10 @@
-# HS-150-04 - The turn route (threads API, refs frozen, abort, branch, keep)
+# HS-151-04 - The turn route (threads API, refs frozen, abort, branch, keep)
 
 - **Project:** holdspeak
 - **Phase:** 150
 - **Status:** done
-- **Depends on:** HS-150-01, HS-150-02, HS-150-03
-- **Unblocks:** HS-150-05, HS-150-07
+- **Depends on:** HS-151-01, HS-151-02, HS-151-03
+- **Unblocks:** HS-151-05, HS-151-07
 - **Owner:** unassigned
 
 ## Problem
@@ -64,7 +64,7 @@ Any UI (05/06); tools (DC-02); attachments (out of DC-01).
   adapter; all AC above), `tests/unit/test_phase143_*census.py`.
 - **Integration:** `tests/integration/test_threads_api.py` via the
   FastAPI test client with the WebSocket bus captured.
-- **Manual / device:** HS-150-08.
+- **Manual / device:** HS-151-08.
 
 ## Notes / open questions
 

@@ -66,7 +66,7 @@ ADOPTED_CAPABILITIES = (
     # evidence provider in ToolTurnFoundationService, so they are deliberately
     # absent here.
     "recipe.run",
-    "chat.turn",  # HS-150-02: replaces retired recipe.chat
+    "chat.turn",  # HS-151-02: replaces retired recipe.chat
     "workbench.item",
     "voice.reference_resolve",
     "sequence.step",
@@ -1603,7 +1603,7 @@ class RoutedInferenceCoordinator:
         planned_node: str = "",
         payload_redactor: Callable[[dict, Mapping[str, Any]], dict] | None = None,
     ) -> dict[str, Any]:
-        """Streaming twin of ``execute`` (HS-150-04).
+        """Streaming twin of ``execute`` (HS-151-04).
 
         Identical admitted-execution bookkeeping (frozen plan, attempt rows,
         receipt attestation, disposition) but calls
@@ -1687,7 +1687,7 @@ class RoutedInferenceCoordinator:
                 int(reservation["route_leg_ordinal"]),
             )
             payload = dict(serialized["payload"])
-            # HS-150-04 M5: apply caller-supplied redaction AFTER the payload
+            # HS-151-04 M5: apply caller-supplied redaction AFTER the payload
             # is reconstructed from frozen evidence and BEFORE it reaches the
             # engine.  The frozen route plan (``route``) carries the boundary
             # the redactor needs.  Admission evidence is never altered.
@@ -2840,7 +2840,7 @@ class RoutedInferenceCoordinator:
             })
             if value:
                 profile = entry_for(value)
-                for capability_id in ("recipe.run", "chat.turn", "sequence.step"):  # HS-150-02: recipe.chat → chat.turn
+                for capability_id in ("recipe.run", "chat.turn", "sequence.step"):  # HS-151-02: recipe.chat → chat.turn
                     subject_entries.append({
                         "subject_kind": "recipe", "subject_id": str(recipe.id),
                         "capability_id": capability_id, "entry": profile,

@@ -1,4 +1,4 @@
-/** HS-150-07 — shared Threads row for pullouts.
+/** HS-151-07 — shared Threads row for pullouts.
  * Lists threads whose thread_refs name a given object (by ref_id).
  * Shows titles only — People content never leaves the encrypted store. */
 import { useEffect, useState } from "react";

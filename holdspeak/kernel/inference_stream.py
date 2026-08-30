@@ -1,4 +1,4 @@
-"""Typed streaming primitives for inference dispatch (HS-150-03).
+"""Typed streaming primitives for inference dispatch (HS-151-03).
 
 ``Delta`` is the unit of streaming output from a provider: a frozen value
 carrying kind, text, and metadata.  ``StreamCadence`` gates persistence
@@ -99,8 +99,8 @@ def _default_clock() -> float:
 
 
 # ------------------------------------------------- frame broadcast helpers
-# Canonical emit points for the three thread frames (HS-150-03).
-# The thread service (HS-150-04) calls these; the realtime frame scanner
+# Canonical emit points for the three thread frames (HS-151-03).
+# The thread service (HS-151-04) calls these; the realtime frame scanner
 # reads them to prove the frames are wired.
 
 

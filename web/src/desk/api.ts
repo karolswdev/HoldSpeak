@@ -676,7 +676,7 @@ export async function loadAll(): Promise<LoadResult> {
       .catch(() => {
         models = []; /* older hub = honest empty door */
       }),
-    // HS-150-05: threads load from the thread API.
+    // HS-151-05: threads load from the thread API.
     apiFetch<Record<string, unknown>>("/api/threads")
       .then((d) => {
         items.thread = wireArray(d, "threads")

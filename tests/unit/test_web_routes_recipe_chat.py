@@ -1,4 +1,4 @@
-"""Tests for the /api/recipes/{id}/chat thread alias (HS-150-04).
+"""Tests for the /api/recipes/{id}/chat thread alias (HS-151-04).
 
 The route creates/reuses a thread bound to the recipe and starts a turn.
 Retired RecipeService.chat()-specific tests (body assembly, grounding,
@@ -67,14 +67,14 @@ def test_chat_alias_requires_text(env) -> None:
     assert client.post("/api/recipes/recipe_scout/chat", json={"text": ""}).status_code == 400
 
 
-# HS-150-04: test_chat_assembles_the_turn_and_persists_nothing DELETED —
+# HS-151-04: test_chat_assembles_the_turn_and_persists_nothing DELETED —
 # tested RecipeService.chat() body shape (block assembly, output, egress,
 # context_ids); the alias creates a thread+turn, none of those apply.
 
-# HS-150-04: test_chat_kb_honesty_marker_when_nothing_hydrates DELETED —
+# HS-151-04: test_chat_kb_honesty_marker_when_nothing_hydrates DELETED —
 # tested RecipeService.chat() KB honesty marker in user_prompt.
 
-# HS-150-04: test_chat_grounding_refuses_unknown_ids DELETED —
+# HS-151-04: test_chat_grounding_refuses_unknown_ids DELETED —
 # the alias does not accept a grounding body; ref refusal is tested via
 # ThreadService.start_turn(refs=...) in test_thread_service.py.
 

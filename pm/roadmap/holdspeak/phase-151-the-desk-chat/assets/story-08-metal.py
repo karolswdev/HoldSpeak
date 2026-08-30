@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HS-150-08 real-metal legs -- self-contained, never touches the owner's DB.
+"""HS-151-08 real-metal legs -- self-contained, never touches the owner's DB.
 
 Boots the hub in-process in an isolated HOME (137 law), seeds a REAL
 local-network profile for llama.cpp at http://192.168.1.43:8080 (OpenAI-
@@ -10,14 +10,14 @@ compatible), and exercises:
   LEG 2 -- People boundary under profile switch: sensitive part redacted
            on cloud egress, preserved on local egress.
 
-Skip cleanly if .43 is unreachable.  ``HS150_METAL_DRY=1`` exercises
+Skip cleanly if .43 is unreachable.  ``HS151_METAL_DRY=1`` exercises
 everything via a local capture server instead of the real endpoint.
 
 Run for real (from an unsandboxed shell that can reach the LAN):
-  uv run python pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal.py
+  uv run python pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal.py
 
 Dry run (no LAN required):
-  HS150_METAL_DRY=1 uv run python pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal.py
+  HS151_METAL_DRY=1 uv run python pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal.py
 """
 from __future__ import annotations
 
@@ -40,8 +40,8 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parents[5]
-PAYLOADS = REPO / "pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-metal-payloads"
-TOKEN = "hs150-metal"
+PAYLOADS = REPO / "pm/roadmap/holdspeak/phase-151-the-desk-chat/assets/story-08-metal-payloads"
+TOKEN = "hs151-metal"
 
 LAN_HOST = "192.168.1.43"
 LAN_PORT = 8080
@@ -49,7 +49,7 @@ LAN_BASE = f"http://{LAN_HOST}:{LAN_PORT}/v1"
 LAN_MODEL = "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf"  # from GET /v1/models
 
 SENTINEL = "METAL-LEG-SENSITIVE-PERSON-DATA-d8f2a"
-DRY_MODE = os.environ.get("HS150_METAL_DRY") == "1"
+DRY_MODE = os.environ.get("HS151_METAL_DRY") == "1"
 
 
 # ─────────────────────────────────── capture server (LEG 2 + dry mode) ───
@@ -120,7 +120,7 @@ def start_capture_server() -> tuple[http.server.HTTPServer, int, threading.Threa
 
 # ─────────────────────────────── profile seeding ─────────────────────────
 
-def seed_lan_profile(db: Any, base_url: str, model: str, profile_id: str = "hs150-metal-lan") -> None:
+def seed_lan_profile(db: Any, base_url: str, model: str, profile_id: str = "hs151-metal-lan") -> None:
     """Seed a profile that routes to an OpenAI-compatible endpoint on the LAN.
 
     Uses the test helper ``_profile()`` for a valid local-engine admission chain
@@ -148,14 +148,14 @@ def seed_lan_profile(db: Any, base_url: str, model: str, profile_id: str = "hs15
 
     # 3. Capability-scoped assignment for chat.turn.
     InferenceAssignmentService(db).set_assignment(OWNER, {
-        "command_id": f"hs150-metal-assign-{profile_id}",
+        "command_id": f"hs151-metal-assign-{profile_id}",
         "expected_revision": 0,
         "scope": {"kind": "capability", "capability_id": "chat.turn"},
         "entries": [{"profile_id": profile_id, "profile_revision": 1}],
     })
     # Also for ask.answer so the CONTROL Ask works.
     InferenceAssignmentService(db).set_assignment(OWNER, {
-        "command_id": f"hs150-metal-assign-ask-{profile_id}",
+        "command_id": f"hs151-metal-assign-ask-{profile_id}",
         "expected_revision": 0,
         "scope": {"kind": "capability", "capability_id": "ask.answer"},
         "entries": [{"profile_id": profile_id, "profile_revision": 1}],
@@ -165,7 +165,7 @@ def seed_lan_profile(db: Any, base_url: str, model: str, profile_id: str = "hs15
 def seed_cloud_profile(
     db: Any,
     capture_url: str,
-    profile_id: str = "hs150-metal-cloud",
+    profile_id: str = "hs151-metal-cloud",
 ) -> None:
     """Seed a cloud-egress profile pointing at the capture server."""
     from holdspeak.principals import Principal, PrincipalKind
@@ -189,7 +189,7 @@ def seed_cloud_profile(
     )
     target = resolve_inference_target(db, profile_id)
     capture_deployment_revision(db, target)
-    # HS-150-04 fix: use _profile() for a valid admission chain.
+    # HS-151-04 fix: use _profile() for a valid admission chain.
     from tests.unit.test_phase143_inference_assignments import _result_claim
     _profile(db, profile_id, claims=("language", _result_claim("chat.turn")))
 
@@ -310,7 +310,7 @@ def main() -> int:
 
     if not DRY_MODE and not lan_reachable():
         print(f"SKIP: .43 ({LAN_HOST}:{LAN_PORT}) is unreachable; "
-              f"set HS150_METAL_DRY=1 for dry run", flush=True)
+              f"set HS151_METAL_DRY=1 for dry run", flush=True)
         return 0
 
     import holdspeak.config as config_module
@@ -319,7 +319,7 @@ def main() -> int:
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
     real_home = os.environ.get("HOME", str(Path.home()))
-    home = Path(tempfile.mkdtemp(prefix="hs150-metal-"))
+    home = Path(tempfile.mkdtemp(prefix="hs151-metal-"))
     os.environ["HOME"] = str(home)
     os.environ.setdefault(
         "PLAYWRIGHT_BROWSERS_PATH",
@@ -604,7 +604,7 @@ def main() -> int:
             print("\n  -- CONTROL: non-streaming Ask --", flush=True)
             ask_start = time.monotonic()
             a_status, ask_resp = hub_api(url, "POST", "/api/ask",
-                                         {"prompt": prompts[0], "profile_id": "hs150-metal-lan"}, timeout=120)
+                                         {"prompt": prompts[0], "profile_id": "hs151-metal-lan"}, timeout=120)
             ask_wall = time.monotonic() - ask_start
             if a_status == 200:
                 ask_output = str(ask_resp.get("output", ""))
@@ -683,15 +683,15 @@ def main() -> int:
             # Now do the actual dispatch test: seed a cloud profile pointing
             # at the capture server, PATCH profile_override, post a turn.
             capture_cloud_base = f"http://cloud.example.test:{capture_port}/v1"
-            seed_cloud_profile(db, capture_cloud_base, profile_id="hs150-metal-cloud")
+            seed_cloud_profile(db, capture_cloud_base, profile_id="hs151-metal-cloud")
 
             # PATCH thread's profile_override to the cloud profile
             p_status, _ = hub_api(url, "PATCH", f"/api/threads/{tid2}",
-                                  {"profile_override": "hs150-metal-cloud"})
+                                  {"profile_override": "hs151-metal-cloud"})
             if p_status >= 300:
                 failures.append(f"LEG 2 profile_override PATCH failed: {p_status}")
             else:
-                print(f"  profile_override set to hs150-metal-cloud", flush=True)
+                print(f"  profile_override set to hs151-metal-cloud", flush=True)
 
             # Post a new user turn. This will go through the admission service
             # with the cloud profile's egress, then dispatch to the engine.
@@ -704,7 +704,7 @@ def main() -> int:
                 # In dry mode, re-seed the cloud profile to point at the actual
                 # capture server (localhost) so dispatch succeeds.
                 db.profiles.upsert(
-                    profile_id="hs150-metal-cloud",
+                    profile_id="hs151-metal-cloud",
                     name="Metal Cloud Capture (dry)",
                     kind="openAICompatible",
                     base_url=capture_base,
@@ -714,16 +714,16 @@ def main() -> int:
                 # Re-capture deployment revision
                 from holdspeak.inference_targets import resolve_inference_target
                 from holdspeak.deployment_revisions import capture_deployment_revision
-                target = resolve_inference_target(db, "hs150-metal-cloud")
+                target = resolve_inference_target(db, "hs151-metal-cloud")
                 capture_deployment_revision(db, target)
 
             # Switch back to LAN profile and verify local payload preserves sentinel
             p_status2, _ = hub_api(url, "PATCH", f"/api/threads/{tid2}",
-                                   {"profile_override": "hs150-metal-lan"})
+                                   {"profile_override": "hs151-metal-lan"})
             if p_status2 >= 300:
                 failures.append(f"LEG 2 profile_override restore PATCH failed: {p_status2}")
             else:
-                print(f"  profile_override restored to hs150-metal-lan", flush=True)
+                print(f"  profile_override restored to hs151-metal-lan", flush=True)
 
             # Re-verify via the service that local payload has the sentinel
             thread_obj2 = db.threads.get(tid2)

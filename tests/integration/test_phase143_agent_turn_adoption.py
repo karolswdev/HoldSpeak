@@ -47,8 +47,8 @@ def _qualified_recipe(db: Database, *, tools: list[str] | None = None) -> tuple[
     return RecipeService(db, broker=broker), engine, recipe.id
 
 
-# HS-150-04: three tests DELETED. They tested RecipeService.chat() which is
-# permanently retired (recipe.chat replaced by chat.turn in HS-150-02):
+# HS-151-04: three tests DELETED. They tested RecipeService.chat() which is
+# permanently retired (recipe.chat replaced by chat.turn in HS-151-02):
 # - test_recipe_chat_qualified_route_drives_foundation_controller_and_runner
 # - test_recipe_chat_unqualified_uses_ruled_plain_fallback_and_no_toolturn_rows
 # - test_recipe_tools_remain_inert_on_the_qualified_production_turn

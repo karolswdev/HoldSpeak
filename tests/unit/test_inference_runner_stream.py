@@ -1,4 +1,4 @@
-"""HS-150-03: InferenceRunner.invoke_stream — streaming dispatch tests.
+"""HS-151-03: InferenceRunner.invoke_stream — streaming dispatch tests.
 
 Fake streaming adapter, ordered deltas with seq, usage in receipt,
 cancel mid-stream, error before/after first delta.
@@ -352,7 +352,7 @@ def test_usage_meta_in_published_result(tmp_path: Path) -> None:
 
     assert outcome.outcome == "succeeded"
     assert len(published) == 1
-    # HS-150-04 (real-path defect): the published result is validated against
+    # HS-151-04 (real-path defect): the published result is validated against
     # the sealed capability output schema (output/provider/model ONLY); usage
     # must NOT leak into it. It travels on the usage Delta instead.
     assert "usage" not in published[0]

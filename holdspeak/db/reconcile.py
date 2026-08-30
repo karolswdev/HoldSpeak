@@ -664,7 +664,7 @@ def _apply_data_backfills(conn: sqlite3.Connection) -> None:
         + ", ".join(f"{key}={value}" for key, value in memory_counts.items())
     )
 
-    # ── chat-route-assignments (HS-150-02) ─────────────────────────────
+    # ── chat-route-assignments (HS-151-02) ─────────────────────────────
     # Copy the assignment chain from recipe.chat to chat.turn. If no
     # recipe.chat chain exists, copy from ask.answer instead. Idempotent:
     # an existing chat.turn chain is never overwritten.
@@ -672,7 +672,7 @@ def _apply_data_backfills(conn: sqlite3.Connection) -> None:
 
 
 def _backfill_chat_route_assignments(conn: sqlite3.Connection) -> None:
-    """Family ``chat-route-assignments`` (HS-150-02).
+    """Family ``chat-route-assignments`` (HS-151-02).
 
     Copies an existing global capability assignment chain to ``chat.turn``.
     Source precedence: ``recipe.chat`` first, then ``ask.answer``.

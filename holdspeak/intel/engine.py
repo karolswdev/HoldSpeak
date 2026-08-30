@@ -568,7 +568,7 @@ class MeetingIntel:
         """Stream typed ``Delta`` objects from a freeform prompt.
 
         The streaming twin of ``run_prompt_messages``.  The thread service
-        adapter (HS-150-04) calls this; it does not assemble system prompts
+        adapter (HS-151-04) calls this; it does not assemble system prompts
         itself -- the caller pre-builds the message array.
         """
         from ..kernel.inference_stream import Delta

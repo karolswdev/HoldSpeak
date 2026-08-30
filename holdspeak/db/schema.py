@@ -3401,7 +3401,7 @@ ON calendar_events(source_id, uid, starts_at);
 CREATE INDEX IF NOT EXISTS idx_calendar_events_upcoming
 ON calendar_events(starts_at, id);
 
--- HS-150-01: The thread ledger — persistent desk conversations.
+-- HS-151-01: The thread ledger — persistent desk conversations.
 CREATE TABLE IF NOT EXISTS threads (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL DEFAULT '',

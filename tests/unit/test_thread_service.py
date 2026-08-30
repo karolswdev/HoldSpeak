@@ -1,4 +1,4 @@
-"""HS-150-04 — ThreadService unit tests.
+"""HS-151-04 — ThreadService unit tests.
 
 Covers every acceptance criterion from the story with a fake streaming
 adapter/runner, exercising the turn pipeline, abort, branch, regenerate,
@@ -507,7 +507,7 @@ def test_import_threads(service: ThreadService) -> None:
 
 
 def test_real_coordinator_with_fake_engine(tmp_path: Path) -> None:
-    """Regression for HS-150-04: drives ThreadService through the REAL
+    """Regression for HS-151-04: drives ThreadService through the REAL
     RoutedInferenceCoordinator / InferenceRunner / _attempt_stream path
     with a fake engine injected via _engine_factory.
 
@@ -521,7 +521,7 @@ def test_real_coordinator_with_fake_engine(tmp_path: Path) -> None:
     from holdspeak.db import reset_database, get_database
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
-    home = Path(tempfile.mkdtemp(prefix="hs150-regr-"))
+    home = Path(tempfile.mkdtemp(prefix="hs151-regr-"))
     old_home = os.environ.get("HOME", "")
     os.environ["HOME"] = str(home)
     config_module.CONFIG_FILE = home / ".holdspeak" / "config.json"
@@ -632,7 +632,7 @@ def test_graceful_degradation_run_prompt_only_engine(tmp_path: Path) -> None:
     from holdspeak.db import reset_database, get_database
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
-    home = Path(tempfile.mkdtemp(prefix="hs150-degrade-"))
+    home = Path(tempfile.mkdtemp(prefix="hs151-degrade-"))
     old_home = os.environ.get("HOME", "")
     os.environ["HOME"] = str(home)
     config_module.CONFIG_FILE = home / ".holdspeak" / "config.json"
@@ -726,7 +726,7 @@ def _m5_rig(tmp_path: Path, *, boundary: str):
     from holdspeak.db import reset_database, get_database
     from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
 
-    home = Path(tempfile.mkdtemp(prefix=f"hs150-m5-{boundary}-"))
+    home = Path(tempfile.mkdtemp(prefix=f"hs151-m5-{boundary}-"))
     old_home = os.environ.get("HOME", "")
     os.environ["HOME"] = str(home)
     config_module.CONFIG_FILE = home / ".holdspeak" / "config.json"

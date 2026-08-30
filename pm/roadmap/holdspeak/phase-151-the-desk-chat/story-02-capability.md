@@ -1,10 +1,10 @@
-# HS-150-02 - The capability (chat.turn sealed + assigned)
+# HS-151-02 - The capability (chat.turn sealed + assigned)
 
 - **Project:** holdspeak
 - **Phase:** 150
 - **Status:** done
-- **Depends on:** HS-150-01
-- **Unblocks:** HS-150-03, HS-150-04
+- **Depends on:** HS-151-01
+- **Unblocks:** HS-151-03, HS-151-04
 - **Owner:** unassigned
 
 ## Problem
@@ -13,7 +13,7 @@ Every model call is a sealed capability with an assignment chain
 (Phase 143). A thread turn is a new job (`chat.turn`); today's
 `recipe.chat` is the localStorage chat's capability and carrying two
 chat capabilities is a permanent confusion (counsel S1). The runner
-(HS-150-03) builds its route plan from the registered capability, so
+(HS-151-03) builds its route plan from the registered capability, so
 this precedes it.
 
 ## Scope
@@ -34,7 +34,7 @@ this precedes it.
 
 ### Out
 
-The turn service itself (HS-150-04); any UI beyond what the registry
+The turn service itself (HS-151-04); any UI beyond what the registry
 lists.
 
 ## Acceptance criteria
@@ -58,5 +58,5 @@ lists.
 
 ## Notes / open questions
 
-`/api/recipes/{id}/chat` aliasing lands in HS-150-04, so this story may
+`/api/recipes/{id}/chat` aliasing lands in HS-151-04, so this story may
 leave the route temporarily pointing at a 410 stub with a named reason.

@@ -1,4 +1,4 @@
-"""HS-150-07 thread corpus in MemoryRepository search."""
+"""HS-151-07 thread corpus in MemoryRepository search."""
 from __future__ import annotations
 
 import time

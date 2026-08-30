@@ -1,6 +1,6 @@
-# Evidence - HS-150-06
+# Evidence - HS-151-06
 
-- **Story:** HS-150-06 - The composer (mic, @-refs, send/stop, / verbs)
+- **Story:** HS-151-06 - The composer (mic, @-refs, send/stop, / verbs)
 - **Status:** done
 - **Date:** 2026-08-29
 
@@ -35,7 +35,7 @@ people titles come from the same relationships endpoint PeopleCore
 uses, display names only; `/` filters the registry, never a second
 command system); the `window.prompt` fork became an inline editor
 (Art. VII); edit-and-resend branches in place. Real-Chromium truth:
-the e2e probe `test_hs150_thread_glass.py` (3 passed: progressive
+the e2e probe `test_hs151_thread_glass.py` (3 passed: progressive
 deltas, receipt on the done row, Stop→Send after abort) and the rig's
 composer legs at 1440 + 393 (overflow fixed in-round). The e2e abort
 leg exposed a server defect (per-request service instances lost the

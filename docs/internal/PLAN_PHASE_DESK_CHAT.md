@@ -1,6 +1,6 @@
 # Phase DC-01: The Desk Chat — porting the warpdrv chat experience into HoldSpeak
 
-> **Status:** DC-01 shipped as Phase 150 (pending owner merge); DC-02+
+> **Status:** DC-01 shipped as Phase 151 (pending owner merge); DC-02+
 > unchartered. Backlog candidate **AF** in `pm/roadmap/holdspeak/BACKLOG.md`
 > is the handoff row.
 >
@@ -523,7 +523,7 @@ theirs.
 
 ## 17. What DC-01 actually shipped vs the plan
 
-Phase 150 (8 stories) implemented the DC-01 slice. Deltas from this plan:
+Phase 151 (8 stories) implemented the DC-01 slice. Deltas from this plan:
 
 - **No file attachments.** The composer accepts `@`-references to desk
   objects; file upload is deferred to DC-02.

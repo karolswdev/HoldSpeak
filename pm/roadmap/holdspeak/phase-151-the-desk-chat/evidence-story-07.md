@@ -1,6 +1,6 @@
-# Evidence - HS-150-07
+# Evidence - HS-151-07
 
-- **Story:** HS-150-07 - Search, list and retirement (FTS corpus, list view, Threads rows, chat.ts import + delete)
+- **Story:** HS-151-07 - Search, list and retirement (FTS corpus, list view, Threads rows, chat.ts import + delete)
 - **Status:** done
 - **Date:** 2026-08-29
 

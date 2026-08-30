@@ -1,4 +1,4 @@
-/** HS-150-05 — ThreadPullout rendering tests: rows render streaming, done,
+/** HS-151-05 — ThreadPullout rendering tests: rows render streaming, done,
  * error, crashed+Retry, sibling picker. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -166,7 +166,7 @@ describe("ThreadPullout rows", () => {
         receiptId: "rcpt-aabbccdd11223344",
         // Server stores boundary name (same_device), not abstract scope (local).
         egressScope: "same_device",
-        modelId: "hs150-fake-model",
+        modelId: "hs151-fake-model",
         parts: [{ id: "p1", messageId: "msg-1", ordinal: 0, kind: "text", text: "Answer", sensitive: false }],
       }),
     ]);
@@ -180,7 +180,7 @@ describe("ThreadPullout rows", () => {
     expect(lampEl).toBeTruthy();
     expect(lampEl!.textContent).toContain("LOCAL");
     // Model id as the row label.
-    expect(screen.getByText("hs150-fake-model")).toBeTruthy();
+    expect(screen.getByText("hs151-fake-model")).toBeTruthy();
   });
 
   it("CRASHED row renders even with zero parts", () => {

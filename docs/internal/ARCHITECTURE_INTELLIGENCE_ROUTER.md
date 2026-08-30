@@ -191,7 +191,7 @@ Every continued or fallback model route must remain tool-qualified. The
 controller's closed disposition rules govern whether it continues, falls back,
 settles, stops, or becomes indeterminate.
 
-`chat.turn` (formerly `recipe.chat`, retired in Phase 150) is the first
+`chat.turn` (formerly `recipe.chat`, retired in Phase 151) is the first
 adopter. It probes the `agent.tool_turn` route and uses the narrow Agent turn
 facade only when that route is ready. There is no broad model `call_tool`
 transport.

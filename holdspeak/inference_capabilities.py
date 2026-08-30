@@ -1066,7 +1066,7 @@ def builtin_capability_definitions() -> tuple[InferenceCapabilityDefinition, ...
         _capability("agent.code", "Agent code", *agents, "Produce a bounded code-oriented agent result without effect authority.", operation="agent.code", output_kind="code_proposal", minimum_context_tokens=8192, fallback_dispositions=text_fallback, source_module="holdspeak.plugins.intelligence"),
         _capability("workbench.item", "Workbench item", *agents, "Run one admitted Workbench item.", operation="workbench.item", output_kind="workbench_item_output", minimum_context_tokens=8192, fallback_dispositions=text_fallback, source_module="holdspeak.services.workbench_runner"),
         _capability("recipe.run", "Recipe run", *agents, "Run one saved recipe with rendered input.", operation="recipe.run", origin="saved_definition", output_kind="recipe_output", minimum_context_tokens=4096, fallback_dispositions=text_fallback, source_module="holdspeak.services.recipe_service"),
-        # HS-150-02: recipe.chat RETIRED into chat.turn. The capability id
+        # HS-151-02: recipe.chat RETIRED into chat.turn. The capability id
         # survives only in the chat-route-assignments backfill family, never in
         # the sealed registry.
         _capability("chat.turn", "Desk chat", *thought, "Answer one desk chat turn with admitted context and grounding.", operation="chat.turn", output_kind="chat_turn_answer", minimum_context_tokens=4096, fallback_dispositions=text_fallback, source_module="holdspeak.services.thread_service"),

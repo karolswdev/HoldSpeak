@@ -1,4 +1,4 @@
-/** HS-150-06 — Thread composer: textarea + MicButton + @-refs + / verbs.
+/** HS-151-06 — Thread composer: textarea + MicButton + @-refs + / verbs.
  *
  * Laws: Art. IV (voice arms, never fires), Art. VII (no modals),
  * mic on every text input, Signal Workbench material. */

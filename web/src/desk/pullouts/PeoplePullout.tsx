@@ -1,4 +1,4 @@
-/** HS-150-07 — People pullout content.
+/** HS-151-07 — People pullout content.
  * Shows thread TITLES only — People content never leaves the encrypted store.
  * The "Threads" section lists threads whose thread_refs name this person. */
 import { SurfaceFooter } from "../surface/SurfaceFooter";

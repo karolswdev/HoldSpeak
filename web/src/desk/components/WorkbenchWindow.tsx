@@ -34,7 +34,7 @@ import { useWriteReceipt, type WriteAttempt } from "../hooks/useWriteReceipt";
 import { boundaryEgressLamp } from "../inferenceEgress";
 import { apiRequest } from "../../lib/api";
 
-/** HS-150-07: inlined from the retired chat.ts — recipe keep is not a thread
+/** HS-151-07: inlined from the retired chat.ts — recipe keep is not a thread
  * operation; the /api/recipes/{id}/keep route lives on independently. */
 async function keepReply(
   recipeId: string,

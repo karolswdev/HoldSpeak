@@ -117,7 +117,7 @@ export function openPrimitive(ref: string): void {
   shellNavigate?.(`/?open=${encodeURIComponent(ref)}`);
 }
 
-/** Open a thread bound to a recipe (HS-150-07: replaces the retired PersonaChat). */
+/** Open a thread bound to a recipe (HS-151-07: replaces the retired PersonaChat). */
 export function openPersona(personaId: string): void {
   void import("./threads").then((m) =>
     m.createThread({ recipe_id: personaId }).then((t) =>

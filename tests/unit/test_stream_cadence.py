@@ -1,4 +1,4 @@
-"""HS-150-03: StreamCadence flushes at 500 chars, at 2 s, and at done."""
+"""HS-151-03: StreamCadence flushes at 500 chars, at 2 s, and at done."""
 from __future__ import annotations
 
 import pytest

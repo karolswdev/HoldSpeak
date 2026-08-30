@@ -1,9 +1,9 @@
-# HS-150-08 - The walk and the close (real metal, glass, docs, counsel)
+# HS-151-08 - The walk and the close (real metal, glass, docs, counsel)
 
 - **Project:** holdspeak
 - **Phase:** 150
 - **Status:** done
-- **Depends on:** HS-150-06, HS-150-07
+- **Depends on:** HS-151-06, HS-151-07
 - **Unblocks:** none
 - **Owner:** unassigned
 
@@ -32,7 +32,7 @@ rider (the web-unit baseline) has been carried two arcs.
   thread from a Door item → streamed reply → receipt).
 - Docs: README + USER_GUIDE entry points ("Threads"), MCP docs count
   arithmetic, `docs/internal/PLAN_PHASE_DESK_CHAT.md` status line →
-  "DC-01 shipped as Phase 150".
+  "DC-01 shipped as Phase 151".
 - `web-inherited-baseline.txt` + a sweep-side check (handover §3.D).
 - Close sweep (isolated HOME, `-n auto`, baseline-diffed), close
   counsel, AGPL check (`git grep -i warpdrv` returns only the plan and

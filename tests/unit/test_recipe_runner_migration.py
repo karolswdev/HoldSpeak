@@ -38,9 +38,9 @@ def rig(tmp_path: Path) -> tuple[Database, object]:
     return db, broker
 
 
-# HS-150-04: test_recipe_run_and_root_chat_stage_controller_winners DELETED.
+# HS-151-04: test_recipe_run_and_root_chat_stage_controller_winners DELETED.
 # It tested RecipeService.chat() which is permanently retired
-# (recipe.chat replaced by chat.turn in HS-150-02).
+# (recipe.chat replaced by chat.turn in HS-151-02).
 
 
 def test_recipe_subject_edit_applies_only_to_later_admission(rig: tuple[Database, object]) -> None:

@@ -1,4 +1,4 @@
-"""Thread ledger persistence (HS-150-01).
+"""Thread ledger persistence (HS-151-01).
 
 CRUD + tree operations for persistent desk conversations: threads, messages
 (with parent_id tree), typed parts, frozen refs, and FTS search.

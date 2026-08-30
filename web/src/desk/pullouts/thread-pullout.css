@@ -1,4 +1,4 @@
-/* HS-150-05 — Thread pullout styling. Signal Workbench material model:
+/* HS-151-05 — Thread pullout styling. Signal Workbench material model:
  * opaque, beveled, 2px radius, mono labels. Reuses desk tokens
  * (--desk-type-primary-size 15px, --desk-surface-body-size 13px,
  * --desk-surface-detail-size 12px, --desk-surface-label-size 11px).
@@ -325,7 +325,7 @@
   box-sizing: border-box;
 }
 
-/* ── Composer (HS-150-06) ─────────────────────────────────────────────── */
+/* ── Composer (HS-151-06) ─────────────────────────────────────────────── */
 
 .thread-composer {
   display: flex;

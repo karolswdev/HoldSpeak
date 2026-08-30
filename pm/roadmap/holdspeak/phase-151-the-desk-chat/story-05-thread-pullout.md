@@ -1,10 +1,10 @@
-# HS-150-05 - The Thread on the Desk (primitive, verbs, ThreadPullout, streaming renderer)
+# HS-151-05 - The Thread on the Desk (primitive, verbs, ThreadPullout, streaming renderer)
 
 - **Project:** holdspeak
 - **Phase:** 150
 - **Status:** done
-- **Depends on:** HS-150-04
-- **Unblocks:** HS-150-06, HS-150-07
+- **Depends on:** HS-151-04
+- **Unblocks:** HS-151-06, HS-151-07
 - **Owner:** unassigned
 
 ## Problem
@@ -58,7 +58,7 @@ The composer (06), search/list bands beyond the label (07).
 - **Unit:** vitest `web/src/desk/__tests__/threads.test.ts`
   (delta application, seq dedup, crash rule), `ThreadPullout.test.tsx`.
 - **Integration:** real-Chromium probe under
-  `tests/e2e/test_hs150_thread_glass.py` (rig pattern: 149's
+  `tests/e2e/test_hs151_thread_glass.py` (rig pattern: 149's
   `story-04-rig.py`).
 - **Manual / device:** shots reviewed by the orchestrator (cross-read).
 

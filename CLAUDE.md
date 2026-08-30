@@ -78,9 +78,10 @@ disagrees with one of these, canon wins:
   trace naming it instead of stalling the run at 98% forever. A test that
   legitimately needs longer declares `@pytest.mark.timeout(...)`.
 - Web-unit inherited baseline:
-  `uv run python scripts/web_baseline_check.py` — runs `npm --prefix web
-  run test:desk`, diffs failures against `tests/fixtures/web-inherited-baseline.txt`,
-  exits 1 on any new red. Pass `--json <path>` to skip the vitest run.
+  `uv run python scripts/check_web_baseline.py --run` — runs the desk
+  vitest suite and diffs its failures against
+  `tests/web-inherited-baseline.txt` (BASELINE-MATCHED / BRANCH-NEW /
+  HEALED; exit 0 only with zero branch-new). See `tests/WEB_BASELINE.md`.
 
 The `Tests ran` rule (PMO contract §3) requires you to actually run
 the relevant tests via these commands and read the output before

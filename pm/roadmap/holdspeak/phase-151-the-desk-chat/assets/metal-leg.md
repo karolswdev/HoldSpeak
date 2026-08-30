@@ -1,4 +1,4 @@
-# HS-150-08 real-metal legs on .43 (llama.cpp Q6)
+# HS-151-08 real-metal legs on .43 (llama.cpp Q6)
 
 Two real-metal legs run on the Intel box at `192.168.1.43:8080`
 (llama.cpp Q6 K-quant, accessible from an unsandboxed shell or over
@@ -8,10 +8,10 @@ SSH).
 
 ### Env / profile rows that must exist
 
-1. **Profile row:** a profile id (e.g. `hs150-metal-local`) pointing to
+1. **Profile row:** a profile id (e.g. `hs151-metal-local`) pointing to
    the Q6 GGUF on .43, registered in the hub's SQLite:
    ```
-   profile_id:  hs150-metal-local
+   profile_id:  hs151-metal-local
    kind:        onDevice
    provider:    local
    runtime:     llama_cpp_prompt_v1
@@ -25,7 +25,7 @@ SSH).
    curl -X PUT http://localhost:PORT/api/settings \
      -H 'X-HoldSpeak-Token: TOKEN' \
      -H 'Content-Type: application/json' \
-     -d '{"inference": {"default_profile": "hs150-metal-local"}}'
+     -d '{"inference": {"default_profile": "hs151-metal-local"}}'
    ```
 
 3. **Hub running:** the owner's real hub must be running with the web
@@ -45,9 +45,9 @@ both turns, rows match the glass.
 
 ```bash
 # 1. Open a WebSocket bus listener that prints timestamps.
-#    Save this as /tmp/hs150-bus-listener.py and run alongside the turn.
+#    Save this as /tmp/hs151-bus-listener.py and run alongside the turn.
 
-cat > /tmp/hs150-bus-listener.py << 'PYEOF'
+cat > /tmp/hs151-bus-listener.py << 'PYEOF'
 """Bus listener that prints timestamps for thread frames."""
 import asyncio, json, time, sys, base64, websockets
 
@@ -89,7 +89,7 @@ asyncio.run(listen())
 PYEOF
 
 # Run the listener in a background terminal:
-uv run python /tmp/hs150-bus-listener.py "OWNER_TOKEN" "ws://localhost:PORT" &
+uv run python /tmp/hs151-bus-listener.py "OWNER_TOKEN" "ws://localhost:PORT" &
 
 # 2. Create a thread and send two turns.
 TOKEN="OWNER_TOKEN"
@@ -198,8 +198,8 @@ curl -s -X PATCH "http://localhost:$PORT/api/threads/$THREAD" \
 
 # 6. Capture the provider payload via the engine's request logging.
 #    The simplest approach: monkeypatch the adapter to log the payload.
-#    Save this as /tmp/hs150-payload-capture.py:
-cat > /tmp/hs150-payload-capture.py << 'PYEOF'
+#    Save this as /tmp/hs151-payload-capture.py:
+cat > /tmp/hs151-payload-capture.py << 'PYEOF'
 """Capture and inspect the provider payload for People redaction.
 
 Run this INSTEAD of step 7's curl -- it sends the turn and intercepts
@@ -234,7 +234,7 @@ else:
     print("PASS: People content properly redacted for cloud egress")
 PYEOF
 
-uv run python /tmp/hs150-payload-capture.py "$THREAD"
+uv run python /tmp/hs151-payload-capture.py "$THREAD"
 ```
 
 ### Expected output

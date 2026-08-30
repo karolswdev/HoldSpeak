@@ -1,10 +1,10 @@
-# HS-150-03 - The streaming seam (invoke_stream + typed deltas + frames)
+# HS-151-03 - The streaming seam (invoke_stream + typed deltas + frames)
 
 - **Project:** holdspeak
 - **Phase:** 150
 - **Status:** done
-- **Depends on:** HS-150-02
-- **Unblocks:** HS-150-04
+- **Depends on:** HS-151-02
+- **Unblocks:** HS-151-04
 - **Owner:** unassigned
 
 ## Problem
@@ -32,11 +32,11 @@ frozen-plan / receipt envelope (settled-design D3).
 - Frames `thread_turn_started`, `thread_delta`, `thread_turn_done`
   appended to `RUNTIME_FRAME_TYPES` and `web/src/runtime/frames.ts`.
 - The persistence cadence helper (2 s / 500 chars / done) as a small
-  pure class the service (HS-150-04) drives.
+  pure class the service (HS-151-04) drives.
 
 ### Out
 
-The HTTP route and the assembler (HS-150-04); any UI.
+The HTTP route and the assembler (HS-151-04); any UI.
 
 ## Acceptance criteria
 
@@ -58,7 +58,7 @@ The HTTP route and the assembler (HS-150-04); any UI.
 - **Unit:** `tests/unit/test_inference_runner_stream.py` (fixture SSE
   server via a fake adapter), `tests/unit/test_realtime_frame_registry.py`,
   cadence helper test.
-- **Integration:** n/a until HS-150-08 (real `.43`).
+- **Integration:** n/a until HS-151-08 (real `.43`).
 - **Manual / device:** n/a.
 
 ## Notes / open questions

@@ -9,7 +9,7 @@ Sourced from the Phase-48 strategic review (`.guru_meditation.md`, an untracked
 scratch file, captured here so it survives) and the Phase-48 deferred decisions.
 
 **Last updated:** 2026-08-30 — candidate **AF** DC-01 GRADUATED and shipped as
-Phase 150 in one sitting (see the AF disposition); DC-02–05 stay parked.
+Phase 151 in one sitting (see the AF disposition); DC-02–05 stay parked.
 Earlier — candidate **AF. The Desk Chat**
 filed with its full RFC
 ([`docs/internal/PLAN_PHASE_DESK_CHAT.md`](../../../docs/internal/PLAN_PHASE_DESK_CHAT.md)):
@@ -932,10 +932,10 @@ surface or gets a small dedicated one.
 
 ---
 
-### AF. The Desk Chat — the warpdrv chat experience, ported as capabilities — **DC-01 GRADUATED → [Phase 150 — The Thread](./phase-150-the-desk-chat/current-phase-status.md)** (plan: [`docs/internal/PLAN_PHASE_DESK_CHAT.md`](../../../docs/internal/PLAN_PHASE_DESK_CHAT.md)); DC-02 The Hands, DC-03 The Practice, DC-04 The Call, DC-05 The Crew stay parked here
+### AF. The Desk Chat — the warpdrv chat experience, ported as capabilities — **DC-01 GRADUATED → [Phase 151 — The Thread](./phase-151-the-desk-chat/current-phase-status.md)** (plan: [`docs/internal/PLAN_PHASE_DESK_CHAT.md`](../../../docs/internal/PLAN_PHASE_DESK_CHAT.md)); DC-02 The Hands, DC-03 The Practice, DC-04 The Call, DC-05 The Crew stay parked here
 
 **Disposition (2026-08-30):** the owner said "Let's impl it!" the same day the plan
-was filed; Phase 150 chartered DC-01 (eight stories) and shipped it in one
+was filed; Phase 151 chartered DC-01 (eight stories) and shipped it in one
 sitting — the persisted thread ledger, `chat.turn` replacing `recipe.chat`,
 the streaming seam inside the frozen-plan envelope, the turn route with
 message-level People redaction at the coordinator's payload reconstruction
