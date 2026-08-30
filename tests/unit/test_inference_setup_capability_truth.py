@@ -137,7 +137,15 @@ def test_first_and_repeated_reads_do_not_mutate_database_or_config(tmp_path: Pat
     first = service.get_inference_setup(OWNER)
     second = service.get_inference_setup(OWNER)
 
-    assert first == second
+    # Capacity observations are live telemetry: available memory may change
+    # between two reads even though the projection performs no write. Compare
+    # the stable capability/setup truth independently from that observation.
+    first_stable = {**first, "hardware": {**first["hardware"], "observation": None}}
+    second_stable = {**second, "hardware": {**second["hardware"], "observation": None}}
+    assert first_stable == second_stable
+    for projection in (first, second):
+        available = projection["hardware"]["observation"]["available_memory_bytes"]
+        assert available is None or available >= 0
     assert config_path.read_bytes() == before_config
     assert (config_path.stat().st_size, config_path.stat().st_mtime_ns) == before_stat
     assert db_files() == before_db
