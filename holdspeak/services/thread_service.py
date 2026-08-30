@@ -42,6 +42,11 @@ _PEOPLE_REF_KINDS = frozenset({"person"})
 class ThreadService:
     """Orchestrate desk chat threads: CRUD, turn, branch, regenerate, keep, abort."""
 
+    # Class-level shared dict: every ThreadService instance (the route
+    # factory creates one per request) sees the same active turns so
+    # POST /abort can cancel a turn started by POST /turns.
+    _active_turns: dict[str, threading.Event] = {}
+
     def __init__(
         self,
         db: Database,
@@ -52,8 +57,6 @@ class ThreadService:
         self._db = db
         self._broadcast = broadcast
         self._broker = broker
-        # Active streaming turns: message_id -> cancel event.
-        self._active_turns: dict[str, threading.Event] = {}
 
     @property
     def _threads(self) -> ThreadRepository:
@@ -219,8 +222,14 @@ class ThreadService:
         )
 
         route_plan = admitted["route_plan"]
-        egress_scope = str(route_plan.get("egress_scope", "") or "")
+        # Derive egress_scope from the first route entry's boundary.
+        entries = route_plan.get("entries", [])
+        egress_scope = str(entries[0].get("boundary", "")) if entries else ""
+        if not egress_scope:
+            egress_scope = str(route_plan.get("egress_scope", "") or "")
         model_id = str(route_plan.get("model_id", "") or "")
+        if not model_id and entries:
+            model_id = str(entries[0].get("profile_id", "") or "")
 
         # -- Commit assistant row with streaming=1 --
         assistant_msg = self._threads.append_message(
@@ -249,7 +258,7 @@ class ThreadService:
         cancel_event = threading.Event()
         self._active_turns[assistant_msg.id] = cancel_event
 
-        adapter = StreamingPromptAdapter()
+        adapter = StreamingPromptAdapter(external_cancel=cancel_event)
 
         bg = threading.Thread(
             target=self._run_streaming_turn,
@@ -353,11 +362,24 @@ class ThreadService:
             )
             outcome = str(routed.get("outcome", "failed"))
             receipt = routed.get("receipt", {})
-            receipt_id = str(receipt.get("id", "") or "")
+            # The route execution receipt uses "execution_id" as its identifier.
+            receipt_id = str(
+                receipt.get("execution_id", "")
+                or receipt.get("id", "")
+                or ""
+            )
+            # When the runner catches an engine exception before the first
+            # delta, on_delta is never called so stats["error"] is unset.
+            # The routed dict carries the error from InvocationOutcome.
+            routed_error = str(routed.get("error", "") or "")
+            if outcome == "failed" and routed_error and not stats.get("error"):
+                stats["error"] = routed_error
 
         except Exception as exc:
             outcome = "failed"
             stats["error"] = str(exc)
+            from ..logging_config import get_logger
+            get_logger("thread_service").warning("execute_stream failed: %s", exc)
 
         # Flush any remaining buffered text.
         if part_id is not None and cadence.finish():
@@ -372,10 +394,19 @@ class ThreadService:
             outcome = "aborted"
             receipt_id = "indeterminate"
         else:
+            # Persist error_json when the turn failed (defect 2: engine raises
+            # before first delta).
+            error_json_str = ""
+            if outcome in ("failed", "indeterminate") and stats.get("error"):
+                error_json_str = json.dumps(
+                    {"error": str(stats["error"])},
+                    separators=(",", ":"),
+                )
             self._threads.complete_message(
                 assistant_msg_id,
                 receipt_id=receipt_id,
                 stats_json=stats_json,
+                error_json=error_json_str,
             )
 
         # Update token totals.
@@ -384,7 +415,13 @@ class ThreadService:
         if token_in or token_out:
             self._threads.add_token_totals(thread_id, token_in=token_in, token_out=token_out)
 
-        # Broadcast thread_turn_done.
+        # Broadcast thread_turn_done -- include error details when failed.
+        done_stats = dict(stats)
+        if outcome in ("failed", "indeterminate") and stats.get("error"):
+            done_stats["error"] = {
+                "code": "execute_stream_failed",
+                "message": str(stats["error"]),
+            }
         emit_thread_turn_done(
             self._broadcast,
             thread_id=thread_id,
@@ -392,7 +429,7 @@ class ThreadService:
             receipt_id=receipt_id,
             outcome=outcome,
             egress=egress_scope,
-            stats=stats,
+            stats=done_stats,
         )
 
         # Clean up active turn.
@@ -665,6 +702,19 @@ class ThreadService:
 
     def _message_dict(self, msg: Any) -> dict[str, Any]:
         parts = self._threads.get_parts(msg.id)
+        # Parse error_json / stats_json from DB strings to dicts for the wire.
+        error_json = None
+        if msg.error_json:
+            try:
+                error_json = json.loads(msg.error_json)
+            except (json.JSONDecodeError, TypeError):
+                error_json = {"error": str(msg.error_json)}
+        stats_json = None
+        if msg.stats_json:
+            try:
+                stats_json = json.loads(msg.stats_json)
+            except (json.JSONDecodeError, TypeError):
+                stats_json = None
         return {
             "id": msg.id,
             "role": msg.role,
@@ -673,6 +723,8 @@ class ThreadService:
             "receipt_id": msg.receipt_id,
             "egress_scope": msg.egress_scope,
             "model_id": msg.model_id,
+            "error_json": error_json,
+            "stats_json": stats_json,
             "parts": [
                 {
                     "id": p.id,
@@ -684,6 +736,7 @@ class ThreadService:
                 for p in parts
             ],
             "created_at": msg.created_at,
+            "updated_at": msg.updated_at,
             "completed_at": msg.completed_at,
             "aborted_at": msg.aborted_at,
         }

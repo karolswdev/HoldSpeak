@@ -44,12 +44,16 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
         )
 
     def _service() -> ThreadService:
-        from ...db import get_observer
+        # The kernel broker is the module-level runtime service (the same
+        # authority web_server.py hands the projection reaper); it is NOT an
+        # attribute of the Database. The story-08 rig caught the getattr
+        # fallback handing every HTTP turn a None broker.
+        from ...kernel.runtime import _service as _kernel_service
         broadcast = ctx.broadcast or (lambda t, d: None)
         return ThreadService(
             _database(),
             broadcast=broadcast,
-            broker=getattr(_database(), "_broker", None),
+            broker=_kernel_service(),
         )
 
     def _error(exc: ServiceError) -> JSONResponse:

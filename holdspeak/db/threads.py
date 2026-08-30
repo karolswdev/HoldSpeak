@@ -206,14 +206,27 @@ class ThreadRepository(BaseRepository):
             ).fetchone()
         return _row_to_thread(row) if row else None
 
-    def list(self, *, limit: int = 100) -> list[Thread]:
-        """Return newest-first, excluding soft-deleted threads."""
+    def list(self, *, limit: int = 100, ref_id: str = "") -> list[Thread]:
+        """Return newest-first, excluding soft-deleted threads.
+
+        When *ref_id* is non-empty, only threads whose ``thread_refs``
+        contain at least one row with that ``ref_id`` are returned.
+        """
         with self._connection() as conn:
-            rows = conn.execute(
-                "SELECT * FROM threads WHERE deleted_at IS NULL "
-                "ORDER BY updated_at DESC LIMIT ?",
-                (limit,),
-            ).fetchall()
+            if ref_id:
+                rows = conn.execute(
+                    "SELECT DISTINCT t.* FROM threads t "
+                    "JOIN thread_refs r ON r.thread_id = t.id "
+                    "WHERE t.deleted_at IS NULL AND r.ref_id = ? "
+                    "ORDER BY t.updated_at DESC LIMIT ?",
+                    (ref_id, limit),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM threads WHERE deleted_at IS NULL "
+                    "ORDER BY updated_at DESC LIMIT ?",
+                    (limit,),
+                ).fetchall()
         return [_row_to_thread(r) for r in rows]
 
     def patch(
@@ -400,14 +413,16 @@ class ThreadRepository(BaseRepository):
         *,
         receipt_id: str = "",
         stats_json: str = "",
+        error_json: str = "",
     ) -> Optional[ThreadMessage]:
         now = time.time()
         with self._connection() as conn:
             conn.execute(
                 "UPDATE thread_messages "
-                "SET streaming=0, completed_at=?, updated_at=?, receipt_id=?, stats_json=? "
+                "SET streaming=0, completed_at=?, updated_at=?, receipt_id=?, "
+                "stats_json=?, error_json=? "
                 "WHERE id=?",
-                (now, now, receipt_id, stats_json, str(message_id)),
+                (now, now, receipt_id, stats_json, error_json, str(message_id)),
             )
             row = conn.execute(
                 "SELECT * FROM thread_messages WHERE id=?", (str(message_id),)

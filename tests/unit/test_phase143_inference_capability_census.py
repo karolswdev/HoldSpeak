@@ -98,9 +98,10 @@ holdspeak/intel/providers.py:843|_profile_engine|configured_meeting_intel|call
 holdspeak/kernel/executor.py:19|<module>|_install_claim_issuer|call
 holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
 holdspeak/kernel/inference_runner.py:329|InferenceRunner._attempt_stream|_issue_dispatch_context|call
-holdspeak/kernel/inference_runner.py:609|InferenceRunner._attempt|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py:614|InferenceRunner._attempt|_issue_dispatch_context|call
 holdspeak/kernel/inference_runner.py:81|InferenceRunner.__init__|build_intel_for_revision|ref
 holdspeak/kernel/prompt_adapter.py:15|CanonicalPromptAdapter.dispatch|run_prompt|call
+holdspeak/kernel/prompt_adapter.py:57|StreamingPromptAdapter.dispatch|run_prompt|call
 holdspeak/main.py:765|_run_meeting_mode|transcribe|call
 holdspeak/main.py:774|_run_meeting_mode|transcribe|call
 holdspeak/meeting_import.py:313|_transcribe_import_windows|transcribe|call
@@ -414,11 +415,12 @@ holdspeak/kernel/executor.py:84|ExecutorPlane.claim|_issue_claim_witness|call
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.inference_runner", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/kernel/inference_runner.py:329|InferenceRunner._attempt_stream|_issue_dispatch_context|call
-holdspeak/kernel/inference_runner.py:609|InferenceRunner._attempt|_issue_dispatch_context|call
+holdspeak/kernel/inference_runner.py:614|InferenceRunner._attempt|_issue_dispatch_context|call
 holdspeak/kernel/inference_runner.py:81|InferenceRunner.__init__|build_intel_for_revision|ref
 """),
     _group(ProposedRoute("internal.inference.dispatch", "kernel.prompt_adapter", "InferenceRunner gateway/context-gated adapter"), """
 holdspeak/kernel/prompt_adapter.py:15|CanonicalPromptAdapter.dispatch|run_prompt|call
+holdspeak/kernel/prompt_adapter.py:57|StreamingPromptAdapter.dispatch|run_prompt|call
 """),
     _group(ProposedRoute("internal.speech.runtime_assembly", "speech_session", "InferenceRunner context-gated adapter"), """
 holdspeak/commands/dictation.py:166|_cmd_dry_run|build_pipeline|call
@@ -539,7 +541,8 @@ def test_phase143_call_site_fixture_is_complete_and_fail_closed() -> None:
     # HS-146-07 adds the one vision prompt leaf (run_prompt_messages).
     # HS-150-02/D3: streaming seam adds _chat_completion_deltas (3 sites)
     # and _attempt_stream (1 site); line shifts update 6 existing sites.
-    assert len(live) == 108
+    # HS-150-04: +1 StreamingPromptAdapter.dispatch run_prompt fallback, +1 line shift
+    assert len(live) == 109
 
 
 def test_phase143_every_product_runner_entrance_has_one_owner() -> None:

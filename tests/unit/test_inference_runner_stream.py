@@ -352,5 +352,11 @@ def test_usage_meta_in_published_result(tmp_path: Path) -> None:
 
     assert outcome.outcome == "succeeded"
     assert len(published) == 1
-    assert published[0]["usage"]["prompt_tokens"] == 42
-    assert published[0]["usage"]["completion_tokens"] == 17
+    # HS-150-04 (real-path defect): the published result is validated against
+    # the sealed capability output schema (output/provider/model ONLY); usage
+    # must NOT leak into it. It travels on the usage Delta instead.
+    assert "usage" not in published[0]
+    assert set(published[0]) >= {"output", "provider", "model"}
+    usage = [d for d in received if d.kind == "usage"]
+    assert usage and usage[0].meta["prompt_tokens"] == 42
+    assert usage[0].meta["completion_tokens"] == 17

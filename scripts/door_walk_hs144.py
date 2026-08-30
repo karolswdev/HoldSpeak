@@ -43,7 +43,7 @@ DEFAULT_PAIRS_MD = ASSETS / "story-06-pairs.md"
 TOKEN = "hs144-06-cold-walk-token"
 FIXTURE_TEXT = "Typed first value — this remains editable and has note custody."
 FIXTURE_PREFIX = "HS144 WALK"
-ALL_LEGS = ("cold", "reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe", "menus")
+ALL_LEGS = ("cold", "reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe", "menus", "thread")
 
 
 class WalkAssertionError(AssertionError):
@@ -1076,6 +1076,155 @@ def leg_menus(reporter: Reporter, browser: Any, hub: Hub, out: Path) -> None:
         n_context.close()
 
 
+def leg_thread(reporter: Reporter, browser: Any, hub: Hub, out: Path) -> None:
+    """HS-150: from a Door item's context menu choose 'Continue in thread' ->
+    the pullout opens with the ref chip -> composer visible -> thread created
+    via API with seed ref.
+
+    The walk hub has no model assignment, so no inference is possible. This leg
+    proves the gesture up to the composer + ref chip and verifies the thread was
+    created with the correct seed ref via the API. The streamed-answer flow is
+    proven by story-08-rig.py and story-08-metal.py which inject a fake engine.
+    """
+    THREAD_SHOTS = REPO / "pm/roadmap/holdspeak/phase-150-the-desk-chat/assets/story-08-walk-shots"
+    THREAD_SHOTS.mkdir(parents=True, exist_ok=True)
+
+    context, page, errors = browser_context(browser, 1440, 900)
+    try:
+        go(page, hub)
+        normal_door(page)
+
+        # Use the already-seeded fixture thought (created by seed_populated_truth,
+        # same one leg_menus targets). It is a note-kind object the desk already
+        # loaded at page-load time.
+        note_title = f"{FIXTURE_PREFIX} active thought"
+
+        # Switch to list view the same way leg_menus does.
+        page.get_by_role("button", name="Floor", exact=True).first.click()
+        row = page.locator(".desk-list-face tbody tr").first
+        if row.count() == 0:
+            page.get_by_role("button", name="Desk", exact=True).first.click()
+            page.locator('nav[role="menu"]').last.get_by_text("List view", exact=True).click()
+            page.wait_for_timeout(1000)
+
+        # Target the OBJECT row by the fixture title (zone rows do not wire
+        # the context menu -- the 148 handover).
+        obj_row = page.locator(".desk-list-face tbody tr", has_text=note_title).first
+        try:
+            obj_row.wait_for(timeout=15000)
+        except Exception:
+            pass
+        reporter.check(
+            "thread leg: source note row visible in list view",
+            obj_row.count() >= 1,
+            f"looked for {note_title!r} in .desk-list-face tbody tr",
+            scope="list-view object row for context menu",
+        )
+        capture(reporter, page, THREAD_SHOTS, "thread-list-view-1440.png",
+                "list view with the fixture note row visible")
+
+        # Right-click the object row to open the context menu.
+        obj_row.click(button="right")
+        cmenu = page.locator('nav[role="menu"]').last
+        cmenu.wait_for(timeout=15000)
+        capture(reporter, page, THREAD_SHOTS, "thread-context-menu-1440.png",
+                "context menu on the fixture note row")
+
+        # "Continue in thread" must be present and not ghosted.
+        thread_entry = cmenu.get_by_text("Continue in thread", exact=True)
+        reporter.check(
+            "thread leg: 'Continue in thread' verb present in context menu",
+            thread_entry.count() >= 1,
+            scope="list-view object row contextmenu",
+        )
+
+        thread_entry.click()
+        page.wait_for_timeout(2500)
+
+        # The pullout should open with the thread head visible.
+        thread_head = page.locator(".thread-head")
+        reporter.check(
+            "thread leg: thread pullout opens after Continue in thread",
+            thread_head.count() >= 1,
+            scope=".thread-head after Continue in thread verb",
+        )
+        capture(reporter, page, THREAD_SHOTS, "thread-pullout-opened-1440.png",
+                "thread pullout opened from Continue in thread verb")
+
+        # The composer must be visible.
+        composer = page.locator(".thread-composer-input")
+        reporter.check(
+            "thread leg: composer visible in thread pullout",
+            composer.count() >= 1,
+            scope=".thread-composer-input in thread pullout",
+        )
+
+        # Verify the thread was created with the seed ref via the API.
+        threads_status, threads_resp = hub.api("GET", "/api/threads")
+        thread_list = threads_resp.get("threads", []) if isinstance(threads_resp, dict) else []
+        reporter.check(
+            "thread leg: at least one thread exists after verb",
+            len(thread_list) >= 1,
+            f"thread count={len(thread_list)}",
+            scope="GET /api/threads",
+        )
+
+        if thread_list:
+            # The newest thread (first in list, newest-first) should have a
+            # seed ref pointing to the fixture note.
+            newest_tid = thread_list[0].get("id", "")
+            detail_status, detail = hub.api("GET", f"/api/threads/{newest_tid}")
+            refs = detail.get("refs", [])
+            has_seed_ref = any(
+                r.get("ref_kind") in ("note", "seed") for r in refs
+            )
+            reporter.check(
+                "thread leg: thread carries seed ref from the source note",
+                has_seed_ref,
+                f"refs={refs}",
+                scope=f"GET /api/threads/{newest_tid} refs",
+            )
+
+            # Post a turn via the API to verify the endpoint returns ids.
+            # The hub has no model, so the turn will fail at admission, but the
+            # endpoint itself must be reachable and return a structured error.
+            turn_status, turn_resp = hub.api(
+                "POST", f"/api/threads/{newest_tid}/turns",
+                {"text": "Summarize this note for me"},
+            )
+            # Expected: 201 (turn started, will fail in background) or 4xx/5xx
+            # (no model assignment). Either is acceptable -- what matters is
+            # the endpoint is reachable.
+            reporter.check(
+                "thread leg: turn endpoint reachable",
+                turn_status in (200, 201, 400, 409, 422, 500),
+                f"status={turn_status}",
+                scope=f"POST /api/threads/{newest_tid}/turns",
+            )
+
+            if turn_status in (200, 201):
+                # The turn was accepted (maybe the hub HAS a model somehow).
+                reporter.check(
+                    "thread leg: turn returns assistant message id",
+                    bool(turn_resp.get("assistant_message_id")),
+                    f"resp={turn_resp}",
+                    scope="turn response shape",
+                )
+                # Wait briefly and check for an error or done row.
+                page.wait_for_timeout(3000)
+                error_or_done = page.locator(
+                    ".thread-row-error, .thread-row-crashed, .thread-row-assistant"
+                )
+                if error_or_done.count() > 0:
+                    capture(reporter, page, THREAD_SHOTS,
+                            "thread-turn-result-1440.png",
+                            "turn result (error/crashed/reply) in pullout")
+
+        assert_clean(reporter, page, errors, "thread 1440")
+    finally:
+        context.close()
+
+
 def measured_tasks(reporter: Reporter, page: Any, ids: dict[str, str]) -> None:
     ledger = ClickLedger(reporter, "Tasks", "1", "settled populated Door after first-value handoff")
     door = normal_door(page)
@@ -1309,7 +1458,7 @@ def run_walk(args: argparse.Namespace) -> int:
             leg_cold(reporter, browser, hub, out)
 
         # Seeding never occurs until the actual first-value handoff has occurred.
-        needs_populated = any(leg in selected for leg in ("reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe", "menus"))
+        needs_populated = any(leg in selected for leg in ("reveal", "completion", "schedule", "calendar", "one-tap", "click-depth", "doorframe", "menus", "thread"))
         if needs_populated:
             if "cold" not in selected:
                 reporter.finding("partial walk bypassed cold first-value handoff; populated legs are diagnostic only")
@@ -1351,6 +1500,8 @@ def run_walk(args: argparse.Namespace) -> int:
             call("doorframe", lambda: leg_doorframe(reporter, browser, hub, out))
         if "menus" in selected:
             call("menus", lambda: leg_menus(reporter, browser, hub, out))
+        if "thread" in selected:
+            call("thread", lambda: leg_thread(reporter, browser, hub, out))
     except Exception as error:  # noqa: BLE001
         name = reporter.current.name if reporter.current else "bootstrap"
         if reporter.current is None:

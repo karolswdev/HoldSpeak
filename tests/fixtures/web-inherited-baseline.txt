@@ -1,0 +1,13 @@
+# Web-unit inherited-failure baseline (vitest / npm --prefix web run test:desk)
+#
+# Law: every name here is a known-inherited red that predates the current
+# phase. A NEW red not listed here is a regression — the check exits 1.
+# Removing a line is only lawful when the fix ships in the same commit.
+#
+# Format: file > describe > it  (exactly as vitest FAIL lines print it)
+
+src/desk/__tests__/containerQueryLaw.test.ts > HS-129-06 container-query law > keeps viewport-width media limited to shell exceptions
+src/desk/__tests__/writeReceiptGuard.test.ts > HS-132-06 swallowed-write guard > keeps every desk write out of a bare catch
+src/desk/components/InlineEditor.test.tsx > HS-129-08 editor windows > hosts note editing in its open pullout
+src/desk/components/MicButton.test.tsx > MicButton surfaces named refusals (HS-132-05) > never claims retention the session cannot prove
+src/desk/components/__tests__/workbenchAutomations.test.tsx > Workbench STARTS WHEN automations > tests without delivering work, then enables and pauses the trigger

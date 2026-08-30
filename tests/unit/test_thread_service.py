@@ -499,3 +499,210 @@ def test_import_threads(service: ThreadService) -> None:
     # Import again - should return existing.
     result2 = service.import_threads(payload)
     assert result == result2
+
+
+# ---------------------------------------------------------------------------
+# Regression: real RoutedInferenceCoordinator with fake engine factory
+# ---------------------------------------------------------------------------
+
+
+def test_real_coordinator_with_fake_engine(tmp_path: Path) -> None:
+    """Regression for HS-150-04: drives ThreadService through the REAL
+    RoutedInferenceCoordinator / InferenceRunner / _attempt_stream path
+    with a fake engine injected via _engine_factory.
+
+    This is the gap that let the production defect through: the unit tests
+    used a fake adoption service that bypassed the runner and receipt chain.
+    """
+    import os
+    import tempfile
+    import holdspeak.config as config_module
+    import holdspeak.db.core as db_core
+    from holdspeak.db import reset_database, get_database
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    home = Path(tempfile.mkdtemp(prefix="hs150-regr-"))
+    old_home = os.environ.get("HOME", "")
+    os.environ["HOME"] = str(home)
+    config_module.CONFIG_FILE = home / ".holdspeak" / "config.json"
+    db_core.DEFAULT_DB_PATH = home / "holdspeak.db"
+    reset_database()
+
+    try:
+        server = MeetingWebServer(
+            WebRuntimeCallbacks(
+                on_bookmark=lambda *_: None,
+                on_stop=lambda: None,
+                get_state=lambda: {},
+            ),
+        )
+        url = server.start()
+        db = get_database()
+
+        from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+        from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+        from holdspeak.kernel.inference_stream import Delta
+
+        profile_id = "regr-local"
+        _profile(db, profile_id, claims=("language", _result_claim("chat.turn")))
+        InferenceAssignmentService(db).set_assignment(OWNER, {
+            "command_id": "regr-assign",
+            "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "chat.turn"},
+            "entries": [{"profile_id": profile_id, "profile_revision": 1}],
+        })
+
+        from holdspeak.kernel.runtime import _service as _kernel_service
+        broker = _kernel_service()
+        runner = broker.inference_runner
+
+        class _FakeEngine:
+            active_provider = "fake-regr"
+            active_model = "regr-model"
+            def run_prompt_stream(self, *, messages=None, temperature=None, max_tokens=None, **kw):
+                words = "Alpha Beta Gamma Delta Epsilon".split()
+                for w in words:
+                    yield Delta(kind="text", text=w + " ")
+                yield Delta(kind="usage", meta={"prompt_tokens": 5, "completion_tokens": 5})
+                yield Delta(kind="done")
+            def run_prompt_messages(self, *, messages=None, **kw):
+                return "Alpha Beta Gamma Delta Epsilon "
+            def run_prompt(self, *, system_prompt="", user_prompt="", **kw):
+                return self.run_prompt_messages()
+
+        runner._engine_factory = lambda _rev, **_kw: _FakeEngine()
+
+        broadcasts_local: list[tuple[str, Any]] = []
+        svc = ThreadService(
+            db,
+            broadcast=lambda t, d: broadcasts_local.append((t, d)),
+            broker=broker,
+        )
+        thread = svc.create(title="Regression test")
+        tid = thread["id"]
+
+        result = asyncio.run(svc.start_turn(OWNER, tid, "Hello regression"))
+        assert "thread_id" in result
+        assert "assistant_message_id" in result
+
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            msg = db.threads.get_message(result["assistant_message_id"])
+            if msg and not msg.streaming:
+                break
+            time.sleep(0.2)
+        else:
+            pytest.fail("Streaming did not complete within 15s")
+
+        parts = db.threads.get_parts(result["assistant_message_id"])
+        text_parts = [p.text for p in parts if p.kind == "text" and p.text]
+        db_text = "".join(text_parts)
+        assert db_text == "Alpha Beta Gamma Delta Epsilon ", f"DB text: {db_text!r}"
+
+        delta_frames = [d for ft, d in broadcasts_local if ft == "thread_delta"]
+        assert len(delta_frames) >= 5, f"Expected >= 5 deltas, got {len(delta_frames)}"
+        seqs = [d["seq"] for d in delta_frames]
+        assert seqs == sorted(seqs), f"seq not monotonic: {seqs}"
+
+        done_frames = [d for ft, d in broadcasts_local if ft == "thread_turn_done"]
+        assert len(done_frames) == 1
+        assert done_frames[0]["outcome"] == "succeeded"
+        assert done_frames[0]["receipt_id"]
+        assert done_frames[0]["egress"]
+
+        msg = db.threads.get_message(result["assistant_message_id"])
+        assert msg is not None
+        assert msg.streaming is False
+        assert msg.receipt_id, "receipt_id should be set"
+        assert msg.egress_scope, "egress_scope should be set"
+
+        server.stop()
+    finally:
+        os.environ["HOME"] = old_home
+        reset_database()
+
+
+def test_graceful_degradation_run_prompt_only_engine(tmp_path: Path) -> None:
+    """An engine with only run_prompt (no run_prompt_stream) degrades to
+    one text delta containing the full output, followed by done."""
+    import os
+    import tempfile
+    import holdspeak.config as config_module
+    import holdspeak.db.core as db_core
+    from holdspeak.db import reset_database, get_database
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    home = Path(tempfile.mkdtemp(prefix="hs150-degrade-"))
+    old_home = os.environ.get("HOME", "")
+    os.environ["HOME"] = str(home)
+    config_module.CONFIG_FILE = home / ".holdspeak" / "config.json"
+    db_core.DEFAULT_DB_PATH = home / "holdspeak.db"
+    reset_database()
+
+    try:
+        server = MeetingWebServer(
+            WebRuntimeCallbacks(
+                on_bookmark=lambda *_: None,
+                on_stop=lambda: None,
+                get_state=lambda: {},
+            ),
+        )
+        url = server.start()
+        db = get_database()
+
+        from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+        from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+
+        profile_id = "degrade-local"
+        _profile(db, profile_id, claims=("language", _result_claim("chat.turn")))
+        InferenceAssignmentService(db).set_assignment(OWNER, {
+            "command_id": "degrade-assign",
+            "expected_revision": 0,
+            "scope": {"kind": "capability", "capability_id": "chat.turn"},
+            "entries": [{"profile_id": profile_id, "profile_revision": 1}],
+        })
+
+        from holdspeak.kernel.runtime import _service as _kernel_service
+        broker = _kernel_service()
+        runner = broker.inference_runner
+
+        class _RunPromptOnlyEngine:
+            active_provider = "fake-degrade"
+            active_model = "degrade-model"
+            def run_prompt(self, *, system_prompt="", user_prompt="", **kw):
+                return "Degraded single output"
+
+        runner._engine_factory = lambda _rev, **_kw: _RunPromptOnlyEngine()
+
+        broadcasts_local: list[tuple[str, Any]] = []
+        svc = ThreadService(
+            db,
+            broadcast=lambda t, d: broadcasts_local.append((t, d)),
+            broker=broker,
+        )
+        thread = svc.create(title="Degradation test")
+        result = asyncio.run(svc.start_turn(OWNER, thread["id"], "Hello degrade"))
+
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            msg = db.threads.get_message(result["assistant_message_id"])
+            if msg and not msg.streaming:
+                break
+            time.sleep(0.2)
+        else:
+            pytest.fail("Streaming did not complete within 15s")
+
+        parts = db.threads.get_parts(result["assistant_message_id"])
+        text_parts = [p.text for p in parts if p.kind == "text" and p.text]
+        db_text = "".join(text_parts)
+        assert db_text == "Degraded single output", f"DB text: {db_text!r}"
+
+        done_frames = [d for ft, d in broadcasts_local if ft == "thread_turn_done"]
+        assert len(done_frames) == 1
+        assert done_frames[0]["outcome"] == "succeeded"
+        assert done_frames[0]["receipt_id"]
+
+        server.stop()
+    finally:
+        os.environ["HOME"] = old_home
+        reset_database()

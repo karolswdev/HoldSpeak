@@ -466,6 +466,7 @@ ADAPTER_ALLOWLIST: dict[tuple[str, str], str] = {
     ("holdspeak/intel/engine.py", "MeetingIntel.generate_bookmark_label_with_context"): "L: the ONE bookmark-label leaf; both the live and the deferred admitted children dispatch it",
     ("holdspeak/intel/mesh_relay.py", "MeshRelayIntel._chat_completion_text"): "L: the mesh envelope leaf; carries the frozen revision + warrant",
     ("holdspeak/kernel/prompt_adapter.py", "CanonicalPromptAdapter.dispatch"): "L: the canonical adapter the runner hands an engine to",
+    ("holdspeak/kernel/prompt_adapter.py", "StreamingPromptAdapter.dispatch"): "L: the streaming adapter's non-streaming fallback when the engine lacks run_prompt_stream (HS-150-04)",
     ("holdspeak/plugins/dictation/runtime_llama_cpp.py", "LlamaCppRuntime.classify"): "L: local constrained-decoding classify leaf",
     ("holdspeak/plugins/dictation/runtime_llama_cpp.py", "LlamaCppRuntime.rewrite"): "L: local rewrite leaf",
     ("holdspeak/plugins/dictation/runtime_mesh_relay.py", "MeshRelayRuntime._run"): "L: mesh relay leaf for the dictation legs",
@@ -708,7 +709,8 @@ def test_every_model_execution_site_is_in_exactly_one_bucket() -> None:
     # multi-part sibling of run_prompt the VisionPromptAdapter dispatches.
     # HS-150-02/D3: streaming seam adds _chat_completion_deltas (3) +
     # _attempt_stream (1); line shifts do not change count.
-    assert len(sites) == 108
+    # HS-150-04: +1 StreamingPromptAdapter.dispatch run_prompt fallback
+    assert len(sites) == 109
     # THE headline: the blocking ledger is empty. Every model execution in
     # production is now the gateway, a reviewed adapter, or an admitted seam.
     assert counts["finding"] == 0

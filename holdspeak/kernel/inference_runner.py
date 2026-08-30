@@ -448,9 +448,14 @@ class InferenceRunner:
                 if pending_principal:
                     self._perform_cancel(iid, active, pending_principal)
                 return self._finish(active, iid, "indeterminate" if active.disposition == "unknown" else "cancelled")
-            result = {"output": "".join(collected_text)}
-            if usage_meta:
-                result["usage"] = usage_meta
+            result = {
+                "output": "".join(collected_text),
+                "provider": str(getattr(bound_engine, "active_provider", "") or ""),
+                "model": str(getattr(bound_engine, "active_model", "") or getattr(bound_engine, "model", "") or ""),
+            }
+            # Usage is not part of the capability output schema; it is carried
+            # via the on_delta(Delta(kind="usage", ...)) callback and persisted
+            # by the caller in stats_json, not in the project result.
             try:
                 result_ref = publish(result) if publish else f"inference-result:{iid}"
             except Exception as exc:
