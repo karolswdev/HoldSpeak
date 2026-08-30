@@ -8,7 +8,7 @@ export default defineConfig({
     outDir: "../holdspeak/static/_built",
     emptyOutDir: true,
     assetsDir: "assets",
-    sourcemap: true,
+    sourcemap: process.env.HOLDSPEAK_WEB_SOURCEMAPS === "1",
     rollupOptions: {
       output: {
         manualChunks: {

@@ -2,10 +2,12 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { usePrimitiveDetail } from "../usePrimitiveDetail";
+import { deskQueryClient } from "../../../lib/queryClient";
 
 describe("usePrimitiveDetail", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    deskQueryClient.clear();
   });
 
   it("fetches on mount with the correct id", async () => {
@@ -21,6 +23,23 @@ describe("usePrimitiveDetail", () => {
     expect(fetchFn).toHaveBeenCalledWith("abc");
     expect(result.current.data).toEqual({ name: "test" });
     expect(result.current.error).toBeNull();
+  });
+
+  it("deduplicates the same server resource across windows", async () => {
+    const fetchFn = vi.fn().mockResolvedValue({ name: "shared" });
+    const first = renderHook(() =>
+      usePrimitiveDetail("widget", "same", fetchFn),
+    );
+    await waitFor(() => expect(first.result.current.data).toEqual({ name: "shared" }));
+
+    const second = renderHook(() =>
+      usePrimitiveDetail("widget", "same", fetchFn),
+    );
+    await waitFor(() => expect(second.result.current.data).toEqual({ name: "shared" }));
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    first.unmount();
+    second.unmount();
   });
 
   it("refetches when id changes", async () => {

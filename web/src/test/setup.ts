@@ -1,4 +1,13 @@
 import "@testing-library/jest-dom/vitest";
+import { beforeEach } from "vitest";
+import { deskQueryClient } from "../lib/queryClient";
+
+// The application intentionally shares one resource cache. Tests must not
+// share it across cases, or a prior mocked response can satisfy a later
+// window without exercising that test's API contract.
+beforeEach(() => {
+  deskQueryClient.clear();
+});
 
 class ResizeObserverStub {
   observe() {}
