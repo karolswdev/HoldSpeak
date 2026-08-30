@@ -291,6 +291,8 @@ export interface ThreadDetail {
   messages: ThreadMessage[];
   siblings: Record<string, string[]>;
   refs: ThreadRef[];
+  /** HS-153-04: draft annotation parts from the server. */
+  draftAnnotations: DraftAnnotation[];
 }
 
 export async function createThread(opts: {
@@ -368,7 +370,23 @@ export async function getThread(id: string): Promise<ThreadDetail> {
   const rawRefs = Array.isArray(d.refs) ? d.refs : [];
   const refs = rawRefs.map((r: unknown) => toRef(r as Record<string, unknown>));
 
-  return { thread, messages, siblings, refs };
+  // HS-153-04: parse draft annotations from the server response.
+  const rawAnnotations = Array.isArray(d.draft_annotations) ? d.draft_annotations : [];
+  const draftAnnotations: DraftAnnotation[] = rawAnnotations.map((a: unknown) => {
+    const ann = a as Record<string, unknown>;
+    return {
+      id: String(ann.id ?? ""),
+      kind: String(ann.kind ?? "annotation"),
+      text: ann.text != null ? String(ann.text) : null,
+      ordinal: Number(ann.ordinal ?? 0),
+      sensitive: Boolean(ann.sensitive),
+      ...(ann.meta_json && typeof ann.meta_json === "object"
+        ? { meta_json: ann.meta_json as DraftAnnotation["meta_json"] }
+        : {}),
+    };
+  });
+
+  return { thread, messages, siblings, refs, draftAnnotations };
 }
 
 export async function patchThread(
@@ -465,6 +483,42 @@ export async function decideToolCall(
   );
 }
 
+// ── annotations (HS-153-04) ─────────────────────────────────────────
+
+export interface DraftAnnotation {
+  id: string;
+  kind: string;
+  text: string | null;
+  ordinal: number;
+  sensitive: boolean;
+  meta_json?: {
+    source: string;
+    quote: string;
+    comment: string;
+    anchor_message_id: string;
+  };
+}
+
+export async function addAnnotation(
+  threadId: string,
+  body: { message_id: string; quote: string; comment: string },
+): Promise<DraftAnnotation> {
+  return apiFetch<DraftAnnotation>(
+    `/api/threads/${encodeURIComponent(threadId)}/annotations`,
+    { method: "POST", json: body },
+  );
+}
+
+export async function deleteAnnotation(
+  threadId: string,
+  partId: string,
+): Promise<void> {
+  await apiFetch(
+    `/api/threads/${encodeURIComponent(threadId)}/annotations/${encodeURIComponent(partId)}`,
+    { method: "DELETE" },
+  );
+}
+
 // ── streaming buffer ────────────────────────────────────────────────
 
 export interface StreamingBuffer {
@@ -532,6 +586,8 @@ export interface ThreadStoreState {
   statusLines: Record<string, string>;
   /** HS-153-03: guardrail rows keyed by thread id -> message id. */
   guardrailRows: Record<string, Record<string, GuardrailRow>>;
+  /** HS-153-04: draft annotations keyed by thread id. */
+  draftAnnotations: Record<string, DraftAnnotation[]>;
 }
 
 export interface ThreadStoreActions {
@@ -579,6 +635,7 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
   toolRows: {},
   statusLines: {},
   guardrailRows: {},
+  draftAnnotations: {},
 
   async loadThread(id) {
     set((s) => ({ loading: { ...s.loading, [id]: true } }));
@@ -587,6 +644,11 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
       set((s) => ({
         threads: { ...s.threads, [id]: detail },
         loading: { ...s.loading, [id]: false },
+        // HS-153-04: hydrate draft annotations from server response.
+        draftAnnotations: {
+          ...s.draftAnnotations,
+          [id]: detail.draftAnnotations ?? [],
+        },
       }));
       // HS-152-04: hydrate tool rows from persisted parts
       get().hydrateToolRows(id);

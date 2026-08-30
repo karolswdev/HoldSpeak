@@ -56,6 +56,7 @@ function seedThread(threadId: string, messages: ThreadMessage[] = []): void {
         messages,
         siblings: {},
         refs: [],
+        draftAnnotations: [],
       },
     },
     buffers: {},

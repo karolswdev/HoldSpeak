@@ -1004,3 +1004,94 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ── Annotation popover + chips (HS-153-04) ───────────────────────── */
+
+.thread-annotation-popover {
+  background: var(--desk-window-fill);
+  border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.12));
+  border-left: 2px solid var(--accent, #4488ff);
+  border-radius: 2px;
+  padding: 8px;
+  min-width: 240px;
+  max-width: 360px;
+  color: var(--text);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.thread-annotation-quote-head {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size, 11px);
+  color: var(--text-muted, #888);
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-annotation-input-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.thread-annotation-comment-input {
+  flex: 1;
+  padding: 4px 6px;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size, 12px);
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.2));
+  border-radius: 2px;
+  background: var(--desk-window-well);
+  color: var(--text);
+  outline: none;
+}
+
+.thread-annotation-comment-input:focus {
+  border-color: var(--accent, #4488ff);
+}
+
+.thread-annotation-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.thread-annotation-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 8px 0;
+}
+
+.thread-annotation-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  background: var(--wash-2, rgba(128, 128, 128, 0.08));
+  border-radius: 3px;
+  max-width: 200px;
+}
+
+.thread-annotation-chip-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-annotation-chip-remove {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  color: var(--text-muted, #888);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.thread-annotation-chip-remove:hover {
+  color: var(--text, inherit);
+}

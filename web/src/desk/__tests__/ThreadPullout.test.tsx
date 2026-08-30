@@ -60,6 +60,7 @@ function seedStore(messages: ThreadMessage[], siblings: Record<string, string[]>
     messages,
     siblings,
     refs: [],
+    draftAnnotations: [],
   };
   useThreadStore.setState({ threads: { "t-1": detail }, buffers: {}, loading: {} });
 }

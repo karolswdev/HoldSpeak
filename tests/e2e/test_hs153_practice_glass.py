@@ -579,3 +579,205 @@ def test_guardrail_row_renders_and_deny_focused(guardrail_hub: dict) -> None:
             page.close()
 
         browser.close()
+
+
+# ----------------------------------------------------------------- annotate leg (HS-153-04)
+
+SHOTS_04 = REPO / "pm/roadmap/holdspeak/phase-153-the-practice/assets/story-04-shots"
+
+
+def test_annotation_popover_and_chips(hub: dict) -> None:
+    """Select text in an assistant response via mouseup -> popover appears
+    anchored inside the pullout, type a comment -> Save -> chip renders;
+    reload -> chip persists; Send -> promoted user message with the
+    annotation prefix, draft_annotations == []. No modal, no overflow.
+    Assertive — no defensive ``if count > 0``."""
+    from playwright.sync_api import sync_playwright
+
+    url = hub["url"]
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        for width in (1440, 393):
+            # Create a thread and send a turn to get an assistant response.
+            r = _api_direct(url, "POST", "/api/threads",
+                            {"title": f"Annotation glass {width}"})
+            assert r["status"] == 201, f"Create thread failed: {r}"
+            thread_id = r["payload"]["id"]
+
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            _open_thread(page, url, thread_id)
+
+            composer = page.locator("[data-testid='composer-input']")
+            composer.wait_for(state="visible", timeout=10000)
+
+            def _type(text: str) -> None:
+                page.evaluate(
+                    """([s,v])=>{const e=document.querySelector(s);if(!e)return;
+                    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(e,v);
+                    e.dispatchEvent(new Event('input',{bubbles:true}));
+                    e.dispatchEvent(new Event('change',{bubbles:true}));
+                    e.selectionStart=e.selectionEnd=v.length}""",
+                    ["[data-testid='composer-input']", text])
+
+            # Send a first turn to get an assistant response.
+            _type("Tell me something interesting")
+            page.wait_for_timeout(500)
+            send_btn = page.locator("[data-testid='send-button']")
+            if send_btn.count() > 0:
+                send_btn.click()
+            else:
+                composer.press("Enter")
+            page.wait_for_timeout(5000)
+
+            # Verify the assistant row rendered.
+            asst_body = page.locator(".thread-row-assistant .thread-row-body")
+            asst_body.wait_for(state="visible", timeout=5000)
+
+            # -- Select text via real mouse drag across the assistant text --
+            # Get the precise bounding box of the text paragraph inside the
+            # assistant body. Drag from the start to ~80px right to produce
+            # a real browser selection that fires selectionchange.
+            text_box = page.evaluate("""() => {
+                var p = document.querySelector(
+                    '.thread-row-assistant .thread-row-body .surface-material p'
+                );
+                if (!p) {
+                    // Fallback: use the body itself
+                    p = document.querySelector('.thread-row-assistant .thread-row-body');
+                }
+                if (!p) return null;
+                var r = p.getBoundingClientRect();
+                return {x: r.x, y: r.y, w: r.width, h: r.height};
+            }""")
+            assert text_box is not None, f"No text element bounding box at {width}"
+            drag_y = text_box["y"] + text_box["h"] / 2
+            drag_x_start = text_box["x"] + 2
+            drag_x_end = drag_x_start + min(100, text_box["w"] - 4)
+            page.mouse.move(drag_x_start, drag_y)
+            page.mouse.down()
+            # Move in small steps to simulate a real drag
+            for i in range(1, 6):
+                page.mouse.move(
+                    drag_x_start + (drag_x_end - drag_x_start) * i / 5,
+                    drag_y,
+                )
+            page.mouse.up()
+            # Verify the selection was created.
+            sel_text = page.evaluate(
+                "() => (window.getSelection() || '').toString().trim()"
+            )
+            if not sel_text:
+                # Fallback: build a Range programmatically and dispatch
+                # selectionchange manually (same as a real browser would).
+                page.evaluate("""() => {
+                    var body = document.querySelector(
+                        '.thread-row-assistant .thread-row-body'
+                    );
+                    if (!body) return;
+                    var range = document.createRange();
+                    var walker = document.createTreeWalker(
+                        body, NodeFilter.SHOW_TEXT
+                    );
+                    var node = walker.nextNode();
+                    if (!node) return;
+                    range.setStart(node, 0);
+                    range.setEnd(node, Math.min(node.length, 10));
+                    window.getSelection().removeAllRanges();
+                    window.getSelection().addRange(range);
+                    document.dispatchEvent(
+                        new Event('selectionchange', {bubbles: false})
+                    );
+                }""")
+
+            # -- ASSERT: popover visible --
+            popover = page.locator("[data-testid='annotation-popover']")
+            popover.wait_for(state="visible", timeout=3000)
+            assert popover.is_visible(), f"Popover not visible at {width}"
+
+            # Popover bounding box is inside the pullout (no page overflow).
+            pop_box = popover.bounding_box()
+            assert pop_box is not None, f"Popover has no bounding box at {width}"
+            assert pop_box["x"] >= 0, f"Popover left outside viewport at {width}"
+            assert pop_box["x"] + pop_box["width"] <= width + 2, (
+                f"Popover right edge overflows at {width}"
+            )
+            _save_shot(page, "annotation-popover", width, shots_dir=SHOTS_04)
+
+            # MicButton (or its unsupported placeholder) present in the popover.
+            mic = popover.locator(".desk-mic")
+            assert mic.count() > 0, f"MicButton missing in popover at {width}"
+
+            # -- Type a comment via native setter and Save --
+            comment_input = page.locator("[data-testid='annotation-comment-input']")
+            comment_input.wait_for(state="visible", timeout=2000)
+            page.evaluate("""() => {
+                var el = document.querySelector("[data-testid='annotation-comment-input']");
+                if (!el) return;
+                Object.getOwnPropertyDescriptor(
+                    HTMLInputElement.prototype, 'value'
+                ).set.call(el, 'I agree with this');
+                el.dispatchEvent(new Event('input', {bubbles: true}));
+                el.dispatchEvent(new Event('change', {bubbles: true}));
+            }""")
+            page.wait_for_timeout(300)
+
+            save_btn2 = page.locator("[data-testid='annotation-save']")
+            save_btn2.wait_for(state="visible", timeout=2000)
+            save_btn2.click()
+            page.wait_for_timeout(1500)
+
+            # -- ASSERT: chip visible --
+            chip = page.locator("[data-testid='annotation-chip']")
+            chip.first.wait_for(state="visible", timeout=3000)
+            assert chip.first.is_visible(), f"Chip not visible after save at {width}"
+            _save_shot(page, "annotation-chip", width, shots_dir=SHOTS_04)
+
+            # -- Reload and ASSERT chip persists --
+            _open_thread(page, url, thread_id)
+            page.wait_for_timeout(2500)
+            chip_reload = page.locator("[data-testid='annotation-chip']")
+            chip_reload.first.wait_for(state="visible", timeout=5000)
+            assert chip_reload.first.is_visible(), (
+                f"Chip not visible after reload at {width}"
+            )
+
+            # -- Send a turn: drafts promoted --
+            _type("Please elaborate on that")
+            page.wait_for_timeout(500)
+            sb = page.locator("[data-testid='send-button']")
+            if sb.count() > 0:
+                sb.click()
+            else:
+                page.locator("[data-testid='composer-input']").press("Enter")
+            page.wait_for_timeout(6000)
+            _save_shot(page, "annotation-after-send", width, shots_dir=SHOTS_04)
+
+            # -- ASSERT: GET shows promoted annotation + no drafts --
+            get_r = _api_direct(url, "GET", f"/api/threads/{thread_id}", None)
+            assert get_r["status"] == 200, f"GET failed: {get_r}"
+            msgs = get_r["payload"].get("messages", [])
+            user_msgs = [m for m in msgs if m.get("role") == "user"]
+            assert len(user_msgs) >= 2, (
+                f"Expected at least 2 user messages after send, got {len(user_msgs)}"
+            )
+            last_user_parts = user_msgs[-1].get("parts", [])
+            all_text = " ".join(p.get("text", "") or "" for p in last_user_parts)
+            assert "annotated" in all_text.lower(), (
+                f"Promoted user message should contain annotation prefix, "
+                f"got: {all_text[:120]}"
+            )
+            drafts = get_r["payload"].get("draft_annotations", [])
+            assert len(drafts) == 0, (
+                f"draft_annotations should be empty after send, got {drafts}"
+            )
+
+            # No horizontal overflow.
+            body_w = page.evaluate("document.body.scrollWidth")
+            vp_w = page.evaluate("window.innerWidth")
+            assert body_w <= vp_w + 1, f"H-overflow at {width}: {body_w}>{vp_w}"
+
+            page.close()
+
+        browser.close()

@@ -80,6 +80,7 @@ function seedStore(messages: ThreadMessage[], siblings: Record<string, string[]>
     messages,
     siblings,
     refs: [],
+    draftAnnotations: [],
   };
   useThreadStore.setState({ threads: { "t-1": detail }, buffers: {}, loading: {} });
 }
@@ -923,6 +924,7 @@ describe("HS-152-05 status line", () => {
       messages: [makeMsg()],
       siblings: {},
       refs: [],
+      draftAnnotations: [],
     };
     useThreadStore.setState({ threads: { "t-1": detail }, buffers: {}, loading: {} });
     const { container } = renderPullout();
@@ -950,6 +952,7 @@ describe("HS-152-05 status line", () => {
       messages: [makeMsg()],
       siblings: {},
       refs: [],
+      draftAnnotations: [],
     };
     useThreadStore.setState({
       threads: { "t-1": detail },

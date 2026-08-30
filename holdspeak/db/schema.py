@@ -3458,7 +3458,8 @@ CREATE TABLE IF NOT EXISTS thread_message_parts (
     tool_call_id TEXT NOT NULL DEFAULT '',
     attachment_ref TEXT NOT NULL DEFAULT '',
     meta_json TEXT NOT NULL DEFAULT '',
-    sensitive INTEGER NOT NULL DEFAULT 0
+    sensitive INTEGER NOT NULL DEFAULT 0,
+    draft INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_thread_message_parts_message_ordinal
 ON thread_message_parts(message_id, ordinal);

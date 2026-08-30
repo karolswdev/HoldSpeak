@@ -322,4 +322,100 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to decide tool call")
 
+    # ── Annotations (HS-153-04) ────────────────────────────────────
+
+    @router.post("/api/threads/{thread_id}/annotations")
+    async def api_add_annotation(thread_id: str, request: Request) -> Any:
+        """Add an owner annotation to the thread's draft message."""
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        message_id = str(body.get("message_id") or "")
+        quote = str(body.get("quote") or "")
+        comment = str(body.get("comment") or "")
+        if not message_id or not quote:
+            return JSONResponse(
+                {"error": "message_id and quote are required"},
+                status_code=400,
+            )
+        try:
+            import json as _json
+            db = _database()
+            threads = db.threads
+
+            # Validate the source message exists and belongs to this thread.
+            source_msg = threads.get_message(message_id)
+            if source_msg is None or source_msg.thread_id != thread_id:
+                return JSONResponse(
+                    {"error": "message_not_found"},
+                    status_code=404,
+                )
+
+            # Check if the source part is sensitive (for the fence).
+            source_parts = threads.get_parts(message_id)
+            source_sensitive = any(p.sensitive for p in source_parts if p.kind == "text")
+
+            # Get or create the draft message.
+            draft_msg = threads.draft_message_for(thread_id)
+            if draft_msg is None:
+                # Auto-chain to the current leaf.
+                path = threads.list_path(thread_id)
+                parent_id = path[-1].id if path else None
+                draft_msg = threads.append_message(
+                    thread_id,
+                    role="user",
+                    parent_id=parent_id,
+                )
+
+            meta = {
+                "source": "owner",
+                "quote": quote,
+                "comment": comment,
+                "anchor_message_id": message_id,
+            }
+            part = threads.append_part(
+                draft_msg.id,
+                kind="annotation",
+                text=f'The owner annotated: «{quote}» — {comment}',
+                meta_json=_json.dumps(meta, separators=(",", ":"), sort_keys=True),
+                sensitive=source_sensitive,
+                draft=True,
+            )
+            return JSONResponse({
+                "id": part.id,
+                "kind": part.kind,
+                "text": part.text,
+                "ordinal": part.ordinal,
+                "sensitive": part.sensitive,
+                "draft": part.draft,
+                "meta_json": meta,
+            }, status_code=201)
+        except ServiceError as exc:
+            return _error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to add annotation")
+
+    @router.delete("/api/threads/{thread_id}/annotations/{part_id}")
+    async def api_delete_annotation(thread_id: str, part_id: str, request: Request) -> Any:
+        """Delete a draft annotation part."""
+        try:
+            db = _database()
+            threads = db.threads
+            # Verify the part belongs to this thread.
+            parts = threads.draft_parts(thread_id)
+            if not any(p.id == part_id for p in parts):
+                return JSONResponse(
+                    {"error": "annotation_not_found"},
+                    status_code=404,
+                )
+            deleted = threads.delete_part(part_id)
+            if not deleted:
+                return JSONResponse(
+                    {"error": "annotation_not_found"},
+                    status_code=404,
+                )
+            return JSONResponse({"deleted": True})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to delete annotation")
+
     return router

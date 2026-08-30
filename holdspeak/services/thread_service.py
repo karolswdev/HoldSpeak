@@ -184,15 +184,30 @@ class ThreadService:
             raise ServiceError("thread_not_found", f"Thread {thread_id} not found", context={"status": 404})
         result = self._thread_dict(thread)
         path = self._threads.list_path(thread_id)
-        result["messages"] = [self._message_dict(m) for m in path]
+        # HS-153-04: filter out the draft message from the transcript.
+        visible_path = [m for m in path if not self._threads.is_draft_message(m.id)]
+        result["messages"] = [self._message_dict(m) for m in visible_path]
         # Build siblings map: message_id -> (n, m).
         siblings_map: dict[str, list[int]] = {}
-        for m in path:
+        for m in visible_path:
             n, total = self._threads.siblings(m.id)
             if total > 1:
                 siblings_map[m.id] = [n, total]
         result["siblings"] = siblings_map
         result["refs"] = [self._ref_dict(r) for r in self._threads.get_refs(thread_id)]
+        # HS-153-04: expose draft annotations for the composer chips.
+        draft_parts = self._threads.draft_parts(thread_id)
+        result["draft_annotations"] = [
+            {
+                "id": p.id,
+                "kind": p.kind,
+                "text": p.text,
+                "ordinal": p.ordinal,
+                "sensitive": p.sensitive,
+                **({"meta_json": json.loads(p.meta_json)} if p.meta_json else {}),
+            }
+            for p in draft_parts
+        ]
         return result
 
     def patch(
@@ -342,13 +357,25 @@ class ThreadService:
                         "sensitive": False,
                     })
 
-        # -- Persist user message --
-        user_msg = self._threads.append_message(
-            thread_id,
-            role="user",
-            parent_id=parent_id,
-        )
-        self._threads.append_part(user_msg.id, kind="text", text=text)
+        # -- Persist user message (HS-153-04: promote draft if present) --
+        draft_msg = self._threads.draft_message_for(thread_id)
+        if draft_msg is not None:
+            # Promote the draft message: set draft=0 on existing annotation
+            # parts and append the typed text AFTER the annotations.
+            # The annotation parts already carry their prefix text (set by
+            # the POST route); _assemble_payload concatenates all text +
+            # annotation parts, so we only need to append the typed text
+            # as a plain text part — no separate prefix construction.
+            self._threads.promote_drafts(draft_msg.id)
+            self._threads.append_part(draft_msg.id, kind="text", text=text)
+            user_msg = draft_msg
+        else:
+            user_msg = self._threads.append_message(
+                thread_id,
+                role="user",
+                parent_id=parent_id,
+            )
+            self._threads.append_part(user_msg.id, kind="text", text=text)
 
         # -- Freeze refs with sensitive marking --
         if frozen_ref_rows:
@@ -1545,6 +1572,9 @@ class ThreadService:
 
         sensitive_texts: list[str] = []
         for msg in path:
+            # HS-153-04: skip the draft message from the payload.
+            if self._threads.is_draft_message(msg.id):
+                continue
             parts = self._threads.get_parts(msg.id)
             text_parts = []
             for part in parts:
@@ -1658,6 +1688,7 @@ class ThreadService:
                     "text": p.text,
                     "ordinal": p.ordinal,
                     "sensitive": p.sensitive,
+                    "draft": p.draft,
                     **({"meta_json": json.loads(p.meta_json)}
                        if p.meta_json else {}),
                     **({"tool_call_id": p.tool_call_id}

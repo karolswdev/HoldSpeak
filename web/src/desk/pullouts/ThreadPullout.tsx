@@ -35,6 +35,8 @@ import {
   regenerateThread,
   createThread,
   decideToolCall,
+  addAnnotation,
+  deleteAnnotation,
   type ThreadMessage,
   type ThreadDeltaPayload,
   type ThreadTurnStartedPayload,
@@ -43,12 +45,14 @@ import {
   type ThreadToolResultPayload,
   type ThreadStatusLinePayload,
   type ThreadGuardrailPayload,
+  type DraftAnnotation,
   type ToolRow,
   type ToolRowState,
   type GuardrailRow,
 } from "../threads";
 import { useDesk } from "../store";
 import { ThreadComposer, InlineEditor } from "../components/ThreadComposer";
+import { MicButton } from "../components/MicButton";
 import { ModeTabs } from "../components/ModeTabs";
 import type { PulloutContentProps } from "./types";
 import "./thread-pullout.css";
@@ -56,6 +60,7 @@ import "./thread-pullout.css";
 // HS-152-04: stable empty refs for zustand selectors (avoid infinite re-render).
 const EMPTY_TOOL_ROWS: Record<string, ToolRow> = {};
 const EMPTY_GUARDRAIL_ROWS: Record<string, GuardrailRow> = {};
+const EMPTY_DRAFT_ANNOTATIONS: DraftAnnotation[] = [];
 
 // ── StreamingMaterial ────────────────────────────────────────────────
 // Append-safe wrapper: renders the live text cheaply while streaming,
@@ -661,6 +666,134 @@ function ToolRowView({
   );
 }
 
+// ── Annotation popover (HS-153-04) ──────────────────────────────────
+
+function AnnotationPopover({
+  anchorRect,
+  quoteText,
+  onSave,
+  onCancel,
+}: {
+  anchorRect: { top: number; left: number; width: number; bottom: number };
+  quoteText: string;
+  onSave: (comment: string) => void;
+  onCancel: () => void;
+}) {
+  const [comment, setComment] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        onCancel();
+      }
+    };
+    document.addEventListener("keydown", handler, true);
+    return () => document.removeEventListener("keydown", handler, true);
+  }, [onCancel]);
+
+  const quoteHead = quoteText.length > 40 ? quoteText.slice(0, 40) + "..." : quoteText;
+
+  return (
+    <div
+      ref={popoverRef}
+      className="thread-annotation-popover"
+      data-testid="annotation-popover"
+      style={{
+        position: "absolute",
+        top: anchorRect.bottom + 4,
+        left: Math.max(0, anchorRect.left),
+        zIndex: 100,
+      }}
+    >
+      <div className="thread-annotation-quote-head" title={quoteText}>
+        {quoteHead}
+      </div>
+      <div className="thread-annotation-input-row">
+        <input
+          ref={inputRef}
+          type="text"
+          className="thread-annotation-comment-input"
+          data-testid="annotation-comment-input"
+          placeholder="Comment"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && comment.trim()) {
+              e.preventDefault();
+              onSave(comment.trim());
+            }
+          }}
+        />
+        <MicButton
+          onText={(text) => setComment((prev) => (prev ? prev + " " + text : text))}
+          label="Dictate comment"
+        />
+      </div>
+      <div className="thread-annotation-actions">
+        <button
+          type="button"
+          className="desk-chip is-primary"
+          data-testid="annotation-save"
+          disabled={!comment.trim()}
+          onClick={() => onSave(comment.trim())}
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          className="desk-chip quiet"
+          data-testid="annotation-cancel"
+          onClick={onCancel}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Annotation chips (HS-153-04) ────────────────────────────────────
+
+function AnnotationChips({
+  annotations,
+  onRemove,
+}: {
+  annotations: DraftAnnotation[];
+  onRemove: (partId: string) => void;
+}) {
+  if (annotations.length === 0) return null;
+  return (
+    <div className="thread-annotation-chips" data-testid="annotation-chips">
+      {annotations.map((a) => {
+        const quote = a.meta_json?.quote ?? "";
+        const head = quote.length > 30 ? quote.slice(0, 30) + "..." : quote;
+        return (
+          <span key={a.id} className="thread-annotation-chip" data-testid="annotation-chip">
+            <span className="thread-annotation-chip-text">{head}</span>
+            <button
+              type="button"
+              className="thread-annotation-chip-remove"
+              data-testid="annotation-chip-remove"
+              aria-label="Remove annotation"
+              onClick={() => onRemove(a.id)}
+            >
+              x
+            </button>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Message row ─────────────────────────────────────────────────────
 function MessageRow({
   msg,
@@ -1005,6 +1138,10 @@ function ThreadPulloutInner({
 
   const handleSend = useCallback(
     (text: string, refs: Array<{ ref_kind: string; ref_id: string }>) => {
+      // HS-153-04: clear draft annotations optimistically on send (they are promoted server-side).
+      useThreadStore.setState((s) => ({
+        draftAnnotations: { ...s.draftAnnotations, [threadId]: [] },
+      }));
       void attempt("send turn", () =>
         sendTurn(threadId, { text, refs: refs.length > 0 ? refs : undefined }),
       );
@@ -1069,6 +1206,174 @@ function ThreadPulloutInner({
 
   const isStreaming = detail?.messages.some((m) => m.streaming) ?? false;
 
+  // HS-153-04: annotation popover state
+  const draftAnnotations = useThreadStore((s) => s.draftAnnotations[threadId] ?? EMPTY_DRAFT_ANNOTATIONS);
+  const [annotationPopover, setAnnotationPopover] = useState<{
+    rect: { top: number; left: number; width: number; bottom: number };
+    quote: string;
+    messageId: string;
+  } | null>(null);
+  // Keep a ref to the setter so checkSelection never captures a stale one.
+  const setPopoverRef = useRef(setAnnotationPopover);
+  setPopoverRef.current = setAnnotationPopover;
+
+  // Selection detection: show popover on text selection in assistant rows
+  const checkSelection = useCallback(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+      return;
+    }
+    // Guard: don't open while focus is inside an input/textarea/contenteditable
+    const active = document.activeElement;
+    if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as HTMLElement).isContentEditable)) {
+      return;
+    }
+    // Check if the selection is inside an assistant text part
+    const range = sel.getRangeAt(0);
+    const container = range.commonAncestorContainer;
+    const el = container instanceof Element ? container : container.parentElement;
+    if (!el) return;
+    const row = el.closest?.("[data-message-id]");
+    if (!row) return;
+    const msgId = row.getAttribute("data-message-id");
+    if (!msgId) return;
+    // Only assistant rows with class thread-row-assistant
+    if (!row.classList.contains("thread-row-assistant")) return;
+    // Only text parts (the row body); check if the element or any ancestor
+    // up to the row is the row body itself.
+    const rowBody = row.querySelector(".thread-row-body");
+    if (!rowBody) return;
+    // Walk from el upward to check containment (handles shadow DOM edge cases).
+    let inBody = false;
+    let walk: Element | null = el;
+    while (walk && walk !== row) {
+      if (walk === rowBody) { inBody = true; break; }
+      walk = walk.parentElement;
+    }
+    if (!inBody) return;
+
+    const quote = sel.toString().trim();
+    if (!quote) return;
+    const rect = range.getBoundingClientRect();
+    const parentRect = bodyRef.current?.getBoundingClientRect() ?? { top: 0, left: 0 };
+    setPopoverRef.current({
+      rect: {
+        top: rect.top - parentRect.top + (bodyRef.current?.scrollTop ?? 0),
+        left: rect.left - parentRect.left,
+        width: rect.width,
+        bottom: rect.bottom - parentRect.top + (bodyRef.current?.scrollTop ?? 0),
+      },
+      quote,
+      messageId: msgId,
+    });
+  }, []);
+
+  // mouseup on the body opens the popover when a selection exists in
+  // assistant text.  Attached as a native DOM listener (not React synthetic)
+    // Open the popover on selectionchange when a non-empty selection
+  // lies inside an assistant text part. selectionchange fires AFTER
+  // the browser finalizes the selection (unlike mouseup which fires
+  // before for multi-click gestures), so it works reliably for both
+  // single-drag and triple-click.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const handler = () => {
+      // Debounce: selectionchange fires many times during a drag.
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = null;
+        checkSelection();
+      }, 80);
+    };
+    document.addEventListener("selectionchange", handler);
+    return () => {
+      document.removeEventListener("selectionchange", handler);
+      if (timer) clearTimeout(timer);
+    };
+  }, [checkSelection]);
+
+  // Callback ref: sets bodyRef.current when the body div mounts.
+  const bodyCallbackRef = useCallback((node: HTMLDivElement | null) => {
+    bodyRef.current = node;
+  }, []);
+
+  // Dismiss popover when clicking outside it (not on selectionchange,
+  // because clicking the comment input collapses the text selection).
+  useEffect(() => {
+    if (!annotationPopover) return;
+    const onMouseDown = (e: MouseEvent) => {
+      const popoverEl = bodyRef.current?.querySelector("[data-testid='annotation-popover']");
+      if (popoverEl && popoverEl.contains(e.target as Node)) return;
+      // Clicked outside the popover -- dismiss.
+      setAnnotationPopover(null);
+    };
+    // Use capture to fire before the click can open a new popover.
+    document.addEventListener("mousedown", onMouseDown, true);
+    return () => document.removeEventListener("mousedown", onMouseDown, true);
+  }, [annotationPopover]);
+
+  // `a` key opens the annotation popover when text is selected (keyboard route)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      if (e.key === "a" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const sel = window.getSelection();
+        if (sel && !sel.isCollapsed && sel.toString().trim()) {
+          e.preventDefault();
+          checkSelection();
+        }
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [checkSelection]);
+
+  const handleAnnotationSave = useCallback(
+    async (comment: string) => {
+      if (!annotationPopover) return;
+      try {
+        const result = await addAnnotation(threadId, {
+          message_id: annotationPopover.messageId,
+          quote: annotationPopover.quote,
+          comment,
+        });
+        // Optimistic add to store
+        useThreadStore.setState((s) => ({
+          draftAnnotations: {
+            ...s.draftAnnotations,
+            [threadId]: [...(s.draftAnnotations[threadId] ?? []), result],
+          },
+        }));
+      } catch {
+        // Rollback: reload
+        void loadThread(threadId);
+      }
+      setAnnotationPopover(null);
+      window.getSelection()?.removeAllRanges();
+    },
+    [annotationPopover, threadId, loadThread],
+  );
+
+  const handleAnnotationRemove = useCallback(
+    async (partId: string) => {
+      // Optimistic remove
+      useThreadStore.setState((s) => ({
+        draftAnnotations: {
+          ...s.draftAnnotations,
+          [threadId]: (s.draftAnnotations[threadId] ?? []).filter((a) => a.id !== partId),
+        },
+      }));
+      try {
+        await deleteAnnotation(threadId, partId);
+      } catch {
+        // Rollback: reload
+        void loadThread(threadId);
+      }
+    },
+    [threadId, loadThread],
+  );
+
   // Token meter — guard against detail or detail.thread being absent.
   const tokenIn = detail?.thread?.token_in ?? 0;
   const tokenOut = detail?.thread?.token_out ?? 0;
@@ -1105,7 +1410,7 @@ function ThreadPulloutInner({
 
   return (
     <>
-      <div className="desk-pullout-body desk-surface-body thread-pullout-body" ref={bodyRef}>
+      <div className="desk-pullout-body desk-surface-body thread-pullout-body" ref={bodyCallbackRef}>
         {/* Head: title, egress, status, token meter */}
         <div className="thread-head">
           {editingTitle ? (
@@ -1222,6 +1527,18 @@ function ThreadPulloutInner({
             })}
           </div>
         )}
+        {/* HS-153-04: annotation popover anchored to selection */}
+        {annotationPopover && (
+          <AnnotationPopover
+            anchorRect={annotationPopover.rect}
+            quoteText={annotationPopover.quote}
+            onSave={(comment) => void handleAnnotationSave(comment)}
+            onCancel={() => {
+              setAnnotationPopover(null);
+              window.getSelection()?.removeAllRanges();
+            }}
+          />
+        )}
       </div>
 
       {/* The foot is a direct flex child of the window shell (not
@@ -1234,6 +1551,11 @@ function ThreadPulloutInner({
           disabled={isStreaming}
         />
         {receipt}
+        {/* HS-153-04: annotation chips above the composer */}
+        <AnnotationChips
+          annotations={draftAnnotations}
+          onRemove={handleAnnotationRemove}
+        />
         <ThreadComposer
           onSend={handleSend}
           onStop={handleStop}

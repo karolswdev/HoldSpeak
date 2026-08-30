@@ -70,6 +70,7 @@ class ThreadMessagePart:
     attachment_ref: str
     meta_json: str
     sensitive: bool
+    draft: bool = False
 
 
 @dataclass(frozen=True)
@@ -141,6 +142,7 @@ def _row_to_part(row: Any) -> ThreadMessagePart:
         attachment_ref=str(row["attachment_ref"] or ""),
         meta_json=str(row["meta_json"] or ""),
         sensitive=bool(row["sensitive"]),
+        draft=bool(row["draft"]) if "draft" in row.keys() else False,
     )
 
 
@@ -346,6 +348,7 @@ class ThreadRepository(BaseRepository):
         attachment_ref: str = "",
         meta_json: str = "",
         sensitive: bool = False,
+        draft: bool = False,
     ) -> ThreadMessagePart:
         part_id = _new_id("tp")
         with self._connection() as conn:
@@ -359,10 +362,11 @@ class ThreadRepository(BaseRepository):
             conn.execute(
                 """INSERT INTO thread_message_parts
                    (id, message_id, ordinal, kind, text,
-                    tool_call_id, attachment_ref, meta_json, sensitive)
-                   VALUES (?,?,?,?,?,?,?,?,?)""",
+                    tool_call_id, attachment_ref, meta_json, sensitive, draft)
+                   VALUES (?,?,?,?,?,?,?,?,?,?)""",
                 (part_id, str(message_id), ordinal, kind, text,
-                 tool_call_id, attachment_ref, meta_json, int(bool(sensitive))),
+                 tool_call_id, attachment_ref, meta_json, int(bool(sensitive)),
+                 int(bool(draft))),
             )
             # Touch message updated_at.
             now = time.time()
@@ -699,6 +703,97 @@ class ThreadRepository(BaseRepository):
             result[import_hash] = thread.id
 
         return result
+
+    # ── Draft annotations (HS-153-04) ───────────────────────────────
+
+    def draft_message_for(self, thread_id: str) -> Optional[ThreadMessage]:
+        """Return the thread's ONE draft user message (all parts draft=1), or None.
+
+        A draft message is a user message where EVERY part has draft=1.
+        The transcript readers skip it; it holds annotation parts until Send
+        promotes them.
+        """
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT m.* FROM thread_messages m
+                   WHERE m.thread_id=? AND m.role='user' AND m.deleted_at IS NULL
+                     AND EXISTS (
+                       SELECT 1 FROM thread_message_parts p
+                       WHERE p.message_id=m.id AND p.draft=1
+                     )
+                     AND NOT EXISTS (
+                       SELECT 1 FROM thread_message_parts p
+                       WHERE p.message_id=m.id AND p.draft=0
+                     )
+                   ORDER BY m.created_at DESC LIMIT 1""",
+                (str(thread_id),),
+            ).fetchall()
+        if not rows:
+            return None
+        return _row_to_message(rows[0])
+
+    def is_draft_message(self, message_id: str) -> bool:
+        """True when every part of the message has draft=1 and at least one exists."""
+        with self._connection() as conn:
+            has_draft = conn.execute(
+                "SELECT 1 FROM thread_message_parts WHERE message_id=? AND draft=1 LIMIT 1",
+                (str(message_id),),
+            ).fetchone()
+            if not has_draft:
+                return False
+            has_non_draft = conn.execute(
+                "SELECT 1 FROM thread_message_parts WHERE message_id=? AND draft=0 LIMIT 1",
+                (str(message_id),),
+            ).fetchone()
+            return has_non_draft is None
+
+    def draft_parts(self, thread_id: str) -> list[ThreadMessagePart]:
+        """Return all draft annotation parts for a thread's draft message."""
+        msg = self.draft_message_for(thread_id)
+        if msg is None:
+            return []
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM thread_message_parts "
+                "WHERE message_id=? AND draft=1 ORDER BY ordinal",
+                (str(msg.id),),
+            ).fetchall()
+        return [_row_to_part(r) for r in rows]
+
+    def delete_part(self, part_id: str) -> bool:
+        """Delete a single part by id. Returns True if found and deleted."""
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT message_id FROM thread_message_parts WHERE id=?",
+                (str(part_id),),
+            ).fetchone()
+            if not row:
+                return False
+            message_id = str(row["message_id"])
+            conn.execute(
+                "DELETE FROM thread_message_parts WHERE id=?",
+                (str(part_id),),
+            )
+            # If the message has no remaining parts, delete the message too.
+            remaining = conn.execute(
+                "SELECT COUNT(*) AS c FROM thread_message_parts WHERE message_id=?",
+                (message_id,),
+            ).fetchone()
+            if remaining and int(remaining["c"]) == 0:
+                conn.execute(
+                    "DELETE FROM thread_messages WHERE id=?",
+                    (message_id,),
+                )
+        return True
+
+    def promote_drafts(self, message_id: str) -> int:
+        """Set draft=0 on all parts of a message. Returns count updated."""
+        with self._connection() as conn:
+            cursor = conn.execute(
+                "UPDATE thread_message_parts SET draft=0 WHERE message_id=? AND draft=1",
+                (str(message_id),),
+            )
+            return cursor.rowcount
 
     # ── Tool policy (HS-152-02) ────────────────────────────────────
 
