@@ -1,6 +1,6 @@
 # Phase 151 — The Live Intelligence Proof
 
-**Status:** in progress (5/6) — the close holds for the owner's attended leg.
+**Status:** in progress (5/6) — sweep + counsel COMPLETE and clean; the close holds ONLY for the owner's attended leg + shot verdict + merge word.
 
 **Last updated:** 2026-08-30.
 
@@ -67,7 +67,7 @@ Branch `feat/hs151-live-intel-proof` from main `3a37e484`.
 | HS-151-03 | The headless metal proof (control vs treatment) | done | [story-03](./story-03-metal-proof.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-151-04 | The vision proof (the snapshot adapter on real metal) | done | [story-04](./story-04-vision-proof.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-151-05 | The record book | done | [story-05](./story-05-record-book.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-151-06 | The walk, the attended leg, and the close | ready | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-151-06 | The walk, the attended leg, and the close | in-progress | [story-06](./story-06-walk-and-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 
@@ -225,6 +225,33 @@ real latent defects before a single story ran.
   surgery. Deferred to close counsel: project_detector's always-on
   status; binder defense-in-depth; whether no_assignment should be
   terminal at settlement.
+
+- **2026-08-30 — CLOSE counsel: RATIFY-WITH-CONCERNS, ZERO
+  must-fix, ONE should-fix (applied in-round), 228 focused green.**
+  The no-fake law CLEAN (zero sync/push in any rig; treatment rides
+  the real import door; assertions shape-grounded throughout; the
+  CREO groundedness call ruled honest). All FIVE Design-A pins
+  verified, incl. the negative test (core capabilities terminal)
+  and the binder's own defense-in-depth (it independently
+  re-validates reachability at prepare — it never trusts the
+  planner blindly). The structured-output fallback mechanically
+  correct: one physical request per admitted child, named signal,
+  the follow-up child omitting the format. Idempotency fix SAFE
+  (single bounded session; no mid-import config change possible);
+  fence-strip SAFE (anchored non-greedy regex; the three pins).
+  Tuesday + joy PASS ("the loop is real, the latencies are honest,
+  the documentation prepares a cold reader"); no attended-demo
+  embarrassment found beyond documented behaviors. S1 APPLIED
+  IN-ROUND: the process-lifetime response_format downgrade now
+  logs a warning (census re-remapped, 17 entries, attribution:
+  the S1 lines). LEDGERED: S2 the plugin_chain_skipped receipt is
+  DB/log-only — surfacing it is a P1 for a future
+  settings/diagnostics story; L1 project_detector always-routed
+  (now routinely skip-with-receipted by default — document or
+  rule); L2 skipped plugin work unrecoverable without re-import (a
+  "re-analyze" gesture is a future arc); L3 the dialect set has no
+  TTL (same accepted shape as HS-131-10); L4 the remote
+  DeploymentRevision kind hardcoding.
 
 ## Risk register
 

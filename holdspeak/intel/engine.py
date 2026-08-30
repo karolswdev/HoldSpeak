@@ -134,6 +134,12 @@ def _response_format_compatibility_retry(endpoint_key: str, exc: BaseException) 
     if endpoint_rejects_response_format(endpoint_key):
         return False  # already speaking the dialect: this is a real failure
     _COMPAT_NO_RESPONSE_FORMAT.add(str(endpoint_key))
+    # HS-151-06 close counsel S1: the downgrade lasts the process lifetime —
+    # it must be visible in the log, never silent.
+    log.warning(
+        "Endpoint %s rejected response_format; omitting structured output "
+        "for the rest of this process", endpoint_key,
+    )
     return True
 
 

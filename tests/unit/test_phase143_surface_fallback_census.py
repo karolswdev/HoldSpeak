@@ -29,6 +29,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/dictation_telemetry.py", "_fallback_category"): ("lexical/degraded telemetry, never model fallback", "143-07"),
     ("holdspeak/inference_targets.py", "_profile_key_present"): ("profile credential readiness", "143-03"),
     ("holdspeak/intel/engine.py", "_compatibility_retry"): ("provider dialect attempt; separate admitted physical child", "143-06"),
+    ("holdspeak/intel/engine.py", "_response_format_compatibility_retry"): ("provider dialect attempt (structured output); separate admitted physical child", "151-01"),
     ("holdspeak/intel/engine.py", "_resolved_model_path"): ("immutable local artifact read", "143-03"),
     ("holdspeak/intel/providers.py", "_lookup_profile_record"): ("legacy profile lookup", "143-03"),
     ("holdspeak/intel/providers.py", "_apply_runtime_profile"): ("legacy profile-shaped runtime construction", "143-03"),
@@ -110,7 +111,9 @@ CAMEL_POINTER_TOKENS = ("inferenceTargetId", "intelProfileId", "profileId", "res
 RUNS_ON_PICKER_SURFACE = re.compile(
     r"(?:import\s*\{\s*RunsOnPicker\s*\}|export\s+function\s+RunsOnPicker)"
 )
-STORY_RE = re.compile(r"^143-(?:0[1-9]|1[0-4])$")
+# HS-151-06: later phases lawfully add classified decisions — the owner
+# is any phase-story id (originally 143-only).
+STORY_RE = re.compile(r"^\d{2,3}-\d{2}$")
 
 # Story 06 retired every client-owned Swift retry/fallback execution site. The
 # scanner remains as a zero-regression fence: legacy wire strings may survive in
