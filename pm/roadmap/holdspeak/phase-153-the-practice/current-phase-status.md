@@ -1,6 +1,6 @@
 # Phase 153 - The Desk Chat — The Practice (DC-03)
 
-**Last updated:** 2026-08-29.
+**Last updated:** 2026-08-30.
 
 ## Goal
 
@@ -19,7 +19,7 @@ Modes, prompts, guardrails, annotations, compaction and Door-backed todo on the 
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-153-01 | Modes as recipes (kind, seeds, allow-lists, mode tabs) | backlog | [story-01-modes](./story-01-modes.md) | - |
+| HS-153-01 | Modes as recipes (kind, seeds, allow-lists, mode tabs) | done | [story-01-modes](./story-01-modes.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-153-02 | Prompts and slash verbs (notes tagged prompt, arguments) | backlog | [story-02-prompts-slash](./story-02-prompts-slash.md) | - |
 | HS-153-03 | Guardrails (chat.guardrail, seeds, the advisory row) | backlog | [story-03-guardrails](./story-03-guardrails.md) | - |
 | HS-153-04 | Annotations (selection popover, draft parts, mic) | backlog | [story-04-annotations](./story-04-annotations.md) | - |
@@ -28,7 +28,7 @@ Modes, prompts, guardrails, annotations, compaction and Door-backed todo on the 
 
 ## Where we are
 
-This phase has been scaffolded and is ready for story planning.
+HS-153-01 (Modes as recipes) implementation complete: palette seam unified through `ThreadService._palette_for`, mode tabs in the composer, PATCH/GET recipe_id + resolved mode, glass at 1440+393. Three real-path defects found and fixed (default-to-Desk was wrong for unbound threads, executor re-resolved palette independently, Draft empty-tools array caused executor spin-up). Awaiting orchestrator flip and full suite run.
 
 ## Active risks
 

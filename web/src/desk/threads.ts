@@ -11,6 +11,13 @@ import { apiFetch } from "../lib/api";
 
 // ── wire types (snake_case from the hub) ──────────────────────────────
 
+/** HS-153-01: resolved mode from the server (recipe with kind='mode'). */
+export interface ThreadMode {
+  id: string;
+  name: string;
+  avatar: string;
+}
+
 export interface ThreadWire {
   id: string;
   title: string;
@@ -19,6 +26,7 @@ export interface ThreadWire {
   directory_id: string | null;
   parent_thread_id: string | null;
   status_line: string | null;
+  mode: ThreadMode | null;
   token_in: number;
   token_out: number;
   created_at: string;
@@ -296,6 +304,11 @@ export async function getThread(id: string): Promise<ThreadDetail> {
     directory_id: d.directory_id != null ? String(d.directory_id) : null,
     parent_thread_id: d.parent_thread_id != null ? String(d.parent_thread_id) : null,
     status_line: d.status_line != null ? String(d.status_line) : null,
+    mode: d.mode && typeof d.mode === "object"
+      ? { id: String((d.mode as Record<string, unknown>).id ?? ""),
+          name: String((d.mode as Record<string, unknown>).name ?? ""),
+          avatar: String((d.mode as Record<string, unknown>).avatar ?? "") }
+      : null,
     token_in: Number(d.token_in ?? 0),
     token_out: Number(d.token_out ?? 0),
     created_at: wireTimestamp(d.created_at),
@@ -335,7 +348,7 @@ export async function getThread(id: string): Promise<ThreadDetail> {
 
 export async function patchThread(
   id: string,
-  patch: { title?: string; profile_override?: string },
+  patch: { title?: string; profile_override?: string; recipe_id?: string },
 ): Promise<ThreadWire> {
   return apiFetch<ThreadWire>(`/api/threads/${encodeURIComponent(id)}`, {
     method: "PATCH",
@@ -525,6 +538,8 @@ export interface ThreadStoreActions {
   decideOptimistic(threadId: string, callId: string, decision: "approve" | "deny"): void;
   /** HS-152-04: Hydrate tool rows from persisted parts after load. */
   hydrateToolRows(threadId: string): void;
+  /** HS-153-01: Set the active mode for a thread (optimistic + PATCH + GET). */
+  setMode(threadId: string, recipeId: string): Promise<void>;
 }
 
 export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set, get) => ({
@@ -896,6 +911,30 @@ export const useThreadStore = create<ThreadStoreState & ThreadStoreActions>((set
       set((s) => ({
         toolRows: { ...s.toolRows, [threadId]: { ...(s.toolRows[threadId] || {}), ...rows } },
       }));
+    }
+  },
+
+  async setMode(threadId, recipeId) {
+    // Optimistic: update the thread's recipe_id in the store immediately.
+    const detail = get().threads[threadId];
+    if (detail) {
+      set((s) => ({
+        threads: {
+          ...s.threads,
+          [threadId]: {
+            ...detail,
+            thread: { ...detail.thread, recipe_id: recipeId || null },
+          },
+        },
+      }));
+    }
+    // PATCH the thread, then GET to confirm (reconciles the resolved mode).
+    try {
+      await patchThread(threadId, { recipe_id: recipeId });
+      await get().loadThread(threadId);
+    } catch {
+      // Revert on failure — reload the thread to get the real state.
+      await get().loadThread(threadId);
     }
   },
 }));

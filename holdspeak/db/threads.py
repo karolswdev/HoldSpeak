@@ -236,6 +236,7 @@ class ThreadRepository(BaseRepository):
         title: Optional[str] = None,
         profile_override: Optional[str] = None,
         status_line: Optional[str] = None,
+        recipe_id: Optional[str] = None,
     ) -> Optional[Thread]:
         sets: list[str] = []
         params: list[Any] = []
@@ -248,6 +249,9 @@ class ThreadRepository(BaseRepository):
         if status_line is not None:
             sets.append("status_line=?")
             params.append(status_line)
+        if recipe_id is not None:
+            sets.append("recipe_id=?")
+            params.append(recipe_id)
         if not sets:
             return self.get(thread_id)
         sets.append("updated_at=?")

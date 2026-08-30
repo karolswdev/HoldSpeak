@@ -117,6 +117,23 @@ class ThreadService:
     def _threads(self) -> ThreadRepository:
         return self._db.threads
 
+    def _palette_for(self, thread_id: str) -> frozenset[str] | None:
+        """Resolve the tool palette for a thread at admission time.
+
+        Returns None when no mode is bound (caller uses CHAT_PALETTE).
+        Returns the mode's allow-list intersected with TOOL_NAMES when bound.
+        Draft (empty allow-list) returns an empty frozenset -- the caller
+        must omit the ``tools`` key entirely so the pass loop runs one
+        pass (no tool schemas).
+
+        HS-153-01: ONE helper used by both ``start_turn`` (initial
+        payload) and ``_run_streaming_turn`` (per-pass payload).
+        A mid-turn PATCH does not change the in-flight palette -- the
+        palette is resolved once at admission for the turn.
+        """
+        from .thread_modes import palette_for
+        return palette_for(self._db, thread_id)
+
     # ── Thread CRUD ─────────────────────────────────────────────────
 
     def create(
@@ -165,8 +182,30 @@ class ThreadService:
         *,
         title: Optional[str] = None,
         profile_override: Optional[str] = None,
+        recipe_id: Optional[str] = None,
     ) -> dict[str, Any]:
-        thread = self._threads.patch(thread_id, title=title, profile_override=profile_override)
+        # HS-153-01: validate recipe_id -- empty string unbinds; non-empty
+        # must reference a kind='mode' recipe (400 otherwise).
+        if recipe_id is not None and recipe_id != "":
+            recipe = self._db.recipes.get(recipe_id)
+            if recipe is None:
+                raise ValidationError(
+                    f"Unknown recipe: {recipe_id}",
+                    code="recipe_not_found",
+                    context={"status": 400},
+                )
+            if recipe.kind != "mode":
+                raise ValidationError(
+                    f"Recipe {recipe_id} is not a mode (kind={recipe.kind!r})",
+                    code="recipe_not_mode",
+                    context={"status": 400},
+                )
+        thread = self._threads.patch(
+            thread_id,
+            title=title,
+            profile_override=profile_override,
+            recipe_id=recipe_id,
+        )
         if thread is None:
             raise ServiceError("thread_not_found", f"Thread {thread_id} not found", context={"status": 404})
         return self._thread_dict(thread)
@@ -323,14 +362,17 @@ class ThreadService:
         # Assemble the payload (assembler law).
         payload = self._assemble_payload(thread_id, user_msg.id, thread)
 
-        # HS-152-03: the tool palette rides INSIDE the admitted payload.
-        # ``execute_stream`` replays the payload frozen at admission, so a
-        # palette injected only in the pass loop never reaches pass 1 on
-        # the real path (the fake-adoption loop tests could not see this).
+        # HS-152-03 + HS-153-01: the tool palette rides INSIDE the admitted
+        # payload.  Resolved once at admission so a mid-turn PATCH does not
+        # change the in-flight palette (the "next turn" rule).
+        # Draft (empty palette) = no ``tools`` key → one pass, no tools.
         if self._tool_dispatch_fn is not None:
             from .thread_tools import tool_schemas_for, CHAT_PALETTE
 
-            payload["tools"] = tool_schemas_for(CHAT_PALETTE)
+            palette = self._palette_for(thread_id)
+            effective_palette = palette if palette is not None else CHAT_PALETTE
+            if effective_palette:
+                payload["tools"] = tool_schemas_for(effective_palette)
 
         # HS-152-03: the thread's model pick is honored at admission.
         profile_override = str(getattr(thread, "profile_override", "") or "")
@@ -447,10 +489,13 @@ class ThreadService:
         answer and the turn is done.
         """
         # -- Compose the per-turn tool executor if the dispatch seam is wired --
+        # HS-153-01: the palette is resolved from the payload, which was
+        # frozen at admission (start_turn).  Draft = no tools key = no
+        # executor (one pass, text only).
         tool_executor: Any = None
         tool_schemas: list[dict[str, Any]] = []
-        if self._tool_dispatch_fn is not None:
-            from .thread_tools import ThreadToolExecutor, tool_schemas_for, CHAT_PALETTE
+        if self._tool_dispatch_fn is not None and "tools" in payload:
+            from .thread_tools import ThreadToolExecutor
 
             tool_executor = ThreadToolExecutor(
                 self._db,
@@ -459,7 +504,7 @@ class ThreadService:
                 control_mode_fn=self._control_mode_fn,
                 broker=self._broker,
             )
-            tool_schemas = tool_schemas_for(CHAT_PALETTE)
+            tool_schemas = list(payload["tools"])
             ThreadService._tool_executor.register(assistant_msg_id, tool_executor)
 
         max_passes = _CHAT_PASS_CAP if tool_executor is not None else 1
@@ -1352,6 +1397,13 @@ class ThreadService:
     # ── Helpers ──────────────────────────────────────────────────────
 
     def _thread_dict(self, thread: Any) -> dict[str, Any]:
+        # HS-153-01: resolve the mode for GET responses.
+        from .thread_modes import mode_for_thread
+        mode = mode_for_thread(self._db, thread.id)
+        mode_dict = (
+            {"id": mode.id, "name": mode.name, "avatar": mode.avatar}
+            if mode is not None else None
+        )
         return {
             "id": thread.id,
             "title": thread.title,
@@ -1363,6 +1415,7 @@ class ThreadService:
             "created_at": thread.created_at,
             "updated_at": thread.updated_at,
             "last_turn_at": thread.last_turn_at,
+            "mode": mode_dict,
         }
 
     def _message_dict(self, msg: Any) -> dict[str, Any]:

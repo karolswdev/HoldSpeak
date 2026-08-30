@@ -121,8 +121,11 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
                 thread_id,
                 title=body.get("title"),
                 profile_override=body.get("profile_override"),
+                recipe_id=body.get("recipe_id"),
             )
             return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse({"error": str(exc), "code": exc.code}, status_code=400)
         except ServiceError as exc:
             return _error(exc)
         except Exception as exc:

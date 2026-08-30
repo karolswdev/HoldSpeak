@@ -2,7 +2,8 @@
 
 Each mode carries an allow-list of tool names and a short system prompt.
 The executor's palette = mode allow-list intersection TOOL_NAMES; an
-unknown thread (no mode) defaults to Desk's list.
+unbound thread (no mode) returns None from ``palette_for`` and the
+caller falls back to ``CHAT_PALETTE`` (the 152 addendum).
 
 Seeds are deterministic (hs-seed-mode-*) and idempotent: the seed path
 creates them only when absent, reconcile-time ensures they exist on
@@ -10,10 +11,16 @@ every hub.
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Optional
 
 from .thread_tools import TOOL_NAMES, _TOOL_CLASSES
+
+_log = logging.getLogger(__name__)
+
+# Set of mode ids whose unclassified-tool warning has already been emitted.
+_warned_modes: set[str] = set()
 
 if TYPE_CHECKING:
     from ..db.core import Database
@@ -149,9 +156,37 @@ def allowed_tools_for_thread(db: "Database", thread_id: str) -> frozenset[str]:
     """Return the effective tool palette for a thread.
 
     mode allow-list intersected with TOOL_NAMES; no mode -> Desk's list.
+
+    .. deprecated:: HS-153-01
+        Callers in ThreadService should use ``palette_for`` instead,
+        which returns None when no mode is bound (caller uses CHAT_PALETTE).
+        This function is kept for backward compat.
+    """
+    palette = palette_for(db, thread_id)
+    if palette is None:
+        return _DESK_TOOLS & TOOL_NAMES
+    return palette
+
+
+def palette_for(db: "Database", thread_id: str) -> Optional[frozenset[str]]:
+    """Return the mode's palette for a thread, or None when no mode is bound.
+
+    When None, the caller should fall back to ``CHAT_PALETTE``.
+    When empty (Draft mode), the caller should omit the ``tools`` key entirely
+    so the pass loop runs one pass (no tool schemas).
+
+    Unclassified names in a custom mode's allow-list are dropped and logged
+    ONCE per (mode id) at WARNING (fail-closed).
     """
     mode = mode_for_thread(db, thread_id)
     if mode is None:
-        # Default to Desk
-        return _DESK_TOOLS & TOOL_NAMES
+        return None
+    # Intersect with TOOL_NAMES; log unclassified names for custom modes
+    unknown = mode.tools - TOOL_NAMES - FORWARD_TOOLS
+    if unknown and mode.id not in _warned_modes:
+        _warned_modes.add(mode.id)
+        _log.warning(
+            "Mode %r (%s) references unclassified tools (dropped, fail-closed): %s",
+            mode.name, mode.id, sorted(unknown),
+        )
     return mode.tools & TOOL_NAMES

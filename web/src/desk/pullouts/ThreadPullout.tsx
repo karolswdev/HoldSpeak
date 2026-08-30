@@ -47,6 +47,7 @@ import {
 } from "../threads";
 import { useDesk } from "../store";
 import { ThreadComposer, InlineEditor } from "../components/ThreadComposer";
+import { ModeTabs } from "../components/ModeTabs";
 import type { PulloutContentProps } from "./types";
 import "./thread-pullout.css";
 
@@ -844,7 +845,7 @@ function ThreadPulloutInner({
   const {
     loadThread, applyTurnStarted, applyDelta, applyTurnDone, reconcile,
     getBufferText, applyToolPending, applyToolResult, applyStatusLine,
-    decideOptimistic,
+    decideOptimistic, setMode,
   } = useThreadStore.getState();
 
   const { attempt, receipt } = useWriteReceipt();
@@ -1073,6 +1074,19 @@ function ThreadPulloutInner({
             </button>
           )}
           <div className="thread-head-instruments">
+            {detail.thread?.mode && (
+              <span
+                className="thread-mode-badge"
+                data-testid="mode-badge"
+                style={{ borderColor: detail.thread.mode.avatar }}
+              >
+                <span
+                  className="thread-mode-dot"
+                  style={{ backgroundColor: detail.thread.mode.avatar }}
+                />
+                {detail.thread.mode.name}
+              </span>
+            )}
             {egressLamp && <LampGadget on {...egressLamp} />}
             {(liveStatusLine || detail.thread?.status_line) && (
               <span className="thread-status-line">{liveStatusLine || detail.thread?.status_line}</span>
@@ -1146,6 +1160,11 @@ function ThreadPulloutInner({
           SurfaceFooter, which is a 36px bar). The composer needs its
           full height to render the textarea + mic + Send/Stop. */}
       <div className="thread-foot">
+        <ModeTabs
+          activeMode={detail.thread?.mode ?? null}
+          onSelect={(recipeId) => void setMode(threadId, recipeId)}
+          disabled={isStreaming}
+        />
         {receipt}
         <ThreadComposer
           onSend={handleSend}

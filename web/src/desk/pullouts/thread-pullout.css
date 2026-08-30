@@ -841,3 +841,82 @@
   padding-left: 8px;
   font-style: italic;
 }
+
+/* ── HS-153-01: Mode tabs ─────────────────────────────────────────────── */
+
+.thread-mode-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.thread-mode-tabs::-webkit-scrollbar { display: none; }
+
+.thread-mode-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.15));
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #888);
+  transition: background 0.1s, border-color 0.1s;
+}
+.thread-mode-tab:hover:not(:disabled) {
+  background: var(--surface-hover, rgba(128, 128, 128, 0.08));
+}
+.thread-mode-tab:focus-visible {
+  outline: 2px solid var(--focus-ring, #4f8ff7);
+  outline-offset: -1px;
+}
+.thread-mode-tab:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.thread-mode-tab--active {
+  background: var(--surface-selected, rgba(128, 128, 128, 0.12));
+  border-color: var(--text-muted, #888);
+  color: var(--text, #e0e0e0);
+  font-weight: 600;
+}
+
+.thread-mode-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.thread-mode-label {
+  line-height: 1;
+}
+
+/* Mode badge in the pullout head */
+.thread-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.15));
+  border-radius: 2px;
+  font-size: var(--desk-surface-label-size, 11px);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #888);
+  white-space: nowrap;
+}
