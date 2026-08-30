@@ -15,18 +15,14 @@ import { useLaunchers } from "./launcherRegistry";
 import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
+import { DOCK_APPLICATIONS } from "../../applications";
 
 /** HS-100-11 — the dock IS the launcher: the four applications ride it
  * always (running mark when their window is open); drawers and tools
  * moved to the menu-bar bell and the search shelf. */
-const DOCK_APPS = [
-  { key: "open-intelligence", id: "intelligence:desk", label: "Intelligence", glyph: "◈", fallback: "/" },
-  { key: "dictate", id: "surface-dictation", label: "Speak", glyph: "⌁", fallback: "/dictation" },
-  { key: "review-meetings", id: "surface-meetings", label: "Meetings", glyph: "▣", fallback: "/history" },
-  { key: "inspect-personas-and-coders", id: "surface-companion", label: "Agents", glyph: "◉", fallback: "/companion" },
-  { key: "configure-settings", id: "surface-settings", label: "Settings", glyph: "⚙", fallback: "/settings" },
-] as const;
-const DOCK_APP_IDS = new Set<string>(DOCK_APPS.map((a) => a.id));
+const DOCK_APP_IDS = new Set<string>(
+  DOCK_APPLICATIONS.map((application) => application.windowId),
+);
 const ACTIONABLE_LAUNCHERS = new Set(["attention", "delivery-board"]);
 
 /** The dock (HS-95-03): every open window as a chip -- tap focuses (or
@@ -88,38 +84,42 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       aria-label="Dock"
       /* HS-110-04: magnification swell removed -- the shelf is flat. */
     >
-      {DOCK_APPS.map((a) => {
-        const win = windows.find((w) => w.id === a.id);
-        const minimized = win ? panelMin.includes(a.id) : false;
-        const badge = a.id === "intelligence:desk" ? intelligenceBadge : null;
+      {DOCK_APPLICATIONS.map((application) => {
+        const win = windows.find((w) => w.id === application.windowId);
+        const minimized = win ? panelMin.includes(application.windowId) : false;
+        const badge =
+          application.windowId === "intelligence:desk"
+            ? intelligenceBadge
+            : null;
         const overdue = badge !== null && badge !== "•";
         return (
           <button
-            key={a.id}
+            key={application.windowId}
             type="button"
             className={
               "desk-dock-launch desk-dock-app" +
               (win ? " is-run" : "") +
-              (win && a.id === front && !minimized ? " is-front" : "") +
+              (win && application.windowId === front && !minimized ? " is-front" : "") +
               (overdue ? " is-attention" : "")
             }
-            aria-label={badge ? `${a.label}, ${overdue ? `${badge} overdue` : "brief ready"}` : a.label}
+            aria-label={badge ? `${application.label}, ${overdue ? `${badge} overdue` : "brief ready"}` : application.label}
             onClick={() => {
               const s = useDesk.getState();
-              if (win && minimized) s.restorePanel(a.id);
-              else if (win) s.focusPanel(a.id);
-              else if (a.key === "open-intelligence") openIntelligence({ view: "brief" });
+              if (win && minimized) s.restorePanel(application.windowId);
+              else if (win) s.focusPanel(application.windowId);
+              else if (application.dock.launch === "intelligence")
+                openIntelligence({ view: "brief" });
               else
                 void import("../../shell").then((m) =>
-                  m.openSurfaceOr(a.key, a.fallback),
+                  m.openSurfaceOr(application.action, application.href),
                 );
             }}
             onContextMenu={(e) => {
               if (!win) return;
               e.preventDefault();
               setChipMenu({
-                id: a.id,
-                label: a.label,
+                id: application.windowId,
+                label: application.label,
                 x: e.clientX,
                 y: e.clientY,
                 minimized,
@@ -130,12 +130,12 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             {/* HS-111-09 — integer-true: the 32px source renders at 32
                 CSS px (64 device px at DPR 2 = exact 2x); 24 was a 1.5x
                 smear. */}
-            {DOCK_SPRITES[a.id] ? (
-              <img src={DOCK_SPRITES[a.id]} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
+            {DOCK_SPRITES[application.windowId] ? (
+              <img src={DOCK_SPRITES[application.windowId]} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
             ) : (
-              <span aria-hidden="true">{a.glyph}</span>
+              <span aria-hidden="true">{application.glyph}</span>
             )}
-            <span className="desk-dock-label">{a.label}</span>
+            <span className="desk-dock-label">{application.label}</span>
             {badge ? (
               <span className="desk-chip desk-dock-badge" data-tone={overdue ? "warn" : undefined}>
                 {badge}

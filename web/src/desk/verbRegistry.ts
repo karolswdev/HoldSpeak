@@ -15,6 +15,7 @@ import { openIntelligence } from "./intelligenceNavigation";
 import { openSurfaceOr } from "./shell";
 import { objectByRef } from "./world";
 import { DESK_TOOLS, KIND_GLYPH } from "./tools";
+import { applicationForAction } from "./applications";
 import { usePalette, useShortcutSheet } from "./chromeState";
 import {
   closeFrontWindow,
@@ -150,16 +151,6 @@ function currentView(): "list" | "spatial" {
 
 /** The four applications carry ⌘1-⌘4 and a window id the keymap can
  * focus/restore instead of re-opening (the HS-101 B8 behavior). */
-const APP_BINDINGS: Record<
-  string,
-  { key: string; windowId: string } | undefined
-> = {
-  dictate: { key: "⌘1", windowId: "surface-dictation" },
-  "review-meetings": { key: "⌘2", windowId: "surface-meetings" },
-  "inspect-personas-and-coders": { key: "⌘3", windowId: "surface-companion" },
-  "configure-settings": { key: "⌘4", windowId: "surface-settings" },
-};
-
 const needWindow = (): string | null =>
   openWindowCount() > 0 ? null : "No window open";
 
@@ -588,7 +579,11 @@ export const VERBS: Verb[] = [
   // ── Go (the applications - DESK_TOOLS is the data truth) ────────────
   // HS-148-02: glyph and group flow from DESK_TOOLS (dock-parity).
   ...DESK_TOOLS.map((tool): Verb => {
-    const binding = APP_BINDINGS[tool.action];
+    const application = applicationForAction(tool.action);
+    const binding =
+      application?.shortcut && application.windowId
+        ? { key: application.shortcut, windowId: application.windowId }
+        : undefined;
     return {
       id: `go.${tool.action}`,
       label: tool.label,

@@ -13,6 +13,10 @@ import {
 } from "react";
 import { create } from "zustand";
 import {
+  DESK_APPLICATION_ALIASES,
+  SURFACE_APPLICATIONS,
+} from "../applications";
+import {
   consumeStagedSurfaceOpen,
   openSurfaceWhenReady,
   registerSurface,
@@ -38,221 +42,17 @@ export interface SurfaceRow {
   Core: LazyExoticComponent<ComponentType<CoreProps & { scope?: string }>>;
 }
 
-const SURFACES: SurfaceRow[] = [
-  {
-    key: "dictate",
-    id: "surface-dictation",
-    title: "Speak",
-    glyph: "⌁",
-    eyebrow: "Daily cockpit",
-    minW: 560,
-    Core: lazy(() =>
-      import("../../pages/cores/DictationCore").then((m) => ({
-        default: m.DictationCore,
-      })),
-    ),
-  },
-  {
-    key: "review-meetings",
-    id: "surface-meetings",
-    title: "Meetings",
-    glyph: "▣",
-    eyebrow: "Meeting memory",
-    minW: 640,
-    Core: lazy(() =>
-      import("../../pages/cores/HistoryCore").then((m) => ({
-        default: m.HistoryCore,
-      })),
-    ),
-  },
-  {
-    key: "record-live",
-    id: "surface-live",
-    title: "Live meeting",
-    glyph: "●",
-    eyebrow: "Meeting room",
-    minW: 560,
-    Core: lazy(() =>
-      import("../../pages/cores/LiveCore").then((m) => ({
-        default: m.LiveCore,
-      })),
-    ),
-  },
-  {
-    key: "configure-settings",
-    id: "surface-settings",
-    title: "Settings",
-    glyph: "⚙",
-    eyebrow: "Configuration",
-    minW: 560,
-    defaultH: 760,
-    Core: lazy(() =>
-      import("../../pages/cores/SettingsCore").then((m) => ({
-        default: m.SettingsCore,
-      })),
-    ),
-  },
-  {
-    key: "configure-cadence",
-    id: "surface-cadence",
-    title: "Cadence",
-    glyph: "∿",
-    eyebrow: "Follow-through",
-    minW: 520,
-    Core: lazy(() =>
-      import("../../pages/cores/CadenceCore").then((m) => ({
-        default: m.CadenceCore,
-      })),
-    ),
-  },
-  {
-    key: "configure-setup",
-    id: "surface-setup",
-    title: "Setup",
-    glyph: "✓",
-    eyebrow: "Arrival",
-    minW: 520,
-    Core: lazy(() =>
-      import("../../pages/cores/SetupCore").then((m) => ({
-        default: m.SetupCore,
-      })),
-    ),
-  },
-  {
-    key: "open-constitutional-context",
-    id: "surface-constitutional-context",
-    title: "Context",
-    glyph: "§",
-    eyebrow: "Owner",
-    minW: 480,
-    maximized: false,
-    Core: lazy(() =>
-      import("../../pages/cores/ConstitutionalContextCore").then((m) => ({
-        default: m.ConstitutionalContextCore,
-      })),
-    ),
-  },
-  {
-    key: "open-workbenches",
-    id: "surface-workbenches",
-    title: "Workbenches",
-    glyph: "⚒",
-    eyebrow: "Work",
-    minW: 560,
-    maximized: false,
-    Core: lazy(() =>
-      import("../../pages/cores/WorkbenchesHomeCore").then((m) => ({
-        default: m.WorkbenchesHomeCore,
-      })),
-    ),
-  },
-  {
-    key: "inspect-personas-and-coders",
-    id: "surface-companion",
-    title: "Agents",
-    // HS-111-09 — no emoji as icons: the Agents face is the same
-    // type-scale character the dock fallback speaks.
-    glyph: "◉",
-    eyebrow: "Companion",
-    minW: 560,
-    Core: lazy(() =>
-      import("../../pages/cores/CompanionCore").then((m) => ({
-        default: m.CompanionCore,
-      })),
-    ),
-  },
-  {
-    key: "design-components",
-    id: "surface-components",
-    title: "Components",
-    glyph: "▦",
-    eyebrow: "Signal React",
-    minW: 640,
-    Core: lazy(() =>
-      import("../../pages/cores/ComponentsCore").then((m) => ({
-        default: m.ComponentsCore,
-      })),
-    ),
-  },
-  {
-    key: "inspect-activity",
-    id: "surface-activity",
-    title: "Activity",
-    glyph: "⊙",
-    eyebrow: "This-device context",
-    minW: 480,
-    Core: lazy(() =>
-      import("../../pages/cores/ActivityCore").then((m) => ({
-        default: m.ActivityCore,
-      })),
-    ),
-  },
-  {
-    key: "open-project-memory",
-    id: "surface-project-memory",
-    title: "Project memory",
-    glyph: "▤",
-    eyebrow: "Long memory",
-    minW: 640,
-    Core: lazy(() =>
-      import("../../pages/cores/ProjectMemoryCore").then((m) => ({
-        default: m.ProjectMemoryCore,
-      })),
-    ),
-  },
-  {
-    key: "inspect-processes",
-    id: "surface-processes",
-    title: "Processes",
-    glyph: "∷",
-    eyebrow: "Kernel",
-    minW: 520,
-    Core: lazy(() =>
-      import("../../pages/cores/ProcessCore").then((m) => ({
-        default: m.ProcessCore,
-      })),
-    ),
-  },
-  {
-    key: "configure-commands",
-    id: "surface-commands",
-    title: "Commands",
-    glyph: "⌘",
-    eyebrow: "Voice commands",
-    minW: 460,
-    Core: lazy(() =>
-      import("../../pages/cores/CommandsCore").then((m) => ({
-        default: m.CommandsCore,
-      })),
-    ),
-  },
-  {
-    key: "open-people",
-    id: "surface-people",
-    title: "People",
-    glyph: "♧",
-    eyebrow: "Follow-through",
-    minW: 560,
-    Core: lazy(() =>
-      import("../../pages/cores/PeopleCore").then((m) => ({
-        default: m.PeopleCore,
-      })),
-    ),
-  },
-  {
-    key: "review-calendar-snapshot",
-    id: "surface-calendar-snapshot",
-    title: "Calendar snapshot",
-    glyph: "▦",
-    eyebrow: "Calendar",
-    minW: 640,
-    Core: lazy(() =>
-      import("../../pages/cores/CalendarSnapshotReviewCore").then((m) => ({
-        default: m.CalendarSnapshotReviewCore,
-      })),
-    ),
-  },
-];
+const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS.map((application) => ({
+  key: application.action,
+  id: application.windowId,
+  title: application.label,
+  glyph: application.glyph,
+  eyebrow: application.surface.eyebrow,
+  minW: application.surface.minW,
+  defaultH: application.surface.defaultH,
+  maximized: application.surface.maximized,
+  Core: lazy(application.surface.load),
+}));
 
 /** HS-103-01 — which surface windows were open survives a reload, the
  * same manual-localStorage shape `store.ts` already uses for positions
@@ -304,20 +104,6 @@ export const useSurfaceWindows = create<SurfaceState>((set, get) => ({
 /** Alias keys open an existing window with a default scope (e.g. the
  * shelf's Integrations entry is the Settings window scoped to
  * integrations). */
-const SURFACE_ALIASES: Record<string, { target: string; scope?: string }> = {
-  "configure-integrations": {
-    target: "configure-settings",
-    scope: "integration:destinations",
-  },
-  "configure-integration": { target: "configure-settings" },
-  // The durable /profiles alias is the Model Library; contextual assignment
-  // controls open Assignments directly rather than retargeting this library door.
-  "configure-runs-on": { target: "configure-settings", scope: "models" },
-  // HS-100-10 — the Runtime guide is Settings' Guide wing; old
-  // dispatches and deep links keep landing.
-  "read-runtime-docs": { target: "configure-settings", scope: "guide" },
-};
-
 const FIRST_VALUE_RECOVERY_SURFACES = SURFACES.filter(
   (row) => row.key === "configure-setup",
 );
@@ -356,7 +142,7 @@ export function SurfaceWindows({
           useDesk.getState().toggleMaximizePanel(row.id);
       }),
     );
-    const aliasOffs = Object.entries(SURFACE_ALIASES)
+    const aliasOffs = Object.entries(DESK_APPLICATION_ALIASES)
       .filter(([, alias]) => rows.some((row) => row.key === alias.target))
       .map(([key, alias]) =>
         registerSurface(key, (scope) =>
