@@ -24,6 +24,7 @@ import { useDesk } from "../store";
 import { objectByRef } from "../world";
 import { DeskWindowFrame } from "./DeskWindow";
 import { FootSlotContext } from "../surface/foot";
+import { TitleSlotContext } from "../surface/title";
 import { WingSlotContext } from "../surface/wings";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { ApplicationBoundary } from "./ApplicationBoundary";
@@ -141,8 +142,9 @@ export function SurfaceWindows({
 }
 
 /** One hosted core: owns the head's wing slot so the core can publish
- * its faces into the window chrome (HS-100-07, the posture rule), and the
- * foot slot so its footer belongs to the frame (HS-129-01). */
+ * its faces into the window chrome (HS-100-07, the posture rule), the
+ * foot slot so its footer belongs to the frame (HS-129-01), and the
+ * title slot so cores can override the manifest label (HS-158-05). */
 export function SurfaceWindowHost({
   row,
   scope,
@@ -154,12 +156,13 @@ export function SurfaceWindowHost({
 }) {
   const [wings, setWings] = useState<ReactNode>(null);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
+  const [titleOverride, setTitleOverride] = useState<string | null>(null);
   return (
     <DeskWindowFrame
       id={row.id}
       glyph={row.glyph}
       eyebrow={row.eyebrow}
-      title={row.title}
+      title={titleOverride ?? row.title}
       minW={row.minW}
       defaultH={row.defaultH}
       wings={wings}
@@ -174,20 +177,22 @@ export function SurfaceWindowHost({
     >
       <FootSlotContext.Provider value={foot}>
         <div className="desk-surface-body">
-          <WingSlotContext.Provider value={setWings}>
-            <ApplicationBoundary label={row.title}>
-              <Suspense fallback={<p className="quiet">…</p>}>
-                <row.Core
-                  scope={scope}
-                  scopeLabel={
-                    scope
-                      ? (objectByRef(items, scope)?.title ?? undefined)
-                      : undefined
-                  }
-                />
-              </Suspense>
-            </ApplicationBoundary>
-          </WingSlotContext.Provider>
+          <TitleSlotContext.Provider value={setTitleOverride}>
+            <WingSlotContext.Provider value={setWings}>
+              <ApplicationBoundary label={row.title}>
+                <Suspense fallback={<p className="quiet">…</p>}>
+                  <row.Core
+                    scope={scope}
+                    scopeLabel={
+                      scope
+                        ? (objectByRef(items, scope)?.title ?? undefined)
+                        : undefined
+                    }
+                  />
+                </Suspense>
+              </ApplicationBoundary>
+            </WingSlotContext.Provider>
+          </TitleSlotContext.Provider>
         </div>
         <footer
           ref={setFoot}

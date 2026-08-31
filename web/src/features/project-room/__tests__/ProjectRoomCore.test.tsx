@@ -5,6 +5,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../../desk/api";
+import { TitleSlotContext } from "../../../desk/surface/title";
 import { WingSlotContext } from "../../../desk/surface/wings";
 import { useDesk } from "../../../desk/store";
 import { ProjectRoomCore } from "../ProjectRoomCore";
@@ -33,13 +34,16 @@ vi.mock("../../../desk/shell", async () => {
   return { ...actual, openPrimitive: vi.fn(), openSurfaceOr: vi.fn() };
 });
 
-function WindowHarness({ scope }: { scope?: string }) {
+function WindowHarness({ scope, onTitle }: { scope?: string; onTitle?: (t: string | null) => void }) {
   const [wings, setWings] = useState<ReactNode>(null);
+  const setTitle = onTitle ?? (() => {});
   return (
-    <WingSlotContext.Provider value={setWings}>
-      <div>{wings}</div>
-      <ProjectRoomCore scope={scope} />
-    </WingSlotContext.Provider>
+    <TitleSlotContext.Provider value={setTitle}>
+      <WingSlotContext.Provider value={setWings}>
+        <div>{wings}</div>
+        <ProjectRoomCore scope={scope} />
+      </WingSlotContext.Provider>
+    </TitleSlotContext.Provider>
   );
 }
 
@@ -417,5 +421,40 @@ describe("ProjectRoomCore — no-scope states", () => {
   it("shows empty state when no project scope is provided", () => {
     render(<ProjectRoomCore />);
     expect(screen.getByText("Open a Project")).toBeTruthy();
+  });
+});
+
+describe("ProjectRoomCore — window title slot (HS-158-05, WEB-IA-001)", () => {
+  it("pushes the project name into the window title when loaded", async () => {
+    const onTitle = vi.fn();
+    render(<WindowHarness scope="project:p1" onTitle={onTitle} />);
+
+    await waitFor(() =>
+      expect(onTitle).toHaveBeenCalledWith("Alpha Project"),
+    );
+  });
+
+  it("does not push a title when unscoped (manifest label stays)", () => {
+    const onTitle = vi.fn();
+    render(<WindowHarness onTitle={onTitle} />);
+
+    // The only call should be null (cleanup or initial) — never a project name.
+    const calls = onTitle.mock.calls.map((c: unknown[]) => c[0]);
+    expect(calls.every((c: unknown) => c === null)).toBe(true);
+  });
+
+  it("clears the title on unmount (no stale titles on rescope/close)", async () => {
+    const onTitle = vi.fn();
+    const { unmount } = render(
+      <WindowHarness scope="project:p1" onTitle={onTitle} />,
+    );
+
+    await waitFor(() =>
+      expect(onTitle).toHaveBeenCalledWith("Alpha Project"),
+    );
+
+    onTitle.mockClear();
+    unmount();
+    expect(onTitle).toHaveBeenCalledWith(null);
   });
 });

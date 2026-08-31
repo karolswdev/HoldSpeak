@@ -27,6 +27,7 @@ import {
 } from "../../desk/surface/Surface";
 import { CycleGadget } from "../../desk/surface/gadgets";
 import { humanTime } from "../../desk/surface/format";
+import { useWindowTitle } from "../../desk/surface/title";
 import { readableError } from "../../lib/api";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type { SinceLastMeetingResponse } from "./model";
@@ -470,6 +471,13 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   const ctrl = useProjectRoomController(scope, scopeLabel);
   const loading = ctrl.loadStatus === "loading";
   const detailLoading = ctrl.detailStatus === "loading";
+
+  // HS-158-05 — push the scoped Project's name into the window head;
+  // null keeps the manifest label (loading / unscoped states).
+  const runtimeTitle = ctrl.loadStatus === "ready" && ctrl.projectName !== "Project"
+    ? ctrl.projectName
+    : null;
+  useWindowTitle(runtimeTitle, [runtimeTitle]);
 
   // HS-111-06 -- the timeline is a filed-archive ledger (audit M3):
   // fixed time column, mono kind tokens, open-in-place as before.
