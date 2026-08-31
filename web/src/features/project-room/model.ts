@@ -87,9 +87,51 @@ export type RoomResourcesData = {
   latest: Record<string, unknown> | null;
 };
 
+/** One decoded aggregate change (wire: change_kind/summary_json/created_at). */
+export type RoomChangeRow = {
+  id: string;
+  kind: string;
+  label: string;
+  occurredAt: string | null;
+};
+
+const CHANGE_KIND_LABELS: Record<string, string> = {
+  "project.created": "Created",
+  "project.updated": "Updated",
+  "project.archived": "Archived",
+  "project.restored": "Restored",
+  "project.resource.linked": "Resource linked",
+  "project.resource.unlinked": "Resource unlinked",
+};
+
+function changeLabel(kind: string, summary: Record<string, unknown>): string {
+  const base = CHANGE_KIND_LABELS[kind]
+    ?? (kind.split(".").pop() ?? "Change").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+  const fields = Object.keys(summary);
+  if (fields.length === 0) return base;
+  return `${base} · ${fields.slice(0, 3).join(", ")}${fields.length > 3 ? "…" : ""}`;
+}
+
+export function decodeChangeRow(raw: Record<string, unknown>): RoomChangeRow {
+  const kind = String(raw.change_kind ?? "");
+  let summary: Record<string, unknown> = {};
+  const rawSummary = raw.summary_json;
+  if (typeof rawSummary === "string" && rawSummary) {
+    try { summary = JSON.parse(rawSummary) as Record<string, unknown>; } catch { summary = {}; }
+  } else if (rawSummary && typeof rawSummary === "object") {
+    summary = rawSummary as Record<string, unknown>;
+  }
+  return {
+    id: String(raw.id ?? ""),
+    kind,
+    label: changeLabel(kind, summary),
+    occurredAt: raw.created_at ? String(raw.created_at) : null,
+  };
+}
+
 /** Changes section data shape (when ok). */
 export type RoomChangesData = {
-  recent: Record<string, unknown>[];
+  recent: RoomChangeRow[];
 };
 
 /** The full room snapshot (typed, WEB-ARC-004). */
@@ -190,7 +232,9 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
       latest: (s.latest && typeof s.latest === "object") ? s.latest as Record<string, unknown> : null,
     })),
     changes: decodeSection<RoomChangesData>(raw.changes, (s) => ({
-      recent: Array.isArray(s.recent) ? s.recent as Record<string, unknown>[] : [],
+      recent: Array.isArray(s.recent)
+        ? (s.recent as Record<string, unknown>[]).map(decodeChangeRow)
+        : [],
     })),
     review: decodeSection<Record<string, never>>(raw.review, () => ({} as Record<string, never>)),
     sources: decodeSection<Record<string, never>>(raw.sources, () => ({} as Record<string, never>)),

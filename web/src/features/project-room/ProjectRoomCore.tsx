@@ -526,11 +526,11 @@ function RightRail({ room }: { room: RoomSnapshot }) {
           </div>
           {changes.recent.length > 0 ? (
             changes.recent.map((change, i) => (
-              <div key={String(change.id ?? i)} className="project-room-change-row" data-testid="rail-change-row">
-                <span>{String(change.summary || change.kind || "Change")}</span>
-                {change.occurred_at ? (
+              <div key={change.id || String(i)} className="project-room-change-row" data-testid="rail-change-row">
+                <span>{change.label}</span>
+                {change.occurredAt ? (
                   <span className="project-room-date-token">
-                    {humanTime(change.occurred_at)}
+                    {humanTime(change.occurredAt)}
                   </span>
                 ) : null}
               </div>

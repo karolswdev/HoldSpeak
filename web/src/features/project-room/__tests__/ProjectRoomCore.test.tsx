@@ -492,8 +492,8 @@ describe("ProjectRoomCore — R2 desktop composition (HS-158-05)", () => {
           changes: {
             state: "ok",
             recent: [
-              { id: "c1", summary: "Added milestone", kind: "update", occurred_at: "2026-08-30T14:00:00" },
-              { id: "c2", summary: "Risk closed", kind: "close", occurred_at: "2026-08-29T10:00:00" },
+              { id: "c1", change_kind: "project.updated", summary_json: { purpose: "x", posture: "y" }, created_at: "2026-08-30T14:00:00" },
+              { id: "c2", change_kind: "project.resource.linked", summary_json: {}, created_at: "2026-08-29T10:00:00" },
             ],
           },
         }));
@@ -506,7 +506,7 @@ describe("ProjectRoomCore — R2 desktop composition (HS-158-05)", () => {
 
     const changeRows = screen.getAllByTestId("rail-change-row");
     expect(changeRows.length).toBe(2);
-    expect(changeRows[0].textContent).toContain("Added milestone");
+    expect(changeRows[0].textContent).toContain("Updated · purpose, posture");
   });
 
   it("right rail omits absent sections (Art VI)", async () => {
