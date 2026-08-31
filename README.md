@@ -159,6 +159,11 @@ assistant text to annotate by voice (chips above the composer, promoted with
 the next turn). `/compact` summarises earlier turns behind a cut marker.
 `/todo` writes an action item to the Door with thread provenance.
 
+Start a call on any thread to hear every reply spoken aloud and talk back
+hands-free. The default voice is the browser's own speech synthesis (zero
+deps, zero egress). Install `holdspeak[tts]` for server-side kokoro-onnx
+voices (GPL-3.0; phonemizer + espeak-ng). Click the call chip to stop.
+
 **Set up models.** Open **Settings, Models** to make models available in Model
 Library, check their readiness, and choose compatible model lists in Assignments.
 

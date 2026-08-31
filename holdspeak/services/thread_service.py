@@ -25,6 +25,7 @@ from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..kernel.inference_stream import (
     Delta,
     StreamCadence,
+    emit_thread_call_state,
     emit_thread_compacted,
     emit_thread_delta,
     emit_thread_guardrail,
@@ -218,6 +219,7 @@ class ThreadService:
         title: Optional[str] = None,
         profile_override: Optional[str] = None,
         recipe_id: Optional[str] = None,
+        call_mode: Optional[int] = None,
     ) -> dict[str, Any]:
         # HS-153-01: validate recipe_id -- empty string unbinds; non-empty
         # must reference a kind='mode' recipe (400 otherwise).
@@ -235,14 +237,35 @@ class ThreadService:
                     code="recipe_not_mode",
                     context={"status": 400},
                 )
+        # HS-154-03: validate call_mode (0 = off, 1 = on).
+        if call_mode is not None and call_mode not in (0, 1):
+            raise ValidationError(
+                f"call_mode must be 0 or 1, got {call_mode!r}",
+                code="invalid_call_mode",
+                context={"status": 400},
+            )
+        old_call_mode: Optional[int] = None
+        if call_mode is not None:
+            old_thread = self._threads.get(thread_id)
+            if old_thread is not None:
+                old_call_mode = old_thread.call_mode
         thread = self._threads.patch(
             thread_id,
             title=title,
             profile_override=profile_override,
             recipe_id=recipe_id,
+            call_mode=call_mode,
         )
         if thread is None:
             raise ServiceError("thread_not_found", f"Thread {thread_id} not found", context={"status": 404})
+        # HS-154-03: emit thread_call_state frame on ON/OFF transitions.
+        if call_mode is not None and old_call_mode is not None and call_mode != old_call_mode:
+            state = "listening" if call_mode == 1 else "off"
+            emit_thread_call_state(
+                self._broadcast,
+                thread_id=thread_id,
+                state=state,
+            )
         return self._thread_dict(thread)
 
     def soft_delete(self, thread_id: str) -> bool:
@@ -475,6 +498,15 @@ class ThreadService:
             model_id=model_id,
             egress=egress_scope,
         )
+
+        # HS-154-03: if the thread is in call mode, emit THINKING transition.
+        thread_obj = self._threads.get(thread_id)
+        if thread_obj is not None and thread_obj.call_mode == 1:
+            emit_thread_call_state(
+                self._broadcast,
+                thread_id=thread_id,
+                state="thinking",
+            )
 
         # -- Run streaming turn in a daemon thread --
         cancel_event = threading.Event()
@@ -1488,6 +1520,15 @@ class ThreadService:
             stats=done_stats,
         )
 
+        # HS-154-03: if the thread is still in call mode, transition back to LISTENING.
+        thread_after = self._threads.get(thread_id)
+        if thread_after is not None and thread_after.call_mode == 1:
+            emit_thread_call_state(
+                self._broadcast,
+                thread_id=thread_id,
+                state="listening",
+            )
+
         # -- Clean up --
         if tool_executor is not None:
             ThreadService._tool_executor.unregister(assistant_msg_id)
@@ -1972,6 +2013,7 @@ class ThreadService:
             "recipe_id": thread.recipe_id,
             "profile_override": thread.profile_override,
             "directory_id": thread.directory_id,
+            "call_mode": thread.call_mode,
             "token_in": thread.token_in,
             "token_out": thread.token_out,
             "created_at": thread.created_at,

@@ -1,0 +1,76 @@
+{
+  "id": "th_2337965345c5",
+  "title": "HS-154-05 Leg 5 grammar",
+  "recipe_id": "hs-seed-mode-desk",
+  "profile_override": "",
+  "directory_id": "",
+  "call_mode": 1,
+  "token_in": 5,
+  "token_out": 4,
+  "created_at": 1788132145.6203752,
+  "updated_at": 1788132145.756257,
+  "last_turn_at": 1788132145.6391292,
+  "mode": {
+    "id": "hs-seed-mode-desk",
+    "name": "Desk",
+    "avatar": "#6B7280"
+  },
+  "messages": [
+    {
+      "id": "tm_bcc317beef0c",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_2c4610be74cf",
+          "kind": "text",
+          "text": "Tell me a short joke.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788132145.625236,
+      "updated_at": 1788132145.626359,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_1514a7800fc9",
+      "role": "assistant",
+      "parent_id": "tm_bcc317beef0c",
+      "streaming": false,
+      "receipt_id": "ire_8ba695b899c437301c1f3d636490875c",
+      "egress_scope": "local",
+      "model_id": "hs154-local",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 4,
+        "prompt_tokens": 5
+      },
+      "parts": [
+        {
+          "id": "tp_e7749a258775",
+          "kind": "text",
+          "text": "Simple desk response -- no actions taken.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788132145.6391292,
+      "updated_at": 1788132145.755878,
+      "completed_at": 1788132145.755878,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

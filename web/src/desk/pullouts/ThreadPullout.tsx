@@ -49,11 +49,21 @@ import {
   type ToolRow,
   type ToolRowState,
   type GuardrailRow,
+  type ThreadCallStatePayload,
 } from "../threads";
 import { useDesk } from "../store";
 import { ThreadComposer, InlineEditor } from "../components/ThreadComposer";
 import { MicButton } from "../components/MicButton";
 import { ModeTabs } from "../components/ModeTabs";
+import { CallChip } from "../components/CallChip";
+import { SpeakerGlyph } from "../components/SpeakerGlyph";
+import {
+  feedDelta as autoSpeakFeedDelta,
+  flushTurn as autoSpeakFlushTurn,
+  setCallActive as autoSpeakSetCallActive,
+  bargeIn as autoSpeakBargeIn,
+  wasAutoSpoken,
+} from "../autoSpeak";
 import type { PulloutContentProps } from "./types";
 import "./thread-pullout.css";
 
@@ -1100,6 +1110,10 @@ function MessageRow({
       )}
 
       <div className="thread-row-actions">
+        {/* HS-154-04: speaker glyph — replay any finished assistant text */}
+        {isDone && displayText && (
+          <SpeakerGlyph messageId={msg.id} text={displayText} />
+        )}
         <SiblingPicker
           position={siblingPosition}
           total={siblingTotal}
@@ -1210,11 +1224,18 @@ function ThreadPulloutInner({
         const p = frame.data as ThreadDeltaPayload;
         if (p.thread_id !== threadId) return;
         applyDelta(p);
+        // HS-154-04: feed text deltas to auto-speak (not reasoning).
+        // S1: guard against reconnect-replayed deltas for already-spoken turns.
+        if (p.kind === "text" && !wasAutoSpoken(p.message_id)) {
+          autoSpeakFeedDelta(p.message_id, p.text);
+        }
       }),
       subscribe("thread_turn_done", (frame) => {
         const p = frame.data as ThreadTurnDonePayload;
         if (p.thread_id !== threadId) return;
         applyTurnDone(p);
+        // HS-154-04: flush auto-speak tail at turn end.
+        autoSpeakFlushTurn(p.message_id);
         // HS-151-06: restore focus to the composer after turn_done
         setRestoreFocus(true);
         requestAnimationFrame(() => setRestoreFocus(false));
@@ -1253,6 +1274,12 @@ function ThreadPulloutInner({
       // HS-153-05: compaction frame — refresh thread to get the cut row
       subscribe("thread_compacted", (frame) => {
         const p = frame.data as { thread_id: string };
+        if (p.thread_id !== threadId) return;
+        void loadThread(threadId);
+      }),
+      // HS-154-03: call state frame — reload thread to sync call_mode
+      subscribe("thread_call_state", (frame) => {
+        const p = frame.data as ThreadCallStatePayload;
         if (p.thread_id !== threadId) return;
         void loadThread(threadId);
       }),
@@ -1346,6 +1373,12 @@ function ThreadPulloutInner({
   }, []);
 
   const isStreaming = detail?.messages.some((m) => m.streaming) ?? false;
+
+  // HS-154-04: sync auto-speak active state with call_mode.
+  const callMode = detail?.thread?.call_mode ?? 0;
+  useEffect(() => {
+    autoSpeakSetCallActive(callMode === 1);
+  }, [callMode]);
 
   // HS-153-04: annotation popover state
   const draftAnnotations = useThreadStore((s) => s.draftAnnotations[threadId] ?? EMPTY_DRAFT_ANNOTATIONS);
@@ -1596,6 +1629,12 @@ function ThreadPulloutInner({
                 {detail.thread.mode.name}
               </span>
             )}
+            <CallChip
+              threadId={threadId}
+              callMode={detail.thread?.call_mode ?? 0}
+              isStreaming={isStreaming}
+              onReload={() => void loadThread(threadId)}
+            />
             {egressLamp && <LampGadget on {...egressLamp} />}
             {(liveStatusLine || detail.thread?.status_line) && (
               <span className="thread-status-line">{liveStatusLine || detail.thread?.status_line}</span>

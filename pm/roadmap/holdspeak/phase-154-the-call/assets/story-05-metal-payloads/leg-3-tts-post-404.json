@@ -1,0 +1,7 @@
+{
+  "status": 404,
+  "body": {
+    "code": "tts_not_installed",
+    "message": "Install the TTS extra: pip install 'holdspeak[tts]'"
+  }
+}

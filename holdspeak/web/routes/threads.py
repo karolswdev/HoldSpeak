@@ -129,11 +129,24 @@ def build_threads_router(ctx: WebContext) -> APIRouter:
                     toggle_guardrail_on_mode(
                         svc._db, thread.recipe_id, str(toggle_guardrail_id), enable=bool(enable),
                     )
+            # HS-154-03: call_mode toggle (0 or 1).
+            raw_call_mode = body.get("call_mode")
+            # S2: non-numeric call_mode -> 400, not 500.
+            call_mode_val = None
+            if raw_call_mode is not None:
+                try:
+                    call_mode_val = int(raw_call_mode)
+                except (ValueError, TypeError):
+                    return JSONResponse(
+                        {"error": "invalid_call_mode", "detail": "call_mode must be an integer"},
+                        status_code=400,
+                    )
             result = _service().patch(
                 thread_id,
                 title=body.get("title"),
                 profile_override=body.get("profile_override"),
                 recipe_id=body.get("recipe_id"),
+                call_mode=call_mode_val,
             )
             return JSONResponse(result)
         except ValidationError as exc:

@@ -925,6 +925,33 @@ a literal slash.
 | `/stop` | Stop a running turn |
 | `/new` | Start a new thread |
 
+### The Call
+
+Start a call on any thread to hear every reply and talk back hands-free.
+The call chip in the thread head shows four states: OFF, LISTENING,
+THINKING, SPEAKING. Click the chip in any non-OFF state to stop (TTS
+stops, mic closes, call ends). A fresh thread is always OFF.
+
+Every assistant turn shows a speaker glyph. Click the glyph to replay
+the turn through the voice. In call mode, speech starts at sentence
+boundaries while the reply is still streaming (auto-speak). Barge-in
+(speak or click) stops TTS immediately and returns to LISTENING.
+
+**Default voice.** The browser's Web Speech API (`speechSynthesis`):
+zero dependencies, zero egress, instant.
+
+**Server voice.** Install the optional extra for kokoro-onnx voices:
+
+```
+pip install holdspeak[tts]
+```
+
+The `phonemizer` and `espeak-ng` dependencies are GPL-3.0. When
+enabled, Settings shows the server voice block. When absent, the
+route answers 404 and the client stays on the browser voice. If the
+server voice's first chunk exceeds 2 s, that utterance falls back to
+the browser voice (R4).
+
 ## Schedule A Recording
 
 You can set the hub to start a recording on its own at a time you choose.

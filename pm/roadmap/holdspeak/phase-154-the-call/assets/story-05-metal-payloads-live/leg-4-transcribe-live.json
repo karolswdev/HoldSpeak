@@ -1,0 +1,7 @@
+{
+  "status": 503,
+  "body": {
+    "success": false,
+    "error": "Transcription is unavailable in this runtime. Your audio is kept in the browser for Retry. Start the desktop runtime."
+  }
+}
