@@ -452,6 +452,77 @@ describe("Popover", () => {
     openPopover();
     expect(document.querySelector(".surface-popover")).toBeTruthy();
   });
+
+  /* ── Portal-target regression (HS-156 popover z-index fix) ────── */
+
+  /** Wrapper that provides a #desk-next container, matching the real
+   *  DeskApp shell, so the Popover portal lands inside it and scoped
+   *  CSS rules (.desk-next .surface-popover) match. */
+  function TestPopoverInDesk() {
+    const anchorRef = useRef<HTMLButtonElement>(null);
+    const [open, setOpen] = useState(false);
+    const [clicked, setClicked] = useState(false);
+    return (
+      <div className="desk-next" id="desk-next">
+        <button ref={anchorRef} onClick={() => setOpen(true)}>
+          Open
+        </button>
+        <Popover
+          anchor={anchorRef}
+          open={open}
+          onClose={() => setOpen(false)}
+          ariaLabel="Desk popover"
+        >
+          <p>{clicked ? "Clicked!" : "Popover content"}</p>
+          <button onClick={() => setClicked(true)}>Inner action</button>
+        </Popover>
+      </div>
+    );
+  }
+
+  it("portals into #desk-next so scoped z-index rules apply", () => {
+    render(<TestPopoverInDesk />);
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    const popover = document.querySelector(".surface-popover");
+    expect(popover).toBeTruthy();
+    // The popover must be inside the desk-next root, not document.body
+    const deskRoot = document.getElementById("desk-next");
+    expect(deskRoot!.contains(popover!)).toBe(true);
+  });
+
+  it("content receives pointer events above the backdrop", () => {
+    render(<TestPopoverInDesk />);
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    // The backdrop sits behind the content — clicking a button inside
+    // the popover must fire its handler, not the backdrop's onClose.
+    const innerBtn = screen.getByRole("button", { name: "Inner action" });
+    fireEvent.click(innerBtn);
+    expect(screen.getByText("Clicked!")).toBeInTheDocument();
+    // The popover must still be open (backdrop did not intercept).
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("backdrop click still closes the popover", () => {
+    render(<TestPopoverInDesk />);
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    const backdrop = document.querySelector(".surface-popover-backdrop");
+    expect(backdrop).toBeTruthy();
+    fireEvent.click(backdrop!);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("popover and backdrop have co-located z-index classes for CSS", () => {
+    render(<TestPopoverInDesk />);
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    const popover = document.querySelector(".surface-popover");
+    const backdrop = document.querySelector(".surface-popover-backdrop");
+    expect(popover).toBeTruthy();
+    expect(backdrop).toBeTruthy();
+    // Both must be inside the same portal target (#desk-next)
+    const deskRoot = document.getElementById("desk-next");
+    expect(deskRoot!.contains(popover!)).toBe(true);
+    expect(deskRoot!.contains(backdrop!)).toBe(true);
+  });
 });
 
 /* ────────────────────────────────────────────────────────────────────

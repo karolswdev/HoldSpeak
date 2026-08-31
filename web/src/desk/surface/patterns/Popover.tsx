@@ -108,6 +108,15 @@ export function Popover({
       break;
   }
 
+  /* Portal into the desk-next root so `.desk-next .surface-popover`
+     CSS scoping applies (z-index, tokens, focus ring).  Without this
+     the portal escapes the .desk-next ancestor and the content's
+     z-index rule never matches — while the backdrop's unscoped
+     z-index DOES apply, blocking pointer events over the content.
+     Matches the pattern used by DeskMenu and DeskToolShelf. */
+  const portalTarget =
+    document.getElementById("desk-next") ?? document.body;
+
   return createPortal(
     <>
       {/* Invisible backdrop to catch outside clicks */}
@@ -128,6 +137,6 @@ export function Popover({
         {children}
       </div>
     </>,
-    document.body,
+    portalTarget,
   );
 }
