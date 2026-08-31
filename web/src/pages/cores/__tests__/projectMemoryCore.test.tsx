@@ -19,6 +19,15 @@ import {
   composeProjectTimeline,
 } from "../ProjectMemoryCore";
 
+const mockRunAsk = vi.fn();
+vi.mock("../../../desk/ask", async () => {
+  const actual =
+    await vi.importActual<typeof import("../../../desk/ask")>(
+      "../../../desk/ask",
+    );
+  return { ...actual, runAsk: (...args: unknown[]) => mockRunAsk(...args) };
+});
+
 const apiFetch = vi.fn();
 vi.mock("../../../lib/api", async () => {
   const actual =
@@ -219,5 +228,59 @@ describe("Project Memory", () => {
       expect(useDesk.getState().windowsById["surface-project-memory"]?.scope)
         .toBe("project:p1"),
     );
+  });
+
+  // HS-157-04: WEB-ARC-006 gap coverage — Ask interaction
+  it("submits a project Ask and renders the grounded answer", async () => {
+    mockRunAsk.mockResolvedValue({
+      ok: true,
+      output: "The project uses the Desk grammar.",
+      egress: { scope: "local", host: "This device" },
+      model: "test-model",
+      profileId: null,
+      inferenceTarget: null,
+      actualPlacement: null,
+      contextIds: ["p1"],
+      contextTitles: ["Long memory"],
+      groundingClaims: [],
+      groundingReceipt: {
+        sourceRefs: ["meeting:m1"],
+        selection: "summary",
+        matchedCount: 3,
+        overflowCount: 1,
+      },
+    });
+
+    render(<WindowHarness />);
+    // Wait for data load, then switch to Ask tab
+    await screen.findByText("Since Kickoff");
+    fireEvent.click(screen.getByRole("tab", { name: "Ask" }));
+
+    const textarea = screen.getByRole("textbox", { name: "Ask this project" });
+    fireEvent.change(textarea, { target: { value: "What grammar?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+
+    expect(await screen.findByText("The project uses the Desk grammar.")).toBeTruthy();
+    expect(screen.getByText("GROUNDED ON 2 OF 3")).toBeTruthy();
+    expect(mockRunAsk).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: "What grammar?",
+        lens: "Project",
+      }),
+    );
+  });
+
+  // HS-157-04: WEB-ARC-006 gap coverage — load error state
+  it("shows an error state when the project load fails", async () => {
+    apiFetch.mockRejectedValue(new Error("Network failure"));
+    render(<ProjectMemoryCore scope="project:p1" />);
+
+    expect(await screen.findByText("Network failure")).toBeTruthy();
+  });
+
+  // HS-157-04: WEB-ARC-006 gap coverage — no-scope empty state
+  it("shows an empty state when no project scope is provided", () => {
+    render(<ProjectMemoryCore />);
+    expect(screen.getByText("Open a Project")).toBeTruthy();
   });
 });

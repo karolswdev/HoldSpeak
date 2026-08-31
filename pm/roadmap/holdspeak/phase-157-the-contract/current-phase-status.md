@@ -1,0 +1,87 @@
+# Phase 157 - Project Rooms: The Contract (P0)
+
+**Last updated:** 2026-08-31 — PHASE COMPLETE 5/5. Counsel RATIFY zero must-fix; sweep zero true branch-new (2 candidates proven load-flakes with isolated greens); web baseline zero branch-new. PR to main next. Owner rulings recorded: POSITIONING "Watches (Project-scoped)" row RATIFIED; EverDriven delivery rides GitHub (P2a proves; Jira P7 follows with a real adapter).
+
+## Goal
+
+Freeze the contracts today's Project subsystem holds implicitly —
+qualified refs, command results, typed errors — and pin existing
+Project behavior (service, routes, Web surface, MCP registration)
+under characterization tests, so the Project Rooms graduation can
+proceed without ever breaking the promise AD-PRJ-004 makes: every
+citizen keeps its own truth. Small, unglamorous, non-negotiable.
+
+First phase of the Project Rooms arc. Charter grounded in the vetted
+SRS suite (`docs/internal/project-rooms/`, PR #519): domain slice P0
+(`SRS_DOMAIN_DRIVER.md` §14), REF-001..004, API-001..003, TST-008.
+Constitution: Art VI (honest by construction), Art IX (proof over
+claim); the arc ahead answers to Art XI (the kernel) via NFR-009.
+
+## Scope
+
+- **In:** the five stories below; PR from `feat/project-rooms-p0-the-contract`.
+- **Out:** any schema change, any new endpoint, any Web feature work,
+  the `project.*` MCP family, Watch graduation — those are P1+ phases.
+  Characterization changes NO behavior.
+
+## Exit criteria (evidence required)
+
+- [x] Current Project behavior is protected: characterization tests cover ProjectService (CRUD/archive/meeting/resource/summary/since-last-meeting), all 18 `/api/projects*` routes, the Web Project Memory registration/opening seam, and the MCP family registration truth — all green under isolated HOME.
+- [x] Schema/API names are agreed: the P0 contract doc records the frozen result envelope (`result_kind`, `project_id`, `project_revision`, `changed_refs`, typed errors), the qualified-ref grammar, and the ID prefixes from SRS_DOMAIN_DRIVER §4 — and every name traces to the SRS suite (a discovery that invalidates one updates the suite before or with the code).
+- [x] The `person:`/`people:` ref-prefix drift is settled (REF-003): one canonical type, backward-compatible aliases, round-trip tests, and a fence that keeps new Project code off feature-local string splitting.
+- [x] Sweep name-diff clean vs main (zero branch-new); web baseline zero branch-new; counsel close with zero open must-fix.
+
+## Story status
+
+| ID | Story | Status | Story file | Evidence |
+|---|---|---|---|---|
+| HS-157-01 | The qualified ref (one grammar, aliases, the fence) | done | [story-01-the-qualified-ref](./story-01-the-qualified-ref.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-157-02 | The result contract (envelope, typed errors, ID prefixes) | done | [story-02-the-result-contract](./story-02-the-result-contract.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-157-03 | The service characterization (ProjectService + routes) | done | [story-03-the-service-characterization](./story-03-the-service-characterization.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-157-04 | The surface characterization (Web + MCP registration) | done | [story-04-the-surface-characterization](./story-04-the-surface-characterization.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-157-05 | The close (gates, suite updates, final summary) | done | [story-05-the-close](./story-05-the-close.md) | [evidence-story-05](./evidence-story-05.md) |
+
+## Where we are
+
+CHARTERED 2026-08-31 against the vetted SRS suite on PR #519
+(handover: `docs/internal/project-rooms/HANDOVER-IMPLEMENTATION.md`).
+All 15 handover §1 ground-truth anchors re-verified against
+origin/main at charter time (`56d7ca2c`) — every one holds; nothing
+moved. The `person:`/`people:` drift confirmed live:
+`holdspeak/services/thread_service.py:311` splits `person:` while
+`holdspeak/services/people_service.py:784,799` emits `people:`.
+No `project.*` MCP family exists (15 registered families; Watch tools
+live in `reactions.py`). #519 merged `e7e56e1e` (2026-08-31); the
+owner ratified the POSITIONING canon row and ruled delivery = GitHub
+(`gh`), with Jira parity following GitHub proof on a real adapter.
+HS-157-01 shipped `holdspeak/refs.py` + CONTRACTS-P0.md: REF-003
+ruled `people:` canonical on runtime-safety evidence (6/6 emitters,
+5/6 parsers), 58 tests + the REF-001 fence green under isolated HOME.
+HS-157-04 pinned the surfaces: Project Memory registration + the
+WEB-ARC-006 gaps closed (Ask interaction, error, no-scope), the 11
+Watch/Reaction tool names, the no-project-family starting fact — and
+surfaced the MCP-006 baseline violation (families/__init__.py bare
+imports: one failure kills all 15 families; P6 owns the fix).
+HS-157-03 pinned the whole service + route surface (62 + 46 tests,
+140 green with the legacy kb suite): four oddities recorded as-is for
+P1 — DELETE-is-archive, three 404 wordings, success-key asymmetry,
+raw ValueError through the service boundary.
+HS-157-02 froze the names: CommandResultEnvelope, 16 result kinds,
+5 error codes, all 11 §4.1 ID prefixes (3 deterministic with §4.1
+input signatures) — every name SRS-traced in CONTRACTS-P0.md;
+167 tests green.
+THE CLOSE (05): full suite 12F/7766P vs main's 26-name baseline —
+2 name-diff candidates both proven load-flakes (isolated greens; the
+branch changes zero runtime code); web check + baseline green
+(1791 passed, baseline-subset); counsel RATIFY zero M/S, N-1 fence
+addition applied in-round, N-2 recorded. final-summary.md written.
+PHASE COMPLETE 5/5 — the PR to main carries it.
+
+## Active risks
+
+| Risk | Likelihood | Mitigation | Stop signal |
+|---|---|---|---|
+| Characterization drifts into refactor | medium | pin behavior as-is; a P0 commit changes no runtime semantics | any behavior change in a characterization diff |
+| Ref canonicalization breaks Desk consumers | medium | aliases accepted on parse; existing emitters untouched in P0 | web baseline branch-new; a changed emitted ref |
+| Contract doc invents names the SRS never agreed | low | every name traces to the suite; discoveries amend the suite before/with code | a name in code absent from the SRS + no suite edit |
+| Charter built on stale anchors | low | anchors re-verified at charter (see Where we are) | an anchor miss during implementation |
