@@ -1,6 +1,6 @@
 # Phase 157 - Project Rooms: The Contract (P0)
 
-**Last updated:** 2026-08-31 — CHARTERED; PR #519 MERGED (`e7e56e1e`) — the suite is on main; building. Owner rulings recorded: POSITIONING "Watches (Project-scoped)" row RATIFIED; EverDriven delivery rides GitHub (P2a proves; Jira P7 follows with a real adapter).
+**Last updated:** 2026-08-31 — HS-157-01 DONE (the ref grammar RULED: `people:` canonical, `person:` alias — evidence reversed the charter's guess); 03/04 in flight; building. Owner rulings recorded: POSITIONING "Watches (Project-scoped)" row RATIFIED; EverDriven delivery rides GitHub (P2a proves; Jira P7 follows with a real adapter).
 
 ## Goal
 
@@ -35,10 +35,10 @@ claim); the arc ahead answers to Art XI (the kernel) via NFR-009.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-157-01 | The qualified ref (one grammar, aliases, the fence) | backlog | [story-01-the-qualified-ref](./story-01-the-qualified-ref.md) | - |
+| HS-157-01 | The qualified ref (one grammar, aliases, the fence) | done | [story-01-the-qualified-ref](./story-01-the-qualified-ref.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-157-02 | The result contract (envelope, typed errors, ID prefixes) | backlog | [story-02-the-result-contract](./story-02-the-result-contract.md) | - |
-| HS-157-03 | The service characterization (ProjectService + routes) | backlog | [story-03-the-service-characterization](./story-03-the-service-characterization.md) | - |
-| HS-157-04 | The surface characterization (Web + MCP registration) | backlog | [story-04-the-surface-characterization](./story-04-the-surface-characterization.md) | - |
+| HS-157-03 | The service characterization (ProjectService + routes) | in-progress | [story-03-the-service-characterization](./story-03-the-service-characterization.md) | - |
+| HS-157-04 | The surface characterization (Web + MCP registration) | in-progress | [story-04-the-surface-characterization](./story-04-the-surface-characterization.md) | - |
 | HS-157-05 | The close (gates, suite updates, final summary) | backlog | [story-05-the-close](./story-05-the-close.md) | - |
 
 ## Where we are
@@ -50,10 +50,13 @@ origin/main at charter time (`56d7ca2c`) — every one holds; nothing
 moved. The `person:`/`people:` drift confirmed live:
 `holdspeak/services/thread_service.py:311` splits `person:` while
 `holdspeak/services/people_service.py:784,799` emits `people:`.
-No `project.*` MCP family exists (17 family modules; Watch tools live
-in `reactions.py`). #519 merged `e7e56e1e` (2026-08-31); the owner
-ratified the POSITIONING canon row and ruled delivery = GitHub (`gh`),
-with Jira parity following GitHub proof on a real adapter.
+No `project.*` MCP family exists (15 registered families; Watch tools
+live in `reactions.py`). #519 merged `e7e56e1e` (2026-08-31); the
+owner ratified the POSITIONING canon row and ruled delivery = GitHub
+(`gh`), with Jira parity following GitHub proof on a real adapter.
+HS-157-01 shipped `holdspeak/refs.py` + CONTRACTS-P0.md: REF-003
+ruled `people:` canonical on runtime-safety evidence (6/6 emitters,
+5/6 parsers), 58 tests + the REF-001 fence green under isolated HOME.
 
 ## Active risks
 

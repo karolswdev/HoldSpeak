@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 157
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** -
 - **Unblocks:** HS-157-02
 - **Owner:** unassigned
@@ -47,6 +47,32 @@ miss links. REF-001..004 are the law here.
 - **Unit:** `tests/unit/test_project_refs.py` (grammar, aliases, round-trip, unknown types, registry refusal) + the fence test.
 - **Regression:** full-suite name-diff vs main at the close (05).
 
+## What shipped
+
+- `holdspeak/refs.py` — the central qualified-ref authority (PURE: no
+  DB, no IO): closed registry of 12 citizen types (10 active from
+  codebase evidence, `repo`/`kernel` planned per SRS §3.2),
+  `parse()`/`format()`/`resolve_alias()`, `QualifiedRef` frozen
+  dataclass with `is_registered`, typed errors
+  (`MalformedRefError`, `UnregisteredTypeError`).
+- **REF-003 RULED: `people:` is canonical; `person:` is the alias.**
+  The story's initial recommendation (`person:` singular) was REVERSED
+  by codebase evidence: all 6 emitters and 5 of 6 parsers already
+  speak `people:`; only `thread_service.py:311` parses `person:`.
+  Runtime safety beat linguistic symmetry. Secondary alias:
+  `door` → `action_item` (SRS naming vs the code's 3 emission sites).
+- `docs/internal/project-rooms/CONTRACTS-P0.md` — the ruling with the
+  full drift-evidence table, per-type emission evidence at file:line,
+  REF-001..004 traceability; HS-157-02 placeholder section.
+- `tests/unit/test_project_refs.py` — 58 tests: grammar, aliases
+  (both forms parse to one canonical), round-trip for every registered
+  type, unknown-type inspectable-but-refused (REF-004), malformed
+  refs, and the REF-001 fence (`PROJECT_ROOMS_MODULES` named list —
+  starts with `refs.py` alone, grows as P1+ adds modules; legacy
+  sites never fire it). `58 passed in 0.32s` under isolated HOME.
+
 ## Notes / open questions
 
-- Recommendation going in: canonical `person:` (singular matches `meeting:`, `decision:`), alias `people:` — but verify against what the Desk relationship routes and web consumers actually parse before ruling; the ruling itself is the deliverable, recorded in the contract doc.
+- The ruling REVERSED the charter's initial `person:` recommendation — evidence won, exactly as the story demanded. Nothing imports `refs.py` yet; adoption begins with newly touched Project code (REF-001's own scoping).
+- `schedule:` prefixes in workbench_runner/scheduled_recording_conductor are idempotency keys, not citizen refs — deliberately unregistered.
+- `thread_service.py:311`'s `person:` parse path now looks suspect (no emitter produces `person:` refs today) — flagged for P1, not touched in P0.
