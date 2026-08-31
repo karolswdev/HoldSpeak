@@ -1,6 +1,6 @@
 # Phase 159 - Project Rooms: The Interview (P1a)
 
-**Last updated:** 2026-08-31 — 3/7 DONE: the interview's engine runs (durable resumable sessions, deterministic fact-traceable suggestions, one-transaction finalize fault-proven, Blank lawful, no hollow Projects). 04 the routes next; then the face.
+**Last updated:** 2026-08-31 — 4/7 DONE: the wire is live (20 routes, the full happy walk through the real app, 409 law for dead sessions, api-surface 594). NOW: 05 the face ∥ 06 the walk — then the beauty pass and THE OWNER'S SHOTS.
 
 ## Goal
 
@@ -47,7 +47,7 @@ deterministic path is the P1a implementation).
 | HS-159-01 | The watch graduation (WatchSpec@1 columns + §9 tables, legacy intact) | done | [story-01-the-watch-graduation](./story-01-the-watch-graduation.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-159-02 | The watch service (one façade; ReactionService compat) | done | [story-02-the-watch-service](./story-02-the-watch-service.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-159-03 | The setup service (durable session, native suggestions, atomic finalize) | done | [story-03-the-setup-service](./story-03-the-setup-service.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-159-04 | The setup routes (HTTP §10, command contract, api-surface) | backlog | [story-04-the-setup-routes](./story-04-the-setup-routes.md) | - |
+| HS-159-04 | The setup routes (HTTP §10, command contract, api-surface) | done | [story-04-the-setup-routes](./story-04-the-setup-routes.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-159-05 | The interview face (two questions, live brief, activation — shots + verdict) | backlog | [story-05-the-interview-face](./story-05-the-interview-face.md) | - |
 | HS-159-06 | The walk (reload-resume → finalize → populated Now, on glass) | backlog | [story-06-the-walk](./story-06-the-walk.md) | - |
 | HS-159-07 | The close (gates, suite amendments, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |

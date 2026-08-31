@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 159
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-159-03
 - **Unblocks:** HS-159-05, HS-159-06
 - **Owner:** unassigned
@@ -38,6 +38,27 @@ applies to every command.
 
 - **Integration:** `tests/integration/test_project_setup_routes.py` via the real app.
 
+## What shipped
+
+- `holdspeak/web/routes/project_setup.py` (10 routes: start/get/
+  answers/suggest/select/deselect/clarify/test/finalize/abandon) +
+  `holdspeak/web/routes/watches.py` (10: list ×2/get/update/test/
+  baseline/pause/resume/retire/rules) — parse-and-serialize thin,
+  owner-scoped, registered per the front_door pattern.
+- Status law: 404 unknown ids; 400 validation (incl. WatchCondition@1
+  refusals through PUT rules); 409 for expired/abandoned/idempotency
+  conflicts (the sibling ConflictError convention) — expired sessions
+  transition ON READ and then refuse mutation with 409.
+- Finalize returns the envelope (result_kind/project_id/
+  project_revision/changed_refs).
+- api-surface 574 → 594 (+20), fence green, both docs regenerated.
+- 30 integration tests through the REAL app incl. the full happy walk
+  (start → answers → suggest → select → test → finalize → the
+  created Project visible via /room with its watch binding), Blank
+  finalize, abandon-then-finalize refusal, watch round-trips.
+  Scoped set 206 passed (captured).
+
 ## Notes / open questions
 
 - Keep route handlers parse-and-serialize thin — the services own everything (the ProjectService docstring's own law).
+- Test-harness gotcha: TestClient composes no auth middleware — the suite injects an OWNER-stamping middleware matching production; the face's fixtures should mirror the REAL wire shapes these routes emit (the 158 law).

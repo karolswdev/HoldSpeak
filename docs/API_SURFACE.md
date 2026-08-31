@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 574 (plus static mounts). iOS-consumed: 89. Web-consumed: 446.
+Routes: 594 (plus static mounts). iOS-consumed: 89. Web-consumed: 449.
 
 ## device_audio_ws
 
@@ -765,6 +765,21 @@ Routes: 574 (plus static mounts). iOS-consumed: 89. Web-consumed: 446.
 | PUT | `/api/workflows/{workflow_id}` | web |
 | POST | `/api/workflows/{workflow_id}/run` | ios, web |
 
+## web.routes.project_setup
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/project-setups` | server only |
+| GET | `/api/project-setups/{session_id}` | web |
+| POST | `/api/project-setups/{session_id}/abandon` | server only |
+| POST | `/api/project-setups/{session_id}/answers` | server only |
+| POST | `/api/project-setups/{session_id}/finalize` | server only |
+| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/clarify` | server only |
+| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/deselect` | server only |
+| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/select` | server only |
+| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/test` | server only |
+| POST | `/api/project-setups/{session_id}/suggest` | server only |
+
 ## web.routes.projections
 
 | Method | Path | Consumers |
@@ -1010,3 +1025,18 @@ Routes: 574 (plus static mounts). iOS-consumed: 89. Web-consumed: 446.
 | POST | `/api/tts` | web |
 | POST | `/api/tts/download` | web |
 | GET | `/api/tts/status` | web |
+
+## web.routes.watches
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/projects/{project_id}/watches` | server only |
+| GET | `/api/watches` | server only |
+| GET | `/api/watches/{watch_id}` | web |
+| PATCH | `/api/watches/{watch_id}` | web |
+| POST | `/api/watches/{watch_id}/baseline` | server only |
+| POST | `/api/watches/{watch_id}/pause` | server only |
+| POST | `/api/watches/{watch_id}/resume` | server only |
+| POST | `/api/watches/{watch_id}/retire` | server only |
+| PUT | `/api/watches/{watch_id}/rules` | server only |
+| POST | `/api/watches/{watch_id}/test` | server only |

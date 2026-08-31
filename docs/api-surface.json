@@ -3927,6 +3927,88 @@
       ]
     },
     {
+      "path": "/api/project-setups",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
+      "path": "/api/project-setups/{session_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/project-setups/{session_id}/abandon",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
+      "path": "/api/project-setups/{session_id}/answers",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
+      "path": "/api/project-setups/{session_id}/finalize",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
+      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
+      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/deselect",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
+      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/select",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
+      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/test",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
+      "path": "/api/project-setups/{session_id}/suggest",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
       "path": "/api/projects",
       "methods": [
         "GET"
@@ -4120,6 +4202,14 @@
         "GET"
       ],
       "module": "web.routes.projects",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/watches",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.watches",
       "consumers": []
     },
     {
@@ -5056,6 +5146,82 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/watches",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.watches",
+      "consumers": []
+    },
+    {
+      "path": "/api/watches/{watch_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.watches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/watches/{watch_id}",
+      "methods": [
+        "PATCH"
+      ],
+      "module": "web.routes.watches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/watches/{watch_id}/baseline",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.watches",
+      "consumers": []
+    },
+    {
+      "path": "/api/watches/{watch_id}/pause",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.watches",
+      "consumers": []
+    },
+    {
+      "path": "/api/watches/{watch_id}/resume",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.watches",
+      "consumers": []
+    },
+    {
+      "path": "/api/watches/{watch_id}/retire",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.watches",
+      "consumers": []
+    },
+    {
+      "path": "/api/watches/{watch_id}/rules",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.watches",
+      "consumers": []
+    },
+    {
+      "path": "/api/watches/{watch_id}/test",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.watches",
+      "consumers": []
     },
     {
       "path": "/api/workbench-templates",
