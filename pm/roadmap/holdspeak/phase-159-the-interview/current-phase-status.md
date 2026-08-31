@@ -1,6 +1,6 @@
 # Phase 159 - Project Rooms: The Interview (P1a)
 
-**Last updated:** 2026-08-31 — CHARTERED off main `a685c36e` (158 merged; anchors re-verified: connector_watches @ schema.py:2295, ReactionService:167, GitHubWatchSource:43, zero P1a-name squatting, SCHEMA_VERSION 67).
+**Last updated:** 2026-08-31 — 1/7 DONE: schema v68, the WatchSpec@1 graduation with 31 legacy pins green on both sides and the real-DB proof run on a copy of the owner's actual desk. 02 the watch façade next.
 
 ## Goal
 
@@ -44,7 +44,7 @@ deterministic path is the P1a implementation).
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-159-01 | The watch graduation (WatchSpec@1 columns + §9 tables, legacy intact) | backlog | [story-01-the-watch-graduation](./story-01-the-watch-graduation.md) | - |
+| HS-159-01 | The watch graduation (WatchSpec@1 columns + §9 tables, legacy intact) | done | [story-01-the-watch-graduation](./story-01-the-watch-graduation.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-159-02 | The watch service (one façade; ReactionService compat) | backlog | [story-02-the-watch-service](./story-02-the-watch-service.md) | - |
 | HS-159-03 | The setup service (durable session, native suggestions, atomic finalize) | backlog | [story-03-the-setup-service](./story-03-the-setup-service.md) | - |
 | HS-159-04 | The setup routes (HTTP §10, command contract, api-surface) | backlog | [story-04-the-setup-routes](./story-04-the-setup-routes.md) | - |

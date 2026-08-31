@@ -197,3 +197,408 @@ class AutomationRepository(BaseRepository):
                 (reaction_id, max(1, min(int(limit), 500))),
             ).fetchall()
         return [self._payload(row, "facts", "refs") for row in rows]
+
+    # ── HS-159-01: WatchSpec@1 graduation CRUD ─────────────────────────
+
+    def update_watch_spec(
+        self,
+        watch_id: str,
+        *,
+        schema_version: str | None = None,
+        project_id: str | None = None,
+        intent: str | None = None,
+        provider_connection_id: str | None = None,
+        subject_kind: str | None = None,
+        trigger_kind: str | None = None,
+        trigger_json: str | None = None,
+        mode: str | None = None,
+        state: str | None = None,
+        revision: int | None = None,
+        baseline_state: str | None = None,
+        test_state: str | None = None,
+        test_result_json: str | None = None,
+        last_test_at: str | None = None,
+        next_evaluation_at: str | None = None,
+        last_evaluated_at: str | None = None,
+    ) -> bool:
+        """Update graduation columns on a connector_watches row (named-column)."""
+        sets: list[str] = []
+        params: list[Any] = []
+        for col, val in (
+            ("schema_version", schema_version),
+            ("project_id", project_id),
+            ("intent", intent),
+            ("provider_connection_id", provider_connection_id),
+            ("subject_kind", subject_kind),
+            ("trigger_kind", trigger_kind),
+            ("trigger_json", trigger_json),
+            ("mode", mode),
+            ("state", state),
+            ("revision", revision),
+            ("baseline_state", baseline_state),
+            ("test_state", test_state),
+            ("test_result_json", test_result_json),
+            ("last_test_at", last_test_at),
+            ("next_evaluation_at", next_evaluation_at),
+            ("last_evaluated_at", last_evaluated_at),
+        ):
+            if val is not None:
+                sets.append(f"{col}=?")
+                params.append(val)
+        if not sets:
+            return False
+        sets.append("updated_at=datetime('now')")
+        params.append(watch_id)
+        with self._connection() as conn:
+            cur = conn.execute(
+                f"UPDATE connector_watches SET {','.join(sets)} WHERE id=?",
+                params,
+            )
+        return bool(cur.rowcount)
+
+    # ── Setup sessions (§9.1) ──────────────────────────────────────────
+
+    def create_setup_session(
+        self,
+        *,
+        session_id: str,
+        state: str = "active",
+        stage: str = "",
+        draft_schema: str = "",
+        draft_json: str = "{}",
+        project_id: str | None = None,
+        expires_at: str | None = None,
+    ) -> dict[str, Any]:
+        with self._connection() as conn:
+            conn.execute(
+                """INSERT INTO project_setup_sessions
+                   (id,state,stage,draft_schema,draft_json,project_id,expires_at)
+                   VALUES (?,?,?,?,?,?,?)""",
+                (session_id, state, stage, draft_schema, draft_json,
+                 project_id, expires_at),
+            )
+        return self.get_setup_session(session_id) or {}
+
+    def get_setup_session(self, session_id: str) -> dict[str, Any] | None:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM project_setup_sessions WHERE id=?",
+                (session_id,),
+            ).fetchone()
+        return self._payload(row, "draft") if row else None
+
+    def list_setup_sessions(self, *, state: str | None = None) -> list[dict[str, Any]]:
+        where = " WHERE state=?" if state else ""
+        params: list[Any] = [state] if state else []
+        with self._connection() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM project_setup_sessions{where} ORDER BY created_at DESC",
+                params,
+            ).fetchall()
+        return [self._payload(row, "draft") for row in rows]
+
+    # ── Setup answers (§9.1) ───────────────────────────────────────────
+
+    def create_setup_answer(
+        self,
+        *,
+        answer_id: str,
+        session_id: str,
+        question_id: str,
+        answer_schema: str = "",
+        answer_json: str = "{}",
+        revision: int = 1,
+    ) -> dict[str, Any]:
+        with self._connection() as conn:
+            conn.execute(
+                """INSERT INTO project_setup_answers
+                   (id,session_id,question_id,answer_schema,answer_json,revision)
+                   VALUES (?,?,?,?,?,?)""",
+                (answer_id, session_id, question_id, answer_schema,
+                 answer_json, revision),
+            )
+            row = conn.execute(
+                "SELECT * FROM project_setup_answers WHERE id=?",
+                (answer_id,),
+            ).fetchone()
+        return self._payload(row, "answer") if row else {}
+
+    def list_setup_answers(self, session_id: str) -> list[dict[str, Any]]:
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM project_setup_answers WHERE session_id=? "
+                "ORDER BY question_id, revision",
+                (session_id,),
+            ).fetchall()
+        return [self._payload(row, "answer") for row in rows]
+
+    # ── Watch setup proposals (§9.1) ───────────────────────────────────
+
+    def create_setup_proposal(
+        self,
+        *,
+        proposal_id: str,
+        session_id: str,
+        provider_id: str = "",
+        connection_id: str | None = None,
+        spec_schema: str = "",
+        spec_json: str = "{}",
+        rationale_json: str = "{}",
+        state: str = "proposed",
+        test_state: str = "",
+        test_result_json: str | None = None,
+    ) -> dict[str, Any]:
+        with self._connection() as conn:
+            conn.execute(
+                """INSERT INTO watch_setup_proposals
+                   (id,session_id,provider_id,connection_id,spec_schema,
+                    spec_json,rationale_json,state,test_state,test_result_json)
+                   VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                (proposal_id, session_id, provider_id, connection_id,
+                 spec_schema, spec_json, rationale_json, state,
+                 test_state, test_result_json),
+            )
+        return self.get_setup_proposal(proposal_id) or {}
+
+    def get_setup_proposal(self, proposal_id: str) -> dict[str, Any] | None:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM watch_setup_proposals WHERE id=?",
+                (proposal_id,),
+            ).fetchone()
+        return self._payload(row, "spec", "rationale", "test_result") if row else None
+
+    # ── Provider connections (§9.2) ────────────────────────────────────
+
+    def create_provider_connection(
+        self,
+        *,
+        connection_id: str,
+        provider_id: str = "",
+        transport: str = "",
+        external_connection_ref: str = "",
+        state: str = "",
+        capability_manifest_json: str = "{}",
+        capability_revision: int = 0,
+        discovery_state: str = "",
+    ) -> dict[str, Any]:
+        with self._connection() as conn:
+            conn.execute(
+                """INSERT INTO watch_provider_connections
+                   (id,provider_id,transport,external_connection_ref,state,
+                    capability_manifest_json,capability_revision,discovery_state)
+                   VALUES (?,?,?,?,?,?,?,?)""",
+                (connection_id, provider_id, transport, external_connection_ref,
+                 state, capability_manifest_json, capability_revision,
+                 discovery_state),
+            )
+        return self.get_provider_connection(connection_id) or {}
+
+    def get_provider_connection(self, connection_id: str) -> dict[str, Any] | None:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM watch_provider_connections WHERE id=?",
+                (connection_id,),
+            ).fetchone()
+        return self._payload(row, "capability_manifest") if row else None
+
+    def list_provider_connections(self, *, provider_id: str | None = None) -> list[dict[str, Any]]:
+        where = " WHERE provider_id=?" if provider_id else ""
+        params: list[Any] = [provider_id] if provider_id else []
+        with self._connection() as conn:
+            rows = conn.execute(
+                f"SELECT * FROM watch_provider_connections{where} "
+                "ORDER BY created_at DESC",
+                params,
+            ).fetchall()
+        return [self._payload(row, "capability_manifest") for row in rows]
+
+    # ── Watch rules (§9.4) ─────────────────────────────────────────────
+
+    def create_rule(
+        self,
+        *,
+        rule_id: str,
+        watch_id: str,
+        ordinal: int = 0,
+        condition_schema: str = "",
+        condition_json: str = "{}",
+        action_schema: str = "",
+        action_json: str = "{}",
+        enabled: bool = True,
+        revision: int = 0,
+    ) -> dict[str, Any]:
+        with self._connection() as conn:
+            conn.execute(
+                """INSERT INTO watch_rules
+                   (id,watch_id,ordinal,condition_schema,condition_json,
+                    action_schema,action_json,enabled,revision)
+                   VALUES (?,?,?,?,?,?,?,?,?)""",
+                (rule_id, watch_id, ordinal, condition_schema,
+                 condition_json, action_schema, action_json,
+                 int(enabled), revision),
+            )
+        return self.get_rule(rule_id) or {}
+
+    def get_rule(self, rule_id: str) -> dict[str, Any] | None:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM watch_rules WHERE id=?",
+                (rule_id,),
+            ).fetchone()
+        return self._payload(row, "condition", "action") if row else None
+
+    def list_rules(self, watch_id: str) -> list[dict[str, Any]]:
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM watch_rules WHERE watch_id=? ORDER BY ordinal",
+                (watch_id,),
+            ).fetchall()
+        return [self._payload(row, "condition", "action") for row in rows]
+
+    # ── Watch evaluations (§9.4) ───────────────────────────────────────
+
+    def create_evaluation(
+        self,
+        *,
+        evaluation_id: str,
+        watch_id: str,
+        watch_revision: int = 0,
+        provider_capability_revision: int = 0,
+        source_revision: str = "",
+        trigger_kind: str = "",
+        state: str = "",
+        matched_rule_ids_json: str = "[]",
+        observation_ids_json: str = "[]",
+        started_at: str | None = None,
+        completed_at: str | None = None,
+        error_code: str | None = None,
+        error_detail: str | None = None,
+    ) -> dict[str, Any]:
+        with self._connection() as conn:
+            conn.execute(
+                """INSERT INTO watch_evaluations
+                   (id,watch_id,watch_revision,provider_capability_revision,
+                    source_revision,trigger_kind,state,matched_rule_ids_json,
+                    observation_ids_json,started_at,completed_at,
+                    error_code,error_detail)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (evaluation_id, watch_id, watch_revision,
+                 provider_capability_revision, source_revision, trigger_kind,
+                 state, matched_rule_ids_json, observation_ids_json,
+                 started_at, completed_at, error_code, error_detail),
+            )
+        return self.get_evaluation(evaluation_id) or {}
+
+    def get_evaluation(self, evaluation_id: str) -> dict[str, Any] | None:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM watch_evaluations WHERE id=?",
+                (evaluation_id,),
+            ).fetchone()
+        return self._payload(row, "matched_rule_ids", "observation_ids") if row else None
+
+    def list_evaluations(self, watch_id: str, *, limit: int = 100) -> list[dict[str, Any]]:
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM watch_evaluations WHERE watch_id=? "
+                "ORDER BY started_at DESC LIMIT ?",
+                (watch_id, max(1, min(int(limit), 500))),
+            ).fetchall()
+        return [self._payload(row, "matched_rule_ids", "observation_ids") for row in rows]
+
+    # ── Watch effects (§9.4) ───────────────────────────────────────────
+
+    def create_effect(
+        self,
+        *,
+        effect_id: str,
+        evaluation_id: str,
+        rule_id: str,
+        action_kind: str = "",
+        target_ref: str = "",
+        idempotency_key: str,
+        arguments_sha256: str = "",
+        state: str = "",
+        operation_id: str | None = None,
+        receipt_id: str | None = None,
+        result_ref: str | None = None,
+        verification_state: str = "",
+        error_code: str | None = None,
+        error_detail: str | None = None,
+    ) -> dict[str, Any]:
+        with self._connection() as conn:
+            conn.execute(
+                """INSERT INTO watch_effects
+                   (id,evaluation_id,rule_id,action_kind,target_ref,
+                    idempotency_key,arguments_sha256,state,
+                    operation_id,receipt_id,result_ref,verification_state,
+                    error_code,error_detail)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (effect_id, evaluation_id, rule_id, action_kind, target_ref,
+                 idempotency_key, arguments_sha256, state,
+                 operation_id, receipt_id, result_ref, verification_state,
+                 error_code, error_detail),
+            )
+        return self.get_effect(effect_id) or {}
+
+    def get_effect(self, effect_id: str) -> dict[str, Any] | None:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM watch_effects WHERE id=?",
+                (effect_id,),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def list_effects(self, evaluation_id: str) -> list[dict[str, Any]]:
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM watch_effects WHERE evaluation_id=? "
+                "ORDER BY created_at",
+                (evaluation_id,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    # ── Project sources (§5.4) ─────────────────────────────────────────
+
+    def create_project_source(
+        self,
+        *,
+        source_id: str,
+        project_id: str,
+        source_ref: str = "",
+        label: str = "",
+        semantic_role: str = "",
+        materiality_policy_json: str = "{}",
+        enabled: bool = True,
+        freshness_state: str = "",
+        revision: int = 0,
+    ) -> dict[str, Any]:
+        with self._connection() as conn:
+            conn.execute(
+                """INSERT INTO project_sources
+                   (id,project_id,source_ref,label,semantic_role,
+                    materiality_policy_json,enabled,freshness_state,revision)
+                   VALUES (?,?,?,?,?,?,?,?,?)""",
+                (source_id, project_id, source_ref, label, semantic_role,
+                 materiality_policy_json, int(enabled), freshness_state,
+                 revision),
+            )
+        return self.get_project_source(source_id) or {}
+
+    def get_project_source(self, source_id: str) -> dict[str, Any] | None:
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM project_sources WHERE id=?",
+                (source_id,),
+            ).fetchone()
+        return self._payload(row, "materiality_policy") if row else None
+
+    def list_project_sources(self, project_id: str) -> list[dict[str, Any]]:
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM project_sources WHERE project_id=? "
+                "ORDER BY created_at",
+                (project_id,),
+            ).fetchall()
+        return [self._payload(row, "materiality_policy") for row in rows]

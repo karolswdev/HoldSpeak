@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 159
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** -
 - **Unblocks:** HS-159-02
 - **Owner:** unassigned
@@ -53,6 +53,32 @@ existing Watch and its attached Reactions MUST keep running.
 
 - **Unit:** `tests/unit/test_watch_graduation_schema.py` (fresh + legacy fixture + real-DB copy; backfill truth table); ReactionService characterization pins; snapshot + positional-INSERT fences.
 
+## What shipped
+
+- Schema v68: `connector_watches` +16 §9.3 columns (query_json and
+  snapshot_json untouched); 8 new tables — setup sessions/answers/
+  proposals, provider connections (no credential columns),
+  rules/evaluations/effects with the SRS's uniqueness, and
+  `project_sources` (DOM-013 by shape: no query/cadence/baseline
+  columns exist to copy into); 9 indexes; named columns throughout.
+- The backfill lives in `reconcile.py:_backfill_watch_graduation`
+  (inside `_apply_data_backfills`): rows with empty schema_version
+  graduate to WatchSpec@1 / 'Legacy automation watch' / poll trigger
+  lifted from query_json.refresh_interval_minutes / state from
+  enabled / yolo / revision 1. Second reconcile is a no-op.
+- LEGACY PINNED FIRST: 31 characterization tests over
+  ReactionService's watch paths (create/list/preview/refresh cycle/
+  due cadence/diff semantics/reaction routing) — green before AND
+  after the graduation.
+- Repo helpers in `holdspeak/db/automations.py` (where
+  connector_watches access already lived); nothing calls the new
+  ones yet.
+- REAL-DB PROOF RUN BY THE ORCHESTRATOR (the worker only authored
+  it): the owner's actual DB copied to tmp, reconciled — watch IDs,
+  row counts, and attached reactions intact; backfill truth verified;
+  second pass no-op. `1 passed in 0.68s`. Scoped set:
+  154 passed, 2 skipped (the CI-skip legs) under isolated HOME.
+
 ## Notes / open questions
 
-- The backfill runs inside reconcile (the One Schema's self-reconciling law) — study how prior data backfills were done in reconcile.py before inventing a mechanism.
+- The real-DB test copies via shutil.copy2 and opens ONLY the copy — the one lawful un-isolated pytest invocation, verified by code read before running.
