@@ -105,7 +105,7 @@ const CHANGE_KIND_LABELS: Record<string, string> = {
 };
 
 function humanizeValue(v: unknown): string {
-  return String(v).replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+  return String(v).replace(/[._]/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
 
 function changeLabel(kind: string, summary: Record<string, unknown>): string {

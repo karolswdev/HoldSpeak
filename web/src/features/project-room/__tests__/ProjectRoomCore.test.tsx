@@ -493,7 +493,7 @@ describe("ProjectRoomCore — R2 desktop composition (HS-158-05)", () => {
             state: "ok",
             recent: [
               { id: "c1", change_kind: "project.updated", summary_json: { purpose: "x", posture: "y" }, created_at: "2026-08-30T14:00:00" },
-              { id: "c2", change_kind: "project.updated", summary_json: { action: "item_created", item_id: "pitem_x", item_type: "risk" }, created_at: "2026-08-29T10:00:00" },
+              { id: "c2", change_kind: "project.updated", summary_json: { action: "item.created", item_id: "pitem_x", item_type: "risk" }, created_at: "2026-08-29T10:00:00" },
             ],
           },
         }));
