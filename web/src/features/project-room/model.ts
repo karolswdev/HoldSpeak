@@ -104,9 +104,21 @@ const CHANGE_KIND_LABELS: Record<string, string> = {
   "project.resource.unlinked": "Resource unlinked",
 };
 
+function humanizeValue(v: unknown): string {
+  return String(v).replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+}
+
 function changeLabel(kind: string, summary: Record<string, unknown>): string {
+  // Action-shaped summaries (item mutations): the VALUES are the story.
+  if (typeof summary.action === "string" && summary.action) {
+    const action = humanizeValue(summary.action);
+    const itemType = typeof summary.item_type === "string" && summary.item_type
+      ? ` · ${String(summary.item_type)}` : "";
+    return `${action}${itemType}`;
+  }
   const base = CHANGE_KIND_LABELS[kind]
     ?? (kind.split(".").pop() ?? "Change").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+  // Field-patch summaries: the changed field NAMES are the story.
   const fields = Object.keys(summary);
   if (fields.length === 0) return base;
   return `${base} · ${fields.slice(0, 3).join(", ")}${fields.length > 3 ? "…" : ""}`;
