@@ -46,6 +46,27 @@ from .providers import (
 
 log = get_logger("intel")
 
+#: Process-level Llama instance cache — prevents the ggml-metal teardown crash.
+#:
+#: On Apple Silicon the hub process may host TWO Metal GPU runtimes: MLX (for
+#: whisper-mlx transcription) and ggml-metal (for in-process llama.cpp
+#: inference).  They can coexist while both are alive, but when a ``Llama``
+#: instance is garbage-collected its C++ destructor calls ``ggml_metal_free``,
+#: which invalidates GPU stream state that MLX holds — the process aborts with
+#: ``libc++abi: terminating … There is no Stream(gpu, N) in current thread.``
+#:
+#: The inference runner creates a fresh ``MeetingIntel`` per chat turn, so the
+#: embedded ``Llama`` is freed at the end of every turn.  This cache retains a
+#: reference to the last ``Llama`` keyed by its resolved model path, so the
+#: object survives the ``MeetingIntel`` going out of scope.  The next turn
+#: reuses the cached instance (also saving ~200 ms of model reload).  At
+#: process exit Python's finalization may collect both runtimes, but an abort
+#: during shutdown is benign (the process is already terminating).
+import threading as _threading
+
+_LLAMA_CACHE_LOCK = _threading.Lock()
+_LLAMA_PROCESS_CACHE: dict[str, object] = {}
+
 #: Endpoint keys (`_cloud_endpoint_key()`) that answered `max_tokens` with a
 #: TypeError and therefore speak `max_completion_tokens` (HS-131-10).
 #:
@@ -246,6 +267,14 @@ class MeetingIntel:
                 " Intelligence."
             )
 
+        cache_key = str(model_path)
+        with _LLAMA_CACHE_LOCK:
+            cached = _LLAMA_PROCESS_CACHE.get(cache_key)
+        if cached is not None:
+            self._llm = cached
+            log.info("Reusing cached Llama for %s (Metal-safe)", model_path.name)
+            return
+
         kwargs: dict[str, object] = {
             "model_path": str(model_path),
             "n_ctx": self.n_ctx,
@@ -262,6 +291,9 @@ class MeetingIntel:
         except Exception as exc:
             log.error(f"Failed to load intel model: {exc}", exc_info=True)
             raise MeetingIntelError(f"Failed to load intel model: {exc}") from exc
+
+        with _LLAMA_CACHE_LOCK:
+            _LLAMA_PROCESS_CACHE[cache_key] = self._llm
 
     def _ensure_runtime_loaded(self) -> None:
         if self._active_provider is None:
