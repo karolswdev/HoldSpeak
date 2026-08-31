@@ -390,6 +390,14 @@ export function decodeFinalizeEnvelope(
   };
 }
 
+/* ── Project name inference (mirrors server: outcome_text[:80] or "New Project") ── */
+
+/** Derive the project name the server will use at finalize.
+ *  The finalize API does NOT accept a name override; this is read-only. */
+export function inferProjectName(outcomeText: string): string {
+  return outcomeText.substring(0, 80).trim() || "New Project";
+}
+
 /* ── Derived helpers ── */
 
 /** Compute the brief state for a proposal (INT-011 five-state vocabulary). */

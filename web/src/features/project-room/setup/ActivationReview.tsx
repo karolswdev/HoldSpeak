@@ -1,13 +1,15 @@
-// HS-159-05 -- activation review (ACT-001/WEB-CR-011): outcome, each
-// Watch spec with ledger-aligned label/value rows, posture token,
-// plain-words conditions, cadence, action, test result, first-run
-// behavior, step indicator.
+// HS-159-05 -- activation review (ACT-001/WEB-CR-011): consequence headline,
+// outcome, each Watch spec with ledger-aligned label/value rows, posture token,
+// plain-words conditions, cadence, action, framed test evidence, first-run
+// behavior, step indicator, pinned SurfaceFooter for activate/back verbs.
 // Cmd/Ctrl+Enter activates (WEB-CMD-005).
 
 import { useCallback, useEffect, type KeyboardEvent } from "react";
+import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
 import {
   cadenceLabel,
   conditionPlainWords,
+  inferProjectName,
   modeLabel,
   ACTION_LABELS,
   STAGE_META,
@@ -15,7 +17,6 @@ import {
   type SetupAnswer,
   type SetupProposal,
 } from "./model";
-import { TestResultDisplay } from "./TestResult";
 
 export function ActivationReview({
   outcomeAnswer,
@@ -36,6 +37,10 @@ export function ActivationReview({
   const passed = selected.filter((p) => p.testState === "passed");
   const untested = selected.filter((p) => !p.testState);
   const failed = selected.filter((p) => p.testState === "failed");
+
+  // Derive the project name the same way the server does (read-only; no wire override)
+  const projectName = inferProjectName(outcomeAnswer.answer.normalized);
+  const testedCount = passed.length;
 
   // Cmd/Ctrl+Enter activates (WEB-CMD-005)
   useEffect(() => {
@@ -72,7 +77,14 @@ export function ActivationReview({
         Step {meta.index} of {STAGE_COUNT}
       </div>
 
-      <h3 className="setup-review-heading">Review before activation</h3>
+      {/* Consequence headline -- the anchor: says what activation MEANS */}
+      <h3
+        className="setup-review-headline"
+        data-testid="review-headline"
+      >
+        This creates {"“"}{projectName}{"”"} with{" "}
+        {testedCount} tested {testedCount === 1 ? "Watch" : "Watches"}
+      </h3>
 
       {/* Outcome */}
       <div className="setup-review-section" data-testid="review-outcome">
@@ -82,9 +94,9 @@ export function ActivationReview({
         </div>
       </div>
 
-      {/* Signals */}
-      <div className="setup-review-section" data-testid="review-signals">
-        <div className="setup-review-label">Signals</div>
+      {/* What to notice (was "Signals" -- speaks the question's words) */}
+      <div className="setup-review-section" data-testid="review-signals" data-section="signals">
+        <div className="setup-review-label">What to notice</div>
         <div className="setup-review-value">
           {signalsAnswer.answer.normalized}
         </div>
@@ -131,26 +143,30 @@ export function ActivationReview({
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="setup-review-actions">
-        <button
-          type="button"
-          className="setup-review-back"
-          onClick={onBack}
-          disabled={finalizing}
-        >
-          Back
-        </button>
-        <button
-          type="button"
-          className="setup-review-activate"
-          onClick={onFinalize}
-          disabled={finalizing}
-          data-testid="review-activate-btn"
-        >
-          {finalizing ? "Creating..." : "Create Project"}
-        </button>
-      </div>
+      {/* Pinned footer -- primary verb in frame, always (fix 3) */}
+      <SurfaceFooter
+        verbs={
+          <>
+            <button
+              type="button"
+              className="setup-review-back"
+              onClick={onBack}
+              disabled={finalizing}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              className="setup-review-activate"
+              onClick={onFinalize}
+              disabled={finalizing}
+              data-testid="review-activate-btn"
+            >
+              {finalizing ? "Creating..." : "Create Project"}
+            </button>
+          </>
+        }
+      />
     </div>
   );
 }
@@ -201,8 +217,9 @@ function ReviewWatchSpec({ proposal }: { proposal: SetupProposal }) {
         </div>
       </dl>
 
+      {/* Framed test evidence (fix 5): compact bordered inset block */}
       {proposal.testResult ? (
-        <TestResultDisplay
+        <ReviewTestEvidence
           result={proposal.testResult}
           testState={proposal.testState ?? ""}
         />
@@ -211,4 +228,75 @@ function ReviewWatchSpec({ proposal }: { proposal: SetupProposal }) {
       )}
     </div>
   );
+}
+
+/** Framed test evidence block: pass token, count, sample entities, observed time
+ *  as ONE compact object (not four floating lines). */
+function ReviewTestEvidence({
+  result,
+  testState,
+}: {
+  result: import("./model").TestResult;
+  testState: string;
+}) {
+  const isPassed = testState === "passed";
+  const isFailed = testState === "failed";
+
+  return (
+    <div
+      className="setup-review-evidence"
+      data-test-state={testState}
+      data-testid="review-test-evidence"
+    >
+      {/* Pass/fail token + count on one line */}
+      <div className="setup-review-evidence-header">
+        <span className="setup-review-evidence-icon" aria-hidden="true">
+          {isPassed ? "✓" : isFailed ? "✗" : "…"}
+        </span>
+        <span className="setup-review-evidence-status">
+          {isPassed ? "Test passed" : isFailed ? "Test failed" : "Testing"}
+        </span>
+        <span className="setup-review-evidence-count">
+          {result.entityCount} current {result.entityCount === 1 ? "match" : "matches"}
+        </span>
+      </div>
+
+      {/* Sample entities as a tight list */}
+      {result.representativeEntities.length > 0 ? (
+        <ul className="setup-review-evidence-entities">
+          {result.representativeEntities.slice(0, 5).map((entity, i) => (
+            <li key={i} className="setup-review-evidence-entity">
+              {entityLabel(entity)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {/* Observed time as meta */}
+      <div className="setup-review-evidence-time">
+        Observed at {formatTime(result.observedAt)}
+      </div>
+
+      {/* Error detail */}
+      {result.error ? (
+        <div className="setup-review-evidence-error">
+          {result.error.type}: {result.error.message}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function entityLabel(entity: Record<string, unknown>): string {
+  const title = entity.title ?? entity.text ?? entity.name ?? entity.id;
+  return String(title ?? "Unknown");
+}
+
+function formatTime(iso: string): string {
+  if (!iso) return "unknown";
+  try {
+    return new Date(iso).toLocaleTimeString();
+  } catch {
+    return iso;
+  }
 }

@@ -71,23 +71,18 @@ export function SetupCore({ scope }: CoreProps) {
     );
   }
 
-  // Review stage
+  // Review stage -- NO brief panel: review IS the brief; every fact once (fix 2)
   if (ctrl.state.kind === "review") {
     return (
       <div className="setup-root" data-testid="setup-root">
         <div className="sr-only" id="setup-stage-announce" aria-live="polite" role="status" />
-        <SurfaceColumns
-          main={
-            <ActivationReview
-              outcomeAnswer={ctrl.state.outcomeAnswer}
-              signalsAnswer={ctrl.state.signalsAnswer}
-              proposals={ctrl.state.proposals}
-              onFinalize={ctrl.finalize}
-              onBack={ctrl.backToProposals}
-              finalizing={ctrl.state.kind === "review" && false}
-            />
-          }
-          side={<SetupBrief state={ctrl.state} />}
+        <ActivationReview
+          outcomeAnswer={ctrl.state.outcomeAnswer}
+          signalsAnswer={ctrl.state.signalsAnswer}
+          proposals={ctrl.state.proposals}
+          onFinalize={ctrl.finalize}
+          onBack={ctrl.backToProposals}
+          finalizing={false}
         />
       </div>
     );

@@ -2,8 +2,28 @@
 // keyboard behaviors (WEB-CMD-005), voice-never-submits (WEB-CMD-006),
 // card object slots (INT-008), brief state mirroring, Blank path.
 
+import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
+/* ── Mock SurfaceFooter (renders inline in test env) ── */
+vi.mock("../../../../desk/surface/SurfaceFooter", () => ({
+  SurfaceFooter: ({
+    egress,
+    receipt,
+    verbs,
+  }: {
+    egress?: React.ReactNode;
+    receipt?: React.ReactNode;
+    verbs?: React.ReactNode;
+  }) => (
+    <footer data-testid="surface-footer">
+      {egress}
+      {receipt}
+      {verbs}
+    </footer>
+  ),
+}));
 
 /* ── Mock MicButton (voice fills, never submits) ── */
 vi.mock("../../../../desk/surface/controls/MicButton", () => ({
@@ -31,6 +51,7 @@ import { ActivationReview } from "../ActivationReview";
 import type { ControllerState } from "../useSetupController";
 import {
   conditionPlainWords,
+  inferProjectName,
   modeLabel,
   STAGE_META,
   STAGE_COUNT,
@@ -869,5 +890,292 @@ describe("Step token across stages", () => {
     expect(STAGE_META["signals"].index).toBe(2);
     expect(STAGE_META["proposals"].index).toBe(3);
     expect(STAGE_META["review"].index).toBe(4);
+  });
+});
+
+/* ── Beauty Round 2: legibility of consequence (HS-159-05) ── */
+
+describe("Consequence headline (fix 1)", () => {
+  const noop = () => {};
+
+  it("renders headline with inferred name and tested count", () => {
+    const outcomeAnswer = makeAnswer("outcome", "Ship Q4 Payments Platform");
+    const signalsAnswer = makeAnswer("signals", "PRs stale");
+    const proposals = [
+      makeProposal("wprop_1", { state: "selected", testState: "passed" }),
+      makeProposal("wprop_2", { state: "selected", testState: "passed" }),
+    ];
+    render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={proposals}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    const headline = screen.getByTestId("review-headline");
+    expect(headline).toBeTruthy();
+    // Name derived from outcome answer
+    expect(headline.textContent).toContain("Ship Q4 Payments Platform");
+    expect(headline.textContent).toContain("2 tested Watches");
+  });
+
+  it("uses singular Watch for 1 tested", () => {
+    const outcomeAnswer = makeAnswer("outcome", "Ship Q4");
+    const signalsAnswer = makeAnswer("signals", "PRs stale");
+    const proposals = [
+      makeProposal("wprop_1", { state: "selected", testState: "passed" }),
+    ];
+    render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={proposals}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    const headline = screen.getByTestId("review-headline");
+    expect(headline.textContent).toContain("1 tested Watch");
+    // Not "Watches"
+    expect(headline.textContent).not.toContain("Watches");
+  });
+
+  it("falls back to 'New Project' when outcome is empty", () => {
+    const outcomeAnswer = makeAnswer("outcome", "");
+    const signalsAnswer = makeAnswer("signals", "PRs stale");
+    render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={[]}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    const headline = screen.getByTestId("review-headline");
+    expect(headline.textContent).toContain("New Project");
+    expect(headline.textContent).toContain("0 tested Watches");
+  });
+});
+
+describe("inferProjectName", () => {
+  it("truncates at 80 chars", () => {
+    const long = "A".repeat(100);
+    expect(inferProjectName(long)).toBe("A".repeat(80));
+  });
+
+  it("returns 'New Project' for empty string", () => {
+    expect(inferProjectName("")).toBe("New Project");
+  });
+
+  it("returns 'New Project' for whitespace only", () => {
+    expect(inferProjectName("   ")).toBe("New Project");
+  });
+
+  it("trims whitespace", () => {
+    expect(inferProjectName("  Ship Q4  ")).toBe("Ship Q4");
+  });
+});
+
+describe("No fact duplication at review (fix 2)", () => {
+  it("review stage does not render the brief panel", () => {
+    // When at review, SetupRoot should NOT mount SetupBrief.
+    // We test this indirectly: the ActivationReview does not include
+    // a SetupBrief, and the SetupRoot review branch renders without
+    // SurfaceColumns.  We verify the review region is present and
+    // no setup-brief testid exists in its tree.
+    const noop = () => {};
+    const outcomeAnswer = makeAnswer("outcome", "Ship Q4");
+    const signalsAnswer = makeAnswer("signals", "PRs stale");
+    const proposals = [makeProposal("wprop_1", { state: "selected" })];
+    const { container } = render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={proposals}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    // ActivationReview does not contain a brief panel
+    expect(container.querySelector('[data-testid="setup-brief"]')).toBeNull();
+    // But the review sections ARE present (outcome, signals, watches)
+    expect(screen.getByTestId("review-outcome")).toBeTruthy();
+    expect(screen.getByTestId("review-signals")).toBeTruthy();
+    expect(screen.getByTestId("review-watches")).toBeTruthy();
+  });
+});
+
+describe("Pinned footer verb (fix 3)", () => {
+  const noop = () => {};
+  const outcomeAnswer = makeAnswer("outcome", "Ship Q4");
+  const signalsAnswer = makeAnswer("signals", "PRs stale");
+
+  it("activate button is inside a SurfaceFooter", () => {
+    const proposals = [makeProposal("wprop_1", { state: "selected" })];
+    render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={proposals}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    // The mocked SurfaceFooter renders a <footer data-testid="surface-footer">
+    const footer = screen.getByTestId("surface-footer");
+    expect(footer).toBeTruthy();
+    // The activate button lives inside it
+    const activateBtn = screen.getByTestId("review-activate-btn");
+    expect(footer.contains(activateBtn)).toBe(true);
+  });
+
+  it("Back button is inside the footer", () => {
+    const proposals = [makeProposal("wprop_1", { state: "selected" })];
+    render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={proposals}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    const footer = screen.getByTestId("surface-footer");
+    const backBtn = footer.querySelector(".setup-review-back");
+    expect(backBtn).toBeTruthy();
+    expect(backBtn?.textContent).toBe("Back");
+  });
+});
+
+describe("'What to notice' header (fix 4)", () => {
+  const noop = () => {};
+  const outcomeAnswer = makeAnswer("outcome", "Ship Q4");
+  const signalsAnswer = makeAnswer("signals", "PRs stale");
+
+  it("review signals section is labeled 'What to notice'", () => {
+    const proposals = [makeProposal("wprop_1", { state: "selected" })];
+    render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={proposals}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    const section = screen.getByTestId("review-signals");
+    const label = section.querySelector(".setup-review-label");
+    expect(label?.textContent).toBe("What to notice");
+    // data- attribute preserves machine key
+    expect(section.getAttribute("data-section")).toBe("signals");
+  });
+});
+
+describe("Framed test evidence (fix 5)", () => {
+  const noop = () => {};
+  const outcomeAnswer = makeAnswer("outcome", "Ship Q4");
+  const signalsAnswer = makeAnswer("signals", "PRs stale");
+
+  it("renders evidence as one framed block with pass token, count, entities, time", () => {
+    const proposals = [
+      makeProposal("wprop_1", {
+        state: "selected",
+        testState: "passed",
+        testResult: {
+          entityCount: 1,
+          representativeEntities: [{ title: "Sprint 7 Planning" }],
+          observedAt: "2026-08-31T10:04:00",
+          error: null,
+          message: "Test passed -- 1 current matches",
+        },
+      }),
+    ];
+    render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={proposals}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    const evidence = screen.getByTestId("review-test-evidence");
+    expect(evidence).toBeTruthy();
+    expect(evidence.getAttribute("data-test-state")).toBe("passed");
+
+    // One block contains: pass icon, count, entity, time
+    const header = evidence.querySelector(".setup-review-evidence-header");
+    expect(header).toBeTruthy();
+    expect(header?.textContent).toContain("Test passed");
+    expect(header?.textContent).toContain("1 current match");
+
+    // Entity in list
+    const entity = evidence.querySelector(".setup-review-evidence-entity");
+    expect(entity?.textContent).toBe("Sprint 7 Planning");
+
+    // Observed time
+    const time = evidence.querySelector(".setup-review-evidence-time");
+    expect(time?.textContent).toContain("Observed at");
+
+    // It is a bordered inset (has the evidence class with border)
+    expect(evidence.classList.contains("setup-review-evidence")).toBe(true);
+  });
+
+  it("uses plural matches for count > 1", () => {
+    const proposals = [
+      makeProposal("wprop_1", {
+        state: "selected",
+        testState: "passed",
+        testResult: {
+          entityCount: 3,
+          representativeEntities: [
+            { title: "Item 1" },
+            { title: "Item 2" },
+            { title: "Item 3" },
+          ],
+          observedAt: "2026-08-31T10:04:00",
+          error: null,
+          message: "Test passed -- 3 current matches",
+        },
+      }),
+    ];
+    render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={proposals}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    const header = screen.getByTestId("review-test-evidence")
+      .querySelector(".setup-review-evidence-header");
+    expect(header?.textContent).toContain("3 current matches");
+
+    // All three entities in list
+    const entities = screen.getByTestId("review-test-evidence")
+      .querySelectorAll(".setup-review-evidence-entity");
+    expect(entities.length).toBe(3);
   });
 });
