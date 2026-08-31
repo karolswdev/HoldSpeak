@@ -178,7 +178,8 @@ left column is the name; do not alternate with the synonyms.
 | coders (live coding sessions awaiting you) | "agents" for this concept, "companions" (the word is retired: an agent is a persona you author; a coder is a live Claude or Codex session) |
 | the iPad app | "the companion", "the companion app" |
 | Threads (multi-turn desk conversations) | "chat", "chat app", "PersonaChat" |
-| Automations (the watch/reaction surface) | "event triggers", "webhooks", "watches" |
+| Automations (the watch/reaction surface) | "event triggers", "webhooks", "watches" (except the Project-scoped Watches of Project Rooms) |
+| Watches (Project-scoped) | "event triggers", "monitors", "subscriptions" |
 | Resourceful (overnight bounded maintenance) | "maintenance mode", "idle work", "overnight tasks" |
 
 ## Voice rules (the editing standard for every user-facing doc)

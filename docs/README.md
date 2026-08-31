@@ -133,6 +133,9 @@ current accuracy audit and canonical facts). The
 **[June audit](./internal/DOC_AUDIT_2026-06.md)** remains a historical snapshot.
 A few highlights:
 
+- **[Project Rooms SRS suite](./internal/project-rooms/README.md)**: the integrated
+  product, Web, domain, MCP/driver, validation, and interview-installed Watch
+  contract for issue #514.
 - `internal/PLAN_ARCHITECT_PLUGIN_SYSTEM.md`: the parent plugin-system RFC.
 - `internal/PLAN_PHASE_DICTATION_INTENT_ROUTING.md`: the DIR-01 dictation pipeline spec.
 - `internal/PLAN_PHASE_MULTI_INTENT_ROUTING.md`: the MIR-01 meeting-side routing spec.
