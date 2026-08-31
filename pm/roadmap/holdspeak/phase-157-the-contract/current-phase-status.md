@@ -1,6 +1,6 @@
 # Phase 157 - Project Rooms: The Contract (P0)
 
-**Last updated:** 2026-08-31 — HS-157-01 DONE (the ref grammar RULED: `people:` canonical, `person:` alias — evidence reversed the charter's guess); 03/04 in flight; building. Owner rulings recorded: POSITIONING "Watches (Project-scoped)" row RATIFIED; EverDriven delivery rides GitHub (P2a proves; Jira P7 follows with a real adapter).
+**Last updated:** 2026-08-31 — HS-157-01 + HS-157-04 DONE (ref grammar ruled `people:` canonical; surfaces pinned — and the MCP-006 baseline truth found: one family import failure suppresses ALL families today, P6's to fix); 02/03 in flight. Owner rulings recorded: POSITIONING "Watches (Project-scoped)" row RATIFIED; EverDriven delivery rides GitHub (P2a proves; Jira P7 follows with a real adapter).
 
 ## Goal
 
@@ -36,9 +36,9 @@ claim); the arc ahead answers to Art XI (the kernel) via NFR-009.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-157-01 | The qualified ref (one grammar, aliases, the fence) | done | [story-01-the-qualified-ref](./story-01-the-qualified-ref.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-157-02 | The result contract (envelope, typed errors, ID prefixes) | backlog | [story-02-the-result-contract](./story-02-the-result-contract.md) | - |
+| HS-157-02 | The result contract (envelope, typed errors, ID prefixes) | in-progress | [story-02-the-result-contract](./story-02-the-result-contract.md) | - |
 | HS-157-03 | The service characterization (ProjectService + routes) | in-progress | [story-03-the-service-characterization](./story-03-the-service-characterization.md) | - |
-| HS-157-04 | The surface characterization (Web + MCP registration) | in-progress | [story-04-the-surface-characterization](./story-04-the-surface-characterization.md) | - |
+| HS-157-04 | The surface characterization (Web + MCP registration) | done | [story-04-the-surface-characterization](./story-04-the-surface-characterization.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-157-05 | The close (gates, suite updates, final summary) | backlog | [story-05-the-close](./story-05-the-close.md) | - |
 
 ## Where we are
@@ -57,6 +57,11 @@ owner ratified the POSITIONING canon row and ruled delivery = GitHub
 HS-157-01 shipped `holdspeak/refs.py` + CONTRACTS-P0.md: REF-003
 ruled `people:` canonical on runtime-safety evidence (6/6 emitters,
 5/6 parsers), 58 tests + the REF-001 fence green under isolated HOME.
+HS-157-04 pinned the surfaces: Project Memory registration + the
+WEB-ARC-006 gaps closed (Ask interaction, error, no-scope), the 11
+Watch/Reaction tool names, the no-project-family starting fact — and
+surfaced the MCP-006 baseline violation (families/__init__.py bare
+imports: one failure kills all 15 families; P6 owns the fix).
 
 ## Active risks
 

@@ -58,4 +58,32 @@ describe("DeskOS application manifest", () => {
       "desk.open-people",
     ]);
   });
+
+  // HS-157-04: pin the Project Memory registration identity so the
+  // graduation (AD-PRJ-003, WEB-IA-010) cannot silently drop a field.
+  it("pins the Project Memory registration: action, windowId, label, glyph, surface", () => {
+    const projectMemory = DESK_APPLICATIONS.find(
+      (application) => application.action === "open-project-memory",
+    );
+    expect(projectMemory).toBeDefined();
+    expect(projectMemory).toMatchObject({
+      action: "open-project-memory",
+      windowId: "surface-project-memory",
+      label: "Project memory",
+      description: "Long-lived project context and evidence.",
+      glyph: "▤",
+      href: "/project-memory",
+    });
+    expect(projectMemory!.surface).toBeDefined();
+    expect(projectMemory!.surface!.eyebrow).toBe("Long memory");
+    expect(projectMemory!.surface!.minW).toBe(640);
+  });
+
+  it("includes Project Memory in the surface-application projection", () => {
+    expect(
+      SURFACE_APPLICATIONS.some(
+        (application) => application.action === "open-project-memory",
+      ),
+    ).toBe(true);
+  });
 });
