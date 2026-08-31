@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 157
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** -
 - **Unblocks:** HS-157-05
 - **Owner:** unassigned
@@ -48,6 +48,33 @@ before anything moves.
 - **Unit/integration:** `tests/unit/test_project_service_characterization.py`, `tests/integration/test_project_routes_characterization.py` (names may follow repo convention).
 - **Regression:** full-suite name-diff vs main at the close.
 
+## What shipped
+
+- `tests/unit/test_project_service_characterization.py` — 62 tests:
+  all 18 public ProjectService methods pinned (result shape: keys,
+  types, defaults; not-found/validation behavior each).
+- `tests/integration/test_project_routes_characterization.py` — 46
+  tests: all 18 routes through the real FastAPI app (success shape +
+  at least one failure path each).
+- No runtime code touched; no pre-existing test modified. Verified
+  with the pre-existing `test_web_project_kb_api.py` in the same run:
+  `140 passed in 36.19s` under isolated HOME (orchestrator re-ran).
+
 ## Notes / open questions
 
-- Existing `tests/integration/test_web_project_kb_api.py` covers part of this — extend rather than duplicate; the story's value is the COMPLETE pin, method by method, route by route.
+Characterization surprises RECORDED, deliberately not fixed (P0 law):
+
+1. **DELETE is archive** — `DELETE /api/projects/{id}` (projects.py:79)
+   calls `archive_project`; the project stays retrievable. Semantically
+   misleading verb; P1's command contract should name it honestly.
+2. **Three flavors of 404 wording** — "Project not found" vs "Unknown
+   project: <id>" vs "Unknown Project: <id>" (projects.py:27,37,104).
+   The HS-157-02 error-code table is the cure; route migration is P1.
+3. **`success`-key asymmetry in 404s** — GET 404s lack `success`;
+   PATCH/DELETE 404s carry `success: false`.
+4. **Invalid relationship ValueError passes raw through the service**
+   (project_service.py:97-101 → relationships.py:190; the route
+   catches it at projects.py:114). The service boundary should own
+   typed validation — P1's `expected_revision`/command work fixes it.
+
+None contradict the SRS baseline claims; no suite amendment needed.
