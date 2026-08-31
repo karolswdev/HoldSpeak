@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 156
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-156-03, HS-156-04
 - **Unblocks:** HS-156-07
 - **Owner:** unassigned
@@ -58,3 +58,75 @@ to the max" (settled design D6).
   component exists.
 
 - Elegance is the requirement, not decoration: the map must read at a glance — home node anchored, flows legible, no cable spaghetti at seven groups (bundle flows to the same node).
+
+## What shipped
+
+**Library component** (`surface/graph/TopologySurface.tsx` + CSS):
+DOM nodes over an SVG edge layer; bounded pan (pointer drag + Shift+Arrow);
+home-node designation (accent border, star badge); bundled labeled flows
+(2 labels inline, 3+ summarized as "A +N"); roving selection (Tab enters,
+arrows navigate by nearest-neighbor direction, Home jumps to home node);
+inspector + add-node render-prop slots; reduced-motion honored (CSS
+`@media (prefers-reduced-motion: reduce)` kills animations); token-only
+styling (all colors, spacing, elevations from design-tokens.json); 25
+contract tests passing.
+
+Barrel export added to `surface/index.ts`; guard fence extended
+(`graph` in PRIVATE_IMPORT_RE, `surface-topology` in LIBRARY_CSS_RE).
+Gallery section added to ComponentsCore (3 nodes, 2 bundled flows,
+inspector + add-node slots).
+
+**Topology map view** (`TopologyMapView.tsx` + CSS):
+The advanced layer's opening view in the Models surface (the Disclosure
+fold from story 05 opens onto the map; a Map/Table toggle switches to the
+existing Library + Assignments table view). This Mac as the home node
+(runtimes, downloaded models), one node per defined endpoint (the owner's
+real desk shape: LAN server at 192.168.1.43:8080 with its model name).
+The job groups as bundled labeled flows to their serving node. Node health
+from existing facts (StateChip: ready/unreachable). Add-node opens the
+existing connect grammar in-world via Disclosure (define-endpoint /
+connect-hosted -- no modal, no new authority). Selecting a node shows its
+models + jobs (inspector slot) and re-points a flow via the existing
+assignments editor/set shapes (in place). 11 vitest tests passing.
+
+**Backend** (`GET /api/front-door/topology`): thin aggregation of existing
+facts (list_inference_targets + inspect_runtimes + assignment_summary);
+no new authority, no new facts. API surface manifest regenerated.
+
+**Glass legs** (`test_topology`, `test_topology_add_node`): real hub seeded
+owner-shaped (global assignment + LAN endpoint profile + group assignments
+to the LAN endpoint), 1440 + 393, zero horizontal overflow, 10 shots
+captured in `assets/story-06-shots/`.
+
+**Council-contract divergence:** Add-node uses Disclosure (in-flow push)
+instead of Popover (overlay), because the Popover portal renders outside
+the .desk-next scope and the backdrop blocks pointer events. The Disclosure
+is more consistent with the codex rule ("Disclosure pushes layout rather
+than opening a modal") and works correctly in both the vitest and glass
+environments.
+
+**Visual gate FAIL (pass 1) and fixes:**
+The first shot sheet failed four items. Fixes applied:
+
+1. **Flows invisible** -- the glass seeding assigned globally to a local
+   profile, so all flows self-looped to this_machine (zero-length paths,
+   invisible). Fixed: seed 5 group assignments (`thoughts_notes`,
+   `writing_dictation`, `meetings`, `agents_tools`, `background`) to the
+   LAN endpoint profile so the map draws a real bundled edge with
+   "THOUGHTS & NOTES +4" label. Edge styling upgraded: `--accent-tint`
+   stroke with 2px dashed line (3px solid when active), flow label chip
+   uses `--accent-tint` border + 600-weight 10px text for legibility.
+
+2. **Inspector overlaps Add-node** -- the add-node slot was absolutely
+   positioned in the top-right, colliding with the inspector column.
+   Fixed: restructured the TopologySurface container into a map-area
+   flex row (viewport + inspector) above a toolbar row (add-node).
+   The toolbar uses `border-top` separation and never overlaps.
+
+3. **Default framing** -- nodes floated small at 1440; home node was
+   half-clipped at 393. Fixed: the offset formula now anchors on the
+   home node (center-left at ~30% from the viewport's left edge) instead
+   of centering the content bounding box. The home node is fully visible
+   at both widths on initial load.
+
+4. **All 10 shots retaken** after fixes; both glass legs green.

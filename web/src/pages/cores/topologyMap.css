@@ -1,0 +1,270 @@
+/* HS-156-06 — Topology map view layout.
+   All visual furniture from the surface library; this file is layout only. */
+
+.topology-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-surface-gap, 8px);
+}
+
+/* ── Node content inside the TopologySurface node cards ── */
+
+.topology-node-kind {
+  font: 400 9px / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-wide);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.topology-node-runtimes,
+.topology-node-models {
+  font: 400 10px / 1.2 var(--font-mono);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topology-node-url {
+  font: 400 9px / 1 var(--font-mono);
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Inspector body ── */
+
+.topology-inspector-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.topology-inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.topology-inspector-label {
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-compact);
+  text-transform: uppercase;
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topology-inspector-kind {
+  font: 400 10px / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-wide);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.topology-inspector-url {
+  font: 400 10px / 1 var(--font-mono);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topology-inspector-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.topology-inspector-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  font: 400 10px / 1.3 var(--font-mono);
+  color: var(--text);
+}
+
+.topology-inspector-list li small {
+  color: var(--text-muted);
+  flex: none;
+}
+
+.topology-inspector-repoint {
+  align-self: flex-start;
+  padding: var(--space-1) 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-compact);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.topology-inspector-repoint:hover {
+  color: var(--accent-hover);
+}
+
+.topology-inspector-repoint:focus-visible {
+  outline: var(--focus-ring);
+}
+
+/* ── Re-point panel ── */
+
+.topology-repoint {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.topology-repoint-label {
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-compact);
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.topology-repoint-candidates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.topology-repoint-candidate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  font: 400 11px / 1.2 var(--font-mono);
+  color: var(--text);
+}
+
+.topology-repoint-candidate:hover {
+  background: var(--surface-hover);
+}
+
+.topology-repoint-candidate input {
+  flex: none;
+}
+
+.topology-repoint-candidate small {
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+.topology-repoint-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ── Add node popover ── */
+
+.topology-add-btn {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-compact);
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.topology-add-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.topology-add-btn:focus-visible {
+  outline: var(--focus-ring);
+}
+
+.topology-add-node-body {
+  min-width: 220px;
+  padding: var(--space-2);
+}
+
+.topology-add-title {
+  display: block;
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-compact);
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: var(--space-2);
+}
+
+.topology-add-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.topology-add-choices button {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text);
+  font: 400 11px / 1.3 var(--font-mono);
+  cursor: pointer;
+  text-align: start;
+}
+
+.topology-add-choices button:hover {
+  background: var(--surface-hover);
+}
+
+.topology-add-choices button:focus-visible {
+  outline: var(--focus-ring);
+}
+
+.topology-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.topology-add-secret {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font: 400 10px / 1 var(--font-mono);
+  color: var(--text-muted);
+}
+
+.topology-add-secret input {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface-1);
+  color: var(--text);
+  font: inherit;
+}
+
+.topology-add-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.topology-add-actions button:first-child {
+  padding: var(--space-1);
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font: 600 10px / 1 var(--font-mono);
+  text-transform: uppercase;
+  cursor: pointer;
+}

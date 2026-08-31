@@ -73,9 +73,9 @@ const baselineCss = new Set(baseline["library-css-outside"] || []);
 const baselineRoving = new Set(baseline["roving-reimpl"] || []);
 
 const PRIVATE_IMPORT_RE =
-  /from\s*["'][^"']*\/surface\/(Surface|gadgets|roving|Material|SurfaceFooter|wings|citations|format|foot|sparse|LedgerFilter|patterns|controls)["']/;
+  /from\s*["'][^"']*\/surface\/(Surface|gadgets|roving|Material|SurfaceFooter|wings|citations|format|foot|sparse|LedgerFilter|patterns|controls|graph)["']/;
 const LIBRARY_CSS_RE =
-  /surface-state-chip|surface-action-notice|surface-disclosure|surface-progress-plan|surface-choice-card|surface-popover|surface-provenance/;
+  /surface-state-chip|surface-action-notice|surface-disclosure|surface-progress-plan|surface-choice-card|surface-popover|surface-provenance|surface-topology/;
 const ROVING_REIMPL_RE = /Arrow(?:Up|Down)/;
 
 for (const file of files) {

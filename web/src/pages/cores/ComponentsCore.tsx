@@ -50,6 +50,11 @@ import {
   type ChipState,
   type PlanStep,
 } from "../../desk/surface/patterns";
+import {
+  TopologySurface,
+  type GraphNode,
+  type GraphFlow,
+} from "../../desk/surface/graph/TopologySurface";
 
 const ALL_CHIP_STATES: ChipState[] = [
   "idle", "active", "working", "success", "warning", "failure", "unreachable",
@@ -60,6 +65,17 @@ const GALLERY_PLAN_STEPS: PlanStep[] = [
   { id: "download", label: "Download weights", status: "running", progress: 0.42, rate: "18 MB/s" },
   { id: "verify", label: "Verify checksums", status: "queued" },
   { id: "register", label: "Register model", status: "queued" },
+];
+
+const GALLERY_TOPOLOGY_NODES: GraphNode[] = [
+  { id: "home", label: "This Mac", home: true, state: "success", x: 40, y: 100, children: <span style={{ fontSize: 10, color: "var(--text-muted)" }}>MLX, llama.cpp</span> },
+  { id: "lan", label: "LAN Server", state: "success", x: 360, y: 35, children: <span style={{ fontSize: 10, color: "var(--text-muted)" }}>qwen3.6-35b</span> },
+  { id: "cloud", label: "Cloud API", state: "unreachable", x: 360, y: 175 },
+];
+
+const GALLERY_TOPOLOGY_FLOWS: GraphFlow[] = [
+  { id: "f1", from: "home", to: "lan", labels: ["Chat & agents", "Summaries"] },
+  { id: "f2", from: "home", to: "cloud", labels: ["Translation"] },
 ];
 
 const GALLERY_PLAN_MIXED: PlanStep[] = [
@@ -399,6 +415,15 @@ export function ComponentsCore({ hero }: CoreProps) {
           <Receipt status="warn" label="Partial" timestamp="09:41" />
           <Receipt status="danger" label="Failed" onInspect={() => {}} />
         </div>
+      </SurfaceSection>
+      <SurfaceSection label="TopologySurface — graph viewport">
+        <TopologySurface
+          nodes={GALLERY_TOPOLOGY_NODES}
+          flows={GALLERY_TOPOLOGY_FLOWS}
+          ariaLabel="Gallery topology"
+          inspectorSlot={<div style={{ padding: 8, fontSize: 11, fontFamily: "var(--font-mono)" }}>Inspector slot</div>}
+          addNodeSlot={<button type="button" className="signal-btn" style={{ fontSize: 10 }}>+ Add node</button>}
+        />
       </SurfaceSection>
       <SurfaceFooter
         receipt={<Receipt status="ok" label="Gallery loaded" timestamp="now" />}

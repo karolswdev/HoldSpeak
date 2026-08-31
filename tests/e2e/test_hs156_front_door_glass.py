@@ -22,6 +22,7 @@ pytest.importorskip("playwright.sync_api", reason="Glass needs Playwright")
 REPO = Path(__file__).resolve().parents[2]
 TOKEN = "hs156-door-glass"
 SHOTS_DIR = REPO / "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-04-shots"
+SHOTS_06_DIR = REPO / "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-06-shots"
 
 pytestmark = [pytest.mark.e2e, pytest.mark.requires_meeting]
 
@@ -151,6 +152,43 @@ def _seed_profile_and_assign(db: Any) -> None:
         "scope": {"kind": "global"},
         "entries": [{"profile_id": pid, "profile_revision": 1}],
     })
+
+
+def _save_shot_06(page: Any, name: str, width: int) -> None:
+    SHOTS_06_DIR.mkdir(parents=True, exist_ok=True)
+    page.screenshot(path=str(SHOTS_06_DIR / f"{name}-{width}.png"))
+
+
+def _seed_endpoint_profile(db: Any, pid: str, label: str, base_url: str, model: str) -> None:
+    """Seed an openAICompatible endpoint profile for the topology map.
+
+    Creates a model profile revision (so the assignment service accepts it),
+    then overwrites the raw profile record with the endpoint's kind/base_url.
+    """
+    from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
+    _profile(db, pid, claims=("language", _result_claim("chat.turn")))
+    # Overwrite the raw profile record with endpoint kind + URL
+    db.profiles.upsert(
+        profile_id=pid,
+        name=label,
+        kind="openAICompatible",
+        base_url=base_url,
+        model=model,
+    )
+
+
+def _seed_group_assignment_to(db: Any, group_ids: list[str], profile_id: str) -> None:
+    """Assign specific groups to a profile so topology flows are visible."""
+    from tests.unit.test_phase143_inference_assignments import OWNER
+    from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+    svc = InferenceAssignmentService(db)
+    for gid in group_ids:
+        svc.set_assignment(OWNER, {
+            "command_id": f"hs156-glass-assign-{gid}",
+            "expected_revision": 0,
+            "scope": {"kind": "group", "group_id": gid},
+            "entries": [{"profile_id": profile_id, "profile_revision": 1}],
+        })
 
 
 def _open_models_module(page: Any, url: str, width: int) -> None:
@@ -290,6 +328,156 @@ def test_door_strip(hub: dict) -> None:
                 advanced.first.click()
                 page.wait_for_timeout(1000)
                 _save_shot(page, "strip-fold-open", width)
+
+            # No horizontal overflow
+            body_w = page.evaluate("document.body.scrollWidth")
+            viewport_w = page.evaluate("window.innerWidth")
+            assert body_w <= viewport_w + 1, (
+                f"Horizontal overflow at {width}: body={body_w}, viewport={viewport_w}"
+            )
+
+            page.close()
+
+        browser.close()
+
+
+# ----------------------------------------------------------------- topology leg
+
+def test_topology(hub: dict) -> None:
+    """HS-156-06: the topology map shows this Mac + LAN endpoint at 1440+393."""
+    from playwright.sync_api import sync_playwright
+
+    url = hub["url"]
+    db = hub["db"]
+
+    # Seed desk + complete onboarding + assign a profile (to reach strip)
+    _api_direct(url, "POST", "/api/desk/seed")
+    _api_direct(url, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    _seed_profile_and_assign(db)
+
+    # Seed an LAN endpoint profile (owner-shaped: .43 server)
+    _seed_endpoint_profile(
+        db,
+        pid="lan-qwen36-35b-a3b",
+        label="LAN Qwen 3.6",
+        base_url="http://192.168.1.43:8080/v1",
+        model="qwen3.6-35b-a3b",
+    )
+
+    # Assign most groups to the LAN endpoint so the topology draws real bundled flows
+    _seed_group_assignment_to(
+        db,
+        ["thoughts_notes", "writing_dictation", "meetings", "agents_tools", "background"],
+        "lan-qwen36-35b-a3b",
+    )
+
+    # Verify topology API works
+    topo_result = _api_direct(url, "GET", "/api/front-door/topology")
+    assert topo_result["status"] == 200, f"Topology failed: {topo_result}"
+    payload = topo_result["payload"]
+    assert len(payload["nodes"]) >= 2, f"Expected at least 2 nodes, got {len(payload['nodes'])}"
+    # Verify flows point to the LAN node (not just this_machine)
+    lan_flows = [f for f in payload["flows"] if f["target_node_id"] == "lan-qwen36-35b-a3b"]
+    assert len(lan_flows) >= 3, f"Expected flows to LAN node, got {lan_flows}"
+
+    # Check flows match assignments
+    assignments_result = _api_direct(url, "GET", "/api/inference/assignments")
+    assert assignments_result["status"] == 200
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        for width in (1440, 393):
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            _open_models_module(page, url, width)
+
+            # Open Advanced fold
+            advanced = page.locator("text=Advanced")
+            if advanced.count() > 0:
+                advanced.first.click()
+                page.wait_for_timeout(2000)
+
+            # The Map tab should be selected by default
+            _save_shot_06(page, "topology-map", width)
+
+            # Click a node if visible
+            node = page.locator("[data-topology-node]").first
+            if node.count() > 0:
+                node.click()
+                page.wait_for_timeout(1000)
+                _save_shot_06(page, "topology-node-selected", width)
+
+            # Keyboard focus: Tab into the map
+            page.keyboard.press("Tab")
+            page.keyboard.press("Tab")
+            _save_shot_06(page, "topology-keyboard-focus", width)
+
+            # No horizontal overflow
+            body_w = page.evaluate("document.body.scrollWidth")
+            viewport_w = page.evaluate("window.innerWidth")
+            assert body_w <= viewport_w + 1, (
+                f"Horizontal overflow at {width}: body={body_w}, viewport={viewport_w}"
+            )
+
+            page.close()
+
+        browser.close()
+
+
+# ----------------------------------------------------------------- topology-add-node leg
+
+def test_topology_add_node(hub: dict) -> None:
+    """HS-156-06: add-node round-trips a second endpoint on the topology map."""
+    from playwright.sync_api import sync_playwright
+
+    url = hub["url"]
+    db = hub["db"]
+
+    # Seed desk + complete onboarding + assign a profile
+    _api_direct(url, "POST", "/api/desk/seed")
+    _api_direct(url, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    _seed_profile_and_assign(db)
+
+    # Seed the first LAN endpoint + assign groups to it
+    _seed_endpoint_profile(
+        db,
+        pid="lan-qwen36-35b-a3b",
+        label="LAN Qwen 3.6",
+        base_url="http://192.168.1.43:8080/v1",
+        model="qwen3.6-35b-a3b",
+    )
+    _seed_group_assignment_to(
+        db,
+        ["thoughts_notes", "writing_dictation", "meetings", "agents_tools", "background"],
+        "lan-qwen36-35b-a3b",
+    )
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        for width in (1440, 393):
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            _open_models_module(page, url, width)
+
+            # Open Advanced fold
+            advanced = page.locator("text=Advanced")
+            if advanced.count() > 0:
+                advanced.first.click()
+                page.wait_for_timeout(2000)
+
+            # Click "Add node" disclosure trigger
+            add_btn = page.locator("text=+ Add node")
+            if add_btn.count() > 0:
+                add_btn.first.click()
+                page.wait_for_timeout(500)
+                _save_shot_06(page, "topology-add-node-choices", width)
+
+                # Click "Define endpoint"
+                define_btn = page.locator("[data-testid='add-endpoint']")
+                if define_btn.count() > 0:
+                    define_btn.click()
+                    page.wait_for_timeout(500)
+                    _save_shot_06(page, "topology-add-node-form", width)
 
             # No horizontal overflow
             body_w = page.evaluate("document.body.scrollWidth")

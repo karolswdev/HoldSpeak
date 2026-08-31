@@ -33,6 +33,9 @@ vi.mock("../ModelLibraryCore", () => ({
 vi.mock("../CapabilityAssignmentsCore", () => ({
   CapabilityAssignmentsCore: () => <div data-testid="assignments-core">Assignments</div>,
 }));
+vi.mock("../TopologyMapView", () => ({
+  TopologyMapView: () => <div data-testid="topology-map-view">Topology Map</div>,
+}));
 
 const mockApiFetch = vi.mocked(apiFetch);
 const mockGetSummary = vi.mocked(getAssignmentSummary);
@@ -198,6 +201,12 @@ describe("FrontDoorView", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("front-door-advanced")).toBeTruthy();
+      });
+
+      // Default view is Map; switch to Table to see Library + Assignments
+      fireEvent.click(screen.getByRole("tab", { name: "Table" }));
+
+      await waitFor(() => {
         expect(screen.getByTestId("model-library-core")).toBeTruthy();
         expect(screen.getByTestId("assignments-core")).toBeTruthy();
       });
@@ -314,6 +323,12 @@ describe("FrontDoorView", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("front-door-advanced")).toBeTruthy();
+      });
+
+      // Default view is Map; switch to Table to see Library + Assignments
+      fireEvent.click(screen.getByRole("tab", { name: "Table" }));
+
+      await waitFor(() => {
         expect(screen.getByTestId("model-library-core")).toBeTruthy();
         expect(screen.getByTestId("assignments-core")).toBeTruthy();
       });

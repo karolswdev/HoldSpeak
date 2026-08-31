@@ -2443,6 +2443,16 @@
       ]
     },
     {
+      "path": "/api/front-door/topology",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.front_door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/gate/audit",
       "methods": [
         "GET"

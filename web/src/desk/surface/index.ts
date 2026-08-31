@@ -107,3 +107,10 @@ export {
 } from "./patterns";
 
 export { MicButton, type MicState } from "./controls/MicButton";
+
+export {
+  TopologySurface,
+  type GraphNode,
+  type GraphFlow,
+  type TopologySurfaceProps,
+} from "./graph/TopologySurface";

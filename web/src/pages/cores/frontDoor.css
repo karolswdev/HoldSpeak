@@ -37,3 +37,42 @@
   flex-direction: column;
   gap: var(--desk-surface-gap, 8px);
 }
+
+/* ── Map / Table toggle ── */
+
+.front-door-view-toggle {
+  display: flex;
+  gap: 0;
+  align-self: flex-start;
+}
+
+.front-door-view-toggle button {
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-compact);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.front-door-view-toggle button:first-child {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.front-door-view-toggle button:last-child {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-left: none;
+}
+
+.front-door-view-toggle button[aria-selected="true"] {
+  background: var(--accent-tint);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.front-door-view-toggle button:focus-visible {
+  outline: var(--focus-ring);
+  z-index: var(--z-base, 0);
+}

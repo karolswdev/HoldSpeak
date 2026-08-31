@@ -1,6 +1,6 @@
 # Phase 156 - The Front Door
 
-**Last updated:** 2026-08-31.
+**Last updated:** 2026-08-31 (story 06 in progress).
 
 ## Goal
 
@@ -29,19 +29,18 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 | HS-156-03 | The library patterns (the reform's v1, the barrel, the fence) | done | [story-03-the-library-patterns](./story-03-the-library-patterns.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-156-04 | The door surface (cards, plan, health strip, fold) | done | [story-04-the-door-surface](./story-04-the-door-surface.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-156-05 | Plain words (jargon purge, UX-evidence checklist) | done | [story-05-plain-words](./story-05-plain-words.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-156-06 | The topology (this Mac + nodes; configuration over the same authorities) | backlog | [story-06-the-topology](./story-06-the-topology.md) | - |
+| HS-156-06 | The topology (this Mac + nodes; configuration over the same authorities) | done | [story-06-the-topology](./story-06-the-topology.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-156-07 | The stopwatch walk and the close | backlog | [story-07-the-stopwatch-walk](./story-07-the-stopwatch-walk.md) | - |
 
 ## Where we are
 
-HS-156-01 through HS-156-04 done. HS-156-05 in-progress: three bound
-defects fixed (raw GGUF filenames humanized, speech deduplication,
-"Thoughts & notes Fix" label collision resolved); deny-list fence
-green; desk-tokens.css shim retired (zero importers); UX evidence
-checklist ships 1 FIXED / 11 RECORDED / 0 unaddressed. All test
-suites green: 48 recommendation + 27 apply (Python), 13 frontDoor
-vitest, `npm check` green (1742 tests), web baseline zero branch-new.
-Shot index created; shots need retake. Awaiting orchestrator flip.
+HS-156-01 through HS-156-05 done. HS-156-06 in-progress: TopologySurface
+library component shipped under surface/graph/ (25 contract tests), the
+topology map view as the advanced layer's opening view (11 vitest tests),
+GET /api/front-door/topology aggregator added (no new facts), glass legs
+topology + topology-add-node passing (2 legs, 1440+393, 10 shots), all
+gates green: npm check 1778 tests, web baseline zero branch-new, bundle
+gate passed. Awaiting orchestrator review and flip.
 
 ## Active risks
 

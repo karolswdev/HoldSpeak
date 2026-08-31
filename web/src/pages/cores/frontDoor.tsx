@@ -28,6 +28,7 @@ import {
 } from "./assignmentExperience";
 import { ModelLibraryCore } from "./ModelLibraryCore";
 import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
+import { TopologyMapView } from "./TopologyMapView";
 import "./frontDoor.css";
 
 // ── Types ────────────────────────────────────────────────────────────────
@@ -178,6 +179,7 @@ export function FrontDoorView({
   const [selectedPack, setSelectedPack] = useState<string | null>(null);
   const [applyError, setApplyError] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [advancedView, setAdvancedView] = useState<"map" | "table">("map");
   const pollRef = useRef<ReturnType<typeof setInterval>>(undefined);
   const mountedRef = useRef(true);
 
@@ -396,8 +398,18 @@ export function FrontDoorView({
         ) : null}
         {showAdvanced ? (
           <div className="front-door-advanced-inline" data-testid="front-door-advanced">
-            <ModelLibraryCore />
-            <CapabilityAssignmentsCore />
+            <div className="front-door-view-toggle" role="tablist" aria-label="Advanced view">
+              <button type="button" role="tab" aria-selected={advancedView === "map"} onClick={() => setAdvancedView("map")}>Map</button>
+              <button type="button" role="tab" aria-selected={advancedView === "table"} onClick={() => setAdvancedView("table")}>Table</button>
+            </div>
+            {advancedView === "map" ? (
+              <TopologyMapView onOpenAssignments={() => setAdvancedView("table")} />
+            ) : (
+              <>
+                <ModelLibraryCore />
+                <CapabilityAssignmentsCore />
+              </>
+            )}
           </div>
         ) : null}
       </div>
@@ -466,8 +478,18 @@ export function FrontDoorView({
         variant="default"
       >
         <div className="front-door-advanced" data-testid="front-door-advanced">
-          <ModelLibraryCore />
-          <CapabilityAssignmentsCore />
+          <div className="front-door-view-toggle" role="tablist" aria-label="Advanced view">
+            <button type="button" role="tab" aria-selected={advancedView === "map"} onClick={() => setAdvancedView("map")}>Map</button>
+            <button type="button" role="tab" aria-selected={advancedView === "table"} onClick={() => setAdvancedView("table")}>Table</button>
+          </div>
+          {advancedView === "map" ? (
+            <TopologyMapView onOpenAssignments={() => setAdvancedView("table")} />
+          ) : (
+            <>
+              <ModelLibraryCore />
+              <CapabilityAssignmentsCore />
+            </>
+          )}
         </div>
       </Disclosure>
     </div>

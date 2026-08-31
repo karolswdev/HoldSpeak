@@ -1,8 +1,9 @@
-"""Front Door routes (HS-156-01 recommendation, HS-156-02 apply).
+"""Front Door routes (HS-156-01 recommendation, HS-156-02 apply, HS-156-06 topology).
 
 GET  /api/front-door/recommendation  -- pack recommendations
 POST /api/front-door/apply           -- apply a recommended pack
 GET  /api/front-door/apply           -- read the current apply plan
+GET  /api/front-door/topology        -- topology aggregation (no new facts)
 """
 from __future__ import annotations
 
@@ -337,6 +338,131 @@ def build_front_door_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return JSONResponse(
                 {"code": "front_door_apply_error", "message": str(exc)},
+                status_code=500,
+            )
+
+    @router.get("/topology")
+    async def get_topology(request: Request) -> Any:
+        """HS-156-06: thin aggregation of existing facts — no new authority.
+
+        Aggregates inference targets (list_inference_targets), hardware
+        runtimes, and assignment summary rows into the topology wire shape.
+        """
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
+        if principal.kind is not PrincipalKind.OWNER:
+            return _error(ServiceError(
+                "front_door_owner_required",
+                "Owner access is required.",
+                context={"status": 403},
+            ))
+
+        try:
+            from ...inference_targets import (
+                list_inference_targets,
+                THIS_MACHINE_ID,
+            )
+            from ...services.inference_setup_service import (
+                inspect_hardware,
+                inspect_runtimes,
+            )
+            from datetime import datetime, timezone
+            from pathlib import Path
+
+            setup_svc = ctx.inference_setup_service
+            db = None
+            home = Path.home()
+            now = datetime.now(timezone.utc)
+
+            if setup_svc is not None:
+                db = setup_svc._db
+                home = setup_svc._home_provider()
+
+            if db is None:
+                return JSONResponse({"nodes": [], "flows": []})
+
+            # ── Gather nodes from inference targets ──
+            targets = list_inference_targets(db)
+            hardware = inspect_hardware(home=home, now=now)
+            capability = hardware.get("capability", {})
+            apple_silicon = bool(capability.get("apple_silicon"))
+            runtimes = inspect_runtimes(apple_silicon=apple_silicon)
+
+            nodes = []
+            for target in targets:
+                node: dict[str, Any] = {
+                    "id": target.id,
+                    "label": target.name,
+                    "kind": target.kind,
+                    "home": target.id == THIS_MACHINE_ID,
+                    "state": target.readiness_state,
+                }
+                if target.id == THIS_MACHINE_ID:
+                    # Add runtimes for this machine
+                    node["runtimes"] = [
+                        {"id": rt["id"], "state": rt["availability"]["state"]}
+                        for rt in runtimes
+                    ]
+                    # Add installed model names
+                    installed = [
+                        a.name for a in db.model_artifacts.list()
+                        if a.state in ("installed", "ready")
+                    ] if hasattr(db, "model_artifacts") else []
+                    if installed:
+                        node["models"] = installed
+                else:
+                    if target.model:
+                        node["models"] = [target.model]
+                    # Include base_url for endpoint targets
+                    if target.profile_id:
+                        profile = db.profiles.get(target.profile_id)
+                        if profile and getattr(profile, "base_url", None):
+                            node["base_url"] = profile.base_url
+
+                nodes.append(node)
+
+            # ── Gather flows from assignment summary ──
+            from ...services.inference_assignment_service import (
+                InferenceAssignmentService,
+            )
+            asvc = InferenceAssignmentService(db)
+            summary = asvc.assignment_summary(principal)
+            flows = []
+            for row in summary.get("rows", []):
+                if row.get("id") == "global":
+                    continue
+                assignment = row.get("assignment")
+                if assignment and assignment.get("entries"):
+                    # First entry determines the target node
+                    first_entry = assignment["entries"][0]
+                    profile_id = first_entry.get("profile_id", "")
+                    boundary = first_entry.get("boundary", "")
+                    # Map to target node id
+                    target_id = THIS_MACHINE_ID
+                    if profile_id:
+                        # Check if any non-home target matches
+                        for target in targets:
+                            if target.profile_id == profile_id:
+                                target_id = target.id
+                                break
+                        # Boundary-based fallback
+                        if target_id == THIS_MACHINE_ID and boundary not in (
+                            "same_device", "local", ""
+                        ):
+                            target_id = profile_id
+
+                    flows.append({
+                        "group_id": row["id"],
+                        "group_label": row.get("label", row["id"]),
+                        "target_node_id": target_id,
+                    })
+
+            return JSONResponse({"nodes": nodes, "flows": flows})
+
+        except ServiceError as exc:
+            return _error(exc)
+        except Exception as exc:
+            return JSONResponse(
+                {"code": "front_door_topology_error", "message": str(exc)},
                 status_code=500,
             )
 
