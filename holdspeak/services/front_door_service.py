@@ -150,19 +150,50 @@ def _endpoint_facts(
     return reachable, probed_urls
 
 
+def _humanize_model_label(raw_label: str | None) -> tuple[str, str | None]:
+    """Produce a human-readable label from a model name or filename.
+
+    Returns ``(human_label, original_filename_or_none)``.  When the
+    input is already human-readable (not a ``.gguf`` path), it passes
+    through unchanged with ``None`` as the detail.
+    """
+    if not raw_label:
+        return "Local model", None
+    if not raw_label.lower().endswith(".gguf"):
+        return raw_label, None
+    # Strip directory prefix, keep just the filename
+    stem = raw_label.rsplit("/", 1)[-1]
+    name = stem[: -len(".gguf")]  # strip extension
+    # Parse common naming: Family-SizeB-Variant-Quant
+    parts = name.split("-")
+    family = parts[0] if parts else name
+    size_part = ""
+    for part in parts[1:]:
+        if part and part[-1].upper() == "B" and any(c.isdigit() for c in part[:-1]):
+            size_part = part.upper()
+            break
+    if size_part:
+        return f"{family} {size_part} (local)", stem
+    return f"{family} (local)", stem
+
+
 def _build_assignment_line(
     group_id: str,
     group_label: str,
     source_label: str,
     provenance: str | None = None,
+    detail: str | None = None,
 ) -> dict[str, Any]:
     """Build one human-readable assignment line for a pack."""
-    return {
+    line: dict[str, Any] = {
         "group_id": group_id,
         "group_label": group_label,
         "source_label": source_label,
         "provenance": provenance,
     }
+    if detail is not None:
+        line["detail"] = detail
+    return line
 
 
 def _build_plan_entry(
@@ -229,11 +260,13 @@ def _pick_llm_for_group(
 
     # Priority 2: legacy GGUF from config (if llama.cpp available)
     if legacy_gguf_path and has_llama_cpp:
+        human_label, gguf_detail = _humanize_model_label(legacy_gguf_label)
         return (
             _build_assignment_line(
                 group_id, group_label,
-                legacy_gguf_label or "Legacy local model",
+                human_label,
                 provenance="legacy_config",
+                detail=gguf_detail,
             ),
             _build_plan_entry(
                 group_id,
@@ -361,13 +394,20 @@ def _human_size(n: int) -> str:
 
 
 def _speech_line(whisper_name: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Build the speech recognition line for a pack."""
+    """Build the speech recognition line for a pack.
+
+    The display dict carries ``group_id="speech_recognition"`` so it
+    contributes to the completeness check (all seven groups covered).
+    The plan dict stays whisper-specific.
+    """
     model = _WHISPER_MODELS.get(whisper_name, _WHISPER_MODELS["base"])
     return (
         {
+            "group_id": "speech_recognition",
+            "group_label": "Speech recognition",
+            "source_label": f"{model['label']} ({_human_size(model['download_bytes'])})",
+            "provenance": "builtin_whisper",
             "job": "speech",
-            "label": f"Speech recognition -- {model['label']} ({_human_size(model['download_bytes'])})",
-            "source": "builtin_whisper",
         },
         {
             "job": "speech",
@@ -383,9 +423,10 @@ def _tts_line() -> tuple[dict[str, Any], dict[str, Any]]:
     total = _TTS_MODEL["download_bytes"] + _TTS_MODEL["voices_bytes"]
     return (
         {
+            "group_label": "Text-to-speech",
+            "source_label": f"{_TTS_MODEL['label']} ({_human_size(total)})",
+            "provenance": "builtin_kokoro",
             "job": "tts",
-            "label": f"Text-to-speech -- {_TTS_MODEL['label']} ({_human_size(total)})",
-            "source": "builtin_kokoro",
         },
         {
             "job": "tts",
@@ -520,8 +561,11 @@ def _build_pack(
     plan_entries: list[dict[str, Any]] = []
     total_download = 0
 
-    # Resolve each of the seven assignment groups
+    # Resolve the LLM-powered assignment groups (speech_recognition is
+    # handled separately by _speech_line — it uses whisper, not an LLM).
     for group_id, group_label in ASSIGNMENT_GROUPS:
+        if group_id == "speech_recognition":
+            continue
         result = _pick_llm_for_group(
             group_id,
             group_label,

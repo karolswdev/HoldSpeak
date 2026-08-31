@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 156
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-156-04
 - **Unblocks:** HS-156-07
 - **Owner:** unassigned
@@ -38,8 +38,51 @@ POSITIONING voice rules).
 - **Integration:** covered by 03's glass (shots show the final words).
 - **Manual / device:** story 05.
 
+## What shipped
+
+### Three bound defects fixed
+
+1. **Raw GGUF filenames (Defect 1):** `_humanize_model_label()` added to
+   `front_door_service.py`; converts "Qwen3.5-9B-Instruct-Q6_K.gguf" to
+   "Qwen3.5 9B (local)" with the raw filename preserved as a `detail` field.
+   Legacy GGUF packs no longer show the filename x7 on the card.
+
+2. **SPEECH RECOGNITION duplication (Defect 2):** `speech_recognition` removed
+   from the LLM loop in `_build_pack`; handled only by `_speech_line()` which
+   now carries `group_id: "speech_recognition"` for completeness. Each card
+   shows Speech recognition exactly once (the whisper line).
+
+3. **"Thoughts & notes Fix" collision (Defect 3):** `repairCopy()` added to
+   `frontDoor.tsx`; produces a proper sentence (e.g., "Speech recognition has
+   no model"). Short action verbs ("Fix") become "needs attention". ActionNotice
+   button changed from "Fix" to "Fix it" per D3 pattern.
+
+### Deny-list fence
+
+Copy fence tests in `frontDoor.test.tsx`: unconfigured cards, configured
+strip, and attention strip all rendered and checked for banned jargon
+("catalog", "no_assignment", "no_compatible_assignment", "provider_family",
+".gguf"). Python deny-list test in `test_front_door_recommendation.py`
+covers both catalog-preset and legacy-GGUF packs.
+
+### desk-tokens.css shim retired
+
+Import census: zero importers across the web tree. File deleted. The
+one source of truth is `styles/tokens.css`.
+
+### UX evidence checklist
+
+12-item concierge log reviewed: 1 FIXED (item 9, jargon in door path),
+11 RECORDED (backend/API gaps, not door-path wording). Checklist at
+`assets/concierge-ux-checklist-05.md`.
+
+### Shots
+
+Shot index at `assets/story-05-shots/index.md` with reviewer slot.
+Shots need retake after code changes (orchestrator or glass).
+
 ## Notes / open questions
 
-- Council checklist item: retire the `desk-tokens.css` import shim after an import census (one token source).
+- Council checklist item: retire the `desk-tokens.css` import shim after an import census (one token source). DONE: census clean, file deleted.
 
-- No prose novels: plain ≠ wordy; one line beats a paragraph everywhere.
+- No prose novels: plain = wordy; one line beats a paragraph everywhere.

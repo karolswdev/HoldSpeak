@@ -43,10 +43,11 @@ const DISPLAY_LINES = [
   { group_id: "thoughts_notes", group_label: "Thoughts & notes", source_label: "Qwen 4B (Q4_K_M)" },
   { group_id: "chat_practice", group_label: "Chat practice", source_label: "Qwen 4B (Q4_K_M)" },
   { group_id: "writing_dictation", group_label: "Writing & dictation", source_label: "Qwen 4B (Q4_K_M)" },
-  { group_id: "speech_recognition", group_label: "Speech recognition", source_label: "Whisper small" },
   { group_id: "meetings", group_label: "Meetings", source_label: "Qwen 4B (Q4_K_M)" },
   { group_id: "agents_tools", group_label: "Agents & tools", source_label: "Qwen 4B (Q4_K_M)" },
   { group_id: "background", group_label: "Background", source_label: "Qwen 4B (Q4_K_M)" },
+  { group_id: "speech_recognition", group_label: "Speech recognition", source_label: "Whisper small (444 MB)", job: "speech" },
+  { group_label: "Text-to-speech", source_label: "Kokoro TTS (fp16) (197 MB)", job: "tts" },
 ];
 
 const PLAN_ENTRIES = [
@@ -341,16 +342,170 @@ describe("FrontDoorView", () => {
         expect(screen.getByTestId("front-door-strip")).toBeTruthy();
       });
 
-      // The attention notice names the issue
-      expect(screen.getByText(/Speech recognition/)).toBeTruthy();
-      expect(screen.getByText(/has no model/)).toBeTruthy();
+      // The attention notice names the issue as a proper sentence
+      expect(screen.getByText(/Speech recognition has no model/)).toBeTruthy();
 
-      // Exactly ONE action button ("Fix")
+      // Exactly ONE action button ("Fix it" per D3)
       const actionButtons = screen.getAllByRole("button").filter(
         (btn) => btn.classList.contains("surface-action-notice-btn"),
       );
       expect(actionButtons).toHaveLength(1);
-      expect(actionButtons[0].textContent).toBe("Fix");
+      expect(actionButtons[0].textContent).toBe("Fix it");
+    });
+
+    it("short action-verb repair falls back to 'needs attention'", async () => {
+      const donePlan = {
+        id: "fdap_done",
+        pack_id: "balanced",
+        status: "done" as const,
+        items: [],
+        created_at: "2026-08-30T12:00:00Z",
+        updated_at: "2026-08-30T12:00:00Z",
+      };
+
+      // When repair is just "Fix" (an action verb, not a description)
+      setupMocks(
+        configuredSummary({ id: "speech_recognition", label: "Speech recognition", text: "Fix" }),
+        { plan: donePlan },
+      );
+
+      render(<FrontDoorView />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("front-door-strip")).toBeTruthy();
+      });
+
+      // "Fix" alone becomes "needs attention" -- no label collision with the button
+      expect(screen.getByText(/Speech recognition needs attention/)).toBeTruthy();
+    });
+
+    it("descriptive repair passes through as a sentence", async () => {
+      const donePlan = {
+        id: "fdap_done",
+        pack_id: "balanced",
+        status: "done" as const,
+        items: [],
+        created_at: "2026-08-30T12:00:00Z",
+        updated_at: "2026-08-30T12:00:00Z",
+      };
+
+      setupMocks(
+        configuredSummary({ id: "speech_recognition", label: "Speech recognition", text: "needs a model" }),
+        { plan: donePlan },
+      );
+
+      render(<FrontDoorView />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("front-door-strip")).toBeTruthy();
+      });
+
+      // Descriptive repair text passes through as a sentence
+      expect(screen.getByText(/Speech recognition needs a model/)).toBeTruthy();
+    });
+  });
+
+  describe("wording states", () => {
+    it("pack cards show human model names, not raw filenames", async () => {
+      setupMocks(unconfiguredSummary());
+      render(<FrontDoorView />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("front-door-cards")).toBeTruthy();
+      });
+
+      const text = document.body.textContent ?? "";
+      // No raw GGUF filenames on the cards
+      expect(text).not.toContain(".gguf");
+      // Human labels should be visible
+      expect(text).toContain("Qwen 4B");
+    });
+
+    it("speech recognition appears exactly once per card (not duplicated)", async () => {
+      setupMocks(unconfiguredSummary());
+      render(<FrontDoorView />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("front-door-cards")).toBeTruthy();
+      });
+
+      // Speech recognition should appear (as label) in each of 3 cards = 3 times
+      // NOT 6 times (which would indicate duplication within each card)
+      const speechMatches = screen.getAllByText("Speech recognition");
+      expect(speechMatches).toHaveLength(3); // One per card
+    });
+  });
+
+  describe("copy fence -- no jargon on the door path", () => {
+    const BANNED_JARGON = [
+      "catalog",
+      "no_assignment",
+      "no_compatible_assignment",
+      "provider_family",
+      ".gguf",
+    ];
+
+    it("unconfigured cards contain no banned jargon", async () => {
+      setupMocks(unconfiguredSummary());
+      const { container } = render(<FrontDoorView />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("front-door-cards")).toBeTruthy();
+      });
+
+      const text = container.textContent ?? "";
+      for (const word of BANNED_JARGON) {
+        expect(text.toLowerCase()).not.toContain(word.toLowerCase());
+      }
+    });
+
+    it("configured strip contains no banned jargon", async () => {
+      const donePlan = {
+        id: "fdap_done",
+        pack_id: "balanced",
+        status: "done" as const,
+        items: [],
+        created_at: "2026-08-30T12:00:00Z",
+        updated_at: "2026-08-30T12:00:00Z",
+      };
+
+      setupMocks(configuredSummary(), { plan: donePlan });
+      const { container } = render(<FrontDoorView />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("front-door-strip")).toBeTruthy();
+      });
+
+      const text = container.textContent ?? "";
+      for (const word of BANNED_JARGON) {
+        expect(text.toLowerCase()).not.toContain(word.toLowerCase());
+      }
+    });
+
+    it("attention strip contains no banned jargon", async () => {
+      const donePlan = {
+        id: "fdap_done",
+        pack_id: "balanced",
+        status: "done" as const,
+        items: [],
+        created_at: "2026-08-30T12:00:00Z",
+        updated_at: "2026-08-30T12:00:00Z",
+      };
+
+      setupMocks(
+        configuredSummary({ id: "speech_recognition", label: "Speech recognition", text: "has no model" }),
+        { plan: donePlan },
+      );
+      const { container } = render(<FrontDoorView />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("front-door-strip")).toBeTruthy();
+      });
+
+      const text = container.textContent ?? "";
+      for (const word of BANNED_JARGON) {
+        expect(text.toLowerCase()).not.toContain(word.toLowerCase());
+      }
     });
   });
 });

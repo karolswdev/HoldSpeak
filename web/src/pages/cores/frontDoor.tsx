@@ -97,6 +97,19 @@ function lineValue(line: PackDisplayLine): string {
   return line.source_label ?? line.source ?? "";
 }
 
+/** HS-156-05: produce a sentence from an attention row, never echoing the action verb. */
+function repairCopy(row: AssignmentSummaryRow): string {
+  const { label, repair } = row;
+  if (!repair) return `${label} needs attention`;
+  // Short action verbs ("Fix", "Add") are not descriptive — convert to sentence
+  const trimmed = repair.trim();
+  if (/^[A-Z]\w{0,5}$/.test(trimmed)) {
+    return `${label} needs attention`;
+  }
+  // Descriptive phrase (e.g. "has no model") — compose as sentence
+  return `${label} ${repair}`;
+}
+
 function hasUnconfiguredGroups(summary: AssignmentSummary | null): boolean {
   if (!summary) return true;
   // global row is special — check group rows only
@@ -425,14 +438,14 @@ export function FrontDoorView({
         <ActionNotice
           tone="warn"
           action={{
-            label: "Fix",
+            label: "Fix it",
             onClick: () => {
               setShowAdvanced(true);
               onOpenAssignments?.();
             },
           }}
         >
-          {attentionRow.label} {attentionRow.repair ?? "needs attention"}
+          {repairCopy(attentionRow)}
         </ActionNotice>
       ) : (
         <ActionNotice

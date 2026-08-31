@@ -16,6 +16,7 @@ from holdspeak.services.front_door_service import (
     PACK_LIGHT,
     recommend,
     _human_size,
+    _humanize_model_label,
 )
 
 
@@ -239,16 +240,27 @@ class Test16GBAppleSiliconNoEndpoints:
         assert len(speech_plans) == 1
         assert speech_plans[0]["whisper_name"] == "small"
 
-    def test_display_lines_include_mlx_appropriate_labels(self) -> None:
+    def test_display_lines_include_human_readable_labels(self) -> None:
         """Display lines should include human-readable labels with sizes."""
         result = self._recommend()
         light = _pack_by_id(result["packs"], "light")
         assert light is not None
-        # Check that display lines have source_label containing the preset label
-        group_lines = [l for l in light["display_lines"] if "group_id" in l]
-        for line in group_lines:
-            assert "Qwen" in line["source_label"]  # Catalog preset label contains "Qwen"
+        # LLM group lines use catalog preset labels (not speech_recognition)
+        llm_lines = [
+            l for l in light["display_lines"]
+            if "group_id" in l and l["group_id"] != "speech_recognition"
+        ]
+        for line in llm_lines:
+            assert "Qwen" in line["source_label"]
             assert line["provenance"] == "catalog_preset"
+        # Speech line uses whisper labels
+        speech_lines = [
+            l for l in light["display_lines"]
+            if l.get("group_id") == "speech_recognition"
+        ]
+        assert len(speech_lines) == 1
+        assert "Whisper" in speech_lines[0]["source_label"]
+        assert speech_lines[0]["provenance"] == "builtin_whisper"
 
     def test_total_download_bytes_is_calculated(self) -> None:
         result = self._recommend()
@@ -360,11 +372,21 @@ class TestEndpointAndLegacyGGUF:
         """When the endpoint is reachable, it appears as pack ingredients with provenance."""
         result = self._recommend(reachable=True)
         for pack in result["packs"]:
-            group_lines = [l for l in pack["display_lines"] if "group_id" in l]
-            # All groups should use the endpoint since it's priority 1
-            for line in group_lines:
+            # LLM group lines (not speech) should use the endpoint
+            llm_lines = [
+                l for l in pack["display_lines"]
+                if "group_id" in l and l["group_id"] != "speech_recognition"
+            ]
+            for line in llm_lines:
                 assert line["provenance"] == "known_endpoint"
                 assert "192.168.1.43:8080" in line["source_label"]
+            # Speech line uses builtin whisper, not the endpoint
+            speech_lines = [
+                l for l in pack["display_lines"]
+                if l.get("group_id") == "speech_recognition"
+            ]
+            assert len(speech_lines) == 1
+            assert speech_lines[0]["provenance"] == "builtin_whisper"
 
     def test_endpoint_provenance_in_facts(self) -> None:
         result = self._recommend(reachable=True)
@@ -384,23 +406,32 @@ class TestEndpointAndLegacyGGUF:
         assert ep["reachable"] is False
         assert ep["reason"] is not None  # Has a reason
 
-        # Since the endpoint is unreachable, packs should fall back to
-        # legacy GGUF or catalog presets
+        # Since the endpoint is unreachable, LLM groups should fall back
+        # to legacy GGUF or catalog presets
         for pack in result["packs"]:
-            group_lines = [l for l in pack["display_lines"] if "group_id" in l]
-            for line in group_lines:
-                # Should use legacy_config (priority 2) since endpoint is down
+            llm_lines = [
+                l for l in pack["display_lines"]
+                if "group_id" in l and l["group_id"] != "speech_recognition"
+            ]
+            for line in llm_lines:
                 assert line["provenance"] in ("legacy_config", "catalog_preset")
 
     def test_unreachable_uses_legacy_gguf(self) -> None:
-        """When endpoint is unreachable, falls back to legacy GGUF."""
+        """When endpoint is unreachable, falls back to legacy GGUF with human label."""
         result = self._recommend(reachable=False)
         for pack in result["packs"]:
-            group_lines = [l for l in pack["display_lines"] if "group_id" in l]
-            # Legacy GGUF is priority 2
+            # Only check LLM group lines (speech_recognition is handled by _speech_line)
+            group_lines = [
+                l for l in pack["display_lines"]
+                if "group_id" in l and l["group_id"] != "speech_recognition"
+            ]
             for line in group_lines:
                 assert line["provenance"] == "legacy_config"
-                assert "Legacy local model" in line["source_label"] or self.LEGACY_GGUF_LABEL in line["source_label"]
+                # Human label, NOT raw .gguf filename
+                assert ".gguf" not in line["source_label"]
+                assert "Qwen3.5 9B (local)" in line["source_label"]
+                # Raw filename preserved as detail
+                assert line.get("detail") == "Qwen3.5-9B-Instruct-Q6_K.gguf"
 
     def test_legacy_gguf_path_in_facts(self) -> None:
         result = self._recommend(reachable=False)
@@ -589,6 +620,133 @@ class TestHumanSize:
 
     def test_gigabytes(self) -> None:
         assert _human_size(2_740_937_888) == "2.6 GB"
+
+
+class TestHumanizeModelLabel:
+    """HS-156-05: raw GGUF filenames become human labels."""
+
+    def test_gguf_filename_with_size(self) -> None:
+        label, detail = _humanize_model_label("Qwen3.5-9B-Instruct-Q6_K.gguf")
+        assert label == "Qwen3.5 9B (local)"
+        assert detail == "Qwen3.5-9B-Instruct-Q6_K.gguf"
+
+    def test_gguf_filename_with_path(self) -> None:
+        label, detail = _humanize_model_label("~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf")
+        assert label == "Qwen3.5 9B (local)"
+        assert detail == "Qwen3.5-9B-Instruct-Q6_K.gguf"
+
+    def test_gguf_small_model(self) -> None:
+        label, detail = _humanize_model_label("Qwen3.5-0.8B-Q4_K_M.gguf")
+        assert label == "Qwen3.5 0.8B (local)"
+        assert detail == "Qwen3.5-0.8B-Q4_K_M.gguf"
+
+    def test_non_gguf_passthrough(self) -> None:
+        label, detail = _humanize_model_label("Quick local Qwen")
+        assert label == "Quick local Qwen"
+        assert detail is None
+
+    def test_none_input(self) -> None:
+        label, detail = _humanize_model_label(None)
+        assert label == "Local model"
+        assert detail is None
+
+    def test_gguf_no_size_part(self) -> None:
+        label, detail = _humanize_model_label("custom-model.gguf")
+        assert label == "custom (local)"
+        assert detail == "custom-model.gguf"
+
+
+# ── HS-156-05: speech deduplication ─────────────────────────────────────
+
+class TestSpeechDeduplication:
+    """Speech recognition appears exactly once in display lines (whisper, not LLM)."""
+
+    def test_speech_recognition_appears_once(self) -> None:
+        result = recommend(
+            hardware=_hw(apple_silicon=True, total_memory_bytes=_16GB),
+            catalog_entries=BOTH_PRESETS,
+            known_endpoints=[],
+            has_llama_cpp=True,
+            probe=_no_probe,
+        )
+        for pack in result["packs"]:
+            speech_lines = [
+                l for l in pack["display_lines"]
+                if l.get("group_id") == "speech_recognition"
+                or l.get("group_label", "").lower() == "speech recognition"
+            ]
+            assert len(speech_lines) == 1, (
+                f"Pack {pack['id']}: speech_recognition appears {len(speech_lines)} times"
+            )
+
+    def test_speech_line_uses_whisper_label(self) -> None:
+        result = recommend(
+            hardware=_hw(apple_silicon=True, total_memory_bytes=_16GB),
+            catalog_entries=BOTH_PRESETS,
+            known_endpoints=[],
+            has_llama_cpp=True,
+            probe=_no_probe,
+        )
+        balanced = _pack_by_id(result["packs"], "balanced")
+        assert balanced is not None
+        speech_lines = [
+            l for l in balanced["display_lines"]
+            if l.get("group_id") == "speech_recognition"
+        ]
+        assert len(speech_lines) == 1
+        assert "Whisper" in speech_lines[0]["source_label"]
+        assert speech_lines[0]["provenance"] == "builtin_whisper"
+
+
+# ── HS-156-05: deny-list fence ──────────────────────────────────────────
+
+class TestDisplayLineDenyList:
+    """No raw jargon in the display lines (the user-visible pack card content)."""
+
+    BANNED = [
+        "catalog",
+        "no_assignment",
+        "no_compatible_assignment",
+        "provider_family",
+        ".gguf",
+    ]
+
+    def test_no_jargon_in_catalog_preset_packs(self) -> None:
+        result = recommend(
+            hardware=_hw(apple_silicon=True, total_memory_bytes=_16GB),
+            catalog_entries=BOTH_PRESETS,
+            known_endpoints=[],
+            has_llama_cpp=True,
+            probe=_no_probe,
+        )
+        for pack in result["packs"]:
+            for line in pack["display_lines"]:
+                for key in ("source_label", "group_label"):
+                    value = str(line.get(key, ""))
+                    for banned in self.BANNED:
+                        assert banned not in value.lower(), (
+                            f"Pack {pack['id']}, line {line}: "
+                            f"banned jargon '{banned}' in {key}='{value}'"
+                        )
+
+    def test_no_jargon_in_legacy_gguf_packs(self) -> None:
+        result = recommend(
+            hardware=_hw(apple_silicon=True, total_memory_bytes=_16GB),
+            catalog_entries=BOTH_PRESETS,
+            known_endpoints=[],
+            legacy_gguf_path="~/Models/Qwen3.5-9B-Instruct-Q6_K.gguf",
+            legacy_gguf_label="Qwen3.5-9B-Instruct-Q6_K.gguf",
+            has_llama_cpp=True,
+            probe=_no_probe,
+        )
+        for pack in result["packs"]:
+            for line in pack["display_lines"]:
+                value = str(line.get("source_label", ""))
+                for banned in self.BANNED:
+                    assert banned not in value.lower(), (
+                        f"Pack {pack['id']}: banned jargon '{banned}' "
+                        f"in source_label='{value}'"
+                    )
 
 
 # ── Route test through real app ──────────────────────────────────────────

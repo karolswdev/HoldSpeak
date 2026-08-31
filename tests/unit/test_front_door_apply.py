@@ -341,8 +341,8 @@ class TestApplyEndpointPack:
         ]
         assert len(lib.endpoints) == len(endpoint_items)
 
-    def test_assignments_set_for_all_groups(self) -> None:
-        """All seven groups get assigned."""
+    def test_assignments_set_for_llm_groups(self) -> None:
+        """All LLM-powered groups get assigned (speech uses builtin whisper)."""
         pack = _endpoint_pack()
         db = FakeDB()
         lib = FakeModelLibraryService()
@@ -358,7 +358,10 @@ class TestApplyEndpointPack:
         assigned_groups = {
             a["scope"]["group_id"] for a in assign.assignments
         }
-        expected_groups = {gid for gid, _ in ASSIGNMENT_GROUPS}
+        # speech_recognition uses builtin whisper, not an LLM assignment
+        expected_groups = {
+            gid for gid, _ in ASSIGNMENT_GROUPS if gid != "speech_recognition"
+        }
         assert assigned_groups == expected_groups
 
     def test_plan_persisted_in_db(self) -> None:

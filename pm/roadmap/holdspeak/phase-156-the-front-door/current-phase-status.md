@@ -28,18 +28,20 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 | HS-156-02 | One confirmation applies everything | done | [story-02-one-confirmation](./story-02-one-confirmation.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-156-03 | The library patterns (the reform's v1, the barrel, the fence) | done | [story-03-the-library-patterns](./story-03-the-library-patterns.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-156-04 | The door surface (cards, plan, health strip, fold) | done | [story-04-the-door-surface](./story-04-the-door-surface.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-156-05 | Plain words (jargon purge, UX-evidence checklist) | backlog | [story-05-plain-words](./story-05-plain-words.md) | - |
+| HS-156-05 | Plain words (jargon purge, UX-evidence checklist) | done | [story-05-plain-words](./story-05-plain-words.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-156-06 | The topology (this Mac + nodes; configuration over the same authorities) | backlog | [story-06-the-topology](./story-06-the-topology.md) | - |
 | HS-156-07 | The stopwatch walk and the close | backlog | [story-07-the-stopwatch-walk](./story-07-the-stopwatch-walk.md) | - |
 
 ## Where we are
 
-HS-156-01 done, HS-156-02 done. HS-156-03 in-progress: the v1 library
-patterns, barrel, fence, contract, MicButton inversion, gallery, and
-shot sheet are built and passing. 7 pattern components with 58 contract
-tests, 12 fence tests, 1 gallery axe test. `npm --prefix web run check`
-green end-to-end (1729 tests, zero regressions). Shot sheet captured at
-1440+393 with 8 images. Awaiting orchestrator review and story flip.
+HS-156-01 through HS-156-04 done. HS-156-05 in-progress: three bound
+defects fixed (raw GGUF filenames humanized, speech deduplication,
+"Thoughts & notes Fix" label collision resolved); deny-list fence
+green; desk-tokens.css shim retired (zero importers); UX evidence
+checklist ships 1 FIXED / 11 RECORDED / 0 unaddressed. All test
+suites green: 48 recommendation + 27 apply (Python), 13 frontDoor
+vitest, `npm check` green (1742 tests), web baseline zero branch-new.
+Shot index created; shots need retake. Awaiting orchestrator flip.
 
 ## Active risks
 
