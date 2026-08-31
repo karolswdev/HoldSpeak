@@ -3,7 +3,7 @@
 // This test imports the callLoopWiring and spies on sendTurn to prove
 // that the call loop's onSubmit path goes through the SAME function
 // the ThreadComposer uses — no parallel turn entrance; the loop never
-// calls fetch('/api/threads/*/turns') itself.
+// issues its own network request to /api/threads/*/turns.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── mocks ───────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ describe("callLoopWiring", () => {
     expect(mockSendTurn).toHaveBeenCalledWith(THREAD_ID, { text: "Hello from voice" });
   });
 
-  it("the loop never calls fetch('/api/threads/*/turns') itself", async () => {
+  it("the loop never issues its own /api/threads/*/turns request", async () => {
     // The wiring proves this by construction: onSubmit calls sendTurn,
     // which is the composer's OWN function. The callLoop module has no
     // import of apiFetch or threads — it receives onSubmit as a callback.
@@ -78,7 +78,7 @@ describe("callLoopWiring", () => {
 
     capturedCallbacks!.onSubmit("Test text");
 
-    // sendTurn is the ONLY thing called — no direct fetch
+    // sendTurn is the ONLY thing called — no direct network request
     expect(mockSendTurn).toHaveBeenCalledOnce();
   });
 

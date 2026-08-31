@@ -96,6 +96,7 @@ function seedStore(messages: ThreadMessage[], drafts: DraftAnnotation[] = []) {
       parent_thread_id: null,
       status_line: null,
       mode: null,
+      call_mode: 0,
       token_in: 100,
       token_out: 50,
       created_at: new Date().toISOString(),
