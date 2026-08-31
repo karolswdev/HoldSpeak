@@ -42,6 +42,20 @@ from .service_event_ledger import ServiceEventLedger
 _log = get_logger("services.project_service")
 
 
+# ── Closed Project Room vocabularies (HS-158-02, SRS WEB §4) ─────────
+
+# Project lifecycle: closed vocabulary per SRS WEB-LC §4.
+# 'archived' is EXCLUDED — it is a storage state managed by archive_project/
+# restore_project, not a user-settable lifecycle value via PATCH.
+PROJECT_LIFECYCLES: frozenset[str] = frozenset({
+    "proposed", "active", "paused", "complete", "cancelled",
+})
+
+# Maximum lengths for free-text room fields.
+_POSTURE_MAX = 64
+_POSTURE_REASON_MAX = 500
+_SLUG_MAX = 64
+
 # ── Closed item vocabularies (HS-158-03) ──────────────────────────────
 
 # Severity: nullable; validated on write.
@@ -498,6 +512,123 @@ class ProjectService:
         if "detection_threshold" in patch:
             fields["detection_threshold"] = self._threshold(patch["detection_threshold"])
 
+        # ── Room fields (HS-158-02, SRS §5.1) ────────────────────────
+        if "purpose" in patch:
+            fields["purpose"] = str(patch["purpose"]).strip() if patch["purpose"] else None
+        if "outcome_text" in patch:
+            fields["outcome_text"] = str(patch["outcome_text"]).strip() if patch["outcome_text"] else None
+        if "owner_ref" in patch:
+            owner_ref_val = patch["owner_ref"]
+            if owner_ref_val is not None:
+                owner_ref_str = str(owner_ref_val).strip()
+                if not owner_ref_str:
+                    owner_ref_val = None
+                else:
+                    try:
+                        parse_ref(owner_ref_str)
+                    except Exception as exc:
+                        raise ValidationError(
+                            f"owner_ref is not a valid qualified ref: {exc}",
+                            code="invalid_owner_ref",
+                        ) from exc
+                    owner_ref_val = owner_ref_str
+            fields["owner_ref"] = owner_ref_val
+        if "lifecycle" in patch:
+            lc = str(patch["lifecycle"] or "").strip().lower()
+            if lc == "archived":
+                raise ValidationError(
+                    "lifecycle 'archived' cannot be set via update; use archive_project",
+                    code="invalid_lifecycle",
+                )
+            if lc not in PROJECT_LIFECYCLES:
+                raise ValidationError(
+                    f"lifecycle must be one of {sorted(PROJECT_LIFECYCLES)}, got {lc!r}",
+                    code="invalid_lifecycle",
+                )
+            fields["lifecycle"] = lc
+        if "posture" in patch:
+            posture_val = str(patch["posture"]).strip() if patch["posture"] else None
+            if posture_val and len(posture_val) > _POSTURE_MAX:
+                raise ValidationError(
+                    f"posture exceeds {_POSTURE_MAX} characters",
+                    code="posture_too_long",
+                )
+            fields["posture"] = posture_val
+        if "posture_reason" in patch:
+            reason_val = str(patch["posture_reason"]).strip() if patch["posture_reason"] else None
+            if reason_val and len(reason_val) > _POSTURE_REASON_MAX:
+                raise ValidationError(
+                    f"posture_reason exceeds {_POSTURE_REASON_MAX} characters",
+                    code="posture_reason_too_long",
+                )
+            fields["posture_reason"] = reason_val
+        for date_key in ("start_at", "target_at", "next_review_at"):
+            if date_key in patch:
+                date_val = patch[date_key]
+                if date_val is not None:
+                    date_str = str(date_val).strip()
+                    if not date_str:
+                        date_val = None
+                    else:
+                        try:
+                            datetime.fromisoformat(date_str)
+                        except (ValueError, TypeError) as exc:
+                            raise ValidationError(
+                                f"{date_key} is not valid ISO-8601: {date_str!r}",
+                                code=f"invalid_{date_key}",
+                            ) from exc
+                        date_val = date_str
+                fields[date_key] = date_val
+        if "review_cadence_json" in patch:
+            cadence = patch["review_cadence_json"]
+            if cadence is not None:
+                if not isinstance(cadence, dict):
+                    raise ValidationError(
+                        "review_cadence_json must be a dict",
+                        code="invalid_review_cadence",
+                    )
+                if "every_days" in cadence:
+                    try:
+                        every = int(cadence["every_days"])
+                    except (TypeError, ValueError) as exc:
+                        raise ValidationError(
+                            "review_cadence_json.every_days must be a positive integer",
+                            code="invalid_review_cadence",
+                        ) from exc
+                    if every < 1:
+                        raise ValidationError(
+                            "review_cadence_json.every_days must be a positive integer",
+                            code="invalid_review_cadence",
+                        )
+            fields["review_cadence_json"] = cadence
+        if "template_key" in patch:
+            tk = str(patch["template_key"]).strip() if patch["template_key"] else None
+            if tk and len(tk) > _SLUG_MAX:
+                raise ValidationError(
+                    f"template_key exceeds {_SLUG_MAX} characters",
+                    code="template_key_too_long",
+                )
+            fields["template_key"] = tk
+        if "modules_json" in patch:
+            mods = patch["modules_json"]
+            if mods is not None:
+                if not isinstance(mods, list):
+                    raise ValidationError(
+                        "modules_json must be a list of short slugs",
+                        code="invalid_modules",
+                    )
+                cleaned: list[str] = []
+                for m in mods:
+                    slug = str(m).strip()
+                    if len(slug) > _SLUG_MAX:
+                        raise ValidationError(
+                            f"modules_json entry exceeds {_SLUG_MAX} characters",
+                            code="invalid_modules",
+                        )
+                    cleaned.append(slug)
+                mods = cleaned
+            fields["modules_json"] = mods
+
         cmd_id = command_id or generate_pcmd_id()
         now_iso = datetime.now().isoformat()
         project_ref = format_ref("project", project_id)
@@ -539,6 +670,23 @@ class ProjectService:
                 elif key == "detection_threshold":
                     updates.append("detection_threshold = ?")
                     params.append(max(0.0, min(1.0, float(value))))
+                # ── Room columns (HS-158-02) ─────────────────────────
+                elif key in ("purpose", "outcome_text", "owner_ref",
+                             "lifecycle", "posture", "posture_reason",
+                             "start_at", "target_at", "next_review_at",
+                             "template_key"):
+                    updates.append(f"{key} = ?")
+                    params.append(value)
+                elif key == "review_cadence_json":
+                    updates.append("review_cadence_json = ?")
+                    params.append(
+                        json.dumps(value, ensure_ascii=False) if value is not None else None
+                    )
+                elif key == "modules_json":
+                    updates.append("modules_json = ?")
+                    params.append(
+                        json.dumps(value, ensure_ascii=False) if value is not None else None
+                    )
 
             updates.append("revision = ?")
             params.append(new_revision)
