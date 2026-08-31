@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 159
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-159-04
 - **Unblocks:** HS-159-07
 - **Owner:** unassigned
@@ -42,6 +42,26 @@ sentence must run on glass, end to end, deterministically — the
 
 - **E2E:** the three legs above; run via the playwright-env scratch script.
 
+## What shipped
+
+- `tests/e2e/test_hs159_interview_glass.py` — 5 legs, deterministic
+  across two consecutive runs (~23s): the WALK at 1440 and 393
+  (seeded meeting/decision/overdue-door → 3 fact-traceable
+  suggestion cards → select → test ('Test passed — 1 current
+  matches') → RELOAD → exact-stage resume (session id + both
+  collapsed answers + card count) → activation review → finalize →
+  the Room opens NON-EMPTY with the change log visible), the BLANK
+  leg (active Project, no Watch, honest empty Room), the ABANDON leg
+  (zero Projects). Zero-false-events: exactly ONE project.created in
+  the service events after finalize. Overflow asserted everywhere;
+  7 shots into assets/story-06-shots/ (they feed 05's sheet).
+- Opens via the production staged-surface-open path
+  (project-setup → surface-project-setup → SetupRoot).
+- Evidence capture re-ran the whole suite AFTER a fresh bundle build
+  (the stale-bundle law).
+
 ## Notes / open questions
 
 - Seed through the REAL API wherever reachable; DB-layer seeding only where no route exists yet — and note each such gap for the next phase (the 158 precedent that found the PATCH hole).
+- **SEEDING GAPS (no create routes exist — recorded for the arc):** meetings (`db.meetings.save_meeting`), decisions (direct INSERT; source_state CHECK linked|source_deleted), Door action items (direct INSERT). P2's evidence collectors will feel these same walls.
+- The finalized Room's FOCUS is honestly empty (watch bindings create sources, not items) — correct behavior, noted so nobody 'fixes' it.
