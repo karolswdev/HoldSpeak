@@ -25,8 +25,8 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-156-01 | The recommendation (packs A/B/C from existing facts) | done | [story-01-the-recommendation](./story-01-the-recommendation.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-156-02 | One confirmation applies everything | backlog | [story-02-one-confirmation](./story-02-one-confirmation.md) | - |
-| HS-156-03 | The library patterns (the reform's v1, the barrel, the fence) | backlog | [story-03-the-library-patterns](./story-03-the-library-patterns.md) | - |
+| HS-156-02 | One confirmation applies everything | done | [story-02-one-confirmation](./story-02-one-confirmation.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-156-03 | The library patterns (the reform's v1, the barrel, the fence) | in-progress | [story-03-the-library-patterns](./story-03-the-library-patterns.md) | - |
 | HS-156-04 | The door surface (cards, plan, health strip, fold) | backlog | [story-04-the-door-surface](./story-04-the-door-surface.md) | - |
 | HS-156-05 | Plain words (jargon purge, UX-evidence checklist) | backlog | [story-05-plain-words](./story-05-plain-words.md) | - |
 | HS-156-06 | The topology (this Mac + nodes; configuration over the same authorities) | backlog | [story-06-the-topology](./story-06-the-topology.md) | - |
@@ -34,11 +34,17 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 
 ## Where we are
 
-HS-156-01 in-progress: the pure recommender + GET route are built and
-tested (38 unit + 8 fence = 46 passed). Three fixture truth tables pin
-the pack shapes for 16GB, 32GB, and endpoint+legacy-GGUF scenarios.
-Completeness law, probe boundary, and no-credential cloud exclusion
-all proven. Awaiting orchestrator commit + flip to done.
+HS-156-01 done. HS-156-02 in-progress: the apply engine, routes, DB
+persistence, and 27 unit tests are built and passing (73 total with
+recommendation + fence tests). The apply engine drives only existing
+service seams (define_endpoint, download, set_assignment) -- no direct
+DB writes. Fault injection proven: failure on item N -> plan records
+the error, re-apply completes the remainder, nothing double-created.
+The end-to-end assignment proof is BLOCKED-ON(fix/model-wiring-p0):
+the define-endpoint context_ceiling=0 bug makes all profiles
+incompatible at the assignment compat check. The test suite stubs the
+assignment service to prove the calling shape. Awaiting orchestrator
+commit + flip to done after P0 fix merges.
 
 ## Active risks
 

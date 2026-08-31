@@ -3540,4 +3540,14 @@ CREATE TABLE IF NOT EXISTS thread_tool_policy (
 );
 CREATE INDEX IF NOT EXISTS idx_thread_tool_policy_thread_tool
 ON thread_tool_policy(thread_id, tool_name, set_at DESC);
+
+-- HS-156-02: Front Door apply plans — durable, resumable pack application.
+CREATE TABLE IF NOT EXISTS front_door_apply_plans (
+    id TEXT PRIMARY KEY,
+    pack_id TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('running','done','failed')),
+    items_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 """
