@@ -65,10 +65,15 @@ class TestCreateProjectRoute:
         assert body["success"] is True
         assert "project" in body
         proj = body["project"]
+        # HS-157-03 legacy keys
         expected_keys = {"id", "name", "description", "keywords", "team_members",
                          "context", "detection_threshold", "is_archived",
                          "meeting_count", "created_at", "updated_at"}
-        assert set(proj.keys()) == expected_keys
+        # HS-158-02 additive envelope keys
+        assert expected_keys <= set(proj.keys())
+        assert "result_kind" in proj
+        assert "project_revision" in proj
+        assert "changed_refs" in proj
         assert proj["name"] == "Alpha"
 
     def test_empty_name_400(self, rig) -> None:
@@ -140,7 +145,8 @@ class TestGetProjectRoute:
         expected_keys = {"id", "name", "description", "keywords", "team_members",
                          "context", "detection_threshold", "is_archived",
                          "meeting_count", "created_at", "updated_at"}
-        assert set(body.keys()) == expected_keys
+        # get is a READ -- no additive envelope keys required
+        assert expected_keys <= set(body.keys())
 
     def test_not_found_404(self, rig) -> None:
         _db, client = rig
@@ -165,6 +171,9 @@ class TestUpdateProjectRoute:
         body = resp.json()
         assert body["success"] is True
         assert body["project"]["name"] == "Renamed"
+        # HS-158-02 additive: envelope keys present
+        assert "result_kind" in body["project"]
+        assert "project_revision" in body["project"]
 
     def test_not_found_404(self, rig) -> None:
         _db, client = rig
@@ -287,10 +296,13 @@ class TestAddResourceRoute:
         body = resp.json()
         assert "resource" in body
         resource = body["resource"]
+        # HS-157-03 legacy keys
         expected_keys = {"id", "project_id", "resource_ref", "relationship",
                          "source", "confidence", "created_at", "last_modified",
                          "deleted"}
-        assert set(resource.keys()) == expected_keys
+        # HS-158-02 additive envelope keys
+        assert expected_keys <= set(resource.keys())
+        assert "result_kind" in resource
 
     def test_bad_ref_400(self, rig) -> None:
         _db, client = rig

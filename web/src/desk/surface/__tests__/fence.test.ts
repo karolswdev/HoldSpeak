@@ -45,7 +45,7 @@ describe("fence-baseline.json", () => {
 
 describe("fence pattern matching", () => {
   const PRIVATE_IMPORT_RE =
-    /from\s*["'][^"']*\/surface\/(Surface|gadgets|roving|Material|SurfaceFooter|wings|citations|format|foot|sparse|LedgerFilter|patterns|controls)["']/;
+    /from\s*["'][^"']*\/surface\/(Surface|gadgets|roving|Material|SurfaceFooter|wings|citations|format|foot|title|sparse|LedgerFilter|patterns|controls)["']/;
 
   it("catches a direct surface/Surface import", () => {
     expect(

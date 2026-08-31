@@ -45,6 +45,7 @@ CITIZEN_TYPES: FrozenSet[str] = frozenset({
     "repo",          # Repo / delivery system  (planned -- no emission evidence)
     "watch",         # Watch
     "kernel",        # Kernel / Desk object    (planned -- no emission evidence)
+    "project",       # Project aggregate  (SRS SS3.1 -- the Room itself; HS-158-02)
 })
 
 # Aliases: parse() resolves these to the canonical form; format()

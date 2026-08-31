@@ -55,6 +55,28 @@ function WindowHarness() {
 }
 
 function response(url: string) {
+  // HS-158-05: the controller now calls /room first; supply a well-formed
+  // room response so legacy tests keep passing.
+  if (url.includes("/room"))
+    return {
+      project_id: "p1", revision: 1, observed_at: "2026-08-31T10:00:00",
+      project: {
+        id: "p1", name: "Long memory", description: null,
+        is_archived: false, meeting_count: 1,
+        created_at: "2026-08-01T00:00:00", updated_at: "2026-08-31T10:00:00",
+        purpose: null, outcome_text: null, owner_ref: null,
+        lifecycle: null, posture: null, posture_reason: null,
+        start_at: null, target_at: null, revision: 1,
+      },
+      items: { state: "ok", focus: [], totals_by_type: {}, total: 0 },
+      meetings: { state: "ok", count: 1, latest: { id: "m1", title: "Review" } },
+      resources: { state: "ok", count: 0, latest: null },
+      changes: { state: "ok", recent: [] },
+      review: { state: "absent", reason: "not_yet_built" },
+      sources: { state: "absent", reason: "not_yet_built" },
+      updates: { state: "absent", reason: "not_yet_built" },
+      steward: { state: "absent", reason: "not_yet_built" },
+    };
   if (url === "/api/projects/p1") return { id: "p1", name: "Long memory" };
   if (url.includes("/meetings"))
     return {

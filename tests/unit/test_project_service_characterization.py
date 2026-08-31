@@ -54,10 +54,15 @@ class TestCreateProject:
                                  keywords=["k1", "k2"], team_members=["Alice"],
                                  detection_threshold=0.5)
         assert isinstance(result, dict)
+        # HS-157-03 legacy keys (unchanged)
         expected_keys = {"id", "name", "description", "keywords", "team_members",
                          "context", "detection_threshold", "is_archived",
                          "meeting_count", "created_at", "updated_at"}
-        assert set(result.keys()) == expected_keys
+        # HS-158-02 additive envelope keys
+        additive_keys = {"result_kind", "project_revision", "changed_refs",
+                         "project_id"}
+        assert expected_keys <= set(result.keys())
+        assert additive_keys <= set(result.keys())
         assert result["name"] == "Alpha"
         assert result["description"] == "desc"
         assert result["keywords"] == ["k1", "k2"]
@@ -153,7 +158,8 @@ class TestGetProject:
         expected_keys = {"id", "name", "description", "keywords", "team_members",
                          "context", "detection_threshold", "is_archived",
                          "meeting_count", "created_at", "updated_at"}
-        assert set(result.keys()) == expected_keys
+        # get_project is a READ -- no additive envelope keys
+        assert expected_keys <= set(result.keys())
 
     def test_not_found(self, rig) -> None:
         _db, svc = rig
@@ -214,7 +220,10 @@ class TestUpdateProject:
         expected_keys = {"id", "name", "description", "keywords", "team_members",
                          "context", "detection_threshold", "is_archived",
                          "meeting_count", "created_at", "updated_at"}
-        assert set(result.keys()) == expected_keys
+        # HS-158-02 additive: result_kind, project_revision, changed_refs, project_id
+        assert expected_keys <= set(result.keys())
+        assert "result_kind" in result
+        assert "project_revision" in result
 
 
 # ── archive_project ──────────────────────────────────────────────────────
@@ -356,10 +365,13 @@ class TestAddResource:
         _db, svc = rig
         proj = _create_project(svc)
         result = svc.add_resource(OWNER, proj["id"], "note:n1")
+        # HS-157-03 legacy keys
         expected_keys = {"id", "project_id", "resource_ref", "relationship",
                          "source", "confidence", "created_at", "last_modified",
                          "deleted"}
-        assert set(result.keys()) == expected_keys
+        # HS-158-02 additive envelope keys
+        assert expected_keys <= set(result.keys())
+        assert "result_kind" in result
         assert result["source"] == "manual"
         assert result["confidence"] == 1.0
         assert result["deleted"] is False

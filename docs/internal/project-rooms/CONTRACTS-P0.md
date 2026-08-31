@@ -29,6 +29,7 @@ resolved to the canonical form; `format()` refuses them.
 | `watch`        | Watch                   | --         | Active  | `holdspeak/services/reaction_service.py:293,295,482,483` |
 | `repo`         | Repo / delivery system  | --         | Planned | No emission evidence in codebase |
 | `kernel`       | Kernel / Desk object    | --         | Planned | No emission evidence in codebase |
+| `project`      | Project aggregate (the Room itself, SRS §3.1) | -- | Active | `holdspeak/services/project_service.py` (changed_refs on every write — HS-158-02) |
 
 ### Canonical-vs-alias ruling (REF-003): `people:` is canonical; `person:` is the alias
 
@@ -161,3 +162,85 @@ always produce the same ID.
 
 Validators: `validate_<prefix>_id(id_str) -> bool` for each prefix, plus
 `validate_id(id_str, prefix) -> bool` for the generic case.
+
+---
+
+## Room projection sections -- HS-158-04
+
+Module: `holdspeak/services/project_service.py`
+Route: `GET /api/projects/{project_id}/room`
+Tests: `tests/unit/test_project_room_read.py`
+
+### Section state vocabulary (SS6.2, NFR-006, Art VI)
+
+Every section in the room projection carries a `state` field whose value
+is drawn from this closed vocabulary:
+
+| State | Meaning | Traceability |
+|-------|---------|--------------|
+| `ok` | Section read succeeded; data is present and current. | SS6.2 (per-section status) |
+| `degraded` | Section read failed; sibling sections remain unaffected. Carries `error_code`. | NFR-003 (fault isolation), SS6.2 |
+| `absent` | Domain not yet implemented. Carries `reason` explaining why. | Art VI (honest absence), NFR-006 (honest empty/stale/partial/failed/stopped) |
+
+### Absent section shape
+
+Sections whose backing domain does not yet exist use this exact shape:
+
+```json
+{"state": "absent", "reason": "not_yet_built"}
+```
+
+P1-absent sections: `review`, `sources`, `updates`, `steward`.
+
+### Degraded section shape
+
+When a sub-read raises an exception, the section degrades:
+
+```json
+{"state": "degraded", "error_code": "<section>_read_failed"}
+```
+
+The response remains HTTP 200; 404 only when the project itself is missing.
+
+### Populated section shape
+
+Each populated section carries `"state": "ok"` alongside its data fields.
+
+### Focus ordering rule (DB-005)
+
+The items focus block uses this deterministic ordering:
+
+1. `severity DESC NULLS LAST` (items with severity before nulls; alphabetical descending within)
+2. `due_at ASC NULLS LAST` (soonest due first; items without due last)
+3. `sort_key ASC NULLS LAST`
+4. `created_at ASC`
+5. `id ASC` (unique tiebreaker -- fully deterministic)
+
+### Caps (NFR-001, DB-005)
+
+| Constant | Value | Controls |
+|----------|-------|----------|
+| `ROOM_FOCUS_CAP` | 5 | Maximum items in the focus block (WEB-NOW-006 spirit) |
+| `ROOM_CHANGES_CAP` | 10 | Maximum recent changes |
+
+True totals (by item_type and overall) accompany the capped focus list.
+
+### observed_at determinism
+
+`observed_at` is derived from `project.updated_at` (the DB-persisted
+value), not from wall-clock time. Two consecutive reads with no writes
+in between produce **byte-identical** payloads. This is the preferred
+approach per the story spec.
+
+### Requirement traceability
+
+| Requirement | How satisfied |
+|-------------|---------------|
+| SS6.2 | One `GET .../room` returns header, focus, meetings, resources, changes, per-section status |
+| NFR-001 | Focus and changes are bounded by named constants |
+| NFR-002 | Items are deterministically ordered; changes are ordered by revision DESC |
+| NFR-003 | Each sub-read is wrapped; failure degrades only its section |
+| NFR-006 | Absent domains carry explicit `"state": "absent"` markers |
+| Art VI | No empty-faked review/steward/update/sources payloads |
+| API-006 | Legacy detail routes remain untouched |
+| DB-005 | Reads are bounded, indexed, and deterministically ordered |
