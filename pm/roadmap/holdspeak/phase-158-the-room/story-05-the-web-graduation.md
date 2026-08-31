@@ -81,7 +81,26 @@ real data, honest absent-states for the domains P2+ will fill.
   label untouched; fence pattern extended, baseline unchanged.
 - AFTER shots verified by the orchestrator's eyes at 1440+393:
   head named, all seven defects dead, 393 clean. Before/after in
-  assets/story-05-shots/ (+ before/). AWAITING THE OWNER'S VERDICT.
+  assets/story-05-shots/ (+ before/).
+- **ROUND 1 VERDICT: BOUNCED** (owner, 2026-08-31, no notes).
+  Orchestrator's interpretation for round 2: (1) no desktop
+  composition — at 1440 the face is a sparse single column
+  (WEB-RSP-001 wants river+focus at width); (2) due-date chips read
+  as INPUT boxes; (3) band label asymmetry (OUTCOME eyebrowed,
+  purpose not); (4) token-row hierarchy flat (identity vs meta);
+  (5) focus rows lack row material; counts appended to labels.
+- **ROUND 2 SHIPPED:** SurfaceColumns 3:2 at the 560px container
+  breakpoint (canon PeopleCore pattern); right rail renders
+  meetings/resources/changes from the projection; date chips became
+  quiet glyph tokens; PURPOSE joined OUTCOME; facts row split
+  identity-left/meta-right; count-chips. Then the glass caught two
+  self-consistent fixture lies vitest had blessed: the change-row
+  decode used imagined field names (summary/kind/occurred_at vs the
+  wire's change_kind/summary_json/created_at → 'Change' × 8), and
+  the action humanizer missed the backend's dotted values
+  ('Item.created'). Both fixed with REAL wire fixtures
+  (d7c6d0dd, d297c39e, b024813d). LAW RELEARNED: fixtures must
+  speak the backend's dialect — and only the glass proves they do.
 
 ## Notes / open questions
 

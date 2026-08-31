@@ -1,6 +1,6 @@
 # Phase 158 - Project Rooms: The Room (P1)
 
-**Last updated:** 2026-08-31 — 4/6 DONE; 05 fully built (extraction, adoption, rig, beauty ×7 defects, TitleSlotContext for WEB-IA-001, room-fields PATCH gap closed under 02) — AFTER shots verified at 1440+393; before/after sheet in assets/story-05-shots/; AWAITING THE OWNER'S VERDICT (it closes 05 and holds the merge word).
+**Last updated:** 2026-08-31 — 4/6 DONE; 05 fully built (extraction, adoption, rig, beauty ×7 defects, TitleSlotContext for WEB-IA-001, room-fields PATCH gap closed under 02) — Round 1 BOUNCED; ROUND 2 SHIPPED (f68ddbb7 + three orchestrator repairs b024813d): SurfaceColumns desktop split with a right rail (meetings/resources/changes finally rendered), de-input'd date tokens, PURPOSE/OUTCOME symmetry, identity/meta split, count-chips — and the glass caught TWO self-consistent fixture lies (wrong change-row field names, then the dotted action value) that vitest alone blessed. Round-2 sheet in assets/story-05-shots/; AWAITING THE OWNER'S ROUND-2 VERDICT.
 
 ## Goal
 
