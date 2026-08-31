@@ -285,11 +285,17 @@ function SinceLastMeeting({ receipt }: { receipt: SinceLastMeetingResponse }) {
 
 /* ── Orientation band (WEB-NOW-001 P1 subset, WEB-LC-001/002) ── */
 
+/** Humanize a machine token for the glass: underscores to spaces,
+ *  sentence case. The DOM keeps the machine value in a data- attribute. */
+function humanizeToken(raw: string): string {
+  return raw.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+}
+
 /** Lifecycle chip for the orientation band — maps lifecycle to a token
  *  with the appropriate tone. */
 function OrientationLifecycleChip({ lifecycle }: { lifecycle: string | null }) {
   if (!lifecycle) return null;
-  const label = lifecycle[0].toUpperCase() + lifecycle.slice(1);
+  const label = humanizeToken(lifecycle);
   const tone =
     lifecycle === "active" || lifecycle === "in_progress"
       ? "ok"
@@ -297,7 +303,7 @@ function OrientationLifecycleChip({ lifecycle }: { lifecycle: string | null }) {
         ? "danger"
         : undefined;
   return (
-    <span className="surface-token" data-tone={tone} data-testid="orientation-lifecycle">
+    <span className="surface-token" data-tone={tone} data-testid="orientation-lifecycle" data-lifecycle={lifecycle}>
       {label}
     </span>
   );
@@ -306,9 +312,9 @@ function OrientationLifecycleChip({ lifecycle }: { lifecycle: string | null }) {
 /** Posture fact — separate from lifecycle per WEB-LC-001/002. */
 function OrientationPosture({ posture, reason }: { posture: string | null; reason: string | null }) {
   if (!posture) return null;
-  const label = posture[0].toUpperCase() + posture.slice(1);
+  const label = humanizeToken(posture);
   return (
-    <span className="surface-token" data-testid="orientation-posture" title={reason || undefined}>
+    <span className="surface-token" data-testid="orientation-posture" data-posture={posture} title={reason || undefined}>
       {label}
     </span>
   );
@@ -329,9 +335,10 @@ function OrientationBand({ room }: { room: RoomSnapshot }) {
         </p>
       ) : null}
       {project.outcomeText ? (
-        <p className="project-room-outcome" data-testid="orientation-outcome">
-          {project.outcomeText}
-        </p>
+        <div className="project-room-outcome" data-testid="orientation-outcome">
+          <span className="surface-token project-room-outcome-eyebrow" data-testid="outcome-eyebrow">OUTCOME</span>
+          <p>{project.outcomeText}</p>
+        </div>
       ) : null}
       <div className="project-room-facts" data-testid="orientation-facts">
         <OrientationLifecycleChip lifecycle={project.lifecycle} />
@@ -358,9 +365,11 @@ function FocusBlock({ room }: { room: RoomSnapshot }) {
   if (items.state === "absent") return null;
   if (items.state === "degraded") {
     return (
-      <SurfaceSection label="Focus">
-        <SurfaceState error={`Items unavailable: ${items.error_code}`} />
-      </SurfaceSection>
+      <div data-testid="focus-degraded" data-error-code={items.error_code} title={items.error_code}>
+        <SurfaceSection label="Focus">
+          <SurfaceState error="Items unavailable right now." />
+        </SurfaceSection>
+      </div>
     );
   }
   // ok state
@@ -384,8 +393,16 @@ function FocusBlock({ room }: { room: RoomSnapshot }) {
     if (!grouped[kind]) grouped[kind] = [];
     grouped[kind].push(item);
   }
+  /** Proper per-kind plural labels — no naive suffix. */
+  const PLURAL_LABELS: Record<string, string> = {
+    workstream: "Workstreams",
+    milestone: "Milestones",
+    risk: "Risks",
+    dependency: "Dependencies",
+    signal: "Signals",
+  };
   const typeLabel = (type: string) =>
-    type[0].toUpperCase() + type.slice(1) + "s";
+    PLURAL_LABELS[type] || type[0].toUpperCase() + type.slice(1) + "s";
   return (
     <div data-testid="focus-block">
     <SurfaceSection label="Focus">
@@ -395,20 +412,37 @@ function FocusBlock({ room }: { room: RoomSnapshot }) {
             {typeLabel(kind)} {items.totalsByType[kind] ?? kindItems.length}
           </span>
           <SurfaceRows>
-            {kindItems.map((item) => (
-              <SurfaceRow
-                key={item.id}
-                title={item.title}
-                detail={
-                  [
-                    item.severity ? item.severity.toUpperCase() : "",
-                    item.dueAt ? `Due ${item.dueAt}` : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" · ") || undefined
-                }
-              />
-            ))}
+            {kindItems.map((item) => {
+              const severityTone =
+                item.severity === "critical" ? "danger"
+                : item.severity === "high" ? "warn"
+                : undefined;
+              return (
+                <SurfaceRow
+                  key={item.id}
+                  title={item.title}
+                  meta={
+                    <>
+                      {item.severity ? (
+                        <span
+                          className="surface-token"
+                          data-tone={severityTone}
+                          data-testid="focus-severity"
+                          data-severity={item.severity}
+                        >
+                          {humanizeToken(item.severity)}
+                        </span>
+                      ) : null}
+                      {item.dueAt ? (
+                        <span className="desk-chip quiet" data-testid="focus-due">
+                          {item.dueAt}
+                        </span>
+                      ) : null}
+                    </>
+                  }
+                />
+              );
+            })}
           </SurfaceRows>
         </div>
       ))}
@@ -664,7 +698,10 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
       {hero ? (
         hero(verbs)
       ) : (
-        <SurfaceVerbs status={ctrl.projectName} />
+        /* When the room is loaded, the orientation band carries the
+           identity and lifecycle — no need to repeat the name here
+           (defect 4: de-duplication). */
+        <SurfaceVerbs />
       )}
       {/* Orientation band renders before slow sections (WEB-STA-001) */}
       {ctrl.room ? (

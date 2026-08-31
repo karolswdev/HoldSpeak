@@ -281,6 +281,138 @@ describe("ProjectRoomCore — degraded section isolation (WEB-STA-002)", () => {
   });
 });
 
+describe("ProjectRoomCore — beauty pass (HS-158-05)", () => {
+  it("dependency items render under 'Dependencies' (proper plural, not 'Dependencys')", async () => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room")) {
+        return Promise.resolve(roomResponse({
+          items: {
+            state: "ok",
+            focus: [
+              { id: "dep-1", project_id: "p1", item_type: "dependency", title: "External API", severity: null, due_at: null, sort_key: 1, created_at: "2026-08-15T00:00:00" },
+            ],
+            totals_by_type: { dependency: 1 },
+            total: 1,
+          },
+        }));
+      }
+      return Promise.resolve(detailResponse(url));
+    });
+
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("focus-block");
+    expect(screen.getByText(/Dependencies 1/)).toBeTruthy();
+  });
+
+  it("posture humanizes underscored tokens ('On track' visible, data-posture='on_track')", async () => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room")) {
+        return Promise.resolve(roomResponse({
+          project: { posture: "on_track", posture_reason: "All milestones green" },
+        }));
+      }
+      return Promise.resolve(detailResponse(url));
+    });
+
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("orientation-band");
+
+    const posture = screen.getByTestId("orientation-posture");
+    expect(posture.textContent).toBe("On track");
+    expect(posture.getAttribute("data-posture")).toBe("on_track");
+  });
+
+  it("severity renders as a toned chip (high=warn, critical=danger, medium/low=quiet)", async () => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room")) {
+        return Promise.resolve(roomResponse({
+          items: {
+            state: "ok",
+            focus: [
+              { id: "item-c", project_id: "p1", item_type: "risk", title: "Critical risk", severity: "critical", due_at: null, sort_key: 1, created_at: "2026-08-15T00:00:00" },
+              { id: "item-h", project_id: "p1", item_type: "risk", title: "High risk", severity: "high", due_at: "2026-09-15", sort_key: 2, created_at: "2026-08-15T00:00:00" },
+              { id: "item-m", project_id: "p1", item_type: "risk", title: "Medium risk", severity: "medium", due_at: null, sort_key: 3, created_at: "2026-08-15T00:00:00" },
+            ],
+            totals_by_type: { risk: 3 },
+            total: 3,
+          },
+        }));
+      }
+      return Promise.resolve(detailResponse(url));
+    });
+
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("focus-block");
+
+    const chips = screen.getAllByTestId("focus-severity");
+    const critical = chips.find(el => el.getAttribute("data-severity") === "critical");
+    const high = chips.find(el => el.getAttribute("data-severity") === "high");
+    const medium = chips.find(el => el.getAttribute("data-severity") === "medium");
+
+    expect(critical).toBeTruthy();
+    expect(critical!.getAttribute("data-tone")).toBe("danger");
+    expect(critical!.textContent).toBe("Critical");
+
+    expect(high).toBeTruthy();
+    expect(high!.getAttribute("data-tone")).toBe("warn");
+    expect(high!.textContent).toBe("High");
+
+    expect(medium).toBeTruthy();
+    // medium/low are quiet (no tone)
+    expect(medium!.getAttribute("data-tone")).toBeNull();
+    expect(medium!.textContent).toBe("Medium");
+  });
+
+  it("due date renders as its own quiet chip, not concatenated text", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("focus-block");
+
+    const dueChips = screen.getAllByTestId("focus-due");
+    expect(dueChips.length).toBeGreaterThan(0);
+    expect(dueChips[0].textContent).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("outcome has its own OUTCOME eyebrow (SYS-002, WEB-NOW-001)", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("orientation-band");
+
+    const eyebrow = screen.getByTestId("outcome-eyebrow");
+    expect(eyebrow.textContent).toBe("OUTCOME");
+    // Outcome text is visually separate from purpose
+    const outcome = screen.getByTestId("orientation-outcome");
+    expect(outcome.textContent).toContain("Widget shipped");
+  });
+
+  it("degraded items show plain words, machine code in title attribute", async () => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room")) {
+        return Promise.resolve(roomResponse({
+          items: { state: "degraded", error_code: "items_read_failed" },
+        }));
+      }
+      return Promise.resolve(detailResponse(url));
+    });
+
+    render(<WindowHarness scope="project:p1" />);
+    const wrapper = await screen.findByTestId("focus-degraded");
+    // Plain words on the glass
+    expect(screen.getByText("Items unavailable right now.")).toBeTruthy();
+    // Machine code NOT visible as text
+    expect(screen.queryByText("items_read_failed")).toBeNull();
+    // Machine code accessible via title/data attribute
+    expect(wrapper.getAttribute("data-error-code")).toBe("items_read_failed");
+    expect(wrapper.getAttribute("title")).toBe("items_read_failed");
+  });
+
+  it("lifecycle chip carries data-lifecycle attribute", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("orientation-band");
+
+    const lifecycle = screen.getByTestId("orientation-lifecycle");
+    expect(lifecycle.getAttribute("data-lifecycle")).toBe("active");
+  });
+});
+
 describe("ProjectRoomCore — no-scope states", () => {
   it("shows empty state when no project scope is provided", () => {
     render(<ProjectRoomCore />);
