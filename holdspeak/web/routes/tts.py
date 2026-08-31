@@ -13,6 +13,7 @@ from __future__ import annotations
 import io
 import struct
 import time
+import urllib.request
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -25,6 +26,16 @@ from ..context import WebContext
 from ..runtime_support import error_500
 
 log = get_logger("web.routes.tts")
+
+# ---- model file constants ----
+# v1.0 fp16 model + v1.0 voices (includes af_heart and 50+ voices).
+# fp16 is ~156 MB (vs 310 MB full precision) with negligible quality loss.
+_MODEL_FILENAME = "kokoro-v1.0.fp16.onnx"
+_VOICES_FILENAME = "voices-v1.0.bin"
+_GITHUB_RELEASE_TAG = "model-files-v1.1"
+_GITHUB_RELEASE_BASE = (
+    "https://github.com/thewh1teagle/kokoro-onnx/releases/download"
+)
 
 # ---- lazy kokoro-onnx singleton ----
 
@@ -68,8 +79,8 @@ def _model_ready() -> bool:
     """Check whether the model weights have been downloaded."""
     weights_dir = _model_weights_dir()
     # kokoro-onnx needs two files: the ONNX model and the voices binary
-    model_file = weights_dir / "kokoro-v0_19.onnx"
-    voices_file = weights_dir / "voices.bin"
+    model_file = weights_dir / _MODEL_FILENAME
+    voices_file = weights_dir / _VOICES_FILENAME
     return model_file.exists() and voices_file.exists()
 
 
@@ -90,8 +101,8 @@ def _get_kokoro() -> Any:
 
         weights_dir = _model_weights_dir()
         _kokoro_instance = kokoro_onnx.Kokoro(
-            str(weights_dir / "kokoro-v0_19.onnx"),
-            str(weights_dir / "voices.bin"),
+            str(weights_dir / _MODEL_FILENAME),
+            str(weights_dir / _VOICES_FILENAME),
         )
         return _kokoro_instance
     except Exception:
@@ -123,10 +134,15 @@ def _wav_header(sample_rate: int, num_samples: int, channels: int = 1, bits: int
     return header
 
 
+class _VoiceNotFoundError(Exception):
+    """Raised when a requested voice name is not in the loaded voices file."""
+
+
 def _synthesize_wav(text: str, voice: str = "af_heart", speed: float = 1.0) -> Iterator[bytes]:
     """Generate WAV bytes from text using the kokoro engine.
 
     Yields the WAV header first, then PCM data chunks.
+    Raises _VoiceNotFoundError when the voice name is invalid.
     """
     engine = _get_kokoro()
     if engine is None:
@@ -146,6 +162,9 @@ def _synthesize_wav(text: str, voice: str = "af_heart", speed: float = 1.0) -> I
         chunk_size = 4096
         for i in range(0, num_samples, chunk_size):
             yield samples[i : i + chunk_size].tobytes()
+    except ValueError as exc:
+        # kokoro-onnx raises ValueError when the voice name is not found
+        raise _VoiceNotFoundError(str(exc)) from exc
     except Exception:
         log.warning("TTS synthesis failed", exc_info=True)
         return
@@ -205,10 +224,27 @@ def build_tts_router(ctx: WebContext) -> APIRouter:
         voice = body.get("voice", "af_heart") if isinstance(body, dict) else "af_heart"
         speed = body.get("speed", 1.0) if isinstance(body, dict) else 1.0
 
-        return StreamingResponse(
-            _synthesize_wav(text, voice=voice, speed=speed),
-            media_type="audio/wav",
-        )
+        try:
+            # Eagerly pull the first chunk so voice-name errors surface before
+            # StreamingResponse starts (otherwise the 200 is already sent).
+            gen = _synthesize_wav(text, voice=voice, speed=speed)
+            first_chunk = next(gen, None)
+            if first_chunk is None:
+                return JSONResponse(
+                    {"code": "tts_synthesis_failed", "message": "TTS engine returned no audio."},
+                    status_code=500,
+                )
+
+            def _chain() -> Iterator[bytes]:
+                yield first_chunk
+                yield from gen
+
+            return StreamingResponse(_chain(), media_type="audio/wav")
+        except _VoiceNotFoundError as exc:
+            return JSONResponse(
+                {"code": "tts_invalid_voice", "message": str(exc)},
+                status_code=400,
+            )
 
     @router.post("/api/tts/download")
     async def tts_download(request: Request) -> Any:
@@ -224,33 +260,27 @@ def build_tts_router(ctx: WebContext) -> APIRouter:
             weights_dir = _model_weights_dir()
             weights_dir.mkdir(parents=True, exist_ok=True)
 
-            # kokoro-onnx's own download mechanism
-            import kokoro_onnx
-
             started = time.monotonic()
-            model_path = weights_dir / "kokoro-v0_19.onnx"
-            voices_path = weights_dir / "voices.bin"
+            model_path = weights_dir / _MODEL_FILENAME
+            voices_path = weights_dir / _VOICES_FILENAME
 
-            # Use kokoro-onnx's download helper if available, else
-            # the library downloads on first Kokoro() instantiation.
-            if hasattr(kokoro_onnx, "download"):
-                kokoro_onnx.download(str(weights_dir))
-            else:
-                # Instantiate to trigger download — the constructor
-                # downloads if files are absent.
+            # Download from the kokoro-onnx GitHub releases.
+            total_bytes = 0
+            for filename in (_MODEL_FILENAME, _VOICES_FILENAME):
+                dest = weights_dir / filename
+                if dest.exists():
+                    total_bytes += dest.stat().st_size
+                    continue
+                url = f"{_GITHUB_RELEASE_BASE}/{_GITHUB_RELEASE_TAG}/{filename}"
+                log.info("Downloading TTS weight %s from %s", filename, url)
+                tmp = dest.with_suffix(".part")
                 try:
-                    kokoro_onnx.Kokoro(str(model_path), str(voices_path))
-                except FileNotFoundError:
-                    # Model files not bundled and no download helper.
-                    # The owner must manually place the weights.
-                    return JSONResponse(
-                        {
-                            "code": "tts_download_manual",
-                            "message": "Place kokoro-v0_19.onnx and voices.bin in the TTS weights directory.",
-                            "weights_dir": str(weights_dir),
-                        },
-                        status_code=422,
-                    )
+                    urllib.request.urlretrieve(url, str(tmp))
+                    tmp.rename(dest)
+                    total_bytes += dest.stat().st_size
+                except Exception:
+                    tmp.unlink(missing_ok=True)
+                    raise
 
             elapsed = time.monotonic() - started
             ready = _model_ready()
@@ -263,11 +293,12 @@ def build_tts_router(ctx: WebContext) -> APIRouter:
                 "downloaded": ready,
                 "elapsed_s": round(elapsed, 2),
                 "weights_dir": str(weights_dir),
+                "total_bytes": total_bytes,
             }
             egress = {
-                "host": "huggingface.co",
-                "bytes_estimate": "~90 MB",
-                "purpose": "TTS model weights (kokoro-onnx)",
+                "host": "github.com",
+                "bytes_estimate": "~183 MB",
+                "purpose": "TTS model weights (kokoro-onnx v1.0 fp16 + voices)",
             }
             return JSONResponse(
                 {

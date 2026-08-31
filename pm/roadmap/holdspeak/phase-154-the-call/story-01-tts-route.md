@@ -80,3 +80,85 @@ HANDOVER supersedes RFC §6.8's server-side default).
 ### Evidence
 
 - `pm/roadmap/holdspeak/phase-154-the-call/evidence-story-01.md` — captured run: 15 passed (test_tts_route.py 10 + test_api_surface.py 5).
+
+## Kokoro live proof
+
+Proved the server-voice opt-in path LIVE with the real kokoro-onnx
+engine, real ONNX model weights, and a real hub.
+
+### Install
+
+- Method: `uv sync --python 3.13 --extra tts` (Python 3.14 lacks
+  onnxruntime wheels; pinned to 3.13 for the TTS extra).
+- kokoro-onnx 0.6.1, onnxruntime 1.23.2, phonemizer 3.4.0,
+  espeakng-loader 0.2.4, soundfile 0.13.1.
+- espeak-ng 1.52.0 (Homebrew, already installed).
+- Python 3.13.14.
+
+### Model weights
+
+- File: `kokoro-v1.0.fp16.onnx` (156 MB fp16) + `voices-v1.0.bin`
+  (27 MB, 52 voices including `af_heart`).
+- Source: `github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.1/`.
+
+### Live proof results
+
+Booted an isolated hub (isolated HOME, fresh DB), copied weights into
+the hub's `CONFIG_DIR/tts/`, exercised all three TTS endpoints over HTTP.
+
+| Check | Result |
+|---|---|
+| `GET /api/tts/status` | `{installed: true, model_ready: true}` |
+| `POST /api/tts` (text: "The desk can speak now.", voice: af_heart) | 200 streaming WAV |
+| WAV format | PCM, mono, 24000 Hz, 16-bit |
+| WAV duration | 1.51 s (36128 samples) |
+| WAV body size | 72300 bytes |
+| First-chunk latency | **1.757 s** (within 2 s R4 threshold) |
+| Invalid voice (POST with voice: "nonexistent") | 400 `tts_invalid_voice` |
+
+Proof artifacts: `assets/story-01-kokoro-live/proof.wav`,
+`assets/story-01-kokoro-live/metadata.json`.
+
+### Defects found and fixed
+
+Three defects the fake-module tests hid (the fake-adoption law at work):
+
+1. **Voice mismatch (DEFECT 1).** The route defaulted to voice
+   `af_heart`, but the v0.19 `voices.bin` (5.5 MB, 11 voices) does not
+   include it. The real kokoro-onnx raises `ValueError: Voice af_heart
+   not found in available voices`. Fix: updated to v1.0 model files
+   (`kokoro-v1.0.fp16.onnx` + `voices-v1.0.bin`) which carry 52 voices
+   including `af_heart`. The route now uses module-level constants
+   `_MODEL_FILENAME` and `_VOICES_FILENAME` for the file names.
+
+2. **Download endpoint broken (DEFECT 2).** The download endpoint
+   called `kokoro_onnx.download()` as the primary path, but
+   kokoro-onnx 0.6.1 has no `download` function. The fallback tried
+   `Kokoro()` instantiation to trigger a download, but the constructor
+   simply raises `FileNotFoundError` when files are missing -- it does
+   not download anything. The test faked this by attaching
+   `fake.download = fake_download` to the mock module. Fix: replaced
+   both paths with a real download implementation using
+   `urllib.request.urlretrieve` from the kokoro-onnx GitHub releases
+   (`model-files-v1.1` tag). Egress badge host updated from
+   `huggingface.co` to `github.com`.
+
+3. **Silent failure on bad voice (DEFECT 3).** `_synthesize_wav()`
+   caught all exceptions (including `ValueError` from an invalid voice
+   name) and silently returned an empty iterator. The route then sent a
+   200 response with an empty body -- no WAV header, no error code, no
+   indication of failure. Fix: `ValueError` is now re-raised as
+   `_VoiceNotFoundError`; the `tts_speak` handler eagerly pulls the
+   first WAV chunk before starting `StreamingResponse`, catches
+   `_VoiceNotFoundError`, and returns 400 with code `tts_invalid_voice`.
+
+### Test counts
+
+After fixes: **13 passed** in `test_tts_route.py` (was 10; +3 new tests
+for voice validation and model filename constants). The 5
+`test_api_surface.py` tests also pass. Total: **18 passed, 0 failed**.
+
+Tests also hardened: `_hide_kokoro()` helper properly blocks the real
+kokoro-onnx import (using PEP 451 `find_spec`) so the 404-law tests
+work regardless of whether the TTS extra is installed in the venv.
+`_inject_fake_kokoro()` now validates voice names like the real engine.

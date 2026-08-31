@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-30T18:35:18",
+  "python_version": "3.13.14 (main, Jul 18 2026, 16:56:45) [Clang 22.1.3 ]",
+  "kokoro_onnx_version": "0.6.1",
+  "onnxruntime_version": "1.23.2",
+  "model_file": "kokoro-v1.0.fp16.onnx",
+  "voices_file": "voices-v1.0.bin",
+  "status": {
+    "installed": true,
+    "model_ready": true
+  },
+  "wav": {
+    "bytes": 72300,
+    "sample_rate": 24000,
+    "channels": 1,
+    "bits_per_sample": 16,
+    "num_samples": 36128,
+    "duration_s": 1.505,
+    "total_time_s": 1.757
+  },
+  "latency_s": 1.757,
+  "failures": []
+}
