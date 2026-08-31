@@ -322,7 +322,7 @@ The Project window container—not browser viewport—is authoritative. The exis
 |---|---|---|---|
 | WEB-STA-001 | MUST | Identity/orientation MUST render before independent Delta/Timeline/source/Steward resources finish. | T,D |
 | WEB-STA-002 | MUST | One failed resource MUST NOT blank successful resources. | T,D |
-| WEB-STA-003 | MUST | Empty copy: `This Project has a purpose but no working material yet.` Primary: Add first material. | T,D |
+| WEB-STA-003 | MUST | Empty copy: `No material yet.` Primary: Add first material. | T,D |
 | WEB-STA-004 | MUST | No-Delta state MUST show last review and source coverage, with Add evidence, Ask, and Run Steward now. | T,D |
 | WEB-STA-005 | MUST | Stale/unavailable sources MUST show last successful observation and retry/reconnect; cached claims retain observation time. | T,D |
 | WEB-STA-006 | MUST | Evidence conflicts MUST show both claims/sources. | T,D |
@@ -330,6 +330,7 @@ The Project window container—not browser viewport—is authoritative. The exis
 | WEB-STA-008 | MUST | Missing Project MUST show Project unavailable and recovery navigation. | T,D |
 | WEB-STA-009 | MUST | Provider discovery/test failure MUST retain answer, interpreted Watch, discovered scopes, selections, and retry/continue-disabled paths. | T,D |
 | WEB-STA-010 | MUST | Connection loss MUST preserve the exact active Watch and cached observation, mark attention, and offer reconnect/retest without deletion. | T,D |
+| WEB-STA-011 | MUST | Error, degraded, and failure indicators MUST render in their own layout region and MUST NOT overlay or obscure functional UI elements. | T,D |
 
 ## 14. Accessibility and visual system
 
@@ -340,13 +341,16 @@ The Project window container—not browser viewport—is authoritative. The exis
 | WEB-A11Y-003 | MUST | Review queue MUST announce position/total/kind/disposition. | T,I |
 | WEB-A11Y-004 | MUST | Review and Steward verbs MUST name their target unambiguously. | T,I |
 | WEB-A11Y-005 | MUST | Focus order MUST follow visible semantics and restore to source initiator. | T,D |
-| WEB-A11Y-008 | MUST | Setup MUST announce step, question, provider state, discovery count, selection count, and test result; suggestions MUST be labeled controls and states MUST not rely on color. | T,I |
 | WEB-A11Y-006 | MUST | At 200% zoom, essential labels/verbs MUST reflow rather than clip. | T,I |
 | WEB-A11Y-007 | MUST | Reduced motion MUST remove spatial transitions without removing state/progress feedback. | T,I |
+| WEB-A11Y-008 | MUST | (a) Setup MUST announce step, question, provider state, discovery count, selection count, and test result. (b) Suggestions MUST be labeled controls. (c) States MUST not rely on color. | T,I |
+| WEB-A11Y-009 | MUST | Every text input in the Project Room MUST support voice entry through the existing OS mic affordance (Constitution Art IV.1). | T,D |
 | WEB-VIS-001 | MUST | Use Signal tokens, Surface primitives, and feature-owned CSS; no raw colors/z-index. | I |
 | WEB-VIS-002 | MUST | One window material; use type, hairlines, indentation, and depth—not nested dashboard cards. | I,D |
-| WEB-VIS-003 | MUST | Updates read as filed dossier pages; evidence chips retain existing physical-reference language. | D |
+| WEB-VIS-003 | MUST | Updates read as filed dossier pages; evidence chips retain existing physical-reference language (design intent; verified by demonstration). | D |
 | WEB-VIS-004 | MUST | Motion occurs only for refresh, disposition, Steward progress, and completed transitions; Room is quiet at rest. | I,D |
+| WEB-VIS-005 | MUST | Every Watch evaluation, Steward step, provider call, and model invocation that crosses egress MUST display the compact egress badge (local / local+cloud / cloud, with target name) at its point of decision and in its activity/receipt row (Constitution Art III.2). | T,D |
+| WEB-VIS-006 | SHOULD | Every accepted mutation, effect, and provider call SHOULD produce a visible receipt row in Stewardship activity or Timeline showing who, what, where, and outcome (Constitution Art V.2). | T,D |
 
 ## 15. Web read model and controller
 

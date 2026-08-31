@@ -41,6 +41,10 @@ Verification codes:
 - **U** — owner/design-partner usability or outcome validation.
 - **I** — inspection of schema, trace, receipt, accessibility tree, or generated contract.
 
+## Slice naming
+
+The suite uses two slice schemes: domain slices P0--P7 (`SRS_DOMAIN_DRIVER.md` section 14) and setup slices V0-A through V0-E (`SRS_PROJECT_INTERVIEW_WATCHES.md` section 15). V0-A, V0-B, and V0-C land within P1--P4 before Gate A.
+
 ## Baseline truth
 
 This is a graduation, not a greenfield replacement. At baseline `60a4ee99`, HoldSpeak already has:

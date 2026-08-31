@@ -29,7 +29,7 @@ The implementation MUST graduate these seams. It MUST NOT treat issue #514 as a 
 |---|---|
 | Domain façade | `ProjectService` remains the transport-neutral façade. Focused internal services may be composed behind it. |
 | Truth | Each first-class citizen retains its own authority. Project stores qualified references, observations, Project assessments, and review history. |
-| Steward runtime | `ProjectStewardService` owns durable run and step state. It borrows proven scheduling and inference helpers; Workbench is not the core engine. |
+| Steward runtime | `ProjectStewardService` [proposed] owns durable run and step state. It borrows proven scheduling and inference helpers; Workbench is not the core engine. |
 | Cadence | Projects attention such as review-due, source-degraded, and intervention-needed. It neither schedules nor executes Steward work. |
 | MCP | A driver over the same service contract used by Web. MCP is not a second authority or autonomous runtime. |
 | Watch | Existing `connector_watches` graduates to `WatchSpec@1`; no parallel Project Watch aggregate is introduced. |
@@ -87,6 +87,7 @@ Project does not own the canonical body or lifecycle of:
 | DOM-011 | MUST/V0 | Existing archived Projects and legacy relationships MUST remain readable and restorable after reconciliation. | T |
 | DOM-012 | MUST/V0 | Incoming legacy sync MUST NOT erase Project Room fields that the legacy payload cannot represent. | T |
 | DOM-013 | MUST/V0 | A Project Watch binding MUST NOT copy provider query, condition, cadence, baseline, evaluation, or effect truth from the canonical Watch. | T,I |
+| DOM-014 | MUST/V0 | Egress posture for every provider and model call MUST be recorded with the operation receipt. | T,I |
 
 ## 4. Identifiers and references
 
@@ -454,9 +455,9 @@ The MCP layer is a strong driver foundation, but it is not yet the self-driving 
 
 | Dimension | Current standing | Project Room implication |
 |---|---|---|
-| Breadth | Strong: 142 tools across 31 families, plus owner resources/templates. | Reuse family registration, discovery, and transport; do not build another tool server. |
+| Breadth | Strong: ~94 tools across ~20 families, plus owner resources/templates. | Reuse family registration, discovery, and transport; do not build another tool server. |
 | Authority parity | Strong: the stdio sidecar opens the same database and generally dispatches through application services. | `project.*`, setup, provider, and Watch tools can be thin drivers over the same contracts as Web. |
-| Watch primitives | Useful partial: MCP already lists/creates/enables/previews/refreshes Watches and manages Reactions/events. | Graduate these tools to `WatchSpec@1`; add durable test/baseline/evaluation/effect inspection rather than replacing them. |
+| Watch primitives | Useful partial: MCP already lists/creates/enables/previews/refreshes Watches and manages Reactions/events (currently in the reactions MCP family module). | Graduate these tools to `WatchSpec@1`; add durable test/baseline/evaluation/effect inspection rather than replacing them. |
 | Project semantics | Missing: no `project.*` family. | Add coherent Project/Delta/update/Steward/setup operations with stable results. |
 | Autonomous lifecycle | Missing for Project: current Watch→Workbench reactions do not provide the Project Steward's durable observe→act→verify run contract. | MCP starts/polls the application-owned run; it does not hold orchestration inside one tool call. |
 | Provider consumption | Missing: HoldSpeak is an MCP server, not a general external MCP client. | External GitHub/Jira MCP/app support requires a provider adapter/client seam; V0 may use existing local connector packs behind the same contract. |
@@ -522,7 +523,7 @@ V0 sync is `identity_only` for the Project Room additions:
 |---|---|---|---|
 | SYN-001 | MUST/V0 | Existing sync round trips MUST retain Project identity and relationships after schema extension. | T |
 | SYN-002 | MUST/V0 | A legacy incoming Project payload MUST not null or reset Project Room fields absent from the payload. | T |
-| SYN-003 | SHOULD/V1 | Rich Project Room sync MUST begin with an explicit conflict model and per-entity revision contract, not accidental JSON replication. | I |
+| SYN-003 | SHOULD/V1 | Rich Project Room sync SHOULD begin with an explicit conflict model and per-entity revision contract, not accidental JSON replication. | I |
 
 ## 13. Test and verification specification
 

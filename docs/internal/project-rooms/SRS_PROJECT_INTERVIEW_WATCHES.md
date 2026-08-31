@@ -38,8 +38,8 @@ A Blank Project is an escape hatch. It is not the flagship creation experience.
 
 This design MUST graduate the current automation substrate:
 
-- `connector_watches` already stores typed Watch identity, provider query, baseline, cadence state, freshness, and error;
-- `ReactionService` already previews, baselines, refreshes due Watches, emits semantic service events, isolates source failures, and deduplicates projections;
+- `connector_watches` already stores typed Watch identity, provider query, latest snapshot (baseline), error, and enabled state; the cadence interval is embedded in query_json (refresh_interval_minutes), and freshness is inferred from last_success_at;
+- `ReactionService` already previews, baselines, refreshes due Watches, emits semantic service events, isolates source failures, and routes events to matching Reactions;
 - `GitHubWatchSource` already performs a live `gh pr list` snapshot;
 - semantic diffs already cover GitHub PR review/check/head/state/merge changes and Jira assignment/status/priority/due/resolution changes;
 - `connector_reactions` already maps Watch events to Workbench items/runs;
@@ -167,7 +167,7 @@ Previous answers collapse into editable rows. The durable structured proposal is
 |---|---|---|---|
 | INT-001 | MUST/V0 | Primary Create Project MUST open a durable setup session, not an empty active Project or generic metadata form. | T,D |
 | INT-002 | MUST/V0 | Outcome and at least one watch intent MUST precede external provider recommendations; Blank remains explicitly available. | T,D |
-| INT-003 | MUST/V0 | No more than two universal questions may precede concrete recommendation cards. | T,U |
+| INT-003 | MUST/V0 | Setup MUST NOT present more than two universal questions before concrete recommendation cards appear. | T,U |
 | INT-004 | MUST/V0 | Answers MUST support text and voice, preserve the original, and expose the normalized outcome/intent for direct editing. | T,D |
 | INT-005 | MUST/V0 | A setup session MUST autosave, survive reload/window close, and resume at its prior stage. | T,D |
 | INT-006 | MUST/V0 | Abandoning setup MUST NOT leave a hollow active Project. | T |

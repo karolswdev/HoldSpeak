@@ -53,7 +53,7 @@ V0 assumptions:
 - **AD-PRJ-002:** `ProjectService` graduates into the transport-neutral Project Room application boundary.
 - **AD-PRJ-003:** `ProjectMemoryCore` graduates into the Project Room Web feature; it is not replaced by an unrelated page.
 - **AD-PRJ-004:** Meeting, Decision, People, Door, Thread, Note, Workbench, Agent/Recipe, Calendar, Automation, and delivery systems retain their own truth. Project stores relationships and Project-owned assessments, not copies.
-- **AD-PRJ-005:** `ProjectStewardService` owns the Steward's durable run/step lifecycle. It MAY bind an existing Agent/Recipe and MUST reuse suitable conductor heartbeat, inference-routing, and event-broadcasting patterns. Workbench and Cadence are evidence/attention collaborators, not the Steward engine or Project authority.
+- **AD-PRJ-005:** `ProjectStewardService` [proposed] owns the Steward's durable run/step lifecycle. It MAY bind an existing Agent/Recipe and MUST reuse suitable conductor heartbeat, inference-routing, and event-broadcasting patterns. Workbench and Cadence are evidence/attention collaborators, not the Steward engine or Project authority.
 - **AD-PRJ-006:** MCP is an adapter over `ProjectService`, not an orchestration runtime or privileged parallel implementation.
 - **AD-PRJ-007:** V0 fixes reliability defects that block the closed loop. It does not pause for remote-security or full-protocol programs.
 - **AD-PRJ-008:** Project-owned records use explicit typed schemas and lifecycle. The existing untyped `context_json` MUST NOT become the dumping ground for the operating model.
@@ -140,7 +140,7 @@ Current remote MCP transport/protocol surface, scoped identity, multi-user colla
 |---|---|---|---|
 | SYS-030 | MUST/V0 | Project MUST support typed milestones, risks, dependencies, signals, and updates with stable IDs, lifecycle, ordering, revision, and provenance. | T,I |
 | SYS-031 | MUST/V0 | The owner and Steward MUST be able to create or update these records through the same application service used by Web and MCP. | T |
-| SYS-032 | MUST/V0 | Model-generated records MUST begin as proposals unless a YOLO action explicitly invokes an effect tool whose product contract directly applies the change. | T,I |
+| SYS-032 | MUST/V0 | Model-generated records MUST begin as proposals unless a YOLO action explicitly invokes an effect tool whose product contract directly applies the change, with the action recorded as a committed proposal in the same transaction. | T,I |
 | SYS-033 | MUST/V0 | Accepted Decisions and existing commitments MUST be linked, not re-authored as Project-owned substitutes. | T,I |
 | SYS-034 | SHOULD/V1 | Workstreams and module-specific record schemas SHOULD be added without changing Project identity or relationship semantics. | T,I |
 
@@ -148,7 +148,7 @@ Current remote MCP transport/protocol surface, scoped identity, multi-user colla
 
 | ID | Pri | Requirement | Verify |
 |---|---|---|---|
-| SYS-040 | MUST/V0 | The owner MUST be able to configure one Project Steward, optionally bind an existing Agent/Recipe for inference/capabilities, and give it a focused tool palette. Manual `run_once` MUST ship before scheduling; an unattended trigger MUST be enabled for the Gate A dogfood. | T,D |
+| SYS-040 | MUST/V0 | (a) The owner MUST be able to configure one Project Steward. (b) The owner MAY optionally bind an existing Agent/Recipe for inference/capabilities. (c) The Steward MUST receive a focused tool palette. (d) Manual `run_once` MUST ship before scheduling; an unattended trigger MUST be enabled for the Gate A dogfood. | T,D |
 | SYS-041 | MUST/V0 | In YOLO mode, eligible configured Steward tools MUST run without per-action confirmation prompts. | T,D |
 | SYS-042 | MUST/V0 | One Steward run MUST observe, compute Delta, perform at least one useful configured action, verify the result when a read path exists, record activity, and draft an update. | T,D,U |
 | SYS-043 | MUST/V0 | Pause and Stop MUST be available from the Project Room and MUST not depend on the Steward's model response. | T,D |
@@ -180,7 +180,7 @@ Current remote MCP transport/protocol surface, scoped identity, multi-user colla
 
 | ID | Pri | Requirement | Verify |
 |---|---|---|---|
-| NFR-001 | MUST/V0 | A local Project Room with 500 linked records SHOULD show its cached shell within 500 ms and useful content within 2 s on the supported development machine. | T,D |
+| NFR-001 | MUST/V0 | A local Project Room with 500 linked records MUST show its cached shell within 500 ms and useful content within 2 s on the supported development machine. | T,D |
 | NFR-002 | MUST/V0 | Lists and timeline reads MUST be bounded and deterministically ordered. | T |
 | NFR-003 | MUST/V0 | An unrelated subsystem initialization failure MUST NOT prevent Project identity, Project reads, or an unrelated Project tool from operating. | T |
 | NFR-004 | MUST/V0 | All accepted state changes MUST be transactionally durable and idempotent where the caller supplies an idempotency key. | T |
@@ -188,6 +188,7 @@ Current remote MCP transport/protocol surface, scoped identity, multi-user colla
 | NFR-006 | MUST/V0 | The system MUST expose honest empty, stale, partial, failed, and stopped states. | T,D |
 | NFR-007 | MUST/V0 | New schema MUST follow the repository's additive reconciliation/backup policy and preserve current Project identities and relationships. | T,I |
 | NFR-008 | SHOULD/V1 | Core Project contracts SHOULD be generated or shared across Python/TypeScript/MCP to prevent drift. | T,I |
+| NFR-009 | MUST/V0 | Every consequential operation the Project Room performs — Watch evaluation effects, Steward step effects, provider reads that cross egress, and model invocations — MUST be admitted through the kernel before it acts and MUST end in a terminal receipt (Constitution Art XI). | T,I |
 
 ## 9. Explicit V0 non-goals
 
