@@ -74,7 +74,21 @@ always meant to be.
   edge is either fixed by D1–D3 or fixed here, each with a test or an
   explicit recorded-not-fixed entry.
 
-## D6 — the topology (story 05) — OWNER, mid-charter, verbatim: "we have
+## D5.5 — the library reform (story 03) — COUNCIL-RULED
+
+The component-library reform (assets/design-council.md — codex
+gpt-5.6-sol + Opus, converged) is a PREREQUISITE story: surface/
+promoted in place with a public barrel + contract.md, the v1 delight
+patterns (StateChip, ActionNotice, Disclosure, ProgressPlan,
+ChoiceCardGroup, Popover, ProvenanceChip/Receipt), and the ratchet
+fence in guard-architecture.mjs (legacy baselined, never grows). The
+door and the topology BUILD FROM these patterns. Visual gates are
+first-class at three boundaries (new/changed library component, story
+acceptance, phase close) via named shot sheets, judged by eyes. The
+north star: Amiga's streamlined honesty + modern delight — an
+HONESTLY GREAT feeling, never nostalgia cosplay.
+
+## D6 — the topology (story 06) — OWNER, mid-charter, verbatim: "we have
 home-lab (.43), we have this Mac with MLX. I feel like I need a visual
 topography editor almost for some advanced scenarios. Where 'this
 PC/(Mac)' is displayed, and then we can 'add nodes'. … All workbench
@@ -102,7 +116,7 @@ PC/(Mac)' is displayed, and then we can 'add nodes'. … All workbench
   kingdom, no second design system. Beautiful at 1440, honest at 393
   (the map pans; the page never scrolls sideways).
 
-## D7 — the walk (story 06)
+## D7 — the walk (story 07)
 
 - THE STOPWATCH BAR (unchanged by D6 — the map is layer B): from a fresh desk (and from the owner's
   real-shape desk: legacy config + LAN server present), a cold owner

@@ -1,10 +1,10 @@
-# HS-156-04 - Plain words: the jargon purge and the UX-evidence checklist
+# HS-156-05 - Plain words: the jargon purge and the UX-evidence checklist
 
 - **Project:** holdspeak
 - **Phase:** 156
 - **Status:** backlog
-- **Depends on:** HS-156-03
-- **Unblocks:** HS-156-05
+- **Depends on:** HS-156-04
+- **Unblocks:** HS-156-07
 - **Owner:** unassigned
 
 ## Problem
@@ -39,5 +39,7 @@ POSITIONING voice rules).
 - **Manual / device:** story 05.
 
 ## Notes / open questions
+
+- Council checklist item: retire the `desk-tokens.css` import shim after an import census (one token source).
 
 - No prose novels: plain ≠ wordy; one line beats a paragraph everywhere.

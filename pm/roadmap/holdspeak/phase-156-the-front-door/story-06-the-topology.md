@@ -1,10 +1,10 @@
-# HS-156-05 - The topology: this Mac, your nodes, and the map that runs the desk
+# HS-156-06 - The topology: this Mac, your nodes, and the map that runs the desk
 
 - **Project:** holdspeak
 - **Phase:** 156
 - **Status:** backlog
-- **Depends on:** HS-156-03
-- **Unblocks:** HS-156-06
+- **Depends on:** HS-156-03, HS-156-04
+- **Unblocks:** HS-156-07
 - **Owner:** unassigned
 
 ## Problem
@@ -19,7 +19,7 @@ to the max" (settled design D6).
 
 ## Scope
 
-- **In:** the topology map as the advanced layer's opening view
+- **In:** `TopologySurface` lands FIRST as a library component under `surface/graph/` (the council contract: DOM nodes / SVG edges, bounded pan, keyboard pan-select-repoint, inspector + add-node slots, presentation only) with its own contract tests and gallery shot sheet; THEN the topology map as the advanced layer's opening view
   (the table view stays one toggle away): **this Mac** as the home
   node showing its runtimes (MLX, local llama.cpp) and downloaded
   models; one node per connected endpoint (the `.43` server with its
@@ -46,7 +46,7 @@ to the max" (settled design D6).
 
 - **Unit:** vitest `topologyMap.test.tsx`; a wire-shape test if a thin `GET /api/front-door/topology` aggregator is added (aggregation only — no new facts).
 - **Integration:** glass legs `topology`, `topology-add-node` in the 156 glass file.
-- **Manual / device:** story 06 (the owner's real mesh is the walk).
+- **Manual / device:** story 07 (the owner's real mesh is the walk).
 
 ## Notes / open questions
 

@@ -1,9 +1,9 @@
-# HS-156-06 - The stopwatch walk and the close
+# HS-156-07 - The stopwatch walk and the close
 
 - **Project:** holdspeak
 - **Phase:** 156
 - **Status:** backlog
-- **Depends on:** HS-156-01, HS-156-02, HS-156-03, HS-156-04, HS-156-05
+- **Depends on:** HS-156-01, HS-156-02, HS-156-03, HS-156-04, HS-156-05, HS-156-06
 - **Unblocks:** HS-155-01
 - **Owner:** unassigned
 

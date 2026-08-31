@@ -12,31 +12,33 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 
 ## Scope
 
-- **In:** the six stories below; PR from `feat/the-front-door`.
+- **In:** the seven stories below (the council-ruled library reform is story 03, a prerequisite of the door and the topology); PR from `feat/the-front-door`.
 - **Out:** new model catalog entries, network-wide LAN scanning,
   removing anything from the advanced layer, Phase 155.
 
 ## Exit criteria (evidence required)
 
-- [ ] All six stories done with evidence; the stopwatch bar met and measured (<60 s cold-owner to working chat + dictation, downloads excluded and reported); glass 1440+393; metal on `.43`; counsel zero open must-fix; sweep name-diff clean + the web contract green.
+- [ ] All seven stories done with evidence; the stopwatch bar met and measured (<60 s cold-owner to working chat + dictation, downloads excluded and reported); glass 1440+393; metal on `.43`; counsel zero open must-fix; sweep name-diff clean + the web contract green.
 
 ## Story status
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-156-01 | The recommendation (packs A/B/C from existing facts) | backlog | [story-01-the-recommendation](./story-01-the-recommendation.md) | - |
+| HS-156-01 | The recommendation (packs A/B/C from existing facts) | in-progress | [story-01-the-recommendation](./story-01-the-recommendation.md) | [evidence](./evidence-story-01.md) |
 | HS-156-02 | One confirmation applies everything | backlog | [story-02-one-confirmation](./story-02-one-confirmation.md) | - |
-| HS-156-03 | The door surface (cards, plan, health strip, fold) | backlog | [story-03-the-door-surface](./story-03-the-door-surface.md) | - |
-| HS-156-04 | Plain words (jargon purge, UX-evidence checklist) | backlog | [story-04-plain-words](./story-04-plain-words.md) | - |
-| HS-156-05 | The topology (this Mac + nodes; the map over the same authorities) | backlog | [story-05-the-topology](./story-05-the-topology.md) | - |
-| HS-156-06 | The stopwatch walk and the close | backlog | [story-06-the-stopwatch-walk](./story-06-the-stopwatch-walk.md) | - |
+| HS-156-03 | The library patterns (the reform's v1, the barrel, the fence) | backlog | [story-03-the-library-patterns](./story-03-the-library-patterns.md) | - |
+| HS-156-04 | The door surface (cards, plan, health strip, fold) | backlog | [story-04-the-door-surface](./story-04-the-door-surface.md) | - |
+| HS-156-05 | Plain words (jargon purge, UX-evidence checklist) | backlog | [story-05-plain-words](./story-05-plain-words.md) | - |
+| HS-156-06 | The topology (this Mac + nodes; configuration over the same authorities) | backlog | [story-06-the-topology](./story-06-the-topology.md) | - |
+| HS-156-07 | The stopwatch walk and the close | backlog | [story-07-the-stopwatch-walk](./story-07-the-stopwatch-walk.md) | - |
 
 ## Where we are
 
-Chartered 2026-08-31 from the owner's ruling, minutes after the data
-point that demanded it (the co-creator lost in Settings → Models on
-his real desk). The concierge UX-evidence log lands in assets/ as the
-defect ledger when the live-desk configuration completes.
+HS-156-01 in-progress: the pure recommender + GET route are built and
+tested (38 unit + 8 fence = 46 passed). Three fixture truth tables pin
+the pack shapes for 16GB, 32GB, and endpoint+legacy-GGUF scenarios.
+Completeness law, probe boundary, and no-credential cloud exclusion
+all proven. Awaiting orchestrator commit + flip to done.
 
 ## Active risks
 
@@ -47,6 +49,8 @@ defect ledger when the live-desk configuration completes.
 | The stopwatch bar slips into vibes | low | the rig measures wall clock; the bar is an exit criterion | a close without the number |
 
 ## Decisions made (this phase)
+
+- 2026-08-31 - DESIGN COUNCIL ruling ratified into the charter (assets/design-council.md; voices: codex gpt-5.6-sol + Opus): surface/ promoted with a public barrel + contract.md, seven v1 delight patterns, the ratchet fence, visual gates first-class at three boundaries, the reform as story 03 before the door/topology - council-led per the owner's ruling - orchestrator synthesis, owner ratifies.
 
 - 2026-08-31 - Two layers: packs A/B/C on top, the existing Library/Assignments as the advanced layer - owner ruling, verbatim in the settled design - never a parallel authority.
 - 2026-08-31 - No network-wide LAN scanning; explicit endpoints only - custody posture - orchestrator.

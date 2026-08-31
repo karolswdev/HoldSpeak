@@ -1,10 +1,10 @@
-# HS-156-03 - The door surface: pack cards, the health strip, the advanced fold
+# HS-156-04 - The door surface: pack cards, the health strip, the advanced fold
 
 - **Project:** holdspeak
 - **Phase:** 156
 - **Status:** backlog
-- **Depends on:** HS-156-01, HS-156-02
-- **Unblocks:** HS-156-04, HS-156-05
+- **Depends on:** HS-156-01, HS-156-02, HS-156-03
+- **Unblocks:** HS-156-05, HS-156-06, HS-156-07
 - **Owner:** unassigned
 
 ## Problem
@@ -16,7 +16,7 @@ with the whole advanced layer folded underneath once configured
 
 ## Scope
 
-- **In:** the door view inside the existing Models settings surface:
+- **In (council law):** built FROM the 03 library patterns — the cards are `ChoiceCardGroup`, the plan is `ProgressPlan`, the strip is an `ActionNotice`, the fold is `Disclosure`; zero new one-off furniture (the fence enforces it). The door view inside the existing Models settings surface:
   when any group is unassigned → pack cards (name, one line per job,
   total download size, Balanced marked recommended) + "Set up my own"
   (jumps to the advanced layer); confirm → the live plan view (per-item
@@ -38,7 +38,7 @@ with the whole advanced layer folded underneath once configured
 
 - **Unit:** vitest `frontDoor.test.tsx`.
 - **Integration:** glass legs `door-cards`, `door-apply`, `door-strip` in `tests/e2e/test_hs156_front_door_glass.py`.
-- **Manual / device:** story 05.
+- **Manual / device:** story 07.
 
 ## Notes / open questions
 
