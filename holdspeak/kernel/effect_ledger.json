@@ -5,19 +5,35 @@
   "snapshot": "phase-108-close",
   "scope": "Unmigrated effect-capable statements under holdspeak/ in the five ratified census families. Migrated, read, exempt-computation, and confined statements remain machine-pinned by tests/unit/test_kernel_effect_fence.py.",
   "counting_rule": "Count statements, not logical user actions. A statement leaves this transitional register only with a machine-asserted enforcement or exemption proof.",
-  "legal_effect": "The register is empty: no declared path acts outside the kernel. Any new unclassified effect statement fails the fence and must be migrated or explicitly adjudicated before merge.",
+  "legal_effect": "One egress site: the front-door probe checks reachability of a local LLM endpoint before recommending a pack.",
   "status_definitions": {
     "bypass": "A reachable route avoids all named audited chokepoints.",
     "mixed": "Covered and bypass routes share this statement; treated as debt.",
     "dormant": "No current production caller, but the ambient capability can execute without a named chokepoint; treated as debt."
   },
   "expected": {
-    "total": 0,
-    "covered": 0,
+    "total": 1,
+    "covered": 1,
     "reads": 0,
     "exempt_computation": 0,
     "not_covered": 0,
-    "families": {}
+    "families": {
+      "egress": 1
+    }
   },
-  "sites": []
+  "sites": [
+    {
+      "id": "E01",
+      "family": "egress",
+      "status": "covered",
+      "path": "holdspeak/services/front_door_service.py",
+      "census_line": 99,
+      "selector": {
+        "scope": "_default_probe",
+        "target": "urlopen",
+        "ordinal": 1
+      },
+      "reason": "Probes a known local LLM endpoint /v1/models for reachability before recommending a setup pack; bounded timeout, read-only GET, no credentials."
+    }
+  ]
 }

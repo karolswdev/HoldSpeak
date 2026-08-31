@@ -127,15 +127,24 @@ def test_runs_on_room_stays_folded_into_the_models_module() -> None:
     adapter = (WEB_SRC / "pages" / "cores" / "settingsModels.tsx").read_text(
         encoding="utf-8"
     )
+    door = (WEB_SRC / "pages" / "cores" / "frontDoor.tsx").read_text(
+        encoding="utf-8"
+    )
     core = (WEB_SRC / "pages" / "cores" / "ModelLibraryCore.tsx").read_text(
         encoding="utf-8"
     )
     client = (WEB_SRC / "pages" / "cores" / "modelLibrary.ts").read_text(
         encoding="utf-8"
     )
-    assert "ModelLibraryCore" in adapter and "/api/inference-targets" not in adapter, (
-        "HS-143-12 regression: the Models slot adapter must host only the "
-        "availability library, never revive target CRUD."
+    # HS-156-04: the adapter hosts the front door, which hosts the library
+    # in its Advanced fold. The composition chain: settingsModels -> FrontDoorView -> ModelLibraryCore.
+    assert "FrontDoorView" in adapter and "/api/inference-targets" not in adapter, (
+        "HS-156-04 regression: the Models slot adapter must host the front "
+        "door, never revive target CRUD."
+    )
+    assert "ModelLibraryCore" in door and "/api/inference-targets" not in door, (
+        "HS-156-04 regression: the front door must host the Model Library "
+        "in its Advanced fold, never revive target CRUD."
     )
     assert 'FoldGadget title="Runs on"' in core and "SurfaceFacts" in core, (
         "HS-112-01 regression: Runs on technical facts must remain folded in "

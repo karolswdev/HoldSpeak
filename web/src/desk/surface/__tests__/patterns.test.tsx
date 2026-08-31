@@ -424,16 +424,16 @@ describe("Popover", () => {
     expect(screen.getByText("Popover content")).toBeInTheDocument();
   });
 
-  it("has role=dialog with aria-label", () => {
+  it("carries its aria-label without dialog semantics (no-modals law)", () => {
     render(<TestPopover />);
     openPopover();
-    expect(screen.getByRole("dialog", { name: "Test popover" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Test popover")).toBeInTheDocument();
   });
 
   it("closes on Escape", () => {
     render(<TestPopover />);
     openPopover();
-    const dialog = screen.getByRole("dialog");
+    const dialog = document.querySelector(".surface-popover") as HTMLElement;
     fireEvent.keyDown(dialog, { key: "Escape" });
     expect(screen.queryByText("Popover content")).toBeNull();
   });
@@ -499,7 +499,7 @@ describe("Popover", () => {
     fireEvent.click(innerBtn);
     expect(screen.getByText("Clicked!")).toBeInTheDocument();
     // The popover must still be open (backdrop did not intercept).
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(document.querySelector(".surface-popover") as HTMLElement).toBeInTheDocument();
   });
 
   it("backdrop click still closes the popover", () => {
@@ -508,7 +508,7 @@ describe("Popover", () => {
     const backdrop = document.querySelector(".surface-popover-backdrop");
     expect(backdrop).toBeTruthy();
     fireEvent.click(backdrop!);
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.querySelector(".surface-popover")).toBeNull();
   });
 
   it("popover and backdrop have co-located z-index classes for CSS", () => {

@@ -126,7 +126,16 @@ tool count arithmetic (`len(TOOLS)` is truth). Shot exhibit for 151:
 https://claude.ai/code/artifact/5f8ffe8d-63cb-45fa-8c67-6e6d4a655705 —
 make one per phase before asking the merge word.
 
-Go (2026-08-30 night, post-#511-merge): the port lives on MAIN
+Go (2026-08-31): **PHASE 156 THE FRONT DOOR COMPLETE 7/7 on PR #517**
+(feat/the-front-door) — packs A/B/C, one-confirmation apply, the
+library reform + ratchet fence, plain words, the topology map,
+the stopwatch (0.36 s machinery vs the <60 s bar), counsel RATIFY;
+HOLDING for the owner's attended walk. LAWS from this phase: visual
+shot-sheet gates at three boundaries are standing process (two stories
+bounced and rebuilt); never a positional INSERT; wrappers must cd to
+the CURRENT tree; `npm --prefix web run check` in every close. NEXT:
+155 The Crew (chartered, in main), then the backend model-era collapse
+(BACKLOG.md). Earlier — Go (2026-08-30 night, post-#511-merge): the port lives on MAIN
 (fb2d1082) with the platform reset. **Phase 154 The Call COMPLETE 5/5
 on PR #513** (feat/desk-chat-the-call) — voice/ear/call-mode/glyph/walk;
 counsel RATIFY-W-C, M1+S1–S4 fixed in-round; metal DRY 5/5 + LIVE 5/5;

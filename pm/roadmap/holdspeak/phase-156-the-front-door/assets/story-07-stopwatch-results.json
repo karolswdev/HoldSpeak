@@ -1,0 +1,31 @@
+{
+  "bar_seconds": 60.0,
+  "shapes": [
+    {
+      "shape": "fresh",
+      "segments": {
+        "recommendation": 0.007142124930396676,
+        "apply": 0.02435004198923707,
+        "first_chat_answer": 0.32549387495964766,
+        "dictation": 0.002491625025868416,
+        "total": 0.3638573340140283
+      },
+      "failures": [],
+      "bar_seconds": 60.0
+    },
+    {
+      "shape": "owner-shaped",
+      "segments": {
+        "recommendation": 0.007018708856776357,
+        "apply": 0.02487612492404878,
+        "first_chat_answer": 0.3243245000485331,
+        "dictation": 0.002849958138540387,
+        "total": 0.36233874992467463
+      },
+      "failures": [],
+      "bar_seconds": 60.0
+    }
+  ],
+  "total_failures": 0,
+  "failure_details": []
+}

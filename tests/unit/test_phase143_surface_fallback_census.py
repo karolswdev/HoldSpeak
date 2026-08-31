@@ -81,6 +81,9 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/sequence_workflow_service.py", "_route_target"): ("frozen route egress projection", "143-10"),
     ("holdspeak/services/support.py", "_norm_run_target"): ("workflow placement normalization", "143-10"),
     ("holdspeak/services/workbench_runner.py", "_route_target"): ("frozen route egress projection", "143-10"),
+    ("holdspeak/services/front_door_service.py", "_collect_profile_from_done_item"): ("front-door plan profile identity extraction from receipt; not assignment authority", "156-04"),
+    ("holdspeak/services/front_door_service.py", "_resolve_group_assignments"): ("front-door plan assignment composition from completed provisioning items", "156-04"),
+    ("holdspeak/services/front_door_service.py", "_select_preset_for_tier"): ("front-door catalog preset selection for pack recommendation; not assignment authority", "156-04"),
     ("holdspeak/speaker_intel.py", "_get_fallback_speaker"): ("speaker identity fallback, not inference", "143-01"),
     ("holdspeak/target_profile.py", "_build_model_target_prompt"): ("model-assisted target prompt", "143-07"),
     ("holdspeak/target_profile.py", "_profile"): ("legacy target-profile lookup", "143-07"),
@@ -105,6 +108,7 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/pages/cores/assignmentExperience.ts": ("inference-route", "143-13"),
     "web/src/pages/cores/core-types.ts": ("display-transport", "143-11"),
     "web/src/pages/cores/ModelLibraryCore.tsx": ("display-transport", "143-12"),
+    "web/src/pages/cores/TopologyMapView.tsx": ("display-transport", "156-04"),
     "web/src/pages/cores/modelLibrary.ts": ("display-transport", "143-12"),
 }
 

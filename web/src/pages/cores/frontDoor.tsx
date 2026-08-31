@@ -467,7 +467,7 @@ export function FrontDoorView({
             onClick: () => void load(),
           }}
         >
-          Everything wired{packLabel ? ` · ${packLabel}` : ""} · change
+          Everything wired{packLabel ? ` · ${packLabel}` : ""}
         </ActionNotice>
       )}
       <Disclosure

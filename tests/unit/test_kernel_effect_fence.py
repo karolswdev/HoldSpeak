@@ -981,11 +981,11 @@ def test_effect_ledger_asserts_the_composed_family_counts() -> None:
     expected = ledger["expected"]
 
     families = Counter(entry["family"] for entry in entries)
-    assert entries == []
-    assert dict(families) == expected["families"] == {}
-    assert expected["total"] == 0
+    assert len(entries) == 1
+    assert dict(families) == expected["families"] == {"egress": 1}
+    assert expected["total"] == 1
     assert expected["not_covered"] == 0
-    assert "register is empty" in ledger["legal_effect"]
+    assert "front-door probe" in ledger["legal_effect"]
 
 
 def test_phase108_migrated_effect_sites_are_exact_and_still_present() -> None:

@@ -418,7 +418,7 @@ class TestApplyEndpointPack:
         for draft in lib.endpoints:
             assert "192.168.1.43" in draft["endpoint"]
             assert draft["provider_family"] == "openai_compatible"
-            assert "Front Door" in draft["label"]
+            assert "Home lab (.43)" == draft["label"]
 
 
 class TestApplyCatalogPack:
@@ -689,7 +689,7 @@ class TestLANEndpointProvenance:
         # Every define_endpoint call should carry a label with the URL
         for draft in lib.endpoints:
             assert "label" in draft
-            assert "Front Door" in draft["label"]
+            assert "Home lab (.43)" == draft["label"]
             assert draft["provider_family"] == "openai_compatible"
             # The endpoint URL should have /v1 appended
             assert draft["endpoint"].endswith("/v1")
@@ -857,3 +857,58 @@ class TestPlanPersistence:
         result = db.front_door.get_plan_by_pack("light")
         assert result is not None
         assert result["pack_id"] == "light"
+
+
+class TestCounselS1LegacyOnlyPack:
+    """Counsel S1 (156 close): an all-legacy pack must fail the assignments
+    step with a plain actionable error, never reach DONE with zero
+    assignments (the silent cards-loop)."""
+
+    def test_all_legacy_pack_fails_plainly(self) -> None:
+        pack = {"id": "legacy-only", "plan": [
+            {"kind": "legacy_gguf", "group_id": "thoughts_notes", "path": "/tmp/x.gguf"},
+            {"kind": "legacy_gguf", "group_id": "meetings", "path": "/tmp/x.gguf"},
+        ]}
+        db = FakeDB()
+        result = apply_pack(
+            pack=pack, db=db,
+            model_library_service=FakeModelLibraryService(),
+            assignment_service=FakeAssignmentService(),
+            principal=OWNER, catalog_revision=4,
+        )
+        assert result["status"] == "failed"
+        failed = [i for i in result["items"] if i["status"] == "failed"]
+        assert failed and "Advanced" in (failed[0].get("error") or "")
+
+    def test_mixed_pack_reports_unwired_legacy(self) -> None:
+        pack = {"id": "mixed", "plan": [
+            {"kind": "endpoint", "group_id": "thoughts_notes",
+             "base_url": "http://192.168.1.43:8080/v1", "label": "LAN Qwen"},
+            {"kind": "legacy_gguf", "group_id": "meetings", "path": "/tmp/x.gguf"},
+        ]}
+        db = FakeDB()
+        result = apply_pack(
+            pack=pack, db=db,
+            model_library_service=FakeModelLibraryService(),
+            assignment_service=FakeAssignmentService(),
+            principal=OWNER, catalog_revision=4,
+        )
+        assignment = [i for i in result["items"] if i["entry"].get("kind") == "assignments"]
+        assert assignment and assignment[0]["receipt"].get("unwired_legacy_groups") == ["meetings"]
+
+
+class TestEndpointProfileHumanLabel:
+    """The Library profile created by an endpoint apply carries the
+    endpoint's human name, never a generated id (plain-words law)."""
+
+    def test_define_draft_uses_the_endpoint_name(self) -> None:
+        pack = _endpoint_pack()
+        db = FakeDB()
+        lib = FakeModelLibraryService()
+        apply_pack(
+            pack=pack, db=db, model_library_service=lib,
+            assignment_service=FakeAssignmentService(),
+            principal=OWNER, catalog_revision=4,
+        )
+        labels = [ (d[0] if isinstance(d, tuple) else d).get("label", "") if isinstance((d[0] if isinstance(d, tuple) else d), dict) else "" for d in lib.endpoints]
+        assert labels and all(l == "Home lab (.43)" for l in labels)

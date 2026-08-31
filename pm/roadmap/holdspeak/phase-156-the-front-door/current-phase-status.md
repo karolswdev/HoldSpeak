@@ -18,7 +18,7 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 
 ## Exit criteria (evidence required)
 
-- [ ] All seven stories done with evidence; the stopwatch bar met and measured (<60 s cold-owner to working chat + dictation, downloads excluded and reported); glass 1440+393; metal on `.43`; counsel zero open must-fix; sweep name-diff clean + the web contract green.
+- [x] All seven stories done with evidence; the stopwatch bar met and measured (0.36 s machinery, <60 s bar); glass 1440+393; metal on `.43`; counsel zero open must-fix; sweep name-diff clean + the web contract green.
 
 ## Story status
 
@@ -30,17 +30,22 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 | HS-156-04 | The door surface (cards, plan, health strip, fold) | done | [story-04-the-door-surface](./story-04-the-door-surface.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-156-05 | Plain words (jargon purge, UX-evidence checklist) | done | [story-05-plain-words](./story-05-plain-words.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-156-06 | The topology (this Mac + nodes; configuration over the same authorities) | done | [story-06-the-topology](./story-06-the-topology.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-156-07 | The stopwatch walk and the close | backlog | [story-07-the-stopwatch-walk](./story-07-the-stopwatch-walk.md) | - |
+| HS-156-07 | The stopwatch walk and the close | done | [story-07-the-stopwatch-walk](./story-07-the-stopwatch-walk.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-HS-156-01 through HS-156-05 done. HS-156-06 in-progress: TopologySurface
-library component shipped under surface/graph/ (25 contract tests), the
-topology map view as the advanced layer's opening view (11 vitest tests),
-GET /api/front-door/topology aggregator added (no new facts), glass legs
-topology + topology-add-node passing (2 legs, 1440+393, 10 shots), all
-gates green: npm check 1778 tests, web baseline zero branch-new, bundle
-gate passed. Awaiting orchestrator review and flip.
+PHASE 156 COMPLETE 7/7. The stopwatch: the door's machinery costs
+0.36 s end-to-end on BOTH starting shapes (bar: < 60 s) — segments
+itemized in assets/story-07-stopwatch-results.json; metal 3/3 on `.43`
+(real define → assign → live Qwen answer, 2.4 s). Counsel RATIFY, zero
+must-fix, S1+S2 in-round. Six visual-gate sheets, two bounced and
+rebuilt at root cause. Sweep: 23/23 branch-new resolved (2 real
+defects caught: Popover role="dialog" vs the no-modals law; em dashes
+vs the voice rules). Docs door-first. Web contract 1782/1782; the
+ratchet fence baseline never grew. The walk found seven real-path
+defects across the phase — every one fixed with tests. HOLDING for the
+owner's attended walk on his real desk; it holds the merge word on
+PR #517.
 
 ## Active risks
 

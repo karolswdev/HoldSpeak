@@ -1,0 +1,201 @@
+{
+  "plan_id": "fdap_dee25c750231440c8063d8ed4aaeaf6d",
+  "status": "done",
+  "items": [
+    {
+      "ordinal": 0,
+      "entry": {
+        "group_id": "thoughts_notes",
+        "kind": "endpoint",
+        "preset_id": null,
+        "endpoint_id": "hs156-lan-43",
+        "endpoint_base_url": "http://192.168.1.43:8080",
+        "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+        "legacy_model_path": null,
+        "runtime_id": null,
+        "download_bytes": 0
+      },
+      "status": "done",
+      "receipt": {
+        "kind": "define_endpoint",
+        "profile_id": "front-door-ep-hs156-lan-43",
+        "result": {
+          "kind": "model_library_provider",
+          "message": "Added to the Model Library. Assignments are unchanged."
+        }
+      },
+      "error": null
+    },
+    {
+      "ordinal": 1,
+      "entry": {
+        "group_id": "chat_practice",
+        "kind": "endpoint",
+        "preset_id": null,
+        "endpoint_id": "hs156-lan-43",
+        "endpoint_base_url": "http://192.168.1.43:8080",
+        "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+        "legacy_model_path": null,
+        "runtime_id": null,
+        "download_bytes": 0
+      },
+      "status": "done",
+      "receipt": {
+        "kind": "define_endpoint",
+        "profile_id": "front-door-ep-hs156-lan-43",
+        "result": {
+          "kind": "model_library_provider",
+          "message": "Added to the Model Library. Assignments are unchanged."
+        }
+      },
+      "error": null
+    },
+    {
+      "ordinal": 2,
+      "entry": {
+        "group_id": "writing_dictation",
+        "kind": "endpoint",
+        "preset_id": null,
+        "endpoint_id": "hs156-lan-43",
+        "endpoint_base_url": "http://192.168.1.43:8080",
+        "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+        "legacy_model_path": null,
+        "runtime_id": null,
+        "download_bytes": 0
+      },
+      "status": "done",
+      "receipt": {
+        "kind": "define_endpoint",
+        "profile_id": "front-door-ep-hs156-lan-43",
+        "result": {
+          "kind": "model_library_provider",
+          "message": "Added to the Model Library. Assignments are unchanged."
+        }
+      },
+      "error": null
+    },
+    {
+      "ordinal": 3,
+      "entry": {
+        "group_id": "meetings",
+        "kind": "endpoint",
+        "preset_id": null,
+        "endpoint_id": "hs156-lan-43",
+        "endpoint_base_url": "http://192.168.1.43:8080",
+        "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+        "legacy_model_path": null,
+        "runtime_id": null,
+        "download_bytes": 0
+      },
+      "status": "done",
+      "receipt": {
+        "kind": "define_endpoint",
+        "profile_id": "front-door-ep-hs156-lan-43",
+        "result": {
+          "kind": "model_library_provider",
+          "message": "Added to the Model Library. Assignments are unchanged."
+        }
+      },
+      "error": null
+    },
+    {
+      "ordinal": 4,
+      "entry": {
+        "group_id": "agents_tools",
+        "kind": "endpoint",
+        "preset_id": null,
+        "endpoint_id": "hs156-lan-43",
+        "endpoint_base_url": "http://192.168.1.43:8080",
+        "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+        "legacy_model_path": null,
+        "runtime_id": null,
+        "download_bytes": 0
+      },
+      "status": "done",
+      "receipt": {
+        "kind": "define_endpoint",
+        "profile_id": "front-door-ep-hs156-lan-43",
+        "result": {
+          "kind": "model_library_provider",
+          "message": "Added to the Model Library. Assignments are unchanged."
+        }
+      },
+      "error": null
+    },
+    {
+      "ordinal": 5,
+      "entry": {
+        "group_id": "background",
+        "kind": "endpoint",
+        "preset_id": null,
+        "endpoint_id": "hs156-lan-43",
+        "endpoint_base_url": "http://192.168.1.43:8080",
+        "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+        "legacy_model_path": null,
+        "runtime_id": null,
+        "download_bytes": 0
+      },
+      "status": "done",
+      "receipt": {
+        "kind": "define_endpoint",
+        "profile_id": "front-door-ep-hs156-lan-43",
+        "result": {
+          "kind": "model_library_provider",
+          "message": "Added to the Model Library. Assignments are unchanged."
+        }
+      },
+      "error": null
+    },
+    {
+      "ordinal": 6,
+      "entry": {
+        "job": "speech",
+        "kind": "whisper_model",
+        "whisper_name": "small",
+        "download_bytes": 466000000
+      },
+      "status": "done",
+      "receipt": {
+        "kind": "whisper_model",
+        "message": "Built-in, no provisioning needed."
+      },
+      "error": null
+    },
+    {
+      "ordinal": 7,
+      "entry": {
+        "job": "tts",
+        "kind": "kokoro_tts",
+        "download_bytes": 206000000
+      },
+      "status": "done",
+      "receipt": {
+        "kind": "kokoro_tts",
+        "message": "Built-in, no provisioning needed."
+      },
+      "error": null
+    },
+    {
+      "ordinal": 8,
+      "entry": {
+        "kind": "assignments"
+      },
+      "status": "done",
+      "receipt": {
+        "kind": "assignments",
+        "groups": [
+          "thoughts_notes",
+          "chat_practice",
+          "writing_dictation",
+          "meetings",
+          "agents_tools",
+          "background"
+        ],
+        "result": {
+          "kind": "service_result"
+        }
+      },
+      "error": null
+    }
+  ]
+}

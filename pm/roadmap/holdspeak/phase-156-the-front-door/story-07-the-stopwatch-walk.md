@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 156
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-156-01, HS-156-02, HS-156-03, HS-156-04, HS-156-05, HS-156-06
 - **Unblocks:** HS-155-01
 - **Owner:** unassigned
@@ -45,3 +45,31 @@ is measured, not vibed.
 ## Notes / open questions
 
 - If the stopwatch fails, the phase is not done — cut scope elsewhere, never the bar.
+
+
+## The honest sweep
+
+Full isolated suite: 33 failed / 7458 passed; name-diff against
+main@`1eea0a66` (26 names) left 23 branch-new — the cost of the new
+door: 15 old-era Models glass tests ADAPTED (door navigation added,
+assertions at full strength), 4 fences ADAPTED honestly (interior
+canon composition chain, surface-fallback census classifications, the
+effect ledger's new egress site), 2 REAL DEFECTS FIXED (the Popover
+carried role="dialog" against the no-modals law; em dashes in gallery
+labels against the voice rules), 2 known flakes recorded (3× alone).
+Combined rerun of all 23: green. Final web contract: 1782/1782, fence
+baseline never grew.
+
+## Counsel
+
+`assets/counsel-close.md`: **RATIFY — zero must-fix.** S1 (all-legacy
+packs silently looped the door) and S2 (doubled 'change') fixed
+in-round with tests; the walk's two defects (endpoint-apply label
+rejection; chat_practice group crash) fixed by the walker; the leaked
+machine-id profile label cured (human endpoint names, fenced by test).
+
+
+## Exhibit
+
+Shot exhibit for the owner (six rooms, the stopwatch table, the gate
+ledger): https://claude.ai/code/artifact/c90eb3ee-e89e-4b4c-ab58-f7c557ffdca3

@@ -164,8 +164,11 @@ hands-free. The default voice is the browser's own speech synthesis (zero
 deps, zero egress). Install `holdspeak[tts]` for server-side kokoro-onnx
 voices (GPL-3.0; phonemizer + espeak-ng). Click the call chip to stop.
 
-**Set up models.** Open **Settings, Models** to make models available in Model
-Library, check their readiness, and choose compatible model lists in Assignments.
+**Set up models.** Open **Settings, Models**. The door recommends a pack
+(Light, Balanced, or Full) for your hardware; pick one, confirm, and the desk
+wires everything. The health strip stays green while readiness holds. For
+manual control, open **Advanced** to see the topology map, Model Library, and
+Assignments.
 
 **The gate: your agent asks first.** Off by default, and armed only by two
 deliberate steps of yours, a Claude Code session's risky Bash call can stop
@@ -187,9 +190,10 @@ of reach by design.
 
 - **Every run names its boundary.** Model-backed work can use a local model, a
   paired device, a private endpoint, or an external OpenAI-compatible service.
-  Add or connect a model in **Settings, Models → Model Library**, then choose its
-  compatible ordered model list in **Assignments**. Connection secrets stay in local
-  custody and readiness is checked against the exact bound model. See
+  Open **Settings, Models** and pick a recommended pack, or open **Advanced**
+  to add models manually in Model Library and choose model lists in
+  Assignments. Connection secrets stay in local custody and readiness is
+  checked against the exact bound model. See
   [Security & privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md)
   and [Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
 - **It learns how you work, and shows you the receipts.** The dictation
@@ -333,7 +337,19 @@ surface tells you the one recovery to take. `holdspeak doctor` is also available
 when you want diagnostics for microphone permissions and backends; it is not a
 first-value prerequisite.
 
-### Later: voice typing, repairs, and deployment
+### Set up models
+
+Open **Settings, Models**. The door shows up to three packs (Light, Balanced,
+Full) based on your hardware, what you already have downloaded, and any
+endpoints you have connected. Pick a pack, confirm with **Set up**, and the
+desk downloads what is missing, wires every assignment, and reports each step
+as a live plan. When the plan finishes, the door collapses to a health strip:
+green means everything is wired; a warning names the one thing to fix.
+
+That is the whole A path. Talk to the desk: open a Thread, ask a question,
+and the reply streams with its receipt.
+
+### Later: voice typing, repairs, and advanced model setup
 
 For voice typing in another app, hold the global hotkey (Right Option on macOS,
 Right Alt on Linux), speak, and release. The Desk's **Speak** surface also has
@@ -342,13 +358,15 @@ that action with an explicit Aim and a dry-run **Rehearse** control.
 Automatic furnishing is the ordinary first-run path. For repair, `holdspeak
 seed` creates only starter objects HoldSpeak has never seen, preserving your
 edits and deletions. To deliberately restore the default Desk, use the
-destructive, confirmed **Settings, Desk → Reset to seed** action. To add a
-model-backed feature or deploy headlessly, open **Settings, Models**. Add or
-connect a model in Model Library, check readiness, then choose a compatible
-model list in Assignments. `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless key
-fallback. See [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
+destructive, confirmed **Settings, Desk, Reset to seed** action.
 
-Install only the extras you need for those later features:
+For manual model control, open **Advanced** under Settings, Models. The topology
+map shows this Mac and every connected node, with the seven job groups as flows
+between them. Add a node, re-point a flow, or switch to **Table** view for the
+full Model Library and Assignments surface. `HOLDSPEAK_PROFILE_<ID>_KEY` remains
+a headless key fallback. See [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
+
+Install only the extras you need for later features:
 
 ```bash
 pip install 'holdspeak[meeting]'          # meeting mode and AI intelligence
@@ -505,7 +523,8 @@ deliberate absences.
 | Understand how it works, with diagrams | [Architecture](https://github.com/karolswdev/HoldSpeak/blob/main/docs/ARCHITECTURE.md) |
 | Get it running and verify my setup | [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) |
 | Take the first-sentence loop or repair/deploy later | [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) |
-| Make models available and assign them | [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) |
+| Pick a pack and get models wired | [User Guide, Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/USER_GUIDE.md#models) |
+| Manual model setup (Library, Assignments, topology) | [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) |
 | Understand technical routing and receipts | [Intelligence Router architecture](https://github.com/karolswdev/HoldSpeak/blob/main/docs/internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md) |
 | Live on the Desk (the web front door) | [The Desk](https://github.com/karolswdev/HoldSpeak/blob/main/docs/WEB_DESK.md) |
 | See speech become a project-grounded task | [The Dictation Copilot](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_COPILOT.md) |
@@ -526,10 +545,10 @@ deliberate absences.
 
 Config lives at `~/.config/holdspeak/config.json`, but you rarely edit it by hand.
 The Settings window on the Desk exposes the hotkey, meeting intelligence,
-dictation pipeline, and presence options. **Settings, Models** has the model
-setup surface: use Model Library to make a model available, then Assignments to
-choose compatible model lists for registered work. The full owner guide is
-[Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
+dictation pipeline, and presence options. **Settings, Models** opens on the
+door: pick a recommended pack or open **Advanced** for the full topology map,
+Model Library, and Assignments. The full owner guide is
+[Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
 The full reference is in
 [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) and the guides above.
 

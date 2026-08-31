@@ -23,6 +23,20 @@ pytest.importorskip("playwright.sync_api", reason="model acquisition glass needs
 TOKEN = "hs142-model-acquisition-glass"
 
 
+def _navigate_through_door(page: Any) -> None:
+    """HS-156-04: navigate through the front door to expose Model Library."""
+    door = page.locator(".front-door")
+    door.wait_for(timeout=10_000)
+    own_btn = page.get_by_role("button", name="Set up my own", exact=True)
+    if own_btn.count():
+        own_btn.click()
+    else:
+        page.get_by_role("button", name="Advanced").click()
+    page.get_by_role("tab", name="Table").click()
+    page.locator(".model-library").wait_for(timeout=5_000)
+    page.locator(".model-library").scroll_into_view_if_needed()
+
+
 def _api(page: Any, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
     result = page.evaluate(
         """async ([method, path, body]) => {
@@ -177,6 +191,7 @@ def test_download_verify_add_to_library_without_assigning(
             _api(page, "POST", "/api/desk/seed")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
             page.goto(f"{url}/profiles", wait_until="load")
+            _navigate_through_door(page)
 
             surface = page.locator(".model-library")
             surface.get_by_role("heading", name="Model Library", exact=True).wait_for()

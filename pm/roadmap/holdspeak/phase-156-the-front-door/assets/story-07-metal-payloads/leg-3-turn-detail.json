@@ -1,0 +1,76 @@
+{
+  "id": "th_d44045b43038",
+  "title": "HS-156-07 Metal chat",
+  "recipe_id": "hs-seed-mode-desk",
+  "profile_override": "",
+  "directory_id": "",
+  "call_mode": 0,
+  "token_in": 0,
+  "token_out": 0,
+  "created_at": 1788153317.2486558,
+  "updated_at": 1788153317.2623029,
+  "last_turn_at": 1788153317.2623029,
+  "mode": {
+    "id": "hs-seed-mode-desk",
+    "name": "Desk",
+    "avatar": "#6B7280"
+  },
+  "messages": [
+    {
+      "id": "tm_f8d995c7ebbb",
+      "role": "user",
+      "parent_id": null,
+      "streaming": false,
+      "receipt_id": "",
+      "egress_scope": "",
+      "model_id": "",
+      "error_json": null,
+      "stats_json": null,
+      "parts": [
+        {
+          "id": "tp_dd931dc7154e",
+          "kind": "text",
+          "text": "What is the capital of France? Answer in one sentence.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788153317.250416,
+      "updated_at": 1788153317.251081,
+      "completed_at": null,
+      "aborted_at": null
+    },
+    {
+      "id": "tm_0af3ccf08a36",
+      "role": "assistant",
+      "parent_id": "tm_f8d995c7ebbb",
+      "streaming": false,
+      "receipt_id": "ire_b1a1a95bf549ef58c9ad833fedc65da8",
+      "egress_scope": "local",
+      "model_id": "hs156-lan-43",
+      "error_json": null,
+      "stats_json": {
+        "completion_tokens": 0,
+        "prompt_tokens": 0
+      },
+      "parts": [
+        {
+          "id": "tp_2960a13de6fb",
+          "kind": "text",
+          "text": "The capital of France is Paris.",
+          "ordinal": 0,
+          "sensitive": false,
+          "draft": false
+        }
+      ],
+      "created_at": 1788153317.2623029,
+      "updated_at": 1788153317.713984,
+      "completed_at": 1788153317.713984,
+      "aborted_at": null
+    }
+  ],
+  "siblings": {},
+  "refs": [],
+  "draft_annotations": []
+}

@@ -1,0 +1,437 @@
+{
+  "packs": [
+    {
+      "id": "light",
+      "label": "Light",
+      "summary": "Fits comfortably, fastest to get started.",
+      "recommended": false,
+      "display_lines": [
+        {
+          "group_id": "thoughts_notes",
+          "group_label": "Thoughts & notes",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "chat_practice",
+          "group_label": "Chat practice",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "writing_dictation",
+          "group_label": "Writing & dictation",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "meetings",
+          "group_label": "Meetings",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "agents_tools",
+          "group_label": "Agents & tools",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "background",
+          "group_label": "Background",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "speech_recognition",
+          "group_label": "Speech recognition",
+          "source_label": "Whisper base (135 MB)",
+          "provenance": "builtin_whisper",
+          "job": "speech"
+        },
+        {
+          "group_label": "Text-to-speech",
+          "source_label": "Kokoro TTS (fp16) (196 MB)",
+          "provenance": "builtin_kokoro",
+          "job": "tts"
+        }
+      ],
+      "plan": [
+        {
+          "group_id": "thoughts_notes",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "chat_practice",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "writing_dictation",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "meetings",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "agents_tools",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "background",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "job": "speech",
+          "kind": "whisper_model",
+          "whisper_name": "base",
+          "download_bytes": 142000000
+        },
+        {
+          "job": "tts",
+          "kind": "kokoro_tts",
+          "download_bytes": 206000000
+        }
+      ],
+      "total_download_bytes": 348000000
+    },
+    {
+      "id": "balanced",
+      "label": "Balanced",
+      "summary": "Recommended for this hardware.",
+      "recommended": true,
+      "display_lines": [
+        {
+          "group_id": "thoughts_notes",
+          "group_label": "Thoughts & notes",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "chat_practice",
+          "group_label": "Chat practice",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "writing_dictation",
+          "group_label": "Writing & dictation",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "meetings",
+          "group_label": "Meetings",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "agents_tools",
+          "group_label": "Agents & tools",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "background",
+          "group_label": "Background",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "speech_recognition",
+          "group_label": "Speech recognition",
+          "source_label": "Whisper small (444 MB)",
+          "provenance": "builtin_whisper",
+          "job": "speech"
+        },
+        {
+          "group_label": "Text-to-speech",
+          "source_label": "Kokoro TTS (fp16) (196 MB)",
+          "provenance": "builtin_kokoro",
+          "job": "tts"
+        }
+      ],
+      "plan": [
+        {
+          "group_id": "thoughts_notes",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "chat_practice",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "writing_dictation",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "meetings",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "agents_tools",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "background",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "job": "speech",
+          "kind": "whisper_model",
+          "whisper_name": "small",
+          "download_bytes": 466000000
+        },
+        {
+          "job": "tts",
+          "kind": "kokoro_tts",
+          "download_bytes": 206000000
+        }
+      ],
+      "total_download_bytes": 672000000
+    },
+    {
+      "id": "full",
+      "label": "Full",
+      "summary": "The most capable setup that fits.",
+      "recommended": false,
+      "display_lines": [
+        {
+          "group_id": "thoughts_notes",
+          "group_label": "Thoughts & notes",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "chat_practice",
+          "group_label": "Chat practice",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "writing_dictation",
+          "group_label": "Writing & dictation",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "meetings",
+          "group_label": "Meetings",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "agents_tools",
+          "group_label": "Agents & tools",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "background",
+          "group_label": "Background",
+          "source_label": "LAN Qwen 3.6 (.43) on http://192.168.1.43:8080",
+          "provenance": "known_endpoint"
+        },
+        {
+          "group_id": "speech_recognition",
+          "group_label": "Speech recognition",
+          "source_label": "Whisper medium (1.4 GB)",
+          "provenance": "builtin_whisper",
+          "job": "speech"
+        },
+        {
+          "group_label": "Text-to-speech",
+          "source_label": "Kokoro TTS (fp16) (196 MB)",
+          "provenance": "builtin_kokoro",
+          "job": "tts"
+        }
+      ],
+      "plan": [
+        {
+          "group_id": "thoughts_notes",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "chat_practice",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "writing_dictation",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "meetings",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "agents_tools",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "group_id": "background",
+          "kind": "endpoint",
+          "preset_id": null,
+          "endpoint_id": "hs156-lan-43",
+          "endpoint_base_url": "http://192.168.1.43:8080",
+          "endpoint_model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "legacy_model_path": null,
+          "runtime_id": null,
+          "download_bytes": 0
+        },
+        {
+          "job": "speech",
+          "kind": "whisper_model",
+          "whisper_name": "medium",
+          "download_bytes": 1530000000
+        },
+        {
+          "job": "tts",
+          "kind": "kokoro_tts",
+          "download_bytes": 206000000
+        }
+      ],
+      "total_download_bytes": 1736000000
+    }
+  ],
+  "facts": {
+    "apple_silicon": true,
+    "total_memory_bytes": 34359738368,
+    "has_llama_cpp": true,
+    "has_mlx": false,
+    "has_cloud_credential": false,
+    "endpoints": [
+      {
+        "id": "hs156-lan-43",
+        "name": "LAN Qwen 3.6 (.43)",
+        "base_url": "http://192.168.1.43:8080",
+        "model": "Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+        "reachable": true,
+        "reason": null
+      }
+    ],
+    "probed_urls": [
+      "http://192.168.1.43:8080"
+    ],
+    "legacy_gguf_path": "~/Models/gguf/Qwen3.5-9B-Instruct-Q6_K.gguf",
+    "legacy_gguf_label": "Qwen3.5-9B-Instruct-Q6_K.gguf"
+  }
+}

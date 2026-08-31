@@ -128,7 +128,6 @@ export function Popover({
       <div
         ref={popoverRef}
         className="surface-popover"
-        role="dialog"
         aria-label={ariaLabel}
         tabIndex={-1}
         style={style}

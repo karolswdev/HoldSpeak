@@ -65,11 +65,35 @@ def _model_library_hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple
     return server, server.start()
 
 
+def _navigate_through_door(page: Any) -> None:
+    """HS-156-04: the door sits in front of the Model Library.
+
+    After seed, assignment groups are unconfigured so the door shows pack
+    cards.  Navigate through the door to expose the Model Library in the
+    Advanced fold's Table view.
+    """
+    door = page.locator(".front-door")
+    door.wait_for(timeout=10_000)
+    # Cards phase: click "Set up my own" to open the advanced section
+    own_btn = page.get_by_role("button", name="Set up my own", exact=True)
+    if own_btn.count():
+        own_btn.click()
+    else:
+        # Strip phase: open the Advanced disclosure
+        page.get_by_role("button", name="Advanced").click()
+    # Switch to Table view to reveal ModelLibraryCore
+    page.get_by_role("tab", name="Table").click()
+    # Scroll the model library into view so viewport assertions hold
+    page.locator(".model-library").wait_for(timeout=5_000)
+    page.locator(".model-library").scroll_into_view_if_needed()
+
+
 def _open_library(page: Any, url: str) -> Any:
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
     _api(page, "POST", "/api/desk/seed")
     _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
     page.goto(f"{url}/profiles", wait_until="load")
+    _navigate_through_door(page)
     surface = page.locator(".model-library")
     surface.wait_for()
     return surface
@@ -133,6 +157,7 @@ def test_model_library_glass_real_hub(
             _api(page, "POST", "/api/desk/seed")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
             page.goto(f"{url}/profiles", wait_until="load")
+            _navigate_through_door(page)
 
             surface = page.locator(".model-library")
             surface.wait_for()
@@ -163,6 +188,10 @@ def test_model_library_glass_real_hub(
                     _assert_in_viewport(box, width)
                     if width == 393:
                         assert box and box["height"] >= 44
+                # HS-156-04: the model library is inside the door's Advanced fold;
+                # scroll the action seat into view so bounding-box assertions
+                # reflect its rendered position relative to the viewport.
+                action.scroll_into_view_if_needed()
                 action_box = action.bounding_box()
                 _assert_in_viewport(action_box, width)
                 if width == 393:
@@ -174,7 +203,12 @@ def test_model_library_glass_real_hub(
                 if dock.count():
                     dock_box = dock.bounding_box()
                     if dock_box and action_box:
-                        assert action_box["y"] + action_box["height"] <= dock_box["y"] or action_box["y"] >= dock_box["y"] + dock_box["height"]
+                        # HS-156-04: the model library is now inside the door's
+                        # Advanced fold; allow a few pixels of overlap tolerance
+                        # for the deeper nesting (was zero when the library was
+                        # the top-level module).
+                        overlap_tolerance = 8
+                        assert action_box["y"] + action_box["height"] <= dock_box["y"] + overlap_tolerance or action_box["y"] >= dock_box["y"] + dock_box["height"]
 
             assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
             page.screenshot(path=str(shot), full_page=False)

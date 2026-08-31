@@ -274,7 +274,7 @@ export function ComponentsCore({ hero }: CoreProps) {
         <SurfaceState error="The error leg renders in the flow" />
       </SurfaceSection>
       {/* ── HS-156-03: v1 library patterns gallery ── */}
-      <SurfaceSection label="StateChip — all seven states">
+      <SurfaceSection label="StateChip: all seven states">
         <div className="surface-actions">
           {ALL_CHIP_STATES.map((state) => (
             <StateChip key={state} state={state} />
@@ -284,7 +284,7 @@ export function ComponentsCore({ hero }: CoreProps) {
           <StateChip state="active" label="Custom label" icon="*" />
         </div>
       </SurfaceSection>
-      <SurfaceSection label="ActionNotice — tone variants">
+      <SurfaceSection label="ActionNotice: tone variants">
         <ActionNotice tone="info" icon="i">
           Models are downloading in the background.
         </ActionNotice>
@@ -305,7 +305,7 @@ export function ComponentsCore({ hero }: CoreProps) {
           Default tone (no explicit tone set).
         </ActionNotice>
       </SurfaceSection>
-      <SurfaceSection label="Disclosure — controlled and uncontrolled">
+      <SurfaceSection label="Disclosure: controlled and uncontrolled">
         <Disclosure label="Uncontrolled fold (default closed)">
           <p>Content pushed into the layout flow. Escape closes.</p>
         </Disclosure>
@@ -324,7 +324,7 @@ export function ComponentsCore({ hero }: CoreProps) {
           <p>The RAW variant for advanced/debug panels.</p>
         </Disclosure>
       </SurfaceSection>
-      <SurfaceSection label="ProgressPlan — detailed and compact">
+      <SurfaceSection label="ProgressPlan: detailed and compact">
         <ProgressPlan
           steps={GALLERY_PLAN_STEPS}
           receipt={<Receipt status="ok" label="Started" timestamp="09:41" />}
@@ -337,7 +337,7 @@ export function ComponentsCore({ hero }: CoreProps) {
           action={{ label: "Resume", onClick: () => {} }}
         />
       </SurfaceSection>
-      <SurfaceSection label="ChoiceCardGroup — radio semantics">
+      <SurfaceSection label="ChoiceCardGroup: radio semantics">
         <ChoiceCardGroup
           name="gallery-model"
           value={choiceValue}
@@ -384,7 +384,7 @@ export function ComponentsCore({ hero }: CoreProps) {
           />
         </ChoiceCardGroup>
       </SurfaceSection>
-      <SurfaceSection label="Popover — in-flow anchored">
+      <SurfaceSection label="Popover: in-flow anchored">
         <button
           ref={popoverAnchorRef}
           type="button"
@@ -404,7 +404,7 @@ export function ComponentsCore({ hero }: CoreProps) {
           </p>
         </Popover>
       </SurfaceSection>
-      <SurfaceSection label="ProvenanceChip and Receipt — footer slots">
+      <SurfaceSection label="ProvenanceChip and Receipt: footer slots">
         <div className="surface-actions">
           <ProvenanceChip source="Whisper" />
           <ProvenanceChip source="Local LLM" boundary="LAN" />
@@ -416,7 +416,7 @@ export function ComponentsCore({ hero }: CoreProps) {
           <Receipt status="danger" label="Failed" onInspect={() => {}} />
         </div>
       </SurfaceSection>
-      <SurfaceSection label="TopologySurface — graph viewport">
+      <SurfaceSection label="TopologySurface: graph viewport">
         <TopologySurface
           nodes={GALLERY_TOPOLOGY_NODES}
           flows={GALLERY_TOPOLOGY_FLOWS}

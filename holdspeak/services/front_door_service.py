@@ -202,6 +202,7 @@ def _build_plan_entry(
     kind: str,
     preset_id: str | None = None,
     endpoint_id: str | None = None,
+    endpoint_name: str | None = None,
     endpoint_base_url: str | None = None,
     endpoint_model: str | None = None,
     legacy_model_path: str | None = None,
@@ -214,6 +215,7 @@ def _build_plan_entry(
         "kind": kind,
         "preset_id": preset_id,
         "endpoint_id": endpoint_id,
+        "endpoint_name": endpoint_name,
         "endpoint_base_url": endpoint_base_url,
         "endpoint_model": endpoint_model,
         "legacy_model_path": legacy_model_path,
@@ -253,6 +255,7 @@ def _pick_llm_for_group(
                     group_id,
                     kind="endpoint",
                     endpoint_id=ep.get("id"),
+                    endpoint_name=ep.get("name"),
                     endpoint_base_url=ep.get("base_url"),
                     endpoint_model=ep.get("model"),
                 ),
@@ -668,7 +671,7 @@ def _execute_endpoint_item(
         "request_id": uuid.uuid4().hex,
         "profile_id": profile_id,
         "expected_profile_revision": 0,
-        "label": f"Front Door: {base_url}",
+        "label": str(entry.get("endpoint_name") or "") or f"Front Door endpoint ({endpoint_id or 'auto'})",
         "provider_family": "openai_compatible",
         "model": entry.get("endpoint_model", "default"),
         "endpoint": endpoint_url,
@@ -710,9 +713,15 @@ def _execute_assignment_item(
     principal: Any,
 ) -> dict[str, Any]:
     """Set assignments for all groups via apply_starter_bundle or set_assignment."""
+    # Filter to groups the assignment service actually accepts (owner-visible).
+    # Internal-only groups (e.g. chat_practice) appear on the card for display
+    # but are not assignable at the group scope.
+    assignable = set(assignment_service._group_ids()) if hasattr(assignment_service, "_group_ids") else None
     # Gather current revisions for all groups
     groups_payload: list[dict[str, Any]] = []
     for ga in group_assignments:
+        if assignable is not None and ga["group_id"] not in assignable:
+            continue
         group_id = ga["group_id"]
         profile_id = ga["profile_id"]
         profile_revision = ga.get("profile_revision", 1)
@@ -965,6 +974,25 @@ def _run_plan(
     # Phase 2: Assignment — wire all seven groups through set_assignment
     # Collect which profile to assign to each group
     group_assignments = _resolve_group_assignments(items, endpoint_profiles)
+    # Counsel S1 (156 close): legacy GGUF groups are skipped by assignment
+    # resolution.  If the pack's LLM groups are ALL legacy, the plan used to
+    # reach DONE with zero assignments and the door looped back to the cards.
+    # Fail the assignments step with a plain, actionable message instead.
+    _legacy_groups = [
+        str(item.get("entry", {}).get("group_id", ""))
+        for item in items
+        if item.get("entry", {}).get("kind") == "legacy_gguf"
+        and item.get("entry", {}).get("group_id")
+    ]
+    if _legacy_groups and not group_assignments:
+        assignment_item = _find_or_create_assignment_item(items)
+        assignment_item["status"] = ITEM_FAILED
+        assignment_item["error"] = (
+            "These models are local files the packs cannot wire — open "
+            "Advanced to add them to the library, then assign them."
+        )
+        db.front_door.update_plan(plan_id, status=PLAN_FAILED, items=items)
+        return _plan_result(plan_id, PLAN_FAILED, items)
     if group_assignments:
         # Create a synthetic "assignments" item if not already present
         assignment_item = _find_or_create_assignment_item(items)
@@ -980,6 +1008,8 @@ def _run_plan(
                     principal=principal,
                 )
                 assignment_item["status"] = ITEM_DONE
+                if _legacy_groups:
+                    receipt = {**receipt, "unwired_legacy_groups": _legacy_groups}
                 assignment_item["receipt"] = receipt
                 db.front_door.update_plan(plan_id, status=PLAN_RUNNING, items=items)
             except Exception as exc:
