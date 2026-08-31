@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 158
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-158-02
 - **Unblocks:** HS-158-05
 - **Owner:** unassigned
@@ -46,6 +46,28 @@ Art VI demands they be honestly absent, not faked.
 - **Unit:** `tests/unit/test_project_room_read.py` (composition, caps, ordering, absent markers, section fault isolation, revision stamping).
 - **Integration:** the route through the real app incl. 404 + non-owner.
 
+## What shipped
+
+- `ProjectService.room()` (§6.1 composition: four private sub-readers
+  behind the façade) + `GET /api/projects/{project_id}/room` beside
+  its siblings. Sections: project orientation (all §5.1 fields +
+  revision), items focus (ROOM_FOCUS_CAP=5, per-type totals),
+  meetings/resources summaries, recent changes (ROOM_CHANGES_CAP=10),
+  and EXPLICIT absent markers for review/sources/updates/steward.
+- Section vocabulary `ok | degraded | absent` recorded in
+  CONTRACTS-P0.md (appended §, traced to §6.2/NFR-006/Art VI).
+- Fault isolation: `_room_section()` wraps each sub-read — a failure
+  degrades ITS section (`error_code`, HTTP stays 200); 404 only for a
+  missing project.
+- FULLY deterministic: `observed_at` derives from the project's
+  persisted `updated_at`, so consecutive no-write reads are
+  byte-identical (tested).
+- Focus ordering: severity(non-null first, DESC) → due_at ASC →
+  sort_key → created_at → id. API surface regenerated (570 routes).
+- 35 new tests; orchestrator re-ran the scoped set:
+  297 passed under isolated HOME (captured).
+
 ## Notes / open questions
 
-- CONTRACTS-P0.md gains the room-section state vocabulary (absent | ok | degraded) as a §-amendment in the same commit — the suite rule (names agreed before use).
+- CONTRACTS-P0.md carries the section vocabulary (absent | ok | degraded) — landed with this story per the names-before-use rule.
+- **Severity ordering is alphabetical DESC on free TEXT** — semantically blind until 03 defines the severity enum. HS-158-03 owns the fix: an explicit rank (CASE or numeric) in `_read_room_items` + test, once the enum exists. Deliberately not guessed here.

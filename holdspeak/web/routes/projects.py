@@ -43,6 +43,15 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to list project briefings")
 
+    @router.get("/api/projects/{project_id}/room")
+    async def api_project_room(project_id: str, request: Request) -> Any:
+        try:
+            return JSONResponse(service.room(principal(request), project_id))
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to get project room")
+
     @router.get("/api/projects")
     async def api_list_projects(request: Request, include_archived: bool = False) -> Any:
         try:

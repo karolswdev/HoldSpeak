@@ -18,6 +18,7 @@ from typing import Any, Optional
 
 from ..db.core import Database
 from ..db.relationships import qualified_ref
+from ..logging_config import get_logger
 from ..meeting_aftercare import compute_project_since_last_meeting
 from ..principals import Principal
 from ..project_contracts import (
@@ -31,6 +32,17 @@ from ..project_contracts import (
 from ..refs import format as format_ref, parse as parse_ref
 from .errors import ConflictError, NotFound, ValidationError
 from .service_event_ledger import ServiceEventLedger
+
+_log = get_logger("services.project_service")
+
+# ── Room projection constants (HS-158-04, DB-005/NFR-001) ───────────────
+# WEB-NOW-006 spirit: the focus block shows the top-N most urgent items.
+ROOM_FOCUS_CAP: int = 5
+# Recent changes shown in the room projection.
+ROOM_CHANGES_CAP: int = 10
+
+# Absent-section marker for domains not yet built (Art VI, NFR-006).
+_ABSENT_SECTION: dict[str, str] = {"state": "absent", "reason": "not_yet_built"}
 
 
 def _request_hash(payload: dict[str, Any]) -> str:
@@ -129,6 +141,142 @@ class ProjectService:
                  "title": item.title, "body_markdown": item.body_markdown, "confidence": item.confidence,
                  "status": item.status, "plugin_id": item.plugin_id, "created_at": item.created_at.isoformat()}
                 for item in self._db.projects.get_project_artifacts(project_id)]
+
+    # ── room projection (HS-158-04, SS6.2) ────────────────────────────
+
+    def room(self, principal: Principal, project_id: str) -> dict[str, Any]:
+        """Coherent, revision-stamped room projection (SS6.2, HS-158-04).
+
+        Returns one dict with every section the first useful render needs.
+        Per-section fault isolation (NFR-003): each sub-read is wrapped;
+        a failure degrades that section without failing the response.
+        404 only when the project itself is missing.
+
+        observed_at is derived from project.updated_at (fully deterministic:
+        two reads with no writes in between produce byte-identical payloads).
+
+        Focus ordering (DB-005): severity DESC NULLS LAST, due_at ASC
+        NULLS LAST, sort_key ASC NULLS LAST, created_at ASC, id ASC.
+        """
+        project = self._require_project(project_id)
+        room_fields = self._db.projects.get_project_room_fields(project_id)
+
+        # Orientation: identity + SS5.1 fields + revision + is_archived
+        orientation = self._project_payload(project)
+        revision = 0
+        if room_fields:
+            orientation["purpose"] = room_fields["purpose"]
+            orientation["outcome_text"] = room_fields["outcome_text"]
+            orientation["owner_ref"] = room_fields["owner_ref"]
+            orientation["lifecycle"] = room_fields["lifecycle"]
+            orientation["posture"] = room_fields["posture"]
+            orientation["posture_reason"] = room_fields["posture_reason"]
+            orientation["start_at"] = room_fields["start_at"]
+            orientation["target_at"] = room_fields["target_at"]
+            orientation["review_cadence_json"] = room_fields["review_cadence_json"]
+            orientation["next_review_at"] = room_fields["next_review_at"]
+            orientation["template_key"] = room_fields["template_key"]
+            orientation["modules_json"] = room_fields["modules_json"]
+            orientation["revision"] = room_fields["revision"]
+            orientation["last_review_id"] = room_fields["last_review_id"]
+            orientation["last_review_at"] = room_fields["last_review_at"]
+            revision = room_fields["revision"] or 0
+
+        # observed_at: derived from project.updated_at for full determinism
+        observed_at = project.updated_at.isoformat()
+
+        return {
+            "project_id": project_id,
+            "revision": revision,
+            "observed_at": observed_at,
+            "project": orientation,
+            "items": self._room_section(
+                "items", lambda: self._read_room_items(project_id)),
+            "meetings": self._room_section(
+                "meetings", lambda: self._read_room_meetings(
+                    principal, project_id, project)),
+            "resources": self._room_section(
+                "resources", lambda: self._read_room_resources(project_id)),
+            "changes": self._room_section(
+                "changes", lambda: self._read_room_changes(project_id)),
+            "review": dict(_ABSENT_SECTION),
+            "sources": dict(_ABSENT_SECTION),
+            "updates": dict(_ABSENT_SECTION),
+            "steward": dict(_ABSENT_SECTION),
+        }
+
+    # ── room sub-readers (fault-isolated) ────────────────────────────
+
+    @staticmethod
+    def _room_section(name: str, fn: Any) -> dict[str, Any]:
+        """Run *fn* and tag the result with state=ok, or return degraded."""
+        try:
+            result = fn()
+            result["state"] = "ok"
+            return result
+        except Exception as exc:
+            _log.warning("room section %s degraded: %s", name, exc)
+            return {"state": "degraded", "error_code": f"{name}_read_failed"}
+
+    def _read_room_items(self, project_id: str) -> dict[str, Any]:
+        """Focus block: bounded top-N items + total counts per type."""
+        with self._db._connection() as conn:
+            count_rows = conn.execute(
+                "SELECT item_type, COUNT(*) as cnt FROM project_items "
+                "WHERE project_id = ? GROUP BY item_type",
+                (project_id,),
+            ).fetchall()
+            totals_by_type = {row["item_type"]: row["cnt"] for row in count_rows}
+            total = sum(totals_by_type.values())
+
+            # Focus: bounded, deterministically ordered (DB-005)
+            # Order: severity DESC NULLS LAST, due_at ASC NULLS LAST,
+            #        sort_key ASC NULLS LAST, created_at ASC, id ASC
+            focus_rows = conn.execute(
+                """
+                SELECT * FROM project_items WHERE project_id = ?
+                ORDER BY
+                    severity IS NULL, severity DESC,
+                    due_at IS NULL, due_at ASC,
+                    sort_key IS NULL, sort_key ASC,
+                    created_at ASC,
+                    id ASC
+                LIMIT ?
+                """,
+                (project_id, ROOM_FOCUS_CAP),
+            ).fetchall()
+        return {
+            "focus": [dict(r) for r in focus_rows],
+            "totals_by_type": totals_by_type,
+            "total": total,
+        }
+
+    def _read_room_meetings(
+        self, principal: Principal, project_id: str, project: Any,
+    ) -> dict[str, Any]:
+        """Meetings summary: count + latest."""
+        count = project.meeting_count
+        latest_list = self.list_meetings(principal, project_id, limit=1)
+        return {
+            "count": count,
+            "latest": latest_list[0] if latest_list else None,
+        }
+
+    def _read_room_resources(self, project_id: str) -> dict[str, Any]:
+        """Resources summary: count + latest linked."""
+        resource_objs = self._db.project_relationships.list_for_project(
+            project_id)
+        count = len(resource_objs)
+        return {
+            "count": count,
+            "latest": resource_objs[0].to_dict() if resource_objs else None,
+        }
+
+    def _read_room_changes(self, project_id: str) -> dict[str, Any]:
+        """Recent changes, bounded, newest first."""
+        changes = self._db.projects.list_project_changes(
+            project_id, limit=ROOM_CHANGES_CAP)
+        return {"recent": changes}
 
     # ── writes (graduated to revision law) ───────────────────────────
 

@@ -4063,6 +4063,14 @@
       "consumers": []
     },
     {
+      "path": "/api/projects/{project_id}/room",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": []
+    },
+    {
       "path": "/api/projects/{project_id}/since-last-meeting",
       "methods": [
         "GET"
