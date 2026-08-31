@@ -1,6 +1,6 @@
 # Phase 158 - Project Rooms: The Room (P1)
 
-**Last updated:** 2026-08-31 — 3/6 DONE + 05-extraction committed. GET /room stands: one deterministic projection, honest absent markers (ok|degraded|absent in CONTRACTS-P0), fault-isolated sections, caps 5/10. NOW: 03 (items — owns the severity-rank fix) ∥ 05-adoption (the Room face → shots).
+**Last updated:** 2026-08-31 — 4/6 DONE + 05-extraction committed. Items land: five typed records, closed vocabularies, DOM-007 verb guard, the severity rank paid into /room focus. 05-adoption in flight → beauty pass → THE OWNER'S SHOTS.
 
 ## Goal
 
@@ -41,7 +41,7 @@ effects, so no new kernel admissions arise; NFR-009 bites from P2a on.
 |---|---|---|---|---|
 | HS-158-01 | The reconcile (columns, items, changes, commands — proven on a real-DB copy) | done | [story-01-the-reconcile](./story-01-the-reconcile.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-158-02 | The revision law (revision + change + event, atomically; idempotent commands; restore) | done | [story-02-the-revision-law](./story-02-the-revision-law.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-158-03 | The items (typed workstream/milestone/risk/dependency/signal via the service) | backlog | [story-03-the-items](./story-03-the-items.md) | - |
+| HS-158-03 | The items (typed workstream/milestone/risk/dependency/signal via the service) | done | [story-03-the-items](./story-03-the-items.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-158-04 | The room read (GET /room — one coherent, honest, bounded projection) | done | [story-04-the-room-read](./story-04-the-room-read.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-158-05 | The web graduation (controller extraction, /room adoption, the Room face, shots) | in-progress | [story-05-the-web-graduation](./story-05-the-web-graduation.md) | - |
 | HS-158-06 | The close (gates, suite amendments, final summary) | backlog | [story-06-the-close](./story-06-the-close.md) | - |

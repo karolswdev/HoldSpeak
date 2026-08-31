@@ -6,6 +6,11 @@ in the same transaction (DOM-003, DOM-004, API-004).  Optional
 expected_revision / command_id enforce optimistic concurrency (API-001)
 and idempotent replay (API-002, DOM-010).  Absent params = legacy behavior
 (API-006).
+
+HS-158-03: item commands under the revision law (create/update/transition/
+list).  Items are Project-OWNED records (SS5.3), not citizens (SS3.2).
+changed_refs carries ``project:<id>``; the item id rides in the result
+payload.  Event kind is ``project.updated`` (SS10 has no item event kind).
 """
 from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
@@ -28,12 +33,97 @@ from ..project_contracts import (
     ResultKind,
     generate_pchg_id,
     generate_pcmd_id,
+    generate_pitem_id,
 )
 from ..refs import format as format_ref, parse as parse_ref
 from .errors import ConflictError, NotFound, ValidationError
 from .service_event_ledger import ServiceEventLedger
 
 _log = get_logger("services.project_service")
+
+
+# ── Closed item vocabularies (HS-158-03) ──────────────────────────────
+
+# Severity: nullable; validated on write.
+SEVERITY_LEVELS: frozenset[str] = frozenset({
+    "critical", "high", "medium", "low",
+})
+
+# Explicit rank for focus ordering (CASE expression: highest first).
+SEVERITY_RANK: dict[str, int] = {
+    "critical": 0,
+    "high": 1,
+    "medium": 2,
+    "low": 3,
+}
+
+# Item types and their closed lifecycle vocabularies.
+ITEM_TYPES: frozenset[str] = frozenset({
+    "milestone", "risk", "dependency", "signal", "workstream",
+})
+
+ITEM_LIFECYCLES: dict[str, tuple[str, ...]] = {
+    "milestone": ("planned", "reached", "missed", "dropped"),
+    "risk": ("open", "mitigated", "accepted", "closed"),
+    "dependency": ("healthy", "at_risk", "broken", "resolved"),
+    "signal": ("active", "retired"),
+    "workstream": ("active", "paused", "done"),
+}
+
+# Default lifecycle per item type (the initial state on create).
+ITEM_DEFAULT_LIFECYCLE: dict[str, str] = {
+    "milestone": "planned",
+    "risk": "open",
+    "dependency": "healthy",
+    "signal": "active",
+    "workstream": "active",
+}
+
+# Provenance kinds (P1 = owner only).
+PROVENANCE_KINDS: frozenset[str] = frozenset({"owner"})
+
+# ── Closed details_json schemas per item_type (DB-004) ────────────────
+#
+# Each entry: field_name -> (required, validator_fn).
+# Unknown fields are refused.  Common fields (title, summary, lifecycle,
+# severity, owner_ref, due_at, sort_key) are COLUMNS, not in details_json.
+
+def _is_str(v: Any) -> bool:
+    return isinstance(v, str)
+
+def _is_str_or_none(v: Any) -> bool:
+    return v is None or isinstance(v, str)
+
+def _is_number_or_none(v: Any) -> bool:
+    return v is None or isinstance(v, (int, float))
+
+_DETAILS_SCHEMAS: dict[str, dict[str, tuple[bool, Any]]] = {
+    "milestone": {
+        # completion_evidence_refs: optional list of ref strings
+        "completion_evidence_refs": (False, lambda v: v is None or (isinstance(v, list) and all(isinstance(x, str) for x in v))),
+    },
+    "risk": {
+        "likelihood": (True, _is_str),
+        "impact": (True, _is_str),
+        "mitigation": (False, _is_str_or_none),
+    },
+    "dependency": {
+        "direction": (True, lambda v: v in ("upstream", "downstream")),
+        "counterpart_ref": (True, _is_str),
+        "required_by": (False, _is_str_or_none),
+        "confidence": (False, _is_str_or_none),
+    },
+    "signal": {
+        "metric": (True, _is_str),
+        "unit": (False, _is_str_or_none),
+        "latest_value": (False, _is_number_or_none),
+        "source_ref": (False, _is_str_or_none),
+        "observed_at": (False, _is_str_or_none),
+    },
+    "workstream": {
+        # No type-specific extras.
+    },
+}
 
 # ── Room projection constants (HS-158-04, DB-005/NFR-001) ───────────────
 # WEB-NOW-006 spirit: the focus block shows the top-N most urgent items.
@@ -230,13 +320,19 @@ class ProjectService:
             total = sum(totals_by_type.values())
 
             # Focus: bounded, deterministically ordered (DB-005)
-            # Order: severity DESC NULLS LAST, due_at ASC NULLS LAST,
-            #        sort_key ASC NULLS LAST, created_at ASC, id ASC
+            # HS-158-03: explicit CASE rank for severity (highest first,
+            # nulls last) instead of free-text DESC over the column.
             focus_rows = conn.execute(
                 """
                 SELECT * FROM project_items WHERE project_id = ?
                 ORDER BY
-                    severity IS NULL, severity DESC,
+                    CASE severity
+                        WHEN 'critical' THEN 0
+                        WHEN 'high'     THEN 1
+                        WHEN 'medium'   THEN 2
+                        WHEN 'low'      THEN 3
+                        ELSE 999
+                    END ASC,
                     due_at IS NULL, due_at ASC,
                     sort_key IS NULL, sort_key ASC,
                     created_at ASC,
@@ -1082,6 +1178,615 @@ class ProjectService:
             )
 
         return True
+
+    # ── item commands (HS-158-03) ──────────────────────────────────────
+
+    def create_item(
+        self, principal: Principal, project_id: str,
+        payload: dict[str, Any],
+        *, expected_revision: Optional[int] = None,
+        command_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Create a typed item under a project (SYS-030, DOM-001).
+
+        Items are Project-OWNED records (SS5.3); they increment the
+        project's revision (not citizens, not in CITIZEN_TYPES).
+        """
+        self._require_project(project_id)
+
+        item_type = str(payload.get("item_type") or "").strip()
+        if item_type not in ITEM_TYPES:
+            raise ValidationError(
+                f"Unknown item_type: {item_type!r}; "
+                f"must be one of {sorted(ITEM_TYPES)}",
+                code="validation",
+            )
+
+        title = str(payload.get("title") or "").strip()
+        if not title:
+            raise ValidationError("Item title is required", code="validation")
+
+        severity = self._validate_severity(payload.get("severity"))
+        lifecycle = str(payload.get("lifecycle") or "").strip() or ITEM_DEFAULT_LIFECYCLE[item_type]
+        self._validate_lifecycle(item_type, lifecycle)
+
+        owner_ref = self._validate_optional_ref(payload.get("owner_ref"), "owner_ref")
+        created_by_ref = self._validate_optional_ref(
+            payload.get("created_by_ref") or f"principal:{principal.identity}",
+            "created_by_ref",
+        )
+        due_at = payload.get("due_at")
+        sort_key = payload.get("sort_key")
+        if sort_key is not None:
+            try:
+                sort_key = float(sort_key)
+            except (TypeError, ValueError) as exc:
+                raise ValidationError("sort_key must be a number", code="validation") from exc
+        summary = payload.get("summary")
+
+        # Validate and serialize details_json (DB-004)
+        details = payload.get("details") or {}
+        details_json = self._validate_details(item_type, details)
+
+        provenance = str(payload.get("provenance_kind") or "owner").strip()
+        if provenance not in PROVENANCE_KINDS:
+            raise ValidationError(
+                f"provenance_kind must be one of {sorted(PROVENANCE_KINDS)}",
+                code="validation",
+            )
+
+        # Idempotency check
+        req_hash = _request_hash({
+            "project_id": project_id, "item_type": item_type,
+            "title": title, **{k: v for k, v in payload.items()
+                                if k not in ("command_id",)},
+        })
+        replay = self._check_idempotency(command_id, req_hash, "create_item")
+        if replay is not None:
+            return replay
+
+        item_id = generate_pitem_id()
+        cmd_id = command_id or generate_pcmd_id()
+        now_iso = datetime.now().isoformat()
+        project_ref = format_ref("project", project_id)
+
+        with self._db._connection() as conn:
+            current_rev = self._get_revision(conn, project_id)
+            if expected_revision is not None and current_rev != expected_revision:
+                raise ConflictError(
+                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    code="stale_revision",
+                    context={
+                        "expected_revision": expected_revision,
+                        "current_revision": current_rev,
+                    },
+                )
+            new_revision = current_rev + 1
+
+            conn.execute(
+                "UPDATE projects SET revision = ?, updated_at = ? WHERE id = ?",
+                (new_revision, now_iso, project_id),
+            )
+
+            conn.execute(
+                """
+                INSERT INTO project_items (
+                    id, project_id, item_type, title, summary, lifecycle,
+                    severity, owner_ref, due_at, sort_key, details_json,
+                    provenance_kind, source_observation_id, created_by_ref,
+                    revision, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+                """,
+                (
+                    item_id, project_id, item_type, title, summary,
+                    lifecycle, severity, owner_ref, due_at, sort_key,
+                    details_json, provenance, payload.get("source_observation_id"),
+                    created_by_ref, now_iso, now_iso,
+                ),
+            )
+
+            change_id = generate_pchg_id(
+                project_id=project_id,
+                project_revision=new_revision,
+                ordinal=0,
+            )
+            conn.execute(
+                """
+                INSERT INTO project_changes (
+                    id, project_id, project_revision, change_kind,
+                    target_ref, actor_ref, command_id,
+                    before_hash, after_hash, summary_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    change_id, project_id, new_revision,
+                    "project.updated",
+                    project_ref,
+                    f"principal:{principal.identity}",
+                    cmd_id, None,
+                    _request_hash({"item_id": item_id, "item_type": item_type}),
+                    json.dumps({
+                        "action": "item.created",
+                        "item_id": item_id,
+                        "item_type": item_type,
+                        "title": title,
+                    }),
+                    now_iso,
+                ),
+            )
+
+            self._ledger.append_in_transaction(
+                conn, principal,
+                event_type="project.updated",
+                producer="ProjectService",
+                subject_ref=project_ref,
+                source_revision=str(new_revision),
+                facts={
+                    "project_id": project_id,
+                    "action": "item.created",
+                    "item_id": item_id,
+                    "item_type": item_type,
+                },
+                refs=[project_ref],
+            )
+
+            envelope = CommandResultEnvelope(
+                result_kind=ResultKind.UPDATED,
+                project_id=project_id,
+                project_revision=new_revision,
+                changed_refs=(parse_ref(project_ref),),
+            )
+            self._record_command(
+                conn, cmd_id, project_id, "create_item",
+                req_hash, envelope,
+            )
+
+        item = self._db.projects.get_project_item(item_id)
+        result = dict(item) if item else {"id": item_id}
+        result.update(_envelope_to_dict(envelope))
+        result["item_id"] = item_id
+        return result
+
+    def update_item(
+        self, principal: Principal, project_id: str, item_id: str,
+        patch: dict[str, Any],
+        *, expected_revision: Optional[int] = None,
+        command_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Update mutable fields on an item (SYS-031, DOM-006)."""
+        self._require_project(project_id)
+        existing = self._db.projects.get_project_item(item_id)
+        if existing is None or existing["project_id"] != project_id:
+            raise NotFound("project_item", item_id)
+
+        item_type = existing["item_type"]
+
+        # Build validated fields
+        fields: dict[str, Any] = {}
+        if "title" in patch:
+            title = str(patch["title"] or "").strip()
+            if not title:
+                raise ValidationError("Item title cannot be empty", code="validation")
+            fields["title"] = title
+        if "summary" in patch:
+            fields["summary"] = patch["summary"]
+        if "severity" in patch:
+            fields["severity"] = self._validate_severity(patch["severity"])
+        if "owner_ref" in patch:
+            fields["owner_ref"] = self._validate_optional_ref(patch["owner_ref"], "owner_ref")
+        if "due_at" in patch:
+            fields["due_at"] = patch["due_at"]
+        if "sort_key" in patch:
+            sk = patch["sort_key"]
+            if sk is not None:
+                try:
+                    sk = float(sk)
+                except (TypeError, ValueError) as exc:
+                    raise ValidationError("sort_key must be a number", code="validation") from exc
+            fields["sort_key"] = sk
+        if "details" in patch:
+            fields["details_json"] = self._validate_details(item_type, patch["details"] or {})
+
+        # Lifecycle via update is allowed but NOT for completing milestones (DOM-007)
+        if "lifecycle" in patch:
+            new_lc = str(patch["lifecycle"]).strip()
+            self._validate_lifecycle(item_type, new_lc)
+            if item_type == "milestone" and new_lc == "reached":
+                raise ValidationError(
+                    "Milestones cannot be completed through a field update; "
+                    "use the transition verb (DOM-007)",
+                    code="validation",
+                )
+            fields["lifecycle"] = new_lc
+
+        if not fields:
+            raise ValidationError("No updatable fields supplied", code="validation")
+
+        # Idempotency
+        req_hash = _request_hash({"project_id": project_id, "item_id": item_id, **patch})
+        replay = self._check_idempotency(command_id, req_hash, "update_item")
+        if replay is not None:
+            return replay
+
+        cmd_id = command_id or generate_pcmd_id()
+        now_iso = datetime.now().isoformat()
+        project_ref = format_ref("project", project_id)
+
+        with self._db._connection() as conn:
+            current_rev = self._get_revision(conn, project_id)
+            if expected_revision is not None and current_rev != expected_revision:
+                raise ConflictError(
+                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    code="stale_revision",
+                    context={
+                        "expected_revision": expected_revision,
+                        "current_revision": current_rev,
+                    },
+                )
+            new_revision = current_rev + 1
+
+            conn.execute(
+                "UPDATE projects SET revision = ?, updated_at = ? WHERE id = ?",
+                (new_revision, now_iso, project_id),
+            )
+
+            # Update item fields
+            item_updates: list[str] = []
+            item_params: list[Any] = []
+            for key, value in fields.items():
+                item_updates.append(f"{key} = ?")
+                item_params.append(value)
+            item_updates.append("revision = revision + 1")
+            item_updates.append("updated_at = ?")
+            item_params.append(now_iso)
+            item_params.append(item_id)
+            conn.execute(
+                f"UPDATE project_items SET {', '.join(item_updates)} WHERE id = ?",
+                item_params,
+            )
+
+            change_id = generate_pchg_id(
+                project_id=project_id,
+                project_revision=new_revision,
+                ordinal=0,
+            )
+            conn.execute(
+                """
+                INSERT INTO project_changes (
+                    id, project_id, project_revision, change_kind,
+                    target_ref, actor_ref, command_id,
+                    before_hash, after_hash, summary_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    change_id, project_id, new_revision,
+                    "project.updated",
+                    project_ref,
+                    f"principal:{principal.identity}",
+                    cmd_id, None,
+                    _request_hash(fields),
+                    json.dumps({
+                        "action": "item.updated",
+                        "item_id": item_id,
+                        "fields": list(fields.keys()),
+                    }),
+                    now_iso,
+                ),
+            )
+
+            self._ledger.append_in_transaction(
+                conn, principal,
+                event_type="project.updated",
+                producer="ProjectService",
+                subject_ref=project_ref,
+                source_revision=str(new_revision),
+                facts={
+                    "project_id": project_id,
+                    "action": "item.updated",
+                    "item_id": item_id,
+                    "fields": list(fields.keys()),
+                },
+                refs=[project_ref],
+            )
+
+            envelope = CommandResultEnvelope(
+                result_kind=ResultKind.UPDATED,
+                project_id=project_id,
+                project_revision=new_revision,
+                changed_refs=(parse_ref(project_ref),),
+            )
+            self._record_command(
+                conn, cmd_id, project_id, "update_item",
+                req_hash, envelope,
+            )
+
+        item = self._db.projects.get_project_item(item_id)
+        result = dict(item) if item else {"id": item_id}
+        result.update(_envelope_to_dict(envelope))
+        result["item_id"] = item_id
+        return result
+
+    def transition_item(
+        self, principal: Principal, project_id: str, item_id: str,
+        verb: str, payload: dict[str, Any] | None = None,
+        *, expected_revision: Optional[int] = None,
+        command_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Explicit lifecycle verb on an item (DOM-007).
+
+        The verb IS the target lifecycle state.  DOM-007 is satisfied
+        because a milestone can ONLY reach "reached" through this method
+        (update_item refuses it), and this method requires an explicit
+        verb from the caller -- narrative prose cannot invoke it.
+        """
+        self._require_project(project_id)
+        existing = self._db.projects.get_project_item(item_id)
+        if existing is None or existing["project_id"] != project_id:
+            raise NotFound("project_item", item_id)
+
+        body = payload or {}
+        item_type = existing["item_type"]
+        verb = str(verb).strip()
+        self._validate_lifecycle(item_type, verb)
+
+        current_lc = existing["lifecycle"]
+        if current_lc == verb:
+            # No-op: already in that state
+            with self._db._connection() as conn:
+                current_rev = self._get_revision(conn, project_id)
+            envelope = CommandResultEnvelope(
+                result_kind=ResultKind.NO_CHANGE,
+                project_id=project_id,
+                project_revision=current_rev,
+            )
+            result = dict(existing)
+            result.update(_envelope_to_dict(envelope))
+            result["item_id"] = item_id
+            return result
+
+        # Idempotency
+        req_hash = _request_hash({
+            "project_id": project_id, "item_id": item_id,
+            "verb": verb, **body,
+        })
+        replay = self._check_idempotency(command_id, req_hash, "transition_item")
+        if replay is not None:
+            return replay
+
+        cmd_id = command_id or generate_pcmd_id()
+        now_iso = datetime.now().isoformat()
+        project_ref = format_ref("project", project_id)
+
+        with self._db._connection() as conn:
+            current_rev = self._get_revision(conn, project_id)
+            if expected_revision is not None and current_rev != expected_revision:
+                raise ConflictError(
+                    f"stale revision: expected {expected_revision}, got {current_rev}",
+                    code="stale_revision",
+                    context={
+                        "expected_revision": expected_revision,
+                        "current_revision": current_rev,
+                    },
+                )
+            new_revision = current_rev + 1
+
+            conn.execute(
+                "UPDATE projects SET revision = ?, updated_at = ? WHERE id = ?",
+                (new_revision, now_iso, project_id),
+            )
+
+            conn.execute(
+                "UPDATE project_items SET lifecycle = ?, revision = revision + 1, "
+                "updated_at = ? WHERE id = ?",
+                (verb, now_iso, item_id),
+            )
+
+            change_id = generate_pchg_id(
+                project_id=project_id,
+                project_revision=new_revision,
+                ordinal=0,
+            )
+            conn.execute(
+                """
+                INSERT INTO project_changes (
+                    id, project_id, project_revision, change_kind,
+                    target_ref, actor_ref, command_id,
+                    before_hash, after_hash, summary_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    change_id, project_id, new_revision,
+                    "project.updated",
+                    project_ref,
+                    f"principal:{principal.identity}",
+                    cmd_id, None, None,
+                    json.dumps({
+                        "action": "item.transitioned",
+                        "item_id": item_id,
+                        "from": current_lc,
+                        "to": verb,
+                    }),
+                    now_iso,
+                ),
+            )
+
+            self._ledger.append_in_transaction(
+                conn, principal,
+                event_type="project.updated",
+                producer="ProjectService",
+                subject_ref=project_ref,
+                source_revision=str(new_revision),
+                facts={
+                    "project_id": project_id,
+                    "action": "item.transitioned",
+                    "item_id": item_id,
+                    "from": current_lc,
+                    "to": verb,
+                },
+                refs=[project_ref],
+            )
+
+            envelope = CommandResultEnvelope(
+                result_kind=ResultKind.UPDATED,
+                project_id=project_id,
+                project_revision=new_revision,
+                changed_refs=(parse_ref(project_ref),),
+            )
+            self._record_command(
+                conn, cmd_id, project_id, "transition_item",
+                req_hash, envelope,
+            )
+
+        item = self._db.projects.get_project_item(item_id)
+        result = dict(item) if item else {"id": item_id}
+        result.update(_envelope_to_dict(envelope))
+        result["item_id"] = item_id
+        return result
+
+    def list_items(
+        self, principal: Principal, project_id: str,
+        *, item_type: Optional[str] = None,
+        limit: int = 200, offset: int = 0,
+    ) -> dict[str, Any]:
+        """List items for a project, bounded and deterministically ordered.
+
+        Order: item_type ASC, sort_key ASC NULLS LAST, created_at ASC, id ASC.
+        Pagination via limit/offset (sibling convention).
+        """
+        self._require_project(project_id)
+        clean_limit = max(1, min(int(limit), 1000))
+        clean_offset = max(0, int(offset))
+
+        with self._db._connection() as conn:
+            if item_type:
+                if item_type not in ITEM_TYPES:
+                    raise ValidationError(
+                        f"Unknown item_type filter: {item_type!r}",
+                        code="validation",
+                    )
+                rows = conn.execute(
+                    """
+                    SELECT * FROM project_items
+                    WHERE project_id = ? AND item_type = ?
+                    ORDER BY sort_key IS NULL, sort_key ASC,
+                             created_at ASC, id ASC
+                    LIMIT ? OFFSET ?
+                    """,
+                    (project_id, item_type, clean_limit, clean_offset),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """
+                    SELECT * FROM project_items
+                    WHERE project_id = ?
+                    ORDER BY item_type ASC,
+                             sort_key IS NULL, sort_key ASC,
+                             created_at ASC, id ASC
+                    LIMIT ? OFFSET ?
+                    """,
+                    (project_id, clean_limit, clean_offset),
+                ).fetchall()
+
+        return {
+            "items": [dict(r) for r in rows],
+            "limit": clean_limit,
+            "offset": clean_offset,
+        }
+
+    # ── item validation helpers ─────────────────────────────────────────
+
+    @staticmethod
+    def _validate_severity(value: Any) -> Optional[str]:
+        """Validate severity (nullable, closed vocabulary)."""
+        if value is None or value == "":
+            return None
+        sev = str(value).strip().lower()
+        if sev not in SEVERITY_LEVELS:
+            raise ValidationError(
+                f"severity must be one of {sorted(SEVERITY_LEVELS)} or null, "
+                f"got {sev!r}",
+                code="validation",
+            )
+        return sev
+
+    @staticmethod
+    def _validate_lifecycle(item_type: str, lifecycle: str) -> None:
+        """Validate lifecycle against the item type's closed vocabulary."""
+        valid = ITEM_LIFECYCLES.get(item_type)
+        if valid is None:
+            raise ValidationError(
+                f"Unknown item_type: {item_type!r}",
+                code="validation",
+            )
+        if lifecycle not in valid:
+            raise ValidationError(
+                f"lifecycle {lifecycle!r} is not valid for {item_type}; "
+                f"must be one of {list(valid)}",
+                code="validation",
+            )
+
+    @staticmethod
+    def _validate_optional_ref(value: Any, field_name: str) -> Optional[str]:
+        """Validate an optional qualified ref through holdspeak.refs."""
+        if value is None or value == "":
+            return None
+        ref_str = str(value).strip()
+        try:
+            parse_ref(ref_str)
+        except Exception as exc:
+            raise ValidationError(
+                f"{field_name} is not a valid qualified ref: {ref_str!r}",
+                code="validation",
+            ) from exc
+        return ref_str
+
+    @staticmethod
+    def _validate_details(item_type: str, details: dict[str, Any]) -> str:
+        """Validate details_json against the closed per-type schema (DB-004).
+
+        Returns the JSON string to persist.  Unknown fields or wrong types
+        raise a typed validation error.
+        """
+        schema = _DETAILS_SCHEMAS.get(item_type)
+        if schema is None:
+            raise ValidationError(
+                f"No details schema for item_type {item_type!r}",
+                code="validation",
+            )
+
+        if not isinstance(details, dict):
+            raise ValidationError(
+                "details must be a JSON object",
+                code="validation",
+            )
+
+        # Refuse unknown fields
+        unknown = set(details.keys()) - set(schema.keys())
+        if unknown:
+            raise ValidationError(
+                f"Unknown fields in details for {item_type}: {sorted(unknown)}",
+                code="validation",
+            )
+
+        # Validate each field
+        clean: dict[str, Any] = {}
+        for field_name, (required, validator) in schema.items():
+            value = details.get(field_name)
+            if value is None and field_name not in details:
+                if required:
+                    raise ValidationError(
+                        f"details.{field_name} is required for {item_type}",
+                        code="validation",
+                    )
+                continue  # omitted optional field
+            if not validator(value):
+                raise ValidationError(
+                    f"details.{field_name} has invalid type/value for {item_type}",
+                    code="validation",
+                )
+            clean[field_name] = value
+
+        return json.dumps(clean, ensure_ascii=False)
 
     # ── internal helpers ─────────────────────────────────────────────
 

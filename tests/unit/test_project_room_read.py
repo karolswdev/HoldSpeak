@@ -179,11 +179,28 @@ class TestDeterministicOrdering:
         )
         result = svc.room(OWNER, proj["id"])
         titles = [i["title"] for i in result["items"]["focus"]]
-        # severity DESC: 'high' > 'critical' alphabetically DESC
-        # both come before null
+        # HS-158-03: explicit CASE rank (critical=0 < high=1 < medium=2
+        # < low=3 < null=999); critical comes first, null comes last.
+        assert titles[0] == "critical-sev", "critical must be first"
+        assert titles[1] == "high-sev", "high must be second"
         assert titles[-1] == "no-severity", "null severity should be last"
-        # The two with severity should come before the null one
-        assert "no-severity" not in titles[:2]
+
+    def test_severity_rank_order_all_four_levels(self, rig) -> None:
+        """HS-158-03 inherited duty: prove explicit rank order with all
+        four severity levels + null (CASE expression, not free-text DESC).
+        """
+        db, svc = rig
+        proj = _create(svc)
+        for sev in [None, "low", "medium", "high", "critical"]:
+            db.projects.insert_project_item(
+                item_id=generate_pitem_id(), project_id=proj["id"],
+                item_type="risk", title=f"sev-{sev}", severity=sev,
+            )
+        result = svc.room(OWNER, proj["id"])
+        titles = [i["title"] for i in result["items"]["focus"]]
+        assert titles == [
+            "sev-critical", "sev-high", "sev-medium", "sev-low", "sev-None",
+        ]
 
     def test_due_at_asc_nulls_last_within_same_severity(self, rig) -> None:
         db, svc = rig

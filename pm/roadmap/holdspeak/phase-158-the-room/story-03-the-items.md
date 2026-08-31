@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 158
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-158-02
 - **Unblocks:** HS-158-05
 - **Owner:** unassigned
@@ -45,6 +45,34 @@ service Web and MCP will use. `details_json` is closed per type
 - **Unit:** `tests/unit/test_project_items.py` (five types, closed schemas, lifecycle verbs, ordering, revision-law compliance).
 - **Integration:** items routes through the real app.
 
+## What shipped
+
+- Four ProjectService item commands under the revision law:
+  `create_item` / `update_item` / `transition_item` / `list_items` —
+  each mutation one transaction (revision+1, change row,
+  `project.updated` event — §10 has no item event kind, none
+  invented), envelope additive, `expected_revision`/`command_id`
+  honored. Items are project-OWNED records, not citizens:
+  `changed_refs` carries `project:<id>`, `item_id` rides the payload
+  (no `pitem` ref type — §3.2 respected).
+- Closed vocabularies: severity `critical|high|medium|low` (nullable,
+  validated; SEVERITY_RANK 0-3); per-type lifecycles (milestone
+  planned|reached|missed|dropped; risk open|mitigated|accepted|closed;
+  dependency healthy|at_risk|broken|resolved; signal active|retired;
+  workstream active|paused|done — grounded in #514's vocabulary, no
+  SRS doc prescribed exact names; choice documented).
+- Closed `details_json` per type (DB-004): unknown fields/wrong types
+  → typed `validation`. DOM-007 guard: transition requires an
+  explicit verb (People-service convention:
+  `POST /items/{id}/transition` with `{"verb": ...}`).
+- INHERITED 04 DUTY PAID: `_read_room_items` severity ordering is now
+  an explicit CASE rank (critical first; alphabetical-DESC bug dead);
+  04's ordering tests extended to prove all four levels + null.
+- Routes: GET/POST items, PATCH item, POST transition; API surface
+  regenerated (574 routes). 57 new tests; orchestrator re-ran the
+  scoped set: 249 passed under isolated HOME (captured).
+
 ## Notes / open questions
 
-- Keep the per-type schemas minimal-but-real (the SRS table's common fields are first-class columns; details_json holds only type-specific extras).
+- Per-type schemas stayed minimal-but-real: common fields are columns; details_json holds only type-specific extras.
+- The api-surface manifest had pre-existing consumer drift on /room (the live extraction sees the 05-adoption WIP web consumer); regenerated — the branch head stays fence-green even though this commit's manifest references web work landing in 05's commit.

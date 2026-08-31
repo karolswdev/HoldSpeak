@@ -4003,6 +4003,38 @@
       "consumers": []
     },
     {
+      "path": "/api/projects/{project_id}/items",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/items",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.projects",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/items/{item_id}",
+      "methods": [
+        "PATCH"
+      ],
+      "module": "web.routes.projects",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/items/{item_id}/transition",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.projects",
+      "consumers": []
+    },
+    {
       "path": "/api/projects/{project_id}/meetings",
       "methods": [
         "GET"
@@ -4068,7 +4100,9 @@
         "GET"
       ],
       "module": "web.routes.projects",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/since-last-meeting",

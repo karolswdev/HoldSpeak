@@ -263,4 +263,106 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to get project artifacts")
 
+    # ── Item routes (HS-158-03) ─────────────────────────────────────
+
+    @router.get("/api/projects/{project_id}/items")
+    async def api_list_items(
+        project_id: str, request: Request,
+        item_type: str | None = None,
+        limit: int = 200, offset: int = 0,
+    ) -> Any:
+        try:
+            return JSONResponse(service.list_items(
+                principal(request), project_id,
+                item_type=item_type, limit=limit, offset=offset,
+            ))
+        except NotFound as exc:
+            return not_found(exc)
+        except ValidationError as exc:
+            return JSONResponse({"error": exc.detail}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list project items")
+
+    @router.post("/api/projects/{project_id}/items")
+    async def api_create_item(
+        project_id: str, payload: dict[str, Any], request: Request,
+    ) -> Any:
+        try:
+            expected_rev = payload.pop("expected_revision", None)
+            cmd_id = payload.pop("command_id", None)
+            result = service.create_item(
+                principal(request), project_id, payload,
+                expected_revision=expected_rev, command_id=cmd_id,
+            )
+            return JSONResponse({"success": True, "item": result})
+        except ConflictError as exc:
+            return JSONResponse({"success": False, "error": exc.detail,
+                                 "error_code": exc.code}, status_code=409)
+        except NotFound as exc:
+            return not_found(exc, success=True)
+        except ValidationError as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
+        except Exception as exc:
+            log.error(f"Failed to create item: {exc}")
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+
+    @router.patch("/api/projects/{project_id}/items/{item_id}")
+    async def api_update_item(
+        project_id: str, item_id: str,
+        payload: dict[str, Any], request: Request,
+    ) -> Any:
+        try:
+            expected_rev = payload.pop("expected_revision", None)
+            cmd_id = payload.pop("command_id", None)
+            result = service.update_item(
+                principal(request), project_id, item_id, payload,
+                expected_revision=expected_rev, command_id=cmd_id,
+            )
+            return JSONResponse({"success": True, "item": result})
+        except ConflictError as exc:
+            return JSONResponse({"success": False, "error": exc.detail,
+                                 "error_code": exc.code}, status_code=409)
+        except NotFound as exc:
+            return not_found(exc, success=True)
+        except ValidationError as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
+        except Exception as exc:
+            log.error(f"Failed to update item: {exc}")
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+
+    @router.post("/api/projects/{project_id}/items/{item_id}/transition")
+    async def api_transition_item(
+        project_id: str, item_id: str,
+        payload: dict[str, Any], request: Request,
+    ) -> Any:
+        """Explicit lifecycle transition (DOM-007).
+
+        Follows the people service transition convention: POST with
+        ``verb`` in the request body.
+        """
+        try:
+            verb = str(payload.pop("verb", "")).strip()
+            if not verb:
+                return JSONResponse(
+                    {"success": False, "error": "verb is required"},
+                    status_code=400,
+                )
+            expected_rev = payload.pop("expected_revision", None)
+            cmd_id = payload.pop("command_id", None)
+            result = service.transition_item(
+                principal(request), project_id, item_id, verb, payload,
+                expected_revision=expected_rev, command_id=cmd_id,
+            )
+            return JSONResponse({"success": True, "item": result})
+        except ConflictError as exc:
+            return JSONResponse({"success": False, "error": exc.detail,
+                                 "error_code": exc.code}, status_code=409)
+        except NotFound as exc:
+            return not_found(exc, success=True)
+        except ValidationError as exc:
+            return JSONResponse({"success": False, "error": exc.detail}, status_code=400)
+        except Exception as exc:
+            log.error(f"Failed to transition item: {exc}")
+            return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
+
     return router
