@@ -149,7 +149,7 @@ class InferenceFallbackController:
         )
         effect = {"execution_id": execution_id}
         conn.execute(
-            "INSERT INTO inference_route_execution_commands VALUES (?,?,?,?,?,?,?)",
+            "INSERT INTO inference_route_execution_commands (command_id, action, request_sha256, execution_id, effect_json, effect_sha256, created_at) VALUES (?,?,?,?,?,?,?)",
             (command, "start", request_hash, execution_id, _canonical(effect), _sha256(effect), created_at),
         )
         self._insert_transition(
@@ -281,7 +281,7 @@ class InferenceFallbackController:
                     )
                     if larger:
                         conn.execute(
-                            "INSERT INTO inference_route_execution_skips VALUES (?,?,?,?,?,?)",
+                            "INSERT INTO inference_route_execution_skips (id, execution_id, route_leg_ordinal, disposition, reason_code, created_at) VALUES (?,?,?,?,?,?)",
                             (f"{execution}:{leg_ordinal}", execution, leg_ordinal,
                              "context_overflow", str(planned["reason_code"]), now_text),
                         )
@@ -290,7 +290,7 @@ class InferenceFallbackController:
                 if planned["eligibility"] != "executable":
                     disposition = "context_overflow" if planned["eligibility"] == "known_context_overflow" else "preflight_unavailable"
                     conn.execute(
-                        "INSERT INTO inference_route_execution_skips VALUES (?,?,?,?,?,?)",
+                        "INSERT INTO inference_route_execution_skips (id, execution_id, route_leg_ordinal, disposition, reason_code, created_at) VALUES (?,?,?,?,?,?)",
                         (f"{execution}:{leg_ordinal}", execution, leg_ordinal, disposition, str(planned["reason_code"]), now_text),
                     )
                     # Current v1 policies do not authorize preflight-unavailable
@@ -1299,7 +1299,7 @@ class InferenceFallbackController:
     @staticmethod
     def _insert_command(conn: Any, command: str, action: str, request_hash: str, execution: str, effect: dict[str, Any], created_at: str) -> None:
         conn.execute(
-            "INSERT INTO inference_route_execution_commands VALUES (?,?,?,?,?,?,?)",
+            "INSERT INTO inference_route_execution_commands (command_id, action, request_sha256, execution_id, effect_json, effect_sha256, created_at) VALUES (?,?,?,?,?,?,?)",
             (command, action, request_hash, execution, _canonical(effect), _sha256(effect), created_at),
         )
 
@@ -1340,7 +1340,7 @@ class InferenceFallbackController:
         }
         digest = _sha256(material)
         conn.execute(
-            "INSERT INTO inference_route_execution_transitions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO inference_route_execution_transitions (transition_id, execution_id, ordinal, action, command_id, prior_revision, post_revision, prior_state, post_state, effect_sha256, previous_sha256, sha256) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 f"irt_{digest.removeprefix('sha256:')[:32]}", execution_id, ordinal,
                 action, command_id, prior_revision, post_revision, prior_state,

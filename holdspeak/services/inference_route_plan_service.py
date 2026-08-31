@@ -610,7 +610,7 @@ class InferenceRoutePlanService:
             principal_policy_evidence=principal_policy,
         )
         conn.execute(
-            "INSERT INTO inference_route_plan_commands VALUES (?,?,?,?,?)",
+            "INSERT INTO inference_route_plan_commands (command_id, request_sha256, plan_id, plan_sha256, created_at) VALUES (?,?,?,?,?)",
             (command, request_hash, material["id"], digest, material["created_at"]),
         )
         return {**material, "sha256": digest}
@@ -675,7 +675,7 @@ class InferenceRoutePlanService:
             principal_policy_evidence=principal_policy,
         )
         conn.execute(
-            "INSERT INTO inference_route_plan_commands VALUES (?,?,?,?,?)",
+            "INSERT INTO inference_route_plan_commands (command_id, request_sha256, plan_id, plan_sha256, created_at) VALUES (?,?,?,?,?)",
             (command, request_hash, material["id"], resolved["sha256"], material["created_at"]),
         )
         return resolved
@@ -782,7 +782,7 @@ class InferenceRoutePlanService:
                 )
                 route_hash = _sha256(material)
                 self._insert_route(conn, material, route_hash, [deployment_revision], capability_definition=capability.canonical_dict(), retry_policy_definition=policy.canonical_dict(), frozen_preflight=({"route_leg_ordinal": 1, "eligibility": "executable", "reason_code": None},))
-                conn.execute("INSERT INTO inference_route_plan_commands VALUES (?,?,?,?,?)", (command, request_hash, material["id"], route_hash, material["created_at"]))
+                conn.execute("INSERT INTO inference_route_plan_commands (command_id, request_sha256, plan_id, plan_sha256, created_at) VALUES (?,?,?,?,?)", (command, request_hash, material["id"], route_hash, material["created_at"]))
                 conn.commit()
                 return {**material, "sha256": route_hash}
             except Exception:
@@ -967,7 +967,7 @@ class InferenceRoutePlanService:
                     material_snapshot_sha256,payload_json,sha256) VALUES (?,?,?,?,?,?,?)""",
                 (operation["id"], budget_material["provider_id"], budget_material["provider_revision"], operation["admission_evidence_ref"], operation["material_snapshot_sha256"], _canonical(budget_material), _sha256(budget_material)),
             )
-        conn.execute("INSERT INTO inference_operation_route_request_plan_commands VALUES (?,?,?,?,?,?,?)", (command, request_hash, route_material["id"], resolved["sha256"], operation["id"], operation_hash, operation["created_at"]))
+        conn.execute("INSERT INTO inference_operation_route_request_plan_commands (command_id, request_sha256, route_plan_id, route_plan_sha256, operation_plan_id, operation_plan_sha256, created_at) VALUES (?,?,?,?,?,?,?)", (command, request_hash, route_material["id"], resolved["sha256"], operation["id"], operation_hash, operation["created_at"]))
         return {"route_plan": resolved, "operation_request_plan": {**operation, "sha256": operation_hash}}
 
     def freeze_operation_for_route(
@@ -1089,7 +1089,7 @@ class InferenceRoutePlanService:
              _canonical(budget_material), _sha256(budget_material)),
         )
         conn.execute(
-            "INSERT INTO inference_operation_route_request_plan_commands VALUES (?,?,?,?,?,?,?)",
+            "INSERT INTO inference_operation_route_request_plan_commands (command_id, request_sha256, route_plan_id, route_plan_sha256, operation_plan_id, operation_plan_sha256, created_at) VALUES (?,?,?,?,?,?,?)",
             (command, request_hash, route["id"], route["sha256"], operation["id"], operation_hash, operation["created_at"]),
         )
         return {"route_plan": route, "operation_request_plan": {**operation, "sha256": operation_hash}}
@@ -1721,12 +1721,12 @@ class InferenceRoutePlanService:
                 (f"{material['id']}:{entry['ordinal']}", material["id"], entry["ordinal"], entry["profile_id"], entry["profile_revision"], entry["profile_schema_version"], entry["binding_id"], entry["binding_revision"], entry["deployment_head_id"], entry["deployment_configuration_revision"], entry["deployment_revision_id"], entry["capability_manifest_sha256"], entry["boundary"], _canonical(entry["context_support"])),
             )
         conn.execute(
-            "INSERT INTO inference_route_plan_authority_evidence VALUES (?,?,?,?,?)",
+            "INSERT INTO inference_route_plan_authority_evidence (plan_id, capability_definition_json, capability_definition_sha256, retry_policy_definition_json, retry_policy_definition_sha256) VALUES (?,?,?,?,?)",
             (material["id"], _canonical(capability_definition), capability_definition["schema_sha256"], _canonical(retry_policy_definition), retry_policy_definition["sha256"]),
         )
         if principal_policy_evidence is not None:
             conn.execute(
-                "INSERT INTO inference_route_plan_principal_evidence VALUES (?,?,?)",
+                "INSERT INTO inference_route_plan_principal_evidence (plan_id, payload_json, sha256) VALUES (?,?,?)",
                 (
                     material["id"],
                     _canonical(principal_policy_evidence),
@@ -1741,7 +1741,7 @@ class InferenceRoutePlanService:
             if int(item["route_leg_ordinal"]) != expected:
                 raise ConflictError("Route preflight order is invalid.", code="inference_route_plan_integrity_invalid")
             conn.execute(
-                "INSERT INTO inference_route_plan_preflight_evidence VALUES (?,?,?,?)",
+                "INSERT INTO inference_route_plan_preflight_evidence (plan_id, route_leg_ordinal, eligibility, reason_code) VALUES (?,?,?,?)",
                 (material["id"], expected, item["eligibility"], item.get("reason_code")),
             )
 

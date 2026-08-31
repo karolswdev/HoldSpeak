@@ -340,7 +340,7 @@ class ProductionRouteEvidence:
                 )
             return {**material, "material_snapshot_sha256": material_sha}
         conn.execute(
-            "INSERT INTO inference_adoption_material_snapshots VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO inference_adoption_material_snapshots (planning_reference, capability_id, operation_id, contract, contract_revision, payload_json, payload_sha256, material_snapshot_sha256, reserved_output_tokens, reserved_tool_calls, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             (reference, capability_id, operation, contract, contract_revision,
              payload_json, payload_sha, material_sha, reserved_output_tokens,
              reserved_tool_calls, _now()),
@@ -487,7 +487,7 @@ class ProductionRouteEvidence:
                 )
         else:
             conn.execute(
-                "INSERT INTO inference_adoption_route_evidence VALUES (?,?,?,?,?,?,?,?)",
+                "INSERT INTO inference_adoption_route_evidence (evidence_ref, planning_reference, operation_id, capability_id, material_snapshot_sha256, evidence_json, evidence_sha256, created_at) VALUES (?,?,?,?,?,?,?,?)",
                 (
                     evidence_ref, planning_reference, operation_id, capability_id,
                     row["material_snapshot_sha256"], evidence_json, evidence_sha, _now(),
@@ -984,7 +984,7 @@ class RoutedInferenceCoordinator:
                 operation_plan_ids = [value["operation_request_plan"]["id"] for value in admitted]
                 result = {"schema": "InferenceAdoptionComposite@1", "id": composite_id, "operation_plan_ids": operation_plan_ids}
                 conn.execute(
-                    "INSERT INTO inference_adoption_composites VALUES (?,?,?,?,?,?)",
+                    "INSERT INTO inference_adoption_composites (composite_id, command_id, request_sha256, operation_plan_ids_json, result_sha256, created_at) VALUES (?,?,?,?,?,?)",
                     (
                         composite_id, command, request_sha,
                         _canonical(operation_plan_ids), _sha256(result), _now(),
@@ -1511,7 +1511,7 @@ class RoutedInferenceCoordinator:
                     ).fetchone()
                     if prior is None:
                         conn.execute(
-                            "INSERT INTO inference_adoption_attempt_results VALUES (?,?,?,?,?,?)",
+                            "INSERT INTO inference_adoption_attempt_results (attempt_id, child_invocation_id, producer_result_ref, result_json, result_sha256, created_at) VALUES (?,?,?,?,?,?)",
                             (
                                 str(reservation["attempt_id"]),
                                 str(reservation["child_invocation_id"]),
@@ -1714,7 +1714,7 @@ class RoutedInferenceCoordinator:
                     ).fetchone()
                     if prior is None:
                         conn.execute(
-                            "INSERT INTO inference_adoption_attempt_results VALUES (?,?,?,?,?,?)",
+                            "INSERT INTO inference_adoption_attempt_results (attempt_id, child_invocation_id, producer_result_ref, result_json, result_sha256, created_at) VALUES (?,?,?,?,?,?)",
                             (
                                 str(reservation["attempt_id"]),
                                 str(reservation["child_invocation_id"]),
