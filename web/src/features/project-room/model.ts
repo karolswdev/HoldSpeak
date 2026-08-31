@@ -15,6 +15,190 @@ export type {
   MemorySearchResponse,
 } from "../../pages/cores/core-types";
 
+/* ── Room snapshot types (WEB-ARC-004 discriminated section states) ── */
+
+/** Section state vocabulary (CONTRACTS-P0 SS6.2). */
+export type SectionStateOk = "ok";
+export type SectionStateDegraded = "degraded";
+export type SectionStateAbsent = "absent";
+export type SectionState = SectionStateOk | SectionStateDegraded | SectionStateAbsent;
+
+/** An ok section carries its data alongside state:"ok". */
+export type OkSection<T> = T & { state: SectionStateOk };
+
+/** A degraded section: the sub-read failed (NFR-003). */
+export type DegradedSection = { state: SectionStateDegraded; error_code: string };
+
+/** An absent section: domain not yet built (Art VI, NFR-006). */
+export type AbsentSection = { state: SectionStateAbsent; reason: string };
+
+/** Discriminated union for any section in the room snapshot. */
+export type RoomSection<T> = OkSection<T> | DegradedSection | AbsentSection;
+
+/** The project orientation block from /room. */
+export type RoomProjectOrientation = {
+  id: string;
+  name: string;
+  description: string | null;
+  isArchived: boolean;
+  meetingCount: number;
+  createdAt: string;
+  updatedAt: string;
+  // SS5.1 room fields (nullable)
+  purpose: string | null;
+  outcomeText: string | null;
+  ownerRef: string | null;
+  lifecycle: string | null;
+  posture: string | null;
+  postureReason: string | null;
+  startAt: string | null;
+  targetAt: string | null;
+  revision: number;
+};
+
+/** Focus item from the items section. */
+export type RoomFocusItem = {
+  id: string;
+  projectId: string;
+  itemType: string;
+  title: string;
+  severity: string | null;
+  dueAt: string | null;
+  sortKey: number | null;
+  createdAt: string;
+};
+
+/** Items section data shape (when ok). */
+export type RoomItemsData = {
+  focus: RoomFocusItem[];
+  totalsByType: Record<string, number>;
+  total: number;
+};
+
+/** Meetings section data shape (when ok). */
+export type RoomMeetingsData = {
+  count: number;
+  latest: Record<string, unknown> | null;
+};
+
+/** Resources section data shape (when ok). */
+export type RoomResourcesData = {
+  count: number;
+  latest: Record<string, unknown> | null;
+};
+
+/** Changes section data shape (when ok). */
+export type RoomChangesData = {
+  recent: Record<string, unknown>[];
+};
+
+/** The full room snapshot (typed, WEB-ARC-004). */
+export type RoomSnapshot = {
+  projectId: string;
+  revision: number;
+  observedAt: string;
+  project: RoomProjectOrientation;
+  items: RoomSection<RoomItemsData>;
+  meetings: RoomSection<RoomMeetingsData>;
+  resources: RoomSection<RoomResourcesData>;
+  changes: RoomSection<RoomChangesData>;
+  review: RoomSection<Record<string, never>>;
+  sources: RoomSection<Record<string, never>>;
+  updates: RoomSection<Record<string, never>>;
+  steward: RoomSection<Record<string, never>>;
+};
+
+/* ── Room snapshot decoder ── */
+
+function decodeOrientation(raw: Record<string, unknown>): RoomProjectOrientation {
+  return {
+    id: String(raw.id ?? ""),
+    name: String(raw.name ?? ""),
+    description: raw.description != null ? String(raw.description) : null,
+    isArchived: Boolean(raw.is_archived),
+    meetingCount: Number(raw.meeting_count ?? 0),
+    createdAt: String(raw.created_at ?? ""),
+    updatedAt: String(raw.updated_at ?? ""),
+    purpose: raw.purpose != null ? String(raw.purpose) : null,
+    outcomeText: raw.outcome_text != null ? String(raw.outcome_text) : null,
+    ownerRef: raw.owner_ref != null ? String(raw.owner_ref) : null,
+    lifecycle: raw.lifecycle != null ? String(raw.lifecycle) : null,
+    posture: raw.posture != null ? String(raw.posture) : null,
+    postureReason: raw.posture_reason != null ? String(raw.posture_reason) : null,
+    startAt: raw.start_at != null ? String(raw.start_at) : null,
+    targetAt: raw.target_at != null ? String(raw.target_at) : null,
+    revision: Number(raw.revision ?? 0),
+  };
+}
+
+function decodeFocusItem(raw: Record<string, unknown>): RoomFocusItem {
+  return {
+    id: String(raw.id ?? ""),
+    projectId: String(raw.project_id ?? ""),
+    itemType: String(raw.item_type ?? ""),
+    title: String(raw.title ?? ""),
+    severity: raw.severity != null ? String(raw.severity) : null,
+    dueAt: raw.due_at != null ? String(raw.due_at) : null,
+    sortKey: raw.sort_key != null ? Number(raw.sort_key) : null,
+    createdAt: String(raw.created_at ?? ""),
+  };
+}
+
+function decodeSection<T>(
+  raw: unknown,
+  decodeData: (section: Record<string, unknown>) => T,
+): RoomSection<T> {
+  if (!raw || typeof raw !== "object") {
+    return { state: "absent", reason: "missing" };
+  }
+  const section = raw as Record<string, unknown>;
+  const state = String(section.state ?? "absent");
+  if (state === "absent") {
+    return { state: "absent", reason: String(section.reason ?? "unknown") };
+  }
+  if (state === "degraded") {
+    return { state: "degraded", error_code: String(section.error_code ?? "unknown") };
+  }
+  return { state: "ok", ...decodeData(section) };
+}
+
+/** Decode a raw /room JSON response into a typed RoomSnapshot (WEB-ARC-004). */
+export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
+  const project = (raw.project ?? {}) as Record<string, unknown>;
+  return {
+    projectId: String(raw.project_id ?? ""),
+    revision: Number(raw.revision ?? 0),
+    observedAt: String(raw.observed_at ?? ""),
+    project: decodeOrientation(project),
+    items: decodeSection<RoomItemsData>(raw.items, (s) => ({
+      focus: Array.isArray(s.focus) ? s.focus.map((r: unknown) => decodeFocusItem(r as Record<string, unknown>)) : [],
+      totalsByType: (s.totals_by_type && typeof s.totals_by_type === "object")
+        ? Object.fromEntries(
+            Object.entries(s.totals_by_type as Record<string, unknown>).map(
+              ([k, v]) => [k, Number(v ?? 0)],
+            ),
+          )
+        : {},
+      total: Number(s.total ?? 0),
+    })),
+    meetings: decodeSection<RoomMeetingsData>(raw.meetings, (s) => ({
+      count: Number(s.count ?? 0),
+      latest: (s.latest && typeof s.latest === "object") ? s.latest as Record<string, unknown> : null,
+    })),
+    resources: decodeSection<RoomResourcesData>(raw.resources, (s) => ({
+      count: Number(s.count ?? 0),
+      latest: (s.latest && typeof s.latest === "object") ? s.latest as Record<string, unknown> : null,
+    })),
+    changes: decodeSection<RoomChangesData>(raw.changes, (s) => ({
+      recent: Array.isArray(s.recent) ? s.recent as Record<string, unknown>[] : [],
+    })),
+    review: decodeSection<Record<string, never>>(raw.review, () => ({} as Record<string, never>)),
+    sources: decodeSection<Record<string, never>>(raw.sources, () => ({} as Record<string, never>)),
+    updates: decodeSection<Record<string, never>>(raw.updates, () => ({} as Record<string, never>)),
+    steward: decodeSection<Record<string, never>>(raw.steward, () => ({} as Record<string, never>)),
+  };
+}
+
 /* ── domain types ── */
 
 export type ProjectTimelineEntry = {

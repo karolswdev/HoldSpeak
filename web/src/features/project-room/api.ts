@@ -14,8 +14,19 @@ import type {
   DecisionPromoteResponse,
   MemorySearchResponse,
 } from "./model";
+import type { RoomSnapshot } from "./model";
+import { decodeRoomSnapshot } from "./model";
 
-/* ── project data fan-out ── */
+/* ── room projection (HS-158-05 adoption: the first render) ── */
+
+export async function fetchProjectRoom(projectId: string): Promise<RoomSnapshot> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `/api/projects/${encodeURIComponent(projectId)}/room`,
+  );
+  return decodeRoomSnapshot(raw);
+}
+
+/* ── project data fan-out (progressive follow-ups) ── */
 
 export function fetchProject(projectId: string) {
   return apiFetch<ProjectResponse>(

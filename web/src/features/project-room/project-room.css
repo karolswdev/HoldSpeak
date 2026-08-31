@@ -1,0 +1,37 @@
+/* HS-158-05 — Project Room orientation band and focus block.
+   Signal tokens only; no raw colors or z-index. */
+
+.project-room-orientation {
+  padding: 8px var(--desk-surface-row-pad-x, 14px);
+}
+
+.project-room-name {
+  margin: 0 0 4px;
+  font-size: var(--desk-surface-heading-size, 15px);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.project-room-purpose,
+.project-room-outcome {
+  margin: 0 0 2px;
+  font-size: var(--desk-surface-body-size, 13px);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.project-room-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-top: 6px;
+}
+
+.project-room-focus-group {
+  margin-bottom: 4px;
+}
+
+.project-room-degraded {
+  padding: 4px var(--desk-surface-row-pad-x, 14px);
+  margin: 0;
+}

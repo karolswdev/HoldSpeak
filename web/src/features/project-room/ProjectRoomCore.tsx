@@ -1,5 +1,6 @@
-// HS-158-05 extraction — the rendering core, composing exactly what
-// ProjectMemoryCore renders today.  Zero visual/behavior change.
+// HS-158-05 adoption — the Room face on the desk. Orientation band from
+// /room data, focus block, honest absent/degraded states. Existing wings
+// (Timeline/Decisions/Search/Ask) keep working unchanged.
 import { useState } from "react";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { Button } from "../../components/signal/Signal";
@@ -29,9 +30,11 @@ import { humanTime } from "../../desk/surface/format";
 import { readableError } from "../../lib/api";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type { SinceLastMeetingResponse } from "./model";
+import type { RoomSnapshot, RoomSection } from "./model";
 import { lifecycleLabel, type ProjectTimelineEntry } from "./model";
 import { promoteDecision } from "./api";
 import { useProjectRoomController } from "./useProjectRoomController";
+import "./project-room.css";
 
 /* ── sub-components (unchanged from ProjectMemoryCore) ── */
 
@@ -280,11 +283,159 @@ function SinceLastMeeting({ receipt }: { receipt: SinceLastMeetingResponse }) {
   );
 }
 
+/* ── Orientation band (WEB-NOW-001 P1 subset, WEB-LC-001/002) ── */
+
+/** Lifecycle chip for the orientation band — maps lifecycle to a token
+ *  with the appropriate tone. */
+function OrientationLifecycleChip({ lifecycle }: { lifecycle: string | null }) {
+  if (!lifecycle) return null;
+  const label = lifecycle[0].toUpperCase() + lifecycle.slice(1);
+  const tone =
+    lifecycle === "active" || lifecycle === "in_progress"
+      ? "ok"
+      : lifecycle === "archived" || lifecycle === "closed"
+        ? "danger"
+        : undefined;
+  return (
+    <span className="surface-token" data-tone={tone} data-testid="orientation-lifecycle">
+      {label}
+    </span>
+  );
+}
+
+/** Posture fact — separate from lifecycle per WEB-LC-001/002. */
+function OrientationPosture({ posture, reason }: { posture: string | null; reason: string | null }) {
+  if (!posture) return null;
+  const label = posture[0].toUpperCase() + posture.slice(1);
+  return (
+    <span className="surface-token" data-testid="orientation-posture" title={reason || undefined}>
+      {label}
+    </span>
+  );
+}
+
+/** The orientation band: name/purpose/outcome + lifecycle + posture as
+ *  separate facts (WEB-LC-001/002). Nothing fabricated when absent (Art VI). */
+function OrientationBand({ room }: { room: RoomSnapshot }) {
+  const { project } = room;
+  return (
+    <section className="project-room-orientation" data-testid="orientation-band" aria-label="Project orientation">
+      <h2 className="project-room-name" data-testid="project-room-name">
+        {project.name}
+      </h2>
+      {project.purpose ? (
+        <p className="project-room-purpose" data-testid="orientation-purpose">
+          {project.purpose}
+        </p>
+      ) : null}
+      {project.outcomeText ? (
+        <p className="project-room-outcome" data-testid="orientation-outcome">
+          {project.outcomeText}
+        </p>
+      ) : null}
+      <div className="project-room-facts" data-testid="orientation-facts">
+        <OrientationLifecycleChip lifecycle={project.lifecycle} />
+        <OrientationPosture posture={project.posture} reason={project.postureReason} />
+        {room.revision > 0 ? (
+          <span className="surface-token" data-testid="orientation-revision">
+            REV {room.revision}
+          </span>
+        ) : null}
+        {project.updatedAt ? (
+          <span className="surface-token" data-testid="orientation-activity">
+            {humanTime(project.updatedAt)}
+          </span>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+/* ── Focus block (WEB-NOW-001: items grouped by kind, honest totals) ── */
+
+function FocusBlock({ room }: { room: RoomSnapshot }) {
+  const items = room.items;
+  if (items.state === "absent") return null;
+  if (items.state === "degraded") {
+    return (
+      <SurfaceSection label="Focus">
+        <SurfaceState error={`Items unavailable: ${items.error_code}`} />
+      </SurfaceSection>
+    );
+  }
+  // ok state
+  if (items.total === 0) {
+    return (
+      <div data-testid="focus-block">
+        <SurfaceSection label="Focus">
+          <SurfaceState
+            empty
+            emptyLabel="No material yet."
+            emptyGlyph={"▤"}
+          />
+        </SurfaceSection>
+      </div>
+    );
+  }
+  // Group focus items by kind
+  const grouped: Record<string, typeof items.focus> = {};
+  for (const item of items.focus) {
+    const kind = item.itemType || "other";
+    if (!grouped[kind]) grouped[kind] = [];
+    grouped[kind].push(item);
+  }
+  const typeLabel = (type: string) =>
+    type[0].toUpperCase() + type.slice(1) + "s";
+  return (
+    <div data-testid="focus-block">
+    <SurfaceSection label="Focus">
+      {Object.entries(grouped).map(([kind, kindItems]) => (
+        <div key={kind} className="project-room-focus-group">
+          <span className="surface-token">
+            {typeLabel(kind)} {items.totalsByType[kind] ?? kindItems.length}
+          </span>
+          <SurfaceRows>
+            {kindItems.map((item) => (
+              <SurfaceRow
+                key={item.id}
+                title={item.title}
+                detail={
+                  [
+                    item.severity ? item.severity.toUpperCase() : "",
+                    item.dueAt ? `Due ${item.dueAt}` : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || undefined
+                }
+              />
+            ))}
+          </SurfaceRows>
+        </div>
+      ))}
+    </SurfaceSection>
+    </div>
+  );
+}
+
+/* ── Degraded section inline notice ── */
+
+function DegradedNotice({ label, section }: { label: string; section: RoomSection<unknown> }) {
+  if (section.state !== "degraded") return null;
+  return (
+    <p className="project-room-degraded" data-testid={`degraded-${label}`} role="status">
+      <span className="surface-token" data-tone="warn">
+        {label.toUpperCase()} UNAVAILABLE
+      </span>
+    </p>
+  );
+}
+
 /* ── main core ── */
 
 export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   const ctrl = useProjectRoomController(scope, scopeLabel);
   const loading = ctrl.loadStatus === "loading";
+  const detailLoading = ctrl.detailStatus === "loading";
 
   // HS-111-06 -- the timeline is a filed-archive ledger (audit M3):
   // fixed time column, mono kind tokens, open-in-place as before.
@@ -304,9 +455,9 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     <SurfaceSection label="Timeline">
       <SinceLastMeeting receipt={ctrl.since} />
       <SurfaceState
-        loading={loading}
+        loading={detailLoading}
         error={ctrl.error}
-        empty={!ctrl.timeline.length}
+        empty={!detailLoading && !ctrl.timeline.length}
         emptyLabel="No project memory yet"
         emptyGlyph={"▤"}
         onRetry={() => void ctrl.load()}
@@ -357,9 +508,9 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
       actions={<span className="quiet">{ctrl.decisions.length}</span>}
     >
       <SurfaceState
-        loading={loading}
+        loading={detailLoading}
         error={ctrl.error}
-        empty={!ctrl.decisions.length}
+        empty={!detailLoading && !ctrl.decisions.length}
         emptyLabel="No decisions recorded"
         emptyGlyph={"✓"}
         onRetry={() => void ctrl.load()}
@@ -515,6 +666,20 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
       ) : (
         <SurfaceVerbs status={ctrl.projectName} />
       )}
+      {/* Orientation band renders before slow sections (WEB-STA-001) */}
+      {ctrl.room ? (
+        <>
+          <OrientationBand room={ctrl.room} />
+          <FocusBlock room={ctrl.room} />
+          {/* Degraded sections show inline (WEB-STA-002, never overlay) */}
+          <DegradedNotice label="meetings" section={ctrl.room.meetings} />
+          <DegradedNotice label="resources" section={ctrl.room.resources} />
+          <DegradedNotice label="changes" section={ctrl.room.changes} />
+          {/* Absent sections render NOTHING (Art VI) — no teaser placeholders */}
+        </>
+      ) : loading ? (
+        <SurfaceState loading />
+      ) : null}
       <div className="project-memory-core" data-view={ctrl.view}>
         {ctrl.view === "timeline" ? (
           timelineFace

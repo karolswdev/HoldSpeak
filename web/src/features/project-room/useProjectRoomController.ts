@@ -1,7 +1,10 @@
-// HS-158-05 extraction — the state/effects/handlers that lived inside
-// ProjectMemoryCore, exposed as a controller hook.  WEB-ARC-003: the
-// main load lifecycle is a discriminated `loadStatus` instead of
-// contradictory loading+error booleans.
+// HS-158-05 adoption — the controller now uses GET /room as the FIRST
+// render (one request for orientation + focus + counts). The legacy
+// detail fetches (meetings/decisions/artifacts/since-last-meeting)
+// become progressive follow-ups feeding the existing timeline/decision
+// wings. WEB-ARC-003: discriminated loadStatus. WEB-STA-001/002:
+// orientation renders before slow sections; one failed section never
+// blanks the rest.
 
 import { useEffect, useMemo, useState } from "react";
 import { readableError } from "../../lib/api";
@@ -9,6 +12,7 @@ import { openSurfaceOr } from "../../desk/shell";
 import { openSourceRef } from "../../desk/surface/citations";
 import { useCoreWings } from "../../pages/cores/core-hooks";
 import type { SinceLastMeetingResponse } from "./model";
+import type { RoomSnapshot } from "./model";
 import { composeProjectTimeline } from "./model";
 import * as api from "./api";
 
@@ -32,6 +36,7 @@ export function useProjectRoomController(
     : "";
   const wings = useCoreWings(WINGS, "timeline");
   const [project, setProject] = useState<Record<string, unknown>>({});
+  const [room, setRoom] = useState<RoomSnapshot | null>(null);
   const [meetings, setMeetings] = useState<Record<string, unknown>[]>([]);
   const [decisions, setDecisions] = useState<Record<string, unknown>[]>([]);
   const [artifacts, setArtifacts] = useState<Record<string, unknown>[]>([]);
@@ -39,6 +44,7 @@ export function useProjectRoomController(
   const [loadStatus, setLoadStatus] = useState<LoadStatus>(
     projectId ? "loading" : "idle",
   );
+  const [detailStatus, setDetailStatus] = useState<"idle" | "loading" | "ready">("idle");
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchHits, setSearchHits] = useState<Record<string, unknown>[]>([]);
@@ -53,24 +59,46 @@ export function useProjectRoomController(
     setLoadStatus("loading");
     setError("");
     try {
-      const [projectBody, meetingBody, decisionBody, artifactBody, sinceBody] =
-        await Promise.all([
-          api.fetchProject(projectId),
-          api.fetchProjectMeetings(projectId),
-          api.fetchProjectDecisions(projectId),
-          api.fetchProjectArtifacts(projectId),
-          api.fetchSinceLastMeeting(projectId),
-        ]);
-      setProject(projectBody);
-      setMeetings(meetingBody.meetings || []);
-      setDecisions(decisionBody.decisions || []);
-      setArtifacts(artifactBody.artifacts || []);
-      setSince(sinceBody);
+      // Phase 1: one /room request gives orientation + focus + counts
+      const snapshot = await api.fetchProjectRoom(projectId);
+      setRoom(snapshot);
+      // Populate project from the room orientation for backward compat
+      setProject({
+        id: snapshot.project.id,
+        name: snapshot.project.name,
+        description: snapshot.project.description,
+        is_archived: snapshot.project.isArchived,
+        meeting_count: snapshot.project.meetingCount,
+        created_at: snapshot.project.createdAt,
+        updated_at: snapshot.project.updatedAt,
+      });
       setReadAt(Date.now());
     } catch (reason) {
       setError(readableError(reason));
     } finally {
       setLoadStatus("ready");
+    }
+
+    // Phase 2: progressive detail fetches for timeline/decisions wings
+    // These are non-blocking; the first paint does not wait for them.
+    setDetailStatus("loading");
+    try {
+      const [meetingBody, decisionBody, artifactBody, sinceBody] =
+        await Promise.all([
+          api.fetchProjectMeetings(projectId),
+          api.fetchProjectDecisions(projectId),
+          api.fetchProjectArtifacts(projectId),
+          api.fetchSinceLastMeeting(projectId),
+        ]);
+      setMeetings(meetingBody.meetings || []);
+      setDecisions(decisionBody.decisions || []);
+      setArtifacts(artifactBody.artifacts || []);
+      setSince(sinceBody);
+    } catch (reason) {
+      // Detail failure does not blank the room face (WEB-STA-002)
+      if (!error) setError(readableError(reason));
+    } finally {
+      setDetailStatus("ready");
     }
   };
 
@@ -82,7 +110,9 @@ export function useProjectRoomController(
     () => composeProjectTimeline(meetings, decisions, artifacts),
     [meetings, decisions, artifacts],
   );
-  const projectName = String(project.name || scopeLabel || "Project");
+  const projectName = String(
+    room?.project.name || project.name || scopeLabel || "Project",
+  );
 
   const openMoment = async (decision: Record<string, unknown>) => {
     try {
@@ -156,9 +186,11 @@ export function useProjectRoomController(
   return {
     projectId,
     loadStatus,
+    detailStatus,
     error,
     // Data
     project,
+    room,
     meetings,
     decisions,
     artifacts,
