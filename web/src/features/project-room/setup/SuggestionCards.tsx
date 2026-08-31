@@ -1,12 +1,21 @@
-// HS-159-05 -- suggestion cards as OBJECTS (INT-008): chip row
-// (source + subject-kind + cadence), name anchor, plain-words
-// condition, action, rationale footer, readiness state token,
-// selection as PRESENCE (accent wash + check).
-// Cards are labeled CONTROLS, not clickable prose (WEB-A11Y-008).
-// Space toggles selection, arrows traverse (WEB-CMD-005).
+// HS-159-05 -- suggestion cards ARE ChoiceCards: the surface library's
+// card visual language (HS-156-08) carries each proposal object.
+//
+// Semantic reconciliation: ChoiceCardGroup imposes radiogroup (single-
+// select). Setup suggestions are multi-select (listbox/option, Space
+// toggles). So we use the ChoiceCard CSS classes on div[role="option"]
+// directly — the visual language without the radio interaction model.
+// data-selected stamps the library's accent-wash selection presence;
+// aria-selected preserves the a11y contract.
+//
+// Glass selectors preserved: setup-suggestion-cards (testid),
+// [role="option"], .setup-card-rationale, .setup-card-test-btn,
+// .setup-card-test.
 
 import { useCallback, useRef } from "react";
 import { useRovingRows } from "../../../desk/surface/roving";
+import { Disclosure } from "../../../desk/surface/patterns/Disclosure";
+import "../../../desk/surface/patterns/choice-card.css";
 import {
   cadenceLabel,
   conditionPlainWords,
@@ -117,34 +126,24 @@ function SuggestionCard({
 
   return (
     <div
-      className="setup-card"
+      className="surface-choice-card"
       role="option"
       aria-selected={isSelected}
       data-testid={`setup-card-${proposal.id}`}
       data-state={briefState}
+      data-selected={isSelected || undefined}
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onClick={handleToggle}
     >
-      {/* Chip row: source + subject-kind + cadence + state token */}
-      <div className="setup-card-chips">
-        <span className="setup-card-chip" data-chip="source">{proposal.providerId}</span>
-        <span className="setup-card-chip" data-chip="subject">{spec.subject.kind}</span>
-        <span className="setup-card-chip" data-chip="cadence">{cadenceLabel(spec.trigger)}</span>
-        <span className="setup-card-chip" data-chip="mode" data-mode={spec.mode}>
-          {modeLabel(spec.mode)}
-        </span>
-        <span className="setup-card-readiness" data-state={briefState}>
-          {STATE_LABEL[briefState]}
-        </span>
+      {/* Head: name anchor */}
+      <div className="surface-choice-card-head">
+        <span className="surface-choice-card-label">{spec.name}</span>
       </div>
 
-      {/* Name anchor */}
-      <div className="setup-card-name">{spec.name}</div>
-
-      {/* Plain-words condition (defect 2) */}
+      {/* Summary: plain-words condition — the one-line anchor (156-08 law) */}
       <div
-        className="setup-card-conditions"
+        className="surface-choice-card-summary"
         data-condition-raw={spec.rules.flatMap((r) =>
           r.condition.clauses.map((c) => `${c.field}:${c.comparison}${c.value != null ? `:${c.value}` : ""}`),
         ).join(",")}
@@ -152,12 +151,32 @@ function SuggestionCard({
         {conditionPlainWords(spec)}
       </div>
 
-      {/* Action */}
-      <div className="setup-card-action">
-        {ACTION_LABELS[spec.action.kind] ?? spec.action.kind}
+      {/* Facts: chips in the library's fact-chip layout */}
+      <div className="surface-choice-card-facts">
+        <div className="surface-choice-card-fact" data-chip="source">
+          <span className="surface-choice-card-fact-key">source</span>
+          <span className="surface-choice-card-fact-val">{proposal.providerId}</span>
+        </div>
+        <div className="surface-choice-card-fact" data-chip="subject">
+          <span className="surface-choice-card-fact-key">subject</span>
+          <span className="surface-choice-card-fact-val">{spec.subject.kind}</span>
+        </div>
+        <div className="surface-choice-card-fact" data-chip="cadence">
+          <span className="surface-choice-card-fact-key">cadence</span>
+          <span className="surface-choice-card-fact-val">{cadenceLabel(spec.trigger)}</span>
+        </div>
+        <div className="surface-choice-card-fact" data-chip="mode" data-mode={spec.mode}>
+          <span className="surface-choice-card-fact-key">mode</span>
+          <span className="surface-choice-card-fact-val">{modeLabel(spec.mode)}</span>
+        </div>
       </div>
 
-      {/* Rationale footer */}
+      {/* Readiness state token (custom — no ChoiceCard slot for this) */}
+      <span className="setup-card-readiness" data-state={briefState}>
+        {STATE_LABEL[briefState]}
+      </span>
+
+      {/* Rationale: visible footer — glass test asserts is_visible */}
       <div className="setup-card-rationale">
         {proposal.rationale.fact}
         {proposal.rationale.detail ? ` -- ${proposal.rationale.detail}` : ""}
@@ -170,7 +189,7 @@ function SuggestionCard({
         </div>
       ) : null}
 
-      {/* Test button (only for selected proposals) */}
+      {/* Test button (only for selected proposals without test state) */}
       {isSelected && !proposal.testState ? (
         <button
           type="button"
@@ -184,6 +203,18 @@ function SuggestionCard({
           Test
         </button>
       ) : null}
+
+      {/* Fold: action detail behind a Disclosure (ChoiceCard fold pattern) */}
+      <div
+        className="surface-choice-card-fold"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Disclosure label="Action" defaultOpen={false}>
+          <div className="setup-card-action-detail">
+            {ACTION_LABELS[spec.action.kind] ?? spec.action.kind}
+          </div>
+        </Disclosure>
+      </div>
     </div>
   );
 }

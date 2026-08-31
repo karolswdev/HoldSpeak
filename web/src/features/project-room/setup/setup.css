@@ -148,56 +148,17 @@
   border-radius: var(--radius-sm);
 }
 
-.setup-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3);
-  border: 1px solid var(--border-secondary);
-  border-radius: var(--radius-sm);
-  background: var(--bg-secondary);
-  cursor: pointer;
-  transition:
-    border-color var(--duration-fast) var(--ease-out),
-    background var(--duration-fast) var(--ease-out);
-}
+/* ── Suggestion cards use surface-choice-card CSS (HS-156-08 ChoiceCard
+   visual language) — card shell, selection presence, summary anchor,
+   fact chips, fold are all owned by choice-card.css.
+   Only custom slots below: readiness, rationale, test state/button,
+   focus ring (option-based, no hidden radio). ── */
 
-.setup-card:focus-visible {
-  outline: 2px solid var(--border-focus);
-  outline-offset: -1px;
-}
-
-/* Selection = PRESENCE: accent wash + accent border (the 156-08 grammar) */
-.setup-card[aria-selected="true"] {
-  border-color: var(--border-accent);
-  background: var(--bg-accent-subtle);
-}
-
-/* Chip row: horizontal, wrapping, small gap */
-.setup-card-chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.setup-card-chip {
-  display: inline-block;
-  font-size: var(--text-xs);
-  padding: 1px var(--space-1);
-  border-radius: var(--radius-xs);
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-/* Mode chip: quiet restrained token (the WEB-STW-001 spirit) */
-.setup-card-chip[data-chip="mode"] {
-  font-family: var(--font-mono, monospace);
-  font-weight: var(--font-semibold, 600);
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+/* Focus ring — option-based cards receive :focus-visible directly,
+   not via the radio sibling selector the library's ChoiceCard uses. */
+.setup-cards .surface-choice-card:focus-visible {
+  outline: var(--focus-ring, 2px solid var(--border-focus));
+  outline-offset: 2px;
 }
 
 .setup-card-readiness {
@@ -216,23 +177,12 @@
   color: var(--text-danger);
 }
 
-/* Name = the anchor: prominent, the eye lands here */
-.setup-card-name {
-  font-weight: var(--font-medium);
-  font-size: var(--text-base);
-  color: var(--text-primary);
-}
-
-/* Condition: one plain-words line */
-.setup-card-conditions {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-
-/* Action: quiet line */
-.setup-card-action {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
+/* Action detail inside the fold disclosure */
+.setup-card-action-detail {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--desk-surface-detail-size, 12px);
+  color: var(--text-muted);
+  padding: var(--space-1) 0;
 }
 
 /* Rationale footer: the soul -- italic, faint */
