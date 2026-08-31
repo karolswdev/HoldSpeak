@@ -540,7 +540,7 @@ class InferenceParentRouteBundleService:
             }
             digest = _sha256(material)
             conn.execute(
-                "INSERT INTO inference_parent_route_bundles VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO inference_parent_route_bundles (id, command_id, request_sha256, parent_operation_id, parent_deadline_at, parent_child_budget, lifecycle_child_budget, feature_principal_sha256, payload_json, sha256, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     bundle_id,
                     command,
@@ -557,7 +557,7 @@ class InferenceParentRouteBundleService:
             )
             for member in members:
                 conn.execute(
-                    "INSERT INTO inference_parent_route_bundle_members VALUES (?,?,?,?,?,?,?,?,?)",
+                    "INSERT INTO inference_parent_route_bundle_members (id, bundle_id, ordinal, route_key, capability_id, route_plan_id, route_plan_sha256, principal_policy_sha256, maximum_physical_attempts) VALUES (?,?,?,?,?,?,?,?,?)",
                     (
                         f"{bundle_id}:{member['ordinal']}",
                         bundle_id,
@@ -1163,7 +1163,7 @@ class InferenceParentRouteBundleService:
             }
             now = self._parents._clock()
             conn.execute(
-                "INSERT INTO inference_parent_stop_handoffs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO inference_parent_stop_handoffs (command_id, request_sha256, bundle_id, parent_operation_id, evidence_provider_id, evidence_provider_revision, planning_reference, evidence_ref, evidence_sha256, state, effect_json, effect_sha256, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     command,
                     request_hash,
@@ -1182,7 +1182,7 @@ class InferenceParentRouteBundleService:
             )
             for ordinal, (execution_id, stop) in enumerate(zip(executions, effects), 1):
                 conn.execute(
-                    "INSERT INTO inference_parent_stop_handoff_executions VALUES (?,?,?,?,?)",
+                    "INSERT INTO inference_parent_stop_handoff_executions (command_id, ordinal, execution_id, stop_command_id, elected_state) VALUES (?,?,?,?,?)",
                     (
                         command,
                         ordinal,
@@ -1401,7 +1401,7 @@ class InferenceParentRouteBundleService:
         self._reconstruct_handoff_evidence(conn, row, expected_state="reserved")
         settled = {**dict(effect), "state": "committed"}
         conn.execute(
-            "INSERT INTO inference_parent_stop_handoff_settlements VALUES (?,?,?,?)",
+            "INSERT INTO inference_parent_stop_handoff_settlements (command_id, effect_json, effect_sha256, created_at) VALUES (?,?,?,?)",
             (
                 command_id,
                 _canonical(settled),

@@ -828,7 +828,7 @@ class InferenceAssignmentService:
                         ),
                     )
                     conn.execute(
-                        """INSERT INTO inference_assignment_heads VALUES (?,?,?,?,?)
+                        """INSERT INTO inference_assignment_heads (assignment_key, assignment_id, revision, cleared, updated_at) VALUES (?,?,?,?,?)
                            ON CONFLICT(assignment_key) DO UPDATE SET assignment_id=excluded.assignment_id,
                            revision=excluded.revision,cleared=0,updated_at=excluded.updated_at""",
                         (
@@ -841,7 +841,7 @@ class InferenceAssignmentService:
                     )
                     for entry in group["entries"]:
                         conn.execute(
-                            "INSERT INTO inference_assignments VALUES (?,?,?,?,?,?,?)",
+                            "INSERT INTO inference_assignments (id, assignment_id, assignment_revision, profile_id, profile_revision, profile_schema_version, ordinal) VALUES (?,?,?,?,?,?,?)",
                             (
                                 f"{assignment_id}:{revision}:{entry['ordinal']}",
                                 assignment_id,
@@ -1080,12 +1080,12 @@ class InferenceAssignmentService:
                             ),
                         )
                         conn.execute(
-                            "INSERT INTO inference_assignment_heads VALUES (?,?,?,?,?)",
+                            "INSERT INTO inference_assignment_heads (assignment_key, assignment_id, revision, cleared, updated_at) VALUES (?,?,?,?,?)",
                             (scope["assignment_key"], assignment_id, 1, 0, created_at),
                         )
                         for entry in entries:
                             conn.execute(
-                                "INSERT INTO inference_assignments VALUES (?,?,?,?,?,?,?)",
+                                "INSERT INTO inference_assignments (id, assignment_id, assignment_revision, profile_id, profile_revision, profile_schema_version, ordinal) VALUES (?,?,?,?,?,?,?)",
                                 (
                                     f"{assignment_id}:1:{entry['ordinal']}", assignment_id, 1,
                                     entry["profile_id"], entry["profile_revision"],
@@ -1115,7 +1115,7 @@ class InferenceAssignmentService:
                 }
                 committed_at = _now()
                 conn.execute(
-                    "INSERT INTO inference_assignment_migrations VALUES (?,?,?,?,?,?)",
+                    "INSERT INTO inference_assignment_migrations (family, marker_revision, source_sha256, result_json, result_sha256, committed_at) VALUES (?,?,?,?,?,?)",
                     (
                         clean_family, 1, source_sha256, _canonical(result),
                         _sha256(result), committed_at,
@@ -1199,9 +1199,9 @@ class InferenceAssignmentService:
                              scope["subject_kind"], "capability", capability.id, "", None,
                              _canonical(material), digest, created_at),
                         )
-                        conn.execute("INSERT INTO inference_assignment_heads VALUES (?,?,?,?,?)", (scope["assignment_key"], assignment_id, 1, 0, created_at))
+                        conn.execute("INSERT INTO inference_assignment_heads (assignment_key, assignment_id, revision, cleared, updated_at) VALUES (?,?,?,?,?)", (scope["assignment_key"], assignment_id, 1, 0, created_at))
                         for entry in entries:
-                            conn.execute("INSERT INTO inference_assignments VALUES (?,?,?,?,?,?,?)", (
+                            conn.execute("INSERT INTO inference_assignments (id, assignment_id, assignment_revision, profile_id, profile_revision, profile_schema_version, ordinal) VALUES (?,?,?,?,?,?,?)", (
                                 f"{assignment_id}:1:{entry['ordinal']}", assignment_id, 1,
                                 entry["profile_id"], entry["profile_revision"], entry["profile_schema_version"], entry["ordinal"],
                             ))
@@ -1221,7 +1221,7 @@ class InferenceAssignmentService:
                     "source_records": normalized_records,
                 }
                 committed_at = _now()
-                conn.execute("INSERT INTO inference_assignment_migrations VALUES (?,?,?,?,?,?)", (
+                conn.execute("INSERT INTO inference_assignment_migrations (family, marker_revision, source_sha256, result_json, result_sha256, committed_at) VALUES (?,?,?,?,?,?)", (
                     clean_family, 1, source_sha256, _canonical(result), _sha256(result), committed_at,
                 ))
                 conn.commit()
@@ -1367,7 +1367,7 @@ class InferenceAssignmentService:
                     )
                 committed_at = _now()
                 conn.execute(
-                    "INSERT INTO inference_assignment_migrations VALUES (?,?,?,?,?,?)",
+                    "INSERT INTO inference_assignment_migrations (family, marker_revision, source_sha256, result_json, result_sha256, committed_at) VALUES (?,?,?,?,?,?)",
                     (
                         family,
                         marker_revision,

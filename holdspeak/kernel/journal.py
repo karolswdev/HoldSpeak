@@ -489,7 +489,7 @@ class JournalStore:
         }
         signature = hmac.new(secret.encode(), _json(material).encode(), hashlib.sha256).hexdigest()
         conn.execute(
-            "INSERT INTO kernel_inference_receipt_attestations VALUES(?,?,?,?,?)",
+            "INSERT INTO kernel_inference_receipt_attestations (receipt_id, operation_id, material_json, signature, created_at) VALUES(?,?,?,?,?)",
             (receipt["receipt_id"], operation["operation_id"], _json(material), signature, receipt["created_at"]),
         )
     def receipt(self, operation_id: str) -> dict[str, Any] | None:
