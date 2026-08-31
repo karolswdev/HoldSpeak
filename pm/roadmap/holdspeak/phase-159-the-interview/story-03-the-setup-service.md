@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 159
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-159-02
 - **Unblocks:** HS-159-04
 - **Owner:** unassigned
@@ -52,6 +52,38 @@ Projects.
 
 - **Unit:** `tests/unit/test_project_setup_service.py` (state machine, resume, suggestions truth tables, finalize atomicity, Blank, abandon).
 
+## What shipped
+
+- `ProjectSetupService`: start/get/answer/suggest/select/clarify/
+  test_proposal/finalize/abandon over the §9.1 tables. Stage machine
+  outcome→signals→proposals→review→completed|abandoned|expired;
+  EVERY stage rehydrates (session + latest-revision answers + all
+  proposals) — the resume seam. Answers append-only, original
+  preserved beside normalized (INT-004).
+- DETERMINISTIC native suggestions (§8.3) with a fixture truth
+  table: meetings activity, decision review-due, overdue Door,
+  stale follow-through — each proposal a full WatchSpec@1 draft
+  (native provider, real-ID scopes, validated conditions,
+  project.observe, cadence preset, a rationale naming the fact +
+  count). An empty desk yields ZERO proposals and the Blank path —
+  nothing invented.
+- `ProjectService.create_from_setup`: ONE connection writes
+  everything — project row, each selected+PASSED watch (active,
+  baseline established, zero events), rules, project_sources
+  bindings, change row, ledger event, command record. Fault
+  injection at project-INSERT and watch-INSERT both roll back to a
+  recoverable active session with zero Project/Watch rows (ACT-004/
+  INT-006). Failed/untested proposals refused from activation
+  (ACT-003). Blank finalize lawful (INT-002).
+- test_proposal reads the REAL seams (meetings/decisions/
+  FollowThroughService.board); `evidence` returns [] honestly — no
+  native read path exists yet (noted for 04/06).
+- 42 new tests; scoped set 227 passed (orchestrator re-ran via
+  capture). No automations.py changes needed — create_from_setup
+  writes through one conn directly.
+
 ## Notes / open questions
 
 - `create_from_setup` lives on ProjectService (§10's ruling) — the setup service composes, never writes Project rows itself.
+- FOUND: a ternary-precedence expiry bug (`a > b.replace(...) if c else b` parses as `(a > ...) if c else b` — a truthy datetime in the else branch); split into statements. Worth a lint thought someday.
+- Decisions seeding gotcha: `source_state` CHECK allows only linked|source_deleted.

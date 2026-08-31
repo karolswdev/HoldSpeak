@@ -676,6 +676,7 @@ class MeetingWebServer:
         from .people import production_people_store
         from .services.reaction_service import ReactionService
         from .services.watch_service import WatchService
+        from .services.project_setup_service import ProjectSetupService
         from .services.refinement_coordinator import RefinementCoordinator
         from .services.refinement_application_service import RefinementApplicationService
 
@@ -849,6 +850,11 @@ class MeetingWebServer:
             mission_control_service=MissionControlService(get_database(), observer=obs),
             reaction_service=ReactionService(get_database(), observer=obs),
             watch_service=WatchService(get_database(), observer=obs),
+            project_setup_service=ProjectSetupService(
+                get_database(),
+                project_service=ProjectService(get_database(), observer=obs),
+                watch_service=WatchService(get_database(), observer=obs),
+            ),
             refinement_coordinator=refinement_coordinator,
             refinement_service=refinement_service,
             settings_service=SettingsService(

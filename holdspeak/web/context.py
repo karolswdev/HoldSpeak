@@ -107,6 +107,9 @@ class WebContext:
     # HS-159-02: the universal Watch facade over the graduated
     # connector_watches table. Routes come in P3; construction only here.
     watch_service: Optional[Any] = None
+    # HS-159-03: the durable setup interview service. Composes
+    # ProjectService + WatchService; routes come in P4.
+    project_setup_service: Optional[Any] = None
     # HS-141-04: the single application-owned one-question task lifecycle.
     # Route factories must never create their own threads or event loops.
     refinement_coordinator: Optional[Any] = None

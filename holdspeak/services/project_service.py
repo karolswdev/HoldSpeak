@@ -34,9 +34,11 @@ from ..project_contracts import (
     generate_pchg_id,
     generate_pcmd_id,
     generate_pitem_id,
+    generate_psrc_id,
 )
 from ..refs import format as format_ref, parse as parse_ref
 from .errors import ConflictError, NotFound, ValidationError
+from .project_setup_service import CADENCE_PRESETS
 from .service_event_ledger import ServiceEventLedger
 
 _log = get_logger("services.project_service")
@@ -480,6 +482,222 @@ class ProjectService:
 
         result = self._project_payload(self._require_project(project_id))
         result.update(_envelope_to_dict(envelope))
+        return result
+
+    def create_from_setup(
+        self, principal: Principal, setup_payload: dict[str, Any],
+        *, command_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Atomic Project creation from a setup interview (ACT-004).
+
+        ONE transaction:
+        - Create the Project row (name, purpose, outcome_text, lifecycle)
+        - Activate selected+passed proposals as WatchSpec@1 rows in
+          connector_watches (state='active', baseline_state='established')
+        - Create watch_rules for each activated watch
+        - Create project_sources bindings (semantic_role from proposal)
+        - Record change + event + command
+
+        All-or-nothing: any failure rolls back to zero Project/Watch rows.
+        Baseline established WITHOUT events (ACT-005: ledger silence).
+        Blank path: zero proposals is lawful (INT-002).
+        """
+        name = str(setup_payload.get("name") or "").strip()
+        if not name:
+            raise ValidationError("Project name is required")
+
+        req_hash = _request_hash(setup_payload)
+        replay = self._check_idempotency(command_id, req_hash, "create_from_setup")
+        if replay is not None:
+            return replay
+
+        project_id = f"proj-{uuid.uuid4().hex[:12]}"
+        cmd_id = command_id or generate_pcmd_id()
+        now_iso = datetime.now().isoformat()
+        new_revision = 1
+        proposals = setup_payload.get("proposals") or []
+
+        with self._db._connection() as conn:
+            # 1. Create the Project row
+            conn.execute(
+                """
+                INSERT INTO projects (
+                    id, name, description, keywords_json, team_members_json,
+                    context_json, detection_threshold, revision,
+                    purpose, outcome_text, lifecycle,
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    project_id, name,
+                    str(setup_payload.get("description") or ""),
+                    json.dumps([], ensure_ascii=False),
+                    json.dumps([], ensure_ascii=False),
+                    json.dumps({}, ensure_ascii=False),
+                    0.4,  # default threshold
+                    new_revision,
+                    str(setup_payload.get("purpose") or ""),
+                    str(setup_payload.get("outcome_text") or ""),
+                    str(setup_payload.get("lifecycle") or "active"),
+                    now_iso, now_iso,
+                ),
+            )
+
+            # 2. Activate selected+passed proposals as Watch rows
+            activated_watches: list[dict[str, Any]] = []
+            for proposal in proposals:
+                spec = proposal.get("spec") or {}
+                if isinstance(spec, str):
+                    spec = json.loads(spec)
+
+                watch_id = f"watch_{uuid.uuid4().hex[:12]}"
+                watch_name = spec.get("name", "Untitled watch")
+                connector_id = spec.get("provider", {}).get("id", "native")
+                query_kind = spec.get("subject", {}).get("kind", "")
+                query = spec.get("subject", {}).get("scope", {})
+                trigger = spec.get("trigger") or CADENCE_PRESETS.get("normal", {})
+                mode = spec.get("mode", "yolo")
+
+                # Insert into connector_watches with graduated columns
+                conn.execute(
+                    """
+                    INSERT INTO connector_watches (
+                        id, connector_id, query_kind, name, query_json, enabled,
+                        schema_version, project_id, intent, subject_kind,
+                        trigger_kind, trigger_json, mode, state, revision,
+                        baseline_state, test_state, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        watch_id, connector_id, query_kind, watch_name,
+                        json.dumps(query, sort_keys=True, separators=(",", ":")),
+                        1,  # enabled
+                        "WatchSpec@1", project_id,
+                        spec.get("intent", ""),
+                        query_kind,
+                        trigger.get("kind", "poll"),
+                        json.dumps(trigger, sort_keys=True, separators=(",", ":")),
+                        mode, "active", 1,
+                        "established",  # ACT-005: baseline without events
+                        "passed",  # carried from proposal test
+                        now_iso, now_iso,
+                    ),
+                )
+
+                # 3. Create watch_rules
+                rules = spec.get("rules", [])
+                for ordinal, rule in enumerate(rules):
+                    rule_id = f"wrule_{uuid.uuid4().hex[:12]}"
+                    conn.execute(
+                        """
+                        INSERT INTO watch_rules (
+                            id, watch_id, ordinal, condition_schema, condition_json,
+                            action_schema, action_json, enabled, revision,
+                            created_at, updated_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            rule_id, watch_id, ordinal,
+                            "WatchCondition@1",
+                            json.dumps(
+                                rule.get("condition", {}),
+                                sort_keys=True, separators=(",", ":"),
+                            ),
+                            "WatchAction@1",
+                            json.dumps(
+                                rule.get("actions", []),
+                                sort_keys=True, separators=(",", ":"),
+                            ),
+                            1, 0, now_iso, now_iso,
+                        ),
+                    )
+
+                # 4. Create project_sources binding
+                source_id = generate_psrc_id()
+                semantic_role = spec.get("subject", {}).get("kind", "general")
+                conn.execute(
+                    """
+                    INSERT INTO project_sources (
+                        id, project_id, source_ref, label, semantic_role,
+                        enabled, revision, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        source_id, project_id,
+                        format_ref("watch", watch_id),
+                        watch_name,
+                        semantic_role,
+                        1, 0, now_iso, now_iso,
+                    ),
+                )
+
+                activated_watches.append({
+                    "watch_id": watch_id,
+                    "name": watch_name,
+                    "source_id": source_id,
+                })
+
+            # 5. Change log (DOM-003)
+            project_ref = format_ref("project", project_id)
+            change_id = generate_pchg_id(
+                project_id=project_id,
+                project_revision=new_revision,
+                ordinal=0,
+            )
+            conn.execute(
+                """
+                INSERT INTO project_changes (
+                    id, project_id, project_revision, change_kind,
+                    target_ref, actor_ref, command_id,
+                    before_hash, after_hash, summary_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    change_id, project_id, new_revision,
+                    "project.created",
+                    project_ref,
+                    f"principal:{principal.identity}",
+                    cmd_id, None, _request_hash({"name": name}),
+                    json.dumps({
+                        "name": name,
+                        "source": "setup",
+                        "watches_activated": len(activated_watches),
+                    }),
+                    now_iso,
+                ),
+            )
+
+            # 6. Service event (API-004)
+            self._ledger.append_in_transaction(
+                conn, principal,
+                event_type="project.created",
+                producer="ProjectService",
+                subject_ref=project_ref,
+                source_revision=str(new_revision),
+                facts={
+                    "project_id": project_id,
+                    "name": name,
+                    "source": "setup",
+                    "watches_activated": len(activated_watches),
+                },
+                refs=[project_ref],
+            )
+
+            # 7. Command ledger (API-002)
+            envelope = CommandResultEnvelope(
+                result_kind=ResultKind.CREATED,
+                project_id=project_id,
+                project_revision=new_revision,
+                changed_refs=(parse_ref(project_ref),),
+            )
+            self._record_command(
+                conn, cmd_id, project_id, "create_from_setup",
+                req_hash, envelope,
+            )
+
+        result = self._project_payload(self._require_project(project_id))
+        result.update(_envelope_to_dict(envelope))
+        result["activated_watches"] = activated_watches
         return result
 
     def update_project(
