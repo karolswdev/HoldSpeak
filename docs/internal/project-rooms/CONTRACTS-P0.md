@@ -90,4 +90,74 @@ the SRS naming.
 
 ## Command results and errors -- HS-157-02
 
-(Placeholder -- this section will be completed by story HS-157-02.)
+Module: `holdspeak/project_contracts.py`
+Tests: `tests/unit/test_project_contracts.py`
+
+### Envelope shape (API-003, MCP-004)
+
+Every Project write returns a `CommandResultEnvelope` with these fields:
+
+| Field | Type | Requirement |
+|-------|------|-------------|
+| `result_kind` | `ResultKind` (closed enum) | API-003, MCP-004 |
+| `project_id` | `str` (non-empty) | API-003 |
+| `project_revision` | `int` (>= 0) | API-003, API-001 |
+| `changed_refs` | `tuple[QualifiedRef, ...]` | API-003; validated through `holdspeak.refs` |
+| `warnings` | `tuple[ProjectWarning, ...]` | API-003 |
+| `errors` | `tuple[ProjectError, ...]` | API-003 |
+
+### Result-kind vocabulary (16 values, closed)
+
+| Value | SRS operation | Traceability |
+|-------|---------------|--------------|
+| `created` | project.create | SS11.1, SS10 project.created |
+| `updated` | project.update | SS11.1, SS10 project.updated |
+| `archived` | project.archive | SS11.1, SS10 project.archived |
+| `restored` | project.restore | SS11.1, SS10 project.restored |
+| `linked` | project.link | SS11.1, SS10 project.resource.linked |
+| `unlinked` | project.unlink | SS11.1, SS10 project.resource.unlinked |
+| `review_opened` | project.open_review | SS11.1, SS10 project.review.opened, SS7.2 |
+| `proposal_decided` | project.decide_proposal | SS11.1, SS10 project.proposal.decided, SS7.3 |
+| `review_accepted` | project.accept_review | SS11.1, SS10 project.review.accepted, DEL-005 |
+| `update_drafted` | project.draft_update | SS11.1, SS10 project.update.drafted, UPD-001..003 |
+| `update_saved` | project.update_draft (save) | SS11.1, UPD-005 |
+| `update_published` | project.publish_update | SS11.1, SS10 project.update.published, UPD-005 |
+| `steward_configured` | project.configure_steward | SS11.1, SS10 project.steward.configured |
+| `steward_run_requested` | project.run_steward | SS11.1, SS10 project.steward.run_started, MCP-003 |
+| `steward_stopped` | project.stop_steward | SS11.1, STW-003 |
+| `no_change` | Idempotent replay | API-002 |
+
+### Error-code table (5 values, closed)
+
+| Code | Meaning | Requirement ID |
+|------|---------|----------------|
+| `stale_revision` | `expected_revision` does not match current; no partial mutation | API-001 |
+| `idempotency_conflict` | Same `command_id`, different request hash | API-002 |
+| `not_found` | Referenced Project or entity does not exist | SS6.3 (implied), DOM-001 |
+| `validation` | Input fails structural or semantic validation | DOM-006, DB-004 |
+| `capability` | Unsupported citizen mutation attempted | MCP-005 |
+
+### ID-prefix table (SS4.1, 11 prefixes)
+
+| Prefix | Entity | Stability | Generator signature |
+|--------|--------|-----------|---------------------|
+| `pitem_` | Project item | Stable for item lifetime | `generate_pitem_id() -> str` |
+| `psrc_` | Source | Stable for one configured source | `generate_psrc_id() -> str` |
+| `pobs_` | Observation | Deterministic | `generate_pobs_id(*, adapter, source_id, source_version, fact_key) -> str` |
+| `pprop_` | Proposal | Deterministic | `generate_pprop_id(*, project_id, review_window_key, proposal_kind, target_ref, normalized_patch) -> str` |
+| `prev_` | Review | Unique session identity | `generate_prev_id() -> str` |
+| `pupd_` | Update | Stable draft identity | `generate_pupd_id() -> str` |
+| `pchg_` | Change | Deterministic | `generate_pchg_id(*, project_id, project_revision, ordinal) -> str` |
+| `pcmd_` | Command | Caller-supplied or generated once | `generate_pcmd_id() -> str` |
+| `pstpol_` | Steward policy | Stable per Project policy | `generate_pstpol_id() -> str` |
+| `pstrun_` | Steward run | Unique execution attempt | `generate_pstrun_id() -> str` |
+| `pststep_` | Steward step | Unique step/effect attempt | `generate_pststep_id() -> str` |
+
+ID format: `<prefix><32 hex chars>`. Non-deterministic IDs use
+`uuid4().hex`; deterministic IDs use `sha256(length-prefixed inputs)[:32]`
+-- both produce the same wire format. The deterministic generators take
+keyword-only arguments matching the SS4.1 determinism inputs; same inputs
+always produce the same ID.
+
+Validators: `validate_<prefix>_id(id_str) -> bool` for each prefix, plus
+`validate_id(id_str, prefix) -> bool` for the generic case.

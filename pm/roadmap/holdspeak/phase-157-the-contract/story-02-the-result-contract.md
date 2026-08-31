@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 157
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-157-01
 - **Unblocks:** HS-157-05
 - **Owner:** unassigned
@@ -45,6 +45,36 @@ before any of them is implemented.
 
 - **Unit:** `tests/unit/test_project_contracts.py` (frozen names, prefix generators/validators, error-code table).
 
+## What shipped
+
+- `holdspeak/project_contracts.py` — beside `refs.py` (domain-grammar
+  modules live at the package root; services under `services/`). Pure:
+  enums, frozen dataclasses, validators, ID generators. Imports
+  `holdspeak.refs` for `changed_refs` validation.
+- `CommandResultEnvelope` (API-003/MCP-004): `result_kind`,
+  `project_id`, `project_revision`, `changed_refs`
+  (tuple[QualifiedRef]), `warnings`, `errors` — plus
+  `validate_envelope()`.
+- `ResultKind` — 16 closed values, each traced to §11.1 tools /
+  §10 events / UPD-005 / API-002 (`no_change` for idempotent replay).
+- `ProjectErrorCode` — 5 closed values: `stale_revision` (API-001),
+  `idempotency_conflict` (API-002), `not_found`, `validation`
+  (DOM-006/DB-004), `capability` (MCP-005).
+- All 11 §4.1 ID prefixes: 8 uuid4-style generators + 3 DETERMINISTIC
+  ones whose signatures take the §4.1 determinism inputs
+  (`generate_pobs_id(adapter, source_id, source_version, fact_key)`,
+  `generate_pprop_id(project_id, review_window_key, proposal_kind,
+  target_ref, normalized_patch)`, `generate_pchg_id(project_id,
+  project_revision, ordinal)`) — sha256 length-prefixed, 32-hex wire
+  format matching the repo's `prefix_ + uuid4().hex` convention
+  (`db/front_door.py:29`). Per-prefix validators.
+- CONTRACTS-P0.md HS-157-02 section completed: envelope table,
+  vocabulary + traceability, error codes, generator signatures.
+- Tests: `tests/unit/test_project_contracts.py` (frozen names, good/
+  bad envelopes, determinism, closed tables) — `167 passed in 0.46s`
+  with the refs suite, re-run by the orchestrator under isolated HOME.
+
 ## Notes / open questions
 
-- Keep it boring: constants, dataclasses/TypedDicts, validators. The value is that P1..P6 import names instead of inventing them.
+- Nothing imports the module yet — by design. P1's command handlers are its first consumers; a rename after this commit is a deliberate suite amendment, not an accident.
+- The design mapped cleanly onto the SRS: 16 kinds, 5 codes, no inventions needed.

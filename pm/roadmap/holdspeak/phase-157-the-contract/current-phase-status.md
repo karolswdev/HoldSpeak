@@ -1,6 +1,6 @@
 # Phase 157 - Project Rooms: The Contract (P0)
 
-**Last updated:** 2026-08-31 — 3/5 DONE (01 ref grammar; 04 surfaces + MCP-006 truth; 03 service/routes pinned 108 tests — DELETE-is-archive, three 404 wordings, success-key asymmetry recorded for P1); 02 in flight. Owner rulings recorded: POSITIONING "Watches (Project-scoped)" row RATIFIED; EverDriven delivery rides GitHub (P2a proves; Jira P7 follows with a real adapter).
+**Last updated:** 2026-08-31 — 4/5 DONE (01 ref grammar; 02 result contract frozen: 16 kinds, 5 codes, 11 prefixes; 03 service/routes 108 tests; 04 surfaces + MCP-006 truth). The close (05) runs. Owner rulings recorded: POSITIONING "Watches (Project-scoped)" row RATIFIED; EverDriven delivery rides GitHub (P2a proves; Jira P7 follows with a real adapter).
 
 ## Goal
 
@@ -36,7 +36,7 @@ claim); the arc ahead answers to Art XI (the kernel) via NFR-009.
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-157-01 | The qualified ref (one grammar, aliases, the fence) | done | [story-01-the-qualified-ref](./story-01-the-qualified-ref.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-157-02 | The result contract (envelope, typed errors, ID prefixes) | in-progress | [story-02-the-result-contract](./story-02-the-result-contract.md) | - |
+| HS-157-02 | The result contract (envelope, typed errors, ID prefixes) | done | [story-02-the-result-contract](./story-02-the-result-contract.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-157-03 | The service characterization (ProjectService + routes) | done | [story-03-the-service-characterization](./story-03-the-service-characterization.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-157-04 | The surface characterization (Web + MCP registration) | done | [story-04-the-surface-characterization](./story-04-the-surface-characterization.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-157-05 | The close (gates, suite updates, final summary) | backlog | [story-05-the-close](./story-05-the-close.md) | - |
@@ -66,6 +66,10 @@ HS-157-03 pinned the whole service + route surface (62 + 46 tests,
 140 green with the legacy kb suite): four oddities recorded as-is for
 P1 — DELETE-is-archive, three 404 wordings, success-key asymmetry,
 raw ValueError through the service boundary.
+HS-157-02 froze the names: CommandResultEnvelope, 16 result kinds,
+5 error codes, all 11 §4.1 ID prefixes (3 deterministic with §4.1
+input signatures) — every name SRS-traced in CONTRACTS-P0.md;
+167 tests green. The close (05) now runs the full gates.
 
 ## Active risks
 
