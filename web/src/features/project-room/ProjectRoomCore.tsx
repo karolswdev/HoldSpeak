@@ -17,6 +17,7 @@ import {
 import { Material } from "../../desk/surface/Material";
 import {
   ConfirmVerb,
+  SurfaceColumns,
   SurfaceLedger,
   SurfaceLedgerRow,
   SurfaceRow,
@@ -322,7 +323,11 @@ function OrientationPosture({ posture, reason }: { posture: string | null; reaso
 }
 
 /** The orientation band: name/purpose/outcome + lifecycle + posture as
- *  separate facts (WEB-LC-001/002). Nothing fabricated when absent (Art VI). */
+ *  separate facts (WEB-LC-001/002). Nothing fabricated when absent (Art VI).
+ *
+ *  HS-158-05 R2: band label symmetry — both purpose and outcome carry
+ *  micro-eyebrows (PURPOSE / OUTCOME) as one deliberate system.
+ *  Token-row hierarchy — identity facts left, meta facts quieter right. */
 function OrientationBand({ room }: { room: RoomSnapshot }) {
   const { project } = room;
   return (
@@ -331,29 +336,34 @@ function OrientationBand({ room }: { room: RoomSnapshot }) {
         {project.name}
       </h2>
       {project.purpose ? (
-        <p className="project-room-purpose" data-testid="orientation-purpose">
-          {project.purpose}
-        </p>
+        <div className="project-room-purpose" data-testid="orientation-purpose">
+          <span className="project-room-eyebrow" data-testid="purpose-eyebrow">PURPOSE</span>
+          <p>{project.purpose}</p>
+        </div>
       ) : null}
       {project.outcomeText ? (
         <div className="project-room-outcome" data-testid="orientation-outcome">
-          <span className="surface-token project-room-outcome-eyebrow" data-testid="outcome-eyebrow">OUTCOME</span>
+          <span className="project-room-eyebrow" data-testid="outcome-eyebrow">OUTCOME</span>
           <p>{project.outcomeText}</p>
         </div>
       ) : null}
       <div className="project-room-facts" data-testid="orientation-facts">
-        <OrientationLifecycleChip lifecycle={project.lifecycle} />
-        <OrientationPosture posture={project.posture} reason={project.postureReason} />
-        {room.revision > 0 ? (
-          <span className="surface-token" data-testid="orientation-revision">
-            REV {room.revision}
-          </span>
-        ) : null}
-        {project.updatedAt ? (
-          <span className="surface-token" data-testid="orientation-activity">
-            {humanTime(project.updatedAt)}
-          </span>
-        ) : null}
+        <span className="project-room-facts-identity" data-testid="facts-identity">
+          <OrientationLifecycleChip lifecycle={project.lifecycle} />
+          <OrientationPosture posture={project.posture} reason={project.postureReason} />
+        </span>
+        <span className="project-room-facts-meta" data-testid="facts-meta">
+          {room.revision > 0 ? (
+            <span className="surface-token" data-testid="orientation-revision">
+              REV {room.revision}
+            </span>
+          ) : null}
+          {project.updatedAt ? (
+            <span className="surface-token" data-testid="orientation-activity">
+              {humanTime(project.updatedAt)}
+            </span>
+          ) : null}
+        </span>
       </div>
     </section>
   );
@@ -407,47 +417,129 @@ function FocusBlock({ room }: { room: RoomSnapshot }) {
   return (
     <div data-testid="focus-block">
     <SurfaceSection label="Focus">
-      {Object.entries(grouped).map(([kind, kindItems]) => (
-        <div key={kind} className="project-room-focus-group">
-          <span className="surface-token">
-            {typeLabel(kind)} {items.totalsByType[kind] ?? kindItems.length}
-          </span>
-          <SurfaceRows>
-            {kindItems.map((item) => {
-              const severityTone =
-                item.severity === "critical" ? "danger"
-                : item.severity === "high" ? "warn"
-                : undefined;
-              return (
-                <SurfaceRow
-                  key={item.id}
-                  title={item.title}
-                  meta={
-                    <>
-                      {item.severity ? (
-                        <span
-                          className="surface-token"
-                          data-tone={severityTone}
-                          data-testid="focus-severity"
-                          data-severity={item.severity}
-                        >
-                          {humanizeToken(item.severity)}
-                        </span>
-                      ) : null}
-                      {item.dueAt ? (
-                        <span className="desk-chip quiet" data-testid="focus-due">
-                          {item.dueAt}
-                        </span>
-                      ) : null}
-                    </>
-                  }
-                />
-              );
-            })}
-          </SurfaceRows>
-        </div>
-      ))}
+      {Object.entries(grouped).map(([kind, kindItems]) => {
+        const count = items.totalsByType[kind] ?? kindItems.length;
+        return (
+          <div key={kind} className="project-room-focus-group">
+            <span className="project-room-focus-label">
+              <span className="surface-token" data-testid="focus-type-label">
+                {typeLabel(kind)}
+              </span>
+              <span className="project-room-count-chip" data-testid="focus-count-chip">
+                {count}
+              </span>
+            </span>
+            <SurfaceRows>
+              {kindItems.map((item) => {
+                const severityTone =
+                  item.severity === "critical" ? "danger"
+                  : item.severity === "high" ? "warn"
+                  : undefined;
+                return (
+                  <SurfaceRow
+                    key={item.id}
+                    title={item.title}
+                    meta={
+                      <>
+                        {item.severity ? (
+                          <span
+                            className="surface-token"
+                            data-tone={severityTone}
+                            data-testid="focus-severity"
+                            data-severity={item.severity}
+                          >
+                            {humanizeToken(item.severity)}
+                          </span>
+                        ) : null}
+                        {item.dueAt ? (
+                          <span className="project-room-date-token" data-testid="focus-due">
+                            <span className="project-room-date-glyph" aria-hidden="true">{"▪"}</span>
+                            {item.dueAt}
+                          </span>
+                        ) : null}
+                      </>
+                    }
+                  />
+                );
+              })}
+            </SurfaceRows>
+          </div>
+        );
+      })}
     </SurfaceSection>
+    </div>
+  );
+}
+
+/* ── Right rail: meetings, resources, changes from the /room projection ── */
+
+function RightRail({ room }: { room: RoomSnapshot }) {
+  const { meetings, resources, changes } = room;
+  return (
+    <div data-testid="project-room-rail">
+      {/* Meetings count + latest */}
+      {meetings.state === "ok" ? (
+        <div className="project-room-rail-section" data-testid="rail-meetings">
+          <div className="project-room-rail-label">
+            <span className="surface-token">Meetings</span>
+            <span className="project-room-count-chip" data-testid="rail-meetings-count">
+              {meetings.count}
+            </span>
+          </div>
+          {meetings.latest ? (
+            <span className="project-room-rail-value" data-testid="rail-meetings-latest">
+              {String((meetings.latest as Record<string, unknown>).title || "Latest")}
+            </span>
+          ) : (
+            <span className="project-room-rail-absent">None yet</span>
+          )}
+        </div>
+      ) : null}
+
+      {/* Resources count + latest */}
+      {resources.state === "ok" ? (
+        <div className="project-room-rail-section" data-testid="rail-resources">
+          <div className="project-room-rail-label">
+            <span className="surface-token">Resources</span>
+            <span className="project-room-count-chip" data-testid="rail-resources-count">
+              {resources.count}
+            </span>
+          </div>
+          {resources.latest ? (
+            <span className="project-room-rail-value">
+              {String((resources.latest as Record<string, unknown>).title || "Latest")}
+            </span>
+          ) : (
+            <span className="project-room-rail-absent">None yet</span>
+          )}
+        </div>
+      ) : null}
+
+      {/* Recent changes — the projection's changes section */}
+      {changes.state === "ok" ? (
+        <div className="project-room-rail-section" data-testid="rail-changes">
+          <div className="project-room-rail-label">
+            <span className="surface-token">Changes</span>
+            <span className="project-room-count-chip" data-testid="rail-changes-count">
+              {changes.recent.length}
+            </span>
+          </div>
+          {changes.recent.length > 0 ? (
+            changes.recent.map((change, i) => (
+              <div key={String(change.id ?? i)} className="project-room-change-row" data-testid="rail-change-row">
+                <span>{String(change.summary || change.kind || "Change")}</span>
+                {change.occurred_at ? (
+                  <span className="project-room-date-token">
+                    {humanTime(change.occurred_at)}
+                  </span>
+                ) : null}
+              </div>
+            ))
+          ) : (
+            <span className="project-room-rail-absent">No recent changes</span>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -714,13 +806,25 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
       {/* Orientation band renders before slow sections (WEB-STA-001) */}
       {ctrl.room ? (
         <>
+          {/* Orientation band spans full width, always */}
           <OrientationBand room={ctrl.room} />
-          <FocusBlock room={ctrl.room} />
-          {/* Degraded sections show inline (WEB-STA-002, never overlay) */}
-          <DegradedNotice label="meetings" section={ctrl.room.meetings} />
-          <DegradedNotice label="resources" section={ctrl.room.resources} />
-          <DegradedNotice label="changes" section={ctrl.room.changes} />
-          {/* Absent sections render NOTHING (Art VI) — no teaser placeholders */}
+          {/* HS-158-05 R2: two-column desktop composition via SurfaceColumns.
+              At 560px+ container width the focus block is left (~3fr),
+              the right rail (~2fr) carries meetings/resources/changes.
+              Below 560px everything stacks as today. */}
+          <SurfaceColumns
+            main={
+              <>
+                <FocusBlock room={ctrl.room} />
+                {/* Degraded sections show inline (WEB-STA-002, never overlay) */}
+                <DegradedNotice label="meetings" section={ctrl.room.meetings} />
+                <DegradedNotice label="resources" section={ctrl.room.resources} />
+                <DegradedNotice label="changes" section={ctrl.room.changes} />
+                {/* Absent sections render NOTHING (Art VI) — no teaser placeholders */}
+              </>
+            }
+            side={<RightRail room={ctrl.room} />}
+          />
         </>
       ) : loading ? (
         <SurfaceState loading />

@@ -211,7 +211,7 @@ describe("ProjectRoomCore — orientation band (WEB-NOW-001, WEB-IA-001)", () =>
 });
 
 describe("ProjectRoomCore — focus block", () => {
-  it("renders focus items grouped by kind with totals", async () => {
+  it("renders focus items grouped by kind with totals as count-chips", async () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("focus-block");
 
@@ -219,9 +219,14 @@ describe("ProjectRoomCore — focus block", () => {
     expect(screen.getByText("Dependency risk")).toBeTruthy();
     expect(screen.getByText("Beta release")).toBeTruthy();
 
-    // Should show totals per type
-    expect(screen.getByText(/Risks 3/)).toBeTruthy();
-    expect(screen.getByText(/Milestones 2/)).toBeTruthy();
+    // R2: totals render as separate count-chip elements, not appended text
+    const labels = screen.getAllByTestId("focus-type-label");
+    expect(labels.some(el => el.textContent === "Risks")).toBe(true);
+    expect(labels.some(el => el.textContent === "Milestones")).toBe(true);
+
+    const chips = screen.getAllByTestId("focus-count-chip");
+    expect(chips.some(el => el.textContent === "3")).toBe(true);
+    expect(chips.some(el => el.textContent === "2")).toBe(true);
   });
 
   it("shows 'No material yet.' for empty focus (WEB-STA-003)", async () => {
@@ -286,7 +291,7 @@ describe("ProjectRoomCore — degraded section isolation (WEB-STA-002)", () => {
 });
 
 describe("ProjectRoomCore — beauty pass (HS-158-05)", () => {
-  it("dependency items render under 'Dependencies' (proper plural, not 'Dependencys')", async () => {
+  it("dependency items render under 'Dependencies' (proper plural, not 'Dependencys') with count-chip", async () => {
     apiFetch.mockImplementation((url: string) => {
       if (url.includes("/room")) {
         return Promise.resolve(roomResponse({
@@ -305,7 +310,11 @@ describe("ProjectRoomCore — beauty pass (HS-158-05)", () => {
 
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("focus-block");
-    expect(screen.getByText(/Dependencies 1/)).toBeTruthy();
+    // R2: label and count are separate elements
+    const labels = screen.getAllByTestId("focus-type-label");
+    expect(labels.some(el => el.textContent === "Dependencies")).toBe(true);
+    const chips = screen.getAllByTestId("focus-count-chip");
+    expect(chips.some(el => el.textContent === "1")).toBe(true);
   });
 
   it("posture humanizes underscored tokens ('On track' visible, data-posture='on_track')", async () => {
@@ -367,21 +376,32 @@ describe("ProjectRoomCore — beauty pass (HS-158-05)", () => {
     expect(medium!.textContent).toBe("Medium");
   });
 
-  it("due date renders as its own quiet chip, not concatenated text", async () => {
+  it("due date renders as a quiet text token, not an input-like chip", async () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("focus-block");
 
-    const dueChips = screen.getAllByTestId("focus-due");
-    expect(dueChips.length).toBeGreaterThan(0);
-    expect(dueChips[0].textContent).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    const dueTokens = screen.getAllByTestId("focus-due");
+    expect(dueTokens.length).toBeGreaterThan(0);
+    // R2: de-inputted — a date-token span, not a desk-chip with border
+    expect(dueTokens[0].className).toContain("project-room-date-token");
+    expect(dueTokens[0].className).not.toContain("desk-chip");
+    // Date value is present (glyph + date text)
+    expect(dueTokens[0].textContent).toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 
-  it("outcome has its own OUTCOME eyebrow (SYS-002, WEB-NOW-001)", async () => {
+  it("outcome has its own OUTCOME eyebrow, purpose has PURPOSE (band label symmetry)", async () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("orientation-band");
 
-    const eyebrow = screen.getByTestId("outcome-eyebrow");
-    expect(eyebrow.textContent).toBe("OUTCOME");
+    // R2: both purpose and outcome carry micro-eyebrows
+    const purposeEyebrow = screen.getByTestId("purpose-eyebrow");
+    expect(purposeEyebrow.textContent).toBe("PURPOSE");
+    expect(purposeEyebrow.className).toContain("project-room-eyebrow");
+
+    const outcomeEyebrow = screen.getByTestId("outcome-eyebrow");
+    expect(outcomeEyebrow.textContent).toBe("OUTCOME");
+    expect(outcomeEyebrow.className).toContain("project-room-eyebrow");
+
     // Outcome text is visually separate from purpose
     const outcome = screen.getByTestId("orientation-outcome");
     expect(outcome.textContent).toContain("Widget shipped");
@@ -414,6 +434,119 @@ describe("ProjectRoomCore — beauty pass (HS-158-05)", () => {
 
     const lifecycle = screen.getByTestId("orientation-lifecycle");
     expect(lifecycle.getAttribute("data-lifecycle")).toBe("active");
+  });
+});
+
+describe("ProjectRoomCore — R2 desktop composition (HS-158-05)", () => {
+  it("renders SurfaceColumns (wide-vs-narrow container branch)", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("orientation-band");
+
+    // The surface-columns wrapper exists for the two-column layout
+    const columns = document.querySelector(".surface-columns");
+    expect(columns).not.toBeNull();
+
+    // Main column contains the focus block
+    const main = document.querySelector(".surface-columns-main");
+    expect(main).not.toBeNull();
+    expect(main!.querySelector("[data-testid='focus-block']")).not.toBeNull();
+
+    // Side column contains the right rail
+    const side = document.querySelector(".surface-columns-side");
+    expect(side).not.toBeNull();
+    expect(side!.querySelector("[data-testid='project-room-rail']")).not.toBeNull();
+  });
+
+  it("right rail renders meetings count + latest from the projection", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("orientation-band");
+
+    const meetingsSection = screen.getByTestId("rail-meetings");
+    expect(meetingsSection).toBeTruthy();
+    expect(screen.getByTestId("rail-meetings-count").textContent).toBe("2");
+    expect(screen.getByTestId("rail-meetings-latest").textContent).toBe("Review");
+  });
+
+  it("right rail renders resources count from the projection", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("orientation-band");
+
+    const resourcesSection = screen.getByTestId("rail-resources");
+    expect(resourcesSection).toBeTruthy();
+    expect(screen.getByTestId("rail-resources-count").textContent).toBe("1");
+  });
+
+  it("right rail renders changes section from the projection", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("orientation-band");
+
+    const changesSection = screen.getByTestId("rail-changes");
+    expect(changesSection).toBeTruthy();
+    expect(screen.getByTestId("rail-changes-count").textContent).toBe("0");
+  });
+
+  it("right rail renders change rows when changes exist", async () => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room")) {
+        return Promise.resolve(roomResponse({
+          changes: {
+            state: "ok",
+            recent: [
+              { id: "c1", summary: "Added milestone", kind: "update", occurred_at: "2026-08-30T14:00:00" },
+              { id: "c2", summary: "Risk closed", kind: "close", occurred_at: "2026-08-29T10:00:00" },
+            ],
+          },
+        }));
+      }
+      return Promise.resolve(detailResponse(url));
+    });
+
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("orientation-band");
+
+    const changeRows = screen.getAllByTestId("rail-change-row");
+    expect(changeRows.length).toBe(2);
+    expect(changeRows[0].textContent).toContain("Added milestone");
+  });
+
+  it("right rail omits absent sections (Art VI)", async () => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room")) {
+        return Promise.resolve(roomResponse({
+          meetings: { state: "absent", reason: "not_built" },
+          resources: { state: "absent", reason: "not_built" },
+          changes: { state: "absent", reason: "not_built" },
+        }));
+      }
+      return Promise.resolve(detailResponse(url));
+    });
+
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("orientation-band");
+
+    expect(screen.queryByTestId("rail-meetings")).toBeNull();
+    expect(screen.queryByTestId("rail-resources")).toBeNull();
+    expect(screen.queryByTestId("rail-changes")).toBeNull();
+  });
+});
+
+describe("ProjectRoomCore — R2 token hierarchy (HS-158-05)", () => {
+  it("identity facts (lifecycle, posture) left; meta facts (rev, time) right", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("orientation-band");
+
+    // Identity group contains lifecycle and posture
+    const identity = screen.getByTestId("facts-identity");
+    expect(identity.querySelector("[data-testid='orientation-lifecycle']")).not.toBeNull();
+    expect(identity.querySelector("[data-testid='orientation-posture']")).not.toBeNull();
+
+    // Meta group contains revision and activity
+    const meta = screen.getByTestId("facts-meta");
+    expect(meta.querySelector("[data-testid='orientation-revision']")).not.toBeNull();
+    expect(meta.querySelector("[data-testid='orientation-activity']")).not.toBeNull();
+
+    // Meta group uses quieter styling (margin-left: auto pushes right)
+    expect(meta.className).toContain("project-room-facts-meta");
   });
 });
 

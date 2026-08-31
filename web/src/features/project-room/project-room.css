@@ -1,5 +1,6 @@
 /* HS-158-05 — Project Room orientation band and focus block.
-   Signal tokens only; no raw colors or z-index. */
+   Signal tokens only; no raw colors or z-index.
+   Container-driven layout: @container surface (560px canon breakpoint). */
 
 .project-room-orientation {
   padding: 8px var(--desk-surface-row-pad-x, 14px);
@@ -12,8 +13,23 @@
   line-height: 1.3;
 }
 
+/* ── Band label symmetry: PURPOSE and OUTCOME both get micro-eyebrows ── */
+.project-room-eyebrow {
+  display: block;
+  margin-bottom: 1px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
 .project-room-purpose {
-  margin: 0 0 2px;
+  margin: 4px 0 2px;
+}
+.project-room-purpose p {
+  margin: 0;
   font-size: var(--desk-surface-body-size, 13px);
   color: var(--text-muted);
   line-height: 1.4;
@@ -28,21 +44,100 @@
   color: var(--text-muted);
   line-height: 1.4;
 }
-.project-room-outcome-eyebrow {
-  display: block;
-  margin-bottom: 1px;
-  font-size: 10px;
-}
 
+/* ── Token row: identity left, meta right ── */
 .project-room-facts {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px 10px;
   margin-top: 6px;
 }
+.project-room-facts-identity {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+}
+.project-room-facts-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  margin-left: auto;
+}
+.project-room-facts-meta .surface-token {
+  color: var(--text-faint);
+  font-weight: 500;
+}
 
+/* ── Focus group labels: count as a chip, not appended text ── */
 .project-room-focus-group {
   margin-bottom: 4px;
+}
+.project-room-focus-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.project-room-count-chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-faint);
+  min-width: 16px;
+  text-align: center;
+}
+
+/* ── De-inputted date tokens ── */
+.project-room-date-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  /* No border, no box-shadow — deliberately NOT an input affordance */
+}
+.project-room-date-glyph {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+/* ── Right rail sections ── */
+.project-room-rail-section {
+  padding: 4px 0;
+}
+.project-room-rail-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.project-room-rail-value {
+  font-size: var(--desk-surface-body-size, 13px);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.project-room-rail-absent {
+  font-size: var(--desk-surface-body-size, 13px);
+  color: var(--text-faint);
+  font-style: italic;
+}
+.project-room-change-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+  font-size: var(--desk-surface-body-size, 13px);
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle, var(--border));
+}
+.project-room-change-row:last-child {
+  border-bottom: none;
 }
 
 .project-room-degraded {
