@@ -31,10 +31,15 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 | HS-156-05 | Plain words (jargon purge, UX-evidence checklist) | done | [story-05-plain-words](./story-05-plain-words.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-156-06 | The topology (this Mac + nodes; configuration over the same authorities) | done | [story-06-the-topology](./story-06-the-topology.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-156-07 | The stopwatch walk and the close | done | [story-07-the-stopwatch-walk](./story-07-the-stopwatch-walk.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-156-08 | The beauty pass (the selector learns imagination) | ready | [story-08-the-beauty-pass](./story-08-the-beauty-pass.md) | - |
 
 ## Where we are
 
-PHASE 156 COMPLETE 7/7. The stopwatch: the door's machinery costs
+REOPENED BY THE OWNER for HS-156-08 The beauty pass (his verbatim
+critique is the story's Problem): the profile selector reads as
+unimaginative walls of undivided text. Functional close stands
+(7/7 below); the phase does NOT merge until the beauty pass ships and
+THE OWNER'S SHOT VERDICT passes. Earlier: PHASE 156 COMPLETE 7/7. The stopwatch: the door's machinery costs
 0.36 s end-to-end on BOTH starting shapes (bar: < 60 s) — segments
 itemized in assets/story-07-stopwatch-results.json; metal 3/3 on `.43`
 (real define → assign → live Qwen answer, 2.4 s). Counsel RATIFY, zero
