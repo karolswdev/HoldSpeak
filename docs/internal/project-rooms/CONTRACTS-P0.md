@@ -29,6 +29,7 @@ resolved to the canonical form; `format()` refuses them.
 | `watch`        | Watch                   | --         | Active  | `holdspeak/services/reaction_service.py:293,295,482,483` |
 | `repo`         | Repo / delivery system  | --         | Planned | No emission evidence in codebase |
 | `kernel`       | Kernel / Desk object    | --         | Planned | No emission evidence in codebase |
+| `project`      | Project aggregate (the Room itself, SRS §3.1) | -- | Active | `holdspeak/services/project_service.py` (changed_refs on every write — HS-158-02) |
 
 ### Canonical-vs-alias ruling (REF-003): `people:` is canonical; `person:` is the alias
 

@@ -1,6 +1,6 @@
 # Phase 158 - Project Rooms: The Room (P1)
 
-**Last updated:** 2026-08-31 — 5/6 DONE; THE OWNER'S ROUND-2 VERDICT: PASS ('PASS — close it') closes 05. THE CLOSE (06) RUNS: full gates + counsel in flight. Earlier: Round 1 BOUNCED; ROUND 2 SHIPPED (f68ddbb7 + three orchestrator repairs b024813d): SurfaceColumns desktop split with a right rail (meetings/resources/changes finally rendered), de-input'd date tokens, PURPOSE/OUTCOME symmetry, identity/meta split, count-chips — and the glass caught TWO self-consistent fixture lies (wrong change-row field names, then the dotted action value) that vitest alone blessed. Round-2 sheet in assets/story-05-shots/; AWAITING THE OWNER'S ROUND-2 VERDICT.
+**Last updated:** 2026-08-31 — PHASE COMPLETE 6/6. Owner verdict PASS; counsel RATIFY-W-C zero M (conditions discharged); suite 12F/7968P zero true branch-new; web gates green. PR to main next. Earlier: Round 1 BOUNCED; ROUND 2 SHIPPED (f68ddbb7 + three orchestrator repairs b024813d): SurfaceColumns desktop split with a right rail (meetings/resources/changes finally rendered), de-input'd date tokens, PURPOSE/OUTCOME symmetry, identity/meta split, count-chips — and the glass caught TWO self-consistent fixture lies (wrong change-row field names, then the dotted action value) that vitest alone blessed. Round-2 sheet in assets/story-05-shots/; AWAITING THE OWNER'S ROUND-2 VERDICT.
 
 ## Goal
 
@@ -29,11 +29,11 @@ effects, so no new kernel admissions arise; NFR-009 bites from P2a on.
 
 ## Exit criteria (evidence required)
 
-- [ ] SRS §14 P1 exit: the owner can create/configure/open a REVISIONED Project Room from the desk, and legacy Projects remain intact (pre-Project-Room DB reconciles on a COPY of the real DB; archive/restore round-trips; P0's 275 characterization pins hold or are updated deliberately-and-additively).
-- [ ] The revision law holds under test: one revision increment + one `project_changes` row + one ledger event per accepted mutation, atomically; `expected_revision`/`command_id` conflicts are typed via `project_contracts` (its first consumers).
-- [ ] `GET /api/projects/{id}/room` is the default Web read path (fan-out retired), revision-stamped, bounded, deterministically ordered; absent-domain sections (sources/updates/steward) are honestly absent, never faked.
-- [ ] Shots at 1440+393 on the real hub; beauty pass after the functional pass; THE OWNER'S SHOT VERDICT closes HS-158-05 and holds the merge word.
-- [ ] Sweep name-diff zero branch-new; web baseline zero branch-new; counsel close zero open must-fix.
+- [x] SRS §14 P1 exit: the owner can create/configure/open a REVISIONED Project Room from the desk, and legacy Projects remain intact (pre-Project-Room DB reconciles on a COPY of the real DB; archive/restore round-trips; P0's 275 characterization pins hold or are updated deliberately-and-additively).
+- [x] The revision law holds under test: one revision increment + one `project_changes` row + one ledger event per accepted mutation, atomically; `expected_revision`/`command_id` conflicts are typed via `project_contracts` (its first consumers).
+- [x] `GET /api/projects/{id}/room` is the default Web read path (fan-out retired), revision-stamped, bounded, deterministically ordered; absent-domain sections (sources/updates/steward) are honestly absent, never faked.
+- [x] Shots at 1440+393 on the real hub; beauty pass after the functional pass; THE OWNER'S SHOT VERDICT closes HS-158-05 and holds the merge word.
+- [x] Sweep name-diff zero branch-new; web baseline zero branch-new; counsel close zero open must-fix.
 
 ## Story status
 
@@ -44,7 +44,7 @@ effects, so no new kernel admissions arise; NFR-009 bites from P2a on.
 | HS-158-03 | The items (typed workstream/milestone/risk/dependency/signal via the service) | done | [story-03-the-items](./story-03-the-items.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-158-04 | The room read (GET /room — one coherent, honest, bounded projection) | done | [story-04-the-room-read](./story-04-the-room-read.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-158-05 | The web graduation (controller extraction, /room adoption, the Room face, shots) | done | [story-05-the-web-graduation](./story-05-the-web-graduation.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-158-06 | The close (gates, suite amendments, final summary) | in-progress | [story-06-the-close](./story-06-the-close.md) | - |
+| HS-158-06 | The close (gates, suite amendments, final summary) | done | [story-06-the-close](./story-06-the-close.md) | [evidence-story-06](./evidence-story-06.md) |
 
 ## Where we are
 

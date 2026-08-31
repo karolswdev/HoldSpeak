@@ -63,7 +63,8 @@ Project does not own the canonical body or lifecycle of:
 | Door/follow-through | qualified ref and Project context; status writes go to canonical authority |
 | Person/participant | qualified ref and Project role; person identity remains canonical |
 | Thread | conversation scope/ref; messages remain canonical |
-| Note/artifact | resource/evidence ref; content remains canonical |
+| Note | resource/evidence ref; content remains canonical (registered as its own `note:` ref type — HS-158 amendment per counsel-157 N-2) |
+| Artifact | resource/evidence ref; content remains canonical (registered as its own `artifact:` ref type — HS-158 amendment per counsel-157 N-2) |
 | Workbench | source/result refs and optional action collaborator; recipes/results remain canonical |
 | Agent/Recipe | optional Steward inference/capability binding; configuration remains canonical |
 | Repo/delivery system | source adapter and evidence refs; remote system remains canonical |
