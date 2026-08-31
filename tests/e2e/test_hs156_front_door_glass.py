@@ -119,19 +119,28 @@ def _api_direct(url: str, method: str, path: str, body: Any = None) -> dict:
     if data:
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(full_url, data=data, headers=headers, method=method)
-    try:
-        with urllib.request.urlopen(req) as resp:
-            ct = resp.headers.get("content-type", "")
-            raw = resp.read()
-            payload = json.loads(raw) if "json" in ct else raw.decode()
-            return {"status": resp.status, "payload": payload}
-    except urllib.error.HTTPError as e:
-        raw = e.read()
+    # HS-156-08 CI hardening: the in-process hub can briefly refuse
+    # connections under CI load — retry bounded before failing.
+    for attempt in range(5):
         try:
-            payload = json.loads(raw)
-        except Exception:
-            payload = raw.decode()
-        return {"status": e.code, "payload": payload}
+            with urllib.request.urlopen(req) as resp:
+                ct = resp.headers.get("content-type", "")
+                raw = resp.read()
+                payload = json.loads(raw) if "json" in ct else raw.decode()
+                return {"status": resp.status, "payload": payload}
+        except urllib.error.HTTPError as e:
+            raw = e.read()
+            try:
+                payload = json.loads(raw)
+            except Exception:
+                payload = raw.decode()
+            return {"status": e.code, "payload": payload}
+        except urllib.error.URLError:
+            if attempt == 4:
+                raise
+            import time as _time
+            _time.sleep(1.0)
+    raise RuntimeError("unreachable")
 
 
 def _save_shot(page: Any, name: str, width: int) -> None:
@@ -501,6 +510,37 @@ def _save_shot_08(page: Any, name: str, width: int) -> None:
     page.screenshot(path=str(SHOTS_08_DIR / f"{name}-{width}.png"))
 
 
+def _start_stub_endpoint() -> "tuple[Any, int]":
+    """Minimal OpenAI-compat /v1/models endpoint.
+
+    CI runners carry no local inference runtime, so the recommender can
+    build zero packs on a bare hub; a reachable endpoint guarantees packs
+    (the stopwatch rig's capture-server trick, HS-156-07)."""
+    import http.server
+    import socket
+    import threading
+
+    class _Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(
+                {"data": [{"id": "glass-stub-model", "object": "model"}]}
+            ).encode())
+
+        def log_message(self, *_: Any) -> None:
+            pass
+
+    sock = socket.socket()
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    httpd = http.server.HTTPServer(("127.0.0.1", port), _Handler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    return httpd, port
+
+
 def test_beauty_cards(hub: dict) -> None:
     """HS-156-08: pack cards as OBJECTS — tier row, summary anchor, folded detail."""
     from playwright.sync_api import sync_playwright
@@ -508,6 +548,13 @@ def test_beauty_cards(hub: dict) -> None:
     url = hub["url"]
     _api_direct(url, "POST", "/api/desk/seed")
     _api_direct(url, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    # A reachable stub endpoint so the recommender ALWAYS offers packs,
+    # even on runners with no local inference runtime (CI).
+    stub, stub_port = _start_stub_endpoint()
+    _seed_endpoint_profile(
+        hub["db"], "hs156-beauty-stub", "Qwen server (stub)",
+        f"http://127.0.0.1:{stub_port}", "glass-stub-model",
+    )
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True)
@@ -515,19 +562,24 @@ def test_beauty_cards(hub: dict) -> None:
         for width in (1440, 393):
             page = browser.new_page(viewport={"width": width, "height": 1000})
             _open_models_module(page, url, width)
-            page.wait_for_selector("[data-testid='front-door-cards']", timeout=15000)
+            page.wait_for_selector("[data-testid='front-door-cards']", timeout=20000)
             _save_shot_08(page, "cards", width)
 
             # The recommended pack, selected: presence, not just a corner tag
-            page.locator(".surface-choice-card[data-recommended]").first.click()
+            recommended = page.locator(".surface-choice-card[data-recommended]").first
+            recommended.wait_for(state="visible", timeout=20000)
+            recommended.click()
             page.wait_for_timeout(300)
             _save_shot_08(page, "cards-selected", width)
 
             # One fold open: per-job detail grouped by what serves them
+            cards_count = page.locator(".surface-choice-card").count()
             folds = page.locator(
                 ".surface-choice-card-fold .surface-disclosure-trigger"
             )
-            assert folds.count() >= 3, "every pack card carries a fold"
+            assert cards_count >= 1 and folds.count() == cards_count, (
+                "every pack card carries a fold"
+            )
             folds.first.click()
             page.wait_for_timeout(300)
             _save_shot_08(page, "cards-fold-open", width)
@@ -542,6 +594,7 @@ def test_beauty_cards(hub: dict) -> None:
             page.close()
 
         browser.close()
+    stub.shutdown()
 
 
 def test_beauty_candidate_picker(hub: dict) -> None:
@@ -554,13 +607,16 @@ def test_beauty_candidate_picker(hub: dict) -> None:
     _api_direct(url, "POST", "/api/desk/seed")
     _api_direct(url, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
     _seed_profile_and_assign(db)
+    # Stub-backed endpoint profiles: a LAN address here would stall the
+    # recommender's reachability probes on CI (3 s each, no LAN).
+    stub, stub_port = _start_stub_endpoint()
     _seed_endpoint_profile(
         db, "hs156-beauty-lan", "Qwen server on .43",
-        "http://192.168.1.43:8080/v1", "qwen3.5-9b",
+        f"http://127.0.0.1:{stub_port}", "qwen3.5-9b",
     )
     _seed_endpoint_profile(
         db, "hs156-beauty-mlx", "Qwen3.5 9B (MLX)",
-        "http://127.0.0.1:8081/v1", "qwen3.5-9b-mlx",
+        f"http://127.0.0.1:{stub_port}", "qwen3.5-9b-mlx",
     )
 
     with sync_playwright() as pw:
@@ -570,7 +626,8 @@ def test_beauty_candidate_picker(hub: dict) -> None:
             page = browser.new_page(viewport={"width": width, "height": 1000})
             _open_models_module(page, url, width)
 
-            # Open the Advanced fold, switch to the Table view
+            # The configured desk shows the strip; wait for it, then the fold
+            page.wait_for_selector("[data-testid='front-door-strip']", timeout=25000)
             advanced = page.locator("text=Advanced")
             assert advanced.count() > 0, "the strip carries the Advanced fold"
             advanced.first.click()
@@ -603,3 +660,4 @@ def test_beauty_candidate_picker(hub: dict) -> None:
             page.close()
 
         browser.close()
+    stub.shutdown()
