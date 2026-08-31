@@ -1,6 +1,6 @@
 # Phase 156 - The Front Door
 
-**Last updated:** 2026-08-31 (story 06 in progress).
+**Last updated:** 2026-08-31 — PHASE COMPLETE 8/8; the owner's shot verdict PASSED; PR #517 merging.
 
 ## Goal
 
@@ -19,6 +19,7 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 ## Exit criteria (evidence required)
 
 - [x] All seven stories done with evidence; the stopwatch bar met and measured (0.36 s machinery, <60 s bar); glass 1440+393; metal on `.43`; counsel zero open must-fix; sweep name-diff clean + the web contract green.
+- [x] The beauty pass (HS-156-08): the owner's shot verdict PASS (2026-08-31, "Better. Merge it in, brother."); before/after sheet in assets/story-08-shots/; fence held; check green; baseline zero branch-new; stopwatch re-measured 0.35 s.
 
 ## Story status
 
@@ -31,12 +32,13 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 | HS-156-05 | Plain words (jargon purge, UX-evidence checklist) | done | [story-05-plain-words](./story-05-plain-words.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-156-06 | The topology (this Mac + nodes; configuration over the same authorities) | done | [story-06-the-topology](./story-06-the-topology.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-156-07 | The stopwatch walk and the close | done | [story-07-the-stopwatch-walk](./story-07-the-stopwatch-walk.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-156-08 | The beauty pass (the selector learns imagination) | in-progress | [story-08-the-beauty-pass](./story-08-the-beauty-pass.md) | - |
+| HS-156-08 | The beauty pass (the selector learns imagination) | done | [story-08-the-beauty-pass](./story-08-the-beauty-pass.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Where we are
 
-HS-156-08 THE BEAUTY PASS IS BUILT — HOLDING FOR THE OWNER'S SHOT
-VERDICT (the only close). The wall is gone: ChoiceCard grew object
+PHASE 156 COMPLETE 8/8 — THE OWNER'S SHOT VERDICT PASSED (2026-08-31,
+on the before/after exhibit, verbatim: "Better. Merge it in,
+brother."). HS-156-08 closes and PR #517 merges. The wall is gone: ChoiceCard grew object
 slots (summary anchor / emblem / tier temperature / fold) and
 `layout="row"` with a stamped track count; a pack card is an object —
 name + character, ONE summary line ("6 jobs → … · Speech → …"),

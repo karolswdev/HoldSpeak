@@ -1,8 +1,9 @@
 # HS-156-08 shot sheet — the beauty pass: the selector learns imagination
 
-Reviewer: ______________ Verdict: ______________ Date: ______________
+Reviewer: THE OWNER Verdict: **PASS** Date: 2026-08-31
 
-THE OWNER'S SHOT VERDICT IS THE ONLY CLOSE (story-08 acceptance).
+THE OWNER'S SHOT VERDICT IS THE ONLY CLOSE (story-08 acceptance) —
+**given 2026-08-31, verbatim: "Better. Merge it in, brother."**
 
 ## Before (the culprit — story-05 frames, kept verbatim)
 
@@ -42,4 +43,5 @@ candidate picker is a grid of material cards with boundary + health
 chips and an explicit chain state. Beauty cost nothing: the stopwatch
 re-ran at 0.35 s machinery vs the 60 s bar.
 
-**THE OWNER'S SHOT VERDICT IS THE ONLY CLOSE.**
+**THE OWNER'S SHOT VERDICT: PASS** (2026-08-31, on the exhibit:
+"Better. Merge it in, brother."). The story closes; PR #517 merges.

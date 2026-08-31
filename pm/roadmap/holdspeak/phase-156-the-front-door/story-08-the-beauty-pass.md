@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 156
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-156-07
 - **Unblocks:** -
 - **Owner:** unassigned
@@ -47,9 +47,9 @@ pass, and THE OWNER SEES SHOTS BEFORE MERGE.
 
 ## Acceptance criteria
 
-- [ ] The pack cards and the candidate picker redesigned per the direction; before/after shot sheet at 1440 + 393; the ORCHESTRATOR's gate looks, then THE OWNER SEES THE SHOTS and his verdict is the gate.
-- [ ] Zero new one-off furniture (fence holds); contract tests updated with the extended slots; `npm --prefix web run check` green; baseline zero branch-new.
-- [ ] The stopwatch rig still passes (beauty must not cost the minute).
+- [x] The pack cards and the candidate picker redesigned per the direction; before/after shot sheet at 1440 + 393; the ORCHESTRATOR's gate looks, then THE OWNER SEES THE SHOTS and his verdict is the gate.
+- [x] Zero new one-off furniture (fence holds); contract tests updated with the extended slots; `npm --prefix web run check` green; baseline zero branch-new.
+- [x] The stopwatch rig still passes (beauty must not cost the minute).
 
 ## Test plan
 
