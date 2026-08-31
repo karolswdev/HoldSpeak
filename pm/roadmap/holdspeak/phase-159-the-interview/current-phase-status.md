@@ -1,6 +1,6 @@
 # Phase 159 - Project Rooms: The Interview (P1a)
 
-**Last updated:** 2026-08-31 — 1/7 DONE: schema v68, the WatchSpec@1 graduation with 31 legacy pins green on both sides and the real-DB proof run on a copy of the owner's actual desk. 02 the watch façade next.
+**Last updated:** 2026-08-31 — 2/7 DONE: the façade stands (material-edit staling, honest zero-match tests, ledger-silent baselines, the no-third-door fence, closed condition/action validation at the package root). 03 the setup service next.
 
 ## Goal
 
@@ -45,7 +45,7 @@ deterministic path is the P1a implementation).
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-159-01 | The watch graduation (WatchSpec@1 columns + §9 tables, legacy intact) | done | [story-01-the-watch-graduation](./story-01-the-watch-graduation.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-159-02 | The watch service (one façade; ReactionService compat) | backlog | [story-02-the-watch-service](./story-02-the-watch-service.md) | - |
+| HS-159-02 | The watch service (one façade; ReactionService compat) | done | [story-02-the-watch-service](./story-02-the-watch-service.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-159-03 | The setup service (durable session, native suggestions, atomic finalize) | backlog | [story-03-the-setup-service](./story-03-the-setup-service.md) | - |
 | HS-159-04 | The setup routes (HTTP §10, command contract, api-surface) | backlog | [story-04-the-setup-routes](./story-04-the-setup-routes.md) | - |
 | HS-159-05 | The interview face (two questions, live brief, activation — shots + verdict) | backlog | [story-05-the-interview-face](./story-05-the-interview-face.md) | - |

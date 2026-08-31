@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 159
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-159-01
 - **Unblocks:** HS-159-03
 - **Owner:** unassigned
@@ -46,6 +46,31 @@ lifecycle (AD-PRJ-010).
 
 - **Unit:** `tests/unit/test_watch_service.py` (lifecycle, revisions, staling, condition validation, baseline honesty); the no-third-door fence; ReactionService pins re-run.
 
+## What shipped
+
+- `holdspeak/services/watch_service.py` — the façade: list/get (full
+  spec + rules), update (material fields → revision+1 + test/baseline
+  staled; name/intent don't — ACT-008 exact), pause/resume/retire
+  (ACT-009: history retained), `test_watch` (bounded non-mutating
+  read via the existing snapshot seam; zero-match = PASSED —
+  ACT-002; persists test_state/result), `baseline_watch` (snapshot +
+  baseline_state, ZERO events — ACT-005 proven by ledger count),
+  `set_rules` (replace-by-ordinal under the uniqueness).
+- `holdspeak/watch_validation.py` — pure, package-root (the
+  refs.py convention): closed WatchCondition@1 tree (recursive;
+  unknown operators/comparisons/keys refused) + closed WatchAction@1
+  kinds; P4/P5/P6 will import, not re-declare.
+- NO-THIRD-DOOR fence: source-scan over holdspeak/ — raw
+  connector_watches writes only in automations.py + watch_service.py;
+  three sub-tests incl. anti-stale-entry.
+- ReactionService: ALL seven watch methods stay as-is — partial
+  absorption per §2, per-method reasoning recorded (different
+  contracts/columns; delegation would risk the 31 pins). Wired into
+  web context/server construction; routes come in 04.
+- 83 + 3 new tests; scoped set 150 passed, 1 skipped (the real-DB
+  CI-skip), captured.
+
 ## Notes / open questions
 
 - Keep the façade thin over the graduated table — the P5 evaluator and P2a adapters bolt onto THIS contract; don't pre-build their seams beyond what §10/§11 name.
+- WatchService has NO create by design (create stays legacy + finalize-time): story 03's atomic finalize creates/activates specs INSIDE its one transaction — via repo helpers or an internal conn-taking seam; 03 decides with the transaction constraint stated.

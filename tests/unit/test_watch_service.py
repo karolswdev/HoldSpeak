@@ -1,0 +1,731 @@
+"""HS-159-02: WatchService facade -- lifecycle, revisions, staling,
+condition validation, baseline honesty.
+
+Tests:
+- Reads: list_watches (filters), get_watch (with rules).
+- Lifecycle: update_watch (material vs non-material), pause/resume/retire.
+- ACT-008: material edit -> revision+1 + test_state/baseline_state staled.
+- ACT-002: test_watch (zero-match semantics, passed/failed).
+- ACT-005: baseline_watch never emits events (ledger-silence proof).
+- ACT-009: retire_watch stops future evaluation, retains history.
+- WatchCondition@1 validation (closed operators/comparisons, code refusal).
+- WatchAction@1 validation (closed kinds).
+- set_rules validation and replace-by-ordinal.
+"""
+from __future__ import annotations
+
+import json
+from typing import Any
+
+import pytest
+
+from holdspeak.db.core import Database
+from holdspeak.principals import Principal, PrincipalKind
+from holdspeak.services.errors import NotFound, ServiceError, ValidationError
+from holdspeak.services.reaction_service import ReactionService
+from holdspeak.services.watch_service import WatchService
+from holdspeak.watch_validation import (
+    ACTION_KINDS,
+    COMPARISONS,
+    LOGICAL_OPERATORS,
+    validate_action,
+    validate_condition,
+    validate_rule,
+    validate_rules,
+)
+
+
+OWNER = Principal(PrincipalKind.OWNER, "test-watch-owner")
+
+
+# ── Helpers ──────────────────────────────────────────────────────────
+
+def _make_watch(db: Database, watch_id: str = "watch-01", **kwargs: Any) -> dict[str, Any]:
+    """Create a watch via ReactionService (the legacy creator)."""
+    svc = ReactionService(db)
+    return svc.create_watch(
+        OWNER,
+        connector_id=kwargs.get("connector_id", "gh"),
+        query_kind=kwargs.get("query_kind", "pull_requests"),
+        name=kwargs.get("name", "Test watch"),
+        query=kwargs.get("query", {"repository": "acme/app"}),
+        watch_id=watch_id,
+    )
+
+
+def _watch_svc(
+    db: Database,
+    fetcher: Any = None,
+) -> WatchService:
+    return WatchService(db, snapshot_fetcher=fetcher)
+
+
+# ── Reads ────────────────────────────────────────────────────────────
+
+
+class TestListWatches:
+    def test_list_returns_all(self, tmp_path) -> None:
+        db = Database(tmp_path / "list.db")
+        _make_watch(db, "watch-a")
+        _make_watch(db, "watch-b", connector_id="jira", query_kind="issues")
+        svc = _watch_svc(db)
+        watches = svc.list_watches(OWNER)
+        ids = [w["id"] for w in watches]
+        assert "watch-a" in ids
+        assert "watch-b" in ids
+
+    def test_list_filters_by_connector(self, tmp_path) -> None:
+        db = Database(tmp_path / "filter-conn.db")
+        _make_watch(db, "watch-gh", connector_id="gh")
+        _make_watch(db, "watch-jira", connector_id="jira", query_kind="issues")
+        svc = _watch_svc(db)
+        result = svc.list_watches(OWNER, connector="gh")
+        assert len(result) == 1
+        assert result[0]["id"] == "watch-gh"
+
+    def test_list_filters_by_state(self, tmp_path) -> None:
+        db = Database(tmp_path / "filter-state.db")
+        _make_watch(db, "watch-act")
+        svc = _watch_svc(db)
+        svc.pause_watch(OWNER, "watch-act")
+        active = svc.list_watches(OWNER, state="active")
+        paused = svc.list_watches(OWNER, state="paused")
+        assert len(active) == 0
+        assert len(paused) == 1
+
+    def test_list_filters_by_project_id(self, tmp_path) -> None:
+        db = Database(tmp_path / "filter-proj.db")
+        _make_watch(db, "watch-proj")
+        db.automations.update_watch_spec("watch-proj", project_id="proj-1")
+        svc = _watch_svc(db)
+        result = svc.list_watches(OWNER, project_id="proj-1")
+        assert len(result) == 1
+        result2 = svc.list_watches(OWNER, project_id="proj-other")
+        assert len(result2) == 0
+
+
+class TestGetWatch:
+    def test_get_returns_watch_with_rules(self, tmp_path) -> None:
+        db = Database(tmp_path / "get.db")
+        _make_watch(db, "watch-get")
+        svc = _watch_svc(db)
+        # Add a rule manually.
+        db.automations.create_rule(
+            rule_id="rule-1", watch_id="watch-get", ordinal=0,
+            condition_schema="WatchCondition@1",
+            condition_json='{"operator":"any","clauses":[{"field":"checks","comparison":"changed_to","value":"failure"}]}',
+            action_schema="WatchAction@1",
+            action_json='[{"kind":"project.observe"}]',
+        )
+        watch = svc.get_watch(OWNER, "watch-get")
+        assert watch["id"] == "watch-get"
+        assert len(watch["rules"]) == 1
+        assert watch["rules"][0]["id"] == "rule-1"
+
+    def test_get_missing_watch_raises(self, tmp_path) -> None:
+        db = Database(tmp_path / "get-miss.db")
+        svc = _watch_svc(db)
+        with pytest.raises(NotFound):
+            svc.get_watch(OWNER, "no-such-watch")
+
+
+# ── Lifecycle: update_watch ──────────────────────────────────────────
+
+
+class TestUpdateWatch:
+    def test_non_material_edit_does_not_stale(self, tmp_path) -> None:
+        """ACT-008: name/intent are non-material; revision stays."""
+        db = Database(tmp_path / "nonmat.db")
+        _make_watch(db, "watch-nm")
+        db.automations.update_watch_spec(
+            "watch-nm", revision=1, test_state="passed", baseline_state="established",
+        )
+        svc = _watch_svc(db)
+        result = svc.update_watch(OWNER, "watch-nm", name="Renamed", intent="New intent")
+        assert result["name"] == "Renamed"
+        assert result.get("intent") == "New intent"
+        assert int(result.get("revision") or 0) == 1  # unchanged
+        assert result.get("test_state") == "passed"  # not staled
+        assert result.get("baseline_state") == "established"  # not staled
+
+    def test_material_edit_stales_and_increments_revision(self, tmp_path) -> None:
+        """ACT-008: query change -> revision+1, test/baseline stale."""
+        db = Database(tmp_path / "mat.db")
+        _make_watch(db, "watch-mat")
+        db.automations.update_watch_spec(
+            "watch-mat", revision=2, test_state="passed", baseline_state="established",
+        )
+        svc = _watch_svc(db)
+        result = svc.update_watch(
+            OWNER, "watch-mat",
+            query={"repository": "acme/newrepo"},
+        )
+        assert int(result.get("revision") or 0) == 3  # was 2, now 3
+        assert result.get("test_state") == "stale"
+        assert result.get("baseline_state") == "stale"
+        assert result["query"] == {"repository": "acme/newrepo"}
+
+    def test_mixed_material_and_non_material(self, tmp_path) -> None:
+        """Mixed update: material field triggers staling."""
+        db = Database(tmp_path / "mixed.db")
+        _make_watch(db, "watch-mix")
+        db.automations.update_watch_spec(
+            "watch-mix", revision=1, test_state="passed", baseline_state="established",
+        )
+        svc = _watch_svc(db)
+        result = svc.update_watch(
+            OWNER, "watch-mix",
+            name="Updated name",
+            trigger_kind="poll",
+            trigger={"every_minutes": 15},
+        )
+        assert result["name"] == "Updated name"
+        assert int(result.get("revision") or 0) == 2  # incremented
+        assert result.get("test_state") == "stale"
+
+    def test_update_missing_watch_raises(self, tmp_path) -> None:
+        db = Database(tmp_path / "up-miss.db")
+        svc = _watch_svc(db)
+        with pytest.raises(NotFound):
+            svc.update_watch(OWNER, "no-such", name="x")
+
+    def test_update_requires_owner(self, tmp_path) -> None:
+        db = Database(tmp_path / "up-auth.db")
+        _make_watch(db, "watch-auth")
+        svc = _watch_svc(db)
+        agent = Principal(PrincipalKind.AGENT, "agent-1")
+        with pytest.raises(ServiceError, match="OWNER"):
+            svc.update_watch(agent, "watch-auth", name="x")
+
+
+# ── Lifecycle: pause/resume/retire ───────────────────────────────────
+
+
+class TestPauseResumeRetire:
+    def test_pause_sets_state(self, tmp_path) -> None:
+        db = Database(tmp_path / "pause.db")
+        _make_watch(db, "watch-p")
+        svc = _watch_svc(db)
+        result = svc.pause_watch(OWNER, "watch-p")
+        assert result.get("state") == "paused"
+
+    def test_resume_sets_active(self, tmp_path) -> None:
+        db = Database(tmp_path / "resume.db")
+        _make_watch(db, "watch-r")
+        svc = _watch_svc(db)
+        svc.pause_watch(OWNER, "watch-r")
+        result = svc.resume_watch(OWNER, "watch-r")
+        assert result.get("state") == "active"
+
+    def test_retire_sets_retired(self, tmp_path) -> None:
+        """ACT-009: retire stops future evaluation."""
+        db = Database(tmp_path / "retire.db")
+        _make_watch(db, "watch-ret")
+        svc = _watch_svc(db)
+        result = svc.retire_watch(OWNER, "watch-ret")
+        assert result.get("state") == "retired"
+
+    def test_retire_retains_watch_row(self, tmp_path) -> None:
+        """ACT-009: retired watches retain rows and history."""
+        db = Database(tmp_path / "retire-retain.db")
+        _make_watch(db, "watch-rr")
+        svc = _watch_svc(db)
+        svc.retire_watch(OWNER, "watch-rr")
+        # The watch is still readable.
+        watch = svc.get_watch(OWNER, "watch-rr")
+        assert watch["id"] == "watch-rr"
+        assert watch.get("state") == "retired"
+
+    def test_lifecycle_missing_watch_raises(self, tmp_path) -> None:
+        db = Database(tmp_path / "lc-miss.db")
+        svc = _watch_svc(db)
+        for method in [svc.pause_watch, svc.resume_watch, svc.retire_watch]:
+            with pytest.raises(NotFound):
+                method(OWNER, "no-such")
+
+
+# ── Test watch (ACT-002) ────────────────────────────────────────────
+
+
+class TestTestWatch:
+    def test_successful_test_persists_passed(self, tmp_path) -> None:
+        db = Database(tmp_path / "test-pass.db")
+        _make_watch(db, "watch-tp")
+
+        def fetcher(principal, **kwargs):
+            return [{"number": 5, "state": "open", "title": "Five"}]
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        result = svc.test_watch(OWNER, "watch-tp")
+        assert result["test_state"] == "passed"
+        assert result["result"]["entity_count"] == 1
+        assert len(result["result"]["representative_entities"]) == 1
+        assert result["result"]["error"] is None
+
+        # Graduated columns persisted.
+        watch = db.automations.get_watch("watch-tp")
+        assert watch.get("test_state") == "passed"
+        assert watch.get("last_test_at") is not None
+
+    def test_zero_matches_is_passed(self, tmp_path) -> None:
+        """ACT-002: zero-match test with successful read = PASSED."""
+        db = Database(tmp_path / "test-zero.db")
+        _make_watch(db, "watch-zero")
+
+        def fetcher(principal, **kwargs):
+            return []  # Zero entities
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        result = svc.test_watch(OWNER, "watch-zero")
+        assert result["test_state"] == "passed"
+        assert result["result"]["entity_count"] == 0
+        assert "0 current matches" in result["result"]["message"]
+
+    def test_failed_test_persists_failed(self, tmp_path) -> None:
+        db = Database(tmp_path / "test-fail.db")
+        _make_watch(db, "watch-tf")
+
+        def fetcher(principal, **kwargs):
+            raise RuntimeError("network down")
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        result = svc.test_watch(OWNER, "watch-tf")
+        assert result["test_state"] == "failed"
+        assert result["result"]["error"] is not None
+        assert result["result"]["error"]["type"] == "RuntimeError"
+        assert "network down" in result["result"]["error"]["message"]
+
+        # Graduated columns persisted.
+        watch = db.automations.get_watch("watch-tf")
+        assert watch.get("test_state") == "failed"
+
+    def test_does_not_advance_baseline(self, tmp_path) -> None:
+        db = Database(tmp_path / "test-nobase.db")
+        _make_watch(db, "watch-nb")
+
+        def fetcher(principal, **kwargs):
+            return [{"number": 1, "state": "open", "title": "PR"}]
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.test_watch(OWNER, "watch-nb")
+        watch = db.automations.get_watch("watch-nb")
+        assert watch["snapshot"] == {}  # Baseline NOT advanced
+
+    def test_representative_entities_capped_at_five(self, tmp_path) -> None:
+        db = Database(tmp_path / "test-cap.db")
+        _make_watch(db, "watch-cap")
+
+        def fetcher(principal, **kwargs):
+            return [{"number": i, "state": "open", "title": f"PR {i}"} for i in range(1, 11)]
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        result = svc.test_watch(OWNER, "watch-cap")
+        assert result["result"]["entity_count"] == 10
+        assert len(result["result"]["representative_entities"]) == 5
+
+    def test_missing_watch_raises(self, tmp_path) -> None:
+        db = Database(tmp_path / "test-miss.db")
+        svc = _watch_svc(db)
+        with pytest.raises(NotFound):
+            svc.test_watch(OWNER, "no-such")
+
+
+# ── Baseline watch (ACT-005) ────────────────────────────────────────
+
+
+class TestBaselineWatch:
+    def test_baseline_sets_snapshot_and_state(self, tmp_path) -> None:
+        db = Database(tmp_path / "base.db")
+        _make_watch(db, "watch-base")
+
+        def fetcher(principal, **kwargs):
+            return [{"number": 3, "state": "open", "title": "Three"}]
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        result = svc.baseline_watch(OWNER, "watch-base")
+        assert result["baseline_state"] == "established"
+        assert result["entity_count"] == 1
+
+        # Snapshot persisted.
+        watch = db.automations.get_watch("watch-base")
+        assert watch["snapshot"] != {}
+
+        # Graduated column persisted.
+        raw = watch.get("baseline_state")
+        assert raw == "established"
+
+    def test_baseline_never_emits_events(self, tmp_path) -> None:
+        """ACT-005: the service-event ledger MUST stay silent."""
+        db = Database(tmp_path / "base-silent.db")
+        _make_watch(db, "watch-silent")
+
+        def fetcher(principal, **kwargs):
+            return [
+                {"number": 1, "state": "open", "title": "One"},
+                {"number": 2, "state": "open", "title": "Two"},
+            ]
+
+        svc = _watch_svc(db, fetcher=fetcher)
+
+        # Count events BEFORE baseline.
+        events_before = db.automations.list_events()
+        count_before = len(events_before)
+
+        svc.baseline_watch(OWNER, "watch-silent")
+
+        # Count events AFTER baseline -- must be identical.
+        events_after = db.automations.list_events()
+        count_after = len(events_after)
+        assert count_after == count_before, (
+            f"ACT-005 violation: baseline emitted {count_after - count_before} events"
+        )
+
+    def test_baseline_records_error_on_failure(self, tmp_path) -> None:
+        db = Database(tmp_path / "base-err.db")
+        _make_watch(db, "watch-berr")
+
+        def fetcher(principal, **kwargs):
+            raise RuntimeError("provider offline")
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        with pytest.raises(RuntimeError, match="provider offline"):
+            svc.baseline_watch(OWNER, "watch-berr")
+
+        watch = db.automations.get_watch("watch-berr")
+        assert watch["last_error"] == "provider offline"
+
+    def test_missing_watch_raises(self, tmp_path) -> None:
+        db = Database(tmp_path / "base-miss.db")
+        svc = _watch_svc(db)
+        with pytest.raises(NotFound):
+            svc.baseline_watch(OWNER, "no-such")
+
+
+# ── Rules (set_rules) ───────────────────────────────────────────────
+
+
+class TestSetRules:
+    def test_set_rules_creates_rules(self, tmp_path) -> None:
+        db = Database(tmp_path / "rules.db")
+        _make_watch(db, "watch-rules")
+        svc = _watch_svc(db)
+        result = svc.set_rules(OWNER, "watch-rules", [
+            {
+                "condition": {
+                    "schema": "WatchCondition@1",
+                    "operator": "any",
+                    "clauses": [
+                        {"field": "checks", "comparison": "changed_to", "value": "failure"},
+                    ],
+                },
+                "actions": [
+                    {"schema": "WatchAction@1", "kind": "project.observe"},
+                ],
+            },
+        ])
+        assert len(result["rules"]) == 1
+        assert result["rules"][0]["ordinal"] == 0
+
+    def test_set_rules_replaces_existing(self, tmp_path) -> None:
+        db = Database(tmp_path / "replace.db")
+        _make_watch(db, "watch-repl")
+        svc = _watch_svc(db)
+
+        # First set.
+        svc.set_rules(OWNER, "watch-repl", [
+            {
+                "condition": {"operator": "any", "clauses": [
+                    {"field": "state", "comparison": "equals", "value": "open"},
+                ]},
+                "actions": [{"kind": "project.observe"}],
+            },
+        ])
+        assert len(db.automations.list_rules("watch-repl")) == 1
+
+        # Replace with two rules.
+        svc.set_rules(OWNER, "watch-repl", [
+            {
+                "condition": {"operator": "any", "clauses": [
+                    {"field": "state", "comparison": "equals", "value": "open"},
+                ]},
+                "actions": [{"kind": "project.observe"}],
+            },
+            {
+                "condition": {"operator": "all", "clauses": [
+                    {"field": "checks", "comparison": "changed_to", "value": "failure"},
+                ]},
+                "actions": [{"kind": "project.steward.run_once"}],
+            },
+        ])
+        rules = db.automations.list_rules("watch-repl")
+        assert len(rules) == 2
+        assert rules[0]["ordinal"] == 0
+        assert rules[1]["ordinal"] == 1
+
+    def test_set_rules_increments_revision_and_stales(self, tmp_path) -> None:
+        """Rules are material -- ACT-008 applies."""
+        db = Database(tmp_path / "rules-rev.db")
+        _make_watch(db, "watch-rrev")
+        db.automations.update_watch_spec(
+            "watch-rrev", revision=3, test_state="passed", baseline_state="established",
+        )
+        svc = _watch_svc(db)
+        result = svc.set_rules(OWNER, "watch-rrev", [
+            {
+                "condition": {"operator": "any", "clauses": [
+                    {"field": "state", "comparison": "equals", "value": "open"},
+                ]},
+                "actions": [{"kind": "project.observe"}],
+            },
+        ])
+        assert result["revision"] == 4
+        watch = db.automations.get_watch("watch-rrev")
+        assert watch.get("test_state") == "stale"
+        assert watch.get("baseline_state") == "stale"
+
+    def test_set_rules_invalid_condition_refuses(self, tmp_path) -> None:
+        db = Database(tmp_path / "rules-bad.db")
+        _make_watch(db, "watch-bad")
+        svc = _watch_svc(db)
+        with pytest.raises(ValidationError, match="Invalid watch rules"):
+            svc.set_rules(OWNER, "watch-bad", [
+                {
+                    "condition": {"operator": "UNKNOWN", "clauses": []},
+                    "actions": [{"kind": "project.observe"}],
+                },
+            ])
+
+    def test_set_rules_invalid_action_refuses(self, tmp_path) -> None:
+        db = Database(tmp_path / "rules-bad-act.db")
+        _make_watch(db, "watch-ba")
+        svc = _watch_svc(db)
+        with pytest.raises(ValidationError, match="Invalid watch rules"):
+            svc.set_rules(OWNER, "watch-ba", [
+                {
+                    "condition": {"operator": "any", "clauses": [
+                        {"field": "state", "comparison": "equals", "value": "open"},
+                    ]},
+                    "actions": [{"kind": "totally.made.up"}],
+                },
+            ])
+
+    def test_set_rules_empty_list_clears(self, tmp_path) -> None:
+        db = Database(tmp_path / "rules-clear.db")
+        _make_watch(db, "watch-clr")
+        svc = _watch_svc(db)
+        svc.set_rules(OWNER, "watch-clr", [
+            {
+                "condition": {"operator": "any", "clauses": [
+                    {"field": "state", "comparison": "equals", "value": "open"},
+                ]},
+                "actions": [{"kind": "project.observe"}],
+            },
+        ])
+        # Clear rules.
+        svc.set_rules(OWNER, "watch-clr", [])
+        assert db.automations.list_rules("watch-clr") == []
+
+
+# ── WatchCondition@1 validation ─────────────────────────────────────
+
+
+class TestConditionValidation:
+    def test_valid_logical_node(self) -> None:
+        cond = {
+            "schema": "WatchCondition@1",
+            "operator": "any",
+            "clauses": [
+                {"field": "checks", "comparison": "changed_to", "value": "failure"},
+            ],
+        }
+        assert validate_condition(cond) == []
+
+    def test_valid_nested_tree(self) -> None:
+        cond = {
+            "schema": "WatchCondition@1",
+            "operator": "all",
+            "clauses": [
+                {
+                    "operator": "any",
+                    "clauses": [
+                        {"field": "state", "comparison": "equals", "value": "open"},
+                        {"field": "state", "comparison": "equals", "value": "draft"},
+                    ],
+                },
+                {"field": "checks", "comparison": "changed_to", "value": "failure"},
+            ],
+        }
+        assert validate_condition(cond) == []
+
+    def test_valid_not_operator(self) -> None:
+        cond = {
+            "operator": "not",
+            "clauses": [
+                {"field": "is_draft", "comparison": "equals", "value": True},
+            ],
+        }
+        assert validate_condition(cond) == []
+
+    def test_not_requires_single_clause(self) -> None:
+        cond = {
+            "operator": "not",
+            "clauses": [
+                {"field": "a", "comparison": "equals", "value": 1},
+                {"field": "b", "comparison": "equals", "value": 2},
+            ],
+        }
+        errors = validate_condition(cond)
+        assert any("exactly one" in str(e) for e in errors)
+
+    def test_unknown_operator_refused(self) -> None:
+        cond = {"operator": "xor", "clauses": []}
+        errors = validate_condition(cond)
+        assert any("unknown operator" in str(e) for e in errors)
+
+    def test_unknown_comparison_refused(self) -> None:
+        cond = {"field": "state", "comparison": "fuzzy_match", "value": "x"}
+        errors = validate_condition(cond)
+        assert any("unknown comparison" in str(e) for e in errors)
+
+    def test_unknown_keys_refused(self) -> None:
+        cond = {
+            "operator": "any",
+            "clauses": [{"field": "x", "comparison": "equals", "value": 1}],
+            "script": "import os; os.system('rm -rf /')",
+        }
+        errors = validate_condition(cond)
+        assert any("unknown keys" in str(e) for e in errors)
+
+    def test_code_string_in_unknown_key_is_refused(self) -> None:
+        """Code refusal: the closed schema rejects unknown keys."""
+        cond = {
+            "field": "state",
+            "comparison": "equals",
+            "value": "open",
+            "python": "exec('hack')",
+        }
+        errors = validate_condition(cond)
+        assert len(errors) > 0
+        assert any("unknown keys" in str(e) for e in errors)
+
+    def test_exists_comparison_no_value_required(self) -> None:
+        cond = {"field": "assignee", "comparison": "exists"}
+        assert validate_condition(cond) == []
+
+    def test_missing_comparison_no_value_required(self) -> None:
+        cond = {"field": "assignee", "comparison": "missing"}
+        assert validate_condition(cond) == []
+
+    def test_changed_comparison_no_value_required(self) -> None:
+        cond = {"field": "status", "comparison": "changed"}
+        assert validate_condition(cond) == []
+
+    def test_equals_requires_value(self) -> None:
+        cond = {"field": "state", "comparison": "equals"}
+        errors = validate_condition(cond)
+        assert any("requires a 'value'" in str(e) for e in errors)
+
+    def test_empty_field_refused(self) -> None:
+        cond = {"field": "", "comparison": "equals", "value": "x"}
+        errors = validate_condition(cond)
+        assert any("non-empty string" in str(e) for e in errors)
+
+    def test_not_a_dict_refused(self) -> None:
+        errors = validate_condition("not a condition")
+        assert any("must be an object" in str(e) for e in errors)
+
+    def test_no_operator_or_comparison_refused(self) -> None:
+        errors = validate_condition({"field": "x"})
+        assert any("must have either" in str(e) for e in errors)
+
+    def test_wrong_schema_refused(self) -> None:
+        cond = {"schema": "WatchCondition@99", "operator": "any", "clauses": [
+            {"field": "x", "comparison": "equals", "value": 1},
+        ]}
+        errors = validate_condition(cond)
+        assert any("WatchCondition@1" in str(e) for e in errors)
+
+    def test_depth_limit(self) -> None:
+        """Deeply nested trees are refused."""
+        node: dict = {"field": "x", "comparison": "equals", "value": 1}
+        for _ in range(25):
+            node = {"operator": "all", "clauses": [node]}
+        errors = validate_condition(node)
+        assert any("maximum depth" in str(e) for e in errors)
+
+    @pytest.mark.parametrize("comparison", sorted(COMPARISONS))
+    def test_all_closed_comparisons_accepted(self, comparison) -> None:
+        no_value = {"exists", "missing", "changed"}
+        cond = {"field": "x", "comparison": comparison}
+        if comparison not in no_value:
+            cond["value"] = "test"
+        errors = validate_condition(cond)
+        assert errors == [], f"{comparison} should be accepted: {errors}"
+
+    @pytest.mark.parametrize("operator", sorted(LOGICAL_OPERATORS))
+    def test_all_closed_operators_accepted(self, operator) -> None:
+        clauses = [{"field": "x", "comparison": "equals", "value": 1}]
+        cond = {"operator": operator, "clauses": clauses}
+        errors = validate_condition(cond)
+        assert errors == [], f"{operator} should be accepted: {errors}"
+
+
+# ── WatchAction@1 validation ────────────────────────────────────────
+
+
+class TestActionValidation:
+    @pytest.mark.parametrize("kind", sorted(ACTION_KINDS))
+    def test_all_closed_kinds_accepted(self, kind) -> None:
+        errors = validate_action({"schema": "WatchAction@1", "kind": kind})
+        assert errors == [], f"{kind} should be accepted: {errors}"
+
+    def test_unknown_kind_refused(self) -> None:
+        errors = validate_action({"kind": "nuclear.launch"})
+        assert any("unknown action kind" in str(e) for e in errors)
+
+    def test_empty_kind_refused(self) -> None:
+        errors = validate_action({"kind": ""})
+        assert any("non-empty string" in str(e) for e in errors)
+
+    def test_unknown_keys_refused(self) -> None:
+        errors = validate_action({"kind": "project.observe", "sql": "DROP TABLE"})
+        assert any("unknown keys" in str(e) for e in errors)
+
+    def test_not_a_dict_refused(self) -> None:
+        errors = validate_action(42)
+        assert any("must be an object" in str(e) for e in errors)
+
+    def test_wrong_schema_refused(self) -> None:
+        errors = validate_action({"schema": "WatchAction@99", "kind": "project.observe"})
+        assert any("WatchAction@1" in str(e) for e in errors)
+
+
+# ── Rule validation (condition + actions) ────────────────────────────
+
+
+class TestRuleValidation:
+    def test_valid_rule(self) -> None:
+        rule = {
+            "condition": {
+                "operator": "any",
+                "clauses": [{"field": "checks", "comparison": "changed_to", "value": "failure"}],
+            },
+            "actions": [{"kind": "project.observe"}],
+        }
+        assert validate_rule(rule) == []
+
+    def test_missing_condition_refused(self) -> None:
+        errors = validate_rule({"actions": [{"kind": "project.observe"}]})
+        assert any("must have a 'condition'" in str(e) for e in errors)
+
+    def test_missing_actions_refused(self) -> None:
+        errors = validate_rule({
+            "condition": {"operator": "any", "clauses": [
+                {"field": "x", "comparison": "equals", "value": 1},
+            ]},
+        })
+        assert any("non-empty array" in str(e) for e in errors)
+
+    def test_rules_list_validation(self) -> None:
+        errors = validate_rules("not a list")
+        assert any("must be an array" in str(e) for e in errors)
