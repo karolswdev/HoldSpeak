@@ -27,7 +27,7 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 | HS-156-01 | The recommendation (packs A/B/C from existing facts) | done | [story-01-the-recommendation](./story-01-the-recommendation.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-156-02 | One confirmation applies everything | done | [story-02-one-confirmation](./story-02-one-confirmation.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-156-03 | The library patterns (the reform's v1, the barrel, the fence) | done | [story-03-the-library-patterns](./story-03-the-library-patterns.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-156-04 | The door surface (cards, plan, health strip, fold) | backlog | [story-04-the-door-surface](./story-04-the-door-surface.md) | - |
+| HS-156-04 | The door surface (cards, plan, health strip, fold) | done | [story-04-the-door-surface](./story-04-the-door-surface.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-156-05 | Plain words (jargon purge, UX-evidence checklist) | backlog | [story-05-plain-words](./story-05-plain-words.md) | - |
 | HS-156-06 | The topology (this Mac + nodes; configuration over the same authorities) | backlog | [story-06-the-topology](./story-06-the-topology.md) | - |
 | HS-156-07 | The stopwatch walk and the close | backlog | [story-07-the-stopwatch-walk](./story-07-the-stopwatch-walk.md) | - |

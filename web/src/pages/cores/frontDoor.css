@@ -1,0 +1,39 @@
+/* HS-156-04 — Front Door surface layout.
+   Minimal layout; all visual furniture comes from the surface library. */
+
+.front-door {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-surface-gap, 8px);
+}
+
+/* ── "Set up my own" action ── */
+
+.front-door-own-setup {
+  align-self: flex-start;
+  padding: var(--space-1, 4px) 0;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-compact);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.front-door-own-setup:hover {
+  color: var(--text);
+}
+
+.front-door-own-setup:focus-visible {
+  outline: var(--focus-ring);
+}
+
+/* ── Advanced fold content ── */
+
+.front-door-advanced,
+.front-door-advanced-inline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-surface-gap, 8px);
+}
