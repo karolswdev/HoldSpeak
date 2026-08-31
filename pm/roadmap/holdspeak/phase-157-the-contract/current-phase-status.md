@@ -1,6 +1,6 @@
 # Phase 157 - Project Rooms: The Contract (P0)
 
-**Last updated:** 2026-08-31 — 4/5 DONE (01 ref grammar; 02 result contract frozen: 16 kinds, 5 codes, 11 prefixes; 03 service/routes 108 tests; 04 surfaces + MCP-006 truth). The close (05) runs. Owner rulings recorded: POSITIONING "Watches (Project-scoped)" row RATIFIED; EverDriven delivery rides GitHub (P2a proves; Jira P7 follows with a real adapter).
+**Last updated:** 2026-08-31 — PHASE COMPLETE 5/5. Counsel RATIFY zero must-fix; sweep zero true branch-new (2 candidates proven load-flakes with isolated greens); web baseline zero branch-new. PR to main next. Owner rulings recorded: POSITIONING "Watches (Project-scoped)" row RATIFIED; EverDriven delivery rides GitHub (P2a proves; Jira P7 follows with a real adapter).
 
 ## Goal
 
@@ -26,10 +26,10 @@ claim); the arc ahead answers to Art XI (the kernel) via NFR-009.
 
 ## Exit criteria (evidence required)
 
-- [ ] Current Project behavior is protected: characterization tests cover ProjectService (CRUD/archive/meeting/resource/summary/since-last-meeting), all 18 `/api/projects*` routes, the Web Project Memory registration/opening seam, and the MCP family registration truth — all green under isolated HOME.
-- [ ] Schema/API names are agreed: the P0 contract doc records the frozen result envelope (`result_kind`, `project_id`, `project_revision`, `changed_refs`, typed errors), the qualified-ref grammar, and the ID prefixes from SRS_DOMAIN_DRIVER §4 — and every name traces to the SRS suite (a discovery that invalidates one updates the suite before or with the code).
-- [ ] The `person:`/`people:` ref-prefix drift is settled (REF-003): one canonical type, backward-compatible aliases, round-trip tests, and a fence that keeps new Project code off feature-local string splitting.
-- [ ] Sweep name-diff clean vs main (zero branch-new); web baseline zero branch-new; counsel close with zero open must-fix.
+- [x] Current Project behavior is protected: characterization tests cover ProjectService (CRUD/archive/meeting/resource/summary/since-last-meeting), all 18 `/api/projects*` routes, the Web Project Memory registration/opening seam, and the MCP family registration truth — all green under isolated HOME.
+- [x] Schema/API names are agreed: the P0 contract doc records the frozen result envelope (`result_kind`, `project_id`, `project_revision`, `changed_refs`, typed errors), the qualified-ref grammar, and the ID prefixes from SRS_DOMAIN_DRIVER §4 — and every name traces to the SRS suite (a discovery that invalidates one updates the suite before or with the code).
+- [x] The `person:`/`people:` ref-prefix drift is settled (REF-003): one canonical type, backward-compatible aliases, round-trip tests, and a fence that keeps new Project code off feature-local string splitting.
+- [x] Sweep name-diff clean vs main (zero branch-new); web baseline zero branch-new; counsel close with zero open must-fix.
 
 ## Story status
 
@@ -39,7 +39,7 @@ claim); the arc ahead answers to Art XI (the kernel) via NFR-009.
 | HS-157-02 | The result contract (envelope, typed errors, ID prefixes) | done | [story-02-the-result-contract](./story-02-the-result-contract.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-157-03 | The service characterization (ProjectService + routes) | done | [story-03-the-service-characterization](./story-03-the-service-characterization.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-157-04 | The surface characterization (Web + MCP registration) | done | [story-04-the-surface-characterization](./story-04-the-surface-characterization.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-157-05 | The close (gates, suite updates, final summary) | backlog | [story-05-the-close](./story-05-the-close.md) | - |
+| HS-157-05 | The close (gates, suite updates, final summary) | done | [story-05-the-close](./story-05-the-close.md) | [evidence-story-05](./evidence-story-05.md) |
 
 ## Where we are
 
@@ -69,7 +69,13 @@ raw ValueError through the service boundary.
 HS-157-02 froze the names: CommandResultEnvelope, 16 result kinds,
 5 error codes, all 11 §4.1 ID prefixes (3 deterministic with §4.1
 input signatures) — every name SRS-traced in CONTRACTS-P0.md;
-167 tests green. The close (05) now runs the full gates.
+167 tests green.
+THE CLOSE (05): full suite 12F/7766P vs main's 26-name baseline —
+2 name-diff candidates both proven load-flakes (isolated greens; the
+branch changes zero runtime code); web check + baseline green
+(1791 passed, baseline-subset); counsel RATIFY zero M/S, N-1 fence
+addition applied in-round, N-2 recorded. final-summary.md written.
+PHASE COMPLETE 5/5 — the PR to main carries it.
 
 ## Active risks
 

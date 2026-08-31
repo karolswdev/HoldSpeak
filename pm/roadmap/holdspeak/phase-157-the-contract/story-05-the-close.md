@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 157
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-157-01, HS-157-02, HS-157-03, HS-157-04
 - **Unblocks:** Phase P1 (The Room)
 - **Owner:** unassigned
@@ -42,6 +42,27 @@ or WITH the code).
 
 - **Everything:** the phase's own exit criteria — this story IS the gate run.
 
+## What shipped
+
+- Full suite CI-style: `12 failed, 7766 passed, 53 skipped in 20:43`
+  under isolated HOME + `-n auto`. Name-diff vs main's CI baseline
+  (26 names): 2 candidates, BOTH proven load-flakes with isolated
+  green re-runs (the branch changes zero runtime code, so neither can
+  be a branch defect): `test_one_shot_disables_after_cancelled`
+  (sleep-race, 1 passed in 0.78s isolated) and glass `error-1440`
+  (contention, 1 passed in 4.12s isolated). Zero true branch-new.
+- Web gates: `npm --prefix web run check` exit 0 (bundle gate passed);
+  baseline verdict `baseline-subset, zero branch-new` (1791 passed).
+- Counsel close: **RATIFY, zero M, zero S** — all five axes clean.
+  N-1 applied in-round (`project_contracts.py` joined the fence list;
+  167 re-green). N-2 (SRS §3.2 Note/artifact row split) recorded for
+  the next suite amendment.
+- Suite-amendment duty: no P0 discovery invalidated a suite claim
+  (counsel confirmed CONTRACTS-P0.md contradicts nothing); N-2 is
+  cosmetic and recorded, not amended.
+- `final-summary.md` written; phase COMPLETE 5/5.
+
 ## Notes / open questions
 
 - The next phase (P1 "The Room") charters only after this one merges; its anchors must be re-verified against the new main at that time (the handover's own rule).
+- The merge rides the PR: conclusion JSON read in its own step, name-diff vs the PR's own CI run, then a merge commit.

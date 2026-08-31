@@ -260,6 +260,7 @@ def test_aliases_resolve_to_registered_types() -> None:
 # ref operations in that file.
 PROJECT_ROOMS_MODULES: list[str] = [
     "holdspeak/refs.py",
+    "holdspeak/project_contracts.py",  # HS-157-05: counsel N-1
 ]
 
 # The central module itself is ALLOWED to use these patterns.
