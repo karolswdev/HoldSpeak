@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 66  # informational; 65→66: call_mode on threads (HS-154-03)
+SCHEMA_VERSION = 67  # informational; 66→67: Project Room aggregate bones (HS-158-01)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -543,6 +543,22 @@ CREATE TABLE IF NOT EXISTS projects (
     context_json TEXT NOT NULL DEFAULT '{}',
     detection_threshold REAL NOT NULL DEFAULT 0.4,
     is_archived INTEGER NOT NULL DEFAULT 0,
+    -- HS-158-01: Project Room aggregate identity, lifecycle, and cadence.
+    purpose TEXT,
+    outcome_text TEXT,
+    owner_ref TEXT,
+    lifecycle TEXT NOT NULL DEFAULT 'active',
+    posture TEXT,
+    posture_reason TEXT,
+    start_at TEXT,
+    target_at TEXT,
+    review_cadence_json TEXT,
+    next_review_at TEXT,
+    template_key TEXT,
+    modules_json TEXT,
+    revision INTEGER NOT NULL DEFAULT 0,
+    last_review_id TEXT,
+    last_review_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -1447,6 +1463,10 @@ CREATE TABLE IF NOT EXISTS project_resources (
     relationship TEXT NOT NULL DEFAULT 'member',
     source TEXT NOT NULL DEFAULT 'manual',
     confidence REAL NOT NULL DEFAULT 1,
+    -- HS-158-01: semantic role and metadata for Project Room sources.
+    semantic_role TEXT,
+    metadata_json TEXT,
+    revision INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_modified TEXT NOT NULL DEFAULT (datetime('now')),
     deleted INTEGER NOT NULL DEFAULT 0,
@@ -1466,6 +1486,61 @@ CREATE INDEX IF NOT EXISTS idx_knowledge_memberships_resource ON knowledge_membe
 CREATE INDEX IF NOT EXISTS idx_knowledge_memberships_modified ON knowledge_memberships(last_modified);
 CREATE INDEX IF NOT EXISTS idx_project_resources_resource ON project_resources(resource_ref, deleted);
 CREATE INDEX IF NOT EXISTS idx_project_resources_modified ON project_resources(last_modified);
+
+-- HS-158-01: Project-owned items (workstream, milestone, risk, dependency, signal).
+CREATE TABLE IF NOT EXISTS project_items (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    item_type TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '',
+    summary TEXT,
+    lifecycle TEXT NOT NULL DEFAULT 'open',
+    severity TEXT,
+    owner_ref TEXT,
+    due_at TEXT,
+    sort_key REAL,
+    details_json TEXT,
+    provenance_kind TEXT,
+    source_observation_id TEXT,
+    created_by_ref TEXT,
+    revision INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_project_items_project_type
+ON project_items(project_id, item_type);
+
+-- HS-158-01: Project aggregate change log (append-only).
+CREATE TABLE IF NOT EXISTS project_changes (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    project_revision INTEGER NOT NULL,
+    change_kind TEXT NOT NULL,
+    target_ref TEXT,
+    actor_ref TEXT,
+    command_id TEXT,
+    before_hash TEXT,
+    after_hash TEXT,
+    summary_json TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_project_changes_project_rev
+ON project_changes(project_id, project_revision);
+
+-- HS-158-01: Idempotent command ledger for Project writes (API-002, DOM-010).
+CREATE TABLE IF NOT EXISTS project_commands (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    command_kind TEXT NOT NULL,
+    request_hash TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    result_json TEXT,
+    error_code TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    completed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_project_commands_project
+ON project_commands(project_id, status);
 
 -- -- Workbench (HS-116-01) ------------------------------------------------
 -- A Workbench is a DeskPrimitive: one agent, one target, one schedule, N items.

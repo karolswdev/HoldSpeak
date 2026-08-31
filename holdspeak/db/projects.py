@@ -478,6 +478,414 @@ class ProjectRepository(BaseRepository):
                 for row in rows
             ]
 
+    # ── HS-158-01: Project Room aggregate CRUD ─────────────────────────
+
+    def get_project_room_fields(self, project_id: str) -> Optional[dict[str, Any]]:
+        """Load the Project Room columns for *project_id*.
+
+        Returns None if the project does not exist.  Only the Room-era
+        columns are returned; callers wanting the full legacy shape use
+        ``get_project()``.
+        """
+        clean_id = str(project_id).strip()
+        if not clean_id:
+            return None
+        with self._connection() as conn:
+            row = conn.execute(
+                """
+                SELECT purpose, outcome_text, owner_ref, lifecycle,
+                       posture, posture_reason, start_at, target_at,
+                       review_cadence_json, next_review_at, template_key,
+                       modules_json, revision, last_review_id, last_review_at
+                FROM projects WHERE id = ?
+                """,
+                (clean_id,),
+            ).fetchone()
+            if not row:
+                return None
+            return {
+                "purpose": row["purpose"],
+                "outcome_text": row["outcome_text"],
+                "owner_ref": row["owner_ref"],
+                "lifecycle": row["lifecycle"],
+                "posture": row["posture"],
+                "posture_reason": row["posture_reason"],
+                "start_at": row["start_at"],
+                "target_at": row["target_at"],
+                "review_cadence_json": row["review_cadence_json"],
+                "next_review_at": row["next_review_at"],
+                "template_key": row["template_key"],
+                "modules_json": row["modules_json"],
+                "revision": row["revision"],
+                "last_review_id": row["last_review_id"],
+                "last_review_at": row["last_review_at"],
+            }
+
+    def update_project_room_fields(
+        self,
+        project_id: str,
+        *,
+        expected_revision: Optional[int] = None,
+        **fields: Any,
+    ) -> int:
+        """Update Project Room columns and return the new revision.
+
+        If *expected_revision* is given and does not match the current
+        revision, raises ``ValueError`` (optimistic concurrency).
+        Only Room-era fields are accepted; unknown keys are silently
+        ignored.
+        """
+        clean_id = str(project_id).strip()
+        if not clean_id:
+            raise ValueError("project_id is required")
+
+        allowed = {
+            "purpose", "outcome_text", "owner_ref", "lifecycle",
+            "posture", "posture_reason", "start_at", "target_at",
+            "review_cadence_json", "next_review_at", "template_key",
+            "modules_json", "last_review_id", "last_review_at",
+        }
+        updates: list[str] = []
+        params: list[Any] = []
+        for key, value in fields.items():
+            if key not in allowed:
+                continue
+            updates.append(f"{key} = ?")
+            params.append(value)
+        if not updates:
+            raise ValueError("no updatable fields supplied")
+
+        with self._connection() as conn:
+            if expected_revision is not None:
+                current = conn.execute(
+                    "SELECT revision FROM projects WHERE id = ?",
+                    (clean_id,),
+                ).fetchone()
+                if current is None:
+                    raise ValueError(f"project {clean_id} not found")
+                if current["revision"] != expected_revision:
+                    raise ValueError(
+                        f"stale revision: expected {expected_revision}, "
+                        f"got {current['revision']}"
+                    )
+            updates.append("revision = revision + 1")
+            updates.append("updated_at = ?")
+            params.append(datetime.now().isoformat())
+            params.append(clean_id)
+            conn.execute(
+                f"UPDATE projects SET {', '.join(updates)} WHERE id = ?",
+                params,
+            )
+            row = conn.execute(
+                "SELECT revision FROM projects WHERE id = ?",
+                (clean_id,),
+            ).fetchone()
+            return int(row["revision"])
+
+    # ── project_items CRUD ───────────────────────────────────────────
+
+    def insert_project_item(
+        self,
+        *,
+        item_id: str,
+        project_id: str,
+        item_type: str,
+        title: str = "",
+        summary: Optional[str] = None,
+        lifecycle: str = "open",
+        severity: Optional[str] = None,
+        owner_ref: Optional[str] = None,
+        due_at: Optional[str] = None,
+        sort_key: Optional[float] = None,
+        details_json: Optional[str] = None,
+        provenance_kind: Optional[str] = None,
+        source_observation_id: Optional[str] = None,
+        created_by_ref: Optional[str] = None,
+    ) -> None:
+        """Insert a Project item (workstream, milestone, risk, etc.)."""
+        now_iso = datetime.now().isoformat()
+        with self._connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO project_items (
+                    id, project_id, item_type, title, summary, lifecycle,
+                    severity, owner_ref, due_at, sort_key, details_json,
+                    provenance_kind, source_observation_id, created_by_ref,
+                    revision, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+                """,
+                (
+                    str(item_id).strip(),
+                    str(project_id).strip(),
+                    str(item_type).strip(),
+                    str(title).strip(),
+                    summary,
+                    str(lifecycle).strip(),
+                    severity,
+                    owner_ref,
+                    due_at,
+                    sort_key,
+                    details_json,
+                    provenance_kind,
+                    source_observation_id,
+                    created_by_ref,
+                    now_iso,
+                    now_iso,
+                ),
+            )
+
+    def get_project_item(self, item_id: str) -> Optional[dict[str, Any]]:
+        """Load a single project item by ID."""
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM project_items WHERE id = ?",
+                (str(item_id).strip(),),
+            ).fetchone()
+            if not row:
+                return None
+            return dict(row)
+
+    def list_project_items(
+        self, project_id: str, *, item_type: Optional[str] = None, limit: int = 200
+    ) -> list[dict[str, Any]]:
+        """List items for a project, optionally filtered by type."""
+        clean_id = str(project_id).strip()
+        if item_type:
+            rows = self._execute_read(
+                "SELECT * FROM project_items WHERE project_id = ? AND item_type = ? "
+                "ORDER BY sort_key, created_at LIMIT ?",
+                (clean_id, str(item_type).strip(), max(1, int(limit))),
+            )
+        else:
+            rows = self._execute_read(
+                "SELECT * FROM project_items WHERE project_id = ? "
+                "ORDER BY item_type, sort_key, created_at LIMIT ?",
+                (clean_id, max(1, int(limit))),
+            )
+        return [dict(r) for r in rows]
+
+    def update_project_item(self, item_id: str, **fields: Any) -> None:
+        """Update mutable fields on a project item."""
+        allowed = {
+            "title", "summary", "lifecycle", "severity", "owner_ref",
+            "due_at", "sort_key", "details_json", "provenance_kind",
+            "source_observation_id",
+        }
+        updates: list[str] = []
+        params: list[Any] = []
+        for key, value in fields.items():
+            if key not in allowed:
+                continue
+            updates.append(f"{key} = ?")
+            params.append(value)
+        if not updates:
+            return
+        updates.append("revision = revision + 1")
+        updates.append("updated_at = ?")
+        params.append(datetime.now().isoformat())
+        params.append(str(item_id).strip())
+        with self._connection() as conn:
+            conn.execute(
+                f"UPDATE project_items SET {', '.join(updates)} WHERE id = ?",
+                params,
+            )
+
+    # ── project_changes CRUD ─────────────────────────────────────────
+
+    def insert_project_change(
+        self,
+        *,
+        change_id: str,
+        project_id: str,
+        project_revision: int,
+        change_kind: str,
+        target_ref: Optional[str] = None,
+        actor_ref: Optional[str] = None,
+        command_id: Optional[str] = None,
+        before_hash: Optional[str] = None,
+        after_hash: Optional[str] = None,
+        summary_json: Optional[str] = None,
+    ) -> None:
+        """Append a change-log entry (append-only by convention)."""
+        now_iso = datetime.now().isoformat()
+        with self._connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO project_changes (
+                    id, project_id, project_revision, change_kind,
+                    target_ref, actor_ref, command_id,
+                    before_hash, after_hash, summary_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    str(change_id).strip(),
+                    str(project_id).strip(),
+                    int(project_revision),
+                    str(change_kind).strip(),
+                    target_ref,
+                    actor_ref,
+                    command_id,
+                    before_hash,
+                    after_hash,
+                    summary_json,
+                    now_iso,
+                ),
+            )
+
+    def list_project_changes(
+        self,
+        project_id: str,
+        *,
+        since_revision: Optional[int] = None,
+        limit: int = 200,
+    ) -> list[dict[str, Any]]:
+        """List changes for a project, optionally since a revision."""
+        clean_id = str(project_id).strip()
+        if since_revision is not None:
+            rows = self._execute_read(
+                "SELECT * FROM project_changes "
+                "WHERE project_id = ? AND project_revision >= ? "
+                "ORDER BY project_revision, created_at LIMIT ?",
+                (clean_id, int(since_revision), max(1, int(limit))),
+            )
+        else:
+            rows = self._execute_read(
+                "SELECT * FROM project_changes WHERE project_id = ? "
+                "ORDER BY project_revision DESC, created_at DESC LIMIT ?",
+                (clean_id, max(1, int(limit))),
+            )
+        return [dict(r) for r in rows]
+
+    # ── project_commands CRUD ────────────────────────────────────────
+
+    def insert_project_command(
+        self,
+        *,
+        command_id: str,
+        project_id: str,
+        command_kind: str,
+        request_hash: Optional[str] = None,
+        status: str = "pending",
+    ) -> None:
+        """Insert a new command (idempotency ledger entry)."""
+        now_iso = datetime.now().isoformat()
+        with self._connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO project_commands (
+                    id, project_id, command_kind, request_hash,
+                    status, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    str(command_id).strip(),
+                    str(project_id).strip(),
+                    str(command_kind).strip(),
+                    request_hash,
+                    str(status).strip(),
+                    now_iso,
+                ),
+            )
+
+    def get_project_command(self, command_id: str) -> Optional[dict[str, Any]]:
+        """Load a command by ID."""
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM project_commands WHERE id = ?",
+                (str(command_id).strip(),),
+            ).fetchone()
+            if not row:
+                return None
+            return dict(row)
+
+    def complete_project_command(
+        self,
+        command_id: str,
+        *,
+        status: str,
+        result_json: Optional[str] = None,
+        error_code: Optional[str] = None,
+    ) -> None:
+        """Mark a command completed (succeeded/failed)."""
+        now_iso = datetime.now().isoformat()
+        with self._connection() as conn:
+            conn.execute(
+                """
+                UPDATE project_commands
+                SET status = ?, result_json = ?, error_code = ?,
+                    completed_at = ?
+                WHERE id = ?
+                """,
+                (
+                    str(status).strip(),
+                    result_json,
+                    error_code,
+                    now_iso,
+                    str(command_id).strip(),
+                ),
+            )
+
+    def list_project_commands(
+        self, project_id: str, *, status: Optional[str] = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
+        """List commands for a project, optionally filtered by status."""
+        clean_id = str(project_id).strip()
+        if status:
+            rows = self._execute_read(
+                "SELECT * FROM project_commands "
+                "WHERE project_id = ? AND status = ? "
+                "ORDER BY created_at DESC LIMIT ?",
+                (clean_id, str(status).strip(), max(1, int(limit))),
+            )
+        else:
+            rows = self._execute_read(
+                "SELECT * FROM project_commands WHERE project_id = ? "
+                "ORDER BY created_at DESC LIMIT ?",
+                (clean_id, max(1, int(limit))),
+            )
+        return [dict(r) for r in rows]
+
+    # ── project_resources Room extensions ─────────────────────────────
+
+    def update_resource_room_fields(
+        self,
+        project_id: str,
+        resource_ref: str,
+        *,
+        semantic_role: Optional[str] = None,
+        metadata_json: Optional[str] = None,
+    ) -> None:
+        """Update the Room-era fields on a project resource."""
+        updates: list[str] = []
+        params: list[Any] = []
+        if semantic_role is not None:
+            updates.append("semantic_role = ?")
+            params.append(semantic_role)
+        if metadata_json is not None:
+            updates.append("metadata_json = ?")
+            params.append(metadata_json)
+        if not updates:
+            return
+        updates.append("revision = revision + 1")
+        updates.append("last_modified = ?")
+        params.append(datetime.now().isoformat())
+        params.extend([str(project_id).strip(), str(resource_ref).strip()])
+        with self._connection() as conn:
+            conn.execute(
+                f"UPDATE project_resources SET {', '.join(updates)} "
+                "WHERE project_id = ? AND resource_ref = ?",
+                params,
+            )
+
+    # ── internal helpers ─────────────────────────────────────────────
+
+    def _execute_read(
+        self, sql: str, params: tuple[Any, ...] = ()
+    ) -> list[sqlite3.Row]:
+        """Convenience: execute a read query and return all rows."""
+        with self._connection() as conn:
+            return conn.execute(sql, params).fetchall()
+
     def _row_to_project(self, row: sqlite3.Row) -> ProjectSummary:
         """Convert a DB row to a ProjectSummary."""
         return ProjectSummary(

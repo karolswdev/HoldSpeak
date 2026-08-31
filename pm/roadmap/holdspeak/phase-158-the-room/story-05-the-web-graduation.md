@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 158
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HS-158-04 (adoption half; extraction half may start with 01)
 - **Unblocks:** HS-158-06
 - **Owner:** unassigned
