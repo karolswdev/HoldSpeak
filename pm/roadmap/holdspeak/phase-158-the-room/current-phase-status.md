@@ -1,6 +1,6 @@
 # Phase 158 - Project Rooms: The Room (P1)
 
-**Last updated:** 2026-08-31 — 4/6 DONE + 05-extraction committed. Items land: five typed records, closed vocabularies, DOM-007 verb guard, the severity rank paid into /room focus. 05-adoption in flight → beauty pass → THE OWNER'S SHOTS.
+**Last updated:** 2026-08-31 — 4/6 DONE; 05 fully built (extraction, adoption, rig, beauty ×7 defects, TitleSlotContext for WEB-IA-001, room-fields PATCH gap closed under 02) — AFTER shots verified at 1440+393; before/after sheet in assets/story-05-shots/; AWAITING THE OWNER'S VERDICT (it closes 05 and holds the merge word).
 
 ## Goal
 

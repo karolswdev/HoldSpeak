@@ -59,6 +59,31 @@ real data, honest absent-states for the domains P2+ will fill.
 - **Glass:** e2e shots at 1440+393 via the rig-booted hub.
 - **Manual:** the owner's shot review — the closing gate.
 
+## What shipped (functional + beauty; verdict pending)
+
+- Extraction (c547f6e1): ProjectMemoryCore → features/project-room/
+  (api/model/controller/core; 16-line re-export); zero behavior
+  change, 157 pins green unchanged.
+- Adoption (d6b19e12): /room is the first render (one request before
+  ready — proven); orientation band = separate facts, null renders
+  nothing; focus top-5 by kind; absent domains render NOTHING;
+  degraded sections degrade alone. 1841 web tests green,
+  baseline-subset.
+- Shot rig (baedbe5a): 5 deterministic glass legs on a rig-booted
+  hub via the production staged-surface-open path; zero-overflow
+  asserted; found the room-fields PATCH gap (closed under 02).
+- Beauty pass (4c0d24da), art-directed from the orchestrator's
+  shot review: proper plurals, plain-words lifecycle/posture,
+  de-duped identity, severity/due chips with tones, OUTCOME eyebrow,
+  plain-words degraded notice.
+- TitleSlotContext (6a7b8f9a): the window head names the scoped
+  Project at runtime (WEB-IA-001) — mirrors WingSlotContext; manifest
+  label untouched; fence pattern extended, baseline unchanged.
+- AFTER shots verified by the orchestrator's eyes at 1440+393:
+  head named, all seven defects dead, 393 clean. Before/after in
+  assets/story-05-shots/ (+ before/). AWAITING THE OWNER'S VERDICT.
+
 ## Notes / open questions
 
 - The extraction half must not move CSS or rename testids — the pins are the leash.
+- **GOTCHA (cost one blind reshoot):** the glass rig serves the BUILT web bundle (gitignored), not source — vitest proves source while the hub serves dist. `npm --prefix web run build` BEFORE every shot run.
