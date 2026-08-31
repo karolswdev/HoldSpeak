@@ -7,6 +7,7 @@ import { useContext, useEffect, useState } from "react";
 import { SurfaceColumns } from "../../../desk/surface/Surface";
 import { TitleSlotContext } from "../../../desk/surface/title";
 import type { CoreProps } from "../../../pages/cores/core-types";
+import { STAGE_META, STAGE_COUNT } from "./model";
 import { useSetupController } from "./useSetupController";
 import { SetupInterview } from "./SetupInterview";
 import { SetupBrief } from "./SetupBrief";
@@ -135,6 +136,10 @@ export function SetupCore({ scope }: CoreProps) {
             {/* Suggestion cards (after both questions answered) */}
             {ctrl.state.kind === "proposals" ? (
               <>
+                {/* Step indicator for proposals stage (defect 6) */}
+                <div className="setup-step-token" aria-hidden="true" data-testid="setup-step-token">
+                  Step {STAGE_META["proposals"].index} of {STAGE_COUNT}
+                </div>
                 {clarifyingProposal ? (
                   <ClarifyStep
                     proposal={clarifyingProposal}

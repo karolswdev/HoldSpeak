@@ -1,5 +1,7 @@
-// HS-159-05 -- suggestion cards as OBJECTS (INT-008): source chip,
-// subject, plain-words conditions, cadence, readiness, rationale.
+// HS-159-05 -- suggestion cards as OBJECTS (INT-008): chip row
+// (source + subject-kind + cadence), name anchor, plain-words
+// condition, action, rationale footer, readiness state token,
+// selection as PRESENCE (accent wash + check).
 // Cards are labeled CONTROLS, not clickable prose (WEB-A11Y-008).
 // Space toggles selection, arrows traverse (WEB-CMD-005).
 
@@ -7,8 +9,9 @@ import { useCallback, useRef } from "react";
 import { useRovingRows } from "../../../desk/surface/roving";
 import {
   cadenceLabel,
-  conditionSummary,
+  conditionPlainWords,
   proposalBriefState,
+  modeLabel,
   ACTION_LABELS,
   type SetupProposal,
   type WatchBriefState,
@@ -123,34 +126,38 @@ function SuggestionCard({
       onKeyDown={handleKeyDown}
       onClick={handleToggle}
     >
-      {/* Source chip */}
-      <div className="setup-card-source">
-        <span className="setup-card-chip">{proposal.providerId}</span>
+      {/* Chip row: source + subject-kind + cadence + state token */}
+      <div className="setup-card-chips">
+        <span className="setup-card-chip" data-chip="source">{proposal.providerId}</span>
+        <span className="setup-card-chip" data-chip="subject">{spec.subject.kind}</span>
+        <span className="setup-card-chip" data-chip="cadence">{cadenceLabel(spec.trigger)}</span>
+        <span className="setup-card-chip" data-chip="mode" data-mode={spec.mode}>
+          {modeLabel(spec.mode)}
+        </span>
         <span className="setup-card-readiness" data-state={briefState}>
           {STATE_LABEL[briefState]}
         </span>
       </div>
 
-      {/* Subject */}
+      {/* Name anchor */}
       <div className="setup-card-name">{spec.name}</div>
 
-      {/* Intent / subject kind */}
-      <div className="setup-card-subject">
-        <span className="setup-card-subject-kind">{spec.subject.kind}</span>
+      {/* Plain-words condition (defect 2) */}
+      <div
+        className="setup-card-conditions"
+        data-condition-raw={spec.rules.flatMap((r) =>
+          r.condition.clauses.map((c) => `${c.field}:${c.comparison}${c.value != null ? `:${c.value}` : ""}`),
+        ).join(",")}
+      >
+        {conditionPlainWords(spec)}
       </div>
-
-      {/* Plain-words conditions */}
-      <div className="setup-card-conditions">{conditionSummary(spec)}</div>
 
       {/* Action */}
       <div className="setup-card-action">
         {ACTION_LABELS[spec.action.kind] ?? spec.action.kind}
       </div>
 
-      {/* Cadence */}
-      <div className="setup-card-cadence">{cadenceLabel(spec.trigger)}</div>
-
-      {/* Rationale */}
+      {/* Rationale footer */}
       <div className="setup-card-rationale">
         {proposal.rationale.fact}
         {proposal.rationale.detail ? ` -- ${proposal.rationale.detail}` : ""}

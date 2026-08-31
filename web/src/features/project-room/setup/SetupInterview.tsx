@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { MicButton } from "../../../desk/surface/controls/MicButton";
-import { QUESTION_TEXT, Q_OUTCOME, Q_SIGNALS, type SetupAnswer } from "./model";
+import { QUESTION_TEXT, Q_OUTCOME, Q_SIGNALS, STAGE_META, STAGE_COUNT, type SetupAnswer } from "./model";
 import type { ControllerState } from "./useSetupController";
 
 export function SetupInterview({
@@ -45,7 +45,7 @@ export function SetupInterview({
           draft={state.draft}
           onDraft={onSetDraft}
           onSubmit={onSubmitOutcome}
-          stepLabel="Step 1 of 2"
+          stageKey="outcome"
         />
       ) : null}
 
@@ -63,7 +63,7 @@ export function SetupInterview({
             draft={state.draft}
             onDraft={onSetDraft}
             onSubmit={onSubmitSignals}
-            stepLabel="Step 2 of 2"
+            stageKey="signals"
           />
         </>
       ) : null}
@@ -108,17 +108,19 @@ function QuestionStep({
   draft,
   onDraft,
   onSubmit,
-  stepLabel,
+  stageKey,
 }: {
   questionId: string;
   questionText: string;
   draft: string;
   onDraft: (text: string) => void;
   onSubmit: (text: string) => void;
-  stepLabel: string;
+  stageKey: string;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [submitting, setSubmitting] = useState(false);
+  const meta = STAGE_META[stageKey];
+  const stepLabel = meta ? `Step ${meta.index} of ${STAGE_COUNT}` : "";
 
   // Focus the textarea on mount for keyboard-first flow
   useEffect(() => {
@@ -164,8 +166,9 @@ function QuestionStep({
   return (
     <div className="setup-question" data-testid={`setup-question-${questionId}`}>
       <div
-        className="setup-question-step"
+        className="setup-step-token"
         aria-hidden="true"
+        data-testid="setup-step-token"
       >
         {stepLabel}
       </div>

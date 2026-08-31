@@ -27,8 +27,17 @@ vi.mock("../../../../desk/surface/controls/MicButton", () => ({
 import { SetupInterview } from "../SetupInterview";
 import { SuggestionCards } from "../SuggestionCards";
 import { SetupBrief } from "../SetupBrief";
+import { ActivationReview } from "../ActivationReview";
 import type { ControllerState } from "../useSetupController";
-import type { SetupAnswer, SetupProposal } from "../model";
+import {
+  conditionPlainWords,
+  modeLabel,
+  STAGE_META,
+  STAGE_COUNT,
+  type SetupAnswer,
+  type SetupProposal,
+  type WatchSpec,
+} from "../model";
 
 /* ── Helpers ── */
 
@@ -282,13 +291,14 @@ describe("SuggestionCards", () => {
 
     // Object slots present
     expect(screen.getByTestId("setup-card-wprop_1")).toBeTruthy();
-    expect(screen.getByText("Meeting activity")).toBeTruthy(); // name
+    expect(screen.getByText("Meeting activity")).toBeTruthy(); // name anchor
     expect(screen.getByText("native")).toBeTruthy(); // source chip
-    expect(screen.getByText("meetings")).toBeTruthy(); // subject kind
-    expect(screen.getByText("content changed")).toBeTruthy(); // conditions
+    expect(screen.getByText("meetings")).toBeTruthy(); // subject kind chip
+    // Defect 2: plain-words conditions (was "content changed")
+    expect(screen.getByText("When meeting content changes")).toBeTruthy(); // conditions
     expect(screen.getByText("Put it in Project attention")).toBeTruthy(); // action
-    expect(screen.getByText("Every 35 min")).toBeTruthy(); // cadence
-    expect(screen.getByText(/1 recent meetings/)).toBeTruthy(); // rationale
+    expect(screen.getByText("Every 35 min")).toBeTruthy(); // cadence chip
+    expect(screen.getByText(/1 recent meetings/)).toBeTruthy(); // rationale footer
   });
 
   it("renders Blank path when no proposals (INT-002)", () => {
@@ -459,5 +469,405 @@ describe("SetupBrief", () => {
     expect(states).toContain("proposed");
     expect(states).toContain("tested");
     expect(states).toContain("disabled");
+  });
+
+  it("brief groups show count chips (defect 5)", () => {
+    const proposals: SetupProposal[] = [
+      makeProposal("wprop_1", { state: "proposed" }),
+      makeProposal("wprop_2", { state: "proposed" }),
+      makeProposal("wprop_3", { state: "selected", testState: "passed" }),
+    ];
+    const state: ControllerState = {
+      kind: "proposals",
+      proposals,
+      outcomeAnswer: makeAnswer("outcome", "Ship Q4"),
+      signalsAnswer: makeAnswer("signals", "PRs stale"),
+      suggesting: false,
+    };
+    render(<SetupBrief state={state} />);
+
+    // Count chips for proposed (2) and tested (1)
+    const proposedCount = screen.getByTestId("brief-count-proposed");
+    expect(proposedCount.textContent).toBe("2");
+    const testedCount = screen.getByTestId("brief-count-tested");
+    expect(testedCount.textContent).toBe("1");
+  });
+
+  it("brief watch rows show cadence chip and action (defect 5)", () => {
+    const proposals: SetupProposal[] = [
+      makeProposal("wprop_1", { state: "proposed" }),
+    ];
+    const state: ControllerState = {
+      kind: "proposals",
+      proposals,
+      outcomeAnswer: makeAnswer("outcome", "Ship Q4"),
+      signalsAnswer: makeAnswer("signals", "PRs stale"),
+      suggesting: false,
+    };
+    render(<SetupBrief state={state} />);
+
+    const row = screen.getByTestId("brief-watch-wprop_1");
+    // Name anchor present
+    expect(row.querySelector(".setup-brief-watch-name")?.textContent).toBe("Meeting activity");
+    // Cadence chip
+    expect(row.querySelector(".setup-brief-watch-chip")?.textContent).toBe("Every 35 min");
+    // Action in plain words
+    expect(row.querySelector(".setup-brief-watch-action")?.textContent).toBe("Put it in Project attention");
+  });
+});
+
+/* ── Plain-words conditions (defect 2) ── */
+
+describe("conditionPlainWords", () => {
+  function specWith(comparison: string, field: string, value?: unknown, subjectKind = "meetings"): WatchSpec {
+    return {
+      schema: "WatchSpec@1",
+      name: "test",
+      intent: "test",
+      provider: { id: "native", transport: "local_domain" },
+      subject: { kind: subjectKind },
+      trigger: { kind: "poll", everyMinutes: 35 },
+      rules: [
+        {
+          condition: {
+            schema: "WatchCondition@1",
+            operator: "any",
+            clauses: [{ field, comparison, value }],
+          },
+          actions: [{ schema: "WatchAction@1", kind: "project.observe" }],
+        },
+      ],
+      action: { schema: "WatchAction@1", kind: "project.observe" },
+      mode: "yolo",
+    };
+  }
+
+  it("maps 'changed' to plain words", () => {
+    expect(conditionPlainWords(specWith("changed", "content"))).toBe(
+      "When meeting content changes",
+    );
+  });
+
+  it("maps 'changed_to' with value", () => {
+    expect(conditionPlainWords(specWith("changed_to", "lifecycle", "accepted", "decisions"))).toBe(
+      "When decision lifecycle becomes accepted",
+    );
+  });
+
+  it("maps 'equals' with value", () => {
+    expect(conditionPlainWords(specWith("equals", "lifecycle", "accepted", "decisions"))).toBe(
+      "When decision lifecycle is accepted",
+    );
+  });
+
+  it("maps 'older_than' with value", () => {
+    expect(conditionPlainWords(specWith("older_than", "due_date", "7d", "action_items"))).toBe(
+      "When due_date is older than 7d",
+    );
+  });
+
+  it("maps 'contains' with value", () => {
+    expect(conditionPlainWords(specWith("contains", "tags", "urgent"))).toBe(
+      "When tags contains urgent",
+    );
+  });
+
+  it("maps 'exists'", () => {
+    expect(conditionPlainWords(specWith("exists", "assignee"))).toBe(
+      "When assignee exists",
+    );
+  });
+
+  it("returns 'On any change' when no clauses", () => {
+    const spec = specWith("changed", "content");
+    spec.rules = [];
+    expect(conditionPlainWords(spec)).toBe("On any change");
+  });
+
+  it("falls back gracefully for unknown comparison", () => {
+    const result = conditionPlainWords(specWith("custom_check", "status", "done"));
+    // Should not contain raw JSON, should be a readable sentence
+    expect(result).toContain("When");
+    expect(result).toContain("custom_check");
+    expect(result).toContain("done");
+  });
+});
+
+/* ── Mode label (defect 3) ── */
+
+describe("modeLabel", () => {
+  it("maps yolo to YOLO", () => {
+    expect(modeLabel("yolo")).toBe("YOLO");
+  });
+
+  it("maps safe to Secure", () => {
+    expect(modeLabel("safe")).toBe("Secure");
+  });
+
+  it("maps neutral to Normal", () => {
+    expect(modeLabel("neutral")).toBe("Normal");
+  });
+
+  it("falls back to raw value for unknown modes", () => {
+    expect(modeLabel("custom")).toBe("custom");
+  });
+});
+
+/* ── Card object slots (defect 1) ── */
+
+describe("SuggestionCards object structure", () => {
+  const noop = () => {};
+
+  it("renders chip row with source, subject, cadence, mode chips", () => {
+    render(
+      <SuggestionCards
+        proposals={[makeProposal("wprop_1")]}
+        onSelect={noop}
+        onDeselect={noop}
+        onTest={noop}
+        suggesting={false}
+      />,
+    );
+
+    const card = screen.getByTestId("setup-card-wprop_1");
+    const chips = card.querySelectorAll(".setup-card-chip");
+    expect(chips.length).toBe(4); // source, subject, cadence, mode
+
+    // data-chip attributes
+    expect(chips[0].getAttribute("data-chip")).toBe("source");
+    expect(chips[0].textContent).toBe("native");
+    expect(chips[1].getAttribute("data-chip")).toBe("subject");
+    expect(chips[1].textContent).toBe("meetings");
+    expect(chips[2].getAttribute("data-chip")).toBe("cadence");
+    expect(chips[2].textContent).toBe("Every 35 min");
+    expect(chips[3].getAttribute("data-chip")).toBe("mode");
+    expect(chips[3].textContent).toBe("YOLO");
+  });
+
+  it("card has name as anchor (prominent element)", () => {
+    render(
+      <SuggestionCards
+        proposals={[makeProposal("wprop_1")]}
+        onSelect={noop}
+        onDeselect={noop}
+        onTest={noop}
+        suggesting={false}
+      />,
+    );
+
+    const card = screen.getByTestId("setup-card-wprop_1");
+    const name = card.querySelector(".setup-card-name");
+    expect(name?.textContent).toBe("Meeting activity");
+  });
+
+  it("card has rationale as footer", () => {
+    render(
+      <SuggestionCards
+        proposals={[makeProposal("wprop_1")]}
+        onSelect={noop}
+        onDeselect={noop}
+        onTest={noop}
+        suggesting={false}
+      />,
+    );
+
+    const card = screen.getByTestId("setup-card-wprop_1");
+    const rationale = card.querySelector(".setup-card-rationale");
+    expect(rationale?.textContent).toContain("1 recent meetings");
+  });
+
+  it("card has readiness state token", () => {
+    render(
+      <SuggestionCards
+        proposals={[makeProposal("wprop_1")]}
+        onSelect={noop}
+        onDeselect={noop}
+        onTest={noop}
+        suggesting={false}
+      />,
+    );
+
+    const card = screen.getByTestId("setup-card-wprop_1");
+    const readiness = card.querySelector(".setup-card-readiness");
+    expect(readiness?.textContent).toBe("Ready to select");
+    expect(readiness?.getAttribute("data-state")).toBe("proposed");
+  });
+
+  it("card stores condition raw values in data attribute", () => {
+    render(
+      <SuggestionCards
+        proposals={[makeProposal("wprop_1")]}
+        onSelect={noop}
+        onDeselect={noop}
+        onTest={noop}
+        suggesting={false}
+      />,
+    );
+
+    const card = screen.getByTestId("setup-card-wprop_1");
+    const conditions = card.querySelector(".setup-card-conditions");
+    expect(conditions?.getAttribute("data-condition-raw")).toBe("content:changed");
+  });
+
+  it("selected card shows presence (accent) via aria-selected", () => {
+    render(
+      <SuggestionCards
+        proposals={[makeProposal("wprop_1", { state: "selected" })]}
+        onSelect={noop}
+        onDeselect={noop}
+        onTest={noop}
+        suggesting={false}
+      />,
+    );
+
+    const card = screen.getByTestId("setup-card-wprop_1");
+    expect(card.getAttribute("aria-selected")).toBe("true");
+  });
+});
+
+/* ── Review ledger alignment and YOLO token (defects 3, 4) ── */
+
+describe("ActivationReview beauty", () => {
+  const noop = () => {};
+  const outcomeAnswer = makeAnswer("outcome", "Ship Q4");
+  const signalsAnswer = makeAnswer("signals", "PRs stale");
+
+  it("renders ledger-aligned label/value rows for watch spec", () => {
+    const proposals = [makeProposal("wprop_1", { state: "selected", testState: "passed" })];
+    render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={proposals}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    const ledger = screen.getByTestId("review-ledger-wprop_1");
+    expect(ledger).toBeTruthy();
+
+    // Check label/value pairs
+    const rows = ledger.querySelectorAll(".setup-review-ledger-row");
+    expect(rows.length).toBe(5); // Subject, Conditions, Cadence, Action, Mode
+
+    // Labels aligned
+    const labels = Array.from(rows).map((r) => r.querySelector("dt")?.textContent);
+    expect(labels).toEqual(["Subject", "Conditions", "Cadence", "Action", "Mode"]);
+  });
+
+  it("renders mode as a posture token with data-mode (defect 3)", () => {
+    const proposals = [makeProposal("wprop_1", { state: "selected" })];
+    render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={proposals}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    const modeToken = screen.getByTestId("review-watch-wprop_1").querySelector(".setup-mode-token");
+    expect(modeToken).toBeTruthy();
+    expect(modeToken?.textContent).toBe("YOLO");
+    expect(modeToken?.getAttribute("data-mode")).toBe("yolo");
+  });
+
+  it("renders plain-words conditions in review (defect 2)", () => {
+    const proposals = [makeProposal("wprop_1", { state: "selected" })];
+    render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={proposals}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    // Find the Conditions row
+    const conditionValue = screen.getByTestId("review-ledger-wprop_1")
+      .querySelectorAll(".setup-review-ledger-row")[1]
+      .querySelector("dd");
+    expect(conditionValue?.textContent).toBe("When meeting content changes");
+    // Machine value in data attribute
+    expect(conditionValue?.getAttribute("data-condition-raw")).toBe("content:changed");
+  });
+
+  it("shows step indicator on review (defect 6)", () => {
+    const proposals = [makeProposal("wprop_1", { state: "selected" })];
+    render(
+      <ActivationReview
+        outcomeAnswer={outcomeAnswer}
+        signalsAnswer={signalsAnswer}
+        proposals={proposals}
+        onFinalize={noop}
+        onBack={noop}
+        finalizing={false}
+      />,
+    );
+
+    const token = screen.getByTestId("setup-step-token");
+    expect(token.textContent).toBe("Step 4 of 4");
+  });
+});
+
+/* ── Step token consistency (defect 6) ── */
+
+describe("Step token across stages", () => {
+  const noop = () => {};
+
+  it("outcome stage shows Step 1 of 4", () => {
+    const state: ControllerState = { kind: "outcome", draft: "" };
+    render(
+      <SetupInterview
+        state={state}
+        error=""
+        onSubmitOutcome={noop}
+        onSubmitSignals={noop}
+        onEditOutcome={noop}
+        onEditSignals={noop}
+        onSetDraft={noop}
+      />,
+    );
+
+    const token = screen.getByTestId("setup-step-token");
+    expect(token.textContent).toBe("Step 1 of 4");
+  });
+
+  it("signals stage shows Step 2 of 4", () => {
+    const state: ControllerState = {
+      kind: "signals",
+      draft: "",
+      outcomeAnswer: makeAnswer("outcome", "Ship Q4"),
+    };
+    render(
+      <SetupInterview
+        state={state}
+        error=""
+        onSubmitOutcome={noop}
+        onSubmitSignals={noop}
+        onEditOutcome={noop}
+        onEditSignals={noop}
+        onSetDraft={noop}
+      />,
+    );
+
+    const tokens = screen.getAllByTestId("setup-step-token");
+    // The active question has the token
+    const signalsToken = tokens[tokens.length - 1];
+    expect(signalsToken.textContent).toBe("Step 2 of 4");
+  });
+
+  it("STAGE_META has consistent 4-stage system", () => {
+    expect(STAGE_COUNT).toBe(4);
+    expect(STAGE_META["outcome"].index).toBe(1);
+    expect(STAGE_META["signals"].index).toBe(2);
+    expect(STAGE_META["proposals"].index).toBe(3);
+    expect(STAGE_META["review"].index).toBe(4);
   });
 });

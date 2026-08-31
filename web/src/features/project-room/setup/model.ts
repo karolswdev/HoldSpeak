@@ -411,7 +411,7 @@ export function cadenceLabel(trigger: WatchTrigger): string {
   return `Every ${trigger.everyMinutes} min`;
 }
 
-/** Human-readable condition summary from a spec's rules. */
+/** Human-readable condition summary from a spec's rules (raw form). */
 export function conditionSummary(spec: WatchSpec): string {
   const clauses = spec.rules.flatMap((r) => r.condition.clauses);
   if (clauses.length === 0) return "Any change";
@@ -422,3 +422,85 @@ export function conditionSummary(spec: WatchSpec): string {
     })
     .join(", ");
 }
+
+/* ── Plain-words condition renderer (HS-159-05 defect 2) ────────── */
+
+/** Subject-kind nouns for sentence construction. */
+const SUBJECT_NOUNS: Record<string, string> = {
+  meetings: "meeting",
+  decisions: "decision",
+  action_items: "action item",
+  action_item: "action item",
+  resources: "resource",
+  changes: "change",
+  notes: "note",
+  threads: "thread",
+  people: "person",
+  recipes: "recipe",
+  workflows: "workflow",
+};
+
+/** Comparison verbs for the closed WatchCondition@1 vocabulary. */
+const COMPARISON_VERBS: Record<string, (field: string, value: string | null, noun: string) => string> = {
+  changed: (_f, _v, noun) => `When ${noun} content changes`,
+  changed_to: (field, value, noun) => `When ${noun} ${field} becomes ${value ?? "unknown"}`,
+  equals: (field, value, noun) => `When ${noun} ${field} is ${value ?? "unknown"}`,
+  not_equals: (field, value, noun) => `When ${noun} ${field} is not ${value ?? "unknown"}`,
+  older_than: (field, value, _noun) => `When ${field} is older than ${value ?? "unknown"}`,
+  newer_than: (field, value, _noun) => `When ${field} is newer than ${value ?? "unknown"}`,
+  greater_than: (field, value, _noun) => `When ${field} exceeds ${value ?? "unknown"}`,
+  less_than: (field, value, _noun) => `When ${field} is below ${value ?? "unknown"}`,
+  contains: (field, value, _noun) => `When ${field} contains ${value ?? "unknown"}`,
+  not_contains: (field, value, _noun) => `When ${field} does not contain ${value ?? "unknown"}`,
+  exists: (field, _v, _noun) => `When ${field} exists`,
+  not_exists: (field, _v, _noun) => `When ${field} does not exist`,
+};
+
+/** Plain-words condition from a single clause (defect 2). */
+function clausePlainWords(clause: WatchConditionClause, subjectKind: string): string {
+  const noun = SUBJECT_NOUNS[subjectKind] ?? subjectKind;
+  const valueStr = clause.value != null ? String(clause.value) : null;
+  const verb = COMPARISON_VERBS[clause.comparison];
+  if (verb) return verb(clause.field, valueStr, noun);
+  // Unknown comparison: neutral fallback, never raw JSON
+  const valPart = valueStr ? ` ${valueStr}` : "";
+  return `When ${noun} ${clause.field} ${clause.comparison}${valPart}`;
+}
+
+/** Plain-words conditions for a full spec (HS-159-05 defect 2).
+ *  Maps the closed WatchCondition@1 vocabulary to sentences.
+ *  Machine values stay in data- attributes on the rendered elements. */
+export function conditionPlainWords(spec: WatchSpec): string {
+  const clauses = spec.rules.flatMap((r) => r.condition.clauses);
+  if (clauses.length === 0) return "On any change";
+  return clauses
+    .map((c) => clausePlainWords(c, spec.subject.kind))
+    .join("; ");
+}
+
+/* ── Mode/posture labels (HS-159-05 defect 3) ────────────────────── */
+
+/** Human-readable posture labels for watch mode values. */
+export const MODE_LABELS: Record<string, string> = {
+  yolo: "YOLO",
+  safe: "Secure",
+  neutral: "Normal",
+};
+
+/** Human-readable mode label, with fallback. */
+export function modeLabel(mode: string): string {
+  return MODE_LABELS[mode] ?? mode;
+}
+
+/* ── Stage progress (HS-159-05 defect 6) ────────────────────────── */
+
+/** Total number of setup stages visible to the user. */
+export const STAGE_COUNT = 4;
+
+/** Stage labels and ordinals for the step indicator. */
+export const STAGE_META: Record<string, { index: number; label: string }> = {
+  outcome: { index: 1, label: "Outcome" },
+  signals: { index: 2, label: "Signals" },
+  proposals: { index: 3, label: "Suggestions" },
+  review: { index: 4, label: "Review" },
+};

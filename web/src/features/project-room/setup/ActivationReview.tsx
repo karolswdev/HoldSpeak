@@ -1,12 +1,17 @@
 // HS-159-05 -- activation review (ACT-001/WEB-CR-011): outcome, each
-// Watch spec, cadence, action, test result, first-run behavior.
+// Watch spec with ledger-aligned label/value rows, posture token,
+// plain-words conditions, cadence, action, test result, first-run
+// behavior, step indicator.
 // Cmd/Ctrl+Enter activates (WEB-CMD-005).
 
 import { useCallback, useEffect, type KeyboardEvent } from "react";
 import {
   cadenceLabel,
-  conditionSummary,
+  conditionPlainWords,
+  modeLabel,
   ACTION_LABELS,
+  STAGE_META,
+  STAGE_COUNT,
   type SetupAnswer,
   type SetupProposal,
 } from "./model";
@@ -51,6 +56,8 @@ export function ActivationReview({
     return () => el?.removeEventListener("keydown", handler as EventListener);
   }, [onFinalize, onBack, finalizing]);
 
+  const meta = STAGE_META["review"];
+
   return (
     <div
       className="setup-review"
@@ -60,6 +67,11 @@ export function ActivationReview({
       role="region"
       aria-label="Activation review"
     >
+      {/* Step indicator (defect 6) */}
+      <div className="setup-step-token" aria-hidden="true" data-testid="setup-step-token">
+        Step {meta.index} of {STAGE_COUNT}
+      </div>
+
       <h3 className="setup-review-heading">Review before activation</h3>
 
       {/* Outcome */}
@@ -151,28 +163,44 @@ function ReviewWatchSpec({ proposal }: { proposal: SetupProposal }) {
       data-testid={`review-watch-${proposal.id}`}
     >
       <div className="setup-review-watch-name">{spec.name}</div>
-      <div className="setup-review-watch-details">
-        <div className="setup-review-watch-row">
-          <span className="setup-review-watch-key">Subject</span>
-          <span>{spec.subject.kind}</span>
+
+      {/* Ledger-aligned label/value rows (defect 4) */}
+      <dl className="setup-review-ledger" data-testid={`review-ledger-${proposal.id}`}>
+        <div className="setup-review-ledger-row">
+          <dt className="setup-review-ledger-label">Subject</dt>
+          <dd className="setup-review-ledger-value">{spec.subject.kind}</dd>
         </div>
-        <div className="setup-review-watch-row">
-          <span className="setup-review-watch-key">Conditions</span>
-          <span>{conditionSummary(spec)}</span>
+        <div className="setup-review-ledger-row">
+          <dt className="setup-review-ledger-label">Conditions</dt>
+          <dd
+            className="setup-review-ledger-value"
+            data-condition-raw={spec.rules.flatMap((r) =>
+              r.condition.clauses.map((c) => `${c.field}:${c.comparison}${c.value != null ? `:${c.value}` : ""}`),
+            ).join(",")}
+          >
+            {conditionPlainWords(spec)}
+          </dd>
         </div>
-        <div className="setup-review-watch-row">
-          <span className="setup-review-watch-key">Cadence</span>
-          <span>{cadenceLabel(spec.trigger)}</span>
+        <div className="setup-review-ledger-row">
+          <dt className="setup-review-ledger-label">Cadence</dt>
+          <dd className="setup-review-ledger-value">{cadenceLabel(spec.trigger)}</dd>
         </div>
-        <div className="setup-review-watch-row">
-          <span className="setup-review-watch-key">Action</span>
-          <span>{ACTION_LABELS[spec.action.kind] ?? spec.action.kind}</span>
+        <div className="setup-review-ledger-row">
+          <dt className="setup-review-ledger-label">Action</dt>
+          <dd className="setup-review-ledger-value">
+            {ACTION_LABELS[spec.action.kind] ?? spec.action.kind}
+          </dd>
         </div>
-        <div className="setup-review-watch-row">
-          <span className="setup-review-watch-key">Mode</span>
-          <span>{spec.mode}</span>
+        <div className="setup-review-ledger-row">
+          <dt className="setup-review-ledger-label">Mode</dt>
+          <dd className="setup-review-ledger-value">
+            <span className="setup-mode-token" data-mode={spec.mode}>
+              {modeLabel(spec.mode)}
+            </span>
+          </dd>
         </div>
-      </div>
+      </dl>
+
       {proposal.testResult ? (
         <TestResultDisplay
           result={proposal.testResult}

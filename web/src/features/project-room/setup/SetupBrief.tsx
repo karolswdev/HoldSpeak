@@ -1,6 +1,7 @@
 // HS-159-05 -- the live brief: outcome, watches by state --
-// mentioned/proposed/tested/disabled/active per INT-011,
-// cadence/test state.  Mirrors the durable session at every step.
+// mentioned/proposed/tested/disabled/active per INT-011.
+// Compact rows: name anchor + cadence chip + action in plain words.
+// State grouping headers with count chips (the 158 grammar).
 
 import {
   cadenceLabel,
@@ -115,8 +116,13 @@ function BriefWatches({ state }: { state: ControllerState }) {
       {stateOrder.map((bs) =>
         grouped[bs].length > 0 ? (
           <div key={bs} className="setup-brief-group" data-brief-state={bs}>
-            <div className="setup-brief-group-label">
-              {BRIEF_STATE_LABEL[bs]} ({grouped[bs].length})
+            <div className="setup-brief-group-header">
+              <span className="setup-brief-group-label">
+                {BRIEF_STATE_LABEL[bs]}
+              </span>
+              <span className="setup-brief-count-chip" data-testid={`brief-count-${bs}`}>
+                {grouped[bs].length}
+              </span>
             </div>
             {grouped[bs].map((p) => (
               <BriefWatchRow key={p.id} proposal={p} />
@@ -134,8 +140,10 @@ function BriefWatchRow({ proposal }: { proposal: SetupProposal }) {
     <div className="setup-brief-watch" data-testid={`brief-watch-${proposal.id}`}>
       <div className="setup-brief-watch-name">{spec.name}</div>
       <div className="setup-brief-watch-meta">
-        <span>{cadenceLabel(spec.trigger)}</span>
-        <span>{ACTION_LABELS[spec.action.kind] ?? spec.action.kind}</span>
+        <span className="setup-brief-watch-chip">{cadenceLabel(spec.trigger)}</span>
+        <span className="setup-brief-watch-action">
+          {ACTION_LABELS[spec.action.kind] ?? spec.action.kind}
+        </span>
       </div>
       {proposal.testResult ? (
         <div

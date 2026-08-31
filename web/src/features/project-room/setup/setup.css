@@ -1,4 +1,4 @@
-/* HS-159-05 -- setup interview styles (functional pass).
+/* HS-159-05 -- setup interview styles (beauty pass).
    Uses design tokens; no raw values (validate-tokens.cjs). */
 
 .setup-root {
@@ -8,6 +8,17 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+}
+
+/* ── Step indicator token (defect 6: one system across all stages) ── */
+
+.setup-step-token {
+  font-size: var(--text-xs);
+  font-family: var(--font-mono, monospace);
+  font-weight: var(--font-semibold, 600);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 /* ── Interview ── */
@@ -38,13 +49,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-}
-
-.setup-question-step {
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .setup-question-label {
@@ -124,7 +128,7 @@
   gap: var(--space-2);
 }
 
-/* ── Suggestion cards ── */
+/* ── Suggestion cards (defect 1: cards are OBJECTS) ── */
 
 .setup-cards {
   display: flex;
@@ -148,12 +152,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  padding: var(--space-2);
+  padding: var(--space-3);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-sm);
   background: var(--bg-primary);
   cursor: pointer;
-  transition: border-color var(--duration-fast) var(--ease-out);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
 }
 
 .setup-card:focus-visible {
@@ -161,28 +167,45 @@
   outline-offset: -1px;
 }
 
+/* Selection = PRESENCE: accent wash + accent border (the 156-08 grammar) */
 .setup-card[aria-selected="true"] {
   border-color: var(--border-accent);
   background: var(--bg-accent-subtle);
 }
 
-.setup-card-source {
+/* Chip row: horizontal, wrapping, small gap */
+.setup-card-chips {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1);
 }
 
 .setup-card-chip {
+  display: inline-block;
   font-size: var(--text-xs);
-  padding: 0 var(--space-1);
+  padding: 1px var(--space-1);
   border-radius: var(--radius-xs);
   background: var(--bg-tertiary);
   color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Mode chip: quiet restrained token (the WEB-STW-001 spirit) */
+.setup-card-chip[data-chip="mode"] {
+  font-family: var(--font-mono, monospace);
+  font-weight: var(--font-semibold, 600);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .setup-card-readiness {
+  margin-left: auto;
   font-size: var(--text-xs);
+  font-weight: var(--font-medium);
   color: var(--text-tertiary);
+  white-space: nowrap;
 }
 
 .setup-card-readiness[data-state="tested"] {
@@ -193,30 +216,33 @@
   color: var(--text-danger);
 }
 
+/* Name = the anchor: prominent, the eye lands here */
 .setup-card-name {
   font-weight: var(--font-medium);
+  font-size: var(--text-base);
   color: var(--text-primary);
 }
 
-.setup-card-subject,
-.setup-card-conditions,
-.setup-card-action,
-.setup-card-cadence {
+/* Condition: one plain-words line */
+.setup-card-conditions {
   font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
-.setup-card-subject-kind {
-  font-size: var(--text-xs);
-  padding: 0 var(--space-1);
-  border-radius: var(--radius-xs);
-  background: var(--bg-tertiary);
+/* Action: quiet line */
+.setup-card-action {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
 }
 
+/* Rationale footer: the soul -- italic, faint */
 .setup-card-rationale {
   font-size: var(--text-xs);
   color: var(--text-tertiary);
   font-style: italic;
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--border-secondary);
+  margin-top: var(--space-1);
 }
 
 .setup-card-test {
@@ -243,7 +269,7 @@
   cursor: pointer;
 }
 
-/* ── Brief ── */
+/* ── Brief (defect 5: compact rows, count chips) ── */
 
 .setup-brief {
   display: flex;
@@ -297,12 +323,30 @@
   gap: var(--space-1);
 }
 
+/* Grouping header with count chip (the 158 count-chip grammar) */
+.setup-brief-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 .setup-brief-group-label {
   font-size: var(--text-xs);
   font-weight: var(--font-medium);
   color: var(--text-secondary);
 }
 
+.setup-brief-count-chip {
+  display: inline-block;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: var(--font-semibold, 600);
+  color: var(--text-tertiary);
+  min-width: 16px;
+  text-align: center;
+}
+
+/* Compact watch row: name + meta chips on one line */
 .setup-brief-watch {
   display: flex;
   flex-direction: column;
@@ -316,13 +360,36 @@
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .setup-brief-watch-meta {
   display: flex;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--space-1);
   font-size: var(--text-xs);
   color: var(--text-tertiary);
+}
+
+/* Cadence as a chip in the meta row */
+.setup-brief-watch-chip {
+  display: inline-block;
+  font-size: 10px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-xs);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.setup-brief-watch-action {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .setup-brief-watch-test {
@@ -471,7 +538,7 @@
   color: var(--text-danger);
 }
 
-/* ── Review ── */
+/* ── Review (defect 4: ledger-aligned label/value) ── */
 
 .setup-review {
   display: flex;
@@ -532,21 +599,47 @@
   color: var(--text-primary);
 }
 
-.setup-review-watch-details {
+/* Ledger-aligned dl: label column aligns, value column fills */
+.setup-review-ledger {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  margin: 0;
+  padding: 0;
 }
 
-.setup-review-watch-row {
+.setup-review-ledger-row {
   display: flex;
   gap: var(--space-2);
   font-size: var(--text-xs);
+  align-items: baseline;
 }
 
-.setup-review-watch-key {
+.setup-review-ledger-label {
   color: var(--text-tertiary);
-  min-width: 5rem;
+  min-width: 6rem;
+  font-weight: normal;
+  margin: 0;
+}
+
+.setup-review-ledger-value {
+  color: var(--text-primary);
+  margin: 0;
+  padding: 0;
+}
+
+/* Mode posture token (defect 3: quiet restrained style, WEB-STW-001 spirit) */
+.setup-mode-token {
+  display: inline-block;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: var(--font-semibold, 600);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-xs);
+  background: var(--bg-tertiary);
 }
 
 .setup-review-watch-untested {
