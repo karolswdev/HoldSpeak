@@ -321,6 +321,12 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "setup/diagnostic network probe",
     (
+        "holdspeak/services/front_door_service.py",
+        "_default_probe",
+        "urlopen",
+        1,
+    ): "setup/diagnostic network probe",
+    (
         "holdspeak/coder_gate.py",
         "_send",
         "urlopen",

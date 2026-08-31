@@ -4,8 +4,9 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // species on the surface idiom are the living style guide now — the
 // legacy Signal dialect (Switch/Tabs/StatusPill/InlineMessage/
 // Disclosure/ChoiceCard/Toolbar) retired with this story.
+// HS-156-03 — extended with the v1 library patterns gallery.
 import type { CoreProps } from "./core-types";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   CheckGadget,
@@ -36,6 +37,52 @@ import {
   SurfaceVerbs,
 } from "../../desk/surface/Surface";
 import { SurfaceWings } from "../../desk/surface/wings";
+import {
+  StateChip,
+  ActionNotice,
+  Disclosure,
+  ProgressPlan,
+  ChoiceCardGroup,
+  ChoiceCard,
+  Popover,
+  ProvenanceChip,
+  Receipt,
+  type ChipState,
+  type PlanStep,
+} from "../../desk/surface/patterns";
+import {
+  TopologySurface,
+  type GraphNode,
+  type GraphFlow,
+} from "../../desk/surface/graph/TopologySurface";
+
+const ALL_CHIP_STATES: ChipState[] = [
+  "idle", "active", "working", "success", "warning", "failure", "unreachable",
+];
+
+const GALLERY_PLAN_STEPS: PlanStep[] = [
+  { id: "fetch", label: "Fetch manifest", status: "done" },
+  { id: "download", label: "Download weights", status: "running", progress: 0.42, rate: "18 MB/s" },
+  { id: "verify", label: "Verify checksums", status: "queued" },
+  { id: "register", label: "Register model", status: "queued" },
+];
+
+const GALLERY_TOPOLOGY_NODES: GraphNode[] = [
+  { id: "home", label: "This Mac", home: true, state: "success", x: 40, y: 100, children: <span style={{ fontSize: 10, color: "var(--text-muted)" }}>MLX, llama.cpp</span> },
+  { id: "lan", label: "LAN Server", state: "success", x: 360, y: 35, children: <span style={{ fontSize: 10, color: "var(--text-muted)" }}>qwen3.6-35b</span> },
+  { id: "cloud", label: "Cloud API", state: "unreachable", x: 360, y: 175 },
+];
+
+const GALLERY_TOPOLOGY_FLOWS: GraphFlow[] = [
+  { id: "f1", from: "home", to: "lan", labels: ["Chat & agents", "Summaries"] },
+  { id: "f2", from: "home", to: "cloud", labels: ["Translation"] },
+];
+
+const GALLERY_PLAN_MIXED: PlanStep[] = [
+  { id: "connect", label: "Connect to host", status: "done" },
+  { id: "auth", label: "Authenticate", status: "failed", detail: "Token expired" },
+  { id: "sync", label: "Sync state", status: "queued" },
+];
 
 export function ComponentsCore({ hero }: CoreProps) {
   const [checked, setChecked] = useState(true);
@@ -50,6 +97,10 @@ export function ComponentsCore({ hero }: CoreProps) {
     ["open board", "opens the board"],
   ]);
   const [confirmed, setConfirmed] = useState(0);
+  const [choiceValue, setChoiceValue] = useState<string | null>(null);
+  const [disclosureOpen, setDisclosureOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const popoverAnchorRef = useRef<HTMLButtonElement>(null);
   return (
     <>
       {hero ? (
@@ -222,7 +273,176 @@ export function ComponentsCore({ hero }: CoreProps) {
         <SurfaceState empty emptyLabel="A quiet empty state" emptyGlyph="○" />
         <SurfaceState error="The error leg renders in the flow" />
       </SurfaceSection>
-      <SurfaceFooter />
+      {/* ── HS-156-03: v1 library patterns gallery ── */}
+      <SurfaceSection label="StateChip: all seven states">
+        <div className="surface-actions">
+          {ALL_CHIP_STATES.map((state) => (
+            <StateChip key={state} state={state} />
+          ))}
+        </div>
+        <div className="surface-actions">
+          <StateChip state="active" label="Custom label" icon="*" />
+        </div>
+      </SurfaceSection>
+      <SurfaceSection label="ActionNotice: tone variants">
+        <ActionNotice tone="info" icon="i">
+          Models are downloading in the background.
+        </ActionNotice>
+        <ActionNotice tone="ok" icon={"✓"}>
+          All checks passed.
+        </ActionNotice>
+        <ActionNotice
+          tone="warn"
+          icon={"⚠"}
+          action={{ label: "Review", onClick: () => {} }}
+        >
+          One model needs attention.
+        </ActionNotice>
+        <ActionNotice tone="danger" icon={"✗"}>
+          Connection lost to the host.
+        </ActionNotice>
+        <ActionNotice action={{ label: "Retry", onClick: () => {} }}>
+          Default tone (no explicit tone set).
+        </ActionNotice>
+      </SurfaceSection>
+      <SurfaceSection label="Disclosure: controlled and uncontrolled">
+        <Disclosure label="Uncontrolled fold (default closed)">
+          <p>Content pushed into the layout flow. Escape closes.</p>
+        </Disclosure>
+        <Disclosure label="Uncontrolled fold (default open)" defaultOpen>
+          <p>Started open. The caret rotates with the state.</p>
+        </Disclosure>
+        <Disclosure
+          label="Controlled fold"
+          open={disclosureOpen}
+          onOpenChange={setDisclosureOpen}
+          token="CTRL"
+        >
+          <p>This fold is externally controlled. Token slot visible.</p>
+        </Disclosure>
+        <Disclosure label="RAW variant" variant="raw" token="DEBUG">
+          <p>The RAW variant for advanced/debug panels.</p>
+        </Disclosure>
+      </SurfaceSection>
+      <SurfaceSection label="ProgressPlan: detailed and compact">
+        <ProgressPlan
+          steps={GALLERY_PLAN_STEPS}
+          receipt={<Receipt status="ok" label="Started" timestamp="09:41" />}
+          action={{ label: "Retry", onClick: () => {} }}
+        />
+        <ProgressPlan
+          steps={GALLERY_PLAN_MIXED}
+          compact
+          egress={<ProvenanceChip source="Local" boundary="LAN" />}
+          action={{ label: "Resume", onClick: () => {} }}
+        />
+      </SurfaceSection>
+      <SurfaceSection label="ChoiceCardGroup: radio semantics">
+        <ChoiceCardGroup
+          name="gallery-model"
+          value={choiceValue}
+          onChange={setChoiceValue}
+          confirmLabel="Apply"
+          onConfirm={() => {}}
+          ariaLabel="Model selection"
+          layout="row"
+        >
+          <ChoiceCard
+            value="light"
+            label="On-device"
+            description="Runs entirely on your machine"
+            tier="light"
+            emblem="○"
+            summary="6 jobs → Qwen 9B on this Mac"
+            facts={[
+              { label: "Size", value: "4.2 GB" },
+              { label: "Speed", value: "32 tok/s" },
+            ]}
+            cost="Free"
+            fold={
+              <span>
+                Thoughts &amp; notes · Meetings · Writing &amp; dictation
+              </span>
+            }
+            foldLabel="What's inside"
+            name="gallery-model"
+            selectedValue={choiceValue}
+            onChange={setChoiceValue}
+          />
+          <ChoiceCard
+            value="balanced"
+            label="Balanced"
+            description="The recommended middle"
+            recommended
+            tier="balanced"
+            emblem="◐"
+            summary="6 jobs → your LAN server · Speech → Whisper small"
+            facts={[{ label: "Uses", value: "your server" }]}
+            cost="641 MB download"
+            fold={<span>Chat &amp; agents · Speech recognition</span>}
+            foldLabel="What's inside"
+            name="gallery-model"
+            selectedValue={choiceValue}
+            onChange={setChoiceValue}
+          />
+          <ChoiceCard
+            value="full"
+            label="Full"
+            description="Temporarily unavailable"
+            tier="full"
+            emblem="●"
+            disabled
+            name="gallery-model"
+            selectedValue={choiceValue}
+            onChange={setChoiceValue}
+          />
+        </ChoiceCardGroup>
+      </SurfaceSection>
+      <SurfaceSection label="Popover: in-flow anchored">
+        <button
+          ref={popoverAnchorRef}
+          type="button"
+          className="signal-btn"
+          onClick={() => setPopoverOpen(!popoverOpen)}
+        >
+          {popoverOpen ? "Close popover" : "Open popover"}
+        </button>
+        <Popover
+          anchor={popoverAnchorRef}
+          open={popoverOpen}
+          onClose={() => setPopoverOpen(false)}
+          ariaLabel="Gallery popover"
+        >
+          <p style={{ margin: 0, padding: "8px" }}>
+            Popover content. Escape dismisses. Focus is trapped.
+          </p>
+        </Popover>
+      </SurfaceSection>
+      <SurfaceSection label="ProvenanceChip and Receipt: footer slots">
+        <div className="surface-actions">
+          <ProvenanceChip source="Whisper" />
+          <ProvenanceChip source="Local LLM" boundary="LAN" />
+          <ProvenanceChip source="Cloud API" boundary="egress" onInspect={() => {}} />
+        </div>
+        <div className="surface-actions">
+          <Receipt status="ok" label="Transcribed" timestamp="09:38" />
+          <Receipt status="warn" label="Partial" timestamp="09:41" />
+          <Receipt status="danger" label="Failed" onInspect={() => {}} />
+        </div>
+      </SurfaceSection>
+      <SurfaceSection label="TopologySurface: graph viewport">
+        <TopologySurface
+          nodes={GALLERY_TOPOLOGY_NODES}
+          flows={GALLERY_TOPOLOGY_FLOWS}
+          ariaLabel="Gallery topology"
+          inspectorSlot={<div style={{ padding: 8, fontSize: 11, fontFamily: "var(--font-mono)" }}>Inspector slot</div>}
+          addNodeSlot={<button type="button" className="signal-btn" style={{ fontSize: 10 }}>+ Add node</button>}
+        />
+      </SurfaceSection>
+      <SurfaceFooter
+        receipt={<Receipt status="ok" label="Gallery loaded" timestamp="now" />}
+        egress={<ProvenanceChip source="Local" />}
+      />
     </>
   );
 }

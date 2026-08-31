@@ -1,0 +1,295 @@
+/* ── ChoiceCardGroup: real radio semantics with roving focus ──
+   Cards with visually hidden radio inputs and keyboard navigation.
+
+   HS-156-08 — the card is an OBJECT, not a list: an emblem + name head,
+   a one-sentence character, a one-line summary anchor, fact chips, and
+   the per-item detail folded away. Tiers differentiate by accent
+   temperature (data-tier); RECOMMENDED is presence, not just a tag. */
+
+.desk-next .surface-choice-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-surface-gap);
+}
+
+/* Row layout: tiers stand side by side where width allows, stack narrow.
+   The group stamps --choice-cards (its child count) so tracks match the
+   cards exactly — never auto-fit ghosts stretching the room. */
+.desk-next .surface-choice-group[data-layout="row"] {
+  display: grid;
+  grid-template-columns: repeat(var(--choice-cards, 3), minmax(0, 1fr));
+  align-items: start;
+  max-width: 1240px;
+}
+
+@container surface (max-width: 759.9px) {
+  .desk-next .surface-choice-group[data-layout="row"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.desk-next .surface-choice-group[data-layout="row"] .surface-choice-confirm-btn {
+  grid-column: 1 / -1;
+}
+
+/* ── Individual card ── */
+
+.surface-choice-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-3, 12px) var(--space-3, 12px) var(--space-2, 8px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  cursor: pointer;
+  transition: border-color var(--duration-micro) var(--ease-standard),
+              background-color var(--duration-micro) var(--ease-standard),
+              box-shadow var(--duration-micro) var(--ease-standard);
+}
+
+.surface-choice-card:hover:not([data-disabled]) {
+  background: var(--surface-hover);
+}
+
+/* ── Tier temperature ──
+   Each tier claims a top rail + emblem color. Deliberate, not decoration:
+   cool = light footprint, warm accent = the recommended center,
+   strong = the full stack. */
+
+.surface-choice-card {
+  --choice-tier: var(--text-faint);
+}
+
+.surface-choice-card[data-tier] {
+  border-top: 2px solid var(--choice-tier);
+  padding-top: calc(var(--space-3, 12px) - 1px);
+}
+
+.surface-choice-card[data-tier="light"] {
+  --choice-tier: var(--accent-cool, #5b8def);
+}
+
+.surface-choice-card[data-tier="balanced"] {
+  --choice-tier: var(--accent);
+}
+
+.surface-choice-card[data-tier="full"] {
+  --choice-tier: var(--accent-hover);
+}
+
+/* ── Selected state ── */
+
+.surface-choice-card[data-selected] {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  box-shadow: var(--glow-accent, 0 0 0 1px var(--accent));
+}
+
+/* ── Recommended: presence, not just a corner tag ── */
+
+.surface-choice-card[data-recommended] {
+  background:
+    linear-gradient(180deg, var(--accent-tint), transparent 42%),
+    var(--surface-1);
+  border-color: var(--accent);
+}
+
+.surface-choice-card[data-recommended]::after {
+  content: "RECOMMENDED";
+  position: absolute;
+  top: -1px;
+  right: var(--space-2, 8px);
+  padding: 2px 7px;
+  border: 1px solid var(--accent);
+  border-top: 0;
+  background: var(--accent);
+  font: 700 9px / 1.2 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-wide);
+  text-transform: uppercase;
+  color: var(--text-on-accent);
+}
+
+/* ── Disabled state ── */
+
+.surface-choice-card[data-disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Hidden radio input ── */
+
+.surface-choice-card-radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.surface-choice-card-radio:focus-visible + .surface-choice-card-head {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-choice-card {
+    transition: none;
+  }
+}
+
+/* ── Card header: emblem + name ── */
+
+.surface-choice-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.surface-choice-card-emblem {
+  flex: none;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--choice-tier, var(--text-faint));
+}
+
+.surface-choice-card-label {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size, 13px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+/* ── Description: the one-sentence character ── */
+
+.surface-choice-card-desc {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size, 12px);
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* ── Summary: the one-line anchor the eye lands on ── */
+
+.surface-choice-card-summary {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.45;
+  padding: 6px 8px;
+  border-left: 2px solid var(--choice-tier, var(--border));
+  background: var(--surface-2);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* ── Facts: chips, not rows ── */
+
+.surface-choice-card-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.surface-choice-card-fact {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size, 11px);
+}
+
+.surface-choice-card-fact-key {
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-label-compact);
+  font-weight: 600;
+}
+
+.surface-choice-card-fact-val {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Cost slot: a fact chip in its own right ── */
+
+.surface-choice-card-cost {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: var(--letter-spacing-label-compact);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Fold: per-item detail behind a Disclosure ── */
+
+.surface-choice-card-fold {
+  margin: 2px calc(-1 * var(--space-2, 8px)) 0;
+  border-top: 1px solid var(--border);
+  padding-top: 2px;
+}
+
+.surface-choice-card-fold .surface-disclosure-trigger {
+  font-size: var(--desk-surface-label-size, 11px);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-label-compact);
+  color: var(--text-faint);
+}
+
+.surface-choice-card-fold .surface-disclosure-trigger:hover {
+  color: var(--text);
+}
+
+/* Push the fold to the card floor so heads/summaries stay aligned in rows. */
+.desk-next .surface-choice-group[data-layout="row"] .surface-choice-card-fold {
+  margin-top: auto;
+}
+
+/* ── Confirm button ── */
+
+.surface-choice-confirm-btn {
+  align-self: flex-end;
+  justify-self: end;
+  min-height: var(--size-chip);
+  padding: 0 var(--space-4, 16px);
+  margin-top: var(--space-1, 4px);
+  border: 1px solid var(--accent);
+  border-radius: 0;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-compact);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.surface-choice-confirm-btn:hover {
+  opacity: 0.9;
+}
+
+.surface-choice-confirm-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.surface-choice-confirm-btn:focus-visible {
+  outline: var(--focus-ring);
+}

@@ -1,0 +1,2424 @@
+{
+  "schema": "InferenceAssignmentSummary@1",
+  "rows": [
+    {
+      "id": "global",
+      "label": "Default for AI work",
+      "inherited_from": null,
+      "assignment": null,
+      "status": "no_assignment",
+      "repair": "Choose default",
+      "editor_capability_id": "agent.code"
+    },
+    {
+      "id": "thoughts_notes",
+      "label": "Thoughts & notes",
+      "editor_capability_id": "ask.answer",
+      "inherited_from": "group",
+      "assignment": {
+        "schema": "InferenceAssignmentProjection@1",
+        "id": "ia_ab5609d8f4224a149e01d38cd62814f5",
+        "revision": 1,
+        "sha256": "sha256:ecdbc560648ba3fb4c1a11088b6c6796ab25ce33ac1dd338ffe923333340be67",
+        "scope": {
+          "group_id": "thoughts_notes",
+          "kind": "group"
+        },
+        "entries": [
+          {
+            "ordinal": 1,
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "label": "Front Door endpoint (hs156-lan-43)",
+            "boundary": "private_network",
+            "readiness": "ready"
+          }
+        ],
+        "retry_policy_id": null,
+        "issues": [
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "thought.interview"
+          }
+        ],
+        "created_at": "2026-08-31T05:15:17.227399Z",
+        "effective_retry_policy_id": null,
+        "retry_policy_source": "per_capability_default"
+      },
+      "status": "no_compatible_assignment",
+      "repair": "Fix"
+    },
+    {
+      "id": "writing_dictation",
+      "label": "Writing & dictation",
+      "editor_capability_id": "speech.intent_classify",
+      "inherited_from": "group",
+      "assignment": {
+        "schema": "InferenceAssignmentProjection@1",
+        "id": "ia_f372de7952f045dfa17af3fe26aef741",
+        "revision": 1,
+        "sha256": "sha256:bc4fa391d1d28334d4ce1a0bb35012dc68c6c1d377a495a284b53d7ee925fc1e",
+        "scope": {
+          "group_id": "writing_dictation",
+          "kind": "group"
+        },
+        "entries": [
+          {
+            "ordinal": 1,
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "label": "Front Door endpoint (hs156-lan-43)",
+            "boundary": "private_network",
+            "readiness": "ready"
+          }
+        ],
+        "retry_policy_id": null,
+        "issues": [
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "speech.intent_classify"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "speech.target_classify"
+          }
+        ],
+        "created_at": "2026-08-31T05:15:17.228611Z",
+        "effective_retry_policy_id": null,
+        "retry_policy_source": "per_capability_default"
+      },
+      "status": "no_compatible_assignment",
+      "repair": "Fix"
+    },
+    {
+      "id": "speech_recognition",
+      "label": "Speech recognition",
+      "editor_capability_id": "speech.transcribe",
+      "inherited_from": null,
+      "assignment": null,
+      "status": "no_assignment",
+      "repair": null
+    },
+    {
+      "id": "meetings",
+      "label": "Meetings",
+      "editor_capability_id": "meeting.auto_title",
+      "inherited_from": "group",
+      "assignment": {
+        "schema": "InferenceAssignmentProjection@1",
+        "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+        "revision": 1,
+        "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+        "scope": {
+          "group_id": "meetings",
+          "kind": "group"
+        },
+        "entries": [
+          {
+            "ordinal": 1,
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "label": "Front Door endpoint (hs156-lan-43)",
+            "boundary": "private_network",
+            "readiness": "ready"
+          }
+        ],
+        "retry_policy_id": null,
+        "issues": [
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.deferred_analysis"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.live_analysis"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.action_owner_enforcer"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.adr_drafter"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.customer_signal_extractor"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.decision_announcement_drafter"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.decision_capture"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.dependency_mapper"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.incident_timeline"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.mermaid_architecture"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.milestone_planner"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.project_detector"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.requirements_extractor"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.risk_heatmap"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.runbook_delta"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.scope_guard"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "meeting.plugin.stakeholder_update_drafter"
+          }
+        ],
+        "created_at": "2026-08-31T05:15:17.229622Z",
+        "effective_retry_policy_id": null,
+        "retry_policy_source": "per_capability_default"
+      },
+      "status": "no_compatible_assignment",
+      "repair": "Fix"
+    },
+    {
+      "id": "agents_tools",
+      "label": "Agents & tools",
+      "editor_capability_id": "agent.code",
+      "inherited_from": "group",
+      "assignment": {
+        "schema": "InferenceAssignmentProjection@1",
+        "id": "ia_4971cfd93e714704b1d66420e3f99694",
+        "revision": 1,
+        "sha256": "sha256:a7d87d56ae2a130fdbec15a497f9e00288215f7ba45d1e3873703ee656e18a5c",
+        "scope": {
+          "group_id": "agents_tools",
+          "kind": "group"
+        },
+        "entries": [
+          {
+            "ordinal": 1,
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "label": "Front Door endpoint (hs156-lan-43)",
+            "boundary": "private_network",
+            "readiness": "ready"
+          }
+        ],
+        "retry_policy_id": null,
+        "issues": [
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "agent.plan"
+          },
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "agent.tool_turn"
+          }
+        ],
+        "created_at": "2026-08-31T05:15:17.230725Z",
+        "effective_retry_policy_id": null,
+        "retry_policy_source": "per_capability_default"
+      },
+      "status": "no_compatible_assignment",
+      "repair": "Fix"
+    },
+    {
+      "id": "background",
+      "label": "Background",
+      "editor_capability_id": "background.cadence_draft",
+      "inherited_from": "group",
+      "assignment": {
+        "schema": "InferenceAssignmentProjection@1",
+        "id": "ia_1dd2c0f4b29946c89b9e80cdbefbcf3f",
+        "revision": 1,
+        "sha256": "sha256:f8cc53d9ad3e9e1d3f57e6a5665c0d67d2cfbf511c7fada04106c17591bedc7a",
+        "scope": {
+          "group_id": "background",
+          "kind": "group"
+        },
+        "entries": [
+          {
+            "ordinal": 1,
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "label": "Front Door endpoint (hs156-lan-43)",
+            "boundary": "private_network",
+            "readiness": "ready"
+          }
+        ],
+        "retry_policy_id": null,
+        "issues": [
+          {
+            "code": "structured_output_unsupported",
+            "severity": "blocking",
+            "profile_id": "front-door-ep-hs156-lan-43",
+            "profile_revision": 1,
+            "capability_id": "calendar.snapshot_extract"
+          }
+        ],
+        "created_at": "2026-08-31T05:15:17.231670Z",
+        "effective_retry_policy_id": null,
+        "retry_policy_source": "per_capability_default"
+      },
+      "status": "no_compatible_assignment",
+      "repair": "Fix"
+    }
+  ],
+  "task_overrides": [
+    {
+      "id": "agent.code",
+      "label": "Agent code",
+      "group": {
+        "id": "agents_tools",
+        "label": "Agents & tools"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "agent.code",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_4971cfd93e714704b1d66420e3f99694",
+          "revision": 1,
+          "sha256": "sha256:a7d87d56ae2a130fdbec15a497f9e00288215f7ba45d1e3873703ee656e18a5c",
+          "scope": {
+            "group_id": "agents_tools",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.230725Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "agent.plan",
+      "label": "Agent plan",
+      "group": {
+        "id": "agents_tools",
+        "label": "Agents & tools"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "agent.plan",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_4971cfd93e714704b1d66420e3f99694",
+          "revision": 1,
+          "sha256": "sha256:a7d87d56ae2a130fdbec15a497f9e00288215f7ba45d1e3873703ee656e18a5c",
+          "scope": {
+            "group_id": "agents_tools",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "agent.plan"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.230725Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "agent.plan"
+        }
+      ]
+    },
+    {
+      "id": "agent.tool_turn",
+      "label": "Agent tool turn",
+      "group": {
+        "id": "agents_tools",
+        "label": "Agents & tools"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "agent.tool_turn",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_4971cfd93e714704b1d66420e3f99694",
+          "revision": 1,
+          "sha256": "sha256:a7d87d56ae2a130fdbec15a497f9e00288215f7ba45d1e3873703ee656e18a5c",
+          "scope": {
+            "group_id": "agents_tools",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "agent.tool_turn"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.230725Z",
+          "effective_retry_policy_id": "retry.tool.turn",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "agent.tool_turn"
+        }
+      ]
+    },
+    {
+      "id": "ask.answer",
+      "label": "Ask answer",
+      "group": {
+        "id": "thoughts_notes",
+        "label": "Thoughts & notes"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "ask.answer",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_ab5609d8f4224a149e01d38cd62814f5",
+          "revision": 1,
+          "sha256": "sha256:ecdbc560648ba3fb4c1a11088b6c6796ab25ce33ac1dd338ffe923333340be67",
+          "scope": {
+            "group_id": "thoughts_notes",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.227399Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "background.cadence_draft",
+      "label": "Cadence draft",
+      "group": {
+        "id": "background",
+        "label": "Background"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "background.cadence_draft",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_1dd2c0f4b29946c89b9e80cdbefbcf3f",
+          "revision": 1,
+          "sha256": "sha256:f8cc53d9ad3e9e1d3f57e6a5665c0d67d2cfbf511c7fada04106c17591bedc7a",
+          "scope": {
+            "group_id": "background",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.231670Z",
+          "effective_retry_policy_id": "retry.background.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "background.rails_summary",
+      "label": "Rails summary",
+      "group": {
+        "id": "background",
+        "label": "Background"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "background.rails_summary",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_1dd2c0f4b29946c89b9e80cdbefbcf3f",
+          "revision": 1,
+          "sha256": "sha256:f8cc53d9ad3e9e1d3f57e6a5665c0d67d2cfbf511c7fada04106c17591bedc7a",
+          "scope": {
+            "group_id": "background",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.231670Z",
+          "effective_retry_policy_id": "retry.background.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "calendar.snapshot_extract",
+      "label": "Calendar snapshot extraction",
+      "group": {
+        "id": "background",
+        "label": "Background"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "calendar.snapshot_extract",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_1dd2c0f4b29946c89b9e80cdbefbcf3f",
+          "revision": 1,
+          "sha256": "sha256:f8cc53d9ad3e9e1d3f57e6a5665c0d67d2cfbf511c7fada04106c17591bedc7a",
+          "scope": {
+            "group_id": "background",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "calendar.snapshot_extract"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.231670Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "calendar.snapshot_extract"
+        }
+      ]
+    },
+    {
+      "id": "chat.turn",
+      "label": "Desk chat",
+      "group": {
+        "id": "thoughts_notes",
+        "label": "Thoughts & notes"
+      },
+      "has_override": true,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "chat.turn",
+        "inherited_from": "capability",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_61c524fbd1664d73b388b099e4924305",
+          "revision": 1,
+          "sha256": "sha256:532e09d45277c444ce7ada3a203a4866a30cdd4ee4e36c8c1cac9a9b9db46b38",
+          "scope": {
+            "capability_id": "chat.turn",
+            "kind": "capability"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Hs156 Lan 43",
+              "boundary": "local",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:15.975990Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "decision.promotion_draft",
+      "label": "Decision promotion draft",
+      "group": {
+        "id": "background",
+        "label": "Background"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "decision.promotion_draft",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_1dd2c0f4b29946c89b9e80cdbefbcf3f",
+          "revision": 1,
+          "sha256": "sha256:f8cc53d9ad3e9e1d3f57e6a5665c0d67d2cfbf511c7fada04106c17591bedc7a",
+          "scope": {
+            "group_id": "background",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.231670Z",
+          "effective_retry_policy_id": "retry.background.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "delivery.pr_review_draft",
+      "label": "Pull request review draft",
+      "group": {
+        "id": "background",
+        "label": "Background"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "delivery.pr_review_draft",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_1dd2c0f4b29946c89b9e80cdbefbcf3f",
+          "revision": 1,
+          "sha256": "sha256:f8cc53d9ad3e9e1d3f57e6a5665c0d67d2cfbf511c7fada04106c17591bedc7a",
+          "scope": {
+            "group_id": "background",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.231670Z",
+          "effective_retry_policy_id": "retry.background.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "meeting.auto_title",
+      "label": "Meeting title",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "meeting.auto_title",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "meeting.bookmark_label",
+      "label": "Meeting bookmark label",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "meeting.bookmark_label",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "meeting.deferred_analysis",
+      "label": "Deferred meeting analysis",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.deferred_analysis",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.deferred_analysis"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.deferred_analysis"
+        }
+      ]
+    },
+    {
+      "id": "meeting.live_analysis",
+      "label": "Live meeting analysis",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.live_analysis",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.live_analysis"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.live_analysis"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.action_owner_enforcer",
+      "label": "Meeting plugin: action owner enforcer",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.action_owner_enforcer",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.action_owner_enforcer"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.action_owner_enforcer"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.adr_drafter",
+      "label": "Meeting plugin: adr drafter",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.adr_drafter",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.adr_drafter"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.adr_drafter"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.customer_signal_extractor",
+      "label": "Meeting plugin: customer signal extractor",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.customer_signal_extractor",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.customer_signal_extractor"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.customer_signal_extractor"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.decision_announcement_drafter",
+      "label": "Meeting plugin: decision announcement drafter",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.decision_announcement_drafter",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.decision_announcement_drafter"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.decision_announcement_drafter"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.decision_capture",
+      "label": "Meeting plugin: decision capture",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.decision_capture",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.decision_capture"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.decision_capture"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.dependency_mapper",
+      "label": "Meeting plugin: dependency mapper",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.dependency_mapper",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.dependency_mapper"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.dependency_mapper"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.incident_timeline",
+      "label": "Meeting plugin: incident timeline",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.incident_timeline",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.incident_timeline"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.incident_timeline"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.mermaid_architecture",
+      "label": "Meeting plugin: mermaid architecture",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.mermaid_architecture",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.mermaid_architecture"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.mermaid_architecture"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.milestone_planner",
+      "label": "Meeting plugin: milestone planner",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.milestone_planner",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.milestone_planner"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.milestone_planner"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.project_detector",
+      "label": "Meeting plugin: project detector",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.project_detector",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.project_detector"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.project_detector"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.requirements_extractor",
+      "label": "Meeting plugin: requirements extractor",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.requirements_extractor",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.requirements_extractor"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.requirements_extractor"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.risk_heatmap",
+      "label": "Meeting plugin: risk heatmap",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.risk_heatmap",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.risk_heatmap"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.risk_heatmap"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.runbook_delta",
+      "label": "Meeting plugin: runbook delta",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.runbook_delta",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.runbook_delta"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.runbook_delta"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.scope_guard",
+      "label": "Meeting plugin: scope guard",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.scope_guard",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.scope_guard"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.scope_guard"
+        }
+      ]
+    },
+    {
+      "id": "meeting.plugin.stakeholder_update_drafter",
+      "label": "Meeting plugin: stakeholder update drafter",
+      "group": {
+        "id": "meetings",
+        "label": "Meetings"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "meeting.plugin.stakeholder_update_drafter",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_17a7a838c1374e429d3978fe32c6b87f",
+          "revision": 1,
+          "sha256": "sha256:8dc0f8250d48c2b477a66d208681234b6ddeaf1024e895ab16f58fd3eadf9e21",
+          "scope": {
+            "group_id": "meetings",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "meeting.plugin.stakeholder_update_drafter"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.229622Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "meeting.plugin.stakeholder_update_drafter"
+        }
+      ]
+    },
+    {
+      "id": "project_doc.suggest_update",
+      "label": "Project document suggestion",
+      "group": {
+        "id": "agents_tools",
+        "label": "Agents & tools"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "project_doc.suggest_update",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_4971cfd93e714704b1d66420e3f99694",
+          "revision": 1,
+          "sha256": "sha256:a7d87d56ae2a130fdbec15a497f9e00288215f7ba45d1e3873703ee656e18a5c",
+          "scope": {
+            "group_id": "agents_tools",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.230725Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "recipe.run",
+      "label": "Recipe run",
+      "group": {
+        "id": "agents_tools",
+        "label": "Agents & tools"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "recipe.run",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_4971cfd93e714704b1d66420e3f99694",
+          "revision": 1,
+          "sha256": "sha256:a7d87d56ae2a130fdbec15a497f9e00288215f7ba45d1e3873703ee656e18a5c",
+          "scope": {
+            "group_id": "agents_tools",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.230725Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "sequence.step",
+      "label": "Sequence step",
+      "group": {
+        "id": "agents_tools",
+        "label": "Agents & tools"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "sequence.step",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_4971cfd93e714704b1d66420e3f99694",
+          "revision": 1,
+          "sha256": "sha256:a7d87d56ae2a130fdbec15a497f9e00288215f7ba45d1e3873703ee656e18a5c",
+          "scope": {
+            "group_id": "agents_tools",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.230725Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "speech.intent_classify",
+      "label": "Dictation intent",
+      "group": {
+        "id": "writing_dictation",
+        "label": "Writing & dictation"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "speech.intent_classify",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_f372de7952f045dfa17af3fe26aef741",
+          "revision": 1,
+          "sha256": "sha256:bc4fa391d1d28334d4ce1a0bb35012dc68c6c1d377a495a284b53d7ee925fc1e",
+          "scope": {
+            "group_id": "writing_dictation",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "speech.intent_classify"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.228611Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "speech.intent_classify"
+        }
+      ]
+    },
+    {
+      "id": "speech.rewrite",
+      "label": "Dictation rewrite",
+      "group": {
+        "id": "writing_dictation",
+        "label": "Writing & dictation"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "speech.rewrite",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_f372de7952f045dfa17af3fe26aef741",
+          "revision": 1,
+          "sha256": "sha256:bc4fa391d1d28334d4ce1a0bb35012dc68c6c1d377a495a284b53d7ee925fc1e",
+          "scope": {
+            "group_id": "writing_dictation",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.228611Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "speech.target_classify",
+      "label": "Dictation target",
+      "group": {
+        "id": "writing_dictation",
+        "label": "Writing & dictation"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "speech.target_classify",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_f372de7952f045dfa17af3fe26aef741",
+          "revision": 1,
+          "sha256": "sha256:bc4fa391d1d28334d4ce1a0bb35012dc68c6c1d377a495a284b53d7ee925fc1e",
+          "scope": {
+            "group_id": "writing_dictation",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "speech.target_classify"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.228611Z",
+          "effective_retry_policy_id": "retry.structured.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "speech.target_classify"
+        }
+      ]
+    },
+    {
+      "id": "speech.transcribe",
+      "label": "Speech transcription",
+      "group": {
+        "id": "speech_recognition",
+        "label": "Speech recognition"
+      },
+      "has_override": true,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "speech.transcribe",
+        "inherited_from": "capability",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_e38eb568517448fd90b3ff66a7b539b4",
+          "revision": 1,
+          "sha256": "sha256:da8d382e3937c9d1a95ae8dac098d198a004f13f9d860fa94a546391afa70b33",
+          "scope": {
+            "capability_id": "speech.transcribe",
+            "kind": "capability"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Whisper mlx base",
+              "boundary": "local",
+              "readiness": "unavailable"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "binding_not_ready",
+              "severity": "repair",
+              "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+              "profile_revision": 1
+            }
+          ],
+          "created_at": "2026-08-31T05:15:16.413902Z",
+          "effective_retry_policy_id": "retry.audio.transcription",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": [
+        {
+          "code": "binding_not_ready",
+          "severity": "repair",
+          "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+          "profile_revision": 1
+        }
+      ]
+    },
+    {
+      "id": "thought.interview",
+      "label": "Thought development",
+      "group": {
+        "id": "thoughts_notes",
+        "label": "Thoughts & notes"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "no_compatible_assignment",
+        "capability_id": "thought.interview",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_ab5609d8f4224a149e01d38cd62814f5",
+          "revision": 1,
+          "sha256": "sha256:ecdbc560648ba3fb4c1a11088b6c6796ab25ce33ac1dd338ffe923333340be67",
+          "scope": {
+            "group_id": "thoughts_notes",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [
+            {
+              "code": "structured_output_unsupported",
+              "severity": "blocking",
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "capability_id": "thought.interview"
+            }
+          ],
+          "created_at": "2026-08-31T05:15:17.227399Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": "Choose model"
+      },
+      "issues": [
+        {
+          "code": "structured_output_unsupported",
+          "severity": "blocking",
+          "profile_id": "front-door-ep-hs156-lan-43",
+          "profile_revision": 1,
+          "capability_id": "thought.interview"
+        }
+      ]
+    },
+    {
+      "id": "voice.reference_resolve",
+      "label": "Voice reference resolution",
+      "group": {
+        "id": "agents_tools",
+        "label": "Agents & tools"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "voice.reference_resolve",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_4971cfd93e714704b1d66420e3f99694",
+          "revision": 1,
+          "sha256": "sha256:a7d87d56ae2a130fdbec15a497f9e00288215f7ba45d1e3873703ee656e18a5c",
+          "scope": {
+            "group_id": "agents_tools",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.230725Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "workbench.item",
+      "label": "Workbench item",
+      "group": {
+        "id": "agents_tools",
+        "label": "Agents & tools"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "workbench.item",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_4971cfd93e714704b1d66420e3f99694",
+          "revision": 1,
+          "sha256": "sha256:a7d87d56ae2a130fdbec15a497f9e00288215f7ba45d1e3873703ee656e18a5c",
+          "scope": {
+            "group_id": "agents_tools",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.230725Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    },
+    {
+      "id": "workflow.node",
+      "label": "Workflow node",
+      "group": {
+        "id": "agents_tools",
+        "label": "Agents & tools"
+      },
+      "has_override": false,
+      "effective": {
+        "status": "assigned",
+        "capability_id": "workflow.node",
+        "inherited_from": "group",
+        "assignment": {
+          "schema": "InferenceAssignmentProjection@1",
+          "id": "ia_4971cfd93e714704b1d66420e3f99694",
+          "revision": 1,
+          "sha256": "sha256:a7d87d56ae2a130fdbec15a497f9e00288215f7ba45d1e3873703ee656e18a5c",
+          "scope": {
+            "group_id": "agents_tools",
+            "kind": "group"
+          },
+          "entries": [
+            {
+              "ordinal": 1,
+              "profile_id": "front-door-ep-hs156-lan-43",
+              "profile_revision": 1,
+              "profile_schema_version": 2,
+              "label": "Front Door endpoint (hs156-lan-43)",
+              "boundary": "private_network",
+              "readiness": "ready"
+            }
+          ],
+          "retry_policy_id": null,
+          "issues": [],
+          "created_at": "2026-08-31T05:15:17.230725Z",
+          "effective_retry_policy_id": "retry.text.standard",
+          "retry_policy_source": "capability_default"
+        },
+        "repair": null
+      },
+      "issues": []
+    }
+  ],
+  "issue_count": 6
+}

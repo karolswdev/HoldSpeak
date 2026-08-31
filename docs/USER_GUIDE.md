@@ -41,7 +41,7 @@ Use these guides when you are ready for more than the first sentence:
 | iPad app | Drives both modes from another device over the hub's HTTP API: dictate into the desk, read a meeting back with its artifacts and sources, approve a proposal, browse the archive | [Companions](#companions) |
 | AIPI-Lite companion | Portable ESPHome device for meeting controls, status, and spoken replies to waiting Claude/Codex sessions | [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md), `/companion` |
 | Threads | Multi-turn streamed conversations grounded on desk material with `@`-refs, receipts, and search | The Desk, **Continue in thread** on any object |
-| AI setup | Chooses a Thought AI from OpenRouter presets, local GGUF/llama.cpp, or a custom compatible provider; MLX remains available for writing and dictation | Settings → Models |
+| Models | Pick a recommended pack (Light, Balanced, Full) or set up manually with Model Library and Assignments; the topology map shows this Mac and every connected node | Settings, Models |
 
 ## Develop a thought
 
@@ -635,6 +635,71 @@ When a schedule is linked to a calendar event, it does not appear as a
 separate **SCHEDULED RECORDING** row while the event row is on the rail. The
 event row wears the **ARMED** chip instead. The schedule row reappears only
 if the event leaves the projection.
+
+## Models
+
+Open **Settings, Models**. The surface opens on the door when any assignment
+group is unconfigured, and on the health strip once everything is wired.
+
+### The packs
+
+The door recommends up to three packs: **Light**, **Balanced**, and **Full**.
+Each pack covers all seven assignment groups (Thoughts & notes, Chat practice,
+Writing & dictation, Speech recognition, Meetings, Agents & tools, Background)
+plus speech and TTS. What the recommendation considers:
+
+- Your hardware (memory, Apple Silicon, GPU).
+- Models already downloaded on this machine.
+- Endpoints you have connected (your own servers, paired devices).
+- Credentials already present (cloud providers).
+
+A pack that cannot be completed is not offered. The door never asks for an API
+key on this path.
+
+### One confirmation
+
+Pick a pack and choose **Set up**. The desk downloads what is missing, connects
+what is reachable, and wires every assignment. Each step renders as a live plan
+with its status (queued, running, done, failed). A failed step names the
+problem; choose **Resume** to retry from the failure.
+
+### The health strip
+
+When the plan finishes, the door collapses to a one-line health strip. Green
+means every group is wired and ready. A warning names the first group that needs
+attention and offers **Fix it** (which opens the advanced layer focused on that
+group). Choose **Change** on the strip to reload the recommendation.
+
+### Advanced: the topology map
+
+Below the health strip (or below the pack cards before setup), the **Advanced**
+disclosure opens on the topology map: this Mac as the home node, every connected
+endpoint as a separate node, and the seven job groups as flows between them.
+
+- **Select a node** to see its models and the jobs it serves. The inspector
+  shows runtime, models served, and the base URL.
+- **Re-point a flow.** Click a job row in the inspector and the candidates
+  appear as a radio group. Pick one, confirm, and the assignment saves.
+- **Add a node.** The panel opens the existing connect grammar: define an
+  endpoint (label, base URL, optional key) or connect a hosted provider. The
+  new node appears on the map once connected.
+
+The **Table** toggle above the map switches to the full Model Library and
+Assignments view, the same surface documented in
+[Models (bring your own)](MODELS.md). Switch back to **Map** at any time.
+
+### Model Library and Assignments (table view)
+
+Model Library is where you make a model available: add from the catalog, add a
+model file, connect a provider, define an OpenAI-compatible endpoint, or connect
+a paired device. Check readiness after any change.
+
+Assignments is where you choose the compatible ordered model list for each kind
+of work. Choose a group, pick one to four models in priority order, and save.
+**Use default** clears a row and reveals the inherited choice.
+
+Adding a model does not change an Assignment. Changing an Assignment does not
+alter the Library. The full reference is [Models (bring your own)](MODELS.md).
 
 ## People
 

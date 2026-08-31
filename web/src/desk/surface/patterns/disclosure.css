@@ -1,0 +1,103 @@
+/* ── Disclosure: controlled/uncontrolled fold with focus management ──
+   Button trigger (not details/summary) for full control.
+   Consistent turning-caret face with gadget-fold. */
+
+.desk-next .surface-disclosure {
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+
+/* ── Trigger button ── */
+
+.desk-next .surface-disclosure-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  min-height: 26px;
+  margin: 2px 0;
+  padding: 2px 9px 2px 7px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: var(--desk-surface-detail-size, 12px);
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Stretched when has trailing token */
+.desk-next .surface-disclosure[data-token] .surface-disclosure-trigger {
+  width: 100%;
+}
+
+.desk-next .surface-disclosure-trigger:hover {
+  background: var(--wash-1, var(--surface-hover));
+  color: var(--text);
+}
+
+.desk-next .surface-disclosure-trigger:focus-visible {
+  outline: var(--focus-ring);
+}
+
+/* ── Caret ── */
+
+.surface-disclosure-caret {
+  flex: none;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  transition: transform var(--duration-short) var(--ease-quart);
+  display: inline-block;
+}
+
+.desk-next .surface-disclosure[data-open] .surface-disclosure-caret {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-disclosure-caret {
+    transition: none;
+  }
+}
+
+/* ── Label ── */
+
+.surface-disclosure-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Token (trailing slot) ── */
+
+.surface-disclosure-token {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* ── Body ── */
+
+.surface-disclosure-body {
+  padding: 4px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+}
+
+/* ── RAW variant: no chrome, just the body ── */
+
+.desk-next .surface-disclosure[data-variant="raw"] .surface-disclosure-trigger {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-label-size);
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}

@@ -1,0 +1,122 @@
+/* ── Provenance: source/boundary chip + receipt with status ──
+   For composing into SurfaceFooter. Compact inline species. */
+
+/* ── ProvenanceChip: source label + boundary badge ── */
+
+.desk-next .surface-provenance-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 18px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.surface-provenance-source {
+  color: var(--text-muted);
+}
+
+.surface-provenance-boundary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px;
+  min-height: 14px;
+  background: var(--accent-tint);
+  border: 1px solid var(--border-subtle);
+  font-size: 9px;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  color: var(--accent);
+}
+
+.surface-provenance-inspect {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  font: 600 10px / 1 var(--font-mono);
+  cursor: pointer;
+}
+
+.surface-provenance-inspect:hover {
+  color: var(--text);
+}
+
+.surface-provenance-inspect:focus-visible {
+  outline: var(--focus-ring);
+}
+
+/* ── Receipt: lamp dot + label + timestamp ── */
+
+.desk-next .surface-receipt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* ── Receipt lamp dot ── */
+
+.surface-receipt-lamp {
+  flex: none;
+  width: 6px;
+  height: 6px;
+}
+
+.surface-receipt[data-status="ok"] .surface-receipt-lamp {
+  background: var(--ok);
+}
+.surface-receipt[data-status="warn"] .surface-receipt-lamp {
+  background: var(--warn);
+}
+.surface-receipt[data-status="danger"] .surface-receipt-lamp {
+  background: var(--danger-signal);
+}
+
+/* ── Receipt label ── */
+
+.surface-receipt-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Receipt timestamp ── */
+
+.surface-receipt-time {
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Receipt inspect button ── */
+
+.surface-receipt-inspect {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  font: 600 10px / 1 var(--font-mono);
+  cursor: pointer;
+}
+
+.surface-receipt-inspect:hover {
+  color: var(--text);
+}
+
+.surface-receipt-inspect:focus-visible {
+  outline: var(--focus-ring);
+}

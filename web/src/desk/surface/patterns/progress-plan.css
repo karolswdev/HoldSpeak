@@ -1,0 +1,186 @@
+/* ── ProgressPlan: a live plan with per-step progress ──
+   Step states: queued, running, done, failed.
+   Mono, compact layout, receipt/egress slots at the bottom. */
+
+.desk-next .surface-progress-plan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--desk-surface-gap);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size, 12px);
+  color: var(--text);
+}
+
+/* ── Step list ── */
+
+.surface-plan-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* ── Individual step row ── */
+
+.surface-plan-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 2px 6px;
+}
+
+.surface-plan-step[data-status="done"] {
+  color: var(--ok);
+}
+.surface-plan-step[data-status="running"] {
+  color: var(--info);
+}
+.surface-plan-step[data-status="failed"] {
+  color: var(--danger-signal);
+}
+.surface-plan-step[data-status="queued"] {
+  color: var(--text-muted);
+}
+
+/* ── Step icon ── */
+
+.surface-plan-step-icon {
+  flex: none;
+  width: 14px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* ── Running icon pulse ── */
+
+.surface-plan-step[data-status="running"] .surface-plan-step-icon {
+  animation: surface-plan-pulse var(--duration-medium) ease-in-out infinite alternate;
+}
+
+@keyframes surface-plan-pulse {
+  from { opacity: 1; }
+  to { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-plan-step[data-status="running"] .surface-plan-step-icon {
+    animation: none;
+  }
+}
+
+/* ── Step label ── */
+
+.surface-plan-step-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* ── Step rate ── */
+
+.surface-plan-step-rate {
+  flex: none;
+  font-size: 10px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--letter-spacing-label-compact);
+}
+
+/* ── Step detail (non-compact) ── */
+
+.surface-plan-step-detail {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding-left: 20px;
+  padding-bottom: 2px;
+}
+
+/* ── Progress bar ── */
+
+.surface-plan-progress {
+  flex: none;
+  width: 48px;
+  height: 6px;
+  border: 1px solid var(--border);
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+  overflow: hidden;
+}
+
+.surface-plan-progress-fill {
+  height: 100%;
+  background: var(--info);
+  transition: width var(--duration-short) var(--ease-standard);
+}
+
+.surface-plan-step[data-status="done"] .surface-plan-progress-fill {
+  background: var(--ok);
+}
+.surface-plan-step[data-status="failed"] .surface-plan-progress-fill {
+  background: var(--danger-signal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-plan-progress-fill {
+    transition: none;
+  }
+}
+
+/* ── Compact mode: tighter ── */
+
+.desk-next .surface-progress-plan[data-compact] .surface-plan-step {
+  min-height: 20px;
+  padding: 1px 6px;
+}
+
+.desk-next .surface-progress-plan[data-compact] .surface-plan-step-detail {
+  display: none;
+}
+
+/* ── Footer: receipt, egress, action ── */
+
+.surface-plan-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  padding-top: var(--space-1, 4px);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.surface-plan-footer-slot {
+  flex: 1;
+  min-width: 0;
+}
+
+.surface-plan-action-btn {
+  flex: none;
+  min-height: var(--size-chip);
+  padding: 0 var(--space-3, 12px);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface-2);
+  box-shadow: inset 1px 1px 0 var(--bevel-light, transparent),
+              inset -1px -1px 0 var(--bevel-dark, transparent);
+  color: var(--text);
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-compact);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.surface-plan-action-btn:hover {
+  background: var(--surface-hover);
+}
+
+.surface-plan-action-btn:active {
+  box-shadow: inset 1px 1px 0 var(--bevel-dark, transparent),
+              inset -1px -1px 0 var(--bevel-light, transparent);
+}
+
+.surface-plan-action-btn:focus-visible {
+  outline: var(--focus-ring);
+}

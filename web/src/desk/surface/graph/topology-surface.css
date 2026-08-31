@@ -1,0 +1,258 @@
+/* ── TopologySurface: DOM nodes over SVG edge layer ──
+   Council codex section 2.6. Bounded pan, home-node designation,
+   bundled labeled flows, roving selection, reduced-motion.
+   All styling from design tokens; no raw values. */
+
+/* ── Container: the bounded viewport ── */
+
+.desk-next .surface-topology {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 320px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  box-shadow: var(--desk-window-etch);
+  touch-action: none;
+  container-name: topology;
+  container-type: inline-size;
+}
+
+/* ── Map area: the flex row with viewport + inspector ── */
+
+.surface-topology-map-area {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.surface-topology-map-area:active {
+  cursor: grabbing;
+}
+
+/* ── Viewport: the pannable content area ── */
+
+.surface-topology-viewport {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 260px;
+  transition: transform var(--duration-short) var(--ease-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-topology-viewport {
+    transition: none;
+  }
+}
+
+/* ── SVG edge layer ── */
+
+.surface-topology-edges {
+  pointer-events: none;
+}
+
+.surface-topology-edge {
+  fill: none;
+  stroke: var(--accent-tint);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 6 3;
+  transition: stroke var(--duration-short) var(--ease-standard),
+    stroke-width var(--duration-short) var(--ease-standard);
+}
+
+.surface-topology-edge[data-active] {
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-dasharray: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-topology-edge {
+    transition: none;
+  }
+}
+
+/* ── Flow labels (positioned at edge midpoints) ── */
+
+.surface-topology-flow-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-2);
+  border: 1px solid var(--accent-tint);
+  font: 600 10px / 1.2 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-compact);
+  text-transform: uppercase;
+  color: var(--text);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: var(--z-base, 0);
+}
+
+/* ── Node cards (DOM elements over SVG) ── */
+
+.desk-next .surface-topology-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-2) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  box-shadow: var(--elev-1);
+  cursor: pointer;
+  z-index: var(--z-sticky, 10);
+  font-family: inherit;
+  text-align: start;
+  transition: box-shadow var(--duration-short) var(--ease-standard),
+    border-color var(--duration-short) var(--ease-standard);
+}
+
+.desk-next .surface-topology-node:hover {
+  border-color: var(--accent);
+  box-shadow: var(--elev-2);
+}
+
+.desk-next .surface-topology-node:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.desk-next .surface-topology-node[data-selected] {
+  border-color: var(--accent);
+  box-shadow: var(--elev-2), 0 0 0 1px var(--accent-tint);
+}
+
+/* ── Home node: visually anchored, distinct ── */
+
+.desk-next .surface-topology-node[data-home] {
+  border-width: 2px;
+  border-color: var(--accent);
+  background: var(--surface-1);
+}
+
+/* ── Node header ── */
+
+.surface-topology-node-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 18px;
+}
+
+.surface-topology-home-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  font: 700 9px / 1 var(--font-mono);
+}
+
+.surface-topology-node-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 var(--desk-surface-detail-size, 12px) / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-compact);
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+/* ── Node state indicator (mirrors StateChip tones) ── */
+
+.surface-topology-node-state {
+  flex: none;
+  font: 600 10px / 1 var(--font-mono);
+}
+
+.surface-topology-node-state[data-state="idle"] {
+  color: var(--text-muted);
+}
+.surface-topology-node-state[data-state="active"],
+.surface-topology-node-state[data-state="success"] {
+  color: var(--ok);
+}
+.surface-topology-node-state[data-state="working"] {
+  color: var(--info);
+}
+.surface-topology-node-state[data-state="warning"] {
+  color: var(--warn-signal);
+}
+.surface-topology-node-state[data-state="failure"] {
+  color: var(--danger-signal);
+}
+.surface-topology-node-state[data-state="unreachable"] {
+  color: var(--text-faint);
+}
+
+/* Working state: pulse (reduced-motion honored) */
+.surface-topology-node-state[data-state="working"] {
+  animation: surface-chip-pulse var(--duration-medium) ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-topology-node-state[data-state="working"] {
+    animation: none;
+  }
+}
+
+/* ── Node content (slot) ── */
+
+.surface-topology-node-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font: 400 10px / 1.3 var(--font-mono);
+  color: var(--text-muted);
+}
+
+/* ── Inspector (beside the map viewport, inside the map-area flex row) ── */
+
+.surface-topology-inspector {
+  flex: 0 0 220px;
+  min-width: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: var(--space-2);
+  border-left: 1px solid var(--border-subtle);
+  background: var(--surface-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+@container topology (max-width: 600px) {
+  .surface-topology-inspector {
+    position: absolute;
+    inset: auto 0 0 0;
+    flex: none;
+    max-height: 50%;
+    border-left: none;
+    border-top: 1px solid var(--border-subtle);
+    z-index: var(--z-overlay, 100);
+  }
+}
+
+/* ── Toolbar: add-node slot below the viewport, never overlaps inspector ── */
+
+.surface-topology-toolbar {
+  flex: none;
+  padding: var(--space-1) var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-1);
+}

@@ -2413,6 +2413,46 @@
       ]
     },
     {
+      "path": "/api/front-door/apply",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.front_door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/front-door/apply",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.front_door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/front-door/recommendation",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.front_door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/front-door/topology",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.front_door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/gate/audit",
       "methods": [
         "GET"

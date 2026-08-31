@@ -1006,3 +1006,22 @@ registry (`chat.turn`, later `chat.guardrail`/`chat.compact`/
 pinned wing; yolo default for effect tools in chat; DC-03 before or
 after DC-04; Kokoro server-side vs in-browser; any external MCP server
 wanted on day one.
+
+
+## The model-era collapse (parked 2026-08-31, from the owner's question)
+
+The #511 revolution collapsed the WEB platform's parallel authorities;
+the BACKEND model system still runs two eras side by side: the legacy
+`profiles` table (migrated intel/speech rows, `legacy-*` assignment
+ids, its own freeze path) and the 143 Model Library/Assignments
+(`model_profile_revisions`, versioned DeploymentRevision shapes — the
+"v1/v2" seam INSIDE the new system). Every P0 found on 2026-08-31
+lived in that seam (context_ceiling=0 from from_identity defaults, the
+legacy route-freeze FK 500, swapped migration markers, downloads that
+create artifacts but no assignable profile). The collapse: ONE profile
+authority, legacy rows migrated forward and the legacy path deleted,
+one DeploymentRevision shape, downloads that always yield an assignable
+profile. Charter after Phase 156 proves the front door on the current
+seams (156's apply is the natural migration driver). Owner's words:
+"didn't we get rid of the whole compat kind of thing with that big
+revolution?" — the backend still owes him that revolution.

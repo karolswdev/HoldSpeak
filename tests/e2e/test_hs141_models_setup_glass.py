@@ -19,6 +19,20 @@ pytest.importorskip("fastapi.testclient", reason="Model Library glass needs web 
 TOKEN = "hs141-models-setup-glass"
 
 
+def _navigate_through_door(page: Any) -> None:
+    """HS-156-04: navigate through the front door to expose Model Library."""
+    door = page.locator(".front-door")
+    door.wait_for(timeout=10_000)
+    own_btn = page.get_by_role("button", name="Set up my own", exact=True)
+    if own_btn.count():
+        own_btn.click()
+    else:
+        page.get_by_role("button", name="Advanced").click()
+    page.get_by_role("tab", name="Table").click()
+    page.locator(".model-library").wait_for(timeout=5_000)
+    page.locator(".model-library").scroll_into_view_if_needed()
+
+
 def _api(page: Any, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
     result = page.evaluate(
         """async ([method, path, body]) => {
@@ -99,6 +113,7 @@ def test_models_setup_is_projected_truth_with_one_action_seat(
             _api(page, "POST", "/api/desk/seed")
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
             page.goto(f"{url}/profiles", wait_until="load")
+            _navigate_through_door(page)
 
             surface = page.locator(".model-library")
             surface.get_by_role("heading", name="Model Library", exact=True).wait_for(timeout=10_000)

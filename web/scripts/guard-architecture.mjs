@@ -59,6 +59,60 @@ for (const file of files) {
     failures.push(`request bypasses typed API client: ${name}`);
 }
 
+/* ── HS-156-03 surface library fence ── */
+
+const baselinePath = join(root, "fence-baseline.json");
+let baseline;
+try {
+  baseline = JSON.parse(readFileSync(baselinePath, "utf8"));
+} catch {
+  baseline = { "private-imports": [], "library-css-outside": [], "roving-reimpl": [] };
+}
+const baselinePrivate = new Set(baseline["private-imports"] || []);
+const baselineCss = new Set(baseline["library-css-outside"] || []);
+const baselineRoving = new Set(baseline["roving-reimpl"] || []);
+
+const PRIVATE_IMPORT_RE =
+  /from\s*["'][^"']*\/surface\/(Surface|gadgets|roving|Material|SurfaceFooter|wings|citations|format|foot|sparse|LedgerFilter|patterns|controls|graph)["']/;
+const LIBRARY_CSS_RE =
+  /surface-state-chip|surface-action-notice|surface-disclosure|surface-progress-plan|surface-choice-card|surface-popover|surface-provenance|surface-topology/;
+const ROVING_REIMPL_RE = /Arrow(?:Up|Down)/;
+
+for (const file of files) {
+  const name = relative(root, file);
+  if (![".ts", ".tsx"].some((ext) => file.endsWith(ext))) continue;
+  if (isTestSource(name)) continue;
+  if (name.startsWith("src/desk/surface/")) continue;
+  if (!name.startsWith("src/desk/")) continue;
+
+  const text = readFileSync(file, "utf8");
+
+  // Rule 1: barrel-only imports
+  if (PRIVATE_IMPORT_RE.test(text) && !baselinePrivate.has(name))
+    failures.push(`surface fence: private-import: ${name}`);
+
+  // Rule 3: roving reimplementation
+  if (
+    ROVING_REIMPL_RE.test(text) &&
+    /ArrowUp/.test(text) &&
+    /ArrowDown/.test(text) &&
+    !baselineRoving.has(name)
+  )
+    failures.push(`surface fence: roving-reimpl: ${name}`);
+}
+
+// Rule 2: library CSS outside surface (scans CSS too)
+for (const file of files) {
+  const name = relative(root, file);
+  if (![".css", ".ts", ".tsx"].some((ext) => file.endsWith(ext))) continue;
+  if (isTestSource(name)) continue;
+  if (name.startsWith("src/desk/surface/")) continue;
+
+  const text = readFileSync(file, "utf8");
+  if (LIBRARY_CSS_RE.test(text) && !baselineCss.has(name))
+    failures.push(`surface fence: library-css-outside: ${name}`);
+}
+
 if (failures.length) {
   console.error(
     `React architecture guard failed:\n${failures.map((failure) => `- ${failure}`).join("\n")}`,
