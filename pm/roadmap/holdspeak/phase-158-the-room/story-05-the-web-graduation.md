@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 158
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-158-04 (adoption half; extraction half may start with 01)
 - **Unblocks:** HS-158-06
 - **Owner:** unassigned
@@ -101,6 +101,8 @@ real data, honest absent-states for the domains P2+ will fill.
   ('Item.created'). Both fixed with REAL wire fixtures
   (d7c6d0dd, d297c39e, b024813d). LAW RELEARNED: fixtures must
   speak the backend's dialect — and only the glass proves they do.
+- **ROUND 2 VERDICT: PASS** (owner, 2026-08-31: "PASS — close it").
+  The story closes; the verdict holds the merge word on the phase PR.
 
 ## Notes / open questions
 

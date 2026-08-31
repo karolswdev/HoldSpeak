@@ -1,6 +1,6 @@
 # Phase 158 - Project Rooms: The Room (P1)
 
-**Last updated:** 2026-08-31 — 4/6 DONE; 05 fully built (extraction, adoption, rig, beauty ×7 defects, TitleSlotContext for WEB-IA-001, room-fields PATCH gap closed under 02) — Round 1 BOUNCED; ROUND 2 SHIPPED (f68ddbb7 + three orchestrator repairs b024813d): SurfaceColumns desktop split with a right rail (meetings/resources/changes finally rendered), de-input'd date tokens, PURPOSE/OUTCOME symmetry, identity/meta split, count-chips — and the glass caught TWO self-consistent fixture lies (wrong change-row field names, then the dotted action value) that vitest alone blessed. Round-2 sheet in assets/story-05-shots/; AWAITING THE OWNER'S ROUND-2 VERDICT.
+**Last updated:** 2026-08-31 — 5/6 DONE; THE OWNER'S ROUND-2 VERDICT: PASS ('PASS — close it') closes 05. THE CLOSE (06) RUNS: full gates + counsel in flight. Earlier: Round 1 BOUNCED; ROUND 2 SHIPPED (f68ddbb7 + three orchestrator repairs b024813d): SurfaceColumns desktop split with a right rail (meetings/resources/changes finally rendered), de-input'd date tokens, PURPOSE/OUTCOME symmetry, identity/meta split, count-chips — and the glass caught TWO self-consistent fixture lies (wrong change-row field names, then the dotted action value) that vitest alone blessed. Round-2 sheet in assets/story-05-shots/; AWAITING THE OWNER'S ROUND-2 VERDICT.
 
 ## Goal
 
@@ -43,8 +43,8 @@ effects, so no new kernel admissions arise; NFR-009 bites from P2a on.
 | HS-158-02 | The revision law (revision + change + event, atomically; idempotent commands; restore) | done | [story-02-the-revision-law](./story-02-the-revision-law.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-158-03 | The items (typed workstream/milestone/risk/dependency/signal via the service) | done | [story-03-the-items](./story-03-the-items.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-158-04 | The room read (GET /room — one coherent, honest, bounded projection) | done | [story-04-the-room-read](./story-04-the-room-read.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-158-05 | The web graduation (controller extraction, /room adoption, the Room face, shots) | in-progress | [story-05-the-web-graduation](./story-05-the-web-graduation.md) | - |
-| HS-158-06 | The close (gates, suite amendments, final summary) | backlog | [story-06-the-close](./story-06-the-close.md) | - |
+| HS-158-05 | The web graduation (controller extraction, /room adoption, the Room face, shots) | done | [story-05-the-web-graduation](./story-05-the-web-graduation.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-158-06 | The close (gates, suite amendments, final summary) | in-progress | [story-06-the-close](./story-06-the-close.md) | - |
 
 ## Where we are
 
