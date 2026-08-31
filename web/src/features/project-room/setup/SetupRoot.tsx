@@ -26,8 +26,9 @@ export function SetupCore({ scope }: CoreProps) {
     setTitle?.("New Project");
   }, [setTitle]);
 
-  // Announce stage changes (WEB-A11Y-008)
+  // Announce stage changes (WEB-A11Y-008) + keep the top of each stage in frame
   useEffect(() => {
+    document.querySelector('[data-testid="setup-root"]')?.scrollIntoView({ block: "start" });
     const el = document.getElementById("setup-stage-announce");
     if (el) {
       const labels: Record<string, string> = {
