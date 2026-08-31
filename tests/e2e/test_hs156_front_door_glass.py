@@ -489,3 +489,117 @@ def test_topology_add_node(hub: dict) -> None:
             page.close()
 
         browser.close()
+
+
+# ----------------------------------------------------------------- HS-156-08 beauty legs
+
+SHOTS_08_DIR = REPO / "pm/roadmap/holdspeak/phase-156-the-front-door/assets/story-08-shots"
+
+
+def _save_shot_08(page: Any, name: str, width: int) -> None:
+    SHOTS_08_DIR.mkdir(parents=True, exist_ok=True)
+    page.screenshot(path=str(SHOTS_08_DIR / f"{name}-{width}.png"))
+
+
+def test_beauty_cards(hub: dict) -> None:
+    """HS-156-08: pack cards as OBJECTS — tier row, summary anchor, folded detail."""
+    from playwright.sync_api import sync_playwright
+
+    url = hub["url"]
+    _api_direct(url, "POST", "/api/desk/seed")
+    _api_direct(url, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        for width in (1440, 393):
+            page = browser.new_page(viewport={"width": width, "height": 1000})
+            _open_models_module(page, url, width)
+            page.wait_for_selector("[data-testid='front-door-cards']", timeout=15000)
+            _save_shot_08(page, "cards", width)
+
+            # The recommended pack, selected: presence, not just a corner tag
+            page.locator(".surface-choice-card[data-recommended]").first.click()
+            page.wait_for_timeout(300)
+            _save_shot_08(page, "cards-selected", width)
+
+            # One fold open: per-job detail grouped by what serves them
+            folds = page.locator(
+                ".surface-choice-card-fold .surface-disclosure-trigger"
+            )
+            assert folds.count() >= 3, "every pack card carries a fold"
+            folds.first.click()
+            page.wait_for_timeout(300)
+            _save_shot_08(page, "cards-fold-open", width)
+
+            # No horizontal overflow
+            body_w = page.evaluate("document.body.scrollWidth")
+            viewport_w = page.evaluate("window.innerWidth")
+            assert body_w <= viewport_w + 1, (
+                f"Horizontal overflow at {width}: body={body_w}, viewport={viewport_w}"
+            )
+
+            page.close()
+
+        browser.close()
+
+
+def test_beauty_candidate_picker(hub: dict) -> None:
+    """HS-156-08: candidates are material cards (name, boundary, health), never raw rows."""
+    from playwright.sync_api import sync_playwright
+
+    url = hub["url"]
+    db = hub["db"]
+
+    _api_direct(url, "POST", "/api/desk/seed")
+    _api_direct(url, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    _seed_profile_and_assign(db)
+    _seed_endpoint_profile(
+        db, "hs156-beauty-lan", "Qwen server on .43",
+        "http://192.168.1.43:8080/v1", "qwen3.5-9b",
+    )
+    _seed_endpoint_profile(
+        db, "hs156-beauty-mlx", "Qwen3.5 9B (MLX)",
+        "http://127.0.0.1:8081/v1", "qwen3.5-9b-mlx",
+    )
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        for width in (1440, 393):
+            page = browser.new_page(viewport={"width": width, "height": 1000})
+            _open_models_module(page, url, width)
+
+            # Open the Advanced fold, switch to the Table view
+            advanced = page.locator("text=Advanced")
+            assert advanced.count() > 0, "the strip carries the Advanced fold"
+            advanced.first.click()
+            page.wait_for_timeout(1000)
+            table_tab = page.get_by_role("tab", name="Table")
+            if table_tab.count() > 0:
+                table_tab.first.click()
+                page.wait_for_timeout(1500)
+
+            # Open the first assignment editor
+            page.locator(".capability-assignment-row button").first.click()
+            page.wait_for_selector(".assignment-candidates", timeout=15000)
+            page.locator(".assignment-candidates").scroll_into_view_if_needed()
+            page.wait_for_timeout(300)
+
+            # Material cards, not raw rows: name + chips + chain state
+            cards = page.locator(".assignment-candidates > button")
+            assert cards.count() >= 1, "the editor lists candidate cards"
+            assert page.locator(".assignment-candidate-chips").count() >= 1
+
+            _save_shot_08(page, "candidate-picker", width)
+
+            # No horizontal overflow
+            body_w = page.evaluate("document.body.scrollWidth")
+            viewport_w = page.evaluate("window.innerWidth")
+            assert body_w <= viewport_w + 1, (
+                f"Horizontal overflow at {width}: body={body_w}, viewport={viewport_w}"
+            )
+
+            page.close()
+
+        browser.close()

@@ -7,6 +7,30 @@
   gap: var(--desk-surface-gap, 8px);
 }
 
+/* ── HS-156-08: the folded per-job detail, grouped by what serves them ── */
+
+.front-door-pack-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.front-door-pack-detail-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.front-door-pack-detail-source {
+  font: 600 var(--desk-surface-detail-size, 12px) / 1.3 var(--font-mono);
+  color: var(--text);
+}
+
+.front-door-pack-detail-jobs {
+  font: 400 var(--desk-surface-label-size, 11px) / 1.5 var(--font-mono);
+  color: var(--text-muted);
+}
+
 /* ── "Set up my own" action ── */
 
 .front-door-own-setup {

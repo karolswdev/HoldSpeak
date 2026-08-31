@@ -1,17 +1,34 @@
 import { useRef, useState, type KeyboardEvent } from "react";
 import { EgressChip } from "../../desk/surface/gadgets";
 import { useRovingRows } from "../../desk/surface/roving";
+import { StateChip, ProvenanceChip, type ChipState } from "../../desk/surface";
 import type { AssignmentCandidate } from "./assignmentExperience";
 
 function isCloud(candidate: Pick<AssignmentCandidate, "boundary">): boolean {
   return candidate.boundary === "cloud";
 }
 
+function boundaryLabel(boundary: string): string {
+  if (boundary === "local") return "This device";
+  if (boundary === "lan") return "Your network";
+  return boundary.charAt(0).toUpperCase() + boundary.slice(1);
+}
+
+function health(candidate: AssignmentCandidate): { state: ChipState; label: string } {
+  if (candidate.status === "savable_with_repair") {
+    return { state: "warning", label: "Needs repair" };
+  }
+  if (candidate.readiness === "ready") return { state: "success", label: "Ready" };
+  return { state: "warning", label: candidate.readiness };
+}
+
 /**
- * Server-filtered candidate rows for the shared assignment editor.
+ * Server-filtered candidate cards for the shared assignment editor.
  *
- * The active radio is deliberately separate from draft membership: arrowing
- * through candidates is an inspection/selection operation, never a save.
+ * HS-156-08 — a candidate is a material card (name, boundary chip,
+ * health chip, in-chain state), never a raw row. The active radio is
+ * deliberately separate from draft membership: arrowing through
+ * candidates is an inspection/selection operation, never a save.
  */
 export function AssignmentModelChooser({
   candidates,
@@ -49,6 +66,7 @@ export function AssignmentModelChooser({
     {candidates.map((candidate) => {
       const added = draftProfileIds.has(candidate.profile_id);
       const selected = activeId === candidate.profile_id;
+      const chip = health(candidate);
       return <button
         type="button"
         role="radio"
@@ -59,8 +77,16 @@ export function AssignmentModelChooser({
         key={candidate.profile_id}
         onClick={() => { setActiveId(candidate.profile_id); onChoose(candidate); }}
       >
-        <span><strong>{candidate.label}</strong><small>{candidate.readiness}{candidate.status === "savable_with_repair" ? " · needs repair" : ""}</small></span>
-        {isCloud(candidate) ? <EgressChip label="Egress" scope="cloud" title="This model can leave this device." /> : null}
+        <span className="assignment-candidate-name">{candidate.label}</span>
+        <span className="assignment-candidate-chips">
+          {isCloud(candidate)
+            ? <EgressChip label="Egress" scope="cloud" title="This model can leave this device." />
+            : <ProvenanceChip source={boundaryLabel(candidate.boundary)} />}
+          <StateChip state={chip.state} label={chip.label} />
+        </span>
+        <span className="assignment-candidate-added" aria-hidden="true">
+          {added ? "✓ In the chain" : "Add to the chain"}
+        </span>
       </button>;
     })}
   </div>;

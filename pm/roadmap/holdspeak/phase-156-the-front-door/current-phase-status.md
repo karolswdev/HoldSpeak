@@ -31,9 +31,26 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 | HS-156-05 | Plain words (jargon purge, UX-evidence checklist) | done | [story-05-plain-words](./story-05-plain-words.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-156-06 | The topology (this Mac + nodes; configuration over the same authorities) | done | [story-06-the-topology](./story-06-the-topology.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-156-07 | The stopwatch walk and the close | done | [story-07-the-stopwatch-walk](./story-07-the-stopwatch-walk.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-156-08 | The beauty pass (the selector learns imagination) | ready | [story-08-the-beauty-pass](./story-08-the-beauty-pass.md) | - |
+| HS-156-08 | The beauty pass (the selector learns imagination) | in-progress | [story-08-the-beauty-pass](./story-08-the-beauty-pass.md) | - |
 
 ## Where we are
+
+HS-156-08 THE BEAUTY PASS IS BUILT — HOLDING FOR THE OWNER'S SHOT
+VERDICT (the only close). The wall is gone: ChoiceCard grew object
+slots (summary anchor / emblem / tier temperature / fold) and
+`layout="row"` with a stamped track count; a pack card is an object —
+name + character, ONE summary line ("6 jobs → … · Speech → …"),
+download + provenance as chips, per-job detail grouped BY WHAT SERVES
+IT behind "What's inside"; RECOMMENDED is presence (accent wash +
+filled tab). The candidate picker is a grid of material cards
+(name, boundary chip, health chip, "Add to the chain" ↔ "✓ In the
+chain"). Library-first: contract.md, the gallery, and the contract
+suites extended; the ratchet fence untouched. Proof: vitest 79/79
+(contract + door suites), full `npm --prefix web run check` green,
+baseline zero branch-new (1786 passed), glass beauty legs 2/2 at
+1440+393 (zero overflow), stopwatch re-ran at 0.35 s vs the 60 s bar.
+Before/after: assets/story-08-shots/ (the orchestrator's gate looked
+first — one auto-fit phantom-track frame bounced and re-shot).
 
 REOPENED BY THE OWNER for HS-156-08 The beauty pass (his verbatim
 critique is the story's Problem): the profile selector reads as

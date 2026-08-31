@@ -176,9 +176,20 @@ describe("FrontDoorView", () => {
       const balancedCard = screen.getByText("Balanced").closest(".surface-choice-card");
       expect(balancedCard?.getAttribute("data-recommended")).toBeTruthy();
 
-      // Per-job lines render
-      expect(screen.getAllByText("Thoughts & notes").length).toBeGreaterThanOrEqual(1);
-      expect(screen.getAllByText("Speech recognition").length).toBeGreaterThanOrEqual(1);
+      // HS-156-08: tier temperature stamped per pack
+      expect(balancedCard?.getAttribute("data-tier")).toBe("balanced");
+
+      // HS-156-08: the one-line summary anchor — grouped, never one row per group
+      expect(
+        screen.getAllByText("6 jobs → Qwen 4B (Q4_K_M) · Speech → Whisper small (444 MB)"),
+      ).toHaveLength(3);
+
+      // Per-job lines are folded behind "What's inside", grouped by source
+      expect(screen.queryByText(/Thoughts & notes/)).toBeNull();
+      const folds = screen.getAllByRole("button", { name: /What's inside/ });
+      expect(folds).toHaveLength(3);
+      fireEvent.click(folds[0]);
+      expect(screen.getByText(/Thoughts & notes · Chat practice/)).toBeTruthy();
 
       // Download sizes render (500_000_000 = 477 MB in binary, 3.2G = 3.0 GB, 8G = 7.5 GB)
       expect(screen.getByText("477 MB download")).toBeTruthy();
@@ -444,9 +455,9 @@ describe("FrontDoorView", () => {
         expect(screen.getByTestId("front-door-cards")).toBeTruthy();
       });
 
-      // Speech recognition should appear (as label) in each of 3 cards = 3 times
-      // NOT 6 times (which would indicate duplication within each card)
-      const speechMatches = screen.getAllByText("Speech recognition");
+      // HS-156-08: speech lives in the summary anchor — one "Speech →"
+      // segment per card = 3 total, NOT 6 (duplication within a card)
+      const speechMatches = screen.getAllByText(/Speech → Whisper small/);
       expect(speechMatches).toHaveLength(3); // One per card
     });
   });

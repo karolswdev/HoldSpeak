@@ -29,3 +29,12 @@ Patterns respond to the surface container (@container surface). They push layout
 - ActionNotice is a standalone flow element
 - ProgressPlan and ChoiceCardGroup are section-level patterns
 - Disclosure wraps any content as a collapsible section
+
+## ChoiceCard object slots (HS-156-08)
+A ChoiceCard is an OBJECT, not a list. Beyond label/description/facts/cost:
+- `summary` — the one-line anchor the eye lands on (what this choice does, one breath)
+- `emblem` — a tier mark beside the label, aria-hidden, colored by `tier`
+- `tier` — accent-temperature key stamped as `data-tier` (library palettes: light/balanced/full; unknown keys fall back neutral)
+- `fold` + `foldLabel` — per-item detail behind a Disclosure; clicks inside the fold inspect, they never flip the radio
+- `facts` and `cost` render as chips, not rows
+- ChoiceCardGroup `layout="row"` lays cards out as equal siblings where width allows (stacks narrow); RECOMMENDED renders as presence (accent wash + rail), not just a corner tag

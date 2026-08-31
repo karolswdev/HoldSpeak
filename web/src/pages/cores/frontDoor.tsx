@@ -98,6 +98,96 @@ function lineValue(line: PackDisplayLine): string {
   return line.source_label ?? line.source ?? "";
 }
 
+// ── HS-156-08: the card is an OBJECT — group lines by what serves them ──
+
+type SourceGroup = { source: string; provenance: string | null; jobs: string[] };
+
+function isSpeechLine(line: PackDisplayLine): boolean {
+  return line.group_id === "speech_recognition" || line.job === "speech";
+}
+
+function isTtsLine(line: PackDisplayLine): boolean {
+  return (
+    line.job === "tts" ||
+    line.provenance === "builtin_kokoro" ||
+    (line.group_label ?? line.label) === "Text-to-speech"
+  );
+}
+
+function groupPackLines(lines: PackDisplayLine[]): {
+  llm: SourceGroup[];
+  speech: PackDisplayLine | null;
+  tts: PackDisplayLine | null;
+} {
+  const llm: SourceGroup[] = [];
+  let speech: PackDisplayLine | null = null;
+  let tts: PackDisplayLine | null = null;
+  for (const line of lines) {
+    if (isSpeechLine(line)) {
+      speech = line;
+      continue;
+    }
+    if (isTtsLine(line)) {
+      tts = line;
+      continue;
+    }
+    const source = lineValue(line);
+    const existing = llm.find((group) => group.source === source);
+    if (existing) existing.jobs.push(lineLabel(line));
+    else llm.push({ source, provenance: line.provenance ?? null, jobs: [lineLabel(line)] });
+  }
+  return { llm, speech, tts };
+}
+
+type GroupedPack = ReturnType<typeof groupPackLines>;
+
+/** The one-line anchor: "6 jobs → Qwen3.5 9B (local) · Speech → Whisper small". */
+function packSummary(grouped: GroupedPack): string {
+  const parts = grouped.llm.map(
+    (group) => `${group.jobs.length} job${group.jobs.length === 1 ? "" : "s"} → ${group.source}`,
+  );
+  if (grouped.speech) parts.push(`Speech → ${lineValue(grouped.speech)}`);
+  return parts.join(" · ");
+}
+
+/** Detected-but-unused facts surface as pack ingredients, never as chores. */
+function packIngredients(grouped: GroupedPack): { label: string; value: string }[] {
+  const facts: { label: string; value: string }[] = [];
+  if (grouped.llm.some((group) => group.provenance === "known_endpoint")) {
+    facts.push({ label: "Uses", value: "your server" });
+  }
+  if (grouped.llm.some((group) => group.provenance === "legacy_config")) {
+    facts.push({ label: "Uses", value: "your model file" });
+  }
+  return facts;
+}
+
+const PACK_EMBLEMS: Record<string, string> = { light: "○", balanced: "◐", full: "●" };
+
+/** The folded per-job detail: one block per source, never one row per group. */
+function PackDetail({ grouped }: { grouped: GroupedPack }) {
+  const blocks: { source: string; jobs: string }[] = grouped.llm.map((group) => ({
+    source: group.source,
+    jobs: group.jobs.join(" · "),
+  }));
+  if (grouped.speech) {
+    blocks.push({ source: lineValue(grouped.speech), jobs: lineLabel(grouped.speech) });
+  }
+  if (grouped.tts) {
+    blocks.push({ source: lineValue(grouped.tts), jobs: lineLabel(grouped.tts) });
+  }
+  return (
+    <div className="front-door-pack-detail">
+      {blocks.map((block) => (
+        <div key={`${block.source}:${block.jobs}`} className="front-door-pack-detail-block">
+          <span className="front-door-pack-detail-source">{block.source}</span>
+          <span className="front-door-pack-detail-jobs">{block.jobs}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** HS-156-05: produce a sentence from an attention row, never echoing the action verb. */
 function repairCopy(row: AssignmentSummaryRow): string {
   const { label, repair } = row;
@@ -361,28 +451,34 @@ export function FrontDoorView({
           confirmLabel="Set up"
           onConfirm={() => void confirmPack()}
           ariaLabel="Choose a setup pack"
+          layout="row"
         >
-          {packs.map((pack) => (
-            <ChoiceCard
-              key={pack.id}
-              value={pack.id}
-              label={pack.label}
-              description={pack.summary}
-              recommended={pack.recommended}
-              name="front-door-pack"
-              selectedValue={selectedPack}
-              onChange={setSelectedPack}
-              facts={pack.display_lines.map((line) => ({
-                label: lineLabel(line),
-                value: lineValue(line),
-              }))}
-              cost={
-                pack.total_download_bytes > 0
-                  ? `${formatBytes(pack.total_download_bytes)} download`
-                  : "No downloads needed"
-              }
-            />
-          ))}
+          {packs.map((pack) => {
+            const grouped = groupPackLines(pack.display_lines);
+            return (
+              <ChoiceCard
+                key={pack.id}
+                value={pack.id}
+                label={pack.label}
+                description={pack.summary}
+                recommended={pack.recommended}
+                tier={pack.id}
+                emblem={PACK_EMBLEMS[pack.id]}
+                name="front-door-pack"
+                selectedValue={selectedPack}
+                onChange={setSelectedPack}
+                summary={packSummary(grouped)}
+                facts={packIngredients(grouped)}
+                cost={
+                  pack.total_download_bytes > 0
+                    ? `${formatBytes(pack.total_download_bytes)} download`
+                    : "No downloads needed"
+                }
+                fold={<PackDetail grouped={grouped} />}
+                foldLabel="What's inside"
+              />
+            );
+          })}
         </ChoiceCardGroup>
         <button
           type="button"

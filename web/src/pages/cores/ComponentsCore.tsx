@@ -345,38 +345,52 @@ export function ComponentsCore({ hero }: CoreProps) {
           confirmLabel="Apply"
           onConfirm={() => {}}
           ariaLabel="Model selection"
+          layout="row"
         >
           <ChoiceCard
-            value="local"
+            value="light"
             label="On-device"
             description="Runs entirely on your machine"
-            recommended
+            tier="light"
+            emblem="○"
+            summary="6 jobs → Qwen 9B on this Mac"
             facts={[
               { label: "Size", value: "4.2 GB" },
               { label: "Speed", value: "32 tok/s" },
             ]}
             cost="Free"
+            fold={
+              <span>
+                Thoughts &amp; notes · Meetings · Writing &amp; dictation
+              </span>
+            }
+            foldLabel="What's inside"
             name="gallery-model"
             selectedValue={choiceValue}
             onChange={setChoiceValue}
           />
           <ChoiceCard
-            value="cloud"
-            label="Cloud"
-            description="Runs on a remote endpoint"
-            facts={[
-              { label: "Latency", value: "~200 ms" },
-              { label: "Limit", value: "1000 req/day" },
-            ]}
-            cost="$0.002 / 1k tok"
+            value="balanced"
+            label="Balanced"
+            description="The recommended middle"
+            recommended
+            tier="balanced"
+            emblem="◐"
+            summary="6 jobs → your LAN server · Speech → Whisper small"
+            facts={[{ label: "Uses", value: "your server" }]}
+            cost="641 MB download"
+            fold={<span>Chat &amp; agents · Speech recognition</span>}
+            foldLabel="What's inside"
             name="gallery-model"
             selectedValue={choiceValue}
             onChange={setChoiceValue}
           />
           <ChoiceCard
-            value="held"
-            label="Held"
+            value="full"
+            label="Full"
             description="Temporarily unavailable"
+            tier="full"
+            emblem="●"
             disabled
             name="gallery-model"
             selectedValue={choiceValue}

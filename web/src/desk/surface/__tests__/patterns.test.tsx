@@ -384,6 +384,66 @@ describe("ChoiceCardGroup", () => {
 });
 
 /* ────────────────────────────────────────────────────────────────────
+   5b. ChoiceCard object slots (HS-156-08): summary / emblem / tier / fold
+   ──────────────────────────────────────────────────────────────────── */
+
+describe("ChoiceCard object slots", () => {
+  function SlotGroup() {
+    const [value, setValue] = useState<string | null>(null);
+    return (
+      <ChoiceCardGroup
+        name="tier"
+        value={value}
+        onChange={setValue}
+        ariaLabel="Pick a tier"
+        layout="row"
+      >
+        <ChoiceCard
+          value="balanced"
+          label="Balanced"
+          tier="balanced"
+          emblem="◐"
+          summary="6 jobs → Qwen 9B"
+          fold={<span>Thoughts and notes</span>}
+          foldLabel="What's inside"
+          name="tier"
+          selectedValue={value}
+          onChange={setValue}
+        />
+      </ChoiceCardGroup>
+    );
+  }
+
+  it("renders the one-line summary anchor", () => {
+    render(<SlotGroup />);
+    expect(screen.getByText("6 jobs → Qwen 9B")).toBeInTheDocument();
+  });
+
+  it("renders the emblem as decoration (aria-hidden)", () => {
+    const { container } = render(<SlotGroup />);
+    const emblem = container.querySelector(".surface-choice-card-emblem");
+    expect(emblem?.textContent).toBe("◐");
+    expect(emblem?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("stamps data-tier on the card and data-layout + track count on the group", () => {
+    const { container } = render(<SlotGroup />);
+    expect(container.querySelector('[data-tier="balanced"]')).toBeTruthy();
+    const group = container.querySelector('[data-layout="row"]') as HTMLElement;
+    expect(group).toBeTruthy();
+    expect(group.style.getPropertyValue("--choice-cards")).toBe("1");
+  });
+
+  it("folds detail behind a disclosure; opening it never selects the radio", () => {
+    render(<SlotGroup />);
+    expect(screen.queryByText("Thoughts and notes")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /What's inside/ }));
+    expect(screen.getByText("Thoughts and notes")).toBeInTheDocument();
+    expect(screen.getByRole("radio")).not.toBeChecked();
+  });
+});
+
+/* ────────────────────────────────────────────────────────────────────
    6. Popover
    ──────────────────────────────────────────────────────────────────── */
 
