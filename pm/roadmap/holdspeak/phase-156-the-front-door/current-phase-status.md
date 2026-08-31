@@ -24,7 +24,7 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-156-01 | The recommendation (packs A/B/C from existing facts) | in-progress | [story-01-the-recommendation](./story-01-the-recommendation.md) | [evidence](./evidence-story-01.md) |
+| HS-156-01 | The recommendation (packs A/B/C from existing facts) | done | [story-01-the-recommendation](./story-01-the-recommendation.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-156-02 | One confirmation applies everything | backlog | [story-02-one-confirmation](./story-02-one-confirmation.md) | - |
 | HS-156-03 | The library patterns (the reform's v1, the barrel, the fence) | backlog | [story-03-the-library-patterns](./story-03-the-library-patterns.md) | - |
 | HS-156-04 | The door surface (cards, plan, health strip, fold) | backlog | [story-04-the-door-surface](./story-04-the-door-surface.md) | - |

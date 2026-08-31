@@ -1,0 +1,152 @@
+"""Front Door recommendation route (HS-156-01).
+
+GET /api/front-door/recommendation
+    Returns {packs, facts} -- the three pack recommendations based on the
+    desk's existing knowledge (hardware, catalog, endpoints, legacy config).
+"""
+from __future__ import annotations
+
+from typing import Any
+
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
+
+from ...principals import UNAUTHENTICATED, PrincipalKind
+from ...services.errors import ServiceError
+from ..context import WebContext
+
+
+def _error(exc: ServiceError) -> JSONResponse:
+    ctx = exc.context or {}
+    status = int(ctx.get("status", 400))
+    return JSONResponse({"code": exc.code, "message": exc.detail}, status_code=status)
+
+
+def build_front_door_router(ctx: WebContext) -> APIRouter:
+    router = APIRouter(prefix="/api/front-door", tags=["front-door"])
+
+    @router.get("/recommendation")
+    async def get_recommendation(request: Request) -> Any:
+        principal = getattr(request.state, "principal", UNAUTHENTICATED)
+        if principal.kind is not PrincipalKind.OWNER:
+            return _error(ServiceError(
+                "front_door_owner_required",
+                "Owner access is required.",
+                context={"status": 403},
+            ))
+
+        try:
+            from ...services.front_door_service import recommend
+            from ...services.inference_setup_service import (
+                InferenceSetupApplicationService,
+                inspect_hardware,
+                inspect_runtimes,
+                load_config_read_only,
+            )
+            from ...inference_setup_catalog import (
+                applicable_presets,
+                packaged_catalog_envelope_json,
+                verify_catalog_envelope,
+            )
+            from ...inference_targets import (
+                list_inference_targets,
+                THIS_MACHINE_ID,
+            )
+            from ...config import Config
+            from datetime import datetime, timezone
+            from pathlib import Path
+
+            # Gather inputs
+            setup_svc = ctx.inference_setup_service
+            db = None
+            home = Path.home()
+            now = datetime.now(timezone.utc)
+
+            if setup_svc is not None:
+                db = setup_svc._db
+                home = setup_svc._home_provider()
+
+            config = load_config_read_only()
+            hardware = inspect_hardware(home=home, now=now)
+            capability = hardware.get("capability", {})
+            apple_silicon = bool(capability.get("apple_silicon"))
+            runtimes = inspect_runtimes(apple_silicon=apple_silicon)
+
+            # Catalog entries
+            envelope_json = packaged_catalog_envelope_json()
+            catalog = verify_catalog_envelope(envelope_json, now=now)
+            runtime_ids = {
+                row["id"] for row in runtimes
+                if row["availability"]["state"] == "available"
+            }
+            platform_id = f'{capability["system"]}_{capability["architecture"]}'
+            entries = applicable_presets(
+                platform_id=platform_id,
+                runtime_ids=runtime_ids,
+                entries=catalog["entries"],
+            )
+
+            # Known endpoints: profiles with base_url (openAICompatible kind)
+            known_endpoints: list[dict[str, Any]] = []
+            if db is not None:
+                for profile in db.profiles.list():
+                    if profile.kind == "openAICompatible" and profile.base_url:
+                        known_endpoints.append({
+                            "id": profile.id,
+                            "name": profile.name,
+                            "base_url": profile.base_url,
+                            "model": profile.model,
+                        })
+
+            # Legacy GGUF from config
+            from ...intel.providers import configured_local_meeting_model_path
+            legacy_path_raw = configured_local_meeting_model_path(meeting=config.meeting)
+            legacy_gguf_path = legacy_path_raw if legacy_path_raw else None
+            legacy_gguf_label = None
+            if legacy_gguf_path:
+                from pathlib import PurePosixPath
+                legacy_gguf_label = PurePosixPath(legacy_gguf_path).name
+
+            # Runtime availability
+            has_llama_cpp = any(
+                row["id"] == "llama_cpp_prompt_v1"
+                and row["availability"]["state"] == "available"
+                for row in runtimes
+            )
+            has_mlx = any(
+                row["id"] == "mlx_text_v1"
+                and row["availability"]["state"] == "available"
+                for row in runtimes
+            )
+
+            # Cloud credential: check if any hosted profile has a key
+            has_cloud_credential = False
+            if db is not None:
+                from ...inference_targets import _profile_key_present
+                for profile in db.profiles.list():
+                    if profile.kind == "openAICompatible" and profile.requires_key:
+                        if _profile_key_present(profile.id):
+                            has_cloud_credential = True
+                            break
+
+            result = recommend(
+                hardware=hardware,
+                catalog_entries=entries,
+                known_endpoints=known_endpoints,
+                legacy_gguf_path=legacy_gguf_path,
+                legacy_gguf_label=legacy_gguf_label,
+                has_llama_cpp=has_llama_cpp,
+                has_mlx=has_mlx,
+                has_cloud_credential=has_cloud_credential,
+            )
+            return JSONResponse(result)
+
+        except ServiceError as exc:
+            return _error(exc)
+        except Exception as exc:
+            return JSONResponse(
+                {"code": "front_door_internal_error", "message": str(exc)},
+                status_code=500,
+            )
+
+    return router
