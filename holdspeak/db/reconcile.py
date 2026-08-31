@@ -919,6 +919,13 @@ def _apply_data_backfills(conn: sqlite3.Connection) -> None:
     # owner can independently assign a cheaper model.  Idempotent.
     _backfill_chat_practice_assignments(conn)
 
+    # ── deployment-revisions-context-ceiling (P0 fix) ──────────────────
+    # define-endpoint wrote context_ceiling=0 into deployment_revisions
+    # while inference_deployments carried 16384.  The compatibility
+    # checker reads deployment_revisions, so every defined endpoint was
+    # context_unsupported.  Heal existing poisoned rows.  Idempotent.
+    _backfill_deployment_revision_context_ceiling(conn)
+
 
 def _backfill_chat_route_assignments(conn: sqlite3.Connection) -> None:
     """Family ``chat-route-assignments`` (HS-151-02).
@@ -1107,4 +1114,38 @@ def _backfill_chat_practice_assignments(conn: sqlite3.Connection) -> None:
         log.info(
             "chat-practice-assignments backfill: copied chat.turn to %s (%d entries)",
             target_cap, len(entries),
+        )
+
+
+def _backfill_deployment_revision_context_ceiling(conn: sqlite3.Connection) -> None:
+    """Heal deployment_revisions.context_ceiling=0 from inference_deployments.
+
+    The define-endpoint path (model_library_service._ensure_provider_deployment)
+    wrote context_ceiling=0 via DeploymentRevision.from_identity() into
+    deployment_revisions while simultaneously writing 16384 into
+    inference_deployments.context_ceiling.  The compatibility checker reads
+    deployment_revisions, so every defined-endpoint profile was marked
+    context_unsupported.  This backfill copies the correct value from
+    inference_deployments for affected rows.  Idempotent: rows already !=0
+    are untouched.
+    """
+    healed = conn.execute(
+        """UPDATE deployment_revisions
+           SET context_ceiling = (
+               SELECT d.context_ceiling
+               FROM inference_deployments d
+               WHERE d.execution_revision_id = deployment_revisions.id
+                 AND d.context_ceiling > 0
+               LIMIT 1
+           )
+           WHERE deployment_revisions.context_ceiling = 0
+             AND EXISTS (
+                 SELECT 1 FROM inference_deployments d
+                 WHERE d.execution_revision_id = deployment_revisions.id
+                   AND d.context_ceiling > 0
+             )"""
+    ).rowcount
+    if healed:
+        log.info(
+            "deployment-revision-context-ceiling backfill: healed %d row(s)", healed,
         )

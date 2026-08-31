@@ -853,8 +853,21 @@ class RoutedInferenceCoordinator:
                     reference=reference, route_request=route_request,
                 )
                 conn.commit()
-            except Exception:
+            except Exception as exc:
                 conn.rollback()
+                # Surface FK failures as a typed error instead of raw 500.
+                import sqlite3
+                if isinstance(exc, sqlite3.IntegrityError) and "FOREIGN KEY" in str(exc):
+                    raise ServiceError(
+                        "inference_admission_integrity_failure",
+                        "A required parent record is missing for this model assignment. "
+                        "The profile may need to be re-created or re-bound.",
+                        context={
+                            "capability_id": capability_id,
+                            "status": 409,
+                            "detail": str(exc),
+                        },
+                    ) from exc
                 raise
         return result
 

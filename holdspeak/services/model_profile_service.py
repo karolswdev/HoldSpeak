@@ -13,7 +13,7 @@ import json
 import platform
 import re
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace as _replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -1249,10 +1249,13 @@ class ModelProfileService:
                 "capability_sha256": str(row["capability_sha256"] or ""),
             }
             if schema_version == 1:
-                rebuilt = DeploymentRevision.from_identity(DeploymentIdentity(**{
-                    key: values[key]
-                    for key in ("destination_id", "kind", "engine", "model", "node", "boundary", "model_path", "endpoint", "secret_slot")
-                }))
+                rebuilt = _replace(
+                    DeploymentRevision.from_identity(DeploymentIdentity(**{
+                        key: values[key]
+                        for key in ("destination_id", "kind", "engine", "model", "node", "boundary", "model_path", "endpoint", "secret_slot")
+                    })),
+                    context_ceiling=values["context_ceiling"],
+                )
             elif schema_version == 2:
                 rebuilt = DeploymentRevision.from_artifact(
                     destination_id=values["destination_id"], engine=values["engine"],
