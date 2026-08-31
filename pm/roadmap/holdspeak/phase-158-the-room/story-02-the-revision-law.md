@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 158
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-158-01
 - **Unblocks:** HS-158-03, HS-158-04
 - **Owner:** unassigned
@@ -48,6 +48,38 @@ return stored results; conflicts are typed. P0 froze the names
 - **Unit:** `tests/unit/test_project_revision_law.py` (atomicity, conflicts, idempotent replay, restore); updated characterization files (additive deltas only).
 - **Integration:** route-level pass-through tests.
 
+## What shipped
+
+- All eight ProjectService writes graduated to the revision law:
+  one transaction = revision+1 exactly once + `project_changes` row
+  (deterministic `pchg_`) + ledger event (`project.created/updated/
+  archived/restored/resource.linked/resource.unlinked`; meeting
+  association rides `project.updated` — §10 has no meeting event kind,
+  no semantics invented) + additive envelope (`result_kind`,
+  `project_revision`, `changed_refs` as canonical refs).
+- `expected_revision` → typed `stale_revision` ConflictError (409),
+  no partial mutation (fault-injection proven: a failure inside the
+  transaction rolls back revision, change row, and event together).
+  `command_id` → request-hash idempotent replay; different hash →
+  `idempotency_conflict`. Absent params = exact legacy behavior.
+- NEW `restore_project` + `POST /api/projects/{id}/restore`:
+  archived → restored (lifecycle 'active', revision law); already
+  active → honest `no_change` (no bump); unknown → 404. API surface
+  regenerated.
+- `project` joined `CITIZEN_TYPES` (deliberate, SRS §3.1-grounded:
+  the aggregate is a citizen); changed_refs parse through
+  `holdspeak.refs`.
+- Eight characterization pins updated — every one a superset
+  assertion (legacy keys still required; envelope keys now also
+  asserted); zero status-code or message changes.
+- `tests/unit/test_project_revision_law.py`: 40 tests (atomicity ×2
+  fault injections, conflicts, replay, restore, exactly-one-increment,
+  ref parsing). Orchestrator re-ran the full scoped set:
+  334 passed, 1 skipped (the real-DB leg, correctly, under isolated
+  HOME).
+
 ## Notes / open questions
 
-- `is_archived` vs `lifecycle`: service reconciles — archive sets both; restore returns lifecycle to its pre-archive value or `active`.
+- `is_archived` vs `lifecycle`: archive sets both; restore sets lifecycle='active' (no pre-archive lifecycle memory in P1 — posture history is P2 material).
+- FOUND: `@observe_service` silently breaks `@staticmethod` descriptors (passes self positionally). Worked around with instance methods; worth a repo-wide audit note for counsel.
+- project_service.py stays OUT of the ref fence list: it predates the central module (`qualified_ref` from db.relationships); its NEW emissions go through `holdspeak.refs`.

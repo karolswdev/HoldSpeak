@@ -226,6 +226,7 @@ def test_registry_contains_all_srs_citizens() -> None:
         "Repo/delivery system": "repo",
         "Watch": "watch",
         "Kernel/Desk object": "kernel",
+        "Project": "project",  # HS-158-02: aggregate itself (SRS SS3.1)
     }
     for citizen_name, ref_type in srs_citizens.items():
         assert ref_type in CITIZEN_TYPES, (
