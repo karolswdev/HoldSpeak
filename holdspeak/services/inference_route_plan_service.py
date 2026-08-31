@@ -12,7 +12,7 @@ import hashlib
 import json
 import re
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace as _replace
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from typing import Any, Callable, Mapping, Sequence
@@ -765,10 +765,13 @@ class InferenceRoutePlanService:
                 source = SimpleNamespace(**dict(row))
                 adapted = adapt_v1_profile(source)
                 deployment_revision = self._legacy_deployment(source)
+                context_limit = int(row["context_limit"] or 0)
+                if context_limit > 0:
+                    deployment_revision = _replace(deployment_revision, context_ceiling=context_limit)
                 boundary = _BOUNDARIES.get(deployment_revision.boundary)
                 if boundary not in capability.allowed_boundaries:
                     raise ValidationError("Legacy target boundary is not permitted.", code="inference_route_boundary_unsupported")
-                context = self._context_support({"mode": "bounded", "maximum_tokens": int(row["context_limit"] or 0)})
+                context = self._context_support({"mode": "bounded", "maximum_tokens": context_limit})
                 self._validate_legacy_compatibility(capability, context, boundary)
                 created = self._clock()
                 if created.tzinfo is None:
@@ -1321,7 +1324,10 @@ class InferenceRoutePlanService:
                 profile = adapted["profile"]
                 binding = adapted["binding"]
                 deployment = self._legacy_deployment(source)
-                context = {"mode": profile["context_support"], "maximum_tokens": int(row["context_limit"] or 0)}
+                context_limit = int(row["context_limit"] or 0)
+                if context_limit > 0:
+                    deployment = _replace(deployment, context_ceiling=context_limit)
+                context = {"mode": profile["context_support"], "maximum_tokens": context_limit}
                 readiness = "unknown"
                 enabled = True
             else:

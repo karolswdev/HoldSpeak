@@ -16,6 +16,7 @@ import hashlib
 import json
 import re
 import uuid
+from dataclasses import replace as _replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -452,7 +453,10 @@ class ModelLibraryApplicationService:
         identity = target_from_profile(target, self._db).deployment
         if identity is None:
             raise ServiceError("model_library_provider_invalid", "Provider destination is unavailable.", context={"status": 409})
-        revision = DeploymentRevision.from_identity(identity)
+        revision = _replace(
+            DeploymentRevision.from_identity(identity),
+            context_ceiling=16_384,
+        )
         artifact_id = f"provider-material-{draft['profile_id']}-r{profile_revision}"
         material = {
             "schema": "ModelLibraryProviderMaterial@1",
