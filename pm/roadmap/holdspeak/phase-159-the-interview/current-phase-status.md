@@ -1,6 +1,6 @@
 # Phase 159 - Project Rooms: The Interview (P1a)
 
-**Last updated:** 2026-08-31 — 5/7 DONE: THE §14 SENTENCE STANDS ON GLASS (reload-resume exact, finalize atomic, zero false events, deterministic ×2). 05's functional face committed; the orchestrator's shot review found the wall-of-text card pattern — beauty round 1 in flight; then THE OWNER'S VERDICT closes 05 → 07.
+**Last updated:** 2026-08-31 — 6/7 DONE: THE OWNER'S ROUND-4 VERDICT PASSES THE FACE ('PASS — close it'; his round-2 bounce 'I legit don/t know what I am looking at' became the consequence headline; his round-3 card bounce became library ChoiceCards). THE CLOSE (07) RUNS: full gates + counsel in flight.
 
 ## Goal
 
@@ -48,9 +48,9 @@ deterministic path is the P1a implementation).
 | HS-159-02 | The watch service (one façade; ReactionService compat) | done | [story-02-the-watch-service](./story-02-the-watch-service.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-159-03 | The setup service (durable session, native suggestions, atomic finalize) | done | [story-03-the-setup-service](./story-03-the-setup-service.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-159-04 | The setup routes (HTTP §10, command contract, api-surface) | done | [story-04-the-setup-routes](./story-04-the-setup-routes.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-159-05 | The interview face (two questions, live brief, activation — shots + verdict) | in-progress | [story-05-the-interview-face](./story-05-the-interview-face.md) | - |
+| HS-159-05 | The interview face (two questions, live brief, activation — shots + verdict) | done | [story-05-the-interview-face](./story-05-the-interview-face.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-159-06 | The walk (reload-resume → finalize → populated Now, on glass) | done | [story-06-the-walk](./story-06-the-walk.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-159-07 | The close (gates, suite amendments, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
+| HS-159-07 | The close (gates, suite amendments, final summary) | in-progress | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
