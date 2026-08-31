@@ -1,0 +1,66 @@
+/* ── StateChip: the closed-vocabulary status chip ──
+   Inline-flex, mono, uppercase, etched — consistent with .gadget-chip.
+   Always icon + text (never color alone, a11y law). */
+
+.desk-next .surface-state-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 18px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: var(--letter-spacing-label-wide);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.surface-state-chip-icon {
+  flex: none;
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* ── Tone colors: each state maps to a design-token color ── */
+
+.desk-next .surface-state-chip[data-state="idle"] {
+  color: var(--text-muted);
+}
+.desk-next .surface-state-chip[data-state="active"] {
+  color: var(--accent);
+}
+.desk-next .surface-state-chip[data-state="working"] {
+  color: var(--info);
+}
+.desk-next .surface-state-chip[data-state="success"] {
+  color: var(--ok);
+}
+.desk-next .surface-state-chip[data-state="warning"] {
+  color: var(--warn);
+}
+.desk-next .surface-state-chip[data-state="failure"] {
+  color: var(--danger-signal);
+}
+.desk-next .surface-state-chip[data-state="unreachable"] {
+  color: var(--text-faint);
+}
+
+/* ── Working state: pulsing icon (respects reduced motion) ── */
+
+.desk-next .surface-state-chip[data-state="working"] .surface-state-chip-icon {
+  animation: surface-chip-pulse var(--duration-medium) ease-in-out infinite alternate;
+}
+
+@keyframes surface-chip-pulse {
+  from { opacity: 1; }
+  to { opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .surface-state-chip[data-state="working"] .surface-state-chip-icon {
+    animation: none;
+  }
+}

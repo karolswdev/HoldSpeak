@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 156
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** -
 - **Unblocks:** HS-156-04, HS-156-06, HS-156-07
 - **Owner:** unassigned
@@ -51,6 +51,46 @@ surface and topology build — the first customer proves the contract.
 - **Unit:** vitest contract suites per pattern; the fence fixtures.
 - **Integration:** the gallery render (glass or vitest-DOM) producing the shot sheet.
 - **Manual / device:** the shot-sheet review is the gate (orchestrator's eyes; the owner sees it in the phase exhibit).
+
+## What shipped
+
+### The barrel (`surface/index.ts`)
+The public barrel re-exports the full surface library: 29 layout primitives from Surface.tsx, 19 gadgets, SurfaceFooter, Material, useRovingRows, wings, citations, format helpers, LedgerFilter, foot, sparse, and the 7 new v1 patterns + MicButton (inverted as a surface control).
+
+### The v1 patterns (`surface/patterns/`)
+Seven pattern components with CSS and a 58-test contract suite:
+- **StateChip** (7 states: idle/active/working/success/warning/failure/unreachable, icon+text always, etched chip face, working pulses, prefers-reduced-motion)
+- **ActionNotice** (4 tones: ok/warn/danger/info, at most one named action button, role=status)
+- **Disclosure** (controlled/uncontrolled, Escape closes with focus return, optional persistKey to localStorage, RAW variant, token slot, button trigger not details/summary)
+- **ProgressPlan** (4 step statuses: queued/running/done/failed, progress bar with aria-label, rate slot, receipt/egress footer, one action button, aria-live=polite on transition only, compact mode)
+- **ChoiceCardGroup + ChoiceCard** (real input[type=radio], useRovingRows for keyboard, selected/recommended/disabled, facts key-value list, cost slot, separate confirmation verb, RECOMMENDED badge)
+- **Popover** (createPortal, --desk-z-popover, Escape dismisses, focus trapped, backdrop for outside-click, 4 placements)
+- **ProvenanceChip + Receipt** (source/boundary labels with inspect action, lamp dot + status + timestamp, compose into SurfaceFooter)
+
+### The MicButton inversion (`surface/controls/MicButton.tsx`)
+Compatibility re-export at the new canonical path. Original file untouched; zero consumer edits.
+
+### The ratchet fence (`guard-architecture.mjs` + `fence-baseline.json`)
+Three rules, each with a checked-in baseline that can never grow:
+- Rule 1 (private-imports): 59 baselined files
+- Rule 2 (library-css-outside): 0 baselined files
+- Rule 3 (roving-reimpl): 6 baselined files
+12 fence fixture tests verify the regex patterns and baseline integrity.
+
+### The contract (`surface/contract.md`)
+States vocabulary, accessibility rules, token discipline, motion policy, container behavior, composition rules.
+
+### The gallery (ComponentsCore.tsx)
+Extended with sections for all 7 v1 patterns. Gallery axe test green.
+
+### The shot sheet (`assets/story-03-shot-sheet/`)
+8 shots: gallery top/mid/bottom/focus at 1440px and 393px.
+
+### Test counts
+- 58 pattern contract tests, 12 fence tests, 1 gallery axe test
+- 1729 total suite tests, zero regressions
+- `npm --prefix web run check` green end-to-end
+- `check_web_baseline.py` zero BRANCH-NEW
 
 ## Notes / open questions
 

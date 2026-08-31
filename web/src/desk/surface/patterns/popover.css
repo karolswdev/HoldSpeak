@@ -1,0 +1,55 @@
+/* ── Popover: in-flow anchored popover with focus law ──
+   Positioned near anchor, focus trapped while open.
+   Desk-token styled: surface-2 bg, border, etch shadow. */
+
+.surface-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--desk-z-popover) - 1);
+  background: transparent;
+}
+
+.desk-next .surface-popover {
+  position: absolute;
+  z-index: var(--desk-z-popover);
+  min-width: 120px;
+  max-width: 320px;
+  padding: var(--space-2, 8px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size, 12px);
+}
+
+.desk-next .surface-popover:focus-visible {
+  outline: var(--focus-ring);
+}
+
+/* ── Placement variants ── */
+
+.desk-next .surface-popover[data-placement="above"] {
+  bottom: 100%;
+  margin-bottom: 4px;
+}
+.desk-next .surface-popover[data-placement="below"] {
+  top: 100%;
+  margin-top: 4px;
+}
+.desk-next .surface-popover[data-placement="start"] {
+  right: 100%;
+  margin-right: 4px;
+}
+.desk-next .surface-popover[data-placement="end"] {
+  left: 100%;
+  margin-left: 4px;
+}
+
+/* ── Popover wrapper (establishes positioning context) ── */
+
+.surface-popover-anchor {
+  position: relative;
+  display: inline-block;
+}

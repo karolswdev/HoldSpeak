@@ -26,7 +26,7 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 |---|---|---|---|---|
 | HS-156-01 | The recommendation (packs A/B/C from existing facts) | done | [story-01-the-recommendation](./story-01-the-recommendation.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-156-02 | One confirmation applies everything | done | [story-02-one-confirmation](./story-02-one-confirmation.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-156-03 | The library patterns (the reform's v1, the barrel, the fence) | in-progress | [story-03-the-library-patterns](./story-03-the-library-patterns.md) | - |
+| HS-156-03 | The library patterns (the reform's v1, the barrel, the fence) | done | [story-03-the-library-patterns](./story-03-the-library-patterns.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-156-04 | The door surface (cards, plan, health strip, fold) | backlog | [story-04-the-door-surface](./story-04-the-door-surface.md) | - |
 | HS-156-05 | Plain words (jargon purge, UX-evidence checklist) | backlog | [story-05-plain-words](./story-05-plain-words.md) | - |
 | HS-156-06 | The topology (this Mac + nodes; configuration over the same authorities) | backlog | [story-06-the-topology](./story-06-the-topology.md) | - |
@@ -34,17 +34,12 @@ settled design D1–D7, incl. the topology map). OUTRANKS 155 The Crew.
 
 ## Where we are
 
-HS-156-01 done. HS-156-02 in-progress: the apply engine, routes, DB
-persistence, and 27 unit tests are built and passing (73 total with
-recommendation + fence tests). The apply engine drives only existing
-service seams (define_endpoint, download, set_assignment) -- no direct
-DB writes. Fault injection proven: failure on item N -> plan records
-the error, re-apply completes the remainder, nothing double-created.
-The end-to-end assignment proof is BLOCKED-ON(fix/model-wiring-p0):
-the define-endpoint context_ceiling=0 bug makes all profiles
-incompatible at the assignment compat check. The test suite stubs the
-assignment service to prove the calling shape. Awaiting orchestrator
-commit + flip to done after P0 fix merges.
+HS-156-01 done, HS-156-02 done. HS-156-03 in-progress: the v1 library
+patterns, barrel, fence, contract, MicButton inversion, gallery, and
+shot sheet are built and passing. 7 pattern components with 58 contract
+tests, 12 fence tests, 1 gallery axe test. `npm --prefix web run check`
+green end-to-end (1729 tests, zero regressions). Shot sheet captured at
+1440+393 with 8 images. Awaiting orchestrator review and story flip.
 
 ## Active risks
 
