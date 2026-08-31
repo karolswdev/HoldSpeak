@@ -226,6 +226,18 @@ export const VERBS: Verb[] = [
       void useDesk.getState().refresh();
     },
   },
+  // HS-159-05: Project creation joins the shared creation grammar (WEB-CR-001)
+  {
+    id: "desk.new-project",
+    label: "New Project",
+    menu: "desk",
+    scope: "floor",
+    group: "new",
+    glyph: KIND_GLYPH.project,
+    keywords: ["create", "project", "interview", "setup", "watch"],
+    ghost: never,
+    run: () => openSurfaceOr("project-setup", "/"),
+  },
   // ── Desk: the floor verbs ───────────────────────────────────────────
   {
     id: "desk.toggle-view",
