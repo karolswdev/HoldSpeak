@@ -1,0 +1,18 @@
+{
+  "total_seconds": 3.49,
+  "segments": {
+    "desk_init": 0.15,
+    "open_interview": 1.84,
+    "answer_outcome": 0.02,
+    "answer_signals": 0.03,
+    "suggestions_appear": 0.04,
+    "select_card": 0.54,
+    "clarify_repo": 0.01,
+    "test_proposal": 0.0,
+    "review": 0.02,
+    "activate": 0.84
+  },
+  "bar": 300,
+  "passed": true,
+  "viewport": 1440
+}

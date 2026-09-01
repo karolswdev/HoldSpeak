@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 161
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-161-04 (rig vs the wire; face legs after 05's functional)
 - **Unblocks:** HS-161-07
 - **Owner:** unassigned
@@ -52,3 +52,13 @@ real-metal leg runs the true gh against a real repository.
 ## Notes / open questions
 
 - The real-metal leg reads only public/own-repo data through the owner's own gh auth — the same trust the desk already exercises via GitHubWatchSource.
+
+## Orchestrator's shot-review note (2026-09-01)
+
+The four legs are green and honest (API + glass assertions,
+deterministic ×2, real metal live). But the shot review found 05's
+ProviderWizardStep MOUNTED NOWHERE — the wizard states the charter
+wanted shot cannot render yet, and the current shots show the setup
+face without it (the real-metal shot is an empty transitional pane).
+The verdict shot set is refreshed in 05's consequence round after the
+mount; the stopwatch JSON, the legs, and this story's evidence stand.

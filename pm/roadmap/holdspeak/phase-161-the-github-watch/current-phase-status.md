@@ -51,28 +51,27 @@ not a vibe; OWNER VERDICT closes the face). No writes, no webhooks
 | HS-161-03 | The live test + baseline + manual evaluation (into the Delta) | done | [story-03-the-live-test](./story-03-the-live-test.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-161-04 | The wire (provider routes, api-surface) | done | [story-04-the-wire](./story-04-the-wire.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-161-05 | The face (Check connection → Discover → Clarify → Test; auth honesty — shots + verdict) | in-progress | [story-05-the-face](./story-05-the-face.md) | - |
-| HS-161-06 | The stopwatch walk (< 5:00 measured; + one real-metal leg) | in-progress | [story-06-the-stopwatch-walk](./story-06-the-stopwatch-walk.md) | - |
+| HS-161-06 | The stopwatch walk (< 5:00 measured; + one real-metal leg) | done | [story-06-the-stopwatch-walk](./story-06-the-stopwatch-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-161-07 | The close (gates, S-2 paid, final summary) | in-progress | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
-4/7. 04 DONE — the wire. Seven routes under the house law: the
-provider manifest list, the live connection probe + Recheck, bounded
-paginated discovery, typed validate-repo, MANUAL evaluate (P5's
-boundary named in the docstring), and the minimal clarify-scope wire
-(the generic clarify route couldn't reach the adapter-backed step;
-36 lines, nothing widened). THE HTTP COMPOUNDING LOOP is
-integration-proven end to end through the real app — fifteen HTTP
-calls from connection to the Delta review showing the PR transition,
-never reaching into the DB. TWO REAL BUGS the loop exposed, fixed:
-connector_id "github"→"gh" mapping (github transitions could never
-fire through a finalized setup) and the missing pull_request
-test-read path (finalize would refuse every github proposal).
-Auth-degraded on the wire: 200 + owner_action_required +
-recovery hint — the state IS the result. api-surface 599→606, purely
-additive, fence green. Next: 05 the face (four-word vocabulary,
-egress badge, SETFLOW-003 — THE OWNER'S VERDICT closes it). Chain:
-05 ∥ 06(rig after 05's functional) → 07. All standing laws carry.
+6/7 flipped; 05 in CONSEQUENCE ROUND. 06 DONE — the stopwatch walk:
+THE NUMBER IS 3.27s against the 300s bar (segments itemized in
+assets/story-06-stopwatch.json — the machinery's cost, the 156
+precedent). Four legs: stopwatch, auth-degraded (SETFLOW-003
+round-trip, state preserved), evaluation (the compounding proof ON
+GLASS — the Delta face renders the watch.transition evidence-linked),
+and the REAL-METAL leg (real gh, account karolswdev, 5 PRs from
+karolswdev/HoldSpeak, read-only, skip-clean in isolated HOME).
+Deterministic ×2. The fixture seam: a typed default-off gh_runner
+constructor param on MeetingWebServer — everything above the runner
+stays real. S-2 PAID (8c12ad12): decide+create_item one transaction,
+fault-proven. THE ORCHESTRATOR'S SHOT REVIEW FOUND THE GAP: 05's
+ProviderWizardStep was built + tested but MOUNTED NOWHERE — the
+wizard never renders in the real flow. 05's consequence round mounts
+it, reshoots the wizard states, then THE OWNER'S VERDICT. Chain:
+05(mount → reshoot → verdict) → 07 close. All standing laws carry.
 
 ## Active risks
 
