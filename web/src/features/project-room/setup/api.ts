@@ -9,6 +9,10 @@ import type {
   TestResultResponse,
   FinalizeEnvelope,
   SetupAnswer,
+  ProviderConnectionStatus,
+  DiscoveryResponse,
+  ValidateRepoResponse,
+  ClarifyScopeResponse,
 } from "./model";
 import {
   decodeSession,
@@ -16,6 +20,10 @@ import {
   decodeTestResultResponse,
   decodeFinalizeEnvelope,
   decodeAnswer,
+  decodeProviderConnectionStatus,
+  decodeDiscoveryResponse,
+  decodeValidateRepoResponse,
+  decodeClarifyScopeResponse,
 } from "./model";
 
 const BASE = "/api/project-setups";
@@ -150,4 +158,64 @@ export async function abandon(sessionId: string): Promise<void> {
     `${BASE}/${enc(sessionId)}/abandon`,
     { method: "POST" },
   );
+}
+
+/* ── Provider routes (HS-161-05) ── */
+
+const PROVIDERS = "/api/providers";
+
+/** GET /api/providers/github/connection -- check connection status. */
+export async function getGitHubConnection(): Promise<ProviderConnectionStatus> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${PROVIDERS}/github/connection`,
+  );
+  return decodeProviderConnectionStatus(raw);
+}
+
+/** POST /api/providers/github/connection/recheck -- re-probe connection. */
+export async function recheckGitHubConnection(): Promise<ProviderConnectionStatus> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${PROVIDERS}/github/connection/recheck`,
+    { method: "POST" },
+  );
+  return decodeProviderConnectionStatus(raw);
+}
+
+/** GET /api/providers/github/discover -- discover repositories. */
+export async function discoverGitHub(
+  query?: string,
+  cursor?: string,
+): Promise<DiscoveryResponse> {
+  const params = new URLSearchParams();
+  if (query) params.set("query", query);
+  if (cursor) params.set("cursor", cursor);
+  const qs = params.toString();
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${PROVIDERS}/github/discover${qs ? `?${qs}` : ""}`,
+  );
+  return decodeDiscoveryResponse(raw);
+}
+
+/** POST /api/providers/github/validate-repo -- validate a typed repo. */
+export async function validateGitHubRepo(
+  ownerRepo: string,
+): Promise<ValidateRepoResponse> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${PROVIDERS}/github/validate-repo`,
+    { method: "POST", json: { owner_repo: ownerRepo } },
+  );
+  return decodeValidateRepoResponse(raw);
+}
+
+/** POST /api/project-setups/{sid}/proposals/{pid}/clarify-scope -- scope a proposal. */
+export async function clarifyScope(
+  sessionId: string,
+  proposalId: string,
+  repo?: string,
+): Promise<ClarifyScopeResponse> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${BASE}/${enc(sessionId)}/proposals/${enc(proposalId)}/clarify-scope`,
+    { method: "POST", json: repo ? { repo } : {} },
+  );
+  return decodeClarifyScopeResponse(raw);
 }

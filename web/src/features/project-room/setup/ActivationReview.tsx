@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, type KeyboardEvent } from "react";
 import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
+import { EgressChip } from "../../../desk/surface";
 import {
   cadenceLabel,
   conditionPlainWords,
@@ -216,6 +217,15 @@ function ReviewWatchSpec({ proposal }: { proposal: SetupProposal }) {
           </dd>
         </div>
       </dl>
+
+      {/* Egress badge for GitHub watches (HS-161-05) */}
+      {proposal.providerId === "github" ? (
+        <EgressChip
+          label="local + cloud"
+          scope="mixed"
+          title="This Watch reads from github.com."
+        />
+      ) : null}
 
       {/* Framed test evidence (fix 5): compact bordered inset block */}
       {proposal.testResult ? (

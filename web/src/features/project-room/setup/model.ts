@@ -446,6 +446,8 @@ const SUBJECT_NOUNS: Record<string, string> = {
   people: "person",
   recipes: "recipe",
   workflows: "workflow",
+  pull_requests: "PR",
+  pull_request: "PR",
 };
 
 /** Comparison verbs for the closed WatchCondition@1 vocabulary. */
@@ -464,15 +466,20 @@ const COMPARISON_VERBS: Record<string, (field: string, value: string | null, nou
   not_exists: (field, _v, _noun) => `When ${field} does not exist`,
 };
 
-/** Plain-words condition from a single clause (defect 2). */
+/** Plain-words condition from a single clause (defect 2).
+ *  HS-161-05: PR fields use prFieldLabel for human-readable field names. */
 function clausePlainWords(clause: WatchConditionClause, subjectKind: string): string {
   const noun = SUBJECT_NOUNS[subjectKind] ?? subjectKind;
+  // HS-161-05: PR subject kinds get human-readable field names
+  const fieldName = subjectKind === "pull_requests" || subjectKind === "pull_request"
+    ? prFieldLabel(clause.field)
+    : clause.field;
   const valueStr = clause.value != null ? String(clause.value) : null;
   const verb = COMPARISON_VERBS[clause.comparison];
-  if (verb) return verb(clause.field, valueStr, noun);
+  if (verb) return verb(fieldName, valueStr, noun);
   // Unknown comparison: neutral fallback, never raw JSON
   const valPart = valueStr ? ` ${valueStr}` : "";
-  return `When ${noun} ${clause.field} ${clause.comparison}${valPart}`;
+  return `When ${noun} ${fieldName} ${clause.comparison}${valPart}`;
 }
 
 /** Plain-words conditions for a full spec (HS-159-05 defect 2).
@@ -512,3 +519,177 @@ export const STAGE_META: Record<string, { index: number; label: string }> = {
   proposals: { index: 3, label: "Suggestions" },
   review: { index: 4, label: "Review" },
 };
+
+/* ── Provider connection vocabulary (HS-161-05) ─────────────────── */
+
+/** The seven provider-state tokens. Wire values from GET /api/providers/github/connection. */
+export const PROVIDER_STATES = [
+  "checking",
+  "connected",
+  "connection_required",
+  "capability_missing",
+  "partial",
+  "unavailable",
+  "owner_action_required",
+] as const;
+export type ProviderState = (typeof PROVIDER_STATES)[number];
+
+/** Provider connection status from the wire (mined from test_provider_routes.py). */
+export type ProviderConnectionStatus = {
+  state: ProviderState;
+  errorCode: string | null;
+  errorDetail: string | null;
+  display: {
+    account: string | null;
+    recoveryHint: string | null;
+  };
+};
+
+/** One discovered repository item from GET /api/providers/github/discover. */
+export type DiscoveryItem = {
+  id: string;
+  name: string;
+  owner: string;
+  visibility: string;
+};
+
+/** Discovery response from the wire. */
+export type DiscoveryResponse = {
+  state: string;
+  items: DiscoveryItem[];
+  cursor: string | null;
+  errorCode: string | null;
+};
+
+/** Validate-repo response from POST /api/providers/github/validate-repo. */
+export type ValidateRepoResponse = {
+  valid: boolean;
+  message: string | null;
+};
+
+/** Clarify-scope response from POST /api/project-setups/{sid}/proposals/{pid}/clarify-scope. */
+export type ClarifyScopeResponse = {
+  scopeState: string;
+  repositories: string[];
+};
+
+/* ── Provider state display vocabulary ────────────────────────────── */
+
+/** Human card copy for each provider state token. */
+export const PROVIDER_STATE_COPY: Record<ProviderState, { headline: string; detail: string }> = {
+  checking: {
+    headline: "Checking connection",
+    detail: "Verifying GitHub access...",
+  },
+  connected: {
+    headline: "Connected",
+    detail: "GitHub is ready. Choose a repository to watch.",
+  },
+  connection_required: {
+    headline: "Connection required",
+    detail: "GitHub needs to be connected before it can be used.",
+  },
+  capability_missing: {
+    headline: "Capability missing",
+    detail: "The GitHub CLI is not installed or not found.",
+  },
+  partial: {
+    headline: "Partially connected",
+    detail: "GitHub is reachable but some permissions are missing.",
+  },
+  unavailable: {
+    headline: "Unavailable",
+    detail: "GitHub cannot be reached at this time.",
+  },
+  owner_action_required: {
+    headline: "Authentication required",
+    detail: "GitHub needs you to authenticate before HoldSpeak can connect.",
+  },
+};
+
+/** The ONE next action for each provider state. */
+export const PROVIDER_STATE_ACTION: Record<ProviderState, { label: string; kind: "recheck" | "discover" | "authenticate" | "install" | "wait" | "retry" }> = {
+  checking: { label: "Checking...", kind: "wait" },
+  connected: { label: "Choose repository", kind: "discover" },
+  connection_required: { label: "Connect GitHub", kind: "authenticate" },
+  capability_missing: { label: "Install GitHub CLI", kind: "install" },
+  partial: { label: "Recheck connection", kind: "recheck" },
+  unavailable: { label: "Retry", kind: "retry" },
+  owner_action_required: { label: "Recheck", kind: "recheck" },
+};
+
+/* ── Provider decoders ────────────────────────────────────────────── */
+
+export function decodeProviderConnectionStatus(raw: Record<string, unknown>): ProviderConnectionStatus {
+  const display = (raw.display ?? {}) as Record<string, unknown>;
+  return {
+    state: (PROVIDER_STATES.includes(raw.state as ProviderState) ? raw.state : "unavailable") as ProviderState,
+    errorCode: raw.error_code != null ? String(raw.error_code) : null,
+    errorDetail: raw.error_detail != null ? String(raw.error_detail) : null,
+    display: {
+      account: display.account != null ? String(display.account) : null,
+      recoveryHint: display.recovery_hint != null ? String(display.recovery_hint) : null,
+    },
+  };
+}
+
+export function decodeDiscoveryItem(raw: Record<string, unknown>): DiscoveryItem {
+  const owner = raw.owner as Record<string, unknown> | undefined;
+  return {
+    id: String(raw.id ?? ""),
+    name: String(raw.name ?? ""),
+    owner: owner?.login != null ? String(owner.login) : String(raw.owner ?? ""),
+    visibility: String(raw.visibility ?? ""),
+  };
+}
+
+export function decodeDiscoveryResponse(raw: Record<string, unknown>): DiscoveryResponse {
+  const items = Array.isArray(raw.items)
+    ? raw.items.map((i: Record<string, unknown>) => decodeDiscoveryItem(i))
+    : [];
+  return {
+    state: String(raw.state ?? ""),
+    items,
+    cursor: raw.cursor != null ? String(raw.cursor) : null,
+    errorCode: raw.error_code != null ? String(raw.error_code) : null,
+  };
+}
+
+export function decodeValidateRepoResponse(raw: Record<string, unknown>): ValidateRepoResponse {
+  return {
+    valid: Boolean(raw.valid),
+    message: raw.message != null ? String(raw.message) : null,
+  };
+}
+
+export function decodeClarifyScopeResponse(raw: Record<string, unknown>): ClarifyScopeResponse {
+  return {
+    scopeState: String(raw.scope_state ?? ""),
+    repositories: Array.isArray(raw.repositories)
+      ? raw.repositories.map(String)
+      : [],
+  };
+}
+
+/* ── PR condition plain-words vocabulary (HS-161-05) ────────────── */
+
+/** Field-specific plain-words renderers for PR condition fields.
+ *  Extends the base COMPARISON_VERBS with PR-domain knowledge. */
+const PR_FIELD_LABELS: Record<string, string> = {
+  review_requested: "review requested",
+  review_decision: "review decision",
+  checks: "CI checks",
+  head_sha: "commit SHA",
+  state: "PR state",
+  merged: "merged",
+  updated_at: "last updated",
+  title: "title",
+  draft: "draft status",
+  labels: "labels",
+  number: "PR number",
+};
+
+/** Resolve a PR field name to its plain-words label. */
+export function prFieldLabel(field: string): string {
+  return PR_FIELD_LABELS[field] ?? field.replace(/_/g, " ");
+}

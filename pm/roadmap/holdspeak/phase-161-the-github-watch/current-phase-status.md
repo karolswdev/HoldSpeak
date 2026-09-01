@@ -50,7 +50,7 @@ not a vibe; OWNER VERDICT closes the face). No writes, no webhooks
 | HS-161-02 | The compilation (§8.1 templates → WatchSpec@1; GitHub joins the interview's inventory) | done | [story-02-the-compilation](./story-02-the-compilation.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-161-03 | The live test + baseline + manual evaluation (into the Delta) | done | [story-03-the-live-test](./story-03-the-live-test.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-161-04 | The wire (provider routes, api-surface) | done | [story-04-the-wire](./story-04-the-wire.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-161-05 | The face (Check connection → Discover → Clarify → Test; auth honesty — shots + verdict) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
+| HS-161-05 | The face (Check connection → Discover → Clarify → Test; auth honesty — shots + verdict) | in-progress | [story-05-the-face](./story-05-the-face.md) | - |
 | HS-161-06 | The stopwatch walk (< 5:00 measured; + one real-metal leg) | backlog | [story-06-the-stopwatch-walk](./story-06-the-stopwatch-walk.md) | - |
 | HS-161-07 | The close (gates, S-2 paid, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 
