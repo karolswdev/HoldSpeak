@@ -32,7 +32,7 @@ this phase builds the factory the action will call.
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-162-01 | The update ledger (schema v70 + repo + revision pinning) | done | [story-01-the-update-ledger](./story-01-the-update-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-162-02 | The deterministic drafter (UPD-003 first; sections + claims + citations) | backlog | [story-02-the-deterministic-drafter](./story-02-the-deterministic-drafter.md) | - |
+| HS-162-02 | The deterministic drafter (UPD-003 first; sections + claims + citations) | done | [story-02-the-deterministic-drafter](./story-02-the-deterministic-drafter.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-162-03 | The model drafter (frozen router; marked language; fallback proven) | backlog | [story-03-the-model-drafter](./story-03-the-model-drafter.md) | - |
 | HS-162-04 | The verbs on the wire (draft/regenerate/save/copy/publish; api-surface) | backlog | [story-04-the-verbs](./story-04-the-verbs.md) | - |
 | HS-162-05 | The face (the Update room — claims open their sources; OWNER VERDICT) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
@@ -41,19 +41,19 @@ this phase builds the factory the action will call.
 
 ## Where we are
 
-1/7. 01 DONE — the update ledger. Schema v70 additive:
-project_updates pinned to an explicit project_revision +
-source_manifest at draft time; lifecycle draft|published|superseded
-with THE LAW AS REPO LAW — any write to a published row raises
-PublishedUpdateError (UPD-004: published is IMMUTABLE), supersede
-mints draft_revision+1 in one transaction. pupd_ was already in the
-frozen contract as uuid4 — correctly non-deterministic (the identity
-is the artifact, not the slot); zero contract changes. Revision pin
-proven to survive project mutation; reconcile proven on a COPY of
-the owner's real DB (real HOME leg, skip-clean elsewhere);
-positional-INSERT fence green. Next: 02 the deterministic drafter —
-it defines the claim schema everything downstream is constrained to.
-Chain: 02 → 03 → 04 → 05 ∥ 06(rig after 05's functional) → 07. The
+2/7. 02 DONE — the deterministic drafter, shipped FIRST (UPD-003 as
+primary, not fallback-shaped). The frozen claim schema now exists
+({span_id, text, refs ≥1 canonical, section}) and everything
+downstream is constrained to it. Six UPD-001 sections over one
+pinned revision + manifest; every factual sentence claims its refs —
+the deterministic drafter does not know how to lie; empty sections
+say so honestly; caveats appear iff a consulted room section is
+degraded/absent. Byte-determinism proven ACROSS a supersede
+boundary; UPD-004 through the service (regenerate supersedes
+unaccepted; published never touched). Goldens: rich/empty/degraded.
+Next: 03 the model drafter — constrained to 02's schema, unsupported
+language MARKED, router-down falls back to 02, one .43 real-metal
+leg. Chain: 03 → 04 → 05 ∥ 06(rig after 05's functional) → 07. The
 161 lesson is law: prove the MOUNT and the PIXELS.
 
 ## Active risks

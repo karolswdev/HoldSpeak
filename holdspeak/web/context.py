@@ -120,6 +120,9 @@ class WebContext:
     # evidence collector into the twelve-step deterministic Delta.
     # Routes come in 05; construction only here.
     project_delta_service: Optional[Any] = None
+    # HS-162-02: the update factory composes ProjectService + Delta into
+    # deterministic (and later model) drafts. Routes come in 04.
+    project_update_service: Optional[Any] = None
     # HS-141-04: the single application-owned one-question task lifecycle.
     # Route factories must never create their own threads or event loops.
     refinement_coordinator: Optional[Any] = None
