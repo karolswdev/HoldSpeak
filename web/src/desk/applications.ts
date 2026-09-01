@@ -273,8 +273,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "open-project-memory",
     windowId: "surface-project-memory",
-    label: "Project memory",
-    description: "Long-lived project context and evidence.",
+    label: "Desk memory",
+    description: "Search connected evidence across the Desk or within a Project.",
     glyph: "▤",
     href: "/project-memory",
     surface: {

@@ -342,7 +342,7 @@ Logs are written to: {LOG_FILE}
     memory_subparsers = memory_parser.add_subparsers(dest="memory_action")
     memory_subparsers.add_parser(
         "rebuild-index",
-        help="Rebuild decision, artifact, and note search indexes",
+        help="Rebuild the materialized Decision, Artifact, and Note memory indexes",
     )
 
     # Doctor subcommand

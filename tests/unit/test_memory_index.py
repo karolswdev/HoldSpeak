@@ -1,4 +1,5 @@
 """HS-109-04 memory FTS freshness, ranking, filters, and overflow."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -38,7 +39,9 @@ def _decision(
         )
 
 
-def _artifact(db: Database, artifact_id: str, title: str, body: str, updated: str) -> None:
+def _artifact(
+    db: Database, artifact_id: str, title: str, body: str, updated: str
+) -> None:
     db.plugins.record_artifact(
         artifact_id=artifact_id,
         meeting_id="",
@@ -69,16 +72,18 @@ def test_triggers_refresh_and_drop_each_kind(tmp_path: Path) -> None:
         )
 
     _decision(db, "d1", "alpha decision")
-    assert [hit.source_ref for hit in db.memory.search("alpha").hits] == ["decision:d1"]
+    assert [
+        hit.source_ref for hit in db.memory.search("alpha", kinds=["decision"]).hits
+    ] == ["decision:d1"]
     with db._connection() as conn:
         conn.execute(
             "UPDATE decisions SET text='beta decision', rationale='because beta' WHERE id='d1'"
         )
-    assert db.memory.search("alpha").total == 0
-    assert db.memory.search("beta").total == 1
+    assert db.memory.search("alpha", kinds=["decision"]).total == 0
+    assert db.memory.search("beta", kinds=["decision"]).total == 1
     with db._connection() as conn:
         conn.execute("DELETE FROM meetings WHERE id='source-meeting'")
-    assert db.memory.search("beta").total == 0
+    assert db.memory.search("beta", kinds=["decision"]).total == 0
     assert db.decisions.get("d1").source_state == "source_deleted"
 
     _artifact(db, "a1", "Alpha artifact", "artifact body", "2026-01-02T00:00:00")
@@ -119,8 +124,12 @@ def test_project_kind_time_filters_and_idempotent_rebuild(tmp_path: Path) -> Non
     db = Database(tmp_path / "filters.db")
     db.projects.create_project(project_id="p1", name="One")
     db.projects.create_project(project_id="p2", name="Two")
-    _decision(db, "d1", "retention answer", project="p1", decided_at="2024-01-01T00:00:00")
-    _decision(db, "d2", "retention answer", project="p2", decided_at="2026-01-01T00:00:00")
+    _decision(
+        db, "d1", "retention answer", project="p1", decided_at="2024-01-01T00:00:00"
+    )
+    _decision(
+        db, "d2", "retention answer", project="p2", decided_at="2026-01-01T00:00:00"
+    )
     _note(db, "n1", "Retention", "retention answer", "2025-01-01T00:00:00")
     db.project_relationships.upsert(project_id="p1", resource_ref="note:n1")
 
@@ -132,12 +141,34 @@ def test_project_kind_time_filters_and_idempotent_rebuild(tmp_path: Path) -> Non
     assert {hit.source_ref for hit in historical.hits} == {"decision:d1", "note:n1"}
     notes = db.memory.search("retention", kinds="note", project_id="p1")
     assert [hit.source_ref for hit in notes.hits] == ["note:n1"]
-    assert db.memory.rebuild() == db.memory.rebuild() == {
-        "decisions": 2,
-        "artifacts": 0,
-        "notes": 1,
-        "total": 3,
-    }
+    assert (
+        db.memory.rebuild()
+        == db.memory.rebuild()
+        == {
+            "decisions": 2,
+            "artifacts": 0,
+            "notes": 1,
+            "total": 3,
+        }
+    )
+
+
+def test_project_decision_scope_inherits_its_source_meeting(tmp_path: Path) -> None:
+    db = Database(tmp_path / "decision_meeting_scope.db")
+    db.projects.create_project(project_id="p1", name="One")
+    with db._connection() as conn:
+        conn.execute(
+            "INSERT INTO meetings(id,started_at,title) VALUES ('m1','2026-01-01','Source')"
+        )
+        conn.execute(
+            "INSERT INTO meeting_projects(meeting_id,project_id) VALUES ('m1','p1')"
+        )
+    _decision(db, "d1", "zephyr decision", meeting_id="m1")
+
+    result = db.memory.search("zephyr", kinds=["decision"], project_id="p1")
+
+    assert [hit.source_ref for hit in result.hits] == ["decision:d1"]
+    assert result.hits[0].project_id == "p1"
 
 
 def test_project_grounding_counts_overflow_and_labels_recency(tmp_path: Path) -> None:
@@ -174,3 +205,31 @@ def test_project_grounding_counts_overflow_and_labels_recency(tmp_path: Path) ->
     assert fallback.matched_count == GROUNDING_MAX_REFS + 3
     assert fallback.overflow_count == 3
     assert fallback.blocks[0].ref == f"n{GROUNDING_MAX_REFS + 2:02d}"
+
+
+def test_automatic_memory_overflow_does_not_subtract_an_unmatched_exclusion(
+    tmp_path: Path,
+) -> None:
+    db = Database(tmp_path / "automatic_overflow.db")
+    for index in range(GROUNDING_MAX_REFS + 1):
+        _note(
+            db,
+            f"n{index:02d}",
+            f"Zephyr {index}",
+            "zephyr retrieval evidence",
+            f"2026-02-{index + 1:02d}T00:00:00",
+        )
+
+    hydrated = hydrate_refs_detailed(
+        db,
+        [],
+        [],
+        "summary",
+        query="zephyr",
+        include_memory=True,
+        exclude_refs=["thread:not-a-match"],
+    )
+
+    assert len(hydrated.blocks) == GROUNDING_MAX_REFS
+    assert hydrated.matched_count == GROUNDING_MAX_REFS + 1
+    assert hydrated.overflow_count == 1

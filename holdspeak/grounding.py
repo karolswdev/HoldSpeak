@@ -64,7 +64,11 @@ def meeting_digest(state: Any) -> str:
     if state.intel is not None and state.intel.summary:
         parts.append(state.intel.summary)
         items = state.intel.to_dict().get("action_items") or []
-        tasks = [str(i.get("task") or i.get("text") or "") for i in items if isinstance(i, dict)]
+        tasks = [
+            str(i.get("task") or i.get("text") or "")
+            for i in items
+            if isinstance(i, dict)
+        ]
         tasks = [t for t in tasks if t]
         if tasks:
             parts.append("\n".join(f"- {t}" for t in tasks))
@@ -81,6 +85,8 @@ def hydrate_refs_detailed(
     qualified_refs: Optional[list[str]] = None,
     *,
     query: Optional[str] = None,
+    include_memory: bool = False,
+    exclude_refs: Optional[list[str]] = None,
 ) -> GroundingHydrationResult:
     """Load refs with an honest receipt for selection and bounded overflow."""
     blocks: list[GroundingBlock] = []
@@ -90,6 +96,7 @@ def hydrate_refs_detailed(
         "matched_count": 0,
         "overflow_count": 0,
     }
+    visited: set[str] = set()
     for mid in meeting_ids:
         try:
             state = db.meetings.get_meeting(mid)
@@ -114,8 +121,11 @@ def hydrate_refs_detailed(
         else:
             text = meeting_digest(state)
         blocks.append(
-            GroundingBlock(kind="meeting", ref=mid, title=title, subtitle=day, text=text)
+            GroundingBlock(
+                kind="meeting", ref=mid, title=title, subtitle=day, text=text
+            )
         )
+        visited.add(f"meeting:{mid}")
     for aid in artifact_ids:
         try:
             art = db.plugins.get_artifact(aid)
@@ -134,12 +144,14 @@ def hydrate_refs_detailed(
         title = art.title or aid
         body = str(art.body_markdown or "")
         blocks.append(
-            GroundingBlock(kind="artifact", ref=aid, title=title, subtitle=of, text=body)
+            GroundingBlock(
+                kind="artifact", ref=aid, title=title, subtitle=of, text=body
+            )
         )
+        visited.add(f"artifact:{aid}")
     # HS-92-05: the same qualified resolver serves Ask, steer, Web, and native.
     # Containers resolve their real current members recursively; any stale leaf
     # makes the whole request unknown so callers can refuse rather than pretend.
-    visited: set[str] = set()
     for raw_ref in qualified_refs or []:
         try:
             ref = qualified_ref(raw_ref)
@@ -151,6 +163,43 @@ def hydrate_refs_detailed(
         )
         blocks.extend(more)
         unknown.extend(missing)
+
+    # Model-bearing consumers opt into the same retrieval pass even when the
+    # user did not manually attach a Project or source.  Project refs already
+    # perform a scoped search in ``_hydrate_qualified``; a second global pass
+    # would both duplicate evidence and escape that scope.
+    has_project_ref = any(
+        str(raw_ref).strip().lower().startswith("project:")
+        for raw_ref in qualified_refs or []
+    )
+    has_explicit_sources = bool(meeting_ids or artifact_ids or qualified_refs)
+    if (
+        include_memory
+        and query
+        and str(query).strip()
+        and not has_project_ref
+        and not has_explicit_sources
+    ):
+        excluded = {
+            str(ref).split("#", 1)[0]
+            for ref in (exclude_refs or [])
+            if str(ref).strip()
+        }
+        search = db.memory.search(
+            str(query),
+            limit=GROUNDING_MAX_REFS + len(excluded),
+            exclude_refs=excluded,
+        )
+        members = [hit.source_ref for hit in search.hits][:GROUNDING_MAX_REFS]
+        more, missing = _hydrate_members(
+            db, members, expand, visited, query=query, stats=stats
+        )
+        blocks.extend(more)
+        unknown.extend(missing)
+        stats["selection"] = "ecosystem_relevance"
+        stats["overflow_count"] = int(stats["overflow_count"]) + max(
+            0, search.total - len(members)
+        )
     # Expanded containers still obey the original global 16-ref context cap.
     # Count every project-search/container miss plus any cross-container excess;
     # only then cut, so the receipt always says exactly how many matched sources
@@ -177,6 +226,8 @@ def hydrate_refs(
     qualified_refs: Optional[list[str]] = None,
     *,
     query: Optional[str] = None,
+    include_memory: bool = False,
+    exclude_refs: Optional[list[str]] = None,
 ) -> tuple[list[GroundingBlock], list[str]]:
     """Compatibility tuple over :func:`hydrate_refs_detailed`."""
     result = hydrate_refs_detailed(
@@ -186,6 +237,8 @@ def hydrate_refs(
         expand,
         qualified_refs=qualified_refs,
         query=query,
+        include_memory=include_memory,
+        exclude_refs=exclude_refs,
     )
     return result.blocks, result.unknown
 
@@ -218,11 +271,14 @@ def _hydrate_qualified(
         full = kind == "transcript" or expand == "full"
         text = (
             "\n".join(f"{s.speaker}: {s.text}" for s in state.segments)
-            if full else meeting_digest(state)
+            if full
+            else meeting_digest(state)
         )
         if len(text) > GROUNDING_TRANSCRIPT_CAP:
             text = text[:GROUNDING_TRANSCRIPT_CAP] + "\n[content cut at grounding cap]"
-        return [GroundingBlock(kind, resource_id, state.title or resource_id, day, text)], []
+        return [
+            GroundingBlock(kind, resource_id, state.title or resource_id, day, text)
+        ], []
     if kind == "artifact":
         try:
             art = db.plugins.get_artifact(resource_id)
@@ -230,40 +286,152 @@ def _hydrate_qualified(
             art = None
         if art is None:
             return [], [ref]
-        return [GroundingBlock(kind, resource_id, art.title or resource_id, "", str(art.body_markdown or ""))], []
+        return [
+            GroundingBlock(
+                kind,
+                resource_id,
+                art.title or resource_id,
+                "",
+                str(art.body_markdown or ""),
+            )
+        ], []
     if kind == "note":
         note = db.notes.get(resource_id)
         if note is None:
             return [], [ref]
-        return [GroundingBlock(kind, resource_id, note.title or resource_id, "", note.body_markdown)], []
+        return [
+            GroundingBlock(
+                kind, resource_id, note.title or resource_id, "", note.body_markdown
+            )
+        ], []
     if kind == "decision":
         decision = db.decisions.get(resource_id)
         if decision is None:
             return [], [ref]
         rationale = f"\n\nRationale: {decision.rationale}" if decision.rationale else ""
-        return [GroundingBlock(
-            kind, resource_id, decision.text, decision.decided_at,
-            decision.text + rationale,
-        )], []
+        return [
+            GroundingBlock(
+                kind,
+                resource_id,
+                decision.text,
+                decision.decided_at,
+                decision.text + rationale,
+            )
+        ], []
+    if kind in {
+        "decision_record",
+        "desk_decision",
+        "action",
+        "project_item",
+        "workbench_item",
+        "cadence",
+    }:
+        queries = {
+            "decision_record": (
+                "SELECT decision_text title,COALESCE(rationale,'')||CASE WHEN alternatives IS NULL OR alternatives='' THEN '' ELSE '\n\nAlternatives: '||alternatives END text,updated_at subtitle FROM decision_records WHERE id=? AND deleted=0"
+            ),
+            "desk_decision": (
+                "SELECT CASE WHEN title='' THEN decision_markdown ELSE title END title,context_markdown||CASE WHEN decision_markdown='' THEN '' ELSE '\n\nDecision: '||decision_markdown END||CASE WHEN consequences_markdown='' THEN '' ELSE '\n\nConsequences: '||consequences_markdown END text,status subtitle FROM desk_decisions WHERE id=? AND deleted=0"
+            ),
+            "action": (
+                "SELECT task title,task||CASE WHEN owner IS NULL OR owner='' THEN '' ELSE '\nOwner: '||owner END||CASE WHEN due IS NULL OR due='' THEN '' ELSE '\nDue: '||due END text,status subtitle FROM action_items WHERE id=?"
+            ),
+            "project_item": (
+                "SELECT title,COALESCE(summary,'')||CASE WHEN details_json IS NULL OR details_json='' THEN '' ELSE '\n\nDetails: '||details_json END text,item_type||' · '||lifecycle subtitle FROM project_items WHERE id=?"
+            ),
+            "workbench_item": (
+                "SELECT title,body||CASE WHEN result IS NULL OR result='' THEN '' ELSE '\n\nResult: '||result END text,status subtitle FROM workbench_items WHERE id=? AND status!='dismissed'"
+            ),
+            "cadence": (
+                "SELECT title,summary||CASE WHEN owner IS NULL OR owner='' THEN '' ELSE '\nOwner: '||owner END text,status||' · '||priority subtitle FROM cadence_loops WHERE id=? AND status!='killed'"
+            ),
+        }
+        with db._connection() as conn:
+            row = conn.execute(queries[kind], (resource_id,)).fetchone()
+        if row is None:
+            return [], [ref]
+        text = str(row["text"] or "")
+        if len(text) > GROUNDING_TRANSCRIPT_CAP:
+            text = text[:GROUNDING_TRANSCRIPT_CAP] + "\n[content cut at grounding cap]"
+        return [
+            GroundingBlock(
+                kind,
+                resource_id,
+                str(row["title"] or resource_id),
+                str(row["subtitle"] or ""),
+                text,
+            )
+        ], []
+    if kind == "thread":
+        # Search identifies the best matching message as ``thread:id#message``;
+        # grounding returns the coherent parent conversation.
+        thread_id = resource_id.split("#", 1)[0]
+        thread = db.threads.get(thread_id)
+        if thread is None or thread.deleted_at is not None:
+            return [], [ref]
+        lines: list[str] = []
+        for message in db.threads.list_path(thread_id):
+            text = "\n".join(
+                str(part.text)
+                for part in db.threads.get_parts(message.id)
+                if part.kind == "text"
+                and part.text
+                and not part.sensitive
+                and not part.draft
+            ).strip()
+            if text:
+                lines.append(f"{message.role}: {text}")
+        body = "\n\n".join(lines)
+        if len(body) > GROUNDING_TRANSCRIPT_CAP:
+            body = body[:GROUNDING_TRANSCRIPT_CAP] + "\n[content cut at grounding cap]"
+        return [
+            GroundingBlock(
+                kind,
+                thread_id,
+                thread.title or thread_id,
+                "conversation",
+                body,
+            )
+        ], []
     if kind == "knowledge":
         kb = db.kbs.get(resource_id)
         if kb is None:
             return [], [ref]
-        members = [row.resource_ref for row in db.knowledge_memberships.list_for_knowledge(resource_id)]
+        members = [
+            row.resource_ref
+            for row in db.knowledge_memberships.list_for_knowledge(resource_id)
+        ]
         if not members:
             members = [value for value in kb.member_ids if ":" in value]
         return _hydrate_container(
-            db, kind, resource_id, kb.name, members, expand, visited,
-            query=query, stats=stats,
+            db,
+            kind,
+            resource_id,
+            kb.name,
+            members,
+            expand,
+            visited,
+            query=query,
+            stats=stats,
         )
     if kind == "zone":
         zone = db.directories.get(resource_id)
         if zone is None:
             return [], [ref]
-        members = [row.primitive_id for row in db.directory_memberships.list_for_directory(resource_id)]
+        members = [
+            row.primitive_id
+            for row in db.directory_memberships.list_for_directory(resource_id)
+        ]
         return _hydrate_container(
-            db, kind, resource_id, zone.name, members, expand, visited,
-            query=query, stats=stats,
+            db,
+            kind,
+            resource_id,
+            zone.name,
+            members,
+            expand,
+            visited,
+            query=query,
+            stats=stats,
         )
     if kind == "project":
         project = db.projects.get_project(resource_id)
@@ -296,9 +464,7 @@ def _hydrate_qualified(
                 )
         # A project expands to its selected source blocks. It is not flattened into
         # one anonymous container, so every model-visible block keeps a citable ref.
-        return _hydrate_members(
-            db, members, expand, visited, query=query, stats=stats
-        )
+        return _hydrate_members(db, members, expand, visited, query=query, stats=stats)
     return [], [ref]
 
 
@@ -345,8 +511,9 @@ def _hydrate_container(
     text = "\n\n".join(
         f"[{block.kind.upper()}: {block.title}]\n{block.text}" for block in children
     )
-    container = GroundingBlock(kind, resource_id, title or resource_id,
-                               f"{len(members)} member(s)", text)
+    container = GroundingBlock(
+        kind, resource_id, title or resource_id, f"{len(members)} member(s)", text
+    )
     return [container], unknown
 
 
@@ -358,6 +525,8 @@ def hydrate_grounding_blocks_detailed(
     qualified_refs: Optional[list[str]] = None,
     *,
     query: Optional[str] = None,
+    include_memory: bool = False,
+    exclude_refs: Optional[list[str]] = None,
 ) -> tuple[list[str], list[str], list[str], GroundingHydrationResult]:
     """Ask formatting plus the additive selection/overflow receipt."""
     result = hydrate_refs_detailed(
@@ -367,6 +536,8 @@ def hydrate_grounding_blocks_detailed(
         expand,
         qualified_refs=qualified_refs,
         query=query,
+        include_memory=include_memory,
+        exclude_refs=exclude_refs,
     )
     out_blocks: list[str] = []
     ids: list[str] = []
@@ -397,6 +568,8 @@ def hydrate_grounding_blocks(
     qualified_refs: Optional[list[str]] = None,
     *,
     query: Optional[str] = None,
+    include_memory: bool = False,
+    exclude_refs: Optional[list[str]] = None,
 ) -> tuple[list[str], list[str], list[str], list[str]]:
     """Compatibility tuple preserving the pre-HS-109-04 result shape."""
     blocks, ids, titles, result = hydrate_grounding_blocks_detailed(
@@ -406,6 +579,8 @@ def hydrate_grounding_blocks(
         expand,
         qualified_refs=qualified_refs,
         query=query,
+        include_memory=include_memory,
+        exclude_refs=exclude_refs,
     )
     return blocks, ids, titles, result.unknown
 
@@ -495,8 +670,7 @@ SupportLabel = Literal["entailed", "partial", "unsupported"]
 
 def _content_tokens(text: str) -> set[str]:
     return {
-        w for w in _WORD_RE.findall(text.lower())
-        if len(w) > 2 and w not in _STOPWORDS
+        w for w in _WORD_RE.findall(text.lower()) if len(w) > 2 and w not in _STOPWORDS
     }
 
 
@@ -545,12 +719,14 @@ def score_claims(text: str, source_text: str) -> list[dict[str, Any]]:
     for claim in decompose_claims(text):
         score = entailment_score(claim, source_text)
         label = classify_support(score)
-        out.append({
-            "text": claim,
-            "score": round(score, 3),
-            "label": label,
-            "flagged": label != "entailed",
-        })
+        out.append(
+            {
+                "text": claim,
+                "score": round(score, 3),
+                "label": label,
+                "flagged": label != "entailed",
+            }
+        )
     return out
 
 

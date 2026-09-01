@@ -91,7 +91,12 @@ class RecipeService:
         return True
 
     async def run(self, principal: Principal, recipe_id: str, *, input: str = "", variables: dict[str, Any] | None = None, inference_target_id: str | None = None, requested_placement: str | None = None, workbench_id: str | None = None, max_tokens: Any = None, temperature: Any = None, source_ref: str | None = None, source_type: Any = None, deadline_at: Any = None, broadcast: Broadcast | None = None, **extra: Any) -> dict[str, Any]:
-        from .support import _render_user_prompt, canonical_source_type, inject_skills
+        from .support import (
+            _hydrate_grounding_detailed,
+            _render_user_prompt,
+            canonical_source_type,
+            inject_skills,
+        )
         self._migrate_subject_pointers(principal)
         self._reject_retired_selector(inference_target_id or requested_placement)
         recipe = self._recipe(recipe_id)
@@ -103,13 +108,36 @@ class RecipeService:
         sources = [{"source_type": "recipe", "source_ref": recipe_id}]
         if str(source_ref or "").strip():
             sources.append({"source_type": canonical_source_type(source_type) if source_type else "input", "source_ref": str(source_ref)})
+        memory_blocks, memory_ids, memory_titles, memory_hydration = (
+            _hydrate_grounding_detailed(
+                self._db,
+                [],
+                [],
+                "summary",
+                query=user,
+                include_memory=True,
+            )
+        )
+        rendered_user = (
+            "[MEMORY]\n" + "\n\n".join(memory_blocks) + "\n\n[INPUT]\n" + user
+            if memory_blocks
+            else user
+        )
         payload = {
             "system_prompt": inject_skills(self._db, recipe.system_prompt, recipe_id),
-            "user_prompt": user, "variables": variables, "recipe_id": recipe_id,
+            "user_prompt": rendered_user, "variables": variables, "recipe_id": recipe_id,
             "recipe_revision": str(recipe.last_modified),
             "temperature": float(temperature) if temperature is not None else None,
             "max_tokens": int(max_tokens) if max_tokens is not None else None,
             "workbench_id": str(workbench_id or ""),
+            "context_ids": memory_ids,
+            "context_titles": memory_titles,
+            "grounding": {
+                "source_refs": memory_hydration.source_refs,
+                "selection": memory_hydration.selection,
+                "matched_count": memory_hydration.matched_count,
+                "overflow_count": memory_hydration.overflow_count,
+            },
         }
         invocation_id = "recipe_run_" + uuid.uuid4().hex
         self._broadcast(broadcast, "running", kind="recipe", ref=recipe_id, name=recipe.name or recipe_id)
@@ -142,7 +170,12 @@ class RecipeService:
         return result
 
     async def chat(self, principal: Principal, recipe_id: str, *, question: str, history: list[Any] | None = None, grounding: Any = None, inference_target_id: str | None = None, workbench_id: str | None = None, egress_context: Any = None, broadcast: Broadcast | None = None) -> dict[str, Any]:
-        from .support import _GROUNDING_EXPANDS, _GROUNDING_MAX_REFS, _hydrate_grounding, inject_skills
+        from .support import (
+            _GROUNDING_EXPANDS,
+            _GROUNDING_MAX_REFS,
+            _hydrate_grounding_detailed,
+            inject_skills,
+        )
         self._migrate_subject_pointers(principal)
         self._reject_retired_selector(inference_target_id)
         question = str(question or "").strip()
@@ -157,19 +190,38 @@ class RecipeService:
         if context: blocks.append("[CONTEXT]\n" + "\n\n".join(x for x in context if x))
         context_ids: list[str] = []
         context_titles: list[str] = []
-        grounding_echo = None
-        if grounding is not None:
-            if not isinstance(grounding, dict): raise ValidationError("grounding must be an object")
-            mids = [str(x).strip() for x in grounding.get("meeting_ids", []) if str(x).strip()] if isinstance(grounding.get("meeting_ids"), list) else []
-            aids = [str(x).strip() for x in grounding.get("artifact_ids", []) if str(x).strip()] if isinstance(grounding.get("artifact_ids"), list) else []
-            expand = str(grounding.get("expand") or "summary").strip() or "summary"
-            if expand not in _GROUNDING_EXPANDS: raise ValidationError(f"expand {expand!r} is not one of {list(_GROUNDING_EXPANDS)}")
-            if len(mids) + len(aids) > _GROUNDING_MAX_REFS: raise ValidationError(f"grounding is capped at {_GROUNDING_MAX_REFS} refs")
-            gblocks, gids, gtitles, unknown = _hydrate_grounding(self._db, mids, aids, expand)
-            if unknown: raise ServiceError("grounding_not_found", "grounding ids not on this hub", context={"unknown_ids": unknown})
-            if gblocks: blocks.append("[GROUNDING]\n" + "\n\n".join(gblocks))
-            context_ids += gids; context_titles += gtitles
-            grounding_echo = {"meeting_ids": mids, "artifact_ids": aids, "expand": expand, "titles": gtitles}
+        if grounding is not None and not isinstance(grounding, dict):
+            raise ValidationError("grounding must be an object")
+        grounding = grounding or {}
+        mids = [str(x).strip() for x in grounding.get("meeting_ids", []) if str(x).strip()] if isinstance(grounding.get("meeting_ids"), list) else []
+        aids = [str(x).strip() for x in grounding.get("artifact_ids", []) if str(x).strip()] if isinstance(grounding.get("artifact_ids"), list) else []
+        refs = [str(x).strip() for x in grounding.get("refs", []) if str(x).strip()] if isinstance(grounding.get("refs"), list) else []
+        expand = str(grounding.get("expand") or "summary").strip() or "summary"
+        if expand not in _GROUNDING_EXPANDS: raise ValidationError(f"expand {expand!r} is not one of {list(_GROUNDING_EXPANDS)}")
+        if len(mids) + len(aids) + len(refs) > _GROUNDING_MAX_REFS: raise ValidationError(f"grounding is capped at {_GROUNDING_MAX_REFS} refs")
+        gblocks, gids, gtitles, hydration = _hydrate_grounding_detailed(
+            self._db,
+            mids,
+            aids,
+            expand,
+            qualified_refs=refs,
+            query=question,
+            include_memory=True,
+        )
+        if hydration.unknown: raise ServiceError("grounding_not_found", "grounding ids not on this hub", context={"unknown_ids": hydration.unknown})
+        if gblocks: blocks.append("[GROUNDING]\n" + "\n\n".join(gblocks))
+        context_ids += gids; context_titles += gtitles
+        grounding_echo = {
+            "meeting_ids": mids,
+            "artifact_ids": aids,
+            "refs": refs,
+            "expand": expand,
+            "titles": gtitles,
+            "source_refs": hydration.source_refs,
+            "selection": hydration.selection,
+            "matched_count": hydration.matched_count,
+            "overflow_count": hydration.overflow_count,
+        }
         window = [x for x in (history or []) if isinstance(x, dict)][-12:]
         convo = "\n".join(("User: " if str(x.get("role")) == "you" else f"{name}: ") + str(x.get("text") or "") for x in window)
         if convo: blocks.append("[CONVERSATION SO FAR]\n" + convo)

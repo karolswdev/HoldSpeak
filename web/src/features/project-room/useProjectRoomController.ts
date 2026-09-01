@@ -111,7 +111,7 @@ export function useProjectRoomController(
     [meetings, decisions, artifacts],
   );
   const projectName = String(
-    room?.project.name || project.name || scopeLabel || "Project",
+    room?.project.name || project.name || scopeLabel || (projectId ? "Project" : "Desk memory"),
   );
 
   const openMoment = async (decision: Record<string, unknown>) => {
@@ -164,7 +164,9 @@ export function useProjectRoomController(
       wings.setView("decisions");
       return;
     }
-    openSourceRef(ref);
+    // Memory ranks the child message that matched, but the Desk opens the
+    // parent conversation.  Other qualified refs are already parent refs.
+    openSourceRef(ref.startsWith("thread:") ? ref.split("#", 1)[0] : ref);
   };
 
   const search = async () => {

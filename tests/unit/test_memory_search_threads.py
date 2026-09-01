@@ -1,4 +1,5 @@
 """HS-151-07 thread corpus in MemoryRepository search."""
+
 from __future__ import annotations
 
 import time
@@ -60,8 +61,10 @@ def test_thread_found_by_assistant_part(tmp_path: Path) -> None:
         db,
         "t1",
         "Jenkins pipeline",
-        [("m1", "user", "why is the build red"),
-         ("m2", "assistant", "the jenkins pipeline has a flaky stage")],
+        [
+            ("m1", "user", "why is the build red"),
+            ("m2", "assistant", "the jenkins pipeline has a flaky stage"),
+        ],
     )
     hits = db.memory.search("jenkins", kinds=["thread"]).hits
     assert len(hits) == 1
@@ -148,8 +151,10 @@ def test_source_ref_carries_message_id(tmp_path: Path) -> None:
         db,
         "t5",
         "Deployment checklist",
-        [("m6", "user", "run the migration"),
-         ("m7", "assistant", "canary deployment started successfully")],
+        [
+            ("m6", "user", "run the migration"),
+            ("m7", "assistant", "canary deployment started successfully"),
+        ],
     )
     hits = db.memory.search("canary", kinds=["thread"]).hits
     assert len(hits) == 1
@@ -158,6 +163,27 @@ def test_source_ref_carries_message_id(tmp_path: Path) -> None:
     assert ref.startswith("thread:t5#")
     message_id = ref.split("#", 1)[1]
     assert message_id == "m7"
+
+
+def test_repository_exclusion_removes_thread_from_rank_and_total(
+    tmp_path: Path,
+) -> None:
+    db = Database(tmp_path / "thread_exclusion.db")
+    _seed_thread(
+        db,
+        "t-excluded",
+        "Current conversation",
+        [("m-excluded", "user", "zephyr current thread")],
+    )
+
+    result = db.memory.search(
+        "zephyr",
+        kinds=["thread"],
+        exclude_refs=["thread:t-excluded"],
+    )
+
+    assert result.total == 0
+    assert result.hits == []
 
 
 # -------------------------------------------------------------------
@@ -169,8 +195,10 @@ def test_multiple_parts_one_hit(tmp_path: Path) -> None:
         db,
         "t6",
         "Database tuning",
-        [("m8", "user", "postgres vacuum settings"),
-         ("m9", "assistant", "postgres vacuum should run nightly")],
+        [
+            ("m8", "user", "postgres vacuum settings"),
+            ("m9", "assistant", "postgres vacuum should run nightly"),
+        ],
     )
     hits = db.memory.search("postgres", kinds=["thread"]).hits
     assert len(hits) == 1
@@ -182,6 +210,7 @@ def test_multiple_parts_one_hit(tmp_path: Path) -> None:
 # -------------------------------------------------------------------
 def test_normalize_kinds_accepts_thread() -> None:
     from holdspeak.db.memory import MemoryRepository
+
     assert "thread" in MemoryRepository._normalize_kinds(["thread"])
     assert "thread" in MemoryRepository._normalize_kinds(None)  # default
 
@@ -200,9 +229,13 @@ def test_mcp_memory_search_thread_kind(tmp_path: Path, monkeypatch) -> None:
 
     from holdspeak.principals import Principal, PrincipalKind
     from holdspeak.services.memory_service import MemoryService
+
     svc = MemoryService(db=db)
     principal = Principal(PrincipalKind.OWNER, "test-owner")
     result = svc.search(principal, "sonarqube", kind="thread")
     assert result["page"]["total"] == 1
     assert result["hits"][0]["kind"] == "thread"
-    assert "sonarqube" in result["hits"][0]["snippet"].lower() or "<mark>" in result["hits"][0]["snippet"]
+    assert (
+        "sonarqube" in result["hits"][0]["snippet"].lower()
+        or "<mark>" in result["hits"][0]["snippet"]
+    )
