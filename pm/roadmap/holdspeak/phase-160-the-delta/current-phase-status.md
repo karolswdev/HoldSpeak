@@ -1,6 +1,6 @@
 # Phase 160 - Project Rooms: The Delta (P2)
 
-**Last updated:** 2026-09-01 — 7/8 DONE: THE OWNER'S VERDICT PASSES THE FACE FIRST-ROUND ('PASS — close it' — the banked taste laws paid off). THE CLOSE (08) RUNS: full gates + counsel in flight.
+**Last updated:** 2026-09-01 — PHASE COMPLETE 8/8. Owner PASS first-round; counsel RATIFY-W-C with the hollow-suppression catch made TRUE in-round; suite + web gates zero unexplained branch-new. PR to main next.
 
 ## Goal
 
@@ -30,12 +30,12 @@ egress, no model in the deterministic path (DEL-007).
 
 ## Exit criteria (evidence required)
 
-- [ ] §14 P2 exit: ONE REAL Project produces repeatable evidence-linked Delta with honest partial coverage — on glass (07), re-run identical (SYS-024), degraded leg honest (SYS-025).
-- [ ] Golden Delta tests (TST-004): frozen-window repeatability, ordering, conflict retention, dismissal/defer recurrence laws, model-independent results.
-- [ ] Adapter contract (TST-003): retry dedup, stale/failed coverage, partial success — one failing adapter never discards the others.
-- [ ] Accept advances the cursor atomically (DEL-005/SYS-023) under the revision law; every proposal decision durable (DEL-002).
-- [ ] Shots 1440+393; beauty pass; THE OWNER'S VERDICT closes 06 and holds the merge word.
-- [ ] Sweep zero unexplained branch-new; web gates green; counsel zero open must-fix.
+- [x] §14 P2 exit: ONE REAL Project produces repeatable evidence-linked Delta with honest partial coverage — on glass (07), re-run identical (SYS-024), degraded leg honest (SYS-025).
+- [x] Golden Delta tests (TST-004): frozen-window repeatability, ordering, conflict retention, dismissal/defer recurrence laws, model-independent results.
+- [x] Adapter contract (TST-003): retry dedup, stale/failed coverage, partial success — one failing adapter never discards the others.
+- [x] Accept advances the cursor atomically (DEL-005/SYS-023) under the revision law; every proposal decision durable (DEL-002).
+- [x] Shots 1440+393; beauty pass; THE OWNER'S VERDICT closes 06 and holds the merge word.
+- [x] Sweep zero unexplained branch-new; web gates green; counsel zero open must-fix.
 
 ## Story status
 
@@ -48,7 +48,7 @@ egress, no model in the deterministic path (DEL-007).
 | HS-160-05 | The wire + the room (routes; the review section becomes real) | done | [story-05-the-wire](./story-05-the-wire.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-160-06 | The review face (the posture in Now, J/K/A/E/L/X — shots + verdict) | done | [story-06-the-review-face](./story-06-the-review-face.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-160-07 | The walk (repeatable Delta on glass, the degraded leg) | done | [story-07-the-walk](./story-07-the-walk.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-160-08 | The close (gates, suite amendments, final summary) | in-progress | [story-08-the-close](./story-08-the-close.md) | - |
+| HS-160-08 | The close (gates, suite amendments, final summary) | done | [story-08-the-close](./story-08-the-close.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Where we are
 
