@@ -373,6 +373,12 @@ _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "mandatory authenticated owner read",
     (
+        "holdspeak/services/github_provider.py",
+        "GitHubProviderAdapter._run_gh",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",
+    (
         "holdspeak/missioncontrol_bridge.py",
         "_default_runner",
         "run",

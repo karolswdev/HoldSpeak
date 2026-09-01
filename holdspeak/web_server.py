@@ -198,6 +198,7 @@ class MeetingWebServer:
         auth_token: str = "",
         dictation_corrections_repository: Optional[Any] = None,
         dictation_journal_repository: Optional[Any] = None,
+        gh_runner: Optional[Any] = None,
     ) -> None:
         if _IMPORT_ERROR is not None:
             raise RuntimeError(
@@ -208,6 +209,11 @@ class MeetingWebServer:
         # HS-26-06: explode the bundle onto attributes so the rest of the class
         # (and `_create_app`'s WebContext build) reads `self.on_*` unchanged.
         self._callbacks = callbacks
+        # HS-161-06: test-only fixture runner seam for e2e glass tests.
+        # Default off; when non-None, injected into GitHubProviderAdapter
+        # and WatchService snapshot_fetcher so the booted hub uses canned
+        # responses instead of real subprocess calls.
+        self._gh_runner = gh_runner
         # HS-39-02: one session-scoped dictation correction store, shared by the
         # dictation routes (record/read) and the live runtime (consult).
         # HS-40-02: when the live runtime injects a repository the store is
@@ -324,6 +330,26 @@ class MeetingWebServer:
         self._kernel_liveness_task: Optional[asyncio.Task[None]] = None
 
         self.app = self._create_app()
+
+    def _gh_watch_service_kwargs(self) -> dict[str, Any]:
+        """HS-161-06: extra kwargs for WatchService when a fixture runner is
+        active.  Returns ``{"snapshot_fetcher": <fn>}`` or ``{}``."""
+        if self._gh_runner is None:
+            return {}
+        from .services.watch_sources import fetch_watch_snapshot as _base_fetch
+        _runner = self._gh_runner
+        def _fixture_fetcher(
+            principal: Any,
+            *,
+            connector_id: str,
+            query_kind: str,
+            query: dict[str, Any],
+        ) -> list[dict[str, Any]]:
+            return _base_fetch(
+                principal, connector_id=connector_id, query_kind=query_kind,
+                query=query, github_runner=_runner,
+            )
+        return {"snapshot_fetcher": _fixture_fetcher}
 
     @property
     def url(self) -> Optional[str]:
@@ -669,6 +695,7 @@ class MeetingWebServer:
             build_tts_router,
             build_project_reviews_router,
             build_project_setup_router,
+            build_providers_router,
             build_watches_router,
         )
 
@@ -679,6 +706,7 @@ class MeetingWebServer:
         from .people import production_people_store
         from .services.reaction_service import ReactionService
         from .services.watch_service import WatchService
+        from .services.github_provider import GitHubProviderAdapter
         from .services.project_setup_service import ProjectSetupService
         from .services.project_evidence_collector import ProjectEvidenceCollector
         from .services.project_delta_service import ProjectDeltaService
@@ -863,11 +891,23 @@ class MeetingWebServer:
             memory_service=MemoryService(get_database(), observer=obs),
             mission_control_service=MissionControlService(get_database(), observer=obs),
             reaction_service=ReactionService(get_database(), observer=obs),
-            watch_service=WatchService(get_database(), observer=obs),
+            watch_service=WatchService(
+                get_database(), observer=obs,
+                **self._gh_watch_service_kwargs(),
+            ),
+            github_provider=GitHubProviderAdapter(
+                db=get_database(), runner=self._gh_runner,
+            ),
             project_setup_service=ProjectSetupService(
                 get_database(),
                 project_service=ProjectService(get_database(), observer=obs),
-                watch_service=WatchService(get_database(), observer=obs),
+                watch_service=WatchService(
+                    get_database(), observer=obs,
+                    **self._gh_watch_service_kwargs(),
+                ),
+                github_adapter=GitHubProviderAdapter(
+                    db=get_database(), runner=self._gh_runner,
+                ),
             ),
             project_evidence_collector=ProjectEvidenceCollector(get_database()),
             project_delta_service=_project_delta_service,
@@ -1012,6 +1052,7 @@ class MeetingWebServer:
         app.include_router(build_tts_router(web_ctx))
         app.include_router(build_project_reviews_router(web_ctx))
         app.include_router(build_project_setup_router(web_ctx))
+        app.include_router(build_providers_router(web_ctx))
         app.include_router(build_watches_router(web_ctx))
 
         @app.on_event("startup")

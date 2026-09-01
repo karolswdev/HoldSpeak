@@ -687,28 +687,14 @@ class ProjectDeltaService:
                 base_patch.update(effective_patch)
                 patch_json_str = _deterministic_json(base_patch)
 
-            with self._db._connection() as conn:
-                self._db.project_observations.update_proposal_in_transaction(
-                    conn, proposal_id,
-                    lifecycle="accepted",
-                    decided_at=now,
-                    decided_by_ref=decided_by,
-                )
-                # Record the command
-                envelope = CommandResultEnvelope(
-                    result_kind=ResultKind.PROPOSAL_DECIDED,
-                    project_id=project_id,
-                    project_revision=0,  # no revision bump
-                    changed_refs=(
-                        parse_ref(format_ref("project", project_id)),
-                    ),
-                )
-                self._record_command(
-                    conn, cmd_id, project_id,
-                    "decide_proposal", req_hash, envelope,
-                )
+            # HS-161-07 S-2 fix: decide + create_item in ONE transaction
+            # (the 159 M-1 conn-threading pattern).  A fault between
+            # the two halves can no longer leave a decided proposal
+            # without its item.
 
-            # If handler is create_item, route through ProjectService
+            # Build the item payload BEFORE the transaction so
+            # validation errors abort before any DB write.
+            item_payload: Optional[dict[str, Any]] = None
             if handler_action == "create_item" and self._project_service:
                 try:
                     item_patch = json.loads(patch_json_str) if isinstance(
@@ -717,7 +703,7 @@ class ProjectDeltaService:
                     item_patch = {}
 
                 item_type = item_patch.get("item_type", "risk")
-                item_payload: dict[str, Any] = {
+                item_payload = {
                     "item_type": item_type,
                     "title": item_patch.get("title",
                                             proposal.get("title", "")),
@@ -767,11 +753,38 @@ class ProjectDeltaService:
                             "metric": item_patch.get("metric", "unknown"),
                         }
 
-                item_result = self._project_service.create_item(
-                    principal, project_id, item_payload,
+            with self._db._connection() as conn:
+                self._db.project_observations.update_proposal_in_transaction(
+                    conn, proposal_id,
+                    lifecycle="accepted",
+                    decided_at=now,
+                    decided_by_ref=decided_by,
                 )
-                result["item_id"] = item_result.get("item_id")
-                result["item_result"] = item_result
+
+                # If handler is create_item, route through
+                # ProjectService inside THIS transaction (S-2 fix).
+                if item_payload is not None and self._project_service:
+                    item_result = (
+                        self._project_service.create_item_in_transaction(
+                            conn, principal, project_id, item_payload,
+                        )
+                    )
+                    result["item_id"] = item_result.get("item_id")
+                    result["item_result"] = item_result
+
+                # Record the command
+                envelope = CommandResultEnvelope(
+                    result_kind=ResultKind.PROPOSAL_DECIDED,
+                    project_id=project_id,
+                    project_revision=0,  # no revision bump
+                    changed_refs=(
+                        parse_ref(format_ref("project", project_id)),
+                    ),
+                )
+                self._record_command(
+                    conn, cmd_id, project_id,
+                    "decide_proposal", req_hash, envelope,
+                )
 
             result["lifecycle"] = "accepted"
 

@@ -870,3 +870,159 @@ class TestEvidenceStub:
         result = svc.test_proposal(OWNER, session["id"], proposal_id)
         assert result["test_state"] == "passed"
         assert result["result"]["entity_count"] == 0
+
+
+# ── GitHub pull_request test path (HS-161-04) ─────────────────────────
+
+
+class TestGitHubPullRequestTestRead:
+    """_native_test_read for pull_request returns real PR entities via
+    adapter.snapshot, not validation placeholders."""
+
+    @pytest.fixture
+    def gh_rig(self, tmp_path):
+        import subprocess
+        reset_database()
+        db = Database(tmp_path / "gh-test.db")
+
+        def runner(*args, **kwargs):
+            cmd = args[0] if args else kwargs.get("args", [])
+            if cmd[:3] == ["gh", "auth", "status"]:
+                return subprocess.CompletedProcess(
+                    cmd, 0,
+                    stdout="Logged in to github.com account user (keyring)\n",
+                    stderr="",
+                )
+            if cmd[:3] == ["gh", "pr", "list"]:
+                prs = [
+                    {
+                        "number": 7,
+                        "title": "Upgrade deps",
+                        "url": "https://github.com/org/repo/pull/7",
+                        "state": "OPEN",
+                        "isDraft": False,
+                        "reviewRequests": [],
+                        "reviewDecision": "",
+                        "statusCheckRollup": [],
+                        "headRefOid": "aaa111",
+                        "updatedAt": "2026-09-01T10:00:00Z",
+                    },
+                    {
+                        "number": 8,
+                        "title": "Fix tests",
+                        "url": "https://github.com/org/repo/pull/8",
+                        "state": "OPEN",
+                        "isDraft": False,
+                        "reviewRequests": [],
+                        "reviewDecision": "",
+                        "statusCheckRollup": [],
+                        "headRefOid": "bbb222",
+                        "updatedAt": "2026-09-01T09:00:00Z",
+                    },
+                ]
+                return subprocess.CompletedProcess(
+                    cmd, 0, stdout=json.dumps(prs), stderr="",
+                )
+            if cmd[:3] == ["gh", "repo", "list"]:
+                repos = [{"name": "repo", "owner": {"login": "org"}, "visibility": "public"}]
+                return subprocess.CompletedProcess(
+                    cmd, 0, stdout=json.dumps(repos), stderr="",
+                )
+            return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+        from holdspeak.services.github_provider import GitHubProviderAdapter
+        from holdspeak.services.watch_service import WatchService
+
+        adapter = GitHubProviderAdapter(db=db, runner=runner)
+        project_svc = ProjectService(db)
+        watch_svc = WatchService(db)
+        svc = ProjectSetupService(
+            db,
+            project_service=project_svc,
+            watch_service=watch_svc,
+            github_adapter=adapter,
+        )
+        yield db, svc
+        reset_database()
+
+    def test_pull_request_returns_real_entities(self, gh_rig) -> None:
+        db, svc = gh_rig
+        session = svc.start_setup(OWNER)
+        svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Watch PRs"})
+        proposals = svc.suggest(OWNER, session["id"])
+        gh_props = [p for p in proposals if p.get("provider_id") == "github"]
+        assert len(gh_props) >= 1, "connected adapter should produce github proposals"
+        pid = gh_props[0]["id"]
+
+        svc.select_proposal(OWNER, session["id"], pid)
+        svc.clarify_repo_scope(OWNER, session["id"], pid, repo="org/repo")
+
+        result = svc.test_proposal(OWNER, session["id"], pid)
+        assert result["test_state"] == "passed"
+        assert result["result"]["entity_count"] >= 1
+
+        entities = result["result"]["representative_entities"]
+        assert len(entities) >= 1
+        for ent in entities:
+            assert "id" in ent and ent["id"], f"entity missing id: {ent}"
+            assert "title" in ent and ent["title"], f"entity missing title: {ent}"
+            assert "state" in ent and ent["state"], f"entity missing state: {ent}"
+            assert "head_sha" in ent, f"entity missing head_sha: {ent}"
+
+        # Verify the entities are from our fake PRs
+        ids = {e["id"] for e in entities}
+        assert "7" in ids or "8" in ids, f"expected PR IDs from fake runner; got {ids}"
+
+    def test_pull_request_no_scope_returns_empty(self, gh_rig) -> None:
+        db, svc = gh_rig
+        session = svc.start_setup(OWNER)
+        svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Watch PRs"})
+        proposals = svc.suggest(OWNER, session["id"])
+        gh_props = [p for p in proposals if p.get("provider_id") == "github"]
+        pid = gh_props[0]["id"]
+
+        svc.select_proposal(OWNER, session["id"], pid)
+        # No clarify -- scope is empty
+
+        result = svc.test_proposal(OWNER, session["id"], pid)
+        assert result["test_state"] == "passed"
+        assert result["result"]["entity_count"] == 0
+        assert result["result"]["representative_entities"] == []
+
+    def test_pull_request_no_adapter_fails(self, tmp_path) -> None:
+        reset_database()
+        db = Database(tmp_path / "no-adapter.db")
+        svc = ProjectSetupService(
+            db,
+            project_service=ProjectService(db),
+            watch_service=None,
+            github_adapter=None,
+        )
+        session = svc.start_setup(OWNER)
+        svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Watch PRs"})
+
+        # Manually seed a pull_request proposal without the adapter
+        spec = {
+            "name": "PR Watch",
+            "subject": {
+                "kind": "pull_request",
+                "scope": {"repositories": ["org/repo"]},
+            },
+            "trigger": {"kind": "poll", "every_minutes": 60},
+            "rules": [],
+        }
+        import uuid
+        proposal_id = f"wprop_{uuid.uuid4().hex[:12]}"
+        db.automations.create_setup_proposal(
+            proposal_id=proposal_id,
+            session_id=session["id"],
+            spec_schema="WatchSpec@1",
+            spec_json=json.dumps(spec, sort_keys=True, separators=(",", ":")),
+            state="suggested",
+        )
+
+        result = svc.test_proposal(OWNER, session["id"], proposal_id)
+        # Without adapter, test fails (caught exception)
+        assert result["test_state"] == "failed"
+        assert "adapter" in result["result"]["error"]["message"].lower()
+        reset_database()

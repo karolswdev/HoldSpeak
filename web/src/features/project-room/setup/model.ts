@@ -446,14 +446,16 @@ const SUBJECT_NOUNS: Record<string, string> = {
   people: "person",
   recipes: "recipe",
   workflows: "workflow",
+  pull_requests: "PR",
+  pull_request: "PR",
 };
 
 /** Comparison verbs for the closed WatchCondition@1 vocabulary. */
 const COMPARISON_VERBS: Record<string, (field: string, value: string | null, noun: string) => string> = {
-  changed: (_f, _v, noun) => `When ${noun} content changes`,
-  changed_to: (field, value, noun) => `When ${noun} ${field} becomes ${value ?? "unknown"}`,
-  equals: (field, value, noun) => `When ${noun} ${field} is ${value ?? "unknown"}`,
-  not_equals: (field, value, noun) => `When ${noun} ${field} is not ${value ?? "unknown"}`,
+  changed: (field, _v, _noun) => `When ${field} changes`,
+  changed_to: (field, value, _noun) => `When ${field} becomes ${value ?? "unknown"}`,
+  equals: (field, value, _noun) => `When ${field} is ${value ?? "unknown"}`,
+  not_equals: (field, value, _noun) => `When ${field} is not ${value ?? "unknown"}`,
   older_than: (field, value, _noun) => `When ${field} is older than ${value ?? "unknown"}`,
   newer_than: (field, value, _noun) => `When ${field} is newer than ${value ?? "unknown"}`,
   greater_than: (field, value, _noun) => `When ${field} exceeds ${value ?? "unknown"}`,
@@ -464,15 +466,71 @@ const COMPARISON_VERBS: Record<string, (field: string, value: string | null, nou
   not_exists: (field, _v, _noun) => `When ${field} does not exist`,
 };
 
-/** Plain-words condition from a single clause (defect 2). */
+/* ── Closed PR phrase table (HS-161-05 final copy pass) ─────────── */
+
+/** Owner-grade phrases for the closed set of PR condition combinations.
+ *  Keyed on "field:comparison" or "field:comparison:value".
+ *  Consulted BEFORE the generic verb path for pull_request subjects. */
+const PR_PHRASE_TABLE: Record<string, string | ((value: string) => string)> = {
+  "review_requested:changed": "When a review is requested",
+  "review_decision:changed": "When the review decision changes",
+  "review_decision:equals:approved": "When the review decision is approved",
+  "checks:changed_to:failure": "When CI checks fail",
+  "checks:changed_to:success": "When CI checks recover",
+  "checks:changed": "When CI checks change",
+  "head_sha:changed": "When the head commit changes",
+  "state:changed": "When the PR state changes",
+  "merged:changed_to:true": "When a PR merges",
+  "updated_at:older_than": (value: string) => {
+    // Parse duration: "7d" -> "7 days", "14d" -> "14 days"
+    const match = value.match(/^(\d+)d$/);
+    if (match) {
+      const n = Number(match[1]);
+      return `When a PR goes quiet for ${n} ${n === 1 ? "day" : "days"}`;
+    }
+    return `When a PR goes quiet for ${value}`;
+  },
+};
+
+/** Look up a PR clause in the closed phrase table.
+ *  Returns the exact phrase or null (fall through to generic). */
+function prPhrase(clause: WatchConditionClause): string | null {
+  const valueStr = clause.value != null ? String(clause.value).toLowerCase() : null;
+
+  // Try field:comparison:value first (most specific)
+  if (valueStr != null) {
+    const keyWithValue = `${clause.field}:${clause.comparison}:${valueStr}`;
+    const exact = PR_PHRASE_TABLE[keyWithValue];
+    if (typeof exact === "string") return exact;
+  }
+
+  // Try field:comparison (may be a function needing the value)
+  const keyBase = `${clause.field}:${clause.comparison}`;
+  const entry = PR_PHRASE_TABLE[keyBase];
+  if (typeof entry === "string") return entry;
+  if (typeof entry === "function" && valueStr != null) return entry(valueStr);
+
+  return null;
+}
+
+/** Plain-words condition from a single clause (defect 2).
+ *  HS-161-05: PR subjects consult the closed phrase table first. */
 function clausePlainWords(clause: WatchConditionClause, subjectKind: string): string {
-  const noun = SUBJECT_NOUNS[subjectKind] ?? subjectKind;
+  // PR subjects: closed phrase table first (owner-grade copy)
+  if (subjectKind === "pull_requests" || subjectKind === "pull_request") {
+    const phrase = prPhrase(clause);
+    if (phrase) return phrase;
+  }
+
+  // Generic path (non-PR subjects, or PR combinations not in the table)
+  const fieldName = subjectKind === "pull_requests" || subjectKind === "pull_request"
+    ? prFieldLabel(clause.field)
+    : clause.field;
   const valueStr = clause.value != null ? String(clause.value) : null;
   const verb = COMPARISON_VERBS[clause.comparison];
-  if (verb) return verb(clause.field, valueStr, noun);
-  // Unknown comparison: neutral fallback, never raw JSON
+  if (verb) return verb(fieldName, valueStr, SUBJECT_NOUNS[subjectKind] ?? subjectKind);
   const valPart = valueStr ? ` ${valueStr}` : "";
-  return `When ${noun} ${clause.field} ${clause.comparison}${valPart}`;
+  return `When ${(SUBJECT_NOUNS[subjectKind] ?? subjectKind)} ${fieldName} ${clause.comparison}${valPart}`;
 }
 
 /** Plain-words conditions for a full spec (HS-159-05 defect 2).
@@ -481,9 +539,43 @@ function clausePlainWords(clause: WatchConditionClause, subjectKind: string): st
 export function conditionPlainWords(spec: WatchSpec): string {
   const clauses = spec.rules.flatMap((r) => r.condition.clauses);
   if (clauses.length === 0) return "On any change";
-  return clauses
-    .map((c) => clausePlainWords(c, spec.subject.kind))
-    .join("; ");
+  // Deduplicate identical plain-words clauses
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const c of clauses) {
+    const text = clausePlainWords(c, spec.subject.kind);
+    if (!seen.has(text)) {
+      seen.add(text);
+      unique.push(text);
+    }
+  }
+  return unique.join("; ");
+}
+
+/** Plain-words description of the query/scope (repo, state, base branch).
+ *  Distinct from conditionPlainWords which describes transition clauses.
+ *  HS-161-05 defect 2: Query != Conditions. */
+export function queryPlainWords(spec: WatchSpec): string {
+  const parts: string[] = [];
+  const scope = spec.subject.scope as Record<string, unknown> | undefined;
+
+  // Repository
+  if (scope?.repository) {
+    parts.push(String(scope.repository));
+  } else if (scope?.repositories) {
+    const repos = scope.repositories as string[];
+    if (repos.length > 0) parts.push(repos.join(", "));
+  }
+
+  // Query filters (state, base branch)
+  const query = (scope?.query ?? {}) as Record<string, unknown>;
+  if (query.state) parts.push(`${String(query.state)} PRs`);
+  if (query.base) parts.push(`base: ${String(query.base)}`);
+
+  // Subject kind
+  const noun = SUBJECT_NOUNS[spec.subject.kind] ?? spec.subject.kind;
+  if (parts.length === 0) return `All ${noun}s`;
+  return parts.join(", ");
 }
 
 /* ── Mode/posture labels (HS-159-05 defect 3) ────────────────────── */
@@ -512,3 +604,183 @@ export const STAGE_META: Record<string, { index: number; label: string }> = {
   proposals: { index: 3, label: "Suggestions" },
   review: { index: 4, label: "Review" },
 };
+
+/* ── Provider connection vocabulary (HS-161-05) ─────────────────── */
+
+/** The seven provider-state tokens. Wire values from GET /api/providers/github/connection. */
+export const PROVIDER_STATES = [
+  "checking",
+  "connected",
+  "connection_required",
+  "capability_missing",
+  "partial",
+  "unavailable",
+  "owner_action_required",
+] as const;
+export type ProviderState = (typeof PROVIDER_STATES)[number];
+
+/** Provider connection status from the wire (mined from test_provider_routes.py). */
+export type ProviderConnectionStatus = {
+  state: ProviderState;
+  errorCode: string | null;
+  errorDetail: string | null;
+  display: {
+    account: string | null;
+    recoveryHint: string | null;
+  };
+};
+
+/** One discovered repository item from GET /api/providers/github/discover. */
+export type DiscoveryItem = {
+  id: string;
+  name: string;
+  owner: string;
+  visibility: string;
+};
+
+/** Discovery response from the wire. */
+export type DiscoveryResponse = {
+  state: string;
+  items: DiscoveryItem[];
+  cursor: string | null;
+  errorCode: string | null;
+};
+
+/** Validate-repo response from POST /api/providers/github/validate-repo. */
+export type ValidateRepoResponse = {
+  valid: boolean;
+  message: string | null;
+};
+
+/** Clarify-scope response from POST /api/project-setups/{sid}/proposals/{pid}/clarify-scope. */
+export type ClarifyScopeResponse = {
+  scopeState: string;
+  repositories: string[];
+};
+
+/* ── Provider state display vocabulary ────────────────────────────── */
+
+/** Human card copy for each provider state token. */
+export const PROVIDER_STATE_COPY: Record<ProviderState, { headline: string; detail: string }> = {
+  checking: {
+    headline: "Checking connection",
+    detail: "Verifying GitHub access...",
+  },
+  connected: {
+    headline: "Connected",
+    detail: "GitHub is ready. Choose a repository to watch.",
+  },
+  connection_required: {
+    headline: "Connection required",
+    detail: "GitHub needs to be connected before it can be used.",
+  },
+  capability_missing: {
+    headline: "Capability missing",
+    detail: "The GitHub CLI is not installed or not found.",
+  },
+  partial: {
+    headline: "Partially connected",
+    detail: "GitHub is reachable but some permissions are missing.",
+  },
+  unavailable: {
+    headline: "Unavailable",
+    detail: "GitHub cannot be reached at this time.",
+  },
+  owner_action_required: {
+    headline: "Authentication required",
+    detail: "GitHub needs you to authenticate before HoldSpeak can connect.",
+  },
+};
+
+/** The ONE next action for each provider state. */
+export const PROVIDER_STATE_ACTION: Record<ProviderState, { label: string; kind: "recheck" | "discover" | "authenticate" | "install" | "wait" | "retry" }> = {
+  checking: { label: "Checking...", kind: "wait" },
+  connected: { label: "Choose repository", kind: "discover" },
+  connection_required: { label: "Connect GitHub", kind: "authenticate" },
+  capability_missing: { label: "Install GitHub CLI", kind: "install" },
+  partial: { label: "Recheck connection", kind: "recheck" },
+  unavailable: { label: "Retry", kind: "retry" },
+  owner_action_required: { label: "Recheck", kind: "recheck" },
+};
+
+/* ── Provider decoders ────────────────────────────────────────────── */
+
+export function decodeProviderConnectionStatus(raw: Record<string, unknown>): ProviderConnectionStatus {
+  const display = (raw.display ?? {}) as Record<string, unknown>;
+  return {
+    state: (PROVIDER_STATES.includes(raw.state as ProviderState) ? raw.state : "unavailable") as ProviderState,
+    errorCode: raw.error_code != null ? String(raw.error_code) : null,
+    errorDetail: raw.error_detail != null ? String(raw.error_detail) : null,
+    display: {
+      account: display.account != null ? String(display.account) : null,
+      recoveryHint: display.recovery_hint != null ? String(display.recovery_hint) : null,
+    },
+  };
+}
+
+export function decodeDiscoveryItem(raw: Record<string, unknown>): DiscoveryItem {
+  const id = String(raw.id ?? "");
+  // Wire sends {id: "owner/name", name, visibility} -- no owner field.
+  // Derive owner from id (split on first "/").
+  const derivedOwner = id.includes("/") ? id.split("/")[0] : "";
+  return {
+    id,
+    name: String(raw.name ?? ""),
+    owner: derivedOwner,
+    visibility: String(raw.visibility ?? ""),
+  };
+}
+
+export function decodeDiscoveryResponse(raw: Record<string, unknown>): DiscoveryResponse {
+  const items = Array.isArray(raw.items)
+    ? raw.items.map((i: Record<string, unknown>) => decodeDiscoveryItem(i))
+    : [];
+  return {
+    state: String(raw.state ?? ""),
+    items,
+    cursor: raw.cursor != null ? String(raw.cursor) : null,
+    errorCode: raw.error_code != null ? String(raw.error_code) : null,
+  };
+}
+
+export function decodeValidateRepoResponse(raw: Record<string, unknown>): ValidateRepoResponse {
+  // Wire sends {valid, error_code, error_detail} -- no message field.
+  // Map error_detail to message so the UI renders the adapter's real reason.
+  const detail = raw.error_detail != null ? String(raw.error_detail) : null;
+  return {
+    valid: Boolean(raw.valid),
+    message: detail || null,
+  };
+}
+
+export function decodeClarifyScopeResponse(raw: Record<string, unknown>): ClarifyScopeResponse {
+  return {
+    scopeState: String(raw.scope_state ?? ""),
+    repositories: Array.isArray(raw.repositories)
+      ? raw.repositories.map(String)
+      : [],
+  };
+}
+
+/* ── PR condition plain-words vocabulary (HS-161-05) ────────────── */
+
+/** Field-specific plain-words renderers for PR condition fields.
+ *  Extends the base COMPARISON_VERBS with PR-domain knowledge. */
+const PR_FIELD_LABELS: Record<string, string> = {
+  review_requested: "review requested",
+  review_decision: "review decision",
+  checks: "CI checks",
+  head_sha: "commit SHA",
+  state: "PR state",
+  merged: "merged",
+  updated_at: "last updated",
+  title: "title",
+  draft: "draft status",
+  labels: "labels",
+  number: "PR number",
+};
+
+/** Resolve a PR field name to its plain-words label. */
+export function prFieldLabel(field: string): string {
+  return PR_FIELD_LABELS[field] ?? field.replace(/_/g, " ");
+}

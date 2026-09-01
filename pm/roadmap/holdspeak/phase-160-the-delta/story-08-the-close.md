@@ -79,10 +79,10 @@ ruling on the S-class:
   unused. One conn block.
 - **N-3 — FIX IN-ROUND (two lines):** delta.py's captured_at
   default is naive local; becomes aware-UTC.
-- **S-2 — BACKLOGGED (counsel's condition):** decide→create_item is
-  a split transaction (the 159 M-1 shape; narrow blast radius:
-  risk_attention only, single-user SQLite). Named for P2a: join the
-  conn or reorder-create-first.
+- **S-2 — PAID by HS-161-07:** decide→create_item split transaction
+  joined via create_item_in_transaction (the 159 M-1 conn-threading
+  pattern); fault-proven by test_item_insert_fault_rolls_back_decision
+  and test_happy_path_single_revision_bump.
 - **S-4 — travels with P3 (counsel's condition; owner-approved
   face):** source chips display-only; WEB-DLT-009's open-the-source
   joins the Draft-update story.

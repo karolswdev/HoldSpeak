@@ -199,6 +199,42 @@ def build_project_setup_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to clarify proposal")
 
+    # ── POST /api/project-setups/{sid}/proposals/{pid}/clarify-scope
+
+    @router.post("/{session_id}/proposals/{proposal_id}/clarify-scope")
+    async def clarify_repo_scope(
+        session_id: str, proposal_id: str, request: Request,
+    ) -> Any:
+        """Clarify the repo scope for a GitHub proposal (INT-009).
+
+        HS-161-04: the wire path for discovery/typed-fallback scope
+        resolution.  The existing clarify route handles generic patch
+        edits (cadence/action/scope); this route reaches the adapter-
+        backed clarify_repo_scope (discovery or validate_repo).
+        """
+        try:
+            body = await request.json()
+            repo = body.get("repo")
+            result = ctx.project_setup_service.clarify_repo_scope(
+                principal(request), session_id, proposal_id,
+                repo=repo,
+            )
+            return JSONResponse(result)
+        except NotFound as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=404,
+            )
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=400,
+            )
+        except ServiceError as exc:
+            return _svc_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to clarify repo scope")
+
     # ── POST /api/project-setups/{sid}/proposals/{pid}/test ──────
 
     @router.post("/{session_id}/proposals/{proposal_id}/test")

@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, type KeyboardEvent } from "react";
 import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
+import { EgressChip } from "../../../desk/surface";
 import {
   cadenceLabel,
   conditionPlainWords,
@@ -217,6 +218,15 @@ function ReviewWatchSpec({ proposal }: { proposal: SetupProposal }) {
         </div>
       </dl>
 
+      {/* Egress badge for GitHub watches (HS-161-05) */}
+      {proposal.providerId === "github" ? (
+        <EgressChip
+          label="local + cloud"
+          scope="mixed"
+          title="This Watch reads from github.com."
+        />
+      ) : null}
+
       {/* Framed test evidence (fix 5): compact bordered inset block */}
       {proposal.testResult ? (
         <ReviewTestEvidence
@@ -287,9 +297,17 @@ function ReviewTestEvidence({
   );
 }
 
+/** Label for a normalized entity (reaction_service._normalize_entity).
+ *  PR entities: id=PR number, title, state. Native: title/text/name. */
 function entityLabel(entity: Record<string, unknown>): string {
-  const title = entity.title ?? entity.text ?? entity.name ?? entity.id;
-  return String(title ?? "Unknown");
+  const id = entity.id != null ? String(entity.id) : "";
+  const title = entity.title != null && String(entity.title) !== ""
+    ? String(entity.title)
+    : (entity.text != null ? String(entity.text) : (entity.name != null ? String(entity.name) : null));
+  if (title) {
+    return id ? `#${id} ${title}` : title;
+  }
+  return id ? `#${id}` : "Unknown";
 }
 
 function formatTime(iso: string): string {

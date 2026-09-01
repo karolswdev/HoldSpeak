@@ -16,7 +16,10 @@ Traceability
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import sqlite3
+import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -28,7 +31,7 @@ from holdspeak.services.observer import (
     PipelineObserver,
     observe_service,
 )
-from holdspeak.services.reaction_service import normalize_snapshot
+from holdspeak.services.reaction_service import diff_snapshots, normalize_snapshot
 from holdspeak.watch_validation import (
     validate_action,
     validate_condition,
@@ -45,6 +48,74 @@ def _rule_id() -> str:
 _MATERIAL_FIELDS: frozenset[str] = frozenset({
     "subject_kind", "query", "trigger_kind", "trigger",
 })
+
+
+# ── SS8.1 github transition kinds (diff_snapshots vocabulary) ──────
+#
+# The closed set of event_type values that diff_snapshots produces for
+# connector_id == "gh".  Surfaced in the test display payload as
+# "supported_transitions" so the consumer knows what future diffs can
+# detect without reading the source code.
+
+_GITHUB_TRANSITION_KINDS: tuple[str, ...] = (
+    "github.pr.opened",
+    "github.pr.state_changed",
+    "github.pr.merged",
+    "github.pr.review_requested",
+    "github.pr.review_decision_changed",
+    "github.pr.checks_changed",
+    "github.pr.head_changed",
+)
+
+
+def _github_conditions_summary(
+    entities: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Build a summary of present conditions across entities (SS8.1).
+
+    Returns a compact map:
+    - states: {"open": 3, "closed": 1}
+    - checks: {"success": 2, "failure": 1}
+    - review_decisions: {"approved": 1, "": 3}
+    - drafts: count of draft PRs
+    """
+    states: dict[str, int] = {}
+    checks: dict[str, int] = {}
+    review_decisions: dict[str, int] = {}
+    drafts = 0
+    for e in entities.values():
+        s = e.get("state", "")
+        states[s] = states.get(s, 0) + 1
+        c = e.get("checks", "")
+        checks[c] = checks.get(c, 0) + 1
+        rd = e.get("review_decision", "")
+        review_decisions[rd] = review_decisions.get(rd, 0) + 1
+        if e.get("is_draft"):
+            drafts += 1
+    return {
+        "states": states,
+        "checks": checks,
+        "review_decisions": review_decisions,
+        "drafts": drafts,
+    }
+
+
+def _classify_test_error(exc: Exception) -> tuple[str, str]:
+    """Map an exception to a PROV-009 typed code + detail string."""
+    if isinstance(exc, ValidationError):
+        return "query_invalid", str(exc)
+    if isinstance(exc, ServiceError):
+        code = getattr(exc, "code", "") or ""
+        if "unavailable" in code:
+            return "unavailable", str(exc)
+        if "refused" in code:
+            return "scope_denied", str(exc)
+        if "invalid" in code:
+            return "query_invalid", str(exc)
+        return "unavailable", str(exc)
+    if isinstance(exc, (TimeoutError, OSError)):
+        return "unavailable", str(exc)
+    return "unavailable", str(exc)
 
 
 @observe_service
@@ -244,6 +315,12 @@ class WatchService:
 
         Zero matches with a successful read = PASSED with
         'Test passed . 0 current matches' semantics (ACT-002).
+
+        For github-family watches, the test_result carries every SS8.1
+        field: provider, connection, repository, normalized query,
+        entity count, up to 5 representative PRs, matched conditions,
+        supported transitions, observation time, duration, and typed
+        error/partial state (PROV-009).
         """
         self._owner(principal)
         watch = self._repo.get_watch(watch_id)
@@ -251,29 +328,69 @@ class WatchService:
             raise NotFound("watch", watch_id)
 
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        connector_id = watch.get("connector_id", "")
+        query = watch.get("query") or {}
 
+        t0 = time.monotonic()
         try:
             entities = self._fetch(principal, watch)
-            snapshot = normalize_snapshot(watch["connector_id"], entities)
+            snapshot = normalize_snapshot(connector_id, entities)
             entity_count = len(snapshot["entities"])
             representative = list(snapshot["entities"].values())[:5]
+            duration_ms = int((time.monotonic() - t0) * 1000)
 
-            test_result = {
+            test_result: dict[str, Any] = {
                 "entity_count": entity_count,
                 "representative_entities": representative,
                 "observed_at": now,
+                "duration_ms": duration_ms,
                 "error": None,
                 "message": f"Test passed · {entity_count} current matches",
             }
+
+            # SS8.1: enrich github-family watches with the full display
+            # payload.
+            if connector_id == "gh":
+                test_result["provider"] = "github"
+                test_result["connection"] = (
+                    watch.get("provider_connection_id") or ""
+                )
+                test_result["repository"] = query.get("repository", "")
+                test_result["normalized_query"] = query
+                test_result["matched_conditions"] = (
+                    _github_conditions_summary(snapshot["entities"])
+                )
+                test_result["supported_transitions"] = list(
+                    _GITHUB_TRANSITION_KINDS
+                )
+
             test_state = "passed"
         except Exception as exc:
+            duration_ms = int((time.monotonic() - t0) * 1000)
+            error_code, _error_detail = _classify_test_error(exc)
+
             test_result = {
                 "entity_count": 0,
                 "representative_entities": [],
                 "observed_at": now,
-                "error": {"type": type(exc).__name__, "message": str(exc)},
+                "duration_ms": duration_ms,
+                "error": {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                    "code": error_code,
+                },
                 "message": f"Test failed: {exc}",
             }
+
+            # SS8.1: github-family failures still carry provider context.
+            if connector_id == "gh":
+                test_result["provider"] = "github"
+                test_result["connection"] = (
+                    watch.get("provider_connection_id") or ""
+                )
+                test_result["repository"] = query.get("repository", "")
+                test_result["normalized_query"] = query
+
             test_state = "failed"
 
         self._repo.update_watch_spec(
@@ -327,6 +444,209 @@ class WatchService:
             "watch_id": watch_id,
             "baseline_state": "established",
             "entity_count": len(snapshot["entities"]),
+        }
+
+    # ── Evaluate ────────────────────────────────────────────────────
+
+    def evaluate_once(
+        self,
+        principal: Principal,
+        watch_id: str,
+    ) -> dict[str, Any]:
+        """Manual evaluation: snapshot -> diff -> transitions -> observations.
+
+        MANUAL only (P5 owns scheduling).  Fetches a fresh snapshot,
+        diffs it against the stored baseline via diff_snapshots (which
+        already speaks GitHub PR semantics: review/checks/head/state/
+        merge), persists a watch_evaluations row, emits watch.transition
+        observations via the 160 collector discipline (deterministic
+        pobs_ IDs, evidence links, the project binding as source), and
+        advances the baseline.
+
+        Idempotent: UNIQUE(watch_id, watch_revision, source_revision)
+        ensures the same source revision evaluates once.  Repeated
+        identical snapshots produce zero new observations (WAT-006's
+        spirit at the read level).
+        """
+        from holdspeak.project_contracts import generate_pobs_id
+        from holdspeak.refs import format as format_ref
+
+        self._owner(principal)
+        watch = self._repo.get_watch(watch_id)
+        if not watch:
+            raise NotFound("watch", watch_id)
+
+        connector_id = watch.get("connector_id", "")
+        watch_revision = int(watch.get("revision") or 0)
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+        # 1. Fetch fresh snapshot via the admitted adapter path.
+        entities = self._fetch(principal, watch)
+        snapshot = normalize_snapshot(connector_id, entities)
+
+        # 2. Compute source_revision (deterministic hash of snapshot).
+        snapshot_json_str = json.dumps(
+            snapshot, sort_keys=True, separators=(",", ":"),
+        )
+        source_revision = hashlib.sha256(
+            snapshot_json_str.encode("utf-8"),
+        ).hexdigest()[:32]
+
+        # 3. Idempotency: same (watch_id, watch_revision, source_revision)?
+        existing = self._repo.find_evaluation_by_source(
+            watch_id, watch_revision, source_revision,
+        )
+        if existing is not None:
+            return {
+                "watch_id": watch_id,
+                "evaluation_id": existing["id"],
+                "state": "no_op",
+                "transitions": 0,
+                "observation_ids": [],
+                "message": "Identical snapshot already evaluated",
+            }
+
+        # 4. Diff against the stored baseline.
+        baseline = watch.get("snapshot") or {}
+        transitions = diff_snapshots(connector_id, baseline, snapshot)
+
+        # 5. Persist: evaluation + observations + baseline in one txn.
+        evaluation_id = f"weval_{uuid.uuid4().hex[:12]}"
+        observation_ids: list[str] = []
+
+        project_id = watch.get("project_id") or ""
+        source_key = ""
+        if project_id:
+            sources = self._repo.list_project_sources(project_id)
+            for s in sources:
+                if s.get("source_ref") == f"watch:{watch_id}":
+                    source_key = s.get("id", "")
+                    break
+        if not source_key:
+            source_key = f"watch:{watch_id}"
+
+        try:
+            with self._db._connection() as conn:
+                # 5a. Evaluation row.
+                self._repo.create_evaluation_in_transaction(
+                    conn,
+                    evaluation_id=evaluation_id,
+                    watch_id=watch_id,
+                    watch_revision=watch_revision,
+                    source_revision=source_revision,
+                    trigger_kind="manual",
+                    state="completed",
+                    started_at=now,
+                    completed_at=now,
+                )
+
+                # 5b. Observations for each transition (160 collector
+                #     discipline: deterministic pobs_ IDs, watch.transition
+                #     kind, canonical subject refs).
+                if project_id and transitions:
+                    for event in transitions:
+                        entity_ref = event.get("entity_ref", "")
+                        event_type = event.get("event_type", "")
+                        facts = event.get("facts", {})
+                        fact = {
+                            "event_type": event_type,
+                            "entity_ref": entity_ref,
+                            "changed": facts.get("changed", {}),
+                        }
+                        fact_str = json.dumps(
+                            fact, sort_keys=True, separators=(",", ":"),
+                        )
+                        content_hash = hashlib.sha256(
+                            fact_str.encode("utf-8"),
+                        ).hexdigest()[:32]
+
+                        obs_id = generate_pobs_id(
+                            adapter="watch",
+                            source_id=source_key,
+                            source_version=event.get("source_revision", ""),
+                            fact_key=content_hash,
+                        )
+
+                        was_inserted = (
+                            self._db.project_observations
+                            .insert_observation_in_transaction(
+                                conn,
+                                observation_id=obs_id,
+                                project_id=project_id,
+                                source_id=source_key,
+                                observation_kind="watch.transition",
+                                subject_ref=format_ref("watch", watch_id),
+                                source_version=event.get(
+                                    "source_revision", "",
+                                ),
+                                observed_at=now,
+                                fact_json=fact_str,
+                                content_hash=content_hash,
+                            )
+                        )
+                        if was_inserted:
+                            observation_ids.append(obs_id)
+
+                # 5c. Update evaluation with observation IDs.
+                if observation_ids:
+                    conn.execute(
+                        "UPDATE watch_evaluations "
+                        "SET observation_ids_json=? WHERE id=?",
+                        (
+                            json.dumps(
+                                observation_ids, separators=(",", ":"),
+                            ),
+                            evaluation_id,
+                        ),
+                    )
+
+                # 5d. Advance baseline (same snapshot write as
+                #     record_refresh but inside the caller's transaction).
+                conn.execute(
+                    "UPDATE connector_watches "
+                    "SET snapshot_json=?, last_success_at=datetime('now'), "
+                    "last_error=NULL, updated_at=datetime('now') "
+                    "WHERE id=?",
+                    (snapshot_json_str, watch_id),
+                )
+        except sqlite3.IntegrityError:
+            # S-3 counsel: TOCTOU on the UNIQUE(watch_id, watch_revision,
+            # source_revision) constraint.  find_evaluation_by_source ran
+            # outside the write transaction; a concurrent evaluation
+            # inserted the row first.  Return the typed no_op result
+            # exactly as if the idempotency check had caught it.
+            existing = self._repo.find_evaluation_by_source(
+                watch_id, watch_revision, source_revision,
+            )
+            if existing is not None:
+                return {
+                    "watch_id": watch_id,
+                    "evaluation_id": existing["id"],
+                    "state": "no_op",
+                    "transitions": 0,
+                    "observation_ids": [],
+                    "message": "Identical snapshot already evaluated (concurrent)",
+                }
+            # If somehow the row still doesn't exist, re-raise.
+            raise
+
+        # 5e. Graduated columns (non-critical; outside the txn).
+        self._repo.update_watch_spec(
+            watch_id,
+            baseline_state="established",
+            last_evaluated_at=now,
+        )
+
+        return {
+            "watch_id": watch_id,
+            "evaluation_id": evaluation_id,
+            "state": "completed",
+            "transitions": len(transitions),
+            "observation_ids": observation_ids,
+            "message": (
+                f"Evaluation complete: {len(transitions)} transitions, "
+                f"{len(observation_ids)} observations"
+            ),
         }
 
     # ── Rules ───────────────────────────────────────────────────────

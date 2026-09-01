@@ -1196,3 +1196,178 @@ class TestSameFactCollision:
                 if p["proposal_kind"] == "risk_attention"
                 and p["target_ref"] == "action_item:ai-x"]
         assert len(risk) == 1, f"expected ONE deduped proposal, got {len(risk)}"
+
+
+# ── HS-161-07: S-2 decide->create_item split transaction fix ────────
+#
+# The 160 counsel flagged S-2: accepting a risk_attention proposal
+# performed the decision write and the create_item write in SEPARATE
+# transactions.  A fault between them left a decided proposal without
+# its item (or vice versa).  The fix: create_item_in_transaction joins
+# decide_proposal's transaction via the 159 M-1 conn-threading pattern.
+
+
+class TestDecideCreateItemAtomicity:
+    """S-2 fault-proof: decide + create_item is one atomic transaction."""
+
+    def test_item_insert_fault_rolls_back_decision(self, rig) -> None:
+        """Injecting a failure in the item insert rolls back the
+        proposal decision too -- no decided-proposal-without-item state.
+        """
+        db, project_svc, delta_svc = rig
+        pid = _seed_project(db)
+        _seed_meeting(db)
+        _associate_meeting(db, pid, "m-dec01")
+
+        review = _open_review_with_proposals(
+            db, delta_svc, pid,
+            observation_kinds=["followthrough.overdue"],
+        )
+        proposals = review["proposals"]
+        risk_prop = next(
+            (p for p in proposals if p["proposal_kind"] == "risk_attention"),
+            None,
+        )
+        assert risk_prop is not None
+
+        # Snapshot state before the attempt
+        with db._connection() as conn:
+            rev_before = conn.execute(
+                "SELECT revision FROM projects WHERE id = ?", (pid,),
+            ).fetchone()["revision"]
+        prop_before = db.project_observations.get_proposal(risk_prop["id"])
+        assert prop_before["lifecycle"] == "open"
+
+        # Inject a fault into create_item_in_transaction so the item
+        # INSERT raises after the proposal update but inside the same
+        # transaction.
+        original = project_svc.create_item_in_transaction
+
+        def faulty_create(conn, principal, project_id, payload):
+            raise RuntimeError("injected item-insert fault (S-2 test)")
+
+        project_svc.create_item_in_transaction = faulty_create
+        try:
+            with pytest.raises(RuntimeError, match="injected item-insert fault"):
+                delta_svc.decide_proposal(
+                    OWNER, pid, risk_prop["id"], "accept",
+                )
+        finally:
+            project_svc.create_item_in_transaction = original
+
+        # The proposal MUST still be 'open' -- the decision rolled back
+        prop_after = db.project_observations.get_proposal(risk_prop["id"])
+        assert prop_after["lifecycle"] == "open", (
+            f"Proposal should still be 'open' after rollback, "
+            f"got {prop_after['lifecycle']!r}"
+        )
+
+        # Project revision MUST be unchanged
+        with db._connection() as conn:
+            rev_after = conn.execute(
+                "SELECT revision FROM projects WHERE id = ?", (pid,),
+            ).fetchone()["revision"]
+        assert rev_after == rev_before, (
+            f"Revision should not have changed: {rev_before} vs {rev_after}"
+        )
+
+        # No orphaned items
+        items = db.projects.list_project_items(pid)
+        assert len(items) == 0, (
+            f"No items should exist after rollback, got {len(items)}"
+        )
+
+    def test_happy_path_single_revision_bump(self, rig) -> None:
+        """Accepting a risk_attention proposal creates the item with
+        exactly one revision bump (from the item creation), not two
+        separate bumps.
+        """
+        db, project_svc, delta_svc = rig
+        pid = _seed_project(db)
+        _seed_meeting(db)
+        _associate_meeting(db, pid, "m-dec01")
+
+        review = _open_review_with_proposals(
+            db, delta_svc, pid,
+            observation_kinds=["followthrough.overdue"],
+        )
+        proposals = review["proposals"]
+        risk_prop = next(
+            (p for p in proposals if p["proposal_kind"] == "risk_attention"),
+            None,
+        )
+        assert risk_prop is not None
+
+        # Snapshot revision before
+        with db._connection() as conn:
+            rev_before = conn.execute(
+                "SELECT revision FROM projects WHERE id = ?", (pid,),
+            ).fetchone()["revision"]
+
+        result = delta_svc.decide_proposal(
+            OWNER, pid, risk_prop["id"], "accept",
+        )
+        assert result["lifecycle"] == "accepted"
+        assert "item_id" in result
+
+        # Exactly one revision bump (the item creation's)
+        with db._connection() as conn:
+            rev_after = conn.execute(
+                "SELECT revision FROM projects WHERE id = ?", (pid,),
+            ).fetchone()["revision"]
+        assert rev_after == rev_before + 1, (
+            f"Expected exactly one revision bump: {rev_before} -> "
+            f"{rev_before + 1}, got {rev_after}"
+        )
+
+        # Both effects landed: proposal accepted AND item exists
+        prop_after = db.project_observations.get_proposal(risk_prop["id"])
+        assert prop_after["lifecycle"] == "accepted"
+
+        item = db.projects.get_project_item(result["item_id"])
+        assert item is not None
+        assert item["project_id"] == pid
+        assert item["item_type"] == "risk"
+
+        # Change row records the item creation at the correct revision
+        changes = db.projects.list_project_changes(pid, limit=5)
+        item_change = next(
+            (c for c in changes
+             if c.get("change_kind") == "project.updated"
+             and "item.created" in (c.get("summary_json") or "")),
+            None,
+        )
+        assert item_change is not None, (
+            "Expected a project_changes row for item.created"
+        )
+        assert item_change["project_revision"] == rev_after
+
+    def test_record_only_accept_unaffected_by_s2_fix(self, rig) -> None:
+        """Accept on a record_only kind (review_flag) still works
+        without any item creation -- the S-2 fix only fires for
+        create_item handler kinds.
+        """
+        db, project_svc, delta_svc = rig
+        pid = _seed_project(db)
+        _seed_meeting(db)
+
+        # Seed a decision.review_due observation -> review_flag proposal
+        _seed_observation(
+            db, pid,
+            observation_kind="decision.review_due",
+            subject_ref="decision:d-01",
+        )
+        review = delta_svc.open_review(OWNER, pid)
+        proposals = review["proposals"]
+        flag_prop = next(
+            (p for p in proposals if p["proposal_kind"] == "review_flag"),
+            None,
+        )
+        assert flag_prop is not None
+
+        result = delta_svc.decide_proposal(
+            OWNER, pid, flag_prop["id"], "accept",
+        )
+        assert result["lifecycle"] == "accepted"
+        # No item_id for record_only kinds
+        assert "item_id" not in result

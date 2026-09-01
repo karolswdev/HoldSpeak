@@ -107,6 +107,9 @@ class WebContext:
     # HS-159-02: the universal Watch facade over the graduated
     # connector_watches table. Routes come in P3; construction only here.
     watch_service: Optional[Any] = None
+    # HS-161-01: the V0 GitHub provider adapter. Routes come in P3;
+    # construction only here.
+    github_provider: Optional[Any] = None
     # HS-159-03: the durable setup interview service. Composes
     # ProjectService + WatchService; routes come in P4.
     project_setup_service: Optional[Any] = None

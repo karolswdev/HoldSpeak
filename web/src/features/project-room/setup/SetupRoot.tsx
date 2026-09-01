@@ -14,12 +14,14 @@ import { SetupBrief } from "./SetupBrief";
 import { SuggestionCards } from "./SuggestionCards";
 import { ClarifyStep } from "./ClarifyStep";
 import { ActivationReview } from "./ActivationReview";
+import { ProviderWizardFlow } from "./ProviderWizardStep";
 import "./setup.css";
 
 export function SetupCore({ scope }: CoreProps) {
   const ctrl = useSetupController();
   const setTitle = useContext(TitleSlotContext);
   const [clarifyingId, setClarifyingId] = useState<string | null>(null);
+  const [providerWizardId, setProviderWizardId] = useState<string | null>(null);
 
   // Set window title
   useEffect(() => {
@@ -51,6 +53,12 @@ export function SetupCore({ scope }: CoreProps) {
   const clarifyingProposal =
     clarifyingId && (ctrl.state.kind === "proposals" || ctrl.state.kind === "review")
       ? ctrl.state.proposals.find((p) => p.id === clarifyingId) ?? null
+      : null;
+
+  // The provider wizard proposal (HS-161-05)
+  const wizardProposal =
+    providerWizardId && (ctrl.state.kind === "proposals" || ctrl.state.kind === "review")
+      ? ctrl.state.proposals.find((p) => p.id === providerWizardId) ?? null
       : null;
 
   // Done state: surface has already opened the project room
@@ -137,7 +145,31 @@ export function SetupCore({ scope }: CoreProps) {
                 <div className="setup-step-token" aria-hidden="true" data-testid="setup-step-token">
                   Step {STAGE_META["proposals"].index} of {STAGE_COUNT}
                 </div>
-                {clarifyingProposal ? (
+                {/* HS-161-05: provider wizard takes priority when active */}
+                {providerWizardId && wizardProposal ? (
+                  <ProviderWizardFlow
+                    proposal={wizardProposal}
+                    connection={ctrl.providerConnection}
+                    discovery={ctrl.providerDiscovery}
+                    checking={ctrl.providerChecking}
+                    discovering={ctrl.providerDiscovering}
+                    scopeState={ctrl.providerScopeState}
+                    onCheckConnection={ctrl.checkConnection}
+                    onRecheck={ctrl.recheckConnection}
+                    onDiscover={ctrl.discoverRepos}
+                    onValidateRepo={ctrl.validateRepo}
+                    onClarifyScope={(repo) =>
+                      ctrl.clarifyProposalScope(wizardProposal.id, repo)
+                    }
+                    onTest={() => {
+                      void ctrl.testProp(wizardProposal.id);
+                    }}
+                    onDone={() => {
+                      setProviderWizardId(null);
+                      ctrl.resetProviderState();
+                    }}
+                  />
+                ) : clarifyingProposal ? (
                   <ClarifyStep
                     proposal={clarifyingProposal}
                     onClarify={ctrl.clarifyProp}
@@ -147,7 +179,15 @@ export function SetupCore({ scope }: CoreProps) {
                   <SuggestionCards
                     proposals={ctrl.state.proposals}
                     onSelect={(id) => {
+                      // HS-161-05: GitHub proposals enter the provider wizard
+                      const prop = ctrl.state.kind === "proposals"
+                        ? ctrl.state.proposals.find((p) => p.id === id)
+                        : undefined;
                       void ctrl.selectProp(id);
+                      if (prop?.providerId === "github") {
+                        setProviderWizardId(id);
+                        void ctrl.checkConnection();
+                      }
                     }}
                     onDeselect={(id) => {
                       void ctrl.deselectProp(id);

@@ -11,6 +11,7 @@ import { useCallback, useRef } from "react";
 import {
   ChoiceCardShell,
   Disclosure,
+  EgressChip,
   useRovingRows,
 } from "../../../desk/surface";
 import {
@@ -171,6 +172,15 @@ function SuggestionCard({
         <div className="setup-card-test" data-test-state={proposal.testState}>
           {proposal.testResult?.message ?? `Test: ${proposal.testState}`}
         </div>
+      ) : null}
+
+      {/* Egress badge for GitHub provider cards (HS-161-05) */}
+      {proposal.providerId === "github" ? (
+        <EgressChip
+          label="local + cloud"
+          scope="mixed"
+          title="This Watch reads from github.com."
+        />
       ) : null}
 
       {/* Test button (only for selected proposals without test state) */}
