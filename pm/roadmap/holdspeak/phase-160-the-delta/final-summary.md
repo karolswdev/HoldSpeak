@@ -61,9 +61,10 @@ repeatable evidence-linked Delta with honest partial coverage.*
 
 ## Backlog carried (named, per counsel's conditions)
 
-- **P2a:** S-2 decide→create_item split transaction (the 159 M-1
-  shape); N-5 widen the no-fetch spy; 158's S-1/N-1/N-3; 159's
-  seeding walls + evidence read path + finalize name override.
+- **P2a:** ~~S-2 decide→create_item split transaction~~ PAID by
+  HS-161-07 (conn-threading, fault-proven); N-5 widen the no-fetch
+  spy; 158's S-1/N-1/N-3; 159's seeding walls + evidence read path +
+  finalize name override.
 - **P3:** S-4 source chips open their source (with Draft-update);
   N-1 Space preview; N-2 a server-side undismiss verb.
 

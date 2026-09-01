@@ -1763,6 +1763,159 @@ class ProjectService:
         result["item_id"] = item_id
         return result
 
+    def create_item_in_transaction(
+        self, conn: Any, principal: Principal, project_id: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create a typed item inside the caller's transaction (S-2 fix).
+
+        Conn-accepting sibling of create_item, following the 159 M-1
+        pattern (conn-threading).  The caller owns the connection and
+        the transaction boundary; this method does validation (pure
+        Python) then all DB writes on the provided conn.
+
+        Preconditions (caller's job):
+        - project_id exists (no _require_project read here)
+        - idempotency is the caller's concern
+
+        Returns the same result dict shape as create_item.
+        """
+        item_type = str(payload.get("item_type") or "").strip()
+        if item_type not in ITEM_TYPES:
+            raise ValidationError(
+                f"Unknown item_type: {item_type!r}; "
+                f"must be one of {sorted(ITEM_TYPES)}",
+                code="validation",
+            )
+
+        title = str(payload.get("title") or "").strip()
+        if not title:
+            raise ValidationError("Item title is required", code="validation")
+
+        severity = self._validate_severity(payload.get("severity"))
+        lifecycle = str(payload.get("lifecycle") or "").strip() or ITEM_DEFAULT_LIFECYCLE[item_type]
+        self._validate_lifecycle(item_type, lifecycle)
+
+        owner_ref = self._validate_optional_ref(payload.get("owner_ref"), "owner_ref")
+        created_by_ref = self._validate_optional_ref(
+            payload.get("created_by_ref") or f"principal:{principal.identity}",
+            "created_by_ref",
+        )
+        due_at = payload.get("due_at")
+        sort_key = payload.get("sort_key")
+        if sort_key is not None:
+            try:
+                sort_key = float(sort_key)
+            except (TypeError, ValueError) as exc:
+                raise ValidationError("sort_key must be a number", code="validation") from exc
+        summary = payload.get("summary")
+
+        # Validate and serialize details_json (DB-004)
+        details = payload.get("details") or {}
+        details_json = self._validate_details(item_type, details)
+
+        provenance = str(payload.get("provenance_kind") or "owner").strip()
+        if provenance not in PROVENANCE_KINDS:
+            raise ValidationError(
+                f"provenance_kind must be one of {sorted(PROVENANCE_KINDS)}",
+                code="validation",
+            )
+
+        item_id = generate_pitem_id()
+        cmd_id = generate_pcmd_id()
+        now_iso = datetime.now().isoformat()
+        project_ref = format_ref("project", project_id)
+
+        current_rev = self._get_revision(conn, project_id)
+        new_revision = current_rev + 1
+
+        conn.execute(
+            "UPDATE projects SET revision = ?, updated_at = ? WHERE id = ?",
+            (new_revision, now_iso, project_id),
+        )
+
+        conn.execute(
+            """
+            INSERT INTO project_items (
+                id, project_id, item_type, title, summary, lifecycle,
+                severity, owner_ref, due_at, sort_key, details_json,
+                provenance_kind, source_observation_id, created_by_ref,
+                revision, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+            """,
+            (
+                item_id, project_id, item_type, title, summary,
+                lifecycle, severity, owner_ref, due_at, sort_key,
+                details_json, provenance, payload.get("source_observation_id"),
+                created_by_ref, now_iso, now_iso,
+            ),
+        )
+
+        change_id = generate_pchg_id(
+            project_id=project_id,
+            project_revision=new_revision,
+            ordinal=0,
+        )
+        req_hash = _request_hash({
+            "project_id": project_id, "item_type": item_type,
+            "title": title, **{k: v for k, v in payload.items()
+                                if k not in ("command_id",)},
+        })
+        conn.execute(
+            """
+            INSERT INTO project_changes (
+                id, project_id, project_revision, change_kind,
+                target_ref, actor_ref, command_id,
+                before_hash, after_hash, summary_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                change_id, project_id, new_revision,
+                "project.updated",
+                project_ref,
+                f"principal:{principal.identity}",
+                cmd_id, None,
+                _request_hash({"item_id": item_id, "item_type": item_type}),
+                json.dumps({
+                    "action": "item.created",
+                    "item_id": item_id,
+                    "item_type": item_type,
+                    "title": title,
+                }),
+                now_iso,
+            ),
+        )
+
+        self._ledger.append_in_transaction(
+            conn, principal,
+            event_type="project.updated",
+            producer="ProjectService",
+            subject_ref=project_ref,
+            source_revision=str(new_revision),
+            facts={
+                "project_id": project_id,
+                "action": "item.created",
+                "item_id": item_id,
+                "item_type": item_type,
+            },
+            refs=[project_ref],
+        )
+
+        envelope = CommandResultEnvelope(
+            result_kind=ResultKind.UPDATED,
+            project_id=project_id,
+            project_revision=new_revision,
+            changed_refs=(parse_ref(project_ref),),
+        )
+        self._record_command(
+            conn, cmd_id, project_id, "create_item",
+            req_hash, envelope,
+        )
+
+        result = _envelope_to_dict(envelope)
+        result["item_id"] = item_id
+        return result
+
     def update_item(
         self, principal: Principal, project_id: str, item_id: str,
         patch: dict[str, Any],
