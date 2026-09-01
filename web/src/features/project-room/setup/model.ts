@@ -719,11 +719,14 @@ export function decodeProviderConnectionStatus(raw: Record<string, unknown>): Pr
 }
 
 export function decodeDiscoveryItem(raw: Record<string, unknown>): DiscoveryItem {
-  const owner = raw.owner as Record<string, unknown> | undefined;
+  const id = String(raw.id ?? "");
+  // Wire sends {id: "owner/name", name, visibility} -- no owner field.
+  // Derive owner from id (split on first "/").
+  const derivedOwner = id.includes("/") ? id.split("/")[0] : "";
   return {
-    id: String(raw.id ?? ""),
+    id,
     name: String(raw.name ?? ""),
-    owner: owner?.login != null ? String(owner.login) : String(raw.owner ?? ""),
+    owner: derivedOwner,
     visibility: String(raw.visibility ?? ""),
   };
 }
@@ -741,9 +744,12 @@ export function decodeDiscoveryResponse(raw: Record<string, unknown>): Discovery
 }
 
 export function decodeValidateRepoResponse(raw: Record<string, unknown>): ValidateRepoResponse {
+  // Wire sends {valid, error_code, error_detail} -- no message field.
+  // Map error_detail to message so the UI renders the adapter's real reason.
+  const detail = raw.error_detail != null ? String(raw.error_detail) : null;
   return {
     valid: Boolean(raw.valid),
-    message: raw.message != null ? String(raw.message) : null,
+    message: detail || null,
   };
 }
 

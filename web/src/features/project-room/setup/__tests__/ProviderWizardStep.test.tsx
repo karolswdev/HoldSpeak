@@ -102,22 +102,25 @@ const WIRE_OWNER_ACTION: Record<string, unknown> = {
   display: { account: null, recovery_hint: "gh auth login" },
 };
 
-/** Fixture: discover response (TestGitHubDiscover.test_discover_returns_items). */
+/** Fixture: discover response (TestGitHubDiscover.test_discover_returns_items).
+ *  Wire shape from GitHubProviderAdapter.discover(): {id, name, visibility} -- NO owner field. */
 const WIRE_DISCOVER: Record<string, unknown> = {
   state: "ready",
   items: [
-    { id: "acme/platform", name: "platform", owner: { login: "acme" }, visibility: "public" },
-    { id: "acme/backend", name: "backend", owner: { login: "acme" }, visibility: "private" },
-    { id: "acme/docs", name: "docs", owner: { login: "acme" }, visibility: "public" },
+    { id: "acme/platform", name: "platform", visibility: "public" },
+    { id: "acme/backend", name: "backend", visibility: "private" },
+    { id: "acme/docs", name: "docs", visibility: "public" },
   ],
   cursor: null,
   error_code: null,
 };
 
-/** Fixture: validate-repo response (TestGitHubValidateRepo.test_valid_repo). */
+/** Fixture: validate-repo response (TestGitHubValidateRepo.test_valid_repo).
+ *  Wire shape from GitHubProviderAdapter.validate_repo(): {valid, error_code, error_detail}. */
 const WIRE_VALID_REPO: Record<string, unknown> = {
   valid: true,
-  message: null,
+  error_code: null,
+  error_detail: null,
 };
 
 /** Fixture: clarify-scope response (TestClarifyScope line 453/475). */
@@ -260,17 +263,30 @@ describe("Provider decoders", () => {
     expect(status.display.recoveryHint).toBe("gh auth login");
   });
 
-  it("decodes discovery response (test_discover_returns_items)", () => {
+  it("decodes discovery response -- owner derived from id (S-1)", () => {
     const disc = decodeDiscoveryResponse(WIRE_DISCOVER);
     expect(disc.state).toBe("ready");
     expect(disc.items).toHaveLength(3);
     expect(disc.items[0].id).toBe("acme/platform");
+    // Wire sends no owner field; decoder derives it from id
     expect(disc.items[0].owner).toBe("acme");
+    expect(disc.items[1].owner).toBe("acme");
   });
 
-  it("decodes validate-repo response (test_valid_repo)", () => {
+  it("decodes validate-repo valid response (test_valid_repo)", () => {
     const resp = decodeValidateRepoResponse(WIRE_VALID_REPO);
     expect(resp.valid).toBe(true);
+    expect(resp.message).toBeNull();
+  });
+
+  it("decodes validate-repo invalid response -- error_detail maps to message (S-2)", () => {
+    const resp = decodeValidateRepoResponse({
+      valid: false,
+      error_code: "scope_denied",
+      error_detail: "Repository not found or not accessible",
+    });
+    expect(resp.valid).toBe(false);
+    expect(resp.message).toBe("Repository not found or not accessible");
   });
 
   it("decodes clarify-scope response (test_clarify_scope_with_typed_repo)", () => {

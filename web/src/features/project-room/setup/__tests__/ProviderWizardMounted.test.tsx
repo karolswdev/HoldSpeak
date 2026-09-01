@@ -403,6 +403,43 @@ describe("Provider wizard mounted path", () => {
     });
   });
 
+  it("S-2: error_detail reaches rendered validation error in mounted wizard", async () => {
+    mockGetGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
+    mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
+    mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
+    // Decoded shape: message maps from error_detail
+    mockValidateGitHubRepo.mockResolvedValue({
+      valid: false,
+      message: "Repository not found or not accessible",
+    });
+
+    await renderAtProposals();
+
+    // Enter wizard
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("setup-card-wprop_gh_01"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("provider-typed-repo")).toBeInTheDocument();
+    });
+
+    // Type an invalid repo
+    const input = screen.getByPlaceholderText("owner/repo");
+    await act(async () => {
+      fireEvent.change(input, { target: { value: "acme/nonexistent" } });
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Use this repo"));
+    });
+
+    // The adapter's real error_detail must reach the UI
+    await waitFor(() => {
+      expect(screen.getByText("Repository not found or not accessible")).toBeInTheDocument();
+    });
+  });
+
   it("SETFLOW-003: unauthenticated path renders recovery in the mounted flow", async () => {
     mockGetGitHubConnection.mockResolvedValue(UNAUTH_STATUS);
     mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
