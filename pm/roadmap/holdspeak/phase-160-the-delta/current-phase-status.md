@@ -1,6 +1,6 @@
 # Phase 160 - Project Rooms: The Delta (P2)
 
-**Last updated:** 2026-09-01 — 6/8 DONE + 06's functional face committed: THE §14 SENTENCE STANDS ON GLASS ×2 (keyboard-decided loop, zero duplicates on reopen, byte-identical windows, the degraded leg honest). Beauty round on the face in flight → THE OWNER'S VERDICT closes 06 → 08.
+**Last updated:** 2026-09-01 — 7/8 DONE: THE OWNER'S VERDICT PASSES THE FACE FIRST-ROUND ('PASS — close it' — the banked taste laws paid off). THE CLOSE (08) RUNS: full gates + counsel in flight.
 
 ## Goal
 
@@ -46,9 +46,9 @@ egress, no model in the deterministic path (DEL-007).
 | HS-160-03 | The frozen review (§7.2 twelve steps, golden tests) | done | [story-03-the-frozen-review](./story-03-the-frozen-review.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-160-04 | The decisions (accept/edit/defer/dismiss, the cursor, the recurrence laws) | done | [story-04-the-decisions](./story-04-the-decisions.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-160-05 | The wire + the room (routes; the review section becomes real) | done | [story-05-the-wire](./story-05-the-wire.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-160-06 | The review face (the posture in Now, J/K/A/E/L/X — shots + verdict) | in-progress | [story-06-the-review-face](./story-06-the-review-face.md) | - |
+| HS-160-06 | The review face (the posture in Now, J/K/A/E/L/X — shots + verdict) | done | [story-06-the-review-face](./story-06-the-review-face.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-160-07 | The walk (repeatable Delta on glass, the degraded leg) | done | [story-07-the-walk](./story-07-the-walk.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-160-08 | The close (gates, suite amendments, final summary) | backlog | [story-08-the-close](./story-08-the-close.md) | - |
+| HS-160-08 | The close (gates, suite amendments, final summary) | in-progress | [story-08-the-close](./story-08-the-close.md) | - |
 
 ## Where we are
 

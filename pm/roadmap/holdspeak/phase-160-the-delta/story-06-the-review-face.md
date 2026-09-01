@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 160
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-160-05
 - **Unblocks:** HS-160-07, HS-160-08
 - **Owner:** unassigned
@@ -58,6 +58,25 @@ exists. The proposal view model is §7's ProjectProposal shape.
 - **Glass:** rides 07's walk + dedicated face shots.
 - **Manual:** the owner's verdict — the closing gate.
 
+## What shipped
+
+- Functional (e4272ce7): the posture in Now (no modal, in-place
+  swap), grouped queue + count chips, the ledger comparison honest
+  about record-only kinds, four verbs + session undo, typed edit,
+  posture-scoped keyboard (letters dead in inputs), conflicts show
+  both sources, the no-delta state. 48 tests, wire-mined fixtures.
+- Beauty (c6aef96d), the orchestrator's seven-point list: plain-words
+  card anchors (machine kind/ref → data-attrs), human queue rows,
+  the value renderer that can never say [object Object], machine ids
+  hidden from the ledger, one verb row with the defer two-step (L
+  stays immediate — glass-compat verified selector by selector),
+  materiality as High/Medium/Low temperatures, position stated once
+  with a disposition tally. 31 more tests; 248 green.
+- **THE OWNER'S VERDICT: PASS** (2026-09-01, "PASS — close it") —
+  first round, no bounce: three phases of banked taste laws paid off.
+  Evidence captures the scoped suites + a fresh build + the four
+  glass legs green on the beautified face.
+
 ## Notes / open questions
 
-- The keyboard letters route through the command deck (WEB-CMD-001 ranking comes with it) — find the house command registration before writing any listener.
+- The keyboard letters stay posture-local by design (review verbs have no desk-wide meaning); the command deck integration note stands for P3's Draft-update verb.
