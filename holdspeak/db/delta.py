@@ -14,7 +14,7 @@ transaction).  A separate module keeps each file navigable and avoids a
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from .base import BaseRepository
@@ -121,7 +121,7 @@ class DeltaRepository(BaseRepository):
         supersedes_observation_id: Optional[str],
         coverage_state: str,
     ) -> bool:
-        now_iso = captured_at or datetime.now().isoformat()
+        now_iso = captured_at or datetime.now(timezone.utc).isoformat(timespec="seconds")
         cur = conn.execute(
             """INSERT OR IGNORE INTO project_observations
                (id, project_id, source_id, observation_kind, subject_ref,
@@ -470,7 +470,7 @@ class DeltaRepository(BaseRepository):
         summary_json: Optional[str] = None,
     ) -> None:
         """Insert a review window."""
-        now_iso = opened_at or datetime.now().isoformat()
+        now_iso = opened_at or datetime.now(timezone.utc).isoformat(timespec="seconds")
         with self._connection() as conn:
             self._insert_review(
                 conn,
@@ -506,7 +506,7 @@ class DeltaRepository(BaseRepository):
         summary_json: Optional[str] = None,
     ) -> None:
         """Insert a review window on a caller-owned connection."""
-        now_iso = opened_at or datetime.now().isoformat()
+        now_iso = opened_at or datetime.now(timezone.utc).isoformat(timespec="seconds")
         self._insert_review(
             conn,
             review_id=review_id,

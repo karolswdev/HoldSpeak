@@ -79,4 +79,13 @@ and advances the Project's review pointers (SYS-023) — all under the
 ## Notes / open questions
 
 - The registered-handler map is the extension seam P4's Steward reuses — name it clearly, keep it closed.
+- **HONESTY CORRECTION AT THE CLOSE:** counsel caught that the
+  DEL-003 suppression claim above was weaker than its words — the
+  basis hash used review_window_key (unique per window) so
+  cross-window suppression never fired; everything returned as
+  linked successors. FIXED IN-ROUND at 08: the observation's
+  source_version now rides patch_json (`_source_version`, outside
+  the deterministic-ID inputs) and BOTH hash sites derive from it;
+  `test_unchanged_basis_suppressed` now proves HARD suppression
+  across two windows (len == 0). The claim is true as written.
 - Banked: PROVENANCE_KINDS is closed to {owner} — delta-born items carry provenance via evidence links, not a new enum value (revisit at P4 if the Steward needs its own).

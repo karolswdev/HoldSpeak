@@ -472,11 +472,22 @@ class TestDismissalRecurrence:
     """DEL-003: dismissed material does not recur unless basis changes."""
 
     def test_unchanged_basis_suppressed(self, rig) -> None:
-        """Dismissed proposal with same basis suppressed in next window."""
+        """S-1 TRUE law: dismissed proposal with SAME source_version +
+        SAME fact content is SUPPRESSED across two windows.
+
+        Window 1: observation (source_version="v1", fact=X) -> proposal
+                  -> dismiss.
+        Window 2: fresh observation (source_version="v1", fact=X via a
+                  different source_id so the obs_id differs and inserts)
+                  -> proposal suppressed (basis hash matches).
+        """
         db, project_svc, delta_svc = rig
         pid = _seed_project(db)
         _seed_meeting(db)
         _associate_meeting(db, pid, "m-dec01")
+
+        # The stable fact content used in BOTH windows
+        fact_content = json.dumps({"lane": "overdue", "stale_score": "0.8"})
 
         # Open first review and dismiss a proposal
         review1 = _open_review_with_proposals(
@@ -492,38 +503,42 @@ class TestDismissalRecurrence:
         # Accept the review to close the window
         delta_svc.accept_review(OWNER, pid, review1["review_id"])
 
-        # Seed the SAME observation again (unchanged basis)
+        # Seed a new observation for the SAME target with the SAME
+        # source_version and SAME fact content.  We use a different
+        # source_id ("test-source-2") so the deterministic obs_id
+        # differs and the row actually inserts.
         future_ts = "2099-01-01T00:00:00"
-        _seed_observation(
-            db, pid,
+        obs_id = generate_pobs_id(
+            adapter="test",
+            source_id="test-source-2",
+            source_version="v1",  # unchanged
+            fact_key=f"{pid}:action_item:ai-00:followthrough.overdue",
+        )
+        db.project_observations.insert_observation(
+            observation_id=obs_id,
+            project_id=pid,
+            source_id="test-source-2",
             observation_kind="followthrough.overdue",
             subject_ref="action_item:ai-00",
-            fact_json=json.dumps({"lane": "overdue", "stale_score": "0.8"}),
-            source_version="v2",  # different version but we need same content
+            source_version="v1",  # same as window 1
+            observed_at=future_ts,
             captured_at=future_ts,
+            fact_json=fact_content,
+            content_hash="hash1",
         )
 
-        # Open second review -- the dismissed proposal should be suppressed
+        # Open second review -- the dismissed proposal MUST be suppressed
         review2 = delta_svc.open_review(OWNER, pid)
 
-        # The dismissed-basis proposal should not reappear
         risk_props = [
             p for p in review2["proposals"]
             if p["proposal_kind"] == "risk_attention"
             and p["target_ref"] == "action_item:ai-00"
         ]
-        # It may be suppressed or may have a linked successor with changed
-        # basis -- depends on whether the new observation produces a
-        # proposal with the same basis hash. Given different source_version
-        # in the review_window_key, the basis hash differs, so it should
-        # be a linked successor with predecessor_proposal_id.
-        if risk_props:
-            # If it appears, it must be a linked successor
-            for rp in risk_props:
-                patch = json.loads(rp.get("patch_json", "{}"))
-                assert "predecessor_proposal_id" in patch, (
-                    "Changed-basis proposal must link to predecessor"
-                )
+        assert len(risk_props) == 0, (
+            f"S-1: unchanged basis (same source_version + same fact) "
+            f"must be suppressed, but got {len(risk_props)} proposals"
+        )
 
     def test_changed_basis_linked_successor(self, rig) -> None:
         """Changed basis yields a linked successor, not a resurrection."""
@@ -1076,3 +1091,72 @@ class TestBasisHash:
         h1 = _dismissal_basis_hash("v1", '{"lane":"overdue"}')
         h2 = _dismissal_basis_hash("v1", '{"lane":"stale"}')
         assert h1 != h2
+
+
+# ── Test: S-3 _store_window atomicity ────────────────────────────────
+
+
+class TestStoreWindowAtomicity:
+    """S-3: _store_window uses one transaction (review + proposals).
+
+    Fault-injection: if proposal k>1 explodes, neither the review row
+    nor any proposal row should be committed.
+    """
+
+    def test_fault_on_second_proposal_rolls_back_all(self, rig) -> None:
+        """Injected failure on proposal 2 -> no review row, no proposals."""
+        db, project_svc, delta_svc = rig
+        pid = _seed_project(db)
+        _seed_meeting(db)
+        _associate_meeting(db, pid, "m-dec01")
+
+        # Seed two observations so open_review generates >= 2 proposals
+        _seed_observation(
+            db, pid,
+            observation_kind="followthrough.overdue",
+            subject_ref="action_item:ai-00",
+            fact_json=json.dumps({"lane": "overdue", "stale_score": "0.8"}),
+        )
+        _seed_observation(
+            db, pid,
+            observation_kind="followthrough.overdue",
+            subject_ref="action_item:ai-01",
+            fact_json=json.dumps({"lane": "overdue", "stale_score": "0.9"}),
+            source_version="v1b",
+        )
+
+        # Monkey-patch insert_proposal_in_transaction to fail on the 2nd call
+        original_insert = (
+            db.project_observations.insert_proposal_in_transaction
+        )
+        call_count = {"n": 0}
+
+        def _exploding_insert(conn, **kwargs):
+            call_count["n"] += 1
+            if call_count["n"] >= 2:
+                raise RuntimeError("fault-injected explosion on proposal 2")
+            return original_insert(conn, **kwargs)
+
+        db.project_observations.insert_proposal_in_transaction = (
+            _exploding_insert
+        )
+
+        with pytest.raises(RuntimeError, match="fault-injected explosion"):
+            delta_svc.open_review(OWNER, pid)
+
+        # Restore
+        db.project_observations.insert_proposal_in_transaction = (
+            original_insert
+        )
+
+        # Verify: NO review rows and NO proposal rows for this project
+        reviews = db.project_observations.list_reviews(pid)
+        assert len(reviews) == 0, (
+            f"Atomicity violated: {len(reviews)} review rows survived "
+            f"a rolled-back _store_window"
+        )
+        proposals = db.project_observations.list_proposals(pid)
+        assert len(proposals) == 0, (
+            f"Atomicity violated: {len(proposals)} proposal rows survived "
+            f"a rolled-back _store_window"
+        )

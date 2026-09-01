@@ -1012,12 +1012,20 @@ class ProjectDeltaService:
     def _extract_source_version(proposal: dict[str, Any]) -> str:
         """Extract the source_version from a proposal for basis hashing.
 
-        Proposals carry the source observation's source_version in
-        patch_json or via the evidence link chain. For DEL-003, we
-        use the review_window_key as a stable version proxy -- it
-        identifies the window that produced the proposal.
+        DEL-003 (S-1 fix): the source_version is the observation's
+        stable fact-version, carried in patch_json["_source_version"].
+        Both dismiss-time and recurrence-time hashing derive from the
+        same field, so identical facts hash identically across windows.
         """
-        return proposal.get("review_window_key", "")
+        patch_raw = proposal.get("patch_json", "{}")
+        if isinstance(patch_raw, str):
+            try:
+                patch_obj = json.loads(patch_raw)
+            except (json.JSONDecodeError, TypeError):
+                return ""
+        else:
+            patch_obj = patch_raw
+        return patch_obj.get("_source_version", "")
 
     def _record_command(
         self,
@@ -1086,7 +1094,9 @@ class ProjectDeltaService:
 
         for p in proposals:
             patch_str = p.get("patch_json", "{}")
-            source_version = p.get("review_window_key", "")
+            # S-1: derive source_version from patch_json._source_version
+            # (same derivation as _extract_source_version at dismiss time)
+            source_version = self._extract_source_version(p)
             basis = _dismissal_basis_hash(source_version, patch_str)
 
             # DEL-003: dismissed suppression
@@ -1375,13 +1385,24 @@ class ProjectDeltaService:
                     normalized_patch=patch_str,
                 )
 
+                # S-1: thread the observation's source_version into
+                # patch_json so both dismiss-time and recurrence-time
+                # hashing derive the same stable basis.
+                obs_source_version = obs.get("source_version", "")
+                try:
+                    patch_obj = json.loads(patch_str)
+                except (json.JSONDecodeError, TypeError):
+                    patch_obj = {}
+                patch_obj["_source_version"] = obs_source_version
+                patch_str_with_sv = _deterministic_json(patch_obj)
+
                 proposals.append({
                     "proposal_id": proposal_id,
                     "proposal_kind": rule.proposal_kind,
                     "target_ref": target_ref,
                     "title": f"{rule.proposal_kind}: {target_ref}",
                     "rationale": rule.rationale_template,
-                    "patch_json": patch_str,
+                    "patch_json": patch_str_with_sv,
                     "provenance_class": rule.provenance_class,
                     "observed_at": obs.get("observed_at", now),
                     "source_refs": [obs.get("source_id", "")],
@@ -1471,41 +1492,49 @@ class ProjectDeltaService:
         summary: dict[str, Any],
         now: str,
     ) -> None:
-        """Persist the review row and all proposals atomically."""
+        """Persist the review row and all proposals atomically.
+
+        S-3: one transaction wrapping the review + all proposals via the
+        _in_transaction variants.  A failure on proposal k>1 rolls back
+        the review AND proposals 1..k-1 -- all-or-nothing.
+        """
         manifest_json = _deterministic_json(source_manifest)
         summary_json = _deterministic_json(summary)
 
         delta = self._db.project_observations
 
-        # Insert the review row
-        delta.insert_review(
-            review_id=review_id,
-            project_id=project_id,
-            status="open",
-            from_sequence=from_sequence,
-            through_sequence=through_sequence,
-            source_manifest_json=manifest_json,
-            project_revision_opened=revision,
-            opened_at=now,
-            summary_json=summary_json,
-        )
-
-        # Insert proposals under this review's window key
-        for p in proposals:
-            delta.insert_proposal(
-                proposal_id=p["proposal_id"],
+        with self._db._connection() as conn:
+            # Insert the review row
+            delta.insert_review_in_transaction(
+                conn,
+                review_id=review_id,
                 project_id=project_id,
-                review_window_key=review_id,
-                proposal_kind=p.get("proposal_kind", ""),
-                target_ref=p.get("target_ref", ""),
-                title=p.get("title", ""),
-                rationale=p.get("rationale"),
-                patch_json=p.get("patch_json", "{}"),
-                materiality=p.get("materiality"),
-                confidence=None,
-                producer_kind=p.get("provenance_class"),
-                lifecycle="open",
+                status="open",
+                from_sequence=from_sequence,
+                through_sequence=through_sequence,
+                source_manifest_json=manifest_json,
+                project_revision_opened=revision,
+                opened_at=now,
+                summary_json=summary_json,
             )
+
+            # Insert proposals under this review's window key
+            for p in proposals:
+                delta.insert_proposal_in_transaction(
+                    conn,
+                    proposal_id=p["proposal_id"],
+                    project_id=project_id,
+                    review_window_key=review_id,
+                    proposal_kind=p.get("proposal_kind", ""),
+                    target_ref=p.get("target_ref", ""),
+                    title=p.get("title", ""),
+                    rationale=p.get("rationale"),
+                    patch_json=p.get("patch_json", "{}"),
+                    materiality=p.get("materiality"),
+                    confidence=None,
+                    producer_kind=p.get("provenance_class"),
+                    lifecycle="open",
+                )
 
     # ── Read-back helpers ─────────────────────────────────────────────
 
