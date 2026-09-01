@@ -47,7 +47,7 @@ not a vibe; OWNER VERDICT closes the face). No writes, no webhooks
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
 | HS-161-01 | The provider adapter (real auth status, discovery, typed fallback, egress receipts) | done | [story-01-the-provider-adapter](./story-01-the-provider-adapter.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-161-02 | The compilation (§8.1 templates → WatchSpec@1; GitHub joins the interview's inventory) | backlog | [story-02-the-compilation](./story-02-the-compilation.md) | - |
+| HS-161-02 | The compilation (§8.1 templates → WatchSpec@1; GitHub joins the interview's inventory) | done | [story-02-the-compilation](./story-02-the-compilation.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-161-03 | The live test + baseline + manual evaluation (into the Delta) | backlog | [story-03-the-live-test](./story-03-the-live-test.md) | - |
 | HS-161-04 | The wire (provider routes, api-surface) | backlog | [story-04-the-wire](./story-04-the-wire.md) | - |
 | HS-161-05 | The face (Check connection → Discover → Clarify → Test; auth honesty — shots + verdict) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
@@ -56,20 +56,21 @@ not a vibe; OWNER VERDICT closes the face). No writes, no webhooks
 
 ## Where we are
 
-1/7. 01 DONE — the provider adapter. THE KERNEL ANSWER, verified by
-trace: production gh reads were ALREADY admitted —
-`PermissionGate(github_cli.MANIFEST).run_read_subprocess` (principal
-OWNER+READ, manifest `shell:exec`) is the path GitHubWatchSource has
-used since HS-11-04; the adapter RIDES it through one seam
-(`_run_gh`), one classified fence entry ("mandatory authenticated
-owner read"). Auth truth table (connected / owner_action_required /
-degraded / unavailable — probe, never `which gh` alone), bounded
-discovery with stable owner/name IDs, typed validate_repo fallback,
-snapshot DELEGATES to fetch_watch_snapshot (zero forked logic).
-PROV-004 proven by test: persisted row + DEBUG logs grepped clean of
-credential material. Live probes green against real gh. Next: 02 the
-compilation. Chain: 02 → 03 → 04 → 05 ∥ 06(rig after 05's
-functional) → 07. All standing laws carry.
+2/7. 02 DONE — the compilation. The five §8.1 templates
+(review_queue, ci_health, merge_flow, delivery_drift,
+release_readiness) live as a closed data table + one compile() in
+pure `holdspeak/github_templates.py`; EVERY output passes
+watch_validation (parametrized truth table) — no validator widening
+was needed, the §8.1 vocabulary mapped cleanly. GitHub joined the
+interview: suggest() consults the LIVE adapter's connection_status
+(INT-007) — connected ⇒ five candidates beside natives; any other
+state or no adapter ⇒ ZERO (no grey theater). clarify_repo_scope:
+discovered list AND typed fallback, both validated; PROV-011 proven
+(candidates never name un-surfaced repos). Cadence-preset duplication
+(circular-import break) is pinned by a field-parity test. Proposals
+persist identically to natives. Next: 03 the live test + baseline +
+manual evaluation into the Delta. Chain: 03 → 04 → 05 ∥ 06(rig after
+05's functional) → 07. All standing laws carry.
 
 ## Active risks
 

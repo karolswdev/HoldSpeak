@@ -870,6 +870,7 @@ class MeetingWebServer:
                 get_database(),
                 project_service=ProjectService(get_database(), observer=obs),
                 watch_service=WatchService(get_database(), observer=obs),
+                github_adapter=GitHubProviderAdapter(db=get_database()),
             ),
             project_evidence_collector=ProjectEvidenceCollector(get_database()),
             project_delta_service=_project_delta_service,

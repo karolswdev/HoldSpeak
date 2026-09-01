@@ -100,11 +100,13 @@ class ProjectSetupService:
         *,
         project_service: Any | None = None,
         watch_service: Any | None = None,
+        github_adapter: Any | None = None,
     ) -> None:
         self._db = db
         self._repo = db.automations
         self._project_service = project_service
         self._watch_service = watch_service
+        self._github_adapter = github_adapter
 
     # ── Guards ──────────────────────────────────────────────────────
 
@@ -302,6 +304,17 @@ class ProjectSetupService:
                 ))
         except Exception:
             pass  # Degraded: no follow-through stale
+
+        # 5. GitHub template candidates (HS-161-02, INT-007)
+        #    Appear ONLY when the provider is genuinely connected.
+        #    Disconnected/unauthenticated => NO github candidates at all
+        #    (SETFLOW-004 spirit: no grey theater).
+        if self._github_adapter is not None:
+            try:
+                gh_proposals = self._github_candidates(principal, session_id)
+                proposals.extend(gh_proposals)
+            except Exception:
+                pass  # Degraded: no github candidates
 
         # Persist proposals (truncate to cap)
         persisted: list[dict[str, Any]] = []
@@ -727,6 +740,166 @@ class ProjectSetupService:
                 "detail": f"Items: {', '.join(t[:40] for t in card_texts[:3])}",
                 "subject_count": len(cards),
             },
+        }
+
+    # ── GitHub candidate builder (HS-161-02) ───────────────────────
+
+    def _github_candidates(
+        self,
+        principal: Principal,
+        session_id: str,
+    ) -> list[dict[str, Any]]:
+        """Build GitHub Watch candidates from connected adapter (INT-007).
+
+        Returns candidates ONLY when connection_status says connected.
+        Each candidate mirrors the native candidate shape (INT-008):
+        source/scope/conditions/action/cadence/readiness/rationale.
+        PROV-011: candidates carry needs-scope state -- no invented repos.
+        """
+        from holdspeak.github_templates import GITHUB_TEMPLATES
+        from holdspeak.services.github_provider import STATE_CONNECTED
+
+        adapter = self._github_adapter
+        if adapter is None:
+            return []
+
+        status = adapter.connection_status(principal)
+        if status.get("state") != STATE_CONNECTED:
+            return []
+
+        candidates: list[dict[str, Any]] = []
+        for tmpl in GITHUB_TEMPLATES:
+            # PROV-011: no repo scope yet -- candidate carries needs_scope
+            # The interview's clarify step will fill the repo scope.
+            spec = {
+                "schema": "WatchSpec@1",
+                "name": tmpl.name,
+                "intent": tmpl.intent,
+                "provider": {
+                    "id": "github",
+                    "transport": "connector_pack",
+                },
+                "subject": {
+                    "kind": "pull_request",
+                    "scope": {},  # needs-scope: filled by clarify
+                    "query": dict(tmpl.query_defaults),
+                },
+                "trigger": CADENCE_PRESETS.get(tmpl.cadence_preset, CADENCE_PRESETS["normal"]),
+                "rules": tmpl.rules,
+                "action": tmpl.rules[0]["actions"][0] if tmpl.rules else {},
+                "mode": "yolo",
+            }
+
+            account = status.get("display", {}).get("account", "")
+            candidates.append({
+                "id": _proposal_id(),
+                "provider_id": "github",
+                "spec": spec,
+                "rationale": {
+                    "source": "github",
+                    "template_id": tmpl.template_id,
+                    "fact": f"GitHub connected as {account}" if account else "GitHub connected",
+                    "detail": tmpl.intent,
+                    "subject_count": 0,
+                    "readiness": "needs_scope",
+                    "conditions": [
+                        c.get("comparison", "") for clause in tmpl.rules
+                        for c in clause.get("condition", {}).get("clauses", [])
+                    ],
+                    "cadence": tmpl.cadence_preset,
+                    "action": tmpl.rules[0]["actions"][0].get("kind", "") if tmpl.rules else "",
+                },
+            })
+
+        return candidates
+
+    # ── Clarify: repo-scope step (HS-161-02) ──────────────────────
+
+    def clarify_repo_scope(
+        self,
+        principal: Principal,
+        session_id: str,
+        proposal_id: str,
+        *,
+        repo: str | None = None,
+    ) -> dict[str, Any]:
+        """Clarify the repo scope for a GitHub proposal (INT-009).
+
+        Two paths:
+        1. Discovered list: adapter.discover() enumerates repos
+        2. Typed fallback: adapter.validate_repo() checks one repo
+
+        PROV-011: a candidate never names a repo the adapter did not
+        surface/validate.
+        """
+        self._owner(principal)
+        self._require_active(session_id)
+        proposal = self._require_proposal(proposal_id, session_id)
+
+        adapter = self._github_adapter
+        if adapter is None:
+            raise ServiceError(
+                "github_adapter_missing",
+                "GitHub adapter not configured",
+            )
+
+        if repo is not None:
+            # Typed fallback: validate the specific repo
+            validation = adapter.validate_repo(principal, repo)
+            if not validation.get("valid"):
+                return {
+                    "proposal_id": proposal_id,
+                    "scope_state": "invalid",
+                    "error": validation.get("error_detail", "Repository validation failed"),
+                    "repositories": [],
+                }
+            repositories = [repo]
+        else:
+            # Discovered list: enumerate accessible repos
+            discovery = adapter.discover(principal)
+            if discovery.get("state") not in ("ready", "partial"):
+                return {
+                    "proposal_id": proposal_id,
+                    "scope_state": "discovery_failed",
+                    "error": discovery.get("error_detail", "Discovery failed"),
+                    "repositories": [],
+                }
+            repositories = [item["id"] for item in discovery.get("items", [])]
+            if not repositories:
+                return {
+                    "proposal_id": proposal_id,
+                    "scope_state": "empty",
+                    "error": None,
+                    "repositories": [],
+                }
+
+        # Apply the repo scope to the proposal spec
+        spec = proposal.get("spec") or {}
+        if isinstance(spec, str):
+            spec = json.loads(spec)
+
+        if "subject" not in spec:
+            spec["subject"] = {}
+        spec["subject"]["scope"] = {"repositories": repositories}
+
+        # Re-validate rules after scope application
+        rationale = proposal.get("rationale") or {}
+        if isinstance(rationale, str):
+            rationale = json.loads(rationale)
+        rationale["readiness"] = "scoped"
+        rationale["subject_count"] = len(repositories)
+
+        self._update_proposal(
+            proposal_id,
+            spec_json=json.dumps(spec, sort_keys=True, separators=(",", ":")),
+            rationale_json=json.dumps(rationale, ensure_ascii=False),
+        )
+
+        return {
+            "proposal_id": proposal_id,
+            "scope_state": "scoped",
+            "error": None,
+            "repositories": repositories,
         }
 
     # ── Native test reads (reuse desk seams) ───────────────────────
