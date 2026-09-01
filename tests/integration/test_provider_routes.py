@@ -69,8 +69,34 @@ def _make_connected_runner(call_log: list[list[str]] | None = None):
                 cmd, 0, stdout=json.dumps(repos), stderr="",
             )
         if cmd[:3] == ["gh", "pr", "list"]:
+            prs = [
+                {
+                    "number": 101,
+                    "title": "Fix CI pipeline",
+                    "url": "https://github.com/acme/platform/pull/101",
+                    "state": "OPEN",
+                    "isDraft": False,
+                    "reviewRequests": [],
+                    "reviewDecision": "",
+                    "statusCheckRollup": [],
+                    "headRefOid": "abc123def",
+                    "updatedAt": "2026-09-01T10:00:00Z",
+                },
+                {
+                    "number": 102,
+                    "title": "Add feature flag",
+                    "url": "https://github.com/acme/platform/pull/102",
+                    "state": "OPEN",
+                    "isDraft": False,
+                    "reviewRequests": [],
+                    "reviewDecision": "",
+                    "statusCheckRollup": [],
+                    "headRefOid": "def456abc",
+                    "updatedAt": "2026-09-01T09:00:00Z",
+                },
+            ]
             return subprocess.CompletedProcess(
-                cmd, 0, stdout="[]", stderr="",
+                cmd, 0, stdout=json.dumps(prs), stderr="",
             )
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
     return runner
@@ -476,6 +502,89 @@ class TestClarifyScope:
         assert "acme/platform" in body["repositories"]
 
 
+# ── GitHub proposal test returns real PRs ────────────────────────────
+
+
+class TestGitHubProposalTestEntities:
+    """The github proposal test step returns real PR entities through the
+    adapter's snapshot path, never placeholders."""
+
+    def test_github_proposal_test_returns_real_pr_entities(self, rig) -> None:
+        _db, client, _log, _ctx = rig
+        # Start a session, suggest, select, clarify, then test
+        resp = client.post("/api/project-setups")
+        session_id = resp.json()["id"]
+        client.post(
+            f"/api/project-setups/{session_id}/answers",
+            json={"question_id": "outcome", "payload": {"text": "Monitor PRs"}},
+        )
+        resp = client.post(f"/api/project-setups/{session_id}/suggest")
+        gh_proposals = [p for p in resp.json()["proposals"] if p.get("provider_id") == "github"]
+        assert len(gh_proposals) >= 1
+        proposal_id = gh_proposals[0]["id"]
+
+        # Select and clarify scope
+        client.post(
+            f"/api/project-setups/{session_id}/proposals/{proposal_id}/select",
+        )
+        client.post(
+            f"/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope",
+            json={"repo": "acme/platform"},
+        )
+
+        # Test the proposal
+        resp = client.post(
+            f"/api/project-setups/{session_id}/proposals/{proposal_id}/test",
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["test_state"] == "passed"
+
+        entities = body["result"]["representative_entities"]
+        assert len(entities) >= 1, "test must return representative PRs"
+        assert body["result"]["entity_count"] >= 1
+
+        # Every entity carries the normalized PR shape: id, title, state,
+        # head_sha. No "Unknown"-shaped placeholders.
+        for ent in entities:
+            assert "id" in ent and ent["id"], f"entity missing id: {ent}"
+            assert "title" in ent and ent["title"], f"entity missing title: {ent}"
+            assert "state" in ent and ent["state"], f"entity missing state: {ent}"
+            assert "head_sha" in ent, f"entity missing head_sha: {ent}"
+
+        # Verify specific values from our fake runner
+        ids = [e["id"] for e in entities]
+        assert "101" in ids or "102" in ids, (
+            f"expected PR IDs from fake runner; got {ids}"
+        )
+
+    def test_github_proposal_test_no_scope_returns_empty(self, rig) -> None:
+        """Unscoped proposal (no clarify) returns zero entities (ACT-002)."""
+        _db, client, _log, _ctx = rig
+        resp = client.post("/api/project-setups")
+        session_id = resp.json()["id"]
+        client.post(
+            f"/api/project-setups/{session_id}/answers",
+            json={"question_id": "outcome", "payload": {"text": "Monitor PRs"}},
+        )
+        resp = client.post(f"/api/project-setups/{session_id}/suggest")
+        gh_proposals = [p for p in resp.json()["proposals"] if p.get("provider_id") == "github"]
+        proposal_id = gh_proposals[0]["id"]
+
+        # Select but do NOT clarify scope
+        client.post(
+            f"/api/project-setups/{session_id}/proposals/{proposal_id}/select",
+        )
+        resp = client.post(
+            f"/api/project-setups/{session_id}/proposals/{proposal_id}/test",
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        # No scope -> zero entities (passed with zero-match honesty)
+        assert body["test_state"] == "passed"
+        assert body["result"]["entity_count"] == 0
+
+
 # ── THE FULL COMPOUNDING LOOP THROUGH HTTP ───────────────────────────
 
 
@@ -549,6 +658,22 @@ class TestFullCompoundingLoop:
         assert test_body["test_state"] == "passed", (
             f"test_proposal should pass for scoped github proposal; got {test_body}"
         )
+        # Real PR entities, not placeholders: every representative entity
+        # carries id, title, and state (never "Unknown"-shaped).
+        entities = test_body["result"]["representative_entities"]
+        assert len(entities) >= 1, (
+            f"test must return representative PRs; got {entities}"
+        )
+        for ent in entities:
+            assert "id" in ent and ent["id"], (
+                f"entity missing id: {ent}"
+            )
+            assert "title" in ent and ent["title"], (
+                f"entity missing title: {ent}"
+            )
+            assert "state" in ent and ent["state"], (
+                f"entity missing state: {ent}"
+            )
 
         # ── 7. Finalize ──────────────────────────────────────────
         resp = client.post(

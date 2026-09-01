@@ -4276,7 +4276,9 @@
         "GET"
       ],
       "module": "web.routes.providers",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/providers/github/connection",

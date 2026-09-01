@@ -974,7 +974,11 @@ class ProjectSetupService:
             return []
 
         if subject_kind == "pull_request":
-            # HS-161-04: GitHub PR subjects test through the adapter
+            # HS-161-04: GitHub PR subjects test through the adapter's
+            # snapshot path -- a real bounded read returning representative
+            # PRs (id/title/state/head_sha), not validation placeholders.
+            from holdspeak.services.reaction_service import normalize_snapshot
+
             adapter = self._github_adapter
             if adapter is None:
                 raise ValidationError(
@@ -985,11 +989,17 @@ class ProjectSetupService:
             repos = scope.get("repositories", [])
             if not repos:
                 return []
-            # Validate first scoped repo as the bounded read test
-            validation = adapter.validate_repo(principal, repos[0])
-            if validation.get("valid"):
-                return [{"repository": r} for r in repos]
-            return []
+            # Build the spec subset adapter.snapshot expects:
+            # query_kind + query with repository (the first scoped repo).
+            snapshot_spec = {
+                "query_kind": "pull_requests",
+                "query": {"repository": repos[0]},
+            }
+            raw_entities = adapter.snapshot(principal, snapshot_spec)
+            # Normalize through the same path WatchService uses so the
+            # representative entities carry id/title/state/head_sha.
+            normalized = normalize_snapshot("gh", raw_entities)
+            return list(normalized.get("entities", {}).values())[:5]
 
         raise ValidationError(
             f"Unknown native subject kind: {subject_kind!r}",
