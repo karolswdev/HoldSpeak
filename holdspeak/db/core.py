@@ -31,7 +31,7 @@ from . import (  # noqa: F401
     automations as _m25, resourceful as _m26,
     scheduled_recordings as _m27, refinement_thoughts as _m28,
     calendar_events as _m29, threads as _m30,
-    front_door as _m31,
+    front_door as _m31, delta as _m32,
 )
 
 from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401  re-exported

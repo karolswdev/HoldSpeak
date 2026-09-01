@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 160
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** -
 - **Unblocks:** HS-160-02
 - **Owner:** unassigned
@@ -42,6 +42,24 @@ with the full decision lifecycle (§5.7), and frozen review windows
 
 - **Unit:** `tests/unit/test_delta_schema.py` (fresh/legacy/real-copy, uniqueness laws); test_db snapshot legs; positional-INSERT fence.
 
+## What shipped
+
+- Schema v69: the four §5.5-5.8 tables (12/8/18/12 columns, CASCADE
+  FKs) + 4 bounded-read indexes. UNIQUENESS RULED: the deterministic
+  ID IS the PK IS the constraint — a natural-key UNIQUE would be
+  wider than the hash inputs (no `adapter` column exists) or
+  duplicate the PK truth; INSERT OR IGNORE on the PK gives the
+  retry no-op.
+- `holdspeak/db/delta.py` (new domain repo per the house
+  one-repo-per-domain pattern; auto-registered in core.py):
+  insert/get/list for all four + conn-accepting *_in_transaction
+  variants for 04's atomic accept (the 159 M-1 law pre-paid).
+- Snapshot regenerated (8-line diff); real-DB proof authored AND RUN
+  BY THE ORCHESTRATOR (copy2, only the copy opened — verified by
+  grep before running): reconcile clean + idempotent on the owner's
+  actual desk. 31 new tests; prior schema suites green (the v69
+  version pin updated mechanically).
+
 ## Notes / open questions
 
-- pobs_/pprop_ generators already take the determinism inputs (P0's frozen signatures) — the schema's UNIQUE constraints must agree with THOSE inputs exactly.
+- pobs_/pprop_ generators already take the determinism inputs (P0's frozen signatures) — the PK ruling above is the schema's answer.
