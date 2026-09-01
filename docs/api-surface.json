@@ -3979,6 +3979,14 @@
       "consumers": []
     },
     {
+      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
       "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/deselect",
       "methods": [
         "POST"
@@ -4260,6 +4268,46 @@
         "GET"
       ],
       "module": "web.routes.watches",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/github/connection",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/github/connection/recheck",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/github/discover",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/github/validate-repo",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
       "consumers": []
     },
     {
@@ -5231,6 +5279,14 @@
         "POST"
       ],
       "module": "web.routes.watches",
+      "consumers": []
+    },
+    {
+      "path": "/api/watches/{watch_id}/evaluate",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
       "consumers": []
     },
     {

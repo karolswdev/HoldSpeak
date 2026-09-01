@@ -595,7 +595,11 @@ class ProjectService:
 
                 watch_id = f"watch_{uuid.uuid4().hex[:12]}"
                 watch_name = spec.get("name", "Untitled watch")
-                connector_id = spec.get("provider", {}).get("id", "native")
+                # Map provider spec IDs to connector_pack IDs
+                # (the watch table's connector_id is "gh", not "github")
+                _PROVIDER_TO_CONNECTOR = {"github": "gh"}
+                raw_provider = spec.get("provider", {}).get("id", "native")
+                connector_id = _PROVIDER_TO_CONNECTOR.get(raw_provider, raw_provider)
                 query_kind = spec.get("subject", {}).get("kind", "")
                 query = spec.get("subject", {}).get("scope", {})
                 trigger = spec.get("trigger") or CADENCE_PRESETS.get("normal", {})

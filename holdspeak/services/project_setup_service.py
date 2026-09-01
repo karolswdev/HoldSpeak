@@ -973,6 +973,24 @@ class ProjectSetupService:
             # Evidence silence: no native read path yet
             return []
 
+        if subject_kind == "pull_request":
+            # HS-161-04: GitHub PR subjects test through the adapter
+            adapter = self._github_adapter
+            if adapter is None:
+                raise ValidationError(
+                    "GitHub adapter not configured for pull_request test",
+                    code="validation",
+                )
+            scope = spec.get("subject", {}).get("scope", {})
+            repos = scope.get("repositories", [])
+            if not repos:
+                return []
+            # Validate first scoped repo as the bounded read test
+            validation = adapter.validate_repo(principal, repos[0])
+            if validation.get("valid"):
+                return [{"repository": r} for r in repos]
+            return []
+
         raise ValidationError(
             f"Unknown native subject kind: {subject_kind!r}",
             code="validation",
