@@ -48,7 +48,7 @@ not a vibe; OWNER VERDICT closes the face). No writes, no webhooks
 |---|---|---|---|---|
 | HS-161-01 | The provider adapter (real auth status, discovery, typed fallback, egress receipts) | done | [story-01-the-provider-adapter](./story-01-the-provider-adapter.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-161-02 | The compilation (§8.1 templates → WatchSpec@1; GitHub joins the interview's inventory) | done | [story-02-the-compilation](./story-02-the-compilation.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-161-03 | The live test + baseline + manual evaluation (into the Delta) | backlog | [story-03-the-live-test](./story-03-the-live-test.md) | - |
+| HS-161-03 | The live test + baseline + manual evaluation (into the Delta) | done | [story-03-the-live-test](./story-03-the-live-test.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-161-04 | The wire (provider routes, api-surface) | backlog | [story-04-the-wire](./story-04-the-wire.md) | - |
 | HS-161-05 | The face (Check connection → Discover → Clarify → Test; auth honesty — shots + verdict) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
 | HS-161-06 | The stopwatch walk (< 5:00 measured; + one real-metal leg) | backlog | [story-06-the-stopwatch-walk](./story-06-the-stopwatch-walk.md) | - |
@@ -56,21 +56,21 @@ not a vibe; OWNER VERDICT closes the face). No writes, no webhooks
 
 ## Where we are
 
-2/7. 02 DONE — the compilation. The five §8.1 templates
-(review_queue, ci_health, merge_flow, delivery_drift,
-release_readiness) live as a closed data table + one compile() in
-pure `holdspeak/github_templates.py`; EVERY output passes
-watch_validation (parametrized truth table) — no validator widening
-was needed, the §8.1 vocabulary mapped cleanly. GitHub joined the
-interview: suggest() consults the LIVE adapter's connection_status
-(INT-007) — connected ⇒ five candidates beside natives; any other
-state or no adapter ⇒ ZERO (no grey theater). clarify_repo_scope:
-discovered list AND typed fallback, both validated; PROV-011 proven
-(candidates never name un-surfaced repos). Cadence-preset duplication
-(circular-import break) is pinned by a field-parity test. Proposals
-persist identically to natives. Next: 03 the live test + baseline +
-manual evaluation into the Delta. Chain: 03 → 04 → 05 ∥ 06(rig after
-05's functional) → 07. All standing laws carry.
+3/7. 03 DONE — the live test + evaluate_once: THE COMPOUNDING MOMENT,
+proven by integration test end to end (watch → baseline → changed PR
+→ evaluate_once → watch.transition observations → an evidence-linked
+observation_attention proposal in the NEXT open_review, producer
+observed_fact, materiality > 0). test_watch carries the full §8.1
+payload with ACT-002 zero-match honesty; baseline stays
+ledger-silent (ACT-005 asserted); evaluate_once is MANUAL-only (P5
+owns scheduling), idempotent under UNIQUE(watch_id, revision,
+source_revision) — identical re-evaluation is a typed no_op with
+zero new observations (WAT-006's spirit). diff_snapshots REUSED
+(seven existing GitHub PR transition kinds, zero re-derived); the
+watch_evaluations tables earn their first real rows; every snapshot
+read rides the 01 admitted path. Next: 04 the wire (providers on
+HTTP + the full compounding loop through the real app). Chain: 04 →
+05 ∥ 06(rig after 05's functional) → 07. All standing laws carry.
 
 ## Active risks
 

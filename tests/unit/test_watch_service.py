@@ -729,3 +729,360 @@ class TestRuleValidation:
     def test_rules_list_validation(self) -> None:
         errors = validate_rules("not a list")
         assert any("must be an array" in str(e) for e in errors)
+
+
+# ── HS-161-03: GitHub test payload (SS8.1) ─────────────────────────
+
+
+class TestGitHubTestPayload:
+    """SS8.1: the github test carries provider/connection, repo, query,
+    entity count, up to 5 representative PRs, matched conditions,
+    supported transitions, observation time, duration, and typed error.
+    """
+
+    @staticmethod
+    def _github_fetcher(principal, **kwargs):
+        """Fake runner returning 3 open PRs with varied states."""
+        return [
+            {
+                "number": 10, "title": "Add login",
+                "url": "https://github.com/acme/app/pull/10",
+                "state": "open", "isDraft": False,
+                "reviewRequests": [], "reviewDecision": "",
+                "checks": "success", "headRefOid": "aaa111",
+                "updatedAt": "2026-09-01T00:00:00Z",
+            },
+            {
+                "number": 11, "title": "Fix CI",
+                "url": "https://github.com/acme/app/pull/11",
+                "state": "open", "isDraft": True,
+                "reviewRequests": ["alice"], "reviewDecision": "",
+                "checks": "failure", "headRefOid": "bbb222",
+                "updatedAt": "2026-09-01T01:00:00Z",
+            },
+            {
+                "number": 12, "title": "Refactor DB",
+                "url": "https://github.com/acme/app/pull/12",
+                "state": "open", "isDraft": False,
+                "reviewRequests": [], "reviewDecision": "APPROVED",
+                "checks": "success", "headRefOid": "ccc333",
+                "updatedAt": "2026-09-01T02:00:00Z",
+            },
+        ]
+
+    def test_ss81_fields_present(self, tmp_path) -> None:
+        """Every SS8.1 display field is present in the test result."""
+        db = Database(tmp_path / "gh-ss81.db")
+        _make_watch(db, "watch-gh-ss81")
+        svc = _watch_svc(db, fetcher=self._github_fetcher)
+        result = svc.test_watch(OWNER, "watch-gh-ss81")
+
+        r = result["result"]
+        assert result["test_state"] == "passed"
+
+        # SS8.1 fields
+        assert r["provider"] == "github"
+        assert "connection" in r
+        assert r["repository"] == "acme/app"
+        assert r["normalized_query"] == {"repository": "acme/app"}
+        assert r["entity_count"] == 3
+        assert len(r["representative_entities"]) == 3
+        assert "matched_conditions" in r
+        assert "supported_transitions" in r
+        assert r["observed_at"] != ""
+        assert "duration_ms" in r
+        assert r["error"] is None
+
+    def test_matched_conditions_summary(self, tmp_path) -> None:
+        """Matched conditions summarize PR states correctly."""
+        db = Database(tmp_path / "gh-cond.db")
+        _make_watch(db, "watch-gh-cond")
+        svc = _watch_svc(db, fetcher=self._github_fetcher)
+        result = svc.test_watch(OWNER, "watch-gh-cond")
+
+        cond = result["result"]["matched_conditions"]
+        assert cond["states"]["open"] == 3
+        assert cond["checks"]["success"] == 2
+        assert cond["checks"]["failure"] == 1
+        assert cond["drafts"] == 1
+
+    def test_supported_transitions_closed_set(self, tmp_path) -> None:
+        db = Database(tmp_path / "gh-trans.db")
+        _make_watch(db, "watch-gh-trans")
+        svc = _watch_svc(db, fetcher=self._github_fetcher)
+        result = svc.test_watch(OWNER, "watch-gh-trans")
+
+        transitions = result["result"]["supported_transitions"]
+        assert "github.pr.checks_changed" in transitions
+        assert "github.pr.merged" in transitions
+        assert "github.pr.review_decision_changed" in transitions
+        assert len(transitions) >= 7
+
+    def test_zero_matches_honest_label(self, tmp_path) -> None:
+        """ACT-002: zero-match test for github = PASSED with honest label."""
+        db = Database(tmp_path / "gh-zero.db")
+        _make_watch(db, "watch-gh-zero")
+
+        def empty_fetcher(principal, **kwargs):
+            return []
+
+        svc = _watch_svc(db, fetcher=empty_fetcher)
+        result = svc.test_watch(OWNER, "watch-gh-zero")
+
+        assert result["test_state"] == "passed"
+        r = result["result"]
+        assert r["entity_count"] == 0
+        assert "0 current matches" in r["message"]
+        assert r["provider"] == "github"
+        assert r["error"] is None
+
+    def test_failure_typed_prov009(self, tmp_path) -> None:
+        """PROV-009: failures carry typed error codes."""
+        db = Database(tmp_path / "gh-fail.db")
+        _make_watch(db, "watch-gh-fail")
+
+        def fail_fetcher(principal, **kwargs):
+            raise ServiceError(
+                "connector_unavailable",
+                "GitHub CLI is not installed",
+            )
+
+        svc = _watch_svc(db, fetcher=fail_fetcher)
+        result = svc.test_watch(OWNER, "watch-gh-fail")
+
+        assert result["test_state"] == "failed"
+        err = result["result"]["error"]
+        assert err["code"] == "unavailable"
+        assert err["type"] == "ServiceError"
+        assert result["result"]["provider"] == "github"
+
+
+# ── HS-161-03: GitHub baseline (ACT-005) ──────────────────────────
+
+
+class TestGitHubBaseline:
+    """ACT-005: baseline for github watches emits zero events."""
+
+    def test_github_baseline_ledger_silence(self, tmp_path) -> None:
+        db = Database(tmp_path / "gh-base-silent.db")
+        _make_watch(db, "watch-gh-bs")
+
+        def fetcher(principal, **kwargs):
+            return [
+                {"number": 1, "state": "open", "title": "PR1",
+                 "url": "http://gh/1", "checks": "success"},
+                {"number": 2, "state": "open", "title": "PR2",
+                 "url": "http://gh/2", "checks": "failure"},
+            ]
+
+        svc = _watch_svc(db, fetcher=fetcher)
+
+        events_before = db.automations.list_events()
+        count_before = len(events_before)
+
+        result = svc.baseline_watch(OWNER, "watch-gh-bs")
+
+        events_after = db.automations.list_events()
+        count_after = len(events_after)
+        assert count_after == count_before, (
+            f"ACT-005 violation: github baseline emitted "
+            f"{count_after - count_before} events"
+        )
+        assert result["baseline_state"] == "established"
+        assert result["entity_count"] == 2
+
+
+# ── HS-161-03: evaluate_once ──────────────────────────────────────
+
+
+class TestEvaluateOnce:
+    """evaluate_once: snapshot -> diff -> evaluation -> observations."""
+
+    @staticmethod
+    def _seed_project_and_watch(db, project_id="proj-eval",
+                                watch_id="watch-eval"):
+        """Seed a project, a watch, and a project_sources binding."""
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO projects
+                   (id, name, description, keywords_json,
+                    team_members_json, context_json,
+                    detection_threshold, revision,
+                    created_at, updated_at)
+                   VALUES (?, 'Eval Project', '', '[]', '[]', '{}',
+                           0.4, 1, datetime('now'), datetime('now'))""",
+                (project_id,),
+            )
+        from holdspeak.services.reaction_service import ReactionService
+        rs = ReactionService(db)
+        rs.create_watch(
+            OWNER, connector_id="gh", query_kind="pull_requests",
+            name="Eval Watch",
+            query={"repository": "acme/app"},
+            watch_id=watch_id,
+        )
+        db.automations.update_watch_spec(
+            watch_id, project_id=project_id, revision=1,
+        )
+        db.automations.create_project_source(
+            source_id=f"psrc_{watch_id}",
+            project_id=project_id,
+            source_ref=f"watch:{watch_id}",
+            label="Eval Watch",
+            semantic_role="watch",
+        )
+        return project_id, watch_id
+
+    def test_transitions_yield_evaluation_and_observations(
+        self, tmp_path,
+    ) -> None:
+        """Changed PR snapshot -> transitions -> evaluation row + obs."""
+        db = Database(tmp_path / "eval-trans.db")
+        project_id, watch_id = self._seed_project_and_watch(db)
+
+        # Phase 1: baseline with one PR open.
+        baseline_entities = [
+            {"number": 1, "state": "open", "title": "PR One",
+             "url": "http://gh/1", "checks": "success",
+             "headRefOid": "aaa"},
+        ]
+        call_count = [0]
+
+        def fetcher(principal, **kwargs):
+            call_count[0] += 1
+            if call_count[0] <= 1:
+                return baseline_entities
+            # Phase 2: checks changed to failure.
+            return [
+                {"number": 1, "state": "open", "title": "PR One",
+                 "url": "http://gh/1", "checks": "failure",
+                 "headRefOid": "aaa"},
+            ]
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, watch_id)
+
+        # Evaluate: checks changed -> transition.
+        result = svc.evaluate_once(OWNER, watch_id)
+
+        assert result["state"] == "completed"
+        assert result["transitions"] >= 1
+        assert len(result["observation_ids"]) >= 1
+
+        # Evaluation row persisted.
+        eval_row = db.automations.get_evaluation(result["evaluation_id"])
+        assert eval_row is not None
+        assert eval_row["watch_id"] == watch_id
+        assert eval_row["state"] == "completed"
+
+        # Observations persisted in project_observations.
+        obs = db.project_observations.list_observations(project_id)
+        watch_obs = [
+            o for o in obs
+            if o["observation_kind"] == "watch.transition"
+        ]
+        assert len(watch_obs) >= 1
+
+    def test_unchanged_snapshot_noop(self, tmp_path) -> None:
+        """Identical re-evaluation = typed no-op, never a crash."""
+        db = Database(tmp_path / "eval-noop.db")
+        project_id, watch_id = self._seed_project_and_watch(db)
+
+        entities = [
+            {"number": 1, "state": "open", "title": "PR One",
+             "url": "http://gh/1"},
+        ]
+
+        def fetcher(principal, **kwargs):
+            return entities
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, watch_id)
+
+        # First evaluate: same as baseline -> no transitions but creates eval.
+        r1 = svc.evaluate_once(OWNER, watch_id)
+        assert r1["state"] == "completed"
+        assert r1["transitions"] == 0
+
+        # Second evaluate: identical snapshot -> no_op.
+        r2 = svc.evaluate_once(OWNER, watch_id)
+        assert r2["state"] == "no_op"
+        assert r2["evaluation_id"] == r1["evaluation_id"]
+        assert r2["observation_ids"] == []
+
+    def test_uniqueness_law(self, tmp_path) -> None:
+        """UNIQUE(watch_id, revision, source_revision) proven."""
+        db = Database(tmp_path / "eval-uniq.db")
+        project_id, watch_id = self._seed_project_and_watch(db)
+
+        entities = [
+            {"number": 5, "state": "open", "title": "Five",
+             "url": "http://gh/5"},
+        ]
+
+        def fetcher(principal, **kwargs):
+            return entities
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, watch_id)
+
+        r1 = svc.evaluate_once(OWNER, watch_id)
+        r2 = svc.evaluate_once(OWNER, watch_id)
+
+        # Both return the same evaluation ID -- second is no_op.
+        assert r1["evaluation_id"] == r2["evaluation_id"]
+        assert r2["state"] == "no_op"
+
+        # Only one evaluation row exists.
+        evals = db.automations.list_evaluations(watch_id)
+        assert len(evals) == 1
+
+    def test_no_project_binding_still_evaluates(self, tmp_path) -> None:
+        """A watch without a project binding still creates the eval row."""
+        db = Database(tmp_path / "eval-noproj.db")
+        _make_watch(db, "watch-noproj")
+        db.automations.update_watch_spec("watch-noproj", revision=1)
+
+        entities = [
+            {"number": 1, "state": "open", "title": "Solo",
+             "url": "http://gh/1"},
+        ]
+
+        def fetcher(principal, **kwargs):
+            return entities
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "watch-noproj")
+        result = svc.evaluate_once(OWNER, "watch-noproj")
+
+        assert result["state"] == "completed"
+        assert result["evaluation_id"] is not None
+        # No observations (no project binding).
+        assert result["observation_ids"] == []
+
+    def test_baseline_advanced_after_evaluate(self, tmp_path) -> None:
+        """After evaluate_once, the baseline reflects the new snapshot."""
+        db = Database(tmp_path / "eval-advance.db")
+        _make_watch(db, "watch-advance")
+        db.automations.update_watch_spec("watch-advance", revision=1)
+
+        call_count = [0]
+
+        def fetcher(principal, **kwargs):
+            call_count[0] += 1
+            if call_count[0] <= 1:
+                return [{"number": 1, "state": "open", "title": "One",
+                         "url": "http://gh/1"}]
+            return [
+                {"number": 1, "state": "open", "title": "One",
+                 "url": "http://gh/1"},
+                {"number": 2, "state": "open", "title": "Two",
+                 "url": "http://gh/2"},
+            ]
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "watch-advance")
+        svc.evaluate_once(OWNER, "watch-advance")
+
+        watch = db.automations.get_watch("watch-advance")
+        assert len(watch["snapshot"].get("entities", {})) == 2

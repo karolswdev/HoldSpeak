@@ -620,6 +620,60 @@ class AutomationRepository(BaseRepository):
             )
         return self.get_evaluation(evaluation_id) or {}
 
+    def create_evaluation_in_transaction(
+        self,
+        conn: Any,
+        *,
+        evaluation_id: str,
+        watch_id: str,
+        watch_revision: int = 0,
+        provider_capability_revision: int = 0,
+        source_revision: str = "",
+        trigger_kind: str = "",
+        state: str = "",
+        matched_rule_ids_json: str = "[]",
+        observation_ids_json: str = "[]",
+        started_at: str | None = None,
+        completed_at: str | None = None,
+        error_code: str | None = None,
+        error_detail: str | None = None,
+    ) -> None:
+        """Insert a watch_evaluations row on a caller-owned connection.
+
+        HS-161-03: the caller is responsible for transaction boundaries;
+        this method never opens or commits its own connection.
+        """
+        conn.execute(
+            """INSERT INTO watch_evaluations
+               (id, watch_id, watch_revision, provider_capability_revision,
+                source_revision, trigger_kind, state, matched_rule_ids_json,
+                observation_ids_json, started_at, completed_at,
+                error_code, error_detail)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (evaluation_id, watch_id, watch_revision,
+             provider_capability_revision, source_revision, trigger_kind,
+             state, matched_rule_ids_json, observation_ids_json,
+             started_at, completed_at, error_code, error_detail),
+        )
+
+    def find_evaluation_by_source(
+        self,
+        watch_id: str,
+        watch_revision: int,
+        source_revision: str,
+    ) -> dict[str, Any] | None:
+        """Find an existing evaluation by the UNIQUE key.
+
+        HS-161-03: idempotency check before creating a new evaluation.
+        """
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM watch_evaluations "
+                "WHERE watch_id=? AND watch_revision=? AND source_revision=?",
+                (watch_id, watch_revision, source_revision),
+            ).fetchone()
+        return self._payload(row, "matched_rule_ids", "observation_ids") if row else None
+
     def get_evaluation(self, evaluation_id: str) -> dict[str, Any] | None:
         with self._connection() as conn:
             row = conn.execute(
