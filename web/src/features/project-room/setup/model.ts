@@ -452,10 +452,10 @@ const SUBJECT_NOUNS: Record<string, string> = {
 
 /** Comparison verbs for the closed WatchCondition@1 vocabulary. */
 const COMPARISON_VERBS: Record<string, (field: string, value: string | null, noun: string) => string> = {
-  changed: (_f, _v, noun) => `When ${noun} content changes`,
-  changed_to: (field, value, noun) => `When ${noun} ${field} becomes ${value ?? "unknown"}`,
-  equals: (field, value, noun) => `When ${noun} ${field} is ${value ?? "unknown"}`,
-  not_equals: (field, value, noun) => `When ${noun} ${field} is not ${value ?? "unknown"}`,
+  changed: (field, _v, _noun) => `When ${field} changes`,
+  changed_to: (field, value, _noun) => `When ${field} becomes ${value ?? "unknown"}`,
+  equals: (field, value, _noun) => `When ${field} is ${value ?? "unknown"}`,
+  not_equals: (field, value, _noun) => `When ${field} is not ${value ?? "unknown"}`,
   older_than: (field, value, _noun) => `When ${field} is older than ${value ?? "unknown"}`,
   newer_than: (field, value, _noun) => `When ${field} is newer than ${value ?? "unknown"}`,
   greater_than: (field, value, _noun) => `When ${field} exceeds ${value ?? "unknown"}`,
@@ -466,20 +466,71 @@ const COMPARISON_VERBS: Record<string, (field: string, value: string | null, nou
   not_exists: (field, _v, _noun) => `When ${field} does not exist`,
 };
 
+/* ── Closed PR phrase table (HS-161-05 final copy pass) ─────────── */
+
+/** Owner-grade phrases for the closed set of PR condition combinations.
+ *  Keyed on "field:comparison" or "field:comparison:value".
+ *  Consulted BEFORE the generic verb path for pull_request subjects. */
+const PR_PHRASE_TABLE: Record<string, string | ((value: string) => string)> = {
+  "review_requested:changed": "When a review is requested",
+  "review_decision:changed": "When the review decision changes",
+  "review_decision:equals:approved": "When the review decision is approved",
+  "checks:changed_to:failure": "When CI checks fail",
+  "checks:changed_to:success": "When CI checks recover",
+  "checks:changed": "When CI checks change",
+  "head_sha:changed": "When the head commit changes",
+  "state:changed": "When the PR state changes",
+  "merged:changed_to:true": "When a PR merges",
+  "updated_at:older_than": (value: string) => {
+    // Parse duration: "7d" -> "7 days", "14d" -> "14 days"
+    const match = value.match(/^(\d+)d$/);
+    if (match) {
+      const n = Number(match[1]);
+      return `When a PR goes quiet for ${n} ${n === 1 ? "day" : "days"}`;
+    }
+    return `When a PR goes quiet for ${value}`;
+  },
+};
+
+/** Look up a PR clause in the closed phrase table.
+ *  Returns the exact phrase or null (fall through to generic). */
+function prPhrase(clause: WatchConditionClause): string | null {
+  const valueStr = clause.value != null ? String(clause.value).toLowerCase() : null;
+
+  // Try field:comparison:value first (most specific)
+  if (valueStr != null) {
+    const keyWithValue = `${clause.field}:${clause.comparison}:${valueStr}`;
+    const exact = PR_PHRASE_TABLE[keyWithValue];
+    if (typeof exact === "string") return exact;
+  }
+
+  // Try field:comparison (may be a function needing the value)
+  const keyBase = `${clause.field}:${clause.comparison}`;
+  const entry = PR_PHRASE_TABLE[keyBase];
+  if (typeof entry === "string") return entry;
+  if (typeof entry === "function" && valueStr != null) return entry(valueStr);
+
+  return null;
+}
+
 /** Plain-words condition from a single clause (defect 2).
- *  HS-161-05: PR fields use prFieldLabel for human-readable field names. */
+ *  HS-161-05: PR subjects consult the closed phrase table first. */
 function clausePlainWords(clause: WatchConditionClause, subjectKind: string): string {
-  const noun = SUBJECT_NOUNS[subjectKind] ?? subjectKind;
-  // HS-161-05: PR subject kinds get human-readable field names
+  // PR subjects: closed phrase table first (owner-grade copy)
+  if (subjectKind === "pull_requests" || subjectKind === "pull_request") {
+    const phrase = prPhrase(clause);
+    if (phrase) return phrase;
+  }
+
+  // Generic path (non-PR subjects, or PR combinations not in the table)
   const fieldName = subjectKind === "pull_requests" || subjectKind === "pull_request"
     ? prFieldLabel(clause.field)
     : clause.field;
   const valueStr = clause.value != null ? String(clause.value) : null;
   const verb = COMPARISON_VERBS[clause.comparison];
-  if (verb) return verb(fieldName, valueStr, noun);
-  // Unknown comparison: neutral fallback, never raw JSON
+  if (verb) return verb(fieldName, valueStr, SUBJECT_NOUNS[subjectKind] ?? subjectKind);
   const valPart = valueStr ? ` ${valueStr}` : "";
-  return `When ${noun} ${fieldName} ${clause.comparison}${valPart}`;
+  return `When ${(SUBJECT_NOUNS[subjectKind] ?? subjectKind)} ${fieldName} ${clause.comparison}${valPart}`;
 }
 
 /** Plain-words conditions for a full spec (HS-159-05 defect 2).
@@ -488,9 +539,43 @@ function clausePlainWords(clause: WatchConditionClause, subjectKind: string): st
 export function conditionPlainWords(spec: WatchSpec): string {
   const clauses = spec.rules.flatMap((r) => r.condition.clauses);
   if (clauses.length === 0) return "On any change";
-  return clauses
-    .map((c) => clausePlainWords(c, spec.subject.kind))
-    .join("; ");
+  // Deduplicate identical plain-words clauses
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const c of clauses) {
+    const text = clausePlainWords(c, spec.subject.kind);
+    if (!seen.has(text)) {
+      seen.add(text);
+      unique.push(text);
+    }
+  }
+  return unique.join("; ");
+}
+
+/** Plain-words description of the query/scope (repo, state, base branch).
+ *  Distinct from conditionPlainWords which describes transition clauses.
+ *  HS-161-05 defect 2: Query != Conditions. */
+export function queryPlainWords(spec: WatchSpec): string {
+  const parts: string[] = [];
+  const scope = spec.subject.scope as Record<string, unknown> | undefined;
+
+  // Repository
+  if (scope?.repository) {
+    parts.push(String(scope.repository));
+  } else if (scope?.repositories) {
+    const repos = scope.repositories as string[];
+    if (repos.length > 0) parts.push(repos.join(", "));
+  }
+
+  // Query filters (state, base branch)
+  const query = (scope?.query ?? {}) as Record<string, unknown>;
+  if (query.state) parts.push(`${String(query.state)} PRs`);
+  if (query.base) parts.push(`base: ${String(query.base)}`);
+
+  // Subject kind
+  const noun = SUBJECT_NOUNS[spec.subject.kind] ?? spec.subject.kind;
+  if (parts.length === 0) return `All ${noun}s`;
+  return parts.join(", ");
 }
 
 /* ── Mode/posture labels (HS-159-05 defect 3) ────────────────────── */

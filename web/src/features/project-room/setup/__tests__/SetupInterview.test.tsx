@@ -316,7 +316,7 @@ describe("SuggestionCards", () => {
     expect(screen.getByText("native")).toBeTruthy(); // source fact value
     expect(screen.getByText("meetings")).toBeTruthy(); // subject fact value
     // Defect 2: plain-words conditions (was "content changed")
-    expect(screen.getByText("When meeting content changes")).toBeTruthy(); // summary
+    expect(screen.getByText("When content changes")).toBeTruthy(); // summary
     // Action lives behind the fold (ChoiceCard fold pattern) — open it
     const card = screen.getByTestId("setup-card-wprop_1");
     const foldTrigger = card.querySelector(".surface-disclosure-trigger") as HTMLElement;
@@ -569,19 +569,19 @@ describe("conditionPlainWords", () => {
 
   it("maps 'changed' to plain words", () => {
     expect(conditionPlainWords(specWith("changed", "content"))).toBe(
-      "When meeting content changes",
+      "When content changes",
     );
   });
 
   it("maps 'changed_to' with value", () => {
     expect(conditionPlainWords(specWith("changed_to", "lifecycle", "accepted", "decisions"))).toBe(
-      "When decision lifecycle becomes accepted",
+      "When lifecycle becomes accepted",
     );
   });
 
   it("maps 'equals' with value", () => {
     expect(conditionPlainWords(specWith("equals", "lifecycle", "accepted", "decisions"))).toBe(
-      "When decision lifecycle is accepted",
+      "When lifecycle is accepted",
     );
   });
 
@@ -785,7 +785,7 @@ describe("SuggestionCards object structure", () => {
     const card = screen.getByTestId("setup-card-wprop_1");
     const summary = card.querySelector(".surface-choice-card-summary");
     expect(summary).toBeTruthy();
-    expect(summary?.textContent).toBe("When meeting content changes");
+    expect(summary?.textContent).toBe("When content changes");
   });
 
   it("selection presence via the library's data-selected state", () => {
@@ -954,7 +954,7 @@ describe("ActivationReview beauty", () => {
     const conditionValue = screen.getByTestId("review-ledger-wprop_1")
       .querySelectorAll(".setup-review-ledger-row")[1]
       .querySelector("dd");
-    expect(conditionValue?.textContent).toBe("When meeting content changes");
+    expect(conditionValue?.textContent).toBe("When content changes");
     // Machine value in data attribute
     expect(conditionValue?.getAttribute("data-condition-raw")).toBe("content:changed");
   });

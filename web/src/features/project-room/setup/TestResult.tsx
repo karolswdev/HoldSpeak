@@ -60,10 +60,17 @@ export function TestResultDisplay({
   );
 }
 
+/** Label for a normalized entity (reaction_service._normalize_entity).
+ *  PR entities: id=PR number, title, state. Native: title/text/name. */
 function entityLabel(entity: Record<string, unknown>): string {
-  // Best-effort label from common fields
-  const title = entity.title ?? entity.text ?? entity.name ?? entity.id;
-  return String(title ?? "Unknown");
+  const id = entity.id != null ? String(entity.id) : "";
+  const title = entity.title != null && String(entity.title) !== ""
+    ? String(entity.title)
+    : (entity.text != null ? String(entity.text) : (entity.name != null ? String(entity.name) : null));
+  if (title) {
+    return id ? `#${id} ${title}` : title;
+  }
+  return id ? `#${id}` : "Unknown";
 }
 
 function formatTime(iso: string): string {

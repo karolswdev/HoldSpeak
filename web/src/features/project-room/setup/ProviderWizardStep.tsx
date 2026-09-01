@@ -16,6 +16,7 @@ import {
   PROVIDER_STATE_COPY,
   PROVIDER_STATE_ACTION,
   conditionPlainWords,
+  queryPlainWords,
   type ProviderState,
   type ProviderConnectionStatus,
   type DiscoveryItem,
@@ -441,11 +442,22 @@ export function GitHubTestDisplay({
 
 /* ── Helpers ── */
 
+/** Label a normalized PR entity (fields from _normalize_entity in reaction_service.py).
+ *  Normalized shape: id (PR number as string), title, state, url, updated_at,
+ *  head_sha, checks, review_decision, review_requests, is_draft. */
 function prEntityLabel(entity: Record<string, unknown>): string {
-  const num = entity.number != null ? `#${entity.number}` : "";
-  const title = entity.title ?? entity.name ?? entity.id;
-  const state = entity.state ?? "";
-  return `${num} ${String(title ?? "Unknown")}${state ? ` (${state})` : ""}`.trim();
+  // id IS the PR number in normalized entities (reaction_service._normalize_entity)
+  const id = entity.id != null ? String(entity.id) : "";
+  const num = id ? `#${id}` : "";
+  const title = entity.title != null && String(entity.title) !== ""
+    ? String(entity.title)
+    : null;
+  const state = entity.state != null && String(entity.state) !== ""
+    ? String(entity.state)
+    : "";
+  if (!title && !num) return "Unknown";
+  const label = title ? `${num} ${title}` : num;
+  return `${label}${state ? ` (${state})` : ""}`.trim();
 }
 
 function formatTestTime(iso: string): string {
@@ -595,7 +607,7 @@ export function ProviderWizardFlow({
           {proposal.testResult ? (
             <GitHubTestDisplay
               repo={String(proposal.spec.subject.scope?.repository ?? "")}
-              queryPlainWords={conditionPlainWords(proposal.spec)}
+              queryPlainWords={queryPlainWords(proposal.spec)}
               entityCount={proposal.testResult.entityCount}
               representativeEntities={proposal.testResult.representativeEntities}
               matchedConditions={conditionPlainWords(proposal.spec)}

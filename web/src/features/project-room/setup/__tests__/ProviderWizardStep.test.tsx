@@ -71,6 +71,7 @@ import {
   PROVIDER_STATE_COPY,
   PROVIDER_STATE_ACTION,
   conditionPlainWords,
+  queryPlainWords,
   prFieldLabel,
   decodeProviderConnectionStatus,
   decodeDiscoveryResponse,
@@ -519,17 +520,18 @@ describe("TypedRepoInput", () => {
 /* ── GitHubTestDisplay tests (SS 8.1) ── */
 
 describe("GitHubTestDisplay", () => {
-  it("renders passed test with entity count and representative PRs", () => {
+  it("renders passed test with entity count and representative PRs (normalized shape)", () => {
+    // Normalized entity shape from _normalize_entity: id (PR number), title, state
     render(
       <GitHubTestDisplay
         repo="acme/platform"
-        queryPlainWords="When CI checks is failure"
+        queryPlainWords="acme/platform, open PRs"
         entityCount={2}
         representativeEntities={[
-          { number: 42, title: "Add routing", state: "open" },
-          { number: 43, title: "Fix tests", state: "open" },
+          { id: "42", title: "Add routing", state: "open", url: "https://github.com/acme/platform/pull/42" },
+          { id: "43", title: "Fix tests", state: "open", url: "https://github.com/acme/platform/pull/43" },
         ]}
-        matchedConditions="CI checks is failure"
+        matchedConditions="When CI checks becomes failure"
         observedAt="2026-09-01T10:00:00Z"
         error={null}
         testState="passed"
@@ -541,6 +543,27 @@ describe("GitHubTestDisplay", () => {
     expect(screen.getByText("acme/platform")).toBeInTheDocument();
     expect(screen.getByText(/#42 Add routing/)).toBeInTheDocument();
     expect(screen.getByText(/#43 Fix tests/)).toBeInTheDocument();
+  });
+
+  it("normalized entity never renders 'Unknown' for well-formed entity", () => {
+    // Well-formed normalized entity: id, title, state all populated
+    const { container } = render(
+      <GitHubTestDisplay
+        repo="acme/platform"
+        queryPlainWords="acme/platform"
+        entityCount={1}
+        representativeEntities={[
+          { id: "42", title: "Fix flaky login test", state: "open", url: "" },
+        ]}
+        matchedConditions="When CI checks changes"
+        observedAt="2026-09-01T10:00:00Z"
+        error={null}
+        testState="passed"
+      />
+    );
+    // Must render "#42 Fix flaky login test (open)", never "Unknown"
+    expect(screen.getByText(/#42 Fix flaky login test \(open\)/)).toBeInTheDocument();
+    expect(container.textContent).not.toContain("Unknown");
   });
 
   it("renders zero-match PASS state honestly (ACT-002)", () => {
@@ -583,7 +606,7 @@ describe("GitHubTestDisplay", () => {
 
   it("limits representative entities to 5", () => {
     const entities = Array.from({ length: 8 }, (_, i) => ({
-      number: i + 1,
+      id: String(i + 1),
       title: `PR ${i + 1}`,
       state: "open",
     }));
@@ -657,7 +680,7 @@ describe("PR condition plain words", () => {
     expect(prFieldLabel("some_unknown_field")).toBe("some unknown field");
   });
 
-  it("conditionPlainWords uses PR field labels for pull_requests subject", () => {
+  it("conditionPlainWords uses PR field labels and phrase table for pull_requests subject", () => {
     const spec: WatchSpec = {
       schema: "WatchSpec@1",
       name: "PR health",
@@ -683,9 +706,12 @@ describe("PR condition plain words", () => {
       mode: "yolo",
     };
     const plainWords = conditionPlainWords(spec);
+    // checks:equals:failure not in phrase table -> generic: "When CI checks is failure"
     expect(plainWords).toContain("CI checks");
+    // review_decision:equals:changes_requested not in table -> generic: "When review decision is changes_requested"
     expect(plainWords).toContain("review decision");
-    expect(plainWords).toContain("last updated");
+    // updated_at:older_than:7d IS in phrase table -> "When a PR goes quiet for 7 days"
+    expect(plainWords).toContain("When a PR goes quiet for 7 days");
     // Should NOT contain the raw field names
     expect(plainWords).not.toContain("review_decision");
     expect(plainWords).not.toContain("updated_at");
@@ -713,7 +739,152 @@ describe("PR condition plain words", () => {
       mode: "yolo",
     };
     const plainWords = conditionPlainWords(spec);
-    expect(plainWords).toContain("content");
+    expect(plainWords).toBe("When content changes");
+  });
+});
+
+/* ── Five-template truth table (HS-161-05 defect 2) ── */
+
+describe("Five-template plain-words truth table", () => {
+  /** Helper: build a WatchSpec from the template's rules. */
+  function templateSpec(
+    name: string,
+    clauses: { field: string; comparison: string; value?: unknown }[],
+    scope?: Record<string, unknown>,
+  ): WatchSpec {
+    return {
+      schema: "WatchSpec@1",
+      name,
+      intent: "",
+      provider: { id: "github", transport: "connector_pack" },
+      subject: {
+        kind: "pull_request",
+        scope: {
+          repositories: ["acme/platform"],
+          query: { state: "open", base: "main" },
+          ...scope,
+        },
+      },
+      trigger: { kind: "poll", everyMinutes: 35 },
+      rules: [
+        {
+          condition: {
+            schema: "WatchCondition@1",
+            operator: "any",
+            clauses,
+          },
+          actions: [{ schema: "WatchAction@1", kind: "project.observe" }],
+        },
+      ],
+      action: { schema: "WatchAction@1", kind: "project.observe" },
+      mode: "yolo",
+    };
+  }
+
+  it("review_queue: exact owner-grade copy", () => {
+    const spec = templateSpec("PR review queue", [
+      { field: "review_requested", comparison: "changed" },
+      { field: "review_decision", comparison: "changed" },
+    ]);
+    expect(conditionPlainWords(spec)).toBe(
+      "When a review is requested; When the review decision changes",
+    );
+    expect(queryPlainWords(spec)).toBe("acme/platform, open PRs, base: main");
+  });
+
+  it("ci_health: exact owner-grade copy", () => {
+    const spec = templateSpec("CI health", [
+      { field: "checks", comparison: "changed_to", value: "failure" },
+      { field: "checks", comparison: "changed_to", value: "success" },
+    ]);
+    expect(conditionPlainWords(spec)).toBe(
+      "When CI checks fail; When CI checks recover",
+    );
+    expect(queryPlainWords(spec)).toBe("acme/platform, open PRs, base: main");
+  });
+
+  it("merge_flow: exact owner-grade copy", () => {
+    const spec = templateSpec("Merge flow", [
+      { field: "state", comparison: "changed" },
+      { field: "merged", comparison: "changed_to", value: true },
+    ]);
+    expect(conditionPlainWords(spec)).toBe(
+      "When the PR state changes; When a PR merges",
+    );
+  });
+
+  it("delivery_drift: exact owner-grade copy", () => {
+    const spec = templateSpec("Delivery drift", [
+      { field: "updated_at", comparison: "older_than", value: "7d" },
+    ]);
+    expect(conditionPlainWords(spec)).toBe(
+      "When a PR goes quiet for 7 days",
+    );
+  });
+
+  it("delivery_drift: renders actual duration value (14d)", () => {
+    const spec = templateSpec("Delivery drift 14d", [
+      { field: "updated_at", comparison: "older_than", value: "14d" },
+    ]);
+    expect(conditionPlainWords(spec)).toBe(
+      "When a PR goes quiet for 14 days",
+    );
+  });
+
+  it("release_readiness: exact owner-grade copy", () => {
+    const spec = templateSpec("Release readiness", [
+      { field: "head_sha", comparison: "changed" },
+      { field: "checks", comparison: "changed" },
+      { field: "review_decision", comparison: "equals", value: "approved" },
+    ]);
+    expect(conditionPlainWords(spec)).toBe(
+      "When the head commit changes; When CI checks change; When the review decision is approved",
+    );
+  });
+
+  it("Query and Conditions are NEVER identical for any template", () => {
+    const templates = [
+      templateSpec("Review queue", [
+        { field: "review_requested", comparison: "changed" },
+        { field: "review_decision", comparison: "changed" },
+      ]),
+      templateSpec("CI health", [
+        { field: "checks", comparison: "changed_to", value: "failure" },
+        { field: "checks", comparison: "changed_to", value: "success" },
+      ]),
+      templateSpec("Merge flow", [
+        { field: "state", comparison: "changed" },
+        { field: "merged", comparison: "changed_to", value: true },
+      ]),
+      templateSpec("Delivery drift", [
+        { field: "updated_at", comparison: "older_than", value: "7d" },
+      ]),
+      templateSpec("Release readiness", [
+        { field: "head_sha", comparison: "changed" },
+        { field: "checks", comparison: "changed" },
+        { field: "review_decision", comparison: "equals", value: "approved" },
+      ]),
+    ];
+
+    for (const spec of templates) {
+      expect(queryPlainWords(spec)).not.toBe(conditionPlainWords(spec));
+    }
+  });
+
+  it("deduplicates identical clause texts within one spec", () => {
+    const spec = templateSpec("Dedup test", [
+      { field: "checks", comparison: "changed" },
+      { field: "checks", comparison: "changed" },
+    ]);
+    expect(conditionPlainWords(spec)).toBe("When CI checks change");
+  });
+
+  it("falls back to generic verb for PR combinations not in the table", () => {
+    const spec = templateSpec("Custom", [
+      { field: "labels", comparison: "contains", value: "urgent" },
+    ]);
+    // Not in the closed table; generic path renders with prFieldLabel
+    expect(conditionPlainWords(spec)).toBe("When labels contains urgent");
   });
 });
 
@@ -760,7 +931,7 @@ describe("ActivationReview GitHub enhancements", () => {
       testState: "passed",
       testResult: {
         entityCount: 1,
-        representativeEntities: [{ number: 42, title: "PR 42" }],
+        representativeEntities: [{ id: "42", title: "PR 42", state: "open" }],
         observedAt: "2026-09-01T10:00:00Z",
         error: null,
         message: "Test passed -- 1 current matches",
