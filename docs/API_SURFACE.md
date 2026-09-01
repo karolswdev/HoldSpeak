@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
+Routes: 612 (plus static mounts). iOS-consumed: 89. Web-consumed: 456.
 
 ## device_audio_ws
 
@@ -790,6 +790,17 @@ Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/select` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/test` | server only |
 | POST | `/api/project-setups/{session_id}/suggest` | server only |
+
+## web.routes.project_updates
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/projects/{project_id}/updates` | server only |
+| POST | `/api/projects/{project_id}/updates/draft` | server only |
+| PUT | `/api/updates/{update_id}` | web |
+| GET | `/api/updates/{update_id}/markdown` | server only |
+| POST | `/api/updates/{update_id}/publish` | server only |
+| POST | `/api/updates/{update_id}/regenerate` | server only |
 
 ## web.routes.projections
 

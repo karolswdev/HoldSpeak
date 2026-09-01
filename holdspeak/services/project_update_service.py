@@ -1,8 +1,12 @@
-"""The Update Factory: deterministic + model drafting (UPD-001..004).
+"""The Update Factory: deterministic + model drafting (UPD-001..005).
 
 HS-162-02: the deterministic drafter ships first.  It DEFINES the section
 contract and the claim schema the model drafter (03) will be constrained
 to.
+
+HS-162-04: thin service verbs for the route wire -- list_updates, get_update,
+draft_update_command, save_update, regenerate_update, publish_update.
+Publish joins the project revision law in one transaction.
 
 Section contract (UPD-001)
 --------------------------
@@ -45,16 +49,27 @@ content inside the body.  Sort everything canonically.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re as _re
 import time as _time
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any, Optional
 
 from ..db.updates import PublishedUpdateError
 from ..logging_config import get_logger
 from ..principals import Principal
-from ..project_contracts import generate_pupd_id
+from ..project_contracts import (
+    CommandResultEnvelope,
+    ResultKind,
+    generate_pchg_id,
+    generate_pcmd_id,
+    generate_pupd_id,
+)
+from ..refs import format as format_ref, parse as parse_ref
+from .errors import ConflictError, NotFound
+from .service_event_ledger import ServiceEventLedger
 
 _log = get_logger("services.project_update_service")
 
@@ -899,6 +914,326 @@ class ProjectUpdateService:
             generator=actual_generator,
         )
         return self._db.project_updates.get_update(new_id)
+
+    # ── Route-facing verbs (HS-162-04) ─────────────────────────────
+
+    def list_updates(
+        self,
+        principal: Principal,
+        project_id: str,
+        *,
+        lifecycle: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """List updates for a project, optionally filtered by lifecycle."""
+        self._project_service._require_project(project_id)
+        return self._db.project_updates.list_updates(
+            project_id, lifecycle=lifecycle,
+        )
+
+    def get_update(
+        self,
+        principal: Principal,
+        update_id: str,
+    ) -> dict[str, Any]:
+        """Fetch a single update by ID.
+
+        Raises NotFound when no row matches.
+        """
+        row = self._db.project_updates.get_update(update_id)
+        if row is None:
+            raise NotFound("update", update_id)
+        return row
+
+    def draft_update_command(
+        self,
+        principal: Principal,
+        project_id: str,
+        *,
+        generator: str = "deterministic",
+        command_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Draft an update with optional command_id replay guard.
+
+        Wraps draft_update with idempotency: if the same command_id
+        was already used, the stored result is replayed.
+
+        The result dict includes ``generator`` and ``fallback_reason``
+        (non-None only when model was requested but fell back).
+        """
+        req_hash = _request_hash({
+            "project_id": project_id,
+            "generator": generator,
+        })
+        if command_id is not None:
+            existing = self._db.projects.get_project_command(command_id)
+            if existing is not None:
+                if (existing["status"] == "completed"
+                        and existing["request_hash"] == req_hash):
+                    if existing["result_json"]:
+                        return json.loads(existing["result_json"])
+                    return {"result_kind": "no_change", "project_id": project_id}
+                if existing["request_hash"] != req_hash:
+                    raise ConflictError(
+                        "idempotency conflict: same command_id with different request hash",
+                        code="idempotency_conflict",
+                    )
+
+        result = self.draft_update(principal, project_id, generator=generator)
+
+        # Surface fallback reason when the model path was requested
+        actual_gen = result.get("generator", "deterministic")
+        if generator == "model" and actual_gen == "deterministic":
+            result["fallback_reason"] = "model_unavailable"
+
+        # Record command for idempotency
+        if command_id is not None:
+            cmd_id = command_id
+        else:
+            cmd_id = generate_pcmd_id()
+        project_ref = format_ref("project", project_id)
+        envelope = CommandResultEnvelope(
+            result_kind=ResultKind.CREATED,
+            project_id=project_id,
+            project_revision=result.get("project_revision", 0),
+            changed_refs=(parse_ref(project_ref),),
+        )
+        self._record_command(
+            cmd_id, project_id, "draft_update", req_hash, envelope,
+        )
+
+        return result
+
+    def save_update(
+        self,
+        principal: Principal,
+        update_id: str,
+        *,
+        body_md: str | None = None,
+        command_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Save the owner's edit of a draft.
+
+        Stores body_md; claims_json is left untouched -- it stays
+        as the draft's record of what was generated.  The owner
+        edits prose; claims are stale but preserved as provenance.
+        The updated_at timestamp advancing past created_at is the
+        implicit "edited" marker (no schema change needed).
+
+        Raises PublishedUpdateError if the row is published.
+        Raises NotFound if the update does not exist.
+        """
+        row = self._db.project_updates.get_update(update_id)
+        if row is None:
+            raise NotFound("update", update_id)
+
+        # PublishedUpdateError is raised inside the repo
+        self._db.project_updates.update_draft(
+            update_id, body_md=body_md,
+        )
+
+        return self._db.project_updates.get_update(update_id)
+
+    def regenerate_update(
+        self,
+        principal: Principal,
+        update_id: str,
+        *,
+        generator: str = "deterministic",
+        command_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Regenerate: supersede an unaccepted draft or create a NEW
+        draft when the latest is published.
+
+        Per the 02 service behavior, regenerating when the latest is
+        published creates a fresh revision-1 draft.
+        """
+        row = self._db.project_updates.get_update(update_id)
+        if row is None:
+            raise NotFound("update", update_id)
+
+        project_id = row["project_id"]
+
+        if row["lifecycle"] == "published":
+            # Published => create a brand-new draft (fresh revision 1)
+            return self.draft_update(
+                principal, project_id, generator=generator,
+            )
+
+        # Draft => supersede via the normal draft_update path which
+        # handles superseding internally.
+        return self.draft_update(
+            principal, project_id, generator=generator,
+        )
+
+    def publish_update(
+        self,
+        principal: Principal,
+        update_id: str,
+        *,
+        command_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Publish a draft with the project revision law.
+
+        ONE transaction: publish + revision+1 + project_changes row
+        + ServiceEventLedger.append_in_transaction.
+
+        Raises PublishedUpdateError if already published.
+        Raises NotFound if the update does not exist.
+        """
+        row = self._db.project_updates.get_update(update_id)
+        if row is None:
+            raise NotFound("update", update_id)
+
+        project_id = row["project_id"]
+        ledger = ServiceEventLedger(self._db)
+        cmd_id = command_id or generate_pcmd_id()
+
+        with self._db._connection() as conn:
+            # 1. Publish the update (raises PublishedUpdateError if
+            #    already published)
+            self._db.project_updates.publish_update_in_transaction(
+                conn, update_id,
+            )
+
+            # 2. Bump project revision
+            proj_row = conn.execute(
+                "SELECT revision FROM projects WHERE id = ?",
+                (project_id,),
+            ).fetchone()
+            if proj_row is None:
+                raise NotFound("project", project_id)
+            current_rev = int(proj_row["revision"])
+            new_revision = current_rev + 1
+            now_iso = datetime.now().isoformat()
+
+            conn.execute(
+                "UPDATE projects SET revision = ?, updated_at = ? WHERE id = ?",
+                (new_revision, now_iso, project_id),
+            )
+
+            # 3. project_changes row
+            project_ref = format_ref("project", project_id)
+            change_id = generate_pchg_id(
+                project_id=project_id,
+                project_revision=new_revision,
+                ordinal=0,
+            )
+            req_hash = _request_hash({"update_id": update_id})
+            conn.execute(
+                """INSERT INTO project_changes (
+                    id, project_id, project_revision, change_kind,
+                    target_ref, actor_ref, command_id,
+                    before_hash, after_hash, summary_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    change_id, project_id, new_revision,
+                    "project.updated",
+                    project_ref,
+                    f"principal:{principal.identity}",
+                    cmd_id, None,
+                    _request_hash({"update_id": update_id, "lifecycle": "published"}),
+                    json.dumps({
+                        "action": "update.published",
+                        "update_id": update_id,
+                    }),
+                    now_iso,
+                ),
+            )
+
+            # 4. ServiceEventLedger
+            ledger.append_in_transaction(
+                conn, principal,
+                event_type="project.updated",
+                producer="ProjectUpdateService",
+                subject_ref=project_ref,
+                source_revision=str(new_revision),
+                facts={
+                    "project_id": project_id,
+                    "action": "update.published",
+                    "update_id": update_id,
+                },
+                refs=[project_ref],
+            )
+
+            # 5. Command idempotency ledger
+            envelope = CommandResultEnvelope(
+                result_kind=ResultKind.UPDATED,
+                project_id=project_id,
+                project_revision=new_revision,
+                changed_refs=(parse_ref(project_ref),),
+            )
+            result_json = json.dumps(
+                _envelope_to_dict(envelope), ensure_ascii=False,
+            )
+            conn.execute(
+                """INSERT INTO project_commands (
+                    id, project_id, command_kind, request_hash,
+                    status, result_json, completed_at, created_at
+                ) VALUES (?, ?, ?, ?, 'completed', ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    status = 'completed',
+                    result_json = excluded.result_json,
+                    completed_at = excluded.completed_at
+                """,
+                (
+                    cmd_id, project_id, "publish_update", req_hash,
+                    result_json, now_iso, now_iso,
+                ),
+            )
+
+        # Return the published update with the envelope merged in
+        published = self._db.project_updates.get_update(update_id)
+        published.update(_envelope_to_dict(envelope))
+        return published
+
+    # ── Internal helpers (HS-162-04) ────────────────────────────────
+
+    def _record_command(
+        self,
+        command_id: str,
+        project_id: str,
+        command_kind: str,
+        request_hash: str,
+        envelope: CommandResultEnvelope,
+    ) -> None:
+        """Record a completed command in the idempotency ledger."""
+        now_iso = datetime.now().isoformat()
+        result_json = json.dumps(
+            _envelope_to_dict(envelope), ensure_ascii=False,
+        )
+        with self._db._connection() as conn:
+            conn.execute(
+                """INSERT INTO project_commands (
+                    id, project_id, command_kind, request_hash,
+                    status, result_json, completed_at, created_at
+                ) VALUES (?, ?, ?, ?, 'completed', ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    status = 'completed',
+                    result_json = excluded.result_json,
+                    completed_at = excluded.completed_at
+                """,
+                (
+                    command_id, project_id, command_kind, request_hash,
+                    result_json, now_iso, now_iso,
+                ),
+            )
+
+
+def _request_hash(payload: dict[str, Any]) -> str:
+    """Deterministic hash of a command's request payload."""
+    material = json.dumps(payload, sort_keys=True, separators=(",", ":"),
+                          ensure_ascii=True, default=str)
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()[:32]
+
+
+def _envelope_to_dict(env: CommandResultEnvelope) -> dict[str, Any]:
+    """Serialize an envelope to a JSON-safe dict."""
+    return {
+        "result_kind": env.result_kind.value,
+        "project_id": env.project_id,
+        "project_revision": env.project_revision,
+        "changed_refs": [str(r) for r in env.changed_refs],
+    }
 
 
 class _ModelDraftFailed(Exception):

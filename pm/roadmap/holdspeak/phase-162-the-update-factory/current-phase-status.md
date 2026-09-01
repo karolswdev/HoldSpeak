@@ -34,29 +34,27 @@ this phase builds the factory the action will call.
 | HS-162-01 | The update ledger (schema v70 + repo + revision pinning) | done | [story-01-the-update-ledger](./story-01-the-update-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-162-02 | The deterministic drafter (UPD-003 first; sections + claims + citations) | done | [story-02-the-deterministic-drafter](./story-02-the-deterministic-drafter.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-162-03 | The model drafter (frozen router; marked language; fallback proven) | done | [story-03-the-model-drafter](./story-03-the-model-drafter.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-162-04 | The verbs on the wire (draft/regenerate/save/copy/publish; api-surface) | backlog | [story-04-the-verbs](./story-04-the-verbs.md) | - |
+| HS-162-04 | The verbs on the wire (draft/regenerate/save/copy/publish; api-surface) | done | [story-04-the-verbs](./story-04-the-verbs.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-162-05 | The face (the Update room — claims open their sources; OWNER VERDICT) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
 | HS-162-06 | The walk (PV-H04 measured: edit-to-copy < 5:00, ≥70% retained; degraded leg) | backlog | [story-06-the-walk](./story-06-the-walk.md) | - |
 | HS-162-07 | The close (gates, debts, final summary, PR) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
-3/7. 03 DONE — the model drafter, constrained to the schema that
-cannot lie. The deterministic inventory builds first; the model
-writes better prose over it with per-sentence citations,
-deterministically parsed: valid refs ⇒ verified, empty or INVENTED
-refs ⇒ MARKED (**[UNVERIFIED]** on the body, verified=False in
-claims), unparseable ⇒ full deterministic fallback. Typed fallback
-reasons (no_broker/no_assignment/runner_error/no_output/
-unparseable_output), generator recorded honestly both ways; the
-manifest stays byte-identical between generators. Routing through
-the 143 lawful entrance, census-registered; two pre-existing census
-drifts HEALED (two main-baseline names now green on this branch).
-THE LIVE .43 LEG PASSED — real LAN inference drafts a real room,
-claims resolve (worker + orchestrator re-runs). Next: 04 the five
-verbs on the wire (UPD-005). Chain: 04 → 05 ∥ 06(rig after 05's
-functional) → 07. The 161 lesson is law: prove the MOUNT and the
-PIXELS.
+4/7. 04 DONE — the five verbs on the wire, each a SEPARATE command
+with an honest receipt (UPD-005): lifecycle-filterable list, draft
+(the model path's typed fallback_reason surfaces in the envelope),
+save (the owner's prose stored as-is; claims_json stays the FROZEN
+provenance of what the generator produced), regenerate (UPD-004 on
+the wire — a published update regenerates into a NEW draft), publish
+(ONE transaction: publish + project revision+1 + change row + ledger
++ command — the 161 S-2 shape), and the markdown GET Copy rides.
+THE HTTP LOOP proven: draft → save → publish (room revision visibly
++1) → list → regenerate → markdown. api-surface 606→612 additive;
+publish immutability refused typed on the wire. Next: 05 the face —
+the Update room where claims OPEN their sources (paying 160's S-4);
+MOUNTED-PATH proof is law; THE OWNER'S VERDICT closes it. Chain:
+05 ∥ 06(rig after 05's functional) → 07.
 
 ## Active risks
 

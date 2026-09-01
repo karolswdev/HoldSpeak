@@ -695,6 +695,7 @@ class MeetingWebServer:
             build_tts_router,
             build_project_reviews_router,
             build_project_setup_router,
+            build_project_updates_router,
             build_providers_router,
             build_watches_router,
         )
@@ -1059,6 +1060,7 @@ class MeetingWebServer:
         app.include_router(build_tts_router(web_ctx))
         app.include_router(build_project_reviews_router(web_ctx))
         app.include_router(build_project_setup_router(web_ctx))
+        app.include_router(build_project_updates_router(web_ctx))
         app.include_router(build_providers_router(web_ctx))
         app.include_router(build_watches_router(web_ctx))
 
