@@ -30,6 +30,17 @@ Patterns respond to the surface container (@container surface). They push layout
 - ProgressPlan and ChoiceCardGroup are section-level patterns
 - Disclosure wraps any content as a collapsible section
 
+## ChoiceCardShell (HS-159)
+The card visual language without an interaction model. Owns all `surface-choice-card-*` CSS classes: shell, head (emblem + label), description, summary anchor, fact chips, cost, fold (behind Disclosure), selected/recommended/disabled presence.
+- `as` — wrapper element tag (default "div"); ChoiceCard passes "label", features may pass any semantic element
+- `beforeHead` — content before the head (e.g. a visually-hidden radio whose `:focus-visible + .head` needs DOM adjacency)
+- `selected` — stamps `data-selected` for the accent-wash selection presence
+- `recommended`, `disabled` — stamp `data-recommended`, `data-disabled`
+- `tier` — accent-temperature key stamped as `data-tier`
+- `children` — rendered after the built-in slots, before the fold
+- All extra props pass through to the wrapper element (role, aria-*, data-*, event handlers)
+- ChoiceCard composes the shell internally (one source of material)
+
 ## ChoiceCard object slots (HS-156-08)
 A ChoiceCard is an OBJECT, not a list. Beyond label/description/facts/cost:
 - `summary` — the one-line anchor the eye lands on (what this choice does, one breath)

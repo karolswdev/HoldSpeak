@@ -643,10 +643,10 @@ describe("modeLabel", () => {
 describe("SuggestionCards object structure", () => {
   const noop = () => {};
 
-  it("renders chips in ChoiceCard fact slots (was bespoke chip row)", () => {
-    // CHANGED: chips now use .surface-choice-card-fact (ChoiceCard fact
-    // layout) instead of .setup-card-chip. Each fact has key + value spans.
-    // data-chip preserved for backward compat with glass selectors.
+  it("renders chips in ChoiceCardShell fact slots (was bespoke chip row)", () => {
+    // HS-159: facts now flow through ChoiceCardShell's facts prop.
+    // data-chip attributes are gone (the shell renders standard facts).
+    // Glass selectors (.surface-choice-card-fact, -fact-val) preserved.
     render(
       <SuggestionCards
         proposals={[makeProposal("wprop_1")]}
@@ -661,14 +661,9 @@ describe("SuggestionCards object structure", () => {
     const facts = card.querySelectorAll(".surface-choice-card-fact");
     expect(facts.length).toBe(4); // source, subject, cadence, mode
 
-    // data-chip attributes preserved
-    expect(facts[0].getAttribute("data-chip")).toBe("source");
     expect(facts[0].querySelector(".surface-choice-card-fact-val")?.textContent).toBe("native");
-    expect(facts[1].getAttribute("data-chip")).toBe("subject");
     expect(facts[1].querySelector(".surface-choice-card-fact-val")?.textContent).toBe("meetings");
-    expect(facts[2].getAttribute("data-chip")).toBe("cadence");
     expect(facts[2].querySelector(".surface-choice-card-fact-val")?.textContent).toBe("Every 35 min");
-    expect(facts[3].getAttribute("data-chip")).toBe("mode");
     expect(facts[3].querySelector(".surface-choice-card-fact-val")?.textContent).toBe("YOLO");
   });
 
@@ -738,7 +733,10 @@ describe("SuggestionCards object structure", () => {
 
     const card = screen.getByTestId("setup-card-wprop_1");
     const summary = card.querySelector(".surface-choice-card-summary");
-    expect(summary?.getAttribute("data-condition-raw")).toBe("content:changed");
+    // HS-159: data-condition-raw is now on the content span inside the
+    // summary div (ChoiceCardShell wraps the summary prop in the div).
+    const condSpan = summary?.querySelector("[data-condition-raw]");
+    expect(condSpan?.getAttribute("data-condition-raw")).toBe("content:changed");
   });
 
   it("selected card shows presence (accent) via aria-selected", () => {

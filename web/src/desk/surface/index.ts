@@ -102,6 +102,8 @@ export {
   type PlanStep,
   ChoiceCardGroup,
   ChoiceCard,
+  ChoiceCardShell,
+  type ChoiceCardShellProps,
   Popover,
   ProvenanceChip,
   Receipt,

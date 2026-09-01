@@ -3,7 +3,7 @@
 // in DOM order below (WEB-RSP-005).  This is a CoreProps-compatible
 // component loaded by the SurfaceWindow system.
 
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { SurfaceColumns } from "../../../desk/surface/Surface";
 import { TitleSlotContext } from "../../../desk/surface/title";
 import type { CoreProps } from "../../../pages/cores/core-types";
@@ -26,9 +26,10 @@ export function SetupCore({ scope }: CoreProps) {
     setTitle?.("New Project");
   }, [setTitle]);
 
+  const rootRef = useRef<HTMLDivElement | null>(null);
   // Announce stage changes (WEB-A11Y-008) + keep the top of each stage in frame
   useEffect(() => {
-    document.querySelector('[data-testid="setup-root"]')?.scrollIntoView({ block: "start" });
+    rootRef.current?.scrollIntoView({ block: "start" });
     const el = document.getElementById("setup-stage-announce");
     if (el) {
       const labels: Record<string, string> = {
@@ -75,7 +76,7 @@ export function SetupCore({ scope }: CoreProps) {
   // Review stage -- NO brief panel: review IS the brief; every fact once (fix 2)
   if (ctrl.state.kind === "review") {
     return (
-      <div className="setup-root" data-testid="setup-root">
+      <div className="setup-root" data-testid="setup-root" ref={rootRef}>
         <div className="sr-only" id="setup-stage-announce" aria-live="polite" role="status" />
         <ActivationReview
           outcomeAnswer={ctrl.state.outcomeAnswer}
@@ -92,7 +93,7 @@ export function SetupCore({ scope }: CoreProps) {
   // Finalizing
   if (ctrl.state.kind === "finalizing") {
     return (
-      <div className="setup-root" data-testid="setup-root">
+      <div className="setup-root" data-testid="setup-root" ref={rootRef}>
         <div className="sr-only" id="setup-stage-announce" aria-live="polite" role="status" />
         <SurfaceColumns
           main={
@@ -114,7 +115,7 @@ export function SetupCore({ scope }: CoreProps) {
 
   // Main flow: questions + proposals
   return (
-    <div className="setup-root" data-testid="setup-root">
+    <div className="setup-root" data-testid="setup-root" ref={rootRef}>
       <div className="sr-only" id="setup-stage-announce" aria-live="polite" role="status" />
       <SurfaceColumns
         main={

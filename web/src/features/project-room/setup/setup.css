@@ -148,15 +148,14 @@
   border-radius: var(--radius-sm);
 }
 
-/* ── Suggestion cards use surface-choice-card CSS (HS-156-08 ChoiceCard
-   visual language) — card shell, selection presence, summary anchor,
-   fact chips, fold are all owned by choice-card.css.
-   Only custom slots below: readiness, rationale, test state/button,
-   focus ring (option-based, no hidden radio). ── */
+/* ── Suggestion cards consume ChoiceCardShell from the surface library.
+   Card shell, selection presence, summary anchor, fact chips, fold are
+   all owned by the library. Only custom slots below: readiness,
+   rationale, test state/button, focus ring (option-based, no radio). ── */
 
 /* Focus ring — option-based cards receive :focus-visible directly,
    not via the radio sibling selector the library's ChoiceCard uses. */
-.setup-cards .surface-choice-card:focus-visible {
+.setup-cards [role="option"]:focus-visible {
   outline: var(--focus-ring, 2px solid var(--border-focus));
   outline-offset: 2px;
 }
