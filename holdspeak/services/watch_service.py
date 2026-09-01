@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
 import time
 import uuid
 from datetime import datetime, timezone
@@ -524,89 +525,110 @@ class WatchService:
         if not source_key:
             source_key = f"watch:{watch_id}"
 
-        with self._db._connection() as conn:
-            # 5a. Evaluation row.
-            self._repo.create_evaluation_in_transaction(
-                conn,
-                evaluation_id=evaluation_id,
-                watch_id=watch_id,
-                watch_revision=watch_revision,
-                source_revision=source_revision,
-                trigger_kind="manual",
-                state="completed",
-                started_at=now,
-                completed_at=now,
-            )
-
-            # 5b. Observations for each transition (160 collector
-            #     discipline: deterministic pobs_ IDs, watch.transition
-            #     kind, canonical subject refs).
-            if project_id and transitions:
-                for event in transitions:
-                    entity_ref = event.get("entity_ref", "")
-                    event_type = event.get("event_type", "")
-                    facts = event.get("facts", {})
-                    fact = {
-                        "event_type": event_type,
-                        "entity_ref": entity_ref,
-                        "changed": facts.get("changed", {}),
-                    }
-                    fact_str = json.dumps(
-                        fact, sort_keys=True, separators=(",", ":"),
-                    )
-                    content_hash = hashlib.sha256(
-                        fact_str.encode("utf-8"),
-                    ).hexdigest()[:32]
-
-                    obs_id = generate_pobs_id(
-                        adapter="watch",
-                        source_id=source_key,
-                        source_version=event.get("source_revision", ""),
-                        fact_key=content_hash,
-                    )
-
-                    was_inserted = (
-                        self._db.project_observations
-                        .insert_observation_in_transaction(
-                            conn,
-                            observation_id=obs_id,
-                            project_id=project_id,
-                            source_id=source_key,
-                            observation_kind="watch.transition",
-                            subject_ref=format_ref("watch", watch_id),
-                            source_version=event.get(
-                                "source_revision", "",
-                            ),
-                            observed_at=now,
-                            fact_json=fact_str,
-                            content_hash=content_hash,
-                        )
-                    )
-                    if was_inserted:
-                        observation_ids.append(obs_id)
-
-            # 5c. Update evaluation with observation IDs.
-            if observation_ids:
-                conn.execute(
-                    "UPDATE watch_evaluations "
-                    "SET observation_ids_json=? WHERE id=?",
-                    (
-                        json.dumps(
-                            observation_ids, separators=(",", ":"),
-                        ),
-                        evaluation_id,
-                    ),
+        try:
+            with self._db._connection() as conn:
+                # 5a. Evaluation row.
+                self._repo.create_evaluation_in_transaction(
+                    conn,
+                    evaluation_id=evaluation_id,
+                    watch_id=watch_id,
+                    watch_revision=watch_revision,
+                    source_revision=source_revision,
+                    trigger_kind="manual",
+                    state="completed",
+                    started_at=now,
+                    completed_at=now,
                 )
 
-            # 5d. Advance baseline (same snapshot write as
-            #     record_refresh but inside the caller's transaction).
-            conn.execute(
-                "UPDATE connector_watches "
-                "SET snapshot_json=?, last_success_at=datetime('now'), "
-                "last_error=NULL, updated_at=datetime('now') "
-                "WHERE id=?",
-                (snapshot_json_str, watch_id),
+                # 5b. Observations for each transition (160 collector
+                #     discipline: deterministic pobs_ IDs, watch.transition
+                #     kind, canonical subject refs).
+                if project_id and transitions:
+                    for event in transitions:
+                        entity_ref = event.get("entity_ref", "")
+                        event_type = event.get("event_type", "")
+                        facts = event.get("facts", {})
+                        fact = {
+                            "event_type": event_type,
+                            "entity_ref": entity_ref,
+                            "changed": facts.get("changed", {}),
+                        }
+                        fact_str = json.dumps(
+                            fact, sort_keys=True, separators=(",", ":"),
+                        )
+                        content_hash = hashlib.sha256(
+                            fact_str.encode("utf-8"),
+                        ).hexdigest()[:32]
+
+                        obs_id = generate_pobs_id(
+                            adapter="watch",
+                            source_id=source_key,
+                            source_version=event.get("source_revision", ""),
+                            fact_key=content_hash,
+                        )
+
+                        was_inserted = (
+                            self._db.project_observations
+                            .insert_observation_in_transaction(
+                                conn,
+                                observation_id=obs_id,
+                                project_id=project_id,
+                                source_id=source_key,
+                                observation_kind="watch.transition",
+                                subject_ref=format_ref("watch", watch_id),
+                                source_version=event.get(
+                                    "source_revision", "",
+                                ),
+                                observed_at=now,
+                                fact_json=fact_str,
+                                content_hash=content_hash,
+                            )
+                        )
+                        if was_inserted:
+                            observation_ids.append(obs_id)
+
+                # 5c. Update evaluation with observation IDs.
+                if observation_ids:
+                    conn.execute(
+                        "UPDATE watch_evaluations "
+                        "SET observation_ids_json=? WHERE id=?",
+                        (
+                            json.dumps(
+                                observation_ids, separators=(",", ":"),
+                            ),
+                            evaluation_id,
+                        ),
+                    )
+
+                # 5d. Advance baseline (same snapshot write as
+                #     record_refresh but inside the caller's transaction).
+                conn.execute(
+                    "UPDATE connector_watches "
+                    "SET snapshot_json=?, last_success_at=datetime('now'), "
+                    "last_error=NULL, updated_at=datetime('now') "
+                    "WHERE id=?",
+                    (snapshot_json_str, watch_id),
+                )
+        except sqlite3.IntegrityError:
+            # S-3 counsel: TOCTOU on the UNIQUE(watch_id, watch_revision,
+            # source_revision) constraint.  find_evaluation_by_source ran
+            # outside the write transaction; a concurrent evaluation
+            # inserted the row first.  Return the typed no_op result
+            # exactly as if the idempotency check had caught it.
+            existing = self._repo.find_evaluation_by_source(
+                watch_id, watch_revision, source_revision,
             )
+            if existing is not None:
+                return {
+                    "watch_id": watch_id,
+                    "evaluation_id": existing["id"],
+                    "state": "no_op",
+                    "transitions": 0,
+                    "observation_ids": [],
+                    "message": "Identical snapshot already evaluated (concurrent)",
+                }
+            # If somehow the row still doesn't exist, re-raise.
+            raise
 
         # 5e. Graduated columns (non-critical; outside the txn).
         self._repo.update_watch_spec(

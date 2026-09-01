@@ -44,6 +44,22 @@ from .service_event_ledger import ServiceEventLedger
 _log = get_logger("services.project_service")
 
 
+# ── M-1 finalize mapping tables (HS-161-07 counsel) ─────────────────
+#
+# _PROVIDER_TO_CONNECTOR: the watch table's connector_id is "gh", not
+# "github".  Moved from the loop body to module level per counsel N-2.
+#
+# _SUBJECT_TO_QUERY_KIND: WatchSpec@1 subject.kind is singular
+# ("pull_request"), but GitHubWatchSource.snapshot demands the plural
+# wire form ("pull_requests").  The mapping lives here rather than in
+# the spec so the spec vocabulary stays domain-level.
+_PROVIDER_TO_CONNECTOR: dict[str, str] = {"github": "gh"}
+
+_SUBJECT_TO_QUERY_KIND: dict[str, str] = {
+    "pull_request": "pull_requests",
+}
+
+
 # ── Closed Project Room vocabularies (HS-158-02, SRS WEB §4) ─────────
 
 # Project lifecycle: closed vocabulary per SRS WEB-LC §4.
@@ -597,11 +613,23 @@ class ProjectService:
                 watch_name = spec.get("name", "Untitled watch")
                 # Map provider spec IDs to connector_pack IDs
                 # (the watch table's connector_id is "gh", not "github")
-                _PROVIDER_TO_CONNECTOR = {"github": "gh"}
                 raw_provider = spec.get("provider", {}).get("id", "native")
                 connector_id = _PROVIDER_TO_CONNECTOR.get(raw_provider, raw_provider)
-                query_kind = spec.get("subject", {}).get("kind", "")
-                query = spec.get("subject", {}).get("scope", {})
+                # M-1 counsel: map singular subject kind to the plural
+                # wire form GitHubWatchSource.snapshot demands.
+                raw_kind = spec.get("subject", {}).get("kind", "")
+                query_kind = _SUBJECT_TO_QUERY_KIND.get(raw_kind, raw_kind)
+                # M-1 counsel: build the stored query in the shape
+                # GitHubWatchSource expects: repository (singular string)
+                # + query filters (state/base/search).  Mirror the shape
+                # project_setup_service._native_test_read already uses.
+                subject = spec.get("subject", {})
+                scope = subject.get("scope", {})
+                query_filters = dict(subject.get("query", {}))
+                repos = scope.get("repositories", [])
+                if repos:
+                    query_filters["repository"] = repos[0]
+                query: dict[str, Any] = query_filters
                 trigger = spec.get("trigger") or CADENCE_PRESETS.get("normal", {})
                 mode = spec.get("mode", "yolo")
 

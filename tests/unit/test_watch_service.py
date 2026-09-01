@@ -1086,3 +1086,58 @@ class TestEvaluateOnce:
 
         watch = db.automations.get_watch("watch-advance")
         assert len(watch["snapshot"].get("entities", {})) == 2
+
+    def test_evaluate_once_toctou_integrity_error_returns_no_op(
+        self, tmp_path, monkeypatch,
+    ) -> None:
+        """S-3 counsel: concurrent evaluation races past the idempotency
+        check (find_evaluation_by_source returns None while a row exists).
+        evaluate_once catches the IntegrityError and returns no_op instead
+        of 500ing."""
+        db = Database(tmp_path / "eval-toctou.db")
+        _make_watch(db, "watch-toctou")
+        db.automations.update_watch_spec("watch-toctou", revision=1)
+
+        entities = [
+            {"number": 1, "state": "open", "title": "PR",
+             "url": "http://gh/1", "checks": "success",
+             "headRefOid": "aaa"},
+        ]
+
+        def fetcher(principal, **kwargs):
+            return entities
+
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "watch-toctou")
+
+        # First evaluation succeeds normally.
+        r1 = svc.evaluate_once(OWNER, "watch-toctou")
+        assert r1["state"] == "completed" or r1["state"] == "no_op"
+
+        # Monkeypatch find_evaluation_by_source to return None on the
+        # first call (simulating the TOCTOU window), then restore.
+        original_find = db.automations.find_evaluation_by_source
+        call_count = [0]
+
+        def lying_find(watch_id, watch_revision, source_revision):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                # Simulate the TOCTOU: claim no existing row.
+                return None
+            # On the recovery re-read, tell the truth.
+            return original_find(watch_id, watch_revision, source_revision)
+
+        monkeypatch.setattr(
+            db.automations, "find_evaluation_by_source", lying_find,
+        )
+
+        # Second evaluation: the lying find returns None, so
+        # evaluate_once tries to INSERT and hits IntegrityError.
+        # It should catch and return no_op, not raise.
+        r2 = svc.evaluate_once(OWNER, "watch-toctou")
+        assert r2["state"] == "no_op", (
+            f"TOCTOU collision should return no_op; got {r2['state']}"
+        )
+        assert "concurrent" in r2.get("message", "").lower() or "already" in r2.get("message", "").lower(), (
+            f"Message should indicate concurrent/duplicate; got {r2['message']!r}"
+        )
