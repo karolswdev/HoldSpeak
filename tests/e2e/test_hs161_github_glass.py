@@ -460,60 +460,52 @@ def test_stopwatch_walk(
                 f"Shot {shot_name} too small"
             )
 
-            # -- Step 4: Select the GitHub card --
+            # -- Step 4: Click the GitHub card (wizard mounts) --
             t0 = time.monotonic()
             gh_card = card_elements.nth(gh_card_idx)
             gh_card.click()
 
-            # Wait for selection
-            gh_card.wait_for(state="visible", timeout=5000)
-            page.wait_for_timeout(500)  # brief settle
-
-            # Get the proposal ID from the card's data-testid
-            gh_card_testid = gh_card.get_attribute("data-testid") or ""
-            proposal_id = gh_card_testid.replace("setup-card-", "")
-            assert proposal_id, "Could not extract proposal ID"
+            # The wizard MUST mount on click
+            wizard = page.get_by_test_id("provider-wizard-flow")
+            wizard.wait_for(timeout=10000)
             segments["select_card"] = time.monotonic() - t0
 
-            # -- Step 5: Clarify repo scope via API --
+            # -- Step 5: Wizard auto-checks connection + discovery fires --
             t0 = time.monotonic()
-            session_id = page.evaluate(
-                """() => sessionStorage.getItem('hs.project-setup.session-id')"""
-            )
-            assert session_id, "Session ID should be in sessionStorage"
+            status_card = page.get_by_test_id("provider-status-card")
+            status_card.wait_for(timeout=10000)
+            assert status_card.get_attribute("data-state") == "connected"
 
-            # Clarify scope with the repo
-            clarify_result = _api(
-                page, "POST",
-                f"/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope",
-                {"repo": "testuser/HoldSpeak"},
-            )
-            assert clarify_result.get("scope_state") == "scoped", (
-                f"Expected scoped, got: {clarify_result}"
-            )
+            # Discovery auto-fires; select the first discovered repo
+            disc_list = page.get_by_test_id("provider-discovery-list")
+            disc_list.wait_for(timeout=10000)
+            disc_items = disc_list.locator('[role="option"]')
+            disc_items.first.wait_for(timeout=10000)
+            disc_items.first.click()
             segments["clarify_repo"] = time.monotonic() - t0
 
-            # -- Step 6: Test the proposal via API --
+            # -- Step 6: Click Test in the wizard --
             t0 = time.monotonic()
-            test_result = _api(
-                page, "POST",
-                f"/api/project-setups/{session_id}/proposals/{proposal_id}/test",
-            )
-            assert test_result.get("test_state") == "passed", (
-                f"Expected passed test, got: {test_result}"
+            scoped = page.get_by_test_id("provider-wizard-scoped")
+            scoped.wait_for(timeout=10000)
+
+            test_btn = page.get_by_test_id("provider-test-btn")
+            test_btn.click()
+
+            # Wait for test display with passed state
+            page.wait_for_function(
+                """() => {
+                    const el = document.querySelector(
+                        '[data-testid="provider-test-display"]'
+                            + '[data-test-state="passed"]'
+                    );
+                    return el !== null;
+                }""",
+                timeout=15000,
             )
             segments["test_proposal"] = time.monotonic() - t0
 
-            # Reload to pick up test state in UI
-            page.reload(wait_until="load")
-            _normal_chair(page)
-            _open_interview(page, url)
-
-            # Wait for proposal cards to render with test result
-            cards_reloaded = page.get_by_test_id("setup-suggestion-cards")
-            cards_reloaded.wait_for(timeout=20000)
-
-            # -- SHOT: live test card with result --
+            # -- SHOT: test result in wizard --
             shot_name2 = f"test-result-{width}.png"
             page.screenshot(
                 path=str(SHOTS / shot_name2), full_page=False,
@@ -521,6 +513,13 @@ def test_stopwatch_walk(
             assert (SHOTS / shot_name2).stat().st_size > 20_000, (
                 f"Shot {shot_name2} too small"
             )
+
+            # -- Return to cards via Done --
+            done_btn = page.get_by_test_id("provider-wizard-done")
+            done_btn.click()
+
+            # Wait for suggestion cards to reappear
+            page.get_by_test_id("setup-suggestion-cards").wait_for(timeout=10000)
 
             # -- Step 7: Proceed to review --
             t0 = time.monotonic()
@@ -1003,6 +1002,289 @@ def _gh_real_available() -> bool:
         return False
 
 
+# ── Leg 5: THE WIZARD-STATES LEG ──────────────────────────────────
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+@pytest.mark.parametrize("width", [1440, 393])
+def test_wizard_states(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """UI-driven wizard: click the GitHub card -> wizard mounts ->
+    connection card (connected) -> discovery list -> clarify repo ->
+    scoped -> test -> GitHubTestDisplay with fixture PRs.
+    Plus degraded variant: unauthenticated wizard state."""
+    from playwright.sync_api import sync_playwright
+    from holdspeak.db import reset_database
+
+    fixture_path = tmp_path / "gh_fixture.json"
+    _write_fixture(
+        fixture_path,
+        auth=_GH_AUTH_CONNECTED,
+        repo_list={"stdout": _GH_REPO_LIST, "returncode": 0},
+        pr_validate={"stdout": _GH_PR_VALIDATE_OK, "returncode": 0},
+        pr_list={"stdout": _GH_PR_SNAPSHOT_BASELINE, "returncode": 0},
+    )
+    runner = _make_fixture_runner(fixture_path)
+
+    server, url = _boot(tmp_path, monkeypatch, gh_runner=runner)
+    SHOTS.mkdir(parents=True, exist_ok=True)
+    errors: list[str] = []
+
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(
+                viewport={"width": width, "height": 900 if width == 1440 else 852},
+            )
+            page.emulate_media(reduced_motion="reduce")
+            page.on("pageerror", lambda error: errors.append(f"page: {error}"))
+
+            _init_desk(page, url)
+            _seed_desk_facts(tmp_path)
+            _open_interview(page, url)
+
+            # -- Answer outcome --
+            q_outcome = page.get_by_test_id("setup-question-outcome")
+            q_outcome.wait_for(timeout=15000)
+            q_outcome.locator("textarea").fill(OUTCOME_TEXT)
+            q_outcome.locator("textarea").press("Enter")
+
+            # -- Answer signals --
+            q_signals = page.get_by_test_id("setup-question-signals")
+            q_signals.wait_for(timeout=15000)
+            q_signals.locator("textarea").fill(SIGNALS_TEXT)
+            q_signals.locator("textarea").press("Enter")
+
+            # -- Wait for suggestion cards --
+            cards = page.get_by_test_id("setup-suggestion-cards")
+            cards.wait_for(timeout=20000)
+            card_elements = cards.locator('[role="option"]')
+            card_elements.first.wait_for(timeout=10000)
+
+            # -- SHOT (a): card-badge -- the suggestion grid showing a
+            #    GitHub card WITH its egress badge before entry --
+            page.screenshot(
+                path=str(SHOTS / f"card-badge-{width}.png"),
+                full_page=False,
+            )
+            assert (SHOTS / f"card-badge-{width}.png").stat().st_size > 20_000
+
+            # -- Find and CLICK the GitHub card (Playwright click) --
+            card_count = card_elements.count()
+            gh_card_idx = None
+            for i in range(card_count):
+                card = card_elements.nth(i)
+                egress = card.locator(".gadget-chip-egress")
+                if egress.count() > 0:
+                    gh_card_idx = i
+                    break
+            assert gh_card_idx is not None, (
+                f"No GitHub provider card in {card_count} suggestions"
+            )
+            gh_card = card_elements.nth(gh_card_idx)
+            gh_card.click()
+
+            # -- The wizard MUST mount --
+            wizard = page.get_by_test_id("provider-wizard-flow")
+            wizard.wait_for(timeout=10000)
+            assert wizard.is_visible(), "Wizard did not mount on GitHub card click"
+
+            # -- Connection card: connected state with account --
+            status_card = page.get_by_test_id("provider-status-card")
+            status_card.wait_for(timeout=10000)
+            assert status_card.get_attribute("data-state") == "connected", (
+                f"Expected connected, got {status_card.get_attribute('data-state')}"
+            )
+            account_el = status_card.locator(".provider-status-account")
+            assert account_el.is_visible(), "Account should be visible"
+            assert account_el.inner_text() == "testuser"
+
+            # -- Discovery list auto-fires on connected --
+            discovery = page.get_by_test_id("provider-discovery")
+            discovery.wait_for(timeout=10000)
+            assert discovery.is_visible(), "Discovery should auto-fire"
+
+            disc_list = page.get_by_test_id("provider-discovery-list")
+            disc_list.wait_for(timeout=10000)
+            disc_items = disc_list.locator('[role="option"]')
+            disc_items.first.wait_for(timeout=10000)
+            disc_count = disc_items.count()
+            assert disc_count >= 1, f"Expected discovery items, got {disc_count}"
+
+            # Egress badge visible in wizard
+            wizard_egress = status_card.locator(".gadget-chip-egress")
+            assert wizard_egress.count() > 0, "Egress badge on connection card"
+
+            # -- SHOT (b): wizard-connected -- connection + discovery --
+            page.screenshot(
+                path=str(SHOTS / f"wizard-connected-{width}.png"),
+                full_page=False,
+            )
+            assert (SHOTS / f"wizard-connected-{width}.png").stat().st_size > 20_000
+
+            # -- Select a repo from the discovery list --
+            first_disc = disc_items.first
+            first_disc.click()
+
+            # -- Wait for scoped state --
+            scoped = page.get_by_test_id("provider-wizard-scoped")
+            scoped.wait_for(timeout=10000)
+            assert scoped.is_visible(), "Wizard should show scoped state"
+
+            # -- Click Test button --
+            test_btn = page.get_by_test_id("provider-test-btn")
+            test_btn.wait_for(timeout=5000)
+            test_btn.click()
+
+            # -- Wait for test display with fixture PR data --
+            # Wait until the display renders with passed state
+            page.wait_for_function(
+                """() => {
+                    const el = document.querySelector(
+                        '[data-testid="provider-test-display"][data-test-state="passed"]'
+                    );
+                    return el !== null;
+                }""",
+                timeout=15000,
+            )
+            test_display = page.get_by_test_id("provider-test-display")
+            assert test_display.is_visible(), "Test display should render"
+
+            # Assert the fixture PR count is visible
+            # _native_test_read for pull_request validates the repo and
+            # returns [{"repository": r} for r in repos] -- 1 entity per repo.
+            test_count = test_display.locator(".provider-test-count")
+            count_text = test_count.inner_text()
+            assert "current" in count_text, (
+                f"Expected PR count in display, got: {count_text}"
+            )
+
+            # Assert representative entities render with #<n> <title> (<state>)
+            test_entities = test_display.locator(".provider-test-entity")
+            assert test_entities.count() >= 1, "Representative PRs should render"
+            import re as _re
+            for ei in range(test_entities.count()):
+                row_text = test_entities.nth(ei).inner_text()
+                assert "Unknown" not in row_text, (
+                    f"PR row must not contain 'Unknown': {row_text!r}"
+                )
+                assert _re.search(r"#\d+\s+.+\(\w+\)", row_text), (
+                    f"PR row must match '#<n> <title> (<state>)': {row_text!r}"
+                )
+
+            # Assert egress badge on test results
+            test_egress = test_display.locator(".gadget-chip-egress")
+            assert test_egress.count() > 0, "Egress badge on test results"
+
+            # -- SHOT (c): wizard-test -- test display with PR data --
+            page.screenshot(
+                path=str(SHOTS / f"wizard-test-{width}.png"),
+                full_page=False,
+            )
+            assert (SHOTS / f"wizard-test-{width}.png").stat().st_size > 20_000
+
+            # Overflow zero
+            _assert_clean(page, errors)
+
+            # ── DEGRADED VARIANT ──────────────────────────────────
+            # Return to suggestion cards, then re-enter with degraded auth
+
+            done_btn = page.get_by_test_id("provider-wizard-done")
+            done_btn.click()
+
+            # Wait for suggestion cards to reappear
+            cards2 = page.get_by_test_id("setup-suggestion-cards")
+            cards2.wait_for(timeout=10000)
+
+            # Flip fixture to unauthenticated
+            _write_fixture(fixture_path, auth=_GH_AUTH_UNAUTH)
+
+            # Find and click a GitHub card again (may need to deselect
+            # the previously selected one, or click a different one)
+            card_elements2 = cards2.locator('[role="option"]')
+            card_elements2.first.wait_for(timeout=10000)
+            gh_card_idx2 = None
+            for i in range(card_elements2.count()):
+                card = card_elements2.nth(i)
+                egress = card.locator(".gadget-chip-egress")
+                if egress.count() > 0:
+                    # Check if this is a different card (not already selected)
+                    sel = card.get_attribute("aria-selected")
+                    if sel != "true":
+                        gh_card_idx2 = i
+                        break
+            if gh_card_idx2 is None:
+                # All GitHub cards are selected; click the first one to
+                # deselect, then re-select to re-enter wizard
+                for i in range(card_elements2.count()):
+                    card = card_elements2.nth(i)
+                    egress = card.locator(".gadget-chip-egress")
+                    if egress.count() > 0:
+                        # Deselect
+                        card.click()
+                        page.wait_for_timeout(300)
+                        # Re-select to trigger wizard
+                        card.click()
+                        gh_card_idx2 = i
+                        break
+
+            assert gh_card_idx2 is not None, "Could not find a GitHub card"
+            if gh_card_idx2 is not None:
+                gh_card2 = card_elements2.nth(gh_card_idx2)
+                if gh_card2.get_attribute("aria-selected") != "true":
+                    gh_card2.click()
+
+            # Wizard should mount again
+            wizard2 = page.get_by_test_id("provider-wizard-flow")
+            wizard2.wait_for(timeout=10000)
+
+            # Connection card should show owner_action_required
+            status_card2 = page.get_by_test_id("provider-status-card")
+            status_card2.wait_for(timeout=10000)
+
+            # Wait for the status to reflect the degraded state
+            page.wait_for_function(
+                """() => {
+                    const el = document.querySelector(
+                        '[data-testid="provider-status-card"]'
+                    );
+                    return el && el.getAttribute('data-state') === 'owner_action_required';
+                }""",
+                timeout=10000,
+            )
+            assert status_card2.get_attribute("data-state") == "owner_action_required"
+
+            # Recovery card should name gh auth login
+            recovery = page.get_by_test_id("provider-recovery")
+            recovery.wait_for(timeout=5000)
+            assert recovery.is_visible(), "Recovery card should be visible"
+            recovery_cmd = recovery.locator(".provider-recovery-command")
+            assert "gh auth login" in recovery_cmd.inner_text()
+
+            # Recheck button should be visible
+            recheck_btn = page.get_by_test_id("provider-recheck-btn")
+            assert recheck_btn.is_visible(), "Recheck button should be visible"
+
+            # -- SHOT (d): wizard-degraded --
+            page.screenshot(
+                path=str(SHOTS / f"wizard-degraded-{width}.png"),
+                full_page=False,
+            )
+            assert (SHOTS / f"wizard-degraded-{width}.png").stat().st_size > 20_000
+
+            _assert_clean(page, errors)
+
+            browser.close()
+    finally:
+        server.stop()
+        reset_database()
+
+
+# ── Leg 4: THE REAL-METAL LEG ────────────────────────────────────
+
+
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.skipif(
@@ -1013,7 +1295,8 @@ def test_real_metal(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Real gh against karolswdev/HoldSpeak: probe, discover, validate,
-    one live snapshot test. NO baseline/activation -- read-only."""
+    one live snapshot test, and UI-driven wizard with real PR data.
+    NO baseline/activation -- read-only."""
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -1063,41 +1346,122 @@ def test_real_metal(
             page.on("pageerror", lambda error: errors.append(f"page: {error}"))
 
             _init_desk(page, url)
+            _seed_desk_facts(tmp_path)
+            _open_interview(page, url)
 
-            # -- 1. Probe connection --
-            conn = _api(page, "GET", "/api/providers/github/connection")
-            assert conn.get("state") == "connected", (
-                f"Real gh should be connected: {conn}"
-            )
-            account = conn.get("display", {}).get("account", "")
-            assert account, "Real probe should return an account"
+            # -- Answer outcome + signals --
+            q_outcome = page.get_by_test_id("setup-question-outcome")
+            q_outcome.wait_for(timeout=15000)
+            q_outcome.locator("textarea").fill(OUTCOME_TEXT)
+            q_outcome.locator("textarea").press("Enter")
 
-            # -- 2. Discover repos (bounded) --
-            discover = _api(
-                page, "GET", "/api/providers/github/discover?limit=5",
-            )
-            assert discover.get("state") in ("ready", "partial"), (
-                f"Discovery should work: {discover}"
-            )
-            items = discover.get("items", [])
-            assert len(items) >= 1, (
-                "Authenticated user should have at least one repo"
-            )
+            q_signals = page.get_by_test_id("setup-question-signals")
+            q_signals.wait_for(timeout=15000)
+            q_signals.locator("textarea").fill(SIGNALS_TEXT)
+            q_signals.locator("textarea").press("Enter")
 
-            # -- 3. Validate karolswdev/HoldSpeak --
-            validate = _api(
-                page, "POST", "/api/providers/github/validate-repo",
-                {"owner_repo": "karolswdev/HoldSpeak"},
-            )
-            assert validate.get("valid") is True, (
-                f"karolswdev/HoldSpeak should validate: {validate}"
-            )
+            # -- Wait for suggestion cards --
+            cards = page.get_by_test_id("setup-suggestion-cards")
+            cards.wait_for(timeout=20000)
+            card_elements = cards.locator('[role="option"]')
+            card_elements.first.wait_for(timeout=10000)
 
-            # -- 4. Live snapshot test with real PR data --
-            # Create a temporary watch to test via the WatchService
+            # -- Find and click a GitHub card --
+            card_count = card_elements.count()
+            gh_card_idx = None
+            for i in range(card_count):
+                card = card_elements.nth(i)
+                egress = card.locator(".gadget-chip-egress")
+                if egress.count() > 0:
+                    gh_card_idx = i
+                    break
+            assert gh_card_idx is not None, (
+                f"No GitHub card found with real gh -- got {card_count} cards"
+            )
+            gh_card = card_elements.nth(gh_card_idx)
+            gh_card.click()
+
+            # -- Wizard mounts --
+            wizard = page.get_by_test_id("provider-wizard-flow")
+            wizard.wait_for(timeout=15000)
+
+            # -- Connection card: real connected state --
+            status_card = page.get_by_test_id("provider-status-card")
+            status_card.wait_for(timeout=15000)
+            assert status_card.get_attribute("data-state") == "connected"
+            account_el = status_card.locator(".provider-status-account")
+            account_el.wait_for(timeout=5000)
+            account = account_el.inner_text()
+            assert account, "Real connection should show account"
+
+            # -- Discovery list with real repos --
+            discovery = page.get_by_test_id("provider-discovery")
+            discovery.wait_for(timeout=15000)
+            disc_list = page.get_by_test_id("provider-discovery-list")
+            disc_list.wait_for(timeout=15000)
+            disc_items = disc_list.locator('[role="option"]')
+            disc_items.first.wait_for(timeout=15000)
+            disc_count = disc_items.count()
+            assert disc_count >= 1, f"Real discovery should list repos, got {disc_count}"
+
+            # -- Typed-repo fallback: validate karolswdev/HoldSpeak --
+            typed = page.get_by_test_id("provider-typed-repo")
+            typed_input = typed.locator("input")
+            typed_input.fill("karolswdev/HoldSpeak")
+            typed.locator("button").filter(has_text="Use this repo").click()
+
+            # -- Wait for scoped state --
+            scoped = page.get_by_test_id("provider-wizard-scoped")
+            scoped.wait_for(timeout=15000)
+
+            # -- Click Test --
+            test_btn = page.get_by_test_id("provider-test-btn")
+            test_btn.wait_for(timeout=5000)
+            test_btn.click()
+
+            # -- Wait for test display with real PR data (passed state) --
+            page.wait_for_function(
+                """() => {
+                    const el = document.querySelector(
+                        '[data-testid="provider-test-display"]'
+                            + '[data-test-state="passed"]'
+                    );
+                    return el !== null;
+                }""",
+                timeout=30000,
+            )
+            test_display = page.get_by_test_id("provider-test-display")
+
+            # Assert real PR data rendered with #<n> <title> (<state>)
+            test_count = test_display.locator(".provider-test-count")
+            count_text = test_count.inner_text()
+            # Real repo should have at least 1 PR
+            assert "current" in count_text, f"Test count: {count_text}"
+
+            # The proposal test snapshot queries state=open by default.
+            # karolswdev/HoldSpeak may have 0 open PRs (honest truth).
+            # Verify entity rows when present; the fixture legs prove
+            # the "#<n> <title> (<state>)" rendering unconditionally.
+            test_entities = test_display.locator(".provider-test-entity")
+            pr_count = test_entities.count()
+            import re as _re
+            if pr_count > 0:
+                for ei in range(pr_count):
+                    row_text = test_entities.nth(ei).inner_text()
+                    assert "Unknown" not in row_text, (
+                        f"Real-metal PR row must not contain 'Unknown': "
+                        f"{row_text!r}"
+                    )
+                    assert _re.search(r"#\d+\s+.+\(\w+\)", row_text), (
+                        f"Real-metal PR row must match "
+                        f"'#<n> <title> (<state>)': {row_text!r}"
+                    )
+
+            # Second proof: test through WatchService with state=all
+            # to guarantee representative entities on the real repo.
             from holdspeak.db import get_database
             db = get_database()
-            watch_id = "cw_metal_test_001"
+            watch_id = "cw_metal_all_001"
             now_iso = datetime.now().isoformat()
             with db._connection() as conn_db:
                 conn_db.execute(
@@ -1106,45 +1470,31 @@ def test_real_metal(
                         state, revision, created_at, updated_at
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
-                        watch_id,
-                        "Real metal test",
-                        "gh",
-                        "pull_requests",
+                        watch_id, "Real metal all",
+                        "gh", "pull_requests",
                         json.dumps({
                             "repository": "karolswdev/HoldSpeak",
-                            "state": "all",
-                            "limit": 5,
+                            "state": "all", "limit": 5,
                         }),
-                        "active",
-                        1,
-                        now_iso,
-                        now_iso,
+                        "active", 1, now_iso, now_iso,
                     ),
                 )
-
-            test_result = _api(
+            watch_test = _api(
                 page, "POST", f"/api/watches/{watch_id}/test",
             )
-            assert test_result.get("test_state") == "passed", (
-                f"Real watch test should pass: {test_result}"
-            )
-            pr_count = test_result.get("result", {}).get("entity_count", 0)
-            assert pr_count >= 1, (
-                f"karolswdev/HoldSpeak should have PRs, got {pr_count}"
-            )
-            representative = test_result.get(
+            assert watch_test.get("test_state") == "passed"
+            watch_entities = watch_test.get(
                 "result", {},
             ).get("representative_entities", [])
-            assert len(representative) >= 1, "Should have representative PRs"
+            assert len(watch_entities) >= 1, (
+                "karolswdev/HoldSpeak (state=all) must have PRs"
+            )
+            first_pr = watch_entities[0]
+            assert "id" in first_pr, f"PR needs id: {first_pr.keys()}"
+            assert "title" in first_pr, f"PR needs title: {first_pr.keys()}"
+            assert "state" in first_pr, f"PR needs state: {first_pr.keys()}"
 
-            # Verify PR shape (normalized: id, title, url, state, checks, ...)
-            first_pr = representative[0]
-            assert "id" in first_pr, f"PR should have an id: {first_pr.keys()}"
-            assert "title" in first_pr, f"PR should have a title: {first_pr.keys()}"
-
-            # -- SHOT: real metal result --
-            # Render the test result data on the glass
-            _open_interview(page, url)
+            # -- SHOT: real-metal wizard with real PR data --
             page.screenshot(
                 path=str(SHOTS / "real-metal-1440.png"), full_page=False,
             )
@@ -1152,12 +1502,12 @@ def test_real_metal(
 
             _assert_clean(page, errors)
 
-            # Report what the real repo returned
+            # Report
             print(f"\n=== REAL-METAL REPORT ===")
             print(f"Account: {account}")
-            print(f"Discovery items: {len(items)}")
-            print(f"PR count (karolswdev/HoldSpeak, all, limit=5): {pr_count}")
-            print(f"First PR: #{first_pr.get('id')} {first_pr.get('title')}")
+            print(f"Discovery items: {disc_count}")
+            print(f"PR count in test display: {pr_count}")
+            print(f"Test count text: {count_text}")
             print(f"=========================\n")
 
             browser.close()
