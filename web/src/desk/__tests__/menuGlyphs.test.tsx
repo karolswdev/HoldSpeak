@@ -171,13 +171,13 @@ describe("variant matrix — root attribute gating (HS-148-02)", () => {
 });
 
 describe("Go menu grouping separator (HS-148-02)", () => {
-  it("Go menu entries have the 4/9 app/tool group split with a separator", () => {
+  it("Go menu entries have the 4/10 app/tool group split with a separator", () => {
     const goVerbs = menuVerbs("go");
     // First 4 should be "app" group, rest "tool" group.
     const appVerbs = goVerbs.filter((v) => v.group === "app");
     const toolVerbs = goVerbs.filter((v) => v.group === "tool");
     expect(appVerbs.length).toBe(4);
-    expect(toolVerbs.length).toBe(9);
+    expect(toolVerbs.length).toBe(10);
     // Verify the order: first 4 are app, rest are tool.
     expect(goVerbs.slice(0, 4).every((v) => v.group === "app")).toBe(true);
     expect(goVerbs.slice(4).every((v) => v.group === "tool")).toBe(true);

@@ -252,7 +252,7 @@ describe("Project Memory", () => {
                 {
                   source_ref: "artifact:a1",
                   title: "Rollout checklist",
-                  snippet: "Owners and gates",
+                  snippet: "<mark>Owners</mark> and gates",
                   kind: "artifact",
                   retrieval_origin: "relationship",
                   related_to: "meeting:m1",
@@ -275,6 +275,7 @@ describe("Project Memory", () => {
     fireEvent.click(screen.getByRole("button", { name: "Search" }));
 
     expect(await screen.findByText("Rollout checklist")).toBeTruthy();
+    expect(screen.getByText("Owners").tagName).toBe("MARK");
     expect(screen.getByText("Related · meeting artifact")).toBeTruthy();
   });
 

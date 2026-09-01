@@ -277,6 +277,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     description: "Search connected evidence across the Desk or within a Project.",
     glyph: "▤",
     href: "/project-memory",
+    group: "tool",
     surface: {
       eyebrow: "Long memory",
       minW: 640,

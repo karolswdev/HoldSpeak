@@ -72,6 +72,7 @@ describe("DeskOS application manifest", () => {
       description: "Search connected evidence across the Desk or within a Project.",
       glyph: "▤",
       href: "/project-memory",
+      group: "tool",
     });
     expect(projectMemory!.surface).toBeDefined();
     expect(projectMemory!.surface!.eyebrow).toBe("Long memory");

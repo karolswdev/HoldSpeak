@@ -285,6 +285,24 @@ function SinceLastMeeting({ receipt }: { receipt: SinceLastMeetingResponse }) {
   );
 }
 
+/** Render the trusted FTS marker grammar without injecting result HTML. */
+function MemorySnippet({ value }: { value: string }) {
+  const parts = value.split(/(<mark>.*?<\/mark>)/gi);
+  return (
+    <>
+      {parts.map((part, index) =>
+        /^<mark>.*<\/mark>$/i.test(part) ? (
+          <mark className="project-memory-highlight" key={index}>
+            {part.replace(/^<mark>|<\/mark>$/gi, "")}
+          </mark>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
 /* ── Orientation band (WEB-NOW-001 P1 subset, WEB-LC-001/002) ── */
 
 /** Humanize a machine token for the glass: underscores to spaces,
@@ -765,7 +783,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
             <SurfaceRow
               key={String(hit.source_ref)}
               title={String(hit.title || sourceLabel(String(hit.source_ref)))}
-              detail={String(hit.snippet || "")}
+              detail={<MemorySnippet value={String(hit.snippet || "")} />}
               meta={
                 <>
                   <span className="desk-chip quiet">
