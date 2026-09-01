@@ -90,6 +90,19 @@ ever saw pixels:
   web/src/features/desk-chat/` empty. ZERO unexplained branch-new.
 - Churned old-phase PNGs restored to HEAD (213); one stray untracked
   phase-152 shot PARKED (never deleted) to the session scratchpad.
+- **CI (PR #525, run 33524809739):** Linux Smoke, Route screenshots,
+  Web Quality, Integration (macOS) PASS first try. E2E (macOS): 4
+  failed / 103 passed — hs144_door BASELINE; hs143_assignments[393],
+  hs153_practice, hs159_interview_walk[1440] all PROVEN FLAKES
+  (local isolation ×2: 3 passed twice; test files untouched since
+  main; the hs159 walk failed only the reload-resume wait on one
+  viewport while [393] and every other 158/159/160/161 leg passed).
+  Unit (serial, 5:39:57): 28 failed / 7196 passed — 25 of 28 in
+  main's baseline families; the 3 candidates
+  (scheduled_recording_conductor ×2 — the known sleep-race family —
+  and workbench deadline-expiry) PROVEN FLAKES (isolation ×2 green
+  in 2.3s; files untouched since main). ZERO unexplained branch-new
+  on CI, matching the local sweep.
 
 ## Debts carried forward (named)
 

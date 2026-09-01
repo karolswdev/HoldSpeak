@@ -38,3 +38,12 @@ transaction, the 159 M-1 shape).
 ## Notes / open questions
 
 - P3 "The Update Factory" charters after the merge — and Gate A's dogfood clock starts mattering: the owner's two real EverDriven Projects want the interview + GitHub watches + Delta reviews IN USE.
+
+## CI sweep record (2026-09-01)
+
+Run 33524809739: 4 jobs green first try; E2E 4 failed (1 baseline +
+3 proven flakes), Unit 28 failed (25 baseline + 3 proven flakes).
+Proof standard per candidate: local isolation ×2 green + touching
+files untouched since main (`git log origin/main..HEAD -- <paths>`
+empty). Zero unexplained branch-new — CI agrees with the local
+close sweep. Final head carries this record; merge gates on its run.
