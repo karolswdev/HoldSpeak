@@ -60,11 +60,18 @@
   padding: 0;
 }
 
+/* Queue row text: graceful ellipsis (defect 2) */
+.review-queue-row-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
+
 .review-queue-materiality {
-  font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 500;
-  color: var(--text-faint);
+  white-space: nowrap;
 }
 
 /* ── Comparison layout ── */
@@ -162,10 +169,10 @@
   padding: 4px 0;
 }
 
-/* ── Verb bar ── */
+/* ── Verb bar (defect 5: one coherent row, no wrapping) ── */
 .review-verb-bar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 6px;
   padding: 4px 0;

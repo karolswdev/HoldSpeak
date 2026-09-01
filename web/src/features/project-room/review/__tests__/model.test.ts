@@ -13,6 +13,12 @@ import {
   decodeRoomReviewData,
   groupProposalsByKind,
   kindLabel,
+  proposalAnchor,
+  humanFields,
+  machineAttrs,
+  renderValue,
+  materialityLevel,
+  materialityTone,
   type Proposal,
 } from "../model";
 
@@ -257,5 +263,158 @@ describe("kindLabel", () => {
     expect(kindLabel("conflict")).toBe("Conflicts");
     expect(kindLabel("coverage_degraded")).toBe("Degraded coverage");
     expect(kindLabel("observation_attention")).toBe("Observations");
+  });
+});
+
+/* ── Beauty-pass utilities (HS-160-06 defects 1-7) ── */
+
+describe("proposalAnchor (defect 1: plain-words anchor)", () => {
+  it("returns a plain-words headline for risk_attention", () => {
+    const p = decodeProposal(WIRE_PROPOSAL_RISK);
+    const anchor = proposalAnchor(p);
+    expect(anchor.headline).toBe("Overdue commitment needs attention");
+    expect(anchor.headline).not.toContain("risk_attention");
+    expect(anchor.headline).not.toContain("action_item:");
+  });
+
+  it("extracts subject from patch text field", () => {
+    const p = decodeProposal({
+      ...WIRE_PROPOSAL_RISK,
+      patch_json: '{"text":"Update PCI compliance docs","card_id":"ai-01","lane":"overdue"}',
+    });
+    const anchor = proposalAnchor(p);
+    expect(anchor.subject).toBe("Update PCI compliance docs");
+  });
+
+  it("falls back to target_ref tail when no text in patch", () => {
+    const p = decodeProposal({
+      ...WIRE_PROPOSAL_RISK,
+      patch_json: '{"lane":"overdue"}',
+    });
+    const anchor = proposalAnchor(p);
+    expect(anchor.subject).toBe("ai-01");
+  });
+
+  it("returns review_flag headline for review_flag kind", () => {
+    const p = decodeProposal(WIRE_PROPOSAL_REVIEW_FLAG);
+    const anchor = proposalAnchor(p);
+    expect(anchor.headline).toBe("Decision due for review");
+    expect(anchor.headline).not.toContain("review_flag");
+  });
+
+  it("returns conflict headline for conflict kind", () => {
+    const p = decodeProposal(WIRE_PROPOSAL_CONFLICT);
+    const anchor = proposalAnchor(p);
+    expect(anchor.headline).toBe("Conflicting sources detected");
+  });
+});
+
+describe("humanFields (defect 4: human field labels, machine ids hidden)", () => {
+  it("returns human fields in display order, skipping machine ids", () => {
+    const fields = humanFields({
+      card_id: "ai-01",
+      text: "Update PCI docs",
+      owner: "karol",
+      due: "2026-08-17",
+      lane: "overdue",
+    });
+    // Machine field card_id must be absent
+    expect(fields.find((f) => f.key === "card_id")).toBeUndefined();
+    // Human fields present in order
+    const keys = fields.map((f) => f.key);
+    expect(keys).toEqual(["text", "owner", "due", "lane"]);
+    // Labels are humanized
+    expect(fields[0].label).toBe("Text");
+    expect(fields[1].label).toBe("Owner");
+  });
+
+  it("omits _id and _ref keys", () => {
+    const fields = humanFields({
+      decision_id: "dec-01",
+      text: "Adopt event sourcing",
+      source_ref: "m-delta-001",
+    });
+    expect(fields.find((f) => f.key === "decision_id")).toBeUndefined();
+    expect(fields.find((f) => f.key === "source_ref")).toBeUndefined();
+    expect(fields).toHaveLength(1);
+    expect(fields[0].key).toBe("text");
+  });
+});
+
+describe("machineAttrs (defect 4: machine ids in data-attrs)", () => {
+  it("extracts machine keys as data-attrs", () => {
+    const attrs = machineAttrs({
+      card_id: "ai-01",
+      text: "Update PCI docs",
+      decision_id: "dec-01",
+    });
+    expect(attrs["data-card-id"]).toBe("ai-01");
+    expect(attrs["data-decision-id"]).toBe("dec-01");
+    // Non-machine keys not included
+    expect(attrs["data-text"]).toBeUndefined();
+  });
+});
+
+describe("renderValue (defect 3: nested object rendering)", () => {
+  it("renders strings as-is", () => {
+    expect(renderValue("hello")).toBe("hello");
+  });
+
+  it("renders numbers", () => {
+    expect(renderValue(0.8)).toBe("0.8");
+  });
+
+  it("renders null/undefined as empty string", () => {
+    expect(renderValue(null)).toBe("");
+    expect(renderValue(undefined)).toBe("");
+  });
+
+  it("renders arrays joined with commas", () => {
+    expect(renderValue(["a", "b", "c"])).toBe("a, b, c");
+  });
+
+  it("renders {code, message} objects as 'code: message'", () => {
+    expect(renderValue({ code: "E001", message: "Not found" })).toBe("E001: Not found");
+  });
+
+  it("renders generic objects as compact key:value", () => {
+    expect(renderValue({ lane: "overdue", score: 0.8 })).toBe("lane: overdue, score: 0.8");
+  });
+
+  it("never produces [object Object]", () => {
+    const result = renderValue({ nested: { deep: true } });
+    expect(result).not.toContain("[object Object]");
+    expect(result).toContain("nested:");
+  });
+});
+
+describe("materialityLevel + materialityTone (defect 6)", () => {
+  it("classifies >= 0.7 as High with warn tone", () => {
+    expect(materialityLevel("0.8")).toBe("High");
+    expect(materialityLevel("0.7")).toBe("High");
+    expect(materialityLevel("1.0")).toBe("High");
+    expect(materialityTone("High")).toBe("warn");
+  });
+
+  it("classifies >= 0.45 as Medium with no tone", () => {
+    expect(materialityLevel("0.5")).toBe("Medium");
+    expect(materialityLevel("0.45")).toBe("Medium");
+    expect(materialityTone("Medium")).toBeUndefined();
+  });
+
+  it("classifies < 0.45 as Low with no tone", () => {
+    expect(materialityLevel("0.3")).toBe("Low");
+    expect(materialityLevel("0")).toBe("Low");
+    expect(materialityTone("Low")).toBeUndefined();
+  });
+
+  it("handles NaN gracefully", () => {
+    expect(materialityLevel("not-a-number")).toBe("Low");
+  });
+
+  it("handles numeric input", () => {
+    expect(materialityLevel(0.8)).toBe("High");
+    expect(materialityLevel(0.5)).toBe("Medium");
+    expect(materialityLevel(0.2)).toBe("Low");
   });
 });

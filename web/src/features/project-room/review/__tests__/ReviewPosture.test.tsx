@@ -106,7 +106,7 @@ function reviewWindowResponse() {
         target_ref: "action_item:ai-01",
         title: "risk_attention: action_item:ai-01",
         rationale: "Overdue follow-through requires risk attention",
-        patch_json: '{"lane":"overdue","stale_score":"0.8"}',
+        patch_json: '{"card_id":"ai-01","text":"Update PCI compliance docs","owner":"karol","due":"2026-08-17","lane":"overdue"}',
         materiality: "0.8",
         producer_kind: "",
         lifecycle: "open",
@@ -117,7 +117,7 @@ function reviewWindowResponse() {
         target_ref: "decision:d-01",
         title: "review_flag: decision:d-01",
         rationale: "Accepted decision is due for periodic review",
-        patch_json: '{"review_status":"due"}',
+        patch_json: '{"decision_id":"d-01","text":"Adopt event sourcing","review_status":"due"}',
         materiality: "0.5",
         producer_kind: "",
         lifecycle: "open",
@@ -328,5 +328,226 @@ describe("Room review section decode", () => {
     // When pending > 0, the review verb appears
     const btn = await screen.findByTestId("review-verb");
     expect(btn.textContent).toBe("Review changes");
+  });
+});
+
+/* ── Beauty-pass component tests (HS-160-06 defects 1-7) ── */
+
+function enterReviewPosture() {
+  apiFetch.mockImplementation((url: string) => {
+    if (url.includes("/room")) {
+      return Promise.resolve(roomResponse({
+        review: {
+          state: "ok",
+          pending_count: 3,
+          open_review_id: "prev_r1",
+          last_accepted_at: null,
+        },
+      }));
+    }
+    if (url.includes("/reviews") && !url.includes("/decide") && !url.includes("/accept")) {
+      return Promise.resolve(reviewWindowResponse());
+    }
+    if (url.includes("/decide")) {
+      return Promise.resolve({ verb: "defer", lifecycle: "deferred" });
+    }
+    return Promise.resolve(detailResponse(url));
+  });
+}
+
+describe("Plain-words card anchor (defect 1)", () => {
+  it("shows human headline instead of machine 'kind: ref' string", async () => {
+    enterReviewPosture();
+    render(<WindowHarness scope="project:p1" />);
+    const btn = await screen.findByTestId("review-verb");
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("review-posture")).toBeTruthy();
+    });
+
+    // The card label should be a human headline, not the raw machine title
+    const detail = screen.getByTestId("review-detail");
+    // Check the ChoiceCardShell label is human-readable
+    const label = detail.querySelector(".surface-choice-card-label");
+    expect(label).toBeTruthy();
+    expect(label!.textContent).toBe("Overdue commitment needs attention");
+    expect(label!.textContent).not.toContain("risk_attention");
+    expect(label!.textContent).not.toContain("action_item:");
+  });
+
+  it("shows the human subject as the card description", async () => {
+    enterReviewPosture();
+    render(<WindowHarness scope="project:p1" />);
+    const btn = await screen.findByTestId("review-verb");
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("review-posture")).toBeTruthy();
+    });
+
+    const detail = screen.getByTestId("review-detail");
+    const desc = detail.querySelector(".surface-choice-card-desc");
+    expect(desc).toBeTruthy();
+    // Subject extracted from patch text field
+    expect(desc!.textContent).toBe("Update PCI compliance docs");
+  });
+});
+
+describe("Human queue rows (defect 2)", () => {
+  it("shows human text in queue rows, not truncated kind strings", async () => {
+    enterReviewPosture();
+    render(<WindowHarness scope="project:p1" />);
+    const btn = await screen.findByTestId("review-verb");
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId("review-queue-item");
+      expect(items.length).toBeGreaterThanOrEqual(1);
+    });
+
+    const items = screen.getAllByTestId("review-queue-item");
+    // First item should show the patch text, not the kind
+    const firstText = items[0].querySelector(".review-queue-row-text");
+    expect(firstText).toBeTruthy();
+    expect(firstText!.textContent).toBe("Update PCI compliance docs");
+    expect(firstText!.textContent).not.toContain("risk_a");
+  });
+});
+
+describe("Hidden machine keys (defect 4)", () => {
+  it("omits card_id from visible field rows", async () => {
+    enterReviewPosture();
+    render(<WindowHarness scope="project:p1" />);
+    const btn = await screen.findByTestId("review-verb");
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("review-comparison")).toBeTruthy();
+    });
+
+    // The comparison should not render card_id as a visible field label
+    const fieldKeys = screen.getByTestId("review-comparison")
+      .querySelectorAll(".review-field-key");
+    const keyTexts = Array.from(fieldKeys).map((el) => el.textContent);
+    expect(keyTexts).not.toContain("card_id");
+    // But human fields should be present with humanized labels
+    expect(keyTexts).toContain("Text");
+    expect(keyTexts).toContain("Owner");
+    expect(keyTexts).toContain("Lane");
+  });
+
+  it("stores machine ids in data-attrs on the fields container", async () => {
+    enterReviewPosture();
+    render(<WindowHarness scope="project:p1" />);
+    const btn = await screen.findByTestId("review-verb");
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("review-comparison")).toBeTruthy();
+    });
+
+    const fields = screen.getByTestId("review-comparison")
+      .querySelector(".review-comparison-fields");
+    expect(fields).toBeTruthy();
+    expect(fields!.getAttribute("data-card-id")).toBe("ai-01");
+  });
+});
+
+describe("Materiality temperature token (defect 6)", () => {
+  it("shows High/Medium/Low instead of raw float", async () => {
+    enterReviewPosture();
+    render(<WindowHarness scope="project:p1" />);
+    const btn = await screen.findByTestId("review-verb");
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("review-posture")).toBeTruthy();
+    });
+
+    // Queue materiality tokens should show human levels
+    const matTokens = screen.getAllByTestId("review-queue-item")
+      .map((item) => item.querySelector(".review-queue-materiality"));
+    expect(matTokens[0]).toBeTruthy();
+    expect(matTokens[0]!.textContent).toBe("High");
+
+    // The raw float should be in data-materiality
+    expect(matTokens[0]!.getAttribute("data-materiality")).toBe("0.8");
+
+    // High materiality gets warn tone
+    expect(matTokens[0]!.getAttribute("data-tone")).toBe("warn");
+  });
+
+  it("shows Medium for 0.5 materiality with no tone", async () => {
+    enterReviewPosture();
+    render(<WindowHarness scope="project:p1" />);
+    const btn = await screen.findByTestId("review-verb");
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      const items = screen.getAllByTestId("review-queue-item");
+      expect(items.length).toBeGreaterThanOrEqual(2);
+    });
+
+    // Second proposal has materiality 0.5 (Medium)
+    const items = screen.getAllByTestId("review-queue-item");
+    const secondMat = items[1].querySelector(".review-queue-materiality");
+    expect(secondMat).toBeTruthy();
+    expect(secondMat!.textContent).toBe("Medium");
+    expect(secondMat!.getAttribute("data-tone")).toBeNull();
+  });
+});
+
+describe("Single position source (defect 7)", () => {
+  it("header shows position, footer shows disposition tally not position", async () => {
+    enterReviewPosture();
+    render(<WindowHarness scope="project:p1" />);
+    const btn = await screen.findByTestId("review-verb");
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("review-position")).toBeTruthy();
+    });
+
+    // Header position shows "1 / 3"
+    const position = screen.getByTestId("review-position");
+    expect(position.textContent).toContain("1 / 3");
+
+    // Footer tally should NOT duplicate the position
+    const tally = screen.getByTestId("review-footer-tally");
+    expect(tally.textContent).not.toContain("1/3");
+    expect(tally.textContent).not.toContain("REVIEW");
+    // With 3 proposals, 0 decided -> "3 left"
+    expect(tally.textContent).toContain("3 left");
+  });
+});
+
+describe("Defer two-step (defect 5)", () => {
+  it("clicking Defer button arms the defer (shows date + confirm)", async () => {
+    enterReviewPosture();
+    render(<WindowHarness scope="project:p1" />);
+    const btn = await screen.findByTestId("review-verb");
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("review-posture")).toBeTruthy();
+    });
+
+    // Initially, no armed defer UI
+    expect(screen.queryByTestId("review-defer-armed")).toBeNull();
+
+    // Click the Defer button in the inline verb bar (wide layout)
+    const inlineBar = screen.getByTestId("review-verbs-inline");
+    const deferBtn = inlineBar.querySelector("[aria-label^='Defer']") as HTMLElement;
+    expect(deferBtn).toBeTruthy();
+    fireEvent.click(deferBtn!);
+
+    // Armed UI appears in the inline verb bar: date input + confirm
+    await waitFor(() => {
+      const armed = inlineBar.querySelector("[data-testid='review-defer-armed']");
+      expect(armed).toBeTruthy();
+    });
+    expect(inlineBar.querySelector("[data-testid='review-defer-date']")).toBeTruthy();
+    expect(inlineBar.querySelector("[data-testid='review-defer-confirm']")).toBeTruthy();
   });
 });

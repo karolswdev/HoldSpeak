@@ -275,6 +275,144 @@ export function groupProposalsByKind(proposals: Proposal[]): ProposalGroup[] {
   }));
 }
 
+/* ── Human-readable field labels (defect 4) ── */
+
+/** Fields the owner sees in the ledger, with humanized labels. */
+const HUMAN_FIELD_ORDER: readonly { key: string; label: string }[] = [
+  { key: "text", label: "Text" },
+  { key: "owner", label: "Owner" },
+  { key: "due", label: "Due" },
+  { key: "lane", label: "Lane" },
+  { key: "state", label: "State" },
+  { key: "source", label: "Source" },
+  { key: "lifecycle", label: "Lifecycle" },
+  { key: "review_status", label: "Review status" },
+  { key: "relationship", label: "Relationship" },
+  { key: "stale_score", label: "Staleness" },
+];
+
+const HUMAN_FIELD_KEYS = new Set(HUMAN_FIELD_ORDER.map((f) => f.key));
+
+/** Machine-id keys omitted from the visible ledger. */
+const MACHINE_KEYS = new Set([
+  "card_id",
+  "decision_id",
+  "resource_ref",
+  "source_ref",
+  "meeting_id",
+  "project_id",
+  "artifact_id",
+]);
+
+function isMachineKey(key: string): boolean {
+  return MACHINE_KEYS.has(key) || key.endsWith("_id") || key.endsWith("_ref");
+}
+
+/** Ordered human-visible entries from a patch/evidence object. */
+export function humanFields(
+  obj: Record<string, unknown>,
+): { key: string; label: string; value: unknown }[] {
+  const result: { key: string; label: string; value: unknown }[] = [];
+  // First pass: known human fields in display order
+  for (const field of HUMAN_FIELD_ORDER) {
+    if (field.key in obj) {
+      result.push({ key: field.key, label: field.label, value: obj[field.key] });
+    }
+  }
+  // Second pass: remaining non-machine keys
+  for (const key of Object.keys(obj)) {
+    if (HUMAN_FIELD_KEYS.has(key) || isMachineKey(key)) continue;
+    // Unknown but non-machine: show with the key itself as label
+    result.push({ key, label: key, value: obj[key] });
+  }
+  return result;
+}
+
+/** Extract machine-id entries as data-attrs. */
+export function machineAttrs(
+  obj: Record<string, unknown>,
+): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (isMachineKey(key)) {
+      attrs[`data-${key.replace(/_/g, "-")}`] = String(value ?? "");
+    }
+  }
+  return attrs;
+}
+
+/* ── Value rendering for nested objects (defect 3) ── */
+
+/** Render an unknown value to a human-readable string, handling nested objects. */
+export function renderValue(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) return value.map(renderValue).join(", ");
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    // {code, message} shape -> "code: message"
+    if ("code" in obj && "message" in obj) {
+      return `${renderValue(obj.code)}: ${renderValue(obj.message)}`;
+    }
+    // Generic object -> compact key: value lines
+    return Object.entries(obj)
+      .map(([k, v]) => `${k}: ${renderValue(v)}`)
+      .join(", ");
+  }
+  return String(value);
+}
+
+/* ── Materiality humanization (defect 6) ── */
+
+export type MaterialityLevel = "High" | "Medium" | "Low";
+
+export function materialityLevel(raw: string | number): MaterialityLevel {
+  const n = typeof raw === "string" ? parseFloat(raw) : raw;
+  if (isNaN(n)) return "Low";
+  if (n >= 0.7) return "High";
+  if (n >= 0.45) return "Medium";
+  return "Low";
+}
+
+export function materialityTone(level: MaterialityLevel): string | undefined {
+  if (level === "High") return "warn";
+  return undefined; // Medium and Low use default tone
+}
+
+/* ── Proposal human anchor (defect 1) ── */
+
+/**
+ * Build a human-readable anchor from a proposal's kind + patch data.
+ * The card heading becomes a plain-words story (e.g. "Overdue commitment
+ * needs attention") with the human subject (patch text or target name)
+ * as the secondary line.
+ */
+
+const KIND_ANCHORS: Record<ProposalKind, string> = {
+  risk_attention: "Overdue commitment needs attention",
+  review_flag: "Decision due for review",
+  observation_attention: "State transition observed",
+  conflict: "Conflicting sources detected",
+  coverage_degraded: "Coverage source degraded",
+};
+
+export function proposalAnchor(proposal: Proposal): {
+  headline: string;
+  subject: string;
+} {
+  const headline = KIND_ANCHORS[proposal.proposalKind] ?? kindLabel(proposal.proposalKind);
+  // Extract the human subject from patch data
+  const patch = proposal.patchJson;
+  const subject =
+    (patch.text as string) ||
+    (patch.title as string) ||
+    (patch.owner as string) ||
+    proposal.targetRef.split(":").pop() ||
+    "";
+  return { headline, subject };
+}
+
 /* ── Undo stack entry ── */
 
 export type UndoEntry = {
