@@ -50,28 +50,24 @@ not a vibe; OWNER VERDICT closes the face). No writes, no webhooks
 | HS-161-02 | The compilation (§8.1 templates → WatchSpec@1; GitHub joins the interview's inventory) | done | [story-02-the-compilation](./story-02-the-compilation.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-161-03 | The live test + baseline + manual evaluation (into the Delta) | done | [story-03-the-live-test](./story-03-the-live-test.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-161-04 | The wire (provider routes, api-surface) | done | [story-04-the-wire](./story-04-the-wire.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-161-05 | The face (Check connection → Discover → Clarify → Test; auth honesty — shots + verdict) | in-progress | [story-05-the-face](./story-05-the-face.md) | - |
+| HS-161-05 | The face (Check connection → Discover → Clarify → Test; auth honesty — shots + verdict) | done | [story-05-the-face](./story-05-the-face.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-161-06 | The stopwatch walk (< 5:00 measured; + one real-metal leg) | done | [story-06-the-stopwatch-walk](./story-06-the-stopwatch-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-161-07 | The close (gates, S-2 paid, final summary) | in-progress | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
-6/7 flipped; 05 in CONSEQUENCE ROUND. 06 DONE — the stopwatch walk:
-THE NUMBER IS 3.27s against the 300s bar (segments itemized in
-assets/story-06-stopwatch.json — the machinery's cost, the 156
-precedent). Four legs: stopwatch, auth-degraded (SETFLOW-003
-round-trip, state preserved), evaluation (the compounding proof ON
-GLASS — the Delta face renders the watch.transition evidence-linked),
-and the REAL-METAL leg (real gh, account karolswdev, 5 PRs from
-karolswdev/HoldSpeak, read-only, skip-clean in isolated HOME).
-Deterministic ×2. The fixture seam: a typed default-off gh_runner
-constructor param on MeetingWebServer — everything above the runner
-stays real. S-2 PAID (8c12ad12): decide+create_item one transaction,
-fault-proven. THE ORCHESTRATOR'S SHOT REVIEW FOUND THE GAP: 05's
-ProviderWizardStep was built + tested but MOUNTED NOWHERE — the
-wizard never renders in the real flow. 05's consequence round mounts
-it, reshoots the wizard states, then THE OWNER'S VERDICT. Chain:
-05(mount → reshoot → verdict) → 07 close. All standing laws carry.
+6/7 DONE + 05 CLOSED ON THE OWNER'S VERDICT (PASS — close it, first
+presentation of the final set). The face earned it through three
+consequence rounds the orchestrator's shot reviews forced: the mount
+(the wizard was built + tested but rendered NOWHERE), the polish
+(entity labels vs the normalized shape; Query ≠ Conditions; the
+closed owner-grade phrase table), and the real-PR test-read (backend
+placeholders → a real bounded snapshot; "#42 feat: add payment
+gateway (open)" on the glass; the real-metal leg renders ACT-002's
+honest zero against karolswdev/HoldSpeak). The stopwatch measures
+the REAL UI flow: 2.81s. Remaining: 07 the close — full suite
+(running), sweep vs main's 27-name baseline, counsel (running),
+final summary, PR, merge. All standing laws carry.
 
 ## Active risks
 

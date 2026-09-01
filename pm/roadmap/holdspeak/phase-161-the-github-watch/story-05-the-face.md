@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 161
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-161-04 (scaffolding may start against 04's frozen wire)
 - **Unblocks:** HS-161-07
 - **Owner:** unassigned
@@ -55,3 +55,14 @@ privacy novels).
 ## Notes / open questions
 
 - Find the existing egress badge component FIRST (the desk has one — Art III.2 is old law); never build a second species.
+
+## The owner's verdict (2026-09-01)
+
+**PASS — close it** (verbatim, first presentation of the final set).
+The set judged: the 19-shot story-06-shots/ inventory @ 68fa86ee —
+wizard connected/test/degraded, real-metal honest zero, candidate
+badges, Room, Delta, both viewports. Three consequence rounds
+preceded it: the mount (ProviderWizardStep was built+tested but
+rendered nowhere), the polish (entity label vs the normalized shape;
+Query ≠ Conditions; the closed phrase table), and the real-PR
+test-read (backend placeholders → real bounded snapshot).
