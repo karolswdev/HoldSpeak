@@ -21,8 +21,10 @@ import type { UpdateController } from "./useUpdateController";
 import type { ProjectUpdate, UpdateClaim } from "./model";
 import {
   generatorLabel,
+  humanFallbackReason,
   lifecycleLabel,
   lifecycleTone,
+  refChipLabel,
   refKind,
 } from "./model";
 import "./update-posture.css";
@@ -64,9 +66,10 @@ function ClaimChip({
           data-ref={ref}
           data-ref-kind={refKind(ref)}
           title={ref}
+          aria-label={`${refChipLabel(ref)}: ${ref}`}
           onClick={() => onOpen(ref)}
         >
-          {ref.split(":").pop() || ref}
+          {refChipLabel(ref)}
         </button>
       ))}
       {claim.refs.length === 0 ? (
@@ -169,7 +172,7 @@ function UpdateList({
                         data-tone="warn"
                         data-testid="update-fallback-reason"
                       >
-                        {update.fallbackReason}
+                        {humanFallbackReason(update.fallbackReason)}
                       </span>
                     ) : null}
                   </span>
@@ -177,7 +180,7 @@ function UpdateList({
                 cells={
                   <span className="update-list-meta">
                     <span className="surface-token">
-                      REV {update.draftRevision}
+                      Rev {update.draftRevision}
                     </span>
                     {update.publishedAt ? (
                       <span>{humanTime(update.publishedAt)}</span>
@@ -199,18 +202,19 @@ function UpdateList({
 /* ── Generator provenance chip ── */
 
 function ProvenanceLabel({ update }: { update: ProjectUpdate }) {
+  const fallbackLabel = humanFallbackReason(update.fallbackReason);
   return (
     <span className="update-provenance" data-testid="update-provenance">
       <span className="surface-token" data-testid="update-generator-label">
         {generatorLabel(update.generator)}
       </span>
-      {update.fallbackReason ? (
+      {fallbackLabel ? (
         <span
           className="surface-token"
           data-tone="warn"
           data-testid="update-fallback-reason"
         >
-          {update.fallbackReason}
+          {fallbackLabel}
         </span>
       ) : null}
     </span>
@@ -264,7 +268,7 @@ function UpdateEditor({
           {lifecycleLabel(update.lifecycle)}
         </span>
         <ProvenanceLabel update={update} />
-        <span className="surface-token">REV {update.draftRevision}</span>
+        <span className="surface-token">Rev {update.draftRevision}</span>
       </div>
 
       {/* Body editor: editable for drafts, read-only for published */}

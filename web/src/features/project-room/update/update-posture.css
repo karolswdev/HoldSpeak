@@ -1,9 +1,11 @@
-/* HS-162-05 -- Update posture styles: claim chips, editor, list. */
+/* HS-162-05 -- Update posture styles: claim chips, editor, list.
+   Themed with house tokens (bg-primary, text-primary, border-primary)
+   matching the setup-question-textarea species. */
 
 .update-posture {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3, 0.75rem);
+  gap: var(--space-3);
 }
 
 /* ── List ── */
@@ -11,19 +13,24 @@
 .update-list-row {
   display: flex;
   align-items: center;
-  gap: var(--space-2, 0.5rem);
+  gap: var(--space-2);
+  min-width: 0;
 }
 
 .update-list-generator {
-  font-size: var(--text-sm, 0.875rem);
-  color: var(--color-text-secondary, #666);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .update-list-meta {
   display: flex;
   align-items: center;
-  gap: var(--space-2, 0.5rem);
-  font-size: var(--text-sm, 0.875rem);
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  flex-shrink: 0;
 }
 
 /* ── Editor ── */
@@ -31,59 +38,72 @@
 .update-editor {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3, 0.75rem);
+  gap: var(--space-3);
 }
 
 .update-editor-band {
   display: flex;
   align-items: center;
-  gap: var(--space-2, 0.5rem);
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 .update-provenance {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1, 0.25rem);
+  gap: var(--space-1);
+  min-width: 0;
 }
 
 .update-body-editor {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2, 0.5rem);
+  gap: var(--space-2);
 }
 
 .update-body-editor-toolbar {
   display: flex;
   align-items: center;
-  gap: var(--space-2, 0.5rem);
+  gap: var(--space-2);
 }
 
+/* Textarea: themed with house tokens (setup-question-textarea species). */
 .update-body-textarea {
+  flex: 1;
   width: 100%;
   min-height: 8rem;
-  padding: var(--space-2, 0.5rem);
-  font-family: var(--font-mono, "SF Mono", "Fira Code", monospace);
-  font-size: var(--text-sm, 0.875rem);
+  padding: var(--space-2);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size, 0.875rem);
   line-height: 1.5;
-  border: 1px solid var(--color-border, #ccc);
-  border-radius: var(--radius, 0.25rem);
-  background: var(--color-surface, #fff);
-  color: var(--color-text, #111);
   resize: vertical;
 }
 
+.update-body-textarea:focus {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -1px;
+}
+
+/* Published read-only pre: same theme as the textarea well. */
 .update-body-readonly {
-  padding: var(--space-2, 0.5rem);
+  padding: var(--space-2);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
 }
 
 .update-body-pre {
   white-space: pre-wrap;
   word-break: break-word;
-  font-family: var(--font-mono, "SF Mono", "Fira Code", monospace);
-  font-size: var(--text-sm, 0.875rem);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size, 0.875rem);
   line-height: 1.5;
   margin: 0;
+  color: var(--text-primary);
 }
 
 /* ── Claims ── */
@@ -91,17 +111,17 @@
 .update-claims {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2, 0.5rem);
+  gap: var(--space-2);
 }
 
 .update-claims-section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1, 0.25rem);
+  gap: var(--space-1);
 }
 
 .update-claims-section-label {
-  font-size: var(--text-xs, 0.75rem);
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -109,31 +129,31 @@
 .update-claims-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1, 0.25rem);
+  gap: var(--space-1);
 }
 
 .update-claim-chip {
   display: inline-flex;
   align-items: baseline;
-  gap: var(--space-1, 0.25rem);
+  gap: var(--space-1);
   flex-wrap: wrap;
-  padding: var(--space-1, 0.25rem) 0;
-  font-size: var(--text-sm, 0.875rem);
+  padding: var(--space-1) 0;
+  font-size: var(--text-sm);
 }
 
 .update-claim-chip.is-unverified {
-  border-left: 3px solid var(--color-warn, #e8a12f);
-  padding-left: var(--space-2, 0.5rem);
+  border-left: 3px solid var(--warn);
+  padding-left: var(--space-2);
 }
 
 .update-claim-marker {
-  color: var(--color-warn, #e8a12f);
+  color: var(--warn);
   font-weight: 600;
-  font-size: var(--text-xs, 0.75rem);
+  font-size: var(--text-xs);
 }
 
 .update-claim-text {
-  color: var(--color-text, #111);
+  color: var(--text-primary);
 }
 
 .update-claim-ref {
@@ -150,5 +170,5 @@
 .update-draft-model-action {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1, 0.25rem);
+  gap: var(--space-1);
 }

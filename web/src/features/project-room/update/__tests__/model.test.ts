@@ -6,8 +6,10 @@ import {
   decodeClaim,
   decodeUpdate,
   generatorLabel,
+  humanFallbackReason,
   lifecycleLabel,
   lifecycleTone,
+  refChipLabel,
   refKind,
   sectionLabel,
 } from "../model";
@@ -203,5 +205,62 @@ describe("sectionLabel", () => {
   });
   it("labels unknown sections with humanization", () => {
     expect(sectionLabel("some_new_section")).toBe("Some new section");
+  });
+});
+
+describe("refChipLabel", () => {
+  it("labels action_item refs as 'Open action item'", () => {
+    expect(refChipLabel("action_item:ai-01")).toBe("Open action item");
+  });
+  it("labels decision refs as 'Open decision'", () => {
+    expect(refChipLabel("decision:d-01")).toBe("Open decision");
+  });
+  it("labels meeting refs as 'Open meeting'", () => {
+    expect(refChipLabel("meeting:m-01")).toBe("Open meeting");
+  });
+  it("labels artifact refs as 'Open artifact'", () => {
+    expect(refChipLabel("artifact:art-01")).toBe("Open artifact");
+  });
+  it("labels risk refs as 'Open risk'", () => {
+    expect(refChipLabel("risk:r-01")).toBe("Open risk");
+  });
+  it("labels milestone refs as 'Open milestone'", () => {
+    expect(refChipLabel("milestone:ms-01")).toBe("Open milestone");
+  });
+  it("labels unknown prefix as 'Open'", () => {
+    expect(refChipLabel("blah:x")).toBe("Open");
+  });
+  it("labels bare string as 'Open'", () => {
+    expect(refChipLabel("nocolon")).toBe("Open");
+  });
+  it("never returns a raw hash id", () => {
+    const label = refChipLabel("action_item:pitem_eea3e49373694e4ab9f86fa8efd8c53e");
+    expect(label).toBe("Open action item");
+    expect(label).not.toMatch(/[0-9a-f]{16,}/);
+  });
+});
+
+describe("humanFallbackReason", () => {
+  it("humanizes model_unavailable", () => {
+    expect(humanFallbackReason("model_unavailable")).toBe(
+      "Model unavailable -- drafted deterministically",
+    );
+  });
+  it("humanizes no_output", () => {
+    expect(humanFallbackReason("no_output")).toBe(
+      "Model produced no output -- drafted deterministically",
+    );
+  });
+  it("humanizes unparseable_output", () => {
+    expect(humanFallbackReason("unparseable_output")).toBe(
+      "Model output unusable -- drafted deterministically",
+    );
+  });
+  it("handles unknown codes with generic phrasing", () => {
+    const result = humanFallbackReason("some_new_code");
+    expect(result).toBe("Fallback: some new code -- drafted deterministically");
+  });
+  it("returns null for null input", () => {
+    expect(humanFallbackReason(null)).toBeNull();
   });
 });

@@ -135,17 +135,69 @@ export function lifecycleTone(lifecycle: UpdateLifecycle): string | undefined {
 
 export type RefKind = "item" | "decision" | "meeting" | "artifact" | "observation" | "unknown";
 
+const REF_PREFIX_TO_KIND: Record<string, RefKind> = {
+  action_item: "item",
+  risk: "item",
+  dependency: "item",
+  workstream: "item",
+  milestone: "item",
+  signal: "item",
+  decision: "decision",
+  meeting: "meeting",
+  artifact: "artifact",
+  observation: "observation",
+};
+
 export function refKind(ref: string): RefKind {
   const colon = ref.indexOf(":");
   if (colon < 0) return "unknown";
   const prefix = ref.slice(0, colon);
-  if (prefix === "action_item" || prefix === "risk" || prefix === "dependency"
-    || prefix === "workstream" || prefix === "milestone" || prefix === "signal") {
-    return "item";
-  }
-  if (prefix === "decision") return "decision";
-  if (prefix === "meeting") return "meeting";
-  if (prefix === "artifact") return "artifact";
-  if (prefix === "observation") return "observation";
-  return "unknown";
+  return REF_PREFIX_TO_KIND[prefix] ?? "unknown";
+}
+
+/* ── Human ref labels for claim chips (no raw hashes on glass) ── */
+
+/** Plain-words label for a ref prefix. */
+const REF_PREFIX_LABELS: Record<string, string> = {
+  action_item: "Action item",
+  risk: "Risk",
+  dependency: "Dependency",
+  workstream: "Workstream",
+  milestone: "Milestone",
+  signal: "Signal",
+  decision: "Decision",
+  meeting: "Meeting",
+  artifact: "Artifact",
+  observation: "Observation",
+};
+
+/** Build a human chip label for a claim ref. The raw id is NEVER shown
+ *  on glass -- only the kind in plain words. When the claim's own text
+ *  is available (it always is), "Open <kind>" is sufficient because the
+ *  claim text already names the thing. */
+export function refChipLabel(ref: string): string {
+  const colon = ref.indexOf(":");
+  if (colon < 0) return "Open";
+  const prefix = ref.slice(0, colon);
+  const kindWord = REF_PREFIX_LABELS[prefix];
+  if (kindWord) return `Open ${kindWord.toLowerCase()}`;
+  return "Open";
+}
+
+/* ── Fallback reason humanization (closed table) ── */
+
+const FALLBACK_REASON_LABELS: Record<string, string> = {
+  model_unavailable: "Model unavailable",
+  no_output: "Model produced no output",
+  unparseable_output: "Model output unusable",
+};
+
+/** Human-words label for a fallback reason code. Unknown codes show
+ *  with generic phrasing, never raw machine text. */
+export function humanFallbackReason(code: string | null): string | null {
+  if (!code) return null;
+  const label = FALLBACK_REASON_LABELS[code];
+  if (label) return `${label} -- drafted deterministically`;
+  // Unknown code: generic phrasing
+  return `Fallback: ${code.replace(/_/g, " ")} -- drafted deterministically`;
 }

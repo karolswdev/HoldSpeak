@@ -361,9 +361,52 @@ describe("Claim chips: render and open source", () => {
     const claimChips = screen.getAllByTestId("update-claim-chip");
     expect(claimChips.length).toBeGreaterThanOrEqual(4);
 
-    // Ref chips should be present
+    // Ref chips should be present with human labels
     const refChips = screen.getAllByTestId("update-claim-ref");
     expect(refChips.length).toBeGreaterThanOrEqual(4);
+
+    // Human labels: "Open action item", "Open decision", etc.
+    const actionItemChip = refChips.find(
+      (el) => el.getAttribute("data-ref") === "action_item:ai-01",
+    );
+    expect(actionItemChip!.textContent).toBe("Open action item");
+
+    const decisionChip = refChips.find(
+      (el) => el.getAttribute("data-ref") === "decision:d-01",
+    );
+    expect(decisionChip!.textContent).toBe("Open decision");
+
+    const meetingChip = refChips.find(
+      (el) => el.getAttribute("data-ref") === "meeting:m-01",
+    );
+    expect(meetingChip!.textContent).toBe("Open meeting");
+  });
+
+  it("no raw IDs on glass: ref chip visible text never matches hash pattern", async () => {
+    setupUpdatePosture();
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("updates-verb"));
+    await waitFor(() => screen.getByTestId("update-posture"));
+
+    const items = await screen.findAllByTestId("update-list-item");
+    fireEvent.click(items[0]);
+
+    await waitFor(() => screen.getByTestId("update-editor"));
+
+    // No ref chip visible text should match a raw hash-id pattern
+    const refChips = screen.getAllByTestId("update-claim-ref");
+    const rawIdPattern = /^p[a-z]+_[0-9a-f]{16,}/;
+    for (const chip of refChips) {
+      expect(chip.textContent).not.toMatch(rawIdPattern);
+    }
+
+    // But data-ref still carries the full ref for wiring
+    const actionItemChip = refChips.find(
+      (el) => el.getAttribute("data-ref") === "action_item:ai-01",
+    );
+    expect(actionItemChip).toBeTruthy();
+    expect(actionItemChip!.getAttribute("data-ref")).toBe("action_item:ai-01");
   });
 
   it("clicking a ref chip with action_item: opens the primitive", async () => {
@@ -384,6 +427,7 @@ describe("Claim chips: render and open source", () => {
       (el) => el.getAttribute("data-ref") === "action_item:ai-01",
     );
     expect(actionItemChip).toBeTruthy();
+    expect(actionItemChip!.textContent).toBe("Open action item");
     fireEvent.click(actionItemChip!);
 
     // Should call openPrimitive for non-meeting refs
@@ -408,6 +452,7 @@ describe("Claim chips: render and open source", () => {
       (el) => el.getAttribute("data-ref") === "meeting:m-01",
     );
     expect(meetingChip).toBeTruthy();
+    expect(meetingChip!.textContent).toBe("Open meeting");
     fireEvent.click(meetingChip!);
 
     // Meeting refs open via openSurfaceOr
@@ -435,6 +480,7 @@ describe("Claim chips: render and open source", () => {
       (el) => el.getAttribute("data-ref") === "decision:d-01",
     );
     expect(decisionChip).toBeTruthy();
+    expect(decisionChip!.textContent).toBe("Open decision");
     fireEvent.click(decisionChip!);
 
     expect(mockOpenPrimitive).toHaveBeenCalledWith("decision:d-01");
@@ -621,7 +667,7 @@ describe("Generator provenance", () => {
     await waitFor(() => screen.getByTestId("update-editor"));
 
     const fallback = screen.getByTestId("update-fallback-reason");
-    expect(fallback.textContent).toBe("model_unavailable");
+    expect(fallback.textContent).toBe("Model unavailable -- drafted deterministically");
   });
 });
 
