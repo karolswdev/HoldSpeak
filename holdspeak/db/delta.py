@@ -640,6 +640,52 @@ class DeltaRepository(BaseRepository):
             )
         return [dict(r) for r in rows]
 
+    # ── HS-160-04: decision + recurrence helpers ────────────────────────
+
+    def list_dismissed_proposals(
+        self,
+        project_id: str,
+        *,
+        limit: int = 1000,
+    ) -> list[dict[str, Any]]:
+        """List dismissed proposals for a project (DEL-003 recurrence)."""
+        rows = self._execute_read(
+            "SELECT * FROM project_proposals "
+            "WHERE project_id = ? AND lifecycle = 'dismissed' "
+            "ORDER BY decided_at DESC LIMIT ?",
+            (str(project_id).strip(), max(1, int(limit))),
+        )
+        return [dict(r) for r in rows]
+
+    def list_deferred_proposals(
+        self,
+        project_id: str,
+        *,
+        limit: int = 1000,
+    ) -> list[dict[str, Any]]:
+        """List deferred proposals for a project (DEL-004 return law)."""
+        rows = self._execute_read(
+            "SELECT * FROM project_proposals "
+            "WHERE project_id = ? AND lifecycle = 'deferred' "
+            "ORDER BY decided_at DESC LIMIT ?",
+            (str(project_id).strip(), max(1, int(limit))),
+        )
+        return [dict(r) for r in rows]
+
+    def get_proposal_in_transaction(
+        self,
+        conn: Any,
+        proposal_id: str,
+    ) -> Optional[dict[str, Any]]:
+        """Load a single proposal by ID within a caller-owned connection."""
+        row = conn.execute(
+            "SELECT * FROM project_proposals WHERE id = ?",
+            (str(proposal_id).strip(),),
+        ).fetchone()
+        if not row:
+            return None
+        return dict(row)
+
     # ── internal helpers ────────────────────────────────────────────────
 
     def _execute_read(

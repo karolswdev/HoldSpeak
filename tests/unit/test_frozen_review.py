@@ -788,3 +788,21 @@ class TestProvenanceDistinguishability:
             assert p["producer_kind"] in (
                 "observed_fact", "assessment", "proposal",
             ), f"Unknown provenance: {p['producer_kind']}"
+
+
+class TestCursorTimezoneLaw:
+    """HS-160-04 hardening: the cursor compare is aware-UTC, never lexicographic."""
+
+    def test_naive_and_offset_timestamps_compare_correctly(self) -> None:
+        from holdspeak.services.project_delta_service import _parse_utc
+        from datetime import timezone
+        # A naive local-looking captured_at BEFORE an offset cursor must sort before it.
+        naive_before = _parse_utc("2026-08-31T10:00:00")
+        offset_cursor = _parse_utc("2026-08-31T11:00:00+00:00")
+        assert naive_before < offset_cursor
+        # An offset +02:00 stamp equal in UTC compares equal, not lexicographically.
+        assert _parse_utc("2026-08-31T13:00:00+02:00") == _parse_utc("2026-08-31T11:00:00+00:00")
+        # Empty/garbage never passes the cursor.
+        assert _parse_utc("") < offset_cursor
+        assert _parse_utc("not-a-date") < offset_cursor
+        assert _parse_utc("2026-08-31T13:00:00+02:00").tzinfo == timezone.utc

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 160
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-160-03
 - **Unblocks:** HS-160-05
 - **Owner:** unassigned
@@ -48,6 +48,35 @@ and advances the Project's review pointers (SYS-023) — all under the
 
 - **Unit:** `tests/unit/test_review_decisions.py` (verbs, recurrence laws, atomic accept fault-injection, handler routing, the DOM-007 guard).
 
+## What shipped
+
+- The four verbs on ProjectDeltaService, idempotent under command_id,
+  already-decided → typed conflict. CLOSED handler map:
+  risk_attention → ProjectService.create_item (a REAL project_item,
+  the 158 command, DOM-007 guarded — a reached-milestone patch is
+  stripped); review_flag / observation_attention / coverage_degraded
+  → record-only (the accepted proposal + evidence links ARE the
+  truth, documented); conflict → accept REFUSED (typed capability;
+  judgment framing only).
+- RULINGS documented: proposal decisions don't bump the aggregate
+  revision (§5.7's decided_at is proposal-level; accept_review and
+  handler-created items ride DOM-003); undecided-at-accept →
+  SUPERSEDED (neither suppressed nor returning — fresh material gets
+  a fresh proposal).
+- Recurrence: dismissal_basis_hash = sha256(source_version|patch);
+  unchanged → suppressed; changed basis → linked successor
+  (predecessor id in patch_json — no schema change); deferred-due
+  returns FLAGGED returning; un-due stays suppressed.
+- accept_review: ONE transaction (conn-accepting family) — status +
+  cursor + revision law + ledger event; fault-injection proves
+  all-or-nothing; cursor advances exactly once.
+- ORCHESTRATOR HARDENING (in-story): the cursor compare became
+  aware-UTC (`_parse_utc` both sides) — the naive-vs-offset
+  lexicographic hazard the worker flagged is dead, with a
+  TZ-boundary test. 30 + 1 new tests; 172→76-scoped re-verified
+  green.
+
 ## Notes / open questions
 
 - The registered-handler map is the extension seam P4's Steward reuses — name it clearly, keep it closed.
+- Banked: PROVENANCE_KINDS is closed to {owner} — delta-born items carry provenance via evidence links, not a new enum value (revisit at P4 if the Steward needs its own).
