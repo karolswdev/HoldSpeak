@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 160
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-160-05 (rig may build against the wire; face legs after 06)
 - **Unblocks:** HS-160-08
 - **Owner:** unassigned
@@ -43,6 +43,26 @@ deterministically, twice.
 
 - **E2E:** the three legs; playwright-env scratch script; build-first law.
 
+## What shipped
+
+- `tests/e2e/test_hs160_delta_glass.py` — four legs deterministic ×2
+  (17.8s/17.9s): THE LOOP at 1440 and 393 (Blank-born Project for
+  determinism — the 159 glass owns the interview path; seeded facts
+  → grouped queue with count chips → J/K navigation → A/L/X
+  keyboard decisions with the undo notice → completion summary →
+  Cmd+Enter finish → the Room returns REV 2, pending 0, 'Review
+  accepted' in changes); THE REPEAT (API: re-open no-facts → zero
+  duplicates, deferred suppressed; frozen window byte-identical
+  twice); THE DEGRADED LEG (a collector forced failing → 'DEGRADED
+  COVERAGE 1' group + the honest failed-source card while intact
+  sources deliver — NO face gap). Posture swaps in place (zero
+  dialogs). Overflow zero everywhere; 5 shots (67-117KB) into
+  assets/story-07-shots/ feeding 06's sheet.
+- FOUND FOR THE BEAUTY ROUND (recorded, not fixed): [object Object]
+  where the evidence ledger meets a nested error object; plus the
+  orchestrator's seven-point machine-speech list on the face.
+
 ## Notes / open questions
 
 - Seeding gaps stand (159's walls) — DB-layer where no route exists, named per the law.
+- The verb appears only when pending_count>0 (an open review must exist); the rig opens via POST first — the face's open-on-demand ride the one-open-review law.
