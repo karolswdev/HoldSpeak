@@ -52,22 +52,24 @@ not a vibe; OWNER VERDICT closes the face). No writes, no webhooks
 | HS-161-04 | The wire (provider routes, api-surface) | done | [story-04-the-wire](./story-04-the-wire.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-161-05 | The face (Check connection → Discover → Clarify → Test; auth honesty — shots + verdict) | done | [story-05-the-face](./story-05-the-face.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-161-06 | The stopwatch walk (< 5:00 measured; + one real-metal leg) | done | [story-06-the-stopwatch-walk](./story-06-the-stopwatch-walk.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-161-07 | The close (gates, S-2 paid, final summary) | in-progress | [story-07-the-close](./story-07-the-close.md) | - |
+| HS-161-07 | The close (gates, S-2 paid, final summary) | done | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-6/7 DONE + 05 CLOSED ON THE OWNER'S VERDICT (PASS — close it, first
-presentation of the final set). The face earned it through three
-consequence rounds the orchestrator's shot reviews forced: the mount
-(the wizard was built + tested but rendered NOWHERE), the polish
-(entity labels vs the normalized shape; Query ≠ Conditions; the
-closed owner-grade phrase table), and the real-PR test-read (backend
-placeholders → a real bounded snapshot; "#42 feat: add payment
-gateway (open)" on the glass; the real-metal leg renders ACT-002's
-honest zero against karolswdev/HoldSpeak). The stopwatch measures
-the REAL UI flow: 2.81s. Remaining: 07 the close — full suite
-(running), sweep vs main's 27-name baseline, counsel (running),
-final summary, PR, merge. All standing laws carry.
+**COMPLETE 7/7.** The proving slice is proven: interview → compiled
+Watch → live test → baseline → manual evaluation → evidence-linked
+Delta, with the stopwatch at 2.81s on the REAL UI and one leg on
+real metal (karolswdev/HoldSpeak, read-only, honest zero). The
+kernel answer was RIDE, not invent. 05 closed on THE OWNER'S VERDICT
+(PASS, first presentation of the final set) after three
+orchestrator-forced consequence rounds (mount / polish / real-PR
+test-read). Counsel RATIFY-W-C — ALL conditions paid in-round (M-1
+finalize query-shape confirmed red-first + the snapshot_fetcher
+fixture lie closed; S-1/S-2 decoders; S-3 TOCTOU). 160's S-2 debt
+PAID, fault-proven. Close gates: suite 8463 passed / 13 failed — 11
+baseline-matched + 2 proven flakes, ZERO unexplained branch-new; web
+zero branch-new (2148). Merging via PR. Next: P3 The Update Factory
+— and Gate A's dogfood clock starts mattering.
 
 ## Active risks
 

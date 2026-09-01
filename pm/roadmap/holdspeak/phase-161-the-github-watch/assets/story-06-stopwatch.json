@@ -1,16 +1,16 @@
 {
-  "total_seconds": 2.8,
+  "total_seconds": 2.75,
   "segments": {
-    "desk_init": 0.12,
-    "open_interview": 1.33,
-    "answer_outcome": 0.29,
+    "desk_init": 0.11,
+    "open_interview": 1.34,
+    "answer_outcome": 0.21,
     "answer_signals": 0.04,
-    "suggestions_appear": 0.04,
+    "suggestions_appear": 0.05,
     "select_card": 0.02,
     "clarify_repo": 0.05,
-    "test_proposal": 0.05,
+    "test_proposal": 0.06,
     "review": 0.03,
-    "activate": 0.84
+    "activate": 0.85
   },
   "bar": 300,
   "passed": true,
