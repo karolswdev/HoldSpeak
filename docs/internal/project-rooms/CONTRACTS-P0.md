@@ -244,3 +244,76 @@ approach per the story spec.
 | Art VI | No empty-faked review/steward/update/sources payloads |
 | API-006 | Legacy detail routes remain untouched |
 | DB-005 | Reads are bounded, indexed, and deterministically ordered |
+
+---
+
+## Room review section -- HS-160-05
+
+Module: `holdspeak/services/project_service.py` (room graduation)
+Route: `GET /api/projects/{project_id}/room` (review section)
+Tests: `tests/integration/test_review_routes.py`
+
+### Review section shape (SS6.2, WEB-STA-004)
+
+When the delta service is composed, the `review` section graduates from
+`absent` to a real section with `state: "ok"`:
+
+```json
+{
+  "state": "ok",
+  "last_accepted_at": "2026-08-31T10:00:00+00:00",
+  "pending_count": 3,
+  "open_review_id": "prev_abc123..."
+}
+```
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `state` | `"ok"` | Section read succeeded (SS6.2). |
+| `last_accepted_at` | `string \| null` | ISO timestamp of the last accepted review, or null if no review has been accepted. Derived from `projects.last_review_at`. |
+| `pending_count` | `int` (>= 0) | Count of open proposals in the current open review. Zero when no open review exists. |
+| `open_review_id` | `string \| null` | The `prev_` ID of the current open review, or null when no review is open. |
+
+Art VI: zeros are zeros, not absence. The domain exists; an honest
+empty state reports `pending_count: 0` and `open_review_id: null`.
+
+When the delta service is NOT composed (legacy/partial contexts), the
+review section remains `{"state": "absent", "reason": "not_yet_built"}`.
+
+### Delta empty-state shape (WEB-STA-004)
+
+Route: `GET /api/projects/{project_id}/delta`
+
+When no open review exists, the delta endpoint returns the honest
+empty state that WEB-STA-004 will render:
+
+```json
+{
+  "open_review": null,
+  "last_accepted_at": "2026-08-31T10:00:00+00:00",
+  "source_coverage": {
+    "followthrough": "ok",
+    "decisions": "ok"
+  }
+}
+```
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `open_review` | `null` | No open review exists (the face renders the no-Delta state). |
+| `last_accepted_at` | `string \| null` | ISO timestamp of the last accepted review cursor, or null if no review has ever been accepted. |
+| `source_coverage` | `object \| null` | Map of source keys to their last known state (`"ok"`, `"failed"`, `"stale"`). Null when no accepted review has a source manifest. |
+
+Traceability: SS6.2 (per-section status), WEB-STA-004 (no-Delta honest
+state), Art VI (honest empty states), NFR-006 (honest empty/stale/partial/
+failed/stopped).
+
+### Review routes -- HS-160-05
+
+| Route | Method | Service call | Success | Failure statuses |
+|-------|--------|-------------|---------|-----------------|
+| `/api/projects/{id}/reviews` | POST | `open_review` | 200 (review window) | 404 project, 400 validation, 409 conflict |
+| `/api/projects/{id}/reviews/{rid}` | GET | `_load_frozen_window` | 200 (frozen window) | 404 review/project mismatch |
+| `/api/projects/{id}/delta` | GET | open window or empty state | 200 (window or empty) | 404 project |
+| `/api/projects/{id}/reviews/{rid}/proposals/{pid}/decide` | POST | `decide_proposal` | 200 (decision result) | 404 proposal/review mismatch, 400 bad verb/capability, 409 already-decided/idempotency |
+| `/api/projects/{id}/reviews/{rid}/accept` | POST | `accept_review` | 200 (acceptance envelope) | 404 review/project, 400 validation, 409 already-accepted/idempotency |

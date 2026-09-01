@@ -1,6 +1,6 @@
 # Phase 160 - Project Rooms: The Delta (P2)
 
-**Last updated:** 2026-09-01 — 4/8 DONE: the verbs stand (closed handler map, dismissals stay dead by basis hash, deferred returns flagged, superseded ruled, atomic accept advances the cursor once) + the cursor compare hardened to aware-UTC in-story. 05 the wire next.
+**Last updated:** 2026-09-01 — 5/8 DONE: the wire is live (5 routes, api-surface 599, the full loop through the real app, /room's review section real). 06 the face next — THE OWNER'S VERDICT gate.
 
 ## Goal
 
@@ -45,7 +45,7 @@ egress, no model in the deterministic path (DEL-007).
 | HS-160-02 | The collectors (five native adapters, TST-003 laws) | done | [story-02-the-collectors](./story-02-the-collectors.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-160-03 | The frozen review (§7.2 twelve steps, golden tests) | done | [story-03-the-frozen-review](./story-03-the-frozen-review.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-160-04 | The decisions (accept/edit/defer/dismiss, the cursor, the recurrence laws) | done | [story-04-the-decisions](./story-04-the-decisions.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-160-05 | The wire + the room (routes; the review section becomes real) | backlog | [story-05-the-wire](./story-05-the-wire.md) | - |
+| HS-160-05 | The wire + the room (routes; the review section becomes real) | done | [story-05-the-wire](./story-05-the-wire.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-160-06 | The review face (the posture in Now, J/K/A/E/L/X — shots + verdict) | backlog | [story-06-the-review-face](./story-06-the-review-face.md) | - |
 | HS-160-07 | The walk (repeatable Delta on glass, the degraded leg) | backlog | [story-07-the-walk](./story-07-the-walk.md) | - |
 | HS-160-08 | The close (gates, suite amendments, final summary) | backlog | [story-08-the-close](./story-08-the-close.md) | - |

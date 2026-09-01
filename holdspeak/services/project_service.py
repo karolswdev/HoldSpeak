@@ -172,10 +172,12 @@ def _envelope_to_dict(env: CommandResultEnvelope) -> dict[str, Any]:
 class ProjectService:
     """The durable project boundary; routes only parse and serialize."""
 
-    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None,
+                 delta_service: Any = None) -> None:
         self._db = db
         self._observer = observer or NullObserver()
         self._ledger = ServiceEventLedger(db)
+        self._delta_service = delta_service
 
     # ── reads (unchanged) ────────────────────────────────────────────
 
@@ -305,7 +307,12 @@ class ProjectService:
                 "resources", lambda: self._read_room_resources(project_id)),
             "changes": self._room_section(
                 "changes", lambda: self._read_room_changes(project_id)),
-            "review": dict(_ABSENT_SECTION),
+            "review": (
+                self._room_section(
+                    "review", lambda: self._read_room_review(project_id))
+                if self._delta_service is not None
+                else dict(_ABSENT_SECTION)
+            ),
             "sources": dict(_ABSENT_SECTION),
             "updates": dict(_ABSENT_SECTION),
             "steward": dict(_ABSENT_SECTION),
@@ -389,6 +396,41 @@ class ProjectService:
         changes = self._db.projects.list_project_changes(
             project_id, limit=ROOM_CHANGES_CAP)
         return {"recent": changes}
+
+    def _read_room_review(self, project_id: str) -> dict[str, Any]:
+        """Review section: pending_count, last_accepted_at, open_review_id.
+
+        HS-160-05: the review section graduates from absent to real.
+        Shape: {state:'ok', last_accepted_at, pending_count, open_review_id}.
+        Art VI: zeros are zeros, not absence -- the domain exists now.
+        """
+        room_fields = self._db.projects.get_project_room_fields(project_id)
+        last_accepted_at = (room_fields or {}).get("last_review_at")
+
+        open_review_id = None
+        pending_count = 0
+
+        if self._delta_service is not None:
+            try:
+                open_review = self._delta_service._find_open_review(project_id)
+                if open_review is not None:
+                    open_review_id = open_review["id"]
+                    proposals = self._db.project_observations.list_proposals(
+                        project_id,
+                        review_window_key=open_review_id,
+                        lifecycle="open",
+                    )
+                    pending_count = len(proposals)
+            except Exception:
+                # Fault isolation: if delta reads fail, we still return
+                # the section with what we have.
+                pass
+
+        return {
+            "last_accepted_at": last_accepted_at,
+            "pending_count": pending_count,
+            "open_review_id": open_review_id,
+        }
 
     # ── writes (graduated to revision law) ───────────────────────────
 

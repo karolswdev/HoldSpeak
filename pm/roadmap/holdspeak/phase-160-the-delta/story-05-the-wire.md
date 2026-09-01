@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 160
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-160-04
 - **Unblocks:** HS-160-06, HS-160-07
 - **Owner:** unassigned
@@ -44,6 +44,22 @@ proposals summary (§6.2's review block; the §15 snapshot shape).
 
 - **Integration:** `tests/integration/test_review_routes.py`.
 
+## What shipped
+
+- `project_reviews.py`: five routes (open/get-window/delta/decide/
+  accept) — thin, owner-scoped, the house status law; envelope
+  results where the service speaks them. api-surface 594→599.
+- /room review section GRADUATED: {state ok, last_accepted_at,
+  pending_count, open_review_id} — with an honest conditional: no
+  wired delta_service (legacy direct-construction tests) → absent
+  stays absent; production sees the real section. Both shapes + the
+  WEB-STA-004 delta empty state appended to CONTRACTS-P0.
+- THE FULL LOOP through the real app: seed → open (≥3 proposals) →
+  frozen window byte-identical → decide accept/dismiss/defer →
+  accept → /room pending 0 + cursor visible → reopen: deferred
+  suppressed, no duplicates. 17 + regression 30 green; 88 scoped.
+
 ## Notes / open questions
 
-- get_delta with no open review returns the honest empty state WEB-STA-004 will render — shape it now, name it in CONTRACTS-P0.
+- get_delta's empty state shaped + named in CONTRACTS-P0, as chartered.
+- Banked: same-kind+target+patch observations collide on the deterministic pprop_ PK within one window — pre-existing service truth (the identity doing its job); fixtures vary fact_json.

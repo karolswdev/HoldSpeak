@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 594 (plus static mounts). iOS-consumed: 89. Web-consumed: 450.
+Routes: 599 (plus static mounts). iOS-consumed: 89. Web-consumed: 450.
 
 ## device_audio_ws
 
@@ -764,6 +764,16 @@ Routes: 594 (plus static mounts). iOS-consumed: 89. Web-consumed: 450.
 | GET | `/api/workflows/{workflow_id}` | web |
 | PUT | `/api/workflows/{workflow_id}` | web |
 | POST | `/api/workflows/{workflow_id}/run` | ios, web |
+
+## web.routes.project_reviews
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/projects/{project_id}/delta` | server only |
+| POST | `/api/projects/{project_id}/reviews` | server only |
+| GET | `/api/projects/{project_id}/reviews/{review_id}` | server only |
+| POST | `/api/projects/{project_id}/reviews/{review_id}/accept` | server only |
+| POST | `/api/projects/{project_id}/reviews/{review_id}/proposals/{proposal_id}/decide` | server only |
 
 ## web.routes.project_setup
 
