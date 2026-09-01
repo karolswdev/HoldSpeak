@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 160
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-160-02
 - **Unblocks:** HS-160-04
 - **Owner:** unassigned
@@ -43,6 +43,25 @@ DEL-007 keeps the deterministic path model-free.
 ## Test plan
 
 - **Unit:** `tests/unit/test_frozen_review.py` (golden windows, cursor law, degraded leg, materiality unit tests, conflict retention).
+
+## What shipped
+
+- `ProjectDeltaService.open_review` — §7.2's twelve steps mapped
+  one-to-one (the report's table is the record); step 11 ships as
+  a proven identity hook (P4's seam, may add, never rewrite).
+- CLOSED proposal-rule table (4 rules): followthrough.overdue/stale →
+  risk_attention (assessment), decision.review_due → review_flag
+  (assessment), watch.transition → observation_attention
+  (observed_fact); informational kinds propose nothing.
+- MATERIALITY_VERSION=v1: six weighted factors, each unit-tested;
+  the version pin locks the string AND a canonical example at 0.795 —
+  a factor change without a version bump fails the pin.
+- ONE-OPEN-REVIEW RULED: an existing open window returns
+  byte-identically; accept clears the way (SYS-020's cursor spirit).
+- Golden windows: run-twice identical, re-read identical, ordering
+  stable; cursor law proven both directions; degraded coverage
+  visible in manifest AND proposals; conflicts carry both sources,
+  no winner. 45 new tests; 149 scoped green.
 
 ## Notes / open questions
 

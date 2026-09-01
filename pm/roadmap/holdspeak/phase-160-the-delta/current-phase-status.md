@@ -1,6 +1,6 @@
 # Phase 160 - Project Rooms: The Delta (P2)
 
-**Last updated:** 2026-09-01 — 2/8 DONE: the collectors gather honestly (7 grounded observation kinds, retry no-ops, failure isolation, the watch adapter provably fetch-free). 03 the frozen review next.
+**Last updated:** 2026-09-01 — 3/8 DONE: the twelve steps are law in code (golden byte-identical windows, materiality v1 pinned at a canonical 0.795, one-open-review, conflicts keep both sources, step-11 identity hook). 04 the decisions next.
 
 ## Goal
 
@@ -43,7 +43,7 @@ egress, no model in the deterministic path (DEL-007).
 |---|---|---|---|---|
 | HS-160-01 | The evidence schema (§5.5-5.8, v69, real-DB proof) | done | [story-01-the-evidence-schema](./story-01-the-evidence-schema.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-160-02 | The collectors (five native adapters, TST-003 laws) | done | [story-02-the-collectors](./story-02-the-collectors.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-160-03 | The frozen review (§7.2 twelve steps, golden tests) | backlog | [story-03-the-frozen-review](./story-03-the-frozen-review.md) | - |
+| HS-160-03 | The frozen review (§7.2 twelve steps, golden tests) | done | [story-03-the-frozen-review](./story-03-the-frozen-review.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-160-04 | The decisions (accept/edit/defer/dismiss, the cursor, the recurrence laws) | backlog | [story-04-the-decisions](./story-04-the-decisions.md) | - |
 | HS-160-05 | The wire + the room (routes; the review section becomes real) | backlog | [story-05-the-wire](./story-05-the-wire.md) | - |
 | HS-160-06 | The review face (the posture in Now, J/K/A/E/L/X — shots + verdict) | backlog | [story-06-the-review-face](./story-06-the-review-face.md) | - |
