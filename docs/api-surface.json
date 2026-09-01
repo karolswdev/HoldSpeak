@@ -3932,7 +3932,9 @@
         "POST"
       ],
       "module": "web.routes.project_setup",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/project-setups/{session_id}",

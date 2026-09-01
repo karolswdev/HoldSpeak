@@ -1,6 +1,6 @@
 # Phase 159 - Project Rooms: The Interview (P1a)
 
-**Last updated:** 2026-08-31 — 6/7 DONE: THE OWNER'S ROUND-4 VERDICT PASSES THE FACE ('PASS — close it'; his round-2 bounce 'I legit don/t know what I am looking at' became the consequence headline; his round-3 card bounce became library ChoiceCards). THE CLOSE (07) RUNS: full gates + counsel in flight.
+**Last updated:** 2026-08-31 — PHASE COMPLETE 7/7. Owner PASS r4; counsel RATIFY-W-C all findings dead in-round; FOUR fences caught real drift at this close and every catch was sealed the library/repo way; suite + web gates zero unexplained branch-new. PR to main next.
 
 ## Goal
 
@@ -33,12 +33,12 @@ deterministic path is the P1a implementation).
 
 ## Exit criteria (evidence required)
 
-- [ ] §14 P1a exit: setup RESUMES after reload and opens a NON-EMPTY Project Room without external provider dependency (proven by the walk, story 06).
-- [ ] `connector_watches` graduated additively to WatchSpec@1 (§9.3 columns; existing IDs/query_json/snapshot_json preserved; legacy Watches migrate as legacy non-Project specs and their refresh keeps working — proven on a real-DB copy + legacy compat tests).
-- [ ] Finalization is ONE atomic transaction (ACT-004): Project + selected Watches + bindings + baseline — or a recoverable draft; baselines emit NO false historical events (ACT-005).
-- [ ] Abandoning setup never leaves a hollow active Project (INT-006).
-- [ ] Shots at 1440+393 on a rig-booted hub; beauty pass; THE OWNER'S SHOT VERDICT closes story 05 and holds the merge word.
-- [ ] Sweep zero true branch-new; web gates green; counsel close zero open must-fix.
+- [x] §14 P1a exit: setup RESUMES after reload and opens a NON-EMPTY Project Room without external provider dependency (proven by the walk, story 06).
+- [x] `connector_watches` graduated additively to WatchSpec@1 (§9.3 columns; existing IDs/query_json/snapshot_json preserved; legacy Watches migrate as legacy non-Project specs and their refresh keeps working — proven on a real-DB copy + legacy compat tests).
+- [x] Finalization is ONE atomic transaction (ACT-004): Project + selected Watches + bindings + baseline — or a recoverable draft; baselines emit NO false historical events (ACT-005).
+- [x] Abandoning setup never leaves a hollow active Project (INT-006).
+- [x] Shots at 1440+393 on a rig-booted hub; beauty pass; THE OWNER'S SHOT VERDICT closes story 05 and holds the merge word.
+- [x] Sweep zero true branch-new; web gates green; counsel close zero open must-fix.
 
 ## Story status
 
@@ -50,7 +50,7 @@ deterministic path is the P1a implementation).
 | HS-159-04 | The setup routes (HTTP §10, command contract, api-surface) | done | [story-04-the-setup-routes](./story-04-the-setup-routes.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-159-05 | The interview face (two questions, live brief, activation — shots + verdict) | done | [story-05-the-interview-face](./story-05-the-interview-face.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-159-06 | The walk (reload-resume → finalize → populated Now, on glass) | done | [story-06-the-walk](./story-06-the-walk.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-159-07 | The close (gates, suite amendments, final summary) | in-progress | [story-07-the-close](./story-07-the-close.md) | - |
+| HS-159-07 | The close (gates, suite amendments, final summary) | done | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
