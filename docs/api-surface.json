@@ -4087,6 +4087,16 @@
       "consumers": []
     },
     {
+      "path": "/api/projects/{project_id}/delta",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.project_reviews",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}/items",
       "methods": [
         "GET"
@@ -4177,6 +4187,44 @@
       ],
       "module": "web.routes.projects",
       "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/reviews",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_reviews",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/reviews/{review_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.project_reviews",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/reviews/{review_id}/accept",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_reviews",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/reviews/{review_id}/proposals/{proposal_id}/decide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_reviews",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/room",

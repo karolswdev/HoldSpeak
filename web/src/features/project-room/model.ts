@@ -146,6 +146,13 @@ export type RoomChangesData = {
   recent: RoomChangeRow[];
 };
 
+/** Review section data shape (when ok) — HS-160-06. */
+export type RoomReviewData = {
+  pendingCount: number;
+  openReviewId: string | null;
+  lastAcceptedAt: string | null;
+};
+
 /** The full room snapshot (typed, WEB-ARC-004). */
 export type RoomSnapshot = {
   projectId: string;
@@ -156,7 +163,7 @@ export type RoomSnapshot = {
   meetings: RoomSection<RoomMeetingsData>;
   resources: RoomSection<RoomResourcesData>;
   changes: RoomSection<RoomChangesData>;
-  review: RoomSection<Record<string, never>>;
+  review: RoomSection<RoomReviewData>;
   sources: RoomSection<Record<string, never>>;
   updates: RoomSection<Record<string, never>>;
   steward: RoomSection<Record<string, never>>;
@@ -248,7 +255,11 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
         ? (s.recent as Record<string, unknown>[]).map(decodeChangeRow)
         : [],
     })),
-    review: decodeSection<Record<string, never>>(raw.review, () => ({} as Record<string, never>)),
+    review: decodeSection<RoomReviewData>(raw.review, (s) => ({
+      pendingCount: Number(s.pending_count ?? 0),
+      openReviewId: s.open_review_id != null ? String(s.open_review_id) : null,
+      lastAcceptedAt: s.last_accepted_at != null ? String(s.last_accepted_at) : null,
+    })),
     sources: decodeSection<Record<string, never>>(raw.sources, () => ({} as Record<string, never>)),
     updates: decodeSection<Record<string, never>>(raw.updates, () => ({} as Record<string, never>)),
     steward: decodeSection<Record<string, never>>(raw.steward, () => ({} as Record<string, never>)),

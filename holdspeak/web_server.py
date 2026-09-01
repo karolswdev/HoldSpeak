@@ -667,6 +667,7 @@ class MeetingWebServer:
             build_system_router,
             build_threads_router,
             build_tts_router,
+            build_project_reviews_router,
             build_project_setup_router,
             build_watches_router,
         )
@@ -679,6 +680,8 @@ class MeetingWebServer:
         from .services.reaction_service import ReactionService
         from .services.watch_service import WatchService
         from .services.project_setup_service import ProjectSetupService
+        from .services.project_evidence_collector import ProjectEvidenceCollector
+        from .services.project_delta_service import ProjectDeltaService
         from .services.refinement_coordinator import RefinementCoordinator
         from .services.refinement_application_service import RefinementApplicationService
 
@@ -797,6 +800,12 @@ class MeetingWebServer:
                 getattr(broker, "tool_turn_foundation", None), "_foundation", None
             ),
         )
+        # HS-160-05: extract the delta service so the project_service can
+        # use it for the room() review section (mutual composition).
+        _project_delta_service = ProjectDeltaService(
+            get_database(),
+            collector=ProjectEvidenceCollector(get_database()),
+        )
         web_ctx = WebContext(
             get_state=self.get_state,
             meeting_service=meeting_service,
@@ -820,7 +829,10 @@ class MeetingWebServer:
             on_update_meeting=self.on_update_meeting,
             on_set_title=self.on_set_title,
             on_set_tags=self.on_set_tags,
-            project_service=ProjectService(get_database(), observer=obs),
+            project_service=ProjectService(
+                get_database(), observer=obs,
+                delta_service=_project_delta_service,
+            ),
             projection_service=ProjectionService(get_database(), observer=obs),
             authority_service=AuthorityService(get_database(), observer=obs),
             credential_service=CredentialService(
@@ -857,6 +869,8 @@ class MeetingWebServer:
                 project_service=ProjectService(get_database(), observer=obs),
                 watch_service=WatchService(get_database(), observer=obs),
             ),
+            project_evidence_collector=ProjectEvidenceCollector(get_database()),
+            project_delta_service=_project_delta_service,
             refinement_coordinator=refinement_coordinator,
             refinement_service=refinement_service,
             settings_service=SettingsService(
@@ -996,6 +1010,7 @@ class MeetingWebServer:
         app.include_router(build_sync_router(web_ctx))
         app.include_router(build_threads_router(web_ctx))
         app.include_router(build_tts_router(web_ctx))
+        app.include_router(build_project_reviews_router(web_ctx))
         app.include_router(build_project_setup_router(web_ctx))
         app.include_router(build_watches_router(web_ctx))
 

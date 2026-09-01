@@ -102,7 +102,7 @@ function roomResponse(overrides: Record<string, unknown> = {}) {
     meetings: overrides.meetings ?? { state: "ok", count: 2, latest: { id: "m1", title: "Review" } },
     resources: overrides.resources ?? { state: "ok", count: 1, latest: null },
     changes: overrides.changes ?? { state: "ok", recent: [] },
-    review: { state: "absent", reason: "not_yet_built" },
+    review: overrides.review ?? { state: "absent", reason: "not_yet_built" },
     sources: { state: "absent", reason: "not_yet_built" },
     updates: { state: "absent", reason: "not_yet_built" },
     steward: { state: "absent", reason: "not_yet_built" },

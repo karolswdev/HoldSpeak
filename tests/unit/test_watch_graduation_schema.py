@@ -113,8 +113,8 @@ def _find_real_db() -> Optional[Path]:
 class TestFreshSchema:
     """A fresh DB built from SCHEMA_SQL has every HS-159-01 shape."""
 
-    def test_schema_version_is_68(self) -> None:
-        assert SCHEMA_VERSION == 68
+    def test_schema_version_is_69(self) -> None:
+        assert SCHEMA_VERSION == 69
 
     def test_connector_watches_has_graduation_columns(self, tmp_path: Path) -> None:
         conn = sqlite3.connect(str(tmp_path / "fresh.db"))
