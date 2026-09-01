@@ -110,6 +110,9 @@ class WebContext:
     # HS-159-03: the durable setup interview service. Composes
     # ProjectService + WatchService; routes come in P4.
     project_setup_service: Optional[Any] = None
+    # HS-160-02: the evidence collector composes five adapters behind
+    # ProjectService (SS6.1). Routes come in P3; construction only here.
+    project_evidence_collector: Optional[Any] = None
     # HS-141-04: the single application-owned one-question task lifecycle.
     # Route factories must never create their own threads or event loops.
     refinement_coordinator: Optional[Any] = None

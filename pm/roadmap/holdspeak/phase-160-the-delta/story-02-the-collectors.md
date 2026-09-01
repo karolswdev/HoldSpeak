@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 160
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-160-01
 - **Unblocks:** HS-160-03
 - **Owner:** unassigned
@@ -43,6 +43,20 @@ the others (TST-003, DOM-008).
 
 - **Unit:** `tests/unit/test_evidence_collectors.py` (per-adapter truth tables over seeded fixtures, the three TST-003 laws, the no-fetch proof).
 
+## What shipped
+
+- `ProjectEvidenceCollector` + five adapters over the REAL seams; a
+  closed 7-kind observation vocabulary each grounded in a named seam
+  fact (meeting.associated, resource.linked, decision.lifecycle,
+  decision.review_due, followthrough.overdue, followthrough.stale,
+  watch.transition via diff_snapshots over STORED snapshots).
+- TST-003 proven: retry → all no-op (the PK law), one adapter
+  raising → others persist + that source failed with a typed error;
+  the watch no-fetch proof (spy fetcher never fires); freshness
+  written back to project_sources; coverage summary = the §5.8
+  manifest's raw material. 17 new tests; 123 scoped green.
+
 ## Notes / open questions
 
-- The 159 seeding walls (no create routes for meetings/decisions/door) bite here too — fixtures seed at the DB layer, noted per the standing law.
+- The 159 seeding walls bite as predicted — fixtures seed at the DB layer, named per the law.
+- Gotchas banked: decisions lifecycle CHECK (recorded|accepted|superseded|rejected); follow-through project scoping rides the meeting_projects join; DeltaRepository registers as db.project_observations.
