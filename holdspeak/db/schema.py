@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 67  # informational; 66→67: Project Room aggregate bones (HS-158-01)
+SCHEMA_VERSION = 68  # informational; 67→68: WatchSpec@1 graduation + setup/rule/eval/effect tables (HS-159-01)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -2303,7 +2303,24 @@ CREATE TABLE IF NOT EXISTS connector_watches (
     last_success_at TEXT,
     last_error TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    -- HS-159-01: WatchSpec@1 graduation columns (§9.3).
+    schema_version TEXT NOT NULL DEFAULT '',
+    project_id TEXT,
+    intent TEXT NOT NULL DEFAULT '',
+    provider_connection_id TEXT,
+    subject_kind TEXT NOT NULL DEFAULT '',
+    trigger_kind TEXT NOT NULL DEFAULT '',
+    trigger_json TEXT NOT NULL DEFAULT '{}',
+    mode TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT '',
+    revision INTEGER NOT NULL DEFAULT 0,
+    baseline_state TEXT NOT NULL DEFAULT '',
+    test_state TEXT NOT NULL DEFAULT '',
+    test_result_json TEXT,
+    last_test_at TEXT,
+    next_evaluation_at TEXT,
+    last_evaluated_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_connector_watches_connector
     ON connector_watches(connector_id, enabled);
@@ -3625,4 +3642,152 @@ CREATE TABLE IF NOT EXISTS front_door_apply_plans (
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+
+-- HS-159-01: Project setup interview (§9.1) — durable setup sessions.
+CREATE TABLE IF NOT EXISTS project_setup_sessions (
+    id TEXT PRIMARY KEY,
+    state TEXT NOT NULL DEFAULT 'active',
+    stage TEXT NOT NULL DEFAULT '',
+    draft_schema TEXT NOT NULL DEFAULT '',
+    draft_json TEXT NOT NULL DEFAULT '{}',
+    project_id TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    completed_at TEXT,
+    expires_at TEXT
+);
+
+-- HS-159-01: Setup answers (§9.1) — append-only, UNIQUE(session_id, question_id, revision).
+CREATE TABLE IF NOT EXISTS project_setup_answers (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL REFERENCES project_setup_sessions(id),
+    question_id TEXT NOT NULL,
+    answer_schema TEXT NOT NULL DEFAULT '',
+    answer_json TEXT NOT NULL DEFAULT '{}',
+    revision INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(session_id, question_id, revision)
+);
+CREATE INDEX IF NOT EXISTS idx_project_setup_answers_session
+    ON project_setup_answers(session_id, question_id);
+
+-- HS-159-01: Watch setup proposals (§9.1).
+CREATE TABLE IF NOT EXISTS watch_setup_proposals (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL REFERENCES project_setup_sessions(id),
+    provider_id TEXT NOT NULL DEFAULT '',
+    connection_id TEXT,
+    spec_schema TEXT NOT NULL DEFAULT '',
+    spec_json TEXT NOT NULL DEFAULT '{}',
+    rationale_json TEXT NOT NULL DEFAULT '{}',
+    state TEXT NOT NULL DEFAULT 'proposed',
+    test_state TEXT NOT NULL DEFAULT '',
+    test_result_json TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_watch_setup_proposals_session
+    ON watch_setup_proposals(session_id, state);
+
+-- HS-159-01: Watch provider connections (§9.2) — NO credential material (PROV-004).
+CREATE TABLE IF NOT EXISTS watch_provider_connections (
+    id TEXT PRIMARY KEY,
+    provider_id TEXT NOT NULL DEFAULT '',
+    transport TEXT NOT NULL DEFAULT '',
+    external_connection_ref TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT '',
+    capability_manifest_json TEXT NOT NULL DEFAULT '{}',
+    capability_revision INTEGER NOT NULL DEFAULT 0,
+    discovery_state TEXT NOT NULL DEFAULT '',
+    last_checked_at TEXT,
+    last_connected_at TEXT,
+    last_error_code TEXT,
+    last_error_detail TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_watch_provider_connections_provider
+    ON watch_provider_connections(provider_id, state);
+
+-- HS-159-01: Watch rules (§9.4) — UNIQUE(watch_id, ordinal).
+CREATE TABLE IF NOT EXISTS watch_rules (
+    id TEXT PRIMARY KEY,
+    watch_id TEXT NOT NULL REFERENCES connector_watches(id) ON DELETE CASCADE,
+    ordinal INTEGER NOT NULL DEFAULT 0,
+    condition_schema TEXT NOT NULL DEFAULT '',
+    condition_json TEXT NOT NULL DEFAULT '{}',
+    action_schema TEXT NOT NULL DEFAULT '',
+    action_json TEXT NOT NULL DEFAULT '{}',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    revision INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(watch_id, ordinal)
+);
+CREATE INDEX IF NOT EXISTS idx_watch_rules_watch
+    ON watch_rules(watch_id, enabled);
+
+-- HS-159-01: Watch evaluations (§9.4) — UNIQUE(watch_id, watch_revision, source_revision).
+CREATE TABLE IF NOT EXISTS watch_evaluations (
+    id TEXT PRIMARY KEY,
+    watch_id TEXT NOT NULL REFERENCES connector_watches(id) ON DELETE CASCADE,
+    watch_revision INTEGER NOT NULL DEFAULT 0,
+    provider_capability_revision INTEGER NOT NULL DEFAULT 0,
+    source_revision TEXT NOT NULL DEFAULT '',
+    trigger_kind TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT '',
+    matched_rule_ids_json TEXT NOT NULL DEFAULT '[]',
+    observation_ids_json TEXT NOT NULL DEFAULT '[]',
+    started_at TEXT,
+    completed_at TEXT,
+    error_code TEXT,
+    error_detail TEXT,
+    UNIQUE(watch_id, watch_revision, source_revision)
+);
+CREATE INDEX IF NOT EXISTS idx_watch_evaluations_watch
+    ON watch_evaluations(watch_id, watch_revision);
+
+-- HS-159-01: Watch effects (§9.4) — idempotency_key UNIQUE.
+CREATE TABLE IF NOT EXISTS watch_effects (
+    id TEXT PRIMARY KEY,
+    evaluation_id TEXT NOT NULL REFERENCES watch_evaluations(id) ON DELETE CASCADE,
+    rule_id TEXT NOT NULL REFERENCES watch_rules(id),
+    action_kind TEXT NOT NULL DEFAULT '',
+    target_ref TEXT NOT NULL DEFAULT '',
+    idempotency_key TEXT NOT NULL UNIQUE,
+    arguments_sha256 TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT '',
+    operation_id TEXT,
+    receipt_id TEXT,
+    result_ref TEXT,
+    verification_state TEXT NOT NULL DEFAULT '',
+    error_code TEXT,
+    error_detail TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    completed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_watch_effects_evaluation
+    ON watch_effects(evaluation_id);
+CREATE INDEX IF NOT EXISTS idx_watch_effects_idempotency
+    ON watch_effects(idempotency_key);
+
+-- HS-159-01: Project sources (§5.4 / DOM-013 by shape — no query/cadence/baseline columns).
+CREATE TABLE IF NOT EXISTS project_sources (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id),
+    source_ref TEXT NOT NULL DEFAULT '',
+    label TEXT NOT NULL DEFAULT '',
+    semantic_role TEXT NOT NULL DEFAULT '',
+    materiality_policy_json TEXT NOT NULL DEFAULT '{}',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    freshness_state TEXT NOT NULL DEFAULT '',
+    last_observed_at TEXT,
+    revision INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_project_sources_project
+    ON project_sources(project_id, enabled);
+CREATE INDEX IF NOT EXISTS idx_project_sources_ref
+    ON project_sources(source_ref);
 """

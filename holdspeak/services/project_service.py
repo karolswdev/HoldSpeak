@@ -34,9 +34,11 @@ from ..project_contracts import (
     generate_pchg_id,
     generate_pcmd_id,
     generate_pitem_id,
+    generate_psrc_id,
 )
 from ..refs import format as format_ref, parse as parse_ref
 from .errors import ConflictError, NotFound, ValidationError
+from .project_setup_service import CADENCE_PRESETS
 from .service_event_ledger import ServiceEventLedger
 
 _log = get_logger("services.project_service")
@@ -480,6 +482,226 @@ class ProjectService:
 
         result = self._project_payload(self._require_project(project_id))
         result.update(_envelope_to_dict(envelope))
+        return result
+
+    def create_from_setup(
+        self, principal: Principal, setup_payload: dict[str, Any],
+        *, command_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Atomic Project creation from a setup interview (ACT-004).
+
+        ONE transaction:
+        - Create the Project row (name, purpose, outcome_text, lifecycle)
+        - Activate selected+passed proposals as WatchSpec@1 rows in
+          connector_watches (state='active', baseline_state='established')
+        - Create watch_rules for each activated watch
+        - Create project_sources bindings (semantic_role from proposal)
+        - Record change + event + command
+
+        All-or-nothing: any failure rolls back to zero Project/Watch rows.
+        Baseline established WITHOUT events (ACT-005: ledger silence).
+        Blank path: zero proposals is lawful (INT-002).
+        """
+        name = str(setup_payload.get("name") or "").strip()
+        if not name:
+            raise ValidationError("Project name is required")
+
+        req_hash = _request_hash(setup_payload)
+        replay = self._check_idempotency(command_id, req_hash, "create_from_setup")
+        if replay is not None:
+            return replay
+
+        project_id = f"proj-{uuid.uuid4().hex[:12]}"
+        cmd_id = command_id or generate_pcmd_id()
+        now_iso = datetime.now().isoformat()
+        new_revision = 1
+        proposals = setup_payload.get("proposals") or []
+
+        with self._db._connection() as conn:
+            # 1. Create the Project row
+            conn.execute(
+                """
+                INSERT INTO projects (
+                    id, name, description, keywords_json, team_members_json,
+                    context_json, detection_threshold, revision,
+                    purpose, outcome_text, lifecycle,
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    project_id, name,
+                    str(setup_payload.get("description") or ""),
+                    json.dumps([], ensure_ascii=False),
+                    json.dumps([], ensure_ascii=False),
+                    json.dumps({}, ensure_ascii=False),
+                    0.4,  # default threshold
+                    new_revision,
+                    str(setup_payload.get("purpose") or ""),
+                    str(setup_payload.get("outcome_text") or ""),
+                    str(setup_payload.get("lifecycle") or "active"),
+                    now_iso, now_iso,
+                ),
+            )
+
+            # 2. Activate selected+passed proposals as Watch rows
+            activated_watches: list[dict[str, Any]] = []
+            for proposal in proposals:
+                spec = proposal.get("spec") or {}
+                if isinstance(spec, str):
+                    spec = json.loads(spec)
+
+                watch_id = f"watch_{uuid.uuid4().hex[:12]}"
+                watch_name = spec.get("name", "Untitled watch")
+                connector_id = spec.get("provider", {}).get("id", "native")
+                query_kind = spec.get("subject", {}).get("kind", "")
+                query = spec.get("subject", {}).get("scope", {})
+                trigger = spec.get("trigger") or CADENCE_PRESETS.get("normal", {})
+                mode = spec.get("mode", "yolo")
+
+                # Insert via sanctioned repo helper (M-1: no third door)
+                self._db.automations.create_watch_in_transaction(
+                    conn,
+                    watch_id=watch_id,
+                    connector_id=connector_id,
+                    query_kind=query_kind,
+                    name=watch_name,
+                    query_json=json.dumps(query, sort_keys=True, separators=(",", ":")),
+                    enabled=True,
+                    schema_version="WatchSpec@1",
+                    project_id=project_id,
+                    intent=spec.get("intent", ""),
+                    subject_kind=query_kind,
+                    trigger_kind=trigger.get("kind", "poll"),
+                    trigger_json=json.dumps(trigger, sort_keys=True, separators=(",", ":")),
+                    mode=mode,
+                    state="active",
+                    revision=1,
+                    baseline_state="established",  # ACT-005: baseline without events
+                    test_state="passed",  # carried from proposal test
+                    created_at=now_iso,
+                    updated_at=now_iso,
+                )
+
+                # 3. Create watch_rules via sanctioned repo helper
+                rules = spec.get("rules", [])
+                for ordinal, rule in enumerate(rules):
+                    rule_id = f"wrule_{uuid.uuid4().hex[:12]}"
+                    self._db.automations.create_rule_in_transaction(
+                        conn,
+                        rule_id=rule_id,
+                        watch_id=watch_id,
+                        ordinal=ordinal,
+                        condition_schema="WatchCondition@1",
+                        condition_json=json.dumps(
+                            rule.get("condition", {}),
+                            sort_keys=True, separators=(",", ":"),
+                        ),
+                        action_schema="WatchAction@1",
+                        action_json=json.dumps(
+                            rule.get("actions", []),
+                            sort_keys=True, separators=(",", ":"),
+                        ),
+                        enabled=True,
+                        revision=0,
+                        created_at=now_iso,
+                        updated_at=now_iso,
+                    )
+
+                # 4. Create project_sources binding
+                source_id = generate_psrc_id()
+                semantic_role = spec.get("subject", {}).get("kind", "general")
+                conn.execute(
+                    """
+                    INSERT INTO project_sources (
+                        id, project_id, source_ref, label, semantic_role,
+                        enabled, revision, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        source_id, project_id,
+                        format_ref("watch", watch_id),
+                        watch_name,
+                        semantic_role,
+                        1, 0, now_iso, now_iso,
+                    ),
+                )
+
+                activated_watches.append({
+                    "watch_id": watch_id,
+                    "name": watch_name,
+                    "source_id": source_id,
+                })
+
+            # 5. Change log (DOM-003)
+            project_ref = format_ref("project", project_id)
+            change_id = generate_pchg_id(
+                project_id=project_id,
+                project_revision=new_revision,
+                ordinal=0,
+            )
+            conn.execute(
+                """
+                INSERT INTO project_changes (
+                    id, project_id, project_revision, change_kind,
+                    target_ref, actor_ref, command_id,
+                    before_hash, after_hash, summary_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    change_id, project_id, new_revision,
+                    "project.created",
+                    project_ref,
+                    f"principal:{principal.identity}",
+                    cmd_id, None, _request_hash({"name": name}),
+                    json.dumps({
+                        "name": name,
+                        "source": "setup",
+                        "watches_activated": len(activated_watches),
+                    }),
+                    now_iso,
+                ),
+            )
+
+            # 6. Service event (API-004)
+            self._ledger.append_in_transaction(
+                conn, principal,
+                event_type="project.created",
+                producer="ProjectService",
+                subject_ref=project_ref,
+                source_revision=str(new_revision),
+                facts={
+                    "project_id": project_id,
+                    "name": name,
+                    "source": "setup",
+                    "watches_activated": len(activated_watches),
+                },
+                refs=[project_ref],
+            )
+
+            # 7. Command ledger (API-002)
+            envelope = CommandResultEnvelope(
+                result_kind=ResultKind.CREATED,
+                project_id=project_id,
+                project_revision=new_revision,
+                changed_refs=(parse_ref(project_ref),),
+            )
+            self._record_command(
+                conn, cmd_id, project_id, "create_from_setup",
+                req_hash, envelope,
+            )
+
+            # S-1: mark the setup session completed inside the same
+            # transaction so a crash cannot leave a dangling active
+            # session whose re-finalize would create a duplicate.
+            if session_id:
+                self._db.automations.complete_session_in_transaction(
+                    conn, session_id=session_id, project_id=project_id,
+                )
+
+        result = self._project_payload(self._require_project(project_id))
+        result.update(_envelope_to_dict(envelope))
+        result["activated_watches"] = activated_watches
         return result
 
     def update_project(

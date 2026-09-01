@@ -286,6 +286,23 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
         })),
     },
   },
+  // HS-159-05: project-setup surface (the interview)
+  {
+    action: "project-setup",
+    windowId: "surface-project-setup",
+    label: "New Project",
+    description: "Create a Project through the guided interview.",
+    glyph: "▣",
+    href: "/",
+    surface: {
+      eyebrow: "Setup",
+      minW: 560,
+      load: () =>
+        import("../features/project-room/setup/SetupRoot").then((module) => ({
+          default: module.SetupCore,
+        })),
+    },
+  },
   {
     action: "inspect-processes",
     windowId: "surface-processes",

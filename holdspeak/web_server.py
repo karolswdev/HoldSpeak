@@ -667,6 +667,8 @@ class MeetingWebServer:
             build_system_router,
             build_threads_router,
             build_tts_router,
+            build_project_setup_router,
+            build_watches_router,
         )
 
         from .services.meeting_aftercare_service import MeetingAftercareService
@@ -675,6 +677,8 @@ class MeetingWebServer:
         from .services.people_service import PeopleService, UnavailablePeopleStore
         from .people import production_people_store
         from .services.reaction_service import ReactionService
+        from .services.watch_service import WatchService
+        from .services.project_setup_service import ProjectSetupService
         from .services.refinement_coordinator import RefinementCoordinator
         from .services.refinement_application_service import RefinementApplicationService
 
@@ -847,6 +851,12 @@ class MeetingWebServer:
             memory_service=MemoryService(get_database(), observer=obs),
             mission_control_service=MissionControlService(get_database(), observer=obs),
             reaction_service=ReactionService(get_database(), observer=obs),
+            watch_service=WatchService(get_database(), observer=obs),
+            project_setup_service=ProjectSetupService(
+                get_database(),
+                project_service=ProjectService(get_database(), observer=obs),
+                watch_service=WatchService(get_database(), observer=obs),
+            ),
             refinement_coordinator=refinement_coordinator,
             refinement_service=refinement_service,
             settings_service=SettingsService(
@@ -986,6 +996,8 @@ class MeetingWebServer:
         app.include_router(build_sync_router(web_ctx))
         app.include_router(build_threads_router(web_ctx))
         app.include_router(build_tts_router(web_ctx))
+        app.include_router(build_project_setup_router(web_ctx))
+        app.include_router(build_watches_router(web_ctx))
 
         @app.on_event("startup")
         async def _startup() -> None:

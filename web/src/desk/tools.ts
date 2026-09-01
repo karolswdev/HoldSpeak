@@ -32,6 +32,7 @@ export const KIND_GLYPH: Record<string, string> = {
   workbench: "⊞",  // boxed plus — a compound workspace
   zone: "◰",       // square with upper-left quadrant — a region
   thread: "◬",     // triangle with left half — a speech ribbon
+  project: "▣",    // filled square — a durable container
 };
 
 export const KIND_LABEL: Record<string, string> = {

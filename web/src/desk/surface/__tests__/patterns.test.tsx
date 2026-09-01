@@ -9,6 +9,7 @@ import { ActionNotice } from "../patterns/ActionNotice";
 import { Disclosure } from "../patterns/Disclosure";
 import { ProgressPlan, type PlanStep } from "../patterns/ProgressPlan";
 import { ChoiceCardGroup, ChoiceCard } from "../patterns/ChoiceCardGroup";
+import { ChoiceCardShell } from "../patterns/ChoiceCardShell";
 import { Popover } from "../patterns/Popover";
 import { ProvenanceChip, Receipt } from "../patterns/ProvenanceChip";
 
@@ -440,6 +441,185 @@ describe("ChoiceCard object slots", () => {
     fireEvent.click(screen.getByRole("button", { name: /What's inside/ }));
     expect(screen.getByText("Thoughts and notes")).toBeInTheDocument();
     expect(screen.getByRole("radio")).not.toBeChecked();
+  });
+});
+
+/* ────────────────────────────────────────────────────────────────────
+   5c. ChoiceCardShell (HS-159): material without an interaction model
+   ──────────────────────────────────────────────────────────────────── */
+
+describe("ChoiceCardShell", () => {
+  it("renders the card shell with surface-choice-card class", () => {
+    const { container } = render(
+      <ChoiceCardShell label="Test card" />,
+    );
+    expect(container.querySelector(".surface-choice-card")).toBeTruthy();
+  });
+
+  it("renders head with label", () => {
+    const { container } = render(
+      <ChoiceCardShell label="My label" />,
+    );
+    const head = container.querySelector(".surface-choice-card-head");
+    expect(head).toBeTruthy();
+    const label = container.querySelector(".surface-choice-card-label");
+    expect(label?.textContent).toBe("My label");
+  });
+
+  it("renders emblem as decoration (aria-hidden)", () => {
+    const { container } = render(
+      <ChoiceCardShell label="Card" emblem="*" />,
+    );
+    const emblem = container.querySelector(".surface-choice-card-emblem");
+    expect(emblem?.textContent).toBe("*");
+    expect(emblem?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("renders summary slot", () => {
+    const { container } = render(
+      <ChoiceCardShell label="Card" summary="one-liner" />,
+    );
+    const summary = container.querySelector(".surface-choice-card-summary");
+    expect(summary?.textContent).toBe("one-liner");
+  });
+
+  it("renders description slot", () => {
+    render(<ChoiceCardShell label="Card" description="A description" />);
+    expect(screen.getByText("A description")).toBeInTheDocument();
+  });
+
+  it("renders fact chips", () => {
+    const { container } = render(
+      <ChoiceCardShell
+        label="Card"
+        facts={[
+          { label: "CPU", value: "4 cores" },
+          { label: "RAM", value: "16 GB" },
+        ]}
+      />,
+    );
+    const facts = container.querySelectorAll(".surface-choice-card-fact");
+    expect(facts.length).toBe(2);
+    expect(facts[0].querySelector(".surface-choice-card-fact-key")?.textContent).toBe("CPU");
+    expect(facts[0].querySelector(".surface-choice-card-fact-val")?.textContent).toBe("4 cores");
+    expect(facts[1].querySelector(".surface-choice-card-fact-key")?.textContent).toBe("RAM");
+    expect(facts[1].querySelector(".surface-choice-card-fact-val")?.textContent).toBe("16 GB");
+  });
+
+  it("renders cost slot", () => {
+    render(<ChoiceCardShell label="Card" cost={<span>$5</span>} />);
+    expect(screen.getByText("$5")).toBeInTheDocument();
+  });
+
+  it("renders fold behind a Disclosure", () => {
+    render(
+      <ChoiceCardShell label="Card" fold={<span>Detail</span>} foldLabel="More" />,
+    );
+    expect(screen.queryByText("Detail")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /More/ }));
+    expect(screen.getByText("Detail")).toBeInTheDocument();
+  });
+
+  it("stamps data-selected when selected", () => {
+    const { container } = render(
+      <ChoiceCardShell label="Card" selected />,
+    );
+    expect(container.querySelector("[data-selected]")).toBeTruthy();
+  });
+
+  it("omits data-selected when not selected", () => {
+    const { container } = render(
+      <ChoiceCardShell label="Card" selected={false} />,
+    );
+    expect(container.querySelector("[data-selected]")).toBeNull();
+  });
+
+  it("stamps data-recommended and data-disabled", () => {
+    const { container } = render(
+      <ChoiceCardShell label="Card" recommended disabled />,
+    );
+    expect(container.querySelector("[data-recommended]")).toBeTruthy();
+    expect(container.querySelector("[data-disabled]")).toBeTruthy();
+  });
+
+  it("stamps data-tier", () => {
+    const { container } = render(
+      <ChoiceCardShell label="Card" tier="balanced" />,
+    );
+    expect(container.querySelector('[data-tier="balanced"]')).toBeTruthy();
+  });
+
+  it("renders beforeHead slot before the head", () => {
+    const { container } = render(
+      <ChoiceCardShell
+        label="Card"
+        beforeHead={<input type="hidden" data-testid="pre-head" />}
+      />,
+    );
+    const shell = container.querySelector(".surface-choice-card")!;
+    const preHead = shell.querySelector("[data-testid='pre-head']")!;
+    const head = shell.querySelector(".surface-choice-card-head")!;
+    // beforeHead must precede the head in DOM order
+    const children = Array.from(shell.children);
+    expect(children.indexOf(preHead)).toBeLessThan(children.indexOf(head));
+  });
+
+  it("renders children between standard slots and fold", () => {
+    const { container } = render(
+      <ChoiceCardShell label="Card" fold={<span>Fold</span>}>
+        <div data-testid="custom-child" />
+      </ChoiceCardShell>,
+    );
+    const shell = container.querySelector(".surface-choice-card")!;
+    const custom = shell.querySelector("[data-testid='custom-child']")!;
+    const fold = shell.querySelector(".surface-choice-card-fold")!;
+    const children = Array.from(shell.children);
+    expect(children.indexOf(custom)).toBeLessThan(children.indexOf(fold));
+  });
+
+  it("passes extra props to the wrapper element", () => {
+    const { container } = render(
+      <ChoiceCardShell label="Card" role="option" aria-selected={true} />,
+    );
+    const shell = container.querySelector(".surface-choice-card")!;
+    expect(shell.getAttribute("role")).toBe("option");
+    expect(shell.getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("accepts a custom element via the as prop", () => {
+    const { container } = render(
+      <ChoiceCardShell as="label" label="Card" />,
+    );
+    const shell = container.querySelector(".surface-choice-card")!;
+    expect(shell.tagName).toBe("LABEL");
+  });
+
+  it("ChoiceCard still renders correctly when composing the shell (one-source-of-material)", () => {
+    const [value, setValue] = [null as string | null, vi.fn()];
+    const { container } = render(
+      <ChoiceCard
+        value="a"
+        label="Option A"
+        description="Desc"
+        summary="Sum"
+        facts={[{ label: "K", value: "V" }]}
+        fold={<span>Folded</span>}
+        name="test"
+        selectedValue={value}
+        onChange={setValue}
+      />,
+    );
+    // The ChoiceCard should render as a label wrapping the shell material
+    const card = container.querySelector(".surface-choice-card") as HTMLElement;
+    expect(card.tagName).toBe("LABEL");
+    // Radio input from beforeHead
+    expect(card.querySelector("input[type='radio']")).toBeTruthy();
+    // Head, summary, facts all present
+    expect(card.querySelector(".surface-choice-card-label")?.textContent).toBe("Option A");
+    expect(card.querySelector(".surface-choice-card-summary")?.textContent).toBe("Sum");
+    expect(card.querySelector(".surface-choice-card-fact")).toBeTruthy();
+    // Fold present
+    expect(card.querySelector(".surface-choice-card-fold")).toBeTruthy();
   });
 });
 

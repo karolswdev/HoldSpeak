@@ -926,6 +926,11 @@ def _apply_data_backfills(conn: sqlite3.Connection) -> None:
     # context_unsupported.  Heal existing poisoned rows.  Idempotent.
     _backfill_deployment_revision_context_ceiling(conn)
 
+    # ── watch-graduation (HS-159-01) ──────────────────────────────────
+    # Existing connector_watches rows graduate to WatchSpec@1.
+    # Idempotent: rows already carrying schema_version are untouched.
+    _backfill_watch_graduation(conn)
+
 
 def _backfill_chat_route_assignments(conn: sqlite3.Connection) -> None:
     """Family ``chat-route-assignments`` (HS-151-02).
@@ -1148,4 +1153,71 @@ def _backfill_deployment_revision_context_ceiling(conn: sqlite3.Connection) -> N
     if healed:
         log.info(
             "deployment-revision-context-ceiling backfill: healed %d row(s)", healed,
+        )
+
+
+def _backfill_watch_graduation(conn: sqlite3.Connection) -> None:
+    """Graduate existing ``connector_watches`` rows to WatchSpec@1 (HS-159-01).
+
+    Backfill columns added by §9.3:
+    - schema_version = 'WatchSpec@1'
+    - intent = 'Legacy automation watch'
+    - project_id = NULL (legacy watches have no Project)
+    - trigger_kind = 'poll'
+    - trigger_json = carry over refresh_interval_minutes from query_json
+    - state = 'active' if enabled else 'paused'
+    - mode = 'yolo'
+    - revision = 1
+
+    Idempotent: rows already carrying a non-empty schema_version are
+    untouched.  query_json itself is never modified.
+    """
+    import json as _json
+
+    rows = conn.execute(
+        "SELECT id, query_json, enabled FROM connector_watches "
+        "WHERE schema_version = '' OR schema_version IS NULL"
+    ).fetchall()
+    if not rows:
+        return
+
+    graduated = 0
+    for row in rows:
+        watch_id = row[0]
+        raw_query = row[1] or "{}"
+        enabled = row[2]
+
+        # Extract refresh_interval_minutes from query_json for trigger_json.
+        try:
+            query = _json.loads(raw_query)
+        except (_json.JSONDecodeError, TypeError):
+            query = {}
+        interval = query.get("refresh_interval_minutes", 35)
+        trigger = _json.dumps(
+            {"every_minutes": interval},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+
+        state = "active" if enabled else "paused"
+
+        conn.execute(
+            """UPDATE connector_watches
+               SET schema_version = 'WatchSpec@1',
+                   intent = 'Legacy automation watch',
+                   trigger_kind = 'poll',
+                   trigger_json = ?,
+                   state = ?,
+                   mode = 'yolo',
+                   revision = 1
+               WHERE id = ?
+                 AND (schema_version = '' OR schema_version IS NULL)""",
+            (trigger, state, watch_id),
+        )
+        graduated += 1
+
+    if graduated:
+        log.info(
+            "watch-graduation backfill: graduated %d row(s) to WatchSpec@1",
+            graduated,
         )

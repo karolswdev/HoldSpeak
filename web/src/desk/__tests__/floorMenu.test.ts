@@ -46,6 +46,7 @@ describe("floorMenuEntries", () => {
       "New Workbench",
       "New Zone",
       "New Thread",
+      "New Project",
     ]);
     const note = news.entries[0] as Extract<WorkMenuEntry, { type: "item" }>;
     note.onSelect();
