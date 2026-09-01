@@ -46,7 +46,7 @@ not a vibe; OWNER VERDICT closes the face). No writes, no webhooks
 
 | ID | Story | Status | Story file | Evidence |
 |---|---|---|---|---|
-| HS-161-01 | The provider adapter (real auth status, discovery, typed fallback, egress receipts) | backlog | [story-01-the-provider-adapter](./story-01-the-provider-adapter.md) | - |
+| HS-161-01 | The provider adapter (real auth status, discovery, typed fallback, egress receipts) | done | [story-01-the-provider-adapter](./story-01-the-provider-adapter.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-161-02 | The compilation (§8.1 templates → WatchSpec@1; GitHub joins the interview's inventory) | backlog | [story-02-the-compilation](./story-02-the-compilation.md) | - |
 | HS-161-03 | The live test + baseline + manual evaluation (into the Delta) | backlog | [story-03-the-live-test](./story-03-the-live-test.md) | - |
 | HS-161-04 | The wire (provider routes, api-surface) | backlog | [story-04-the-wire](./story-04-the-wire.md) | - |
@@ -56,13 +56,20 @@ not a vibe; OWNER VERDICT closes the face). No writes, no webhooks
 
 ## Where we are
 
-CHARTERED. Chain: 01 → 02 → 03 → 04 → 05 ∥ 06(rig after 05's
-functional) → 07. THE NEW LAW OF THIS PHASE: provider reads cross
-egress — Art XI applies for the first time in the arc; every gh
-invocation is admitted through the kernel with a receipt (study how
-the existing GitHubWatchSource runner integrates with the kernel
-TODAY before assuming it doesn't — the runner may already be
-admitted; verify, don't invent). All standing laws carry.
+1/7. 01 DONE — the provider adapter. THE KERNEL ANSWER, verified by
+trace: production gh reads were ALREADY admitted —
+`PermissionGate(github_cli.MANIFEST).run_read_subprocess` (principal
+OWNER+READ, manifest `shell:exec`) is the path GitHubWatchSource has
+used since HS-11-04; the adapter RIDES it through one seam
+(`_run_gh`), one classified fence entry ("mandatory authenticated
+owner read"). Auth truth table (connected / owner_action_required /
+degraded / unavailable — probe, never `which gh` alone), bounded
+discovery with stable owner/name IDs, typed validate_repo fallback,
+snapshot DELEGATES to fetch_watch_snapshot (zero forked logic).
+PROV-004 proven by test: persisted row + DEBUG logs grepped clean of
+credential material. Live probes green against real gh. Next: 02 the
+compilation. Chain: 02 → 03 → 04 → 05 ∥ 06(rig after 05's
+functional) → 07. All standing laws carry.
 
 ## Active risks
 

@@ -480,6 +480,35 @@ class AutomationRepository(BaseRepository):
             ).fetchall()
         return [self._payload(row, "capability_manifest") for row in rows]
 
+    def update_provider_connection(
+        self,
+        connection_id: str,
+        **fields: Any,
+    ) -> dict[str, Any] | None:
+        """Update mutable columns on an existing provider connection row.
+
+        HS-161-01 additive helper.  Only the columns listed in ``_ALLOWED``
+        are accepted; unknown keys are silently ignored.  ``updated_at`` is
+        always touched.
+        """
+        _ALLOWED = {
+            "state", "capability_manifest_json", "capability_revision",
+            "discovery_state", "last_checked_at", "last_connected_at",
+            "last_error_code", "last_error_detail",
+        }
+        updates = {k: v for k, v in fields.items() if k in _ALLOWED}
+        if not updates:
+            return self.get_provider_connection(connection_id)
+        set_parts = [f"{k}=?" for k in updates]
+        set_parts.append("updated_at=datetime('now')")
+        values: list[Any] = list(updates.values()) + [connection_id]
+        with self._connection() as conn:
+            conn.execute(
+                f"UPDATE watch_provider_connections SET {', '.join(set_parts)} WHERE id=?",
+                values,
+            )
+        return self.get_provider_connection(connection_id)
+
     # ── Watch rules (§9.4) ─────────────────────────────────────────────
 
     def create_rule(
