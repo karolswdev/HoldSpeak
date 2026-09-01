@@ -45,6 +45,20 @@ on the owner's already-given 06 verdict.
 - Sweep baseline fresh: main's 27 names @ run 33459107466.
 - Full suite + counsel in flight.
 
+## The CI catch (post-close, pre-merge)
+
+- PR #524's CI found what every local run missed: same-second timing
+  puts two observations of ONE fact in one window, both minting the
+  SAME deterministic pprop_ id — the id doing its job, the insert
+  crashing instead of deduping (UNIQUE failed in open_review; the
+  deferred-return test was the messenger, not the cause). FIXED:
+  intra-window dedup by deterministic id (one semantic proposal,
+  first wins) + the conflict path's `review_window_key=""` "filled
+  by caller" placeholder now actually filled (threaded through
+  _detect_conflicts). A forced-collision regression test seeds two
+  identical facts and asserts ONE proposal. The four other CI
+  candidates: churn, proven (untouched files, isolated green ×4).
+
 ## Counsel close (HS-160)
 
 **VERDICT: RATIFY-W-C — zero M, four S, five N.** Axes A/D/F clean

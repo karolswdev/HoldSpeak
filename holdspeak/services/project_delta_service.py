@@ -464,7 +464,7 @@ class ProjectDeltaService:
         grouped = self._group_by_target(new_observations)
 
         # ── Step 7: conflict detection ───────────────────────────────
-        conflicts = self._detect_conflicts(grouped)
+        conflicts = self._detect_conflicts(grouped, review_window_key)
 
         # ── Step 8: deterministic proposals from closed rule table ────
         proposals = self._generate_proposals(
@@ -493,6 +493,20 @@ class ProjectDeltaService:
         # basis (DEL-003); deferred proposals whose deferred_until has
         # passed return flagged as 'returning' (DEL-004).
         proposals = self._apply_recurrence(project_id, proposals, now)
+
+        # Deterministic-ID dedup: two observations of the SAME fact in
+        # one window mint the SAME pprop_ id by design — one semantic
+        # proposal, not a UNIQUE-constraint crash (the CI same-second
+        # collision, HS-160-08). First occurrence wins.
+        seen_ids: set = set()
+        deduped: list[dict[str, Any]] = []
+        for prop in proposals:
+            prop_id = prop.get("proposal_id", "")
+            if prop_id and prop_id in seen_ids:
+                continue
+            seen_ids.add(prop_id)
+            deduped.append(prop)
+        proposals = deduped
 
         # ── Step 10: sort (materiality desc, event time, kind, id) ───
         proposals.sort(key=lambda p: (
@@ -1292,6 +1306,7 @@ class ProjectDeltaService:
 
     def _detect_conflicts(
         self, grouped: dict[str, list[dict[str, Any]]],
+        review_window_key: str = "",
     ) -> list[dict[str, Any]]:
         """Detect conflicting observations for the same target.
 
@@ -1325,7 +1340,7 @@ class ProjectDeltaService:
                     patch_str = _deterministic_json(conflict_patch)
                     proposal_id = generate_pprop_id(
                         project_id=kind_obs[0].get("project_id", ""),
-                        review_window_key="",  # filled by caller
+                        review_window_key=review_window_key,
                         proposal_kind="conflict",
                         target_ref=target_ref,
                         normalized_patch=patch_str,

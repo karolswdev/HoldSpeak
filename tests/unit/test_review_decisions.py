@@ -1160,3 +1160,39 @@ class TestStoreWindowAtomicity:
             f"Atomicity violated: {len(proposals)} proposal rows survived "
             f"a rolled-back _store_window"
         )
+
+
+class TestSameFactCollision:
+    """HS-160-08: two observations of one fact in one window = ONE proposal.
+
+    The deterministic pprop_ id makes them identical by design; the CI
+    same-second timing proved the insert crashed instead of deduping.
+    """
+
+    def test_duplicate_fact_observations_yield_one_proposal(self, rig) -> None:
+        db, project_svc, delta_svc = rig
+        pid = _seed_project(db)
+        _seed_meeting(db)
+        _associate_meeting(db, pid, "m-dec01")
+        # Two observations, IDENTICAL fact_json + kind + target -> same
+        # deterministic patch -> same pprop_ id within the window.
+        fact = '{"card_id": "ai-x", "lane": "overdue", "text": "same fact"}'
+        for src in ("src-a", "src-b"):
+            db.project_observations.insert_observation(
+                observation_id=f"pobs_samefact_{src}",
+                project_id=pid,
+                source_id=src,
+                observation_kind="followthrough.overdue",
+                subject_ref="action_item:ai-x",
+                source_version="v1",
+                observed_at="2099-01-01T00:00:00+00:00",
+                captured_at="2099-01-01T00:00:00+00:00",
+                fact_json=fact,
+                content_hash="h-same",
+                coverage_state="ok",
+            )
+        review = delta_svc.open_review(OWNER, pid)
+        risk = [p for p in review["proposals"]
+                if p["proposal_kind"] == "risk_attention"
+                and p["target_ref"] == "action_item:ai-x"]
+        assert len(risk) == 1, f"expected ONE deduped proposal, got {len(risk)}"
