@@ -1057,6 +1057,63 @@
   font-weight: var(--font-medium);
 }
 
+/* ── Provider wizard flow (HS-161-05: mounted composition) ── */
+
+.provider-wizard-flow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.provider-wizard-heading {
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.provider-wizard-loading {
+  padding: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.provider-wizard-error {
+  font-size: var(--text-sm);
+  color: var(--text-danger);
+  padding: var(--space-2);
+  background: var(--bg-danger-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.provider-wizard-scoped {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.provider-wizard-scope-confirmed {
+  font-size: var(--text-sm);
+  color: var(--text-success);
+  font-weight: var(--font-medium);
+}
+
+.provider-wizard-actions {
+  display: flex;
+  gap: var(--space-2);
+  padding-top: var(--space-1);
+}
+
+.provider-wizard-done {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
 /* ── Utility ── */
 
 .sr-only {

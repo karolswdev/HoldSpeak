@@ -14,6 +14,10 @@ import type {
   TestResultResponse,
   FinalizeEnvelope,
   CadencePresetKey,
+  ProviderConnectionStatus,
+  DiscoveryResponse,
+  ValidateRepoResponse,
+  ClarifyScopeResponse,
 } from "./model";
 
 /* ── Session storage key for resume (WEB-CR-009) ── */
@@ -497,6 +501,130 @@ export function useSetupController() {
     });
   }, []);
 
+  /* ── Provider operations (HS-161-05) ── */
+
+  const [providerConnection, setProviderConnection] = useState<ProviderConnectionStatus | null>(null);
+  const [providerDiscovery, setProviderDiscovery] = useState<DiscoveryResponse | null>(null);
+  const [providerChecking, setProviderChecking] = useState(false);
+  const [providerDiscovering, setProviderDiscovering] = useState(false);
+  const [providerScopeState, setProviderScopeState] = useState<"unscoped" | "scoped" | null>(null);
+
+  const checkConnection = useCallback(async () => {
+    safe(() => setProviderChecking(true));
+    setError("");
+    try {
+      const status = await api.getGitHubConnection();
+      safe(() => {
+        setProviderConnection(status);
+        setProviderChecking(false);
+      });
+    } catch (reason) {
+      safe(() => {
+        setError(readableError(reason));
+        setProviderChecking(false);
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const recheckConnection = useCallback(async () => {
+    safe(() => setProviderChecking(true));
+    setError("");
+    try {
+      const status = await api.recheckGitHubConnection();
+      safe(() => {
+        setProviderConnection(status);
+        setProviderChecking(false);
+      });
+    } catch (reason) {
+      safe(() => {
+        setError(readableError(reason));
+        setProviderChecking(false);
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const discoverRepos = useCallback(async (query?: string, cursor?: string) => {
+    safe(() => setProviderDiscovering(true));
+    setError("");
+    try {
+      const response = await api.discoverGitHub(query, cursor);
+      safe(() => {
+        setProviderDiscovery((prev) => {
+          if (cursor && prev) {
+            // Append for pagination
+            return { ...response, items: [...prev.items, ...response.items] };
+          }
+          return response;
+        });
+        setProviderDiscovering(false);
+      });
+    } catch (reason) {
+      safe(() => {
+        setError(readableError(reason));
+        setProviderDiscovering(false);
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const validateRepo = useCallback(async (ownerRepo: string): Promise<ValidateRepoResponse | null> => {
+    setError("");
+    try {
+      return await api.validateGitHubRepo(ownerRepo);
+    } catch (reason) {
+      safe(() => setError(readableError(reason)));
+      return null;
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const clarifyProposalScope = useCallback(
+    async (proposalId: string, repo?: string): Promise<ClarifyScopeResponse | null> => {
+      if (!sessionRef.current) return null;
+      setError("");
+      try {
+        const response = await api.clarifyScope(sessionRef.current, proposalId, repo);
+        if (response.scopeState === "scoped") {
+          safe(() => {
+            setProviderScopeState("scoped");
+            // Update proposal scope in local state
+            setState((prev) => {
+              if (prev.kind !== "proposals" && prev.kind !== "review") return prev;
+              return {
+                ...prev,
+                proposals: prev.proposals.map((p) =>
+                  p.id === proposalId
+                    ? {
+                        ...p,
+                        spec: {
+                          ...p.spec,
+                          subject: {
+                            ...p.spec.subject,
+                            scope: { ...p.spec.subject.scope, repository: response.repositories[0] ?? "" },
+                          },
+                        },
+                      }
+                    : p,
+                ),
+              };
+            });
+          });
+        }
+        return response;
+      } catch (reason) {
+        safe(() => setError(readableError(reason)));
+        return null;
+      }
+    },
+    [], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const resetProviderState = useCallback(() => {
+    setProviderConnection(null);
+    setProviderDiscovery(null);
+    setProviderChecking(false);
+    setProviderDiscovering(false);
+    setProviderScopeState(null);
+  }, []);
+
   return {
     state,
     error,
@@ -527,5 +655,18 @@ export function useSetupController() {
 
     // Re-init
     retry: init,
+
+    // Provider operations (HS-161-05)
+    providerConnection,
+    providerDiscovery,
+    providerChecking,
+    providerDiscovering,
+    providerScopeState,
+    checkConnection,
+    recheckConnection,
+    discoverRepos,
+    validateRepo,
+    clarifyProposalScope,
+    resetProviderState,
   } as const;
 }

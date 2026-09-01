@@ -15,10 +15,14 @@ import { MicButton } from "../../../desk/surface/controls/MicButton";
 import {
   PROVIDER_STATE_COPY,
   PROVIDER_STATE_ACTION,
+  conditionPlainWords,
   type ProviderState,
   type ProviderConnectionStatus,
   type DiscoveryItem,
   type DiscoveryResponse,
+  type ValidateRepoResponse,
+  type ClarifyScopeResponse,
+  type SetupProposal,
 } from "./model";
 
 /* ── Connection status card ── */
@@ -451,4 +455,181 @@ function formatTestTime(iso: string): string {
   } catch {
     return iso;
   }
+}
+
+/* ── ProviderWizardFlow: the mounted composition that sequences
+     connection -> scope -> test in-world (no modal). ── */
+
+export function ProviderWizardFlow({
+  proposal,
+  connection,
+  discovery,
+  checking,
+  discovering,
+  scopeState,
+  onCheckConnection,
+  onRecheck,
+  onDiscover,
+  onValidateRepo,
+  onClarifyScope,
+  onTest,
+  onDone,
+}: {
+  proposal: SetupProposal;
+  connection: ProviderConnectionStatus | null;
+  discovery: DiscoveryResponse | null;
+  checking: boolean;
+  discovering: boolean;
+  scopeState: "unscoped" | "scoped" | null;
+  onCheckConnection: () => void;
+  onRecheck: () => void;
+  onDiscover: (query?: string, cursor?: string) => void;
+  onValidateRepo: (ownerRepo: string) => Promise<ValidateRepoResponse | null>;
+  onClarifyScope: (repo?: string) => Promise<ClarifyScopeResponse | null>;
+  onTest: () => void;
+  onDone: () => void;
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [validating, setValidating] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Auto-check connection on mount if not already checked
+  useEffect(() => {
+    if (!connection && !checking) {
+      onCheckConnection();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-discover when connection becomes connected and no discovery yet
+  useEffect(() => {
+    if (connection?.state === "connected" && !discovery && !discovering && scopeState !== "scoped") {
+      onDiscover();
+    }
+  }, [connection?.state]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isConnected = connection?.state === "connected";
+  const isScoped = scopeState === "scoped";
+  const hasPassed = proposal.testState === "passed";
+
+  // Handle discovery card selection -> clarify scope
+  const handleRepoSelect = useCallback(async (ownerRepo: string) => {
+    setValidationError(null);
+    await onClarifyScope(ownerRepo);
+  }, [onClarifyScope]);
+
+  // Handle typed repo validation -> clarify scope
+  const handleTypedRepo = useCallback(async (ownerRepo: string) => {
+    setValidating(true);
+    setValidationError(null);
+    const result = await onValidateRepo(ownerRepo);
+    if (result && result.valid) {
+      await onClarifyScope(ownerRepo);
+    } else if (result && !result.valid) {
+      setValidationError(result.message ?? "Invalid repository path. Use owner/repo format.");
+    }
+    setValidating(false);
+  }, [onValidateRepo, onClarifyScope]);
+
+  // Handle search query changes
+  const handleSearchChange = useCallback((q: string) => {
+    setSearchQuery(q);
+    onDiscover(q || undefined);
+  }, [onDiscover]);
+
+  return (
+    <div
+      className="provider-wizard-flow"
+      data-testid="provider-wizard-flow"
+      role="region"
+      aria-label={`Configure ${proposal.spec.name}`}
+    >
+      <h3 className="provider-wizard-heading">
+        Configure: {proposal.spec.name}
+      </h3>
+
+      {/* Step 1: Connection status (always visible) */}
+      {connection ? (
+        <ConnectionStatusCard
+          status={connection}
+          onRecheck={onRecheck}
+          rechecking={checking}
+        />
+      ) : checking ? (
+        <div className="provider-wizard-loading" aria-live="polite">
+          Checking GitHub connection...
+        </div>
+      ) : null}
+
+      {/* Step 2: Repo scope (visible when connected and not yet scoped) */}
+      {isConnected && !isScoped ? (
+        <>
+          <DiscoveryList
+            items={discovery?.items ?? []}
+            cursor={discovery?.cursor ?? null}
+            query={searchQuery}
+            onQueryChange={handleSearchChange}
+            onLoadMore={() => onDiscover(searchQuery || undefined, discovery?.cursor ?? undefined)}
+            onSelect={handleRepoSelect}
+            loading={discovering}
+          />
+          <TypedRepoInput
+            onValidate={handleTypedRepo}
+            validating={validating}
+          />
+          {validationError ? (
+            <div className="provider-wizard-error" role="alert">
+              {validationError}
+            </div>
+          ) : null}
+        </>
+      ) : null}
+
+      {/* Step 3: Scoped -- show scope confirmation + test action */}
+      {isConnected && isScoped ? (
+        <div className="provider-wizard-scoped" data-testid="provider-wizard-scoped">
+          <div className="provider-wizard-scope-confirmed">
+            Repository scoped. Ready to test.
+          </div>
+
+          {/* Test result if available */}
+          {proposal.testResult ? (
+            <GitHubTestDisplay
+              repo={String(proposal.spec.subject.scope?.repository ?? "")}
+              queryPlainWords={conditionPlainWords(proposal.spec)}
+              entityCount={proposal.testResult.entityCount}
+              representativeEntities={proposal.testResult.representativeEntities}
+              matchedConditions={conditionPlainWords(proposal.spec)}
+              observedAt={proposal.testResult.observedAt}
+              error={proposal.testResult.error}
+              testState={proposal.testState ?? ""}
+            />
+          ) : null}
+
+          {/* Test button (if not yet tested) */}
+          {!proposal.testState ? (
+            <button
+              type="button"
+              className="provider-action-btn"
+              data-testid="provider-test-btn"
+              onClick={onTest}
+            >
+              Test this Watch
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Done button */}
+      <div className="provider-wizard-actions">
+        <button
+          type="button"
+          className="provider-wizard-done"
+          data-testid="provider-wizard-done"
+          onClick={onDone}
+        >
+          {isScoped ? "Done" : "Back to suggestions"}
+        </button>
+      </div>
+    </div>
+  );
 }
