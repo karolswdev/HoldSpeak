@@ -117,7 +117,7 @@ class TestFreshSchema:
     """A fresh DB built from SCHEMA_SQL has every HS-160-01 shape."""
 
     def test_schema_version_is_69(self) -> None:
-        assert SCHEMA_VERSION == 69
+        assert SCHEMA_VERSION == 70
 
     # -- project_observations (SS5.5) --
 

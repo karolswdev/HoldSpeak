@@ -1,4 +1,4 @@
-# Phase 162 — Project Rooms: The Update Factory (P3)
+# Phase 162 - Project Rooms: The Update Factory (P3)
 
 - **Project:** holdspeak
 - **Status:** in-progress
@@ -29,9 +29,9 @@ this phase builds the factory the action will call.
 
 ## Stories
 
-| ID | Story | Status | File | Evidence |
+| ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-162-01 | The update ledger (schema v70 + repo + revision pinning) | backlog | [story-01-the-update-ledger](./story-01-the-update-ledger.md) | - |
+| HS-162-01 | The update ledger (schema v70 + repo + revision pinning) | done | [story-01-the-update-ledger](./story-01-the-update-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-162-02 | The deterministic drafter (UPD-003 first; sections + claims + citations) | backlog | [story-02-the-deterministic-drafter](./story-02-the-deterministic-drafter.md) | - |
 | HS-162-03 | The model drafter (frozen router; marked language; fallback proven) | backlog | [story-03-the-model-drafter](./story-03-the-model-drafter.md) | - |
 | HS-162-04 | The verbs on the wire (draft/regenerate/save/copy/publish; api-surface) | backlog | [story-04-the-verbs](./story-04-the-verbs.md) | - |
@@ -41,15 +41,20 @@ this phase builds the factory the action will call.
 
 ## Where we are
 
-CHARTERED. Chain: 01 → 02 → 03 → 04 → 05 ∥ 06(rig after 05's
-functional) → 07. THE LESSON OF 161 CARRIES AS LAW: a component with
-green tests is not a face — prove the MOUNT and the PIXELS before
-the owner sees anything; fixtures speak the wire's dialect and a
-fixture that bypasses a validating seam is a lie (the
-snapshot_fetcher scar). All standing laws carry: additive schema,
-named columns, revision law, one transaction, deterministic IDs,
-PMO rails, isolated HOME, workers scoped tests only, THE OWNER SEES
-SHOTS BEFORE MERGE.
+1/7. 01 DONE — the update ledger. Schema v70 additive:
+project_updates pinned to an explicit project_revision +
+source_manifest at draft time; lifecycle draft|published|superseded
+with THE LAW AS REPO LAW — any write to a published row raises
+PublishedUpdateError (UPD-004: published is IMMUTABLE), supersede
+mints draft_revision+1 in one transaction. pupd_ was already in the
+frozen contract as uuid4 — correctly non-deterministic (the identity
+is the artifact, not the slot); zero contract changes. Revision pin
+proven to survive project mutation; reconcile proven on a COPY of
+the owner's real DB (real HOME leg, skip-clean elsewhere);
+positional-INSERT fence green. Next: 02 the deterministic drafter —
+it defines the claim schema everything downstream is constrained to.
+Chain: 02 → 03 → 04 → 05 ∥ 06(rig after 05's functional) → 07. The
+161 lesson is law: prove the MOUNT and the PIXELS.
 
 ## Active risks
 

@@ -2,8 +2,8 @@
 
 - **Project:** holdspeak
 - **Phase:** 162
-- **Status:** backlog
-- **Depends on:** —
+- **Status:** done
+- **Depends on:** -
 - **Unblocks:** HS-162-02
 - **Owner:** unassigned
 

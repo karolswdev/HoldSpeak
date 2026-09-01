@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 69  # informational; 68→69: observations, evidence links, proposals, reviews (HS-160-01)
+SCHEMA_VERSION = 70  # informational; 69→70: project_updates (HS-162-01)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -3868,4 +3868,29 @@ CREATE TABLE IF NOT EXISTS project_reviews (
 );
 CREATE INDEX IF NOT EXISTS idx_project_reviews_status
     ON project_reviews(project_id, status);
+
+-- HS-162-01: Project updates (§8, UPD-004).
+-- A draft pins the project_revision and source_manifest it was built over.
+-- Publishing sets lifecycle='published' + published_at; published rows are
+-- IMMUTABLE (the repo layer refuses any write).  Regeneration creates a new
+-- draft (draft_revision+1) that supersedes the previous unaccepted draft.
+CREATE TABLE IF NOT EXISTS project_updates (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    project_revision INTEGER NOT NULL,
+    review_id TEXT,
+    lifecycle TEXT NOT NULL DEFAULT 'draft',
+    draft_revision INTEGER NOT NULL DEFAULT 1,
+    body_md TEXT NOT NULL DEFAULT '',
+    claims_json TEXT NOT NULL DEFAULT '{}',
+    source_manifest_json TEXT NOT NULL DEFAULT '{}',
+    generator TEXT NOT NULL DEFAULT 'deterministic',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    published_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_project_updates_project
+    ON project_updates(project_id, lifecycle);
+CREATE INDEX IF NOT EXISTS idx_project_updates_review
+    ON project_updates(project_id, review_id);
 """
