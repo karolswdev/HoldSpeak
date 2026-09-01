@@ -31,6 +31,10 @@ drafters:
       "section":  str           # one of the six section keys
     }
 
+When ``verified`` is ``False`` the claim is MARKED for owner review
+(UPD-002: unsupported model language).  Deterministic claims omit the
+field (always verified); only the model drafter may set it ``False``.
+
 ZERO prose without a locator -- the deterministic drafter does not know
 how to lie.
 
@@ -42,7 +46,9 @@ content inside the body.  Sort everything canonically.
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
+import re as _re
+import time as _time
+from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from ..db.updates import PublishedUpdateError
@@ -51,6 +57,12 @@ from ..principals import Principal
 from ..project_contracts import generate_pupd_id
 
 _log = get_logger("services.project_update_service")
+
+# ── Capability identity (HS-162-03) ──────────────────────────────────
+PROJECT_UPDATE_CAPABILITY = "project.update_draft"
+
+# ── Marker for unverified model claims (UPD-002) ────────────────────
+UNVERIFIED_MARKER = "**[UNVERIFIED]**"
 
 
 # ── Claim schema (UPD-002) ────────────────────────────────────────────
@@ -62,18 +74,31 @@ _log = get_logger("services.project_update_service")
 class Claim:
     """One factual claim in an update draft.
 
-    span_id: stable identifier within this draft (s_<section>_<ordinal>).
-    text:    the factual sentence or phrase.
-    refs:    list of >= 1 canonical refs (item:<id>, decision:<id>, etc.).
-    section: one of the six UPD-001 section keys.
+    span_id:  stable identifier within this draft (s_<section>_<ordinal>).
+    text:     the factual sentence or phrase.
+    refs:     list of >= 1 canonical refs (item:<id>, decision:<id>, etc.).
+    section:  one of the six UPD-001 section keys.
+    verified: True (default) for deterministic / cited model claims.
+              False for MARKED unverified model claims (UPD-002).
+              Omitted from to_dict() when True so deterministic output
+              stays byte-identical.
     """
     span_id: str
     text: str
     refs: list[str]
     section: str
+    verified: bool = True
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        d: dict[str, Any] = {
+            "refs": list(self.refs),
+            "section": self.section,
+            "span_id": self.span_id,
+            "text": self.text,
+        }
+        if not self.verified:
+            d["verified"] = False
+        return d
 
 
 # The six UPD-001 section keys, in canonical order.
@@ -368,6 +393,249 @@ def _assemble_body(sections: dict[str, str]) -> str:
     return "\n\n".join(parts) + "\n"
 
 
+# ── Model drafter helpers (HS-162-03) ────────────────────────────────
+
+_THINK_RE = _re.compile(r"<think>.*?</think>", _re.DOTALL)
+_FENCE_RE = _re.compile(r"```(?:json)?\s*(.*?)\s*```", _re.DOTALL)
+
+
+def _extract_structured_json(raw: str) -> dict[str, Any] | None:
+    """Best-effort extraction of a JSON object from an LLM response.
+
+    Strips ``<think>...</think>`` blocks, tries markdown-fenced JSON
+    first, then scans for the first balanced ``{...}`` substring.
+    Returns ``None`` when no valid JSON dict is found.
+    """
+    if not raw:
+        return None
+    cleaned = _THINK_RE.sub("", raw).strip()
+    fence = _FENCE_RE.search(cleaned)
+    if fence:
+        try:
+            obj = json.loads(fence.group(1))
+            if isinstance(obj, dict):
+                return obj
+        except (ValueError, TypeError):
+            pass
+    depth = 0
+    start = -1
+    for i, ch in enumerate(cleaned):
+        if ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0 and start >= 0:
+                try:
+                    obj = json.loads(cleaned[start : i + 1])
+                    if isinstance(obj, dict):
+                        return obj
+                except (ValueError, TypeError):
+                    pass
+                start = -1
+    return None
+
+
+# Model output JSON schema for response_format (structured output).
+_MODEL_OUTPUT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "sections": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "key": {"type": "string"},
+                    "sentences": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "text": {"type": "string"},
+                                "cited_refs": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                            },
+                            "required": ["text", "cited_refs"],
+                        },
+                    },
+                },
+                "required": ["key", "sentences"],
+            },
+        },
+    },
+    "required": ["sections"],
+}
+
+
+def _build_model_prompt(inventory_claims: list[Claim]) -> dict[str, Any]:
+    """Build a prompt payload from the deterministic evidence inventory.
+
+    The model is given every deterministic claim (with its refs) and asked
+    to rewrite the sections with better prose, citing the exact refs.
+    """
+    by_section: dict[str, list[Claim]] = {}
+    for claim in inventory_claims:
+        by_section.setdefault(claim.section, []).append(claim)
+
+    inventory_lines: list[str] = []
+    for section_key in SECTION_KEYS:
+        claims = by_section.get(section_key, [])
+        inventory_lines.append(f"\n[section: {section_key}]")
+        if claims:
+            for c in claims:
+                refs_str = ", ".join(c.refs)
+                inventory_lines.append(
+                    f"- {c.span_id}: {c.text!r} | refs: {refs_str}"
+                )
+        else:
+            honest = _HONEST_MINIMAL.get(section_key, "")
+            inventory_lines.append(f"- (empty section -- use: {honest!r})")
+
+    system_prompt = (
+        "You are a technical project update writer. Given the evidence "
+        "inventory below, rewrite each section with clear, professional "
+        "prose. Every sentence MUST cite its source references.\n\n"
+        "RULES:\n"
+        "1. Every sentence must cite at least one ref from the inventory "
+        "using the EXACT ref strings provided.\n"
+        "2. If you add a sentence with no evidence backing, set "
+        "cited_refs to an empty list.\n"
+        "3. Use ONLY refs from the inventory -- never invent refs.\n"
+        "4. Cover all six sections in order: progress, decisions, "
+        "risks_blockers, dependencies, next_actions, source_coverage.\n"
+        "5. For empty sections, write the honest minimal line.\n"
+        "6. Keep prose concise and factual.\n\n"
+        "Respond with ONLY a JSON object:\n"
+        '{"sections": [{"key": "<section_key>", "sentences": '
+        '[{"text": "<sentence>", "cited_refs": ["<ref1>", ...]}]}]}'
+    )
+
+    return {
+        "system_prompt": system_prompt,
+        "user_prompt": "EVIDENCE INVENTORY:\n" + "\n".join(inventory_lines),
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "project_update",
+                "schema": _MODEL_OUTPUT_SCHEMA,
+            },
+        },
+    }
+
+
+def _parse_model_output(
+    raw: str,
+    inventory_refs: frozenset[str],
+) -> tuple[dict[str, str], list[Claim]] | None:
+    """Parse model JSON output into sections + claims.
+
+    Returns ``(sections_dict, claims_list)`` on success, ``None`` if the
+    output is unparseable.  Each claim is either verified (all cited_refs
+    exist in the inventory) or MARKED (``verified=False``).
+    """
+    parsed = _extract_structured_json(raw)
+    if parsed is None or "sections" not in parsed:
+        return None
+
+    sections: dict[str, str] = {}
+    claims: list[Claim] = []
+
+    for section_data in parsed.get("sections", []):
+        key = section_data.get("key", "")
+        if key not in SECTION_KEYS:
+            continue
+
+        sentences = section_data.get("sentences", [])
+        lines: list[str] = []
+
+        for i, sentence in enumerate(sentences):
+            text = str(sentence.get("text", "")).strip()
+            if not text:
+                continue
+            cited = sentence.get("cited_refs", [])
+            if not isinstance(cited, list):
+                cited = []
+
+            # Validate: keep only refs that appear in the inventory.
+            valid_refs = [r for r in cited if isinstance(r, str) and r in inventory_refs]
+
+            if valid_refs:
+                claims.append(Claim(
+                    span_id=f"s_{key}_{i}",
+                    text=text,
+                    refs=valid_refs,
+                    section=key,
+                    verified=True,
+                ))
+                lines.append(f"- {text}")
+            else:
+                # MARKED: unverified claim -- no valid evidence refs.
+                claims.append(Claim(
+                    span_id=f"s_{key}_{i}",
+                    text=text,
+                    refs=[],
+                    section=key,
+                    verified=False,
+                ))
+                lines.append(f"- {UNVERIFIED_MARKER} {text}")
+
+        if lines:
+            sections[key] = "\n".join(lines)
+        else:
+            sections[key] = _HONEST_MINIMAL.get(key, "")
+
+    # Fill missing sections with honest minimums.
+    for key in SECTION_KEYS:
+        if key not in sections:
+            sections[key] = _HONEST_MINIMAL.get(key, "")
+
+    return sections, claims
+
+
+def _resolve_for_capability(
+    db: Any,
+    capability_id: str,
+) -> tuple[str, str]:
+    """Resolve the deployment revision and assignment ID for a capability.
+
+    Returns ``(deployment_revision_id, assignment_id)``.
+    Raises ``RuntimeError`` if no assignment exists.
+    """
+    key = f"capability:{capability_id}"
+    with db._connection() as conn:
+        head = conn.execute(
+            "SELECT assignment_id, revision FROM inference_assignment_heads "
+            "WHERE assignment_key=? AND cleared=0",
+            (key,),
+        ).fetchone()
+        if head is None:
+            raise RuntimeError(f"No assignment for {capability_id}")
+        assignment_id = str(head["assignment_id"])
+        entry = conn.execute(
+            "SELECT profile_id FROM inference_assignments "
+            "WHERE assignment_id=? AND assignment_revision=? "
+            "ORDER BY ordinal LIMIT 1",
+            (assignment_id, head["revision"]),
+        ).fetchone()
+        if entry is None:
+            raise RuntimeError(
+                f"No entries in assignment for {capability_id}"
+            )
+        profile_id = entry["profile_id"]
+        rev = conn.execute(
+            "SELECT id FROM deployment_revisions WHERE model=? LIMIT 1",
+            (profile_id,),
+        ).fetchone()
+        if rev is None:
+            raise RuntimeError(
+                f"No deployment revision for profile {profile_id}"
+            )
+        return str(rev["id"]), assignment_id
+
+
 # ── The service ───────────────────────────────────────────────────────
 
 class ProjectUpdateService:
@@ -384,10 +652,103 @@ class ProjectUpdateService:
         *,
         project_service: Any,
         delta_service: Any | None = None,
+        broker: Any | None = None,
     ) -> None:
         self._db = db
         self._project_service = project_service
         self._delta_service = delta_service
+        self._broker = broker
+
+    # ── Model drafter (HS-162-03) ────────────────────────────────────
+
+    def _draft_with_model(
+        self,
+        principal: Principal,
+        det_claims: list[Claim],
+        det_sections: dict[str, str],
+        det_body_md: str,
+    ) -> tuple[str, str, str]:
+        """Attempt model drafting over the deterministic evidence inventory.
+
+        Returns ``(body_md, claims_json, generator)`` on success.
+        Raises ``_ModelDraftFailed`` on any failure (router unavailable,
+        model error, timeout, unparseable output).
+        """
+        from ..kernel.inference_runner import InvocationRequest, ServiceContract
+        from ..kernel.prompt_adapter import CanonicalPromptAdapter
+        from ..kernel.runtime import _as_principal
+
+        broker = self._broker
+        if broker is None:
+            raise _ModelDraftFailed("no_broker")
+
+        runner = broker.inference_runner
+
+        # Resolve deployment revision for the update-draft capability.
+        try:
+            deployment_rev_id, assignment_id = _resolve_for_capability(
+                broker.database, PROJECT_UPDATE_CAPABILITY,
+            )
+        except RuntimeError as exc:
+            raise _ModelDraftFailed(f"no_assignment: {exc}") from exc
+
+        # Build the evidence inventory from deterministic claims.
+        inventory_refs: frozenset[str] = frozenset(
+            ref for claim in det_claims for ref in claim.refs
+        )
+
+        payload = _build_model_prompt(det_claims)
+
+        request = InvocationRequest(
+            deployment_revision=deployment_rev_id,
+            definition_origin=ServiceContract.for_payload(
+                "project.update.draft", "1", payload,
+            ),
+            deadline_at=_time.time() + 120,
+            payload=payload,
+        )
+
+        captured: list[Any] = []
+
+        def _capture(value: Any) -> str:
+            captured.append(value)
+            return f"update-draft:{assignment_id}"
+
+        try:
+            with _as_principal(principal):
+                outcome = runner.invoke(
+                    request, CanonicalPromptAdapter(), publish=_capture,
+                )
+        except Exception as exc:
+            raise _ModelDraftFailed(f"runner_error: {exc}") from exc
+
+        # Extract raw output -- try direct result first, then captured.
+        raw: str | None = None
+        result = getattr(outcome, "result", None)
+        if isinstance(result, dict) and "output" in result:
+            raw = str(result["output"])
+        elif captured:
+            adapter_result = captured[0]
+            if isinstance(adapter_result, dict) and "output" in adapter_result:
+                raw = str(adapter_result["output"])
+
+        if raw is None:
+            raise _ModelDraftFailed("no_output")
+
+        # Parse and constrain to the claim schema.
+        parsed = _parse_model_output(raw, inventory_refs)
+        if parsed is None:
+            raise _ModelDraftFailed("unparseable_output")
+
+        model_sections, model_claims = parsed
+        body_md = _assemble_body(model_sections)
+        claims_json = json.dumps(
+            [c.to_dict() for c in model_claims],
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        generator = f"model:{assignment_id}"
+        return body_md, claims_json, generator
 
     def draft_update(
         self,
@@ -407,16 +768,13 @@ class ProjectUpdateService:
         Args:
             principal: the acting principal.
             project_id: the project to draft for.
-            generator: "deterministic" (default) or "model" (story 03).
+            generator: ``"deterministic"`` (default) or ``"model"``
+                       (HS-162-03).
 
         Returns:
             The persisted draft as a dict (from the updates repo).
         """
-        if generator != "deterministic":
-            raise ValueError(
-                f"Generator {generator!r} not yet supported; "
-                f"only 'deterministic' is available."
-            )
+        want_model = generator == "model"
 
         # 1. Read the room at ONE pinned revision
         room = self._project_service.room(principal, project_id)
@@ -449,27 +807,28 @@ class ProjectUpdateService:
         )
         observation_ids = sorted([obs["id"] for obs in observations])
 
-        # 5. Build sections + claims
-        claims: list[Claim] = []
+        # 5. Build deterministic sections + claims (always -- this is
+        #    the evidence inventory the model drafter is constrained to).
+        det_claims: list[Claim] = []
         items_section = room.get("items", {})
 
-        sections: dict[str, str] = {
-            "progress": _build_progress(items_section, claims),
-            "decisions": _build_decisions(review_section, proposals, claims),
-            "risks_blockers": _build_risks_blockers(items_section, claims),
-            "dependencies": _build_dependencies(items_section, claims),
-            "next_actions": _build_next_actions(items_section, claims),
-            "source_coverage": _build_source_coverage(room, caveats, claims),
+        det_sections: dict[str, str] = {
+            "progress": _build_progress(items_section, det_claims),
+            "decisions": _build_decisions(review_section, proposals, det_claims),
+            "risks_blockers": _build_risks_blockers(items_section, det_claims),
+            "dependencies": _build_dependencies(items_section, det_claims),
+            "next_actions": _build_next_actions(items_section, det_claims),
+            "source_coverage": _build_source_coverage(room, caveats, det_claims),
         }
 
-        body_md = _assemble_body(sections)
-        claims_json = json.dumps(
-            [c.to_dict() for c in claims],
+        det_body_md = _assemble_body(det_sections)
+        det_claims_json = json.dumps(
+            [c.to_dict() for c in det_claims],
             sort_keys=True,
             separators=(",", ":"),
         )
 
-        # 6. Build source manifest
+        # 6. Build source manifest (byte-identical regardless of generator).
         manifest = _build_source_manifest(
             room, review_id, observation_ids, caveats,
         )
@@ -477,7 +836,28 @@ class ProjectUpdateService:
             manifest, sort_keys=True, separators=(",", ":"),
         )
 
-        # 7. Persist: check for existing unaccepted draft to supersede
+        # 7. Choose body + claims based on generator.
+        if want_model:
+            try:
+                body_md, claims_json, actual_generator = (
+                    self._draft_with_model(
+                        principal, det_claims, det_sections, det_body_md,
+                    )
+                )
+            except _ModelDraftFailed as exc:
+                _log.warning(
+                    "Model drafter failed (%s); falling back to deterministic.",
+                    exc.reason,
+                )
+                body_md = det_body_md
+                claims_json = det_claims_json
+                actual_generator = "deterministic"
+        else:
+            body_md = det_body_md
+            claims_json = det_claims_json
+            actual_generator = "deterministic"
+
+        # 8. Persist: check for existing unaccepted draft to supersede
         existing_drafts = self._db.project_updates.list_updates(
             project_id, lifecycle="draft",
         )
@@ -493,7 +873,7 @@ class ProjectUpdateService:
                     body_md=body_md,
                     claims_json=claims_json,
                     source_manifest_json=manifest_json,
-                    generator=generator,
+                    generator=actual_generator,
                 )
                 return new_row
             except PublishedUpdateError:
@@ -516,6 +896,14 @@ class ProjectUpdateService:
             body_md=body_md,
             claims_json=claims_json,
             source_manifest_json=manifest_json,
-            generator=generator,
+            generator=actual_generator,
         )
         return self._db.project_updates.get_update(new_id)
+
+
+class _ModelDraftFailed(Exception):
+    """Internal signal: the model drafting path failed; fall back."""
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__(reason)

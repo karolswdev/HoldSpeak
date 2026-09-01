@@ -916,6 +916,7 @@ class MeetingWebServer:
                 get_database(),
                 project_service=_project_service,
                 delta_service=_project_delta_service,
+                broker=broker,
             ),
             refinement_coordinator=refinement_coordinator,
             refinement_service=refinement_service,

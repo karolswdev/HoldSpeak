@@ -33,7 +33,7 @@ this phase builds the factory the action will call.
 | --- | --- | --- | --- | --- |
 | HS-162-01 | The update ledger (schema v70 + repo + revision pinning) | done | [story-01-the-update-ledger](./story-01-the-update-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-162-02 | The deterministic drafter (UPD-003 first; sections + claims + citations) | done | [story-02-the-deterministic-drafter](./story-02-the-deterministic-drafter.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-162-03 | The model drafter (frozen router; marked language; fallback proven) | backlog | [story-03-the-model-drafter](./story-03-the-model-drafter.md) | - |
+| HS-162-03 | The model drafter (frozen router; marked language; fallback proven) | done | [story-03-the-model-drafter](./story-03-the-model-drafter.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-162-04 | The verbs on the wire (draft/regenerate/save/copy/publish; api-surface) | backlog | [story-04-the-verbs](./story-04-the-verbs.md) | - |
 | HS-162-05 | The face (the Update room — claims open their sources; OWNER VERDICT) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
 | HS-162-06 | The walk (PV-H04 measured: edit-to-copy < 5:00, ≥70% retained; degraded leg) | backlog | [story-06-the-walk](./story-06-the-walk.md) | - |
@@ -41,20 +41,22 @@ this phase builds the factory the action will call.
 
 ## Where we are
 
-2/7. 02 DONE — the deterministic drafter, shipped FIRST (UPD-003 as
-primary, not fallback-shaped). The frozen claim schema now exists
-({span_id, text, refs ≥1 canonical, section}) and everything
-downstream is constrained to it. Six UPD-001 sections over one
-pinned revision + manifest; every factual sentence claims its refs —
-the deterministic drafter does not know how to lie; empty sections
-say so honestly; caveats appear iff a consulted room section is
-degraded/absent. Byte-determinism proven ACROSS a supersede
-boundary; UPD-004 through the service (regenerate supersedes
-unaccepted; published never touched). Goldens: rich/empty/degraded.
-Next: 03 the model drafter — constrained to 02's schema, unsupported
-language MARKED, router-down falls back to 02, one .43 real-metal
-leg. Chain: 03 → 04 → 05 ∥ 06(rig after 05's functional) → 07. The
-161 lesson is law: prove the MOUNT and the PIXELS.
+3/7. 03 DONE — the model drafter, constrained to the schema that
+cannot lie. The deterministic inventory builds first; the model
+writes better prose over it with per-sentence citations,
+deterministically parsed: valid refs ⇒ verified, empty or INVENTED
+refs ⇒ MARKED (**[UNVERIFIED]** on the body, verified=False in
+claims), unparseable ⇒ full deterministic fallback. Typed fallback
+reasons (no_broker/no_assignment/runner_error/no_output/
+unparseable_output), generator recorded honestly both ways; the
+manifest stays byte-identical between generators. Routing through
+the 143 lawful entrance, census-registered; two pre-existing census
+drifts HEALED (two main-baseline names now green on this branch).
+THE LIVE .43 LEG PASSED — real LAN inference drafts a real room,
+claims resolve (worker + orchestrator re-runs). Next: 04 the five
+verbs on the wire (UPD-005). Chain: 04 → 05 ∥ 06(rig after 05's
+functional) → 07. The 161 lesson is law: prove the MOUNT and the
+PIXELS.
 
 ## Active risks
 
