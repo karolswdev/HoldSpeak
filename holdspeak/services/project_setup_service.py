@@ -485,7 +485,27 @@ class ProjectSetupService:
         Blank: finalize with zero selected proposals is lawful (INT-002).
         """
         self._owner(principal)
-        session = self._require_active(session_id)
+
+        # S-1 belt: if the session already carries a project_id, a
+        # previous finalize committed but the caller retried (crash
+        # recovery, duplicate request).  Return the existing project
+        # with no_change instead of creating a duplicate (API-002
+        # honest-replay spirit).
+        session = self._require_session(session_id)
+        if session.get("project_id"):
+            return {
+                "result_kind": ResultKind.NO_CHANGE.value,
+                "project_id": session["project_id"],
+                "activated_watches": [],
+                "refused_proposals": [],
+            }
+
+        if session["state"] != "active":
+            raise ServiceError(
+                "session_not_active",
+                f"Setup session {session_id} is {session['state']}, not active",
+                context={"status": 409, "state": session["state"]},
+            )
 
         if self._project_service is None:
             raise ServiceError(
@@ -525,21 +545,14 @@ class ProjectSetupService:
 
         cmd_id = command_id or generate_pcmd_id()
 
-        # Delegate to ProjectService.create_from_setup (one transaction)
+        # Delegate to ProjectService.create_from_setup (one transaction).
+        # session_id travels so session completion is atomic with the
+        # project creation (S-1: no duplicate-project hazard).
         result = self._project_service.create_from_setup(
             principal,
             setup_payload,
             command_id=cmd_id,
-        )
-
-        # Mark session completed (outside the transaction -- if this
-        # fails, the project exists but the session is still active;
-        # get_setup will see the project_id and know it completed).
-        project_id = result.get("project_id") or result.get("id")
-        self._update_session(
-            session_id,
-            state="completed",
-            project_id=project_id,
+            session_id=session_id,
         )
 
         # Attach refused proposals info

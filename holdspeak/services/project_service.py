@@ -487,6 +487,7 @@ class ProjectService:
     def create_from_setup(
         self, principal: Principal, setup_payload: dict[str, Any],
         *, command_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ) -> dict[str, Any]:
         """Atomic Project creation from a setup interview (ACT-004).
 
@@ -558,58 +559,53 @@ class ProjectService:
                 trigger = spec.get("trigger") or CADENCE_PRESETS.get("normal", {})
                 mode = spec.get("mode", "yolo")
 
-                # Insert into connector_watches with graduated columns
-                conn.execute(
-                    """
-                    INSERT INTO connector_watches (
-                        id, connector_id, query_kind, name, query_json, enabled,
-                        schema_version, project_id, intent, subject_kind,
-                        trigger_kind, trigger_json, mode, state, revision,
-                        baseline_state, test_state, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        watch_id, connector_id, query_kind, watch_name,
-                        json.dumps(query, sort_keys=True, separators=(",", ":")),
-                        1,  # enabled
-                        "WatchSpec@1", project_id,
-                        spec.get("intent", ""),
-                        query_kind,
-                        trigger.get("kind", "poll"),
-                        json.dumps(trigger, sort_keys=True, separators=(",", ":")),
-                        mode, "active", 1,
-                        "established",  # ACT-005: baseline without events
-                        "passed",  # carried from proposal test
-                        now_iso, now_iso,
-                    ),
+                # Insert via sanctioned repo helper (M-1: no third door)
+                self._db.automations.create_watch_in_transaction(
+                    conn,
+                    watch_id=watch_id,
+                    connector_id=connector_id,
+                    query_kind=query_kind,
+                    name=watch_name,
+                    query_json=json.dumps(query, sort_keys=True, separators=(",", ":")),
+                    enabled=True,
+                    schema_version="WatchSpec@1",
+                    project_id=project_id,
+                    intent=spec.get("intent", ""),
+                    subject_kind=query_kind,
+                    trigger_kind=trigger.get("kind", "poll"),
+                    trigger_json=json.dumps(trigger, sort_keys=True, separators=(",", ":")),
+                    mode=mode,
+                    state="active",
+                    revision=1,
+                    baseline_state="established",  # ACT-005: baseline without events
+                    test_state="passed",  # carried from proposal test
+                    created_at=now_iso,
+                    updated_at=now_iso,
                 )
 
-                # 3. Create watch_rules
+                # 3. Create watch_rules via sanctioned repo helper
                 rules = spec.get("rules", [])
                 for ordinal, rule in enumerate(rules):
                     rule_id = f"wrule_{uuid.uuid4().hex[:12]}"
-                    conn.execute(
-                        """
-                        INSERT INTO watch_rules (
-                            id, watch_id, ordinal, condition_schema, condition_json,
-                            action_schema, action_json, enabled, revision,
-                            created_at, updated_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        (
-                            rule_id, watch_id, ordinal,
-                            "WatchCondition@1",
-                            json.dumps(
-                                rule.get("condition", {}),
-                                sort_keys=True, separators=(",", ":"),
-                            ),
-                            "WatchAction@1",
-                            json.dumps(
-                                rule.get("actions", []),
-                                sort_keys=True, separators=(",", ":"),
-                            ),
-                            1, 0, now_iso, now_iso,
+                    self._db.automations.create_rule_in_transaction(
+                        conn,
+                        rule_id=rule_id,
+                        watch_id=watch_id,
+                        ordinal=ordinal,
+                        condition_schema="WatchCondition@1",
+                        condition_json=json.dumps(
+                            rule.get("condition", {}),
+                            sort_keys=True, separators=(",", ":"),
                         ),
+                        action_schema="WatchAction@1",
+                        action_json=json.dumps(
+                            rule.get("actions", []),
+                            sort_keys=True, separators=(",", ":"),
+                        ),
+                        enabled=True,
+                        revision=0,
+                        created_at=now_iso,
+                        updated_at=now_iso,
                     )
 
                 # 4. Create project_sources binding
@@ -694,6 +690,14 @@ class ProjectService:
                 conn, cmd_id, project_id, "create_from_setup",
                 req_hash, envelope,
             )
+
+            # S-1: mark the setup session completed inside the same
+            # transaction so a crash cannot leave a dangling active
+            # session whose re-finalize would create a duplicate.
+            if session_id:
+                self._db.automations.complete_session_in_transaction(
+                    conn, session_id=session_id, project_id=project_id,
+                )
 
         result = self._project_payload(self._require_project(project_id))
         result.update(_envelope_to_dict(envelope))

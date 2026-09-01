@@ -36,6 +36,52 @@ class AutomationRepository(BaseRepository):
             )
         return self.get_watch(watch_id) or {}
 
+    def create_watch_in_transaction(
+        self,
+        conn: Any,
+        *,
+        watch_id: str,
+        connector_id: str,
+        query_kind: str,
+        name: str,
+        query_json: str,
+        enabled: bool,
+        schema_version: str = "",
+        project_id: str = "",
+        intent: str = "",
+        subject_kind: str = "",
+        trigger_kind: str = "",
+        trigger_json: str = "{}",
+        mode: str = "",
+        state: str = "active",
+        revision: int = 1,
+        baseline_state: str = "",
+        test_state: str = "",
+        created_at: str = "",
+        updated_at: str = "",
+    ) -> None:
+        """Insert a connector_watches row on a caller-owned connection.
+
+        Graduated column set (WatchSpec@1).  The caller is responsible
+        for transaction boundaries; this method never opens or commits
+        its own connection.
+        """
+        conn.execute(
+            """INSERT INTO connector_watches
+               (id, connector_id, query_kind, name, query_json, enabled,
+                schema_version, project_id, intent, subject_kind,
+                trigger_kind, trigger_json, mode, state, revision,
+                baseline_state, test_state, created_at, updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                watch_id, connector_id, query_kind, name, query_json,
+                int(enabled), schema_version, project_id, intent,
+                subject_kind, trigger_kind, trigger_json, mode, state,
+                revision, baseline_state, test_state, created_at,
+                updated_at,
+            ),
+        )
+
     def get_watch(self, watch_id: str) -> dict[str, Any] | None:
         with self._connection() as conn:
             row = conn.execute("SELECT * FROM connector_watches WHERE id=?", (watch_id,)).fetchone()
@@ -287,6 +333,27 @@ class AutomationRepository(BaseRepository):
             ).fetchone()
         return self._payload(row, "draft") if row else None
 
+    def complete_session_in_transaction(
+        self,
+        conn: Any,
+        *,
+        session_id: str,
+        project_id: str,
+    ) -> None:
+        """Mark a setup session completed on a caller-owned connection.
+
+        Sets state='completed', project_id, completed_at, and updated_at
+        inside the caller's transaction so the session completion is
+        atomic with the project creation.
+        """
+        conn.execute(
+            """UPDATE project_setup_sessions
+               SET state='completed', project_id=?,
+                   completed_at=datetime('now'), updated_at=datetime('now')
+               WHERE id=?""",
+            (project_id, session_id),
+        )
+
     def list_setup_sessions(self, *, state: str | None = None) -> list[dict[str, Any]]:
         where = " WHERE state=?" if state else ""
         params: list[Any] = [state] if state else []
@@ -439,6 +506,40 @@ class AutomationRepository(BaseRepository):
                  int(enabled), revision),
             )
         return self.get_rule(rule_id) or {}
+
+    def create_rule_in_transaction(
+        self,
+        conn: Any,
+        *,
+        rule_id: str,
+        watch_id: str,
+        ordinal: int = 0,
+        condition_schema: str = "",
+        condition_json: str = "{}",
+        action_schema: str = "",
+        action_json: str = "{}",
+        enabled: bool = True,
+        revision: int = 0,
+        created_at: str = "",
+        updated_at: str = "",
+    ) -> None:
+        """Insert a watch_rules row on a caller-owned connection.
+
+        The caller is responsible for transaction boundaries; this
+        method never opens or commits its own connection.
+        """
+        conn.execute(
+            """INSERT INTO watch_rules
+               (id, watch_id, ordinal, condition_schema, condition_json,
+                action_schema, action_json, enabled, revision,
+                created_at, updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                rule_id, watch_id, ordinal, condition_schema,
+                condition_json, action_schema, action_json,
+                int(enabled), revision, created_at, updated_at,
+            ),
+        )
 
     def get_rule(self, rule_id: str) -> dict[str, Any] | None:
         with self._connection() as conn:

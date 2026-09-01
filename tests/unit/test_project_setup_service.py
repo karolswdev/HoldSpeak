@@ -784,3 +784,89 @@ class TestNotFound:
         session = svc.start_setup(OWNER)
         with pytest.raises(NotFound):
             svc.test_proposal(OWNER, session["id"], "wprop_nonexistent")
+
+
+# ── S-1: Duplicate-project belt ───────────────────────────────────────
+
+
+class TestDuplicateProjectBelt:
+    """S-1: a session that already carries a project_id refuses
+    re-creation and returns the existing project (API-002 honest
+    replay)."""
+
+    def test_session_with_project_id_returns_no_change(self, rig) -> None:
+        """If a session already has a project_id set, finalize()
+        returns result_kind='no_change' with the existing project_id
+        instead of creating a duplicate."""
+        db, ps, svc = rig
+        _seed_meeting(db, "m-1", "Sprint")
+        session = svc.start_setup(OWNER)
+        svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Goal"})
+
+        # First finalize: creates the project
+        result1 = svc.finalize(OWNER, session["id"])
+        assert result1["result_kind"] == "created"
+        project_id = result1["project_id"]
+
+        # Second finalize attempt: session already has project_id,
+        # should return no_change with the same project_id.
+        result2 = svc.finalize(OWNER, session["id"])
+        assert result2["result_kind"] == "no_change"
+        assert result2["project_id"] == project_id
+
+        # No duplicate project
+        projects = ps.list_projects(OWNER)
+        assert len(projects) == 1
+
+    def test_session_completed_atomically(self, rig) -> None:
+        """Session state is 'completed' and project_id is set after
+        finalize -- both inside the same transaction."""
+        db, _ps, svc = rig
+        _seed_meeting(db, "m-1", "Sprint")
+        session = svc.start_setup(OWNER)
+        svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Goal"})
+
+        result = svc.finalize(OWNER, session["id"])
+        project_id = result["project_id"]
+
+        # Read session directly
+        rehydrated = db.automations.get_setup_session(session["id"])
+        assert rehydrated["state"] == "completed"
+        assert rehydrated["project_id"] == project_id
+        assert rehydrated.get("completed_at") is not None
+
+
+# ── S-2: Evidence stub test ───────────────────────────────────────────
+
+
+class TestEvidenceStub:
+    """S-2: subject_kind='evidence' returns [] for test_proposal
+    (zero-match honesty).  Guards the stub from silent breakage."""
+
+    def test_evidence_proposal_test_passes_with_zero_entities(self, rig) -> None:
+        """A proposal with subject_kind='evidence' passes the test
+        with entity_count=0."""
+        db, _ps, svc = rig
+        session = svc.start_setup(OWNER)
+        svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Audit trail"})
+
+        # Create a proposal with subject_kind='evidence' via the repo
+        proposal_id = f"wprop_{__import__('uuid').uuid4().hex[:12]}"
+        spec = {
+            "name": "Evidence watch",
+            "subject": {"kind": "evidence", "scope": {}},
+            "trigger": {"kind": "poll", "every_minutes": 60},
+            "rules": [],
+        }
+        db.automations.create_setup_proposal(
+            proposal_id=proposal_id,
+            session_id=session["id"],
+            spec_schema="WatchSpec@1",
+            spec_json=json.dumps(spec, sort_keys=True, separators=(",", ":")),
+            state="suggested",
+        )
+
+        # Test the proposal
+        result = svc.test_proposal(OWNER, session["id"], proposal_id)
+        assert result["test_state"] == "passed"
+        assert result["result"]["entity_count"] == 0
