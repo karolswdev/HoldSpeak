@@ -136,6 +136,7 @@ export function lifecycleTone(lifecycle: UpdateLifecycle): string | undefined {
 export type RefKind = "item" | "decision" | "meeting" | "artifact" | "observation" | "unknown";
 
 const REF_PREFIX_TO_KIND: Record<string, RefKind> = {
+  item: "item",
   action_item: "item",
   risk: "item",
   dependency: "item",
@@ -159,6 +160,7 @@ export function refKind(ref: string): RefKind {
 
 /** Plain-words label for a ref prefix. */
 const REF_PREFIX_LABELS: Record<string, string> = {
+  item: "Item",
   action_item: "Action item",
   risk: "Risk",
   dependency: "Dependency",

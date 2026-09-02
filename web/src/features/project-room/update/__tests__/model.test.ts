@@ -188,6 +188,9 @@ describe("refKind", () => {
   it("classifies risk as item", () => {
     expect(refKind("risk:r-01")).toBe("item");
   });
+  it("classifies generic item prefix as item", () => {
+    expect(refKind("item:x")).toBe("item");
+  });
   it("classifies unknown prefix as unknown", () => {
     expect(refKind("blah:x")).toBe("unknown");
   });
@@ -226,6 +229,9 @@ describe("refChipLabel", () => {
   });
   it("labels milestone refs as 'Open milestone'", () => {
     expect(refChipLabel("milestone:ms-01")).toBe("Open milestone");
+  });
+  it("labels generic item refs as 'Open item'", () => {
+    expect(refChipLabel("item:pitem_abc123")).toBe("Open item");
   });
   it("labels unknown prefix as 'Open'", () => {
     expect(refChipLabel("blah:x")).toBe("Open");
