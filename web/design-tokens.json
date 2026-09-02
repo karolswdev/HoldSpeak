@@ -944,6 +944,21 @@
         "doc": "the fixed atmosphere behind the document"
       },
       {
+        "name": "--desk-rain-sky-grade",
+        "value": "rgba(5, 14, 25, 0.18)",
+        "doc": "rainy-city atmosphere: cool skyline depth grade"
+      },
+      {
+        "name": "--desk-rain-edge",
+        "value": "rgba(2, 6, 12, 0.38)",
+        "doc": "rainy-city atmosphere: focus vignette around the wet street"
+      },
+      {
+        "name": "--desk-rain-scanline",
+        "value": "rgba(2, 6, 12, 0.05)",
+        "doc": "rainy-city atmosphere: one-pixel CRT scanline"
+      },
+      {
         "name": "--desk-z-dock-under",
         "value": "40",
         "doc": "the dock on compact viewports — sheets own the phone's bottom"

@@ -19,29 +19,36 @@
 @import "./components/delivery.css";
 @import "./components/speak.css";
 
-/* ── HS-110-05: the quiet workbench — flat floor + subtle crosshatch ── */
+/* ── The Floor atmosphere: Three.js rainy-city diorama beneath Pixi ── */
 .desk-next .desk-stage {
   position: fixed;
   inset: 0;
   z-index: var(--desk-z-stage);
   pointer-events: none;
   overflow: hidden;
+  background: var(--bg);
+}
+.desk-next .desk-rain-city {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+}
+.desk-next .desk-rain-city-grade {
+  position: absolute;
+  inset: 0;
   background:
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 3px,
-      rgba(255, 255, 255, 0.02) 3px,
-      rgba(255, 255, 255, 0.02) 4px
+    linear-gradient(to bottom, var(--desk-rain-sky-grade), transparent 48%),
+    radial-gradient(
+      ellipse at 45% 72%,
+      transparent 0 18%,
+      var(--desk-rain-edge) 76%
     ),
     repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 3px,
-      rgba(255, 255, 255, 0.02) 3px,
-      rgba(255, 255, 255, 0.02) 4px
-    ),
-    var(--bg, #0c0d11);
+      to bottom,
+      transparent 0 3px,
+      var(--desk-rain-scanline) 3px 4px
+    );
 }
 
 /* ── HS-110 system sprite utilities ── */

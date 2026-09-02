@@ -8,6 +8,15 @@ live Coder sessions. Zones provide placement for durable work. The Floor
 renders on a WebGL stage; every product surface (Dictation, Meetings, Settings,
 Workbench, and the rest) opens as a window, so nothing navigates away.
 
+Behind the Floor, a procedural Three.js diorama turns the stage into a rainy,
+pixel-art city at night: a block-built skyline, wet street, lamplit puddle,
+depth-layered rain, ripples, and cubic splash arcs. The scene renders to a
+deliberately low-resolution buffer for hard pixel edges. It is decorative and
+pointer-transparent—the Pixi world above it still owns every object and
+gesture. It pauses when the tab is hidden, and the operating system's reduced
+motion setting freezes the rain, splashes, ripples, and camera drift while
+preserving the composed city scene.
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk.png" alt="The HoldSpeak Desk: pixel-art objects floating on a warm dark stage; a Zone tray holding a filed Meeting; Coder session avatars on a right-edge rail; a record orb bottom-center; the compact HoldSpeak menu and an egress badge top-left; Create controls top-right." width="760">
 </p>
