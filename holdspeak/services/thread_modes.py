@@ -31,11 +31,20 @@ if TYPE_CHECKING:
 # Allow-list computation from the classification map
 # ---------------------------------------------------------------------------
 
+# HS-165 law: MCP-only families (project.*, provider.*) are classified
+# for the tool GATE but belong to NO thread palette -- the thread
+# grammar stays bounded; agents reach those tools over MCP only.
+def _thread_side(name: str) -> bool:
+    return not (name.startswith("project.") or name.startswith("provider."))
+
+
 _EVIDENCE_READ = frozenset(
-    name for name, (cls, _) in _TOOL_CLASSES.items() if cls == "evidence_read"
+    name for name, (cls, _) in _TOOL_CLASSES.items()
+    if _thread_side(name) and cls == "evidence_read"
 )
 _CANDIDATE_BUILDER = frozenset(
-    name for name, (cls, _) in _TOOL_CLASSES.items() if cls == "candidate_builder"
+    name for name, (cls, _) in _TOOL_CLASSES.items()
+    if _thread_side(name) and cls == "candidate_builder"
 )
 
 # Forward references: tools that are declared in a mode allow-list but
