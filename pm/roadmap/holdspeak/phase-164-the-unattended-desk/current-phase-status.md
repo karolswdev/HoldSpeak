@@ -40,7 +40,7 @@ admitted 160/162 verbs).
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-164-01 | The due ledger (additive schema: cadence, unattended opt-in, circuit state; trace-first) | done | [story-01-the-due-ledger](./story-01-the-due-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-164-02 | evaluate_due (due Watches evaluate on cadence; isolation + circuit) | backlog | [story-02-evaluate-due](./story-02-evaluate-due.md) | - |
+| HS-164-02 | evaluate_due (due Watches evaluate on cadence; isolation + circuit) | done | [story-02-evaluate-due](./story-02-evaluate-due.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-164-03 | run_due (the triggered hand: watermark requests, ONE run, scheduling cooldown) | backlog | [story-03-run-due](./story-03-run-due.md) | - |
 | HS-164-04 | The conductor (two failure boundaries; §10 events; Cadence attention) | backlog | [story-04-the-conductor](./story-04-the-conductor.md) | - |
 | HS-164-05 | The face (the unattended posture: opt-in, cadence, circuit, interventions — OWNER VERDICT) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
@@ -49,19 +49,22 @@ admitted 160/162 verbs).
 
 ## Where we are
 
-1/7. HS-164-01 the due ledger DONE (2026-09-02): schema v72 additive —
-connector_watches gains evaluation_cadence_minutes + durable circuit
-columns (state/failure_streak/opened_at; half-open DERIVED from
-opened_at + cooldown, never a second clock); steward_policies gains
-unattended_enabled (explicit, NOT NULL, default OFF — the
-bounded-delegation flag as a REAL column). The traces held: the
-graduated watches ALREADY carry next_evaluation_at/last_evaluated_at
-(HS-159-01 — reused, not duplicated); the legacy refresh_due_watches
-reads JSON cadence and stays untouched (story 02 owns the boundary);
-EndpointHealth stays in-memory for LLM endpoints — the watch circuit
-is durable for STW-009. All four DB version pins found + updated
-honestly (the 163 scar paid). Gates: 217 passed scoped; real-DB
-reconcile to v72 on a COPY (2 passed). NEXT: HS-164-02 evaluate_due.
+2/7. HS-164-02 evaluate_due DONE (2026-09-02): WatchService.
+evaluate_due — due selection by the v72 cadence column (enabled +
+state IN active/tested + next_evaluation_at <= now), per-watch
+isolation (NEVER raises; every outcome recorded: evaluated /
+probe_half_open / skipped_circuit_open / failed), the durable circuit
+lifecycle (3 failures open; 900s window; ONE half-open probe; success
+resets in-transaction), bookkeeping (last_evaluated_at +
+next_evaluation_at) transactional via a txn hook on the extracted
+_evaluate_core — evaluate_once stayed byte-identical (its 6 existing
+tests untouched-green) and the OWNER'S HAND OVERRIDES the circuit
+(manual evaluation ignores it; only the scheduler respects it — under
+test). THE BOUNDARY RULE recorded: evaluate_due owns graduated rows
+(state active/tested + real columns); legacy refresh_due_watches owns
+state='' rows reading JSON cadence — never two schedulers on one row.
+Gates: 143 passed scoped (24 new + 110 watch service + schema +
+fence). Earlier: 1/7 the due ledger (v72). NEXT: HS-164-03 run_due.
 
 ## Active risks
 

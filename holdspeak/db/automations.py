@@ -376,6 +376,28 @@ class AutomationRepository(BaseRepository):
         ).fetchone()
         return dict(row) if row else None
 
+    # ── Due-watch query (HS-164-02) ──────────────────────────────────────
+
+    def list_due_watches(self, now_iso: str) -> list[dict[str, Any]]:
+        """Select graduated watches due for scheduled evaluation.
+
+        Boundary: only graduated watches (state IN ('active','tested'))
+        with a set next_evaluation_at that has passed.  Legacy watches
+        (state='') are owned by ReactionService.refresh_due_watches --
+        never two schedulers on one row.
+        """
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT * FROM connector_watches
+                   WHERE enabled = 1
+                     AND state IN ('active', 'tested')
+                     AND next_evaluation_at IS NOT NULL
+                     AND next_evaluation_at <= ?
+                   ORDER BY next_evaluation_at ASC""",
+                (now_iso,),
+            ).fetchall()
+        return [self._payload(row, "query", "snapshot") for row in rows]
+
     # ── Setup sessions (§9.1) ──────────────────────────────────────────
 
     def create_setup_session(
