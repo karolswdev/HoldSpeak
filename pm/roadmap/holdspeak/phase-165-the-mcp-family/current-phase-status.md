@@ -44,30 +44,29 @@ seam noted, not built).
 | HS-165-01 | The family skeleton (project.py reads + §11.2 resources; MCP-006 isolation) | done | [story-01-the-family-skeleton](./story-01-the-family-skeleton.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-165-02 | The command tools (lifecycle/link/review/updates; MCP-001/002/004/005) | done | [story-02-the-command-tools](./story-02-the-command-tools.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-165-03 | The driver tools (steward runs, setup interview, provider discovery, watch graduation) | done | [story-03-the-driver-tools](./story-03-the-driver-tools.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-165-04 | The palette (PROJECT_PALETTE + Project Thread mode; parity hardening) | backlog | [story-04-the-palette](./story-04-the-palette.md) | - |
+| HS-165-04 | The palette (PROJECT_PALETTE + Project Thread mode; parity hardening) | done | [story-04-the-palette](./story-04-the-palette.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-165-05 | The walk (a local MCP client drives §15 end to end — OWNER VERDICT) | backlog | [story-05-the-walk](./story-05-the-walk.md) | - |
 | HS-165-06 | The docs (the Gate B partner surface; the dedicated docs story) | backlog | [story-06-the-docs](./story-06-the-docs.md) | - |
 | HS-165-07 | The close (gates, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
-3/7. HS-165-03 the driver tools DONE (2026-09-02): twenty more tools
-— steward (configure/run/stop/get_run: the 164 immediate-id law on
-MCP, run_id before phase work under a slow-phase fixture, MCP-003
-proven), the 159 setup interview (start/resume/answer/suggest/
-finalize, durable across tool calls), provider discovery (list/
-connection/discover/validate_repo — read-only, the P2a adapters),
-and the watch graduation (7 tools over WatchService with the
-BOUNDARY LAW: _require_graduated_watch refuses legacy rows typed
-both ways; the reactions family untouched, owning state='' rows —
-the 164 boundary rule's MCP twin, under test). command_id posture
-mirrors each route exactly (nothing invented). ORCHESTRATOR FIXES
-in-round: the three copied steward serializers now DELEGATE to the
-route's own (one source of truth); the command-insert guard
-narrowed from bare except-pass to IntegrityError only. Pins paid
-159->179 tools / 33 families (drift guard green). Gates: 138 passed
-scoped. Earlier: 2/7 commands, 1/7 skeleton. NEXT: HS-165-04 the
-palette.
+4/7. HS-165-04 the palette DONE (2026-09-02): the STOP fired in fact
+(no MCP-layer palette existed; the thread Mode species cannot scope
+MCP-only tools) and the resolution is RATIFIED — tools_for_palette +
+dispatch_for_palette apply the thread palette's exact allow-list-
+intersection species at the MCP layer (typed refusal outside the
+palette, under test). PROJECT_PALETTE = the 37 project.* +
+provider.* names; §15's ten points verified to need no companions.
+The Project thread Mode seeds the house way (identity + prompt;
+tools grow when/if thread-side registrations exist). MCP-006 widened
+(every family survives a poisoned neighbor; project tools dispatch
+beside one). The error-shape sweep — 57 parametrized proofs — found
+ZERO prose-only errors (MCP-004 clean). Consumer named per the 164
+scar: 05's walk drives every step through dispatch_for_palette. No
+pins moved (scoping adds no tools; drift guard green). Gates: 211
+passed scoped. Earlier: 3/7 drivers, 2/7 commands, 1/7 skeleton.
+NEXT: HS-165-05 the walk (owner verdict = Gate B).
 
 ## Active risks
 

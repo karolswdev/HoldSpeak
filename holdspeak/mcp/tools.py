@@ -816,3 +816,29 @@ def _dispatch_verb(args: dict[str, Any], principal: Principal, primitives: Primi
     if handler is None:
         raise ToolError(f"Verb is not allowlisted for MCP: {verb_id}")
     return handler(verb_args)
+
+
+# ── MCP-007: Palette scoping ────────────────────────────────────────
+# The same species as thread_modes.palette_for (allow-list intersected
+# with a registry), applied at the MCP layer.  A palette is a
+# frozenset[str] of tool names.  tools_for_palette filters the
+# catalogue; dispatch_for_palette rejects names outside the palette.
+
+
+def tools_for_palette(palette: frozenset[str]) -> list[dict[str, Any]]:
+    """Return only the tools whose names are in *palette*."""
+    return [t for t in TOOLS if t["name"] in palette]
+
+
+def dispatch_for_palette(
+    name: str,
+    arguments: dict[str, Any] | None,
+    principal: Principal,
+    palette: frozenset[str],
+) -> Any:
+    """Dispatch scoped by *palette* -- typed refusal for tools outside it."""
+    if name not in palette:
+        raise ToolError(
+            f"Tool {name!r} is not in the configured palette"
+        )
+    return dispatch(name, arguments, principal)

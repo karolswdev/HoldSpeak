@@ -6,6 +6,7 @@ tool is a THIN driver over the exact service seam the Web route calls:
 no SQL, no verb re-implementation.  command_id replay safety (MCP-002)
 rides the services' own idempotency machinery.
 HS-165-03: driver tools — steward, setup, providers, watch graduation.
+HS-165-04: PROJECT_PALETTE — the scoped allow-list for agent sessions.
 """
 from __future__ import annotations
 
@@ -1448,4 +1449,12 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     raise LookupError(name)
 
 
-__all__ = ["TOOLS", "dispatch"]
+# ── MCP-007: PROJECT_PALETTE ─────────────────────────────────────────
+# The scoped allow-list for agent sessions.  Contains exactly the tools
+# in this family (project.* + provider.*); the SS15 acceptance scenario
+# needs no companions from other families -- every point (setup, watch,
+# steward, delta, review) resolves within this family's tools.
+PROJECT_PALETTE: frozenset[str] = frozenset(t["name"] for t in TOOLS)
+
+
+__all__ = ["TOOLS", "PROJECT_PALETTE", "dispatch"]

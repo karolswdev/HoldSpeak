@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 165
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-165-03
 - **Unblocks:** HS-165-05, HS-165-06
 - **Owner:** unassigned
@@ -37,3 +37,19 @@ MCP-006 hardening and structured-error parity finish the driver.
 ## Test plan
 
 - **Unit:** tests/unit/test_project_mcp_palette.py.
+
+## Trace record (orchestrator ruling, 2026-09-02)
+
+- The STOP condition fired in fact (NO MCP-layer palette mechanism
+  existed; the thread-side Mode species cannot scope MCP-only tools)
+  and the worker's self-resolution is RATIFIED: tools_for_palette +
+  dispatch_for_palette are the thread palette's exact allow-list-
+  intersection species applied at the MCP layer — the same species,
+  not a second mechanism, and what the orchestrator would have ruled.
+- Consumer named (the 164 dormant-machinery scar): the palette's
+  proof consumer is HS-165-05's walk, which drives every step
+  through dispatch_for_palette; the Project thread Mode marks agent
+  identity today (empty tools — project tools are MCP-only) and
+  grows thread-side tools if they ever register in TOOL_NAMES.
+- §15 mapping verified: all ten acceptance points resolve inside
+  project.* + provider.* — the palette needs no companions.

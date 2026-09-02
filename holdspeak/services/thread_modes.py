@@ -67,6 +67,14 @@ _PLAN_TOOLS = frozenset(
     | {"door.get", "memory.search"}
 )
 
+# --- Project (MCP-007): no thread-side tools; the agent uses MCP tools
+# (project.*, provider.*) directly.  Tool names are declared as
+# FORWARD_TOOLS so Mode.tools carries them without an unclassified
+# warning, even though palette_for will not surface them until they
+# arrive in TOOL_NAMES.  The mode exists to (a) identify project-agent
+# threads and (b) set the system prompt for project-scoped work.
+_PROJECT_TOOLS: frozenset[str] = frozenset()
+
 
 # ---------------------------------------------------------------------------
 # Mode dataclass and seeds
@@ -122,6 +130,17 @@ MODE_SEEDS: tuple[Mode, ...] = (
         avatar="#059669",
         system_prompt="Reflect on decisions, thoughts, and memory. Plan, do not execute.",
         tools=_PLAN_TOOLS,
+    ),
+    Mode(
+        id="hs-seed-mode-project",
+        name="Project",
+        avatar="#D97706",
+        system_prompt=(
+            "You are a project agent. Use the MCP project and provider "
+            "tools to observe, drive, and report on projects. Do not use "
+            "unrelated desk tools."
+        ),
+        tools=_PROJECT_TOOLS,
     ),
 )
 
