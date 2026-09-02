@@ -42,33 +42,35 @@ admitted 160/162 verbs).
 | HS-164-01 | The due ledger (additive schema: cadence, unattended opt-in, circuit state; trace-first) | done | [story-01-the-due-ledger](./story-01-the-due-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-164-02 | evaluate_due (due Watches evaluate on cadence; isolation + circuit) | done | [story-02-evaluate-due](./story-02-evaluate-due.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-164-03 | run_due (the triggered hand: watermark requests, ONE run, scheduling cooldown) | done | [story-03-run-due](./story-03-run-due.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-164-04 | The conductor (two failure boundaries; §10 events; Cadence attention) | backlog | [story-04-the-conductor](./story-04-the-conductor.md) | - |
+| HS-164-04 | The conductor (two failure boundaries; §10 events; Cadence attention) | done | [story-04-the-conductor](./story-04-the-conductor.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-164-05 | The face (the unattended posture: opt-in, cadence, circuit, interventions — OWNER VERDICT) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
 | HS-164-06 | The walk (Gate A on glass: two useful unattended runs, zero prompts, zero duplicates) | backlog | [story-06-the-walk](./story-06-the-walk.md) | - |
 | HS-164-07 | The close (gates, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
-3/7. HS-164-03 run_due DONE (2026-09-02): the STOP condition earned
-its keep — the trace found the 161 effect machinery was DORMANT
-SCHEMA (watch_effects + create_effect had zero production callers;
-matched_rule_ids_json never written since 159; no action dispatcher
-existed). The orchestrator's ruling: wake the tables as designed.
-Shipped: WatchCondition@1 matcher (pure module; older_than/newer_than
-honestly unmatchable at transition level — documented); rule matching
-+ effect recording in evaluate_due only (evaluate_once byte-identical,
-95 tests untouched); watch_effects rows ARE the durable requests
-(deterministic key sha256(evaluation:rule:kind), lookup-first — the
-idempotency index is PLAIN, not unique; single-writer today, recorded
-debt); run_due drains project.steward.run_once with honest gate
-receipts in order (no_project / no_opt_in / disabled / cooldown /
-resolved_existing_run at the deterministic watermark
-watch:<id>:<source_revision> / run_started with read-back
-verification); STW-002 absorbed as resolution; manual paths
-byte-identical under four explicit tests. Undispatched kinds stay
-honestly pending (7 declared kinds await handlers — debt to the
-ledger). Gates: 203 passed scoped. Earlier: 2/7 evaluate_due, 1/7 the
-due ledger. NEXT: HS-164-04 the conductor.
+4/7. HS-164-04 the conductor DONE (2026-09-02): two INDEPENDENT
+failure boundaries join the tick (Watch scheduler, Steward scheduler
+— own try/except, named prefixes); every SS10 steward event kind now
+emits in-transaction at its seam (configured on policy PUT /
+run_started / step_completed / intervention_required on circuit-open
++ bounds-exhausted + max-actions; run_completed pre-existed); Cadence
+projects review_due / source_degraded / steward_intervention_required
+via upsert_loop(source_type=system) — attention only, never schedule
+state; policy PUT carries unattended_enabled; api-surface 618->618
+(body extension, zero route change). TWO ORCHESTRATOR CATCHES
+in-round: (1) the blocks constructed CRIPPLED services (bare
+WatchService without the GitHub fetcher; ProjectStewardService with
+None collaborators) — production unattended runs would have failed
+while fake-injected tests stayed green (the DoorService-db scar's
+sibling); fixed with the set_scheduler_services injection seam
+(mirrors set_broadcast) — the conductor runs the app's fully-wired
+instances, unwired = honest skip; (2) the block-isolation tests were
+THEATER (inline try/except simulating nothing) — rewritten against
+the REAL _tick through the seam, + a not-wired test. Gates: 243
+passed scoped. Earlier: 3/7 run_due, 2/7 evaluate_due, 1/7 the due
+ledger. NEXT: HS-164-05 the face (owner verdict) || 06 rig after
+05's functional.
 
 ## Active risks
 

@@ -150,6 +150,10 @@ class WatchService:
         self._repo = db.automations
         self._observer = observer or NullObserver()
         self._snapshot_fetcher = snapshot_fetcher
+        # HS-164-04: event ledger for steward.intervention_required on
+        # circuit-open transitions.
+        from holdspeak.services.service_event_ledger import ServiceEventLedger
+        self._ledger = ServiceEventLedger(db)
 
     # ── Guards ──────────────────────────────────────────────────────
 
@@ -880,6 +884,38 @@ class WatchService:
                             circuit_failure_streak=new_streak,
                             circuit_opened_at=new_opened_at,
                         )
+
+                        # HS-164-04: emit steward.intervention_required
+                        # in-transaction on circuit-open TRANSITION.
+                        if (
+                            new_circuit_state == "open"
+                            and circuit_state != "open"
+                        ):
+                            try:
+                                project_id = watch.get(
+                                    "project_id",
+                                    watch.get("bound_project_id", ""),
+                                )
+                                self._ledger.append_in_transaction(
+                                    conn,
+                                    principal,
+                                    event_type="steward.intervention_required",
+                                    producer="WatchService",
+                                    subject_ref=f"watch:{watch_id}",
+                                    source_revision="",
+                                    facts={
+                                        "reason": "circuit_open",
+                                        "watch_id": watch_id,
+                                        "project_id": project_id,
+                                        "failure_streak": new_streak,
+                                    },
+                                    refs=[
+                                        f"watch:{watch_id}",
+                                        f"project:{project_id}",
+                                    ],
+                                )
+                            except Exception:
+                                pass  # Event must never break circuit write.
                 except Exception:
                     pass  # Double-fault: even failure recording failed.
 

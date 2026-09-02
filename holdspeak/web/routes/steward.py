@@ -282,6 +282,15 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
                     status_code=400,
                 )
 
+            # HS-164-04: unattended_enabled validation
+            unattended_enabled = payload.get("unattended_enabled")
+            if unattended_enabled is not None and not isinstance(unattended_enabled, bool):
+                return JSONResponse(
+                    {"success": False, "code": "validation_error",
+                     "message": "unattended_enabled must be a boolean"},
+                    status_code=400,
+                )
+
             # Upsert: get or create policy
             existing = svc._db.steward_policies.get_policy_for_project(project_id)
             if existing is None:
@@ -295,6 +304,7 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
                     cooldown_seconds=payload.get("cooldown_seconds", 0),
                     bounds_json=json.dumps(payload.get("bounds", {})),
                     enabled=1 if payload.get("enabled", True) else 0,
+                    unattended_enabled=1 if payload.get("unattended_enabled", False) else 0,
                 )
             else:
                 policy_id = existing["id"]
@@ -311,6 +321,8 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
                     update_kwargs["bounds_json"] = json.dumps(payload["bounds"])
                 if enabled is not None:
                     update_kwargs["enabled"] = 1 if enabled else 0
+                if unattended_enabled is not None:
+                    update_kwargs["unattended_enabled"] = 1 if unattended_enabled else 0
                 if update_kwargs:
                     svc._db.steward_policies.update_policy(
                         policy_id, **update_kwargs,
@@ -318,6 +330,36 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
 
             # Return the updated policy
             policy = svc._db.steward_policies.get_policy(policy_id)
+
+            # HS-164-04: steward.configured event at the policy PUT seam.
+            try:
+                from ...services.service_event_ledger import ServiceEventLedger
+                ledger = ServiceEventLedger(svc._db)
+                p = principal(request)
+                with svc._db._connection() as conn:
+                    ledger.append_in_transaction(
+                        conn,
+                        p,
+                        event_type="steward.configured",
+                        producer="steward.routes",
+                        subject_ref=f"steward_policy:{policy_id}",
+                        source_revision="",
+                        facts={
+                            "policy_id": policy_id,
+                            "project_id": project_id,
+                            "enabled": bool(policy["enabled"]) if policy else False,
+                            "unattended_enabled": bool(
+                                policy.get("unattended_enabled", 0)
+                            ) if policy else False,
+                        },
+                        refs=[
+                            f"project:{project_id}",
+                            f"steward_policy:{policy_id}",
+                        ],
+                    )
+            except Exception:
+                pass  # Event emission must never fail the policy response.
+
             return JSONResponse({"success": True, "policy": _serialize_policy(policy)})
         except Exception as exc:
             return error_500(exc, log, "Failed to update steward policy")
@@ -433,6 +475,7 @@ def _serialize_policy(policy: dict[str, Any] | None) -> dict[str, Any] | None:
         "cooldown_seconds": policy["cooldown_seconds"],
         "bounds": bounds,
         "enabled": bool(policy["enabled"]),
+        "unattended_enabled": bool(policy.get("unattended_enabled", 0)),
         "created_at": policy.get("created_at"),
         "updated_at": policy.get("updated_at"),
     }

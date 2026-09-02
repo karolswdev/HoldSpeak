@@ -506,6 +506,25 @@ class ProjectStewardService:
                 run_id, state="running", phase="observe",
             )
 
+            # HS-164-04: steward.run_started event (in-transaction).
+            try:
+                with self._db._connection() as conn:
+                    self._ledger.append_in_transaction(
+                        conn,
+                        principal,
+                        event_type="steward.run_started",
+                        producer="ProjectStewardService",
+                        subject_ref=f"steward_run:{run_id}",
+                        source_revision="",
+                        facts={
+                            "run_id": run_id,
+                            "project_id": project_id,
+                        },
+                        refs=[f"project:{project_id}", f"steward_run:{run_id}"],
+                    )
+            except Exception:
+                pass  # Event emission must never poison the run.
+
             phase_results: dict[str, Any] = {}
 
             for phase in PHASES:
@@ -552,6 +571,31 @@ class ProjectStewardService:
                             default=str,
                         ),
                     )
+
+                    # HS-164-04: steward.step_completed event.
+                    try:
+                        with self._db._connection() as conn:
+                            self._ledger.append_in_transaction(
+                                conn,
+                                principal,
+                                event_type="steward.step_completed",
+                                producer="ProjectStewardService",
+                                subject_ref=f"steward_step:{step_id}",
+                                source_revision="",
+                                facts={
+                                    "run_id": run_id,
+                                    "project_id": project_id,
+                                    "phase": phase,
+                                    "step_id": step_id,
+                                },
+                                refs=[
+                                    f"project:{project_id}",
+                                    f"steward_run:{run_id}",
+                                    f"steward_step:{step_id}",
+                                ],
+                            )
+                    except Exception:
+                        pass  # Event emission must never poison the run.
 
                 except StopRequested:
                     self._db.steward_steps.update_step(
@@ -751,6 +795,34 @@ class ProjectStewardService:
 
             # STW-008: max_actions_per_run check.
             if actions_taken >= max_actions:
+                # HS-164-04: emit intervention_required once on first cap hit.
+                if not any(
+                    s.get("reason") == "max_actions_per_run_exceeded"
+                    for s in effects_skipped
+                ):
+                    try:
+                        with self._db._connection() as conn:
+                            self._ledger.append_in_transaction(
+                                conn,
+                                principal,
+                                event_type="steward.intervention_required",
+                                producer="ProjectStewardService",
+                                subject_ref=f"steward_run:{run_id}",
+                                source_revision="",
+                                facts={
+                                    "reason": "max_actions_per_run_exceeded",
+                                    "run_id": run_id,
+                                    "project_id": project_id,
+                                    "limit": max_actions,
+                                    "actions_taken": actions_taken,
+                                },
+                                refs=[
+                                    f"project:{project_id}",
+                                    f"steward_run:{run_id}",
+                                ],
+                            )
+                    except Exception:
+                        pass
                 effects_skipped.append({
                     "effect_kind": effect_kind,
                     "reason": "max_actions_per_run_exceeded",
@@ -923,6 +995,33 @@ class ProjectStewardService:
                 "error": error_info,
             }),
         )
+
+        # HS-164-04: steward.intervention_required -- bounds exhausted.
+        try:
+            with self._db._connection() as conn:
+                self._ledger.append_in_transaction(
+                    conn,
+                    principal,
+                    event_type="steward.intervention_required",
+                    producer="ProjectStewardService",
+                    subject_ref=f"steward_run:{run_id}",
+                    source_revision="",
+                    facts={
+                        "reason": "bounds_exhausted",
+                        "run_id": run_id,
+                        "project_id": project_id,
+                        "effect_kind": effect_kind,
+                        "step_id": step_id,
+                        "attempts": max_retries + 1,
+                    },
+                    refs=[
+                        f"project:{project_id}",
+                        f"steward_run:{run_id}",
+                        f"steward_step:{step_id}",
+                    ],
+                )
+        except Exception:
+            pass  # Event emission must never poison the run.
 
         return {
             "effect_kind": effect_kind,
@@ -1424,6 +1523,128 @@ class ProjectStewardService:
         elif effect_kind == "create_door_item":
             return {"effect": "create_door_item", "project_id": project_id}
         return {"effect": effect_kind}
+
+
+    # ── HS-164-04: Cadence attention projections ──────────────────────
+
+    def project_cadence_projections(
+        self,
+        principal: Principal,
+    ) -> list[dict[str, Any]]:
+        """Project steward attention items into Cadence as system loops.
+
+        Three projection kinds (attention only, never schedule state):
+        - review_due: a project has a completed run that deserves review
+        - source_degraded: a watch circuit is open for a project
+        - steward_intervention_required: intervention events exist
+
+        NEVER raises: per-projection isolation.
+        """
+        results: list[dict[str, Any]] = []
+
+        try:
+            cadence_repo = self._db.cadence
+        except AttributeError:
+            return results  # No cadence store available (lightweight constructor).
+
+        from holdspeak.cadence.models import OpenLoop, EvidenceRef
+
+        # 1. review_due: completed runs with real effects needing review.
+        try:
+            events = self._ledger.list(
+                principal,
+                event_type="steward.run_completed",
+                limit=50,
+            )
+            for evt in events:
+                facts = evt.get("facts", {})
+                if not facts.get("has_real_effects"):
+                    continue
+                project_id = facts.get("project_id", "")
+                run_id = facts.get("run_id", "")
+                if not project_id or not run_id:
+                    continue
+                loop = OpenLoop(
+                    source_type="system",
+                    source_id=f"steward_review:{run_id}",
+                    title=f"Steward run review due",
+                    summary=f"Run {run_id[:12]} produced real effects",
+                    project=project_id,
+                    priority="normal",
+                    needs_review=True,
+                )
+                cadence_repo.upsert_loop(loop)
+                results.append({
+                    "kind": "review_due",
+                    "project_id": project_id,
+                    "run_id": run_id,
+                })
+        except Exception as exc:
+            results.append({"kind": "review_due", "error": str(exc)})
+
+        # 2. source_degraded: watches with open circuits.
+        try:
+            watches = self._db.automations.list_watches()
+            for w in watches:
+                if w.get("circuit_state") == "open":
+                    watch_id = w.get("id", "")
+                    project_id = w.get(
+                        "project_id",
+                        w.get("bound_project_id", ""),
+                    )
+                    loop = OpenLoop(
+                        source_type="system",
+                        source_id=f"steward_degraded:{watch_id}",
+                        title=f"Source degraded: watch circuit open",
+                        summary=f"Watch {watch_id[:12]} has an open circuit",
+                        project=project_id or None,
+                        priority="high",
+                        needs_review=True,
+                    )
+                    cadence_repo.upsert_loop(loop)
+                    results.append({
+                        "kind": "source_degraded",
+                        "watch_id": watch_id,
+                        "project_id": project_id,
+                    })
+        except Exception as exc:
+            results.append({"kind": "source_degraded", "error": str(exc)})
+
+        # 3. steward_intervention_required: recent intervention events.
+        try:
+            interventions = self._ledger.list(
+                principal,
+                event_type="steward.intervention_required",
+                limit=50,
+            )
+            for evt in interventions:
+                facts = evt.get("facts", {})
+                reason = facts.get("reason", "unknown")
+                subject = evt.get("subject_ref", "")
+                project_id = facts.get("project_id", "")
+                source_id = f"steward_intervention:{subject}:{reason}"
+                loop = OpenLoop(
+                    source_type="system",
+                    source_id=source_id,
+                    title=f"Steward intervention required: {reason}",
+                    summary=f"Reason: {reason}",
+                    project=project_id or None,
+                    priority="urgent",
+                    needs_review=True,
+                )
+                cadence_repo.upsert_loop(loop)
+                results.append({
+                    "kind": "steward_intervention_required",
+                    "reason": reason,
+                    "project_id": project_id,
+                })
+        except Exception as exc:
+            results.append({
+                "kind": "steward_intervention_required",
+                "error": str(exc),
+            })
+
+        return results
 
 
 def _door_idempotency_key(project_id: str, watermark: str) -> str:
