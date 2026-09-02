@@ -79,7 +79,7 @@ function SectionSourceRow({
             data-ref={ref}
             data-ref-kind={refKind(ref)}
             title={`${kind}: ${ref}`}
-            aria-label={`${kind} — ${title}`}
+            aria-label={`${kind}: ${title}`}
             onClick={() => onOpen(ref)}
           >
             {title}
