@@ -697,6 +697,7 @@ class MeetingWebServer:
             build_project_setup_router,
             build_project_updates_router,
             build_providers_router,
+            build_steward_router,
             build_watches_router,
         )
 
@@ -712,6 +713,7 @@ class MeetingWebServer:
         from .services.project_evidence_collector import ProjectEvidenceCollector
         from .services.project_delta_service import ProjectDeltaService
         from .services.project_update_service import ProjectUpdateService
+        from .services.project_steward_service import ProjectStewardService
         from .services.refinement_coordinator import RefinementCoordinator
         from .services.refinement_application_service import RefinementApplicationService
 
@@ -913,11 +915,19 @@ class MeetingWebServer:
             ),
             project_evidence_collector=ProjectEvidenceCollector(get_database()),
             project_delta_service=_project_delta_service,
-            project_update_service=ProjectUpdateService(
+            project_update_service=(_project_update_service := ProjectUpdateService(
                 get_database(),
                 project_service=_project_service,
                 delta_service=_project_delta_service,
                 broker=broker,
+            )),
+            project_steward_service=ProjectStewardService(
+                get_database(),
+                ProjectEvidenceCollector(get_database()),
+                _project_delta_service,
+                update_service=_project_update_service,
+                project_service=_project_service,
+                door_service=door_service,
             ),
             refinement_coordinator=refinement_coordinator,
             refinement_service=refinement_service,
@@ -1062,6 +1072,7 @@ class MeetingWebServer:
         app.include_router(build_project_setup_router(web_ctx))
         app.include_router(build_project_updates_router(web_ctx))
         app.include_router(build_providers_router(web_ctx))
+        app.include_router(build_steward_router(web_ctx))
         app.include_router(build_watches_router(web_ctx))
 
         @app.on_event("startup")

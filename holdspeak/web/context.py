@@ -123,6 +123,10 @@ class WebContext:
     # HS-162-02: the update factory composes ProjectService + Delta into
     # deterministic (and later model) drafts. Routes come in 04.
     project_update_service: Optional[Any] = None
+    # HS-163-04: the steward service owns policy, runs, and phase
+    # execution.  Composed with collector + delta + update + project +
+    # door collaborators.
+    project_steward_service: Optional[Any] = None
     # HS-141-04: the single application-owned one-question task lifecycle.
     # Route factories must never create their own threads or event loops.
     refinement_coordinator: Optional[Any] = None

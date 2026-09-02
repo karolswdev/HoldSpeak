@@ -112,6 +112,34 @@ class ProjectStewardService:
         thread).  STW-002: ActiveRunExistsError propagates to the caller
         as a typed refusal.
         """
+        run_id = self.insert_run(
+            principal, project_id,
+            policy_id=policy_id, watermark=watermark,
+        )
+
+        # Execute the six phases on the calling thread (conductor pattern).
+        self.execute_phases(principal, run_id, project_id)
+
+        return run_id
+
+    def insert_run(
+        self,
+        principal: Principal,
+        project_id: str,
+        *,
+        policy_id: Optional[str] = None,
+        watermark: str = "",
+    ) -> str:
+        """Persist a queued run and return the run ID (SS9.2, STW-001).
+
+        This is the INSERT half of the run_once seam.  The route layer
+        calls this on the request thread so STW-002 ActiveRunExistsError
+        surfaces synchronously as a typed 409 before the daemon thread
+        starts phase execution.
+
+        Existing callers that want synchronous execution still call
+        run_once, which calls insert_run + execute_phases.
+        """
         project_id = str(project_id).strip()
         run_id = generate_pstrun_id()
 
@@ -127,9 +155,6 @@ class ProjectStewardService:
             requested_by=f"principal:{principal.identity}",
             watermark=watermark,
         )
-
-        # Execute the six phases on the calling thread (conductor pattern).
-        self._execute_phases(principal, run_id, project_id)
 
         return run_id
 
@@ -186,13 +211,18 @@ class ProjectStewardService:
 
     # ── phase execution loop ──────────────────────────────────────────
 
-    def _execute_phases(
+    def execute_phases(
         self,
         principal: Principal,
         run_id: str,
         project_id: str,
     ) -> None:
         """Walk OBSERVE -> ... -> RECORD with a checkpoint per transition.
+
+        This is the EXECUTE half of the run_once seam.  The route layer
+        calls this from a daemon thread after insert_run returns the ID
+        on the request path.  Existing callers (run_once, tests) call
+        it synchronously.
 
         Failure isolation per the conductor's patterns (SS9.1): exceptions
         are caught, the run is marked failed with an honest summary, and

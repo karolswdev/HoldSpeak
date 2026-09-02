@@ -45,33 +45,27 @@ omission, not an approval policy).
 | HS-163-01 | The run ledger (schema v71: policy/run/step/command persistence; STW-001) | done | [story-01-the-run-ledger](./story-01-the-run-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-163-02 | The run engine (six checkpointed phases; uniqueness, Stop, recovery) | done | [story-02-the-run-engine](./story-02-the-run-engine.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-163-03 | The bounded hand (the V0 effect set, verified, deduplicated) | done | [story-03-the-bounded-hand](./story-03-the-bounded-hand.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-163-04 | The wire (runs on HTTP: create/poll/stop; api-surface) | backlog | [story-04-the-wire](./story-04-the-wire.md) | - |
+| HS-163-04 | The wire (runs on HTTP: create/poll/stop; api-surface) | done | [story-04-the-wire](./story-04-the-wire.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-163-05 | The face (the Steward posture: run, watch, stop, receipts — OWNER VERDICT) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
 | HS-163-06 | The walk (STW-011 on glass: one real effect + a drafted update, receipted; the degraded legs) | backlog | [story-06-the-walk](./story-06-the-walk.md) | - |
 | HS-163-07 | The close (gates, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
-3/7. HS-163-03 the bounded hand DONE (2026-09-02): ACT fills with the
-five V0 effects, each a step row FIRST with idempotency_key +
-expected_state before apply, observed after (STW-004); Stop before
-every effect slot; STW-005 reconcile-before-re-act by key lookup
-(fault-injection proven: a completed step's key is never re-applied);
-STW-006 partial coverage; STW-007 deterministic fallbacks with
-receipts; STW-008 max_actions/max_retries enforced at the loop +
-retry seams (cooldown stored, enforcement is P5's scheduling layer);
-STW-010 eligibility from policy, unconfigured kinds skip with a
-receipt. The ONE-Door law is TWO mechanisms: door:sha256(project:
-watermark:item) idem key (same-watermark) AND the orchestrator-round
-fix — DoorService.has_item_for_source read-back excludes items that
-already HAVE canonical follow-through (cross-watermark; the charter's
-'lacking canonical follow-through' made real; two new tests). Effects
-route through the real verbs: 160 decide_proposal accept, 162 factory
-draft/supersede (UPD-004), Door add_item. Gates: 121 passed scoped
-(31 effects + 21 engine + 34 schema + 3 fence + 32 Door suites).
-Earlier: 2/7 engine (six-phase spine; 04 must thread run_once for the
-immediate-id contract), 1/7 ledger (v71, STW-002 DB law). NEXT:
-HS-163-04 the wire.
+4/7. HS-163-04 the wire DONE (2026-09-02): six routes in
+holdspeak/web/routes/steward.py — POST runs (immediate-id: insert_run
+on the request thread so STW-002 = synchronous 409 active_run_exists;
+phase execution on a daemon thread), GET runs list, GET run (pollable:
+run + steps with expected/observed/receipt/error — the STW-011
+substrate the face renders), POST stop (STW-003 on the wire), GET/PUT
+policy (six typed validation paths). run_once split into public
+insert_run + execute_phases seams; old callers intact. command_id
+replay via project_commands (same hash ⇒ replayed result; different ⇒
+409 idempotency_conflict). api-surface 612→618, zero removals.
+Gates: 112 passed scoped (18 integration + 86 steward unit + 5
+api-surface + 3 fence). Earlier: 3/7 the bounded hand (five effects,
+the ONE-Door two-mechanism law), 2/7 engine, 1/7 ledger. NEXT:
+HS-163-05 the face (owner verdict) ∥ 06 rig after 05's functional.
 
 ## Active risks
 

@@ -591,7 +591,7 @@ class TestSTW005FaultInjection:
         )
 
         # Execute the engine for run 2.
-        svc._execute_phases(_principal(), run_id_2, "proj-1")
+        svc.execute_phases(_principal(), run_id_2, "proj-1")
 
         # The collector was called in OBSERVE (always), but the ACT
         # phase should have reconciled the refresh_sources effect.
@@ -718,7 +718,7 @@ class TestSTW005FaultInjection:
 
         # Track collector calls to prove no re-apply in ACT.
         calls_before = collector.call_count
-        svc._execute_phases(_principal(), run_id_2, "proj-1")
+        svc.execute_phases(_principal(), run_id_2, "proj-1")
         calls_after = collector.call_count
 
         # The reconciliation should prevent a re-apply in ACT.

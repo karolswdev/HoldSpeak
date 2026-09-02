@@ -4255,6 +4255,38 @@
       ]
     },
     {
+      "path": "/api/projects/{project_id}/steward/policy",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.steward",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/steward/policy",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.steward",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/steward/runs",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.steward",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/steward/runs",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.steward",
+      "consumers": []
+    },
+    {
       "path": "/api/projects/{project_id}/summary",
       "methods": [
         "GET"
@@ -4846,6 +4878,22 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/steward/runs/{run_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.steward",
+      "consumers": []
+    },
+    {
+      "path": "/api/steward/runs/{run_id}/stop",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.steward",
+      "consumers": []
     },
     {
       "path": "/api/stop",
