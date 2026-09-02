@@ -45,28 +45,23 @@ seam noted, not built).
 | HS-165-02 | The command tools (lifecycle/link/review/updates; MCP-001/002/004/005) | done | [story-02-the-command-tools](./story-02-the-command-tools.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-165-03 | The driver tools (steward runs, setup interview, provider discovery, watch graduation) | done | [story-03-the-driver-tools](./story-03-the-driver-tools.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-165-04 | The palette (PROJECT_PALETTE + Project Thread mode; parity hardening) | done | [story-04-the-palette](./story-04-the-palette.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-165-05 | The walk (a local MCP client drives §15 end to end — OWNER VERDICT) | in-progress | [story-05-the-walk](./story-05-the-walk.md) | - |
+| HS-165-05 | The walk (a local MCP client drives §15 end to end — OWNER VERDICT) | done | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-165-06 | The docs (the Gate B partner surface; the dedicated docs story) | backlog | [story-06-the-docs](./story-06-the-docs.md) | - |
 | HS-165-07 | The close (gates, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
-4/7. HS-165-04 the palette DONE (2026-09-02): the STOP fired in fact
-(no MCP-layer palette existed; the thread Mode species cannot scope
-MCP-only tools) and the resolution is RATIFIED — tools_for_palette +
-dispatch_for_palette apply the thread palette's exact allow-list-
-intersection species at the MCP layer (typed refusal outside the
-palette, under test). PROJECT_PALETTE = the 37 project.* +
-provider.* names; §15's ten points verified to need no companions.
-The Project thread Mode seeds the house way (identity + prompt;
-tools grow when/if thread-side registrations exist). MCP-006 widened
-(every family survives a poisoned neighbor; project tools dispatch
-beside one). The error-shape sweep — 57 parametrized proofs — found
-ZERO prose-only errors (MCP-004 clean). Consumer named per the 164
-scar: 05's walk drives every step through dispatch_for_palette. No
-pins moved (scoping adds no tools; drift guard green). Gates: 211
-passed scoped. Earlier: 3/7 drivers, 2/7 commands, 1/7 skeleton.
-NEXT: HS-165-05 the walk (owner verdict = Gate B).
+5/7. THE OWNER'S VERDICT on the walk, verbatim: "PASS" — Gate B
+ready, one round. HS-165-05 DONE: a real stdio subprocess client
+drove §15's ten points x2 deterministic (39 calls/run; 2
+transitions, 5 proposals, 11 receipted steps, room revision 2->3,
+same-command replay, no_op re-evaluations — all measured into the
+transcript artifact). One fixture seam (the snapshot fetcher file,
+verified by the orchestrator's read); the sidecar's missing fetcher
+composition ledgered as debt. The gallery had no pixels — the face
+IS the wire. Earlier: 4/7 palette, 3/7 drivers, 2/7 commands, 1/7
+skeleton. NEXT: flip 06 the docs (landed in parallel), then 07 the
+close.
 
 ## Active risks
 
