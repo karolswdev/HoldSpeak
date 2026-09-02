@@ -107,6 +107,12 @@
   opacity: 0.6;
 }
 
+.project-memory-highlight {
+  padding: 0 2px;
+  background: var(--accent-tint);
+  color: var(--text);
+}
+
 /* ── Right rail sections ── */
 .project-room-rail-section {
   padding: 4px 0;

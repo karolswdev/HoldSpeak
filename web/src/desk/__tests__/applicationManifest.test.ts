@@ -59,9 +59,8 @@ describe("DeskOS application manifest", () => {
     ]);
   });
 
-  // HS-157-04: pin the Project Memory registration identity so the
-  // graduation (AD-PRJ-003, WEB-IA-010) cannot silently drop a field.
-  it("pins the Project Memory registration: action, windowId, label, glyph, surface", () => {
+  // The global Desk surface and scoped Project Room share one retrieval face.
+  it("pins the Desk Memory registration: action, windowId, label, glyph, surface", () => {
     const projectMemory = DESK_APPLICATIONS.find(
       (application) => application.action === "open-project-memory",
     );
@@ -69,10 +68,11 @@ describe("DeskOS application manifest", () => {
     expect(projectMemory).toMatchObject({
       action: "open-project-memory",
       windowId: "surface-project-memory",
-      label: "Project memory",
-      description: "Long-lived project context and evidence.",
+      label: "Desk memory",
+      description: "Search connected evidence across the Desk or within a Project.",
       glyph: "▤",
       href: "/project-memory",
+      group: "tool",
     });
     expect(projectMemory!.surface).toBeDefined();
     expect(projectMemory!.surface!.eyebrow).toBe("Long memory");

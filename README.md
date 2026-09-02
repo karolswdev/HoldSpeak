@@ -28,9 +28,15 @@ where it goes.
 A meeting should change what happens next, not disappear into an archive.
 HoldSpeak keeps decisions as durable records with transcript moments, lets you
 accept or supersede them, and promotes the ones that stand into ADRs, notes, or
-decision announcements. Project Memory finds the text years later across the
-local material you kept, while Ask this project answers from cited sources and
-states how many matches fit its prompt. The read-only Process window shows what
+decision announcements.
+[Desk Memory](docs/RELATIONSHIP_AWARE_MEMORY.md) finds the text years later
+across meetings, authored material, conversations, follow-through, Project
+items, Workbench results, and Cadence. A transcript line or Thread message
+recalls its whole parent, and connected evidence travels with it over real
+provenance links—not invented associations. The same bounded retrieval is
+frozen into Ask, Threads and Agents, automations, Workbenches, and Coder
+steering; Project Rooms scope it to one Project. The read-only Process
+window shows what
 the kernel journal says is running, waiting, unknown, or finished without
 controlling the work.
 

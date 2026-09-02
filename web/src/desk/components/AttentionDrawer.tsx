@@ -79,7 +79,7 @@ export function AttentionDrawer() {
       <SystemShade
         open={shadeOpen}
         onClose={() => setShadeOpen(false)}
-        onOpenMemory={() => store.setOpen(true)}
+        onOpenMemory={() => openSurfaceWhenReady("open-project-memory")}
       />
       <DeskWindowFrame
         id="attention"

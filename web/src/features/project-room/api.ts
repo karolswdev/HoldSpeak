@@ -93,7 +93,8 @@ export function promoteDecision(
 
 /* ── memory search ── */
 
-export function searchProjectMemory(query: string, projectId: string) {
-  const params = new URLSearchParams({ query, project_id: projectId });
+export function searchProjectMemory(query: string, projectId?: string) {
+  const params = new URLSearchParams({ query });
+  if (projectId) params.set("project_id", projectId);
   return apiFetch<MemorySearchResponse>(`/api/memory/search?${params}`);
 }

@@ -25,6 +25,10 @@ Studio, and Settings are focused workrooms.
   every verb (create, open, file, record, ask, preview).
 - **[Desk memory](./DESK_MEMORY.md)**: the shared attention and receipt read
   model, its privacy boundary, contextual badges, pagination, and source links.
+- **[Relationship-aware memory](./RELATIONSHIP_AWARE_MEMORY.md)**: how durable
+  Notes, Meetings, Decisions, Threads, Project work, Workbench results, and
+  Cadence become searchable; how one-hop provenance expansion works; and where
+  bounded recall is injected into model-bearing features.
 
 ## Understand the system
 

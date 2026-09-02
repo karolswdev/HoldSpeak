@@ -878,8 +878,11 @@ failure in flow, never overlapping the UI. A turn whose stream stalls
 
 Edit a past user message or regenerate an assistant reply to create a branch.
 The pullout shows siblings as `< n/m >`. Keep any reply as a Note or Artifact
-with its provenance recorded. Desk search federates Threads alongside meetings,
-notes, and decisions through `memory.search` (kind `thread`).
+with its provenance recorded. Desk Memory searches Threads alongside Meetings,
+Artifacts, Notes, Decisions and Decision Records, Actions, Project items,
+Workbench items/results, and Cadence loops through the same `memory.search`
+contract. Opening it outside a Project searches the whole Desk; opening it from
+a Project keeps the query inside that Project.
 
 ### People boundary
 
@@ -1136,7 +1139,11 @@ the whole loop in one place:
    can use the record as written or ask your configured model to draft the
    artifact. A superseded decision refuses promotion and points you to its
    successor.
-5. Use **Search** to find words across decisions, artifacts, and notes. Run
+5. Use **Search** to find words across decisions, artifacts, Meeting
+   transcripts, notes, and grounded Threads. A matching transcript segment or
+   message recalls its parent object; durable one-hop links can bring the
+   related output or decision beside it. Related results name the relationship.
+   Run
    `holdspeak memory rebuild-index` if you need to rebuild those local search
    indexes from the records you still have.
 6. Use **Ask this project** for a cited answer over the matching project
@@ -1156,8 +1163,9 @@ source as deleted instead of deleting the decision text, rationale, date, or
 lifecycle. The transcript and its moment are gone, so the surviving record no
 longer offers that source jump. It remains available in **Decisions**.
 
-"Years later" means text search over the decisions with linked sources,
-artifacts, and notes still in your local database. A severed decision remains a
+"Years later" means text search over Meetings, Threads, decisions with linked
+sources, artifacts, and notes still in your local database. A severed decision
+remains a
 decision record but leaves that cross-kind index. The index is not a backup,
 does not restore deleted source material, and makes no promise that data you
 remove will survive. Back up the database separately if you need recovery.

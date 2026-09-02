@@ -42,6 +42,34 @@ class SequenceWorkflowService:
 
         register(broker.projection_stager)
 
+    def _with_memory(self, prompt: str) -> tuple[str, dict[str, Any]]:
+        """Freeze shared retrieval into one Sequence/Workflow model node."""
+        from ..grounding import hydrate_grounding_blocks_detailed
+
+        blocks, ids, titles, hydration = hydrate_grounding_blocks_detailed(
+            self.db,
+            [],
+            [],
+            "summary",
+            query=prompt,
+            include_memory=True,
+        )
+        if not blocks:
+            return prompt, {}
+        return (
+            "[MEMORY]\n" + "\n\n".join(blocks) + "\n\n[TASK]\n" + prompt,
+            {
+                "context_ids": ids,
+                "context_titles": titles,
+                "grounding": {
+                    "source_refs": hydration.source_refs,
+                    "selection": hydration.selection,
+                    "matched_count": hydration.matched_count,
+                    "overflow_count": hydration.overflow_count,
+                },
+            },
+        )
+
     @staticmethod
     def _route_target(route: dict[str, Any], ordinal: int = 1) -> dict[str, str]:
         """Project execution placement only from immutable route evidence."""
@@ -359,6 +387,7 @@ class SequenceWorkflowService:
                         f"Nothing to run for {recipe.name or recipe.id}; input is retained for Retry.",
                         context={"status": 400, "recipe_id": recipe.id},
                     )
+                prompt, memory_context = self._with_memory(prompt)
                 route = routes[f"step:{ordinal}"]
                 target = self._route_target(route)
                 payload = {
@@ -376,6 +405,7 @@ class SequenceWorkflowService:
                     if body.get("max_tokens") is not None
                     else None,
                     "attempt_ordinal": 1,
+                    **memory_context,
                 }
                 operation_id = f"sequence:{parent.operation_id}:step:{ordinal}"
 
@@ -627,6 +657,7 @@ class SequenceWorkflowService:
                 )
                 if not prompt.strip():
                     continue
+                prompt, memory_context = self._with_memory(prompt)
                 route = routes[f"node:{node.id}"]
                 revision = _node_revision(node)
                 payload = {
@@ -644,6 +675,7 @@ class SequenceWorkflowService:
                     if body.get("max_tokens") is not None
                     else None,
                     "attempt_ordinal": 1,
+                    **memory_context,
                 }
                 operation_id = f"workflow:{parent.operation_id}:node:{node.id}"
 

@@ -20,7 +20,7 @@ from typing import Any, Callable, Optional
 
 from ..db.core import Database
 from ..db.threads import ThreadRepository
-from ..grounding import hydrate_refs_detailed
+from ..grounding import GROUNDING_MAX_REFS, hydrate_refs_detailed
 from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..kernel.inference_stream import (
     Delta,
@@ -303,11 +303,11 @@ class ThreadService:
 
         # -- Validate refs BEFORE writing (unknown -> 4xx naming the id, no rows) --
         frozen_ref_rows: list[dict[str, Any]] = []
-        if refs:
+        if refs or text.strip():
             # Separate person refs from grounding refs.
             person_refs: list[str] = []
             grounding_refs: list[str] = []
-            for ref in refs:
+            for ref in refs or []:
                 if ref.startswith("person:"):
                     person_refs.append(ref)
                 else:
@@ -354,13 +354,16 @@ class ThreadService:
                     )
 
             # Resolve grounding refs through hydrate_refs_detailed.
-            if grounding_refs:
+            if grounding_refs or text.strip():
                 hydration = hydrate_refs_detailed(
                     self._db,
                     meeting_ids=[],
                     artifact_ids=[],
                     expand="summary",
                     qualified_refs=grounding_refs,
+                    query=text,
+                    include_memory=True,
+                    exclude_refs=[f"thread:{thread_id}"],
                 )
                 if hydration.unknown:
                     raise ValidationError(
@@ -1903,7 +1906,19 @@ class ThreadService:
         messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
 
         # Gather frozen refs for context.
-        refs = self._threads.get_refs(thread_id)
+        path_ids = {msg.id for msg in path}
+        scoped_refs = [
+            ref
+            for ref in self._threads.get_refs(thread_id)
+            if ref.message_id is None or ref.message_id in path_ids
+        ]
+        # Retrieval refs are frozen for auditability on every turn.  Keep the
+        # model-visible set bounded and prefer the newest version of the same
+        # source so a long conversation cannot grow its context without limit.
+        newest: dict[tuple[str, str], Any] = {}
+        for ref in reversed(scoped_refs):
+            newest.setdefault((ref.ref_kind, ref.ref_id), ref)
+        refs = list(reversed(list(newest.values())[:GROUNDING_MAX_REFS]))
         ref_context_parts: list[str] = []
         person_names: list[str] = []
         for ref in refs:

@@ -288,6 +288,24 @@ function SinceLastMeeting({ receipt }: { receipt: SinceLastMeetingResponse }) {
   );
 }
 
+/** Render the trusted FTS marker grammar without injecting result HTML. */
+function MemorySnippet({ value }: { value: string }) {
+  const parts = value.split(/(<mark>.*?<\/mark>)/gi);
+  return (
+    <>
+      {parts.map((part, index) =>
+        /^<mark>.*<\/mark>$/i.test(part) ? (
+          <mark className="project-memory-highlight" key={index}>
+            {part.replace(/^<mark>|<\/mark>$/gi, "")}
+          </mark>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
 /* ── Orientation band (WEB-NOW-001 P1 subset, WEB-LC-001/002) ── */
 
 /** Humanize a machine token for the glass: underscores to spaces,
@@ -736,8 +754,9 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     </SurfaceSection>
   );
 
+  const searchScope = ctrl.projectId ? "this project" : "the Desk";
   const searchFace = (
-    <SurfaceSection label="Search this project">
+    <SurfaceSection label={`Search ${searchScope}`}>
       <div className="desk-chat-well project-memory-search">
         <div className="desk-chat-composer">
           <MicButton
@@ -748,7 +767,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
           />
           <input
             type="search"
-            aria-label="Search this project"
+            aria-label={`Search ${searchScope}`}
             value={ctrl.searchQuery}
             placeholder="Search"
             onChange={(event) => ctrl.setSearchQuery(event.target.value)}
@@ -771,7 +790,7 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
         loading={ctrl.searching}
         error={ctrl.error}
         empty={ctrl.searched && !ctrl.searchHits.length}
-        emptyLabel="No matches in this project"
+        emptyLabel={`No matches in ${searchScope}`}
         emptyGlyph={"⌕"}
         onRetry={() => void ctrl.search()}
       >
@@ -780,11 +799,22 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
             <SurfaceRow
               key={String(hit.source_ref)}
               title={String(hit.title || sourceLabel(String(hit.source_ref)))}
-              detail={String(hit.snippet || "")}
+              detail={<MemorySnippet value={String(hit.snippet || "")} />}
               meta={
-                <span className="desk-chip quiet">
-                  {String(hit.kind || "Memory")}
-                </span>
+                <>
+                  <span className="desk-chip quiet">
+                    {String(hit.kind || "Memory")}
+                  </span>
+                  {hit.retrieval_origin === "relationship" ? (
+                    <span className="desk-chip quiet">
+                      Related ·{" "}
+                      {String(hit.relationship || "linked source").replaceAll(
+                        "_",
+                        " ",
+                      )}
+                    </span>
+                  ) : null}
+                </>
               }
               onOpen={() => ctrl.openProjectRef(String(hit.source_ref))}
             />
@@ -813,9 +843,6 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
       </Button>
     </>
   );
-  if (!ctrl.projectId)
-    return <SurfaceState empty emptyLabel="Open a Project" emptyGlyph={"▤"} />;
-
   const readToken = (() => {
     if (!ctrl.readAt) return "";
     const date = new Date(ctrl.readAt);
@@ -872,7 +899,9 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
         <SurfaceState loading />
       ) : null}
       <div className="project-memory-core" data-view={ctrl.view}>
-        {ctrl.view === "timeline" ? (
+        {!ctrl.projectId ? (
+          searchFace
+        ) : ctrl.view === "timeline" ? (
           timelineFace
         ) : ctrl.view === "decisions" ? (
           decisionsFace
@@ -890,7 +919,9 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
       <SurfaceFooter
         receipt={
           <span className="surface-footer-receipt-line" role="status">
-            {`PROJECT ${ctrl.projectName}${readToken}`}
+            {ctrl.projectId
+              ? `PROJECT ${ctrl.projectName}${readToken}`
+              : "DESK MEMORY · RELATIONSHIP-AWARE"}
           </span>
         }
         verbs={
