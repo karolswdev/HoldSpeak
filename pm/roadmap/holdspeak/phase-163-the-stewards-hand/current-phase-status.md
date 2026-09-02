@@ -42,7 +42,7 @@ omission, not an approval policy).
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-163-01 | The run ledger (schema v71: policy/run/step/command persistence; STW-001) | backlog | [story-01-the-run-ledger](./story-01-the-run-ledger.md) | - |
+| HS-163-01 | The run ledger (schema v71: policy/run/step/command persistence; STW-001) | done | [story-01-the-run-ledger](./story-01-the-run-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-163-02 | The run engine (six checkpointed phases; uniqueness, Stop, recovery) | backlog | [story-02-the-run-engine](./story-02-the-run-engine.md) | - |
 | HS-163-03 | The bounded hand (the V0 effect set, verified, deduplicated) | backlog | [story-03-the-bounded-hand](./story-03-the-bounded-hand.md) | - |
 | HS-163-04 | The wire (runs on HTTP: create/poll/stop; api-surface) | backlog | [story-04-the-wire](./story-04-the-wire.md) | - |
@@ -52,15 +52,17 @@ omission, not an approval policy).
 
 ## Where we are
 
-CHARTERED. Chain: 01 → 02 → 03 → 04 → 05 ∥ 06(rig after 05's
-functional) → 07. THE LAWS OF THE ARC CARRY, now with the 162
-scars: prove the MOUNT and the PIXELS; the orchestrator's own eyes
-on every shot before the owner's; fixtures speak the wire and never
-bypass a validating seam; stage pm/ files BY NAME during closes;
-anchor cwd in background commands and read the totals line. Merge
-posture per the owner's 2026-09-02 call: local gates are the
-substance; record the basis on the PR; don't hold merges hostage to
-the serial Unit job.
+1/7. HS-163-01 the run ledger DONE (2026-09-02): schema v71 —
+steward_policies / steward_runs / steward_steps / steward_commands,
+additive, named columns; STW-002 as a DB law (partial unique index
+uq_steward_runs_one_active_per_project WHERE state IN queued/running/
+stopping, typed ActiveRunExistsError at the repo); the step record
+carries idempotency_key + expected/observed JSON — the STW-005
+reconciliation substrate; four repos with conn-accepting
+*_in_transaction variants; snapshot regenerated; reconcile-from-v70 +
+idempotence under test; real-DB reconcile proven on a COPY (evidence
+leg 2, 1 passed). Gates: 140 passed 1 skipped scoped; positional-
+INSERT fence green. NEXT: HS-163-02 the run engine.
 
 ## Active risks
 

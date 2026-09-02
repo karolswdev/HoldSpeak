@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 70  # informational; 69→70: project_updates (HS-162-01)
+SCHEMA_VERSION = 71  # informational; 70→71: steward ledger (HS-163-01)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -3893,4 +3893,85 @@ CREATE INDEX IF NOT EXISTS idx_project_updates_project
     ON project_updates(project_id, lifecycle);
 CREATE INDEX IF NOT EXISTS idx_project_updates_review
     ON project_updates(project_id, review_id);
+
+-- HS-163-01: Steward policy — per-Project: eligible effect kinds, YOLO flags,
+-- bounds (retry counts, per-run action caps, cooldowns per STW-008).
+CREATE TABLE IF NOT EXISTS steward_policies (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    eligible_effect_kinds_json TEXT NOT NULL DEFAULT '[]',
+    yolo_flags_json TEXT NOT NULL DEFAULT '{}',
+    max_retries INTEGER NOT NULL DEFAULT 3,
+    max_actions_per_run INTEGER NOT NULL DEFAULT 10,
+    cooldown_seconds INTEGER NOT NULL DEFAULT 0,
+    bounds_json TEXT NOT NULL DEFAULT '{}',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_steward_policies_project
+    ON steward_policies(project_id);
+
+-- HS-163-01: Steward runs — the durable run record (STW-001).
+-- state: queued|running|stopping|completed|failed|interrupted.
+-- phase: observe|compare|propose|act|verify|record.
+-- STW-002: partial unique index enforces at most one active run per project.
+CREATE TABLE IF NOT EXISTS steward_runs (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    policy_id TEXT REFERENCES steward_policies(id),
+    state TEXT NOT NULL DEFAULT 'queued',
+    phase TEXT NOT NULL DEFAULT 'observe',
+    requested_by TEXT NOT NULL DEFAULT '',
+    stop_requested_at TEXT,
+    watermark TEXT NOT NULL DEFAULT '',
+    summary_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    started_at TEXT,
+    completed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_steward_runs_project
+    ON steward_runs(project_id, state);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_steward_runs_one_active_per_project
+    ON steward_runs(project_id)
+    WHERE state IN ('queued', 'running', 'stopping');
+
+-- HS-163-01: Steward steps — the STW-005 reconciliation substrate.
+-- Each step in a run: phase, seq, effect kind, idempotency_key for dedup,
+-- expected/observed state JSON for verification (STW-004), receipts, errors.
+CREATE TABLE IF NOT EXISTS steward_steps (
+    id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL REFERENCES steward_runs(id) ON DELETE CASCADE,
+    phase TEXT NOT NULL DEFAULT '',
+    seq INTEGER NOT NULL DEFAULT 0,
+    state TEXT NOT NULL DEFAULT 'pending',
+    effect_kind TEXT NOT NULL DEFAULT '',
+    idempotency_key TEXT NOT NULL DEFAULT '',
+    expected_state_json TEXT NOT NULL DEFAULT '{}',
+    observed_state_json TEXT NOT NULL DEFAULT '{}',
+    receipt_json TEXT NOT NULL DEFAULT '{}',
+    error_json TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    completed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_steward_steps_run
+    ON steward_steps(run_id, phase, seq);
+CREATE INDEX IF NOT EXISTS idx_steward_steps_idempotency
+    ON steward_steps(idempotency_key);
+
+-- HS-163-01: Steward command records — replay substrate.
+-- Each command that triggered or drove a steward action.
+CREATE TABLE IF NOT EXISTS steward_commands (
+    id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL REFERENCES steward_runs(id) ON DELETE CASCADE,
+    step_id TEXT REFERENCES steward_steps(id),
+    command_kind TEXT NOT NULL DEFAULT '',
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    result_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_steward_commands_run
+    ON steward_commands(run_id);
 """

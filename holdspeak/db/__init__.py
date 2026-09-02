@@ -58,6 +58,13 @@ from .threads import (  # noqa: F401
     ThreadRepository,
 )
 from .front_door import FrontDoorApplyRepository  # noqa: F401
+from .steward import (  # noqa: F401
+    ActiveRunExistsError,
+    StewardPolicyRepository,
+    StewardRunRepository,
+    StewardStepRepository,
+    StewardCommandRepository,
+)
 from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401
 from .core import *  # noqa: F401,F403
 from .reconcile import reconcile_schema  # noqa: F401
