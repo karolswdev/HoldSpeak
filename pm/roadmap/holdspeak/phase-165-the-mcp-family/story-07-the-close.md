@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 165
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-165-01..06
 - **Unblocks:** Phase P7 (Jira parity, if selected)
 - **Owner:** unassigned
