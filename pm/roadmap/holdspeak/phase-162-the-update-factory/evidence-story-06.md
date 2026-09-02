@@ -65,3 +65,33 @@ build ok
 ......                                                                   [100%]
 6 passed in 22.52s
 ```
+
+### Captured run — 2026-09-02T01:36:56Z
+
+- **Command:** `/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/cc25f299-2c98-4864-9e8e-a3504d65c608/scratchpad/story162-06-verify.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 6b81189c08bae308ac4830e1764c535d437cc913
+
+```text
+=== build (the glass serves the built bundle) ===
+build ok
+=== the four legs (isolated HOME) ===
+......                                                                   [100%]
+6 passed in 21.61s
+```
+
+### Captured run — 2026-09-02T01:49:41Z
+
+- **Command:** `/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/cc25f299-2c98-4864-9e8e-a3504d65c608/scratchpad/story162-06-verify.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 0a11104bfd7322bf80858f996d38b184b40e5cb0
+
+```text
+=== build (the glass serves the built bundle) ===
+build ok
+=== the four legs (isolated HOME) ===
+......                                                                   [100%]
+6 passed in 21.70s
+```

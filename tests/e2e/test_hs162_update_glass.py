@@ -369,6 +369,31 @@ def test_stopwatch_and_retention(
             page.screenshot(path=str(SHOTS / f"draft-list-{width}.png"), full_page=False)
             assert (SHOTS / f"draft-list-{width}.png").stat().st_size > 20_000
 
+            # -- List-row two-liner: plain-words provenance, no assignment id --
+            _list_rows = page.get_by_test_id("update-list-item")
+            assert _list_rows.count() >= 1, "Expected at least one draft in the list"
+
+            _provenance = page.get_by_test_id("update-list-provenance")
+            assert _provenance.count() >= 1, "List rows must have provenance secondary line"
+            for _pi in range(_provenance.count()):
+                _prov_text = _provenance.nth(_pi).inner_text().strip()
+                assert (
+                    _prov_text.startswith("Deterministic draft")
+                    or _prov_text.startswith("Model draft")
+                ), (
+                    f"Provenance must be plain words ('Deterministic draft' / 'Model draft'), "
+                    f"got: {_prov_text!r}"
+                )
+
+            for _ri in range(_list_rows.count()):
+                _row_text = _list_rows.nth(_ri).inner_text()
+                assert "(" not in _row_text, (
+                    f"List row must not show parenthesized ids: {_row_text!r}"
+                )
+                assert "model:" not in _row_text.lower(), (
+                    f"List row must not leak raw generator string: {_row_text!r}"
+                )
+
             # -- Open the seeded unverified draft for its banner shot --
             list_items = page.get_by_test_id("update-list-item")
             if list_items.count() > 0:
