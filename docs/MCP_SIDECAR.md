@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-145 tools across 32 families. The default non-owner discovery lists 34
+159 tools across 32 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -57,7 +57,7 @@ default.
 
 ## Tool families
 
-The 145 tools are organized into domain families. Each tool follows the
+The 159 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -97,13 +97,20 @@ Door has no MCP resource. Its
 Follow-Through People overlay respects `HOLDSPEAK_MCP_PEOPLE_ACCESS` and is
 safely empty when that encrypted disclosure capability is unavailable or off.
 
-### project (3 tools)
+### project (17 tools)
 
-`project.list` returns all projects (optionally including archived).
-`project.get` returns one project by id with room fields.
-`project.get_room` returns the coherent room projection for one project
-(identity, items, meetings, resources, changes, review). All three are
-thin drivers over `ProjectService` (MCP-001 parity with the web routes).
+Three read tools: `project.list` returns all projects (optionally
+including archived). `project.get` returns one project by id with room
+fields. `project.get_room` returns the coherent room projection.
+
+Fourteen command tools mirror the web routes exactly (MCP-001 parity):
+`project.create`, `project.update` (with expected_revision), `project.archive`,
+`project.restore`, `project.link` / `project.unlink` (meeting association),
+`project.open_review`, `project.get_delta`, `project.decide_proposal`,
+`project.accept_review`, `project.list_updates`, `project.draft_update`,
+`project.update_draft`, `project.publish_update`. Every effect tool
+accepts an optional command_id for idempotent replay (MCP-002); where the
+web route enforces expected_revision, the tool does too.
 
 Five resource templates expose project data: `holdspeak://projects/{id}`,
 `.../room`, `.../delta`, `.../updates/{update_id}`, and

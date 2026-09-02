@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 165
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-165-01
 - **Unblocks:** HS-165-03
 - **Owner:** unassigned
@@ -39,3 +39,21 @@ capability refusals, never simulated success.
 ## Test plan
 
 - **Unit:** tests/unit/test_project_mcp_commands.py.
+
+## Trace record (orchestrator round, 2026-09-02)
+
+- The build report composed the delta service with a _NullCollector
+  ("the sidecar cannot run source adapters"). WRONG per HS-164's
+  proven finding: collect_all is DB-only (native adapters read the
+  DB; the WatchAdapter reads stored snapshots, never a provider).
+  Replaced with the REAL ProjectEvidenceCollector (the web_server
+  recovery block's own composition) — project.open_review is now
+  true MCP-001 parity, honest coverage included.
+- Copied-glue register (the parity risk counsel weighs): ONE item —
+  project.decide_proposal replicates the route's
+  proposal-belongs-to-review ownership check
+  (project_reviews.py:157-174); the validation lives in the route,
+  not the service. Pre-existing seam split; registered, not paid
+  here.
+- PublishedUpdateError (a DB-layer exception) is re-raised as
+  ConflictError(code="published_update"), mirroring the route's 409.

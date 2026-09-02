@@ -42,7 +42,7 @@ seam noted, not built).
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-165-01 | The family skeleton (project.py reads + §11.2 resources; MCP-006 isolation) | done | [story-01-the-family-skeleton](./story-01-the-family-skeleton.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-165-02 | The command tools (lifecycle/link/review/updates; MCP-001/002/004/005) | backlog | [story-02-the-command-tools](./story-02-the-command-tools.md) | - |
+| HS-165-02 | The command tools (lifecycle/link/review/updates; MCP-001/002/004/005) | done | [story-02-the-command-tools](./story-02-the-command-tools.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-165-03 | The driver tools (steward runs, setup interview, provider discovery, watch graduation) | backlog | [story-03-the-driver-tools](./story-03-the-driver-tools.md) | - |
 | HS-165-04 | The palette (PROJECT_PALETTE + Project Thread mode; parity hardening) | backlog | [story-04-the-palette](./story-04-the-palette.md) | - |
 | HS-165-05 | The walk (a local MCP client drives §15 end to end — OWNER VERDICT) | backlog | [story-05-the-walk](./story-05-the-walk.md) | - |
@@ -51,19 +51,24 @@ seam noted, not built).
 
 ## Where we are
 
-1/7. HS-165-01 the family skeleton DONE (2026-09-02): the project.*
-family lands the house way (FAMILIES registry, door.py idiom, three
-read tools as thin drivers with EQUALITY parity asserts against the
-very service returns Web uses); all five §11.2 resources resolve with
-typed refusals; and MCP-006 was BUILT, not found — the families
-registry previously crashed whole on one bad import; per-family
-importlib + DEGRADED_FAMILIES now isolates, proven through the REAL
-assembly path with a poisoned fake family. The delta resource rides
-the same private seams the Web's own delta route rides (parity, warts
-included — ruling in the story trace). Every pin paid: MCP tool count
-142->145, families 31->32, resources 29->34 (docs/README +
-MCP_SIDECAR; doc drift guard green). Gates: 54 passed scoped. NEXT:
-HS-165-02 the command tools.
+2/7. HS-165-02 the command tools DONE (2026-09-02): fourteen command
+tools join the three reads — every one a thin driver over the EXACT
+service seam its Web route calls (the parity table lives in the
+build report; the copied-glue register holds ONE item:
+decide_proposal's route-side ownership check, registered as
+pre-existing seam debt). MCP-002 proven: optional command_id in,
+generated otherwise, ALWAYS returned; replay returns the stored
+result and mints nothing; mismatched payload refuses
+idempotency_conflict — all under test across create/archive/link/
+accept_review/draft_update. Typed capability + stale_revision
+refusals ride the services untouched. ORCHESTRATOR CATCH: the build
+composed the delta service with a NullCollector on the false premise
+that the sidecar cannot run adapters — HS-164 proved collect_all is
+DB-only; the REAL ProjectEvidenceCollector now composes (the
+web_server recovery block's own shape) and open_review is true
+parity with honest coverage. Pins paid 145->159 (doc drift guard
+green). Gates: 97 passed scoped. Earlier: 1/7 the skeleton. NEXT:
+HS-165-03 the driver tools.
 
 ## Active risks
 
