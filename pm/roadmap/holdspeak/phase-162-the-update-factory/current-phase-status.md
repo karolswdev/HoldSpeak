@@ -37,21 +37,21 @@ this phase builds the factory the action will call.
 | HS-162-04 | The verbs on the wire (draft/regenerate/save/copy/publish; api-surface) | done | [story-04-the-verbs](./story-04-the-verbs.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-162-05 | The face (the Update room — claims open their sources; OWNER VERDICT) | done | [story-05-the-face](./story-05-the-face.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-162-06 | The walk (PV-H04 measured: edit-to-copy < 5:00, ≥70% retained; degraded leg) | done | [story-06-the-walk](./story-06-the-walk.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-162-07 | The close (gates, debts, final summary, PR) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
+| HS-162-07 | The close (gates, debts, final summary, PR) | done | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-6/7 DONE + 05 CLOSED ON THE OWNER'S VERDICT (PASS, round 4). The
-face earned it through FOUR owner rounds: the Notes DeskEditor
-replacing the bare textarea; the published view remade as a rendered
-document with named, deduplicated source chips (the S-4 payment);
-the list row rebuilt three times to its true root cause (the house
-ledger's nowrap) and finished with a rest-visible chevron so it says
-it opens; editability confirmed by canon (UPD-001/UPD-005/PV-H04).
-The walk's numbers held through every round: 2.77s edit-to-copy vs
-300s; retention 1.0 vs 0.70; the no-raw-ids law asserted on glass.
-Remaining: 07 the close — full suite (running), sweep, counsel
-(running), final summary, PR, merge. All standing laws carry.
+**COMPLETE 7/7.** The factory is proven: updates draft over a pinned
+revision + manifest, every claim resolves or is MARKED, the router
+can die without killing the draft, published is immutable, and the
+owner closed the face on his round-4 verdict after four recorded
+rounds. PV-H04 measured and held: 2.77s edit-to-copy vs 300s;
+retention 1.0 vs 0.70. 160's S-4 debt PAID on the face. Counsel
+RATIFY-W-C — all conditions paid in-round; the close sweep resolved
+all nine candidates (3 proven flakes, 2 mid-run artifacts, 4 real
+breaks fixed + re-proven). Zero unexplained branch-new anywhere.
+Merging via PR. Next: P4 The Steward's Hand — and Gate A's dogfood
+clock keeps mattering.
 
 ## Active risks
 

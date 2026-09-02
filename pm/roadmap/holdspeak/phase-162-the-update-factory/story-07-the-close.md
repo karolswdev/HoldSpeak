@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 162
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-162-01..06
 - **Unblocks:** Phase P4 (The Steward's Hand)
 - **Owner:** unassigned

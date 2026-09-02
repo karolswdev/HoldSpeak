@@ -77,9 +77,26 @@ validating seam is a lie.
   ONE candidate being the KNOWN ThoughtDocumentPane suite-order flake
   family (isolation ×2 green; thought-workspace untouched since
   main). Zero unexplained branch-new.
-- Python full suite + sweep vs main's 27-name baseline: (filled at
-  close from the story-07 evidence capture).
-- Counsel: (filled at close).
+- Python full suite (CI-style, isolated HOME, xdist): **8559
+  passed, 18 failed, 61 skipped in 22:28**. Sweep vs main's 27-name
+  baseline: 9 baseline-matched; 3 glass names PROVEN FLAKES
+  (isolation green — hs151/hs152/hs153, the known families); 2
+  mid-run artifacts (the suite ran while the counsel-fix worker
+  edited source — healed on the settled tree); **4 REAL breaks fixed
+  in-round** (the v70 schema snapshot regen; the
+  project.update_draft registry entry; the surface-fallback census
+  classification + its reviewed artifact paragraph; the aria-label
+  em-dash vs the vocabulary guard). ZERO unexplained branch-new.
+- Counsel: **RATIFY-W-C — every condition paid in-round** (M-1
+  census line; S-1 superseded guards; S-2 command_id replay wired
+  for save/regenerate; S-3 aria-expanded; S-4/N-2 record numbers;
+  N-1 api-surface consumers; N-3 lifecycle-honest label; N-4 dead
+  branch collapsed). Clean table on the laws: tombstone untouched,
+  publish atomicity, cited-or-MARKED, determinism, egress badge,
+  no second routing door.
+- Close scars recorded for the liturgy: never wholesale-add pm/
+  while the suite runs (112 churned PNGs restored, `75059107`);
+  anchor cwd in background suite commands and read the totals line.
 
 ## Debts
 
