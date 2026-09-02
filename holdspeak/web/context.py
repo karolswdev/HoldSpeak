@@ -107,9 +107,19 @@ class WebContext:
     # HS-159-02: the universal Watch facade over the graduated
     # connector_watches table. Routes come in P3; construction only here.
     watch_service: Optional[Any] = None
+    # HS-161-01: the V0 GitHub provider adapter. Routes come in P3;
+    # construction only here.
+    github_provider: Optional[Any] = None
     # HS-159-03: the durable setup interview service. Composes
     # ProjectService + WatchService; routes come in P4.
     project_setup_service: Optional[Any] = None
+    # HS-160-02: the evidence collector composes five adapters behind
+    # ProjectService (SS6.1). Routes come in P3; construction only here.
+    project_evidence_collector: Optional[Any] = None
+    # HS-160-03: the frozen review algorithm (SS7.2). Composes the
+    # evidence collector into the twelve-step deterministic Delta.
+    # Routes come in 05; construction only here.
+    project_delta_service: Optional[Any] = None
     # HS-141-04: the single application-owned one-question task lifecycle.
     # Route factories must never create their own threads or event loops.
     refinement_coordinator: Optional[Any] = None

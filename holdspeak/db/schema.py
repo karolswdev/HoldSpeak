@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 68  # informational; 67→68: WatchSpec@1 graduation + setup/rule/eval/effect tables (HS-159-01)
+SCHEMA_VERSION = 69  # informational; 68→69: observations, evidence links, proposals, reviews (HS-160-01)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -3790,4 +3790,82 @@ CREATE INDEX IF NOT EXISTS idx_project_sources_project
     ON project_sources(project_id, enabled);
 CREATE INDEX IF NOT EXISTS idx_project_sources_ref
     ON project_sources(source_ref);
+
+-- HS-160-01: Append-only normalized observations (§5.5, DB-003).
+-- Identity is deterministic from (adapter, source_id, source_version, fact_key)
+-- via generate_pobs_id; the PK is the hash so adapter retries no-op (INSERT OR IGNORE).
+CREATE TABLE IF NOT EXISTS project_observations (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    source_id TEXT NOT NULL DEFAULT '',
+    observation_kind TEXT NOT NULL DEFAULT '',
+    subject_ref TEXT,
+    source_version TEXT NOT NULL DEFAULT '',
+    observed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    captured_at TEXT NOT NULL DEFAULT (datetime('now')),
+    fact_json TEXT NOT NULL DEFAULT '{}',
+    content_hash TEXT NOT NULL DEFAULT '',
+    supersedes_observation_id TEXT,
+    coverage_state TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_project_observations_source
+    ON project_observations(project_id, source_id, observed_at);
+
+-- HS-160-01: Evidence links (§5.6) — from assessment/proposal/item to evidence.
+CREATE TABLE IF NOT EXISTS project_evidence_links (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    target_ref TEXT NOT NULL DEFAULT '',
+    evidence_ref TEXT NOT NULL DEFAULT '',
+    relation TEXT NOT NULL DEFAULT '',
+    observation_id TEXT,
+    excerpt_locator_json TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_project_evidence_links_target
+    ON project_evidence_links(project_id, target_ref);
+
+-- HS-160-01: Proposals with full decision lifecycle (§5.7).
+-- Identity is deterministic from (project_id, review_window_key, proposal_kind,
+-- target_ref, normalized_patch) via generate_pprop_id; PK is the hash.
+CREATE TABLE IF NOT EXISTS project_proposals (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    review_window_key TEXT NOT NULL DEFAULT '',
+    proposal_kind TEXT NOT NULL DEFAULT '',
+    target_ref TEXT NOT NULL DEFAULT '',
+    title TEXT NOT NULL DEFAULT '',
+    rationale TEXT,
+    patch_json TEXT NOT NULL DEFAULT '{}',
+    materiality TEXT,
+    confidence REAL,
+    producer_kind TEXT,
+    model_receipt_ref TEXT,
+    lifecycle TEXT NOT NULL DEFAULT 'open',
+    deferred_until TEXT,
+    dismissal_basis_hash TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    decided_at TEXT,
+    decided_by_ref TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_project_proposals_window
+    ON project_proposals(project_id, review_window_key, lifecycle);
+
+-- HS-160-01: Frozen review windows (§5.8).
+CREATE TABLE IF NOT EXISTS project_reviews (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'open',
+    from_sequence INTEGER,
+    through_sequence INTEGER,
+    source_manifest_json TEXT NOT NULL DEFAULT '{}',
+    project_revision_opened INTEGER,
+    project_revision_accepted INTEGER,
+    opened_at TEXT NOT NULL DEFAULT (datetime('now')),
+    accepted_at TEXT,
+    accepted_by_ref TEXT,
+    summary_json TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_project_reviews_status
+    ON project_reviews(project_id, status);
 """

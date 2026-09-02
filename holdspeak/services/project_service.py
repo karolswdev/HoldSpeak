@@ -44,6 +44,22 @@ from .service_event_ledger import ServiceEventLedger
 _log = get_logger("services.project_service")
 
 
+# ── M-1 finalize mapping tables (HS-161-07 counsel) ─────────────────
+#
+# _PROVIDER_TO_CONNECTOR: the watch table's connector_id is "gh", not
+# "github".  Moved from the loop body to module level per counsel N-2.
+#
+# _SUBJECT_TO_QUERY_KIND: WatchSpec@1 subject.kind is singular
+# ("pull_request"), but GitHubWatchSource.snapshot demands the plural
+# wire form ("pull_requests").  The mapping lives here rather than in
+# the spec so the spec vocabulary stays domain-level.
+_PROVIDER_TO_CONNECTOR: dict[str, str] = {"github": "gh"}
+
+_SUBJECT_TO_QUERY_KIND: dict[str, str] = {
+    "pull_request": "pull_requests",
+}
+
+
 # ── Closed Project Room vocabularies (HS-158-02, SRS WEB §4) ─────────
 
 # Project lifecycle: closed vocabulary per SRS WEB-LC §4.
@@ -172,10 +188,12 @@ def _envelope_to_dict(env: CommandResultEnvelope) -> dict[str, Any]:
 class ProjectService:
     """The durable project boundary; routes only parse and serialize."""
 
-    def __init__(self, db: Database, *, observer: PipelineObserver | None = None) -> None:
+    def __init__(self, db: Database, *, observer: PipelineObserver | None = None,
+                 delta_service: Any = None) -> None:
         self._db = db
         self._observer = observer or NullObserver()
         self._ledger = ServiceEventLedger(db)
+        self._delta_service = delta_service
 
     # ── reads (unchanged) ────────────────────────────────────────────
 
@@ -305,7 +323,12 @@ class ProjectService:
                 "resources", lambda: self._read_room_resources(project_id)),
             "changes": self._room_section(
                 "changes", lambda: self._read_room_changes(project_id)),
-            "review": dict(_ABSENT_SECTION),
+            "review": (
+                self._room_section(
+                    "review", lambda: self._read_room_review(project_id))
+                if self._delta_service is not None
+                else dict(_ABSENT_SECTION)
+            ),
             "sources": dict(_ABSENT_SECTION),
             "updates": dict(_ABSENT_SECTION),
             "steward": dict(_ABSENT_SECTION),
@@ -389,6 +412,41 @@ class ProjectService:
         changes = self._db.projects.list_project_changes(
             project_id, limit=ROOM_CHANGES_CAP)
         return {"recent": changes}
+
+    def _read_room_review(self, project_id: str) -> dict[str, Any]:
+        """Review section: pending_count, last_accepted_at, open_review_id.
+
+        HS-160-05: the review section graduates from absent to real.
+        Shape: {state:'ok', last_accepted_at, pending_count, open_review_id}.
+        Art VI: zeros are zeros, not absence -- the domain exists now.
+        """
+        room_fields = self._db.projects.get_project_room_fields(project_id)
+        last_accepted_at = (room_fields or {}).get("last_review_at")
+
+        open_review_id = None
+        pending_count = 0
+
+        if self._delta_service is not None:
+            try:
+                open_review = self._delta_service._find_open_review(project_id)
+                if open_review is not None:
+                    open_review_id = open_review["id"]
+                    proposals = self._db.project_observations.list_proposals(
+                        project_id,
+                        review_window_key=open_review_id,
+                        lifecycle="open",
+                    )
+                    pending_count = len(proposals)
+            except Exception:
+                # Fault isolation: if delta reads fail, we still return
+                # the section with what we have.
+                pass
+
+        return {
+            "last_accepted_at": last_accepted_at,
+            "pending_count": pending_count,
+            "open_review_id": open_review_id,
+        }
 
     # ── writes (graduated to revision law) ───────────────────────────
 
@@ -553,9 +611,25 @@ class ProjectService:
 
                 watch_id = f"watch_{uuid.uuid4().hex[:12]}"
                 watch_name = spec.get("name", "Untitled watch")
-                connector_id = spec.get("provider", {}).get("id", "native")
-                query_kind = spec.get("subject", {}).get("kind", "")
-                query = spec.get("subject", {}).get("scope", {})
+                # Map provider spec IDs to connector_pack IDs
+                # (the watch table's connector_id is "gh", not "github")
+                raw_provider = spec.get("provider", {}).get("id", "native")
+                connector_id = _PROVIDER_TO_CONNECTOR.get(raw_provider, raw_provider)
+                # M-1 counsel: map singular subject kind to the plural
+                # wire form GitHubWatchSource.snapshot demands.
+                raw_kind = spec.get("subject", {}).get("kind", "")
+                query_kind = _SUBJECT_TO_QUERY_KIND.get(raw_kind, raw_kind)
+                # M-1 counsel: build the stored query in the shape
+                # GitHubWatchSource expects: repository (singular string)
+                # + query filters (state/base/search).  Mirror the shape
+                # project_setup_service._native_test_read already uses.
+                subject = spec.get("subject", {})
+                scope = subject.get("scope", {})
+                query_filters = dict(subject.get("query", {}))
+                repos = scope.get("repositories", [])
+                if repos:
+                    query_filters["repository"] = repos[0]
+                query: dict[str, Any] = query_filters
                 trigger = spec.get("trigger") or CADENCE_PRESETS.get("normal", {})
                 mode = spec.get("mode", "yolo")
 
@@ -1714,6 +1788,159 @@ class ProjectService:
         item = self._db.projects.get_project_item(item_id)
         result = dict(item) if item else {"id": item_id}
         result.update(_envelope_to_dict(envelope))
+        result["item_id"] = item_id
+        return result
+
+    def create_item_in_transaction(
+        self, conn: Any, principal: Principal, project_id: str,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create a typed item inside the caller's transaction (S-2 fix).
+
+        Conn-accepting sibling of create_item, following the 159 M-1
+        pattern (conn-threading).  The caller owns the connection and
+        the transaction boundary; this method does validation (pure
+        Python) then all DB writes on the provided conn.
+
+        Preconditions (caller's job):
+        - project_id exists (no _require_project read here)
+        - idempotency is the caller's concern
+
+        Returns the same result dict shape as create_item.
+        """
+        item_type = str(payload.get("item_type") or "").strip()
+        if item_type not in ITEM_TYPES:
+            raise ValidationError(
+                f"Unknown item_type: {item_type!r}; "
+                f"must be one of {sorted(ITEM_TYPES)}",
+                code="validation",
+            )
+
+        title = str(payload.get("title") or "").strip()
+        if not title:
+            raise ValidationError("Item title is required", code="validation")
+
+        severity = self._validate_severity(payload.get("severity"))
+        lifecycle = str(payload.get("lifecycle") or "").strip() or ITEM_DEFAULT_LIFECYCLE[item_type]
+        self._validate_lifecycle(item_type, lifecycle)
+
+        owner_ref = self._validate_optional_ref(payload.get("owner_ref"), "owner_ref")
+        created_by_ref = self._validate_optional_ref(
+            payload.get("created_by_ref") or f"principal:{principal.identity}",
+            "created_by_ref",
+        )
+        due_at = payload.get("due_at")
+        sort_key = payload.get("sort_key")
+        if sort_key is not None:
+            try:
+                sort_key = float(sort_key)
+            except (TypeError, ValueError) as exc:
+                raise ValidationError("sort_key must be a number", code="validation") from exc
+        summary = payload.get("summary")
+
+        # Validate and serialize details_json (DB-004)
+        details = payload.get("details") or {}
+        details_json = self._validate_details(item_type, details)
+
+        provenance = str(payload.get("provenance_kind") or "owner").strip()
+        if provenance not in PROVENANCE_KINDS:
+            raise ValidationError(
+                f"provenance_kind must be one of {sorted(PROVENANCE_KINDS)}",
+                code="validation",
+            )
+
+        item_id = generate_pitem_id()
+        cmd_id = generate_pcmd_id()
+        now_iso = datetime.now().isoformat()
+        project_ref = format_ref("project", project_id)
+
+        current_rev = self._get_revision(conn, project_id)
+        new_revision = current_rev + 1
+
+        conn.execute(
+            "UPDATE projects SET revision = ?, updated_at = ? WHERE id = ?",
+            (new_revision, now_iso, project_id),
+        )
+
+        conn.execute(
+            """
+            INSERT INTO project_items (
+                id, project_id, item_type, title, summary, lifecycle,
+                severity, owner_ref, due_at, sort_key, details_json,
+                provenance_kind, source_observation_id, created_by_ref,
+                revision, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+            """,
+            (
+                item_id, project_id, item_type, title, summary,
+                lifecycle, severity, owner_ref, due_at, sort_key,
+                details_json, provenance, payload.get("source_observation_id"),
+                created_by_ref, now_iso, now_iso,
+            ),
+        )
+
+        change_id = generate_pchg_id(
+            project_id=project_id,
+            project_revision=new_revision,
+            ordinal=0,
+        )
+        req_hash = _request_hash({
+            "project_id": project_id, "item_type": item_type,
+            "title": title, **{k: v for k, v in payload.items()
+                                if k not in ("command_id",)},
+        })
+        conn.execute(
+            """
+            INSERT INTO project_changes (
+                id, project_id, project_revision, change_kind,
+                target_ref, actor_ref, command_id,
+                before_hash, after_hash, summary_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                change_id, project_id, new_revision,
+                "project.updated",
+                project_ref,
+                f"principal:{principal.identity}",
+                cmd_id, None,
+                _request_hash({"item_id": item_id, "item_type": item_type}),
+                json.dumps({
+                    "action": "item.created",
+                    "item_id": item_id,
+                    "item_type": item_type,
+                    "title": title,
+                }),
+                now_iso,
+            ),
+        )
+
+        self._ledger.append_in_transaction(
+            conn, principal,
+            event_type="project.updated",
+            producer="ProjectService",
+            subject_ref=project_ref,
+            source_revision=str(new_revision),
+            facts={
+                "project_id": project_id,
+                "action": "item.created",
+                "item_id": item_id,
+                "item_type": item_type,
+            },
+            refs=[project_ref],
+        )
+
+        envelope = CommandResultEnvelope(
+            result_kind=ResultKind.UPDATED,
+            project_id=project_id,
+            project_revision=new_revision,
+            changed_refs=(parse_ref(project_ref),),
+        )
+        self._record_command(
+            conn, cmd_id, project_id, "create_item",
+            req_hash, envelope,
+        )
+
+        result = _envelope_to_dict(envelope)
         result["item_id"] = item_id
         return result
 

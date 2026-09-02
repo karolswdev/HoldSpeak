@@ -1,0 +1,237 @@
+/* HS-160-06 — Review posture layout.
+   Wide (>=560px container): queue left, detail right.
+   Narrow: stacked, footer verbs visible.
+   Signal tokens only; no raw colors. */
+
+.review-posture {
+  outline: none;
+}
+
+/* ── Wide body: two-column ── */
+.review-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@container surface (min-width: 560px) {
+  .review-body {
+    flex-direction: row;
+    gap: 12px;
+  }
+  .review-queue {
+    flex: 0 0 220px;
+    min-width: 0;
+    overflow-y: auto;
+    max-height: 60vh;
+  }
+  .review-detail {
+    flex: 1;
+    min-width: 0;
+  }
+  /* Hide footer verbs on wide — inline verbs are visible */
+  .review-verbs-footer {
+    display: none;
+  }
+}
+
+@container surface (max-width: 559px) {
+  /* Narrow: queue hidden, one card */
+  .review-queue {
+    display: none;
+  }
+  /* Inline verbs hidden on narrow — footer verbs are visible */
+  .review-verbs-inline {
+    display: none;
+  }
+}
+
+/* ── Kind group ── */
+.review-kind-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 2px;
+}
+
+/* ── Queue group ── */
+.review-queue-group {
+  list-style: none;
+  padding: 0;
+}
+
+/* Queue row text: graceful ellipsis (defect 2) */
+.review-queue-row-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
+
+.review-queue-materiality {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* ── Comparison layout ── */
+.review-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+@container surface (min-width: 560px) {
+  .review-comparison {
+    flex-direction: row;
+    gap: 12px;
+  }
+  .review-comparison-side {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.review-comparison-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: var(--letter-spacing-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 4px;
+}
+
+.review-comparison-value {
+  margin: 0;
+  font-size: var(--desk-surface-body-size, 13px);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ── Field rows ── */
+.review-comparison-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.review-field-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: var(--desk-surface-body-size, 13px);
+}
+
+.review-field-key {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.review-field-value {
+  color: var(--text-muted);
+  word-break: break-word;
+}
+
+.review-field-input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-input, transparent);
+  color: var(--text-primary, inherit);
+}
+
+/* ── Source chip ── */
+.review-source-chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-faint);
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--bg-subtle, transparent);
+  margin: 2px 2px 2px 0;
+}
+
+/* ── Conflict sources ── */
+.review-conflict-sources {
+  padding: 4px 0;
+}
+
+/* ── Verb bar (defect 5: one coherent row, no wrapping) ── */
+.review-verb-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.review-defer-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.review-defer-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-input, transparent);
+  color: var(--text-primary, inherit);
+  width: 120px;
+}
+
+/* ── Undo notice ── */
+.review-undo-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px var(--desk-surface-row-pad-x, 14px);
+  font-size: var(--desk-surface-body-size, 13px);
+  color: var(--text-muted);
+}
+
+/* ── Summary ── */
+.review-summary-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.review-summary-accepted {
+  margin: 4px 0;
+  font-size: var(--desk-surface-body-size, 13px);
+  color: var(--text-muted);
+}
+
+.review-no-delta {
+  padding: 8px 0;
+}
+
+/* ── Position indicator ── */
+.review-position {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+/* ── Verbs inline (wide) ── */
+.review-verbs-inline {
+  padding: 4px 0;
+}

@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 594 (plus static mounts). iOS-consumed: 89. Web-consumed: 450.
+Routes: 606 (plus static mounts). iOS-consumed: 89. Web-consumed: 455.
 
 ## device_audio_ws
 
@@ -765,6 +765,16 @@ Routes: 594 (plus static mounts). iOS-consumed: 89. Web-consumed: 450.
 | PUT | `/api/workflows/{workflow_id}` | web |
 | POST | `/api/workflows/{workflow_id}/run` | ios, web |
 
+## web.routes.project_reviews
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/projects/{project_id}/delta` | web |
+| POST | `/api/projects/{project_id}/reviews` | web |
+| GET | `/api/projects/{project_id}/reviews/{review_id}` | server only |
+| POST | `/api/projects/{project_id}/reviews/{review_id}/accept` | web |
+| POST | `/api/projects/{project_id}/reviews/{review_id}/proposals/{proposal_id}/decide` | web |
+
 ## web.routes.project_setup
 
 | Method | Path | Consumers |
@@ -775,6 +785,7 @@ Routes: 594 (plus static mounts). iOS-consumed: 89. Web-consumed: 450.
 | POST | `/api/project-setups/{session_id}/answers` | server only |
 | POST | `/api/project-setups/{session_id}/finalize` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/clarify` | server only |
+| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/deselect` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/select` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/test` | server only |
@@ -815,6 +826,17 @@ Routes: 594 (plus static mounts). iOS-consumed: 89. Web-consumed: 450.
 | GET | `/api/projects/{project_id}/room` | web |
 | GET | `/api/projects/{project_id}/since-last-meeting` | web |
 | GET | `/api/projects/{project_id}/summary` | server only |
+
+## web.routes.providers
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/providers` | web |
+| GET | `/api/providers/github/connection` | server only |
+| POST | `/api/providers/github/connection/recheck` | server only |
+| GET | `/api/providers/github/discover` | server only |
+| POST | `/api/providers/github/validate-repo` | server only |
+| POST | `/api/watches/{watch_id}/evaluate` | server only |
 
 ## web.routes.repositories
 

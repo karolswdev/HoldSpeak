@@ -3979,6 +3979,14 @@
       "consumers": []
     },
     {
+      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
       "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/deselect",
       "methods": [
         "POST"
@@ -4087,6 +4095,16 @@
       "consumers": []
     },
     {
+      "path": "/api/projects/{project_id}/delta",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.project_reviews",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}/items",
       "methods": [
         "GET"
@@ -4179,6 +4197,44 @@
       "consumers": []
     },
     {
+      "path": "/api/projects/{project_id}/reviews",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_reviews",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/reviews/{review_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.project_reviews",
+      "consumers": []
+    },
+    {
+      "path": "/api/projects/{project_id}/reviews/{review_id}/accept",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_reviews",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/reviews/{review_id}/proposals/{proposal_id}/decide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_reviews",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}/room",
       "methods": [
         "GET"
@@ -4212,6 +4268,48 @@
         "GET"
       ],
       "module": "web.routes.watches",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/providers/github/connection",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/github/connection/recheck",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/github/discover",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/github/validate-repo",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
       "consumers": []
     },
     {
@@ -5183,6 +5281,14 @@
         "POST"
       ],
       "module": "web.routes.watches",
+      "consumers": []
+    },
+    {
+      "path": "/api/watches/{watch_id}/evaluate",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
       "consumers": []
     },
     {

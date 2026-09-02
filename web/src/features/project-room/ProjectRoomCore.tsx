@@ -36,6 +36,9 @@ import type { RoomSnapshot, RoomSection } from "./model";
 import { lifecycleLabel, type ProjectTimelineEntry } from "./model";
 import { promoteDecision } from "./api";
 import { useProjectRoomController } from "./useProjectRoomController";
+import { useReviewController } from "./review/useReviewController";
+import { ReviewPosture } from "./review/ReviewPosture";
+import type { RoomReviewData } from "./model";
 import "./project-room.css";
 
 /* ── sub-components (unchanged from ProjectMemoryCore) ── */
@@ -582,6 +585,19 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   const loading = ctrl.loadStatus === "loading";
   const detailLoading = ctrl.detailStatus === "loading";
 
+  // HS-160-06 — extract the typed review section from the room snapshot.
+  // When the section is ok, it carries pending_count/open_review_id/last_accepted_at.
+  const reviewData: RoomReviewData | null =
+    ctrl.room?.review.state === "ok"
+      ? (ctrl.room.review as RoomReviewData & { state: "ok" })
+      : null;
+
+  const reviewCtrl = useReviewController(
+    ctrl.projectId,
+    reviewData,
+    () => void ctrl.load(),
+  );
+
   // HS-158-05 — push the scoped Project's name into the window head;
   // null keeps the manifest label (loading / unscoped states).
   const runtimeTitle = ctrl.loadStatus === "ready" && ctrl.projectName !== "Project"
@@ -809,9 +825,23 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   );
 
   const verbs = (
-    <Button dense variant="ghost" onClick={() => void ctrl.load()}>
-      Refresh
-    </Button>
+    <>
+      {/* HS-160-06: WEB-NOW-002 — review verb when pending_count > 0 */}
+      {reviewCtrl.primaryVerb ? (
+        <Button
+          dense
+          variant="primary"
+          loading={reviewCtrl.loading}
+          onClick={() => void reviewCtrl.enterReview()}
+          data-testid="review-verb"
+        >
+          {reviewCtrl.primaryVerb}
+        </Button>
+      ) : null}
+      <Button dense variant="ghost" onClick={() => void ctrl.load()}>
+        Refresh
+      </Button>
+    </>
   );
   const readToken = (() => {
     if (!ctrl.readAt) return "";
@@ -819,6 +849,18 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     const pad = (n: number) => String(n).padStart(2, "0");
     return ` · READ ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   })();
+
+  // HS-160-06 — when the review posture is active, it replaces the
+  // entire working field (same window, NO modal — WEB-IA-003).
+  if (reviewCtrl.posture === "active") {
+    return (
+      <>
+        {hero ? hero(verbs) : <SurfaceVerbs />}
+        {ctrl.room ? <OrientationBand room={ctrl.room} /> : null}
+        <ReviewPosture ctrl={reviewCtrl} />
+      </>
+    );
+  }
 
   return (
     <>

@@ -480,6 +480,35 @@ class AutomationRepository(BaseRepository):
             ).fetchall()
         return [self._payload(row, "capability_manifest") for row in rows]
 
+    def update_provider_connection(
+        self,
+        connection_id: str,
+        **fields: Any,
+    ) -> dict[str, Any] | None:
+        """Update mutable columns on an existing provider connection row.
+
+        HS-161-01 additive helper.  Only the columns listed in ``_ALLOWED``
+        are accepted; unknown keys are silently ignored.  ``updated_at`` is
+        always touched.
+        """
+        _ALLOWED = {
+            "state", "capability_manifest_json", "capability_revision",
+            "discovery_state", "last_checked_at", "last_connected_at",
+            "last_error_code", "last_error_detail",
+        }
+        updates = {k: v for k, v in fields.items() if k in _ALLOWED}
+        if not updates:
+            return self.get_provider_connection(connection_id)
+        set_parts = [f"{k}=?" for k in updates]
+        set_parts.append("updated_at=datetime('now')")
+        values: list[Any] = list(updates.values()) + [connection_id]
+        with self._connection() as conn:
+            conn.execute(
+                f"UPDATE watch_provider_connections SET {', '.join(set_parts)} WHERE id=?",
+                values,
+            )
+        return self.get_provider_connection(connection_id)
+
     # ── Watch rules (§9.4) ─────────────────────────────────────────────
 
     def create_rule(
@@ -590,6 +619,60 @@ class AutomationRepository(BaseRepository):
                  started_at, completed_at, error_code, error_detail),
             )
         return self.get_evaluation(evaluation_id) or {}
+
+    def create_evaluation_in_transaction(
+        self,
+        conn: Any,
+        *,
+        evaluation_id: str,
+        watch_id: str,
+        watch_revision: int = 0,
+        provider_capability_revision: int = 0,
+        source_revision: str = "",
+        trigger_kind: str = "",
+        state: str = "",
+        matched_rule_ids_json: str = "[]",
+        observation_ids_json: str = "[]",
+        started_at: str | None = None,
+        completed_at: str | None = None,
+        error_code: str | None = None,
+        error_detail: str | None = None,
+    ) -> None:
+        """Insert a watch_evaluations row on a caller-owned connection.
+
+        HS-161-03: the caller is responsible for transaction boundaries;
+        this method never opens or commits its own connection.
+        """
+        conn.execute(
+            """INSERT INTO watch_evaluations
+               (id, watch_id, watch_revision, provider_capability_revision,
+                source_revision, trigger_kind, state, matched_rule_ids_json,
+                observation_ids_json, started_at, completed_at,
+                error_code, error_detail)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (evaluation_id, watch_id, watch_revision,
+             provider_capability_revision, source_revision, trigger_kind,
+             state, matched_rule_ids_json, observation_ids_json,
+             started_at, completed_at, error_code, error_detail),
+        )
+
+    def find_evaluation_by_source(
+        self,
+        watch_id: str,
+        watch_revision: int,
+        source_revision: str,
+    ) -> dict[str, Any] | None:
+        """Find an existing evaluation by the UNIQUE key.
+
+        HS-161-03: idempotency check before creating a new evaluation.
+        """
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM watch_evaluations "
+                "WHERE watch_id=? AND watch_revision=? AND source_revision=?",
+                (watch_id, watch_revision, source_revision),
+            ).fetchone()
+        return self._payload(row, "matched_rule_ids", "observation_ids") if row else None
 
     def get_evaluation(self, evaluation_id: str) -> dict[str, Any] | None:
         with self._connection() as conn:
