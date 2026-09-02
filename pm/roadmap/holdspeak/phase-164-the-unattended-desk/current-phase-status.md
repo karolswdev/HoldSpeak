@@ -1,7 +1,7 @@
 # Phase 164 - Project Rooms: The Unattended Desk (P5)
 
 - **Project:** holdspeak
-- **Status:** in-progress
+- **Status:** COMPLETE 7/7
 - **Chartered:** 2026-09-02 off main `69e16678` (163 The Steward's Hand MERGED via PR #529 — the EIGHTH Project Rooms phase merged: #521 #522 #523 #524 #525 #527 #529)
 - **Canon:** docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §14 P5 slice, §9.1-9.3 (run_due as an isolated conductor block; Watch-triggered run_once at the observation watermark, same-watermark requests dedupe to ONE run), §10 (steward event kinds; Cadence MAY project review_due/source_degraded/steward_intervention_required and MUST NOT become the schedule of record); CONSTITUTION.md; the owner's bounded-delegation ruling (enabling a schedule approves its exact work until disabled)
 
@@ -45,25 +45,21 @@ admitted 160/162 verbs).
 | HS-164-04 | The conductor (two failure boundaries; §10 events; Cadence attention) | done | [story-04-the-conductor](./story-04-the-conductor.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-164-05 | The face (the unattended posture: opt-in, cadence, circuit, interventions — OWNER VERDICT) | done | [story-05-the-face](./story-05-the-face.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-164-06 | The walk (Gate A on glass: two useful unattended runs, zero prompts, zero duplicates) | done | [story-06-the-walk](./story-06-the-walk.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-164-07 | The close (gates, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
+| HS-164-07 | The close (gates, debts, final summary) | done | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-6/7. THE OWNER'S VERDICT, verbatim: round 1 "Bounce" (scroll wells
-must announce themselves + his model-wiring question — both recorded
-verbatim in the story file), round 2 "PASS". Both findings paid: the
-Door scroll-hint species ported vertical (rest-visible edge fades on
-every scrolling steward well); the MODEL chip removed from Created
-proposals (the Delta's augmentation is an identity no-op — the badge
-over-claimed egress) and the honest chip on Drafted update names its
-wiring (project.update_draft in Settings > Models, deterministic
-fallback with a receipt on model failure). His question answered
-plainly on the gallery itself. HS-164-05 the face DONE: web gates
-2275 passed zero branch-new. Earlier: 5/7 walk (Gate A counted),
-4/7 conductor, 3/7 run_due, 2/7 evaluate_due, 1/7 due ledger. NEXT:
-HS-164-07 the close — the 27-name main baseline REMAINS VALID for
-69e16678 (163's close fixed only branch-new breaks; nothing left
-main's failing set) — full suite, sweep, counsel, PR, merge.
+**COMPLETE 7/7.** Gate A met and counted: two unattended runs, zero
+duplicate effects, zero prompts. The owner's verdict on the face:
+round 1 "Bounce" (scroll affordance + the model question — both paid,
+both recorded verbatim), round 2 "PASS". Counsel RATIFY-W-C: M-1 +
+four S paid in-round (manual circuit-close, loop healing, mount-once
+hook, honest comments, the chip note); five N ledgered. Close gates:
+full suite 13 failed / 8780 passed / 61 skipped in 25:22 -> sweep 9
+baseline + 3 proven flakes (hs141/hs143/hs151, x2 green, untouched)
++ 1 real fixed in-round (api-surface consumers regen). Zero
+unexplained. Web 2275 zero branch-new. See final-summary.md. NEXT
+PHASE: P6 the MCP Project family.
 
 ## Active risks
 

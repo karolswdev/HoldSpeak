@@ -4328,7 +4328,9 @@
         "GET"
       ],
       "module": "web.routes.watches",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/providers",

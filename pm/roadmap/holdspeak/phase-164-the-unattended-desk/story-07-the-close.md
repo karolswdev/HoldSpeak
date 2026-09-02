@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 164
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-164-01..06
 - **Unblocks:** Phase P6 (the MCP Project family)
 - **Owner:** unassigned
