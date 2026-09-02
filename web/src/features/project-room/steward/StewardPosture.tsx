@@ -1,10 +1,11 @@
-// HS-163-05 -- the Steward posture: run, watch, stop, receipts, policy.
+// HS-163-05 / HS-164-05 -- the Steward posture: run, watch, stop,
+// receipts, policy, unattended controls, provenance, circuit state.
 // Architecture mirrors UpdatePosture (162): a verb in the Room chrome,
 // MOUNTED path proven, surface barrel imports only.
 // Laws: no raw IDs on glass; no modals; MicButton on text inputs;
 // EgressChip on model-touching effect kinds; no em/en dashes; no prose.
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
   EgressChip,
@@ -22,12 +23,18 @@ import type { StewardController } from "./useStewardController";
 import type { StewardRun, StewardStep } from "./model";
 import {
   EFFECT_KINDS,
+  assembleGrantText,
+  circuitStateLabel,
+  circuitStateTone,
+  computeVerticalScrollHint,
   coverageSummary,
   effectKindLabel,
   isActive,
   isModelTouchingKind,
   phaseLabel,
   pluralize,
+  provenanceLabel,
+  provenanceTone,
   receiptRefs,
   runRowSubstance,
   runStateLabel,
@@ -138,6 +145,13 @@ function RunDetail({
         <span className="surface-token" data-tone={tone} data-testid="steward-run-state">
           {runStateLabel(run.state)}
         </span>
+        <span
+          className="surface-token"
+          data-tone={provenanceTone(run)}
+          data-testid="steward-run-provenance"
+        >
+          {provenanceLabel(run)}
+        </span>
         {run.phase ? (
           <span className="steward-phase-label" data-testid="steward-phase-label">
             {phaseLabel(run.phase)}
@@ -222,6 +236,13 @@ function RunList({ ctrl }: { ctrl: StewardController }) {
                       <span className="surface-token" data-tone={tone}>
                         {runStateLabel(run.state)}
                       </span>
+                      <span
+                        className="surface-token steward-provenance-chip"
+                        data-tone={provenanceTone(run)}
+                        data-testid="steward-run-provenance"
+                      >
+                        {provenanceLabel(run)}
+                      </span>
                       <span className="steward-list-time">
                         {humanTime(run.createdAt)}
                       </span>
@@ -250,8 +271,65 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
   const draft = ctrl.policyDraft;
   if (!draft) return null;
 
+  // HS-164-05: assemble grant text from draft + watches for live preview
+  const grantPolicy = ctrl.policy
+    ? {
+        ...ctrl.policy,
+        unattendedEnabled: draft.unattended_enabled,
+        eligibleEffectKinds: draft.eligible_effect_kinds,
+        maxActionsPerRun: draft.max_actions_per_run,
+      }
+    : null;
+  const grantText = grantPolicy
+    ? assembleGrantText(grantPolicy, ctrl.watches)
+    : null;
+
+  // HS-164-05: watches with non-closed circuits
+  const circuitWatches = ctrl.watches.filter(
+    (w) => w.circuitState !== "closed",
+  );
+
   return (
     <div className="steward-policy" data-testid="steward-policy">
+      {/* HS-164-05: Source circuits render FIRST when any circuit is
+          not closed. A broken source outranks configuration. */}
+      {/* HS-164-05: Circuit state section (watches with non-closed circuits) */}
+      {circuitWatches.length > 0 ? (
+        <SurfaceSection label="Source circuits">
+          <SurfaceLedger count={`CIRCUITS ${circuitWatches.length}`}>
+            <ul className="surface-ledger-rows">
+              {circuitWatches.map((w) => (
+                <SurfaceLedgerRow
+                  key={w.id}
+                  data-testid="steward-circuit-row"
+                  expands={false}
+                  time={w.circuitOpenedAt ? humanTime(w.circuitOpenedAt) : ""}
+                  primary={
+                    <span className="steward-circuit-row-content">
+                      <span
+                        className="surface-token"
+                        data-tone={circuitStateTone(w.circuitState)}
+                        data-testid="steward-circuit-state"
+                      >
+                        {circuitStateLabel(w.circuitState)}
+                      </span>
+                      <span className="steward-circuit-name" title={w.name || w.connectorId}>
+                        {w.name || w.connectorId}
+                      </span>
+                      {w.circuitFailureStreak > 0 ? (
+                        <span className="steward-circuit-streak" data-testid="steward-circuit-streak">
+                          {pluralize(w.circuitFailureStreak, "failure")}
+                        </span>
+                      ) : null}
+                    </span>
+                  }
+                />
+              ))}
+            </ul>
+          </SurfaceLedger>
+        </SurfaceSection>
+      ) : null}
+
       <SurfaceSection label="Steward policy">
         {/* Enabled toggle */}
         <div className="steward-policy-toggle-row" data-testid="steward-policy-enabled-row">
@@ -259,9 +337,30 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
             label="Steward enabled"
             checked={draft.enabled}
             onChange={(v) => ctrl.updatePolicyDraft("enabled", v)}
-            data-testid="steward-policy-enabled"
           />
           <span className="steward-policy-toggle-label">Steward enabled</span>
+        </div>
+
+        {/* HS-164-05: Unattended operation toggle with assembled grant text */}
+        <div className="steward-unattended-section" data-testid="steward-unattended-section">
+          <div className="steward-policy-toggle-row" data-testid="steward-unattended-row">
+            <SurfaceToggle
+              label="Unattended operation"
+              checked={draft.unattended_enabled}
+              onChange={(v) => ctrl.updatePolicyDraft("unattended_enabled", v)}
+            />
+            <span className="steward-policy-toggle-label">Unattended operation</span>
+          </div>
+          {grantText ? (
+            <p
+              className="steward-grant-text"
+              data-testid="steward-grant-text"
+              role="status"
+              aria-live="polite"
+            >
+              {grantText}
+            </p>
+          ) : null}
         </div>
 
         {/* Eligible effect kinds */}
@@ -282,7 +381,7 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
                 <EgressChip
                   label="model"
                   scope="mixed"
-                  title="This effect may send project data to the configured inference provider."
+                  title="Drafting uses the model assigned to project.update_draft in Settings > Models; if the model fails, drafting falls back to the deterministic composer with a receipt."
                 />
               ) : null}
             </div>
@@ -363,12 +462,57 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
   );
 }
 
+/* ── Vertical scroll-hint: the DoorBoardLane species on the Y axis ── */
+
+/**
+ * Attach a vertical scroll-hint edge fade to the posture root.
+ * The scroll parent is `.desk-surface-body` (the window body that owns
+ * overflow:auto). Pattern reuses DoorBoardLane (HS-145-01): ref on the
+ * child, parentElement for the scroll container, data attribute on the
+ * ref element, CSS pseudo-elements for the gradient.
+ * Constraint: no querySelector/document listeners -- refs only.
+ */
+function useVerticalScrollHint(ref: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // The scroll container is the parent (.desk-surface-body).
+    const scrollParent = el.parentElement;
+    if (!scrollParent) return;
+
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const hint = computeVerticalScrollHint(
+        scrollParent.scrollTop,
+        scrollParent.scrollHeight,
+        scrollParent.clientHeight,
+      );
+      if (el.dataset.scrollHint !== hint) el.dataset.scrollHint = hint;
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    scrollParent.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      scrollParent.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+    // Counsel S-1: mount-once -- the ref identity is stable.
+  }, []);
+}
+
 /* ── Main Steward posture ── */
 
 export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
   const onOpenRef = useCallback((ref: string) => {
     openSourceRef(ref);
   }, []);
+  const postureRef = useRef<HTMLDivElement>(null);
+  useVerticalScrollHint(postureRef);
 
   // ── Loading / error ──
   if (ctrl.loading && ctrl.posture === "off") {
@@ -378,7 +522,7 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
   // ── List view ──
   if (ctrl.posture === "list") {
     return (
-      <div className="steward-posture" data-testid="steward-posture" data-phase="list">
+      <div ref={postureRef} className="steward-posture" data-testid="steward-posture" data-phase="list">
         <SurfaceVerbs>
           <Button dense variant="ghost" onClick={ctrl.exitSteward}>
             Close
@@ -437,7 +581,7 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
   // ── Detail view (single run) ──
   if (ctrl.posture === "detail") {
     return (
-      <div className="steward-posture" data-testid="steward-posture" data-phase="detail">
+      <div ref={postureRef} className="steward-posture" data-testid="steward-posture" data-phase="detail">
         {ctrl.error ? <SurfaceState error={ctrl.error} /> : null}
         <RunDetail ctrl={ctrl} onOpenRef={onOpenRef} />
         <SurfaceFooter
@@ -456,7 +600,7 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
   // ── Policy view ──
   if (ctrl.posture === "policy") {
     return (
-      <div className="steward-posture" data-testid="steward-posture" data-phase="policy">
+      <div ref={postureRef} className="steward-posture" data-testid="steward-posture" data-phase="policy">
         <PolicyEditor ctrl={ctrl} />
         <SurfaceFooter
           receipt={

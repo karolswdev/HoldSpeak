@@ -4,7 +4,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { readableError } from "../../../lib/api";
-import type { StewardRun, StewardStep, StewardPolicy } from "./model";
+import type { StewardRun, StewardStep, StewardPolicy, StewardWatch } from "./model";
 import { isTerminal, isActive } from "./model";
 import * as stewardApi from "./api";
 
@@ -36,8 +36,12 @@ export function useStewardController(
     max_actions_per_run: number;
     cooldown_seconds: number;
     enabled: boolean;
+    unattended_enabled: boolean;
   } | null>(null);
   const [policyError, setPolicyError] = useState("");
+
+  // ── HS-164-05: project watches (for grant text + circuit) ──
+  const [watches, setWatches] = useState<StewardWatch[]>([]);
 
   // ── Verb busy states ──
   const [runBusy, setRunBusy] = useState(false);
@@ -247,8 +251,12 @@ export function useStewardController(
     setLoading(true);
     setPolicyError("");
     try {
-      const p = await stewardApi.getPolicy(projectId);
+      const [p, w] = await Promise.all([
+        stewardApi.getPolicy(projectId),
+        stewardApi.listProjectWatches(projectId),
+      ]);
       setPolicy(p);
+      setWatches(w);
       if (p) {
         setPolicyDraft({
           eligible_effect_kinds: [...p.eligibleEffectKinds],
@@ -256,6 +264,7 @@ export function useStewardController(
           max_actions_per_run: p.maxActionsPerRun,
           cooldown_seconds: p.cooldownSeconds,
           enabled: p.enabled,
+          unattended_enabled: p.unattendedEnabled,
         });
       } else {
         setPolicyDraft({
@@ -264,6 +273,7 @@ export function useStewardController(
           max_actions_per_run: 10,
           cooldown_seconds: 0,
           enabled: true,
+          unattended_enabled: false,
         });
       }
       setPosture("policy");
@@ -292,6 +302,7 @@ export function useStewardController(
         max_actions_per_run: result.policy.maxActionsPerRun,
         cooldown_seconds: result.policy.cooldownSeconds,
         enabled: result.policy.enabled,
+        unattended_enabled: result.policy.unattendedEnabled,
       });
     } catch (reason) {
       setPolicyError(readableError(reason));
@@ -369,6 +380,9 @@ export function useStewardController(
     savePolicy,
     updatePolicyDraft,
     toggleEffectKind,
+
+    // HS-164-05: watches (for grant text + circuit rendering)
+    watches,
   } as const;
 }
 

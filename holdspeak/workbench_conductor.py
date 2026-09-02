@@ -24,6 +24,28 @@ _conductor: Optional[WorkbenchConductor] = None
 _broadcast: Optional[Any] = None
 
 
+class _SchedulerNotWired(Exception):
+    """Internal: a scheduler block skipped because no service is wired."""
+
+
+_watch_service: Optional[Any] = None
+_steward_service: Optional[Any] = None
+
+
+def set_scheduler_services(watch_service: Any, steward_service: Any) -> None:
+    """Inject the app-wired scheduler services (HS-164-04).
+
+    The conductor must run the SAME fully-wired instances the app
+    serves: a bare WatchService(db) has no snapshot fetcher and a bare
+    ProjectStewardService has no collector/delta/effect services --
+    scheduled work would fail in production while fake-injected unit
+    tests stay green (the DoorService-db scar's sibling).
+    """
+    global _watch_service, _steward_service
+    _watch_service = watch_service
+    _steward_service = steward_service
+
+
 def set_broadcast(fn: Any) -> None:
     """Wire the broadcast callback from the hub's WebSocket manager."""
     global _broadcast
@@ -562,6 +584,57 @@ class WorkbenchConductor:
                     log.info("Resourceful conductor: %s", outcome)
         except Exception as exc:
             log.error("Resourceful conductor tick failed: %s", exc, exc_info=True)
+
+        # HS-164-04: Watch scheduler -- evaluate graduated watches that are
+        # due.  Independent failure boundary: a broken evaluate_due must never
+        # stop run_due or the other conductor duties.
+        try:
+            from .principals import Principal, PrincipalKind
+
+            if _watch_service is None:
+                log.debug("Watch scheduler: no wired service; skipping")
+                raise _SchedulerNotWired()
+            owner = Principal(PrincipalKind.OWNER, "local-watch-conductor")
+            eval_outcomes = _watch_service.evaluate_due(owner)
+            for outcome in eval_outcomes:
+                if outcome.get("outcome") in {"failed", "skipped_circuit_open"}:
+                    log.warning("Watch scheduler: %s", outcome)
+                elif outcome.get("outcome") in {"evaluated", "refreshed"}:
+                    log.info("Watch scheduler: %s", outcome)
+        except _SchedulerNotWired:
+            pass
+        except Exception as exc:
+            log.error("Watch scheduler tick failed: %s", exc, exc_info=True)
+
+        # HS-164-04: Steward scheduler -- drain pending steward run_once
+        # effects.  SEPARATE failure boundary from Watch scheduler above.
+        try:
+            from .principals import Principal, PrincipalKind
+
+            if _steward_service is None:
+                log.debug("Steward scheduler: no wired service; skipping")
+                raise _SchedulerNotWired()
+            owner = Principal(PrincipalKind.OWNER, "local-steward-conductor")
+            steward_svc = _steward_service
+            run_outcomes = steward_svc.run_due(owner)
+            for outcome in run_outcomes:
+                if outcome.get("outcome") in {"failed", "error"}:
+                    log.warning("Steward scheduler: %s", outcome)
+                elif outcome.get("outcome") == "run_started":
+                    log.info("Steward scheduler: %s", outcome)
+
+            # HS-164-04: Cadence projections (attention only, never schedule).
+            try:
+                projections = steward_svc.project_cadence_projections(owner)
+                for proj in projections:
+                    if proj.get("error"):
+                        log.warning("Steward projection: %s", proj)
+            except Exception as proj_exc:
+                log.warning("Steward projection failed: %s", proj_exc)
+        except _SchedulerNotWired:
+            pass
+        except Exception as exc:
+            log.error("Steward scheduler tick failed: %s", exc, exc_info=True)
 
 
 def start_conductor() -> WorkbenchConductor:

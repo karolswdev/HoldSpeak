@@ -5,6 +5,42 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  /* Scroll-hint edge fade anchor (species: DoorBoardLane HS-145-01). */
+  position: relative;
+}
+
+/* ── Vertical scroll-hint: DoorBoardLane species on the Y axis ── */
+/* The scroll parent (.desk-surface-body) owns overflow:auto; the
+   posture root carries the data-scroll-hint attribute and the
+   pseudo-element fades.  Pattern: same mechanics as the horizontal
+   door-board-hint-wrap, same gradient from surface-1 -> transparent. */
+.steward-posture::before,
+.steward-posture::after {
+  content: "";
+  position: sticky;
+  left: 0;
+  right: 0;
+  height: 28px;
+  display: none;
+  pointer-events: none;
+  z-index: var(--desk-z-local, 1);
+  flex-shrink: 0;
+}
+.steward-posture::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--surface-1, var(--bg-primary)), transparent);
+  margin-bottom: -28px;
+}
+.steward-posture::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--surface-1, var(--bg-primary)), transparent);
+  margin-top: -28px;
+}
+.steward-posture[data-scroll-hint="bottom"]::after,
+.steward-posture[data-scroll-hint="both"]::before,
+.steward-posture[data-scroll-hint="both"]::after,
+.steward-posture[data-scroll-hint="top"]::before {
+  display: block;
 }
 
 /* ── Run detail: phase progression + step rows ── */
@@ -181,10 +217,76 @@
   flex-shrink: 0;
 }
 
+/* ── HS-164-05: Unattended section ── */
+
+.steward-unattended-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.steward-grant-text {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  padding: 0 var(--space-1);
+}
+
+/* ── HS-164-05: Provenance chip in run list ── */
+
+.steward-provenance-chip {
+  font-size: var(--text-xs);
+  flex-shrink: 0;
+}
+
+/* ── HS-164-05: Circuit state rows ── */
+
+.steward-circuit-row-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  width: 100%;
+}
+
+.steward-circuit-name {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.steward-circuit-streak {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.steward-circuit-since {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 /* ── Consequential stop styling ── */
 
 .steward-stop-action {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+}
+
+/* HS-164-06 shot round: the state token holds ONE line inside the
+   circuit row -- a wrapped token clips the row's siblings (the 162
+   house-ledger nowrap scar). */
+.steward-circuit-row-content .surface-token {
+  white-space: nowrap;
+  flex-shrink: 0;
 }

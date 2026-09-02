@@ -81,8 +81,22 @@ export type StewardPolicy = {
   cooldownSeconds: number;
   bounds: Record<string, unknown>;
   enabled: boolean;
+  unattendedEnabled: boolean;
   createdAt: string | null;
   updatedAt: string | null;
+};
+
+/* ── Watch wire shape (subset for steward posture) ── */
+
+export type StewardWatch = {
+  id: string;
+  name: string;
+  connectorId: string;
+  state: string;
+  evaluationCadenceMinutes: number;
+  circuitState: string;
+  circuitFailureStreak: number;
+  circuitOpenedAt: string | null;
 };
 
 /* ── Decoders ── */
@@ -181,8 +195,24 @@ export function decodePolicy(raw: Record<string, unknown>): StewardPolicy {
       ? raw.bounds
       : {}) as Record<string, unknown>,
     enabled: Boolean(raw.enabled),
+    unattendedEnabled: Boolean(raw.unattended_enabled),
     createdAt: raw.created_at != null ? String(raw.created_at) : null,
     updatedAt: raw.updated_at != null ? String(raw.updated_at) : null,
+  };
+}
+
+export function decodeWatch(raw: Record<string, unknown>): StewardWatch {
+  return {
+    id: String(raw.id ?? ""),
+    name: String(raw.name ?? ""),
+    connectorId: String(raw.connector_id ?? ""),
+    state: String(raw.state ?? ""),
+    evaluationCadenceMinutes: Number(raw.evaluation_cadence_minutes ?? 60),
+    circuitState: String(raw.circuit_state ?? "closed"),
+    circuitFailureStreak: Number(raw.circuit_failure_streak ?? 0),
+    circuitOpenedAt: raw.circuit_opened_at != null
+      ? String(raw.circuit_opened_at)
+      : null,
   };
 }
 
@@ -206,9 +236,33 @@ export function effectKindLabel(kind: string): string {
   return EFFECT_KIND_LABELS[kind] ?? kind.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
 
-/** Whether this effect kind touches a model (needs egress badge). */
+/** Whether this effect kind touches a model (needs egress badge).
+ *  create_proposals is an identity no-op (DEL-007, step 11); only
+ *  draft_update actually calls the model today. */
 export function isModelTouchingKind(kind: string): boolean {
-  return kind === "create_proposals" || kind === "draft_update";
+  return kind === "draft_update";
+}
+
+/* ── Vertical scroll hint (the DoorBoardLane species, vertical axis) ── */
+
+/** The four vertical-overflow states for the scroll-hint edge fade. */
+export type VerticalScrollHint = "none" | "bottom" | "top" | "both";
+
+/** Pure function: derive a vertical scroll-hint from viewport geometry.
+ *  Mirrors DoorBoardLane.computeScrollHint (HS-145-01) on the Y axis. */
+export function computeVerticalScrollHint(
+  scrollTop: number,
+  scrollHeight: number,
+  clientHeight: number,
+): VerticalScrollHint {
+  if (scrollHeight <= clientHeight) return "none";
+  const atTop = scrollTop <= 0;
+  // 20px tolerance mirrors the horizontal species (scrollbar-gutter stable).
+  const atBottom = scrollTop + clientHeight >= scrollHeight - 20;
+  if (atTop && atBottom) return "none";
+  if (atTop) return "bottom";
+  if (atBottom) return "top";
+  return "both";
 }
 
 /* ── Human labels: phases ── */
@@ -386,4 +440,91 @@ export function coverageSummary(run: StewardRun): string | null {
   const ok = sources.filter((s) => s.state === "ok").length;
   if (ok === sources.length) return null;
   return `${ok} of ${sources.length} source${sources.length === 1 ? "" : "s"} answered`;
+}
+
+/* ── HS-164-05: provenance -- unattended vs manual ── */
+
+/** The conductor's exact principal identity (from workbench_conductor.py:617). */
+const CONDUCTOR_IDENTITY = "local-steward-conductor";
+
+/** Whether a run was started by the unattended conductor (not a human click). */
+export function isUnattendedRun(run: StewardRun): boolean {
+  return run.requestedBy === `principal:${CONDUCTOR_IDENTITY}`;
+}
+
+/** Human provenance label: "Scheduled" for conductor runs, "Manual" for human. */
+export function provenanceLabel(run: StewardRun): string {
+  return isUnattendedRun(run) ? "Scheduled" : "Manual";
+}
+
+/** Tone for the provenance chip. */
+export function provenanceTone(run: StewardRun): string | undefined {
+  return isUnattendedRun(run) ? "info" : undefined;
+}
+
+/* ── HS-164-05: grant text assembly ── */
+
+/** The eligible effect kinds as a human list (for the grant sentence).
+ *  Uses the ACTIVE-VOICE labels that say what the steward MAY DO. */
+const EFFECT_GRANT_LABELS: Record<string, string> = {
+  refresh_sources: "refresh sources",
+  create_proposals: "create proposals",
+  apply_proposal_effects: "apply proposal effects",
+  draft_update: "draft updates",
+  create_door_item: "create door items",
+};
+
+function effectGrantLabel(kind: string): string {
+  return EFFECT_GRANT_LABELS[kind] ?? kind.replace(/_/g, " ");
+}
+
+/** Assemble the grant text from real policy + watch state.
+ *  The approval IS the label. Never a static sentence. */
+export function assembleGrantText(
+  policy: StewardPolicy,
+  watches: StewardWatch[],
+): string {
+  if (!policy.unattendedEnabled) return "Unattended operation is off.";
+
+  const parts: string[] = [];
+
+  // Cadence: pick the smallest cadence from active watches, or default
+  // The wire's evaluable states are "active" and "tested" (the
+  // graduated family) -- "graduated" is prose, never a state value.
+  const activeWatches = watches.filter((w) => w.state === "active" || w.state === "tested");
+  const cadences = activeWatches.map((w) => w.evaluationCadenceMinutes).filter((c) => c > 0);
+  const cadence = cadences.length > 0 ? Math.min(...cadences) : 60;
+  parts.push(`every ${pluralize(cadence, "minute")}`);
+
+  // Effects
+  const eligibleLabels = policy.eligibleEffectKinds.map(effectGrantLabel);
+  if (eligibleLabels.length > 0) {
+    parts.push(`the steward may ${eligibleLabels.join(", ")}`);
+  } else {
+    parts.push("no effects are eligible");
+  }
+
+  // Bounds
+  parts.push(`at most ${policy.maxActionsPerRun} actions per run`);
+
+  return `While enabled: ${parts.join(", ")}.`;
+}
+
+/* ── HS-164-05: circuit state labels ── */
+
+const CIRCUIT_STATE_LABELS: Record<string, string> = {
+  closed: "Healthy",
+  open: "Circuit open",
+  half_open: "Probing",
+};
+
+export function circuitStateLabel(state: string): string {
+  return CIRCUIT_STATE_LABELS[state] ?? state.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
+}
+
+export function circuitStateTone(state: string): string | undefined {
+  if (state === "closed") return "ok";
+  if (state === "open") return "danger";
+  if (state === "half_open") return "warn";
+  return undefined;
 }

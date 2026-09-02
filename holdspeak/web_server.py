@@ -1128,8 +1128,16 @@ class MeetingWebServer:
             except Exception as e:
                 log.error(f"steward startup recovery failed: {e}")
             try:
-                from .workbench_conductor import start_conductor, set_broadcast
+                from .workbench_conductor import (
+                    start_conductor,
+                    set_broadcast,
+                    set_scheduler_services,
+                )
                 set_broadcast(lambda t, d: self.broadcast(t, d))
+                set_scheduler_services(
+                    web_ctx.watch_service,
+                    web_ctx.project_steward_service,
+                )
                 start_conductor()
             except Exception as e:
                 log.error(f"workbench conductor startup failed: {e}")

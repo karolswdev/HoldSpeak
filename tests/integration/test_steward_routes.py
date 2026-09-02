@@ -448,6 +448,70 @@ class TestPolicyRoundTrip:
         assert resp.status_code == 400
         assert "boolean" in resp.json()["message"]
 
+    # HS-164-04: unattended_enabled on policy PUT
+    def test_unattended_enabled_round_trip(self, rig) -> None:
+        """Create a policy with unattended_enabled, verify it persists."""
+        db, client, _ = rig
+        pid = _seed_project(db, project_id="proj-pol-ua-01")
+
+        resp = client.put(
+            f"/api/projects/{pid}/steward/policy",
+            json={"enabled": True, "unattended_enabled": True},
+        )
+        assert resp.status_code == 200, resp.text
+        policy = resp.json()["policy"]
+        assert policy["unattended_enabled"] is True
+
+        # GET round-trip
+        resp = client.get(f"/api/projects/{pid}/steward/policy")
+        assert resp.status_code == 200
+        assert resp.json()["policy"]["unattended_enabled"] is True
+
+    def test_unattended_enabled_defaults_false(self, rig) -> None:
+        """When not provided, unattended_enabled defaults to False."""
+        db, client, _ = rig
+        pid = _seed_project(db, project_id="proj-pol-ua-02")
+
+        resp = client.put(
+            f"/api/projects/{pid}/steward/policy",
+            json={"enabled": True},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["policy"]["unattended_enabled"] is False
+
+    def test_unattended_enabled_must_be_bool(self, rig) -> None:
+        """Non-boolean unattended_enabled is rejected."""
+        db, client, _ = rig
+        pid = _seed_project(db, project_id="proj-pol-ua-03")
+
+        resp = client.put(
+            f"/api/projects/{pid}/steward/policy",
+            json={"unattended_enabled": "yes"},
+        )
+        assert resp.status_code == 400
+        assert "boolean" in resp.json()["message"]
+
+    def test_unattended_enabled_update(self, rig) -> None:
+        """Updating unattended_enabled on existing policy."""
+        db, client, _ = rig
+        pid = _seed_project(db, project_id="proj-pol-ua-04")
+
+        # Create with False
+        resp = client.put(
+            f"/api/projects/{pid}/steward/policy",
+            json={"enabled": True, "unattended_enabled": False},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["policy"]["unattended_enabled"] is False
+
+        # Update to True
+        resp = client.put(
+            f"/api/projects/{pid}/steward/policy",
+            json={"unattended_enabled": True},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["policy"]["unattended_enabled"] is True
+
 
 # ── STW-002 ON THE WIRE ─────────────────────────────────────────────
 

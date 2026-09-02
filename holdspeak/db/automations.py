@@ -266,6 +266,7 @@ class AutomationRepository(BaseRepository):
         last_test_at: str | None = None,
         next_evaluation_at: str | None = None,
         last_evaluated_at: str | None = None,
+        evaluation_cadence_minutes: int | None = None,
     ) -> bool:
         """Update graduation columns on a connector_watches row (named-column)."""
         sets: list[str] = []
@@ -287,6 +288,7 @@ class AutomationRepository(BaseRepository):
             ("last_test_at", last_test_at),
             ("next_evaluation_at", next_evaluation_at),
             ("last_evaluated_at", last_evaluated_at),
+            ("evaluation_cadence_minutes", evaluation_cadence_minutes),
         ):
             if val is not None:
                 sets.append(f"{col}=?")
@@ -301,6 +303,100 @@ class AutomationRepository(BaseRepository):
                 params,
             )
         return bool(cur.rowcount)
+
+    # ── Circuit state (HS-164-01) ──────────────────────────────────────
+
+    def update_watch_circuit(
+        self,
+        watch_id: str,
+        *,
+        circuit_state: str,
+        circuit_failure_streak: int,
+        circuit_opened_at: str | None = None,
+    ) -> bool:
+        """Update durable circuit-breaker state on a connector_watches row."""
+        with self._connection() as conn:
+            return self._update_watch_circuit(
+                conn, watch_id,
+                circuit_state=circuit_state,
+                circuit_failure_streak=circuit_failure_streak,
+                circuit_opened_at=circuit_opened_at,
+            )
+
+    def update_watch_circuit_in_transaction(
+        self,
+        conn: Any,
+        watch_id: str,
+        *,
+        circuit_state: str,
+        circuit_failure_streak: int,
+        circuit_opened_at: str | None = None,
+    ) -> bool:
+        return self._update_watch_circuit(
+            conn, watch_id,
+            circuit_state=circuit_state,
+            circuit_failure_streak=circuit_failure_streak,
+            circuit_opened_at=circuit_opened_at,
+        )
+
+    @staticmethod
+    def _update_watch_circuit(
+        conn: Any,
+        watch_id: str,
+        *,
+        circuit_state: str,
+        circuit_failure_streak: int,
+        circuit_opened_at: str | None,
+    ) -> bool:
+        cur = conn.execute(
+            "UPDATE connector_watches "
+            "SET circuit_state = ?, circuit_failure_streak = ?, "
+            "    circuit_opened_at = ?, updated_at = datetime('now') "
+            "WHERE id = ?",
+            (circuit_state, int(circuit_failure_streak), circuit_opened_at, watch_id),
+        )
+        return bool(cur.rowcount)
+
+    def get_watch_circuit(self, watch_id: str) -> dict[str, Any] | None:
+        """Read the durable circuit state for a watch."""
+        with self._connection() as conn:
+            return self._get_watch_circuit(conn, watch_id)
+
+    def get_watch_circuit_in_transaction(
+        self, conn: Any, watch_id: str
+    ) -> dict[str, Any] | None:
+        return self._get_watch_circuit(conn, watch_id)
+
+    @staticmethod
+    def _get_watch_circuit(conn: Any, watch_id: str) -> dict[str, Any] | None:
+        row = conn.execute(
+            "SELECT id, circuit_state, circuit_failure_streak, circuit_opened_at "
+            "FROM connector_watches WHERE id = ?",
+            (watch_id,),
+        ).fetchone()
+        return dict(row) if row else None
+
+    # ── Due-watch query (HS-164-02) ──────────────────────────────────────
+
+    def list_due_watches(self, now_iso: str) -> list[dict[str, Any]]:
+        """Select graduated watches due for scheduled evaluation.
+
+        Boundary: only graduated watches (state IN ('active','tested'))
+        with a set next_evaluation_at that has passed.  Legacy watches
+        (state='') are owned by ReactionService.refresh_due_watches --
+        never two schedulers on one row.
+        """
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT * FROM connector_watches
+                   WHERE enabled = 1
+                     AND state IN ('active', 'tested')
+                     AND next_evaluation_at IS NOT NULL
+                     AND next_evaluation_at <= ?
+                   ORDER BY next_evaluation_at ASC""",
+                (now_iso,),
+            ).fetchall()
+        return [self._payload(row, "query", "snapshot") for row in rows]
 
     # ── Setup sessions (§9.1) ──────────────────────────────────────────
 
@@ -742,6 +838,124 @@ class AutomationRepository(BaseRepository):
                 (evaluation_id,),
             ).fetchall()
         return [dict(row) for row in rows]
+
+    def get_effect_by_idempotency_key(
+        self, idempotency_key: str,
+    ) -> dict[str, Any] | None:
+        """Lookup by idempotency_key (the UNIQUE index)."""
+        with self._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM watch_effects WHERE idempotency_key=?",
+                (idempotency_key,),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def list_pending_effects(
+        self,
+        action_kind: str,
+        *,
+        limit: int = 200,
+    ) -> list[dict[str, Any]]:
+        """Select pending effects by action_kind for drain (HS-164-03).
+
+        Joins watch_evaluations to carry source_revision + watch_id,
+        and connector_watches to carry project_id — run_due needs them.
+        """
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT we.*,
+                          wev.watch_id   AS eval_watch_id,
+                          wev.source_revision AS eval_source_revision,
+                          cw.project_id  AS watch_project_id
+                   FROM watch_effects we
+                   JOIN watch_evaluations wev ON we.evaluation_id = wev.id
+                   JOIN connector_watches cw  ON wev.watch_id = cw.id
+                   WHERE we.state = 'pending'
+                     AND we.action_kind = ?
+                   ORDER BY we.created_at ASC
+                   LIMIT ?""",
+                (action_kind, max(1, int(limit))),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def update_effect(
+        self,
+        effect_id: str,
+        *,
+        state: str | None = None,
+        target_ref: str | None = None,
+        result_ref: str | None = None,
+        verification_state: str | None = None,
+        error_code: str | None = None,
+        error_detail: str | None = None,
+    ) -> None:
+        """Update an effect row (state, outcome fields)."""
+        updates: list[str] = []
+        params: list[Any] = []
+        if state is not None:
+            updates.append("state = ?")
+            params.append(state)
+        if target_ref is not None:
+            updates.append("target_ref = ?")
+            params.append(target_ref)
+        if result_ref is not None:
+            updates.append("result_ref = ?")
+            params.append(result_ref)
+        if verification_state is not None:
+            updates.append("verification_state = ?")
+            params.append(verification_state)
+        if error_code is not None:
+            updates.append("error_code = ?")
+            params.append(error_code)
+        if error_detail is not None:
+            updates.append("error_detail = ?")
+            params.append(error_detail)
+        if not updates:
+            return
+        now_iso = "datetime('now')"
+        if state in ("completed", "failed", "skipped"):
+            updates.append(f"completed_at = {now_iso}")
+        params.append(effect_id)
+        with self._connection() as conn:
+            conn.execute(
+                f"UPDATE watch_effects SET {', '.join(updates)} WHERE id = ?",
+                params,
+            )
+
+    def create_effect_in_transaction(
+        self,
+        conn: Any,
+        *,
+        effect_id: str,
+        evaluation_id: str,
+        rule_id: str,
+        action_kind: str = "",
+        target_ref: str = "",
+        idempotency_key: str,
+        arguments_sha256: str = "",
+        state: str = "",
+        operation_id: str | None = None,
+        receipt_id: str | None = None,
+        result_ref: str | None = None,
+        verification_state: str = "",
+        error_code: str | None = None,
+        error_detail: str | None = None,
+    ) -> dict[str, Any]:
+        """Insert a watch_effects row on a caller-owned connection."""
+        conn.execute(
+            """INSERT INTO watch_effects
+               (id,evaluation_id,rule_id,action_kind,target_ref,
+                idempotency_key,arguments_sha256,state,
+                operation_id,receipt_id,result_ref,verification_state,
+                error_code,error_detail)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (effect_id, evaluation_id, rule_id, action_kind, target_ref,
+             idempotency_key, arguments_sha256, state,
+             operation_id, receipt_id, result_ref, verification_state,
+             error_code, error_detail),
+        )
+        return {"id": effect_id, "idempotency_key": idempotency_key,
+                "action_kind": action_kind, "state": state}
 
     # ── Project sources (§5.4) ─────────────────────────────────────────
 

@@ -21,7 +21,7 @@ import json
 import sqlite3
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from holdspeak.principals import Principal, PrincipalKind
@@ -32,6 +32,7 @@ from holdspeak.services.observer import (
     observe_service,
 )
 from holdspeak.services.reaction_service import diff_snapshots, normalize_snapshot
+from holdspeak.watch_condition_matcher import match_condition
 from holdspeak.watch_validation import (
     validate_action,
     validate_condition,
@@ -48,6 +49,22 @@ def _rule_id() -> str:
 _MATERIAL_FIELDS: frozenset[str] = frozenset({
     "subject_kind", "query", "trigger_kind", "trigger",
 })
+
+# ── HS-164-02: durable circuit-breaker constants ───────────────────
+#
+# Mirrors endpoint_health.py's semantics (HS-103-04) on the durable
+# watch columns.  3 consecutive evaluation failures open the circuit;
+# the cooldown gates scheduled evaluation for 15 minutes — long enough
+# to ride out a transient provider outage, short enough to detect
+# genuine recovery within one typical cadence cycle (60 min default).
+# Manual evaluate_once ALWAYS runs regardless of circuit state:
+# only the SCHEDULER respects the circuit.
+CIRCUIT_FAILURE_THRESHOLD = 3
+CIRCUIT_COOLDOWN_SECONDS = 900  # 15 minutes
+
+# Evaluable watch states: only graduated watches with these states
+# are eligible for scheduled evaluation via evaluate_due.
+_EVALUABLE_STATES = frozenset({"active", "tested"})
 
 
 # ── SS8.1 github transition kinds (diff_snapshots vocabulary) ──────
@@ -133,6 +150,10 @@ class WatchService:
         self._repo = db.automations
         self._observer = observer or NullObserver()
         self._snapshot_fetcher = snapshot_fetcher
+        # HS-164-04: event ledger for steward.intervention_required on
+        # circuit-open transitions.
+        from holdspeak.services.service_event_ledger import ServiceEventLedger
+        self._ledger = ServiceEventLedger(db)
 
     # ── Guards ──────────────────────────────────────────────────────
 
@@ -448,37 +469,38 @@ class WatchService:
 
     # ── Evaluate ────────────────────────────────────────────────────
 
-    def evaluate_once(
+    def _evaluate_core(
         self,
         principal: Principal,
         watch_id: str,
+        *,
+        trigger_kind: str = "manual",
+        now_iso: str | None = None,
+        txn_hook: Any | None = None,
     ) -> dict[str, Any]:
-        """Manual evaluation: snapshot -> diff -> transitions -> observations.
+        """Shared evaluation core: snapshot -> diff -> evaluation -> observations.
 
-        MANUAL only (P5 owns scheduling).  Fetches a fresh snapshot,
-        diffs it against the stored baseline via diff_snapshots (which
-        already speaks GitHub PR semantics: review/checks/head/state/
-        merge), persists a watch_evaluations row, emits watch.transition
-        observations via the 160 collector discipline (deterministic
-        pobs_ IDs, evidence links, the project binding as source), and
-        advances the baseline.
+        Callers:
+        - evaluate_once (manual, trigger_kind="manual", no txn_hook)
+        - evaluate_due  (scheduled, trigger_kind="scheduled", txn_hook
+          writes bookkeeping + circuit reset in the same transaction)
+
+        txn_hook: if provided, called as txn_hook(conn, watch_id, now_iso)
+        inside the write transaction after baseline advance.
 
         Idempotent: UNIQUE(watch_id, watch_revision, source_revision)
-        ensures the same source revision evaluates once.  Repeated
-        identical snapshots produce zero new observations (WAT-006's
-        spirit at the read level).
+        ensures the same source revision evaluates once.
         """
         from holdspeak.project_contracts import generate_pobs_id
         from holdspeak.refs import format as format_ref
 
-        self._owner(principal)
         watch = self._repo.get_watch(watch_id)
         if not watch:
             raise NotFound("watch", watch_id)
 
         connector_id = watch.get("connector_id", "")
         watch_revision = int(watch.get("revision") or 0)
-        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        now = now_iso or datetime.now(timezone.utc).isoformat(timespec="seconds")
 
         # 1. Fetch fresh snapshot via the admitted adapter path.
         entities = self._fetch(principal, watch)
@@ -534,7 +556,7 @@ class WatchService:
                     watch_id=watch_id,
                     watch_revision=watch_revision,
                     source_revision=source_revision,
-                    trigger_kind="manual",
+                    trigger_kind=trigger_kind,
                     state="completed",
                     started_at=now,
                     completed_at=now,
@@ -609,6 +631,12 @@ class WatchService:
                     "WHERE id=?",
                     (snapshot_json_str, watch_id),
                 )
+
+                # 5e. Caller-supplied transactional hook (evaluate_due
+                #     writes bookkeeping + circuit here).
+                if txn_hook is not None:
+                    txn_hook(conn, watch_id, now)
+
         except sqlite3.IntegrityError:
             # S-3 counsel: TOCTOU on the UNIQUE(watch_id, watch_revision,
             # source_revision) constraint.  find_evaluation_by_source ran
@@ -630,13 +658,6 @@ class WatchService:
             # If somehow the row still doesn't exist, re-raise.
             raise
 
-        # 5e. Graduated columns (non-critical; outside the txn).
-        self._repo.update_watch_spec(
-            watch_id,
-            baseline_state="established",
-            last_evaluated_at=now,
-        )
-
         return {
             "watch_id": watch_id,
             "evaluation_id": evaluation_id,
@@ -647,7 +668,376 @@ class WatchService:
                 f"Evaluation complete: {len(transitions)} transitions, "
                 f"{len(observation_ids)} observations"
             ),
+            # Internal: raw transition dicts for rule matching (HS-164-03).
+            # Consumed by evaluate_due only; never serialised to the caller.
+            "_transitions": transitions,
         }
+
+    def evaluate_once(
+        self,
+        principal: Principal,
+        watch_id: str,
+    ) -> dict[str, Any]:
+        """Manual evaluation: snapshot -> diff -> transitions -> observations.
+
+        MANUAL only (P5 owns scheduling).  Fetches a fresh snapshot,
+        diffs it against the stored baseline via diff_snapshots (which
+        already speaks GitHub PR semantics: review/checks/head/state/
+        merge), persists a watch_evaluations row, emits watch.transition
+        observations via the 160 collector discipline (deterministic
+        pobs_ IDs, evidence links, the project binding as source), and
+        advances the baseline.
+
+        Idempotent: UNIQUE(watch_id, watch_revision, source_revision)
+        ensures the same source revision evaluates once.  Repeated
+        identical snapshots produce zero new observations (WAT-006's
+        spirit at the read level).
+
+        Manual evaluation IGNORES circuit state: the owner's hand
+        overrides.  A successful manual evaluation closes the circuit
+        (streak reset, circuit closed) via the post-txn update.
+        Only the scheduler (evaluate_due) respects the circuit.
+        """
+        self._owner(principal)
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+        result = self._evaluate_core(
+            principal, watch_id,
+            trigger_kind="manual",
+            now_iso=now,
+        )
+
+        # 5f. Graduated columns (non-critical; outside the txn).
+        # Byte-identical to the pre-extraction behavior.
+        if result["state"] == "completed":
+            self._repo.update_watch_spec(
+                watch_id,
+                baseline_state="established",
+                last_evaluated_at=now,
+            )
+            # Counsel M-1: the docstring's promise made real -- a
+            # successful manual evaluation closes the circuit.
+            self._repo.update_watch_circuit(
+                watch_id,
+                circuit_state="closed",
+                circuit_failure_streak=0,
+                circuit_opened_at=None,
+            )
+
+        return result
+
+    # ── HS-164-02: evaluate_due — scheduled evaluation ─────────────
+
+    def evaluate_due(
+        self,
+        principal: Principal,
+    ) -> list[dict[str, Any]]:
+        """Evaluate graduated watches that are due based on their cadence.
+
+        Per-watch isolation: one failure isolates, the outcome is
+        recorded, and the loop continues.  NEVER raises.
+
+        The durable circuit (HS-164-01 columns): N consecutive failures
+        open it for that watch (CIRCUIT_FAILURE_THRESHOLD); evaluation
+        is refused with an honest ``skipped_circuit_open`` outcome while
+        the cooldown window has not elapsed.  After the window, ONE
+        half-open probe is allowed through: success closes the circuit
+        (streak=0); failure re-opens with a fresh opened_at.
+
+        Boundary rule: evaluate_due owns graduated watches (state IN
+        ('active','tested')) with a real next_evaluation_at column.
+        ReactionService.refresh_due_watches owns legacy watches
+        (state='') that read cadence from query JSON + updated_at.
+        Never two schedulers on one row.
+
+        Manual evaluate_once on a circuit-open watch: the OWNER's hand
+        overrides — manual evaluation still runs (and its success closes
+        the circuit).  Only THIS scheduler respects the circuit.
+        """
+        self._owner(principal)
+        now = datetime.now(timezone.utc)
+        now_iso = now.isoformat(timespec="seconds")
+
+        outcomes: list[dict[str, Any]] = []
+        due_watches = self._repo.list_due_watches(now_iso)
+
+        for watch in due_watches:
+            watch_id = watch["id"]
+            try:
+                # ── Circuit gate ───────────────────────────────────
+                circuit_state = watch.get("circuit_state", "closed")
+                circuit_streak = int(watch.get("circuit_failure_streak", 0))
+                circuit_opened_at = watch.get("circuit_opened_at")
+                is_probe = False
+
+                if circuit_state in ("open", "half_open"):
+                    if circuit_opened_at:
+                        opened = datetime.fromisoformat(circuit_opened_at)
+                        if opened.tzinfo is None:
+                            opened = opened.replace(tzinfo=timezone.utc)
+                        elapsed = (now - opened).total_seconds()
+                        if elapsed < CIRCUIT_COOLDOWN_SECONDS:
+                            # Still in cooldown — skip with honest outcome.
+                            outcomes.append({
+                                "watch_id": watch_id,
+                                "outcome": "skipped_circuit_open",
+                                "circuit_state": circuit_state,
+                                "circuit_failure_streak": circuit_streak,
+                            })
+                            continue
+                    # Cooldown elapsed: allow ONE half-open probe.
+                    is_probe = True
+
+                # ── Bookkeeping txn hook ───────────────────────────
+                cadence = max(1, int(watch.get("evaluation_cadence_minutes", 60)))
+                next_eval_iso = (
+                    now + timedelta(minutes=cadence)
+                ).isoformat(timespec="seconds")
+
+                def _make_txn_hook(wid, next_iso, repo):
+                    """Factory: capture per-watch values for the closure."""
+                    def hook(conn, _wid, eval_now):
+                        # Bookkeeping: advance timestamps transactionally.
+                        conn.execute(
+                            "UPDATE connector_watches "
+                            "SET last_evaluated_at=?, next_evaluation_at=?, "
+                            "    baseline_state='established' "
+                            "WHERE id=?",
+                            (eval_now, next_iso, wid),
+                        )
+                        # Circuit: success resets.
+                        repo.update_watch_circuit_in_transaction(
+                            conn, wid,
+                            circuit_state="closed",
+                            circuit_failure_streak=0,
+                            circuit_opened_at=None,
+                        )
+                    return hook
+
+                txn_hook = _make_txn_hook(
+                    watch_id, next_eval_iso, self._repo,
+                )
+
+                result = self._evaluate_core(
+                    principal, watch_id,
+                    trigger_kind="scheduled",
+                    now_iso=now_iso,
+                    txn_hook=txn_hook,
+                )
+
+                # ── HS-164-03: rule matching + effect recording ───
+                # Only for completed evaluations with transitions.
+                matched_effects: list[dict[str, Any]] = []
+                raw_transitions = result.get("_transitions", [])
+                eval_id = result.get("evaluation_id", "")
+
+                if (
+                    result["state"] == "completed"
+                    and raw_transitions
+                    and eval_id
+                ):
+                    matched_effects = self._match_and_record_effects(
+                        watch_id, eval_id, raw_transitions,
+                    )
+
+                outcome_type = "probe_half_open" if is_probe else "evaluated"
+                # Idempotent no_op is still a successful evaluation
+                # (same snapshot already seen).
+                if result["state"] == "no_op":
+                    outcome_type = "evaluated"
+
+                outcome_entry: dict[str, Any] = {
+                    "watch_id": watch_id,
+                    "outcome": outcome_type,
+                    "evaluation_id": result.get("evaluation_id"),
+                    "transitions": result.get("transitions", 0),
+                    "observation_ids": result.get("observation_ids", []),
+                }
+                if matched_effects:
+                    outcome_entry["effects"] = matched_effects
+                outcomes.append(outcome_entry)
+
+            except Exception as exc:
+                # Per-watch isolation: record failure, update circuit,
+                # advance bookkeeping, continue.
+                try:
+                    cadence = max(1, int(
+                        watch.get("evaluation_cadence_minutes", 60),
+                    ))
+                    next_eval_iso = (
+                        now + timedelta(minutes=cadence)
+                    ).isoformat(timespec="seconds")
+                    new_streak = circuit_streak + 1
+
+                    if new_streak >= CIRCUIT_FAILURE_THRESHOLD:
+                        new_circuit_state = "open"
+                        new_opened_at = now_iso
+                    else:
+                        new_circuit_state = watch.get(
+                            "circuit_state", "closed",
+                        )
+                        new_opened_at = watch.get("circuit_opened_at")
+
+                    # Write bookkeeping + circuit in one transaction.
+                    with self._db._connection() as conn:
+                        conn.execute(
+                            "UPDATE connector_watches "
+                            "SET last_evaluated_at=?, next_evaluation_at=? "
+                            "WHERE id=?",
+                            (now_iso, next_eval_iso, watch_id),
+                        )
+                        self._repo.update_watch_circuit_in_transaction(
+                            conn, watch_id,
+                            circuit_state=new_circuit_state,
+                            circuit_failure_streak=new_streak,
+                            circuit_opened_at=new_opened_at,
+                        )
+
+                        # HS-164-04: emit steward.intervention_required
+                        # in-transaction on circuit-open TRANSITION.
+                        if (
+                            new_circuit_state == "open"
+                            and circuit_state != "open"
+                        ):
+                            try:
+                                project_id = watch.get(
+                                    "project_id",
+                                    watch.get("bound_project_id", ""),
+                                )
+                                self._ledger.append_in_transaction(
+                                    conn,
+                                    principal,
+                                    event_type="steward.intervention_required",
+                                    producer="WatchService",
+                                    subject_ref=f"watch:{watch_id}",
+                                    source_revision="",
+                                    facts={
+                                        "reason": "circuit_open",
+                                        "watch_id": watch_id,
+                                        "project_id": project_id,
+                                        "failure_streak": new_streak,
+                                    },
+                                    refs=[
+                                        f"watch:{watch_id}",
+                                        f"project:{project_id}",
+                                    ],
+                                )
+                            except Exception:
+                                pass  # Event must never break circuit write.
+                except Exception:
+                    pass  # Double-fault: even failure recording failed.
+
+                outcomes.append({
+                    "watch_id": watch_id,
+                    "outcome": "failed",
+                    "error": str(exc),
+                })
+
+        return outcomes
+
+    # ── HS-164-03: rule matching + effect recording ───────────────
+
+    def _match_and_record_effects(
+        self,
+        watch_id: str,
+        evaluation_id: str,
+        transitions: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Match watch rules against transitions, record effects.
+
+        Returns a list of effect dicts (one per matched rule + action).
+        Idempotent: lookup-first by idempotency_key; re-processing the
+        same evaluation mints nothing new.
+
+        Called ONLY from evaluate_due (scheduled); evaluate_once stays
+        byte-identical.
+        """
+        rules = self._repo.list_rules(watch_id)
+        if not rules:
+            return []
+
+        matched_rule_ids: list[str] = []
+        effects: list[dict[str, Any]] = []
+
+        for rule in rules:
+            if not rule.get("enabled", True):
+                continue
+            rule_id = rule.get("id", "")
+            condition = rule.get("condition", {})
+
+            if not match_condition(condition, transitions):
+                continue
+
+            matched_rule_ids.append(rule_id)
+
+            # Each action in the rule's actions list.
+            actions = rule.get("action", [])
+            if isinstance(actions, dict):
+                actions = [actions]
+            if not isinstance(actions, list):
+                continue
+
+            for action in actions:
+                if not isinstance(action, dict):
+                    continue
+                action_kind = action.get("kind", "")
+                if not action_kind:
+                    continue
+
+                # Deterministic idempotency key:
+                # sha256(evaluation_id + rule_id + action_kind)[:32]
+                key_material = f"{evaluation_id}:{rule_id}:{action_kind}"
+                idem_key = hashlib.sha256(
+                    key_material.encode("utf-8"),
+                ).hexdigest()[:32]
+
+                # Lookup-first: the UNIQUE index guards replay.
+                existing = self._repo.get_effect_by_idempotency_key(
+                    idem_key,
+                )
+                if existing is not None:
+                    effects.append(existing)
+                    continue
+
+                # Mint the effect row.
+                effect_id = f"weff_{uuid.uuid4().hex[:12]}"
+                try:
+                    effect = self._repo.create_effect(
+                        effect_id=effect_id,
+                        evaluation_id=evaluation_id,
+                        rule_id=rule_id,
+                        action_kind=action_kind,
+                        idempotency_key=idem_key,
+                        state="pending",
+                    )
+                    effects.append(effect)
+                except Exception:
+                    # UNIQUE constraint race: another concurrent path
+                    # inserted the same key.  Resolve to that row.
+                    existing = self._repo.get_effect_by_idempotency_key(
+                        idem_key,
+                    )
+                    if existing is not None:
+                        effects.append(existing)
+
+        # Write matched_rule_ids_json on the evaluation row.
+        if matched_rule_ids:
+            try:
+                with self._db._connection() as conn:
+                    conn.execute(
+                        "UPDATE watch_evaluations "
+                        "SET matched_rule_ids_json=? WHERE id=?",
+                        (
+                            json.dumps(
+                                matched_rule_ids, separators=(",", ":"),
+                            ),
+                            evaluation_id,
+                        ),
+                    )
+            except Exception:
+                pass  # Non-critical; effects are already durable.
+
+        return effects
 
     # ── Rules ───────────────────────────────────────────────────────
 

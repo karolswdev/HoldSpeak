@@ -43,6 +43,7 @@ class StewardPolicyRepository(BaseRepository):
         cooldown_seconds: int = 0,
         bounds_json: str = "{}",
         enabled: int = 1,
+        unattended_enabled: int = 0,
     ) -> None:
         with self._connection() as conn:
             self._insert_policy(
@@ -56,6 +57,7 @@ class StewardPolicyRepository(BaseRepository):
                 cooldown_seconds=cooldown_seconds,
                 bounds_json=bounds_json,
                 enabled=enabled,
+                unattended_enabled=unattended_enabled,
             )
 
     def insert_policy_in_transaction(
@@ -71,6 +73,7 @@ class StewardPolicyRepository(BaseRepository):
         cooldown_seconds: int = 0,
         bounds_json: str = "{}",
         enabled: int = 1,
+        unattended_enabled: int = 0,
     ) -> None:
         self._insert_policy(
             conn,
@@ -83,6 +86,7 @@ class StewardPolicyRepository(BaseRepository):
             cooldown_seconds=cooldown_seconds,
             bounds_json=bounds_json,
             enabled=enabled,
+            unattended_enabled=unattended_enabled,
         )
 
     @staticmethod
@@ -98,14 +102,15 @@ class StewardPolicyRepository(BaseRepository):
         cooldown_seconds: int,
         bounds_json: str,
         enabled: int,
+        unattended_enabled: int,
     ) -> None:
         now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
         conn.execute(
             """INSERT INTO steward_policies
                (id, project_id, eligible_effect_kinds_json, yolo_flags_json,
                 max_retries, max_actions_per_run, cooldown_seconds,
-                bounds_json, enabled, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                bounds_json, enabled, unattended_enabled, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 str(policy_id).strip(),
                 str(project_id).strip(),
@@ -116,6 +121,7 @@ class StewardPolicyRepository(BaseRepository):
                 int(cooldown_seconds),
                 bounds_json,
                 int(enabled),
+                int(unattended_enabled),
                 now_iso,
                 now_iso,
             ),
@@ -175,6 +181,7 @@ class StewardPolicyRepository(BaseRepository):
         cooldown_seconds: Optional[int] = None,
         bounds_json: Optional[str] = None,
         enabled: Optional[int] = None,
+        unattended_enabled: Optional[int] = None,
     ) -> None:
         with self._connection() as conn:
             self._update_policy(
@@ -187,6 +194,7 @@ class StewardPolicyRepository(BaseRepository):
                 cooldown_seconds=cooldown_seconds,
                 bounds_json=bounds_json,
                 enabled=enabled,
+                unattended_enabled=unattended_enabled,
             )
 
     def update_policy_in_transaction(
@@ -201,6 +209,7 @@ class StewardPolicyRepository(BaseRepository):
         cooldown_seconds: Optional[int] = None,
         bounds_json: Optional[str] = None,
         enabled: Optional[int] = None,
+        unattended_enabled: Optional[int] = None,
     ) -> None:
         self._update_policy(
             conn,
@@ -212,6 +221,7 @@ class StewardPolicyRepository(BaseRepository):
             cooldown_seconds=cooldown_seconds,
             bounds_json=bounds_json,
             enabled=enabled,
+            unattended_enabled=unattended_enabled,
         )
 
     @staticmethod
@@ -226,6 +236,7 @@ class StewardPolicyRepository(BaseRepository):
         cooldown_seconds: Optional[int],
         bounds_json: Optional[str],
         enabled: Optional[int],
+        unattended_enabled: Optional[int],
     ) -> None:
         updates: list[str] = []
         params: list[Any] = []
@@ -250,6 +261,9 @@ class StewardPolicyRepository(BaseRepository):
         if enabled is not None:
             updates.append("enabled = ?")
             params.append(int(enabled))
+        if unattended_enabled is not None:
+            updates.append("unattended_enabled = ?")
+            params.append(int(unattended_enabled))
         if not updates:
             return
         now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
