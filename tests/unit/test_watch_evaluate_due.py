@@ -574,6 +574,34 @@ class TestManualOverride:
         result = svc.evaluate_once(OWNER, "w-manual")
         assert result["state"] == "completed"
 
+    def test_manual_success_closes_the_circuit(self, tmp_path) -> None:
+        """Counsel M-1: a successful manual evaluation CLOSES the
+        circuit (streak reset), as the docstring promises."""
+        db = Database(tmp_path / "manual-close.db")
+        _make_watch(db, "w-heal")
+        _graduate_watch(db, "w-heal", cadence_minutes=60,
+                        next_evaluation_at=_past_iso(5))
+        now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        db.automations.update_watch_circuit(
+            "w-heal",
+            circuit_state="open",
+            circuit_failure_streak=CIRCUIT_FAILURE_THRESHOLD,
+            circuit_opened_at=now_iso,
+        )
+        entities = [{"number": 1, "state": "open", "title": "PR",
+                     "url": "http://gh/1", "checks": "success",
+                     "headRefOid": "aaa"}]
+        svc = _watch_svc(db, fetcher=_baseline_fetcher(entities))
+        svc.baseline_watch(OWNER, "w-heal")
+
+        result = svc.evaluate_once(OWNER, "w-heal")
+        assert result["state"] == "completed"
+
+        circuit = db.automations.get_watch_circuit("w-heal")
+        assert circuit["circuit_state"] == "closed"
+        assert circuit["circuit_failure_streak"] == 0
+        assert circuit["circuit_opened_at"] is None
+
     def test_scheduler_skips_but_manual_runs(self, tmp_path) -> None:
         """The scheduler skips a circuit-open watch, but manual runs it
         in the same session."""

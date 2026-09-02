@@ -68,3 +68,10 @@ Answer, verbatim: **"PASS"**
 Two rounds total: round 1 bounced on scroll affordance and asked the
 model-wiring question (both recorded above, both paid); round 2
 passed.
+
+### Counsel S-4 note
+
+The MODEL egress chip was intentionally REMOVED from Created
+proposals in the round-2 fix: the Delta's model augmentation is an
+identity no-op (DEL-007), so the badge over-claimed egress. Only
+Drafted update carries the chip, and it names its wiring.

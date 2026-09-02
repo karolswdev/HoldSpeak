@@ -506,7 +506,7 @@ class ProjectStewardService:
                 run_id, state="running", phase="observe",
             )
 
-            # HS-164-04: steward.run_started event (in-transaction).
+            # HS-164-04: steward.run_started event (best-effort, its own transaction).
             try:
                 with self._db._connection() as conn:
                     self._ledger.append_in_transaction(
@@ -1609,6 +1609,29 @@ class ProjectStewardService:
                     })
         except Exception as exc:
             results.append({"kind": "source_degraded", "error": str(exc)})
+
+        # 2b. Counsel S-2: heal stale degraded loops -- a circuit that
+        # closed leaves no high-priority attention item behind.
+        try:
+            watches = self._db.automations.list_watches()
+            for w in watches:
+                if w.get("circuit_state") == "closed":
+                    watch_id = w.get("id", "")
+                    stale = cadence_repo.get_loop_by_source(
+                        "system", f"steward_degraded:{watch_id}",
+                    )
+                    if stale is not None and stale.status not in (
+                        "closed", "killed",
+                    ):
+                        cadence_repo.set_status(stale.id, "closed")
+                        results.append({
+                            "kind": "source_degraded_healed",
+                            "watch_id": watch_id,
+                        })
+        except Exception as exc:
+            results.append({
+                "kind": "source_degraded_healed", "error": str(exc),
+            })
 
         # 3. steward_intervention_required: recent intervention events.
         try:

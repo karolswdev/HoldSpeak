@@ -715,6 +715,14 @@ class WatchService:
                 baseline_state="established",
                 last_evaluated_at=now,
             )
+            # Counsel M-1: the docstring's promise made real -- a
+            # successful manual evaluation closes the circuit.
+            self._repo.update_watch_circuit(
+                watch_id,
+                circuit_state="closed",
+                circuit_failure_streak=0,
+                circuit_opened_at=None,
+            )
 
         return result
 

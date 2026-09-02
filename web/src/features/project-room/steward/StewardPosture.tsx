@@ -501,7 +501,8 @@ function useVerticalScrollHint(ref: React.RefObject<HTMLDivElement | null>) {
       scrollParent.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
     };
-  });
+    // Counsel S-1: mount-once -- the ref identity is stable.
+  }, []);
 }
 
 /* ── Main Steward posture ── */

@@ -655,6 +655,47 @@ class TestCadenceProjections:
         assert loop is not None
         assert loop.priority == "high"
 
+    def test_degraded_loop_healed_on_circuit_close(self, tmp_path) -> None:
+        """Counsel S-2: a closed circuit heals its stale degraded loop."""
+        conn = _make_conn(tmp_path)
+        db, svc = _make_service(conn)
+        p = _principal()
+
+        from holdspeak.db.cadence import CadenceRepository
+        db.cadence = CadenceRepository.__new__(CadenceRepository)
+        db.cadence._connection = db._connection
+
+        # Tick 1: circuit open -> degraded loop upserted.
+        db.automations.list_watches = lambda: [
+            {"id": "watch-heal-01", "circuit_state": "open",
+             "bound_project_id": "proj-1"},
+        ]
+        svc.project_cadence_projections(p)
+        loop = db.cadence.get_loop_by_source(
+            "system", "steward_degraded:watch-heal-01")
+        assert loop is not None and loop.status not in ("closed", "killed")
+
+        # Tick 2: circuit closed -> the stale loop is healed.
+        db.automations.list_watches = lambda: [
+            {"id": "watch-heal-01", "circuit_state": "closed",
+             "bound_project_id": "proj-1"},
+        ]
+        results = svc.project_cadence_projections(p)
+        healed = [r for r in results
+                  if r.get("kind") == "source_degraded_healed"
+                  and not r.get("error")]
+        assert len(healed) == 1 and healed[0]["watch_id"] == "watch-heal-01"
+        loop2 = db.cadence.get_loop_by_source(
+            "system", "steward_degraded:watch-heal-01")
+        assert loop2.status == "closed"
+
+        # Idempotent: a third pass heals nothing further.
+        results3 = svc.project_cadence_projections(p)
+        healed3 = [r for r in results3
+                   if r.get("kind") == "source_degraded_healed"
+                   and not r.get("error")]
+        assert healed3 == []
+
     def test_intervention_required_projection(self, tmp_path) -> None:
         """TST-COND-012: intervention_required loop for intervention events."""
         conn = _make_conn(tmp_path)
