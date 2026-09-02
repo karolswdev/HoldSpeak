@@ -103,8 +103,8 @@ def test_project_tools_are_discoverable_with_versioned_schemas() -> None:
     assert project_tools[0]["name"] == "project.list"
     assert project_tools[1]["name"] == "project.get"
     assert project_tools[2]["name"] == "project.get_room"
-    # HS-165-02 adds 14 command tools (17 total)
-    assert len(project_tools) == 17
+    # HS-165-02 adds 14 command tools (17), HS-165-03 adds 16 driver tools (33 total)
+    assert len(project_tools) == 33
     # Versioned $id schemas
     assert project_tools[0]["inputSchema"]["$id"] == "holdspeak://mcp/project.list@1"
     assert project_tools[1]["inputSchema"]["$id"] == "holdspeak://mcp/project.get@1"

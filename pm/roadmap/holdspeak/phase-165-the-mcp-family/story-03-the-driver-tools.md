@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 165
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-165-02
 - **Unblocks:** HS-165-04
 - **Owner:** unassigned
@@ -41,3 +41,25 @@ to WatchSpec@1 — extend, never replace.
 ## Test plan
 
 - **Unit:** tests/unit/test_project_mcp_driver.py (+ watch-graduation coverage beside the 164 suites).
+
+## Trace record (orchestrator round, 2026-09-02)
+
+- The boundary rule, as shipped: graduated tools guard with
+  _require_graduated_watch (state in active/tested/paused/retired;
+  refusal code legacy_watch_boundary); the reactions family is
+  untouched and owns state='' rows. Both directions under test.
+- ORCHESTRATOR FIXES in-round: (1) the three copied steward
+  serializers now DELEGATE to the route's own (the resources.py
+  precedent — one source of truth; copies drift); (2) the command
+  insert guard narrowed from a bare except-pass to
+  sqlite3.IntegrityError only — a disk or schema failure must
+  surface, only the replay conflict is silent.
+- Copied-glue register additions: _NATIVE_PROVIDERS (providers.py
+  31-43 mirrored). The serializer copies were struck from the
+  register by delegation.
+- The charter's "propose" watch verb does not exist as a WatchService
+  seam — proposing lives in the setup interview; the tools mirror
+  the actual route surface (recorded, not invented).
+- command_id posture mirrors each route exactly; routes without
+  idempotency did not have one invented (registered per tool in the
+  build report).

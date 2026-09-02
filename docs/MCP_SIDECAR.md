@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-159 tools across 32 families. The default non-owner discovery lists 34
+179 tools across 33 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -57,7 +57,7 @@ default.
 
 ## Tool families
 
-The 159 tools are organized into domain families. Each tool follows the
+The 179 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -97,7 +97,7 @@ Door has no MCP resource. Its
 Follow-Through People overlay respects `HOLDSPEAK_MCP_PEOPLE_ACCESS` and is
 safely empty when that encrypted disclosure capability is unavailable or off.
 
-### project (17 tools)
+### project (33 tools)
 
 Three read tools: `project.list` returns all projects (optionally
 including archived). `project.get` returns one project by id with room
@@ -112,9 +112,38 @@ Fourteen command tools mirror the web routes exactly (MCP-001 parity):
 accepts an optional command_id for idempotent replay (MCP-002); where the
 web route enforces expected_revision, the tool does too.
 
+Four steward driver tools: `project.configure_steward` (policy read/write
+including `unattended_enabled`), `project.run_steward` (returns run_id
+PROMPTLY via MCP-003; phase execution on a daemon thread; typed refusals
+for STW-002/disabled/cooldown), `project.stop_steward` (durable STW-003),
+`project.get_steward_run` (pollable state with steps and receipts).
+
+Five setup interview drivers: `project.setup.start`, `project.setup.resume`,
+`project.setup.answer`, `project.setup.suggest`, `project.setup.finalize`.
+The durable session resumes across tool calls; finalize activates atomically
+through the same ProjectService.create_from_setup seam as the web route.
+
+Seven graduated watch tools: `project.watch.inspect`, `project.watch.test`,
+`project.watch.evaluate`, `project.watch.set_rules`, `project.watch.pause`,
+`project.watch.resume`, `project.watch.retire`. These operate ONLY on
+graduated WatchSpec@1 rows (state in active/tested/paused/retired). Legacy
+rows (state='') belong to the reactions family; the boundary is enforced
+with typed `legacy_watch_boundary` refusals in both directions.
+
 Five resource templates expose project data: `holdspeak://projects/{id}`,
 `.../room`, `.../delta`, `.../updates/{update_id}`, and
 `.../steward/runs/{run_id}`. Unknown ids refuse typed.
+
+### provider (4 tools)
+
+Provider discovery and connection status. `provider.list` returns all
+configured providers (native + GitHub) with their capabilities.
+`provider.github_connection` reads the GitHub adapter's connection status.
+`provider.github_discover` runs bounded repository discovery through the
+configured adapter (pagination surfaced). `provider.github_validate_repo`
+validates a repository by owner/repo string. All GitHub tools refuse typed
+with `provider_not_configured` when the adapter is absent. No provider
+writes.
 
 ### thread (1 tool)
 

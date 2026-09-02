@@ -43,7 +43,7 @@ seam noted, not built).
 | --- | --- | --- | --- | --- |
 | HS-165-01 | The family skeleton (project.py reads + §11.2 resources; MCP-006 isolation) | done | [story-01-the-family-skeleton](./story-01-the-family-skeleton.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-165-02 | The command tools (lifecycle/link/review/updates; MCP-001/002/004/005) | done | [story-02-the-command-tools](./story-02-the-command-tools.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-165-03 | The driver tools (steward runs, setup interview, provider discovery, watch graduation) | backlog | [story-03-the-driver-tools](./story-03-the-driver-tools.md) | - |
+| HS-165-03 | The driver tools (steward runs, setup interview, provider discovery, watch graduation) | done | [story-03-the-driver-tools](./story-03-the-driver-tools.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-165-04 | The palette (PROJECT_PALETTE + Project Thread mode; parity hardening) | backlog | [story-04-the-palette](./story-04-the-palette.md) | - |
 | HS-165-05 | The walk (a local MCP client drives §15 end to end — OWNER VERDICT) | backlog | [story-05-the-walk](./story-05-the-walk.md) | - |
 | HS-165-06 | The docs (the Gate B partner surface; the dedicated docs story) | backlog | [story-06-the-docs](./story-06-the-docs.md) | - |
@@ -51,24 +51,23 @@ seam noted, not built).
 
 ## Where we are
 
-2/7. HS-165-02 the command tools DONE (2026-09-02): fourteen command
-tools join the three reads — every one a thin driver over the EXACT
-service seam its Web route calls (the parity table lives in the
-build report; the copied-glue register holds ONE item:
-decide_proposal's route-side ownership check, registered as
-pre-existing seam debt). MCP-002 proven: optional command_id in,
-generated otherwise, ALWAYS returned; replay returns the stored
-result and mints nothing; mismatched payload refuses
-idempotency_conflict — all under test across create/archive/link/
-accept_review/draft_update. Typed capability + stale_revision
-refusals ride the services untouched. ORCHESTRATOR CATCH: the build
-composed the delta service with a NullCollector on the false premise
-that the sidecar cannot run adapters — HS-164 proved collect_all is
-DB-only; the REAL ProjectEvidenceCollector now composes (the
-web_server recovery block's own shape) and open_review is true
-parity with honest coverage. Pins paid 145->159 (doc drift guard
-green). Gates: 97 passed scoped. Earlier: 1/7 the skeleton. NEXT:
-HS-165-03 the driver tools.
+3/7. HS-165-03 the driver tools DONE (2026-09-02): twenty more tools
+— steward (configure/run/stop/get_run: the 164 immediate-id law on
+MCP, run_id before phase work under a slow-phase fixture, MCP-003
+proven), the 159 setup interview (start/resume/answer/suggest/
+finalize, durable across tool calls), provider discovery (list/
+connection/discover/validate_repo — read-only, the P2a adapters),
+and the watch graduation (7 tools over WatchService with the
+BOUNDARY LAW: _require_graduated_watch refuses legacy rows typed
+both ways; the reactions family untouched, owning state='' rows —
+the 164 boundary rule's MCP twin, under test). command_id posture
+mirrors each route exactly (nothing invented). ORCHESTRATOR FIXES
+in-round: the three copied steward serializers now DELEGATE to the
+route's own (one source of truth); the command-insert guard
+narrowed from bare except-pass to IntegrityError only. Pins paid
+159->179 tools / 33 families (drift guard green). Gates: 138 passed
+scoped. Earlier: 2/7 commands, 1/7 skeleton. NEXT: HS-165-04 the
+palette.
 
 ## Active risks
 

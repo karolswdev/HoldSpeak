@@ -5,15 +5,25 @@ HS-165-02: command tools — the same verbs, the same laws.  Every command
 tool is a THIN driver over the exact service seam the Web route calls:
 no SQL, no verb re-implementation.  command_id replay safety (MCP-002)
 rides the services' own idempotency machinery.
+HS-165-03: driver tools — steward, setup, providers, watch graduation.
 """
 from __future__ import annotations
 
+import hashlib
+import json
+import sqlite3
+import threading
 from typing import Any
 
 from holdspeak.db import get_database
 from holdspeak.db.updates import PublishedUpdateError
 from holdspeak.principals import Principal
 from holdspeak.services.errors import ConflictError, NotFound, ServiceError, ValidationError
+
+# HS-165-03: graduated watch boundary — these states belong to the
+# graduated WatchSpec@1 machinery (project.watch.* tools).  Legacy
+# rows (state='') belong to the reactions family (watch.*/reaction.*).
+_GRADUATED_WATCH_STATES = frozenset({"active", "tested", "paused", "retired"})
 
 
 # ── Tool schemas ─────────────────────────────────────────────────────
@@ -332,6 +342,303 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    # ── steward driver tools (HS-165-03) ────────────────────────────
+    {
+        "name": "project.configure_steward",
+        "description": (
+            "Read or update the steward policy for a project. "
+            "GET: omit all optional fields. PUT: supply at least one field to update. "
+            "Includes unattended_enabled (bounded-delegation ruling). "
+            "Emits steward.configured event on write."
+        ),
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.configure_steward@1",
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "Project identifier."},
+                "enabled": {"type": "boolean", "description": "Enable/disable the steward."},
+                "unattended_enabled": {"type": "boolean", "description": "Allow unattended runs (bounded delegation)."},
+                "eligible_effect_kinds": {
+                    "type": "array", "items": {"type": "string"},
+                    "description": "Effect kinds the steward may execute.",
+                },
+                "max_retries": {"type": "integer", "minimum": 0, "maximum": 100},
+                "max_actions_per_run": {"type": "integer", "minimum": 0, "maximum": 1000},
+                "cooldown_seconds": {"type": "integer", "minimum": 0, "maximum": 86400},
+                "bounds": {"type": "object", "description": "Arbitrary bounds object."},
+                "command_id": {"type": "string", "description": "Idempotency key."},
+            },
+            "required": ["project_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.run_steward",
+        "description": (
+            "Start a steward run. Returns run_id IMMEDIATELY (MCP-003); "
+            "phase execution proceeds on a background thread. "
+            "Typed refusals: active_run_exists (STW-002), steward_disabled, cooldown_active."
+        ),
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.run_steward@1",
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "Project identifier."},
+                "watermark": {"type": "string", "description": "Caller-supplied watermark for correlation."},
+                "command_id": {"type": "string", "description": "Idempotency key."},
+            },
+            "required": ["project_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.stop_steward",
+        "description": "Set the durable stop request on a steward run (STW-003).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.stop_steward@1",
+            "type": "object",
+            "properties": {
+                "run_id": {"type": "string", "description": "Steward run identifier."},
+            },
+            "required": ["run_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.get_steward_run",
+        "description": "Poll a steward run: state, phase, steps, and receipts.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.get_steward_run@1",
+            "type": "object",
+            "properties": {
+                "run_id": {"type": "string", "description": "Steward run identifier."},
+            },
+            "required": ["run_id"],
+            "additionalProperties": False,
+        },
+    },
+    # ── setup driver tools (HS-165-03) ──────────────────────────────
+    {
+        "name": "project.setup.start",
+        "description": "Start a new durable setup interview session.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.setup.start@1",
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.setup.resume",
+        "description": "Resume (read) an existing setup interview session.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.setup.resume@1",
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string", "description": "Setup session identifier."},
+            },
+            "required": ["session_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.setup.answer",
+        "description": "Answer an interview question in a setup session.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.setup.answer@1",
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string", "description": "Setup session identifier."},
+                "question_id": {"type": "string", "description": "Question identifier."},
+                "payload": {"type": "object", "description": "Answer payload."},
+            },
+            "required": ["session_id", "question_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.setup.suggest",
+        "description": "Generate watch proposals for a setup session based on answers so far.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.setup.suggest@1",
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string", "description": "Setup session identifier."},
+            },
+            "required": ["session_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.setup.finalize",
+        "description": (
+            "Atomically finalize a setup session: create the project, "
+            "activate selected+passed proposals as graduated watches, "
+            "establish baselines. All-or-nothing."
+        ),
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.setup.finalize@1",
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string", "description": "Setup session identifier."},
+                "command_id": {"type": "string", "description": "Idempotency key."},
+            },
+            "required": ["session_id"],
+            "additionalProperties": False,
+        },
+    },
+    # ── provider driver tools (HS-165-03) ───────────────────────────
+    {
+        "name": "provider.list",
+        "description": "List configured providers (native + GitHub) with their capabilities.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.list@1",
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.github_connection",
+        "description": "Get the GitHub provider connection status.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.github_connection@1",
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.github_discover",
+        "description": "Bounded discovery of GitHub repositories through the configured adapter.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.github_discover@1",
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Optional search query."},
+                "cursor": {"type": "integer", "description": "Pagination cursor."},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 100, "description": "Page size (default 30)."},
+            },
+            "required": [],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.github_validate_repo",
+        "description": "Validate a GitHub repository by owner/repo string.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.github_validate_repo@1",
+            "type": "object",
+            "properties": {
+                "owner_repo": {"type": "string", "description": "GitHub owner/repo (e.g. 'octocat/Hello-World')."},
+            },
+            "required": ["owner_repo"],
+            "additionalProperties": False,
+        },
+    },
+    # ── graduated watch driver tools (HS-165-03) ────────────────────
+    # The 164 boundary rule's MCP twin: these tools operate ONLY on
+    # graduated rows (state in active/tested/paused/retired).  Legacy
+    # rows (state='') belong to the reactions family (watch.*/reaction.*).
+    {
+        "name": "project.watch.inspect",
+        "description": "Get a graduated watch with its rules, circuit state, and evaluation history.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.watch.inspect@1",
+            "type": "object",
+            "properties": {
+                "watch_id": {"type": "string", "description": "Watch identifier."},
+            },
+            "required": ["watch_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.watch.test",
+        "description": "Run a bounded, non-mutating read test on a graduated watch (ACT-002).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.watch.test@1",
+            "type": "object",
+            "properties": {
+                "watch_id": {"type": "string", "description": "Watch identifier."},
+            },
+            "required": ["watch_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.watch.evaluate",
+        "description": "Manually evaluate a graduated watch: snapshot, diff, transitions, observations.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.watch.evaluate@1",
+            "type": "object",
+            "properties": {
+                "watch_id": {"type": "string", "description": "Watch identifier."},
+            },
+            "required": ["watch_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.watch.set_rules",
+        "description": "Replace rules for a graduated watch (WatchCondition@1 + WatchAction@1).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.watch.set_rules@1",
+            "type": "object",
+            "properties": {
+                "watch_id": {"type": "string", "description": "Watch identifier."},
+                "rules": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Ordered rule list (condition + actions).",
+                },
+            },
+            "required": ["watch_id", "rules"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.watch.pause",
+        "description": "Pause a graduated watch (stops evaluation).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.watch.pause@1",
+            "type": "object",
+            "properties": {
+                "watch_id": {"type": "string", "description": "Watch identifier."},
+            },
+            "required": ["watch_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.watch.resume",
+        "description": "Resume a paused graduated watch (state -> active).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.watch.resume@1",
+            "type": "object",
+            "properties": {
+                "watch_id": {"type": "string", "description": "Watch identifier."},
+            },
+            "required": ["watch_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.watch.retire",
+        "description": "Retire a graduated watch (ACT-009). Retains history, stops evaluation.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.watch.retire@1",
+            "type": "object",
+            "properties": {
+                "watch_id": {"type": "string", "description": "Watch identifier."},
+            },
+            "required": ["watch_id"],
+            "additionalProperties": False,
+        },
+    },
 ]
 
 
@@ -376,6 +683,105 @@ def _update_service():
     return ProjectUpdateService(db, project_service=ps)
 
 
+def _steward_service():
+    """Compose ProjectStewardService (same wiring as web context)."""
+    from holdspeak.services.project_evidence_collector import ProjectEvidenceCollector
+    from holdspeak.services.project_delta_service import ProjectDeltaService
+    from holdspeak.services.project_service import ProjectService
+    from holdspeak.services.project_steward_service import ProjectStewardService
+    from holdspeak.services.project_update_service import ProjectUpdateService
+    db = get_database()
+    ps = ProjectService(db)
+    collector = ProjectEvidenceCollector(db)
+    delta = ProjectDeltaService(db, collector=collector, project_service=ps)
+    us = ProjectUpdateService(db, project_service=ps)
+    return ProjectStewardService(
+        db, collector=collector, delta=delta,
+        update_service=us, project_service=ps,
+    )
+
+
+def _setup_service():
+    """Compose ProjectSetupService (same wiring as web context)."""
+    from holdspeak.services.project_service import ProjectService
+    from holdspeak.services.project_setup_service import ProjectSetupService
+    from holdspeak.services.watch_service import WatchService
+    db = get_database()
+    ps = ProjectService(db)
+    ws = WatchService(db)
+    # github_adapter=None is safe: discovery/validate_repo calls
+    # will surface typed provider_not_configured, same as the web
+    # route when the adapter is absent.
+    return ProjectSetupService(db, project_service=ps, watch_service=ws)
+
+
+def _watch_service():
+    """Compose WatchService (same wiring as web context)."""
+    from holdspeak.services.watch_service import WatchService
+    db = get_database()
+    return WatchService(db)
+
+
+def _github_adapter():
+    """Return the GitHubProviderAdapter or None (same as web context)."""
+    from holdspeak.services.github_provider import GitHubProviderAdapter
+    db = get_database()
+    try:
+        return GitHubProviderAdapter(db)
+    except Exception:
+        return None
+
+
+def _request_hash(payload: dict[str, Any]) -> str:
+    """Deterministic hash for idempotency (mirrors steward route)."""
+    material = json.dumps(payload, sort_keys=True, separators=(",", ":"),
+                          ensure_ascii=True, default=str)
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()[:32]
+
+
+def _record_steward_command(
+    db: Any,
+    command_id: str,
+    project_id: str,
+    command_kind: str,
+    request_hash: str,
+    result: dict[str, Any],
+) -> None:
+    """Record a completed steward command via the DB layer (MCP-001: no SQL)."""
+    result_json = json.dumps(result, ensure_ascii=False, default=str)
+    try:
+        db.projects.insert_project_command(
+            command_id=command_id,
+            project_id=project_id,
+            command_kind=command_kind,
+            request_hash=request_hash,
+            status="completed",
+        )
+    except sqlite3.IntegrityError:
+        # The command row already exists (replay); anything else must
+        # surface through the tool's error mapping.
+        pass
+    db.projects.complete_project_command(
+        command_id,
+        status="completed",
+        result_json=result_json,
+    )
+
+
+# The native provider families (mirrors providers.py:31-43).
+_NATIVE_PROVIDERS: list[dict[str, Any]] = [
+    {
+        "provider_id": "native",
+        "transport": "local_domain",
+        "capabilities": {
+            "discover": False,
+            "read": True,
+            "subscribe": False,
+            "effect": False,
+        },
+        "families": ["meetings", "decisions", "door"],
+    },
+]
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -392,7 +798,47 @@ def _require_id(arguments: dict[str, Any], key: str) -> str:
     return value
 
 
-# ── Dispatch ─────────────────────────────────────────────────────────
+def _require_graduated_watch(watch_id: str) -> dict[str, Any]:
+    """Load a watch and refuse if it is a legacy (reactions-family) row.
+
+    HS-165-03 boundary rule: graduated tools operate ONLY on rows
+    whose state is in _GRADUATED_WATCH_STATES.  Legacy rows (state='')
+    belong to the reactions family.
+    """
+    db = get_database()
+    watch = db.automations.get_watch(watch_id)
+    if not watch:
+        raise NotFound("watch", watch_id)
+    state = watch.get("state") or ""
+    if state not in _GRADUATED_WATCH_STATES:
+        raise ServiceError(
+            "legacy_watch_boundary",
+            f"Watch {watch_id!r} is a legacy row (state={state!r}). "
+            f"Use the reactions family tools (watch.list / watch.refresh) instead.",
+            context={"watch_id": watch_id, "state": state, "status": 409},
+        )
+    return watch
+
+
+# ── Steward serialization (mirrors steward.py:370-481) ───────────────
+
+def _serialize_run(run):
+    """Delegate to the steward route's serializer -- ONE source
+    of truth (the resources.py precedent); a copy drifts."""
+    from holdspeak.web.routes.steward import _serialize_run as _r
+    return _r(run)
+
+def _serialize_step(step):
+    """Delegate to the steward route's serializer -- ONE source
+    of truth (the resources.py precedent); a copy drifts."""
+    from holdspeak.web.routes.steward import _serialize_step as _r
+    return _r(step)
+
+def _serialize_policy(policy):
+    """Delegate to the steward route's serializer -- ONE source
+    of truth (the resources.py precedent); a copy drifts."""
+    from holdspeak.web.routes.steward import _serialize_policy as _r
+    return _r(policy)
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Dispatch project tools (MCP-001: thin drivers over service seams)."""
@@ -625,6 +1071,379 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                 code="published_update",
             ) from exc
         return {"success": True, "update": result}
+
+    # ── steward driver tools (HS-165-03) ────────────────────────────
+    # Mirrors: holdspeak/web/routes/steward.py
+
+    if name == "project.configure_steward":
+        # Web parity: steward.py:206 api_get_steward_policy (GET)
+        #              steward.py:223 api_put_steward_policy (PUT)
+        # Service seam: steward_policies DB layer (same as the route)
+        project_id = _require_id(arguments, "project_id")
+        # Detect read vs write: if only project_id is supplied, it's a GET
+        write_fields = {
+            "enabled", "unattended_enabled", "eligible_effect_kinds",
+            "max_retries", "max_actions_per_run", "cooldown_seconds", "bounds",
+        }
+        is_write = any(arguments.get(f) is not None for f in write_fields)
+
+        svc = _steward_service()
+
+        if not is_write:
+            # GET: read the policy
+            policy = svc._db.steward_policies.get_policy_for_project(project_id)
+            return {"policy": _serialize_policy(policy)}
+
+        # PUT: validate and upsert
+        from holdspeak.services.project_steward_service import EFFECT_KINDS
+        from holdspeak.project_contracts import generate_pstpol_id
+
+        eligible = arguments.get("eligible_effect_kinds")
+        if eligible is not None:
+            if not isinstance(eligible, list):
+                raise ValidationError("eligible_effect_kinds must be a list")
+            invalid_kinds = [k for k in eligible if k not in EFFECT_KINDS]
+            if invalid_kinds:
+                raise ValidationError(
+                    f"Invalid effect kinds: {invalid_kinds}. Valid: {list(EFFECT_KINDS)}"
+                )
+
+        for field in ("max_retries", "max_actions_per_run", "cooldown_seconds"):
+            val = arguments.get(field)
+            if val is not None:
+                if not isinstance(val, int) or val < 0:
+                    raise ValidationError(f"{field} must be a non-negative integer")
+
+        enabled = arguments.get("enabled")
+        if enabled is not None and not isinstance(enabled, bool):
+            raise ValidationError("enabled must be a boolean")
+        unattended_enabled = arguments.get("unattended_enabled")
+        if unattended_enabled is not None and not isinstance(unattended_enabled, bool):
+            raise ValidationError("unattended_enabled must be a boolean")
+
+        existing = svc._db.steward_policies.get_policy_for_project(project_id)
+        if existing is None:
+            policy_id = generate_pstpol_id()
+            svc._db.steward_policies.insert_policy(
+                policy_id=policy_id,
+                project_id=project_id,
+                eligible_effect_kinds_json=json.dumps(eligible or []),
+                max_retries=arguments.get("max_retries", 3),
+                max_actions_per_run=arguments.get("max_actions_per_run", 10),
+                cooldown_seconds=arguments.get("cooldown_seconds", 0),
+                bounds_json=json.dumps(arguments.get("bounds", {})),
+                enabled=1 if arguments.get("enabled", True) else 0,
+                unattended_enabled=1 if arguments.get("unattended_enabled", False) else 0,
+            )
+        else:
+            policy_id = existing["id"]
+            update_kwargs: dict[str, Any] = {}
+            if eligible is not None:
+                update_kwargs["eligible_effect_kinds_json"] = json.dumps(eligible)
+            if arguments.get("max_retries") is not None:
+                update_kwargs["max_retries"] = arguments["max_retries"]
+            if arguments.get("max_actions_per_run") is not None:
+                update_kwargs["max_actions_per_run"] = arguments["max_actions_per_run"]
+            if arguments.get("cooldown_seconds") is not None:
+                update_kwargs["cooldown_seconds"] = arguments["cooldown_seconds"]
+            if arguments.get("bounds") is not None:
+                update_kwargs["bounds_json"] = json.dumps(arguments["bounds"])
+            if enabled is not None:
+                update_kwargs["enabled"] = 1 if enabled else 0
+            if unattended_enabled is not None:
+                update_kwargs["unattended_enabled"] = 1 if unattended_enabled else 0
+            if update_kwargs:
+                svc._db.steward_policies.update_policy(policy_id, **update_kwargs)
+
+        policy = svc._db.steward_policies.get_policy(policy_id)
+
+        # steward.configured event (mirrors steward.py:335-361)
+        try:
+            from holdspeak.services.service_event_ledger import ServiceEventLedger
+            ledger = ServiceEventLedger(svc._db)
+            with svc._db._connection() as conn:
+                ledger.append_in_transaction(
+                    conn,
+                    principal,
+                    event_type="steward.configured",
+                    producer="steward.mcp",
+                    subject_ref=f"steward_policy:{policy_id}",
+                    source_revision="",
+                    facts={
+                        "policy_id": policy_id,
+                        "project_id": project_id,
+                        "enabled": bool(policy["enabled"]) if policy else False,
+                        "unattended_enabled": bool(
+                            policy.get("unattended_enabled", 0)
+                        ) if policy else False,
+                    },
+                    refs=[
+                        f"project:{project_id}",
+                        f"steward_policy:{policy_id}",
+                    ],
+                )
+        except Exception:
+            pass  # Event emission must never fail the policy response.
+
+        return {"success": True, "policy": _serialize_policy(policy)}
+
+    if name == "project.run_steward":
+        # Web parity: steward.py:61 api_start_steward_run
+        # MCP-003: insert_run on the call thread (typed refusals surface
+        # synchronously), then hand phase execution to a daemon thread.
+        # run_id returned PROMPTLY.
+        from holdspeak.db.steward import ActiveRunExistsError
+        from holdspeak.services.project_steward_service import (
+            CooldownActiveError,
+            StewardDisabledError,
+        )
+        from holdspeak.project_contracts import generate_pcmd_id
+
+        project_id = _require_id(arguments, "project_id")
+        watermark = str(arguments.get("watermark", "") or "")
+        cmd_id = arguments.get("command_id")
+
+        req_hash = _request_hash({
+            "project_id": project_id,
+            "action": "run_once",
+            "watermark": watermark,
+        })
+
+        # command_id replay (mirrors steward.py:78-91)
+        db = get_database()
+        if cmd_id is not None:
+            existing = db.projects.get_project_command(cmd_id)
+            if existing is not None:
+                if (existing["status"] == "completed"
+                        and existing["request_hash"] == req_hash):
+                    if existing["result_json"]:
+                        return json.loads(existing["result_json"])
+                    return {"success": True, "run_id": None}
+                if existing["request_hash"] != req_hash:
+                    raise ConflictError(
+                        "same command_id with different request hash",
+                        code="idempotency_conflict",
+                    )
+
+        svc = _steward_service()
+
+        try:
+            run_id = svc.insert_run(principal, project_id, watermark=watermark)
+        except ActiveRunExistsError:
+            raise ServiceError(
+                "active_run_exists",
+                f"Project {project_id} already has an active steward run (STW-002)",
+                context={"status": 409},
+            )
+        except StewardDisabledError:
+            raise ServiceError(
+                "steward_disabled",
+                "The steward policy is disabled for this project",
+                context={"status": 409},
+            )
+        except CooldownActiveError as exc:
+            raise ServiceError(
+                "cooldown_active",
+                f"Cooling down: {exc.seconds_remaining}s remaining",
+                context={"status": 409},
+            )
+
+        result_payload = {"success": True, "run_id": run_id}
+
+        # Record command for replay
+        _record_steward_command(
+            svc._db, cmd_id or generate_pcmd_id(),
+            project_id, "run_once", req_hash, result_payload,
+        )
+
+        # MCP-003: phase execution on a daemon thread.
+        def _execute() -> None:
+            try:
+                svc.execute_phases(principal, run_id, project_id)
+            except Exception:
+                pass
+
+        t = threading.Thread(target=_execute, daemon=True)
+        t.start()
+
+        return result_payload
+
+    if name == "project.stop_steward":
+        # Web parity: steward.py:189 api_stop_steward_run
+        # Service seam: ProjectStewardService.stop
+        run_id = _require_id(arguments, "run_id")
+        svc = _steward_service()
+        run = svc._db.steward_runs.get_run(run_id)
+        if run is None:
+            raise NotFound("steward_run", run_id)
+        svc.stop(run_id)
+        return {"success": True, "run_id": run_id}
+
+    if name == "project.get_steward_run":
+        # Web parity: steward.py:168 api_get_steward_run
+        # Service seam: steward_runs + steward_steps DB layer
+        run_id = _require_id(arguments, "run_id")
+        svc = _steward_service()
+        run = svc._db.steward_runs.get_run(run_id)
+        if run is None:
+            raise NotFound("steward_run", run_id)
+        steps = svc._db.steward_steps.list_steps(run_id)
+        return {
+            "run": _serialize_run(run),
+            "steps": [_serialize_step(s) for s in steps],
+        }
+
+    # ── setup driver tools (HS-165-03) ──────────────────────────────
+    # Mirrors: holdspeak/web/routes/project_setup.py
+
+    if name == "project.setup.start":
+        # Web parity: project_setup.py:48 start_setup
+        # Service seam: ProjectSetupService.start_setup
+        return _setup_service().start_setup(principal)
+
+    if name == "project.setup.resume":
+        # Web parity: project_setup.py:60 get_setup
+        # Service seam: ProjectSetupService.get_setup
+        session_id = _require_id(arguments, "session_id")
+        return _setup_service().get_setup(session_id)
+
+    if name == "project.setup.answer":
+        # Web parity: project_setup.py:78 answer
+        # Service seam: ProjectSetupService.answer
+        session_id = _require_id(arguments, "session_id")
+        question_id = _require_id(arguments, "question_id")
+        payload = arguments.get("payload") or {}
+        return _setup_service().answer(
+            principal, session_id, question_id, payload,
+        )
+
+    if name == "project.setup.suggest":
+        # Web parity: project_setup.py:105 suggest
+        # Service seam: ProjectSetupService.suggest
+        session_id = _require_id(arguments, "session_id")
+        proposals = _setup_service().suggest(principal, session_id)
+        return {"proposals": proposals}
+
+    if name == "project.setup.finalize":
+        # Web parity: project_setup.py:261 finalize
+        # Service seam: ProjectSetupService.finalize
+        # command_id mirrors the route's body.command_id
+        session_id = _require_id(arguments, "session_id")
+        cmd_id = arguments.get("command_id")
+        return _setup_service().finalize(
+            principal, session_id, command_id=cmd_id,
+        )
+
+    # ── provider driver tools (HS-165-03) ───────────────────────────
+    # Mirrors: holdspeak/web/routes/providers.py
+
+    if name == "provider.list":
+        # Web parity: providers.py:54 list_providers
+        # Service seam: GitHubProviderAdapter.manifest + _NATIVE_PROVIDERS
+        providers: list[dict[str, Any]] = list(_NATIVE_PROVIDERS)
+        adapter = _github_adapter()
+        if adapter is not None:
+            providers.append(adapter.manifest())
+        return {"providers": providers}
+
+    if name == "provider.github_connection":
+        # Web parity: providers.py:68 github_connection
+        # Service seam: GitHubProviderAdapter.connection_status
+        adapter = _github_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "GitHub provider is not configured",
+                context={"status": 404},
+            )
+        return adapter.connection_status(principal)
+
+    if name == "provider.github_discover":
+        # Web parity: providers.py:104 github_discover
+        # Service seam: GitHubProviderAdapter.discover
+        adapter = _github_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "GitHub provider is not configured",
+                context={"status": 404},
+            )
+        return adapter.discover(
+            principal,
+            query=arguments.get("query"),
+            cursor=arguments.get("cursor"),
+            limit=arguments.get("limit", 30),
+        )
+
+    if name == "provider.github_validate_repo":
+        # Web parity: providers.py:132 github_validate_repo
+        # Service seam: GitHubProviderAdapter.validate_repo
+        adapter = _github_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "GitHub provider is not configured",
+                context={"status": 404},
+            )
+        owner_repo = str(arguments.get("owner_repo", "")).strip()
+        if not owner_repo:
+            raise ValidationError("owner_repo is required")
+        return adapter.validate_repo(principal, owner_repo)
+
+    # ── graduated watch driver tools (HS-165-03) ────────────────────
+    # Mirrors: holdspeak/web/routes/watches.py + providers.py:158
+    # BOUNDARY: these tools operate ONLY on graduated rows.
+
+    if name == "project.watch.inspect":
+        # Web parity: watches.py:73 get_watch
+        # Service seam: WatchService.get_watch
+        watch_id = _require_id(arguments, "watch_id")
+        _require_graduated_watch(watch_id)
+        return _watch_service().get_watch(principal, watch_id)
+
+    if name == "project.watch.test":
+        # Web parity: watches.py:119 test_watch
+        # Service seam: WatchService.test_watch
+        watch_id = _require_id(arguments, "watch_id")
+        _require_graduated_watch(watch_id)
+        return _watch_service().test_watch(principal, watch_id)
+
+    if name == "project.watch.evaluate":
+        # Web parity: providers.py:158 evaluate_watch
+        # Service seam: WatchService.evaluate_once
+        watch_id = _require_id(arguments, "watch_id")
+        _require_graduated_watch(watch_id)
+        result = _watch_service().evaluate_once(principal, watch_id)
+        return {"success": True, **result}
+
+    if name == "project.watch.set_rules":
+        # Web parity: watches.py:229 set_rules
+        # Service seam: WatchService.set_rules
+        watch_id = _require_id(arguments, "watch_id")
+        _require_graduated_watch(watch_id)
+        rules = arguments.get("rules") or []
+        return _watch_service().set_rules(principal, watch_id, rules)
+
+    if name == "project.watch.pause":
+        # Web parity: watches.py:163 pause_watch
+        # Service seam: WatchService.pause_watch
+        watch_id = _require_id(arguments, "watch_id")
+        _require_graduated_watch(watch_id)
+        return _watch_service().pause_watch(principal, watch_id)
+
+    if name == "project.watch.resume":
+        # Web parity: watches.py:185 resume_watch
+        # Service seam: WatchService.resume_watch
+        watch_id = _require_id(arguments, "watch_id")
+        _require_graduated_watch(watch_id)
+        return _watch_service().resume_watch(principal, watch_id)
+
+    if name == "project.watch.retire":
+        # Web parity: watches.py:205 retire_watch
+        # Service seam: WatchService.retire_watch
+        watch_id = _require_id(arguments, "watch_id")
+        _require_graduated_watch(watch_id)
+        return _watch_service().retire_watch(principal, watch_id)
 
     raise LookupError(name)
 

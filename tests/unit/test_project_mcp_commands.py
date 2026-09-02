@@ -777,6 +777,16 @@ def test_all_command_tools_discoverable() -> None:
         "project.decide_proposal", "project.accept_review",
         "project.list_updates", "project.draft_update",
         "project.update_draft", "project.publish_update",
+        # HS-165-03: steward, setup, watch drivers
+        "project.configure_steward", "project.run_steward",
+        "project.stop_steward", "project.get_steward_run",
+        "project.setup.start", "project.setup.resume",
+        "project.setup.answer", "project.setup.suggest",
+        "project.setup.finalize",
+        "project.watch.inspect", "project.watch.test",
+        "project.watch.evaluate", "project.watch.set_rules",
+        "project.watch.pause", "project.watch.resume",
+        "project.watch.retire",
     ]
     assert project_tools == expected
     # All have versioned $id and closed schemas
