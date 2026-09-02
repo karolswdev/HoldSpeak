@@ -1398,20 +1398,26 @@ HoldSpeak stopped and all database connections closed.
 
 ## 17. CF-0 story and evidence map
 
-| Story | Outcome | Requirements | Required evidence |
-| --- | --- | --- | --- |
-| CF0-01 Owner amendments | retention, Memory app, model-license posture ratified | INV-012, section 12, section 14 | signed amendment refs |
-| CF0-02 Domain schema | claims, proposals, evidence, journal, policy, generation foundations | sections 4–6 | migration/constraint tests |
-| CF0-03 Command core | idempotent CAS mutations and stable errors | section 7, TXN-001–004 | concurrency/crash suite |
-| CF0-04 Source journal | adapter registry, cursors, eligibility fixtures | section 10, TXN-007 | reconciliation reports |
-| CF0-05 Plan waist | canonical planner artifact, digest, budgets, receipt | section 8, TXN-005 | golden plans/token tests |
-| CF0-06 Privacy core | encryption/key lineage, redacted observations, removal barrier | INV-008/009, sections 12/15 | shred/removal/log scans |
-| CF0-07 Foundation registries | procedure, graph, embedding-generation contracts | section 5.4, section 13 | state/constraint tests |
-| CF0-08 Capability census | every registry ID assigned explicit policy | section 11 | generated census/CI drift test |
-| CF0-09 Bounded shadow adapters | planner contract plus representative Ask, Thread, Recipe, and Coder adapters construct but never inject local fake-runner plans; CF-2 completes the universal census rollout | INV-010/011, section 16 | per-capability goldens |
-| CF0-10 Product shell/state fixtures | dev-only persisted Memory shell, mock service states, parity and accessibility grammar | UX/IA/CON/PAR/A11Y/STATE | wire fixtures, schema parity, keyboard/AT walkthrough |
-| CF0-11 Local proof harness | owner proof service, retention, preview/export, leakage scan | MEAS-001–010 | sanitized local report |
-| CF0-12 Close and rollback | fault campaigns, compatibility, evidence index | sections 9/16/18 | CF-0 close report |
+| Work package | Roadmap story | Outcome | Requirements | Required evidence |
+| --- | --- | --- | --- | --- |
+| CF0-01 Owner amendments | [HS-160-01](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-01-the-owner-canon.md) | retention, Memory app, model-license posture ratified | INV-012, section 12, section 14 | signed amendment refs |
+| CF0-02 Domain schema | [HS-160-02](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-02-the-domain-grammar.md) | claims, proposals, evidence, journal, policy, generation foundations | sections 4–6 | migration/constraint tests |
+| CF0-03 Command core | [HS-160-03](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-03-the-command-core.md) | idempotent CAS mutations and stable errors | section 7, TXN-001–004 | concurrency/crash suite |
+| CF0-04 Source journal | [HS-160-04](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-04-the-source-spine.md) | adapter registry, cursors, eligibility fixtures | section 10, TXN-007 | reconciliation reports |
+| CF0-05 Plan waist | [HS-160-05](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-05-the-plan-waist.md) | canonical planner artifact, digest, budgets, receipt | section 8, TXN-005 | golden plans/token tests |
+| CF0-06 Privacy core | [HS-160-06](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-06-the-private-material-vault.md), [HS-160-07](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-07-the-private-material-cutover.md), [HS-160-08](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-08-remove-and-forget.md) | key saga, encrypted resolver/cutover, removal barrier and Forget | INV-008/009, sections 12/15 | crypto/cutover/shred/removal/log scans |
+| CF0-07 Foundation registries | [HS-160-09](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-09-the-derived-foundations.md) | procedure, graph, embedding-generation contracts | section 5.4, section 13 | state/constraint tests |
+| CF0-08 Capability census | [HS-160-10](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-10-the-total-policy-census.md) | every registry ID assigned explicit policy | section 11 | generated census/CI drift test |
+| CF0-09 Bounded shadow adapters | [HS-160-11](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-11-bounded-shadow-adoption.md) | planner contract plus representative Ask, Thread, Recipe, and Coder adapters construct but never inject local fake-runner plans; CF-2 completes the universal census rollout | INV-010/011, section 16 | per-capability goldens |
+| CF0-10 Product shell/state fixtures | [HS-160-12](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-12-the-memory-contract-shell.md) | dev-only persisted Memory shell, mock service states, parity and accessibility grammar | UX/IA/CON/PAR/A11Y/STATE | wire fixtures, schema parity, keyboard/AT walkthrough |
+| CF0-11 Local proof harness | [HS-160-13](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-13-the-local-proof-harness.md) | owner proof service, retention, preview/export, leakage scan | MEAS-001–010 | sanitized local report |
+| CF0-12 Close and rollback | [HS-160-14](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/story-14-the-cf0-close.md) | fault campaigns, compatibility, evidence index | sections 9/16/18 | CF-0 close report |
+
+The fourteen roadmap stories are PR-sized implementation contracts derived
+from these twelve work packages, not evidence that CF-0 has shipped. CF0-06 is
+deliberately split into three ordered privacy stories after council review.
+Their live state and dependency graph are maintained in the
+[Phase 160 status](../../pm/roadmap/holdspeak/phase-160-continuity-contracts/current-phase-status.md).
 
 ## 18. Acceptance gates
 
