@@ -262,9 +262,8 @@
   --zone-tint-5: #FF9E64;
   --zone-tint-6: #FBBF24;
   --desk-z-stage: -1; /* the fixed atmosphere behind the document */
-  --desk-rain-sky-grade: rgba(5, 14, 25, 0.18); /* rainy-city atmosphere: cool skyline depth grade */
-  --desk-rain-edge: rgba(2, 6, 12, 0.38); /* rainy-city atmosphere: focus vignette around the wet street */
-  --desk-rain-scanline: rgba(2, 6, 12, 0.05); /* rainy-city atmosphere: one-pixel CRT scanline */
+  --desk-atmosphere-sky-grade: rgba(5, 14, 25, 0.12); /* shared atmosphere skyline depth grade */
+  --desk-atmosphere-edge: rgba(2, 6, 12, 0.28); /* shared atmosphere focus vignette */
   --desk-z-dock-under: 40; /* the dock on compact viewports — sheets own the phone's bottom */
   --desk-z-popover: 82; /* popovers/toasts above even the transient band */
   --desk-glass: var(--surface-2); /* HS-110-01: opaque surface, no frosted glass */

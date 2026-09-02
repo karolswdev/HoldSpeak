@@ -1,22 +1,51 @@
-import { useEffect, useRef } from "react";
-import { mountRainyCityScene } from "./rainyCityScene";
+import { useEffect, useMemo, useRef } from "react";
+import {
+  DEFAULT_ATMOSPHERE_ID,
+  resolveAtmosphere,
+  type AtmosphereId,
+} from "./atmosphereRegistry";
+import { mountAtmosphereScene } from "./atmosphereRuntime";
 
 /** The Floor's decorative world backdrop. Product objects remain in the
  * independent Pixi canvas above this layer, so scenery can never intercept a
  * Desk gesture or become application state. */
-export function Atmosphere() {
+export interface AtmosphereProps {
+  /** Personalization seam: callers select any registered lazy atmosphere. */
+  id?: AtmosphereId;
+}
+
+export function Atmosphere({ id = DEFAULT_ATMOSPHERE_ID }: AtmosphereProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const definition = useMemo(() => resolveAtmosphere(id), [id]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    return mountRainyCityScene(canvas);
-  }, []);
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
+    void definition
+      .load()
+      .then((factory) => {
+        if (cancelled) return;
+        cleanup = mountAtmosphereScene(canvas, factory, {
+          seed: definition.seed,
+        });
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
+  }, [definition]);
 
   return (
-    <div className="desk-stage" aria-hidden="true">
-      <canvas ref={canvasRef} className="desk-rain-city" />
-      <div className="desk-rain-city-grade" />
+    <div
+      className="desk-stage"
+      data-atmosphere={definition.id}
+      aria-hidden="true"
+    >
+      <canvas ref={canvasRef} className="desk-atmosphere-canvas" />
+      <div className={`desk-atmosphere-grade ${definition.gradeClassName}`} />
     </div>
   );
 }

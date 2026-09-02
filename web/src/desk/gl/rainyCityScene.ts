@@ -1,19 +1,29 @@
 import * as THREE from "three";
+import type {
+  AtmosphereFrame,
+  AtmosphereScene,
+  AtmosphereSceneContext,
+  AtmosphereViewport,
+} from "./atmosphereRuntime";
 
-const PIXEL_SCALE = 3;
-const MAX_RENDER_WIDTH = 720;
-const MAX_RENDER_HEIGHT = 480;
-const RAIN_COUNT = 520;
-const SPLASH_COUNT = 72;
+const MAX_RENDER_WIDTH = 1_600;
+const MAX_RENDER_HEIGHT = 1_000;
+const RAIN_COUNT = 720;
+const SPLASH_COUNT = 84;
 const PUDDLE_Y = 0.035;
-const PUDDLE_X = -1.7;
-const PUDDLE_Z = -1.3;
+const PUDDLE_X = -1.65;
+const PUDDLE_Z = 1.8;
+const CAMERA_X = 0;
+const CAMERA_Y = 2.25;
+const CAMERA_Z = 18;
 
 interface RainDrop {
   x: number;
   y: number;
   z: number;
   speed: number;
+  length: number;
+  drift: number;
 }
 
 interface SplashDrop {
@@ -24,21 +34,52 @@ interface SplashDrop {
   vz: number;
   offset: number;
   cycle: number;
+  previousLocal: number;
 }
 
 interface Ripple {
   mesh: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>;
   offset: number;
   cycle: number;
+  previousLocal: number;
 }
 
-/** A tiny deterministic generator keeps the skyline stable across reloads. */
-function makeRandom(seed: number): () => number {
+interface WindowBank {
+  material: THREE.MeshBasicMaterial;
+  baseOpacity: number;
+  phase: number;
+}
+
+interface ReflectionStreak {
+  mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
+  phase: number;
+  baseOpacity: number;
+}
+
+/** A deterministic authored seed makes each atmosphere repeatable while a
+ * second derived stream keeps weather motion irregular within that world. */
+export function makeAtmosphereRandom(seed: number): () => number {
   let state = seed >>> 0;
   return () => {
     state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
     return state / 0x100000000;
   };
+}
+
+/** A short double pulse reads as distant lightning without a hard full-screen
+ * strobe. Reduced-motion users never advance this weather timeline. */
+export function lightningIntensityAt(age: number): number {
+  if (age < 0 || age > 1.15) return 0;
+  const pulse = (center: number, width: number, strength: number) =>
+    Math.max(0, 1 - Math.abs(age - center) / width) * strength;
+  return Math.min(
+    1,
+    pulse(0.08, 0.1, 0.78) + pulse(0.28, 0.075, 0.42) + pulse(0.52, 0.18, 0.88),
+  );
+}
+
+export function nextLightningDelay(random: () => number): number {
+  return 9 + random() * 17;
 }
 
 function disposeScene(scene: THREE.Scene): void {
@@ -72,11 +113,14 @@ function box(
 function puddleRadius(angle: number, radius: number): number {
   return (
     radius *
-    (1 + Math.sin(angle * 3 + 0.4) * 0.055 + Math.sin(angle * 7 - 0.8) * 0.032)
+    (1 +
+      Math.sin(angle * 3 + 0.4) * 0.06 +
+      Math.sin(angle * 7 - 0.8) * 0.035 +
+      Math.sin(angle * 11 + 1.7) * 0.018)
   );
 }
 
-function puddleGeometry(radius: number, segments = 48): THREE.CircleGeometry {
+function puddleGeometry(radius: number, segments = 72): THREE.CircleGeometry {
   const geometry = new THREE.CircleGeometry(radius, segments);
   const positions = geometry.getAttribute("position");
   for (let index = 1; index < positions.count; index += 1) {
@@ -88,7 +132,7 @@ function puddleGeometry(radius: number, segments = 48): THREE.CircleGeometry {
   return geometry;
 }
 
-function puddleContour(radius: number, segments = 48): THREE.BufferGeometry {
+function puddleContour(radius: number, segments = 72): THREE.BufferGeometry {
   const points = Array.from({ length: segments }, (_, index) => {
     const angle = (index / segments) * Math.PI * 2;
     const edge = puddleRadius(angle, radius);
@@ -97,163 +141,274 @@ function puddleContour(radius: number, segments = 48): THREE.BufferGeometry {
   return new THREE.BufferGeometry().setFromPoints(points);
 }
 
-class RainyCityScene {
+class RainyCityScene implements AtmosphereScene {
   private readonly scene = new THREE.Scene();
-  private readonly camera = new THREE.PerspectiveCamera(43, 1, 0.1, 120);
+  private readonly camera = new THREE.PerspectiveCamera(50, 1, 0.1, 180);
   private readonly renderer: THREE.WebGLRenderer;
-  private readonly random = makeRandom(0x484f4c44);
-  private readonly clock = new THREE.Clock();
+  private readonly layoutRandom: () => number;
+  private readonly weatherRandom: () => number;
   private readonly rainDrops: RainDrop[] = [];
   private readonly splashDrops: SplashDrop[] = [];
   private readonly ripples: Ripple[] = [];
+  private readonly windowBanks: WindowBank[] = [];
+  private readonly reflections: ReflectionStreak[] = [];
+  private readonly baseSky = new THREE.Color(0x07131f);
+  private readonly lightningSky = new THREE.Color(0x7393ad);
+  private readonly sky = new THREE.Color();
+  private readonly fogBase = new THREE.Color(0x0a1a2a);
+  private readonly fogLightning = new THREE.Color(0x66869f);
+  private readonly cameraTarget = new THREE.Vector3(0, 5.3, -31);
+  private readonly lightningBolts: Array<
+    THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial>
+  > = [];
   private rain!: THREE.InstancedMesh;
   private splashes!: THREE.InstancedMesh;
-  private animationFrame = 0;
-  private elapsed = 0;
-  private reducedMotion = false;
+  private hemisphere!: THREE.HemisphereLight;
+  private lightning!: THREE.DirectionalLight;
+  private lampLight!: THREE.PointLight;
+  private readonly cloudBank = new THREE.Group();
+  private nextLightning = 0;
+  private lightningStarted = -1;
+  private currentLightning = 0;
+  private lastElapsed = 0;
   private destroyed = false;
-  private pointerX = 0;
-  private pointerY = 0;
-  private readonly motionQuery = window.matchMedia(
-    "(prefers-reduced-motion: reduce)",
-  );
 
-  constructor(private readonly canvas: HTMLCanvasElement) {
+  constructor(context: AtmosphereSceneContext) {
+    this.layoutRandom = makeAtmosphereRandom(context.seed);
+    this.weatherRandom = makeAtmosphereRandom(context.seed ^ 0x9e3779b9);
     this.renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: false,
+      canvas: context.canvas,
+      antialias: true,
       alpha: false,
       depth: true,
       powerPreference: "high-performance",
     });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.28;
-    this.scene.background = new THREE.Color(0x0b1b2d);
-    this.scene.fog = new THREE.FogExp2(0x10243a, 0.017);
+    this.renderer.toneMappingExposure = 1.12;
+    this.scene.background = this.baseSky.clone();
+    this.scene.fog = new THREE.FogExp2(this.fogBase, 0.0125);
 
-    this.camera.position.set(0, 9.2, 18.5);
-    this.camera.lookAt(0, 2.6, -10);
+    this.camera.position.set(CAMERA_X, CAMERA_Y, CAMERA_Z);
+    this.camera.lookAt(this.cameraTarget);
 
     this.buildLights();
+    this.buildSkyAndClouds();
+    this.buildLightningBolt();
     this.buildStreet();
     this.buildSkyline();
     this.buildLamp();
     this.buildRain();
     this.buildSplashes();
-
-    this.reducedMotion = this.motionQuery.matches;
-    this.resize();
-    this.updateRain(0);
-    this.updateSplashes();
-    this.renderer.render(this.scene, this.camera);
-
-    window.addEventListener("resize", this.resize, { passive: true });
-    window.addEventListener("pointermove", this.onPointerMove, {
-      passive: true,
-    });
-    document.addEventListener("visibilitychange", this.onVisibilityChange);
-    this.motionQuery.addEventListener("change", this.onMotionChange);
-    if (!this.reducedMotion && !document.hidden) this.start();
+    this.nextLightning = context.reducedMotion
+      ? Number.POSITIVE_INFINITY
+      : 4.5 + this.weatherRandom() * 4;
   }
 
   private buildLights(): void {
-    this.scene.add(new THREE.HemisphereLight(0x8fb4d2, 0x07101a, 2.15));
-    const moonWash = new THREE.DirectionalLight(0xa1c1d9, 2.2);
-    moonWash.position.set(-8, 14, 8);
+    this.hemisphere = new THREE.HemisphereLight(0x6f91ad, 0x05090e, 1.35);
+    this.scene.add(this.hemisphere);
+
+    const moonWash = new THREE.DirectionalLight(0x91aec4, 1.25);
+    moonWash.position.set(-18, 32, 14);
     this.scene.add(moonWash);
+
+    this.lightning = new THREE.DirectionalLight(0xbdd9ef, 0);
+    this.lightning.position.set(22, 48, -38);
+    this.scene.add(this.lightning);
+  }
+
+  private buildSkyAndClouds(): void {
+    const cloudMaterial = new THREE.MeshLambertMaterial({
+      color: 0x13283a,
+      transparent: true,
+      opacity: 0.76,
+      depthWrite: false,
+    });
+    for (let index = 0; index < 28; index += 1) {
+      const width = 6 + this.layoutRandom() * 14;
+      const height = 1.2 + this.layoutRandom() * 2.8;
+      const depth = 3 + this.layoutRandom() * 8;
+      box(
+        this.cloudBank,
+        [width, height, depth],
+        [
+          -48 + this.layoutRandom() * 96,
+          24 + this.layoutRandom() * 20,
+          -72 + this.layoutRandom() * 42,
+        ],
+        cloudMaterial,
+      );
+    }
+    this.scene.add(this.cloudBank);
+  }
+
+  private buildLightningBolt(): void {
+    const addBolt = (points: THREE.Vector3[], opacity: number) => {
+      const material = new THREE.LineBasicMaterial({
+        color: 0xdaf2ff,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        toneMapped: false,
+      });
+      const bolt = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(points),
+        material,
+      );
+      bolt.userData.peakOpacity = opacity;
+      this.scene.add(bolt);
+      this.lightningBolts.push(bolt);
+    };
+
+    const main: THREE.Vector3[] = [];
+    let x = 18;
+    let y = 39;
+    for (let index = 0; index < 11; index += 1) {
+      main.push(new THREE.Vector3(x, y, -43));
+      x += (this.layoutRandom() - 0.48) * 2.7;
+      y -= 2.15 + this.layoutRandom() * 1.2;
+    }
+    addBolt(main, 0.92);
+    addBolt(
+      [
+        main[4].clone(),
+        main[4].clone().add(new THREE.Vector3(3.2, -2.7, 0)),
+        main[4].clone().add(new THREE.Vector3(5.1, -5.6, 0)),
+      ],
+      0.56,
+    );
+    addBolt(
+      [
+        main[7].clone(),
+        main[7].clone().add(new THREE.Vector3(-2.4, -2.1, 0)),
+        main[7].clone().add(new THREE.Vector3(-3.6, -4.7, 0)),
+      ],
+      0.42,
+    );
   }
 
   private buildStreet(): void {
     const street = new THREE.Mesh(
-      new THREE.PlaneGeometry(54, 55),
+      new THREE.PlaneGeometry(90, 95),
       new THREE.MeshStandardMaterial({
-        color: 0x101f2e,
-        roughness: 0.32,
-        metalness: 0.42,
+        color: 0x0b1721,
+        roughness: 0.24,
+        metalness: 0.58,
       }),
     );
     street.rotation.x = -Math.PI / 2;
-    street.position.set(0, 0, -7);
+    street.position.set(0, 0, -5);
     this.scene.add(street);
 
-    const curbMaterial = new THREE.MeshLambertMaterial({ color: 0x17212b });
-    box(this.scene, [48, 0.28, 1.15], [0, 0.12, -10.8], curbMaterial);
-    box(this.scene, [48, 0.16, 2.8], [0, 0.25, -12.55], curbMaterial);
+    const sidewalkMaterial = new THREE.MeshStandardMaterial({
+      color: 0x172129,
+      roughness: 0.72,
+      metalness: 0.12,
+    });
+    box(this.scene, [90, 0.26, 1.15], [0, 0.13, -13.6], sidewalkMaterial);
+    box(this.scene, [90, 0.2, 7.5], [0, 0.27, -17.9], sidewalkMaterial);
+
+    const curbSeamMaterial = new THREE.MeshBasicMaterial({
+      color: 0x80909a,
+      transparent: true,
+      opacity: 0.2,
+    });
+    for (let x = -40; x < 42; x += 2.8) {
+      box(this.scene, [0.035, 0.025, 6.7], [x, 0.39, -18], curbSeamMaterial);
+    }
 
     const puddle = new THREE.Mesh(
-      puddleGeometry(3.8),
-      new THREE.MeshStandardMaterial({
-        color: 0x102c44,
-        emissive: 0x07111e,
-        emissiveIntensity: 0.8,
+      puddleGeometry(2.9),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x0b2638,
+        emissive: 0x06101a,
+        emissiveIntensity: 0.35,
         transparent: true,
-        opacity: 0.9,
-        roughness: 0.12,
-        metalness: 0.68,
+        opacity: 0.88,
+        roughness: 0.08,
+        metalness: 0.72,
+        clearcoat: 0.72,
+        clearcoatRoughness: 0.12,
       }),
     );
     puddle.rotation.x = -Math.PI / 2;
-    puddle.scale.set(1.48, 0.64, 1);
+    puddle.scale.set(1.45, 0.55, 1);
     puddle.position.set(PUDDLE_X, PUDDLE_Y, PUDDLE_Z);
     this.scene.add(puddle);
 
     const puddleRim = new THREE.LineLoop(
-      puddleContour(3.8),
+      puddleContour(2.9),
       new THREE.LineBasicMaterial({
-        color: 0x6da3b8,
+        color: 0x7ba5b5,
         transparent: true,
-        opacity: 0.46,
+        opacity: 0.25,
       }),
     );
     puddleRim.rotation.x = -Math.PI / 2;
-    puddleRim.scale.set(1.48, 0.64, 1);
+    puddleRim.scale.set(1.45, 0.55, 1);
     puddleRim.position.set(PUDDLE_X, PUDDLE_Y + 0.012, PUDDLE_Z);
     this.scene.add(puddleRim);
 
-    // Chunky amber tiles read as the lamp's broken reflection in wet asphalt.
-    const reflectionMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffb44a,
-      transparent: true,
-      opacity: 0.17,
-      depthWrite: false,
-    });
-    const reflections: Array<[number, number, number, number]> = [
-      [-4.25, -2.75, 0.7, 2.6],
-      [-3.3, -1.95, 1.0, 1.8],
-      [-2.15, -1.2, 0.65, 1.2],
-      [-1.2, -0.62, 0.4, 0.7],
-    ];
-    for (const [x, z, width, depth] of reflections) {
-      const tile = new THREE.Mesh(
-        new THREE.PlaneGeometry(width, depth),
-        reflectionMaterial,
-      );
-      tile.rotation.x = -Math.PI / 2;
-      tile.position.set(x, PUDDLE_Y + 0.008, z);
-      this.scene.add(tile);
-    }
+    this.buildWetReflections();
 
     const laneMaterial = new THREE.MeshBasicMaterial({
-      color: 0x52606c,
+      color: 0x9ca7ab,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.14,
     });
-    for (let x = -16; x <= 18; x += 6.5) {
+    for (let x = -30; x <= 30; x += 8.5) {
       const lane = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.4, 0.08),
+        new THREE.PlaneGeometry(3.7, 0.1),
         laneMaterial,
       );
       lane.rotation.x = -Math.PI / 2;
-      lane.position.set(x, PUDDLE_Y / 2, 8.5);
+      lane.position.set(x, 0.018, 10.5);
       this.scene.add(lane);
     }
   }
 
+  private buildWetReflections(): void {
+    const colors = [0xff9e38, 0xf4c36a, 0x5ca8b9, 0x7d91bc];
+    for (let index = 0; index < 44; index += 1) {
+      const warm = index < 22;
+      const baseOpacity = warm ? 0.055 + this.layoutRandom() * 0.09 : 0.025;
+      const material = new THREE.MeshBasicMaterial({
+        color: colors[Math.floor(this.layoutRandom() * colors.length)],
+        transparent: true,
+        opacity: baseOpacity,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const width = 0.05 + this.layoutRandom() * (warm ? 0.24 : 0.12);
+      const depth = 0.35 + this.layoutRandom() * (warm ? 3.8 : 2.2);
+      const reflection = new THREE.Mesh(
+        new THREE.PlaneGeometry(width, depth),
+        material,
+      );
+      reflection.rotation.x = -Math.PI / 2;
+      reflection.position.set(
+        warm
+          ? -5.25 + (this.layoutRandom() - 0.5) * 3.8
+          : -20 + this.layoutRandom() * 40,
+        PUDDLE_Y + 0.009,
+        warm ? -2 + this.layoutRandom() * 7.5 : -11 + this.layoutRandom() * 14,
+      );
+      this.scene.add(reflection);
+      this.reflections.push({
+        mesh: reflection,
+        phase: this.layoutRandom() * Math.PI * 2,
+        baseOpacity,
+      });
+    }
+  }
+
   private buildSkyline(): void {
-    const facadePalette = [0x1d3044, 0x233a50, 0x1a2c40, 0x293c51];
+    const facadePalette = [0x101f2d, 0x172a3a, 0x1a3042, 0x22384a, 0x293f51];
     const coolWindows: THREE.Matrix4[] = [];
     const warmWindows: THREE.Matrix4[] = [];
+    const dimWindows: THREE.Matrix4[] = [];
     const matrix = new THREE.Matrix4();
 
     const addBuilding = (
@@ -265,155 +420,244 @@ class RainyCityScene {
       shade: number,
       windowChance: number,
     ) => {
-      const material = new THREE.MeshLambertMaterial({ color: shade });
+      const material = new THREE.MeshStandardMaterial({
+        color: shade,
+        roughness: 0.78,
+        metalness: 0.08,
+      });
       box(
         this.scene,
         [width, height, depth],
-        [x, height / 2 + 0.25, z],
+        [x, height / 2 + 0.38, z],
         material,
       );
 
-      const columns = Math.max(1, Math.floor(width / 0.7));
-      const floors = Math.max(2, Math.floor(height / 0.75));
+      const columns = Math.max(2, Math.floor(width / 1.15));
+      const floors = Math.max(3, Math.floor(height / 1.25));
       const gapX = width / (columns + 1);
       const gapY = height / (floors + 1);
       for (let floor = 1; floor <= floors; floor += 1) {
         for (let column = 1; column <= columns; column += 1) {
-          if (this.random() > windowChance) continue;
+          if (this.layoutRandom() > windowChance) continue;
           const wx = x - width / 2 + gapX * column;
-          const wy = 0.25 + gapY * floor;
-          matrix.makeTranslation(wx, wy, z + depth / 2 + 0.012);
-          (this.random() > 0.2 ? coolWindows : warmWindows).push(
-            matrix.clone(),
-          );
+          const wy = 0.38 + gapY * floor;
+          matrix.makeTranslation(wx, wy, z + depth / 2 + 0.015);
+          const roll = this.layoutRandom();
+          (roll > 0.34
+            ? coolWindows
+            : roll > 0.12
+              ? warmWindows
+              : dimWindows
+          ).push(matrix.clone());
         }
+      }
+
+      if (height > 30 && this.layoutRandom() > 0.58) {
+        this.buildRooftopDetail(x, height + 0.38, z, width);
       }
     };
 
-    // Three silhouette bands make the city feel much larger than the Desk.
-    for (let layer = 0; layer < 3; layer += 1) {
-      const z = -35 + layer * 7.5;
-      let x = -25 - this.random() * 2;
-      while (x < 26) {
-        const width = 1.8 + this.random() * 3.4;
-        const height = 4.5 + this.random() * (layer === 0 ? 11 : 7.5);
-        const depth = 3.4 + this.random() * 2.4;
+    // Meter-like proportions and overlapping depth bands stop the city from
+    // reading as a tabletop model. The nearest roofs disappear above frame.
+    const layers = [
+      { z: -72, maxHeight: 67, minHeight: 27, chance: 0.18, scale: 1.15 },
+      { z: -52, maxHeight: 53, minHeight: 21, chance: 0.27, scale: 1 },
+      { z: -34, maxHeight: 40, minHeight: 15, chance: 0.34, scale: 0.88 },
+    ];
+    for (let layer = 0; layer < layers.length; layer += 1) {
+      const band = layers[layer];
+      let x = -52 - this.layoutRandom() * 6;
+      while (x < 54) {
+        const width = (4.2 + this.layoutRandom() * 6.8) * band.scale;
+        const height =
+          band.minHeight +
+          this.layoutRandom() * (band.maxHeight - band.minHeight);
+        const depth = 6 + this.layoutRandom() * 7;
         x += width / 2;
         addBuilding(
           x,
-          z + this.random() * 1.2,
+          band.z + this.layoutRandom() * 4,
           width,
           height,
           depth,
           facadePalette[
-            (layer + Math.floor(this.random() * 3)) % facadePalette.length
+            (layer + Math.floor(this.layoutRandom() * 3)) % facadePalette.length
           ],
-          layer === 0 ? 0.34 : 0.22,
+          band.chance,
         );
-        x += width / 2 + 0.3 + this.random() * 0.8;
+        x += width / 2 + 0.8 + this.layoutRandom() * 2.2;
       }
     }
 
-    // A stepped, needle-topped landmark gives the silhouette an NYC cadence
-    // without reproducing a branded or exact real-world building.
-    const landmarkMaterial = new THREE.MeshLambertMaterial({ color: 0x31475e });
-    box(this.scene, [5.2, 10.5, 4.1], [4.4, 5.5, -31], landmarkMaterial);
-    box(this.scene, [3.4, 4.2, 3.2], [4.4, 12.8, -31], landmarkMaterial);
-    box(this.scene, [1.7, 3.1, 2.1], [4.4, 16.45, -31], landmarkMaterial);
-    box(this.scene, [0.48, 4.2, 0.48], [4.4, 20.05, -31], landmarkMaterial);
+    // A fictional stepped landmark gives the horizon an unmistakably tall-city
+    // cadence without copying a branded building.
+    const landmark = new THREE.MeshStandardMaterial({
+      color: 0x30495f,
+      roughness: 0.68,
+      metalness: 0.14,
+    });
+    box(this.scene, [9, 38, 8], [8, 19.4, -57], landmark);
+    box(this.scene, [6.4, 13, 6.4], [8, 44.9, -57], landmark);
+    box(this.scene, [3.5, 8, 4.2], [8, 55.4, -57], landmark);
+    box(this.scene, [0.62, 14, 0.62], [8, 66.4, -57], landmark);
     box(
       this.scene,
-      [0.72, 0.34, 0.72],
-      [4.4, 22.1, -31],
-      new THREE.MeshBasicMaterial({ color: 0xff705d }),
+      [0.9, 0.55, 0.9],
+      [8, 73.7, -57],
+      new THREE.MeshBasicMaterial({ color: 0xe45f55, toneMapped: false }),
     );
 
-    const windowGeometry = new THREE.PlaneGeometry(0.22, 0.28);
-    const addWindowInstances = (entries: THREE.Matrix4[], color: number) => {
-      const windows = new THREE.InstancedMesh(
-        windowGeometry,
-        new THREE.MeshBasicMaterial({ color, toneMapped: false }),
-        entries.length,
-      );
-      entries.forEach((entry, index) => windows.setMatrixAt(index, entry));
-      windows.instanceMatrix.needsUpdate = true;
-      this.scene.add(windows);
-    };
-    addWindowInstances(coolWindows, 0x7fa8b9);
-    addWindowInstances(warmWindows, 0xe6b064);
+    this.addWindowBank(coolWindows, 0x86b3c5, 0.76, 0.4);
+    this.addWindowBank(warmWindows, 0xf0b85f, 0.84, 1.7);
+    this.addWindowBank(dimWindows, 0x66818d, 0.4, 2.8);
+    this.buildNeonAccents();
+  }
 
-    // Rooftop aerials break otherwise rectangular horizons.
-    const aerialMaterial = new THREE.MeshBasicMaterial({ color: 0x35475a });
-    for (const [x, y, z] of [
-      [-12, 13, -33],
-      [13.5, 11, -28],
-      [-19, 9.5, -24],
-    ] as Array<[number, number, number]>) {
-      box(this.scene, [0.12, 3.2, 0.12], [x, y, z], aerialMaterial);
-      box(this.scene, [1.7, 0.15, 0.12], [x, y + 0.8, z], aerialMaterial);
+  private buildRooftopDetail(
+    x: number,
+    y: number,
+    z: number,
+    width: number,
+  ): void {
+    const silhouette = new THREE.MeshLambertMaterial({ color: 0x172534 });
+    const offset = (this.layoutRandom() - 0.5) * width * 0.42;
+    box(this.scene, [1.7, 1.2, 1.8], [x + offset, y + 0.6, z], silhouette);
+    box(this.scene, [0.1, 4.2, 0.1], [x + offset, y + 3.1, z], silhouette);
+    if (width > 7) {
+      box(this.scene, [2.6, 0.12, 0.12], [x + offset, y + 3.55, z], silhouette);
+    }
+  }
+
+  private addWindowBank(
+    entries: THREE.Matrix4[],
+    color: number,
+    opacity: number,
+    phase: number,
+  ): void {
+    const geometry = new THREE.PlaneGeometry(0.3, 0.42);
+    const material = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity,
+      toneMapped: false,
+    });
+    const windows = new THREE.InstancedMesh(geometry, material, entries.length);
+    entries.forEach((entry, index) => windows.setMatrixAt(index, entry));
+    windows.instanceMatrix.needsUpdate = true;
+    this.scene.add(windows);
+    this.windowBanks.push({ material, baseOpacity: opacity, phase });
+  }
+
+  private buildNeonAccents(): void {
+    const signs: Array<[number, number, number, number]> = [
+      [-15, 11, -27, 0x3eb6c5],
+      [22, 16, -36, 0xb764b8],
+      [-29, 8, -31, 0xd99045],
+    ];
+    for (const [x, y, z, color] of signs) {
+      const sign = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.4, 0.55),
+        new THREE.MeshBasicMaterial({
+          color,
+          transparent: true,
+          opacity: 0.72,
+          toneMapped: false,
+        }),
+      );
+      sign.position.set(x, y, z);
+      this.scene.add(sign);
     }
   }
 
   private buildLamp(): void {
     const structure = new THREE.MeshStandardMaterial({
-      color: 0x344854,
-      emissive: 0x101820,
-      emissiveIntensity: 0.65,
-      roughness: 0.7,
+      color: 0x273943,
+      emissive: 0x091116,
+      emissiveIntensity: 0.45,
+      roughness: 0.62,
+      metalness: 0.52,
     });
-    const edge = new THREE.MeshLambertMaterial({ color: 0x61747c });
+    const edge = new THREE.MeshStandardMaterial({
+      color: 0x556872,
+      roughness: 0.5,
+      metalness: 0.58,
+    });
     const amber = new THREE.MeshStandardMaterial({
-      color: 0xffc05a,
+      color: 0xffd07a,
       emissive: 0xff8c2a,
-      emissiveIntensity: 3.4,
-      roughness: 0.3,
+      emissiveIntensity: 4.4,
+      roughness: 0.24,
       toneMapped: false,
     });
     const lamp = new THREE.Group();
-    lamp.position.set(-7.2, 0, -3.1);
-    box(lamp, [0.85, 0.35, 0.85], [0, 0.18, 0], edge);
-    box(lamp, [0.42, 6.9, 0.42], [0, 3.55, 0], structure);
-    box(lamp, [2.75, 0.34, 0.42], [1.15, 6.75, 0], structure);
-    box(lamp, [0.95, 0.34, 0.95], [2.28, 6.48, 0], edge);
-    box(lamp, [0.62, 0.42, 0.62], [2.28, 6.2, 0], amber);
+    lamp.position.set(-7.25, 0, -4.8);
+    box(lamp, [0.72, 0.22, 0.72], [0, 0.11, 0], edge);
+    box(lamp, [0.28, 7.45, 0.28], [0, 3.84, 0], structure);
+    box(lamp, [2.75, 0.24, 0.3], [1.25, 7.47, 0], structure);
+    box(lamp, [0.18, 0.9, 0.2], [2.52, 7.08, 0], structure);
+    box(lamp, [0.92, 0.22, 0.82], [2.52, 6.67, 0], edge);
+    box(lamp, [0.56, 0.28, 0.54], [2.52, 6.43, 0], amber);
+    box(lamp, [0.12, 1.15, 0.12], [0.72, 7.03, 0], edge).rotation.z = -0.72;
     this.scene.add(lamp);
 
-    const lampLight = new THREE.PointLight(0xffa43a, 38, 17, 1.7);
-    lampLight.position.set(-4.92, 6.05, -3.1);
-    this.scene.add(lampLight);
+    this.lampLight = new THREE.PointLight(0xffa43d, 53, 22, 1.8);
+    this.lampLight.position.set(-4.73, 6.36, -4.8);
+    this.scene.add(this.lampLight);
 
-    const poolLight = new THREE.PointLight(0xff8a24, 11, 10, 2);
-    poolLight.position.set(PUDDLE_X - 0.6, 0.65, PUDDLE_Z);
+    const poolLight = new THREE.PointLight(0xff8f2c, 9, 11, 2);
+    poolLight.position.set(PUDDLE_X - 0.7, 0.48, PUDDLE_Z - 0.6);
     this.scene.add(poolLight);
+
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(4.5, 6.1, 32, 1, true),
+      new THREE.MeshBasicMaterial({
+        color: 0xffb559,
+        transparent: true,
+        opacity: 0.045,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    );
+    cone.position.set(-4.73, 3.32, -4.8);
+    this.scene.add(cone);
   }
 
   private buildRain(): void {
-    const geometry = new THREE.BoxGeometry(0.035, 0.58, 0.035);
+    const geometry = new THREE.BoxGeometry(0.026, 1, 0.026);
     const material = new THREE.MeshBasicMaterial({
-      color: 0x8bbbd0,
+      color: 0xa2cad8,
       transparent: true,
-      opacity: 0.58,
+      opacity: 0.47,
       depthWrite: false,
     });
     this.rain = new THREE.InstancedMesh(geometry, material, RAIN_COUNT);
     this.rain.frustumCulled = false;
     this.scene.add(this.rain);
     for (let index = 0; index < RAIN_COUNT; index += 1) {
-      this.rainDrops.push({
-        x: -21 + this.random() * 42,
-        y: 0.3 + this.random() * 20,
-        z: -39 + this.random() * 53,
-        speed: 8 + this.random() * 8,
-      });
+      this.rainDrops.push(this.newRainDrop(true));
     }
   }
 
+  private newRainDrop(initial = false): RainDrop {
+    return {
+      x: -30 + this.weatherRandom() * 60,
+      y: initial
+        ? 0.2 + this.weatherRandom() * 34
+        : 28 + this.weatherRandom() * 8,
+      z: -65 + this.weatherRandom() * 86,
+      speed: 13 + this.weatherRandom() * 17,
+      length: 0.45 + this.weatherRandom() * 1.35,
+      drift: 0.55 + this.weatherRandom() * 0.85,
+    };
+  }
+
   private buildSplashes(): void {
-    const geometry = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+    const geometry = new THREE.BoxGeometry(0.08, 0.14, 0.08);
     const material = new THREE.MeshBasicMaterial({
-      color: 0xb8e3eb,
+      color: 0xb9e0e7,
       transparent: true,
-      opacity: 0.78,
+      opacity: 0.72,
       depthWrite: false,
     });
     this.splashes = new THREE.InstancedMesh(geometry, material, SPLASH_COUNT);
@@ -421,74 +665,100 @@ class RainyCityScene {
     this.scene.add(this.splashes);
 
     for (let index = 0; index < SPLASH_COUNT; index += 1) {
-      const angle = this.random() * Math.PI * 2;
-      const radius = this.random() * 3.2;
-      const outward = 0.7 + this.random() * 1.5;
-      this.splashDrops.push({
-        x: PUDDLE_X + Math.cos(angle) * radius * 1.6,
-        z: PUDDLE_Z + Math.sin(angle) * radius * 0.55,
-        vx: Math.cos(angle) * outward,
-        vy: 1.4 + this.random() * 2.2,
-        vz: Math.sin(angle) * outward,
-        offset: this.random() * 3.2,
-        cycle: 2.1 + this.random() * 1.4,
-      });
+      const drop: SplashDrop = {
+        x: 0,
+        z: 0,
+        vx: 0,
+        vy: 0,
+        vz: 0,
+        offset: this.weatherRandom() * 3.8,
+        cycle: 1.1 + this.weatherRandom() * 2.7,
+        previousLocal: -1,
+      };
+      this.reseedSplash(drop);
+      this.splashDrops.push(drop);
     }
 
-    const ringMaterial = new THREE.MeshBasicMaterial({
-      color: 0x86c6d6,
-      transparent: true,
-      opacity: 0.4,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    for (let index = 0; index < 7; index += 1) {
+    for (let index = 0; index < 10; index += 1) {
       const ring = new THREE.Mesh(
-        new THREE.RingGeometry(0.18, 0.23, 24),
-        ringMaterial.clone(),
+        new THREE.RingGeometry(0.09, 0.12, 32),
+        new THREE.MeshBasicMaterial({
+          color: 0x8cc4d0,
+          transparent: true,
+          opacity: 0.3,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+        }),
       );
       ring.rotation.x = -Math.PI / 2;
-      const angle = this.random() * Math.PI * 2;
-      const radius = this.random() * 2.8;
-      ring.position.set(
-        PUDDLE_X + Math.cos(angle) * radius * 1.55,
-        PUDDLE_Y + 0.025,
-        PUDDLE_Z + Math.sin(angle) * radius * 0.52,
-      );
+      this.repositionRipple(ring);
       this.scene.add(ring);
       this.ripples.push({
         mesh: ring,
-        offset: this.random() * 3,
-        cycle: 2.1 + this.random() * 1.5,
+        offset: this.weatherRandom() * 4.2,
+        cycle: 1.8 + this.weatherRandom() * 3.2,
+        previousLocal: -1,
       });
     }
   }
 
-  private updateRain(delta: number): void {
+  private puddlePoint(): [number, number] {
+    const angle = this.weatherRandom() * Math.PI * 2;
+    const radius = Math.sqrt(this.weatherRandom()) * 2.5;
+    return [
+      PUDDLE_X + Math.cos(angle) * radius * 1.43,
+      PUDDLE_Z + Math.sin(angle) * radius * 0.53,
+    ];
+  }
+
+  private reseedSplash(drop: SplashDrop): void {
+    const [x, z] = this.puddlePoint();
+    const angle = this.weatherRandom() * Math.PI * 2;
+    const outward = 0.4 + this.weatherRandom() * 0.92;
+    drop.x = x;
+    drop.z = z;
+    drop.vx = Math.cos(angle) * outward;
+    drop.vy = 1.15 + this.weatherRandom() * 1.8;
+    drop.vz = Math.sin(angle) * outward;
+  }
+
+  private repositionRipple(ring: Ripple["mesh"]): void {
+    const [x, z] = this.puddlePoint();
+    ring.position.set(x, PUDDLE_Y + 0.021, z);
+  }
+
+  private updateRain(frame: AtmosphereFrame): void {
     const transform = new THREE.Object3D();
-    transform.rotation.z = 0.075;
+    const gust =
+      0.46 +
+      Math.sin(frame.elapsed * 0.27) * 0.16 +
+      Math.sin(frame.elapsed * 0.83 + 1.7) * 0.09;
+    transform.rotation.z = 0.055 + gust * 0.028;
     for (let index = 0; index < this.rainDrops.length; index += 1) {
       const drop = this.rainDrops[index];
-      drop.y -= drop.speed * delta;
-      drop.x -= drop.speed * delta * 0.08;
-      if (drop.y < 0) {
-        drop.y += 20;
-        drop.x = -21 + this.random() * 42;
-      }
+      drop.y -= drop.speed * frame.delta;
+      drop.x -= gust * drop.drift * frame.delta;
+      if (drop.y < 0 || drop.x < -34) Object.assign(drop, this.newRainDrop());
       transform.position.set(drop.x, drop.y, drop.z);
-      transform.scale.setScalar(drop.z > 1 ? 1.15 : drop.z > -16 ? 0.8 : 0.55);
+      const depthScale = drop.z > 2 ? 1.18 : drop.z > -25 ? 0.78 : 0.48;
+      transform.scale.set(depthScale, drop.length * depthScale, depthScale);
       transform.updateMatrix();
       this.rain.setMatrixAt(index, transform.matrix);
     }
     this.rain.instanceMatrix.needsUpdate = true;
   }
 
-  private updateSplashes(): void {
+  private updateSplashes(frame: AtmosphereFrame): void {
     const transform = new THREE.Object3D();
     for (let index = 0; index < this.splashDrops.length; index += 1) {
       const drop = this.splashDrops[index];
-      const local = (this.elapsed + drop.offset) % drop.cycle;
-      const flight = 0.5;
+      const local = (frame.elapsed + drop.offset) % drop.cycle;
+      if (drop.previousLocal >= 0 && local < drop.previousLocal) {
+        this.reseedSplash(drop);
+        drop.cycle = 1.1 + this.weatherRandom() * 2.7;
+      }
+      drop.previousLocal = local;
+      const flight = 0.52;
       if (local < flight) {
         const y = PUDDLE_Y + drop.vy * local - 4.9 * local * local;
         transform.position.set(
@@ -496,8 +766,8 @@ class RainyCityScene {
           Math.max(PUDDLE_Y, y),
           drop.z + drop.vz * local,
         );
-        const scale = 0.7 + (1 - local / flight) * 0.8;
-        transform.scale.setScalar(scale);
+        const scale = 0.55 + (1 - local / flight) * 0.62;
+        transform.scale.set(0.65 * scale, 1.15 * scale, 0.65 * scale);
       } else {
         transform.position.set(0, -20, 0);
         transform.scale.setScalar(0.001);
@@ -509,101 +779,124 @@ class RainyCityScene {
     this.splashes.instanceMatrix.needsUpdate = true;
 
     for (const ripple of this.ripples) {
-      const local = (this.elapsed + ripple.offset) % ripple.cycle;
-      const progress = Math.min(local / 1.15, 1);
-      ripple.mesh.scale.setScalar(0.5 + progress * 5.5);
-      ripple.mesh.material.opacity = progress < 1 ? 0.36 * (1 - progress) : 0;
+      const local = (frame.elapsed + ripple.offset) % ripple.cycle;
+      if (ripple.previousLocal >= 0 && local < ripple.previousLocal) {
+        this.repositionRipple(ripple.mesh);
+        ripple.cycle = 1.8 + this.weatherRandom() * 3.2;
+      }
+      ripple.previousLocal = local;
+      const progress = Math.min(local / 1.35, 1);
+      ripple.mesh.scale.setScalar(0.45 + progress * 4.2);
+      ripple.mesh.material.opacity = progress < 1 ? 0.28 * (1 - progress) : 0;
     }
   }
 
-  private renderFrame = () => {
-    if (this.destroyed || this.reducedMotion || document.hidden) return;
-    const delta = Math.min(this.clock.getDelta(), 0.05);
-    this.elapsed += delta;
-    this.updateRain(delta);
-    this.updateSplashes();
+  private updateWeather(frame: AtmosphereFrame): void {
+    if (this.lightningStarted < 0 && frame.elapsed >= this.nextLightning) {
+      this.lightningStarted = frame.elapsed;
+    }
+    if (this.lightningStarted >= 0) {
+      const age = frame.elapsed - this.lightningStarted;
+      this.currentLightning = lightningIntensityAt(age);
+      if (age > 1.15) {
+        this.lightningStarted = -1;
+        this.currentLightning = 0;
+        this.nextLightning =
+          frame.elapsed + nextLightningDelay(this.weatherRandom);
+      }
+    }
 
-    const targetX = this.pointerX * 0.55;
-    const targetY = 9.2 - this.pointerY * 0.22;
-    this.camera.position.x += (targetX - this.camera.position.x) * 0.025;
-    this.camera.position.y += (targetY - this.camera.position.y) * 0.025;
-    this.camera.lookAt(0, 2.6, -10);
+    this.lightning.intensity = this.currentLightning * 5.2;
+    this.hemisphere.intensity = 1.35 + this.currentLightning * 1.4;
+    this.lampLight.intensity = 53 - this.currentLightning * 4;
+    this.sky.lerpColors(
+      this.baseSky,
+      this.lightningSky,
+      this.currentLightning * 0.5,
+    );
+    this.scene.background = this.sky;
+    for (const bolt of this.lightningBolts) {
+      bolt.material.opacity =
+        this.currentLightning * Number(bolt.userData.peakOpacity);
+      bolt.visible = this.currentLightning > 0.04;
+    }
+    if (this.scene.fog instanceof THREE.FogExp2) {
+      this.scene.fog.color.lerpColors(
+        this.fogBase,
+        this.fogLightning,
+        this.currentLightning * 0.32,
+      );
+    }
 
-    this.renderer.render(this.scene, this.camera);
-    this.animationFrame = requestAnimationFrame(this.renderFrame);
-  };
-
-  private start(): void {
-    if (this.animationFrame || this.destroyed) return;
-    this.clock.start();
-    this.animationFrame = requestAnimationFrame(this.renderFrame);
+    for (const bank of this.windowBanks) {
+      const shimmer = Math.sin(frame.elapsed * 0.38 + bank.phase) * 0.025;
+      bank.material.opacity = bank.baseOpacity + shimmer;
+    }
+    for (const reflection of this.reflections) {
+      reflection.mesh.material.opacity =
+        reflection.baseOpacity *
+        (0.78 + Math.sin(frame.elapsed * 2.1 + reflection.phase) * 0.22);
+    }
+    this.cloudBank.position.x = Math.sin(frame.elapsed * 0.018) * 3.2;
   }
 
-  private stop(): void {
-    if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
-    this.animationFrame = 0;
-    this.clock.stop();
+  update(frame: AtmosphereFrame): void {
+    if (this.destroyed) return;
+    this.lastElapsed = frame.elapsed;
+    this.updateRain(frame);
+    this.updateSplashes(frame);
+    this.updateWeather(frame);
+
+    const targetX = CAMERA_X + frame.pointer.x * 0.72;
+    const targetY = CAMERA_Y - frame.pointer.y * 0.16;
+    this.camera.position.x += (targetX - this.camera.position.x) * 0.022;
+    this.camera.position.y += (targetY - this.camera.position.y) * 0.022;
+    this.cameraTarget.x = frame.pointer.x * 0.32;
+    this.camera.lookAt(this.cameraTarget);
   }
 
-  private resize = () => {
-    const width = Math.max(window.innerWidth, 1);
-    const height = Math.max(window.innerHeight, 1);
-    const scale = Math.max(
-      PIXEL_SCALE,
-      width / MAX_RENDER_WIDTH,
-      height / MAX_RENDER_HEIGHT,
+  setReducedMotion(reducedMotion: boolean): void {
+    if (reducedMotion) {
+      this.lightningStarted = -1;
+      this.currentLightning = 0;
+      this.nextLightning = Number.POSITIVE_INFINITY;
+      this.lightning.intensity = 0;
+      for (const bolt of this.lightningBolts) bolt.visible = false;
+    } else {
+      this.nextLightning = this.lastElapsed + 4.5 + this.weatherRandom() * 4;
+    }
+  }
+
+  resize(viewport: AtmosphereViewport): void {
+    if (this.destroyed) return;
+    const desiredPixelRatio = Math.min(viewport.devicePixelRatio, 1.25);
+    const backingScale = Math.min(
+      1,
+      MAX_RENDER_WIDTH / (viewport.width * desiredPixelRatio),
+      MAX_RENDER_HEIGHT / (viewport.height * desiredPixelRatio),
     );
-    this.renderer.setSize(
-      Math.max(1, Math.round(width / scale)),
-      Math.max(1, Math.round(height / scale)),
-      false,
+    this.renderer.setPixelRatio(
+      Math.max(0.72, desiredPixelRatio * backingScale),
     );
-    this.camera.aspect = width / height;
+    this.renderer.setSize(viewport.width, viewport.height, false);
+    this.camera.aspect = viewport.width / viewport.height;
     this.camera.updateProjectionMatrix();
-    this.renderer.render(this.scene, this.camera);
-  };
+  }
 
-  private onPointerMove = (event: PointerEvent) => {
-    if (this.reducedMotion) return;
-    this.pointerX = (event.clientX / Math.max(window.innerWidth, 1)) * 2 - 1;
-    this.pointerY = (event.clientY / Math.max(window.innerHeight, 1)) * 2 - 1;
-  };
+  render(): void {
+    if (!this.destroyed) this.renderer.render(this.scene, this.camera);
+  }
 
-  private onVisibilityChange = () => {
-    if (document.hidden) this.stop();
-    else if (!this.reducedMotion) this.start();
-  };
-
-  private onMotionChange = (event: MediaQueryListEvent) => {
-    this.reducedMotion = event.matches;
-    if (this.reducedMotion) {
-      this.stop();
-      this.renderer.render(this.scene, this.camera);
-    } else if (!document.hidden) {
-      this.start();
-    }
-  };
-
-  destroy(): void {
+  dispose(): void {
     if (this.destroyed) return;
     this.destroyed = true;
-    this.stop();
-    window.removeEventListener("resize", this.resize);
-    window.removeEventListener("pointermove", this.onPointerMove);
-    document.removeEventListener("visibilitychange", this.onVisibilityChange);
-    this.motionQuery.removeEventListener("change", this.onMotionChange);
     disposeScene(this.scene);
     this.renderer.dispose();
   }
 }
 
-/** Mount the procedural scene and return the exact React-effect cleanup. WebGL
- * setup may fail on old/test glass; the CSS grade remains a useful fallback. */
-export function mountRainyCityScene(canvas: HTMLCanvasElement): () => void {
-  try {
-    const city = new RainyCityScene(canvas);
-    return () => city.destroy();
-  } catch {
-    return () => undefined;
-  }
+export function createRainyCityScene(
+  context: AtmosphereSceneContext,
+): AtmosphereScene {
+  return new RainyCityScene(context);
 }

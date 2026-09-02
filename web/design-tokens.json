@@ -944,19 +944,14 @@
         "doc": "the fixed atmosphere behind the document"
       },
       {
-        "name": "--desk-rain-sky-grade",
-        "value": "rgba(5, 14, 25, 0.18)",
-        "doc": "rainy-city atmosphere: cool skyline depth grade"
+        "name": "--desk-atmosphere-sky-grade",
+        "value": "rgba(5, 14, 25, 0.12)",
+        "doc": "shared atmosphere skyline depth grade"
       },
       {
-        "name": "--desk-rain-edge",
-        "value": "rgba(2, 6, 12, 0.38)",
-        "doc": "rainy-city atmosphere: focus vignette around the wet street"
-      },
-      {
-        "name": "--desk-rain-scanline",
-        "value": "rgba(2, 6, 12, 0.05)",
-        "doc": "rainy-city atmosphere: one-pixel CRT scanline"
+        "name": "--desk-atmosphere-edge",
+        "value": "rgba(2, 6, 12, 0.28)",
+        "doc": "shared atmosphere focus vignette"
       },
       {
         "name": "--desk-z-dock-under",
