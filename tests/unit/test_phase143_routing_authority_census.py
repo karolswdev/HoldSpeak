@@ -115,7 +115,7 @@ ROUTING_POINTER_ATTRIBUTES = {
     "holdspeak/config/integrations.py:191:inference_target_id",
     "holdspeak/config/meeting.py:145:intel_profile_id",
     "holdspeak/config/meeting.py:144:intel_profile_id",
-    "holdspeak/db/models/__init__.py:1126:resolver_profile_id",
+    "holdspeak/db/models/__init__.py:1128:resolver_profile_id",
     "holdspeak/db/models/workbench.py:139:resolver_profile_id",
     "holdspeak/services/inference_setup_service.py:644:intel_profile_id",
     "holdspeak/services/inference_setup_service.py:649:inference_target_id",
@@ -144,7 +144,11 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/commands/doctor.py:488:profile_id", "holdspeak/commands/doctor.py:787:profile_id",
         "holdspeak/commands/doctor.py:795:profile_id", "holdspeak/commands/doctor.py:809:profile_id",
         "holdspeak/commands/doctor.py:934:profile_id",
-        "holdspeak/db/models/__init__.py:686:profile_id", "holdspeak/inference_targets.py:161:profile_id",
+        "holdspeak/db/models/__init__.py:688:profile_id", "holdspeak/inference_targets.py:161:profile_id",
+        # HS-162-03: front_door.py profile_id reads (display, Phase 156).
+        "holdspeak/web/routes/front_door.py:416:profile_id",
+        "holdspeak/web/routes/front_door.py:417:profile_id",
+        "holdspeak/web/routes/front_door.py:444:profile_id",
         "holdspeak/services/ask_service.py:318:profile_id",
         "holdspeak/services/inference_setup_service.py:653:profile_id", "holdspeak/services/settings_service.py:103:profile_id",
         "holdspeak/setup_status.py:151:profile_id",
@@ -156,7 +160,7 @@ PROFILE_ID_CLASSIFICATIONS = {
         "holdspeak/services/inference_assignment_service.py:1788:profile_id",
     }},
     **{site: "migration source" for site in {
-        "holdspeak/db/models/__init__.py:1125:profile_id",
+        "holdspeak/db/models/__init__.py:1127:profile_id",
         "holdspeak/db/models/workbench.py:138:profile_id",
         "holdspeak/services/recipe_service.py:364:profile_id",
         "holdspeak/services/workbench_service.py:561:profile_id",
@@ -310,10 +314,10 @@ def test_ast_census_is_exact_for_every_routing_resolver_reference_and_pointer() 
     assert pointers == ROUTING_POINTER_ATTRIBUTES
     assert profile_ids == set(PROFILE_ID_CLASSIFICATIONS)
     assert set(PROFILE_ID_CLASSIFICATIONS.values()) <= CLASSES
-    assert len(PROFILE_ID_CLASSIFICATIONS) == 33
+    assert len(PROFILE_ID_CLASSIFICATIONS) == 36  # +3 front_door.py display (HS-156/162-03)
     assert sum(value == "mutable assignment pointer" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 9
     assert sum(value == "migration source" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 4
-    assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 13
+    assert sum(value == "display" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 16  # +3 front_door.py (HS-156/162-03)
     assert sum(value == "credential/provider identity" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 5
     assert sum(value == "immutable evidence" for value in PROFILE_ID_CLASSIFICATIONS.values()) == 2
 

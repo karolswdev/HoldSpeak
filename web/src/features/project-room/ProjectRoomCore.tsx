@@ -38,6 +38,8 @@ import { promoteDecision } from "./api";
 import { useProjectRoomController } from "./useProjectRoomController";
 import { useReviewController } from "./review/useReviewController";
 import { ReviewPosture } from "./review/ReviewPosture";
+import { useUpdateController } from "./update/useUpdateController";
+import { UpdatePosture } from "./update/UpdatePosture";
 import type { RoomReviewData } from "./model";
 import "./project-room.css";
 
@@ -580,6 +582,12 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     () => void ctrl.load(),
   );
 
+  // HS-162-05 — the Update posture controller.
+  const updateCtrl = useUpdateController(
+    ctrl.projectId,
+    () => void ctrl.load(),
+  );
+
   // HS-158-05 — push the scoped Project's name into the window head;
   // null keeps the manifest label (loading / unscoped states).
   const runtimeTitle = ctrl.loadStatus === "ready" && ctrl.projectName !== "Project"
@@ -808,6 +816,16 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
           {reviewCtrl.primaryVerb}
         </Button>
       ) : null}
+      {/* HS-162-05: Updates verb — always available (the face itself
+          shows the honest empty state when no updates exist). */}
+      <Button
+        dense
+        loading={updateCtrl.loading}
+        onClick={() => void updateCtrl.enterUpdates()}
+        data-testid="updates-verb"
+      >
+        Updates
+      </Button>
       <Button dense variant="ghost" onClick={() => void ctrl.load()}>
         Refresh
       </Button>
@@ -831,6 +849,18 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
         {hero ? hero(verbs) : <SurfaceVerbs />}
         {ctrl.room ? <OrientationBand room={ctrl.room} /> : null}
         <ReviewPosture ctrl={reviewCtrl} />
+      </>
+    );
+  }
+
+  // HS-162-05 — when the update posture is active, it replaces the
+  // entire working field (same window, NO modal — WEB-IA-003).
+  if (updateCtrl.posture !== "off") {
+    return (
+      <>
+        {hero ? hero(verbs) : <SurfaceVerbs />}
+        {ctrl.room ? <OrientationBand room={ctrl.room} /> : null}
+        <UpdatePosture ctrl={updateCtrl} />
       </>
     );
   }

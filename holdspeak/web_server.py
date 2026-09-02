@@ -695,6 +695,7 @@ class MeetingWebServer:
             build_tts_router,
             build_project_reviews_router,
             build_project_setup_router,
+            build_project_updates_router,
             build_providers_router,
             build_watches_router,
         )
@@ -710,6 +711,7 @@ class MeetingWebServer:
         from .services.project_setup_service import ProjectSetupService
         from .services.project_evidence_collector import ProjectEvidenceCollector
         from .services.project_delta_service import ProjectDeltaService
+        from .services.project_update_service import ProjectUpdateService
         from .services.refinement_coordinator import RefinementCoordinator
         from .services.refinement_application_service import RefinementApplicationService
 
@@ -857,10 +859,10 @@ class MeetingWebServer:
             on_update_meeting=self.on_update_meeting,
             on_set_title=self.on_set_title,
             on_set_tags=self.on_set_tags,
-            project_service=ProjectService(
+            project_service=(_project_service := ProjectService(
                 get_database(), observer=obs,
                 delta_service=_project_delta_service,
-            ),
+            )),
             projection_service=ProjectionService(get_database(), observer=obs),
             authority_service=AuthorityService(get_database(), observer=obs),
             credential_service=CredentialService(
@@ -911,6 +913,12 @@ class MeetingWebServer:
             ),
             project_evidence_collector=ProjectEvidenceCollector(get_database()),
             project_delta_service=_project_delta_service,
+            project_update_service=ProjectUpdateService(
+                get_database(),
+                project_service=_project_service,
+                delta_service=_project_delta_service,
+                broker=broker,
+            ),
             refinement_coordinator=refinement_coordinator,
             refinement_service=refinement_service,
             settings_service=SettingsService(
@@ -1052,6 +1060,7 @@ class MeetingWebServer:
         app.include_router(build_tts_router(web_ctx))
         app.include_router(build_project_reviews_router(web_ctx))
         app.include_router(build_project_setup_router(web_ctx))
+        app.include_router(build_project_updates_router(web_ctx))
         app.include_router(build_providers_router(web_ctx))
         app.include_router(build_watches_router(web_ctx))
 

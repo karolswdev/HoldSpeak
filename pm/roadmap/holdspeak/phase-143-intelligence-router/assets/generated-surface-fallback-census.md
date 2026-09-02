@@ -9,6 +9,14 @@ Story 143-07 adds `holdspeak/services/ask_service.py` as the controller-winner
 application-projection owner; `_routed_projection` decorates an already elected
 physical result and never selects or advances a route.
 
+Story 162-03 adds `holdspeak/services/project_update_service.py` as a
+classified backend surface: `_resolve_for_capability` is the private
+capability-assignment resolver for `project.update_draft` deployment
+revision lookup (reviewed 162-03); model failure falls back to the
+deterministic drafter with a typed reason and an honest generator
+record — the fallback branch fails closed to lawful deterministic
+output, never to unrouted inference.
+
 ## Classification rule
 
 Each surface/family below has **exactly one Phase 143 story** as its migration

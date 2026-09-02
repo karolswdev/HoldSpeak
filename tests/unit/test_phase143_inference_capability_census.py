@@ -180,7 +180,8 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     "holdspeak/services/ask_service.py:120|AskService._invoke|call": ProposedRoute(
         "internal.semantic_dispatch", "services.ask_service", "InferenceRunner service child; capability supplied by semantic caller",
     ),
-    "holdspeak/services/inference_adoption_service.py:1553|RoutedInferenceCoordinator.execute|call": ProposedRoute(
+    # HS-162-03: line shift 1553 → 1566 from branch additions.
+    "holdspeak/services/inference_adoption_service.py:1566|RoutedInferenceCoordinator.execute|call": ProposedRoute(
         "dynamic:frozen InferenceRoutePlan capability", "services.inference_adoption_service", "InferenceRunner controller-owned routed child",
     ),
     "holdspeak/speech_session/child.py:181|run_admitted_speech_child|call": ProposedRoute(
@@ -198,6 +199,10 @@ PRODUCT_RUNNER_ENTRANCES: dict[str, ProposedRoute] = {
     ),
     "holdspeak/services/thread_practice.py:347|run_compact|call": ProposedRoute(
         "chat.compact", "services.thread_practice", "InferenceRunner admitted child",
+    ),
+    # HS-162-03: model drafter for project update drafting.
+    "holdspeak/services/project_update_service.py:734|ProjectUpdateService._draft_with_model|call": ProposedRoute(
+        "project.update_draft", "services.project_update_service", "InferenceRunner admitted child",
     ),
 }
 
