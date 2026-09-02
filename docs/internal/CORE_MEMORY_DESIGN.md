@@ -11,6 +11,7 @@ is authorized by this document
 [the Constitution](CONSTITUTION.md),
 [long-horizon retrieval](../../pm/roadmap/holdspeak/phase-109-the-long-memory/story-04-retrieval.md),
 the [integration SRS](CORE_MEMORY_INTEGRATION_SRS.md),
+the [CF-0 contract SRS](CONTINUITY_CF0_CONTRACT_SRS.md),
 and the [council record](CORE_MEMORY_COUNCIL.md)
 
 ## 1. Ratification statement
@@ -49,7 +50,7 @@ owner vocabulary is:
 - **Continue** — reconstruct where work stands and resume it.
 - **Review** — inspect proposed additions, changes, conflicts, and lessons.
 - **Recall** — find prior work through lexical, semantic, and relationship recall.
-- **Remove from Core** — stop future Core search and compilation under the
+- **Remove from Memory** — stop future selected Memory search and compilation under the
   truthful V1 retention contract.
 
 Memory is a first-class in-world Desk application with **Continue,
@@ -118,7 +119,7 @@ MemoryCell                       stable accepted identity
   id
   subject / predicate / qualifiers
   scope tuple                    optional Project / Recipe / Workbench bindings
-  claim_key                      canonical structured scope-local slot
+  claim_key                      canonical semantic slot; scope digest is separate
   kind                           preference | fact | convention | constraint
   compile_mode                   always | contextual
   head_version
@@ -417,7 +418,7 @@ The receipt contains exact cell/version, source, scope, bytes, and command.
 
 When a result uses memory, show a quiet `Remembered 2` disclosure. Opening it
 shows exact entries/sources with **Edit**, **Stop using** (archive), and
-**Remove from Core**. The next invocation uses only the accepted new revision.
+**Remove from Memory**. The next invocation uses only the accepted new revision.
 Point-of-use correction matters more than a management screen.
 
 ### 10.3 Review without an inbox
@@ -452,7 +453,7 @@ HoldSpeak presently stores exact admitted context in
 triggers. Once Core participates in inference, universal “Forget” cannot be
 truthfully promised by the memory feature alone.
 
-V1 therefore offers **Remove from Core**:
+V1 therefore offers **Remove from Memory**:
 
 - Purge Core bodies, textual versions, proposals, excerpts, and Core indexes.
 - Prevent future Core search and compilation.

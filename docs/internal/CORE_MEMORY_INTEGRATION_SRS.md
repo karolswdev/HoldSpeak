@@ -5,7 +5,7 @@
 **Status:** Draft for owner ratification and implementation planning; no product
 implementation is authorized by this document
 
-**Version:** 1.0-council
+**Version:** 1.1-council-review
 
 **Date:** 2026-09-01
 
@@ -13,8 +13,19 @@ implementation is authorized by this document
 
 **Related:** [Core architecture](CORE_MEMORY_DESIGN.md),
 [council record](CORE_MEMORY_COUNCIL.md),
+[CF-0 domain and contract SRS](CONTINUITY_CF0_CONTRACT_SRS.md),
 [implemented relationship-aware memory](../RELATIONSHIP_AWARE_MEMORY.md),
 [Constitution](CONSTITUTION.md)
+
+## 0. Normative SRS suite
+
+This document governs product scope, release promise, architecture, program
+requirements, and CF-1 through CF-5 gates. The subordinate
+`SRS-HS-CONTINUITY-CF0` governs the implementation-derivable CF-0 domain:
+schemas, state machines, commands, plans, retention vault, source/capability
+censuses, product state grammar, accessibility, migration, rollback, and
+evidence. Implementers MUST satisfy both. The Constitution and canonical
+HoldSpeak authority contracts prevail; a conflict blocks work until amended.
 
 ## 1. Purpose and product decision
 
@@ -26,7 +37,8 @@ turns existing and future canonical work into a living, inspectable model of:
 - what changed;
 - how a Project, Recipe, or Workbench operates;
 - which explicit corrections should continue to apply; and
-- which exact evidence influenced the current result.
+- which exact context was supplied/selected and which deterministic procedure
+  was applied, without claiming causal influence on generated tokens.
 
 Core Memory is one layer of Continuity, not the whole product.
 
@@ -68,10 +80,10 @@ The implemented branch baseline is:
 | `f5be54c3` | Relationship-aware retrieval integrated across HoldSpeak. |
 | `72bf0ed0` | Desk discovery and search-highlight polish. |
 | `f5ee7a3d` | Lifecycle documentation and production evidence. |
+| `52a25bda` | Council-reviewed Continuity SRS and architecture RFC. |
 
-The branch is pushed to `origin/feat/relationship-aware-memory`. As of this
-SRS, it has no GitHub pull request. The design documents are not part of those
-commits.
+The branch is pushed to `origin/feat/relationship-aware-memory` and is proposed
+in [GitHub pull request #526](https://github.com/karolswdev/HoldSpeak/pull/526).
 
 Primary upstream references:
 
@@ -190,10 +202,12 @@ The owner receives a bounded, clustered proposal bundle:
 ```text
 Suggested for Orion                         8
 
-✓ Orion uses blue-green deployment          Use when relevant
-✓ “the rail” means delivery rail             Use when relevant
-✓ Preserve reversible deployment paths       Always carry
+□ Orion uses blue-green deployment          Use when relevant
+□ “the rail” means delivery rail             Use when relevant
+□ Preserve reversible deployment paths       Always carry
 ```
+
+Proposal batches always begin unselected.
 
 Each proposal shows operation, structured claim, composite scope, temporal
 basis, egress, evidence spans, and conflicts. The owner may select, edit, and
@@ -208,7 +222,7 @@ Coder operations consume the same frozen `ContinuityPlan`. Results disclose:
 Core 4 · Recall 6 · Learned 1
 ```
 
-Correction identifies the exact influencing claim, source, or procedure and
+Correction identifies the exact supplied claim/source or applied procedure and
 changes the next eligible invocation everywhere.
 
 ### 4.5 Keep continuity alive
@@ -296,12 +310,20 @@ Precedence is:
 ```text
 authenticated current instruction
   > exact Workbench + Recipe + Project
-  > exact Workbench/Recipe combinations
+  > exact Workbench + Recipe
+  > exact Workbench + Project
+  > exact Recipe + Project
+  > exact Workbench
+  > exact Recipe
   > exact Project
   > owner-wide
 ```
 
-The receipt names every shadowed version.
+This ordering reflects decreasing invocation locality: Workbench, then reusable
+Recipe behavior, then Project context. Same-rank, same-key overlapping values
+are a blocking conflict rather than last-write-wins. The receipt names every
+shadowed or conflicting version. The owner ratifies this launch law in CF-0;
+future changes require a policy revision and compatibility evidence.
 
 ### 5.4 Conflict and time
 
@@ -460,7 +482,7 @@ demonstration, **U** owner verdict, **B** benchmark.
 | CORE-009 | MUST | `contextual` claims MUST be filtered by principal/scope/time/egress before lexical/semantic relevance selection. | T,I |
 | CORE-010 | MUST | Contextual similarity MUST NOT influence truth, precedence, confidence, or authority. | T,I |
 | CORE-011 | MUST | Archive/restore/remove/change-mode/change-scope MUST use authenticated idempotent CAS commands. | T |
-| CORE-012 | MUST | Remove from Core MUST purge Core-owned prose, proposals, excerpts, indexes, and future compilation while retaining only disclosed content-free lineage. | T,D |
+| CORE-012 | MUST | Remove from Memory MUST purge the selected Continuity-owned live prose, proposals, excerpts, indexes, and future compilation while preserving canonical sources and retaining only disclosed content-free lineage. | T,D |
 
 ### 8.3 Episodic retrieval and graph
 
@@ -501,7 +523,7 @@ demonstration, **U** owner verdict, **B** benchmark.
 | PLAN-004 | MUST | Preview, reservation, admission, dispatch, result disclosure, and receipt MUST agree on exact bytes/accounting/digest. | T |
 | PLAN-005 | MUST | Current authenticated input and policy MUST outrank every memory layer without implicitly mutating it. | T |
 | PLAN-006 | MUST | Thread/Workbench working state MUST remain separately identified from durable accepted memory. | T,I |
-| PLAN-007 | MUST | Point-of-use disclosure MUST identify every influencing layer/ref/revision and provide the appropriate correction path. | T,D,U |
+| PLAN-007 | MUST | Point-of-use disclosure MUST identify every supplied/selected/omitted/shadowed layer/ref/revision and applied deterministic procedure, without claiming causal influence on model tokens, and provide the appropriate correction path. | T,D,U |
 | PLAN-008 | MUST | No adapter, HTTP route, MCP tool, UI, or model consumer may query tables or privately format memory prompt blocks. | T,I |
 | PLAN-009 | MUST | HTTP, MCP, Web, desktop, and phone reads/reviews MUST use shared versioned schemas and application services. | T,I,D |
 | PLAN-010 | MUST | Memory-induced output changes MUST produce zero authority, grant, credential, destination, or approval changes. | T |
@@ -533,24 +555,29 @@ memory_cells
   subject / predicate / qualifiers_json
   scope_project_id? / scope_recipe_id? / scope_workbench_id?
   kind                         preference | fact | convention | constraint
-  compile_mode                 always | contextual
-  egress_policy
-  lifecycle                    active | archived | removed
+  current compile/egress projections
+  lifecycle                    active | archived | moved | removed
   head_version / revision
 
 memory_versions
   cell_id + version
-  typed_value_json / display_text
+  content-free value/display/configuration digests
   provenance_kind
   recorded_at / source_event_at
   valid_from / valid_until
   temporal_basis / precision / timezone
   prior_version / correction_lineage_ref
 
+memory_version_values
+  mandatory encrypted payload ref for typed value/display text
+  purgeable/shreddable while metadata survives
+
 memory_proposals
-  operation / structured proposed claim
-  scope / target accepted revisions
-  state / manifest / reason codes / expiry
+  content-free operation/identity/value/scope digests
+  target revisions / state / input manifest / fingerprint / expiry
+
+memory_proposal_payloads
+  encrypted structured candidate identity/value/rendering
 
 memory_evidence
   proposal-or-version owner
@@ -561,17 +588,24 @@ memory_evidence
 ### 9.2 Source journal, genesis, and maintenance
 
 ```text
-memory_source_events
+continuity_source_events
   monotonic event_seq
-  source ref/revision/digest
-  create | update | delete
-  root event / origin / eligibility / privacy / scope
+  minimal transactional source ref/operation/revision hint/root event
+  no source prose or adapter normalization
+
+continuity_source_observations
+  adapter-normalized source revision/digest/origin/assertor/privacy/egress
+  independent episodic/brief/Core/procedure/graph eligibility and memberships
 
 memory_genesis_runs
 memory_maintenance_runs
   frozen manifests, cursors, policies, assignments, receipts,
   terminal states/counts; no duplicated source or memory prose
 ```
+
+This section names logical resources. The subordinate CF-0 SRS is normative
+for exact physical placement, encryption/purge splits, outbox/observation
+separation, fields, constraints, and state machines.
 
 ### 9.3 Semantic generations
 
@@ -622,7 +656,7 @@ continuity_plans
   immutable plan metadata, layer refs/revisions, accounting, digest
 
 continuity_usage_refs
-  plan + influencing ref/version + layer + omission/use/correction lineage
+  plan + supplied ref/version + layer + disposition/correction lineage
 ```
 
 Use lineage stores identifiers, revisions, digests, and reasons—not duplicated
@@ -690,17 +724,19 @@ eligible candidates and cannot alter identity/scope/time/privacy.
 
 ## 11. Commands and interfaces
 
-Every effect command includes `command_id`, `request_hash`, authenticated
-actor, exact scope, and expected revision/absence. Same ID/hash replays the
+Every effect request includes `command_id`, comparison `request_hash`, requested
+scope, and complete expected revisions/absence. The authenticated actor/owner,
+authority basis, canonical authorized scope, and submitted time are derived and
+stamped server-side, never caller-supplied. Same ID/hash replays the
 stored result; changed bytes return `idempotency_conflict`; stale CAS returns
 `stale_revision`; partial change is forbidden.
 
 Owner application contracts:
 
 ```text
-continuity.genesis.start / pause / resume / status
+continuity.genesis.start / pause / resume / cancel / rebuild / status
 continuity.brief.get
-memory.remember / replace / archive / restore / remove
+memory.remember / replace / change_mode / change_scope / archive / restore / remove / forget
 memory.list / get / compile_preview
 memory.proposals.list / accept / reject / dismiss
 memory.search
@@ -766,7 +802,7 @@ payloads, HoldSpeak SHALL resolve the owner-held retention amendment:
 - accept loss of exact plaintext replay for those operations; and
 - disclose provider, backup, and legacy-plaintext limits separately.
 
-Until then, **Remove from Core** purges Continuity-owned live text/indexes and
+Until then, **Remove from Memory** purges selected Continuity-owned live text/indexes and
 prevents future use, but does not promise universal historical erasure.
 
 ## 14. Reliability, performance, and operations requirements
@@ -912,10 +948,15 @@ These are hidden construction gates under one owner-facing Continuity release.
 
 ### CF-0 — Contracts and retention
 
-- Ratify encrypted/shreddable admitted-material policy.
-- Land source journal, structured claims, composite scope, procedures, graph,
-  embedding generations, continuity policy, and immutable plan schemas.
-- Establish redacted observation and application-service contracts.
+- Ratify encrypted/shreddable admitted-material, first-class Memory application,
+  product vocabulary/shortcut, model-license, and local-proof policies.
+- Implement every contract, state, migration, fixture, and evidence gate in
+  [the normative CF-0 SRS](CONTINUITY_CF0_CONTRACT_SRS.md).
+- Land the source journal, structured claims, composite scope, procedure/graph/
+  embedding-generation foundations, admitted-material vault, continuity policy,
+  immutable plan schema, content-free observation, and application contracts.
+- Build local fake-runner shadow plans only; no production genesis, vector
+  corpus, proposal extraction, prompt injection, or Continuity release claim.
 
 ### CF-1 — Genesis and retrieval
 
@@ -957,6 +998,7 @@ Flags may permit rollback; no preceding gate may claim ecosystem-wide memory.
 | Inspectable/correctable use | AD-CF-004/014 | CORE-004/011/012, PLAN-007/009 | B, J, K |
 | Safe learning cycle | AD-CF-013 | MT-001–012, SEC-001–012 | G, H, J |
 | Immediate impact | AD-CF-002/010/014 | GEN-007–010, NFR-005/012 | A, K |
+| Owner-visible product quality | AD-CF-002/014 | CF0-UX/IA/CON/PAR/A11Y/STATE/MEAS | CF-0 wire fixtures; CF-3/4 production proof |
 | Proof over claim | all | sections 14–15 | A–K |
 
 ## 19. Implementation entry and exit criteria
@@ -967,7 +1009,10 @@ Implementation may begin only after owner ratification of:
 2. the prospective encrypted/shreddable retention amendment;
 3. the first-class Memory application positioning amendment;
 4. the mandatory embedding bake-off and model-license posture; and
-5. initial hardware/reference-corpus definitions for quantitative gates.
+5. initial hardware/reference-corpus definitions for quantitative gates; and
+6. every owner decision enumerated in CF-0 section 14.5 and acceptance gate 18(1), including
+   vocabulary, scope precedence, consent invalidation, launch destination,
+   phone authority, accessibility matrix, proof retention, and Forget posture.
 
 Planning then SHALL produce story-level requirement mappings, additive schema
 and rollback plans, capability-policy census changes, real-model benchmark

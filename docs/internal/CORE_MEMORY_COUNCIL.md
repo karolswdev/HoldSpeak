@@ -49,7 +49,7 @@ vector database, or another application silo?
 4. **V1 is manual and small.** Owner and Project scope, explicit Remember, one
    consumer, no extraction, no automatic cycle.
 5. **The product language is ordinary.** Remember, Remembered, Suggestions,
-   Search, Stop using, and Remove from Core. Internal storage vocabulary stays
+   Search, Stop using, and Remove from Memory. Internal storage vocabulary stays
    out of the main interaction.
 6. **Correction belongs at the point of use.** Every result that relies on Core
    must disclose the exact revisions and offer correction/removal there.
@@ -76,7 +76,7 @@ vector database, or another application silo?
 | Model-generated rationale persisted for review | Store reason codes and exact evidence spans, not secret-duplicating prose. |
 | One standalone Memory app with Core/Recall/Review tabs | Use a search-reachable Memory lens: Remembered + Search; Suggestions is a state/count. |
 | “Desk memory” for attention | Rename to Attention; retain System Shade as the internal surface name. |
-| Generic Forget | Use truthful V1 Remove from Core and hold universal forgetting for owner ratification. |
+| Generic Forget | Use truthful V1 Remove from Memory and hold universal forgetting for owner ratification. |
 
 ## The minimal architecture selected
 
@@ -141,7 +141,7 @@ Therefore a Core-only purge cannot erase historical prompt copies.
 
 The final council adopted the stricter wording:
 
-- **Remove from Core** purges Core-owned text and prevents future Core use.
+- **Remove from Memory** purges selected Memory-owned text and prevents future use.
 - It does not claim to erase canonical sources, old immutable admitted
   payloads, provider retention, or backups.
 - Stronger Forget requires a cross-cutting encrypted-payload/crypto-shredding
@@ -176,9 +176,9 @@ rather than averaging opinions.
 5. **Specialized bridges** — Recipe, Workbench, Dictation, and procedural memory
    only after separate evaluation.
 
-## Held owner decisions
+## Original sitting's held owner decisions (superseded by the SRS suite)
 
-Only two questions remain intentionally open:
+That sitting left two questions open:
 
 1. Should HoldSpeak introduce per-operation encryption and cryptographic
    shredding so a strong Forget can sacrifice exact replay of affected prompts,
@@ -186,14 +186,12 @@ Only two questions remain intentionally open:
 2. Which smallest measured Core context envelope creates useful task improvement
    without crowding out current work and explicit/episodic grounding?
 
-Everything else above is the council's recommended design baseline. No schema,
-route, prompt, UI, migration, commit, push, or PR is authorized by this record.
-
-The later integration SRS preserves this baseline and resolves a question that
-was outside the initial council brief: Core itself remains exact and
-non-vectorized, while optional embeddings are confined to derived episodic
-recall and possible human-review assistance. They never decide Core identity,
-truth, conflict, promotion, or compilation.
+At that time, everything else above was its recommended baseline. The reopened
+sitting and SRS suite supersede the release scope and the earlier non-vectorized
+accepted-Core posture: contextual accepted claims may receive a derived local
+embedding lane only after exact eligibility, while similarity still never
+decides identity, truth, conflict, promotion, scope, or authority. This record
+by itself authorizes no implementation or data processing.
 
 ## Reopened sitting — transformative Continuity mandate
 
@@ -247,3 +245,54 @@ They unanimously retained:
 
 The [integrated SRS](CORE_MEMORY_INTEGRATION_SRS.md) is normative where the
 reopened sitting differs from the original conservative release advice.
+
+## CF-0 specification review loop
+
+The owner subsequently asked for a complete, implementation-derivable SRS and
+a council-led feedback system. The three independent lenses reviewed the
+parent SRS, the actual repository contracts, and then the drafted
+[CF-0 domain and contract SRS](CONTINUITY_CF0_CONTRACT_SRS.md).
+
+The review used three gates:
+
+1. **Independent derivation:** systems, product, and AI-memory produced blocking
+   contracts without sharing a draft answer.
+2. **Draft red-team:** each lens reviewed the actual normative document and
+   cited contradictions, unsafe claims, missing states, and untestable gates.
+3. **Closure check:** fixes were re-read; a blocker could close only when a
+   deterministic implementation/test target replaced the ambiguity.
+
+Material corrections produced by the loop include:
+
+- a minimal atomic source outbox separated from rich adapter observations;
+- qualified-ref migration and heterogeneous source-revision contracts;
+- semantic claim identity separated from scope/kind, with deterministic scope
+  precedence and bitemporal version selection;
+- encrypted/purgeable claim, proposal, evidence, plan, and model-result payloads;
+- distinct Remove and prospective cryptographic Forget operations with a
+  crash-recoverable native-key lifecycle;
+- route-leg intersection across privacy/egress grants and pre-top-K derivative
+  invalidation;
+- exact command/plan/error/state/migration/rollback laws;
+- a generated source/capability/consumer census and bounded CF-0 versus
+  universal CF-2 rollout boundary; and
+- first-class Memory journeys, consent, review-draft ownership, product/lane
+  states, parity, accessibility, local proof, and staged screenshot evidence.
+
+The simulated council is a design method, not a claim that the named historical
+figures participated. The normative outcome is the SRS suite, not this record.
+
+### Closure verdict
+
+After the final qualified-reference correction, all three review seats returned
+no remaining severity-1/severity-2 or product-release blocker:
+
+| Review seat | Closure |
+| --- | --- |
+| Systems/integration | Clear after exact refs, outbox, plan, capture, vault-cutover, migration, and crash contracts. |
+| AI-memory/security | Clear after identity/time, encrypted payload, egress, poisoning, Forget, proposal, and derivative contracts. |
+| Product/experience | Clear after journeys, IA, consent, run-state mapping, parity, accessibility, proof, and staged evidence contracts. |
+
+“Clear” means derivable enough for owner ratification and story planning. It
+does not waive the explicit owner amendments, authorize owner-data processing,
+or claim that CF-1 through CF-5 have been implemented.
