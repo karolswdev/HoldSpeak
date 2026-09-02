@@ -40,3 +40,19 @@ the owner was away, and surface interventions without prose.
 ## Test plan
 
 - **Web unit:** posture walk, opt-in grant wording, circuit/intervention states, provenance. **Glass:** rides 06. **Manual:** the owner's verdict.
+
+## The owner's verdict, round 1 (2026-09-02)
+
+Answer, verbatim: **"Bounce, and only because I saw a lot of windows
+with content that you'd have to scroll to - and that's fine where
+applicable (e.g., mobile, obviously) - but it needs to be made
+obvious.
+
+Secondly - I'm just curious, this whole steward..., and al lthat,
+how do I define which AI model and which AI fallback drives all of
+it? Is it integrated with our profiles and other infrastructure that
+allows for us to determine these things?"**
+
+Findings taken: (1) scrollable wells need a rest-visible scroll
+affordance; (2) his question is a finding too — the model/fallback
+wiring must be discoverable, and the answer goes to him plainly.

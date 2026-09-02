@@ -105,3 +105,23 @@
 ......................                                                   [100%]
 22 passed in 7.22s
 ```
+
+### Captured run — 2026-09-02T16:37:48Z
+
+- **Command:** `bash /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/737d97f2-738a-46f5-b6e1-8d3d7fec615e/scratchpad/story164-06-verify.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 27dafcfbc911a9e206c5e1d551e772977f4c6b97
+
+```text
+✓ built in 3.67s
+=== GLASS RUN 1 ===
+........                                                                 [100%]
+8 passed in 34.67s
+=== GLASS RUN 2 (determinism) ===
+........                                                                 [100%]
+8 passed in 34.34s
+=== ROUTES SANITY ===
+......................                                                   [100%]
+22 passed in 7.27s
+```

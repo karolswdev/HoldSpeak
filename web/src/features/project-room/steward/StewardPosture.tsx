@@ -5,7 +5,7 @@
 // Laws: no raw IDs on glass; no modals; MicButton on text inputs;
 // EgressChip on model-touching effect kinds; no em/en dashes; no prose.
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
   EgressChip,
@@ -26,6 +26,7 @@ import {
   assembleGrantText,
   circuitStateLabel,
   circuitStateTone,
+  computeVerticalScrollHint,
   coverageSummary,
   effectKindLabel,
   isActive,
@@ -380,7 +381,7 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
                 <EgressChip
                   label="model"
                   scope="mixed"
-                  title="This effect may send project data to the configured inference provider."
+                  title="Drafting uses the model assigned to project.update_draft in Settings > Models; if the model fails, drafting falls back to the deterministic composer with a receipt."
                 />
               ) : null}
             </div>
@@ -461,12 +462,56 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
   );
 }
 
+/* ── Vertical scroll-hint: the DoorBoardLane species on the Y axis ── */
+
+/**
+ * Attach a vertical scroll-hint edge fade to the posture root.
+ * The scroll parent is `.desk-surface-body` (the window body that owns
+ * overflow:auto). Pattern reuses DoorBoardLane (HS-145-01): ref on the
+ * child, parentElement for the scroll container, data attribute on the
+ * ref element, CSS pseudo-elements for the gradient.
+ * Constraint: no querySelector/document listeners -- refs only.
+ */
+function useVerticalScrollHint(ref: React.RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // The scroll container is the parent (.desk-surface-body).
+    const scrollParent = el.parentElement;
+    if (!scrollParent) return;
+
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const hint = computeVerticalScrollHint(
+        scrollParent.scrollTop,
+        scrollParent.scrollHeight,
+        scrollParent.clientHeight,
+      );
+      if (el.dataset.scrollHint !== hint) el.dataset.scrollHint = hint;
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    scrollParent.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      scrollParent.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  });
+}
+
 /* ── Main Steward posture ── */
 
 export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
   const onOpenRef = useCallback((ref: string) => {
     openSourceRef(ref);
   }, []);
+  const postureRef = useRef<HTMLDivElement>(null);
+  useVerticalScrollHint(postureRef);
 
   // ── Loading / error ──
   if (ctrl.loading && ctrl.posture === "off") {
@@ -476,7 +521,7 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
   // ── List view ──
   if (ctrl.posture === "list") {
     return (
-      <div className="steward-posture" data-testid="steward-posture" data-phase="list">
+      <div ref={postureRef} className="steward-posture" data-testid="steward-posture" data-phase="list">
         <SurfaceVerbs>
           <Button dense variant="ghost" onClick={ctrl.exitSteward}>
             Close
@@ -535,7 +580,7 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
   // ── Detail view (single run) ──
   if (ctrl.posture === "detail") {
     return (
-      <div className="steward-posture" data-testid="steward-posture" data-phase="detail">
+      <div ref={postureRef} className="steward-posture" data-testid="steward-posture" data-phase="detail">
         {ctrl.error ? <SurfaceState error={ctrl.error} /> : null}
         <RunDetail ctrl={ctrl} onOpenRef={onOpenRef} />
         <SurfaceFooter
@@ -554,7 +599,7 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
   // ── Policy view ──
   if (ctrl.posture === "policy") {
     return (
-      <div className="steward-posture" data-testid="steward-posture" data-phase="policy">
+      <div ref={postureRef} className="steward-posture" data-testid="steward-posture" data-phase="policy">
         <PolicyEditor ctrl={ctrl} />
         <SurfaceFooter
           receipt={

@@ -236,9 +236,33 @@ export function effectKindLabel(kind: string): string {
   return EFFECT_KIND_LABELS[kind] ?? kind.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
 
-/** Whether this effect kind touches a model (needs egress badge). */
+/** Whether this effect kind touches a model (needs egress badge).
+ *  create_proposals is an identity no-op (DEL-007, step 11); only
+ *  draft_update actually calls the model today. */
 export function isModelTouchingKind(kind: string): boolean {
-  return kind === "create_proposals" || kind === "draft_update";
+  return kind === "draft_update";
+}
+
+/* ── Vertical scroll hint (the DoorBoardLane species, vertical axis) ── */
+
+/** The four vertical-overflow states for the scroll-hint edge fade. */
+export type VerticalScrollHint = "none" | "bottom" | "top" | "both";
+
+/** Pure function: derive a vertical scroll-hint from viewport geometry.
+ *  Mirrors DoorBoardLane.computeScrollHint (HS-145-01) on the Y axis. */
+export function computeVerticalScrollHint(
+  scrollTop: number,
+  scrollHeight: number,
+  clientHeight: number,
+): VerticalScrollHint {
+  if (scrollHeight <= clientHeight) return "none";
+  const atTop = scrollTop <= 0;
+  // 20px tolerance mirrors the horizontal species (scrollbar-gutter stable).
+  const atBottom = scrollTop + clientHeight >= scrollHeight - 20;
+  if (atTop && atBottom) return "none";
+  if (atTop) return "bottom";
+  if (atBottom) return "top";
+  return "both";
 }
 
 /* ── Human labels: phases ── */

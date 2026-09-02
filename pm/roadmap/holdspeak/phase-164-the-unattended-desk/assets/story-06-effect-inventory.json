@@ -6,12 +6,12 @@
     "door_created": 1,
     "updates_before": 0,
     "updates_after": 1,
-    "run_id": "pstrun_076b2b02e8c34ae48684bd3ab888d476",
+    "run_id": "pstrun_82f4f096e4674fae8ae46e7afbbef809",
     "eval_outcomes": [
       {
         "watch_id": "cw_glass_unattended_001",
         "outcome": "evaluated",
-        "evaluation_id": "weval_05f03351e5ac",
+        "evaluation_id": "weval_9ed3f89a15bd",
         "transitions": 5,
         "observation_ids": [
           "pobs_5f4255781448420e68d5f65e116088b4",
@@ -22,12 +22,12 @@
         ],
         "effects": [
           {
-            "id": "weff_328818a45fa4",
-            "evaluation_id": "weval_05f03351e5ac",
+            "id": "weff_4259982bf4fb",
+            "evaluation_id": "weval_9ed3f89a15bd",
             "rule_id": "wrule_cw_glass_unattended_001",
             "action_kind": "project.steward.run_once",
             "target_ref": "",
-            "idempotency_key": "6a077b41244cc495ca47b25479c4ad40",
+            "idempotency_key": "29c1b77fb3c23710013e3482bf3614e0",
             "arguments_sha256": "",
             "state": "pending",
             "operation_id": null,
@@ -36,7 +36,7 @@
             "verification_state": "",
             "error_code": null,
             "error_detail": null,
-            "created_at": "2026-09-02 15:13:30",
+            "created_at": "2026-09-02 16:38:34",
             "completed_at": null
           }
         ]
@@ -44,11 +44,11 @@
     ],
     "run_outcomes": [
       {
-        "effect_id": "weff_328818a45fa4",
+        "effect_id": "weff_4259982bf4fb",
         "outcome": "run_started",
-        "project_id": "proj-2c8f52d676ae",
+        "project_id": "proj-5667a0bfa6a6",
         "watermark": "watch:cw_glass_unattended_001:e9b76b391ad1d1f0acfd984bb258ac6a",
-        "run_id": "pstrun_076b2b02e8c34ae48684bd3ab888d476",
+        "run_id": "pstrun_82f4f096e4674fae8ae46e7afbbef809",
         "run_state": "completed"
       }
     ]
@@ -59,12 +59,12 @@
     "door_created": 1,
     "updates_before": 1,
     "updates_after": 2,
-    "run_id": "pstrun_af0499a08e504d0aa046643a7b0eed3b",
+    "run_id": "pstrun_c14fc2a000dd4940af90e95a20353c58",
     "eval_outcomes": [
       {
         "watch_id": "cw_glass_unattended_001",
         "outcome": "evaluated",
-        "evaluation_id": "weval_b005ada3e57d",
+        "evaluation_id": "weval_b108ef877f4d",
         "transitions": 4,
         "observation_ids": [
           "pobs_7483dcbd37a81d42f8b6e4a5cab5adb7",
@@ -74,12 +74,12 @@
         ],
         "effects": [
           {
-            "id": "weff_9fd2a872223a",
-            "evaluation_id": "weval_b005ada3e57d",
+            "id": "weff_aac242fd6ebc",
+            "evaluation_id": "weval_b108ef877f4d",
             "rule_id": "wrule_cw_glass_unattended_001",
             "action_kind": "project.steward.run_once",
             "target_ref": "",
-            "idempotency_key": "a5b1cc702a134af435b57e145c0771e6",
+            "idempotency_key": "3c77fe6f268fc35ccedc3a5c5b4bc483",
             "arguments_sha256": "",
             "state": "pending",
             "operation_id": null,
@@ -88,7 +88,7 @@
             "verification_state": "",
             "error_code": null,
             "error_detail": null,
-            "created_at": "2026-09-02 15:13:30",
+            "created_at": "2026-09-02 16:38:34",
             "completed_at": null
           }
         ]
@@ -96,11 +96,11 @@
     ],
     "run_outcomes": [
       {
-        "effect_id": "weff_9fd2a872223a",
+        "effect_id": "weff_aac242fd6ebc",
         "outcome": "run_started",
-        "project_id": "proj-2c8f52d676ae",
+        "project_id": "proj-5667a0bfa6a6",
         "watermark": "watch:cw_glass_unattended_001:825fb18ad6c2db30020969cf4f7a52af",
-        "run_id": "pstrun_af0499a08e504d0aa046643a7b0eed3b",
+        "run_id": "pstrun_c14fc2a000dd4940af90e95a20353c58",
         "run_state": "completed"
       }
     ]

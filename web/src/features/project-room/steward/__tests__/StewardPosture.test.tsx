@@ -11,6 +11,7 @@ import { WingSlotContext } from "../../../../desk/surface/wings";
 import { useDesk } from "../../../../desk/store";
 import { EMPTY_ITEMS } from "../../../../desk/api";
 import { ProjectRoomCore } from "../../ProjectRoomCore";
+import { computeVerticalScrollHint, isModelTouchingKind } from "../model";
 
 // ── Mocks ──
 
@@ -889,11 +890,12 @@ describe("Policy: round-trip", () => {
 
     await waitFor(() => screen.getByTestId("steward-policy"));
 
-    // EgressChip should be present on model-touching kinds
+    // EgressChip should be present on model-touching kinds.
+    // Only draft_update touches the model today (create_proposals is
+    // an identity no-op, DEL-007 step 11).
     const egressChips = screen.getByTestId("steward-policy-effects")
       .querySelectorAll(".gadget-chip-egress");
-    // create_proposals and draft_update are model-touching = 2 egress chips
-    expect(egressChips.length).toBe(2);
+    expect(egressChips.length).toBe(1);
   });
 });
 
@@ -1443,5 +1445,79 @@ describe("Circuit state: watches with non-closed circuits", () => {
 
     const stateToken = screen.getByTestId("steward-circuit-state");
     expect(stateToken.textContent).toBe("Probing");
+  });
+});
+
+// ── SCROLL HINT: vertical scroll-hint pure function (DoorBoardLane species, Y axis) ──
+
+describe("computeVerticalScrollHint (pure function)", () => {
+  it("returns none when nothing clips", () => {
+    expect(computeVerticalScrollHint(0, 800, 800)).toBe("none");
+    expect(computeVerticalScrollHint(0, 700, 800)).toBe("none");
+  });
+  it("returns bottom at the top edge", () => {
+    expect(computeVerticalScrollHint(0, 1200, 400)).toBe("bottom");
+  });
+  it("returns top at the bottom edge", () => {
+    expect(computeVerticalScrollHint(800, 1200, 400)).toBe("top");
+  });
+  it("returns both at a mid-scroll position", () => {
+    expect(computeVerticalScrollHint(200, 1200, 400)).toBe("both");
+  });
+  it("absorbs the 20px tolerance", () => {
+    // At scrollTop 790, clientHeight 400, scrollHeight 1200:
+    // scrollTop + clientHeight = 1190, scrollHeight - 20 = 1180 -> atBottom = true
+    expect(computeVerticalScrollHint(790, 1200, 400)).toBe("top");
+  });
+});
+
+describe("Scroll hint: data-scroll-hint is set on the posture root", () => {
+  it("sets data-scroll-hint on the steward posture element", async () => {
+    setupStewardPosture();
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    const posture = screen.getByTestId("steward-posture");
+    expect(posture.hasAttribute("data-scroll-hint")).toBe(true);
+  });
+});
+
+// ── MODEL CHIP HONESTY ──
+
+describe("Model chip honesty: only draft_update wears the MODEL egress badge", () => {
+  it("create_proposals is NOT model-touching (identity no-op)", () => {
+    expect(isModelTouchingKind("create_proposals")).toBe(false);
+  });
+
+  it("draft_update IS model-touching", () => {
+    expect(isModelTouchingKind("draft_update")).toBe(true);
+  });
+
+  it("refresh_sources is NOT model-touching", () => {
+    expect(isModelTouchingKind("refresh_sources")).toBe(false);
+  });
+
+  it("egress chip title names the wiring (Settings > Models)", async () => {
+    setupStewardPosture({
+      policy: policyFixture(),
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click(screen.getByTestId("steward-verb-policy"));
+    await waitFor(() => screen.getByTestId("steward-policy"));
+
+    const egressChips = screen.getByTestId("steward-policy-effects")
+      .querySelectorAll(".gadget-chip-egress");
+    expect(egressChips.length).toBe(1);
+    // The title names the wiring: Settings > Models path + fallback.
+    const title = egressChips[0].getAttribute("title") ?? "";
+    expect(title).toContain("Settings");
+    expect(title).toContain("Models");
+    expect(title).toContain("deterministic");
   });
 });

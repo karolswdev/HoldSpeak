@@ -5,6 +5,42 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  /* Scroll-hint edge fade anchor (species: DoorBoardLane HS-145-01). */
+  position: relative;
+}
+
+/* ── Vertical scroll-hint: DoorBoardLane species on the Y axis ── */
+/* The scroll parent (.desk-surface-body) owns overflow:auto; the
+   posture root carries the data-scroll-hint attribute and the
+   pseudo-element fades.  Pattern: same mechanics as the horizontal
+   door-board-hint-wrap, same gradient from surface-1 -> transparent. */
+.steward-posture::before,
+.steward-posture::after {
+  content: "";
+  position: sticky;
+  left: 0;
+  right: 0;
+  height: 28px;
+  display: none;
+  pointer-events: none;
+  z-index: var(--desk-z-local, 1);
+  flex-shrink: 0;
+}
+.steward-posture::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--surface-1, var(--bg-primary)), transparent);
+  margin-bottom: -28px;
+}
+.steward-posture::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--surface-1, var(--bg-primary)), transparent);
+  margin-top: -28px;
+}
+.steward-posture[data-scroll-hint="bottom"]::after,
+.steward-posture[data-scroll-hint="both"]::before,
+.steward-posture[data-scroll-hint="both"]::after,
+.steward-posture[data-scroll-hint="top"]::before {
+  display: block;
 }
 
 /* ── Run detail: phase progression + step rows ── */

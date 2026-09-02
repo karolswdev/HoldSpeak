@@ -1,7 +1,7 @@
 {
   "total_seconds": 1.84,
   "segments": {
-    "desk_seed": 0.12,
+    "desk_seed": 0.13,
     "set_policy": 0.0,
     "tick1": 0.02,
     "tick2": 0.02,
