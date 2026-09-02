@@ -650,3 +650,315 @@ class TestTriggerKind:
             ).fetchone()
         assert row is not None
         assert row[0] == "manual"
+
+
+# ── HS-164-03: Rule matching + effect recording ─────────────────────
+
+
+def _set_rule_on_watch(
+    db: Database,
+    watch_id: str,
+    condition: dict,
+    actions: list[dict],
+) -> str:
+    """Set a rule on a watch via the WatchService."""
+    svc = WatchService(db)
+    result = svc.set_rules(
+        OWNER, watch_id,
+        [{"condition": condition, "actions": actions}],
+    )
+    return result["rules"][0]["id"]
+
+
+class TestEffectRecordingInEvaluateDue:
+    """HS-164-03: evaluate_due matches rules and records effects."""
+
+    def test_matched_rule_records_effect(self, tmp_path) -> None:
+        """A rule matching a transition records a pending effect."""
+        db = Database(tmp_path / "eff-record.db")
+        _make_watch(db, "w-eff")
+        _graduate_watch(db, "w-eff", cadence_minutes=60,
+                        next_evaluation_at=_past_iso(5))
+
+        # Condition: any change on 'checks'.
+        from holdspeak.watch_validation import CONDITION_SCHEMA, ACTION_SCHEMA
+        _set_rule_on_watch(db, "w-eff",
+            condition={
+                "schema": CONDITION_SCHEMA,
+                "operator": "any",
+                "clauses": [
+                    {"field": "checks", "comparison": "changed"},
+                ],
+            },
+            actions=[
+                {"schema": ACTION_SCHEMA, "kind": "project.steward.run_once"},
+            ],
+        )
+
+        # Phase 0: baseline with checks=pending.
+        baseline = [{"number": 1, "state": "open", "title": "PR",
+                     "url": "http://gh/1", "checks": "pending",
+                     "headRefOid": "aaa"}]
+        # Phase 1: checks changed to success.
+        changed = [{"number": 1, "state": "open", "title": "PR",
+                    "url": "http://gh/1", "checks": "success",
+                    "headRefOid": "aaa"}]
+
+        fetcher = _counting_fetcher([baseline, changed])
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "w-eff")
+
+        outcomes = svc.evaluate_due(OWNER)
+        assert len(outcomes) == 1
+        assert outcomes[0]["outcome"] == "evaluated"
+        assert "effects" in outcomes[0]
+        assert len(outcomes[0]["effects"]) == 1
+        eff = outcomes[0]["effects"][0]
+        assert eff["action_kind"] == "project.steward.run_once"
+        assert eff["state"] == "pending"
+
+    def test_unmatched_rule_no_effect(self, tmp_path) -> None:
+        """A rule that does not match produces no effect."""
+        db = Database(tmp_path / "eff-nomatch.db")
+        _make_watch(db, "w-nomatch")
+        _graduate_watch(db, "w-nomatch", cadence_minutes=60,
+                        next_evaluation_at=_past_iso(5))
+
+        from holdspeak.watch_validation import CONDITION_SCHEMA, ACTION_SCHEMA
+        _set_rule_on_watch(db, "w-nomatch",
+            condition={
+                "schema": CONDITION_SCHEMA,
+                "operator": "any",
+                "clauses": [
+                    {"field": "review_decision", "comparison": "changed"},
+                ],
+            },
+            actions=[
+                {"schema": ACTION_SCHEMA, "kind": "project.observe"},
+            ],
+        )
+
+        # Only checks changed, not review_decision.
+        baseline = [{"number": 1, "state": "open", "title": "PR",
+                     "url": "http://gh/1", "checks": "pending",
+                     "headRefOid": "aaa"}]
+        changed = [{"number": 1, "state": "open", "title": "PR",
+                    "url": "http://gh/1", "checks": "success",
+                    "headRefOid": "aaa"}]
+
+        fetcher = _counting_fetcher([baseline, changed])
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "w-nomatch")
+
+        outcomes = svc.evaluate_due(OWNER)
+        assert len(outcomes) == 1
+        assert "effects" not in outcomes[0]
+
+    def test_replay_same_evaluation_mints_nothing(self, tmp_path) -> None:
+        """Re-evaluating with identical snapshot produces no_op and no
+        new effects."""
+        db = Database(tmp_path / "eff-replay.db")
+        _make_watch(db, "w-replay")
+        _graduate_watch(db, "w-replay", cadence_minutes=1,
+                        next_evaluation_at=_past_iso(5))
+
+        from holdspeak.watch_validation import CONDITION_SCHEMA, ACTION_SCHEMA
+        _set_rule_on_watch(db, "w-replay",
+            condition={
+                "schema": CONDITION_SCHEMA,
+                "operator": "any",
+                "clauses": [
+                    {"field": "checks", "comparison": "changed"},
+                ],
+            },
+            actions=[
+                {"schema": ACTION_SCHEMA, "kind": "project.steward.run_once"},
+            ],
+        )
+
+        baseline = [{"number": 1, "state": "open", "title": "PR",
+                     "url": "http://gh/1", "checks": "pending",
+                     "headRefOid": "aaa"}]
+        changed = [{"number": 1, "state": "open", "title": "PR",
+                    "url": "http://gh/1", "checks": "success",
+                    "headRefOid": "aaa"}]
+
+        # Use a fetcher that returns changed on every call after baseline.
+        fetcher = _counting_fetcher([baseline, changed, changed])
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "w-replay")
+
+        # First evaluation: records effect.
+        outcomes1 = svc.evaluate_due(OWNER)
+        assert len(outcomes1) == 1
+        effects1 = outcomes1[0].get("effects", [])
+        assert len(effects1) == 1
+
+        # Advance next_evaluation_at to make it due again.
+        db.automations.update_watch_spec(
+            "w-replay", next_evaluation_at=_past_iso(5),
+        )
+
+        # Second evaluation: identical snapshot => no_op, no new effects.
+        outcomes2 = svc.evaluate_due(OWNER)
+        assert len(outcomes2) == 1
+        assert outcomes2[0]["outcome"] == "evaluated"
+        # no_op has no transitions, so no effects.
+        assert "effects" not in outcomes2[0]
+
+    def test_matched_rule_ids_written_to_evaluation(self, tmp_path) -> None:
+        """matched_rule_ids_json on the evaluation row is updated."""
+        db = Database(tmp_path / "eff-mrids.db")
+        _make_watch(db, "w-mrids")
+        _graduate_watch(db, "w-mrids", cadence_minutes=60,
+                        next_evaluation_at=_past_iso(5))
+
+        from holdspeak.watch_validation import CONDITION_SCHEMA, ACTION_SCHEMA
+        rule_result = WatchService(db).set_rules(
+            OWNER, "w-mrids",
+            [{"condition": {
+                "schema": CONDITION_SCHEMA,
+                "operator": "any",
+                "clauses": [
+                    {"field": "checks", "comparison": "changed"},
+                ],
+            }, "actions": [
+                {"schema": ACTION_SCHEMA, "kind": "project.observe"},
+            ]}],
+        )
+        rule_id = rule_result["rules"][0]["id"]
+
+        baseline = [{"number": 1, "state": "open", "title": "PR",
+                     "url": "http://gh/1", "checks": "pending",
+                     "headRefOid": "aaa"}]
+        changed = [{"number": 1, "state": "open", "title": "PR",
+                    "url": "http://gh/1", "checks": "success",
+                    "headRefOid": "aaa"}]
+
+        fetcher = _counting_fetcher([baseline, changed])
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "w-mrids")
+
+        outcomes = svc.evaluate_due(OWNER)
+        eval_id = outcomes[0]["evaluation_id"]
+
+        with db._connection() as conn:
+            row = conn.execute(
+                "SELECT matched_rule_ids_json FROM watch_evaluations WHERE id=?",
+                (eval_id,),
+            ).fetchone()
+        assert row is not None
+        matched = json.loads(row[0])
+        assert rule_id in matched
+
+    def test_evaluate_once_does_not_record_effects(self, tmp_path) -> None:
+        """Manual evaluate_once NEVER records effects (byte-identical)."""
+        db = Database(tmp_path / "eff-manual.db")
+        _make_watch(db, "w-manual-eff")
+        _graduate_watch(db, "w-manual-eff", cadence_minutes=60)
+
+        from holdspeak.watch_validation import CONDITION_SCHEMA, ACTION_SCHEMA
+        _set_rule_on_watch(db, "w-manual-eff",
+            condition={
+                "schema": CONDITION_SCHEMA,
+                "operator": "any",
+                "clauses": [
+                    {"field": "checks", "comparison": "changed"},
+                ],
+            },
+            actions=[
+                {"schema": ACTION_SCHEMA, "kind": "project.steward.run_once"},
+            ],
+        )
+
+        baseline = [{"number": 1, "state": "open", "title": "PR",
+                     "url": "http://gh/1", "checks": "pending",
+                     "headRefOid": "aaa"}]
+        changed = [{"number": 1, "state": "open", "title": "PR",
+                    "url": "http://gh/1", "checks": "success",
+                    "headRefOid": "aaa"}]
+
+        fetcher = _counting_fetcher([baseline, changed])
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "w-manual-eff")
+
+        result = svc.evaluate_once(OWNER, "w-manual-eff")
+        # Manual evaluation does not record effects.
+        eval_id = result["evaluation_id"]
+        effects = db.automations.list_effects(eval_id)
+        assert len(effects) == 0
+
+    def test_changed_to_condition_matches(self, tmp_path) -> None:
+        """A changed_to comparison matches when the field changed to
+        the specified value."""
+        db = Database(tmp_path / "eff-chto.db")
+        _make_watch(db, "w-chto")
+        _graduate_watch(db, "w-chto", cadence_minutes=60,
+                        next_evaluation_at=_past_iso(5))
+
+        from holdspeak.watch_validation import CONDITION_SCHEMA, ACTION_SCHEMA
+        _set_rule_on_watch(db, "w-chto",
+            condition={
+                "schema": CONDITION_SCHEMA,
+                "operator": "any",
+                "clauses": [
+                    {"field": "checks", "comparison": "changed_to",
+                     "value": "failure"},
+                ],
+            },
+            actions=[
+                {"schema": ACTION_SCHEMA, "kind": "project.steward.run_once"},
+            ],
+        )
+
+        baseline = [{"number": 1, "state": "open", "title": "PR",
+                     "url": "http://gh/1", "checks": "success",
+                     "headRefOid": "aaa"}]
+        changed = [{"number": 1, "state": "open", "title": "PR",
+                    "url": "http://gh/1", "checks": "failure",
+                    "headRefOid": "aaa"}]
+
+        fetcher = _counting_fetcher([baseline, changed])
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "w-chto")
+
+        outcomes = svc.evaluate_due(OWNER)
+        assert len(outcomes[0].get("effects", [])) == 1
+        assert outcomes[0]["effects"][0]["action_kind"] == "project.steward.run_once"
+
+    def test_changed_to_wrong_value_no_match(self, tmp_path) -> None:
+        """changed_to does NOT match when field changed to a DIFFERENT value."""
+        db = Database(tmp_path / "eff-chto-no.db")
+        _make_watch(db, "w-chto-no")
+        _graduate_watch(db, "w-chto-no", cadence_minutes=60,
+                        next_evaluation_at=_past_iso(5))
+
+        from holdspeak.watch_validation import CONDITION_SCHEMA, ACTION_SCHEMA
+        _set_rule_on_watch(db, "w-chto-no",
+            condition={
+                "schema": CONDITION_SCHEMA,
+                "operator": "any",
+                "clauses": [
+                    {"field": "checks", "comparison": "changed_to",
+                     "value": "failure"},
+                ],
+            },
+            actions=[
+                {"schema": ACTION_SCHEMA, "kind": "project.steward.run_once"},
+            ],
+        )
+
+        baseline = [{"number": 1, "state": "open", "title": "PR",
+                     "url": "http://gh/1", "checks": "pending",
+                     "headRefOid": "aaa"}]
+        # Changed to success, NOT failure.
+        changed = [{"number": 1, "state": "open", "title": "PR",
+                    "url": "http://gh/1", "checks": "success",
+                    "headRefOid": "aaa"}]
+
+        fetcher = _counting_fetcher([baseline, changed])
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "w-chto-no")
+
+        outcomes = svc.evaluate_due(OWNER)
+        assert "effects" not in outcomes[0]

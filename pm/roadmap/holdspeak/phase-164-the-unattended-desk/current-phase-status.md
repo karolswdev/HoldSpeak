@@ -41,7 +41,7 @@ admitted 160/162 verbs).
 | --- | --- | --- | --- | --- |
 | HS-164-01 | The due ledger (additive schema: cadence, unattended opt-in, circuit state; trace-first) | done | [story-01-the-due-ledger](./story-01-the-due-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-164-02 | evaluate_due (due Watches evaluate on cadence; isolation + circuit) | done | [story-02-evaluate-due](./story-02-evaluate-due.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-164-03 | run_due (the triggered hand: watermark requests, ONE run, scheduling cooldown) | backlog | [story-03-run-due](./story-03-run-due.md) | - |
+| HS-164-03 | run_due (the triggered hand: watermark requests, ONE run, scheduling cooldown) | done | [story-03-run-due](./story-03-run-due.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-164-04 | The conductor (two failure boundaries; §10 events; Cadence attention) | backlog | [story-04-the-conductor](./story-04-the-conductor.md) | - |
 | HS-164-05 | The face (the unattended posture: opt-in, cadence, circuit, interventions — OWNER VERDICT) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
 | HS-164-06 | The walk (Gate A on glass: two useful unattended runs, zero prompts, zero duplicates) | backlog | [story-06-the-walk](./story-06-the-walk.md) | - |
@@ -49,22 +49,26 @@ admitted 160/162 verbs).
 
 ## Where we are
 
-2/7. HS-164-02 evaluate_due DONE (2026-09-02): WatchService.
-evaluate_due — due selection by the v72 cadence column (enabled +
-state IN active/tested + next_evaluation_at <= now), per-watch
-isolation (NEVER raises; every outcome recorded: evaluated /
-probe_half_open / skipped_circuit_open / failed), the durable circuit
-lifecycle (3 failures open; 900s window; ONE half-open probe; success
-resets in-transaction), bookkeeping (last_evaluated_at +
-next_evaluation_at) transactional via a txn hook on the extracted
-_evaluate_core — evaluate_once stayed byte-identical (its 6 existing
-tests untouched-green) and the OWNER'S HAND OVERRIDES the circuit
-(manual evaluation ignores it; only the scheduler respects it — under
-test). THE BOUNDARY RULE recorded: evaluate_due owns graduated rows
-(state active/tested + real columns); legacy refresh_due_watches owns
-state='' rows reading JSON cadence — never two schedulers on one row.
-Gates: 143 passed scoped (24 new + 110 watch service + schema +
-fence). Earlier: 1/7 the due ledger (v72). NEXT: HS-164-03 run_due.
+3/7. HS-164-03 run_due DONE (2026-09-02): the STOP condition earned
+its keep — the trace found the 161 effect machinery was DORMANT
+SCHEMA (watch_effects + create_effect had zero production callers;
+matched_rule_ids_json never written since 159; no action dispatcher
+existed). The orchestrator's ruling: wake the tables as designed.
+Shipped: WatchCondition@1 matcher (pure module; older_than/newer_than
+honestly unmatchable at transition level — documented); rule matching
++ effect recording in evaluate_due only (evaluate_once byte-identical,
+95 tests untouched); watch_effects rows ARE the durable requests
+(deterministic key sha256(evaluation:rule:kind), lookup-first — the
+idempotency index is PLAIN, not unique; single-writer today, recorded
+debt); run_due drains project.steward.run_once with honest gate
+receipts in order (no_project / no_opt_in / disabled / cooldown /
+resolved_existing_run at the deterministic watermark
+watch:<id>:<source_revision> / run_started with read-back
+verification); STW-002 absorbed as resolution; manual paths
+byte-identical under four explicit tests. Undispatched kinds stay
+honestly pending (7 declared kinds await handlers — debt to the
+ledger). Gates: 203 passed scoped. Earlier: 2/7 evaluate_due, 1/7 the
+due ledger. NEXT: HS-164-04 the conductor.
 
 ## Active risks
 

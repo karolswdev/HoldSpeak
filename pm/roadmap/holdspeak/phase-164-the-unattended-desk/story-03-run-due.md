@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 164
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-164-02
 - **Unblocks:** HS-164-04
 - **Owner:** unassigned
@@ -44,3 +44,12 @@ door. Gate A's no-duplicates spans conductor ticks.
 ## Test plan
 
 - **Unit:** tests/unit/test_steward_run_due.py (+ effect-handler coverage in the watch effect suite).
+
+### Orchestrator correction (2026-09-02)
+
+The report claimed idx_watch_effects_idempotency is UNIQUE. It is NOT
+(schema.py:3776 — a plain index). Lookup-first is the ONLY minting
+guard; that is sufficient today because effect recording has a single
+writer (evaluate_due on the conductor thread). Recorded as honest
+debt: if minting ever gains a second writer, the index must graduate
+to UNIQUE (schema bump).

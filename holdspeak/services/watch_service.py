@@ -32,6 +32,7 @@ from holdspeak.services.observer import (
     observe_service,
 )
 from holdspeak.services.reaction_service import diff_snapshots, normalize_snapshot
+from holdspeak.watch_condition_matcher import match_condition
 from holdspeak.watch_validation import (
     validate_action,
     validate_condition,
@@ -663,6 +664,9 @@ class WatchService:
                 f"Evaluation complete: {len(transitions)} transitions, "
                 f"{len(observation_ids)} observations"
             ),
+            # Internal: raw transition dicts for rule matching (HS-164-03).
+            # Consumed by evaluate_due only; never serialised to the caller.
+            "_transitions": transitions,
         }
 
     def evaluate_once(
@@ -809,19 +813,37 @@ class WatchService:
                     txn_hook=txn_hook,
                 )
 
+                # ── HS-164-03: rule matching + effect recording ───
+                # Only for completed evaluations with transitions.
+                matched_effects: list[dict[str, Any]] = []
+                raw_transitions = result.get("_transitions", [])
+                eval_id = result.get("evaluation_id", "")
+
+                if (
+                    result["state"] == "completed"
+                    and raw_transitions
+                    and eval_id
+                ):
+                    matched_effects = self._match_and_record_effects(
+                        watch_id, eval_id, raw_transitions,
+                    )
+
                 outcome_type = "probe_half_open" if is_probe else "evaluated"
                 # Idempotent no_op is still a successful evaluation
                 # (same snapshot already seen).
                 if result["state"] == "no_op":
                     outcome_type = "evaluated"
 
-                outcomes.append({
+                outcome_entry: dict[str, Any] = {
                     "watch_id": watch_id,
                     "outcome": outcome_type,
                     "evaluation_id": result.get("evaluation_id"),
                     "transitions": result.get("transitions", 0),
                     "observation_ids": result.get("observation_ids", []),
-                })
+                }
+                if matched_effects:
+                    outcome_entry["effects"] = matched_effects
+                outcomes.append(outcome_entry)
 
             except Exception as exc:
                 # Per-watch isolation: record failure, update circuit,
@@ -868,6 +890,110 @@ class WatchService:
                 })
 
         return outcomes
+
+    # ── HS-164-03: rule matching + effect recording ───────────────
+
+    def _match_and_record_effects(
+        self,
+        watch_id: str,
+        evaluation_id: str,
+        transitions: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Match watch rules against transitions, record effects.
+
+        Returns a list of effect dicts (one per matched rule + action).
+        Idempotent: lookup-first by idempotency_key; re-processing the
+        same evaluation mints nothing new.
+
+        Called ONLY from evaluate_due (scheduled); evaluate_once stays
+        byte-identical.
+        """
+        rules = self._repo.list_rules(watch_id)
+        if not rules:
+            return []
+
+        matched_rule_ids: list[str] = []
+        effects: list[dict[str, Any]] = []
+
+        for rule in rules:
+            if not rule.get("enabled", True):
+                continue
+            rule_id = rule.get("id", "")
+            condition = rule.get("condition", {})
+
+            if not match_condition(condition, transitions):
+                continue
+
+            matched_rule_ids.append(rule_id)
+
+            # Each action in the rule's actions list.
+            actions = rule.get("action", [])
+            if isinstance(actions, dict):
+                actions = [actions]
+            if not isinstance(actions, list):
+                continue
+
+            for action in actions:
+                if not isinstance(action, dict):
+                    continue
+                action_kind = action.get("kind", "")
+                if not action_kind:
+                    continue
+
+                # Deterministic idempotency key:
+                # sha256(evaluation_id + rule_id + action_kind)[:32]
+                key_material = f"{evaluation_id}:{rule_id}:{action_kind}"
+                idem_key = hashlib.sha256(
+                    key_material.encode("utf-8"),
+                ).hexdigest()[:32]
+
+                # Lookup-first: the UNIQUE index guards replay.
+                existing = self._repo.get_effect_by_idempotency_key(
+                    idem_key,
+                )
+                if existing is not None:
+                    effects.append(existing)
+                    continue
+
+                # Mint the effect row.
+                effect_id = f"weff_{uuid.uuid4().hex[:12]}"
+                try:
+                    effect = self._repo.create_effect(
+                        effect_id=effect_id,
+                        evaluation_id=evaluation_id,
+                        rule_id=rule_id,
+                        action_kind=action_kind,
+                        idempotency_key=idem_key,
+                        state="pending",
+                    )
+                    effects.append(effect)
+                except Exception:
+                    # UNIQUE constraint race: another concurrent path
+                    # inserted the same key.  Resolve to that row.
+                    existing = self._repo.get_effect_by_idempotency_key(
+                        idem_key,
+                    )
+                    if existing is not None:
+                        effects.append(existing)
+
+        # Write matched_rule_ids_json on the evaluation row.
+        if matched_rule_ids:
+            try:
+                with self._db._connection() as conn:
+                    conn.execute(
+                        "UPDATE watch_evaluations "
+                        "SET matched_rule_ids_json=? WHERE id=?",
+                        (
+                            json.dumps(
+                                matched_rule_ids, separators=(",", ":"),
+                            ),
+                            evaluation_id,
+                        ),
+                    )
+            except Exception:
+                pass  # Non-critical; effects are already durable.
+
+        return effects
 
     # ── Rules ───────────────────────────────────────────────────────
 
