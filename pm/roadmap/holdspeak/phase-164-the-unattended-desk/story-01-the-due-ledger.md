@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 164
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** -
 - **Unblocks:** HS-164-02
 - **Owner:** unassigned
@@ -42,3 +42,54 @@ traced before anything new (the 162 RIDE law).
 ## Test plan
 
 - **Unit:** tests/unit/test_unattended_schema.py.
+
+## Trace record
+
+### Decision 1: Legacy vs graduated scheduler boundary
+
+The **legacy scheduler** is `ReactionService.refresh_due_watches`
+(reaction_service.py:308). It owns the pre-graduation connector_watches
+rows: reads cadence from `watch["query"].get("refresh_interval_minutes")`
+(JSON, not a column) and uses `watch["updated_at"]` as the due-ness
+clock.
+
+The **graduated path** (WatchSpec@1, HS-159-01) already has
+`next_evaluation_at` and `last_evaluated_at` columns on
+connector_watches (schema.py:2322-2323) and `WatchService.evaluate`
+writes `last_evaluated_at` (watch_service.py:637). What was missing: a
+REAL column for the cadence value itself so the graduated scheduler
+never digs into JSON. Added `evaluation_cadence_minutes INTEGER NOT NULL
+DEFAULT 60` — the legacy path keeps reading JSON; the graduated path
+reads the column. Story 02 traces the boundary in full.
+
+### Decision 2: Durable vs in-memory circuit
+
+The HS-103-04 circuit breaker (`endpoint_health.py`) is purely
+in-memory: `_EndpointState` tracks `consecutive_failures` and
+`opened_at` (monotonic time), keyed by endpoint string, lost on
+restart. Shape: 3 failures open the circuit; after cooldown one
+half-open probe is allowed through.
+
+**Decision: DURABLE.** The charter requires STW-009 (recovery) and
+restart survival. Added to connector_watches:
+- `circuit_state TEXT NOT NULL DEFAULT 'closed'` (closed/open/half_open)
+- `circuit_failure_streak INTEGER NOT NULL DEFAULT 0`
+- `circuit_opened_at TEXT` (nullable, ISO timestamp)
+
+No `circuit_half_open_at` column: the scheduler derives half-open from
+`circuit_opened_at + cooldown_seconds` (already on steward_policies).
+The in-memory EndpointHealth stays for LLM endpoints; the watch circuit
+is its own concern with its own persistence.
+
+### Decision 3: Opt-in home
+
+`steward_policies` already has `enabled` (general policy on/off),
+`bounds_json`, and `cooldown_seconds`. The bounded-delegation ruling
+demands an EXPLICIT opt-in for unattended work, default OFF.
+
+**Decision: a REAL named column, not bounds_json.** Added
+`unattended_enabled INTEGER NOT NULL DEFAULT 0` on steward_policies.
+Disabling is a plain `UPDATE steward_policies SET unattended_enabled=0`
+— immediate and durable. The column is law-bearing (the conductor must
+check it before every unattended run); a JSON field would be invisible
+to a simple query and would not carry a NOT NULL + DEFAULT constraint.

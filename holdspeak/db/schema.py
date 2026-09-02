@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 71  # informational; 70→71: steward ledger (HS-163-01)
+SCHEMA_VERSION = 72  # informational; 71→72: unattended bookkeeping (HS-164-01)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -2320,7 +2320,12 @@ CREATE TABLE IF NOT EXISTS connector_watches (
     test_result_json TEXT,
     last_test_at TEXT,
     next_evaluation_at TEXT,
-    last_evaluated_at TEXT
+    last_evaluated_at TEXT,
+    -- HS-164-01: unattended bookkeeping (cadence + circuit).
+    evaluation_cadence_minutes INTEGER NOT NULL DEFAULT 60,
+    circuit_state TEXT NOT NULL DEFAULT 'closed',
+    circuit_failure_streak INTEGER NOT NULL DEFAULT 0,
+    circuit_opened_at TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_connector_watches_connector
     ON connector_watches(connector_id, enabled);
@@ -3906,6 +3911,8 @@ CREATE TABLE IF NOT EXISTS steward_policies (
     cooldown_seconds INTEGER NOT NULL DEFAULT 0,
     bounds_json TEXT NOT NULL DEFAULT '{}',
     enabled INTEGER NOT NULL DEFAULT 1,
+    -- HS-164-01: explicit per-project unattended opt-in (default OFF).
+    unattended_enabled INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

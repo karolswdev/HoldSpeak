@@ -39,7 +39,7 @@ admitted 160/162 verbs).
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-164-01 | The due ledger (additive schema: cadence, unattended opt-in, circuit state; trace-first) | backlog | [story-01-the-due-ledger](./story-01-the-due-ledger.md) | - |
+| HS-164-01 | The due ledger (additive schema: cadence, unattended opt-in, circuit state; trace-first) | done | [story-01-the-due-ledger](./story-01-the-due-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-164-02 | evaluate_due (due Watches evaluate on cadence; isolation + circuit) | backlog | [story-02-evaluate-due](./story-02-evaluate-due.md) | - |
 | HS-164-03 | run_due (the triggered hand: watermark requests, ONE run, scheduling cooldown) | backlog | [story-03-run-due](./story-03-run-due.md) | - |
 | HS-164-04 | The conductor (two failure boundaries; §10 events; Cadence attention) | backlog | [story-04-the-conductor](./story-04-the-conductor.md) | - |
@@ -49,14 +49,19 @@ admitted 160/162 verbs).
 
 ## Where we are
 
-CHARTERED. Chain: 01 → 02 → 03 → 04 → 05 ∥ 06(rig after 05's
-functional) → 07. THE LAWS CARRY, with 163's fresh scars now law:
-rigs BUILD FIRST (the stale-bundle lie); grep EVERY schema-version
-pin on a bump (two hid under lying names); a fixture that hand-seeds
-the very key it asserts is the 161 scar reborn — production seams
-prove themselves; the census + its reviewed artifact re-pin when
-web_server/service code moves. Merge posture: local gates are the
-substance, basis on the PR.
+1/7. HS-164-01 the due ledger DONE (2026-09-02): schema v72 additive —
+connector_watches gains evaluation_cadence_minutes + durable circuit
+columns (state/failure_streak/opened_at; half-open DERIVED from
+opened_at + cooldown, never a second clock); steward_policies gains
+unattended_enabled (explicit, NOT NULL, default OFF — the
+bounded-delegation flag as a REAL column). The traces held: the
+graduated watches ALREADY carry next_evaluation_at/last_evaluated_at
+(HS-159-01 — reused, not duplicated); the legacy refresh_due_watches
+reads JSON cadence and stays untouched (story 02 owns the boundary);
+EndpointHealth stays in-memory for LLM endpoints — the watch circuit
+is durable for STW-009. All four DB version pins found + updated
+honestly (the 163 scar paid). Gates: 217 passed scoped; real-DB
+reconcile to v72 on a COPY (2 passed). NEXT: HS-164-02 evaluate_due.
 
 ## Active risks
 

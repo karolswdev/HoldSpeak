@@ -266,6 +266,7 @@ class AutomationRepository(BaseRepository):
         last_test_at: str | None = None,
         next_evaluation_at: str | None = None,
         last_evaluated_at: str | None = None,
+        evaluation_cadence_minutes: int | None = None,
     ) -> bool:
         """Update graduation columns on a connector_watches row (named-column)."""
         sets: list[str] = []
@@ -287,6 +288,7 @@ class AutomationRepository(BaseRepository):
             ("last_test_at", last_test_at),
             ("next_evaluation_at", next_evaluation_at),
             ("last_evaluated_at", last_evaluated_at),
+            ("evaluation_cadence_minutes", evaluation_cadence_minutes),
         ):
             if val is not None:
                 sets.append(f"{col}=?")
@@ -301,6 +303,78 @@ class AutomationRepository(BaseRepository):
                 params,
             )
         return bool(cur.rowcount)
+
+    # ── Circuit state (HS-164-01) ──────────────────────────────────────
+
+    def update_watch_circuit(
+        self,
+        watch_id: str,
+        *,
+        circuit_state: str,
+        circuit_failure_streak: int,
+        circuit_opened_at: str | None = None,
+    ) -> bool:
+        """Update durable circuit-breaker state on a connector_watches row."""
+        with self._connection() as conn:
+            return self._update_watch_circuit(
+                conn, watch_id,
+                circuit_state=circuit_state,
+                circuit_failure_streak=circuit_failure_streak,
+                circuit_opened_at=circuit_opened_at,
+            )
+
+    def update_watch_circuit_in_transaction(
+        self,
+        conn: Any,
+        watch_id: str,
+        *,
+        circuit_state: str,
+        circuit_failure_streak: int,
+        circuit_opened_at: str | None = None,
+    ) -> bool:
+        return self._update_watch_circuit(
+            conn, watch_id,
+            circuit_state=circuit_state,
+            circuit_failure_streak=circuit_failure_streak,
+            circuit_opened_at=circuit_opened_at,
+        )
+
+    @staticmethod
+    def _update_watch_circuit(
+        conn: Any,
+        watch_id: str,
+        *,
+        circuit_state: str,
+        circuit_failure_streak: int,
+        circuit_opened_at: str | None,
+    ) -> bool:
+        cur = conn.execute(
+            "UPDATE connector_watches "
+            "SET circuit_state = ?, circuit_failure_streak = ?, "
+            "    circuit_opened_at = ?, updated_at = datetime('now') "
+            "WHERE id = ?",
+            (circuit_state, int(circuit_failure_streak), circuit_opened_at, watch_id),
+        )
+        return bool(cur.rowcount)
+
+    def get_watch_circuit(self, watch_id: str) -> dict[str, Any] | None:
+        """Read the durable circuit state for a watch."""
+        with self._connection() as conn:
+            return self._get_watch_circuit(conn, watch_id)
+
+    def get_watch_circuit_in_transaction(
+        self, conn: Any, watch_id: str
+    ) -> dict[str, Any] | None:
+        return self._get_watch_circuit(conn, watch_id)
+
+    @staticmethod
+    def _get_watch_circuit(conn: Any, watch_id: str) -> dict[str, Any] | None:
+        row = conn.execute(
+            "SELECT id, circuit_state, circuit_failure_streak, circuit_opened_at "
+            "FROM connector_watches WHERE id = ?",
+            (watch_id,),
+        ).fetchone()
+        return dict(row) if row else None
 
     # ── Setup sessions (§9.1) ──────────────────────────────────────────
 
