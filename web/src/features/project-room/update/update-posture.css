@@ -10,11 +10,21 @@
 
 /* ── List: two-line row ── */
 
+/* ROOT CAUSE: .surface-ledger-primary sets white-space:nowrap +
+   overflow:hidden, which collapses the two-line flex-column to a
+   single clipped line. Override these on the primary cell when it
+   contains our two-line row so both lines render. */
+.surface-ledger-primary:has(.update-list-row) {
+  white-space: normal;
+  overflow: visible;
+}
+
 .update-list-row {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  width: 100%;
 }
 
 /* Primary line: lifecycle + rev + time in one non-wrapping row. */

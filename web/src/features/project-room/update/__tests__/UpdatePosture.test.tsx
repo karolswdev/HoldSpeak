@@ -748,6 +748,36 @@ describe("Draft list: lifecycle-honest", () => {
     expect(provenances[1].textContent).not.toContain("gpt-4o");
     expect(provenances[1].textContent).not.toContain("(");
   });
+
+  it("row has two-line structure: primary line + secondary line as separate children", async () => {
+    setupUpdatePosture({
+      listUpdates: [draftUpdateFixture()],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("updates-verb"));
+    await waitFor(() => screen.getByTestId("update-posture"));
+
+    const items = screen.getAllByTestId("update-list-item");
+    const row = items[0].querySelector(".update-list-row");
+    expect(row).toBeTruthy();
+
+    // The row is a flex-column with two children (primary + secondary)
+    const primary = row!.querySelector(".update-list-primary");
+    const secondary = row!.querySelector(".update-list-secondary");
+    expect(primary).toBeTruthy();
+    expect(secondary).toBeTruthy();
+
+    // Primary contains lifecycle + rev + time as separate elements
+    expect(primary!.querySelector(".surface-token")).toBeTruthy();
+    expect(primary!.querySelector(".update-list-rev")).toBeTruthy();
+    expect(primary!.querySelector(".update-list-time")).toBeTruthy();
+
+    // The row sits inside .surface-ledger-primary which must allow
+    // the two-line layout (the CSS override lifts white-space:nowrap).
+    const ledgerPrimary = row!.closest(".surface-ledger-primary");
+    expect(ledgerPrimary).toBeTruthy();
+  });
 });
 
 // ── COPY MARKDOWN ──
