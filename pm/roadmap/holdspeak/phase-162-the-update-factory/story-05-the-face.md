@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 162
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-162-04 (scaffold may start against 04's frozen wire)
 - **Unblocks:** HS-162-07
 - **Owner:** unassigned
@@ -84,3 +84,15 @@ it is an interactable surface..." — a FINDING: the row opens on a
 single click (SurfaceLedgerRow onToggle) but nothing signals
 interactability. Affordance round chartered (hover, cursor,
 chevron/hint the house way, keyboard).
+
+## The owner's verdict — round 4 (2026-09-02)
+
+**PASS — close it** (verbatim). The judged set: the round-4 gallery
+(artifact 2e2e5683) — the Notes DeskEditor, the rendered document
+with named deduplicated sources, the designed list row with the
+rest-visible chevron. Four rounds total: r1 bounce (Notes editor;
+claims-dump), r2 bounce (the clipped row fragment), r3 questions +
+finding (editability confirmed by canon; the row must signal it
+opens), r4 PASS. Evidence note: the baseline's one branch-new name
+(ThoughtDocumentPane disclosure) is the known suite-order flake
+family — isolation green ×2, thought-workspace untouched since main.
