@@ -1,6 +1,6 @@
-/* HS-162-05 -- Update posture styles: claim chips, editor, list.
-   Themed with house tokens (bg-primary, text-primary, border-primary)
-   matching the setup-question-textarea species. */
+/* HS-162-05 -- Update posture styles: DeskEditor for drafts,
+   Material rendered document for published + subtle source rows.
+   No claim dump — the document is the hero. */
 
 .update-posture {
   display: flex;
@@ -53,114 +53,77 @@
   min-width: 0;
 }
 
+/* DeskEditor body wrapper: mic sits above the editor. */
 .update-body-editor {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 
-.update-body-editor-toolbar {
+.update-body-editor-mic {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
-/* Textarea: themed with house tokens (setup-question-textarea species). */
-.update-body-textarea {
-  flex: 1;
-  width: 100%;
-  min-height: 8rem;
-  padding: var(--space-2);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-body-size, 0.875rem);
-  line-height: 1.5;
-  resize: vertical;
-}
+/* ── Rendered document (published / preview) ── */
 
-.update-body-textarea:focus {
-  outline: 2px solid var(--border-focus);
-  outline-offset: -1px;
-}
-
-/* Published read-only pre: same theme as the textarea well. */
-.update-body-readonly {
-  padding: var(--space-2);
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
-}
-
-.update-body-pre {
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-body-size, 0.875rem);
-  line-height: 1.5;
-  margin: 0;
-  color: var(--text-primary);
-}
-
-/* ── Claims ── */
-
-.update-claims {
+.update-document {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
-.update-claims-section {
+.update-document-body {
+  max-width: 72ch;
+}
+
+.update-document-body .surface-material-h {
+  display: block;
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-1);
+}
+
+/* ── Per-section source rows (subtle, deduplicated) ── */
+
+.update-sources {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-primary);
 }
 
-.update-claims-section-label {
+.update-sources-label {
   font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  opacity: 0.7;
 }
 
-.update-claims-list {
+.update-source-row {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.update-claim-chip {
-  display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-1);
   flex-wrap: wrap;
-  padding: var(--space-1) 0;
-  font-size: var(--text-sm);
-}
-
-.update-claim-chip.is-unverified {
-  border-left: 3px solid var(--warn);
-  padding-left: var(--space-2);
-}
-
-.update-claim-marker {
-  color: var(--warn);
-  font-weight: 600;
-  font-size: var(--text-xs);
-}
-
-.update-claim-text {
-  color: var(--text-primary);
 }
 
 .update-claim-ref {
   cursor: pointer;
+  font-size: var(--text-xs);
 }
 
 .update-claim-ref.is-empty {
   opacity: 0.5;
   cursor: default;
+}
+
+.update-unverified-banner {
+  padding: var(--space-1) 0;
+}
+
+.update-unverified-notice {
+  font-size: var(--text-xs);
 }
 
 /* ── Draft model action with egress ── */

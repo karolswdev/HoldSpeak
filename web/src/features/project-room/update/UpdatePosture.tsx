@@ -2,9 +2,14 @@
 // five verbs, generator provenance, marked spans, egress badge.
 // Pays 160's S-4 debt: claim chip activation OPENS the source.
 // No modals. Mic on the editor. Surface barrel imports only.
+//
+// THE EDITOR IS THE NOTES EDITOR (DeskEditor — CodeMirror markdown).
+// THE PUBLISHED VIEW IS THE RENDERED DOCUMENT (Material) with claims
+// as subtle per-section source rows (deduplicated).
 
-import { useCallback, useRef, type KeyboardEvent } from "react";
+import { useCallback, type KeyboardEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
+import { DeskEditor } from "../../../desk/components/DeskEditor";
 import {
   SurfaceFooter,
   SurfaceLedger,
@@ -14,6 +19,7 @@ import {
   SurfaceVerbs,
   EgressChip,
   MicButton,
+  Material,
   humanTime,
 } from "../../../desk/surface";
 import { openSourceRef } from "../../../desk/surface/citations";
@@ -29,35 +35,34 @@ import {
 } from "./model";
 import "./update-posture.css";
 
-/* ── Claim chip: hover names refs, click OPENS the source ── */
+/* ── Per-section source row: deduplicated ref chips for a section ── */
 
-function ClaimChip({
-  claim,
+function SectionSourceRow({
+  claims,
   onOpen,
 }: {
-  claim: UpdateClaim;
+  claims: UpdateClaim[];
   onOpen: (ref: string) => void;
 }) {
-  const isUnverified = !claim.verified;
-  const refsTitle = claim.refs.length > 0
-    ? claim.refs.join(", ")
-    : "No evidence refs";
+  // Collect unique refs across all claims in this section
+  const seen = new Set<string>();
+  const uniqueRefs: { ref: string; hasUnverified: boolean }[] = [];
+  for (const claim of claims) {
+    for (const ref of claim.refs) {
+      if (!seen.has(ref)) {
+        seen.add(ref);
+        uniqueRefs.push({ ref, hasUnverified: !claim.verified });
+      }
+    }
+  }
+  // Also surface unverified claims that have no refs
+  const hasUnverifiedNoRef = claims.some((c) => !c.verified && c.refs.length === 0);
+
+  if (uniqueRefs.length === 0 && !hasUnverifiedNoRef) return null;
 
   return (
-    <span
-      className={`update-claim-chip${isUnverified ? " is-unverified" : ""}`}
-      data-testid="update-claim-chip"
-      data-span-id={claim.spanId}
-      data-verified={claim.verified}
-      data-section={claim.section}
-    >
-      {isUnverified ? (
-        <span className="update-claim-marker" data-testid="update-claim-unverified">
-          [UNVERIFIED]
-        </span>
-      ) : null}
-      <span className="update-claim-text">{claim.text}</span>
-      {claim.refs.map((ref) => (
+    <div className="update-source-row" data-testid="update-source-row">
+      {uniqueRefs.map(({ ref }) => (
         <button
           key={ref}
           type="button"
@@ -72,38 +77,31 @@ function ClaimChip({
           {refChipLabel(ref)}
         </button>
       ))}
-      {claim.refs.length === 0 ? (
+      {hasUnverifiedNoRef ? (
         <span
-          className="desk-chip quiet update-claim-ref is-empty"
-          title={refsTitle}
+          className="surface-token update-unverified-notice"
+          data-tone="warn"
+          data-testid="update-claim-unverified"
         >
-          no ref
+          Contains unverified claims
         </span>
       ) : null}
-    </span>
+    </div>
   );
 }
 
-/* ── Claims grouped by section ── */
+/* ── Rendered document view: Material body + subtle claim affordances ── */
 
-function ClaimsBySection({
-  claims,
+function RenderedUpdateDocument({
+  update,
   onOpenRef,
 }: {
-  claims: UpdateClaim[];
+  update: ProjectUpdate;
   onOpenRef: (ref: string) => void;
 }) {
-  if (claims.length === 0) {
-    return (
-      <SurfaceState
-        empty
-        emptyLabel="No claims in this update"
-        emptyGlyph={"▤"}
-      />
-    );
-  }
+  const claims = update.claims;
 
-  // Group by section, preserving order of first appearance
+  // Group claims by section for per-section source rows
   const sectionOrder: string[] = [];
   const grouped: Record<string, UpdateClaim[]> = {};
   for (const claim of claims) {
@@ -115,24 +113,38 @@ function ClaimsBySection({
     grouped[s].push(claim);
   }
 
+  // Check for any unverified claims to show a notice in the body
+  const hasUnverified = claims.some((c) => !c.verified);
+
   return (
-    <div className="update-claims" data-testid="update-claims">
-      {sectionOrder.map((section) => (
-        <div key={section} className="update-claims-section" data-testid="update-claims-section">
-          <span className="surface-token update-claims-section-label">
-            {section.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())}
+    <div className="update-document" data-testid="update-document">
+      {/* The rendered markdown body is the hero */}
+      <div className="update-document-body" data-testid="update-document-body">
+        <Material>{update.bodyMd}</Material>
+      </div>
+
+      {/* Unverified notice when applicable */}
+      {hasUnverified ? (
+        <div className="update-unverified-banner" data-testid="update-unverified-banner" role="status">
+          <span className="surface-token" data-tone="warn">
+            Some claims in this update could not be verified
           </span>
-          <div className="update-claims-list">
-            {grouped[section].map((claim) => (
-              <ClaimChip
-                key={claim.spanId}
-                claim={claim}
-                onOpen={onOpenRef}
-              />
-            ))}
-          </div>
         </div>
-      ))}
+      ) : null}
+
+      {/* Per-section source rows: subtle, deduplicated */}
+      {sectionOrder.length > 0 ? (
+        <div className="update-sources" data-testid="update-sources">
+          <span className="update-sources-label surface-token">Sources</span>
+          {sectionOrder.map((section) => (
+            <SectionSourceRow
+              key={section}
+              claims={grouped[section]}
+              onOpen={onOpenRef}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -235,12 +247,18 @@ function UpdateEditor({
 
   const isDraft = ctrl.isDraft;
   const isPublished = ctrl.isPublished;
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Posture-scoped keyboard (WEB-CMD-002)
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === "Escape") {
+      // DeskEditor handles its own Escape; only catch it outside the editor
+      const target = e.target as HTMLElement;
+      const inEditor =
+        target.closest?.(".cm-editor") != null ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
+
+      if (e.key === "Escape" && !inEditor) {
         e.preventDefault();
         void ctrl.backToList();
         return;
@@ -271,51 +289,47 @@ function UpdateEditor({
         <span className="surface-token">Rev {update.draftRevision}</span>
       </div>
 
-      {/* Body editor: editable for drafts, read-only for published */}
-      <SurfaceSection
-        label="Body"
-        actions={
-          isPublished ? (
-            <span className="surface-token" data-testid="update-readonly-reason">
-              Published updates are read-only
-            </span>
-          ) : null
-        }
-      >
-        {isDraft ? (
-          <div className="update-body-editor" data-testid="update-body-editor">
-            <div className="update-body-editor-toolbar">
-              <MicButton
-                draftScope={`update-editor-${update.id}`}
-                onText={(text) => {
-                  ctrl.handleEditBody(
-                    ctrl.editBody ? `${ctrl.editBody}\n${text}` : text,
-                  );
-                  textareaRef.current?.focus();
-                }}
-              />
-            </div>
-            <textarea
-              ref={textareaRef}
-              className="update-body-textarea"
-              data-testid="update-body-textarea"
-              aria-label="Update body"
-              value={ctrl.editBody}
-              rows={Math.max(8, ctrl.editBody.split("\n").length + 2)}
-              onChange={(e) => ctrl.handleEditBody(e.target.value)}
+      {/* Body: DeskEditor for drafts, Material rendered document for published */}
+      {isDraft ? (
+        <div className="update-body-editor" data-testid="update-body-editor">
+          <div className="update-body-editor-mic">
+            <MicButton
+              draftScope={`update-editor-${update.id}`}
+              onText={(text) => {
+                ctrl.handleEditBody(
+                  ctrl.editBody ? `${ctrl.editBody}\n${text}` : text,
+                );
+              }}
             />
           </div>
-        ) : (
-          <div className="update-body-readonly" data-testid="update-body-readonly">
-            <pre className="update-body-pre">{update.bodyMd}</pre>
-          </div>
-        )}
-      </SurfaceSection>
+          <DeskEditor
+            value={ctrl.editBody}
+            onChange={ctrl.handleEditBody}
+            placeholder="Write your update"
+            ariaLabel="Update body"
+            autoFocus
+            minHeight="200px"
+          />
+        </div>
+      ) : (
+        <div data-testid="update-body-readonly">
+          <SurfaceSection
+            label="Update"
+            actions={
+              <span className="surface-token" data-testid="update-readonly-reason">
+                Published updates are read-only
+              </span>
+            }
+          >
+            <RenderedUpdateDocument update={update} onOpenRef={onOpenRef} />
+          </SurfaceSection>
+        </div>
+      )}
 
-      {/* Claims inline: each claim shows its refs as chips */}
-      <SurfaceSection label="Claims">
-        <ClaimsBySection claims={update.claims} onOpenRef={onOpenRef} />
-      </SurfaceSection>
+      {/* Draft claims: subtle source rows below the editor */}
+      {isDraft && update.claims.length > 0 ? (
+        <RenderedUpdateDocument update={update} onOpenRef={onOpenRef} />
+      ) : null}
 
       {/* Verb bar */}
       <SurfaceVerbs>
@@ -416,7 +430,6 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
               label="local + cloud"
               scope="mixed"
               title="Model drafting may send project data to the configured inference provider."
-              data-testid="update-egress-chip"
             />
           </span>
         </SurfaceVerbs>

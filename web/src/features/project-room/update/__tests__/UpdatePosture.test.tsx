@@ -1,6 +1,7 @@
 // HS-162-05 -- UpdatePosture mounted-path tests: posture swap, draft list,
-// editor, claim chips (ref -> open), five verbs, egress badge, marked spans,
-// generator provenance, fallback_reason, published read-only.
+// DeskEditor for editing, Material-rendered document for published,
+// deduplicated source rows (ref -> open), five verbs, egress badge,
+// unverified banner, generator provenance, fallback_reason.
 // Proves the mount: from the real Room, open the Update posture by real clicks.
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -21,6 +22,30 @@ vi.mock("../../../../desk/ask", async () => {
     );
   return { ...actual, runAsk: vi.fn() };
 });
+
+// DeskEditor mock: renders as a plain textarea (same pattern as
+// ThoughtNoteEditor.test.tsx — the house mock for the Notes editor).
+vi.mock("../../../../desk/components/DeskEditor", () => ({
+  DeskEditor: ({
+    value,
+    onChange,
+    ariaLabel,
+    placeholder,
+  }: {
+    value: string;
+    onChange: (value: string) => void;
+    ariaLabel?: string;
+    placeholder?: string;
+  }) => (
+    <textarea
+      aria-label={ariaLabel || "Body"}
+      data-testid="update-body-textarea"
+      placeholder={placeholder}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  ),
+}));
 
 const apiFetch = vi.fn();
 vi.mock("../../../../lib/api", async () => {
@@ -274,10 +299,10 @@ describe("Mount proof: Updates verb in Room chrome", () => {
   });
 });
 
-// ── MOUNTED-PATH: draft -> edit -> claim chips -> save -> publish ──
+// ── MOUNTED-PATH: draft -> edit -> save -> publish ──
 
 describe("Mounted-path: full draft-to-publish walk", () => {
-  it("drafts, opens editor, edits, saves, publishes", async () => {
+  it("drafts via DeskEditor, edits, saves, publishes", async () => {
     setupUpdatePosture({ listUpdates: [] });
     render(<WindowHarness scope="project:p1" />);
 
@@ -293,22 +318,21 @@ describe("Mounted-path: full draft-to-publish walk", () => {
     const draftBtn = screen.getByTestId("update-verb-draft-deterministic");
     fireEvent.click(draftBtn);
 
-    // Editor opens
+    // Editor opens with DeskEditor (mocked as textarea)
     await waitFor(() => {
       expect(screen.getByTestId("update-editor")).toBeTruthy();
     });
 
-    // Verify we're in the editor
     expect(screen.getByTestId("update-posture").getAttribute("data-phase")).toBe("editor");
 
-    // Body textarea is present and editable
+    // DeskEditor textarea is present and editable
     const textarea = screen.getByTestId("update-body-textarea") as HTMLTextAreaElement;
     expect(textarea.value).toContain("## Progress");
 
     // Edit the body
     fireEvent.change(textarea, { target: { value: "## Progress\n\nOwner edited.\n" } });
 
-    // Save button becomes enabled
+    // Save
     const saveBtn = screen.getByTestId("update-verb-save");
     fireEvent.click(saveBtn);
 
@@ -338,18 +362,16 @@ describe("Mounted-path: full draft-to-publish walk", () => {
   });
 });
 
-// ── CLAIM CHIPS: render and one OPENS its source ──
+// ── SOURCE ROWS: deduplicated refs, open source ──
 
-describe("Claim chips: render and open source", () => {
-  it("renders claim chips with refs", async () => {
+describe("Source rows: deduplicated refs and open source", () => {
+  it("renders deduplicated source rows with ref chips", async () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
-    // Enter update posture
     fireEvent.click(await screen.findByTestId("updates-verb"));
     await waitFor(() => screen.getByTestId("update-posture"));
 
-    // Open the draft in the editor
     const items = await screen.findAllByTestId("update-list-item");
     fireEvent.click(items[0]);
 
@@ -357,15 +379,14 @@ describe("Claim chips: render and open source", () => {
       expect(screen.getByTestId("update-editor")).toBeTruthy();
     });
 
-    // Claims should be rendered
-    const claimChips = screen.getAllByTestId("update-claim-chip");
-    expect(claimChips.length).toBeGreaterThanOrEqual(4);
+    // Source rows should be present (deduplicated)
+    const sourceRows = screen.getAllByTestId("update-source-row");
+    expect(sourceRows.length).toBeGreaterThanOrEqual(1);
 
-    // Ref chips should be present with human labels
+    // Ref chips with human labels
     const refChips = screen.getAllByTestId("update-claim-ref");
     expect(refChips.length).toBeGreaterThanOrEqual(4);
 
-    // Human labels: "Open action item", "Open decision", etc.
     const actionItemChip = refChips.find(
       (el) => el.getAttribute("data-ref") === "action_item:ai-01",
     );
@@ -394,14 +415,13 @@ describe("Claim chips: render and open source", () => {
 
     await waitFor(() => screen.getByTestId("update-editor"));
 
-    // No ref chip visible text should match a raw hash-id pattern
     const refChips = screen.getAllByTestId("update-claim-ref");
     const rawIdPattern = /^p[a-z]+_[0-9a-f]{16,}/;
     for (const chip of refChips) {
       expect(chip.textContent).not.toMatch(rawIdPattern);
     }
 
-    // But data-ref still carries the full ref for wiring
+    // data-ref still carries the full ref for wiring
     const actionItemChip = refChips.find(
       (el) => el.getAttribute("data-ref") === "action_item:ai-01",
     );
@@ -421,7 +441,6 @@ describe("Claim chips: render and open source", () => {
 
     await waitFor(() => screen.getByTestId("update-editor"));
 
-    // Find the action_item ref chip and click it
     const refChips = screen.getAllByTestId("update-claim-ref");
     const actionItemChip = refChips.find(
       (el) => el.getAttribute("data-ref") === "action_item:ai-01",
@@ -430,7 +449,6 @@ describe("Claim chips: render and open source", () => {
     expect(actionItemChip!.textContent).toBe("Open action item");
     fireEvent.click(actionItemChip!);
 
-    // Should call openPrimitive for non-meeting refs
     expect(mockOpenPrimitive).toHaveBeenCalledWith("action_item:ai-01");
   });
 
@@ -446,7 +464,6 @@ describe("Claim chips: render and open source", () => {
 
     await waitFor(() => screen.getByTestId("update-editor"));
 
-    // Find the meeting ref chip
     const refChips = screen.getAllByTestId("update-claim-ref");
     const meetingChip = refChips.find(
       (el) => el.getAttribute("data-ref") === "meeting:m-01",
@@ -455,7 +472,6 @@ describe("Claim chips: render and open source", () => {
     expect(meetingChip!.textContent).toBe("Open meeting");
     fireEvent.click(meetingChip!);
 
-    // Meeting refs open via openSurfaceOr
     expect(mockOpenSurfaceOr).toHaveBeenCalledWith(
       "review-meetings",
       "/history",
@@ -487,10 +503,10 @@ describe("Claim chips: render and open source", () => {
   });
 });
 
-// ── MARKED SPANS: unverified claims visually distinct ──
+// ── UNVERIFIED CLAIMS: banner when present ──
 
-describe("Marked spans: unverified claims", () => {
-  it("renders [UNVERIFIED] marker on unverified claims", async () => {
+describe("Unverified claims: banner in document view", () => {
+  it("shows unverified banner when claims have verified=false", async () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
@@ -502,18 +518,20 @@ describe("Marked spans: unverified claims", () => {
 
     await waitFor(() => screen.getByTestId("update-editor"));
 
-    // Find unverified marker
-    const markers = screen.getAllByTestId("update-claim-unverified");
-    expect(markers.length).toBe(1);
-    expect(markers[0].textContent).toBe("[UNVERIFIED]");
-
-    // The unverified chip has the is-unverified class
-    const unverifiedChip = markers[0].closest(".update-claim-chip");
-    expect(unverifiedChip?.classList.contains("is-unverified")).toBe(true);
+    // The unverified banner appears (the risks_blockers claim has verified:false + no refs)
+    const banner = screen.getByTestId("update-claim-unverified");
+    expect(banner.textContent).toBe("Contains unverified claims");
   });
+});
 
-  it("verified claims have no [UNVERIFIED] marker", async () => {
-    setupUpdatePosture();
+// ── PUBLISHED VIEW: rendered document, not claims dump ──
+
+describe("Published view: rendered document", () => {
+  it("renders Material body for published updates (not a claims dump)", async () => {
+    setupUpdatePosture({
+      listUpdates: [publishedUpdateFixture()],
+      draftResult: publishedUpdateFixture(),
+    });
     render(<WindowHarness scope="project:p1" />);
 
     fireEvent.click(await screen.findByTestId("updates-verb"));
@@ -524,19 +542,31 @@ describe("Marked spans: unverified claims", () => {
 
     await waitFor(() => screen.getByTestId("update-editor"));
 
-    // Only 1 unverified out of 5 total claims
-    const allChips = screen.getAllByTestId("update-claim-chip");
-    expect(allChips.length).toBe(5);
+    // No textarea (draft editor)
+    expect(screen.queryByTestId("update-body-textarea")).toBeNull();
 
-    const verifiedChips = allChips.filter(
-      (el) => el.getAttribute("data-verified") === "true",
-    );
-    expect(verifiedChips.length).toBe(4);
+    // The rendered document is present
+    expect(screen.getByTestId("update-document")).toBeTruthy();
+    expect(screen.getByTestId("update-document-body")).toBeTruthy();
 
-    const unverifiedChips = allChips.filter(
-      (el) => el.getAttribute("data-verified") === "false",
+    // Material renders the markdown body (headings become strong.surface-material-h)
+    const body = screen.getByTestId("update-document-body");
+    const headings = body.querySelectorAll(".surface-material-h");
+    expect(headings.length).toBeGreaterThanOrEqual(1);
+
+    // Read-only reason shown
+    expect(screen.getByTestId("update-readonly-reason")).toBeTruthy();
+    expect(screen.getByTestId("update-readonly-reason").textContent).toBe(
+      "Published updates are read-only",
     );
-    expect(unverifiedChips.length).toBe(1);
+
+    // Source rows present (deduplicated refs)
+    const sourceRows = screen.getAllByTestId("update-source-row");
+    expect(sourceRows.length).toBeGreaterThanOrEqual(1);
+
+    // No Save or Publish buttons
+    expect(screen.queryByTestId("update-verb-save")).toBeNull();
+    expect(screen.queryByTestId("update-verb-publish")).toBeNull();
   });
 });
 
@@ -585,8 +615,6 @@ describe("Five verbs as separate controls", () => {
     await waitFor(() => screen.getByTestId("update-editor"));
 
     const publishBtn = screen.getByTestId("update-verb-publish");
-    // Button component with variant="primary" gets data-variant or className
-    // Check the button exists and is distinct
     expect(publishBtn.textContent).toBe("Publish");
   });
 });
@@ -601,11 +629,9 @@ describe("Egress badge on model drafting", () => {
     fireEvent.click(await screen.findByTestId("updates-verb"));
     await waitFor(() => screen.getByTestId("update-posture"));
 
-    // The model-draft action should have an egress chip
     const modelAction = screen.getByTestId("update-draft-model-action");
     expect(modelAction).toBeTruthy();
 
-    // EgressChip renders as a span with class gadget-chip-egress
     const egressChip = modelAction.querySelector(".gadget-chip-egress");
     expect(egressChip).toBeTruthy();
     expect(egressChip!.textContent).toBe("local + cloud");
@@ -671,40 +697,6 @@ describe("Generator provenance", () => {
   });
 });
 
-// ── PUBLISHED READ-ONLY ──
-
-describe("Published update is read-only", () => {
-  it("renders read-only body for published updates", async () => {
-    setupUpdatePosture({
-      listUpdates: [publishedUpdateFixture()],
-      draftResult: publishedUpdateFixture(),
-    });
-    render(<WindowHarness scope="project:p1" />);
-
-    fireEvent.click(await screen.findByTestId("updates-verb"));
-    await waitFor(() => screen.getByTestId("update-posture"));
-
-    const items = await screen.findAllByTestId("update-list-item");
-    fireEvent.click(items[0]);
-
-    await waitFor(() => screen.getByTestId("update-editor"));
-
-    // Published updates show read-only body (no textarea)
-    expect(screen.queryByTestId("update-body-textarea")).toBeNull();
-    expect(screen.getByTestId("update-body-readonly")).toBeTruthy();
-
-    // Readonly reason shown
-    expect(screen.getByTestId("update-readonly-reason")).toBeTruthy();
-    expect(screen.getByTestId("update-readonly-reason").textContent).toBe(
-      "Published updates are read-only",
-    );
-
-    // No Save or Publish buttons
-    expect(screen.queryByTestId("update-verb-save")).toBeNull();
-    expect(screen.queryByTestId("update-verb-publish")).toBeNull();
-  });
-});
-
 // ── LIST LIFECYCLE DISTINCTION ──
 
 describe("Draft list: lifecycle-honest", () => {
@@ -724,7 +716,6 @@ describe("Draft list: lifecycle-honest", () => {
     const items = screen.getAllByTestId("update-list-item");
     expect(items.length).toBe(3);
 
-    // Each lifecycle is reflected
     const lifecycleLabels = items.map(
       (item) =>
         item.querySelector("[data-lifecycle]")?.getAttribute("data-lifecycle"),
@@ -739,7 +730,6 @@ describe("Draft list: lifecycle-honest", () => {
 
 describe("Copy Markdown verb", () => {
   it("calls GET /api/updates/{id}/markdown and copies to clipboard", async () => {
-    // Mock clipboard
     const mockWriteText = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, { clipboard: { writeText: mockWriteText } });
 
@@ -767,7 +757,6 @@ describe("Copy Markdown verb", () => {
       expect(mockWriteText).toHaveBeenCalled();
     });
 
-    // After copy, the button text changes to "Copied"
     await waitFor(() => {
       expect(screen.getByTestId("update-verb-copy").textContent).toBe("Copied");
     });
@@ -776,8 +765,8 @@ describe("Copy Markdown verb", () => {
 
 // ── MIC BUTTON PRESENCE ──
 
-describe("Mic on the editor", () => {
-  it("renders MicButton in the editor toolbar", async () => {
+describe("Mic on the DeskEditor", () => {
+  it("renders MicButton alongside the DeskEditor", async () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
 
@@ -789,12 +778,11 @@ describe("Mic on the editor", () => {
 
     await waitFor(() => screen.getByTestId("update-body-editor"));
 
-    // MicButton should be present in the editor toolbar
-    const toolbar = screen.getByTestId("update-body-editor")
-      .querySelector(".update-body-editor-toolbar");
-    expect(toolbar).toBeTruthy();
-    // MicButton renders a button with specific aria or class
-    const mic = toolbar!.querySelector("button");
+    // MicButton is in the mic row alongside the DeskEditor
+    const micRow = screen.getByTestId("update-body-editor")
+      .querySelector(".update-body-editor-mic");
+    expect(micRow).toBeTruthy();
+    const mic = micRow!.querySelector("button");
     expect(mic).toBeTruthy();
   });
 });

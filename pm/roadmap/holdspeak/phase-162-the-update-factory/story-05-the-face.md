@@ -41,3 +41,20 @@ the surface that makes it matter.
 ## Test plan
 
 - **Web unit:** mounted walk, claim chips, verb states, marked spans. **Glass:** rides 06. **Manual:** the owner's verdict.
+
+## The owner's verdict — round 1 (2026-09-02)
+
+**BOUNCE**, verbatim: "For things like 02 · THE DRAFT - how do we
+edit the content? Is this supposed to be editable? Becuase if so,
+why aren't we using the component that we use for Notes, with a
+'rich' text editor (well, I mean, it's still markdown but the
+editor experience is at least a ton better. 03 · PUBLISHED, AND
+EVERY CLAIM OPENS - I am really unhappy with how the interface
+looks like... - you're not going to tell me that this is
+acceptable. Also - I am not even sure what the frig am I looking
+at, in this screenshot?"
+
+Two findings: (1) the editor must be the house Notes markdown
+editor, not a bare textarea; (2) the published view reads as a
+claims dump — repetitive rows with buttons instead of the rendered
+update itself. Consequence round chartered.
