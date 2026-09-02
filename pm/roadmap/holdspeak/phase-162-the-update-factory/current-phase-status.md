@@ -35,26 +35,30 @@ this phase builds the factory the action will call.
 | HS-162-02 | The deterministic drafter (UPD-003 first; sections + claims + citations) | done | [story-02-the-deterministic-drafter](./story-02-the-deterministic-drafter.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-162-03 | The model drafter (frozen router; marked language; fallback proven) | done | [story-03-the-model-drafter](./story-03-the-model-drafter.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-162-04 | The verbs on the wire (draft/regenerate/save/copy/publish; api-surface) | done | [story-04-the-verbs](./story-04-the-verbs.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-162-05 | The face (the Update room — claims open their sources; OWNER VERDICT) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
-| HS-162-06 | The walk (PV-H04 measured: edit-to-copy < 5:00, ≥70% retained; degraded leg) | backlog | [story-06-the-walk](./story-06-the-walk.md) | - |
+| HS-162-05 | The face (the Update room — claims open their sources; OWNER VERDICT) | in-progress | [story-05-the-face](./story-05-the-face.md) | - |
+| HS-162-06 | The walk (PV-H04 measured: edit-to-copy < 5:00, ≥70% retained; degraded leg) | done | [story-06-the-walk](./story-06-the-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-162-07 | The close (gates, debts, final summary, PR) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
-4/7. 04 DONE — the five verbs on the wire, each a SEPARATE command
-with an honest receipt (UPD-005): lifecycle-filterable list, draft
-(the model path's typed fallback_reason surfaces in the envelope),
-save (the owner's prose stored as-is; claims_json stays the FROZEN
-provenance of what the generator produced), regenerate (UPD-004 on
-the wire — a published update regenerates into a NEW draft), publish
-(ONE transaction: publish + project revision+1 + change row + ledger
-+ command — the 161 S-2 shape), and the markdown GET Copy rides.
-THE HTTP LOOP proven: draft → save → publish (room revision visibly
-+1) → list → regenerate → markdown. api-surface 606→612 additive;
-publish immutability refused typed on the wire. Next: 05 the face —
-the Update room where claims OPEN their sources (paying 160's S-4);
-MOUNTED-PATH proof is law; THE OWNER'S VERDICT closes it. Chain:
-05 ∥ 06(rig after 05's functional) → 07.
+6/7 flipped; 05 holds for THE OWNER'S VERDICT. 06 DONE — the walk:
+PV-H04's TWO NUMBERS MEASURED — edit-to-copy 1.91s against the 300s
+bar (segments itemized in assets/story-06-stopwatch.json) and
+retention 1.0000 against the 0.70 bar (honest difflib measure; the
+representative edit is additive). Four legs ×2 deterministic:
+stopwatch+retention, the degraded leg (UPD-003 on glass — router
+down ⇒ deterministic draft with the human fallback sentence, claims
+still resolve), publish immutability (read-only render, regenerate
+mints a new draft, the published body never changes, room revision
+advances), and the no-raw-ids law asserted on every leg. Sixteen
+shots, both viewports. THE BEAUTY ROUNDS the orchestrator forced
+before the owner sees pixels: human chip labels (a closed table;
+raw refs demoted to title/aria + a regex fence), the editor themed
+to the house species, human fallback words, the full generator
+label at both viewports, "Open item" for generic refs. The live
+model leg deliberately rides 03's service-level .43 proof (wiring
+.43 into the rig judged disproportionate — honest skip). Next: THE
+OWNER'S VERDICT closes 05, then 07 the close.
 
 ## Active risks
 

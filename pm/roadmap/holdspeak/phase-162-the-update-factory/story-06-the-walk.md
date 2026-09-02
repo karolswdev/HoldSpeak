@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 162
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-162-04 (rig vs the wire; face legs after 05's functional)
 - **Unblocks:** HS-162-07
 - **Owner:** unassigned

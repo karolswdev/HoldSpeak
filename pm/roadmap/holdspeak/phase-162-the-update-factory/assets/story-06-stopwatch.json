@@ -1,0 +1,18 @@
+{
+  "total_seconds": 1.91,
+  "segments": {
+    "desk_seed": 0.13,
+    "open_room": 1.61,
+    "enter_updates": 0.04,
+    "draft_deterministic": 0.05,
+    "human_edit": 0.01,
+    "save": 0.03,
+    "copy_markdown": 0.04
+  },
+  "bar": 300,
+  "passed": true,
+  "retention": 1.0,
+  "retention_bar": 0.7,
+  "retention_passed": true,
+  "viewport": 1440
+}
