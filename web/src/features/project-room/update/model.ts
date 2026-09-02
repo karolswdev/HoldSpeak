@@ -173,10 +173,7 @@ const REF_PREFIX_LABELS: Record<string, string> = {
   observation: "Observation",
 };
 
-/** Build a human chip label for a claim ref. The raw id is NEVER shown
- *  on glass -- only the kind in plain words. When the claim's own text
- *  is available (it always is), "Open <kind>" is sufficient because the
- *  claim text already names the thing. */
+/** Fallback chip label when no claim text is available. */
 export function refChipLabel(ref: string): string {
   const colon = ref.indexOf(":");
   if (colon < 0) return "Open";
@@ -184,6 +181,26 @@ export function refChipLabel(ref: string): string {
   const kindWord = REF_PREFIX_LABELS[prefix];
   if (kindWord) return `Open ${kindWord.toLowerCase()}`;
   return "Open";
+}
+
+/** Strip a "Kind [severity]:" prefix from a claim text to get the
+ *  core title. Patterns: "Risk [critical]: ...", "Dependency: ...",
+ *  "Action item [high]: ...", bare "Something...". */
+const CLAIM_PREFIX_RE = /^[A-Z][a-z]+(?:\s+[a-z]+)?(?:\s*\[[^\]]+\])?\s*:\s*/;
+
+/** Derive a short human identity from a claim's text for a source chip.
+ *  Strips the kind/severity prefix, truncates to ~32 chars with ellipsis.
+ *  Returns null when the text is empty/unusable (caller falls back to
+ *  refChipLabel). */
+export function claimChipTitle(claimText: string | undefined, maxLen = 32): string | null {
+  if (!claimText || !claimText.trim()) return null;
+  const stripped = claimText.replace(CLAIM_PREFIX_RE, "").trim();
+  if (!stripped) return null;
+  if (stripped.length <= maxLen) return stripped;
+  // Find the last space before maxLen to avoid mid-word cut
+  const cut = stripped.lastIndexOf(" ", maxLen);
+  const end = cut > maxLen * 0.5 ? cut : maxLen;
+  return stripped.slice(0, end) + "…";
 }
 
 /* ── Fallback reason humanization (closed table) ── */

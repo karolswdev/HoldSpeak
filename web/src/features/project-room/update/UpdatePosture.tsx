@@ -26,6 +26,7 @@ import { openSourceRef } from "../../../desk/surface/citations";
 import type { UpdateController } from "./useUpdateController";
 import type { ProjectUpdate, UpdateClaim } from "./model";
 import {
+  claimChipTitle,
   generatorLabel,
   humanFallbackReason,
   lifecycleLabel,
@@ -44,14 +45,18 @@ function SectionSourceRow({
   claims: UpdateClaim[];
   onOpen: (ref: string) => void;
 }) {
-  // Collect unique refs across all claims in this section
+  // Collect unique refs; carry the FIRST claim's text per ref for the label.
   const seen = new Set<string>();
-  const uniqueRefs: { ref: string; hasUnverified: boolean }[] = [];
+  const uniqueRefs: { ref: string; title: string }[] = [];
   for (const claim of claims) {
     for (const ref of claim.refs) {
       if (!seen.has(ref)) {
         seen.add(ref);
-        uniqueRefs.push({ ref, hasUnverified: !claim.verified });
+        const derived = claimChipTitle(claim.text);
+        uniqueRefs.push({
+          ref,
+          title: derived ?? refChipLabel(ref),
+        });
       }
     }
   }
@@ -62,21 +67,24 @@ function SectionSourceRow({
 
   return (
     <div className="update-source-row" data-testid="update-source-row">
-      {uniqueRefs.map(({ ref }) => (
-        <button
-          key={ref}
-          type="button"
-          className="desk-chip quiet update-claim-ref"
-          data-testid="update-claim-ref"
-          data-ref={ref}
-          data-ref-kind={refKind(ref)}
-          title={ref}
-          aria-label={`${refChipLabel(ref)}: ${ref}`}
-          onClick={() => onOpen(ref)}
-        >
-          {refChipLabel(ref)}
-        </button>
-      ))}
+      {uniqueRefs.map(({ ref, title }) => {
+        const kind = refChipLabel(ref);
+        return (
+          <button
+            key={ref}
+            type="button"
+            className="desk-chip quiet update-claim-ref"
+            data-testid="update-claim-ref"
+            data-ref={ref}
+            data-ref-kind={refKind(ref)}
+            title={`${kind}: ${ref}`}
+            aria-label={`${kind} — ${title}`}
+            onClick={() => onOpen(ref)}
+          >
+            {title}
+          </button>
+        );
+      })}
       {hasUnverifiedNoRef ? (
         <span
           className="surface-token update-unverified-notice"

@@ -390,17 +390,17 @@ describe("Source rows: deduplicated refs and open source", () => {
     const actionItemChip = refChips.find(
       (el) => el.getAttribute("data-ref") === "action_item:ai-01",
     );
-    expect(actionItemChip!.textContent).toBe("Open action item");
+    expect(actionItemChip!.textContent).toBe("Widget development on track");
 
     const decisionChip = refChips.find(
       (el) => el.getAttribute("data-ref") === "decision:d-01",
     );
-    expect(decisionChip!.textContent).toBe("Open decision");
+    expect(decisionChip!.textContent).toBe("Adopted event sourcing pattern");
 
     const meetingChip = refChips.find(
       (el) => el.getAttribute("data-ref") === "meeting:m-01",
     );
-    expect(meetingChip!.textContent).toBe("Open meeting");
+    expect(meetingChip!.textContent).toBe("Review meeting scheduled");
   });
 
   it("no raw IDs on glass: ref chip visible text never matches hash pattern", async () => {
@@ -446,7 +446,7 @@ describe("Source rows: deduplicated refs and open source", () => {
       (el) => el.getAttribute("data-ref") === "action_item:ai-01",
     );
     expect(actionItemChip).toBeTruthy();
-    expect(actionItemChip!.textContent).toBe("Open action item");
+    expect(actionItemChip!.textContent).toBe("Widget development on track");
     fireEvent.click(actionItemChip!);
 
     expect(mockOpenPrimitive).toHaveBeenCalledWith("action_item:ai-01");
@@ -469,7 +469,7 @@ describe("Source rows: deduplicated refs and open source", () => {
       (el) => el.getAttribute("data-ref") === "meeting:m-01",
     );
     expect(meetingChip).toBeTruthy();
-    expect(meetingChip!.textContent).toBe("Open meeting");
+    expect(meetingChip!.textContent).toBe("Review meeting scheduled");
     fireEvent.click(meetingChip!);
 
     expect(mockOpenSurfaceOr).toHaveBeenCalledWith(
@@ -496,7 +496,7 @@ describe("Source rows: deduplicated refs and open source", () => {
       (el) => el.getAttribute("data-ref") === "decision:d-01",
     );
     expect(decisionChip).toBeTruthy();
-    expect(decisionChip!.textContent).toBe("Open decision");
+    expect(decisionChip!.textContent).toBe("Adopted event sourcing pattern");
     fireEvent.click(decisionChip!);
 
     expect(mockOpenPrimitive).toHaveBeenCalledWith("decision:d-01");

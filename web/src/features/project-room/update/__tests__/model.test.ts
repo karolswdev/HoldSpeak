@@ -3,6 +3,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  claimChipTitle,
   decodeClaim,
   decodeUpdate,
   generatorLabel,
@@ -268,5 +269,38 @@ describe("humanFallbackReason", () => {
   });
   it("returns null for null input", () => {
     expect(humanFallbackReason(null)).toBeNull();
+  });
+});
+
+describe("claimChipTitle", () => {
+  it("returns the claim text as-is when short enough", () => {
+    expect(claimChipTitle("Widget development on track")).toBe("Widget development on track");
+  });
+  it("truncates long text at a word boundary with ellipsis", () => {
+    expect(claimChipTitle("Three milestones completed this sprint")).toBe(
+      "Three milestones completed this…",
+    );
+  });
+  it("strips a Kind: prefix", () => {
+    expect(claimChipTitle("Dependency: Infrastructure load")).toBe("Infrastructure load");
+  });
+  it("strips a Kind [severity]: prefix", () => {
+    expect(claimChipTitle("Risk [critical]: PCI deadline")).toBe("PCI deadline");
+  });
+  it("strips Action item [high]: prefix", () => {
+    expect(claimChipTitle("Action item [high]: Review docs")).toBe("Review docs");
+  });
+  it("returns null for empty string", () => {
+    expect(claimChipTitle("")).toBeNull();
+  });
+  it("returns null for undefined", () => {
+    expect(claimChipTitle(undefined)).toBeNull();
+  });
+  it("returns null for whitespace-only", () => {
+    expect(claimChipTitle("   ")).toBeNull();
+  });
+  it("handles text that is exactly the prefix", () => {
+    // If stripping leaves nothing, return null
+    expect(claimChipTitle("Risk:")).toBeNull();
   });
 });
