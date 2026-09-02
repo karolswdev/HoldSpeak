@@ -43,7 +43,7 @@ omission, not an approval policy).
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-163-01 | The run ledger (schema v71: policy/run/step/command persistence; STW-001) | done | [story-01-the-run-ledger](./story-01-the-run-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-163-02 | The run engine (six checkpointed phases; uniqueness, Stop, recovery) | backlog | [story-02-the-run-engine](./story-02-the-run-engine.md) | - |
+| HS-163-02 | The run engine (six checkpointed phases; uniqueness, Stop, recovery) | done | [story-02-the-run-engine](./story-02-the-run-engine.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-163-03 | The bounded hand (the V0 effect set, verified, deduplicated) | backlog | [story-03-the-bounded-hand](./story-03-the-bounded-hand.md) | - |
 | HS-163-04 | The wire (runs on HTTP: create/poll/stop; api-surface) | backlog | [story-04-the-wire](./story-04-the-wire.md) | - |
 | HS-163-05 | The face (the Steward posture: run, watch, stop, receipts — OWNER VERDICT) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
@@ -52,17 +52,24 @@ omission, not an approval policy).
 
 ## Where we are
 
-1/7. HS-163-01 the run ledger DONE (2026-09-02): schema v71 —
-steward_policies / steward_runs / steward_steps / steward_commands,
-additive, named columns; STW-002 as a DB law (partial unique index
-uq_steward_runs_one_active_per_project WHERE state IN queued/running/
-stopping, typed ActiveRunExistsError at the repo); the step record
-carries idempotency_key + expected/observed JSON — the STW-005
-reconciliation substrate; four repos with conn-accepting
-*_in_transaction variants; snapshot regenerated; reconcile-from-v70 +
-idempotence under test; real-DB reconcile proven on a COPY (evidence
-leg 2, 1 passed). Gates: 140 passed 1 skipped scoped; positional-
-INSERT fence green. NEXT: HS-163-02 the run engine.
+2/7. HS-163-02 the run engine DONE (2026-09-02): ProjectStewardService
+(holdspeak/services/project_steward_service.py) — run_once persists
+the queued run durably BEFORE any phase work (STW-001; the pollable
+row is visible mid-run), then executes OBSERVE->COMPARE->PROPOSE->
+ACT->VERIFY->RECORD on the calling thread per the conductor pattern;
+every transition = run phase update + a step checkpoint row; Stop is
+a DB read between phases AND before effect slots (STW-003, no model
+dependence); STW-002 surfaces as typed ActiveRunExistsError;
+recover_on_startup wired in web_server _startup beside the other
+recovery hooks — interrupted runs free the STW-002 slot, all through
+repo methods (the raw-SQL third door was closed in-round). OBSERVE
+delegates to the 160 collector, COMPARE/PROPOSE to the Delta; ACT is
+the bounded no-op hook 03 fills. NOTE FOR 04: run_once is synchronous
+— the POST route must spawn the daemon thread to honor the
+immediate-id contract. Gates: 58 passed scoped (21 engine + 34
+schema + 3 fence). Earlier: 1/7 the run ledger DONE (schema v71,
+STW-002 DB law, the STW-005 substrate, real-DB reconcile on a COPY).
+NEXT: HS-163-03 the bounded hand.
 
 ## Active risks
 

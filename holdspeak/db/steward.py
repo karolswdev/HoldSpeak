@@ -403,6 +403,23 @@ class StewardRunRepository(BaseRepository):
         ).fetchone()
         return dict(row) if row else None
 
+    def list_all_active_runs(self) -> list[dict[str, Any]]:
+        """All runs in active states across projects (STW-009 recovery)."""
+        with self._connection() as conn:
+            return self._list_all_active_runs(conn)
+
+    def list_all_active_runs_in_transaction(self, conn: Any) -> list[dict[str, Any]]:
+        return self._list_all_active_runs(conn)
+
+    @staticmethod
+    def _list_all_active_runs(conn: Any) -> list[dict[str, Any]]:
+        rows = conn.execute(
+            "SELECT * FROM steward_runs "
+            "WHERE state IN ('queued', 'running', 'stopping') "
+            "ORDER BY created_at"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
     def list_runs(
         self,
         project_id: str,
@@ -710,6 +727,24 @@ class StewardStepRepository(BaseRepository):
         return [dict(r) for r in rows]
 
     # -- update (complete / record observed) --
+
+    def interrupt_pending_steps(self, run_id: str) -> None:
+        """Mark a run's pending/running steps interrupted (STW-009)."""
+        with self._connection() as conn:
+            self._interrupt_pending_steps(conn, run_id)
+
+    def interrupt_pending_steps_in_transaction(self, conn: Any, run_id: str) -> None:
+        self._interrupt_pending_steps(conn, run_id)
+
+    @staticmethod
+    def _interrupt_pending_steps(conn: Any, run_id: str) -> None:
+        now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        conn.execute(
+            "UPDATE steward_steps "
+            "SET state = 'interrupted', updated_at = ?, completed_at = ? "
+            "WHERE run_id = ? AND state IN ('pending', 'running')",
+            (now_iso, now_iso, str(run_id).strip()),
+        )
 
     def update_step(
         self,

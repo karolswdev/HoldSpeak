@@ -1098,6 +1098,23 @@ class MeetingWebServer:
                     log.info(f"Seeded {seeded} built-in skills")
             except Exception as e:
                 log.debug(f"skill seeding skipped: {e}")
+            # HS-163-02 STW-009: mark abandoned steward runs interrupted.
+            try:
+                from .db import get_database as _get_db
+                from .services.project_evidence_collector import ProjectEvidenceCollector
+                from .services.project_delta_service import ProjectDeltaService
+                from .services.project_steward_service import ProjectStewardService
+                _sdb = _get_db()
+                _steward = ProjectStewardService(
+                    _sdb,
+                    ProjectEvidenceCollector(_sdb),
+                    ProjectDeltaService(_sdb, ProjectEvidenceCollector(_sdb)),
+                )
+                recovered = _steward.recover_on_startup()
+                if recovered:
+                    log.info(f"Steward recovery: {len(recovered)} run(s) marked interrupted")
+            except Exception as e:
+                log.error(f"steward startup recovery failed: {e}")
             try:
                 from .workbench_conductor import start_conductor, set_broadcast
                 set_broadcast(lambda t, d: self.broadcast(t, d))
