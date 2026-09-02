@@ -1,10 +1,10 @@
-# HS-160-07 — The private-material cutover: resolver and writer census
+# HS-162-07 — The private-material cutover: resolver and writer census
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-04, HS-160-05, HS-160-06
-- **Unblocks:** HS-160-08, HS-160-11, HS-160-14
+- **Depends on:** HS-162-04, HS-162-05, HS-162-06
+- **Unblocks:** HS-162-08, HS-162-11, HS-162-14
 - **Owner:** unassigned
 
 ## Problem

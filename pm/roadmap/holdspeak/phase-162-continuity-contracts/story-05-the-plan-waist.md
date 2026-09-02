@@ -1,10 +1,10 @@
-# HS-160-05 — The plan waist: policy, allocation, freeze, kernel binding
+# HS-162-05 — The plan waist: policy, allocation, freeze, kernel binding
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-02, HS-160-03, HS-160-06
-- **Unblocks:** HS-160-07, HS-160-10, HS-160-11
+- **Depends on:** HS-162-02, HS-162-03, HS-162-06
+- **Unblocks:** HS-162-07, HS-162-10, HS-162-11
 - **Owner:** unassigned
 
 ## Problem
@@ -22,7 +22,7 @@ and every model-capable consumer.
   binding; `ContinuityPlan@1` schema, canonical bytes, digest, receipt, and
   pure preview/shadow validator; broker-owned execution binding fixture;
   deterministic fake tokenizer/runner for CF-0. Persisted private plan material
-  uses the HS-160-06 encrypted envelope—there is no plaintext interim store.
+  uses the HS-162-06 encrypted envelope—there is no plaintext interim store.
 - **Out:** vector search, real embeddings/reranking, relevance-quality claims,
   dynamic prompt rewriting, and production context injection.
 

@@ -1,10 +1,10 @@
-# HS-160-11 — Bounded shadow adoption: Ask, Thread, Recipe, Coder
+# HS-162-11 — Bounded shadow adoption: Ask, Thread, Recipe, Coder
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-03, HS-160-04, HS-160-05, HS-160-07, HS-160-08, HS-160-10
-- **Unblocks:** HS-160-13, HS-160-14
+- **Depends on:** HS-162-03, HS-162-04, HS-162-05, HS-162-07, HS-162-08, HS-162-10
+- **Unblocks:** HS-162-13, HS-162-14
 - **Owner:** unassigned
 
 ## Problem

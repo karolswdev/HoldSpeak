@@ -1,10 +1,10 @@
-# HS-160-13 — The local proof harness: ledger, leakage, fixtures
+# HS-162-13 — The local proof harness: ledger, leakage, fixtures
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-03 through HS-160-12
-- **Unblocks:** HS-160-14
+- **Depends on:** HS-162-03 through HS-162-12
+- **Unblocks:** HS-162-14
 - **Owner:** unassigned
 
 ## Problem

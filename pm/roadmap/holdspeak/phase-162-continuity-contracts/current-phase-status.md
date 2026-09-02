@@ -1,8 +1,8 @@
-# Phase 160 — Continuity Contracts (CF-0)
+# Phase 162 — Continuity Contracts (CF-0)
 
 **Last updated:** 2026-09-01 — COUNCIL-RATIFIED CHARTER 0/14. Systems,
 AI-memory, and product reviews report zero remaining severity-1/2 story
-blockers. HS-160-01 is still intentionally blocked on explicit owner
+blockers. HS-162-01 is still intentionally blocked on explicit owner
 ratification; all runtime stories remain backlog. No Continuity runtime,
 embedding model, vector store, or released Memory application is claimed.
 
@@ -42,7 +42,7 @@ existing relationship-aware memory contract in
 - **Delivery law:** one story is one implementation PR. A story becomes `done`
   only with its own evidence file. No `final-summary.md` exists until all fourteen
   stories and every exit gate are closed. A close-campaign defect reopens its
-  owning story or receives a numbered corrective story/PR; HS-160-14 remains a
+  owning story or receives a numbered corrective story/PR; HS-162-14 remains a
   campaign/evidence/report PR rather than a product-fix bundle.
 - **Charter bundle:** this planning commit alone creates and cross-links all
   fourteen backlog/blocked contracts atomically; it changes no story to `done`,
@@ -51,40 +51,40 @@ existing relationship-aware memory contract in
 
 ## Exit criteria (evidence required)
 
-- [ ] **Authority (HS-160-01):** every decision in CF-0 §14.5 has an explicit
+- [ ] **Authority (HS-162-01):** every decision in CF-0 §14.5 has an explicit
   owner verdict and amendment reference; no constitutional contradiction or
   umbrella approval hides an unresolved choice.
-- [ ] **Schema (HS-160-02/04/06/07/09):** clean and representative upgraded
+- [ ] **Schema (HS-162-02/04/06/07/09):** clean and representative upgraded
   databases satisfy constraints, state machines, foreign keys, backup law,
   encrypted-payload law, and additive rollback.
-- [ ] **Commands (HS-160-03):** replay, conflicting replay, concurrent CAS,
+- [ ] **Commands (HS-162-03):** replay, conflicting replay, concurrent CAS,
   multi-precondition conflict, timeout-after-commit, and crash recovery have
   deterministic typed outcomes.
-- [ ] **Plans (HS-160-05):** identical frozen inputs and policy yield
+- [ ] **Plans (HS-162-05):** identical frozen inputs and policy yield
   byte-identical `ContinuityPlan@1` artifacts and tokenizer-exact budgets;
   capability differences remain explicit; no plan reaches production context.
-- [ ] **Census (HS-160-10):** every built-in, internal, future, plugin, and
+- [ ] **Census (HS-162-10):** every built-in, internal, future, plugin, and
   Coder capability/source identifier has an explicit policy and CI fails on
   registry drift.
-- [ ] **Sources and derivatives (HS-160-04/09):** fixtures prove revision,
+- [ ] **Sources and derivatives (HS-162-04/09):** fixtures prove revision,
   deletion, privacy, scope, staleness, reconciliation, generation fencing,
   graph fencing, and purge recovery without storing source prose in the
   journal.
-- [ ] **Privacy and removal (HS-160-06/07/08):** canary scans find no private value,
+- [ ] **Privacy and removal (HS-162-06/07/08):** canary scans find no private value,
   query, vector, prompt, or path in public stores/logs/receipts; Remove blocks
   admission immediately and Forget eventually reaches zero authorized
   derivatives through injected crashes.
-- [ ] **Compatibility and bounded adoption (HS-160-11):** Ask, Thread, Recipe,
+- [ ] **Compatibility and bounded adoption (HS-162-11):** Ask, Thread, Recipe,
   Workflow, Workbench, Coder, HTTP, and MCP contracts remain green with flags
   off; representative adapters can construct—but never inject—shadow plans.
-- [ ] **Product contract (HS-160-12):** 1440×900 and 393×852 persisted,
+- [ ] **Product contract (HS-162-12):** 1440×900 and 393×852 persisted,
   watermarked fixtures cover every required state, consent, parity,
   accessibility, and canonical deep-link contract without implying real
   genesis or phone authority.
-- [ ] **Proof and rollback (HS-160-13/14):** the local proof ledger maps every
+- [ ] **Proof and rollback (HS-162-13/14):** the local proof ledger maps every
   requirement to sanitized evidence; disabling CF-0 writers/adapters restores
   the pre-CF-0 runtime path without destructive down-migration or data loss.
-- [ ] **Close (HS-160-14):** full structural/fault matrix, focused legacy suite,
+- [ ] **Close (HS-162-14):** full structural/fault matrix, focused legacy suite,
   post-migration doctor, council review, and owner verdict contain no open
   severity-1/2 authority, privacy, corruption, deletion, or cross-scope defect.
 
@@ -92,29 +92,29 @@ existing relationship-aware memory contract in
 
 | ID | Story | Status | Depends on | Story file | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| HS-160-01 | The owner canon | blocked | — | [story-01](./story-01-the-owner-canon.md) | not created |
-| HS-160-02 | The domain grammar | backlog | 01 | [story-02](./story-02-the-domain-grammar.md) | not created |
-| HS-160-03 | The command core | backlog | 02, 04 | [story-03](./story-03-the-command-core.md) | not created |
-| HS-160-04 | The source spine | backlog | 01, 02 | [story-04](./story-04-the-source-spine.md) | not created |
-| HS-160-05 | The plan waist | backlog | 02, 03, 06 | [story-05](./story-05-the-plan-waist.md) | not created |
-| HS-160-06 | The private-material vault | backlog | 01, 02, 03 | [story-06](./story-06-the-private-material-vault.md) | not created |
-| HS-160-07 | The private-material cutover | backlog | 04, 05, 06 | [story-07](./story-07-the-private-material-cutover.md) | not created |
-| HS-160-08 | Remove and Forget | backlog | 03, 06, 07, 09 | [story-08](./story-08-remove-and-forget.md) | not created |
-| HS-160-09 | The derived foundations | backlog | 02, 03, 04, 06 | [story-09](./story-09-the-derived-foundations.md) | not created |
-| HS-160-10 | The total policy census | backlog | 01, 04, 05, 09 | [story-10](./story-10-the-total-policy-census.md) | not created |
-| HS-160-11 | Bounded shadow adoption | backlog | 03, 04, 05, 07, 08, 10 | [story-11](./story-11-bounded-shadow-adoption.md) | not created |
-| HS-160-12 | The Memory contract shell | backlog | 01, 02, 03, 08, 10 | [story-12](./story-12-the-memory-contract-shell.md) | not created |
-| HS-160-13 | The local proof harness | backlog | 03–12 | [story-13](./story-13-the-local-proof-harness.md) | not created |
-| HS-160-14 | The CF-0 close | backlog | 01–13 | [story-14](./story-14-the-cf0-close.md) | not created |
+| HS-162-01 | The owner canon | blocked | — | [story-01](./story-01-the-owner-canon.md) | not created |
+| HS-162-02 | The domain grammar | backlog | 01 | [story-02](./story-02-the-domain-grammar.md) | not created |
+| HS-162-03 | The command core | backlog | 02, 04 | [story-03](./story-03-the-command-core.md) | not created |
+| HS-162-04 | The source spine | backlog | 01, 02 | [story-04](./story-04-the-source-spine.md) | not created |
+| HS-162-05 | The plan waist | backlog | 02, 03, 06 | [story-05](./story-05-the-plan-waist.md) | not created |
+| HS-162-06 | The private-material vault | backlog | 01, 02, 03 | [story-06](./story-06-the-private-material-vault.md) | not created |
+| HS-162-07 | The private-material cutover | backlog | 04, 05, 06 | [story-07](./story-07-the-private-material-cutover.md) | not created |
+| HS-162-08 | Remove and Forget | backlog | 03, 06, 07, 09 | [story-08](./story-08-remove-and-forget.md) | not created |
+| HS-162-09 | The derived foundations | backlog | 02, 03, 04, 06 | [story-09](./story-09-the-derived-foundations.md) | not created |
+| HS-162-10 | The total policy census | backlog | 01, 04, 05, 09 | [story-10](./story-10-the-total-policy-census.md) | not created |
+| HS-162-11 | Bounded shadow adoption | backlog | 03, 04, 05, 07, 08, 10 | [story-11](./story-11-bounded-shadow-adoption.md) | not created |
+| HS-162-12 | The Memory contract shell | backlog | 01, 02, 03, 08, 10 | [story-12](./story-12-the-memory-contract-shell.md) | not created |
+| HS-162-13 | The local proof harness | backlog | 03–12 | [story-13](./story-13-the-local-proof-harness.md) | not created |
+| HS-162-14 | The CF-0 close | backlog | 01–13 | [story-14](./story-14-the-cf0-close.md) | not created |
 
 ## Where we are
 
 CHARTERED 2026-09-01 from the final council-cleared CF-0 SRS. Phase 109, The
-Long Memory, is already closed and remains immutable; Phase 160 is the new
+Long Memory, is already closed and remains immutable; Phase 162 is the new
 execution ledger. The relationship-aware RAGFlow-derived seam exists and its
 focused tests were green at charter time, but it is not Continuity Core and is
 not represented as one. The phase begins at an intentional authority gate:
-HS-160-01 records owner decisions before a migration or private writer may
+HS-162-01 records owner decisions before a migration or private writer may
 ship. Later stories may be designed and reviewed in parallel, but no runtime
 story may merge past an unresolved governing decision it consumes.
 
@@ -143,21 +143,21 @@ changes before charter close:
   generation tables stay empty, and all five sealed derivative capabilities
   include `memory.continuity_brief@1`;
 - declared capability policy is separate from runtime adoption; the census says
-  `planned_shadow` until HS-160-11 ships all four adapters and fences atomically;
+  `planned_shadow` until HS-162-11 ships all four adapters and fences atomically;
 - Forget preserves owner-ratified content-free immutable attestations while
   purging private payload/usage lineage; and
 - rollback distinguishes current-binary flags-off behavior through v2 from an
   old-binary canonical-only degraded reopen that blocks model-bearing and
   plaintext-write paths.
 
-Council ratification does not answer the owner decisions in HS-160-01 and does
+Council ratification does not answer the owner decisions in HS-162-01 and does
 not authorize implementation past that gate.
 
 ## Active risks
 
 | Risk | Likelihood | Mitigation | Stop signal |
 | --- | --- | --- | --- |
-| Authority is inferred from prose | high | HS-160-01 requires one verdict per §14.5 row | any runtime PR consumes an unresolved owner decision |
+| Authority is inferred from prose | high | HS-162-01 requires one verdict per §14.5 row | any runtime PR consumes an unresolved owner decision |
 | Private material leaks through migration or telemetry | medium | encrypted v2 resolver, canary corpus, storage/WAL/log/backup scans | any canary appears outside the encrypted payload boundary |
 | Source capture duplicates or loses revisions | medium | transactional outbox, idempotent observation identity, reconciliation | cursor advances without durable disposition or two live writers exist |
 | Planner forks across consumers | medium | one canonical plan artifact and digest; generated census fence | a consumer builds context without the canonical planner |
@@ -167,9 +167,9 @@ not authorize implementation past that gate.
 
 ## Decisions made
 
-- Phase 160 is the execution home; the completed Phase 109 is not reopened.
+- Phase 162 is the execution home; the completed Phase 109 is not reopened.
 - The twelve CF0 work packages derive fourteen PR-sized stories. CF0-06 is an
-  ordered three-PR privacy train (HS-160-06/07/08); the other packages each map
+  ordered three-PR privacy train (HS-162-06/07/08); the other packages each map
   to one story. Numbering is traceability; the dependency graph controls order.
 - Owner amendments are a merge gate, not a ceremonial close artifact.
 - CF-0 constructs shadow plans only; no plan is injected into model context.
@@ -181,7 +181,7 @@ not authorize implementation past that gate.
 
 ## Decisions deferred
 
-- Every owner verdict enumerated by CF-0 §14.5, owned by HS-160-01.
+- Every owner verdict enumerated by CF-0 §14.5, owned by HS-162-01.
 - Actual production embedding/reranking models and backend, concrete admitted
   licenses, performance hardware, evaluation corpus, and quality thresholds,
   owned by CF-1 after CF-0 ratifies only the license-admission law, structural

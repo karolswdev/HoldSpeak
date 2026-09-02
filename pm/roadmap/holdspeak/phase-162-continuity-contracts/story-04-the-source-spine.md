@@ -1,10 +1,10 @@
-# HS-160-04 — The source spine: capture registry, outbox, observations
+# HS-162-04 — The source spine: capture registry, outbox, observations
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-01, HS-160-02
-- **Unblocks:** HS-160-03, HS-160-07, HS-160-08, HS-160-09, HS-160-11
+- **Depends on:** HS-162-01, HS-162-02
+- **Unblocks:** HS-162-03, HS-162-07, HS-162-08, HS-162-09, HS-162-11
 - **Owner:** unassigned
 
 ## Problem
@@ -34,7 +34,7 @@ can claim whole-ecosystem integration.
 - [ ] Journal/observation rows store references, hashes, spans, and redacted
   metadata only. An authenticated adapter hydrates a canonical revision from
   its authoritative source service; only copied/admitted excerpts later cross
-  the HS-160-06 `PrivateMaterialService` boundary.
+  the HS-162-06 `PrivateMaterialService` boundary.
 - [ ] Cursor advances through the greatest contiguous sequence of
   `published|deleted|ineligible|skipped_terminal` dispositions. `retryable`
   blocks that adapter cursor; only bounded policy may deliberately emit an

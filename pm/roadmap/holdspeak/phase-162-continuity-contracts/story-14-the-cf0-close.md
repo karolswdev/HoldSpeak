@@ -1,9 +1,9 @@
-# HS-160-14 — The CF-0 close: fault campaigns, rollback, verdict
+# HS-162-14 — The CF-0 close: fault campaigns, rollback, verdict
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-01 through HS-160-13
+- **Depends on:** HS-162-01 through HS-162-13
 - **Unblocks:** CF-1 charter
 - **Owner:** unassigned
 
@@ -23,7 +23,7 @@ an honest indexed record from which CF-1 can begin.
   council severity review and owner close verdict; only after every gate passes,
   write evidence-story-14 and `final-summary.md`. A defect discovered here
   reopens its owning story before close or creates a numbered HS-160 corrective
-  story/PR when ownership crosses stories; HS-160-14 does not absorb product
+  story/PR when ownership crosses stories; HS-162-14 does not absorb product
   fixes into its evidence/report PR.
 - **Out:** fixing deferred CF-1 quality work inside the close, destructive schema
   downgrade, releasing the Memory app, enabling shadow plans, or claiming

@@ -1,10 +1,10 @@
-# HS-160-06 — The private-material vault: custody and key saga
+# HS-162-06 — The private-material vault: custody and key saga
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-01, HS-160-02, HS-160-03
-- **Unblocks:** HS-160-05, HS-160-07, HS-160-08, HS-160-09
+- **Depends on:** HS-162-01, HS-162-02, HS-162-03
+- **Unblocks:** HS-162-05, HS-162-07, HS-162-08, HS-162-09
 - **Owner:** unassigned
 
 ## Problem
@@ -22,8 +22,8 @@ encrypted private material.
   typed store/resolve/destroy interfaces; redaction/telemetry boundary;
   derivative-purger registration protocol; backup/key-loss law and fault probes.
 - **Out:** inventing cryptography, plaintext fallback, cloud key escrow,
-  legacy inference-table cutover (HS-160-07), Remove/Forget orchestration
-  (HS-160-08), arbitrary filesystem secure-erasure claims, and derivation.
+  legacy inference-table cutover (HS-162-07), Remove/Forget orchestration
+  (HS-162-08), arbitrary filesystem secure-erasure claims, and derivation.
 
 ## Acceptance criteria
 
@@ -58,7 +58,7 @@ encrypted private material.
 
 ## Notes / open questions
 
-- CF-0 INV-008/009 and §§12/15 are normative; HS-160-07/08 complete this
+- CF-0 INV-008/009 and §§12/15 are normative; HS-162-07/08 complete this
   work package as separately mergeable, disabled-by-default PRs.
 - This story may define key-provider interfaces for platforms not yet shipped;
   a fake provider cannot satisfy native key-store release proof.

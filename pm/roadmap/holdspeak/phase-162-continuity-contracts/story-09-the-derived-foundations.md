@@ -1,10 +1,10 @@
-# HS-160-09 — The derived foundations: procedures, generations, graph
+# HS-162-09 — The derived foundations: procedures, generations, graph
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-02, HS-160-03, HS-160-04, HS-160-06
-- **Unblocks:** HS-160-08, HS-160-10, HS-160-13
+- **Depends on:** HS-162-02, HS-162-03, HS-162-04, HS-162-06
+- **Unblocks:** HS-162-08, HS-162-10, HS-162-13
 - **Owner:** unassigned
 
 ## Problem
@@ -46,7 +46,7 @@ model writes them.
   destination/egress change, taint downgrade, and Forget invalidate affected
   derivatives before retrieval/top-K admission, with authorization joins over
   source and target endpoint heads rather than post-filtering.
-- [ ] Procedure, graph, and embedding purgers implement HS-160-06's registered
+- [ ] Procedure, graph, and embedding purgers implement HS-162-06's registered
   interface, preserve resumable lineage progress, and reach zero real derivative
   rows through injected crash/restart.
 - [ ] Graph traversal applies authorization at every node and edge; an allowed

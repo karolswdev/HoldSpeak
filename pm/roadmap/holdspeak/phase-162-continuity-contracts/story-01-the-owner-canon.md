@@ -1,10 +1,10 @@
-# HS-160-01 — The owner canon: amendments and decision ledger
+# HS-162-01 — The owner canon: amendments and decision ledger
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** blocked
 - **Depends on:** —
-- **Unblocks:** HS-160-02, HS-160-04, HS-160-05, HS-160-06, HS-160-08, HS-160-10, HS-160-11
+- **Unblocks:** HS-162-02, HS-162-04, HS-162-05, HS-162-06, HS-162-08, HS-162-10, HS-162-11
 - **Owner:** HoldSpeak owner
 
 ## Problem

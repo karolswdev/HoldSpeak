@@ -1,10 +1,10 @@
-# HS-160-02 — The domain grammar: identity, scope, time, claims
+# HS-162-02 — The domain grammar: identity, scope, time, claims
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-01
-- **Unblocks:** HS-160-03, HS-160-04, HS-160-05, HS-160-06, HS-160-09, HS-160-10
+- **Depends on:** HS-162-01
+- **Unblocks:** HS-162-03, HS-162-04, HS-162-05, HS-162-06, HS-162-09, HS-162-10
 - **Owner:** unassigned
 
 ## Problem
@@ -60,4 +60,4 @@ storage contract before command or retrieval behavior can be deterministic.
 
 - CF-0 §4–6 and INV-001–007 are the primary contract anchors.
 - No plaintext source prose belongs in the observation/journal schema; that
-  boundary is enforced with HS-160-04/05.
+  boundary is enforced with HS-162-04/05.

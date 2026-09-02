@@ -1,10 +1,10 @@
-# HS-160-03 — The command core: idempotency, CAS, state machines
+# HS-162-03 — The command core: idempotency, CAS, state machines
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-02, HS-160-04
-- **Unblocks:** HS-160-05, HS-160-06, HS-160-07, HS-160-08, HS-160-09, HS-160-11
+- **Depends on:** HS-162-02, HS-162-04
+- **Unblocks:** HS-162-05, HS-162-06, HS-162-07, HS-162-08, HS-162-09, HS-162-11
 - **Owner:** unassigned
 
 ## Problem

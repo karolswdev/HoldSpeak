@@ -8,8 +8,8 @@
 > from evidence, Terra waves with serialized shipping, walks, honest ledgers —
 > is canon at [`docs/internal/ORCHESTRATION.md`](../../../docs/internal/ORCHESTRATION.md).
 
-**Newest update (2026-09-01): Phase 160 — Continuity Contracts (CF-0) —
-CHARTERED 0/14; HS-160-01 blocked on explicit owner ratification.** The
+**Newest update (2026-09-01): Phase 162 — Continuity Contracts (CF-0) —
+CHARTERED 0/14; HS-162-01 blocked on explicit owner ratification.** The
 council-cleared Core Memory SRS now has a serious execution ledger: fourteen
 one-story/one-PR units covering owner amendments, domain grammar, command and
 source spines, an ordered vault/cutover/Forget privacy train, one frozen plan waist,
@@ -19,7 +19,7 @@ contract shell, local proof machinery, and an adversarial close. CF-0 selects
 no production embedding model or vector store, injects no memory into model
 context, and claims no released Memory behavior. Those later choices must be
 derived from measured CF-1 work after CF-0 closes. Details and the dependency
-graph are in the [Phase 160 record](./phase-160-continuity-contracts/current-phase-status.md).
+graph are in the [Phase 162 record](./phase-162-continuity-contracts/current-phase-status.md).
 
 **Previous update (2026-08-30): Phase 153 — The Desk Chat: The Practice (DC-03) —
 COMPLETE 6/6 on PR #507 (with Phases 151 DC-01 and 152 DC-02; holding for the
@@ -596,7 +596,7 @@ the ⌘K shelf's z-defect fixed; the owner's 101 sitting remains open in
 parallel. Phase 101 itself stands at 3/4 (canon ratified and built,
 PR #359; sweep 4122/0).
 
-**Current phase:** [**Phase 160 — Continuity Contracts (CF-0)**](./phase-160-continuity-contracts/current-phase-status.md) — the council-cleared Core Memory contract becomes fourteen PR-sized implementation/testing stories derived from twelve work packages, beginning with an explicit owner-decision gate and ending with adversarial rollback proof. Chartered 2026-09-01 on PR #526; 0/14, HS-160-01 blocked on owner ratification. Previous: [Phase 159 — Project Rooms: The Interview (P1a)](./phase-159-the-interview/current-phase-status.md) COMPLETE 7/7; [Phase 158 — The Room (P1)](./phase-158-the-room/current-phase-status.md) COMPLETE 6/6, MERGED (PR #522; owner verdict PASS r2; counsel RATIFY-W-C); [Phase 157 — The Contract (P0)](./phase-157-the-contract/current-phase-status.md) MERGED (PR #521).
+**Current phase:** [**Phase 162 — Continuity Contracts (CF-0)**](./phase-162-continuity-contracts/current-phase-status.md) — the council-cleared Core Memory contract becomes fourteen PR-sized implementation/testing stories derived from twelve work packages, beginning with an explicit owner-decision gate and ending with adversarial rollback proof. Chartered 2026-09-01 on PR #526; 0/14, HS-162-01 blocked on owner ratification. Previous: [Phase 159 — Project Rooms: The Interview (P1a)](./phase-159-the-interview/current-phase-status.md) COMPLETE 7/7; [Phase 158 — The Room (P1)](./phase-158-the-room/current-phase-status.md) COMPLETE 6/6, MERGED (PR #522; owner verdict PASS r2; counsel RATIFY-W-C); [Phase 157 — The Contract (P0)](./phase-157-the-contract/current-phase-status.md) MERGED (PR #521).
 Parallel completion: [**Phase 151 — The Live Intelligence Proof**](./phase-151-live-intel-proof/current-phase-status.md) (COMPLETE 7/7 on PR #512). This historical path collides numerically with Desk Chat's Phase 151 but not at runtime; PR #511 consolidates both branches.
 Previous: [**Phase 151 — The Desk Chat: The Thread (DC-01)**](./phase-151-the-desk-chat/current-phase-status.md) (COMPLETE 8/8).
 Previous: [**Phase 150 — Delegation + the Chief-of-Staff Brief**](./phase-150-delegation-monday/current-phase-status.md) (COMPLETE 7/7, merged as PR #508 — the sibling session's arc; this phase took 151 at merge).

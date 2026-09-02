@@ -1,10 +1,10 @@
-# HS-160-12 — The Memory contract shell: state, consent, parity
+# HS-162-12 — The Memory contract shell: state, consent, parity
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-01, HS-160-02, HS-160-03, HS-160-08, HS-160-10
-- **Unblocks:** HS-160-13
+- **Depends on:** HS-162-01, HS-162-02, HS-162-03, HS-162-08, HS-162-10
+- **Unblocks:** HS-162-13
 - **Owner:** unassigned
 
 ## Problem
@@ -41,7 +41,7 @@ service and make screenshots impressive but dishonest.
 - [ ] Keyboard-only and assistive-technology flows have deterministic focus,
   announcements, error association, reduced motion, and normalized parity
   between 1440×900 and 393×852 fixture layouts.
-- [ ] The PAR-009 proof matrix is generated from HS-160-10's ratified target
+- [ ] The PAR-009 proof matrix is generated from HS-162-10's ratified target
   policies and runtime-adoption states; UI/schema parity never rewrites census
   policy or represents `not_integrated` as available behavior.
 - [ ] Every captured frame says `CF-0 fixture — no owner data/model behavior`;

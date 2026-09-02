@@ -1,10 +1,10 @@
-# HS-160-08 — Remove and Forget: barrier, purge, disclosure
+# HS-162-08 — Remove and Forget: barrier, purge, disclosure
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-03, HS-160-06, HS-160-07, HS-160-09
-- **Unblocks:** HS-160-11, HS-160-12, HS-160-13, HS-160-14
+- **Depends on:** HS-162-03, HS-162-06, HS-162-07, HS-162-09
+- **Unblocks:** HS-162-11, HS-162-12, HS-162-13, HS-162-14
 - **Owner:** unassigned
 
 ## Problem
@@ -42,7 +42,7 @@ Forget request to unrelated canonical truth.
 - [ ] Legacy remnants, provider copies, backups, and unavoidable compliance
   tombstones are separately disclosed under the owner-ratified retention law;
   none remain eligible for compile, retrieval, or model-bearing operations.
-- [ ] HS-160-09 purgers preserve source/target endpoint and generation lineage;
+- [ ] HS-162-09 purgers preserve source/target endpoint and generation lineage;
   missing or unknown purgers fail the operation closed rather than declaring
   success.
 - [ ] Progress and errors contain stable IDs/states/counts only; canary scans
@@ -62,4 +62,4 @@ Forget request to unrelated canonical truth.
 ## Notes / open questions
 
 - CF-0 §12/§15 and INV-009 are normative.
-- The composed cross-store zero-eligible campaign is rerun at HS-160-14 close.
+- The composed cross-store zero-eligible campaign is rerun at HS-162-14 close.

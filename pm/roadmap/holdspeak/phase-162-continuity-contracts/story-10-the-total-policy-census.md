@@ -1,10 +1,10 @@
-# HS-160-10 — The total policy census: every capability and source
+# HS-162-10 — The total policy census: every capability and source
 
 - **Project:** holdspeak
 - **Phase:** 160
 - **Status:** backlog
-- **Depends on:** HS-160-01, HS-160-04, HS-160-05, HS-160-09
-- **Unblocks:** HS-160-11, HS-160-12, HS-160-13
+- **Depends on:** HS-162-01, HS-162-04, HS-162-05, HS-162-09
+- **Unblocks:** HS-162-11, HS-162-12, HS-162-13
 - **Owner:** unassigned
 
 ## Problem
@@ -27,7 +27,7 @@ otherwise bypass memory policy simply because nobody remembered to list them.
 
 - [ ] Every model-capable built-in/internal operation and Coder consumer found
   by the repository census has one stable capability/operation row.
-- [ ] Every source owner/adapter from HS-160-04 is represented and reconciles
+- [ ] Every source owner/adapter from HS-162-04 is represented and reconciles
   one-to-one with registry identity and privacy/scope law.
 - [ ] Every row explicitly records policy state, allowed purposes/destinations,
   scope rule, hard caps, disclosure, assignment/route binding, and governing
@@ -39,8 +39,8 @@ otherwise bypass memory policy simply because nobody remembered to list them.
   without a corresponding registry decision.
 - [ ] Policy and rollout are independent axes: every ID carries its exact
   ratified `ContinuityCapabilityPolicy@1`, while runtime-adapter state is
-  `planned_shadow` for HS-160-11's Ask/Thread/Recipe/Coder representatives and
-  `not_integrated|disabled` elsewhere. HS-160-11 alone may atomically change
+  `planned_shadow` for HS-162-11's Ask/Thread/Recipe/Coder representatives and
+  `not_integrated|disabled` elsewhere. HS-162-11 alone may atomically change
   those four to `shadow` when adapters and differential fences ship. CF-0 does
   not erase a future bounded policy to `none` because CF-2 owns adoption.
 
@@ -57,5 +57,5 @@ otherwise bypass memory policy simply because nobody remembered to list them.
 ## Notes / open questions
 
 - CF-0 §11 and acceptance gate 5 are normative.
-- The census is the foundation for complete ecosystem integration; HS-160-11
+- The census is the foundation for complete ecosystem integration; HS-162-11
   proves four seams, while CF-2 later makes runtime plan construction universal.
