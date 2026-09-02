@@ -91,6 +91,20 @@ class DoorService:
             "source_ref": source_ref,
         }
 
+    def has_item_for_source(self, source_ref: str) -> bool:
+        """True if any Door action item already references source_ref.
+
+        The Steward's "lacking canonical follow-through" read (HS-163-03).
+        """
+        if self._db is None or not source_ref:
+            return False
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT 1 FROM action_items WHERE source_ref = ? LIMIT 1",
+                (source_ref,),
+            ).fetchone()
+        return row is not None
+
     def get(self, principal: Any) -> dict[str, Any]:
         now = self._clock()
         if now.tzinfo is None:

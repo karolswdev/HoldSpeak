@@ -697,6 +697,7 @@ class MeetingWebServer:
             build_project_setup_router,
             build_project_updates_router,
             build_providers_router,
+            build_steward_router,
             build_watches_router,
         )
 
@@ -712,6 +713,7 @@ class MeetingWebServer:
         from .services.project_evidence_collector import ProjectEvidenceCollector
         from .services.project_delta_service import ProjectDeltaService
         from .services.project_update_service import ProjectUpdateService
+        from .services.project_steward_service import ProjectStewardService
         from .services.refinement_coordinator import RefinementCoordinator
         from .services.refinement_application_service import RefinementApplicationService
 
@@ -802,6 +804,7 @@ class MeetingWebServer:
             RefinementThoughtService(get_database()),
             get_database().scheduled_recordings,
             get_database().calendar_events,
+            db=get_database(),
             config_loader=Config.load,
             people_service=people_service,
         )
@@ -913,11 +916,19 @@ class MeetingWebServer:
             ),
             project_evidence_collector=ProjectEvidenceCollector(get_database()),
             project_delta_service=_project_delta_service,
-            project_update_service=ProjectUpdateService(
+            project_update_service=(_project_update_service := ProjectUpdateService(
                 get_database(),
                 project_service=_project_service,
                 delta_service=_project_delta_service,
                 broker=broker,
+            )),
+            project_steward_service=ProjectStewardService(
+                get_database(),
+                ProjectEvidenceCollector(get_database()),
+                _project_delta_service,
+                update_service=_project_update_service,
+                project_service=_project_service,
+                door_service=door_service,
             ),
             refinement_coordinator=refinement_coordinator,
             refinement_service=refinement_service,
@@ -1062,6 +1073,7 @@ class MeetingWebServer:
         app.include_router(build_project_setup_router(web_ctx))
         app.include_router(build_project_updates_router(web_ctx))
         app.include_router(build_providers_router(web_ctx))
+        app.include_router(build_steward_router(web_ctx))
         app.include_router(build_watches_router(web_ctx))
 
         @app.on_event("startup")
@@ -1098,6 +1110,23 @@ class MeetingWebServer:
                     log.info(f"Seeded {seeded} built-in skills")
             except Exception as e:
                 log.debug(f"skill seeding skipped: {e}")
+            # HS-163-02 STW-009: mark abandoned steward runs interrupted.
+            try:
+                from .db import get_database as _get_db
+                from .services.project_evidence_collector import ProjectEvidenceCollector
+                from .services.project_delta_service import ProjectDeltaService
+                from .services.project_steward_service import ProjectStewardService
+                _sdb = _get_db()
+                _steward = ProjectStewardService(
+                    _sdb,
+                    ProjectEvidenceCollector(_sdb),
+                    ProjectDeltaService(_sdb, ProjectEvidenceCollector(_sdb)),
+                )
+                recovered = _steward.recover_on_startup()
+                if recovered:
+                    log.info(f"Steward recovery: {len(recovered)} run(s) marked interrupted")
+            except Exception as e:
+                log.error(f"steward startup recovery failed: {e}")
             try:
                 from .workbench_conductor import start_conductor, set_broadcast
                 set_broadcast(lambda t, d: self.broadcast(t, d))

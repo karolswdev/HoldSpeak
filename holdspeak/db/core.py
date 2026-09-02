@@ -33,6 +33,7 @@ from . import (  # noqa: F401
     calendar_events as _m29, threads as _m30,
     front_door as _m31, delta as _m32,
     updates as _m33,
+    steward as _m34,
 )
 
 from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401  re-exported

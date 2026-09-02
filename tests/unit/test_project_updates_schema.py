@@ -133,8 +133,8 @@ def _make_repo(tmp_path: Path):
 class TestFreshSchema:
     """A fresh DB built from SCHEMA_SQL has the HS-162-01 shape."""
 
-    def test_schema_version_is_70(self) -> None:
-        assert SCHEMA_VERSION == 70
+    def test_schema_version_is_71(self) -> None:
+        assert SCHEMA_VERSION == 71
 
     def test_updates_table_exists(self, tmp_path: Path) -> None:
         conn = sqlite3.connect(str(tmp_path / "fresh.db"))
