@@ -470,7 +470,7 @@ export function assembleGrantText(
   const activeWatches = watches.filter((w) => w.state === "active" || w.state === "tested");
   const cadences = activeWatches.map((w) => w.evaluationCadenceMinutes).filter((c) => c > 0);
   const cadence = cadences.length > 0 ? Math.min(...cadences) : 60;
-  parts.push(`every ${cadence} minutes`);
+  parts.push(`every ${pluralize(cadence, "minute")}`);
 
   // Effects
   const eligibleLabels = policy.eligibleEffectKinds.map(effectGrantLabel);

@@ -290,6 +290,45 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
 
   return (
     <div className="steward-policy" data-testid="steward-policy">
+      {/* HS-164-05: Source circuits render FIRST when any circuit is
+          not closed. A broken source outranks configuration. */}
+      {/* HS-164-05: Circuit state section (watches with non-closed circuits) */}
+      {circuitWatches.length > 0 ? (
+        <SurfaceSection label="Source circuits">
+          <SurfaceLedger count={`CIRCUITS ${circuitWatches.length}`}>
+            <ul className="surface-ledger-rows">
+              {circuitWatches.map((w) => (
+                <SurfaceLedgerRow
+                  key={w.id}
+                  data-testid="steward-circuit-row"
+                  expands={false}
+                  time={w.circuitOpenedAt ? humanTime(w.circuitOpenedAt) : ""}
+                  primary={
+                    <span className="steward-circuit-row-content">
+                      <span
+                        className="surface-token"
+                        data-tone={circuitStateTone(w.circuitState)}
+                        data-testid="steward-circuit-state"
+                      >
+                        {circuitStateLabel(w.circuitState)}
+                      </span>
+                      <span className="steward-circuit-name" title={w.name || w.connectorId}>
+                        {w.name || w.connectorId}
+                      </span>
+                      {w.circuitFailureStreak > 0 ? (
+                        <span className="steward-circuit-streak" data-testid="steward-circuit-streak">
+                          {pluralize(w.circuitFailureStreak, "failure")}
+                        </span>
+                      ) : null}
+                    </span>
+                  }
+                />
+              ))}
+            </ul>
+          </SurfaceLedger>
+        </SurfaceSection>
+      ) : null}
+
       <SurfaceSection label="Steward policy">
         {/* Enabled toggle */}
         <div className="steward-policy-toggle-row" data-testid="steward-policy-enabled-row">
@@ -403,47 +442,6 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
           <SurfaceState error={ctrl.policyError} />
         ) : null}
       </SurfaceSection>
-
-      {/* HS-164-05: Circuit state section (watches with non-closed circuits) */}
-      {circuitWatches.length > 0 ? (
-        <SurfaceSection label="Source circuits">
-          <SurfaceLedger count={`CIRCUITS ${circuitWatches.length}`}>
-            <ul className="surface-ledger-rows">
-              {circuitWatches.map((w) => (
-                <SurfaceLedgerRow
-                  key={w.id}
-                  data-testid="steward-circuit-row"
-                  expands={false}
-                  primary={
-                    <span className="steward-circuit-row-content">
-                      <span
-                        className="surface-token"
-                        data-tone={circuitStateTone(w.circuitState)}
-                        data-testid="steward-circuit-state"
-                      >
-                        {circuitStateLabel(w.circuitState)}
-                      </span>
-                      <span className="steward-circuit-name" title={w.name || w.connectorId}>
-                        {w.name || w.connectorId}
-                      </span>
-                      {w.circuitFailureStreak > 0 ? (
-                        <span className="steward-circuit-streak" data-testid="steward-circuit-streak">
-                          {pluralize(w.circuitFailureStreak, "failure")}
-                        </span>
-                      ) : null}
-                      {w.circuitOpenedAt ? (
-                        <span className="steward-circuit-since" data-testid="steward-circuit-since">
-                          {`since ${humanTime(w.circuitOpenedAt)}`}
-                        </span>
-                      ) : null}
-                    </span>
-                  }
-                />
-              ))}
-            </ul>
-          </SurfaceLedger>
-        </SurfaceSection>
-      ) : null}
 
       {/* Verbs */}
       <SurfaceVerbs>

@@ -44,33 +44,31 @@ admitted 160/162 verbs).
 | HS-164-03 | run_due (the triggered hand: watermark requests, ONE run, scheduling cooldown) | done | [story-03-run-due](./story-03-run-due.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-164-04 | The conductor (two failure boundaries; §10 events; Cadence attention) | done | [story-04-the-conductor](./story-04-the-conductor.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-164-05 | The face (the unattended posture: opt-in, cadence, circuit, interventions — OWNER VERDICT) | in-progress | [story-05-the-face](./story-05-the-face.md) | - |
-| HS-164-06 | The walk (Gate A on glass: two useful unattended runs, zero prompts, zero duplicates) | backlog | [story-06-the-walk](./story-06-the-walk.md) | - |
+| HS-164-06 | The walk (Gate A on glass: two useful unattended runs, zero prompts, zero duplicates) | done | [story-06-the-walk](./story-06-the-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-164-07 | The close (gates, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
-4/7. HS-164-04 the conductor DONE (2026-09-02): two INDEPENDENT
-failure boundaries join the tick (Watch scheduler, Steward scheduler
-— own try/except, named prefixes); every SS10 steward event kind now
-emits in-transaction at its seam (configured on policy PUT /
-run_started / step_completed / intervention_required on circuit-open
-+ bounds-exhausted + max-actions; run_completed pre-existed); Cadence
-projects review_due / source_degraded / steward_intervention_required
-via upsert_loop(source_type=system) — attention only, never schedule
-state; policy PUT carries unattended_enabled; api-surface 618->618
-(body extension, zero route change). TWO ORCHESTRATOR CATCHES
-in-round: (1) the blocks constructed CRIPPLED services (bare
-WatchService without the GitHub fetcher; ProjectStewardService with
-None collaborators) — production unattended runs would have failed
-while fake-injected tests stayed green (the DoorService-db scar's
-sibling); fixed with the set_scheduler_services injection seam
-(mirrors set_broadcast) — the conductor runs the app's fully-wired
-instances, unwired = honest skip; (2) the block-isolation tests were
-THEATER (inline try/except simulating nothing) — rewritten against
-the REAL _tick through the seam, + a not-wired test. Gates: 243
-passed scoped. Earlier: 3/7 run_due, 2/7 evaluate_due, 1/7 the due
-ledger. NEXT: HS-164-05 the face (owner verdict) || 06 rig after
-05's functional.
+5/7 committed pending; 05 awaits THE OWNER'S VERDICT. HS-164-06 the
+walk DONE (2026-09-02): tests/e2e/test_hs164_unattended_glass.py,
+four legs, 8 passed x2 deterministic, BUILD FIRST in the rig (163's
+law honored from birth). GATE A MET AND COUNTED: two unattended runs
+across ticks, 2 door items (unique), 2 updates, 0 duplicate effects,
+0 confirmation prompts; SCHEDULED provenance on glass. Dedup across
+ticks: unchanged snapshot -> no_op -> nothing minted, exactly 1 run.
+Circuit: 3 failures open it (visible), recovery closes it. Opt-out:
+disable mid-cadence -> next tick runs NOTHING (skipped_no_opt_in).
+Tick seam: the rig drives the app's own wired instances via
+set_scheduler_services (the hub boots in-thread); the wire has NO
+scheduled-path trigger route — ledgered debt, the orchestrator's
+earlier ruling stands. THE SHOT ROUNDS (three, each root-caused):
+grant grammar (pluralize), circuit attention (Source circuits render
+FIRST when open — a broken source outranks configuration), and the
+house-ledger 52px time-column clip (the opened-at time now rides the
+time slot; the row reads 'just now CIRCUIT OPEN <name> 3 failures').
+Gates: glass 8x2 + routes 22 + vitest 39 + baseline 2265 zero
+branch-new. Earlier: 4/7 conductor, 3/7 run_due, 2/7 evaluate_due,
+1/7 due ledger. NEXT: the owner's verdict on 05, then 07 the close.
 
 ## Active risks
 

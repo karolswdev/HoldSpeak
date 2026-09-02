@@ -1419,8 +1419,8 @@ describe("Circuit state: watches with non-closed circuits", () => {
     const streak = screen.getByTestId("steward-circuit-streak");
     expect(streak.textContent).toBe("3 failures");
 
-    const since = screen.getByTestId("steward-circuit-since");
-    expect(since.textContent).toContain("since");
+    // The opened-at time rides the house ledger time slot now
+    // (52px column), not a separate since-span.
   });
 
   it("half-open circuit shows 'Probing' state", async () => {

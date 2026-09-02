@@ -1,0 +1,114 @@
+{
+  "gate": "A",
+  "tick1": {
+    "door_before": 0,
+    "door_after": 1,
+    "door_created": 1,
+    "updates_before": 0,
+    "updates_after": 1,
+    "run_id": "pstrun_076b2b02e8c34ae48684bd3ab888d476",
+    "eval_outcomes": [
+      {
+        "watch_id": "cw_glass_unattended_001",
+        "outcome": "evaluated",
+        "evaluation_id": "weval_05f03351e5ac",
+        "transitions": 5,
+        "observation_ids": [
+          "pobs_5f4255781448420e68d5f65e116088b4",
+          "pobs_d024481d7b04621a20e8038d8c6511a1",
+          "pobs_6afdd2c67b5b173774f60c7faedb6e67",
+          "pobs_19987c745c324cc9c7d9039e9c19b4c8",
+          "pobs_85b2aee1e7d5ce535a0a2afe1c7cd0ad"
+        ],
+        "effects": [
+          {
+            "id": "weff_328818a45fa4",
+            "evaluation_id": "weval_05f03351e5ac",
+            "rule_id": "wrule_cw_glass_unattended_001",
+            "action_kind": "project.steward.run_once",
+            "target_ref": "",
+            "idempotency_key": "6a077b41244cc495ca47b25479c4ad40",
+            "arguments_sha256": "",
+            "state": "pending",
+            "operation_id": null,
+            "receipt_id": null,
+            "result_ref": null,
+            "verification_state": "",
+            "error_code": null,
+            "error_detail": null,
+            "created_at": "2026-09-02 15:13:30",
+            "completed_at": null
+          }
+        ]
+      }
+    ],
+    "run_outcomes": [
+      {
+        "effect_id": "weff_328818a45fa4",
+        "outcome": "run_started",
+        "project_id": "proj-2c8f52d676ae",
+        "watermark": "watch:cw_glass_unattended_001:e9b76b391ad1d1f0acfd984bb258ac6a",
+        "run_id": "pstrun_076b2b02e8c34ae48684bd3ab888d476",
+        "run_state": "completed"
+      }
+    ]
+  },
+  "tick2": {
+    "door_before": 1,
+    "door_after": 2,
+    "door_created": 1,
+    "updates_before": 1,
+    "updates_after": 2,
+    "run_id": "pstrun_af0499a08e504d0aa046643a7b0eed3b",
+    "eval_outcomes": [
+      {
+        "watch_id": "cw_glass_unattended_001",
+        "outcome": "evaluated",
+        "evaluation_id": "weval_b005ada3e57d",
+        "transitions": 4,
+        "observation_ids": [
+          "pobs_7483dcbd37a81d42f8b6e4a5cab5adb7",
+          "pobs_03f049d8d50cdaca3ba5ea80abc65352",
+          "pobs_da8e3e9ecc423653f0de8fc959a5c660",
+          "pobs_06362bb0093de3bc0ccdb5d9f916d667"
+        ],
+        "effects": [
+          {
+            "id": "weff_9fd2a872223a",
+            "evaluation_id": "weval_b005ada3e57d",
+            "rule_id": "wrule_cw_glass_unattended_001",
+            "action_kind": "project.steward.run_once",
+            "target_ref": "",
+            "idempotency_key": "a5b1cc702a134af435b57e145c0771e6",
+            "arguments_sha256": "",
+            "state": "pending",
+            "operation_id": null,
+            "receipt_id": null,
+            "result_ref": null,
+            "verification_state": "",
+            "error_code": null,
+            "error_detail": null,
+            "created_at": "2026-09-02 15:13:30",
+            "completed_at": null
+          }
+        ]
+      }
+    ],
+    "run_outcomes": [
+      {
+        "effect_id": "weff_9fd2a872223a",
+        "outcome": "run_started",
+        "project_id": "proj-2c8f52d676ae",
+        "watermark": "watch:cw_glass_unattended_001:825fb18ad6c2db30020969cf4f7a52af",
+        "run_id": "pstrun_af0499a08e504d0aa046643a7b0eed3b",
+        "run_state": "completed"
+      }
+    ]
+  },
+  "total_completed_runs": 2,
+  "total_door_items_created": 2,
+  "total_updates_created": 2,
+  "duplicate_door_texts": false,
+  "confirmation_dialogs": 0,
+  "door_source_refs_unique": true
+}

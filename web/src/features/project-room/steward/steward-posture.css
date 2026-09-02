@@ -246,3 +246,11 @@
   align-items: center;
   gap: var(--space-1);
 }
+
+/* HS-164-06 shot round: the state token holds ONE line inside the
+   circuit row -- a wrapped token clips the row's siblings (the 162
+   house-ledger nowrap scar). */
+.steward-circuit-row-content .surface-token {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
