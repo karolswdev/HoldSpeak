@@ -45,7 +45,7 @@ seam noted, not built).
 | HS-165-02 | The command tools (lifecycle/link/review/updates; MCP-001/002/004/005) | done | [story-02-the-command-tools](./story-02-the-command-tools.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-165-03 | The driver tools (steward runs, setup interview, provider discovery, watch graduation) | done | [story-03-the-driver-tools](./story-03-the-driver-tools.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-165-04 | The palette (PROJECT_PALETTE + Project Thread mode; parity hardening) | done | [story-04-the-palette](./story-04-the-palette.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-165-05 | The walk (a local MCP client drives §15 end to end — OWNER VERDICT) | backlog | [story-05-the-walk](./story-05-the-walk.md) | - |
+| HS-165-05 | The walk (a local MCP client drives §15 end to end — OWNER VERDICT) | in-progress | [story-05-the-walk](./story-05-the-walk.md) | - |
 | HS-165-06 | The docs (the Gate B partner surface; the dedicated docs story) | backlog | [story-06-the-docs](./story-06-the-docs.md) | - |
 | HS-165-07 | The close (gates, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 

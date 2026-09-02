@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 165
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HS-165-04
 - **Unblocks:** HS-165-07
 - **Owner:** unassigned
@@ -40,3 +40,24 @@ story — Gate B readiness is his call.
 ## Test plan
 
 - **Integration:** the walk ×2; **Manual:** the owner's verdict.
+
+## Trace record (orchestrator round, 2026-09-02)
+
+- The client was BUILT (none existed): a real subprocess speaking
+  newline-delimited JSON-RPC against the real sidecar, isolated
+  HOME. ONE fixture seam, verified by my own read of
+  _mcp_walk_server.py: the snapshot fetcher reads a file instead of
+  invoking the gh CLI — the subprocess boundary, protocol, dispatch,
+  and service composition are all real.
+- SEAM DEBT LEDGERED: project.py's _watch_service() factory builds
+  WatchService(db) with NO snapshot_fetcher — the real sidecar
+  cannot evaluate/test watches without live gh auth
+  (connector_unavailable). Pre-existing shape (the web app injects
+  its fetcher via _gh_watch_service_kwargs; the sidecar composes
+  bare). Carried to the close ledger; the docs story must state it.
+- The palette-consumer split recorded: the walk's legs run over the
+  subprocess; dispatch_for_palette is proven in-process (it has no
+  server wiring yet — its production consumer beyond the walk is
+  future agent sessions).
+- §15 item 1 (legacy reconcile) honestly pointered to the reconcile
+  suites rather than re-proven in the walk (fresh-DB context).
