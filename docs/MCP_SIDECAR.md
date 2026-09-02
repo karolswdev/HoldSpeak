@@ -127,8 +127,9 @@ Seven graduated watch tools: `project.watch.inspect`, `project.watch.test`,
 `project.watch.evaluate`, `project.watch.set_rules`, `project.watch.pause`,
 `project.watch.resume`, `project.watch.retire`. These operate ONLY on
 graduated WatchSpec@1 rows (state in active/tested/paused/retired). Legacy
-rows (state='') belong to the reactions family; the boundary is enforced
-with typed `legacy_watch_boundary` refusals in both directions.
+rows (state='') belong to the reactions family; the graduated tools
+refuse legacy rows with typed `legacy_watch_boundary` errors. The
+legacy side is not yet guarded in code (backlog).
 
 Five resource templates expose project data: `holdspeak://projects/{id}`,
 `.../room`, `.../delta`, `.../updates/{update_id}`, and
@@ -591,10 +592,12 @@ project.watch.* tools (inspect, test, evaluate, set_rules, pause,
 resume, retire) operate only on WatchSpec@1 rows (state in
 active/tested/paused/retired).
 
-The boundary is enforced in both directions. A graduated tool called
-on a legacy row refuses with `legacy_watch_boundary`. A legacy tool
-called on a graduated row refuses the same way. Nothing was replaced;
-both surfaces coexist.
+The boundary is enforced in one direction today: a graduated tool
+called on a legacy row refuses with `legacy_watch_boundary`. The
+legacy reactions tools are not yet guarded against graduated rows
+(a legacy refresh of a graduated watch is wasteful, not destructive;
+the code-side guard is backlog). Nothing was replaced; both surfaces
+coexist.
 
 ### What V0 refuses
 

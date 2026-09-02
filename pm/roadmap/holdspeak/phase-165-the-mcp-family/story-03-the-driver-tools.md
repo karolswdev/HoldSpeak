@@ -34,9 +34,9 @@ to WatchSpec@1 — extend, never replace.
 
 ## Acceptance criteria
 
-- [ ] MCP-003 proven: run_steward returns run_id before phase work (slow-phase fixture); polling reaches terminal state with receipts.
-- [ ] The setup interview resumes across tool calls (durable session); finalize activates atomically — the same seams as Web.
-- [ ] The watch boundary recorded and tested: graduated tools refuse legacy rows typed, and vice versa; nothing replaced.
+- [x] MCP-003 proven: run_steward returns run_id before phase work (slow-phase fixture); polling reaches terminal state with receipts.
+- [x] The setup interview resumes across tool calls (durable session); finalize activates atomically — the same seams as Web.
+- [x] The watch boundary recorded and tested: graduated tools refuse legacy rows typed (Direction A, under test); the legacy side stays unguarded in code (counsel S-1 — docs corrected, guard ledgered); nothing replaced.
 
 ## Test plan
 
@@ -63,3 +63,14 @@ to WatchSpec@1 — extend, never replace.
 - command_id posture mirrors each route exactly; routes without
   idempotency did not have one invented (registered per tool in the
   build report).
+
+### Counsel S-1 correction (2026-09-02)
+
+The trace above and the docs originally claimed the boundary is
+"enforced in both directions." FALSE as shipped: only Direction A
+(graduated tools refuse legacy rows) exists in code; the reactions
+family has no graduated guard, and refresh_due_watches iterates all
+enabled rows (a graduated watch gets refreshed by BOTH schedulers —
+wasteful, not destructive, since they write different columns). Docs
+and this story now say one-directional; the legacy-side guard is
+ledgered debt.

@@ -770,19 +770,8 @@ def _record_steward_command(
 
 
 # The native provider families (mirrors providers.py:31-43).
-_NATIVE_PROVIDERS: list[dict[str, Any]] = [
-    {
-        "provider_id": "native",
-        "transport": "local_domain",
-        "capabilities": {
-            "discover": False,
-            "read": True,
-            "subscribe": False,
-            "effect": False,
-        },
-        "families": ["meetings", "decisions", "door"],
-    },
-]
+# One source of truth for the native provider list (counsel S-3):
+from holdspeak.web.routes.providers import _NATIVE_PROVIDERS  # noqa: E402
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -963,13 +952,32 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         open_review = delta_svc._find_open_review(project_id)
         if open_review is not None:
             return delta_svc._load_frozen_window(open_review)
-        # Honest empty state (WEB-STA-004)
+        # Honest empty state (WEB-STA-004) -- parity with the Web
+        # route's empty branch incl. source_coverage (counsel S-2).
         db = get_database()
         room_fields = db.projects.get_project_room_fields(project_id)
         last_accepted_at = (room_fields or {}).get("last_review_at")
+        source_coverage = None
+        try:
+            reviews = delta_svc._db.project_observations.list_reviews(
+                project_id, status="accepted", limit=1,
+            )
+            if reviews:
+                manifest_json = reviews[0].get("source_manifest_json", "{}")
+                manifest = (
+                    json.loads(manifest_json)
+                    if isinstance(manifest_json, str) else manifest_json
+                )
+                source_coverage = {
+                    k: v.get("state", "unknown")
+                    for k, v in manifest.items()
+                }
+        except Exception:
+            pass
         return {
             "open_review": None,
             "last_accepted_at": last_accepted_at,
+            "source_coverage": source_coverage,
         }
 
     if name == "project.decide_proposal":
