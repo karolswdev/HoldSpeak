@@ -1,11 +1,11 @@
 {
-  "total_seconds": 2.56,
+  "total_seconds": 2.77,
   "segments": {
-    "desk_seed": 0.14,
-    "open_room": 1.67,
-    "enter_updates": 0.06,
+    "desk_seed": 0.16,
+    "open_room": 1.87,
+    "enter_updates": 0.05,
     "draft_deterministic": 0.05,
-    "human_edit": 0.59,
+    "human_edit": 0.6,
     "save": 0.02,
     "copy_markdown": 0.03
   },

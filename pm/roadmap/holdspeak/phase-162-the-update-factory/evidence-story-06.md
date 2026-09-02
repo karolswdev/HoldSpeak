@@ -95,3 +95,18 @@ build ok
 ......                                                                   [100%]
 6 passed in 21.70s
 ```
+
+### Captured run — 2026-09-02T02:10:09Z
+
+- **Command:** `/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/cc25f299-2c98-4864-9e8e-a3504d65c608/scratchpad/story162-06-verify.sh`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** 675d58bd641fd33728a69d41a9dcc91345db0b5e
+
+```text
+=== build (the glass serves the built bundle) ===
+build ok
+=== the four legs (isolated HOME) ===
+......                                                                   [100%]
+6 passed in 22.77s
+```
