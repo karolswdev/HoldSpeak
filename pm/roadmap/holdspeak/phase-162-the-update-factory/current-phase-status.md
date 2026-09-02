@@ -48,7 +48,7 @@ document with named, deduplicated source chips (the S-4 payment);
 the list row rebuilt three times to its true root cause (the house
 ledger's nowrap) and finished with a rest-visible chevron so it says
 it opens; editability confirmed by canon (UPD-001/UPD-005/PV-H04).
-The walk's numbers held through every round: 2.47s edit-to-copy vs
+The walk's numbers held through every round: 2.77s edit-to-copy vs
 300s; retention 1.0 vs 0.70; the no-raw-ids law asserted on glass.
 Remaining: 07 the close — full suite (running), sweep, counsel
 (running), final summary, PR, merge. All standing laws carry.

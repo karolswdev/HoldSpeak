@@ -797,11 +797,38 @@ describe("Draft list: lifecycle-honest", () => {
     const item = screen.getByTestId("update-list-item");
     expect(item.tagName).toBe("BUTTON");
 
+    // S-3: rows navigate, not expand -- no aria-expanded attribute
+    expect(item.hasAttribute("aria-expanded")).toBe(false);
+
     // Clicking the row opens the editor
     fireEvent.click(item);
     await waitFor(() => {
       expect(screen.getByTestId("update-editor")).toBeTruthy();
     });
+  });
+});
+
+// ── SUPERSEDED READONLY LABEL ──
+
+describe("Superseded readonly label", () => {
+  it("shows lifecycle-honest read-only reason for superseded updates", async () => {
+    setupUpdatePosture({
+      listUpdates: [draftUpdateFixture({ id: "u-sup", lifecycle: "superseded" })],
+      draftResult: draftUpdateFixture({ id: "u-sup", lifecycle: "superseded" }),
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("updates-verb"));
+    await waitFor(() => screen.getByTestId("update-posture"));
+
+    const items = await screen.findAllByTestId("update-list-item");
+    fireEvent.click(items[0]);
+
+    await waitFor(() => screen.getByTestId("update-editor"));
+
+    const reason = screen.getByTestId("update-readonly-reason");
+    expect(reason.textContent).toContain("Superseded");
+    expect(reason.textContent).not.toBe("Published updates are read-only");
   });
 });
 

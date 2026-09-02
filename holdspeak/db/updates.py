@@ -242,9 +242,9 @@ class UpdatesRepository(BaseRepository):
         ).fetchone()
         if not row:
             return
-        if row[0] == "published":
+        if row[0] != "draft":
             raise PublishedUpdateError(
-                f"Cannot modify published update {clean_id}"
+                f"Cannot modify {row[0]} update {clean_id}"
             )
 
         updates: list[str] = []
@@ -301,9 +301,9 @@ class UpdatesRepository(BaseRepository):
         ).fetchone()
         if not row:
             return
-        if row[0] == "published":
+        if row[0] != "draft":
             raise PublishedUpdateError(
-                f"Cannot re-publish already-published update {clean_id}"
+                f"Cannot publish {row[0]} update {clean_id}"
             )
         now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
         conn.execute(

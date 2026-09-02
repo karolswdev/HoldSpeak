@@ -283,6 +283,58 @@ class TestCommandReplay:
         )
         assert resp2.status_code == 200
 
+    def test_save_replay(self, rig) -> None:
+        """S-2: save_update with same command_id replays."""
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-rp-save")
+
+        # Create a draft first
+        resp_draft = client.post(
+            f"/api/projects/{pid}/updates/draft",
+            json={"generator": "deterministic"},
+        )
+        assert resp_draft.status_code == 200
+        update_id = resp_draft.json()["update"]["id"]
+
+        cmd = "cmd-save-replay-01"
+        resp1 = client.put(
+            f"/api/updates/{update_id}",
+            json={"body_md": "edited body", "command_id": cmd},
+        )
+        assert resp1.status_code == 200
+
+        resp2 = client.put(
+            f"/api/updates/{update_id}",
+            json={"body_md": "edited body", "command_id": cmd},
+        )
+        assert resp2.status_code == 200
+
+    def test_regenerate_replay(self, rig) -> None:
+        """S-2: regenerate_update with same command_id replays."""
+        db, client = rig
+        pid = _seed_project(db, project_id="proj-rp-regen")
+
+        # Create a draft first
+        resp_draft = client.post(
+            f"/api/projects/{pid}/updates/draft",
+            json={"generator": "deterministic"},
+        )
+        assert resp_draft.status_code == 200
+        update_id = resp_draft.json()["update"]["id"]
+
+        cmd = "cmd-regen-replay-01"
+        resp1 = client.post(
+            f"/api/updates/{update_id}/regenerate",
+            json={"generator": "deterministic", "command_id": cmd},
+        )
+        assert resp1.status_code == 200
+
+        resp2 = client.post(
+            f"/api/updates/{update_id}/regenerate",
+            json={"generator": "deterministic", "command_id": cmd},
+        )
+        assert resp2.status_code == 200
+
 
 # ── Not-found paths ──────────────────────────────────────────────────
 

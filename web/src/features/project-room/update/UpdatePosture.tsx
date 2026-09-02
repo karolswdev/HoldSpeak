@@ -175,6 +175,7 @@ function UpdateList({
               <SurfaceLedgerRow
                 key={update.id}
                 data-testid="update-list-item"
+                expands={false}
                 primary={
                   <span
                     className="update-list-row"
@@ -324,7 +325,9 @@ function UpdateEditor({
             label="Update"
             actions={
               <span className="surface-token" data-testid="update-readonly-reason">
-                Published updates are read-only
+                {update.lifecycle === "superseded"
+                  ? "Superseded drafts are read-only"
+                  : "Published updates are read-only"}
               </span>
             }
           >

@@ -4268,7 +4268,9 @@
         "GET"
       ],
       "module": "web.routes.project_updates",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/updates/draft",
@@ -4276,7 +4278,9 @@
         "POST"
       ],
       "module": "web.routes.project_updates",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/watches",
@@ -5279,7 +5283,9 @@
         "GET"
       ],
       "module": "web.routes.project_updates",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/updates/{update_id}/publish",
@@ -5287,7 +5293,9 @@
         "POST"
       ],
       "module": "web.routes.project_updates",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/updates/{update_id}/regenerate",
@@ -5295,7 +5303,9 @@
         "POST"
       ],
       "module": "web.routes.project_updates",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/watches",

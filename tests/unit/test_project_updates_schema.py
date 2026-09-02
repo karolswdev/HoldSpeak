@@ -305,6 +305,37 @@ class TestLifecycleLaw:
         assert new_draft["project_revision"] == 5
         conn.close()
 
+    def test_update_draft_on_superseded_refuses(self, tmp_path: Path) -> None:
+        """S-1: a superseded row is immutable -- update_draft refuses."""
+        conn, repo = _make_repo(tmp_path)
+        uid1 = generate_pupd_id()
+        repo.insert_update(
+            update_id=uid1,
+            project_id="proj-1",
+            project_revision=5,
+            body_md="original",
+        )
+        uid2 = generate_pupd_id()
+        repo.supersede_draft(uid1, new_update_id=uid2, body_md="v2")
+        with pytest.raises(PublishedUpdateError, match="superseded"):
+            repo.update_draft(uid1, body_md="should fail")
+        conn.close()
+
+    def test_publish_on_superseded_refuses(self, tmp_path: Path) -> None:
+        """S-1: a superseded row cannot be published."""
+        conn, repo = _make_repo(tmp_path)
+        uid1 = generate_pupd_id()
+        repo.insert_update(
+            update_id=uid1,
+            project_id="proj-1",
+            project_revision=5,
+        )
+        uid2 = generate_pupd_id()
+        repo.supersede_draft(uid1, new_update_id=uid2, body_md="v2")
+        with pytest.raises(PublishedUpdateError, match="superseded"):
+            repo.publish_update(uid1)
+        conn.close()
+
     def test_supersede_preserves_project_pin(self, tmp_path: Path) -> None:
         """The new draft from supersede inherits the original project_revision."""
         conn, repo = _make_repo(tmp_path)

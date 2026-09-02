@@ -1022,16 +1022,51 @@ class ProjectUpdateService:
         Raises PublishedUpdateError if the row is published.
         Raises NotFound if the update does not exist.
         """
+        req_hash = _request_hash({
+            "update_id": update_id,
+            "body_md": body_md,
+        })
+        if command_id is not None:
+            existing = self._db.projects.get_project_command(command_id)
+            if existing is not None:
+                if (existing["status"] == "completed"
+                        and existing["request_hash"] == req_hash):
+                    if existing["result_json"]:
+                        return json.loads(existing["result_json"])
+                    return {"result_kind": "no_change", "update_id": update_id}
+                if existing["request_hash"] != req_hash:
+                    raise ConflictError(
+                        "idempotency conflict: same command_id with different request hash",
+                        code="idempotency_conflict",
+                    )
+
         row = self._db.project_updates.get_update(update_id)
         if row is None:
             raise NotFound("update", update_id)
+
+        project_id = row["project_id"]
 
         # PublishedUpdateError is raised inside the repo
         self._db.project_updates.update_draft(
             update_id, body_md=body_md,
         )
 
-        return self._db.project_updates.get_update(update_id)
+        result = self._db.project_updates.get_update(update_id)
+
+        # Record command for idempotency
+        cmd_id = command_id or generate_pcmd_id()
+        project_ref = format_ref("project", project_id)
+        envelope = CommandResultEnvelope(
+            result_kind=ResultKind.UPDATED,
+            project_id=project_id,
+            project_revision=result.get("project_revision", 0),
+            changed_refs=(parse_ref(project_ref),),
+        )
+        self._record_command(
+            cmd_id, project_id, "save_update", req_hash, envelope,
+        )
+
+        return result
 
     def regenerate_update(
         self,
@@ -1044,26 +1079,53 @@ class ProjectUpdateService:
         """Regenerate: supersede an unaccepted draft or create a NEW
         draft when the latest is published.
 
-        Per the 02 service behavior, regenerating when the latest is
-        published creates a fresh revision-1 draft.
+        Both lifecycle branches delegate to draft_update which handles
+        superseding (for drafts) or fresh creation (after published).
         """
+        req_hash = _request_hash({
+            "update_id": update_id,
+            "generator": generator,
+        })
+        if command_id is not None:
+            existing = self._db.projects.get_project_command(command_id)
+            if existing is not None:
+                if (existing["status"] == "completed"
+                        and existing["request_hash"] == req_hash):
+                    if existing["result_json"]:
+                        return json.loads(existing["result_json"])
+                    return {"result_kind": "no_change", "update_id": update_id}
+                if existing["request_hash"] != req_hash:
+                    raise ConflictError(
+                        "idempotency conflict: same command_id with different request hash",
+                        code="idempotency_conflict",
+                    )
+
         row = self._db.project_updates.get_update(update_id)
         if row is None:
             raise NotFound("update", update_id)
 
         project_id = row["project_id"]
 
-        if row["lifecycle"] == "published":
-            # Published => create a brand-new draft (fresh revision 1)
-            return self.draft_update(
-                principal, project_id, generator=generator,
-            )
-
-        # Draft => supersede via the normal draft_update path which
-        # handles superseding internally.
-        return self.draft_update(
+        # Both published and draft delegate to draft_update which
+        # handles superseding (for drafts) or fresh creation.
+        result = self.draft_update(
             principal, project_id, generator=generator,
         )
+
+        # Record command for idempotency
+        cmd_id = command_id or generate_pcmd_id()
+        project_ref = format_ref("project", project_id)
+        envelope = CommandResultEnvelope(
+            result_kind=ResultKind.CREATED,
+            project_id=project_id,
+            project_revision=result.get("project_revision", 0),
+            changed_refs=(parse_ref(project_ref),),
+        )
+        self._record_command(
+            cmd_id, project_id, "regenerate_update", req_hash, envelope,
+        )
+
+        return result
 
     def publish_update(
         self,
