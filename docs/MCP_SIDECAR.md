@@ -1,9 +1,9 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-142 tools across 31 families. The default non-owner discovery lists 29
-resources; the owner discovery lists 32 because access filtering admits 16
-static resources and 16 templates. Any MCP client (Claude Code, Cursor, a
+145 tools across 32 families. The default non-owner discovery lists 34
+resources; the owner discovery lists 37 because access filtering admits 16
+static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
 
 The sidecar runs as a child process of the MCP client. It opens the same
@@ -57,7 +57,7 @@ default.
 
 ## Tool families
 
-The 142 tools are organized into domain families. Each tool follows the
+The 145 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -96,6 +96,18 @@ message; the Door card shows a "from a thread" provenance chip.
 Door has no MCP resource. Its
 Follow-Through People overlay respects `HOLDSPEAK_MCP_PEOPLE_ACCESS` and is
 safely empty when that encrypted disclosure capability is unavailable or off.
+
+### project (3 tools)
+
+`project.list` returns all projects (optionally including archived).
+`project.get` returns one project by id with room fields.
+`project.get_room` returns the coherent room projection for one project
+(identity, items, meetings, resources, changes, review). All three are
+thin drivers over `ProjectService` (MCP-001 parity with the web routes).
+
+Five resource templates expose project data: `holdspeak://projects/{id}`,
+`.../room`, `.../delta`, `.../updates/{update_id}`, and
+`.../steward/runs/{run_id}`. Unknown ids refuse typed.
 
 ### thread (1 tool)
 

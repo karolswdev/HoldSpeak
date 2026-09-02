@@ -41,7 +41,7 @@ seam noted, not built).
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-165-01 | The family skeleton (project.py reads + §11.2 resources; MCP-006 isolation) | backlog | [story-01-the-family-skeleton](./story-01-the-family-skeleton.md) | - |
+| HS-165-01 | The family skeleton (project.py reads + §11.2 resources; MCP-006 isolation) | done | [story-01-the-family-skeleton](./story-01-the-family-skeleton.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-165-02 | The command tools (lifecycle/link/review/updates; MCP-001/002/004/005) | backlog | [story-02-the-command-tools](./story-02-the-command-tools.md) | - |
 | HS-165-03 | The driver tools (steward runs, setup interview, provider discovery, watch graduation) | backlog | [story-03-the-driver-tools](./story-03-the-driver-tools.md) | - |
 | HS-165-04 | The palette (PROJECT_PALETTE + Project Thread mode; parity hardening) | backlog | [story-04-the-palette](./story-04-the-palette.md) | - |
@@ -51,14 +51,19 @@ seam noted, not built).
 
 ## Where we are
 
-CHARTERED. Chain: 01 → 02 → 03 → 04 → 05 ∥ 06 → 07. THE LAWS CARRY
-(163/164 scars included: production seams prove themselves — no
-fixture may hand-seed what production writes; rigs and walks build
-first where a bundle is involved; grep every version pin on a bump;
-pass time= to SurfaceLedgerRow). This phase is driver-side: no new
-schema expected (STOP-and-report if one appears), no new inference
-entrances (the census laws bite anything that smells like one).
-Merge posture: local gates are the substance; basis on the PR.
+1/7. HS-165-01 the family skeleton DONE (2026-09-02): the project.*
+family lands the house way (FAMILIES registry, door.py idiom, three
+read tools as thin drivers with EQUALITY parity asserts against the
+very service returns Web uses); all five §11.2 resources resolve with
+typed refusals; and MCP-006 was BUILT, not found — the families
+registry previously crashed whole on one bad import; per-family
+importlib + DEGRADED_FAMILIES now isolates, proven through the REAL
+assembly path with a poisoned fake family. The delta resource rides
+the same private seams the Web's own delta route rides (parity, warts
+included — ruling in the story trace). Every pin paid: MCP tool count
+142->145, families 31->32, resources 29->34 (docs/README +
+MCP_SIDECAR; doc drift guard green). Gates: 54 passed scoped. NEXT:
+HS-165-02 the command tools.
 
 ## Active risks
 

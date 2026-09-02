@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 165
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** -
 - **Unblocks:** HS-165-02
 - **Owner:** unassigned
@@ -38,3 +38,16 @@ dispatch idiom) with MCP-006 isolation proven from birth.
 ## Test plan
 
 - **Unit:** tests/unit/test_project_mcp.py (the test_door_mcp.py idiom: reset_database + family import + server).
+
+## Trace record (orchestrator ruling, 2026-09-02)
+
+The delta resource calls ProjectDeltaService._find_open_review /
+_load_frozen_window (private). RULING: lawful — the Web's own delta
+route rides the SAME private seams (project_reviews.py:82 calls
+_load_frozen_window; :68 reaches _db directly), so the resource is
+in MCP-001 parity with Web, warts included. The wart itself (no
+public delta-read method) is pre-existing house debt, not this
+story's to pay. MCP-006 was BUILT here: the families registry
+previously crashed whole on one bad import; per-family importlib +
+DEGRADED_FAMILIES now isolates, proven through the real assembly
+path with a poisoned fake family.
