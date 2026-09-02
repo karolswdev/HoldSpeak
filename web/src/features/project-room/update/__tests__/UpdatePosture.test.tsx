@@ -724,6 +724,30 @@ describe("Draft list: lifecycle-honest", () => {
     expect(lifecycleLabels).toContain("published");
     expect(lifecycleLabels).toContain("superseded");
   });
+
+  it("shows provenance in plain words (no assignment id in row text)", async () => {
+    setupUpdatePosture({
+      listUpdates: [
+        draftUpdateFixture({ id: "u1", generator: "deterministic" }),
+        draftUpdateFixture({ id: "u2", generator: "model:gpt-4o" }),
+      ],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("updates-verb"));
+    await waitFor(() => screen.getByTestId("update-posture"));
+
+    const provenances = screen.getAllByTestId("update-list-provenance");
+    expect(provenances.length).toBe(2);
+
+    // Deterministic row says "Deterministic draft"
+    expect(provenances[0].textContent).toContain("Deterministic draft");
+
+    // Model row says "Model draft" — no assignment id visible
+    expect(provenances[1].textContent).toContain("Model draft");
+    expect(provenances[1].textContent).not.toContain("gpt-4o");
+    expect(provenances[1].textContent).not.toContain("(");
+  });
 });
 
 // ── COPY MARKDOWN ──

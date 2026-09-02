@@ -10,6 +10,7 @@ import {
   humanFallbackReason,
   lifecycleLabel,
   lifecycleTone,
+  provenancePhrase,
   refChipLabel,
   refKind,
   sectionLabel,
@@ -146,6 +147,18 @@ describe("generatorLabel", () => {
 
   it("passes through unknown generators", () => {
     expect(generatorLabel("custom")).toBe("custom");
+  });
+});
+
+describe("provenancePhrase", () => {
+  it("labels deterministic as 'Deterministic draft'", () => {
+    expect(provenancePhrase("deterministic")).toBe("Deterministic draft");
+  });
+  it("labels model as 'Model draft' (no assignment id)", () => {
+    expect(provenancePhrase("model:gpt-4o")).toBe("Model draft");
+  });
+  it("labels unknown generator with draft suffix", () => {
+    expect(provenancePhrase("custom")).toBe("custom draft");
   });
 });
 

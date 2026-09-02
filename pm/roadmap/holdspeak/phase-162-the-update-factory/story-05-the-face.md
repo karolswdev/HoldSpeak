@@ -58,3 +58,15 @@ Two findings: (1) the editor must be the house Notes markdown
 editor, not a bare textarea; (2) the published view reads as a
 claims dump — repetitive rows with buttons instead of the rendered
 update itself. Consequence round chartered.
+
+## The owner's verdict — round 2 (2026-09-02)
+
+**BOUNCE (the list row)**, verbatim: "What does it mean? DRAFT
+MOdel (, REV 1 just now. On this image #4..., I guess I'm confused
+and also a little uglied-out by that." The draft-list row clipped
+the generator label mid-parenthesis ("Model (") into a meaningless
+fragment, and the row's fragments collide instead of reading as a
+designed line. Micro-round chartered: the row becomes a designed
+layout, provenance simplified to "Model draft"/"Deterministic
+draft" in lists (assignment id to title/aria), no mid-token
+clipping ever.

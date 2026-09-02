@@ -31,6 +31,7 @@ import {
   humanFallbackReason,
   lifecycleLabel,
   lifecycleTone,
+  provenancePhrase,
   refChipLabel,
   refKind,
 } from "./model";
@@ -179,34 +180,31 @@ function UpdateList({
                     className="update-list-row"
                     data-lifecycle={update.lifecycle}
                     data-generator={update.generator}
+                    title={generatorLabel(update.generator)}
                   >
-                    <span className="surface-token" data-tone={tone}>
-                      {lifecycleLabel(update.lifecycle)}
-                    </span>
-                    <span className="update-list-generator">
-                      {generatorLabel(update.generator)}
-                    </span>
-                    {update.fallbackReason ? (
-                      <span
-                        className="surface-token"
-                        data-tone="warn"
-                        data-testid="update-fallback-reason"
-                      >
-                        {humanFallbackReason(update.fallbackReason)}
+                    {/* Primary line: lifecycle + rev + time */}
+                    <span className="update-list-primary">
+                      <span className="surface-token" data-tone={tone}>
+                        {lifecycleLabel(update.lifecycle)}
                       </span>
-                    ) : null}
-                  </span>
-                }
-                cells={
-                  <span className="update-list-meta">
-                    <span className="surface-token">
-                      Rev {update.draftRevision}
+                      <span className="update-list-rev">Rev {update.draftRevision}</span>
+                      <span className="update-list-time">
+                        {humanTime(update.publishedAt ?? update.updatedAt)}
+                      </span>
                     </span>
-                    {update.publishedAt ? (
-                      <span>{humanTime(update.publishedAt)}</span>
-                    ) : (
-                      <span>{humanTime(update.updatedAt)}</span>
-                    )}
+                    {/* Secondary line: provenance in plain words */}
+                    <span className="update-list-secondary" data-testid="update-list-provenance">
+                      {provenancePhrase(update.generator)}
+                      {update.fallbackReason ? (
+                        <span
+                          className="surface-token"
+                          data-tone="warn"
+                          data-testid="update-fallback-reason"
+                        >
+                          {humanFallbackReason(update.fallbackReason)}
+                        </span>
+                      ) : null}
+                    </span>
                   </span>
                 }
                 onToggle={() => ctrl.openUpdate(update)}

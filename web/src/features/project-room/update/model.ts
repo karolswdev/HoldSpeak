@@ -101,6 +101,14 @@ export function generatorLabel(generator: string): string {
   return generator;
 }
 
+/** Plain-words provenance for the list row — no assignment id (it goes
+ *  to title/aria and the editor band where there's room). */
+export function provenancePhrase(generator: string): string {
+  if (generator === "deterministic") return "Deterministic draft";
+  if (generator.startsWith("model:")) return "Model draft";
+  return `${generator} draft`;
+}
+
 /* ── Section labels (UPD-001 canonical order) ── */
 
 const SECTION_LABELS: Record<string, string> = {
