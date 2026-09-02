@@ -633,19 +633,8 @@ class TestSTW005FaultInjection:
         )
         assert len(door_svc.added) == 1
 
-        # Now insert a completed step with the Door idempotency key,
-        # attached to run_id_1 (which already exists).
-        door_idem = _door_idempotency_key("proj-1", "w1", "item-1")
-        fault_step_id = generate_pststep_id()
-        db.steward_steps.insert_step(
-            step_id=fault_step_id,
-            run_id=run_id_1,
-            phase="act",
-            seq=99,
-            state="completed",
-            effect_kind="create_door_item",
-            idempotency_key=door_idem,
-        )
+        # No hand-seeded step: run 1's OWN act step carries the
+        # watermark-scoped door key (the production seam, not a fixture).
 
         # Second run with same watermark.
         run_id_2 = svc.run_once(
@@ -663,11 +652,10 @@ class TestSTW005FaultInjection:
             r for r in receipts
             if r["effect_kind"] == "create_door_item"
         ]
-        # Deduplicated by either mechanism: the follow-through read-back
-        # excludes the item before the key check (receipt "skipped"), or
-        # the Door-level idem key reconciles.  Both are lawful STW-005.
-        if door_receipts:
-            assert door_receipts[0].get("outcome") in ("reconciled", "skipped")
+        # The watermark-scoped step key reconciles in _phase_act: the
+        # re-run performs NO selection and creates nothing.
+        assert len(door_receipts) == 1
+        assert door_receipts[0].get("outcome") == "reconciled"
         # No second Door item created.
         assert len(door_svc.added) == 1
 
@@ -874,9 +862,9 @@ class TestOneDoorItemLaw:
 
     def test_idempotency_key_formula(self) -> None:
         """The Door idempotency key is deterministic."""
-        key1 = _door_idempotency_key("proj-1", "w1", "item-1")
-        key2 = _door_idempotency_key("proj-1", "w1", "item-1")
-        key3 = _door_idempotency_key("proj-1", "w2", "item-1")
+        key1 = _door_idempotency_key("proj-1", "w1")
+        key2 = _door_idempotency_key("proj-1", "w1")
+        key3 = _door_idempotency_key("proj-1", "w2")
         assert key1 == key2  # same inputs -> same key
         assert key1 != key3  # different watermark -> different key
         assert key1.startswith("door:")

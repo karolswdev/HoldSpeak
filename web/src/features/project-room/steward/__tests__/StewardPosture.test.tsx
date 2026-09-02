@@ -727,14 +727,15 @@ describe("History list: designed rows", () => {
     expect(row1).toBeTruthy();
     expect(row1!.getAttribute("data-state")).toBe("completed");
 
-    // Summary is human words
+    // Secondary line carries substance, not the state (state lives in the primary token)
     const summaries = screen.getAllByTestId("steward-list-summary");
-    expect(summaries[0].textContent).toContain("Completed");
+    // First row: completed with 2 effects -- secondary shows substance only
     expect(summaries[0].textContent).toContain("2 effects");
+    expect(summaries[0].textContent).not.toContain("Completed");
 
-    // Second row: interrupted with reason
-    expect(summaries[1].textContent).toContain("Interrupted");
+    // Second row: interrupted with reason -- secondary shows reason only
     expect(summaries[1].textContent).toContain("Stopped by you");
+    expect(summaries[1].textContent).not.toContain("Interrupted");
   });
 
   it("row is keyboard-accessible (button tag, no aria-expanded)", async () => {
@@ -914,5 +915,249 @@ describe("Empty state", () => {
     // The empty state is visible
     const emptyLabel = screen.getByText("No steward runs yet. Run once to start.");
     expect(emptyLabel).toBeTruthy();
+  });
+});
+
+// ── FINDING 1: Policy toggles render visible labels ──
+
+describe("Policy: visible labels on toggles", () => {
+  it("enabled toggle has visible 'Steward enabled' label", async () => {
+    setupStewardPosture({ policy: policyFixture() });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click(screen.getByTestId("steward-verb-policy"));
+    await waitFor(() => screen.getByTestId("steward-policy"));
+
+    const enabledRow = screen.getByTestId("steward-policy-enabled-row");
+    expect(enabledRow.textContent).toContain("Steward enabled");
+  });
+
+  it("each effect kind toggle has its human label visible", async () => {
+    setupStewardPosture({ policy: policyFixture() });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click(screen.getByTestId("steward-verb-policy"));
+    await waitFor(() => screen.getByTestId("steward-policy"));
+
+    const effectsSection = screen.getByTestId("steward-policy-effects");
+
+    // All five human labels render as visible text
+    expect(effectsSection.textContent).toContain("Refreshed sources");
+    expect(effectsSection.textContent).toContain("Created proposals");
+    expect(effectsSection.textContent).toContain("Applied proposal effects");
+    expect(effectsSection.textContent).toContain("Drafted update");
+    expect(effectsSection.textContent).toContain("Door item created");
+
+    // Each has a dedicated label element
+    expect(screen.getByTestId("steward-policy-kind-label-refresh_sources").textContent).toBe("Refreshed sources");
+    expect(screen.getByTestId("steward-policy-kind-label-create_proposals").textContent).toBe("Created proposals");
+    expect(screen.getByTestId("steward-policy-kind-label-apply_proposal_effects").textContent).toBe("Applied proposal effects");
+    expect(screen.getByTestId("steward-policy-kind-label-draft_update").textContent).toBe("Drafted update");
+    expect(screen.getByTestId("steward-policy-kind-label-create_door_item").textContent).toBe("Door item created");
+  });
+});
+
+// ── FINDING 2: Secondary line substance, not state duplication ──
+
+describe("History list: secondary line substance", () => {
+  it("secondary line shows effect count without repeating the state", async () => {
+    setupStewardPosture({
+      listRuns: [completedRunFixture()],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    const summary = screen.getByTestId("steward-list-summary");
+    expect(summary.textContent).toBe("2 effects");
+  });
+
+  it("secondary line shows reason for interrupted runs", async () => {
+    setupStewardPosture({
+      listRuns: [interruptedRunFixture()],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    const summary = screen.getByTestId("steward-list-summary");
+    expect(summary.textContent).toBe("Stopped by you");
+  });
+
+  it("no secondary line when run has nothing to say", async () => {
+    setupStewardPosture({
+      listRuns: [runningRunFixture()],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    // Running run with empty summary has no substance -> no secondary line
+    expect(screen.queryByTestId("steward-list-summary")).toBeNull();
+  });
+});
+
+// ── FINDING 3: Degraded coverage renders a visible marker ──
+
+describe("Degraded coverage: visible warning", () => {
+  it("shows PARTIAL COVERAGE chip when a source is not ok", async () => {
+    const degradedRun = completedRunFixture({
+      summary: {
+        outcome: "completed",
+        phases_completed: ["observe"],
+        effects_applied: 1,
+        phase_results: {
+          observe: {
+            coverage: {
+              "GitHub Issues": { state: "ok" },
+              "Jira Board": { state: "error" },
+              "Confluence": { state: "ok" },
+            },
+          },
+        },
+      },
+    });
+
+    setupStewardPosture({
+      listRuns: [degradedRun],
+      runDetail: {
+        run: degradedRun,
+        steps: [
+          completedStepFixture({
+            effect_kind: "refresh_sources",
+            observed: { partial: true, sources_ok: 2, sources_total: 3 },
+          }),
+        ],
+      },
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    const items = screen.getAllByTestId("steward-list-item");
+    fireEvent.click(items[0]);
+
+    await waitFor(() => screen.getByTestId("steward-detail"));
+
+    // The PARTIAL COVERAGE marker is visible in the detail band
+    const degradedChip = screen.getByTestId("steward-coverage-degraded");
+    expect(degradedChip).toBeTruthy();
+    expect(degradedChip.textContent).toContain("PARTIAL COVERAGE");
+    expect(degradedChip.textContent).toContain("2 of 3 sources answered");
+    expect(degradedChip.getAttribute("data-tone")).toBe("warn");
+  });
+
+  it("step row shows PARTIAL chip when observed.partial is true", async () => {
+    const degradedRun = completedRunFixture();
+    setupStewardPosture({
+      listRuns: [degradedRun],
+      runDetail: {
+        run: degradedRun,
+        steps: [
+          completedStepFixture({
+            effect_kind: "refresh_sources",
+            observed: { partial: true },
+          }),
+        ],
+      },
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
+    await waitFor(() => screen.getByTestId("steward-detail"));
+
+    const partialChip = screen.getByTestId("steward-step-partial");
+    expect(partialChip.textContent).toBe("PARTIAL");
+    expect(partialChip.getAttribute("data-tone")).toBe("warn");
+  });
+
+  it("no degraded marker when all sources are ok", async () => {
+    const healthyRun = completedRunFixture({
+      summary: {
+        outcome: "completed",
+        phases_completed: ["observe"],
+        effects_applied: 2,
+        phase_results: {
+          observe: {
+            coverage: {
+              "GitHub Issues": { state: "ok" },
+              "Jira Board": { state: "ok" },
+            },
+          },
+        },
+      },
+    });
+
+    setupStewardPosture({
+      listRuns: [healthyRun],
+      runDetail: {
+        run: healthyRun,
+        steps: stepsForCompletedRun(),
+      },
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
+    await waitFor(() => screen.getByTestId("steward-detail"));
+
+    expect(screen.queryByTestId("steward-coverage-degraded")).toBeNull();
+  });
+});
+
+// ── FINDING 4: Footer pluralization ──
+
+describe("Footer: honest pluralization", () => {
+  it("1 step renders '1 STEP' not '1 STEPS'", async () => {
+    const run = completedRunFixture();
+    setupStewardPosture({
+      listRuns: [run],
+      runDetail: {
+        run,
+        steps: [completedStepFixture()],
+      },
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
+    await waitFor(() => screen.getByTestId("steward-detail"));
+
+    const footer = screen.getByTestId("steward-footer-receipt");
+    expect(footer.textContent).toContain("1 STEP");
+    expect(footer.textContent).not.toMatch(/1 STEPS/);
+  });
+
+  it("4 steps renders '4 STEPS'", async () => {
+    setupStewardPosture({
+      listRuns: [completedRunFixture()],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
+    await waitFor(() => screen.getByTestId("steward-detail"));
+
+    const footer = screen.getByTestId("steward-footer-receipt");
+    expect(footer.textContent).toContain("4 STEPS");
   });
 });

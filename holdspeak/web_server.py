@@ -804,6 +804,7 @@ class MeetingWebServer:
             RefinementThoughtService(get_database()),
             get_database().scheduled_recordings,
             get_database().calendar_events,
+            db=get_database(),
             config_loader=Config.load,
             people_service=people_service,
         )

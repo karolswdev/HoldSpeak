@@ -1,0 +1,13 @@
+{
+  "total_seconds": 5.88,
+  "segments": {
+    "desk_seed": 0.14,
+    "set_policy": 0.0,
+    "open_room": 1.61,
+    "enter_steward": 0.04,
+    "run_once": 2.04,
+    "dedup_rerun": 2.04
+  },
+  "bar": "none (PV-H04 has no bar for steward; measured honestly)",
+  "viewport": 1440
+}

@@ -228,8 +228,6 @@ class ProjectStewardService:
         are caught, the run is marked failed with an honest summary, and
         the caller is not poisoned.
         """
-        seq = 0
-
         try:
             # Transition queued -> running.
             self._db.steward_runs.update_run_state(
@@ -247,8 +245,12 @@ class ProjectStewardService:
                     run_id, state="running", phase=phase,
                 )
 
-                # Create a step record for this phase.
+                # Create a step record for this phase.  seq allocates
+                # from the live step count so phase rows and act-effect
+                # rows share ONE strictly increasing chronology (the
+                # glass interleave scar).
                 step_id = generate_pststep_id()
+                seq = len(self._db.steward_steps.list_steps(run_id))
                 self._db.steward_steps.insert_step(
                     step_id=step_id,
                     run_id=run_id,
@@ -258,7 +260,6 @@ class ProjectStewardService:
                     effect_kind=f"phase:{phase}",
                     idempotency_key=f"{run_id}:{phase}",
                 )
-                seq += 1
 
                 try:
                     # STW-003: check stop before every effect slot.
@@ -890,21 +891,9 @@ class ProjectStewardService:
 
         item_id = selected_item.get("id", "")
 
-        # Build the idempotency key from (project_id, watermark, item_id).
-        door_idem_key = _door_idempotency_key(project_id, watermark, item_id)
-
-        # STW-005: check if a Door item was already created with this key.
-        existing = self._db.steward_steps.get_step_by_idempotency_key(
-            door_idem_key,
-        )
-        if existing and existing["state"] == "completed":
-            return {
-                "effect": "create_door_item",
-                "outcome": "reconciled",
-                "reason": "idempotency_key_match",
-                "idempotency_key": door_idem_key,
-                "existing_step_id": existing["id"],
-            }
+        # Same-watermark dedup lives on the ACT step's idempotency key
+        # (watermark-scoped, checked in _phase_act before this runs);
+        # cross-watermark dedup is the follow-through read-back above.
 
         # Create the Door item through the canonical service.
         item_title = selected_item.get("title", "Steward follow-up")
@@ -924,7 +913,6 @@ class ProjectStewardService:
             "source_item_id": item_id,
             "source_item_type": item_type,
             "source_severity": severity,
-            "idempotency_key": door_idem_key,
         }
 
     def _select_door_candidate(
@@ -1122,8 +1110,15 @@ class ProjectStewardService:
     ) -> str:
         """Compute the idempotency key for an effect step.
 
-        For most effects: run_id:effect_kind (unique per run).
+        For most effects: run_id:effect_kind (unique per run, reconciles
+        an in-run crash).  For create_door_item with a watermark: the
+        watermark-scoped door key — a same-watermark re-run finds the
+        completed step and reconciles to ZERO additional items (the
+        charter's ONE-Door law).  Without a watermark there is no
+        same-watermark contract, so the run-scoped key applies.
         """
+        if effect_kind == "create_door_item" and watermark:
+            return _door_idempotency_key(project_id, watermark)
         return f"{run_id}:{effect_kind}"
 
     @staticmethod
@@ -1156,15 +1151,16 @@ class ProjectStewardService:
         return {"effect": effect_kind}
 
 
-def _door_idempotency_key(
-    project_id: str, watermark: str, item_id: str,
-) -> str:
-    """Compute the Door-item idempotency key.
+def _door_idempotency_key(project_id: str, watermark: str) -> str:
+    """Compute the Door-effect idempotency key: ONE per (project, watermark).
 
-    sha256(project_id + watermark + item_id) -- deterministic, survives re-runs.
-    A same-watermark re-run with the same selected item creates ZERO new items.
+    The key lives ON the act step, so the ordinary step-key reconcile in
+    _phase_act catches every same-watermark re-run — ZERO additional Door
+    items regardless of which item selection would pick (the glass-proven
+    law: run 1's own effects may mint new candidates; the re-run must
+    still create nothing).
     """
-    material = f"{project_id}:{watermark}:{item_id}"
+    material = f"{project_id}:{watermark}"
     digest = hashlib.sha256(material.encode("utf-8")).hexdigest()[:32]
     return f"door:{digest}"
 

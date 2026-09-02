@@ -22,14 +22,17 @@ import type { StewardController } from "./useStewardController";
 import type { StewardRun, StewardStep } from "./model";
 import {
   EFFECT_KINDS,
+  coverageSummary,
   effectKindLabel,
   isActive,
   isModelTouchingKind,
   phaseLabel,
+  pluralize,
   receiptRefs,
-  runRowSummary,
+  runRowSubstance,
   runStateLabel,
   runStateTone,
+  stepIsPartial,
   stepStateLabel,
   stepStateTone,
   summaryReasonLabel,
@@ -47,6 +50,7 @@ function StepRow({
 }) {
   const refs = receiptRefs(step);
   const tone = stepStateTone(step.state);
+  const partial = stepIsPartial(step);
   return (
     <span className="steward-step-row" data-testid="steward-step-row">
       <span className="steward-step-primary">
@@ -54,6 +58,11 @@ function StepRow({
           {stepStateLabel(step.state)}
         </span>
         <span>{effectKindLabel(step.effectKind)}</span>
+        {partial ? (
+          <span className="surface-token" data-tone="warn" data-testid="steward-step-partial">
+            PARTIAL
+          </span>
+        ) : null}
       </span>
       {refs.length > 0 ? (
         <span className="steward-step-secondary">
@@ -120,6 +129,7 @@ function RunDetail({
 
   const tone = runStateTone(run.state);
   const reason = summaryReasonLabel(run.summary.reason);
+  const degraded = coverageSummary(run);
 
   return (
     <div className="steward-detail" data-testid="steward-detail">
@@ -136,6 +146,11 @@ function RunDetail({
         {reason ? (
           <span className="surface-token" data-tone="warn" data-testid="steward-run-reason">
             {reason}
+          </span>
+        ) : null}
+        {degraded ? (
+          <span className="surface-token" data-tone="warn" data-testid="steward-coverage-degraded">
+            {`PARTIAL COVERAGE: ${degraded}`}
           </span>
         ) : null}
       </div>
@@ -191,6 +206,7 @@ function RunList({ ctrl }: { ctrl: StewardController }) {
         <ul className="surface-ledger-rows">
           {ctrl.runs.map((run) => {
             const tone = runStateTone(run.state);
+            const substance = runRowSubstance(run);
             return (
               <SurfaceLedgerRow
                 key={run.id}
@@ -211,9 +227,11 @@ function RunList({ ctrl }: { ctrl: StewardController }) {
                       </span>
                       <span className="steward-list-chevron" aria-hidden="true" data-testid="steward-list-chevron">{">"}</span>
                     </span>
-                    <span className="steward-list-secondary" data-testid="steward-list-summary">
-                      {runRowSummary(run)}
-                    </span>
+                    {substance ? (
+                      <span className="steward-list-secondary" data-testid="steward-list-summary">
+                        {substance}
+                      </span>
+                    ) : null}
                   </span>
                 }
                 onToggle={() => ctrl.openRun(run)}
@@ -236,13 +254,14 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
     <div className="steward-policy" data-testid="steward-policy">
       <SurfaceSection label="Steward policy">
         {/* Enabled toggle */}
-        <div className="steward-policy-field">
+        <div className="steward-policy-toggle-row" data-testid="steward-policy-enabled-row">
           <SurfaceToggle
-            label="Enabled"
+            label="Steward enabled"
             checked={draft.enabled}
             onChange={(v) => ctrl.updatePolicyDraft("enabled", v)}
             data-testid="steward-policy-enabled"
           />
+          <span className="steward-policy-toggle-label">Steward enabled</span>
         </div>
 
         {/* Eligible effect kinds */}
@@ -256,6 +275,9 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
                 onChange={() => ctrl.toggleEffectKind(kind)}
                 data-testid={`steward-policy-kind-${kind}`}
               />
+              <span className="steward-policy-toggle-label" data-testid={`steward-policy-kind-label-${kind}`}>
+                {effectKindLabel(kind)}
+              </span>
               {isModelTouchingKind(kind) ? (
                 <EgressChip
                   label="model"
@@ -422,7 +444,7 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
           receipt={
             <span className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
               {ctrl.currentRun
-                ? `STEWARD ${runStateLabel(ctrl.currentRun.state)} ${ctrl.currentSteps.length} steps`
+                ? `STEWARD ${runStateLabel(ctrl.currentRun.state).toUpperCase()} ${pluralize(ctrl.currentSteps.length, "STEP", "STEPS")}`
                 : "STEWARD"}
             </span>
           }

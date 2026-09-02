@@ -90,7 +90,10 @@ export type StewardPolicy = {
 function decodeSummary(raw: unknown): RunSummary {
   if (!raw || typeof raw !== "object") return {};
   const s = raw as Record<string, unknown>;
+  // Spread the rest so unknown wire fields (phase_results, etc.) survive
+  // for downstream consumers like coverageSummary.
   return {
+    ...s,
     outcome: s.outcome != null ? String(s.outcome) : undefined,
     reason: s.reason != null ? String(s.reason) : undefined,
     phasesCompleted: Array.isArray(s.phases_completed)
@@ -99,10 +102,21 @@ function decodeSummary(raw: unknown): RunSummary {
     interruptedPhase: s.interrupted_phase != null
       ? String(s.interrupted_phase)
       : undefined,
-    effectsApplied: s.effects_applied != null
-      ? Number(s.effects_applied)
-      : undefined,
+    effectsApplied: decodeEffectsApplied(s),
   };
+}
+
+/** The applied-effects count lives in phase_results on the wire
+ * (verify.actions_taken, else act.actions_taken); a top-level
+ * effects_applied wins if a future wire version adds one. */
+function decodeEffectsApplied(s: Record<string, unknown>): number | undefined {
+  if (s.effects_applied != null) return Number(s.effects_applied);
+  const pr = s.phase_results as Record<string, unknown> | undefined;
+  for (const phase of ["verify", "act"]) {
+    const body = pr?.[phase] as Record<string, unknown> | undefined;
+    if (body && body.actions_taken != null) return Number(body.actions_taken);
+  }
+  return undefined;
 }
 
 export function decodeRun(raw: Record<string, unknown>): StewardRun {
@@ -275,17 +289,26 @@ export function summaryReasonLabel(reason: string | undefined): string | null {
 
 /* ── Run summary for list rows ── */
 
-/** Human summary for a run row: "Today 09:14, completed, 2 effects". */
-export function runRowSummary(run: StewardRun): string {
+/** Human substance for a run row secondary line.
+ *  The primary line already carries the state token, so we never repeat it.
+ *  Renders the effect count and/or the reason -- the two things that earn
+ *  a secondary line's place. Returns null when there is nothing to say. */
+export function runRowSubstance(run: StewardRun): string | null {
   const parts: string[] = [];
-  parts.push(runStateLabel(run.state));
   if (run.summary.effectsApplied != null) {
     const n = run.summary.effectsApplied;
     parts.push(`${n} effect${n === 1 ? "" : "s"}`);
   }
   const reason = summaryReasonLabel(run.summary.reason);
   if (reason) parts.push(reason);
-  return parts.join(", ");
+  return parts.length > 0 ? parts.join(", ") : null;
+}
+
+/* ── Honest pluralization ── */
+
+/** "1 step" / "3 steps" -- honest grammar, no "1 STEPS". */
+export function pluralize(n: number, singular: string, plural?: string): string {
+  return `${n} ${n === 1 ? singular : (plural ?? singular + "s")}`;
 }
 
 /* ── Terminal state check ── */
@@ -326,3 +349,40 @@ export const EFFECT_KINDS: readonly string[] = [
   "draft_update",
   "create_door_item",
 ];
+
+/* ── Coverage: partial/degraded observe phase ── */
+
+export type SourceCoverage = { source: string; state: string };
+
+/** Extract per-source coverage from a run's summary.
+ *  Wire shape: summary.phase_results.observe.coverage (object keyed by source name). */
+export function runCoverage(run: StewardRun): SourceCoverage[] {
+  const pr = run.summary as Record<string, unknown>;
+  const phaseResults = pr.phase_results as Record<string, unknown> | undefined;
+  if (!phaseResults) return [];
+  const observe = phaseResults.observe as Record<string, unknown> | undefined;
+  if (!observe) return [];
+  const coverage = observe.coverage as Record<string, unknown> | undefined;
+  if (!coverage || typeof coverage !== "object") return [];
+  return Object.entries(coverage).map(([source, val]) => ({
+    source,
+    state: (val as Record<string, unknown>)?.state != null
+      ? String((val as Record<string, unknown>).state)
+      : "unknown",
+  }));
+}
+
+/** Whether a step's observed state is partial (degraded). */
+export function stepIsPartial(step: StewardStep): boolean {
+  if (!step.observed || typeof step.observed !== "object") return false;
+  return (step.observed as Record<string, unknown>).partial === true;
+}
+
+/** Coverage summary: "N of M sources answered" or null when clean. */
+export function coverageSummary(run: StewardRun): string | null {
+  const sources = runCoverage(run);
+  if (sources.length === 0) return null;
+  const ok = sources.filter((s) => s.state === "ok").length;
+  if (ok === sources.length) return null;
+  return `${ok} of ${sources.length} source${sources.length === 1 ? "" : "s"} answered`;
+}
