@@ -46,37 +46,21 @@ omission, not an approval policy).
 | HS-163-02 | The run engine (six checkpointed phases; uniqueness, Stop, recovery) | done | [story-02-the-run-engine](./story-02-the-run-engine.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-163-03 | The bounded hand (the V0 effect set, verified, deduplicated) | done | [story-03-the-bounded-hand](./story-03-the-bounded-hand.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-163-04 | The wire (runs on HTTP: create/poll/stop; api-surface) | done | [story-04-the-wire](./story-04-the-wire.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-163-05 | The face (the Steward posture: run, watch, stop, receipts — OWNER VERDICT) | in-progress | [story-05-the-face](./story-05-the-face.md) | - |
+| HS-163-05 | The face (the Steward posture: run, watch, stop, receipts — OWNER VERDICT) | done | [story-05-the-face](./story-05-the-face.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-163-06 | The walk (STW-011 on glass: one real effect + a drafted update, receipted; the degraded legs) | done | [story-06-the-walk](./story-06-the-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-163-07 | The close (gates, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
-5/7 committed; 05 awaits THE OWNER'S VERDICT. HS-163-06 the walk DONE
-(2026-09-02): tests/e2e/test_hs163_steward_glass.py, four legs, 8
-passed x2 deterministic, both viewports, no-raw-ids law asserted. The
-rig EARNED ITS KEEP - three product defects found and fixed in-round:
-(1) DoorService built without db= in web_server (create_door_item
-failed on every run; one line); (2) the door idem key was
-item+watermark scoped AND never stored on any step - the promised
-same-watermark dedup was a phantom held up by a self-seeded unit
-fixture (the 161 scar); redesigned: watermark-scoped key ON the act
-step, so the ordinary step-key reconcile catches every same-watermark
-re-run - manual presses (no watermark) are governed by the
-follow-through read-back; (3) step seq collided across the engine
-loop and ACT (interleaved chronology on glass) - seq now allocates
-from the live step count. Face consequence round: visible toggle
-labels, PARTIAL COVERAGE chip (STW-006 visible + rig-asserted),
-substance secondary lines ('5 effects'), honest pluralization;
-decodeSummary now reads effects from phase_results. The degraded seam
-is honest: a MISSING watch row (watch_not_found), not a dead
-connector (WatchAdapter never calls providers). Stale-bundle law
-paid: the rig had no build step - evidence wrapper builds first.
-Measured: 5 effects one press; same-watermark re-run 0 new items;
-manual re-press only ever doors the NEXT uncovered item. Gates:
-glass 8x2 + steward 104 + web 2254 zero branch-new. Earlier: 4/7
-wire, 3/7 hand, 2/7 engine, 1/7 ledger. NEXT: owner verdict on 05,
-then 07 the close.
+6/7. THE OWNER'S VERDICT, verbatim: "PASS" (2026-09-02, one round;
+the pre-verdict consequence round was the orchestrator's own shot
+review). HS-163-05 the face DONE: the Steward posture in the Room —
+Run once, live run view polling the wire, honest Stop, designed
+history rows, labeled policy editor with MODEL egress chips, receipts
+opening through openSourceRef; web gates 2254 passed zero branch-new.
+Earlier: 5/7 walk (three product defects caught + fixed in-round;
+glass 8x2), 4/7 wire, 3/7 hand, 2/7 engine, 1/7 ledger. NEXT:
+HS-163-07 the close — full suite, sweep, counsel, PR, merge.
 
 ## Active risks
 

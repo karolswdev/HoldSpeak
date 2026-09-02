@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 163
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-163-04 (scaffold may start against 04's frozen wire)
 - **Unblocks:** HS-163-07
 - **Owner:** unassigned
@@ -41,3 +41,20 @@ receipts — with zero prose and honest states.
 ## Test plan
 
 - **Web unit:** mounted walk, run states, stop, receipts, policy. **Glass:** rides 06. **Manual:** the owner's verdict.
+
+## The owner's verdict (2026-09-02)
+
+Asked: "The Steward's Hand on glass - gallery at the stable artifact.
+One press runs OBSERVE->...->RECORD with 5 real effects receipted
+(Door item, applied proposals, drafted update); Stop lands
+INTERRUPTED, STOPPED BY YOU; a dead source shows PARTIAL COVERAGE:
+4 OF 5 SOURCES ANSWERED; every policy toggle is labeled, MODEL chips
+on the two model-touching kinds. Your verdict on the face
+(HS-163-05)?"
+
+Answer, verbatim: **"PASS"**
+
+One round of owner review; the pre-verdict consequence round (toggle
+labels, PARTIAL COVERAGE chip, substance secondary lines, honest
+plurals) was the orchestrator's own shot review, fixed before the
+owner saw the gallery.
