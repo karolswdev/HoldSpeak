@@ -10,6 +10,9 @@ Five legs:
   4. THE PUBLISH LEG:  publish -> immutability -> regenerate -> revision bump.
   5. THE LIVE MODEL:   (skip decision noted in report).
 
+Editor: DeskEditor (CodeMirror markdown).  Published view: Material renderer
+with per-section deduplicated Sources rows.  Unverified: single banner.
+
 Seeding: POST /api/projects, then POST /api/projects/{id}/items for
 workstream + risk + dependency + milestone items.  Rich enough for the
 update factory to produce non-trivial sections.
@@ -46,14 +49,11 @@ STOPWATCH_JSON = (
 def _boot(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    *,
-    broker_override: Any = "UNSET",
 ) -> tuple[Any, str]:
     """Boot a real MeetingWebServer with isolated DB.
 
-    broker_override="UNSET" uses whatever the hub constructs naturally
-    (which produces a broker with no inference assignments in a fresh DB).
-    broker_override=None forces broker=None on the ProjectUpdateService.
+    In a fresh DB the hub has no inference assignments, so model drafting
+    fails at _resolve_for_capability -> fallback_reason="model_unavailable".
     """
     import holdspeak.config as config_module
     import holdspeak.db.core as db_core
@@ -81,18 +81,6 @@ def _boot(
         ),
         auth_token=TOKEN,
     )
-
-    # If caller explicitly forces broker=None, patch the service's _broker.
-    if broker_override is not None and broker_override != "UNSET":
-        pass  # not used
-    elif broker_override is None:
-        # Force the service to have no broker -> model draft falls back
-        if hasattr(server, "_app"):
-            pass  # cannot reach easily; the natural path handles it
-    # In a fresh DB, the natural hub has no inference assignments, so
-    # model drafting fails at _resolve_for_capability -> _ModelDraftFailed.
-    # The draft_update_command then sets fallback_reason="model_unavailable".
-
     return server, server.start()
 
 
@@ -150,8 +138,7 @@ def _assert_clean(page: Any, errors: list[str]) -> None:
 
 def _assert_no_raw_ids(page: Any) -> None:
     """No-raw-ids law: no visible element text in the update posture
-    matches /^p[a-z]+_[0-9a-f]{16,}/ (machine-generated IDs must never
-    leak onto real glass as user-facing text)."""
+    matches /^p[a-z]+_[0-9a-f]{16,}/."""
     visible_texts = page.evaluate(
         """() => {
             const posture = document.querySelector(
@@ -178,7 +165,6 @@ def _assert_no_raw_ids(page: Any) -> None:
 
 
 def _normal_chair(page: Any) -> None:
-    """Cross the First Sentence gate without blocking."""
     chair = page.locator(".chair")
     chair.wait_for()
     if chair.evaluate("element => element.classList.contains('chair-first-value')"):
@@ -187,14 +173,12 @@ def _normal_chair(page: Any) -> None:
 
 
 def _init_desk(page: Any, url: str) -> None:
-    """Navigate to the hub root so relative fetch paths work, then seed."""
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
     _api(page, "POST", "/api/desk/seed")
     _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
 
 
 def _open_project_room(page: Any, url: str, project_id: str) -> None:
-    """Open the Project Room for *project_id* via staged-surface-open."""
     page.evaluate(
         """([key, scope]) => {
           sessionStorage.setItem(
@@ -209,7 +193,6 @@ def _open_project_room(page: Any, url: str, project_id: str) -> None:
 
 
 def _create_project_api(page: Any) -> str:
-    """Create a Project via POST /api/projects (fast, deterministic)."""
     created = _api(page, "POST", "/api/projects", {
         "name": "Update Glass Project",
         "description": "Seeded for HS-162-06 update glass.",
@@ -219,17 +202,8 @@ def _create_project_api(page: Any) -> str:
 
 
 def _seed_room_items(page: Any, project_id: str) -> None:
-    """Seed rich items so the update factory produces non-trivial sections.
-
-    Creates:
-    - 1 workstream (active) -> Progress section
-    - 1 risk (open, severity=high) -> Risks & Blockers section
-    - 1 dependency (at_risk) -> Risks & Blockers + Dependencies
-    - 1 milestone (planned, due in 7 days) -> Next Actions section
-    """
     base = f"/api/projects/{project_id}/items"
     future_due = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
-
     _api(page, "POST", base, {
         "item_type": "workstream",
         "title": "Q4 Payments Platform Integration",
@@ -242,21 +216,16 @@ def _seed_room_items(page: Any, project_id: str) -> None:
         "lifecycle": "open",
         "severity": "high",
         "summary": "Compliance docs overdue; 30-day deadline approaching",
-        "details": {
-            "likelihood": "high",
-            "impact": "critical",
-            "mitigation": "Escalate to compliance team this week",
-        },
+        "details": {"likelihood": "high", "impact": "critical",
+                    "mitigation": "Escalate to compliance team this week"},
     })
     _api(page, "POST", base, {
         "item_type": "dependency",
         "title": "Infrastructure team load test environment",
         "lifecycle": "at_risk",
         "summary": "Black Friday load test env provisioning stalled",
-        "details": {
-            "direction": "upstream",
-            "counterpart_ref": "team:infrastructure",
-        },
+        "details": {"direction": "upstream",
+                    "counterpart_ref": "team:infrastructure"},
     })
     _api(page, "POST", base, {
         "item_type": "milestone",
@@ -269,56 +238,33 @@ def _seed_room_items(page: Any, project_id: str) -> None:
 
 
 def _seed_unverified_update(page: Any, project_id: str) -> str:
-    """Insert a draft update with an UNVERIFIED claim directly into the DB.
-
-    This simulates what a model drafter would produce when it emits a
-    sentence with no valid evidence refs (verified=False).
-
-    Returns the update_id.
-    """
+    """Insert a draft with an UNVERIFIED claim (verified=False)."""
     from holdspeak.db import get_database
-
     db = get_database()
     update_id = "pupd_unverified_glass_001"
     claims = [
-        {
-            "span_id": "s_progress_0",
-            "text": "The payment platform integration is progressing well.",
-            "refs": ["item:some-ws-id"],
-            "section": "progress",
-        },
-        {
-            "span_id": "s_progress_1",
-            "text": "Team morale is high and velocity is improving.",
-            "refs": [],
-            "section": "progress",
-            "verified": False,
-        },
-        {
-            "span_id": "s_decisions_0",
-            "text": "No decisions in this window.",
-            "refs": [],
-            "section": "decisions",
-        },
+        {"span_id": "s_progress_0",
+         "text": "The payment platform integration is progressing well.",
+         "refs": ["item:some-ws-id"], "section": "progress"},
+        {"span_id": "s_progress_1",
+         "text": "Team morale is high and velocity is improving.",
+         "refs": [], "section": "progress", "verified": False},
+        {"span_id": "s_decisions_0",
+         "text": "No decisions in this window.",
+         "refs": [], "section": "decisions"},
     ]
     body_md = (
         "## Progress\n\n"
         "- The payment platform integration is progressing well.\n"
         "- **[UNVERIFIED]** Team morale is high and velocity is improving.\n\n"
-        "## Decisions\n\n"
-        "No decisions in this window.\n\n"
-        "## Risks & Blockers\n\n"
-        "No risks or blockers in this window.\n\n"
-        "## Dependencies\n\n"
-        "No dependencies tracked.\n\n"
-        "## Next Actions\n\n"
-        "No upcoming actions.\n\n"
-        "## Source Coverage\n\n"
-        "All sources consulted successfully.\n"
+        "## Decisions\n\nNo decisions in this window.\n\n"
+        "## Risks & Blockers\n\nNo risks or blockers in this window.\n\n"
+        "## Dependencies\n\nNo dependencies tracked.\n\n"
+        "## Next Actions\n\nNo upcoming actions.\n\n"
+        "## Source Coverage\n\nAll sources consulted successfully.\n"
     )
     claims_json = json.dumps(claims, sort_keys=True, separators=(",", ":"))
     now_iso = datetime.now().isoformat()
-
     with db._connection() as conn:
         conn.execute(
             """INSERT INTO project_updates
@@ -326,41 +272,40 @@ def _seed_unverified_update(page: Any, project_id: str) -> str:
                 lifecycle, draft_revision, body_md, claims_json,
                 source_manifest_json, generator, created_at, updated_at)
                VALUES (?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                update_id,
-                project_id,
-                0,
-                None,
-                1,
-                body_md,
-                claims_json,
-                "{}",
-                "model:fixture-unverified",
-                now_iso,
-                now_iso,
-            ),
+            (update_id, project_id, 0, None, 1, body_md, claims_json,
+             "{}", "model:fixture-unverified", now_iso, now_iso),
         )
     return update_id
 
 
 def _compute_retention(original: str, edited: str) -> float:
-    """Compute retention fraction: how much of the original survives in the edit.
-
-    Uses difflib.SequenceMatcher on normalized characters (whitespace-collapsed).
-    Retained = fraction of original characters still present in the edit.
-    """
-    # Normalize whitespace
     orig_norm = " ".join(original.split())
     edit_norm = " ".join(edited.split())
-
     if not orig_norm:
-        return 1.0  # empty original -> nothing to retain
-
+        return 1.0
     matcher = difflib.SequenceMatcher(None, orig_norm, edit_norm)
-    matching_chars = sum(
-        block.size for block in matcher.get_matching_blocks()
-    )
+    matching_chars = sum(b.size for b in matcher.get_matching_blocks())
     return matching_chars / len(orig_norm)
+
+
+def _cm_get_text(page: Any) -> str:
+    """Read the current CodeMirror editor content."""
+    return page.evaluate(
+        """() => {
+            const view = document.querySelector('.cm-editor');
+            if (!view || !view.cmView) return '';
+            return view.cmView.view.state.doc.toString();
+        }"""
+    )
+
+
+def _cm_type_at_end(page: Any, text: str) -> None:
+    """Click into the CodeMirror editor and type text at the end."""
+    cm = page.locator(".cm-content")
+    cm.click()
+    # Move to end of document
+    page.keyboard.press("Meta+End" if os.uname().sysname == "Darwin" else "Control+End")
+    page.keyboard.type(text, delay=10)
 
 
 # ── Leg 1+2: THE STOPWATCH + RETENTION ─────────────────────────────
@@ -372,7 +317,7 @@ def _compute_retention(original: str, edited: str) -> float:
 def test_stopwatch_and_retention(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
 ) -> None:
-    """Seeded room -> draft -> edit -> save -> copy-markdown.
+    """Seeded room -> draft -> edit (CodeMirror) -> save -> copy-markdown.
 
     Measures wall-clock per segment (bar < 300s) and retention (>= 0.70).
     """
@@ -402,52 +347,49 @@ def test_stopwatch_and_retention(
             _seed_room_items(page, project_id)
             segments["desk_seed"] = time.monotonic() - t0
 
-            # -- Also seed the unverified-claim draft for the shot --
+            # -- Seed the unverified-claim draft for its shot --
             _seed_unverified_update(page, project_id)
 
             # -- Open room --
             t0 = time.monotonic()
             _open_project_room(page, url, project_id)
-            room_name = page.get_by_test_id("project-room-name")
-            room_name.wait_for(timeout=15000)
+            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
             segments["open_room"] = time.monotonic() - t0
 
             # -- Click Updates verb --
             t0 = time.monotonic()
-            updates_verb = page.get_by_test_id("updates-verb")
-            updates_verb.wait_for(timeout=10000)
-            updates_verb.click()
-
-            # Wait for update posture to appear (list view)
+            page.get_by_test_id("updates-verb").wait_for(timeout=10000)
+            page.get_by_test_id("updates-verb").click()
             posture = page.get_by_test_id("update-posture")
             posture.wait_for(timeout=10000)
             assert posture.get_attribute("data-phase") == "list"
             segments["enter_updates"] = time.monotonic() - t0
 
-            # -- SHOT: draft list (shows the seeded unverified draft) --
-            shot_list = f"draft-list-{width}.png"
-            page.screenshot(path=str(SHOTS / shot_list), full_page=False)
-            assert (SHOTS / shot_list).stat().st_size > 20_000, (
-                f"Shot {shot_list} too small"
-            )
+            # -- SHOT: draft list --
+            page.screenshot(path=str(SHOTS / f"draft-list-{width}.png"), full_page=False)
+            assert (SHOTS / f"draft-list-{width}.png").stat().st_size > 20_000
 
-            # -- Open the seeded unverified draft to capture its shot --
+            # -- Open the seeded unverified draft for its banner shot --
             list_items = page.get_by_test_id("update-list-item")
             if list_items.count() > 0:
-                # The data-testid="update-list-item" IS the button
                 list_items.first.click()
                 page.get_by_test_id("update-editor").wait_for(timeout=10000)
 
-                # SHOT: unverified claim marker
-                unverified_marker = page.get_by_test_id("update-claim-unverified")
-                if unverified_marker.count() > 0:
-                    shot_unverified = f"unverified-span-{width}.png"
+                # The unverified banner (single notice, not per-claim)
+                banner = page.get_by_test_id("update-unverified-banner")
+                if banner.count() > 0:
                     page.screenshot(
-                        path=str(SHOTS / shot_unverified), full_page=False,
+                        path=str(SHOTS / f"unverified-span-{width}.png"),
+                        full_page=False,
                     )
-                    assert (SHOTS / shot_unverified).stat().st_size > 20_000
+                    assert (SHOTS / f"unverified-span-{width}.png").stat().st_size > 20_000
+                    assert banner.is_visible()
+                    banner_text = banner.inner_text()
+                    assert "unverified" in banner_text.lower() or "could not be verified" in banner_text.lower(), (
+                        f"Banner should mention unverified, got: {banner_text!r}"
+                    )
 
-                # Go back to list via the Back button
+                # Back to list
                 back_btn = page.locator(
                     '[data-testid="update-editor"] button',
                 ).filter(has_text="Back")
@@ -455,9 +397,7 @@ def test_stopwatch_and_retention(
                     back_btn.first.click()
                     page.wait_for_function(
                         """() => {
-                            const el = document.querySelector(
-                                '[data-testid="update-posture"]'
-                            );
+                            const el = document.querySelector('[data-testid="update-posture"]');
                             return el && el.getAttribute('data-phase') === 'list';
                         }""",
                         timeout=10000,
@@ -465,171 +405,114 @@ def test_stopwatch_and_retention(
 
             # -- Draft (deterministic) --
             t0 = time.monotonic()
-            draft_btn = page.get_by_test_id("update-verb-draft-deterministic")
-            draft_btn.wait_for(timeout=5000)
-            draft_btn.click()
-
-            # Wait for editor to open
+            page.get_by_test_id("update-verb-draft-deterministic").click()
             editor = page.get_by_test_id("update-editor")
             editor.wait_for(timeout=15000)
             segments["draft_deterministic"] = time.monotonic() - t0
 
-            # -- Capture the generated body BEFORE editing --
-            textarea = page.get_by_test_id("update-body-textarea")
-            textarea.wait_for(timeout=5000)
-            generated_body = textarea.input_value()
-            assert len(generated_body) > 50, (
-                f"Generated body too short ({len(generated_body)} chars)"
+            # -- Read the generated body via API (the body_md from the draft) --
+            updates_resp = _api(page, "GET", f"/api/projects/{project_id}/updates?lifecycle=draft")
+            det_drafts = [u for u in updates_resp.get("updates", [])
+                          if u.get("generator") == "deterministic"]
+            assert len(det_drafts) >= 1, "No deterministic draft found"
+            update_id = det_drafts[0]["id"]
+            generated_body = _api_text(page, "GET", f"/api/updates/{update_id}/markdown")
+            assert len(generated_body) > 50, f"Generated body too short ({len(generated_body)} chars)"
+
+            # -- Verify CodeMirror editor is present --
+            cm_editor = page.locator(".cm-editor")
+            cm_editor.wait_for(timeout=5000)
+            assert cm_editor.is_visible(), "CodeMirror editor should be visible"
+
+            # -- SHOT: editor with CodeMirror + source rows --
+            page.screenshot(path=str(SHOTS / f"editor-claims-{width}.png"), full_page=False)
+            assert (SHOTS / f"editor-claims-{width}.png").stat().st_size > 20_000
+
+            # -- Verify source rows render with human-label chips --
+            source_rows = page.get_by_test_id("update-source-row")
+            source_rows.first.wait_for(timeout=5000)
+            assert source_rows.count() >= 1, "Expected >=1 source rows"
+
+            ref_chips = page.get_by_test_id("update-claim-ref")
+            assert ref_chips.count() >= 1, "Expected >=1 ref chips in source rows"
+            first_chip = ref_chips.first.inner_text()
+            assert first_chip and len(first_chip) > 0, "Source chip should be non-empty"
+            # Chips now carry derived claim titles, not generic "Open item"
+            assert first_chip.lower() != "open item", (
+                f"Chip should show derived claim title, not generic label: {first_chip!r}"
+            )
+            assert not _RAW_ID_RE.match(first_chip), (
+                f"Raw ID leaked into source chip: {first_chip!r}"
             )
 
-            # -- SHOT: editor with claim chips visible --
-            shot_editor = f"editor-claims-{width}.png"
-            page.screenshot(path=str(SHOTS / shot_editor), full_page=False)
-            assert (SHOTS / shot_editor).stat().st_size > 20_000
-
-            # -- Verify claim chips render with human labels --
-            claim_chips = page.get_by_test_id("update-claim-chip")
-            claim_chips.first.wait_for(timeout=5000)
-            chip_count = claim_chips.count()
-            assert chip_count >= 1, f"Expected >=1 claim chips, got {chip_count}"
-
-            # Beauty pass: ref chips show human labels ("Open", "Open risk",
-            # "Open dependency", etc.), never raw pitem_... IDs.
-            claim_ref_btns = page.get_by_test_id("update-claim-ref")
-            if claim_ref_btns.count() > 0:
-                first_chip_text = claim_ref_btns.first.inner_text()
-                # The beauty pass emits "Open" or "Open <kind>" -- both valid.
-                assert first_chip_text.lower() == "open item", (
-                    f"Claim ref chip should show 'Open item', "
-                    f"got: {first_chip_text!r}"
-                )
-                # Must NOT show raw machine IDs
-                assert not _RAW_ID_RE.match(first_chip_text), (
-                    f"Raw ID leaked into claim ref chip: {first_chip_text!r}"
-                )
-
-            # -- No-raw-ids law on the entire posture --
+            # -- No-raw-ids law --
             _assert_no_raw_ids(page)
 
-            # -- SHOT: click a claim chip ref to open its source --
-            if claim_ref_btns.count() > 0:
-                shot_claim = f"claim-source-{width}.png"
-                claim_ref_btns.first.click()
-                # Allow a moment for any source opening
-                page.wait_for_timeout(500)
-                page.screenshot(path=str(SHOTS / shot_claim), full_page=False)
-                assert (SHOTS / shot_claim).stat().st_size > 20_000
+            # -- SHOT: click a source chip ref --
+            ref_chips.first.click()
+            page.wait_for_timeout(500)
+            page.screenshot(path=str(SHOTS / f"claim-source-{width}.png"), full_page=False)
+            assert (SHOTS / f"claim-source-{width}.png").stat().st_size > 20_000
 
-            # -- SHOT: five verbs band --
-            shot_verbs = f"verbs-band-{width}.png"
-            page.screenshot(path=str(SHOTS / shot_verbs), full_page=False)
-            assert (SHOTS / shot_verbs).stat().st_size > 20_000
+            # -- SHOT: verbs band --
+            page.screenshot(path=str(SHOTS / f"verbs-band-{width}.png"), full_page=False)
+            assert (SHOTS / f"verbs-band-{width}.png").stat().st_size > 20_000
 
-            # -- ONE representative human edit --
+            # -- ONE representative human edit via CodeMirror --
             t0 = time.monotonic()
-            # Append a sentence to the body
-            edit_addition = "\n\nOwner note: reviewed with the team on Monday."
-            edited_body = generated_body + edit_addition
-            textarea.fill(edited_body)
+            edit_text = "\nOwner note: reviewed with the team on Monday."
+            _cm_type_at_end(page, edit_text)
             segments["human_edit"] = time.monotonic() - t0
 
             # -- Save --
             t0 = time.monotonic()
-            save_btn = page.get_by_test_id("update-verb-save")
-            save_btn.wait_for(timeout=5000)
-            save_btn.click()
-
-            # Wait for save to complete (button becomes disabled when not dirty)
+            page.get_by_test_id("update-verb-save").click()
             page.wait_for_function(
                 """() => {
-                    const btn = document.querySelector(
-                        '[data-testid="update-verb-save"]'
-                    );
+                    const btn = document.querySelector('[data-testid="update-verb-save"]');
                     return btn && btn.disabled;
                 }""",
                 timeout=10000,
             )
             segments["save"] = time.monotonic() - t0
 
-            # -- Get the update_id for the copy/markdown GET --
-            update_id = page.evaluate(
-                """() => {
-                    const editor = document.querySelector(
-                        '[data-testid="update-editor"]'
-                    );
-                    if (!editor) return null;
-                    // The editor's lifecycle band has the update info;
-                    // get the ID from the footer receipt or the API state
-                    return null;
-                }"""
-            )
-            # Get update_id from the API (list updates, find the draft)
-            updates_resp = _api(page, "GET", f"/api/projects/{project_id}/updates?lifecycle=draft")
-            draft_updates = updates_resp.get("updates", [])
-            # The latest draft is our one (not the seeded unverified one)
-            real_drafts = [
-                u for u in draft_updates
-                if u.get("generator") == "deterministic"
-            ]
-            assert len(real_drafts) >= 1, "No deterministic draft found"
-            update_id = real_drafts[0]["id"]
-
             # -- Copy Markdown --
             t0 = time.monotonic()
-            copy_btn = page.get_by_test_id("update-verb-copy")
-            copy_btn.wait_for(timeout=5000)
-            copy_btn.click()
-
-            # Wait for the button text to change to "Copied"
+            page.get_by_test_id("update-verb-copy").click()
             page.wait_for_function(
                 """() => {
-                    const btn = document.querySelector(
-                        '[data-testid="update-verb-copy"]'
-                    );
+                    const btn = document.querySelector('[data-testid="update-verb-copy"]');
                     return btn && btn.textContent.includes('Copied');
                 }""",
                 timeout=10000,
             )
             segments["copy_markdown"] = time.monotonic() - t0
 
-            # -- Verify the copy via the GET endpoint --
+            # -- Verify via GET endpoint --
             copied_md = _api_text(page, "GET", f"/api/updates/{update_id}/markdown")
-            assert len(copied_md) > 50, (
-                f"Copied markdown too short ({len(copied_md)} chars)"
-            )
-            assert "Owner note" in copied_md, (
-                "Human edit not preserved in the copied artifact"
-            )
+            assert len(copied_md) > 50
+            assert "Owner note" in copied_md, "Human edit not preserved in the copied artifact"
 
-            # -- Retention measure --
+            # -- Retention --
             retention = _compute_retention(generated_body, copied_md)
-            assert retention >= 0.70, (
-                f"Retention {retention:.2%} below 70% bar"
-            )
+            assert retention >= 0.70, f"Retention {retention:.2%} below 70% bar"
 
-            # -- Overflow assertion --
             _assert_clean(page, errors)
 
-            # -- Write stopwatch JSON (only on 1440 to avoid double-write) --
+            # -- Write stopwatch JSON (1440 only) --
             if width == 1440:
                 total = sum(segments.values())
                 stopwatch = {
                     "total_seconds": round(total, 2),
                     "segments": {k: round(v, 2) for k, v in segments.items()},
-                    "bar": 300,
-                    "passed": total < 300,
+                    "bar": 300, "passed": total < 300,
                     "retention": round(retention, 4),
-                    "retention_bar": 0.70,
-                    "retention_passed": retention >= 0.70,
+                    "retention_bar": 0.70, "retention_passed": retention >= 0.70,
                     "viewport": width,
                 }
                 STOPWATCH_JSON.parent.mkdir(parents=True, exist_ok=True)
-                STOPWATCH_JSON.write_text(
-                    json.dumps(stopwatch, indent=2) + "\n"
-                )
-                assert total < 300, (
-                    f"Stopwatch bar breached: {total:.1f}s > 300s"
-                )
+                STOPWATCH_JSON.write_text(json.dumps(stopwatch, indent=2) + "\n")
+                assert total < 300, f"Stopwatch bar breached: {total:.1f}s > 300s"
 
             browser.close()
     finally:
@@ -646,9 +529,9 @@ def test_stopwatch_and_retention(
 def test_degraded_model_fallback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
 ) -> None:
-    """Hub with no inference assignments -> Draft with model -> falls back
-    to deterministic with honest generator provenance + fallback_reason.
-    Claims still resolve (UPD-003 on glass)."""
+    """No inference assignments -> Draft with model -> falls back to
+    deterministic with honest generator provenance + fallback_reason.
+    Source rows still resolve (UPD-003 on glass)."""
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -669,68 +552,44 @@ def test_degraded_model_fallback(
             project_id = _create_project_api(page)
             _seed_room_items(page, project_id)
 
-            # -- Open room --
             _open_project_room(page, url, project_id)
-            room_name = page.get_by_test_id("project-room-name")
-            room_name.wait_for(timeout=15000)
+            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
 
-            # -- Click Updates verb --
-            updates_verb = page.get_by_test_id("updates-verb")
-            updates_verb.wait_for(timeout=10000)
-            updates_verb.click()
-
-            posture = page.get_by_test_id("update-posture")
-            posture.wait_for(timeout=10000)
+            page.get_by_test_id("updates-verb").wait_for(timeout=10000)
+            page.get_by_test_id("updates-verb").click()
+            page.get_by_test_id("update-posture").wait_for(timeout=10000)
 
             # -- Draft with model (will fall back) --
-            draft_model_btn = page.get_by_test_id("update-verb-draft-model")
-            draft_model_btn.wait_for(timeout=5000)
-            draft_model_btn.click()
-
-            # -- Editor opens with fallback result --
+            page.get_by_test_id("update-verb-draft-model").click()
             editor = page.get_by_test_id("update-editor")
             editor.wait_for(timeout=20000)
 
-            # -- Assert generator label shows "Deterministic" --
+            # -- Generator label shows "Deterministic" --
             gen_label = page.get_by_test_id("update-generator-label")
             gen_label.wait_for(timeout=5000)
-            gen_text = gen_label.inner_text()
-            assert "deterministic" in gen_text.lower(), (
-                f"Expected 'Deterministic' generator label, got: {gen_text!r}"
-            )
+            assert "deterministic" in gen_label.inner_text().lower()
 
-            # -- Assert fallback_reason is visible in warn tone --
+            # -- Fallback reason: human sentence in warn tone --
             fallback = page.get_by_test_id("update-fallback-reason")
             fallback.wait_for(timeout=5000)
-            assert fallback.is_visible(), "fallback_reason should be visible"
-            assert fallback.get_attribute("data-tone") == "warn", (
-                "fallback_reason should have warn tone"
+            assert fallback.is_visible()
+            assert fallback.get_attribute("data-tone") == "warn"
+            fb_text = fallback.inner_text()
+            assert "drafted deterministically" in fb_text.lower(), (
+                f"Expected human fallback sentence, got: {fb_text!r}"
             )
-            fallback_text = fallback.inner_text()
-            # Beauty pass: human sentence, never raw machine code
-            assert "drafted deterministically" in fallback_text.lower(), (
-                f"Expected human fallback sentence, got: {fallback_text!r}"
-            )
-            # Must NOT show raw machine code on glass
-            assert "model_unavailable" not in fallback_text, (
-                f"Raw code leaked into fallback label: {fallback_text!r}"
-            )
+            assert "model_unavailable" not in fb_text
 
-            # -- Claims still resolve --
-            claims = page.get_by_test_id("update-claims")
-            claims.wait_for(timeout=5000)
-            claim_chips = page.get_by_test_id("update-claim-chip")
-            assert claim_chips.count() >= 1, (
-                "Claims should still render in degraded mode"
-            )
+            # -- Source rows still resolve --
+            source_rows = page.get_by_test_id("update-source-row")
+            source_rows.first.wait_for(timeout=5000)
+            ref_chips = page.get_by_test_id("update-claim-ref")
+            assert ref_chips.count() >= 1, "Source row chips should render in degraded mode"
 
-            # -- No-raw-ids law --
             _assert_no_raw_ids(page)
 
-            # -- SHOT: degraded state with fallback_reason --
-            shot_name = f"degraded-fallback-{width}.png"
-            page.screenshot(path=str(SHOTS / shot_name), full_page=False)
-            assert (SHOTS / shot_name).stat().st_size > 20_000
+            page.screenshot(path=str(SHOTS / f"degraded-fallback-{width}.png"), full_page=False)
+            assert (SHOTS / f"degraded-fallback-{width}.png").stat().st_size > 20_000
 
             _assert_clean(page, errors)
             browser.close()
@@ -748,9 +607,8 @@ def test_degraded_model_fallback(
 def test_publish_immutability_regenerate(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
 ) -> None:
-    """Draft -> publish -> read-only state renders with honest reason ->
-    regenerate mints NEW draft (published body unchanged) -> room
-    revision visibly advanced."""
+    """Draft -> publish -> Material rendered document with Sources rows ->
+    regenerate mints NEW draft -> room revision advanced."""
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -771,152 +629,104 @@ def test_publish_immutability_regenerate(
             project_id = _create_project_api(page)
             _seed_room_items(page, project_id)
 
-            # -- Read project revision BEFORE --
             room_before = _api(page, "GET", f"/api/projects/{project_id}/room")
             rev_before = room_before.get("revision", 0)
 
-            # -- Open room --
             _open_project_room(page, url, project_id)
-            room_name = page.get_by_test_id("project-room-name")
-            room_name.wait_for(timeout=15000)
+            page.get_by_test_id("project-room-name").wait_for(timeout=15000)
 
-            # -- Click Updates -> Draft --
-            updates_verb = page.get_by_test_id("updates-verb")
-            updates_verb.wait_for(timeout=10000)
-            updates_verb.click()
+            page.get_by_test_id("updates-verb").wait_for(timeout=10000)
+            page.get_by_test_id("updates-verb").click()
+            page.get_by_test_id("update-posture").wait_for(timeout=10000)
 
-            posture = page.get_by_test_id("update-posture")
-            posture.wait_for(timeout=10000)
-
-            draft_btn = page.get_by_test_id("update-verb-draft-deterministic")
-            draft_btn.wait_for(timeout=5000)
-            draft_btn.click()
-
+            page.get_by_test_id("update-verb-draft-deterministic").click()
             editor = page.get_by_test_id("update-editor")
             editor.wait_for(timeout=15000)
 
-            # Get the draft body for later comparison
-            textarea = page.get_by_test_id("update-body-textarea")
-            textarea.wait_for(timeout=5000)
-            draft_body = textarea.input_value()
-
-            # Get update_id via API
-            updates_resp = _api(
-                page, "GET",
-                f"/api/projects/{project_id}/updates?lifecycle=draft",
-            )
+            # Get the draft body via API for later comparison
+            updates_resp = _api(page, "GET", f"/api/projects/{project_id}/updates?lifecycle=draft")
             drafts = updates_resp.get("updates", [])
-            assert len(drafts) >= 1, "No drafts found"
+            assert len(drafts) >= 1
             update_id = drafts[0]["id"]
+            draft_body = _api_text(page, "GET", f"/api/updates/{update_id}/markdown")
 
             # -- Publish --
-            publish_btn = page.get_by_test_id("update-verb-publish")
-            publish_btn.wait_for(timeout=5000)
-            publish_btn.click()
-
-            # Wait for the editor to switch to published state (read-only)
+            page.get_by_test_id("update-verb-publish").click()
             page.wait_for_function(
                 """() => {
-                    const ed = document.querySelector(
-                        '[data-testid="update-editor"]'
-                    );
+                    const ed = document.querySelector('[data-testid="update-editor"]');
                     return ed && ed.getAttribute('data-lifecycle') === 'published';
                 }""",
                 timeout=15000,
             )
 
-            # -- Assert published state is read-only --
+            # -- Published: read-only reason visible --
             readonly_reason = page.get_by_test_id("update-readonly-reason")
             readonly_reason.wait_for(timeout=5000)
-            assert readonly_reason.is_visible(), "Read-only reason should be visible"
-            assert "read-only" in readonly_reason.inner_text().lower(), (
-                "Read-only reason should mention read-only"
+            assert "read-only" in readonly_reason.inner_text().lower()
+
+            # -- Published: rendered document (Material) visible --
+            doc = page.get_by_test_id("update-document")
+            doc.wait_for(timeout=5000)
+            assert doc.is_visible(), "Rendered document should be visible"
+
+            # -- Published: Sources rows with deduplicated chips --
+            sources = page.get_by_test_id("update-sources")
+            sources.wait_for(timeout=5000)
+            pub_ref_chips = page.get_by_test_id("update-claim-ref")
+            assert pub_ref_chips.count() >= 1, "Published Sources should have ref chips"
+            pub_chip_text = pub_ref_chips.first.inner_text()
+            assert pub_chip_text and len(pub_chip_text) > 0, "Published source chip should be non-empty"
+            assert pub_chip_text.lower() != "open item", (
+                f"Chip should show derived claim title, not generic label: {pub_chip_text!r}"
             )
 
-            # Assert the body is now in a readonly pre element
-            readonly_body = page.get_by_test_id("update-body-readonly")
-            readonly_body.wait_for(timeout=5000)
-            assert readonly_body.is_visible(), "Published body should render read-only"
-
-            # Assert Save and Publish verbs are gone
-            assert page.get_by_test_id("update-verb-save").count() == 0, (
-                "Save verb should not appear for published update"
-            )
-            assert page.get_by_test_id("update-verb-publish").count() == 0, (
-                "Publish verb should not appear for published update"
+            # -- Published: deduplicated (count <= unique items, not a wall) --
+            # We seeded 4 items but some appear in multiple sections; dedup
+            # means the source rows are compact.
+            source_rows = page.get_by_test_id("update-source-row")
+            assert source_rows.count() >= 1
+            # Each source row should have <= 4 chips (the 4 unique items)
+            total_chips = pub_ref_chips.count()
+            assert total_chips <= 20, (
+                f"Expected deduplicated chips, got {total_chips} (wall of repeated rows)"
             )
 
-            # Beauty pass: published claim ref chips show human labels
-            pub_ref_btns = page.get_by_test_id("update-claim-ref")
-            if pub_ref_btns.count() > 0:
-                pub_chip_text = pub_ref_btns.first.inner_text()
-                assert pub_chip_text.lower() == "open item", (
-                    f"Published claim ref chip should show 'Open item', "
-                    f"got: {pub_chip_text!r}"
-                )
+            # -- Save/Publish verbs gone --
+            assert page.get_by_test_id("update-verb-save").count() == 0
+            assert page.get_by_test_id("update-verb-publish").count() == 0
 
-            # No-raw-ids law
             _assert_no_raw_ids(page)
 
             # -- SHOT: published read-only state --
-            shot_published = f"published-readonly-{width}.png"
-            page.screenshot(
-                path=str(SHOTS / shot_published), full_page=False,
-            )
-            assert (SHOTS / shot_published).stat().st_size > 20_000
+            page.screenshot(path=str(SHOTS / f"published-readonly-{width}.png"), full_page=False)
+            assert (SHOTS / f"published-readonly-{width}.png").stat().st_size > 20_000
 
-            # -- Verify published body via API --
-            published_md = _api_text(
-                page, "GET", f"/api/updates/{update_id}/markdown",
-            )
-            assert published_md == draft_body, (
-                "Published body should match the draft body"
-            )
+            # -- Published body via API unchanged --
+            published_md = _api_text(page, "GET", f"/api/updates/{update_id}/markdown")
+            assert published_md == draft_body
 
-            # -- Regenerate mints a NEW draft --
-            regen_btn = page.get_by_test_id("update-verb-regenerate")
-            regen_btn.wait_for(timeout=5000)
-            regen_btn.click()
-
-            # Wait for editor to show a draft again
+            # -- Regenerate --
+            page.get_by_test_id("update-verb-regenerate").click()
             page.wait_for_function(
                 """() => {
-                    const ed = document.querySelector(
-                        '[data-testid="update-editor"]'
-                    );
+                    const ed = document.querySelector('[data-testid="update-editor"]');
                     return ed && ed.getAttribute('data-lifecycle') === 'draft';
                 }""",
                 timeout=15000,
             )
 
-            # Get the new draft's update_id
-            updates_resp2 = _api(
-                page, "GET",
-                f"/api/projects/{project_id}/updates?lifecycle=draft",
-            )
+            updates_resp2 = _api(page, "GET", f"/api/projects/{project_id}/updates?lifecycle=draft")
             new_drafts = updates_resp2.get("updates", [])
-            assert len(new_drafts) >= 1, "No new draft after regenerate"
-            new_update_id = new_drafts[0]["id"]
-            assert new_update_id != update_id, (
-                "Regenerate should create a NEW draft, not reuse the published one"
-            )
+            assert len(new_drafts) >= 1
+            assert new_drafts[0]["id"] != update_id, "Regenerate should create a NEW draft"
 
-            # -- Published body unchanged --
-            published_md_after = _api_text(
-                page, "GET", f"/api/updates/{update_id}/markdown",
-            )
-            assert published_md_after == published_md, (
-                "Published body must be immutable after regenerate"
-            )
+            # Published body immutable
+            assert _api_text(page, "GET", f"/api/updates/{update_id}/markdown") == published_md
 
-            # -- Room revision advanced --
-            room_after = _api(
-                page, "GET", f"/api/projects/{project_id}/room",
-            )
-            rev_after = room_after.get("revision", 0)
-            assert rev_after > rev_before, (
-                f"Room revision should advance: {rev_before} -> {rev_after}"
-            )
+            # Room revision advanced
+            rev_after = _api(page, "GET", f"/api/projects/{project_id}/room").get("revision", 0)
+            assert rev_after > rev_before, f"Room revision should advance: {rev_before} -> {rev_after}"
 
             _assert_clean(page, errors)
             browser.close()

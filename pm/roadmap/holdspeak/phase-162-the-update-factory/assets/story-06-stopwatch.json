@@ -1,13 +1,13 @@
 {
-  "total_seconds": 1.91,
+  "total_seconds": 2.84,
   "segments": {
-    "desk_seed": 0.13,
-    "open_room": 1.61,
-    "enter_updates": 0.04,
+    "desk_seed": 0.17,
+    "open_room": 1.92,
+    "enter_updates": 0.05,
     "draft_deterministic": 0.05,
-    "human_edit": 0.01,
+    "human_edit": 0.59,
     "save": 0.03,
-    "copy_markdown": 0.04
+    "copy_markdown": 0.03
   },
   "bar": 300,
   "passed": true,
