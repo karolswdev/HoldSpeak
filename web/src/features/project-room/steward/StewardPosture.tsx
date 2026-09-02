@@ -1,4 +1,5 @@
-// HS-163-05 -- the Steward posture: run, watch, stop, receipts, policy.
+// HS-163-05 / HS-164-05 -- the Steward posture: run, watch, stop,
+// receipts, policy, unattended controls, provenance, circuit state.
 // Architecture mirrors UpdatePosture (162): a verb in the Room chrome,
 // MOUNTED path proven, surface barrel imports only.
 // Laws: no raw IDs on glass; no modals; MicButton on text inputs;
@@ -22,12 +23,17 @@ import type { StewardController } from "./useStewardController";
 import type { StewardRun, StewardStep } from "./model";
 import {
   EFFECT_KINDS,
+  assembleGrantText,
+  circuitStateLabel,
+  circuitStateTone,
   coverageSummary,
   effectKindLabel,
   isActive,
   isModelTouchingKind,
   phaseLabel,
   pluralize,
+  provenanceLabel,
+  provenanceTone,
   receiptRefs,
   runRowSubstance,
   runStateLabel,
@@ -138,6 +144,13 @@ function RunDetail({
         <span className="surface-token" data-tone={tone} data-testid="steward-run-state">
           {runStateLabel(run.state)}
         </span>
+        <span
+          className="surface-token"
+          data-tone={provenanceTone(run)}
+          data-testid="steward-run-provenance"
+        >
+          {provenanceLabel(run)}
+        </span>
         {run.phase ? (
           <span className="steward-phase-label" data-testid="steward-phase-label">
             {phaseLabel(run.phase)}
@@ -222,6 +235,13 @@ function RunList({ ctrl }: { ctrl: StewardController }) {
                       <span className="surface-token" data-tone={tone}>
                         {runStateLabel(run.state)}
                       </span>
+                      <span
+                        className="surface-token steward-provenance-chip"
+                        data-tone={provenanceTone(run)}
+                        data-testid="steward-run-provenance"
+                      >
+                        {provenanceLabel(run)}
+                      </span>
                       <span className="steward-list-time">
                         {humanTime(run.createdAt)}
                       </span>
@@ -250,6 +270,24 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
   const draft = ctrl.policyDraft;
   if (!draft) return null;
 
+  // HS-164-05: assemble grant text from draft + watches for live preview
+  const grantPolicy = ctrl.policy
+    ? {
+        ...ctrl.policy,
+        unattendedEnabled: draft.unattended_enabled,
+        eligibleEffectKinds: draft.eligible_effect_kinds,
+        maxActionsPerRun: draft.max_actions_per_run,
+      }
+    : null;
+  const grantText = grantPolicy
+    ? assembleGrantText(grantPolicy, ctrl.watches)
+    : null;
+
+  // HS-164-05: watches with non-closed circuits
+  const circuitWatches = ctrl.watches.filter(
+    (w) => w.circuitState !== "closed",
+  );
+
   return (
     <div className="steward-policy" data-testid="steward-policy">
       <SurfaceSection label="Steward policy">
@@ -259,9 +297,30 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
             label="Steward enabled"
             checked={draft.enabled}
             onChange={(v) => ctrl.updatePolicyDraft("enabled", v)}
-            data-testid="steward-policy-enabled"
           />
           <span className="steward-policy-toggle-label">Steward enabled</span>
+        </div>
+
+        {/* HS-164-05: Unattended operation toggle with assembled grant text */}
+        <div className="steward-unattended-section" data-testid="steward-unattended-section">
+          <div className="steward-policy-toggle-row" data-testid="steward-unattended-row">
+            <SurfaceToggle
+              label="Unattended operation"
+              checked={draft.unattended_enabled}
+              onChange={(v) => ctrl.updatePolicyDraft("unattended_enabled", v)}
+            />
+            <span className="steward-policy-toggle-label">Unattended operation</span>
+          </div>
+          {grantText ? (
+            <p
+              className="steward-grant-text"
+              data-testid="steward-grant-text"
+              role="status"
+              aria-live="polite"
+            >
+              {grantText}
+            </p>
+          ) : null}
         </div>
 
         {/* Eligible effect kinds */}
@@ -344,6 +403,47 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
           <SurfaceState error={ctrl.policyError} />
         ) : null}
       </SurfaceSection>
+
+      {/* HS-164-05: Circuit state section (watches with non-closed circuits) */}
+      {circuitWatches.length > 0 ? (
+        <SurfaceSection label="Source circuits">
+          <SurfaceLedger count={`CIRCUITS ${circuitWatches.length}`}>
+            <ul className="surface-ledger-rows">
+              {circuitWatches.map((w) => (
+                <SurfaceLedgerRow
+                  key={w.id}
+                  data-testid="steward-circuit-row"
+                  expands={false}
+                  primary={
+                    <span className="steward-circuit-row-content">
+                      <span
+                        className="surface-token"
+                        data-tone={circuitStateTone(w.circuitState)}
+                        data-testid="steward-circuit-state"
+                      >
+                        {circuitStateLabel(w.circuitState)}
+                      </span>
+                      <span className="steward-circuit-name" title={w.name || w.connectorId}>
+                        {w.name || w.connectorId}
+                      </span>
+                      {w.circuitFailureStreak > 0 ? (
+                        <span className="steward-circuit-streak" data-testid="steward-circuit-streak">
+                          {pluralize(w.circuitFailureStreak, "failure")}
+                        </span>
+                      ) : null}
+                      {w.circuitOpenedAt ? (
+                        <span className="steward-circuit-since" data-testid="steward-circuit-since">
+                          {`since ${humanTime(w.circuitOpenedAt)}`}
+                        </span>
+                      ) : null}
+                    </span>
+                  }
+                />
+              ))}
+            </ul>
+          </SurfaceLedger>
+        </SurfaceSection>
+      ) : null}
 
       {/* Verbs */}
       <SurfaceVerbs>

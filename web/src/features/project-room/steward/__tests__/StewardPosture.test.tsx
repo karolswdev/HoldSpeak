@@ -238,8 +238,24 @@ function policyFixture(overrides: Record<string, unknown> = {}) {
     cooldown_seconds: 60,
     bounds: { max_proposals: 10 },
     enabled: true,
+    unattended_enabled: false,
     created_at: "2026-09-01T08:00:00",
     updated_at: "2026-09-01T08:00:00",
+    ...overrides,
+  };
+}
+
+/** Watch fixture (wire shape from list_watches). */
+function watchFixture(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "cw_watch_001",
+    name: "GitHub PRs",
+    connector_id: "github",
+    state: "tested",
+    evaluation_cadence_minutes: 30,
+    circuit_state: "closed",
+    circuit_failure_streak: 0,
+    circuit_opened_at: null,
     ...overrides,
   };
 }
@@ -274,6 +290,7 @@ function setupStewardPosture(opts: {
   };
   startRunResult?: Record<string, unknown>;
   policy?: Record<string, unknown> | null;
+  watches?: Record<string, unknown>[];
 } = {}) {
   const listRuns = opts.listRuns ?? [completedRunFixture()];
   const runDetail = opts.runDetail ?? {
@@ -285,6 +302,7 @@ function setupStewardPosture(opts: {
     run_id: "pstrun_new_run_12345678",
   };
   const policyVal = opts.policy !== undefined ? opts.policy : null;
+  const watchesVal = opts.watches ?? [watchFixture()];
 
   apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
     // Room
@@ -322,8 +340,13 @@ function setupStewardPosture(opts: {
           max_actions_per_run: body?.max_actions_per_run ?? 10,
           cooldown_seconds: body?.cooldown_seconds ?? 0,
           enabled: body?.enabled ?? true,
+          unattended_enabled: body?.unattended_enabled ?? false,
         }),
       });
+    }
+    // Project watches
+    if (url.match(/\/api\/projects\/[^/]+\/watches$/)) {
+      return Promise.resolve({ watches: watchesVal });
     }
     // Detail responses
     return Promise.resolve(detailResponse(url));
@@ -1159,5 +1182,266 @@ describe("Footer: honest pluralization", () => {
 
     const footer = screen.getByTestId("steward-footer-receipt");
     expect(footer.textContent).toContain("4 STEPS");
+  });
+});
+
+// ── HS-164-05: PROVENANCE -- unattended vs manual ──
+
+describe("Provenance: run history distinguishes unattended from manual", () => {
+  it("manual run shows 'Manual' provenance in list", async () => {
+    setupStewardPosture({
+      listRuns: [
+        completedRunFixture({ requested_by: "principal:owner-session" }),
+      ],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    const provenanceChips = screen.getAllByTestId("steward-run-provenance");
+    expect(provenanceChips[0].textContent).toBe("Manual");
+  });
+
+  it("conductor run shows 'Scheduled' provenance in list", async () => {
+    setupStewardPosture({
+      listRuns: [
+        completedRunFixture({ requested_by: "principal:local-steward-conductor" }),
+      ],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    const provenanceChips = screen.getAllByTestId("steward-run-provenance");
+    expect(provenanceChips[0].textContent).toBe("Scheduled");
+  });
+
+  it("mixed history shows both provenance labels", async () => {
+    setupStewardPosture({
+      listRuns: [
+        completedRunFixture({
+          id: "pstrun_manual_12345678",
+          requested_by: "principal:owner-session",
+        }),
+        completedRunFixture({
+          id: "pstrun_sched_123456789",
+          requested_by: "principal:local-steward-conductor",
+        }),
+      ],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    const chips = screen.getAllByTestId("steward-run-provenance");
+    expect(chips.length).toBe(2);
+    expect(chips[0].textContent).toBe("Manual");
+    expect(chips[1].textContent).toBe("Scheduled");
+  });
+
+  it("detail view shows provenance in the band", async () => {
+    setupStewardPosture({
+      listRuns: [
+        completedRunFixture({ requested_by: "principal:local-steward-conductor" }),
+      ],
+      runDetail: {
+        run: completedRunFixture({ requested_by: "principal:local-steward-conductor" }),
+        steps: stepsForCompletedRun(),
+      },
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
+    await waitFor(() => screen.getByTestId("steward-detail"));
+
+    const provenance = screen.getAllByTestId("steward-run-provenance");
+    // Detail view has its own provenance chip
+    expect(provenance.some((el) => el.textContent === "Scheduled")).toBe(true);
+  });
+});
+
+// ── HS-164-05: UNATTENDED TOGGLE + GRANT TEXT ──
+
+describe("Unattended toggle and grant text assembly", () => {
+  it("policy view shows unattended toggle defaulting to off", async () => {
+    setupStewardPosture({
+      policy: policyFixture({ unattended_enabled: false }),
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click(screen.getByTestId("steward-verb-policy"));
+    await waitFor(() => screen.getByTestId("steward-policy"));
+
+    const section = screen.getByTestId("steward-unattended-section");
+    expect(section).toBeTruthy();
+
+    const grantText = screen.getByTestId("steward-grant-text");
+    expect(grantText.textContent).toBe("Unattended operation is off.");
+  });
+
+  it("enabling unattended shows assembled grant text with real values", async () => {
+    setupStewardPosture({
+      policy: policyFixture({
+        unattended_enabled: true,
+        eligible_effect_kinds: ["refresh_sources", "draft_update"],
+        max_actions_per_run: 20,
+      }),
+      watches: [
+        watchFixture({ evaluation_cadence_minutes: 30 }),
+      ],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click(screen.getByTestId("steward-verb-policy"));
+    await waitFor(() => screen.getByTestId("steward-policy"));
+
+    const grantText = screen.getByTestId("steward-grant-text");
+    expect(grantText.textContent).toContain("every 30 minutes");
+    expect(grantText.textContent).toContain("refresh sources");
+    expect(grantText.textContent).toContain("draft updates");
+    expect(grantText.textContent).toContain("at most 20 actions per run");
+  });
+
+  it("toggle round-trips through PUT with unattended_enabled", async () => {
+    setupStewardPosture({
+      policy: policyFixture({ unattended_enabled: false }),
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click(screen.getByTestId("steward-verb-policy"));
+    await waitFor(() => screen.getByTestId("steward-policy"));
+
+    // Find the unattended row's toggle and click it
+    const unattendedRow = screen.getByTestId("steward-unattended-row");
+    const checkbox = unattendedRow.querySelector("input[type='checkbox']");
+    expect(checkbox).toBeTruthy();
+    fireEvent.click(checkbox!);
+
+    // Save
+    fireEvent.click(screen.getByTestId("steward-verb-save-policy"));
+
+    await waitFor(() => {
+      expect(apiFetch).toHaveBeenCalledWith(
+        expect.stringContaining("/steward/policy"),
+        expect.objectContaining({
+          method: "PUT",
+          json: expect.objectContaining({
+            unattended_enabled: true,
+          }),
+        }),
+      );
+    });
+  });
+
+  it("grant text shows 'no effects are eligible' when empty effect list", async () => {
+    setupStewardPosture({
+      policy: policyFixture({
+        unattended_enabled: true,
+        eligible_effect_kinds: [],
+        max_actions_per_run: 10,
+      }),
+      watches: [watchFixture({ evaluation_cadence_minutes: 60 })],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click(screen.getByTestId("steward-verb-policy"));
+    await waitFor(() => screen.getByTestId("steward-policy"));
+
+    const grantText = screen.getByTestId("steward-grant-text");
+    expect(grantText.textContent).toContain("no effects are eligible");
+  });
+});
+
+// ── HS-164-05: CIRCUIT STATE ──
+
+describe("Circuit state: watches with non-closed circuits", () => {
+  it("shows no circuit section when all watches are closed", async () => {
+    setupStewardPosture({
+      policy: policyFixture(),
+      watches: [watchFixture({ circuit_state: "closed" })],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click(screen.getByTestId("steward-verb-policy"));
+    await waitFor(() => screen.getByTestId("steward-policy"));
+
+    expect(screen.queryByTestId("steward-circuit-row")).toBeNull();
+  });
+
+  it("shows circuit rows for open watches", async () => {
+    setupStewardPosture({
+      policy: policyFixture(),
+      watches: [
+        watchFixture({
+          id: "cw_open_001",
+          name: "GitHub PRs",
+          circuit_state: "open",
+          circuit_failure_streak: 3,
+          circuit_opened_at: "2026-09-01T10:00:00",
+        }),
+      ],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click(screen.getByTestId("steward-verb-policy"));
+    await waitFor(() => screen.getByTestId("steward-policy"));
+
+    const circuitRows = screen.getAllByTestId("steward-circuit-row");
+    expect(circuitRows.length).toBe(1);
+
+    const stateToken = screen.getByTestId("steward-circuit-state");
+    expect(stateToken.textContent).toBe("Circuit open");
+
+    const streak = screen.getByTestId("steward-circuit-streak");
+    expect(streak.textContent).toBe("3 failures");
+
+    const since = screen.getByTestId("steward-circuit-since");
+    expect(since.textContent).toContain("since");
+  });
+
+  it("half-open circuit shows 'Probing' state", async () => {
+    setupStewardPosture({
+      policy: policyFixture(),
+      watches: [
+        watchFixture({
+          circuit_state: "half_open",
+          circuit_failure_streak: 2,
+        }),
+      ],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("steward-verb"));
+    await waitFor(() => screen.getByTestId("steward-posture"));
+
+    fireEvent.click(screen.getByTestId("steward-verb-policy"));
+    await waitFor(() => screen.getByTestId("steward-policy"));
+
+    const stateToken = screen.getByTestId("steward-circuit-state");
+    expect(stateToken.textContent).toBe("Probing");
   });
 });

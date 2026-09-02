@@ -181,6 +181,64 @@
   flex-shrink: 0;
 }
 
+/* ── HS-164-05: Unattended section ── */
+
+.steward-unattended-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.steward-grant-text {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  padding: 0 var(--space-1);
+}
+
+/* ── HS-164-05: Provenance chip in run list ── */
+
+.steward-provenance-chip {
+  font-size: var(--text-xs);
+  flex-shrink: 0;
+}
+
+/* ── HS-164-05: Circuit state rows ── */
+
+.steward-circuit-row-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  width: 100%;
+}
+
+.steward-circuit-name {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.steward-circuit-streak {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.steward-circuit-since {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 /* ── Consequential stop styling ── */
 
 .steward-stop-action {

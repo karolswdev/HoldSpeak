@@ -2,8 +2,8 @@
 // Endpoint paths match holdspeak/web/routes/steward.py.
 
 import { apiFetch } from "../../../lib/api";
-import type { StewardRun, StewardStep, StewardPolicy } from "./model";
-import { decodeRun, decodeStep, decodePolicy } from "./model";
+import type { StewardRun, StewardStep, StewardPolicy, StewardWatch } from "./model";
+import { decodeRun, decodeStep, decodePolicy, decodeWatch } from "./model";
 
 /** POST /api/projects/{id}/steward/runs -- start a run (immediate-id). */
 export async function startRun(projectId: string): Promise<{
@@ -74,6 +74,7 @@ export async function putPolicy(
     cooldown_seconds?: number;
     bounds?: Record<string, unknown>;
     enabled?: boolean;
+    unattended_enabled?: boolean;
   },
 ): Promise<{ success: boolean; policy: StewardPolicy; error?: string }> {
   const raw = await apiFetch<Record<string, unknown>>(
@@ -91,4 +92,12 @@ export async function putPolicy(
     success: true,
     policy: decodePolicy(raw.policy as Record<string, unknown>),
   };
+}
+
+/** GET /api/projects/{id}/watches -- project watches (for grant text + circuit). */
+export async function listProjectWatches(projectId: string): Promise<StewardWatch[]> {
+  const raw = await apiFetch<{ watches: Record<string, unknown>[] }>(
+    `/api/projects/${encodeURIComponent(projectId)}/watches`,
+  );
+  return (raw.watches ?? []).map(decodeWatch);
 }
