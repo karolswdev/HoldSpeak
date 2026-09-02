@@ -11,8 +11,16 @@ const MAX_RENDER_HEIGHT = 1_000;
 const RAIN_COUNT = 720;
 const SPLASH_COUNT = 84;
 const PUDDLE_Y = 0.035;
-const PUDDLE_X = -1.65;
-const PUDDLE_Z = 1.8;
+const PUDDLE_RADIUS = 2.25;
+const PUDDLE_SCALE_X = 1.45;
+const PUDDLE_SCALE_Z = 0.5;
+const PUDDLE_X = -3.55;
+const PUDDLE_Z = 0.8;
+const LAMP_X = -6.6;
+const LAMP_Z = -5.2;
+const BULB_X = -4.75;
+const BULB_Y = 7.35;
+const LAMP_INTENSITY = 28;
 const CAMERA_X = 0;
 const CAMERA_Y = 2.25;
 const CAMERA_Z = 18;
@@ -110,6 +118,27 @@ function box(
   return mesh;
 }
 
+function beamBetween(
+  parent: THREE.Object3D,
+  start: THREE.Vector3,
+  end: THREE.Vector3,
+  thickness: number,
+  material: THREE.Material,
+): THREE.Mesh {
+  const direction = end.clone().sub(start);
+  const beam = new THREE.Mesh(
+    new THREE.BoxGeometry(thickness, direction.length(), thickness),
+    material,
+  );
+  beam.position.copy(start).add(end).multiplyScalar(0.5);
+  beam.quaternion.setFromUnitVectors(
+    new THREE.Vector3(0, 1, 0),
+    direction.normalize(),
+  );
+  parent.add(beam);
+  return beam;
+}
+
 function puddleRadius(angle: number, radius: number): number {
   return (
     radius *
@@ -132,9 +161,14 @@ function puddleGeometry(radius: number, segments = 72): THREE.CircleGeometry {
   return geometry;
 }
 
-function puddleContour(radius: number, segments = 72): THREE.BufferGeometry {
-  const points = Array.from({ length: segments }, (_, index) => {
-    const angle = (index / segments) * Math.PI * 2;
+function puddleArc(
+  radius: number,
+  start: number,
+  end: number,
+  segments = 18,
+): THREE.BufferGeometry {
+  const points = Array.from({ length: segments + 1 }, (_, index) => {
+    const angle = (start + ((end - start) * index) / segments) * Math.PI * 2;
     const edge = puddleRadius(angle, radius);
     return new THREE.Vector3(Math.cos(angle) * edge, Math.sin(angle) * edge, 0);
   });
@@ -294,8 +328,8 @@ class RainyCityScene implements AtmosphereScene {
       new THREE.PlaneGeometry(90, 95),
       new THREE.MeshStandardMaterial({
         color: 0x0b1721,
-        roughness: 0.24,
-        metalness: 0.58,
+        roughness: 0.38,
+        metalness: 0.42,
       }),
     );
     street.rotation.x = -Math.PI / 2;
@@ -320,11 +354,11 @@ class RainyCityScene implements AtmosphereScene {
     }
 
     const puddle = new THREE.Mesh(
-      puddleGeometry(2.9),
+      puddleGeometry(PUDDLE_RADIUS),
       new THREE.MeshPhysicalMaterial({
         color: 0x0b2638,
         emissive: 0x06101a,
-        emissiveIntensity: 0.35,
+        emissiveIntensity: 0.2,
         transparent: true,
         opacity: 0.88,
         roughness: 0.08,
@@ -334,22 +368,31 @@ class RainyCityScene implements AtmosphereScene {
       }),
     );
     puddle.rotation.x = -Math.PI / 2;
-    puddle.scale.set(1.45, 0.55, 1);
+    puddle.scale.set(PUDDLE_SCALE_X, PUDDLE_SCALE_Z, 1);
     puddle.position.set(PUDDLE_X, PUDDLE_Y, PUDDLE_Z);
     this.scene.add(puddle);
 
-    const puddleRim = new THREE.LineLoop(
-      puddleContour(2.9),
-      new THREE.LineBasicMaterial({
-        color: 0x7ba5b5,
-        transparent: true,
-        opacity: 0.25,
-      }),
-    );
-    puddleRim.rotation.x = -Math.PI / 2;
-    puddleRim.scale.set(1.45, 0.55, 1);
-    puddleRim.position.set(PUDDLE_X, PUDDLE_Y + 0.012, PUDDLE_Z);
-    this.scene.add(puddleRim);
+    const rimMaterial = new THREE.LineBasicMaterial({
+      color: 0x7ba5b5,
+      transparent: true,
+      opacity: 0.2,
+    });
+    const rimSections: Array<[number, number]> = [
+      [0.05, 0.17],
+      [0.31, 0.45],
+      [0.57, 0.68],
+      [0.82, 0.93],
+    ];
+    for (const [start, end] of rimSections) {
+      const puddleRim = new THREE.Line(
+        puddleArc(PUDDLE_RADIUS, start, end),
+        rimMaterial,
+      );
+      puddleRim.rotation.x = -Math.PI / 2;
+      puddleRim.scale.set(PUDDLE_SCALE_X, PUDDLE_SCALE_Z, 1);
+      puddleRim.position.set(PUDDLE_X, PUDDLE_Y + 0.012, PUDDLE_Z);
+      this.scene.add(puddleRim);
+    }
 
     this.buildWetReflections();
 
@@ -369,38 +412,70 @@ class RainyCityScene implements AtmosphereScene {
     }
   }
 
+  private addReflectionGlint(
+    color: number,
+    baseOpacity: number,
+    width: number,
+    depth: number,
+    x: number,
+    z: number,
+  ): void {
+    const material = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: baseOpacity,
+      depthWrite: false,
+      toneMapped: false,
+    });
+    const reflection = new THREE.Mesh(
+      new THREE.PlaneGeometry(width, depth),
+      material,
+    );
+    reflection.rotation.x = -Math.PI / 2;
+    reflection.position.set(x, PUDDLE_Y + 0.014, z);
+    this.scene.add(reflection);
+    this.reflections.push({
+      mesh: reflection,
+      phase: this.layoutRandom() * Math.PI * 2,
+      baseOpacity,
+    });
+  }
+
   private buildWetReflections(): void {
-    const colors = [0xff9e38, 0xf4c36a, 0x5ca8b9, 0x7d91bc];
-    for (let index = 0; index < 44; index += 1) {
-      const warm = index < 22;
-      const baseOpacity = warm ? 0.055 + this.layoutRandom() * 0.09 : 0.025;
-      const material = new THREE.MeshBasicMaterial({
-        color: colors[Math.floor(this.layoutRandom() * colors.length)],
-        transparent: true,
-        opacity: baseOpacity,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      });
-      const width = 0.05 + this.layoutRandom() * (warm ? 0.24 : 0.12);
-      const depth = 0.35 + this.layoutRandom() * (warm ? 3.8 : 2.2);
-      const reflection = new THREE.Mesh(
-        new THREE.PlaneGeometry(width, depth),
-        material,
+    // Wet pavement reflects a light as interrupted horizontal facets. Their
+    // spread increases toward the viewer instead of forming a solid light bar.
+    for (let index = 0; index < 52; index += 1) {
+      const progress = Math.pow(this.layoutRandom(), 0.88);
+      const z = -3.9 + progress * 15.6;
+      // Moving toward the camera's X axis compensates for perspective: a
+      // reflection below a left-side lamp stays optically beneath the bulb.
+      const centerX = THREE.MathUtils.lerp(BULB_X, -0.9, progress);
+      const spread = 0.11 + progress * 1.8;
+      const width = 0.14 + progress * 0.78 + this.layoutRandom() * 0.55;
+      const depth = 0.045 + this.layoutRandom() * 0.13;
+      const taper = Math.sin(progress * Math.PI);
+      this.addReflectionGlint(
+        this.layoutRandom() > 0.34 ? 0xffa845 : 0xffd08a,
+        0.12 + progress * 0.04 + taper * (0.14 + this.layoutRandom() * 0.18),
+        width,
+        depth,
+        centerX + (this.layoutRandom() - 0.5) * spread,
+        z,
       );
-      reflection.rotation.x = -Math.PI / 2;
-      reflection.position.set(
-        warm
-          ? -5.25 + (this.layoutRandom() - 0.5) * 3.8
-          : -20 + this.layoutRandom() * 40,
-        PUDDLE_Y + 0.009,
-        warm ? -2 + this.layoutRandom() * 7.5 : -11 + this.layoutRandom() * 14,
+    }
+
+    // Sparse cool fragments keep the rest of the street damp without drawing
+    // another shape around the puddle.
+    const coolColors = [0x5ca8b9, 0x7d91bc, 0x9bb4bd];
+    for (let index = 0; index < 18; index += 1) {
+      this.addReflectionGlint(
+        coolColors[Math.floor(this.layoutRandom() * coolColors.length)],
+        0.025 + this.layoutRandom() * 0.035,
+        0.08 + this.layoutRandom() * 0.38,
+        0.018 + this.layoutRandom() * 0.07,
+        -20 + this.layoutRandom() * 40,
+        -11 + this.layoutRandom() * 17,
       );
-      this.scene.add(reflection);
-      this.reflections.push({
-        mesh: reflection,
-        phase: this.layoutRandom() * Math.PI * 2,
-        baseOpacity,
-      });
     }
   }
 
@@ -583,44 +658,55 @@ class RainyCityScene implements AtmosphereScene {
       metalness: 0.58,
     });
     const amber = new THREE.MeshStandardMaterial({
-      color: 0xffd07a,
-      emissive: 0xff8c2a,
-      emissiveIntensity: 4.4,
+      color: 0xffb24f,
+      emissive: 0xff7518,
+      emissiveIntensity: 3.1,
       roughness: 0.24,
       toneMapped: false,
     });
     const lamp = new THREE.Group();
-    lamp.position.set(-7.25, 0, -4.8);
-    box(lamp, [0.72, 0.22, 0.72], [0, 0.11, 0], edge);
-    box(lamp, [0.28, 7.45, 0.28], [0, 3.84, 0], structure);
-    box(lamp, [2.75, 0.24, 0.3], [1.25, 7.47, 0], structure);
-    box(lamp, [0.18, 0.9, 0.2], [2.52, 7.08, 0], structure);
-    box(lamp, [0.92, 0.22, 0.82], [2.52, 6.67, 0], edge);
-    box(lamp, [0.56, 0.28, 0.54], [2.52, 6.43, 0], amber);
-    box(lamp, [0.12, 1.15, 0.12], [0.72, 7.03, 0], edge).rotation.z = -0.72;
+    lamp.position.set(LAMP_X, 0, LAMP_Z);
+    box(lamp, [0.64, 0.2, 0.64], [0, 0.1, 0], edge);
+
+    // A short, segmented swan-neck silhouette reads as street furniture even
+    // in the intentionally low-poly treatment—without a backboard-like arm.
+    const neckPoints = [
+      new THREE.Vector3(0, 0.2, 0),
+      new THREE.Vector3(0, 6.08, 0),
+      new THREE.Vector3(0.1, 6.72, 0),
+      new THREE.Vector3(0.38, 7.2, 0),
+      new THREE.Vector3(0.86, 7.55, 0),
+      new THREE.Vector3(1.42, 7.68, 0),
+      new THREE.Vector3(1.76, 7.58, 0),
+    ];
+    for (let index = 1; index < neckPoints.length; index += 1) {
+      beamBetween(
+        lamp,
+        neckPoints[index - 1],
+        neckPoints[index],
+        index === 1 ? 0.27 : 0.23,
+        structure,
+      );
+    }
+    box(lamp, [1.12, 0.28, 0.74], [1.73, 7.48, 0], edge).rotation.z = -0.08;
+    box(lamp, [0.7, 0.15, 0.52], [1.83, 7.33, 0], amber).rotation.z = -0.08;
     this.scene.add(lamp);
 
-    this.lampLight = new THREE.PointLight(0xffa43d, 53, 22, 1.8);
-    this.lampLight.position.set(-4.73, 6.36, -4.8);
+    this.lampLight = new THREE.PointLight(0xffa43d, LAMP_INTENSITY, 20, 1.9);
+    this.lampLight.position.set(BULB_X, BULB_Y, LAMP_Z);
     this.scene.add(this.lampLight);
 
-    const poolLight = new THREE.PointLight(0xff8f2c, 9, 11, 2);
-    poolLight.position.set(PUDDLE_X - 0.7, 0.48, PUDDLE_Z - 0.6);
-    this.scene.add(poolLight);
-
-    const cone = new THREE.Mesh(
-      new THREE.ConeGeometry(4.5, 6.1, 32, 1, true),
-      new THREE.MeshBasicMaterial({
-        color: 0xffb559,
-        transparent: true,
-        opacity: 0.045,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      }),
+    const lampWash = new THREE.SpotLight(
+      0xffa34b,
+      8,
+      19,
+      Math.PI * 0.25,
+      0.94,
+      1.9,
     );
-    cone.position.set(-4.73, 3.32, -4.8);
-    this.scene.add(cone);
+    lampWash.position.copy(this.lampLight.position);
+    lampWash.target.position.set(PUDDLE_X, PUDDLE_Y, PUDDLE_Z + 0.2);
+    this.scene.add(lampWash, lampWash.target);
   }
 
   private buildRain(): void {
@@ -704,10 +790,10 @@ class RainyCityScene implements AtmosphereScene {
 
   private puddlePoint(): [number, number] {
     const angle = this.weatherRandom() * Math.PI * 2;
-    const radius = Math.sqrt(this.weatherRandom()) * 2.5;
+    const radius = Math.sqrt(this.weatherRandom()) * PUDDLE_RADIUS * 0.84;
     return [
-      PUDDLE_X + Math.cos(angle) * radius * 1.43,
-      PUDDLE_Z + Math.sin(angle) * radius * 0.53,
+      PUDDLE_X + Math.cos(angle) * radius * PUDDLE_SCALE_X,
+      PUDDLE_Z + Math.sin(angle) * radius * PUDDLE_SCALE_Z,
     ];
   }
 
@@ -808,7 +894,7 @@ class RainyCityScene implements AtmosphereScene {
 
     this.lightning.intensity = this.currentLightning * 5.2;
     this.hemisphere.intensity = 1.35 + this.currentLightning * 1.4;
-    this.lampLight.intensity = 53 - this.currentLightning * 4;
+    this.lampLight.intensity = LAMP_INTENSITY - this.currentLightning * 2.5;
     this.sky.lerpColors(
       this.baseSky,
       this.lightningSky,
