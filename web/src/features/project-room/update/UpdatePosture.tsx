@@ -182,7 +182,7 @@ function UpdateList({
                     data-generator={update.generator}
                     title={generatorLabel(update.generator)}
                   >
-                    {/* Primary line: lifecycle + rev + time */}
+                    {/* Primary line: lifecycle + rev + time + open chevron */}
                     <span className="update-list-primary">
                       <span className="surface-token" data-tone={tone}>
                         {lifecycleLabel(update.lifecycle)}
@@ -191,6 +191,7 @@ function UpdateList({
                       <span className="update-list-time">
                         {humanTime(update.publishedAt ?? update.updatedAt)}
                       </span>
+                      <span className="update-list-chevron" aria-hidden="true" data-testid="update-list-chevron">{"›"}</span>
                     </span>
                     {/* Secondary line: provenance in plain words */}
                     <span className="update-list-secondary" data-testid="update-list-provenance">

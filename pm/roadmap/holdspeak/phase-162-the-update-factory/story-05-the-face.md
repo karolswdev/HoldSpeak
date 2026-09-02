@@ -70,3 +70,17 @@ designed line. Micro-round chartered: the row becomes a designed
 layout, provenance simplified to "Model draft"/"Deterministic
 draft" in lists (assignment id to title/aria), no mid-token
 clipping ever.
+
+## The owner's verdict — round 3 (2026-09-02)
+
+Two questions, verbatim: "Can you be clear to me - so what we just
+sort of..., exposed via the editor. IS that actually meant to be
+editable? Or no?" — answered YES by canon (UPD-001 editable
+Markdown; UPD-005 Save; PV-H04 measures the edit-to-copy loop;
+published freezes read-only). And: "How do I go from state 1 ...
+to 02 ... is it after I double-clicked 01's Updates 1, ro
+something? Because if that's the case, it's not obvious to me that
+it is an interactable surface..." — a FINDING: the row opens on a
+single click (SurfaceLedgerRow onToggle) but nothing signals
+interactability. Affordance round chartered (hover, cursor,
+chevron/hint the house way, keyboard).

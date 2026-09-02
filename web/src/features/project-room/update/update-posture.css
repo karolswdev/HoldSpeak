@@ -46,6 +46,21 @@
   margin-left: auto;
 }
 
+/* Open chevron: subtle affordance at the right edge, visible on
+   hover/focus to signal the row is clickable. */
+.update-list-chevron {
+  color: var(--text-faint);
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.35;
+  transition: opacity 0.1s;
+}
+
+.surface-ledger-line:hover .update-list-chevron,
+.surface-ledger-line:focus-visible .update-list-chevron {
+  opacity: 1;
+}
+
 /* Secondary line: provenance in plain words, dim. */
 .update-list-secondary {
   display: flex;

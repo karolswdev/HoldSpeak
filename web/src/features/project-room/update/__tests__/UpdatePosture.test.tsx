@@ -778,6 +778,31 @@ describe("Draft list: lifecycle-honest", () => {
     const ledgerPrimary = row!.closest(".surface-ledger-primary");
     expect(ledgerPrimary).toBeTruthy();
   });
+
+  it("row carries an open chevron affordance and is a button (keyboard-accessible)", async () => {
+    setupUpdatePosture({
+      listUpdates: [draftUpdateFixture()],
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    fireEvent.click(await screen.findByTestId("updates-verb"));
+    await waitFor(() => screen.getByTestId("update-posture"));
+
+    // Chevron present in the row
+    const chevron = screen.getByTestId("update-list-chevron");
+    expect(chevron).toBeTruthy();
+    expect(chevron.textContent).toBe("›"); // ›
+
+    // The row is rendered inside a button (SurfaceLedgerRow renders <button class="surface-ledger-line">)
+    const item = screen.getByTestId("update-list-item");
+    expect(item.tagName).toBe("BUTTON");
+
+    // Clicking the row opens the editor
+    fireEvent.click(item);
+    await waitFor(() => {
+      expect(screen.getByTestId("update-editor")).toBeTruthy();
+    });
+  });
 });
 
 // ── COPY MARKDOWN ──
