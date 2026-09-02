@@ -155,6 +155,10 @@ export function useStewardController(
       if (!result.success) {
         if (result.code === "active_run_exists") {
           setRunDisabledReason("A run is in progress");
+        } else if (result.code === "steward_disabled") {
+          setRunDisabledReason("The steward is disabled in policy");
+        } else if (result.code === "cooldown_active") {
+          setRunDisabledReason("Cooling down after the last run");
         } else {
           setError(result.message ?? "Failed to start run");
         }

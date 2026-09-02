@@ -40,7 +40,7 @@ export type RunSummary = {
 
 /* ── Step wire shape ── */
 
-export type StepState = "pending" | "running" | "completed" | "skipped" | "failed";
+export type StepState = "pending" | "running" | "completed" | "skipped" | "failed" | "interrupted";
 
 export type StewardStep = {
   id: string;
@@ -257,6 +257,7 @@ const STEP_STATE_LABELS: Record<string, string> = {
   completed: "Completed",
   skipped: "Skipped",
   failed: "Failed",
+  interrupted: "Interrupted",
 };
 
 export function stepStateLabel(state: string): string {
@@ -265,7 +266,7 @@ export function stepStateLabel(state: string): string {
 
 export function stepStateTone(state: string): string | undefined {
   if (state === "completed") return "ok";
-  if (state === "failed") return "danger";
+  if (state === "failed" || state === "interrupted") return "danger";
   if (state === "skipped") return "warn";
   return undefined;
 }

@@ -37,6 +37,8 @@ from holdspeak.db.steward import (
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.project_contracts import generate_pstrun_id, generate_pststep_id
 from holdspeak.services.project_steward_service import (
+    CooldownActiveError,
+    StewardDisabledError,
     PHASES,
     ProjectStewardService,
     StopRequested,
@@ -586,3 +588,88 @@ class TestFailureIsolation:
         svc2, _ = _make_service(conn)
         run_id_2 = svc2.run_once(_principal(), "proj-1")
         assert db.steward_runs.get_run(run_id_2)["state"] == "completed"
+
+
+def _make_policy(
+    conn,
+    project_id: str = "proj-1",
+    eligible_kinds: list[str] | None = None,
+    cooldown_seconds: int = 0,
+    enabled: int = 1,
+) -> str:
+    """Insert a steward policy row directly (named columns)."""
+    import json as _json
+    from holdspeak.project_contracts import generate_pstpol_id
+    policy_id = generate_pstpol_id()
+    conn.execute(
+        """INSERT INTO steward_policies
+           (id, project_id, eligible_effect_kinds_json,
+            cooldown_seconds, enabled)
+           VALUES (?, ?, ?, ?, ?)""",
+        (policy_id, project_id, _json.dumps(eligible_kinds or []),
+         cooldown_seconds, enabled),
+    )
+    conn.commit()
+    return policy_id
+
+
+class TestCounselRound163:
+    """Counsel M-1 + S-2 + S-3: stop between retries, cooldown, disabled."""
+
+    def test_stop_honored_between_retries(self, tmp_path: Path) -> None:
+        """STW-003: a stop requested during a failing effect's first
+        attempt interrupts before the second attempt (counsel M-1)."""
+        conn = _make_conn(tmp_path)
+        svc, db = _make_service(conn)
+        _make_policy(conn, eligible_kinds=["refresh_sources"])
+
+        calls: list[int] = []
+        original = svc._apply_effect
+
+        def failing_effect(principal, run_id, project_id, step_id,
+                           effect_kind, phase_results, watermark):
+            calls.append(1)
+            svc.stop(run_id)
+            raise RuntimeError("transient failure")
+
+        svc._apply_effect = failing_effect
+        run_id = svc.run_once(_principal(), "proj-1")
+
+        run = db.steward_runs.get_run(run_id)
+        assert run["state"] == "interrupted"
+        assert len(calls) == 1, (
+            f"retries must stop at the durable request; got {len(calls)} attempts"
+        )
+
+    def test_cooldown_blocks_after_completed_run(self, tmp_path: Path) -> None:
+        conn = _make_conn(tmp_path)
+        svc, db = _make_service(conn)
+        _make_policy(conn, eligible_kinds=[], cooldown_seconds=3600)
+
+        first = svc.run_once(_principal(), "proj-1")
+        assert db.steward_runs.get_run(first)["state"] == "completed"
+
+        with pytest.raises(CooldownActiveError):
+            svc.insert_run(_principal(), "proj-1")
+
+    def test_interrupted_run_exempt_from_cooldown(self, tmp_path: Path) -> None:
+        """STW-009: recovery leaves the project re-runnable; cooldown
+        never blocks after an interrupted run."""
+        conn = _make_conn(tmp_path)
+        svc, db = _make_service(conn)
+        _make_policy(conn, eligible_kinds=[], cooldown_seconds=3600)
+
+        run_id = generate_pstrun_id()
+        db.steward_runs.insert_run(run_id=run_id, project_id="proj-1")
+        db.steward_runs.update_run_state(run_id, state="interrupted")
+
+        second = svc.insert_run(_principal(), "proj-1")
+        assert second.startswith("pstrun_")
+
+    def test_disabled_policy_refuses(self, tmp_path: Path) -> None:
+        conn = _make_conn(tmp_path)
+        svc, db = _make_service(conn)
+        _make_policy(conn, eligible_kinds=["refresh_sources"], enabled=0)
+
+        with pytest.raises(StewardDisabledError):
+            svc.insert_run(_principal(), "proj-1")

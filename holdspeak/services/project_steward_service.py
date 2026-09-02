@@ -53,6 +53,20 @@ _SEVERITY_RANK: dict[str, int] = {
 }
 
 
+class StewardDisabledError(Exception):
+    """The project's steward policy is disabled (counsel S-3)."""
+
+
+class CooldownActiveError(Exception):
+    """A cooldown from the last terminal run is still active (STW-008)."""
+
+    def __init__(self, seconds_remaining: int) -> None:
+        self.seconds_remaining = seconds_remaining
+        super().__init__(
+            f"Cooldown active: {seconds_remaining}s remaining"
+        )
+
+
 class StopRequested(Exception):
     """Raised internally when the durable stop flag is detected."""
 
@@ -141,6 +155,42 @@ class ProjectStewardService:
         run_once, which calls insert_run + execute_phases.
         """
         project_id = str(project_id).strip()
+
+        # Counsel S-3: a disabled policy refuses the run outright.
+        # Counsel S-2 / STW-008: cooldown_seconds gates a new run against
+        # the last COMPLETED or FAILED run; interrupted runs are exempt
+        # (STW-009: recovery must leave the project re-runnable).
+        policy = self._db.steward_policies.get_policy_for_project(project_id)
+        if policy is not None:
+            if not policy.get("enabled", 1):
+                raise StewardDisabledError(
+                    f"Steward policy for {project_id} is disabled"
+                )
+            cooldown = int(policy.get("cooldown_seconds", 0) or 0)
+            if cooldown > 0:
+                for prior in self._db.steward_runs.list_runs(
+                    project_id, limit=20,
+                ):
+                    if prior.get("state") not in ("completed", "failed"):
+                        continue
+                    completed_at = prior.get("completed_at")
+                    if not completed_at:
+                        break
+                    try:
+                        done = datetime.fromisoformat(
+                            str(completed_at).replace("Z", "+00:00")
+                        )
+                    except ValueError:
+                        break
+                    if done.tzinfo is None:
+                        done = done.replace(tzinfo=timezone.utc)
+                    elapsed = (
+                        datetime.now(timezone.utc) - done
+                    ).total_seconds()
+                    if elapsed < cooldown:
+                        raise CooldownActiveError(int(cooldown - elapsed))
+                    break
+
         run_id = generate_pstrun_id()
 
         # STW-001: durable BEFORE asynchronous work.
@@ -575,6 +625,9 @@ class ProjectStewardService:
         last_error: Optional[Exception] = None
 
         for attempt in range(max_retries + 1):
+            # STW-003 (counsel M-1): a retry IS another effect slot --
+            # the durable stop request is honored between attempts.
+            self._check_stop(run_id)
             try:
                 result = self._apply_effect(
                     principal, run_id, project_id, step_id,

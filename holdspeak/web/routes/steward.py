@@ -21,6 +21,10 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ...db.steward import ActiveRunExistsError
+from ...services.project_steward_service import (
+    CooldownActiveError,
+    StewardDisabledError,
+)
 from ...logging_config import get_logger
 from ...principals import UNAUTHENTICATED
 from ...project_contracts import (
@@ -119,6 +123,18 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(
                 {"success": False, "code": "active_run_exists",
                  "message": f"Project {project_id} already has an active steward run (STW-002)"},
+                status_code=409,
+            )
+        except StewardDisabledError:
+            return JSONResponse(
+                {"success": False, "code": "steward_disabled",
+                 "message": "The steward policy is disabled for this project"},
+                status_code=409,
+            )
+        except CooldownActiveError as exc:
+            return JSONResponse(
+                {"success": False, "code": "cooldown_active",
+                 "message": f"Cooling down: {exc.seconds_remaining}s remaining"},
                 status_code=409,
             )
         except NotFound as exc:
