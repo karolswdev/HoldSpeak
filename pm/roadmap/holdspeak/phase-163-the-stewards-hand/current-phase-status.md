@@ -44,7 +44,7 @@ omission, not an approval policy).
 | --- | --- | --- | --- | --- |
 | HS-163-01 | The run ledger (schema v71: policy/run/step/command persistence; STW-001) | done | [story-01-the-run-ledger](./story-01-the-run-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-163-02 | The run engine (six checkpointed phases; uniqueness, Stop, recovery) | done | [story-02-the-run-engine](./story-02-the-run-engine.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-163-03 | The bounded hand (the V0 effect set, verified, deduplicated) | backlog | [story-03-the-bounded-hand](./story-03-the-bounded-hand.md) | - |
+| HS-163-03 | The bounded hand (the V0 effect set, verified, deduplicated) | done | [story-03-the-bounded-hand](./story-03-the-bounded-hand.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-163-04 | The wire (runs on HTTP: create/poll/stop; api-surface) | backlog | [story-04-the-wire](./story-04-the-wire.md) | - |
 | HS-163-05 | The face (the Steward posture: run, watch, stop, receipts — OWNER VERDICT) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
 | HS-163-06 | The walk (STW-011 on glass: one real effect + a drafted update, receipted; the degraded legs) | backlog | [story-06-the-walk](./story-06-the-walk.md) | - |
@@ -52,24 +52,26 @@ omission, not an approval policy).
 
 ## Where we are
 
-2/7. HS-163-02 the run engine DONE (2026-09-02): ProjectStewardService
-(holdspeak/services/project_steward_service.py) — run_once persists
-the queued run durably BEFORE any phase work (STW-001; the pollable
-row is visible mid-run), then executes OBSERVE->COMPARE->PROPOSE->
-ACT->VERIFY->RECORD on the calling thread per the conductor pattern;
-every transition = run phase update + a step checkpoint row; Stop is
-a DB read between phases AND before effect slots (STW-003, no model
-dependence); STW-002 surfaces as typed ActiveRunExistsError;
-recover_on_startup wired in web_server _startup beside the other
-recovery hooks — interrupted runs free the STW-002 slot, all through
-repo methods (the raw-SQL third door was closed in-round). OBSERVE
-delegates to the 160 collector, COMPARE/PROPOSE to the Delta; ACT is
-the bounded no-op hook 03 fills. NOTE FOR 04: run_once is synchronous
-— the POST route must spawn the daemon thread to honor the
-immediate-id contract. Gates: 58 passed scoped (21 engine + 34
-schema + 3 fence). Earlier: 1/7 the run ledger DONE (schema v71,
-STW-002 DB law, the STW-005 substrate, real-DB reconcile on a COPY).
-NEXT: HS-163-03 the bounded hand.
+3/7. HS-163-03 the bounded hand DONE (2026-09-02): ACT fills with the
+five V0 effects, each a step row FIRST with idempotency_key +
+expected_state before apply, observed after (STW-004); Stop before
+every effect slot; STW-005 reconcile-before-re-act by key lookup
+(fault-injection proven: a completed step's key is never re-applied);
+STW-006 partial coverage; STW-007 deterministic fallbacks with
+receipts; STW-008 max_actions/max_retries enforced at the loop +
+retry seams (cooldown stored, enforcement is P5's scheduling layer);
+STW-010 eligibility from policy, unconfigured kinds skip with a
+receipt. The ONE-Door law is TWO mechanisms: door:sha256(project:
+watermark:item) idem key (same-watermark) AND the orchestrator-round
+fix — DoorService.has_item_for_source read-back excludes items that
+already HAVE canonical follow-through (cross-watermark; the charter's
+'lacking canonical follow-through' made real; two new tests). Effects
+route through the real verbs: 160 decide_proposal accept, 162 factory
+draft/supersede (UPD-004), Door add_item. Gates: 121 passed scoped
+(31 effects + 21 engine + 34 schema + 3 fence + 32 Door suites).
+Earlier: 2/7 engine (six-phase spine; 04 must thread run_once for the
+immediate-id contract), 1/7 ledger (v71, STW-002 DB law). NEXT:
+HS-163-04 the wire.
 
 ## Active risks
 
