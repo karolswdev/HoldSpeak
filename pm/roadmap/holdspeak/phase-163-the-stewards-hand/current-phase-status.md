@@ -46,7 +46,7 @@ omission, not an approval policy).
 | HS-163-02 | The run engine (six checkpointed phases; uniqueness, Stop, recovery) | done | [story-02-the-run-engine](./story-02-the-run-engine.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-163-03 | The bounded hand (the V0 effect set, verified, deduplicated) | done | [story-03-the-bounded-hand](./story-03-the-bounded-hand.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-163-04 | The wire (runs on HTTP: create/poll/stop; api-surface) | done | [story-04-the-wire](./story-04-the-wire.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-163-05 | The face (the Steward posture: run, watch, stop, receipts — OWNER VERDICT) | backlog | [story-05-the-face](./story-05-the-face.md) | - |
+| HS-163-05 | The face (the Steward posture: run, watch, stop, receipts — OWNER VERDICT) | in-progress | [story-05-the-face](./story-05-the-face.md) | - |
 | HS-163-06 | The walk (STW-011 on glass: one real effect + a drafted update, receipted; the degraded legs) | backlog | [story-06-the-walk](./story-06-the-walk.md) | - |
 | HS-163-07 | The close (gates, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 
