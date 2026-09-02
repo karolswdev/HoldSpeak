@@ -1,9 +1,9 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-142 tools across 31 families. The default non-owner discovery lists 29
-resources; the owner discovery lists 32 because access filtering admits 16
-static resources and 16 templates. Any MCP client (Claude Code, Cursor, a
+179 tools across 33 families. The default non-owner discovery lists 34
+resources; the owner discovery lists 37 because access filtering admits 16
+static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
 
 The sidecar runs as a child process of the MCP client. It opens the same
@@ -57,7 +57,7 @@ default.
 
 ## Tool families
 
-The 142 tools are organized into domain families. Each tool follows the
+The 179 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -96,6 +96,55 @@ message; the Door card shows a "from a thread" provenance chip.
 Door has no MCP resource. Its
 Follow-Through People overlay respects `HOLDSPEAK_MCP_PEOPLE_ACCESS` and is
 safely empty when that encrypted disclosure capability is unavailable or off.
+
+### project (33 tools)
+
+Three read tools: `project.list` returns all projects (optionally
+including archived). `project.get` returns one project by id with room
+fields. `project.get_room` returns the coherent room projection.
+
+Fourteen command tools mirror the web routes exactly (MCP-001 parity):
+`project.create`, `project.update` (with expected_revision), `project.archive`,
+`project.restore`, `project.link` / `project.unlink` (meeting association),
+`project.open_review`, `project.get_delta`, `project.decide_proposal`,
+`project.accept_review`, `project.list_updates`, `project.draft_update`,
+`project.update_draft`, `project.publish_update`. Every effect tool
+accepts an optional command_id for idempotent replay (MCP-002); where the
+web route enforces expected_revision, the tool does too.
+
+Four steward driver tools: `project.configure_steward` (policy read/write
+including `unattended_enabled`), `project.run_steward` (returns run_id
+PROMPTLY via MCP-003; phase execution on a daemon thread; typed refusals
+for STW-002/disabled/cooldown), `project.stop_steward` (durable STW-003),
+`project.get_steward_run` (pollable state with steps and receipts).
+
+Five setup interview drivers: `project.setup.start`, `project.setup.resume`,
+`project.setup.answer`, `project.setup.suggest`, `project.setup.finalize`.
+The durable session resumes across tool calls; finalize activates atomically
+through the same ProjectService.create_from_setup seam as the web route.
+
+Seven graduated watch tools: `project.watch.inspect`, `project.watch.test`,
+`project.watch.evaluate`, `project.watch.set_rules`, `project.watch.pause`,
+`project.watch.resume`, `project.watch.retire`. These operate ONLY on
+graduated WatchSpec@1 rows (state in active/tested/paused/retired). Legacy
+rows (state='') belong to the reactions family; the graduated tools
+refuse legacy rows with typed `legacy_watch_boundary` errors. The
+legacy side is not yet guarded in code (backlog).
+
+Five resource templates expose project data: `holdspeak://projects/{id}`,
+`.../room`, `.../delta`, `.../updates/{update_id}`, and
+`.../steward/runs/{run_id}`. Unknown ids refuse typed.
+
+### provider (4 tools)
+
+Provider discovery and connection status. `provider.list` returns all
+configured providers (native + GitHub) with their capabilities.
+`provider.github_connection` reads the GitHub adapter's connection status.
+`provider.github_discover` runs bounded repository discovery through the
+configured adapter (pagination surfaced). `provider.github_validate_repo`
+validates a repository by owner/repo string. All GitHub tools refuse typed
+with `provider_not_configured` when the adapter is absent. No provider
+writes.
 
 ### thread (1 tool)
 
@@ -357,3 +406,218 @@ read.
 | `holdspeak://thoughts/{thought_id}/original` | The owner-only raw capture for a Thought; read lazily and never included in the Workbench projection |
 | `holdspeak://inference/acquisitions/{id}` | Owner-only durable download, verification, installation, and activation truth |
 | `holdspeak://inference/capabilities/{capability_id}` | Owner-only exact registered contract for one intelligence capability |
+
+## The project palette (MCP-007)
+
+The project family ships a `PROJECT_PALETTE`: a frozen set of the 37
+project.* and provider.* tool names. Two functions in the MCP layer
+consume it.
+
+`tools_for_palette(palette)` returns only the tools whose names are in
+the palette. A client that lists tools through this filter sees 37 tools
+instead of 179.
+
+`dispatch_for_palette(name, arguments, principal, palette)` dispatches
+a tool call only if `name` is in the palette. A name outside the palette
+gets a typed refusal ("Tool ... is not in the configured palette"), never
+a silent ignore.
+
+The palette contains exactly the tools in this family. The SS15
+acceptance scenario resolves entirely within project.* and provider.*;
+no companion families from other domains are needed.
+
+### Project thread mode
+
+A Project thread mode is seeded alongside the palette. It identifies
+project-agent threads and sets a scoped system prompt. The mode carries
+no thread-side tools today (its tool set is empty) because all project
+tools are MCP-only. If project tools register in the thread-side
+TOOL_NAMES in the future, the mode's palette will surface them
+automatically through the existing `palette_for` species.
+
+## Worked example: the project lifecycle (SS15)
+
+The transcript excerpts below are from a real MCP walk that drove the
+full lifecycle over stdio. The walk ran twice with deterministic results.
+Each excerpt is real structured output, trimmed where noted.
+
+### 1. Boot the sidecar
+
+Wire the sidecar into your MCP client (see Wiring above). The server
+speaks stdio JSON-RPC; it opens the local database on startup.
+
+### 2. Start the setup interview and create a project
+
+Start a session, answer questions, then finalize to create the project
+atomically:
+
+```json
+{"tool": "project.setup.start", "arguments": {}}
+// result: {"id": "psetup_22e34a18403a", "stage": "outcome", "state": "active"}
+
+{"tool": "project.setup.answer", "arguments": {
+  "session_id": "psetup_22e34a18403a",
+  "question_id": "outcome",
+  "payload": {"text": "Track CI health on my repos"}
+}}
+
+{"tool": "project.setup.finalize", "arguments": {
+  "session_id": "psetup_22e34a18403a",
+  "command_id": "walk-finalize-001"
+}}
+// result (trimmed): {"project_id": "proj-adcf170869d3",
+//   "name": "Track CI health on my repos",
+//   "result_kind": "created", "project_revision": 1}
+```
+
+The session is durable: `project.setup.resume` returns the full state
+at any point, including after finalize.
+
+### 3. Configure the steward and set up a watch
+
+Enable the steward with a policy, then test a watch to verify the
+connector returns data:
+
+```json
+{"tool": "project.configure_steward", "arguments": {
+  "project_id": "proj-adcf170869d3",
+  "enabled": true,
+  "unattended_enabled": true,
+  "eligible_effect_kinds": [
+    "refresh_sources", "create_proposals",
+    "apply_proposal_effects", "draft_update", "create_door_item"
+  ],
+  "cooldown_seconds": 0
+}}
+
+{"tool": "project.watch.test", "arguments": {"watch_id": "cw_walk_001"}}
+// result (trimmed): {"test_state": "passed",
+//   "result": {"entity_count": 2, "message": "Test passed - 2 current matches"}}
+```
+
+### 4. Evaluate changes and open a review
+
+Evaluate the watch to detect transitions, then open a review window
+that materializes proposals from the observations:
+
+```json
+{"tool": "project.watch.evaluate", "arguments": {"watch_id": "cw_walk_001"}}
+// result (trimmed): {"state": "completed", "transitions": 2,
+//   "evaluation_id": "weval_011bee19ce0a"}
+
+{"tool": "project.open_review", "arguments": {
+  "project_id": "proj-adcf170869d3"
+}}
+// result: review with proposals (observation_attention, conflict)
+// and source_manifest showing coverage across native + watch sources
+```
+
+### 5. Run the steward (MCP-003: prompt return, async execution)
+
+`project.run_steward` returns the run_id immediately. Phase execution
+happens on a daemon thread. Poll with `project.get_steward_run`:
+
+```json
+{"tool": "project.run_steward", "arguments": {
+  "project_id": "proj-adcf170869d3",
+  "watermark": "weval_011bee19ce0a",
+  "command_id": "walk-steward-001"
+}}
+// result: {"run_id": "pstrun_104deaf8dd3b4612bec19d9bf3d34eeb", "success": true}
+
+{"tool": "project.get_steward_run", "arguments": {
+  "run_id": "pstrun_104deaf8dd3b4612bec19d9bf3d34eeb"
+}}
+// first poll: {"run": {"state": "queued", "phase": "observe"}, "steps": []}
+// later poll: {"run": {"state": "completed", "phase": "record",
+//   "summary": {"outcome": "completed"}}, "steps": [/* 11 steps elided */]}
+```
+
+### 6. Idempotent replay (MCP-002)
+
+Replaying `run_steward` with the same `command_id` returns the original
+run_id. No new run is created:
+
+```json
+{"tool": "project.run_steward", "arguments": {
+  "project_id": "proj-adcf170869d3",
+  "watermark": "weval_011bee19ce0a",
+  "command_id": "walk-steward-001"
+}}
+// result: {"run_id": "pstrun_104deaf8dd3b4612bec19d9bf3d34eeb", "success": true}
+// same run_id as step 5 -- the command_id dedup prevented a duplicate run
+```
+
+This holds for every effect tool: same command_id + same payload returns
+the stored result. Mismatched payload with the same command_id refuses
+with a typed conflict.
+
+### 7. Draft, publish, and verify the room
+
+Draft an update, publish it, then read the room projection to confirm
+revisions:
+
+```json
+{"tool": "project.draft_update", "arguments": {
+  "project_id": "proj-adcf170869d3",
+  "generator": "deterministic",
+  "command_id": "walk-draft-001"
+}}
+// result (trimmed): {"update": {"id": "pupd_aa69557dec894e1fbb568b587bcabf93",
+//   "lifecycle": "draft", "generator": "deterministic"}}
+
+{"tool": "project.publish_update", "arguments": {
+  "update_id": "pupd_aa69557dec894e1fbb568b587bcabf93",
+  "command_id": "walk-publish-001"
+}}
+// result: lifecycle -> published, project_revision bumped
+
+{"tool": "project.get_room", "arguments": {
+  "project_id": "proj-adcf170869d3"
+}}
+// result: coherent room projection with identity, recent changes,
+// review state, published updates, and steward run history
+```
+
+The room projection is the same shape the web UI reads.
+
+## Boundary notes
+
+### Legacy reactions family vs. graduated watch tools
+
+Two watch surfaces exist. The legacy reactions family
+(`watch.list`, `watch.create`, `watch.set_enabled`, `watch.refresh`,
+`watch.preview`, `reaction.*`) owns state='' rows. The graduated
+project.watch.* tools (inspect, test, evaluate, set_rules, pause,
+resume, retire) operate only on WatchSpec@1 rows (state in
+active/tested/paused/retired).
+
+The boundary is enforced in one direction today: a graduated tool
+called on a legacy row refuses with `legacy_watch_boundary`. The
+legacy reactions tools are not yet guarded against graduated rows
+(a legacy refresh of a graduated watch is wasteful, not destructive;
+the code-side guard is backlog). Nothing was replaced; both surfaces
+coexist.
+
+### What V0 refuses
+
+Provider writes are not available through MCP. The provider.* tools
+are read-only (list, connection status, bounded discovery, validation).
+
+Remote MCP transport (MCP-008) is deferred. The sidecar speaks stdio
+only; no network listener is opened.
+
+### The fetcher seam
+
+The sidecar's `_watch_service()` factory builds `WatchService(db)` with
+no `snapshot_fetcher`. The web server injects its fetcher via
+`_gh_watch_service_kwargs`. This means `project.watch.evaluate` and
+`project.watch.test` need a snapshot fetcher that can reach the
+GitHub API. In the walk, this was solved with a file-based fixture.
+In production, watch evaluation requires live `gh` auth (the adapter
+reads stored snapshots, but evaluation fetches new ones).
+
+This is pre-existing composition debt: the web app injects the fetcher
+at server startup; the sidecar does not. The watch tools will return
+`connector_unavailable` when evaluation requires a live fetch and no
+fetcher is composed.

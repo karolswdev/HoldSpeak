@@ -53,8 +53,7 @@ MODE_RECIPES = {
     "hs-seed-mode-desk",
     "hs-seed-mode-chase",
     "hs-seed-mode-draft",
-    "hs-seed-mode-plan",
-}
+    "hs-seed-mode-plan", "hs-seed-mode-project"}
 SEED_COUNTS = {"directories": 6, "notes": 10, "kbs": 1, "recipes": 4}
 
 

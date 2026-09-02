@@ -92,8 +92,8 @@ Studio, and Settings are focused workrooms.
 ## Extend: build on it
 
 - **[MCP sidecar](./MCP_SIDECAR.md)**: the desk's programmable surface over
-  stdio. 142 tools across 31 domain families, with 29 resources in default
-  non-owner discovery and 32 for the owner, wired automatically
+  stdio. 179 tools across 33 domain families, with 34 resources in default
+  non-owner discovery and 37 for the owner, wired automatically
   in Claude Code via the repo's `.mcp.json`. The reference for families,
   model-invoking tools, trust model, resources, and the explicit opt-in,
   shared-intent-only People boundary.

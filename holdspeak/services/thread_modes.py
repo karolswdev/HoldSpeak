@@ -31,11 +31,20 @@ if TYPE_CHECKING:
 # Allow-list computation from the classification map
 # ---------------------------------------------------------------------------
 
+# HS-165 law: MCP-only families (project.*, provider.*) are classified
+# for the tool GATE but belong to NO thread palette -- the thread
+# grammar stays bounded; agents reach those tools over MCP only.
+def _thread_side(name: str) -> bool:
+    return not (name.startswith("project.") or name.startswith("provider."))
+
+
 _EVIDENCE_READ = frozenset(
-    name for name, (cls, _) in _TOOL_CLASSES.items() if cls == "evidence_read"
+    name for name, (cls, _) in _TOOL_CLASSES.items()
+    if _thread_side(name) and cls == "evidence_read"
 )
 _CANDIDATE_BUILDER = frozenset(
-    name for name, (cls, _) in _TOOL_CLASSES.items() if cls == "candidate_builder"
+    name for name, (cls, _) in _TOOL_CLASSES.items()
+    if _thread_side(name) and cls == "candidate_builder"
 )
 
 # Forward references: tools that are declared in a mode allow-list but
@@ -66,6 +75,14 @@ _PLAN_TOOLS = frozenset(
     | {name for name in _EVIDENCE_READ if name.startswith("decision_record.")}
     | {"door.get", "memory.search"}
 )
+
+# --- Project (MCP-007): no thread-side tools; the agent uses MCP tools
+# (project.*, provider.*) directly.  Tool names are declared as
+# FORWARD_TOOLS so Mode.tools carries them without an unclassified
+# warning, even though palette_for will not surface them until they
+# arrive in TOOL_NAMES.  The mode exists to (a) identify project-agent
+# threads and (b) set the system prompt for project-scoped work.
+_PROJECT_TOOLS: frozenset[str] = frozenset()
 
 
 # ---------------------------------------------------------------------------
@@ -122,6 +139,17 @@ MODE_SEEDS: tuple[Mode, ...] = (
         avatar="#059669",
         system_prompt="Reflect on decisions, thoughts, and memory. Plan, do not execute.",
         tools=_PLAN_TOOLS,
+    ),
+    Mode(
+        id="hs-seed-mode-project",
+        name="Project",
+        avatar="#D97706",
+        system_prompt=(
+            "You are a project agent. Use the MCP project and provider "
+            "tools to observe, drive, and report on projects. Do not use "
+            "unrelated desk tools."
+        ),
+        tools=_PROJECT_TOOLS,
     ),
 )
 
