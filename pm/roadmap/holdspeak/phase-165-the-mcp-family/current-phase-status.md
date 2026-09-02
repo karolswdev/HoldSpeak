@@ -46,22 +46,26 @@ seam noted, not built).
 | HS-165-03 | The driver tools (steward runs, setup interview, provider discovery, watch graduation) | done | [story-03-the-driver-tools](./story-03-the-driver-tools.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-165-04 | The palette (PROJECT_PALETTE + Project Thread mode; parity hardening) | done | [story-04-the-palette](./story-04-the-palette.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-165-05 | The walk (a local MCP client drives §15 end to end — OWNER VERDICT) | done | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-165-06 | The docs (the Gate B partner surface; the dedicated docs story) | backlog | [story-06-the-docs](./story-06-the-docs.md) | - |
+| HS-165-06 | The docs (the Gate B partner surface; the dedicated docs story) | done | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-165-07 | The close (gates, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
-5/7. THE OWNER'S VERDICT on the walk, verbatim: "PASS" — Gate B
-ready, one round. HS-165-05 DONE: a real stdio subprocess client
-drove §15's ten points x2 deterministic (39 calls/run; 2
-transitions, 5 proposals, 11 receipted steps, room revision 2->3,
-same-command replay, no_op re-evaluations — all measured into the
-transcript artifact). One fixture seam (the snapshot fetcher file,
-verified by the orchestrator's read); the sidecar's missing fetcher
-composition ledgered as debt. The gallery had no pixels — the face
-IS the wire. Earlier: 4/7 palette, 3/7 drivers, 2/7 commands, 1/7
-skeleton. NEXT: flip 06 the docs (landed in parallel), then 07 the
-close.
+6/7. HS-165-06 the docs DONE (2026-09-02): docs/MCP_SIDECAR.md grows
+407->620 lines — the palette section (MCP-007), the Project thread
+mode, the §15 worked example built from REAL walk-transcript
+excerpts (seven numbered steps, boot to published update, trimmed
+with visible markers), and the boundary notes stating the honest
+things plainly: the legacy/graduated watch fence, the V0 refusals
+(no provider writes; stdio only, MCP-008 deferred), and the
+fetcher-seam debt (real-sidecar watch evaluation needs live gh
+auth). The roadmap-vocabulary guard caught internal story IDs in the
+first draft — reworded product-tense (a good guard doing its job).
+Gates: drift guard 26 green; product copy 1 failed / 9 passed — the
+failure is the recorded main-baseline name, MCP_SIDECAR itself
+clean. Earlier: 5/7 the walk (owner PASS — Gate B ready), 4/7
+palette, 3/7 drivers, 2/7 commands, 1/7 skeleton. NEXT: HS-165-07
+the close.
 
 ## Active risks
 
