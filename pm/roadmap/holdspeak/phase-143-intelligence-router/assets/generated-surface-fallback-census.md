@@ -127,3 +127,16 @@ The same test scans every Swift `case .fallbackOnDevice`,
 now exactly zero; a synthetic rogue runner proves any reintroduced client-owned
 fallback branch or retry loop fails closed. Legacy strings may exist only as
 non-executing wire raw values.
+
+## Story 163-07 addendum (Phase 163, The Steward's Hand)
+
+Story 163-07 adds `holdspeak/services/project_steward_service.py` as a
+guarded backend surface. Its one private recovery helper,
+`_apply_effect_with_retry`, is a bounded effect retry WITHIN one steward
+run: attempts are capped by the per-project policy's `max_retries`
+(STW-008), the durable stop request is checked between attempts
+(STW-003, counsel M-1), and exhaustion marks the step failed with an
+honest error record. It never selects a model, route, or provider -- all
+inference the steward touches flows through the already-admitted 160/162
+verbs. Classified in `BACKEND_PRIVATE_DECISIONS` with review tag
+`163-07`.

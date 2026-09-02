@@ -116,8 +116,8 @@ def _seed_project(conn: sqlite3.Connection, project_id: str = "proj-1",
 class TestFreshSchema:
     """A fresh DB built from SCHEMA_SQL has every HS-160-01 shape."""
 
-    def test_schema_version_is_69(self) -> None:
-        assert SCHEMA_VERSION == 70
+    def test_schema_version_is_71(self) -> None:
+        assert SCHEMA_VERSION == 71
 
     # -- project_observations (SS5.5) --
 

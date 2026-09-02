@@ -1,7 +1,7 @@
 # Phase 163 - Project Rooms: The Steward's Hand (P4)
 
 - **Project:** holdspeak
-- **Status:** in-progress
+- **Status:** COMPLETE 7/7
 - **Chartered:** 2026-09-02 off main `45385a4c` (162 The Update Factory MERGED via PR #527 — the SEVENTH Project Rooms phase merged: #521 #522 #523 #524 #525 #527)
 - **Canon:** docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §9 (the Steward: 9.1 runtime ruling, 9.2 run lifecycle, 9.3 V0 eligible effects, 9.4 STW-001..011), §14 P4 slice; the frozen contracts; CONSTITUTION.md
 
@@ -48,19 +48,22 @@ omission, not an approval policy).
 | HS-163-04 | The wire (runs on HTTP: create/poll/stop; api-surface) | done | [story-04-the-wire](./story-04-the-wire.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-163-05 | The face (the Steward posture: run, watch, stop, receipts — OWNER VERDICT) | done | [story-05-the-face](./story-05-the-face.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-163-06 | The walk (STW-011 on glass: one real effect + a drafted update, receipted; the degraded legs) | done | [story-06-the-walk](./story-06-the-walk.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-163-07 | The close (gates, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
+| HS-163-07 | The close (gates, debts, final summary) | done | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-6/7. THE OWNER'S VERDICT, verbatim: "PASS" (2026-09-02, one round;
-the pre-verdict consequence round was the orchestrator's own shot
-review). HS-163-05 the face DONE: the Steward posture in the Room —
-Run once, live run view polling the wire, honest Stop, designed
-history rows, labeled policy editor with MODEL egress chips, receipts
-opening through openSourceRef; web gates 2254 passed zero branch-new.
-Earlier: 5/7 walk (three product defects caught + fixed in-round;
-glass 8x2), 4/7 wire, 3/7 hand, 2/7 engine, 1/7 ledger. NEXT:
-HS-163-07 the close — full suite, sweep, counsel, PR, merge.
+**COMPLETE 7/7.** The exit met and measured: one press = 5 real
+effects receipted; same-watermark re-run = 0 additional items with a
+visible reconcile. The owner's verdict on the face, verbatim: "PASS"
+(one round). Counsel RATIFY-W-C: M-1 + three S paid in-round; S-4/
+N-1/N-3 carried. The close gates: full suite 13 failed / 8680 passed
+/ 61 skipped in 24:29 -> sweep 8 baseline + 4 real-fixed-in-round
+(two v71 pins, api-surface consumers, census classification) + 1
+proven flake (hs151 abort, x2 green, untouched); web 2254 zero
+branch-new; steward 108 + glass 8x2. Three product defects caught by
+the walk's rig and burned out. See final-summary.md. NEXT PHASE: P5
+The Unattended Desk (run_due, Watch-triggered watermarked runs,
+scheduling-layer cooldown, Gate A dogfooding).
 
 ## Active risks
 

@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 618 (plus static mounts). iOS-consumed: 89. Web-consumed: 461.
+Routes: 618 (plus static mounts). iOS-consumed: 89. Web-consumed: 467.
 
 ## device_audio_ws
 
@@ -907,12 +907,12 @@ Routes: 618 (plus static mounts). iOS-consumed: 89. Web-consumed: 461.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/projects/{project_id}/steward/policy` | server only |
-| PUT | `/api/projects/{project_id}/steward/policy` | server only |
-| GET | `/api/projects/{project_id}/steward/runs` | server only |
-| POST | `/api/projects/{project_id}/steward/runs` | server only |
-| GET | `/api/steward/runs/{run_id}` | server only |
-| POST | `/api/steward/runs/{run_id}/stop` | server only |
+| GET | `/api/projects/{project_id}/steward/policy` | web |
+| PUT | `/api/projects/{project_id}/steward/policy` | web |
+| GET | `/api/projects/{project_id}/steward/runs` | web |
+| POST | `/api/projects/{project_id}/steward/runs` | web |
+| GET | `/api/steward/runs/{run_id}` | web |
+| POST | `/api/steward/runs/{run_id}/stop` | web |
 
 ## web.routes.sync
 
