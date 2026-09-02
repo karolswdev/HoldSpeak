@@ -43,32 +43,27 @@ admitted 160/162 verbs).
 | HS-164-02 | evaluate_due (due Watches evaluate on cadence; isolation + circuit) | done | [story-02-evaluate-due](./story-02-evaluate-due.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-164-03 | run_due (the triggered hand: watermark requests, ONE run, scheduling cooldown) | done | [story-03-run-due](./story-03-run-due.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-164-04 | The conductor (two failure boundaries; §10 events; Cadence attention) | done | [story-04-the-conductor](./story-04-the-conductor.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-164-05 | The face (the unattended posture: opt-in, cadence, circuit, interventions — OWNER VERDICT) | in-progress | [story-05-the-face](./story-05-the-face.md) | - |
+| HS-164-05 | The face (the unattended posture: opt-in, cadence, circuit, interventions — OWNER VERDICT) | done | [story-05-the-face](./story-05-the-face.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-164-06 | The walk (Gate A on glass: two useful unattended runs, zero prompts, zero duplicates) | done | [story-06-the-walk](./story-06-the-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-164-07 | The close (gates, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | - |
 
 ## Where we are
 
-5/7 committed pending; 05 awaits THE OWNER'S VERDICT. HS-164-06 the
-walk DONE (2026-09-02): tests/e2e/test_hs164_unattended_glass.py,
-four legs, 8 passed x2 deterministic, BUILD FIRST in the rig (163's
-law honored from birth). GATE A MET AND COUNTED: two unattended runs
-across ticks, 2 door items (unique), 2 updates, 0 duplicate effects,
-0 confirmation prompts; SCHEDULED provenance on glass. Dedup across
-ticks: unchanged snapshot -> no_op -> nothing minted, exactly 1 run.
-Circuit: 3 failures open it (visible), recovery closes it. Opt-out:
-disable mid-cadence -> next tick runs NOTHING (skipped_no_opt_in).
-Tick seam: the rig drives the app's own wired instances via
-set_scheduler_services (the hub boots in-thread); the wire has NO
-scheduled-path trigger route — ledgered debt, the orchestrator's
-earlier ruling stands. THE SHOT ROUNDS (three, each root-caused):
-grant grammar (pluralize), circuit attention (Source circuits render
-FIRST when open — a broken source outranks configuration), and the
-house-ledger 52px time-column clip (the opened-at time now rides the
-time slot; the row reads 'just now CIRCUIT OPEN <name> 3 failures').
-Gates: glass 8x2 + routes 22 + vitest 39 + baseline 2265 zero
-branch-new. Earlier: 4/7 conductor, 3/7 run_due, 2/7 evaluate_due,
-1/7 due ledger. NEXT: the owner's verdict on 05, then 07 the close.
+6/7. THE OWNER'S VERDICT, verbatim: round 1 "Bounce" (scroll wells
+must announce themselves + his model-wiring question — both recorded
+verbatim in the story file), round 2 "PASS". Both findings paid: the
+Door scroll-hint species ported vertical (rest-visible edge fades on
+every scrolling steward well); the MODEL chip removed from Created
+proposals (the Delta's augmentation is an identity no-op — the badge
+over-claimed egress) and the honest chip on Drafted update names its
+wiring (project.update_draft in Settings > Models, deterministic
+fallback with a receipt on model failure). His question answered
+plainly on the gallery itself. HS-164-05 the face DONE: web gates
+2275 passed zero branch-new. Earlier: 5/7 walk (Gate A counted),
+4/7 conductor, 3/7 run_due, 2/7 evaluate_due, 1/7 due ledger. NEXT:
+HS-164-07 the close — the 27-name main baseline REMAINS VALID for
+69e16678 (163's close fixed only branch-new breaks; nothing left
+main's failing set) — full suite, sweep, counsel, PR, merge.
 
 ## Active risks
 

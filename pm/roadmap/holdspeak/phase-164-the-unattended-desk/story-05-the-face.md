@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 164
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-164-04 (scaffold may start against 04's frozen wire)
 - **Unblocks:** HS-164-07
 - **Owner:** unassigned
@@ -56,3 +56,15 @@ allows for us to determine these things?"**
 Findings taken: (1) scrollable wells need a rest-visible scroll
 affordance; (2) his question is a finding too — the model/fallback
 wiring must be discoverable, and the answer goes to him plainly.
+
+## The owner's verdict, round 2 (2026-09-02)
+
+Asked with the bounce paid (scroll-hint fades, the honest MODEL chip
+naming its Settings > Models wiring) and the model question answered
+on the gallery itself.
+
+Answer, verbatim: **"PASS"**
+
+Two rounds total: round 1 bounced on scroll affordance and asked the
+model-wiring question (both recorded above, both paid); round 2
+passed.
