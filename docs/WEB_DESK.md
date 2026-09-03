@@ -14,14 +14,15 @@ puddle, depth-layered rain, irregular ripples and splash arcs, drifting cloud
 banks, reflected city light, and occasional distant lightning. The off-axis
 street canyon adds façade-aligned buildings, storefronts, a fire escape,
 receding sidewalks and curbs, a two-lane road, a crosswalk, gutter furniture,
-and seeded passing traffic whose headlights fracture across the wet road and
-puddle. A recessed late-night storefront on the right holds a hand-bent cafe
+and seeded steam that curls from a foreground manhole into the wind-driven
+rain. A recessed late-night storefront on the right holds a hand-bent cafe
 neon behind rain-streaked glass. It flickers on its own seeded electrical
 rhythm, casting synchronized bloom into nearby rain trajectories and a muted
 color falloff across the wet asphalt.
 Generated high-frequency masonry, asphalt, and concrete maps provide surface
 scale beneath the procedural lighting without turning the world into a painted
-backdrop; all composition, weather, traffic, and light behavior remains code.
+backdrop; all composition, weather, street motion, and light behavior remains
+code.
 A screen-space
 bloom pass, formula-generated radial falloff, and a seeded local rain volume
 make precipitation catch the streetlamp without relying on painted glow or
@@ -42,10 +43,10 @@ a future preference surface can switch among many worlds without changing the
 Floor.
 
 When the tab is hidden, the runtime pauses every atmosphere. The operating
-system's reduced-motion setting freezes rain, splashes, ripples, camera drift,
-and storm flashes while preserving the composed city. Lightning is visual and
-deliberately moderate; the decorative layer never starts ambient audio on its
-own.
+system's reduced-motion setting freezes rain, steam, splashes, ripples, camera
+drift, and storm flashes while preserving the composed city. Lightning is
+visual and deliberately moderate; the decorative layer never starts ambient
+audio on its own.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk.png" alt="The HoldSpeak Desk: pixel-art objects floating on a warm dark stage; a Zone tray holding a filed Meeting; Coder session avatars on a right-edge rail; a record orb bottom-center; the compact HoldSpeak menu and an egress badge top-left; Create controls top-right." width="760">

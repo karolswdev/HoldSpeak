@@ -5,8 +5,7 @@ import {
   neonFlickerIntensityAt,
   nextNeonFlickerDelay,
   nextLightningDelay,
-  nextTrafficDelay,
-  trafficProgressAt,
+  steamProgressAt,
 } from "../rainyCityScene";
 
 describe("rainy-city weather model", () => {
@@ -32,16 +31,11 @@ describe("rainy-city weather model", () => {
     expect(lightningIntensityAt(1.2)).toBe(0);
   });
 
-  it("spaces procedural traffic into occasional seeded passes", () => {
-    expect(nextTrafficDelay(() => 0)).toBe(11);
-    expect(nextTrafficDelay(() => 0.5)).toBe(20);
-    expect(nextTrafficDelay(() => 1)).toBe(29);
-  });
-
-  it("clamps a car pass to its authored travel window", () => {
-    expect(trafficProgressAt(4, 5, 8)).toBe(0);
-    expect(trafficProgressAt(9, 5, 8)).toBe(0.5);
-    expect(trafficProgressAt(15, 5, 8)).toBe(1);
+  it("loops seeded manhole steam without a visible timing seam", () => {
+    expect(steamProgressAt(0, 0, 4)).toBe(0);
+    expect(steamProgressAt(2, 0, 4)).toBe(0.5);
+    expect(steamProgressAt(4, 0, 4)).toBe(0);
+    expect(steamProgressAt(1, 1, 4)).toBe(0.5);
   });
 
   it("gives neon independent irregular flicker intervals", () => {
