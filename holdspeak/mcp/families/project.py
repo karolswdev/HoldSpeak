@@ -628,6 +628,23 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    {
+        "name": "project.setup.clarify_jira_scope",
+        "description": "Clarify the Jira scope for a Jira proposal in a setup session.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.setup.clarify_jira_scope@1",
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string", "description": "Setup session ID."},
+                "proposal_id": {"type": "string", "description": "Proposal ID."},
+                "connection_ref": {"type": "string", "description": "Jira connection ref (site|email)."},
+                "projects": {"type": "array", "items": {"type": "string"}, "description": "Project keys."},
+                "issue_types": {"type": "array", "items": {"type": "string"}, "description": "Issue type names."},
+            },
+            "required": ["session_id", "proposal_id"],
+            "additionalProperties": False,
+        },
+    },
     # ── graduated watch driver tools (HS-165-03) ────────────────────
     # The 164 boundary rule's MCP twin: these tools operate ONLY on
     # graduated rows (state in active/tested/paused/retired).  Legacy
@@ -1447,6 +1464,16 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         cmd_id = arguments.get("command_id")
         return _setup_service().finalize(
             principal, session_id, command_id=cmd_id,
+        )
+
+    if name == "project.setup.clarify_jira_scope":
+        session_id = _require_id(arguments, "session_id")
+        proposal_id = _require_id(arguments, "proposal_id")
+        return _setup_service().clarify_jira_scope(
+            principal, session_id, proposal_id,
+            connection_ref=arguments.get("connection_ref", ""),
+            projects=arguments.get("projects", []),
+            issue_types=arguments.get("issue_types", []),
         )
 
     # ── provider driver tools (HS-165-03) ───────────────────────────

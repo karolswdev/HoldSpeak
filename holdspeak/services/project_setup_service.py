@@ -109,6 +109,7 @@ class ProjectSetupService:
         self._watch_service = watch_service
         self._github_adapter = github_adapter
         self._jira_adapter = jira_adapter
+        self._issue_test_calls: int = 0  # HS-166-04: set by _native_test_read
 
     # ── Guards ──────────────────────────────────────────────────────
 
@@ -449,22 +450,60 @@ class ProjectSetupService:
         subject_kind = spec.get("subject", {}).get("kind", "")
         now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
+        import time as _time
+        t0 = _time.monotonic()
         try:
             entities = self._native_test_read(principal, subject_kind, spec)
             entity_count = len(entities)
-            test_result = {
+            duration_ms = int((_time.monotonic() - t0) * 1000)
+            test_result: dict[str, Any] = {
                 "entity_count": entity_count,
                 "representative_entities": entities[:5],
                 "observed_at": now_iso,
+                "duration_ms": duration_ms,
                 "error": None,
                 "message": f"Test passed -- {entity_count} current matches",
             }
+
+            # HS-166-04: enrich jira issue test results with the
+            # display contract (same keys WatchService SS8.2 emits).
+            if subject_kind == "issue":
+                query = spec.get("subject", {}).get("query", {})
+                scope_obj = spec.get("subject", {}).get("scope", {})
+                conn_ref = query.get("connection_ref", scope_obj.get("connection_ref", ""))
+                site = conn_ref.split("|")[0] if "|" in conn_ref else ""
+                email = conn_ref.split("|")[1] if "|" in conn_ref else ""
+                from holdspeak.services.watch_sources import _compile_jql
+                from holdspeak.services.watch_service import (
+                    _jira_conditions_summary, _JIRA_TRANSITION_KINDS,
+                )
+                from holdspeak.services.reaction_service import normalize_snapshot
+                normalized = normalize_snapshot("jira", entities)
+                test_result["provider"] = "jira"
+                test_result["connection"] = {
+                    "site": site, "email": email,
+                    "connection_ref": conn_ref,
+                }
+                test_result["projects"] = scope_obj.get("projects", [])
+                test_result["normalized_jql"] = (
+                    _compile_jql(query) if query else ""
+                )
+                test_result["matched_conditions"] = (
+                    _jira_conditions_summary(normalized["entities"])
+                )
+                test_result["supported_transitions"] = list(
+                    _JIRA_TRANSITION_KINDS
+                )
+                test_result["calls"] = self._issue_test_calls
+
             test_state = "passed"
         except Exception as exc:
+            duration_ms = int((_time.monotonic() - t0) * 1000)
             test_result = {
                 "entity_count": 0,
                 "representative_entities": [],
                 "observed_at": now_iso,
+                "duration_ms": duration_ms,
                 "error": {"type": type(exc).__name__, "message": str(exc)},
                 "message": f"Test failed: {exc}",
             }
@@ -1183,6 +1222,45 @@ class ProjectSetupService:
             # representative entities carry id/title/state/head_sha.
             normalized = normalize_snapshot("gh", raw_entities)
             return list(normalized.get("entities", {}).values())[:5]
+
+        if subject_kind == "issue":
+            # HS-166-04: Jira issue subjects test through the adapter's
+            # search + enrichment path, mirroring JiraWatchSource.snapshot.
+            adapter = self._jira_adapter
+            if adapter is None:
+                raise ValidationError(
+                    "Jira adapter not configured for issue test",
+                    code="validation",
+                )
+            scope = spec.get("subject", {}).get("scope", {})
+            query = spec.get("subject", {}).get("query", {})
+            conn_ref = query.get("connection_ref", "")
+            if not conn_ref:
+                conn_ref = scope.get("connection_ref", "")
+            projects = scope.get("projects", [])
+            if not conn_ref:
+                self._issue_test_calls = 0
+                return []
+            # Build JQL from the spec query using the watch_sources compiler.
+            # Merge scope.projects into query so _compile_jql includes them.
+            from holdspeak.services.watch_sources import _compile_jql
+            merged_query = dict(query)
+            if projects and "projects" not in merged_query:
+                merged_query["projects"] = projects
+            jql = _compile_jql(merged_query) if merged_query else ""
+            if not jql and projects:
+                jql = f"project IN ({', '.join(projects)})"
+            if not jql:
+                self._issue_test_calls = 0
+                return []
+            limit = max(1, min(int(query.get("limit") or 50), 200))
+            result = adapter.search(
+                principal, conn_ref,
+                jql=jql, limit=limit, enrich=True,
+            )
+            items = result.get("items", [])
+            self._issue_test_calls = result.get("calls", 1)
+            return items[:5]
 
         raise ValidationError(
             f"Unknown native subject kind: {subject_kind!r}",

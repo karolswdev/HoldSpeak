@@ -18,6 +18,12 @@ import type {
   DiscoveryResponse,
   ValidateRepoResponse,
   ClarifyScopeResponse,
+  JiraConnection,
+  JiraKnownAccount,
+  JiraDiscoveryResponse,
+  JiraSearchResult,
+  JiraScope,
+  JiraClarifyScopeResponse,
 } from "./model";
 
 /* ── Session storage key for resume (WEB-CR-009) ── */
@@ -625,6 +631,252 @@ export function useSetupController() {
     setProviderScopeState(null);
   }, []);
 
+  /* ── Jira operations (HS-166-04) ── */
+
+  const [jiraConnections, setJiraConnections] = useState<JiraConnection[]>([]);
+  const [jiraKnownAccounts, setJiraKnownAccounts] = useState<JiraKnownAccount[]>([]);
+  const [selectedJiraRef, setSelectedJiraRef] = useState<string | null>(null);
+  const [jiraProjects, setJiraProjects] = useState<JiraDiscoveryResponse | null>(null);
+  const [jiraIssueTypes, setJiraIssueTypes] = useState<JiraDiscoveryResponse | null>(null);
+  const [jiraStatuses, setJiraStatuses] = useState<JiraDiscoveryResponse | null>(null);
+  const [jiraScope, setJiraScopeRaw] = useState<JiraScope>({ connectionRef: "", projects: [], issueTypes: [], statusCategories: [], jql: "" });
+  const [jiraPreview, setJiraPreview] = useState<JiraSearchResult | null>(null);
+  const [jiraLoading, setJiraLoading] = useState(false);
+  const [jiraDiscovering, setJiraDiscovering] = useState(false);
+  const [jiraPreviewing, setJiraPreviewing] = useState(false);
+
+  const loadJiraConnections = useCallback(async () => {
+    safe(() => setJiraLoading(true));
+    setError("");
+    try {
+      const response = await api.getJiraConnections();
+      safe(() => {
+        setJiraConnections(response.connections);
+        setJiraKnownAccounts(response.knownAccounts);
+        setJiraLoading(false);
+      });
+    } catch (reason) {
+      safe(() => {
+        setError(readableError(reason));
+        setJiraLoading(false);
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const addJiraConnection = useCallback(async (site: string, email: string) => {
+    safe(() => setJiraLoading(true));
+    setError("");
+    try {
+      await api.addJiraConnection(site, email);
+      const response = await api.getJiraConnections();
+      safe(() => {
+        setJiraConnections(response.connections);
+        setJiraKnownAccounts(response.knownAccounts);
+        setJiraLoading(false);
+      });
+    } catch (reason) {
+      safe(() => {
+        setError(readableError(reason));
+        setJiraLoading(false);
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const recheckJiraConnection = useCallback(async (ref: string) => {
+    setError("");
+    try {
+      const updated = await api.recheckJiraConnection(ref);
+      safe(() => {
+        setJiraConnections((prev) =>
+          prev.map((c) => (c.connection_ref === ref ? updated : c)),
+        );
+      });
+    } catch (reason) {
+      safe(() => setError(readableError(reason)));
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selectJiraConnection = useCallback(async (ref: string) => {
+    safe(() => {
+      setSelectedJiraRef(ref);
+      setJiraProjects(null);
+      setJiraIssueTypes(null);
+      setJiraStatuses(null);
+      setJiraScopeRaw((prev) => ({ ...prev, connectionRef: ref, projects: [], issueTypes: [], statusCategories: [], jql: "" }));
+      setJiraPreview(null);
+    });
+    safe(() => setJiraDiscovering(true));
+    setError("");
+    try {
+      const response = await api.discoverJira(ref, "projects");
+      safe(() => {
+        setJiraProjects(response);
+        setJiraDiscovering(false);
+      });
+    } catch (reason) {
+      safe(() => {
+        setError(readableError(reason));
+        setJiraDiscovering(false);
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const discoverJiraProjects = useCallback(async (query?: string, cursor?: number) => {
+    if (!selectedJiraRef) return;
+    safe(() => setJiraDiscovering(true));
+    setError("");
+    try {
+      const response = await api.discoverJira(selectedJiraRef, "projects", { query, cursor });
+      safe(() => {
+        setJiraProjects((prev) => {
+          if (cursor != null && prev) {
+            return { ...response, items: [...prev.items, ...response.items] };
+          }
+          return response;
+        });
+        setJiraDiscovering(false);
+      });
+    } catch (reason) {
+      safe(() => {
+        setError(readableError(reason));
+        setJiraDiscovering(false);
+      });
+    }
+  }, [selectedJiraRef]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const discoverJiraTypes = useCallback(async (projectKey: string) => {
+    if (!selectedJiraRef) return;
+    safe(() => setJiraDiscovering(true));
+    setError("");
+    try {
+      const response = await api.discoverJira(selectedJiraRef, "issue_types", { projectKey });
+      safe(() => {
+        setJiraIssueTypes(response);
+        setJiraDiscovering(false);
+      });
+    } catch (reason) {
+      safe(() => {
+        setError(readableError(reason));
+        setJiraDiscovering(false);
+      });
+    }
+  }, [selectedJiraRef]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const discoverJiraStatuses = useCallback(async (projectKey: string) => {
+    if (!selectedJiraRef) return;
+    safe(() => setJiraDiscovering(true));
+    setError("");
+    try {
+      const response = await api.discoverJira(selectedJiraRef, "statuses", { projectKey });
+      safe(() => {
+        setJiraStatuses(response);
+        setJiraDiscovering(false);
+      });
+    } catch (reason) {
+      safe(() => {
+        setError(readableError(reason));
+        setJiraDiscovering(false);
+      });
+    }
+  }, [selectedJiraRef]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const validateJiraScopeAction = useCallback(async (projectKey: string) => {
+    if (!selectedJiraRef) return null;
+    setError("");
+    try {
+      return await api.validateJiraScope(selectedJiraRef, projectKey);
+    } catch (reason) {
+      safe(() => setError(readableError(reason)));
+      return null;
+    }
+  }, [selectedJiraRef]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const previewJiraPopulation = useCallback(async (jql: string, limit?: number) => {
+    if (!selectedJiraRef) return;
+    safe(() => setJiraPreviewing(true));
+    setError("");
+    try {
+      const result = await api.searchJira(selectedJiraRef, jql, limit);
+      safe(() => {
+        setJiraPreview(result);
+        setJiraPreviewing(false);
+      });
+    } catch (reason) {
+      safe(() => {
+        setError(readableError(reason));
+        setJiraPreviewing(false);
+      });
+    }
+  }, [selectedJiraRef]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const clarifyJiraProposalScope = useCallback(
+    async (proposalId: string): Promise<JiraClarifyScopeResponse | null> => {
+      if (!sessionRef.current) return null;
+      setError("");
+      try {
+        const response = await api.clarifyJiraScope(
+          sessionRef.current,
+          proposalId,
+          jiraScope.connectionRef,
+          jiraScope.projects,
+          jiraScope.issueTypes,
+        );
+        if (response.scopeState === "scoped") {
+          safe(() => {
+            setState((prev) => {
+              if (prev.kind !== "proposals" && prev.kind !== "review") return prev;
+              return {
+                ...prev,
+                proposals: prev.proposals.map((p) =>
+                  p.id === proposalId
+                    ? {
+                        ...p,
+                        spec: {
+                          ...p.spec,
+                          subject: {
+                            ...p.spec.subject,
+                            scope: {
+                              ...p.spec.subject.scope,
+                              connection_ref: jiraScope.connectionRef,
+                              projects: response.projects,
+                              issue_types: jiraScope.issueTypes,
+                            },
+                          },
+                        },
+                      }
+                    : p,
+                ),
+              };
+            });
+          });
+        }
+        return response;
+      } catch (reason) {
+        safe(() => setError(readableError(reason)));
+        return null;
+      }
+    },
+    [jiraScope], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const updateJiraScope = useCallback((partial: Partial<JiraScope>) => {
+    setJiraScopeRaw((prev) => ({ ...prev, ...partial }));
+  }, []);
+
+  const resetJiraState = useCallback(() => {
+    setJiraConnections([]);
+    setJiraKnownAccounts([]);
+    setSelectedJiraRef(null);
+    setJiraProjects(null);
+    setJiraIssueTypes(null);
+    setJiraStatuses(null);
+    setJiraScopeRaw({ connectionRef: "", projects: [], issueTypes: [], statusCategories: [], jql: "" });
+    setJiraPreview(null);
+    setJiraLoading(false);
+    setJiraDiscovering(false);
+    setJiraPreviewing(false);
+  }, []);
+
   return {
     state,
     error,
@@ -668,5 +920,30 @@ export function useSetupController() {
     validateRepo,
     clarifyProposalScope,
     resetProviderState,
+
+    // Jira operations (HS-166-04)
+    jiraConnections,
+    jiraKnownAccounts,
+    selectedJiraRef,
+    jiraProjects,
+    jiraIssueTypes,
+    jiraStatuses,
+    jiraScope,
+    jiraPreview,
+    jiraLoading,
+    jiraDiscovering,
+    jiraPreviewing,
+    loadJiraConnections,
+    addJiraConnection,
+    recheckJiraConnection,
+    selectJiraConnection,
+    discoverJiraProjects,
+    discoverJiraTypes,
+    discoverJiraStatuses,
+    validateJiraScope: validateJiraScopeAction,
+    previewJiraPopulation,
+    clarifyJiraProposalScope,
+    updateJiraScope,
+    resetJiraState,
   } as const;
 }

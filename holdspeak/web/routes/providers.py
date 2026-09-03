@@ -192,6 +192,32 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
 
     # ── GET /api/providers/jira/connections ───────────────────────────
 
+    def _enrich_jira_row(row: dict[str, Any]) -> dict[str, Any]:
+        """Derive account + recovery from the raw DB row for the wire.
+
+        DB rows carry ``external_connection_ref`` (site|email), ``state``,
+        ``last_error_code``, ``last_error_detail`` but NOT ``account`` or
+        ``recovery``.  The UI needs them: account for display, recovery
+        for the in-world login command.  HS-166-04.
+        """
+        ref = row.get("external_connection_ref") or row.get("connection_ref") or ""
+        site, email = ("", "")
+        if "|" in ref:
+            parts = ref.split("|", 1)
+            site, email = parts[0], parts[1]
+        enriched = dict(row)
+        enriched["connection_ref"] = ref
+        enriched["account"] = {"site": site, "email": email}
+        state = row.get("state", "")
+        if state == "owner_action_required":
+            enriched["recovery"] = {
+                "command": f"acli jira auth login --site {site} --email {email} --token",
+                "hint": "Authenticate with your Atlassian API token",
+            }
+        else:
+            enriched.setdefault("recovery", None)
+        return enriched
+
     @router.get("/api/providers/jira/connections")
     async def jira_connections(request: Request) -> Any:
         """List all Jira connections + known acli accounts."""
@@ -205,8 +231,9 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
                 )
             p = principal(request)
             rows = adapter.list_connections(p)
+            enriched = [_enrich_jira_row(r) for r in rows]
             known = adapter.known_accounts(p)
-            return JSONResponse({"connections": rows, "known_accounts": known})
+            return JSONResponse({"connections": enriched, "known_accounts": known})
         except Exception as exc:
             return error_500(exc, log, "Failed to list Jira connections")
 

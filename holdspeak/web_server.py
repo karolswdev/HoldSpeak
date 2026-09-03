@@ -199,6 +199,7 @@ class MeetingWebServer:
         dictation_corrections_repository: Optional[Any] = None,
         dictation_journal_repository: Optional[Any] = None,
         gh_runner: Optional[Any] = None,
+        acli_runner: Optional[Any] = None,
     ) -> None:
         if _IMPORT_ERROR is not None:
             raise RuntimeError(
@@ -214,6 +215,7 @@ class MeetingWebServer:
         # and WatchService snapshot_fetcher so the booted hub uses canned
         # responses instead of real subprocess calls.
         self._gh_runner = gh_runner
+        self._acli_runner = acli_runner
         # HS-39-02: one session-scoped dictation correction store, shared by the
         # dictation routes (record/read) and the live runtime (consult).
         # HS-40-02: when the live runtime injects a repository the store is
@@ -334,11 +336,18 @@ class MeetingWebServer:
     def _gh_watch_service_kwargs(self) -> dict[str, Any]:
         """HS-161-06 / HS-166-03 rider-a: extra kwargs for WatchService.
         Uses default_snapshot_fetcher so gh AND jira share the same
-        injection shape."""
+        injection shape.  HS-166-04: pass the composed Jira adapter
+        (with runner) so test/evaluate on a Jira Watch reaches the
+        fixture runner, not a lazy db-only adapter."""
+        from .db import get_database
+        from .services.jira_provider import JiraProviderAdapter
         from .services.watch_sources import default_snapshot_fetcher
+        jira = JiraProviderAdapter(
+            db=get_database(), runner=self._acli_runner,
+        ) if self._acli_runner else None
         fetcher = default_snapshot_fetcher(
             github_runner=self._gh_runner,
-            jira_adapter=None,  # web context composes its own adapter
+            jira_adapter=jira,
         )
         return {"snapshot_fetcher": fetcher}
 
@@ -896,7 +905,7 @@ class MeetingWebServer:
                 db=get_database(), runner=self._gh_runner,
             ),
             jira_provider=JiraProviderAdapter(
-                db=get_database(),
+                db=get_database(), runner=self._acli_runner,
             ),
             project_setup_service=ProjectSetupService(
                 get_database(),
@@ -909,7 +918,7 @@ class MeetingWebServer:
                     db=get_database(), runner=self._gh_runner,
                 ),
                 jira_adapter=JiraProviderAdapter(
-                    db=get_database(),
+                    db=get_database(), runner=self._acli_runner,
                 ),
             ),
             project_evidence_collector=ProjectEvidenceCollector(get_database()),

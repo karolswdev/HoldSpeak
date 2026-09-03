@@ -1,7 +1,7 @@
 # Phase 166 - Project Rooms: The Jira Parity (P7)
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 3/7
+- **Status:** ACTIVE 4/7
 - **Chartered:** 2026-09-03 off main `493253d8` (165 The MCP Family MERGED via PR #531 — the TENTH Project Rooms phase merged; this is the LAST §14 slice)
 - **Canon:** docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §14 P7; SRS_PROJECT_INTERVIEW_WATCHES.md §6 PROV-001..012, §8.2 Jira issue parity, §15 V0-D, SETFLOW-005; SRS_PRODUCT_VALIDATION.md (Jira only with a real adapter); CONSTITUTION.md Article III (honest egress)
 
@@ -61,25 +61,25 @@ never deleted), the per-watch cadence write wire (stays ledgered).
 | HS-166-01 | The acli pack + the connection ledger (many accounts × many sites; switch-and-verify) | done | [story-01-the-connection-ledger](./story-01-the-connection-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-166-02 | Discovery + search (projects, issue types, statuses, JQL; routes + MCP) | done | [story-02-discovery-and-search](./story-02-discovery-and-search.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-166-03 | The JiraWatchSource + templates + candidates (the gate graduates; the fetcher-seam rider) | done | [story-03-the-watch-source](./story-03-the-watch-source.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-166-04 | The web face (provider-keyed wizard; the site egress badge; shots) | backlog | [story-04-the-web-face](./story-04-the-web-face.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-166-04 | The web face (provider-keyed wizard; the site egress badge; shots) | done | [story-04-the-web-face](./story-04-the-web-face.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-166-05 | The live walk (real acli, real site(s), SETFLOW-005 — OWNER VERDICT) | backlog | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-166-06 | The docs (the acli transport canon edit; Jira honesty; the dedicated docs story) | backlog | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-166-06 | The docs (the acli transport canon edit; Jira honesty; the dedicated docs story) | in-progress | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-166-07 | The close (gates, riders, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**ACTIVE 3/7 — HS-166-03 DONE.** The watch_sources gate graduated:
-JiraWatchSource compiles one JQL from the WatchSpec subject, fetches
-through the adapter (search + bounded per-issue enrichment), and
-feeds the UNCHANGED test/baseline/evaluate/effect path — zero fork,
-proven by a jira leg through the real WatchService and LIVE on the
-owner's site (one harness transition → 3 transitions, ONE
-project.observe effect; unchanged refresh → 0). Five watch.jira.*
-templates; jira candidates + clarify in the interview; the ONE
-matcher gained six honest snapshot-level comparisons (paying the
-inherited older_than lie); both 165 riders paid (the shared
-default_snapshot_fetcher; the legacy-side guard). NEXT: HS-166-04
-the web face.
+**ACTIVE 4/7 — HS-166-04 DONE (after the owner's bounce and the
+redesign he ratified).** The Jira face is composed only from the
+surface library: account and project ChoiceCards, StateChips,
+ProvenanceChips naming the site, the population gadget sheet, a
+ProgressPlan that lights up during the test, ledger rows for matches
+and preview — zero sentences. Sixteen shots at 1440 + 393 read by the
+orchestrator; the gallery republished for the owner. The first build
+was rejected verbatim ("I absolutely hate the UX ... Walls of
+text..."); the redesign canvas earned "HECK YES, a BIG YES to this."
+Assets: settled-design-face.md (RATIFIED), story-04-shots/. NEXT:
+HS-166-06 the docs (ready, sequenced behind this commit) and
+HS-166-05 the live walk.
 
 ## Recorded truths (the orchestrator's own acli runs, 2026-09-03)
 
