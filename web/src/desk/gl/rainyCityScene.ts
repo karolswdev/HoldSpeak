@@ -27,15 +27,15 @@ const LAMP_Z = -5.2;
 const BULB_X = -4.75;
 const BULB_Y = 7.35;
 const LAMP_INTENSITY = 28;
-const CAMERA_X = 4.8;
-const CAMERA_Y = 2.85;
+const CAMERA_X = 3.6;
+const CAMERA_Y = 2.35;
 const CAMERA_Z = 18;
-const CAMERA_TARGET_X = -2.4;
-const CAMERA_TARGET_Y = 4.7;
-const CAMERA_TARGET_Z = -34;
-const NEON_X = 9.4;
-const NEON_Y = 7.6;
-const NEON_Z = -21.5;
+const CAMERA_TARGET_X = -1.2;
+const CAMERA_TARGET_Y = 3.8;
+const CAMERA_TARGET_Z = -42;
+const NEON_X = 4.72;
+const NEON_Y = 9;
+const NEON_Z = -10.5;
 
 interface RainDrop {
   x: number;
@@ -284,10 +284,10 @@ class RainyCityScene implements AtmosphereScene {
   private readonly reflections: ReflectionStreak[] = [];
   private readonly trafficReflections: TrafficReflection[] = [];
   private readonly neonTubes: NeonTube[] = [];
-  private readonly baseSky = new THREE.Color(0x07131f);
+  private readonly baseSky = new THREE.Color(0x0a1d2d);
   private readonly lightningSky = new THREE.Color(0x7393ad);
   private readonly sky = new THREE.Color();
-  private readonly fogBase = new THREE.Color(0x0a1a2a);
+  private readonly fogBase = new THREE.Color(0x0c2132);
   private readonly fogLightning = new THREE.Color(0x66869f);
   private readonly cameraTarget = new THREE.Vector3(
     CAMERA_TARGET_X,
@@ -483,7 +483,7 @@ class RainyCityScene implements AtmosphereScene {
     // The curb runs toward the skyline. With the off-axis camera this strong
     // diagonal is what makes the scene read as a street rather than a stage.
     box(this.scene, [10.4, 0.26, 95], [-12.1, 0.13, -5], sidewalkMaterial);
-    box(this.scene, [9.5, 0.22, 95], [16.9, 0.11, -5], sidewalkMaterial);
+    box(this.scene, [9.5, 0.22, 95], [11.65, 0.11, -5], sidewalkMaterial);
 
     const curbMaterial = new THREE.MeshStandardMaterial({
       color: 0x35434a,
@@ -491,12 +491,12 @@ class RainyCityScene implements AtmosphereScene {
       metalness: 0.18,
     });
     box(this.scene, [0.42, 0.44, 95], [-6.72, 0.22, -5], curbMaterial);
-    box(this.scene, [0.34, 0.34, 95], [12.05, 0.17, -5], curbMaterial);
+    box(this.scene, [0.34, 0.34, 95], [6.72, 0.17, -5], curbMaterial);
 
     const curbSeamMaterial = new THREE.MeshBasicMaterial({
       color: 0x80909a,
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.11,
     });
     for (let z = -48; z < 40; z += 3.6) {
       box(
@@ -508,7 +508,7 @@ class RainyCityScene implements AtmosphereScene {
       box(
         this.scene,
         [8.7, 0.025, 0.035],
-        [16.85, 0.235, z + 1.2],
+        [11.65, 0.235, z + 1.2],
         curbSeamMaterial,
       );
     }
@@ -568,7 +568,7 @@ class RainyCityScene implements AtmosphereScene {
         laneMaterial,
       );
       lane.rotation.x = -Math.PI / 2;
-      lane.position.set(3.05, 0.018, z);
+      lane.position.set(0.05, 0.018, z);
       this.scene.add(lane);
     }
   }
@@ -581,11 +581,11 @@ class RainyCityScene implements AtmosphereScene {
     });
     for (let z = -19.5; z <= -15.2; z += 0.85) {
       const stripe = new THREE.Mesh(
-        new THREE.PlaneGeometry(15.8, 0.42),
+        new THREE.PlaneGeometry(12.4, 0.42),
         roadMark,
       );
       stripe.rotation.x = -Math.PI / 2;
-      stripe.position.set(2.65, 0.022, z);
+      stripe.position.set(0, 0.022, z);
       this.scene.add(stripe);
     }
 
@@ -646,15 +646,15 @@ class RainyCityScene implements AtmosphereScene {
       }),
     );
     manhole.rotation.x = -Math.PI / 2;
-    manhole.position.set(6.4, 0.027, 2.8);
+    manhole.position.set(2.9, 0.027, 2.8);
     this.scene.add(manhole);
 
     // A distant signal closes the block and reinforces the vanishing point.
     const signal = new THREE.Group();
     signal.position.set(-6.85, 0.44, -21.6);
     box(signal, [0.12, 6.2, 0.12], [0, 3.1, 0], darkMetal);
-    box(signal, [4.2, 0.12, 0.12], [2.05, 5.9, 0], darkMetal);
-    box(signal, [0.58, 1.45, 0.5], [3.78, 5.25, 0], darkMetal);
+    box(signal, [12.35, 0.12, 0.12], [6.12, 5.9, 0], darkMetal);
+    box(signal, [0.58, 1.45, 0.5], [11.72, 5.25, 0], darkMetal);
     for (const [y, color] of [
       [5.7, 0x9c2f2e],
       [5.25, 0x8f7128],
@@ -663,7 +663,7 @@ class RainyCityScene implements AtmosphereScene {
       box(
         signal,
         [0.2, 0.2, 0.025],
-        [3.78, y, 0.265],
+        [11.72, y, 0.265],
         new THREE.MeshBasicMaterial({ color, toneMapped: false }),
       );
     }
@@ -790,12 +790,12 @@ class RainyCityScene implements AtmosphereScene {
       }
     };
 
-    // Meter-like proportions and overlapping depth bands stop the city from
-    // reading as a tabletop model. The nearest roofs disappear above frame.
+    // The distant skyline closes the view beyond the block, while lower
+    // foreground façades below run with the street rather than across it.
     const layers = [
-      { z: -72, maxHeight: 67, minHeight: 27, chance: 0.18, scale: 1.15 },
-      { z: -52, maxHeight: 53, minHeight: 21, chance: 0.27, scale: 1 },
-      { z: -34, maxHeight: 40, minHeight: 15, chance: 0.34, scale: 0.88 },
+      { z: -100, maxHeight: 50, minHeight: 25, chance: 0.17, scale: 1.12 },
+      { z: -78, maxHeight: 38, minHeight: 18, chance: 0.24, scale: 1 },
+      { z: -58, maxHeight: 25, minHeight: 12, chance: 0.31, scale: 0.9 },
     ];
     for (let layer = 0; layer < layers.length; layer += 1) {
       const band = layers[layer];
@@ -807,17 +807,21 @@ class RainyCityScene implements AtmosphereScene {
           this.layoutRandom() * (band.maxHeight - band.minHeight);
         const depth = 6 + this.layoutRandom() * 7;
         x += width / 2;
-        addBuilding(
-          x,
-          band.z + this.layoutRandom() * 4,
-          width,
-          height,
-          depth,
-          facadePalette[
-            (layer + Math.floor(this.layoutRandom() * 3)) % facadePalette.length
-          ],
-          band.chance,
-        );
+        const closesStreet = x - width / 2 < 8 && x + width / 2 > -8;
+        if (layer === 0 || !closesStreet) {
+          addBuilding(
+            x,
+            band.z + this.layoutRandom() * 4,
+            width,
+            height,
+            depth,
+            facadePalette[
+              (layer + Math.floor(this.layoutRandom() * 3)) %
+                facadePalette.length
+            ],
+            band.chance,
+          );
+        }
         x += width / 2 + 0.8 + this.layoutRandom() * 2.2;
       }
     }
@@ -829,20 +833,135 @@ class RainyCityScene implements AtmosphereScene {
       roughness: 0.68,
       metalness: 0.14,
     });
-    box(this.scene, [9, 38, 8], [8, 19.4, -57], landmark);
-    box(this.scene, [6.4, 13, 6.4], [8, 44.9, -57], landmark);
-    box(this.scene, [3.5, 8, 4.2], [8, 55.4, -57], landmark);
-    box(this.scene, [0.62, 14, 0.62], [8, 66.4, -57], landmark);
+    box(this.scene, [8.5, 32, 8], [-3, 16.4, -96], landmark);
+    box(this.scene, [6.1, 12, 6.4], [-3, 38.4, -96], landmark);
+    box(this.scene, [3.4, 7, 4.2], [-3, 47.9, -96], landmark);
+    box(this.scene, [0.54, 10, 0.54], [-3, 56.4, -96], landmark);
     box(
       this.scene,
       [0.9, 0.55, 0.9],
-      [8, 73.7, -57],
+      [-3, 61.7, -96],
       new THREE.MeshBasicMaterial({ color: 0xe45f55, toneMapped: false }),
     );
 
+    const sideRotation = {
+      left: new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(0, Math.PI / 2, 0),
+      ),
+      right: new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(0, -Math.PI / 2, 0),
+      ),
+    };
+    const canyonSegments = [
+      { z: -3, depth: 21, baseHeight: 17 },
+      { z: -24, depth: 17, baseHeight: 22 },
+      { z: -43, depth: 17, baseHeight: 27 },
+    ];
+    for (const side of [-1, 1] as const) {
+      const faceX = side * 7.05;
+      for (let segment = 0; segment < canyonSegments.length; segment += 1) {
+        const section = canyonSegments[segment];
+        const width = 7.4 + this.layoutRandom() * 2.2;
+        const height = section.baseHeight + this.layoutRandom() * 8;
+        const centerX = faceX + (side * width) / 2;
+        const material = new THREE.MeshStandardMaterial({
+          color:
+            facadePalette[
+              (segment + (side > 0 ? 1 : 3)) % facadePalette.length
+            ],
+          roughness: 0.76,
+          metalness: 0.1,
+        });
+        box(
+          this.scene,
+          [width, height, section.depth],
+          [centerX, height / 2 + 0.38, section.z],
+          material,
+        );
+
+        const rotation = side < 0 ? sideRotation.left : sideRotation.right;
+        for (
+          let windowZ = section.z - section.depth / 2 + 1.25;
+          windowZ < section.z + section.depth / 2 - 0.8;
+          windowZ += 1.65
+        ) {
+          for (let y = 2.2; y < height - 0.8; y += 1.45) {
+            if (this.layoutRandom() > 0.39) continue;
+            matrix.compose(
+              new THREE.Vector3(faceX - side * 0.018, y, windowZ),
+              rotation,
+              new THREE.Vector3(1.1, 1.05, 1),
+            );
+            const roll = this.layoutRandom();
+            (roll > 0.3
+              ? coolWindows
+              : roll > 0.1
+                ? warmWindows
+                : dimWindows
+            ).push(matrix.clone());
+          }
+        }
+
+        if (segment === 0) {
+          for (
+            let storefrontZ = section.z - section.depth / 2 + 2;
+            storefrontZ < section.z + section.depth / 2 - 1;
+            storefrontZ += 3.3
+          ) {
+            matrix.compose(
+              new THREE.Vector3(faceX - side * 0.025, 2.15, storefrontZ),
+              rotation,
+              new THREE.Vector3(6, 3, 1),
+            );
+            dimWindows.push(matrix.clone());
+            box(
+              this.scene,
+              [0.075, 1.3, 0.075],
+              [faceX - side * 0.045, 2.15, storefrontZ],
+              material,
+            );
+            box(
+              this.scene,
+              [0.62, 0.16, 2.45],
+              [faceX - side * 0.28, 3.3, storefrontZ],
+              material,
+            );
+          }
+        }
+      }
+    }
+
+    const fireEscape = new THREE.MeshStandardMaterial({
+      color: 0x182126,
+      roughness: 0.5,
+      metalness: 0.72,
+    });
+    const escapeZ = -11;
+    for (const y of [5.7, 9, 12.3]) {
+      box(this.scene, [0.82, 0.1, 2.75], [-6.68, y, escapeZ], fireEscape);
+      for (const z of [escapeZ - 1.25, escapeZ, escapeZ + 1.25]) {
+        box(this.scene, [0.07, 0.9, 0.07], [-6.28, y + 0.48, z], fireEscape);
+      }
+      box(
+        this.scene,
+        [0.07, 0.07, 2.55],
+        [-6.28, y + 0.9, escapeZ],
+        fireEscape,
+      );
+    }
+    for (const y of [6.05, 9.35]) {
+      beamBetween(
+        this.scene,
+        new THREE.Vector3(-6.25, y, escapeZ - 1),
+        new THREE.Vector3(-6.25, y + 2.55, escapeZ + 1),
+        0.065,
+        fireEscape,
+      );
+    }
+
     this.addWindowBank(coolWindows, 0x86b3c5, 0.76, 0.4);
     this.addWindowBank(warmWindows, 0xf0b85f, 0.84, 1.7);
-    this.addWindowBank(dimWindows, 0x66818d, 0.4, 2.8);
+    this.addWindowBank(dimWindows, 0x66818d, 0.32, 2.8);
     this.buildNeonAccents();
   }
 
@@ -906,21 +1025,22 @@ class RainyCityScene implements AtmosphereScene {
   private buildForegroundNeonSign(): void {
     const sign = new THREE.Group();
     sign.position.set(NEON_X, NEON_Y, NEON_Z);
+    sign.scale.setScalar(0.72);
     const backing = new THREE.MeshStandardMaterial({
       color: 0x090e15,
       roughness: 0.54,
       metalness: 0.5,
     });
     const frame = new THREE.MeshStandardMaterial({
-      color: 0x27343c,
+      color: 0x465760,
       roughness: 0.48,
       metalness: 0.66,
     });
-    box(sign, [4.35, 2.65, 0.24], [0, 0, 0], backing);
-    box(sign, [4.58, 0.12, 0.3], [0, 1.38, 0], frame);
-    box(sign, [4.58, 0.12, 0.3], [0, -1.38, 0], frame);
-    box(sign, [0.12, 2.65, 0.3], [-2.23, 0, 0], frame);
-    box(sign, [0.12, 2.65, 0.3], [2.23, 0, 0], frame);
+    box(sign, [4.6, 3.35, 0.28], [0, 0, 0], backing);
+    box(sign, [4.82, 0.14, 0.34], [0, 1.75, 0], frame);
+    box(sign, [4.82, 0.14, 0.34], [0, -1.75, 0], frame);
+    box(sign, [0.14, 3.38, 0.34], [-2.39, 0, 0], frame);
+    box(sign, [0.14, 3.38, 0.34], [2.39, 0, 0], frame);
 
     const cyan = new THREE.MeshBasicMaterial({
       color: 0x3bdde4,
@@ -934,39 +1054,83 @@ class RainyCityScene implements AtmosphereScene {
       opacity: 0.9,
       toneMapped: false,
     });
+    const amber = new THREE.MeshBasicMaterial({
+      color: 0xffad4d,
+      transparent: true,
+      opacity: 0.86,
+      toneMapped: false,
+    });
+    const cyanField = new THREE.MeshBasicMaterial({
+      color: 0x268d9c,
+      transparent: true,
+      opacity: 0.24,
+      depthWrite: false,
+      toneMapped: false,
+    });
     this.neonTubes.push(
       { material: cyan, baseOpacity: 0.96 },
       { material: magenta, baseOpacity: 0.9 },
+      { material: amber, baseOpacity: 0.86 },
+      { material: cyanField, baseOpacity: 0.24 },
     );
-    const tube = (
-      size: [number, number, number],
-      position: [number, number, number],
-      material: THREE.MeshBasicMaterial,
-    ) => box(sign, size, position, material);
 
-    // Block-built “24” tubing keeps the retro language while reading as a
-    // proper city sign at a distance.
-    tube([1.35, 0.11, 0.08], [-1.05, 0.91, 0.18], cyan);
-    tube([0.11, 0.85, 0.08], [-0.43, 0.52, 0.18], cyan);
-    tube([1.35, 0.11, 0.08], [-1.05, 0.08, 0.18], cyan);
-    tube([0.11, 0.83, 0.08], [-1.67, -0.35, 0.18], cyan);
-    tube([1.35, 0.11, 0.08], [-1.05, -0.79, 0.18], cyan);
+    const field = new THREE.Mesh(new THREE.CircleGeometry(1.24, 32), cyanField);
+    field.position.z = 0.18;
+    sign.add(field);
 
-    tube([0.11, 1.02, 0.08], [0.52, 0.48, 0.18], magenta);
-    const diagonal = beamBetween(
-      sign,
-      new THREE.Vector3(0.52, 0.05, 0.18),
-      new THREE.Vector3(1.48, 0.93, 0.18),
-      0.11,
+    // A filled rain-drop core and heavy speech-wave arcs form an original
+    // emblem. The depth and broad color masses survive at background scale;
+    // this is deliberately not traced typography.
+    const dropShape = new THREE.Shape();
+    dropShape.moveTo(0, 1.08);
+    dropShape.bezierCurveTo(0.22, 0.64, 0.72, 0.08, 0.72, -0.38);
+    dropShape.bezierCurveTo(0.72, -0.86, 0.39, -1.14, 0, -1.14);
+    dropShape.bezierCurveTo(-0.39, -1.14, -0.72, -0.86, -0.72, -0.38);
+    dropShape.bezierCurveTo(-0.72, 0.08, -0.22, 0.64, 0, 1.08);
+    const drop = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(dropShape, {
+        depth: 0.16,
+        bevelEnabled: true,
+        bevelSegments: 2,
+        bevelSize: 0.055,
+        bevelThickness: 0.045,
+      }),
       magenta,
     );
-    diagonal.scale.z = 0.72;
-    tube([1.38, 0.11, 0.08], [1.12, 0.04, 0.18], magenta);
-    tube([0.11, 1.82, 0.08], [1.48, 0.04, 0.18], magenta);
+    drop.position.z = 0.2;
+    sign.add(drop);
 
-    // A slim bracket grounds the panel against the curbside architecture.
-    box(sign, [0.13, 5.9, 0.13], [2.05, -4.32, -0.12], frame);
-    box(sign, [1.05, 0.13, 0.13], [1.58, -1.25, -0.12], frame);
+    const addWave = (side: -1 | 1, radius: number, tubeRadius: number) => {
+      const from = side < 0 ? Math.PI * 0.62 : -Math.PI * 0.38;
+      const to = side < 0 ? Math.PI * 1.38 : Math.PI * 0.38;
+      const points = Array.from({ length: 9 }, (_, index) => {
+        const angle = THREE.MathUtils.lerp(from, to, index / 8);
+        return new THREE.Vector3(
+          Math.cos(angle) * radius,
+          Math.sin(angle) * radius,
+          0.34,
+        );
+      });
+      const curve = new THREE.CatmullRomCurve3(points);
+      sign.add(
+        new THREE.Mesh(
+          new THREE.TubeGeometry(curve, 28, tubeRadius, 7, false),
+          cyan,
+        ),
+      );
+    };
+    addWave(-1, 1.02, 0.085);
+    addWave(1, 1.02, 0.085);
+    addWave(-1, 1.42, 0.065);
+    addWave(1, 1.42, 0.065);
+
+    box(sign, [1.18, 0.12, 0.09], [0, -1.3, 0.29], amber);
+    box(sign, [0.78, 0.1, 0.09], [0, -1.48, 0.29], amber);
+
+    // Twin steel brackets terminate at the right-hand street wall.
+    box(sign, [1.05, 0.13, 0.13], [2.68, 1.12, -0.12], frame);
+    box(sign, [1.05, 0.13, 0.13], [2.68, -1.12, -0.12], frame);
+    box(sign, [0.16, 2.45, 0.16], [3.17, 0, -0.12], frame);
 
     this.neonGlowTexture = radialGlowTexture(64, [255, 255, 255]);
     const addNeonHalo = (
@@ -1023,10 +1187,10 @@ class RainyCityScene implements AtmosphereScene {
       );
       facet.rotation.x = -Math.PI / 2;
       facet.position.set(
-        THREE.MathUtils.lerp(NEON_X, 4.6, progress) +
+        THREE.MathUtils.lerp(NEON_X, 2.3, progress) +
           (this.layoutRandom() - 0.5) * (0.18 + progress * 1.25),
         PUDDLE_Y + 0.013,
-        -16.4 + progress * 24.5,
+        NEON_Z + 1.1 + progress * 17.5,
       );
       this.scene.add(facet);
       this.neonTubes.push({ material, baseOpacity });
@@ -1145,44 +1309,44 @@ class RainyCityScene implements AtmosphereScene {
       toneMapped: false,
     });
 
-    box(this.trafficCar, [3.15, 0.78, 5.05], [0, 0.84, 0], this.carPaint);
+    box(this.trafficCar, [2.05, 0.52, 4.55], [0, 0.66, 0], this.carPaint);
     const hood = box(
       this.trafficCar,
-      [3.02, 0.34, 1.42],
-      [0, 1.31, 1.62],
+      [1.96, 0.28, 1.34],
+      [0, 1.03, 1.5],
       this.carPaint,
     );
     hood.rotation.x = -0.05;
     const cabin = box(
       this.trafficCar,
-      [2.62, 1.02, 2.28],
-      [0, 1.62, -0.25],
+      [1.68, 0.78, 2.12],
+      [0, 1.27, -0.24],
       glass,
     );
     cabin.rotation.x = 0.025;
-    box(this.trafficCar, [3.2, 0.18, 0.24], [0, 0.62, 2.57], trim);
-    box(this.trafficCar, [3.2, 0.16, 0.2], [0, 0.64, -2.56], trim);
+    box(this.trafficCar, [2.1, 0.14, 0.2], [0, 0.48, 2.31], trim);
+    box(this.trafficCar, [2.1, 0.13, 0.18], [0, 0.49, -2.31], trim);
 
     const tire = new THREE.MeshStandardMaterial({
       color: 0x05080a,
       roughness: 0.9,
       metalness: 0.08,
     });
-    for (const x of [-1.52, 1.52]) {
-      for (const z of [-1.62, 1.62]) {
+    for (const x of [-0.98, 0.98]) {
+      for (const z of [-1.46, 1.46]) {
         const wheel = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.42, 0.42, 0.3, 12),
+          new THREE.CylinderGeometry(0.33, 0.33, 0.22, 12),
           tire,
         );
         wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(x, 0.49, z);
+        wheel.position.set(x, 0.36, z);
         this.trafficCar.add(wheel);
       }
     }
 
-    for (const x of [-0.96, 0.96]) {
-      box(this.trafficCar, [0.52, 0.27, 0.06], [x, 0.9, 2.56], headlamp);
-      box(this.trafficCar, [0.44, 0.2, 0.06], [x, 0.87, -2.57], tailLamp);
+    for (const x of [-0.62, 0.62]) {
+      box(this.trafficCar, [0.36, 0.2, 0.05], [x, 0.69, 2.29], headlamp);
+      box(this.trafficCar, [0.32, 0.15, 0.05], [x, 0.67, -2.29], tailLamp);
       const halo = new THREE.Sprite(
         new THREE.SpriteMaterial({
           map: this.lampGlowTexture,
@@ -1194,12 +1358,12 @@ class RainyCityScene implements AtmosphereScene {
           toneMapped: false,
         }),
       );
-      halo.position.set(x, 0.9, 2.68);
-      halo.scale.set(1.45, 1.45, 1);
+      halo.position.set(x, 0.69, 2.4);
+      halo.scale.set(0.92, 0.92, 1);
       this.trafficCar.add(halo);
     }
     const headlightWash = new THREE.PointLight(0xffd18a, 3, 10, 1.9);
-    headlightWash.position.set(0, 1.05, 3.05);
+    headlightWash.position.set(0, 0.82, 2.72);
     this.trafficCar.add(headlightWash);
     this.trafficCar.visible = false;
     this.scene.add(this.trafficCar);
@@ -1235,11 +1399,11 @@ class RainyCityScene implements AtmosphereScene {
   }
 
   private buildRain(): void {
-    const geometry = new THREE.BoxGeometry(0.026, 1, 0.026);
+    const geometry = new THREE.BoxGeometry(0.018, 1, 0.018);
     const material = new THREE.MeshBasicMaterial({
       color: 0xa2cad8,
       transparent: true,
-      opacity: 0.47,
+      opacity: 0.38,
       depthWrite: false,
     });
     this.rain = new THREE.InstancedMesh(geometry, material, RAIN_COUNT);
@@ -1305,7 +1469,7 @@ class RainyCityScene implements AtmosphereScene {
         : 28 + this.weatherRandom() * 8,
       z: -65 + this.weatherRandom() * 86,
       speed: 13 + this.weatherRandom() * 17,
-      length: 0.45 + this.weatherRandom() * 1.35,
+      length: 0.28 + this.weatherRandom() * 0.98,
       drift: 0.55 + this.weatherRandom() * 0.85,
     };
   }
@@ -1554,7 +1718,7 @@ class RainyCityScene implements AtmosphereScene {
     if (this.carStarted < 0 && frame.elapsed >= this.nextCar) {
       this.carStarted = frame.elapsed;
       this.carDuration = 6.2 + this.trafficRandom() * 2.2;
-      this.carLaneX = -0.8 + this.trafficRandom() * 2.25;
+      this.carLaneX = -3.35 + this.trafficRandom() * 1.35;
       const trafficPalette = [0x8a6a20, 0x263f52, 0x542c2c, 0x343b40];
       this.carPaint.color.setHex(
         trafficPalette[
@@ -1573,7 +1737,7 @@ class RainyCityScene implements AtmosphereScene {
       this.carStarted,
       this.carDuration,
     );
-    const z = THREE.MathUtils.lerp(-48, 23, progress);
+    const z = THREE.MathUtils.lerp(-55, 24, progress);
     const fade = Math.min(1, progress * 8, (1 - progress) * 10);
     this.trafficCar.position.set(
       this.carLaneX + Math.sin(progress * Math.PI) * 0.16,

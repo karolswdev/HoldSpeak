@@ -12,11 +12,13 @@ Behind the Floor, a procedural Three.js atmosphere turns the stage into a rainy
 city at night: a block-built but human-scaled skyline, wet street, lamplit
 puddle, depth-layered rain, irregular ripples and splash arcs, drifting cloud
 banks, reflected city light, and occasional distant lightning. The off-axis
-street canyon adds receding sidewalks, curbs, lane markings, a crosswalk,
-gutter furniture, and seeded passing traffic whose headlights fracture across
-the wet road and puddle. A modeled neon sign flickers on its own seeded
-electrical rhythm, casting synchronized bloom into nearby rain trajectories
-and cyan/magenta facets onto the asphalt. A screen-space
+street canyon adds façade-aligned buildings, storefronts, a fire escape,
+receding sidewalks and curbs, a two-lane road, a crosswalk, gutter furniture,
+and seeded passing traffic whose headlights fracture across the wet road and
+puddle. A dimensional rain-and-speech neon emblem is bracketed into the right
+façade and flickers on its own seeded electrical rhythm, casting synchronized
+bloom into nearby rain trajectories and cyan/magenta facets onto the asphalt.
+A screen-space
 bloom pass, formula-generated radial falloff, and a seeded local rain volume
 make precipitation catch the streetlamp without relying on painted glow or
 weather assets. Pixel art comes from the modeled forms and restrained
