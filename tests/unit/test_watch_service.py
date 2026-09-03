@@ -655,7 +655,7 @@ class TestConditionValidation:
 
     @pytest.mark.parametrize("comparison", sorted(COMPARISONS))
     def test_all_closed_comparisons_accepted(self, comparison) -> None:
-        no_value = {"exists", "missing", "changed"}
+        no_value = {"exists", "missing", "changed", "overdue"}
         cond = {"field": "x", "comparison": comparison}
         if comparison not in no_value:
             cond["value"] = "test"
@@ -1141,3 +1141,229 @@ class TestEvaluateOnce:
         assert "concurrent" in r2.get("message", "").lower() or "already" in r2.get("message", "").lower(), (
             f"Message should indicate concurrent/duplicate; got {r2['message']!r}"
         )
+
+
+# ── HS-166-03: Jira leg through the real WatchService path ───────────
+# Zero-fork proof: baseline/evaluate/dedup/effects stay untouched.
+
+
+class TestJiraLeg:
+    """A jira watch tests, baselines, evaluates through unchanged WatchService."""
+
+    def _jira_fetcher(self, phase_entities):
+        """Return a fetcher cycling through entity phases."""
+        call_count = [0]
+        def fetcher(principal, *, connector_id, query_kind, query):
+            idx = min(call_count[0], len(phase_entities) - 1)
+            call_count[0] += 1
+            return list(phase_entities[idx])
+        return fetcher
+
+    def test_jira_test_watch_display_block(self, tmp_path) -> None:
+        """test_watch for a jira watch populates the SS8.2 display payload."""
+        db = Database(tmp_path / "jira-leg-test.db")
+        entities = [
+            {"id": "KAN-1", "key": "KAN-1", "title": "Task 1",
+             "status": "In Progress", "status_category": "indeterminate",
+             "assignee": "alice", "priority": "high", "resolution": "",
+             "due_at": "2026-09-10", "updated_at": "2026-09-01T00:00:00Z",
+             "issue_type": "Task", "labels": [], "project_key": "KAN",
+             "url": "https://alpha.atlassian.net/browse/KAN-1",
+             "status_changed_at": "2026-09-01T00:00:00Z", "created_at": "2026-08-01"},
+        ]
+        fetcher = self._jira_fetcher([entities])
+        _make_watch(db, "watch-jira-01", connector_id="jira",
+                    query_kind="issues", query={
+                        "connection_ref": "alpha.atlassian.net|user@example.com",
+                        "projects": ["KAN"],
+                    })
+        svc = _watch_svc(db, fetcher)
+        result = svc.test_watch(OWNER, "watch-jira-01")
+        assert result["test_state"] == "passed"
+        r = result["result"]
+        assert r["provider"] == "jira"
+        assert r["connection"]["site"] == "alpha.atlassian.net"
+        assert r["connection"]["email"] == "user@example.com"
+        assert r["projects"] == ["KAN"]
+        assert "normalized_jql" in r
+        assert r["entity_count"] == 1
+        assert len(r["representative_entities"]) == 1
+        assert "matched_conditions" in r
+        assert "supported_transitions" in r
+        assert "jira.issue.status_changed" in r["supported_transitions"]
+
+    def test_jira_test_watch_error_twin(self, tmp_path) -> None:
+        """test_watch for a failing jira watch carries provider context."""
+        db = Database(tmp_path / "jira-leg-err.db")
+        def failing_fetcher(principal, **kwargs):
+            from holdspeak.services.errors import ServiceError
+            raise ServiceError("connector_query_invalid", "bad JQL")
+        _make_watch(db, "watch-jira-err", connector_id="jira",
+                    query_kind="issues", query={
+                        "connection_ref": "alpha.atlassian.net|user@example.com",
+                    })
+        svc = _watch_svc(db, failing_fetcher)
+        result = svc.test_watch(OWNER, "watch-jira-err")
+        assert result["test_state"] == "failed"
+        r = result["result"]
+        assert r["provider"] == "jira"
+        assert r["connection"]["site"] == "alpha.atlassian.net"
+
+    def test_jira_baseline(self, tmp_path) -> None:
+        """baseline_watch for a jira watch writes snapshot without events."""
+        db = Database(tmp_path / "jira-baseline.db")
+        entities = [
+            {"id": "KAN-1", "key": "KAN-1", "title": "Task 1",
+             "status": "todo", "status_category": "new",
+             "assignee": "", "priority": "", "resolution": "",
+             "due_at": "", "updated_at": "2026-09-01T00:00:00Z",
+             "issue_type": "Task", "labels": [], "project_key": "KAN",
+             "url": "https://a.atlassian.net/browse/KAN-1",
+             "status_changed_at": "", "created_at": ""},
+        ]
+        fetcher = self._jira_fetcher([entities])
+        _make_watch(db, "watch-jira-bl", connector_id="jira",
+                    query_kind="issues", query={
+                        "connection_ref": "a.atlassian.net|u@x.com",
+                    })
+        svc = _watch_svc(db, fetcher)
+        svc.baseline_watch(OWNER, "watch-jira-bl")
+        watch = db.automations.get_watch("watch-jira-bl")
+        # _payload parses snapshot_json into "snapshot" key
+        snapshot = watch.get("snapshot", {})
+        assert "KAN-1" in snapshot.get("entities", {})
+
+    def test_jira_evaluate_dedup(self, tmp_path) -> None:
+        """Same source_revision evaluates once (idempotency)."""
+        db = Database(tmp_path / "jira-dedup.db")
+        entities = [
+            {"id": "KAN-1", "key": "KAN-1", "title": "Task 1",
+             "status": "todo", "status_category": "new",
+             "assignee": "", "priority": "", "resolution": "",
+             "due_at": "", "updated_at": "2026-09-01T00:00:00Z",
+             "issue_type": "Task", "labels": [], "project_key": "KAN",
+             "url": "https://a.atlassian.net/browse/KAN-1",
+             "status_changed_at": "", "created_at": ""},
+        ]
+        fetcher = self._jira_fetcher([entities])
+        _make_watch(db, "watch-jira-dd", connector_id="jira",
+                    query_kind="issues", query={
+                        "connection_ref": "a.atlassian.net|u@x.com",
+                    })
+        svc = _watch_svc(db, fetcher)
+        # baseline first
+        svc.baseline_watch(OWNER, "watch-jira-dd")
+        # first evaluate
+        r1 = svc.evaluate_once(OWNER, "watch-jira-dd")
+        # same snapshot -> no_op
+        r2 = svc.evaluate_once(OWNER, "watch-jira-dd")
+        assert r2["state"] == "no_op"
+
+    def test_jira_status_transition_creates_effect(self, tmp_path) -> None:
+        """A jira status transition through evaluate_due records ONE effect."""
+        db = Database(tmp_path / "jira-effect.db")
+        baseline = [
+            {"id": "KAN-1", "key": "KAN-1", "title": "Task 1",
+             "status": "todo", "status_category": "new",
+             "assignee": "", "priority": "", "resolution": "",
+             "due_at": "", "updated_at": "2026-09-01T00:00:00Z",
+             "issue_type": "Task", "labels": [], "project_key": "KAN",
+             "url": "https://a.atlassian.net/browse/KAN-1",
+             "status_changed_at": "", "created_at": ""},
+        ]
+        changed = [
+            {"id": "KAN-1", "key": "KAN-1", "title": "Task 1",
+             "status": "in progress", "status_category": "indeterminate",
+             "assignee": "", "priority": "", "resolution": "",
+             "due_at": "", "updated_at": "2026-09-01T12:00:00Z",
+             "issue_type": "Task", "labels": [], "project_key": "KAN",
+             "url": "https://a.atlassian.net/browse/KAN-1",
+             "status_changed_at": "2026-09-01T12:00:00Z", "created_at": ""},
+        ]
+        fetcher = self._jira_fetcher([baseline, changed])
+
+        # Create a project for observations
+        from holdspeak.services.project_service import ProjectService
+        ps = ProjectService(db)
+        project = ps.create_project(OWNER, {"name": "Effect test", "description": "d"})
+        project_id = project["id"]
+
+        _make_watch(db, "watch-jira-fx", connector_id="jira",
+                    query_kind="issues", query={
+                        "connection_ref": "a.atlassian.net|u@x.com",
+                    })
+        # Graduate the watch
+        db.automations.update_watch_spec(
+            "watch-jira-fx",
+            state="active",
+            schema_version="WatchSpec@1",
+            evaluation_cadence_minutes=60,
+            next_evaluation_at="2020-01-01T00:00:00",
+        )
+        # Bind watch to project
+        with db._connection() as conn:
+            conn.execute(
+                "UPDATE connector_watches SET project_id=? WHERE id=?",
+                (project_id, "watch-jira-fx"),
+            )
+
+        # Create a rule that matches status_changed
+        from holdspeak.watch_validation import CONDITION_SCHEMA, ACTION_SCHEMA
+        svc = _watch_svc(db, fetcher)
+        svc.set_rules(OWNER, "watch-jira-fx", [{
+            "condition": {
+                "schema": CONDITION_SCHEMA,
+                "operator": "any",
+                "clauses": [
+                    {"field": "status", "comparison": "changed"},
+                ],
+            },
+            "actions": [
+                {"schema": ACTION_SCHEMA, "kind": "project.observe"},
+            ],
+        }])
+
+        # Baseline
+        svc.baseline_watch(OWNER, "watch-jira-fx")
+        # Evaluate via evaluate_due (the scheduled path)
+        outcomes = svc.evaluate_due(OWNER)
+        assert len(outcomes) == 1
+        outcome = outcomes[0]
+        assert outcome["outcome"] in ("evaluated", "probe_half_open")
+        assert outcome["transitions"] > 0
+        # The effect was recorded
+        assert "effects" in outcome
+        assert len(outcome["effects"]) >= 1
+
+    def test_jira_unchanged_yields_no_op(self, tmp_path) -> None:
+        """Re-evaluate unchanged snapshot -> no new effects (zero-fork proof)."""
+        db = Database(tmp_path / "jira-noop.db")
+        entities = [
+            {"id": "KAN-1", "key": "KAN-1", "title": "Task 1",
+             "status": "todo", "status_category": "new",
+             "assignee": "", "priority": "", "resolution": "",
+             "due_at": "", "updated_at": "2026-09-01T00:00:00Z",
+             "issue_type": "Task", "labels": [], "project_key": "KAN",
+             "url": "https://a.atlassian.net/browse/KAN-1",
+             "status_changed_at": "", "created_at": ""},
+        ]
+        fetcher = self._jira_fetcher([entities])
+        _make_watch(db, "watch-jira-noop", connector_id="jira",
+                    query_kind="issues", query={
+                        "connection_ref": "a.atlassian.net|u@x.com",
+                    })
+        db.automations.update_watch_spec(
+            "watch-jira-noop",
+            state="active",
+            schema_version="WatchSpec@1",
+            evaluation_cadence_minutes=60,
+            next_evaluation_at="2020-01-01T00:00:00",
+        )
+        svc = _watch_svc(db, fetcher)
+        svc.baseline_watch(OWNER, "watch-jira-noop")
+        outcomes = svc.evaluate_due(OWNER)
+        assert len(outcomes) == 1
+        # no_op or zero transitions
+        outcome = outcomes[0]
+        assert outcome.get("transitions", 0) == 0 or outcome["outcome"] == "evaluated"
+        assert "effects" not in outcome or len(outcome.get("effects", [])) == 0

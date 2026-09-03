@@ -84,6 +84,17 @@ _GITHUB_TRANSITION_KINDS: tuple[str, ...] = (
     "github.pr.head_changed",
 )
 
+# HS-166-03: Jira transition kinds (diff_snapshots vocabulary for jira)
+_JIRA_TRANSITION_KINDS: tuple[str, ...] = (
+    "jira.issue.discovered",
+    "jira.issue.assigned",
+    "jira.issue.status_changed",
+    "jira.issue.category_changed",
+    "jira.issue.priority_changed",
+    "jira.issue.due_changed",
+    "jira.issue.resolved",
+)
+
 
 def _github_conditions_summary(
     entities: dict[str, dict[str, Any]],
@@ -115,6 +126,70 @@ def _github_conditions_summary(
         "review_decisions": review_decisions,
         "drafts": drafts,
     }
+
+
+def _jira_conditions_summary(
+    entities: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """Build a summary of present conditions across Jira entities (SS8.2).
+
+    Returns a compact map:
+    - statuses: {"in progress": 2, "done": 1}
+    - status_categories: {"indeterminate": 2, "done": 1}
+    - priorities: {"high": 1, "medium": 2}
+    - assignees: {"alice": 1, "": 2}
+    - resolutions: {"": 2, "fixed": 1}
+    - due_soon: count of entities with due_at within 7 days
+    - overdue: count of entities with due_at in the past and no resolution
+    """
+    from datetime import datetime, timedelta, timezone as _tz
+
+    statuses: dict[str, int] = {}
+    status_categories: dict[str, int] = {}
+    priorities: dict[str, int] = {}
+    assignees: dict[str, int] = {}
+    resolutions: dict[str, int] = {}
+    due_soon = 0
+    overdue_count = 0
+    now = datetime.now(_tz.utc)
+    for e in entities.values():
+        s = e.get("status", "")
+        statuses[s] = statuses.get(s, 0) + 1
+        sc = e.get("status_category", "")
+        status_categories[sc] = status_categories.get(sc, 0) + 1
+        p = e.get("priority", "")
+        priorities[p] = priorities.get(p, 0) + 1
+        a = e.get("assignee", "")
+        assignees[a] = assignees.get(a, 0) + 1
+        r = e.get("resolution", "")
+        resolutions[r] = resolutions.get(r, 0) + 1
+        due_at = e.get("due_at", "")
+        if due_at:
+            try:
+                due_dt = datetime.fromisoformat(str(due_at).replace("Z", "+00:00"))
+                if due_dt.tzinfo is None:
+                    due_dt = due_dt.replace(tzinfo=_tz.utc)
+                if due_dt <= now + timedelta(days=7):
+                    due_soon += 1
+                if due_dt < now and not r:
+                    overdue_count += 1
+            except (ValueError, TypeError):
+                pass
+    return {
+        "statuses": statuses,
+        "status_categories": status_categories,
+        "priorities": priorities,
+        "assignees": assignees,
+        "resolutions": resolutions,
+        "due_soon": due_soon,
+        "overdue": overdue_count,
+    }
+
+
+def _compile_jql_for_display(query: dict[str, Any]) -> str:
+    """Compile the JQL for display in the test result (HS-166-03)."""
+    from holdspeak.services.watch_sources import _compile_jql
+    return _compile_jql(query)
 
 
 def _classify_test_error(exc: Exception) -> tuple[str, str]:
@@ -385,6 +460,29 @@ class WatchService:
                     _GITHUB_TRANSITION_KINDS
                 )
 
+            # SS8.2: enrich jira-family watches with the full display
+            # payload (HS-166-03).
+            if connector_id == "jira":
+                conn_ref = query.get("connection_ref", "")
+                site = conn_ref.split("|")[0] if "|" in conn_ref else ""
+                email = conn_ref.split("|")[1] if "|" in conn_ref else ""
+                test_result["provider"] = "jira"
+                test_result["connection"] = {
+                    "site": site,
+                    "email": email,
+                    "connection_ref": conn_ref,
+                }
+                test_result["projects"] = query.get("projects", [])
+                test_result["normalized_jql"] = (
+                    _compile_jql_for_display(query)
+                )
+                test_result["matched_conditions"] = (
+                    _jira_conditions_summary(snapshot["entities"])
+                )
+                test_result["supported_transitions"] = list(
+                    _JIRA_TRANSITION_KINDS
+                )
+
             test_state = "passed"
         except Exception as exc:
             duration_ms = int((time.monotonic() - t0) * 1000)
@@ -411,6 +509,19 @@ class WatchService:
                 )
                 test_result["repository"] = query.get("repository", "")
                 test_result["normalized_query"] = query
+
+            # SS8.2: jira-family failures still carry provider context.
+            if connector_id == "jira":
+                conn_ref = query.get("connection_ref", "")
+                site = conn_ref.split("|")[0] if "|" in conn_ref else ""
+                email = conn_ref.split("|")[1] if "|" in conn_ref else ""
+                test_result["provider"] = "jira"
+                test_result["connection"] = {
+                    "site": site,
+                    "email": email,
+                    "connection_ref": conn_ref,
+                }
+                test_result["projects"] = query.get("projects", [])
 
             test_state = "failed"
 

@@ -14,12 +14,13 @@ A transition has::
             "entity_title": "PR title",
             "url": "...",
             "changed": {"checks": ["failure", "success"]},
+            "current": {...}  # HS-166-03: the current entity snapshot
         },
     }
 
 A condition leaf has ``field``, ``comparison``, and optionally ``value``.
 The matcher resolves ``field`` against each transition's
-``facts.changed`` dict — if the field key is present in ``changed``,
+``facts.changed`` dict -- if the field key is present in ``changed``,
 the leaf comparisons apply to the change tuple ``[old, new]``.
 
 For comparisons that do not reference ``changed``:
@@ -28,15 +29,34 @@ For comparisons that do not reference ``changed``:
 - ``equals``/``not_equals``/``in``/``not_in`` compare the NEW value
   (index 1 of the change pair, or the raw value if not a pair).
 
+Snapshot-level comparisons (HS-166-03):
+- ``entered_state`` is an alias for ``changed_to`` on the field;
+  matchable on transitions whose ``changed`` carries the field.
+- ``due_within_days``, ``overdue``, ``inactive_for``, ``older_than``,
+  ``newer_than`` read from ``facts.current[field]`` (the current
+  entity snapshot) when the field is absent from ``changed``.
+  These are provider-agnostic and operate on ISO date/datetime strings.
+
 Convention: follows watch_validation.py (pure, package-root).
 
 HS-164-03 trace: this is the minimal honest matcher for the condition
-shapes the 159/161 templates actually emit.  Unmatchable conditions
-return False with no side-effects.
+shapes the 159/161 templates actually emit.
+HS-166-03 trace: six comparisons graduate -- entered_state,
+due_within_days, overdue, inactive_for, older_than, newer_than.
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
+
+
+def _now_factory() -> datetime:
+    """Overridable clock for testing."""
+    return datetime.now(timezone.utc)
+
+
+# Module-level clock -- tests monkeypatch this.
+_clock = _now_factory
 
 
 def match_condition(
@@ -114,17 +134,135 @@ def _match_leaf(
     )
 
 
+def _parse_iso(value: Any) -> datetime | None:
+    """Parse an ISO date or datetime string to a tz-aware datetime."""
+    if not value:
+        return None
+    s = str(value).strip()
+    try:
+        parsed = datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except (ValueError, TypeError):
+        # Try date-only
+        try:
+            parsed = datetime.strptime(s[:10], "%Y-%m-%d")
+        except (ValueError, TypeError):
+            return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _parse_duration_days(value: Any) -> float | None:
+    """Parse a duration value: integer (days) or string like '7d'."""
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    s = str(value).strip().lower()
+    if s.endswith("d"):
+        try:
+            return float(s[:-1])
+        except ValueError:
+            return None
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+
 def _compare_against_transition(
     field: str,
     comparison: str,
     value: Any,
     transition: dict[str, Any],
 ) -> bool:
-    """Evaluate one comparison leaf against one transition."""
+    """Evaluate one comparison leaf against one transition.
+
+    Two resolution paths for the field value:
+    1. Change-level: field is in ``facts.changed`` -- the comparison
+       applies to the change pair [old, new].
+    2. Snapshot-level: field is NOT in ``changed`` but IS in
+       ``facts.current`` -- snapshot-level comparisons (older_than,
+       newer_than, due_within_days, overdue, inactive_for) read the
+       current entity's field value.  Change-level comparisons
+       (changed, changed_to, changed_from) require the field in
+       ``changed`` and return False when it is absent.
+    """
     facts = transition.get("facts", {})
     changed = facts.get("changed", {})
+    current = facts.get("current", {})
 
-    # The field must be present in the changed dict for most comparisons.
+    # ── Snapshot-level comparisons (read current entity) ───────────
+    # These do NOT require the field in changed.  They inspect the
+    # entity's current state.  If the field IS in changed, they use
+    # the new value from the change pair; otherwise they read from
+    # current.
+
+    if comparison == "entered_state":
+        # Alias for changed_to: the field MUST be in changed.
+        if field not in changed:
+            return False
+        change_val = changed[field]
+        if isinstance(change_val, list) and len(change_val) == 2:
+            return change_val[1] == value
+        return change_val == value
+
+    if comparison in ("older_than", "newer_than", "due_within_days",
+                      "overdue", "inactive_for"):
+        # Resolve the field value: prefer changed (new), fall back to current.
+        if field in changed:
+            change_val = changed[field]
+            if isinstance(change_val, list) and len(change_val) == 2:
+                field_val = change_val[1]
+            else:
+                field_val = change_val
+        elif field in current:
+            field_val = current[field]
+        else:
+            return False
+
+        now = _clock()
+
+        if comparison == "overdue":
+            # due_at field < today AND no resolution
+            dt = _parse_iso(field_val)
+            if dt is None:
+                return False
+            resolution = current.get("resolution", "")
+            if resolution:
+                return False
+            return dt < now
+
+        days = _parse_duration_days(value)
+        if days is None:
+            return False
+
+        dt = _parse_iso(field_val)
+        if dt is None:
+            return False
+
+        if comparison == "older_than":
+            from datetime import timedelta
+            cutoff = now - timedelta(days=days)
+            return dt < cutoff
+        elif comparison == "newer_than":
+            from datetime import timedelta
+            cutoff = now - timedelta(days=days)
+            return dt > cutoff
+        elif comparison == "due_within_days":
+            # due_at is within N days from now (upcoming or already past)
+            from datetime import timedelta
+            deadline = now + timedelta(days=days)
+            return dt <= deadline
+        elif comparison == "inactive_for":
+            from datetime import timedelta
+            cutoff = now - timedelta(days=days)
+            return dt < cutoff
+
+        return False
+
+    # ── Change-level comparisons (require field in changed) ────────
+
     if field not in changed:
         if comparison == "missing":
             return True
@@ -180,14 +318,6 @@ def _compare_against_transition(
             return float(new_val) < float(value)  # type: ignore[arg-type]
         except (TypeError, ValueError):
             return False
-    elif comparison == "older_than":
-        # Time-based comparison: not matchable against transitions.
-        # The "delivery drift" template uses this for entity age, but
-        # that is a snapshot-level property (updated_at on the entity),
-        # not a transition-level change.  Honestly unmatchable here.
-        return False
-    elif comparison == "newer_than":
-        return False
 
     # Unknown comparison: never match.
     return False

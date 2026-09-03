@@ -990,3 +990,41 @@ class TestEffectRecordingInEvaluateDue:
 
         outcomes = svc.evaluate_due(OWNER)
         assert "effects" not in outcomes[0]
+
+
+# ── HS-166-03: jira watch is due-evaluated ─────────────────────────
+
+
+class TestJiraDueEvaluation:
+    """A graduated jira watch is evaluated by evaluate_due."""
+
+    def test_graduated_jira_watch_evaluates(self, tmp_path) -> None:
+        db = Database(tmp_path / "jira-due.db")
+        _make_watch(db, "w-jira-due", connector_id="jira",
+                    query_kind="issues", query={
+                        "connection_ref": "a.atlassian.net|u@x.com",
+                    })
+        _graduate_watch(
+            db, "w-jira-due",
+            state="active",
+            cadence_minutes=60,
+            next_evaluation_at="2020-01-01T00:00:00",
+        )
+
+        entities = [
+            {"id": "KAN-1", "key": "KAN-1", "title": "Task 1",
+             "status": "todo", "status_category": "new",
+             "assignee": "", "priority": "", "resolution": "",
+             "due_at": "", "updated_at": "2026-09-01T00:00:00Z",
+             "issue_type": "Task", "labels": [], "project_key": "KAN",
+             "url": "https://a.atlassian.net/browse/KAN-1",
+             "status_changed_at": "", "created_at": ""},
+        ]
+        fetcher = _baseline_fetcher(entities)
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "w-jira-due")
+
+        outcomes = svc.evaluate_due(OWNER)
+        assert len(outcomes) == 1
+        assert outcomes[0]["watch_id"] == "w-jira-due"
+        assert outcomes[0]["outcome"] in ("evaluated",)

@@ -705,3 +705,25 @@ def test_graduated_watch_states_constant() -> None:
     assert project_family._GRADUATED_WATCH_STATES == frozenset({
         "active", "tested", "paused", "retired",
     })
+
+
+# ── HS-166-03: sidecar fetcher seam ─────────────────────────────────
+
+
+def test_watch_service_receives_snapshot_fetcher() -> None:
+    """_watch_service() composes a snapshot_fetcher that handles jira."""
+    from holdspeak.services.watch_service import WatchService
+    ws = project_family._watch_service()
+    assert isinstance(ws, WatchService)
+    # The snapshot_fetcher should be set (not None)
+    assert ws._snapshot_fetcher is not None
+
+
+def test_setup_service_receives_jira_adapter() -> None:
+    """_setup_service() composes with a jira_adapter kwarg."""
+    from holdspeak.services.project_setup_service import ProjectSetupService
+    ss = project_family._setup_service()
+    assert isinstance(ss, ProjectSetupService)
+    # The jira_adapter may be None (no acli installed), but the kwarg
+    # should be accepted without error.
+    assert hasattr(ss, "_jira_adapter")

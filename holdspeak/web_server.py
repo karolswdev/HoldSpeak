@@ -332,24 +332,15 @@ class MeetingWebServer:
         self.app = self._create_app()
 
     def _gh_watch_service_kwargs(self) -> dict[str, Any]:
-        """HS-161-06: extra kwargs for WatchService when a fixture runner is
-        active.  Returns ``{"snapshot_fetcher": <fn>}`` or ``{}``."""
-        if self._gh_runner is None:
-            return {}
-        from .services.watch_sources import fetch_watch_snapshot as _base_fetch
-        _runner = self._gh_runner
-        def _fixture_fetcher(
-            principal: Any,
-            *,
-            connector_id: str,
-            query_kind: str,
-            query: dict[str, Any],
-        ) -> list[dict[str, Any]]:
-            return _base_fetch(
-                principal, connector_id=connector_id, query_kind=query_kind,
-                query=query, github_runner=_runner,
-            )
-        return {"snapshot_fetcher": _fixture_fetcher}
+        """HS-161-06 / HS-166-03 rider-a: extra kwargs for WatchService.
+        Uses default_snapshot_fetcher so gh AND jira share the same
+        injection shape."""
+        from .services.watch_sources import default_snapshot_fetcher
+        fetcher = default_snapshot_fetcher(
+            github_runner=self._gh_runner,
+            jira_adapter=None,  # web context composes its own adapter
+        )
+        return {"snapshot_fetcher": fetcher}
 
     @property
     def url(self) -> Optional[str]:
@@ -916,6 +907,9 @@ class MeetingWebServer:
                 ),
                 github_adapter=GitHubProviderAdapter(
                     db=get_database(), runner=self._gh_runner,
+                ),
+                jira_adapter=JiraProviderAdapter(
+                    db=get_database(),
                 ),
             ),
             project_evidence_collector=ProjectEvidenceCollector(get_database()),

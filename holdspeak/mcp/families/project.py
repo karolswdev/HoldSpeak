@@ -795,20 +795,26 @@ def _setup_service():
     from holdspeak.services.project_service import ProjectService
     from holdspeak.services.project_setup_service import ProjectSetupService
     from holdspeak.services.watch_service import WatchService
+    from holdspeak.services.watch_sources import default_snapshot_fetcher
     db = get_database()
     ps = ProjectService(db)
-    ws = WatchService(db)
-    # github_adapter=None is safe: discovery/validate_repo calls
-    # will surface typed provider_not_configured, same as the web
-    # route when the adapter is absent.
-    return ProjectSetupService(db, project_service=ps, watch_service=ws)
+    ja = _jira_adapter()
+    fetcher = default_snapshot_fetcher(jira_adapter=ja)
+    ws = WatchService(db, snapshot_fetcher=fetcher)
+    return ProjectSetupService(
+        db, project_service=ps, watch_service=ws,
+        jira_adapter=ja,
+    )
 
 
 def _watch_service():
-    """Compose WatchService (same wiring as web context)."""
+    """Compose WatchService (same wiring as web context, HS-166-03 rider-a)."""
     from holdspeak.services.watch_service import WatchService
+    from holdspeak.services.watch_sources import default_snapshot_fetcher
     db = get_database()
-    return WatchService(db)
+    ja = _jira_adapter()
+    fetcher = default_snapshot_fetcher(jira_adapter=ja)
+    return WatchService(db, snapshot_fetcher=fetcher)
 
 
 def _github_adapter():

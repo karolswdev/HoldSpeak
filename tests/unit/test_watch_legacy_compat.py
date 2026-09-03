@@ -468,3 +468,61 @@ class TestReactionsRouting:
         agent = Principal(PrincipalKind.AGENT, "agent-x")
         with pytest.raises(ServiceError, match="Reactions run as OWNER"):
             svc.create_watch(agent, connector_id="gh", query_kind="pull_requests")
+
+
+# ── HS-166-03 rider-b: graduated watches skipped by legacy scheduler ──
+
+
+class TestRiderBGraduatedGuard:
+    """refresh_due_watches skips rows whose state is graduated."""
+
+    def test_graduated_watch_not_refreshed_by_legacy(self, tmp_path) -> None:
+        """A watch with state='active' is NOT refreshed by the legacy pump."""
+        import asyncio
+        db = Database(tmp_path / "rider-b.db")
+        svc = ReactionService(db)
+        watch = svc.create_watch(
+            OWNER, connector_id="jira", query_kind="issues",
+            name="Graduated Jira", query={"jql": "project=KAN"},
+            watch_id="watch-graduated",
+        )
+        # Graduate it
+        db.automations.update_watch_spec(
+            "watch-graduated",
+            state="active",
+            schema_version="WatchSpec@1",
+        )
+        # Force updated_at far in the past so cadence is met
+        with db._connection() as conn:
+            conn.execute(
+                "UPDATE connector_watches SET updated_at='2020-01-01T00:00:00' WHERE id=?",
+                ("watch-graduated",),
+            )
+
+        outcomes = asyncio.run(svc.refresh_due_watches(OWNER))
+        # The graduated watch should be skipped -- not in outcomes
+        watch_ids = [o["watch_id"] for o in outcomes]
+        assert "watch-graduated" not in watch_ids
+
+    def test_legacy_watch_still_refreshed(self, tmp_path) -> None:
+        """A watch with state='' (legacy) IS refreshed by the legacy pump."""
+        import asyncio
+        db = Database(tmp_path / "rider-b-legacy.db")
+        svc = ReactionService(db)
+        svc.create_watch(
+            OWNER, connector_id="jira", query_kind="issues",
+            name="Legacy Jira", query={"jql": "project=KAN"},
+            watch_id="watch-legacy",
+        )
+        # Force updated_at far in the past
+        with db._connection() as conn:
+            conn.execute(
+                "UPDATE connector_watches SET updated_at='2020-01-01T00:00:00' WHERE id=?",
+                ("watch-legacy",),
+            )
+
+        # This will fail because we don't have a real adapter,
+        # but the point is the watch is NOT skipped.
+        outcomes = asyncio.run(svc.refresh_due_watches(OWNER))
+        watch_ids = [o["watch_id"] for o in outcomes]
+        assert "watch-legacy" in watch_ids

@@ -101,12 +101,14 @@ class ProjectSetupService:
         project_service: Any | None = None,
         watch_service: Any | None = None,
         github_adapter: Any | None = None,
+        jira_adapter: Any | None = None,
     ) -> None:
         self._db = db
         self._repo = db.automations
         self._project_service = project_service
         self._watch_service = watch_service
         self._github_adapter = github_adapter
+        self._jira_adapter = jira_adapter
 
     # ── Guards ──────────────────────────────────────────────────────
 
@@ -315,6 +317,14 @@ class ProjectSetupService:
                 proposals.extend(gh_proposals)
             except Exception:
                 pass  # Degraded: no github candidates
+
+        # HS-166-03: Jira template candidates (beside GitHub)
+        if self._jira_adapter is not None:
+            try:
+                jira_proposals = self._jira_candidates(principal, session_id)
+                proposals.extend(jira_proposals)
+            except Exception:
+                pass  # Degraded: no jira candidates
 
         # Persist proposals (truncate to cap)
         persisted: list[dict[str, Any]] = []
@@ -900,6 +910,179 @@ class ProjectSetupService:
             "scope_state": "scoped",
             "error": None,
             "repositories": repositories,
+        }
+
+    # ── Jira candidates (HS-166-03, beside _github_candidates) ─────
+
+    def _jira_candidates(
+        self,
+        principal: Principal,
+        session_id: str,
+    ) -> list[dict[str, Any]]:
+        """Build Jira Watch candidates from connected adapter (INT-007).
+
+        Returns candidates ONLY when at least one Jira connection is
+        connected.  PROV-011: candidates carry needs_scope state --
+        no invented projects.
+        """
+        from holdspeak.jira_templates import JIRA_TEMPLATES
+        from holdspeak.services.jira_provider import STATE_CONNECTED
+
+        adapter = self._jira_adapter
+        if adapter is None:
+            return []
+
+        # Check if any connection is connected
+        connections = adapter.list_connections(principal)
+        connected = [
+            c for c in connections
+            if c.get("state") == STATE_CONNECTED
+        ]
+        if not connected:
+            return []
+
+        # Use the first connected connection's ref
+        first_ref = connected[0].get("connection_ref", connected[0].get("external_connection_ref", ""))
+
+        candidates: list[dict[str, Any]] = []
+        for tmpl in JIRA_TEMPLATES:
+            spec = {
+                "schema": "WatchSpec@1",
+                "name": tmpl.name,
+                "intent": tmpl.intent,
+                "provider": {
+                    "id": "jira",
+                    "transport": "connector_pack",
+                    "connection_ref": first_ref,
+                },
+                "subject": {
+                    "kind": "issue",
+                    "scope": {},  # needs-scope: filled by clarify
+                    "query": dict(tmpl.query_defaults),
+                },
+                "trigger": CADENCE_PRESETS.get(tmpl.cadence_preset, CADENCE_PRESETS["normal"]),
+                "rules": tmpl.rules,
+                "action": tmpl.rules[0]["actions"][0] if tmpl.rules else {},
+                "mode": "yolo",
+            }
+
+            candidates.append({
+                "id": _proposal_id(),
+                "provider_id": "jira",
+                "spec": spec,
+                "rationale": {
+                    "source": "jira",
+                    "template_id": tmpl.template_id,
+                    "fact": f"Jira connected ({first_ref})",
+                    "detail": tmpl.intent,
+                    "subject_count": 0,
+                    "readiness": "needs_scope",
+                    "conditions": [
+                        c.get("comparison", "") for clause in tmpl.rules
+                        for c in clause.get("condition", {}).get("clauses", [])
+                    ],
+                    "cadence": tmpl.cadence_preset,
+                    "action": tmpl.rules[0]["actions"][0].get("kind", "") if tmpl.rules else "",
+                },
+            })
+
+        return candidates
+
+    # ── Clarify: jira-scope step (HS-166-03) ──────────────────────
+
+    def clarify_jira_scope(
+        self,
+        principal: Principal,
+        session_id: str,
+        proposal_id: str,
+        *,
+        connection_ref: str | None = None,
+        projects: list[str] | None = None,
+        issue_types: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Clarify the Jira scope for a Jira proposal.
+
+        Validates the project via adapter.validate_scope.
+        PROV-011: never invents projects.
+        """
+        self._owner(principal)
+        self._require_active(session_id)
+        proposal = self._require_proposal(proposal_id, session_id)
+
+        adapter = self._jira_adapter
+        if adapter is None:
+            raise ServiceError(
+                "jira_adapter_missing",
+                "Jira adapter not configured",
+            )
+
+        ref = connection_ref or ""
+        validated_projects: list[str] = []
+
+        if projects:
+            for proj_key in projects:
+                validation = adapter.validate_scope(principal, ref, proj_key)
+                if not validation.get("valid"):
+                    return {
+                        "proposal_id": proposal_id,
+                        "scope_state": "invalid",
+                        "error": validation.get("error_detail", "Project validation failed"),
+                        "projects": [],
+                    }
+                validated_projects.append(proj_key)
+        else:
+            # Discover projects
+            discovery = adapter.discover(principal, ref, kind="projects")
+            if discovery.get("state") not in ("ready", "partial"):
+                return {
+                    "proposal_id": proposal_id,
+                    "scope_state": "discovery_failed",
+                    "error": discovery.get("error_detail", "Discovery failed"),
+                    "projects": [],
+                }
+            validated_projects = [item.get("key", item.get("id", "")) for item in discovery.get("items", [])]
+            if not validated_projects:
+                return {
+                    "proposal_id": proposal_id,
+                    "scope_state": "empty",
+                    "error": None,
+                    "projects": [],
+                }
+
+        # Apply the scope to the proposal spec
+        spec = proposal.get("spec") or {}
+        if isinstance(spec, str):
+            spec = json.loads(spec)
+
+        if "subject" not in spec:
+            spec["subject"] = {}
+        spec["subject"]["scope"] = {
+            "connection_ref": ref,
+            "projects": validated_projects,
+            "issue_types": issue_types or [],
+        }
+        # Also put connection_ref into the query for the source
+        if "query" not in spec["subject"]:
+            spec["subject"]["query"] = {}
+        spec["subject"]["query"]["connection_ref"] = ref
+
+        rationale = proposal.get("rationale") or {}
+        if isinstance(rationale, str):
+            rationale = json.loads(rationale)
+        rationale["readiness"] = "scoped"
+        rationale["subject_count"] = len(validated_projects)
+
+        self._update_proposal(
+            proposal_id,
+            spec_json=json.dumps(spec, sort_keys=True, separators=(",", ":")),
+            rationale_json=json.dumps(rationale, ensure_ascii=False),
+        )
+
+        return {
+            "proposal_id": proposal_id,
+            "scope_state": "scoped",
+            "error": None,
+            "projects": validated_projects,
         }
 
     # ── Native test reads (reuse desk seams) ───────────────────────
