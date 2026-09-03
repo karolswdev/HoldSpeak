@@ -11,11 +11,14 @@ Workbench, and the rest) opens as a window, so nothing navigates away.
 Behind the Floor, a procedural Three.js atmosphere turns the stage into a rainy
 city at night: a block-built but human-scaled skyline, wet street, lamplit
 puddle, depth-layered rain, irregular ripples and splash arcs, drifting cloud
-banks, reflected city light, and occasional distant lightning. Pixel art now
-comes from the modeled forms and restrained materials rather than an enlarged
-low-resolution framebuffer, so the scene stays crisp at the display's real
-size. It is decorative and pointer-transparent—the Pixi world above it still
-owns every object and gesture.
+banks, reflected city light, and occasional distant lightning. A screen-space
+bloom pass, formula-generated radial falloff, and a seeded local rain volume
+make precipitation catch the streetlamp without relying on painted glow or
+weather assets. Pixel art comes from the modeled forms and restrained
+materials rather than an enlarged low-resolution framebuffer, so the scene
+stays crisp at the display's real size. It is decorative and
+pointer-transparent—the Pixi world above it still owns every object and
+gesture.
 
 The atmosphere host is also a personalization primitive. A registry entry owns
 the background's stable id, user-facing metadata, seed, visual grade, and lazy

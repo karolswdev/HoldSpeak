@@ -1,4 +1,8 @@
 import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import type {
   AtmosphereFrame,
   AtmosphereScene,
@@ -9,6 +13,7 @@ import type {
 const MAX_RENDER_WIDTH = 1_600;
 const MAX_RENDER_HEIGHT = 1_000;
 const RAIN_COUNT = 720;
+const LAMP_RAIN_COUNT = 40;
 const SPLASH_COUNT = 84;
 const PUDDLE_Y = 0.035;
 const PUDDLE_RADIUS = 2.25;
@@ -94,9 +99,15 @@ function disposeScene(scene: THREE.Scene): void {
   const geometries = new Set<THREE.BufferGeometry>();
   const materials = new Set<THREE.Material>();
   scene.traverse((object) => {
-    if (!(object instanceof THREE.Mesh) && !(object instanceof THREE.Line))
+    if (
+      !(object instanceof THREE.Mesh) &&
+      !(object instanceof THREE.Line) &&
+      !(object instanceof THREE.Sprite)
+    )
       return;
-    geometries.add(object.geometry);
+    if (object instanceof THREE.Mesh || object instanceof THREE.Line) {
+      geometries.add(object.geometry);
+    }
     const entries = Array.isArray(object.material)
       ? object.material
       : [object.material];
@@ -139,6 +150,35 @@ function beamBetween(
   return beam;
 }
 
+/** A generated radial falloff keeps the lamp glow resolution-independent and
+ * avoids shipping a painted halo asset for an otherwise procedural world. */
+function radialGlowTexture(size = 64): THREE.DataTexture {
+  const pixels = new Uint8Array(size * size * 4);
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const dx = (x + 0.5) / size - 0.5;
+      const dy = (y + 0.5) / size - 0.5;
+      const distance = Math.sqrt(dx * dx + dy * dy) * 2;
+      const falloff = Math.pow(Math.max(0, 1 - distance), 2.35);
+      const offset = (y * size + x) * 4;
+      pixels[offset] = 255;
+      pixels[offset + 1] = 174;
+      pixels[offset + 2] = 78;
+      pixels[offset + 3] = Math.round(falloff * 255);
+    }
+  }
+  const texture = new THREE.DataTexture(
+    pixels,
+    size,
+    size,
+    THREE.RGBAFormat,
+    THREE.UnsignedByteType,
+  );
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  return texture;
+}
+
 function puddleRadius(angle: number, radius: number): number {
   return (
     radius *
@@ -179,9 +219,13 @@ class RainyCityScene implements AtmosphereScene {
   private readonly scene = new THREE.Scene();
   private readonly camera = new THREE.PerspectiveCamera(50, 1, 0.1, 180);
   private readonly renderer: THREE.WebGLRenderer;
+  private readonly composer: EffectComposer;
+  private readonly bloomPass: UnrealBloomPass;
+  private readonly outputPass: OutputPass;
   private readonly layoutRandom: () => number;
   private readonly weatherRandom: () => number;
   private readonly rainDrops: RainDrop[] = [];
+  private readonly lampRainDrops: RainDrop[] = [];
   private readonly splashDrops: SplashDrop[] = [];
   private readonly ripples: Ripple[] = [];
   private readonly windowBanks: WindowBank[] = [];
@@ -196,6 +240,8 @@ class RainyCityScene implements AtmosphereScene {
     THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial>
   > = [];
   private rain!: THREE.InstancedMesh;
+  private lampRain!: THREE.InstancedMesh;
+  private lampGlowTexture!: THREE.DataTexture;
   private splashes!: THREE.InstancedMesh;
   private hemisphere!: THREE.HemisphereLight;
   private lightning!: THREE.DirectionalLight;
@@ -220,6 +266,17 @@ class RainyCityScene implements AtmosphereScene {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.12;
+    this.composer = new EffectComposer(this.renderer);
+    this.composer.addPass(new RenderPass(this.scene, this.camera));
+    this.bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(1, 1),
+      0.46,
+      0.64,
+      0.72,
+    );
+    this.composer.addPass(this.bloomPass);
+    this.outputPass = new OutputPass();
+    this.composer.addPass(this.outputPass);
     this.scene.background = this.baseSky.clone();
     this.scene.fog = new THREE.FogExp2(this.fogBase, 0.0125);
 
@@ -233,6 +290,7 @@ class RainyCityScene implements AtmosphereScene {
     this.buildSkyline();
     this.buildLamp();
     this.buildRain();
+    this.buildLampRain();
     this.buildSplashes();
     this.nextLightning = context.reducedMotion
       ? Number.POSITIVE_INFINITY
@@ -692,6 +750,26 @@ class RainyCityScene implements AtmosphereScene {
     box(lamp, [0.7, 0.15, 0.52], [1.83, 7.33, 0], amber).rotation.z = -0.08;
     this.scene.add(lamp);
 
+    this.lampGlowTexture = radialGlowTexture();
+    const addHalo = (size: number, opacity: number, color: number) => {
+      const halo = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: this.lampGlowTexture,
+          color,
+          transparent: true,
+          opacity,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          toneMapped: false,
+        }),
+      );
+      halo.position.set(BULB_X, BULB_Y, LAMP_Z + 0.03);
+      halo.scale.set(size, size, 1);
+      this.scene.add(halo);
+    };
+    addHalo(3.4, 0.3, 0xffba62);
+    addHalo(7.8, 0.09, 0xff8a32);
+
     this.lampLight = new THREE.PointLight(0xffa43d, LAMP_INTENSITY, 20, 1.9);
     this.lampLight.position.set(BULB_X, BULB_Y, LAMP_Z);
     this.scene.add(this.lampLight);
@@ -725,6 +803,27 @@ class RainyCityScene implements AtmosphereScene {
     }
   }
 
+  private buildLampRain(): void {
+    const geometry = new THREE.BoxGeometry(0.025, 1, 0.025);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffddb1,
+      transparent: true,
+      opacity: 0.42,
+      depthWrite: false,
+      toneMapped: false,
+    });
+    this.lampRain = new THREE.InstancedMesh(
+      geometry,
+      material,
+      LAMP_RAIN_COUNT,
+    );
+    this.lampRain.frustumCulled = false;
+    this.scene.add(this.lampRain);
+    for (let index = 0; index < LAMP_RAIN_COUNT; index += 1) {
+      this.lampRainDrops.push(this.newLampRainDrop(true));
+    }
+  }
+
   private newRainDrop(initial = false): RainDrop {
     return {
       x: -30 + this.weatherRandom() * 60,
@@ -735,6 +834,19 @@ class RainyCityScene implements AtmosphereScene {
       speed: 13 + this.weatherRandom() * 17,
       length: 0.45 + this.weatherRandom() * 1.35,
       drift: 0.55 + this.weatherRandom() * 0.85,
+    };
+  }
+
+  private newLampRainDrop(initial = false): RainDrop {
+    return {
+      x: BULB_X - 1.65 + this.weatherRandom() * 3.3,
+      y: initial
+        ? 2.4 + this.weatherRandom() * (BULB_Y + 0.6)
+        : BULB_Y + 1 + this.weatherRandom() * 3,
+      z: LAMP_Z - 2.4 + this.weatherRandom() * 4.8,
+      speed: 10 + this.weatherRandom() * 7,
+      length: 0.24 + this.weatherRandom() * 0.52,
+      drift: 0.45 + this.weatherRandom() * 0.6,
     };
   }
 
@@ -832,6 +944,24 @@ class RainyCityScene implements AtmosphereScene {
       this.rain.setMatrixAt(index, transform.matrix);
     }
     this.rain.instanceMatrix.needsUpdate = true;
+
+    // A separate seeded volume catches the lamp's warm light. Keeping it
+    // local lets bloom reveal rainfall around the fixture without making the
+    // entire storm equally luminous.
+    transform.rotation.z = 0.045 + gust * 0.024;
+    for (let index = 0; index < this.lampRainDrops.length; index += 1) {
+      const drop = this.lampRainDrops[index];
+      drop.y -= drop.speed * frame.delta;
+      drop.x -= gust * drop.drift * frame.delta;
+      if (drop.y < 2.35 || drop.x < BULB_X - 2.2) {
+        Object.assign(drop, this.newLampRainDrop());
+      }
+      transform.position.set(drop.x, drop.y, drop.z);
+      transform.scale.set(0.75, drop.length, 0.75);
+      transform.updateMatrix();
+      this.lampRain.setMatrixAt(index, transform.matrix);
+    }
+    this.lampRain.instanceMatrix.needsUpdate = true;
   }
 
   private updateSplashes(frame: AtmosphereFrame): void {
@@ -961,22 +1091,27 @@ class RainyCityScene implements AtmosphereScene {
       MAX_RENDER_WIDTH / (viewport.width * desiredPixelRatio),
       MAX_RENDER_HEIGHT / (viewport.height * desiredPixelRatio),
     );
-    this.renderer.setPixelRatio(
-      Math.max(0.72, desiredPixelRatio * backingScale),
-    );
+    const pixelRatio = Math.max(0.72, desiredPixelRatio * backingScale);
+    this.renderer.setPixelRatio(pixelRatio);
     this.renderer.setSize(viewport.width, viewport.height, false);
+    this.composer.setPixelRatio(pixelRatio);
+    this.composer.setSize(viewport.width, viewport.height);
     this.camera.aspect = viewport.width / viewport.height;
     this.camera.updateProjectionMatrix();
   }
 
   render(): void {
-    if (!this.destroyed) this.renderer.render(this.scene, this.camera);
+    if (!this.destroyed) this.composer.render();
   }
 
   dispose(): void {
     if (this.destroyed) return;
     this.destroyed = true;
     disposeScene(this.scene);
+    this.lampGlowTexture.dispose();
+    this.bloomPass.dispose();
+    this.outputPass.dispose();
+    this.composer.dispose();
     this.renderer.dispose();
   }
 }
