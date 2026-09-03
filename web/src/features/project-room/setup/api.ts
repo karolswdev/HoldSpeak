@@ -13,6 +13,12 @@ import type {
   DiscoveryResponse,
   ValidateRepoResponse,
   ClarifyScopeResponse,
+  JiraConnection,
+  JiraConnectionsResponse,
+  JiraDiscoveryResponse,
+  JiraSearchResult,
+  JiraValidateScopeResponse,
+  JiraClarifyScopeResponse,
 } from "./model";
 import {
   decodeSession,
@@ -24,6 +30,12 @@ import {
   decodeDiscoveryResponse,
   decodeValidateRepoResponse,
   decodeClarifyScopeResponse,
+  decodeJiraConnection,
+  decodeJiraConnectionsResponse,
+  decodeJiraDiscoveryResponse,
+  decodeJiraSearchResult,
+  decodeJiraValidateScopeResponse,
+  decodeJiraClarifyScopeResponse,
 } from "./model";
 
 const BASE = "/api/project-setups";
@@ -218,4 +230,115 @@ export async function clarifyScope(
     { method: "POST", json: repo ? { repo } : {} },
   );
   return decodeClarifyScopeResponse(raw);
+}
+
+/* ── Jira provider routes (HS-166-04) ── */
+
+/** GET /api/providers/jira/connections -- list all connections + known accounts. */
+export async function getJiraConnections(): Promise<JiraConnectionsResponse> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${PROVIDERS}/jira/connections`,
+  );
+  return decodeJiraConnectionsResponse(raw);
+}
+
+/** POST /api/providers/jira/connections -- add a connection. */
+export async function addJiraConnection(
+  site: string,
+  email: string,
+): Promise<JiraConnection> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${PROVIDERS}/jira/connections`,
+    { method: "POST", json: { site, email } },
+  );
+  return decodeJiraConnection(raw);
+}
+
+/** POST /api/providers/jira/connections/{ref}/recheck -- recheck one connection. */
+export async function recheckJiraConnection(
+  ref: string,
+): Promise<JiraConnection> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${PROVIDERS}/jira/connections/${encodeURIComponent(ref)}/recheck`,
+    { method: "POST" },
+  );
+  return decodeJiraConnection(raw);
+}
+
+/** GET /api/providers/jira/discover -- bounded Jira discovery. */
+export async function discoverJira(
+  connectionRef: string,
+  kind: "projects" | "issue_types" | "statuses",
+  opts?: { query?: string; projectKey?: string; cursor?: number; limit?: number },
+): Promise<JiraDiscoveryResponse> {
+  const params = new URLSearchParams();
+  params.set("connection_ref", connectionRef);
+  params.set("kind", kind);
+  if (opts?.query) params.set("query", opts.query);
+  if (opts?.projectKey) params.set("project_key", opts.projectKey);
+  if (opts?.cursor != null) params.set("cursor", String(opts.cursor));
+  if (opts?.limit != null) params.set("limit", String(opts.limit));
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${PROVIDERS}/jira/discover?${params.toString()}`,
+  );
+  return decodeJiraDiscoveryResponse(raw);
+}
+
+/** POST /api/providers/jira/search -- JQL search. */
+export async function searchJira(
+  connectionRef: string,
+  jql: string,
+  limit?: number,
+  enrich?: boolean,
+): Promise<JiraSearchResult> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${PROVIDERS}/jira/search`,
+    {
+      method: "POST",
+      json: {
+        connection_ref: connectionRef,
+        jql,
+        limit: limit ?? 50,
+        enrich: enrich ?? false,
+      },
+    },
+  );
+  return decodeJiraSearchResult(raw);
+}
+
+/** POST /api/providers/jira/validate-scope -- typed project validation. */
+export async function validateJiraScope(
+  connectionRef: string,
+  projectKey: string,
+): Promise<JiraValidateScopeResponse> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${PROVIDERS}/jira/validate-scope`,
+    {
+      method: "POST",
+      json: { connection_ref: connectionRef, project_key: projectKey },
+    },
+  );
+  return decodeJiraValidateScopeResponse(raw);
+}
+
+/** POST /api/project-setups/{sid}/proposals/{pid}/clarify-jira-scope -- scope a Jira proposal. */
+export async function clarifyJiraScope(
+  sessionId: string,
+  proposalId: string,
+  connectionRef: string,
+  projects: string[],
+  issueTypes?: string[],
+): Promise<JiraClarifyScopeResponse> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${BASE}/${enc(sessionId)}/proposals/${enc(proposalId)}/clarify-jira-scope`,
+    {
+      method: "POST",
+      json: {
+        connection_ref: connectionRef,
+        projects,
+        issue_types: issueTypes ?? [],
+      },
+    },
+  );
+  return decodeJiraClarifyScopeResponse(raw);
 }

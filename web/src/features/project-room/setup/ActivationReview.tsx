@@ -300,14 +300,21 @@ function ReviewTestEvidence({
 /** Label for a normalized entity (reaction_service._normalize_entity).
  *  PR entities: id=PR number, title, state. Native: title/text/name. */
 function entityLabel(entity: Record<string, unknown>): string {
+  // HS-166-04: prefer key (KAN-3) over numeric id for Jira entities
+  const key = entity.key != null && String(entity.key) !== ""
+    ? String(entity.key)
+    : null;
   const id = entity.id != null ? String(entity.id) : "";
   const title = entity.title != null && String(entity.title) !== ""
     ? String(entity.title)
-    : (entity.text != null ? String(entity.text) : (entity.name != null ? String(entity.name) : null));
+    : (entity.summary != null && String(entity.summary) !== ""
+      ? String(entity.summary)
+      : (entity.text != null ? String(entity.text) : (entity.name != null ? String(entity.name) : null)));
+  const lead = key ?? (id ? `#${id}` : "");
   if (title) {
-    return id ? `#${id} ${title}` : title;
+    return lead ? `${lead} ${title}` : title;
   }
-  return id ? `#${id}` : "Unknown";
+  return lead || "Unknown";
 }
 
 function formatTime(iso: string): string {

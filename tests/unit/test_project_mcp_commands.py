@@ -782,7 +782,7 @@ def test_all_command_tools_discoverable() -> None:
         "project.stop_steward", "project.get_steward_run",
         "project.setup.start", "project.setup.resume",
         "project.setup.answer", "project.setup.suggest",
-        "project.setup.finalize",
+        "project.setup.finalize", "project.setup.clarify_jira_scope",  # HS-166
         "project.watch.inspect", "project.watch.test",
         "project.watch.evaluate", "project.watch.set_rules",
         "project.watch.pause", "project.watch.resume",

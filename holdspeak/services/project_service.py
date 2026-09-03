@@ -53,10 +53,11 @@ _log = get_logger("services.project_service")
 # ("pull_request"), but GitHubWatchSource.snapshot demands the plural
 # wire form ("pull_requests").  The mapping lives here rather than in
 # the spec so the spec vocabulary stays domain-level.
-_PROVIDER_TO_CONNECTOR: dict[str, str] = {"github": "gh"}
+_PROVIDER_TO_CONNECTOR: dict[str, str] = {"github": "gh", "jira": "jira"}
 
 _SUBJECT_TO_QUERY_KIND: dict[str, str] = {
     "pull_request": "pull_requests",
+    "issue": "issues",
 }
 
 
@@ -629,6 +630,17 @@ class ProjectService:
                 repos = scope.get("repositories", [])
                 if repos:
                     query_filters["repository"] = repos[0]
+                # HS-166-03: flatten jira scope into the stored query
+                # the way repos[0] is flattened for gh.
+                jira_connection_ref = scope.get("connection_ref") or spec.get("provider", {}).get("connection_ref")
+                if jira_connection_ref:
+                    query_filters["connection_ref"] = jira_connection_ref
+                jira_projects = scope.get("projects", [])
+                if jira_projects:
+                    query_filters["projects"] = list(jira_projects)
+                jira_issue_types = scope.get("issue_types", [])
+                if jira_issue_types:
+                    query_filters["issue_types"] = list(jira_issue_types)
                 query: dict[str, Any] = query_filters
                 trigger = spec.get("trigger") or CADENCE_PRESETS.get("normal", {})
                 mode = spec.get("mode", "yolo")

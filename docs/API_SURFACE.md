@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 618 (plus static mounts). iOS-consumed: 89. Web-consumed: 468.
+Routes: 625 (plus static mounts). iOS-consumed: 89. Web-consumed: 468.
 
 ## device_audio_ws
 
@@ -785,6 +785,7 @@ Routes: 618 (plus static mounts). iOS-consumed: 89. Web-consumed: 468.
 | POST | `/api/project-setups/{session_id}/answers` | server only |
 | POST | `/api/project-setups/{session_id}/finalize` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/clarify` | server only |
+| POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-jira-scope` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/deselect` | server only |
 | POST | `/api/project-setups/{session_id}/proposals/{proposal_id}/select` | server only |
@@ -847,6 +848,12 @@ Routes: 618 (plus static mounts). iOS-consumed: 89. Web-consumed: 468.
 | POST | `/api/providers/github/connection/recheck` | server only |
 | GET | `/api/providers/github/discover` | server only |
 | POST | `/api/providers/github/validate-repo` | server only |
+| GET | `/api/providers/jira/connections` | server only |
+| POST | `/api/providers/jira/connections` | server only |
+| POST | `/api/providers/jira/connections/{ref}/recheck` | server only |
+| GET | `/api/providers/jira/discover` | server only |
+| POST | `/api/providers/jira/search` | server only |
+| POST | `/api/providers/jira/validate-scope` | server only |
 | POST | `/api/watches/{watch_id}/evaluate` | server only |
 
 ## web.routes.repositories

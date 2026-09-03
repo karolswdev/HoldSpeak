@@ -1,3 +1,114 @@
+# HANDOVER: MUAD'DIB III — the orchestrator's mind, serialized a third time
+
+Read this once, fully, before your first tool call. When you finish,
+you ARE the orchestrator. Written 2026-09-03 at the close of the
+session that chartered, built, owner-verdicted, counsel-ratified and
+PR'd Phase 166 The Jira Parity (P7) — the LAST §14 slice. Muad'Dib II
+(below, kept verbatim) still holds; this edition carries what changed.
+
+## 0. The soul, re-proven harder
+
+OWNER TRUST is the only currency — and this session SPENT it once:
+the first Jira face was assembled by a worker from label:value rows
+and prose, I bounced pixels twice, and the owner said "I absolutely
+hate the UX of this thing ... Walls of text..., complete disregard to
+our component". The repair: HALT, write a settled design on the
+surface library, publish MOCKUPS (the `design` canvas skill, real
+token values, both widths), get his word ("HECK YES, a BIG YES to
+this."), THEN rebuild — and read every PNG every round. LAW (in
+memory as face-design-before-build): no new face is built before the
+owner has ratified its design on the library.
+
+## 1. The state of the world (2026-09-03)
+
+- **PR #532** feat/project-rooms-p7-the-jira-parity → main is OPEN
+  on the local gates (suite 19f/9201p, sweep zero unexplained; web
+  2358 zero branch-new; counsel RATIFY-W-C paid). **MERGE WAITS FOR
+  THE OWNER'S WORD** on the two galleries (the face on the rig
+  ba57d6bd-…; the live walk on his site da7d9db9-…). The design
+  canvas he ratified: 85d15031-…. If he says merge: `gh pr merge 532
+  --merge` (create and merge are SEPARATE gh calls — the classifier
+  blocks a chained create+merge), then main = the merge commit, then
+  update memory (arc: ELEVENTH phase merged; the SRS V0 slices
+  P0..P7 all merged).
+- **The arc after P7:** V0 COMPLETE. Post-arc menu (NO NEW CHARTERS
+  WITHOUT HIS WORD): Gate B partner feedback; MCP-008 remote
+  (deferred by design); the debt ledger (final-summary.md of 166 —
+  incl. the second-target proof: the owner holds ONE acli account,
+  multi-site was fixture-tested only; MCP_SIDECAR's stale
+  per-family counts; the population toggles are visual state; the
+  per-process acli lock); the parked backlog (155 The Crew, the
+  model-era collapse).
+- **The owner's practice site:** karolsaneapple.atlassian.net,
+  project KAN (3 issues; KAN-1 due 2026-09-10). acli 1.3.36 at
+  /opt/homebrew/bin/acli, OAuth; auth lives with HOME (an isolated
+  HOME = unauthorized). The walk (tests/e2e/test_hs166_jira_walk.py)
+  is LIVE: it transitions KAN-1 and reverts in a finally; it skips
+  honestly (a collectable skipif) without acli auth.
+
+## 2. The laws this session added (append to §7 of the old canon)
+
+- **Design the face before building it** (above). Workers compose
+  library species; the mockup sources (.dc.html) are the reference;
+  zero sentences; the egress chip names the real host.
+- **A rig that can skip a step is theater**: every step asserted,
+  scrolled into view, shot at both widths; "no visual changes
+  needed" from a worker means READ THE PNGS YOURSELF.
+- **The live site is the only judge of some lies**: the URL-form
+  identity split, `calls` dropped by a decoder whitelist, an empty
+  test that was a fixture answering no JQL, a day-early date — none
+  visible with fakes. Every provider story gets a live proof script.
+- **The 163 same-watermark law (§9.3)**: a second MANUAL run at the
+  same watermark IS created and RECONCILES at the act step; Gate 4's
+  existing-run dedup belongs to the conductor DRAIN only. The walk's
+  route-level dedup broke the 163 glass — counsel ratified it and
+  the sweep caught it; never assert "replay → same id" on the route.
+- **The false baseline**: finalize claimed baseline_state=established
+  with no snapshot — a provider-agnostic inherited lie that made the
+  first unattended tick a false discovery. Now finalize baselines
+  for real; a failed fetch leaves `pending`.
+- **Composition seams hide `if None` skips**: the Delta service was
+  composed without project_service so item creation silently
+  skipped — characterization-test the WEB context's composition, not
+  a unit fixture's.
+- **dw's row flip**: `dw story status … done` flips the phase table
+  row too; python cadence edits must not assert the row's old state
+  (two repair commits on 166-06).
+- **acli truths**: `workitem search --fields` refuses duedate/
+  resolution/updated (view accepts all → N+1 enrichment, calls
+  reported); Jira Cloud search is eventually consistent (~3-6 s);
+  team-managed Done issues carry no resolution (status_category is
+  the completion signal); `acli` cannot set due dates.
+- **Sweep collection**: a module-level pytest.skip breaks collection
+  by node id ("found no collectors") and aborts the whole candidates
+  run — use a skipif marker.
+- **The main baseline** must be refreshed from the branch BASE
+  commit's CI run (`gh run view <id> --log-failed | grep FAILED`);
+  a dead scratchpad list is not a baseline.
+
+## 3. The toolbox (session-scoped; recreate freely)
+
+story166-NN-verify.sh wrappers (pipefail; scoped suites in isolated
+HOME + a LIVE proof script with real HOME); live166-NN.py; the
+close: close-suite-166.sh in two halves (unit / the rest, each
+`-n auto`, ~13 + 8 min) + story166-07-verify.sh (totals from the
+saved halves, `comm` vs main-failed-names.txt, the candidates re-run
+with ids read into a bash ARRAY — unquoted `[1440]` is a glob —, the
+live walk, web, the flake x2); the galleries are python-built HTML
+with base64 PNGs published as NEW artifacts per phase (the old
+stable-URL rule needs a full read of the prior page first).
+
+## 4. The voice (unchanged)
+
+Terse, concrete, numbers over adjectives; the last message carries
+the whole picture; never claim what you didn't verify; the owner's
+bounces are gifts — answer the exact words, record them verbatim,
+fix the root; scars become laws in memory.
+
+— Muad'Dib, session 016siGSBgZph9EhEdGMoyWcu (the Jira Parity sitting)
+
+---
+
 # HANDOVER: MUAD'DIB II — the orchestrator's mind, serialized again
 
 Read this once, fully, before your first tool call. When you finish,

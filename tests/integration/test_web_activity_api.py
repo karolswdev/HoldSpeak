@@ -520,7 +520,7 @@ def test_connector_list_includes_calendar_with_capabilities(
     assert response.status_code == 200
     payload = response.json()
     by_id = {c["id"]: c for c in payload["connectors"]}
-    assert set(by_id) == {"gh", "jira", "calendar_activity"}
+    assert set(by_id) == {"gh", "jira", "acli_jira", "calendar_activity"}  # HS-166: the acli pack
     assert by_id["gh"]["capabilities"] == ["annotations"]
     assert by_id["gh"]["kind"] == "cli_enrichment"
     assert by_id["gh"]["requires_cli"] == "gh"

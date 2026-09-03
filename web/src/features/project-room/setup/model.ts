@@ -131,6 +131,15 @@ export type TestResult = {
   observedAt: string;
   error: { type: string; message: string } | null;
   message: string;
+  /** HS-166-04: Jira enrichment fields (SS8.2 display contract). */
+  provider?: string;
+  connection?: { site: string; email: string; connection_ref: string };
+  projects?: string[];
+  normalizedJql?: string;
+  matchedConditions?: string;
+  supportedTransitions?: string[];
+  calls?: number;
+  durationMs?: number;
 };
 
 /* ── Watch states for the live brief (INT-011) ── */
@@ -288,7 +297,8 @@ export function decodeRationale(raw: Record<string, unknown>): ProposalRationale
 
 export function decodeTestResult(raw: Record<string, unknown>): TestResult {
   const errorRaw = raw.error;
-  return {
+  const connRaw = raw.connection;
+  const result: TestResult = {
     entityCount: Number(raw.entity_count ?? 0),
     representativeEntities: Array.isArray(raw.representative_entities)
       ? raw.representative_entities
@@ -303,6 +313,23 @@ export function decodeTestResult(raw: Record<string, unknown>): TestResult {
         : null,
     message: String(raw.message ?? ""),
   };
+  // HS-166-04: Jira enrichment fields (SS8.2 display contract)
+  if (raw.provider != null) result.provider = String(raw.provider);
+  if (connRaw && typeof connRaw === "object") {
+    const c = connRaw as Record<string, unknown>;
+    result.connection = {
+      site: String(c.site ?? ""),
+      email: String(c.email ?? ""),
+      connection_ref: String(c.connection_ref ?? ""),
+    };
+  }
+  if (Array.isArray(raw.projects)) result.projects = raw.projects.map(String);
+  if (raw.normalized_jql != null) result.normalizedJql = String(raw.normalized_jql);
+  if (raw.matched_conditions != null) result.matchedConditions = String(raw.matched_conditions);
+  if (Array.isArray(raw.supported_transitions)) result.supportedTransitions = raw.supported_transitions.map(String);
+  if (raw.calls != null) result.calls = Number(raw.calls);
+  if (raw.duration_ms != null) result.durationMs = Number(raw.duration_ms);
+  return result;
 }
 
 export function decodeProposal(raw: Record<string, unknown>): SetupProposal {
@@ -520,6 +547,11 @@ function clausePlainWords(clause: WatchConditionClause, subjectKind: string): st
   if (subjectKind === "pull_requests" || subjectKind === "pull_request") {
     const phrase = prPhrase(clause);
     if (phrase) return phrase;
+  }
+
+  // HS-166-04: Jira issue subjects use conditionLabel (human tokens)
+  if (subjectKind === "issue") {
+    return conditionLabel(clause);
   }
 
   // Generic path (non-PR subjects, or PR combinations not in the table)
@@ -783,4 +815,396 @@ const PR_FIELD_LABELS: Record<string, string> = {
 /** Resolve a PR field name to its plain-words label. */
 export function prFieldLabel(field: string): string {
   return PR_FIELD_LABELS[field] ?? field.replace(/_/g, " ");
+}
+
+/* ── Provider-keyed state copy (HS-166-04) ────────────────────────── */
+
+export type ProviderStateCopy = { headline: string; detail: string };
+export type ProviderStateAction = { label: string; kind: "recheck" | "discover" | "authenticate" | "install" | "wait" | "retry" };
+
+function _jiraStateCopy(state: ProviderState, site?: string): ProviderStateCopy {
+  const s = site || "Jira";
+  switch (state) {
+    case "checking": return { headline: `${s} checking`, detail: "Verifying Jira access..." };
+    case "connected": return { headline: `${s} is ready`, detail: "Choose projects to watch." };
+    case "connection_required": return { headline: "Connection required", detail: "Jira needs to be connected." };
+    case "capability_missing": return { headline: "acli not installed", detail: "Install the Atlassian CLI to connect." };
+    case "partial": return { headline: "Partially connected", detail: "Jira is reachable but some access is missing." };
+    case "unavailable": return { headline: "Unavailable", detail: "Jira cannot be reached." };
+    case "owner_action_required": return { headline: "Authentication required", detail: `${s} needs you to sign in.` };
+  }
+}
+
+export function providerStateCopy(provider: "github" | "jira", state: ProviderState, site?: string): ProviderStateCopy {
+  if (provider === "github") return PROVIDER_STATE_COPY[state];
+  return _jiraStateCopy(state, site);
+}
+
+const JIRA_STATE_ACTION: Record<ProviderState, ProviderStateAction> = {
+  checking: { label: "Checking...", kind: "wait" },
+  connected: { label: "Choose projects", kind: "discover" },
+  connection_required: { label: "Add account", kind: "authenticate" },
+  capability_missing: { label: "Install acli", kind: "install" },
+  partial: { label: "Recheck connection", kind: "recheck" },
+  unavailable: { label: "Retry", kind: "retry" },
+  owner_action_required: { label: "Recheck", kind: "recheck" },
+};
+
+export function providerStateAction(provider: "github" | "jira", state: ProviderState): ProviderStateAction {
+  if (provider === "github") return PROVIDER_STATE_ACTION[state];
+  return JIRA_STATE_ACTION[state];
+}
+
+/* ── Jira connection types (HS-166-04) ────────────────────────────── */
+
+export type JiraConnection = {
+  provider_id: string;
+  connection_ref: string;
+  state: ProviderState;
+  account: { site: string; email: string };
+  error_code: string | null;
+  error_detail: string | null;
+  recovery: { command: string; hint: string } | null;
+  checked_at: string | null;
+  last_connected_at: string | null;
+};
+
+export type JiraKnownAccount = {
+  site: string;
+  email: string;
+  displayName: string;
+  authType: string;
+  ref: string;
+  current: boolean;
+};
+
+export type JiraConnectionsResponse = {
+  connections: JiraConnection[];
+  knownAccounts: JiraKnownAccount[];
+};
+
+export type JiraDiscoveryItem = {
+  id: string;
+  key?: string;
+  name: string;
+  project_id?: string;
+  type?: string;
+  style?: string;
+  private?: boolean;
+  lead?: string | null;
+  subtask?: boolean;
+  hierarchy_level?: number;
+  category?: string;
+  category_name?: string;
+};
+
+export type JiraDiscoveryResponse = {
+  state: string;
+  items: JiraDiscoveryItem[];
+  cursor: number | null;
+  errorCode: string | null;
+  errorDetail: string | null;
+  connectionRef: string;
+  source?: string;
+  categories?: Array<{ key: string; name: string; source: string }>;
+};
+
+export type JiraSearchItem = {
+  key: string;
+  id: string;
+  summary: string;
+  issueType: string;
+  status: string;
+  statusCategory: string;
+  assignee: string | null;
+  priority: string | null;
+  labels: string[];
+  url: string;
+  dueDate?: string | null;
+  resolution?: string | null;
+};
+
+export type JiraSearchResult = {
+  state: string;
+  items: JiraSearchItem[];
+  calls: number;
+  errorCode: string | null;
+  errorDetail: string | null;
+  connectionRef: string;
+  queryInvalid?: string;
+};
+
+export type JiraValidateScopeResponse = {
+  valid: boolean;
+  project: { key: string; name: string; type: string; style: string } | null;
+  issueTypes: Array<{ id: string; name: string; subtask: boolean; hierarchy_level?: number }>;
+  errorCode: string | null;
+  errorDetail: string | null;
+  connectionRef: string;
+};
+
+export type JiraClarifyScopeResponse = {
+  proposalId: string;
+  scopeState: string;
+  error: string | null;
+  projects: string[];
+};
+
+export type JiraScope = {
+  connectionRef: string;
+  projects: string[];
+  issueTypes: string[];
+  statusCategories: string[];
+  jql: string;
+};
+
+/* ── Jira decoders (HS-166-04) ────────────────────────────────────── */
+
+export function decodeJiraConnection(raw: Record<string, unknown>): JiraConnection {
+  const account = (raw.account ?? {}) as Record<string, unknown>;
+  const recovery = raw.recovery as Record<string, unknown> | null | undefined;
+  return {
+    provider_id: String(raw.provider_id ?? ""),
+    connection_ref: String(raw.connection_ref ?? raw.external_connection_ref ?? ""),
+    state: (PROVIDER_STATES.includes(raw.state as ProviderState) ? raw.state : "unavailable") as ProviderState,
+    account: {
+      site: String(account.site ?? ""),
+      email: String(account.email ?? ""),
+    },
+    error_code: raw.error_code != null ? String(raw.error_code) : null,
+    error_detail: raw.error_detail != null ? String(raw.error_detail) : null,
+    recovery: recovery && typeof recovery === "object"
+      ? { command: String(recovery.command ?? ""), hint: String(recovery.hint ?? "") }
+      : null,
+    checked_at: raw.checked_at != null ? String(raw.checked_at) : null,
+    last_connected_at: raw.last_connected_at != null ? String(raw.last_connected_at) : null,
+  };
+}
+
+export function decodeJiraKnownAccount(raw: Record<string, unknown>): JiraKnownAccount {
+  return {
+    site: String(raw.site ?? ""),
+    email: String(raw.email ?? ""),
+    displayName: String(raw.display_name ?? ""),
+    authType: String(raw.auth_type ?? ""),
+    ref: String(raw.ref ?? ""),
+    current: Boolean(raw.current),
+  };
+}
+
+export function decodeJiraConnectionsResponse(raw: Record<string, unknown>): JiraConnectionsResponse {
+  const connections = Array.isArray(raw.connections)
+    ? raw.connections.map((c: Record<string, unknown>) => decodeJiraConnection(c))
+    : [];
+  const knownAccounts = Array.isArray(raw.known_accounts)
+    ? raw.known_accounts.map((a: Record<string, unknown>) => decodeJiraKnownAccount(a))
+    : [];
+  return { connections, knownAccounts };
+}
+
+export function decodeJiraDiscoveryItem(raw: Record<string, unknown>): JiraDiscoveryItem {
+  const item: JiraDiscoveryItem = {
+    id: String(raw.id ?? ""),
+    name: String(raw.name ?? ""),
+  };
+  if (raw.key != null) item.key = String(raw.key);
+  if (raw.project_id != null) item.project_id = String(raw.project_id);
+  if (raw.type != null) item.type = String(raw.type);
+  if (raw.style != null) item.style = String(raw.style);
+  if (raw.private != null) item.private = Boolean(raw.private);
+  if (raw.lead != null) item.lead = String(raw.lead);
+  if (raw.subtask != null) item.subtask = Boolean(raw.subtask);
+  if (raw.hierarchy_level != null) item.hierarchy_level = Number(raw.hierarchy_level);
+  if (raw.category != null) item.category = String(raw.category);
+  if (raw.category_name != null) item.category_name = String(raw.category_name);
+  return item;
+}
+
+export function decodeJiraDiscoveryResponse(raw: Record<string, unknown>): JiraDiscoveryResponse {
+  const items = Array.isArray(raw.items)
+    ? raw.items.map((i: Record<string, unknown>) => decodeJiraDiscoveryItem(i))
+    : [];
+  const categories = Array.isArray(raw.categories)
+    ? raw.categories.map((c: Record<string, unknown>) => ({
+        key: String(c.key ?? ""),
+        name: String(c.name ?? ""),
+        source: String(c.source ?? ""),
+      }))
+    : undefined;
+  return {
+    state: String(raw.state ?? ""),
+    items,
+    cursor: raw.cursor != null ? Number(raw.cursor) : null,
+    errorCode: raw.error_code != null ? String(raw.error_code) : null,
+    errorDetail: raw.error_detail != null ? String(raw.error_detail) : null,
+    connectionRef: String(raw.connection_ref ?? ""),
+    source: raw.source != null ? String(raw.source) : undefined,
+    categories,
+  };
+}
+
+export function decodeJiraSearchItem(raw: Record<string, unknown>): JiraSearchItem {
+  return {
+    key: String(raw.key ?? ""),
+    id: String(raw.id ?? ""),
+    summary: String(raw.summary ?? ""),
+    issueType: String(raw.issue_type ?? ""),
+    status: String(raw.status ?? ""),
+    statusCategory: String(raw.status_category ?? ""),
+    assignee: raw.assignee != null ? String(raw.assignee) : null,
+    priority: raw.priority != null ? String(raw.priority) : null,
+    labels: Array.isArray(raw.labels) ? raw.labels.map(String) : [],
+    url: String(raw.url ?? ""),
+    dueDate: raw.due_date != null ? String(raw.due_date) : raw.duedate != null ? String(raw.duedate) : undefined,
+    resolution: raw.resolution != null ? String(raw.resolution) : undefined,
+  };
+}
+
+export function decodeJiraSearchResult(raw: Record<string, unknown>): JiraSearchResult {
+  const items = Array.isArray(raw.items)
+    ? raw.items.map((i: Record<string, unknown>) => decodeJiraSearchItem(i))
+    : [];
+  return {
+    state: String(raw.state ?? ""),
+    items,
+    calls: Number(raw.calls ?? 0),
+    errorCode: raw.error_code != null ? String(raw.error_code) : null,
+    errorDetail: raw.error_detail != null ? String(raw.error_detail) : null,
+    connectionRef: String(raw.connection_ref ?? ""),
+    queryInvalid: raw.query_invalid != null ? String(raw.query_invalid) : undefined,
+  };
+}
+
+export function decodeJiraValidateScopeResponse(raw: Record<string, unknown>): JiraValidateScopeResponse {
+  const projectRaw = raw.project as Record<string, unknown> | null | undefined;
+  const issueTypesRaw = Array.isArray(raw.issue_types) ? raw.issue_types : [];
+  return {
+    valid: Boolean(raw.valid),
+    project: projectRaw && typeof projectRaw === "object"
+      ? {
+          key: String(projectRaw.key ?? ""),
+          name: String(projectRaw.name ?? ""),
+          type: String(projectRaw.type ?? ""),
+          style: String(projectRaw.style ?? ""),
+        }
+      : null,
+    issueTypes: issueTypesRaw.map((it: Record<string, unknown>) => ({
+      id: String(it.id ?? ""),
+      name: String(it.name ?? ""),
+      subtask: Boolean(it.subtask),
+      ...(it.hierarchy_level != null ? { hierarchy_level: Number(it.hierarchy_level) } : {}),
+    })),
+    errorCode: raw.error_code != null ? String(raw.error_code) : null,
+    errorDetail: raw.error_detail != null ? String(raw.error_detail) : null,
+    connectionRef: String(raw.connection_ref ?? ""),
+  };
+}
+
+export function decodeJiraClarifyScopeResponse(raw: Record<string, unknown>): JiraClarifyScopeResponse {
+  return {
+    proposalId: String(raw.proposal_id ?? ""),
+    scopeState: String(raw.scope_state ?? ""),
+    error: raw.error != null ? String(raw.error) : null,
+    projects: Array.isArray(raw.projects) ? raw.projects.map(String) : [],
+  };
+}
+
+/* ── Jira condition plain-words vocabulary (HS-166-04) ────────────── */
+
+const JIRA_FIELD_LABELS: Record<string, string> = {
+  status: "status",
+  status_category: "status category",
+  priority: "priority",
+  assignee: "assignee",
+  labels: "labels",
+  components: "components",
+  sprint: "sprint",
+  due_date: "due date",
+  resolution: "resolution",
+  issue_type: "issue type",
+};
+
+export function jiraFieldLabel(field: string): string {
+  return JIRA_FIELD_LABELS[field] ?? field.replace(/_/g, " ");
+}
+
+/** Format a date-only string (YYYY-MM-DD) as a DUE token without timezone shift.
+ *  Never use `new Date(iso)` for date-only values — that parses as UTC midnight
+ *  and shifts a day in negative-UTC-offset timezones. */
+const MONTH_NAMES = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+export function formatDueToken(dateStr: string | null | undefined): string {
+  if (!dateStr) return "";
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr);
+  if (match) {
+    const month = parseInt(match[2], 10) - 1;
+    const day = parseInt(match[3], 10);
+    return `DUE ${MONTH_NAMES[month] ?? "???"} ${day}`;
+  }
+  // Fallback for non-date strings
+  return `DUE ${dateStr}`;
+}
+
+/* ── Condition + action human labels (HS-166-04 catch 2) ────────── */
+
+/** Human-readable condition clause label from field/comparison/value. */
+export function conditionLabel(clause: { field?: string; comparison?: string; value?: unknown }): string {
+  const f = String(clause.field ?? "").replace(/_/g, " ");
+  const comp = String(clause.comparison ?? "");
+  const v = clause.value != null ? String(clause.value) : "";
+
+  // Known patterns
+  if (f === "status" && comp === "entered_state" && v) return `Status enters ${v}`;
+  if (f === "status" && comp === "changed") return "Status changed";
+  if (f === "due" && comp === "within" && v) return `Due within ${v} days`;
+  if (f === "due" && comp === "overdue") return "Overdue";
+  if (f === "assignee" && comp === "changed") return "Assignee changed";
+  if (f === "priority" && comp === "changed") return "Priority changed";
+  if (f === "priority" && comp === "changed_to" && v) return `Priority changed to ${v}`;
+  if (f === "resolution" && comp === "resolved") return "Resolved";
+  if (comp === "older_than" && v) return `No activity ${v} days`;
+  if (comp === "newer_than" && v) return `Activity within ${v} days`;
+
+  // Snapshot-level comparisons where the field is implied by the comparison
+  // (due_within_days, overdue, inactive_for — the field may be "due_at" or anything)
+  if (comp === "due_within_days" && v) return `Due within ${v} days`;
+  if (comp === "overdue") return "Overdue";
+  if (comp === "inactive_for" && v) return `No activity ${v} days`;
+
+  // Fallback: humanize
+  const humanComp = comp.replace(/_/g, " ");
+  return v ? `${f} ${humanComp} ${v}` : `${f} ${humanComp}`;
+}
+
+/** Human-readable action kind label. */
+const ACTION_LABEL_MAP: Record<string, string> = {
+  "project.observe": "Put it in Project attention",
+  "project.propose": "Propose to the Project",
+  "project.steward.run_once": "Run the Steward",
+  "project.update.draft": "Draft an update",
+  "door.add_item": "Add to the Door",
+  "workbench.add_item": "Add to the Workbench",
+};
+
+export function actionLabel(kind: string): string {
+  return ACTION_LABEL_MAP[kind] ?? kind.replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** Human-readable transition kind label. */
+const TRANSITION_LABEL_MAP: Record<string, string> = {
+  "jira.issue.discovered": "Discovered",
+  "jira.issue.assigned": "Assigned",
+  "jira.issue.status_changed": "Status changed",
+  "jira.issue.category_changed": "Category changed",
+  "jira.issue.priority_changed": "Priority changed",
+  "jira.issue.due_changed": "Due changed",
+  "jira.issue.resolved": "Resolved",
+};
+
+/** Pluralize a word: "1 issue" vs "3 issues", "1 call" vs "0 calls". */
+export function plural(n: number, singular: string, pluralForm?: string): string {
+  return `${n} ${n === 1 ? singular : (pluralForm ?? singular + "s")}`;
+}
+
+export function transitionLabel(kind: string): string {
+  return TRANSITION_LABEL_MAP[kind] ?? kind.replace(/^jira\.issue\./, "").replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }

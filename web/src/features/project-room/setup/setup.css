@@ -1114,6 +1114,8 @@
   font-size: var(--text-sm);
 }
 
+/* ── Jira wizard CSS lives in jira-wizard.css (HS-166-04 D5 rebuild) ── */
+
 /* ── Utility ── */
 
 .sr-only {

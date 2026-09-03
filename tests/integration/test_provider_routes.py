@@ -769,3 +769,548 @@ class TestFullCompoundingLoop:
         delta = resp.json()
         # The open review should be reflected
         assert delta.get("open_review") is not None or "proposals" in delta
+
+
+# ════════════════════════════════════════════════════════════════════
+# HS-166-01: Jira provider routes
+# ════════════════════════════════════════════════════════════════════
+
+
+def _make_jira_connected_runner(
+    site: str = "alpha.atlassian.net",
+    email: str = "user@example.com",
+    call_log: list[list[str]] | None = None,
+) -> Any:
+    """recorded_from: acli 1.3.36-stable live, 2026-09-03"""
+    def runner(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        cmd = list(args[0]) if args else list(kwargs.get("args", []))
+        if call_log is not None:
+            call_log.append(cmd)
+        if cmd[0:4] == ["acli", "jira", "auth", "switch"]:
+            return subprocess.CompletedProcess(
+                cmd, 0,
+                stdout=f"✓ Switched to account: {site} [{email}]",
+                stderr="",
+            )
+        if cmd[0:4] == ["acli", "jira", "auth", "status"]:
+            return subprocess.CompletedProcess(
+                cmd, 0,
+                stdout=(
+                    f"✓ Authenticated\n"
+                    f"  Site: {site}\n"
+                    f"  Email: {email}\n"
+                    f"  Authentication Type: oauth\n"
+                ),
+                stderr="",
+            )
+        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+    return runner
+
+
+@pytest.fixture
+def jira_rig(tmp_path, monkeypatch):
+    """Route rig with both GitHub and Jira providers."""
+    from holdspeak.services.jira_provider import JiraProviderAdapter
+
+    reset_database()
+    db = Database(tmp_path / "jira-provider-routes.db")
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+
+    gh_call_log: list[list[str]] = []
+    gh_runner = _make_connected_runner(gh_call_log)
+    gh_adapter = GitHubProviderAdapter(db=db, runner=gh_runner)
+
+    jira_call_log: list[list[str]] = []
+    jira_runner = _make_jira_connected_runner(call_log=jira_call_log)
+    jira_adapter = JiraProviderAdapter(db=db, runner=jira_runner)
+
+    ctx = WebContext(
+        get_state=lambda: {},
+        github_provider=gh_adapter,
+        jira_provider=jira_adapter,
+    )
+
+    app = FastAPI()
+
+    from starlette.middleware.base import BaseHTTPMiddleware
+
+    class _OwnerMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            request.state.principal = OWNER
+            return await call_next(request)
+
+    app.add_middleware(_OwnerMiddleware)
+    app.include_router(build_providers_router(ctx))
+    client = TestClient(app)
+    yield db, client, jira_call_log, jira_adapter
+    reset_database()
+
+
+class TestJiraProviderRoutes:
+    """HS-166-01: Jira connection list/add/recheck roundtrip."""
+
+    def test_list_connections_empty(self, jira_rig) -> None:
+        db, client, _, _ = jira_rig
+        resp = client.get("/api/providers/jira/connections")
+        assert resp.status_code == 200
+        assert resp.json()["connections"] == []
+
+    def test_add_connection(self, jira_rig) -> None:
+        db, client, _, _ = jira_rig
+        resp = client.post(
+            "/api/providers/jira/connections",
+            json={"site": "alpha", "email": "user@example.com"},
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["provider_id"] == "jira"
+        assert body["external_connection_ref"] == "alpha.atlassian.net|user@example.com"
+
+    def test_add_then_list(self, jira_rig) -> None:
+        db, client, _, _ = jira_rig
+        client.post(
+            "/api/providers/jira/connections",
+            json={"site": "alpha", "email": "user@example.com"},
+        )
+        resp = client.get("/api/providers/jira/connections")
+        assert resp.status_code == 200
+        connections = resp.json()["connections"]
+        assert len(connections) == 1
+        assert connections[0]["external_connection_ref"] == "alpha.atlassian.net|user@example.com"
+
+    def test_recheck_connected(self, jira_rig) -> None:
+        db, client, call_log, _ = jira_rig
+        # Add then recheck
+        client.post(
+            "/api/providers/jira/connections",
+            json={"site": "alpha", "email": "user@example.com"},
+        )
+        ref = "alpha.atlassian.net|user@example.com"
+        resp = client.post(f"/api/providers/jira/connections/{ref}/recheck")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["state"] == "connected"
+        assert body["account"]["site"] == "alpha.atlassian.net"
+        assert body["account"]["email"] == "user@example.com"
+
+    def test_readiness_partial_before_connected_after(self, jira_rig) -> None:
+        """SETFLOW-005: partial before recheck, connected after."""
+        db, client, _, _ = jira_rig
+        # Before: partial (acli present via fake runner, zero connected rows)
+        resp = client.get("/api/providers")
+        providers = resp.json()["providers"]
+        jira_entry = next(p for p in providers if p["provider_id"] == "jira")
+        assert jira_entry["readiness"]["state"] == "partial"
+        assert jira_entry["readiness"]["connected"] == 0
+
+        # Add + recheck → connected
+        client.post(
+            "/api/providers/jira/connections",
+            json={"site": "alpha", "email": "user@example.com"},
+        )
+        ref = "alpha.atlassian.net|user@example.com"
+        client.post(f"/api/providers/jira/connections/{ref}/recheck")
+
+        resp = client.get("/api/providers")
+        providers = resp.json()["providers"]
+        jira_entry = next(p for p in providers if p["provider_id"] == "jira")
+        assert jira_entry["readiness"]["state"] == "connected"
+        assert jira_entry["readiness"]["connected"] == 1
+
+    def test_connections_route_includes_known_accounts(self, jira_rig) -> None:
+        """GET /api/providers/jira/connections returns known_accounts."""
+        _, client, _, _ = jira_rig
+        resp = client.get("/api/providers/jira/connections")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert "known_accounts" in body
+        assert isinstance(body["known_accounts"], list)
+
+    def test_add_missing_fields_400(self, jira_rig) -> None:
+        _, client, _, _ = jira_rig
+        resp = client.post(
+            "/api/providers/jira/connections",
+            json={"site": "alpha"},
+        )
+        assert resp.status_code == 400
+
+    def test_recheck_bad_ref_400(self, jira_rig) -> None:
+        _, client, _, _ = jira_rig
+        resp = client.post("/api/providers/jira/connections/bad-ref/recheck")
+        assert resp.status_code == 400
+
+
+class TestJiraUnavailable:
+    """Readiness is ``unavailable`` when acli is not installed."""
+
+    def test_readiness_unavailable_no_acli(self, tmp_path, monkeypatch) -> None:
+        from holdspeak.services.jira_provider import JiraProviderAdapter
+
+        reset_database()
+        db = Database(tmp_path / "jira-unavail.db")
+        monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+        # No runner, and shutil.which returns None
+        monkeypatch.setattr("shutil.which", lambda x: None)
+        jira_adapter = JiraProviderAdapter(db=db, runner=None)
+
+        ctx = WebContext(
+            get_state=lambda: {},
+            jira_provider=jira_adapter,
+        )
+
+        app = FastAPI()
+
+        from starlette.middleware.base import BaseHTTPMiddleware
+
+        class _OwnerMiddleware(BaseHTTPMiddleware):
+            async def dispatch(self, request, call_next):
+                request.state.principal = OWNER
+                return await call_next(request)
+
+        app.add_middleware(_OwnerMiddleware)
+        app.include_router(build_providers_router(ctx))
+        client = TestClient(app)
+
+        resp = client.get("/api/providers")
+        providers = resp.json()["providers"]
+        jira_entry = next(p for p in providers if p["provider_id"] == "jira")
+        assert jira_entry["readiness"]["state"] == "unavailable"
+        assert jira_entry["readiness"]["connected"] == 0
+        reset_database()
+
+
+class TestJiraMcpParity:
+    """Route JSON == MCP tool JSON for the three Jira twins."""
+
+    def test_provider_list_jira_entry_with_readiness(self, jira_rig) -> None:
+        """provider.list MCP tool includes Jira manifest with readiness."""
+        db, client, _, jira_adapter = jira_rig
+        # HTTP
+        http_resp = client.get("/api/providers")
+        http_jira = next(
+            p for p in http_resp.json()["providers"] if p["provider_id"] == "jira"
+        )
+        # MCP
+        from holdspeak.web.routes.providers import collect_provider_manifests
+        mcp_providers = collect_provider_manifests(
+            jira_adapter=jira_adapter, principal=OWNER,
+        )
+        mcp_jira = next(p for p in mcp_providers if p["provider_id"] == "jira")
+        # Byte-equal for the jira entry
+        assert http_jira == mcp_jira
+        # Readiness present
+        assert "readiness" in http_jira
+        assert http_jira["readiness"]["state"] == "partial"
+
+    def test_connections_list_parity(self, jira_rig) -> None:
+        """HTTP list == MCP list (connections + known_accounts)."""
+        db, client, _, jira_adapter = jira_rig
+        jira_adapter.add_connection(OWNER, "alpha", "user@example.com")
+
+        http_resp = client.get("/api/providers/jira/connections")
+        http_body = http_resp.json()
+        http_connections = http_body["connections"]
+        http_known = http_body["known_accounts"]
+
+        # MCP path
+        mcp_connections = jira_adapter.list_connections(OWNER)
+        mcp_known = jira_adapter.known_accounts(OWNER)
+
+        assert len(http_connections) == len(mcp_connections)
+        assert http_connections[0]["external_connection_ref"] == mcp_connections[0]["external_connection_ref"]
+        assert http_known == mcp_known
+
+    def test_recheck_parity(self, jira_rig) -> None:
+        """HTTP recheck == adapter.connection_status."""
+        db, client, _, jira_adapter = jira_rig
+        jira_adapter.add_connection(OWNER, "alpha", "user@example.com")
+        ref = "alpha.atlassian.net|user@example.com"
+
+        http_resp = client.post(f"/api/providers/jira/connections/{ref}/recheck")
+        http_body = http_resp.json()
+
+        mcp_body = jira_adapter.connection_status(OWNER, ref)
+        assert http_body["state"] == mcp_body["state"]
+        assert http_body["provider_id"] == mcp_body["provider_id"]
+
+
+# ════════════════════════════════════════════════════════════════════
+# HS-166-02: Jira discovery + search + validate-scope routes
+# ════════════════════════════════════════════════════════════════════
+
+
+def _make_jira_discovery_runner(
+    site: str = "alpha.atlassian.net",
+    email: str = "user@example.com",
+    call_log: list[list[str]] | None = None,
+) -> Any:
+    """recorded_from: acli 1.3.36-stable live, 2026-09-03
+
+    A fake runner that handles switch + status + project list/view + search.
+    """
+    project_list = json.dumps([
+        {
+            "id": "10001", "key": "KAN", "name": "My Project",
+            "projectTypeKey": "software", "style": "next-gen",
+            "isPrivate": False,
+            "lead": {"displayName": "Lead User", "accountId": "abc"},
+            "issueTypes": None,
+        },
+    ])
+
+    project_view = json.dumps({
+        "id": "10001", "key": "KAN", "name": "My Project",
+        "projectTypeKey": "software", "style": "next-gen",
+        "issueTypes": [
+            {"id": "10006", "name": "Task", "subtask": False, "hierarchyLevel": 0},
+        ],
+    })
+
+    search_result = json.dumps([
+        {
+            "id": "10002", "key": "KAN-1",
+            "fields": {
+                "assignee": None,
+                "issuetype": {"id": "10006", "name": "Task", "subtask": False},
+                "priority": None,
+                "status": {
+                    "id": "10005", "name": "In Progress",
+                    "statusCategory": {"id": 4, "key": "indeterminate", "name": "In Progress"},
+                },
+                "summary": "Task 1",
+                "labels": [],
+            },
+        },
+    ])
+
+    def runner(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        cmd = list(args[0]) if args else list(kwargs.get("args", []))
+        if call_log is not None:
+            call_log.append(cmd)
+        if cmd[0:4] == ["acli", "jira", "auth", "switch"]:
+            return subprocess.CompletedProcess(
+                cmd, 0,
+                stdout=f"✓ Switched to account: {site} [{email}]",
+                stderr="",
+            )
+        if cmd[0:4] == ["acli", "jira", "auth", "status"]:
+            return subprocess.CompletedProcess(
+                cmd, 0,
+                stdout=(
+                    f"✓ Authenticated\n"
+                    f"  Site: {site}\n"
+                    f"  Email: {email}\n"
+                    f"  Authentication Type: oauth\n"
+                ),
+                stderr="",
+            )
+        if cmd[0:4] == ["acli", "jira", "project", "list"]:
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout=project_list, stderr="",
+            )
+        if cmd[0:4] == ["acli", "jira", "project", "view"]:
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout=project_view, stderr="",
+            )
+        if cmd[0:4] == ["acli", "jira", "workitem", "search"]:
+            if "--count" in cmd:
+                return subprocess.CompletedProcess(
+                    cmd, 0,
+                    stdout="✓ Number of work items in the search: 1",
+                    stderr="",
+                )
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout=search_result, stderr="",
+            )
+        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+    return runner
+
+
+@pytest.fixture
+def jira_discovery_rig(tmp_path, monkeypatch):
+    """Route rig with Jira adapter configured for discovery/search/validate."""
+    from holdspeak.services.jira_provider import JiraProviderAdapter
+
+    reset_database()
+    db = Database(tmp_path / "jira-discovery-routes.db")
+    monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
+
+    jira_call_log: list[list[str]] = []
+    jira_runner = _make_jira_discovery_runner(call_log=jira_call_log)
+    jira_adapter = JiraProviderAdapter(db=db, runner=jira_runner)
+
+    # Add and connect a connection for the tests
+    jira_adapter.add_connection(OWNER, "alpha", "user@example.com")
+    ref = "alpha.atlassian.net|user@example.com"
+    jira_adapter.connection_status(OWNER, ref)
+
+    ctx = WebContext(
+        get_state=lambda: {},
+        jira_provider=jira_adapter,
+    )
+
+    app = FastAPI()
+
+    from starlette.middleware.base import BaseHTTPMiddleware
+
+    class _OwnerMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            request.state.principal = OWNER
+            return await call_next(request)
+
+    app.add_middleware(_OwnerMiddleware)
+    app.include_router(build_providers_router(ctx))
+    client = TestClient(app)
+    yield db, client, jira_call_log, jira_adapter
+    reset_database()
+
+
+class TestJiraDiscoverRoutes:
+    """HS-166-02: discover, search, validate-scope route roundtrips."""
+
+    def test_discover_projects(self, jira_discovery_rig) -> None:
+        _, client, _, _ = jira_discovery_rig
+        ref = "alpha.atlassian.net|user@example.com"
+        resp = client.get(
+            f"/api/providers/jira/discover?connection_ref={ref}&kind=projects"
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["state"] == "ready"
+        assert len(body["items"]) >= 1
+        assert body["items"][0]["key"] == "KAN"
+        assert body["connection_ref"] == ref
+
+    def test_discover_issue_types(self, jira_discovery_rig) -> None:
+        _, client, _, _ = jira_discovery_rig
+        ref = "alpha.atlassian.net|user@example.com"
+        resp = client.get(
+            f"/api/providers/jira/discover?connection_ref={ref}&kind=issue_types&project_key=KAN"
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["state"] == "ready"
+        assert body["source"] == "enumerated"
+        assert len(body["items"]) >= 1
+
+    def test_discover_statuses(self, jira_discovery_rig) -> None:
+        _, client, _, _ = jira_discovery_rig
+        ref = "alpha.atlassian.net|user@example.com"
+        resp = client.get(
+            f"/api/providers/jira/discover?connection_ref={ref}&kind=statuses&project_key=KAN"
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["state"] == "ready"
+        assert body["source"] == "observed"
+        assert "categories" in body
+
+    def test_discover_missing_connection_ref_400(self, jira_discovery_rig) -> None:
+        _, client, _, _ = jira_discovery_rig
+        resp = client.get("/api/providers/jira/discover?kind=projects")
+        assert resp.status_code == 400
+
+    def test_search_roundtrip(self, jira_discovery_rig) -> None:
+        _, client, _, _ = jira_discovery_rig
+        ref = "alpha.atlassian.net|user@example.com"
+        resp = client.post(
+            "/api/providers/jira/search",
+            json={"connection_ref": ref, "jql": "project = KAN"},
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["state"] == "ready"
+        assert len(body["items"]) >= 1
+        item = body["items"][0]
+        assert "key" in item
+        assert "summary" in item
+        assert "url" in item
+
+    def test_search_missing_fields_400(self, jira_discovery_rig) -> None:
+        _, client, _, _ = jira_discovery_rig
+        resp = client.post(
+            "/api/providers/jira/search",
+            json={"connection_ref": "alpha.atlassian.net|user@example.com"},
+        )
+        assert resp.status_code == 400
+
+    def test_validate_scope_valid(self, jira_discovery_rig) -> None:
+        _, client, _, _ = jira_discovery_rig
+        ref = "alpha.atlassian.net|user@example.com"
+        resp = client.post(
+            "/api/providers/jira/validate-scope",
+            json={"connection_ref": ref, "project_key": "KAN"},
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["valid"] is True
+        assert body["project"]["key"] == "KAN"
+        assert len(body["issue_types"]) >= 1
+
+    def test_validate_scope_missing_fields_400(self, jira_discovery_rig) -> None:
+        _, client, _, _ = jira_discovery_rig
+        resp = client.post(
+            "/api/providers/jira/validate-scope",
+            json={"connection_ref": "alpha.atlassian.net|user@example.com"},
+        )
+        assert resp.status_code == 400
+
+
+class TestJiraDiscoverMcpParity:
+    """HS-166-02: Route JSON == MCP tool JSON for the three new Jira tools."""
+
+    def test_discover_parity(self, jira_discovery_rig) -> None:
+        """HTTP discover == adapter.discover (byte-equal)."""
+        _, client, _, jira_adapter = jira_discovery_rig
+        ref = "alpha.atlassian.net|user@example.com"
+
+        http_resp = client.get(
+            f"/api/providers/jira/discover?connection_ref={ref}&kind=projects"
+        )
+        http_body = http_resp.json()
+
+        mcp_body = jira_adapter.discover(
+            OWNER, ref, kind="projects",
+        )
+
+        # Byte-equal on the envelope keys that matter
+        assert http_body["state"] == mcp_body["state"]
+        assert http_body["connection_ref"] == mcp_body["connection_ref"]
+        assert len(http_body["items"]) == len(mcp_body["items"])
+        if http_body["items"]:
+            assert http_body["items"][0]["key"] == mcp_body["items"][0]["key"]
+
+    def test_search_parity(self, jira_discovery_rig) -> None:
+        """HTTP search == adapter.search."""
+        _, client, _, jira_adapter = jira_discovery_rig
+        ref = "alpha.atlassian.net|user@example.com"
+
+        http_resp = client.post(
+            "/api/providers/jira/search",
+            json={"connection_ref": ref, "jql": "project = KAN"},
+        )
+        http_body = http_resp.json()
+
+        mcp_body = jira_adapter.search(OWNER, ref, jql="project = KAN")
+
+        assert http_body["state"] == mcp_body["state"]
+        assert http_body["connection_ref"] == mcp_body["connection_ref"]
+        assert len(http_body["items"]) == len(mcp_body["items"])
+
+    def test_validate_scope_parity(self, jira_discovery_rig) -> None:
+        """HTTP validate-scope == adapter.validate_scope."""
+        _, client, _, jira_adapter = jira_discovery_rig
+        ref = "alpha.atlassian.net|user@example.com"
+
+        http_resp = client.post(
+            "/api/providers/jira/validate-scope",
+            json={"connection_ref": ref, "project_key": "KAN"},
+        )
+        http_body = http_resp.json()
+
+        mcp_body = jira_adapter.validate_scope(OWNER, ref, "KAN")
+
+        assert http_body["valid"] == mcp_body["valid"]
+        assert http_body["connection_ref"] == mcp_body["connection_ref"]
+        if http_body["valid"]:
+            assert http_body["project"]["key"] == mcp_body["project"]["key"]

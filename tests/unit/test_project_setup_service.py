@@ -1026,3 +1026,100 @@ class TestGitHubPullRequestTestRead:
         assert result["test_state"] == "failed"
         assert "adapter" in result["result"]["error"]["message"].lower()
         reset_database()
+
+
+# ── HS-166-03: Jira candidates ───────────────────────────────────────
+
+
+class TestJiraCandidates:
+    """Jira candidates only appear when a connected connection exists."""
+
+    def _fake_jira_adapter(self, connected=True):
+        """Minimal fake JiraProviderAdapter."""
+        class FakeJiraAdapter:
+            def list_connections(self, principal):
+                if connected:
+                    return [{"state": "connected", "connection_ref": "a.atlassian.net|u@x.com",
+                             "external_connection_ref": "a.atlassian.net|u@x.com"}]
+                return [{"state": "owner_action_required", "connection_ref": "a.atlassian.net|u@x.com"}]
+            def discover(self, principal, ref, *, kind="projects"):
+                return {"state": "ready", "items": [{"key": "KAN", "name": "WRONG"}]}
+            def validate_scope(self, principal, ref, project_key):
+                return {"valid": True, "key": project_key}
+        return FakeJiraAdapter()
+
+    def test_jira_candidates_when_connected(self, tmp_path) -> None:
+        reset_database()
+        db = Database(tmp_path / "jira-cand-connected.db")
+        svc = ProjectSetupService(
+            db,
+            project_service=ProjectService(db),
+            watch_service=None,
+            jira_adapter=self._fake_jira_adapter(connected=True),
+        )
+        session = svc.start_setup(OWNER)
+        svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Track Jira issues"})
+        proposals = svc.suggest(OWNER, session["id"])
+        jira_proposals = [p for p in proposals if p.get("provider_id") == "jira"]
+        assert len(jira_proposals) == 5
+        for p in jira_proposals:
+            assert p["rationale"]["readiness"] == "needs_scope"
+            assert p["rationale"]["source"] == "jira"
+        reset_database()
+
+    def test_no_jira_candidates_when_disconnected(self, tmp_path) -> None:
+        reset_database()
+        db = Database(tmp_path / "jira-cand-discon.db")
+        svc = ProjectSetupService(
+            db,
+            project_service=ProjectService(db),
+            watch_service=None,
+            jira_adapter=self._fake_jira_adapter(connected=False),
+        )
+        session = svc.start_setup(OWNER)
+        svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Track issues"})
+        proposals = svc.suggest(OWNER, session["id"])
+        jira_proposals = [p for p in proposals if p.get("provider_id") == "jira"]
+        assert len(jira_proposals) == 0
+        reset_database()
+
+    def test_no_jira_candidates_without_adapter(self, tmp_path) -> None:
+        reset_database()
+        db = Database(tmp_path / "jira-cand-none.db")
+        svc = ProjectSetupService(
+            db,
+            project_service=ProjectService(db),
+            watch_service=None,
+            jira_adapter=None,
+        )
+        session = svc.start_setup(OWNER)
+        svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Track issues"})
+        proposals = svc.suggest(OWNER, session["id"])
+        jira_proposals = [p for p in proposals if p.get("provider_id") == "jira"]
+        assert len(jira_proposals) == 0
+        reset_database()
+
+    def test_clarify_jira_scope(self, tmp_path) -> None:
+        reset_database()
+        db = Database(tmp_path / "jira-clarify.db")
+        svc = ProjectSetupService(
+            db,
+            project_service=ProjectService(db),
+            watch_service=None,
+            jira_adapter=self._fake_jira_adapter(connected=True),
+        )
+        session = svc.start_setup(OWNER)
+        svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Track Jira"})
+        proposals = svc.suggest(OWNER, session["id"])
+        jira_proposals = [p for p in proposals if p.get("provider_id") == "jira"]
+        assert len(jira_proposals) > 0
+        proposal_id = jira_proposals[0]["id"]
+
+        result = svc.clarify_jira_scope(
+            OWNER, session["id"], proposal_id,
+            connection_ref="a.atlassian.net|u@x.com",
+            projects=["KAN"],
+        )
+        assert result["scope_state"] == "scoped"
+        assert result["projects"] == ["KAN"]
+        reset_database()

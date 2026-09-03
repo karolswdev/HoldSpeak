@@ -199,6 +199,7 @@ class MeetingWebServer:
         dictation_corrections_repository: Optional[Any] = None,
         dictation_journal_repository: Optional[Any] = None,
         gh_runner: Optional[Any] = None,
+        acli_runner: Optional[Any] = None,
     ) -> None:
         if _IMPORT_ERROR is not None:
             raise RuntimeError(
@@ -214,6 +215,7 @@ class MeetingWebServer:
         # and WatchService snapshot_fetcher so the booted hub uses canned
         # responses instead of real subprocess calls.
         self._gh_runner = gh_runner
+        self._acli_runner = acli_runner
         # HS-39-02: one session-scoped dictation correction store, shared by the
         # dictation routes (record/read) and the live runtime (consult).
         # HS-40-02: when the live runtime injects a repository the store is
@@ -332,24 +334,22 @@ class MeetingWebServer:
         self.app = self._create_app()
 
     def _gh_watch_service_kwargs(self) -> dict[str, Any]:
-        """HS-161-06: extra kwargs for WatchService when a fixture runner is
-        active.  Returns ``{"snapshot_fetcher": <fn>}`` or ``{}``."""
-        if self._gh_runner is None:
-            return {}
-        from .services.watch_sources import fetch_watch_snapshot as _base_fetch
-        _runner = self._gh_runner
-        def _fixture_fetcher(
-            principal: Any,
-            *,
-            connector_id: str,
-            query_kind: str,
-            query: dict[str, Any],
-        ) -> list[dict[str, Any]]:
-            return _base_fetch(
-                principal, connector_id=connector_id, query_kind=query_kind,
-                query=query, github_runner=_runner,
-            )
-        return {"snapshot_fetcher": _fixture_fetcher}
+        """HS-161-06 / HS-166-03 rider-a: extra kwargs for WatchService.
+        Uses default_snapshot_fetcher so gh AND jira share the same
+        injection shape.  HS-166-04: pass the composed Jira adapter
+        (with runner) so test/evaluate on a Jira Watch reaches the
+        fixture runner, not a lazy db-only adapter."""
+        from .db import get_database
+        from .services.jira_provider import JiraProviderAdapter
+        from .services.watch_sources import default_snapshot_fetcher
+        jira = JiraProviderAdapter(
+            db=get_database(), runner=self._acli_runner,
+        ) if self._acli_runner else None
+        fetcher = default_snapshot_fetcher(
+            github_runner=self._gh_runner,
+            jira_adapter=jira,
+        )
+        return {"snapshot_fetcher": fetcher}
 
     @property
     def url(self) -> Optional[str]:
@@ -709,6 +709,7 @@ class MeetingWebServer:
         from .services.reaction_service import ReactionService
         from .services.watch_service import WatchService
         from .services.github_provider import GitHubProviderAdapter
+        from .services.jira_provider import JiraProviderAdapter
         from .services.project_setup_service import ProjectSetupService
         from .services.project_evidence_collector import ProjectEvidenceCollector
         from .services.project_delta_service import ProjectDeltaService
@@ -903,6 +904,9 @@ class MeetingWebServer:
             github_provider=GitHubProviderAdapter(
                 db=get_database(), runner=self._gh_runner,
             ),
+            jira_provider=JiraProviderAdapter(
+                db=get_database(), runner=self._acli_runner,
+            ),
             project_setup_service=ProjectSetupService(
                 get_database(),
                 project_service=ProjectService(get_database(), observer=obs),
@@ -912,6 +916,9 @@ class MeetingWebServer:
                 ),
                 github_adapter=GitHubProviderAdapter(
                     db=get_database(), runner=self._gh_runner,
+                ),
+                jira_adapter=JiraProviderAdapter(
+                    db=get_database(), runner=self._acli_runner,
                 ),
             ),
             project_evidence_collector=ProjectEvidenceCollector(get_database()),
@@ -970,6 +977,11 @@ class MeetingWebServer:
             web_host=self.host,
             web_auth_token=self.auth_token,
         )
+        # HS-166-05: wire the project_service into the delta service
+        # (mutual composition: delta needs project for create_item in
+        # decide_proposal, project needs delta for room review section).
+        _project_delta_service.attach_project_service(_project_service)
+
         from .web.routes.actuator_shared import DeskActuatorLifecycle
         web_ctx.actuator_service = ActuatorProposalService(
             get_database(), config_provider=lambda: Config.load(path=__import__("holdspeak.config", fromlist=["CONFIG_FILE"]).CONFIG_FILE),

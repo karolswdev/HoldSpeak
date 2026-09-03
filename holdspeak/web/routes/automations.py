@@ -46,7 +46,9 @@ def _automation_view(value: dict[str, Any]) -> dict[str, Any]:
     watch = value.get("watch") or {}
     connector = str(watch.get("connector_id") or "custom")
     provider = "github" if connector == "gh" else connector
-    adapter_status = "ready" if connector == "gh" else "unavailable"
+    # HS-166: jira graduated the watch_sources gate (JiraWatchSource);
+    # the read surface must not call a working adapter unavailable.
+    adapter_status = "ready" if connector in ("gh", "jira") else "unavailable"
     enabled = bool(reaction.get("enabled")) and (
         not watch or bool(watch.get("enabled"))
     )

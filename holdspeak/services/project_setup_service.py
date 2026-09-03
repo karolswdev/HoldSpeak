@@ -101,12 +101,15 @@ class ProjectSetupService:
         project_service: Any | None = None,
         watch_service: Any | None = None,
         github_adapter: Any | None = None,
+        jira_adapter: Any | None = None,
     ) -> None:
         self._db = db
         self._repo = db.automations
         self._project_service = project_service
         self._watch_service = watch_service
         self._github_adapter = github_adapter
+        self._jira_adapter = jira_adapter
+        self._issue_test_calls: int = 0  # HS-166-04: set by _native_test_read
 
     # ── Guards ──────────────────────────────────────────────────────
 
@@ -316,6 +319,14 @@ class ProjectSetupService:
             except Exception:
                 pass  # Degraded: no github candidates
 
+        # HS-166-03: Jira template candidates (beside GitHub)
+        if self._jira_adapter is not None:
+            try:
+                jira_proposals = self._jira_candidates(principal, session_id)
+                proposals.extend(jira_proposals)
+            except Exception:
+                pass  # Degraded: no jira candidates
+
         # Persist proposals (truncate to cap)
         persisted: list[dict[str, Any]] = []
         for p in proposals[:_MAX_PROPOSALS]:
@@ -439,22 +450,60 @@ class ProjectSetupService:
         subject_kind = spec.get("subject", {}).get("kind", "")
         now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
+        import time as _time
+        t0 = _time.monotonic()
         try:
             entities = self._native_test_read(principal, subject_kind, spec)
             entity_count = len(entities)
-            test_result = {
+            duration_ms = int((_time.monotonic() - t0) * 1000)
+            test_result: dict[str, Any] = {
                 "entity_count": entity_count,
                 "representative_entities": entities[:5],
                 "observed_at": now_iso,
+                "duration_ms": duration_ms,
                 "error": None,
                 "message": f"Test passed -- {entity_count} current matches",
             }
+
+            # HS-166-04: enrich jira issue test results with the
+            # display contract (same keys WatchService SS8.2 emits).
+            if subject_kind == "issue":
+                query = spec.get("subject", {}).get("query", {})
+                scope_obj = spec.get("subject", {}).get("scope", {})
+                conn_ref = query.get("connection_ref", scope_obj.get("connection_ref", ""))
+                site = conn_ref.split("|")[0] if "|" in conn_ref else ""
+                email = conn_ref.split("|")[1] if "|" in conn_ref else ""
+                from holdspeak.services.watch_sources import _compile_jql
+                from holdspeak.services.watch_service import (
+                    _jira_conditions_summary, _JIRA_TRANSITION_KINDS,
+                )
+                from holdspeak.services.reaction_service import normalize_snapshot
+                normalized = normalize_snapshot("jira", entities)
+                test_result["provider"] = "jira"
+                test_result["connection"] = {
+                    "site": site, "email": email,
+                    "connection_ref": conn_ref,
+                }
+                test_result["projects"] = scope_obj.get("projects", [])
+                test_result["normalized_jql"] = (
+                    _compile_jql(query) if query else ""
+                )
+                test_result["matched_conditions"] = (
+                    _jira_conditions_summary(normalized["entities"])
+                )
+                test_result["supported_transitions"] = list(
+                    _JIRA_TRANSITION_KINDS
+                )
+                test_result["calls"] = self._issue_test_calls
+
             test_state = "passed"
         except Exception as exc:
+            duration_ms = int((_time.monotonic() - t0) * 1000)
             test_result = {
                 "entity_count": 0,
                 "representative_entities": [],
                 "observed_at": now_iso,
+                "duration_ms": duration_ms,
                 "error": {"type": type(exc).__name__, "message": str(exc)},
                 "message": f"Test failed: {exc}",
             }
@@ -567,6 +616,29 @@ class ProjectSetupService:
             command_id=cmd_id,
             session_id=session_id,
         )
+
+        # HS-166-05: populate baseline snapshots AFTER the transaction
+        # commits. ACT-005 says baseline WITHOUT events -- it does NOT
+        # say baseline without a snapshot. An empty snapshot_json causes
+        # the first evaluate_due to "discover" everything and fire false
+        # effects from nothing.
+        activated = result.get("activated_watches", [])
+        if activated and self._watch_service is not None:
+            for aw in activated:
+                wid = aw.get("watch_id", "")
+                if not wid:
+                    continue
+                try:
+                    self._watch_service.baseline_watch(principal, wid)
+                except Exception:
+                    # Fetch failed -- degrade to pending so evaluate_due
+                    # knows the baseline is not real.
+                    try:
+                        self._watch_service._repo.update_watch_spec(
+                            wid, baseline_state="pending",
+                        )
+                    except Exception:
+                        pass
 
         # Attach refused proposals info
         result["refused_proposals"] = [
@@ -902,6 +974,179 @@ class ProjectSetupService:
             "repositories": repositories,
         }
 
+    # ── Jira candidates (HS-166-03, beside _github_candidates) ─────
+
+    def _jira_candidates(
+        self,
+        principal: Principal,
+        session_id: str,
+    ) -> list[dict[str, Any]]:
+        """Build Jira Watch candidates from connected adapter (INT-007).
+
+        Returns candidates ONLY when at least one Jira connection is
+        connected.  PROV-011: candidates carry needs_scope state --
+        no invented projects.
+        """
+        from holdspeak.jira_templates import JIRA_TEMPLATES
+        from holdspeak.services.jira_provider import STATE_CONNECTED
+
+        adapter = self._jira_adapter
+        if adapter is None:
+            return []
+
+        # Check if any connection is connected
+        connections = adapter.list_connections(principal)
+        connected = [
+            c for c in connections
+            if c.get("state") == STATE_CONNECTED
+        ]
+        if not connected:
+            return []
+
+        # Use the first connected connection's ref
+        first_ref = connected[0].get("connection_ref", connected[0].get("external_connection_ref", ""))
+
+        candidates: list[dict[str, Any]] = []
+        for tmpl in JIRA_TEMPLATES:
+            spec = {
+                "schema": "WatchSpec@1",
+                "name": tmpl.name,
+                "intent": tmpl.intent,
+                "provider": {
+                    "id": "jira",
+                    "transport": "connector_pack",
+                    "connection_ref": first_ref,
+                },
+                "subject": {
+                    "kind": "issue",
+                    "scope": {},  # needs-scope: filled by clarify
+                    "query": dict(tmpl.query_defaults),
+                },
+                "trigger": CADENCE_PRESETS.get(tmpl.cadence_preset, CADENCE_PRESETS["normal"]),
+                "rules": tmpl.rules,
+                "action": tmpl.rules[0]["actions"][0] if tmpl.rules else {},
+                "mode": "yolo",
+            }
+
+            candidates.append({
+                "id": _proposal_id(),
+                "provider_id": "jira",
+                "spec": spec,
+                "rationale": {
+                    "source": "jira",
+                    "template_id": tmpl.template_id,
+                    "fact": f"Jira connected ({first_ref})",
+                    "detail": tmpl.intent,
+                    "subject_count": 0,
+                    "readiness": "needs_scope",
+                    "conditions": [
+                        c.get("comparison", "") for clause in tmpl.rules
+                        for c in clause.get("condition", {}).get("clauses", [])
+                    ],
+                    "cadence": tmpl.cadence_preset,
+                    "action": tmpl.rules[0]["actions"][0].get("kind", "") if tmpl.rules else "",
+                },
+            })
+
+        return candidates
+
+    # ── Clarify: jira-scope step (HS-166-03) ──────────────────────
+
+    def clarify_jira_scope(
+        self,
+        principal: Principal,
+        session_id: str,
+        proposal_id: str,
+        *,
+        connection_ref: str | None = None,
+        projects: list[str] | None = None,
+        issue_types: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Clarify the Jira scope for a Jira proposal.
+
+        Validates the project via adapter.validate_scope.
+        PROV-011: never invents projects.
+        """
+        self._owner(principal)
+        self._require_active(session_id)
+        proposal = self._require_proposal(proposal_id, session_id)
+
+        adapter = self._jira_adapter
+        if adapter is None:
+            raise ServiceError(
+                "jira_adapter_missing",
+                "Jira adapter not configured",
+            )
+
+        ref = connection_ref or ""
+        validated_projects: list[str] = []
+
+        if projects:
+            for proj_key in projects:
+                validation = adapter.validate_scope(principal, ref, proj_key)
+                if not validation.get("valid"):
+                    return {
+                        "proposal_id": proposal_id,
+                        "scope_state": "invalid",
+                        "error": validation.get("error_detail", "Project validation failed"),
+                        "projects": [],
+                    }
+                validated_projects.append(proj_key)
+        else:
+            # Discover projects
+            discovery = adapter.discover(principal, ref, kind="projects")
+            if discovery.get("state") not in ("ready", "partial"):
+                return {
+                    "proposal_id": proposal_id,
+                    "scope_state": "discovery_failed",
+                    "error": discovery.get("error_detail", "Discovery failed"),
+                    "projects": [],
+                }
+            validated_projects = [item.get("key", item.get("id", "")) for item in discovery.get("items", [])]
+            if not validated_projects:
+                return {
+                    "proposal_id": proposal_id,
+                    "scope_state": "empty",
+                    "error": None,
+                    "projects": [],
+                }
+
+        # Apply the scope to the proposal spec
+        spec = proposal.get("spec") or {}
+        if isinstance(spec, str):
+            spec = json.loads(spec)
+
+        if "subject" not in spec:
+            spec["subject"] = {}
+        spec["subject"]["scope"] = {
+            "connection_ref": ref,
+            "projects": validated_projects,
+            "issue_types": issue_types or [],
+        }
+        # Also put connection_ref into the query for the source
+        if "query" not in spec["subject"]:
+            spec["subject"]["query"] = {}
+        spec["subject"]["query"]["connection_ref"] = ref
+
+        rationale = proposal.get("rationale") or {}
+        if isinstance(rationale, str):
+            rationale = json.loads(rationale)
+        rationale["readiness"] = "scoped"
+        rationale["subject_count"] = len(validated_projects)
+
+        self._update_proposal(
+            proposal_id,
+            spec_json=json.dumps(spec, sort_keys=True, separators=(",", ":")),
+            rationale_json=json.dumps(rationale, ensure_ascii=False),
+        )
+
+        return {
+            "proposal_id": proposal_id,
+            "scope_state": "scoped",
+            "error": None,
+            "projects": validated_projects,
+        }
+
     # ── Native test reads (reuse desk seams) ───────────────────────
 
     def _native_test_read(
@@ -1000,6 +1245,45 @@ class ProjectSetupService:
             # representative entities carry id/title/state/head_sha.
             normalized = normalize_snapshot("gh", raw_entities)
             return list(normalized.get("entities", {}).values())[:5]
+
+        if subject_kind == "issue":
+            # HS-166-04: Jira issue subjects test through the adapter's
+            # search + enrichment path, mirroring JiraWatchSource.snapshot.
+            adapter = self._jira_adapter
+            if adapter is None:
+                raise ValidationError(
+                    "Jira adapter not configured for issue test",
+                    code="validation",
+                )
+            scope = spec.get("subject", {}).get("scope", {})
+            query = spec.get("subject", {}).get("query", {})
+            conn_ref = query.get("connection_ref", "")
+            if not conn_ref:
+                conn_ref = scope.get("connection_ref", "")
+            projects = scope.get("projects", [])
+            if not conn_ref:
+                self._issue_test_calls = 0
+                return []
+            # Build JQL from the spec query using the watch_sources compiler.
+            # Merge scope.projects into query so _compile_jql includes them.
+            from holdspeak.services.watch_sources import _compile_jql
+            merged_query = dict(query)
+            if projects and "projects" not in merged_query:
+                merged_query["projects"] = projects
+            jql = _compile_jql(merged_query) if merged_query else ""
+            if not jql and projects:
+                jql = f"project IN ({', '.join(projects)})"
+            if not jql:
+                self._issue_test_calls = 0
+                return []
+            limit = max(1, min(int(query.get("limit") or 50), 200))
+            result = adapter.search(
+                principal, conn_ref,
+                jql=jql, limit=limit, enrich=True,
+            )
+            items = result.get("items", [])
+            self._issue_test_calls = result.get("calls", 1)
+            return items[:5]
 
         raise ValidationError(
             f"Unknown native subject kind: {subject_kind!r}",

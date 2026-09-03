@@ -174,12 +174,21 @@ function SuggestionCard({
         </div>
       ) : null}
 
-      {/* Egress badge for GitHub provider cards (HS-161-05) */}
+      {/* Egress badge for provider cards (HS-161-05 + HS-166-04) */}
       {proposal.providerId === "github" ? (
         <EgressChip
           label="local + cloud"
           scope="mixed"
           title="This Watch reads from github.com."
+        />
+      ) : null}
+      {proposal.providerId === "jira" ? (
+        <EgressChip
+          label="local + cloud"
+          scope="mixed"
+          title={`This Watch reads from ${spec.subject.scope?.connection_ref
+            ? String(spec.subject.scope.connection_ref).split("|")[0]
+            : "Jira"}.`}
         />
       ) : null}
 

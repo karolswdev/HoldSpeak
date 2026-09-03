@@ -7,6 +7,7 @@ POST /api/project-setups/{session_id}/suggest         -- suggest
 POST /api/project-setups/{session_id}/proposals/{id}/select
 POST /api/project-setups/{session_id}/proposals/{id}/deselect
 POST /api/project-setups/{session_id}/proposals/{id}/clarify
+POST /api/project-setups/{session_id}/proposals/{id}/clarify-jira-scope
 POST /api/project-setups/{session_id}/proposals/{id}/test
 POST /api/project-setups/{session_id}/finalize        -- finalize
 POST /api/project-setups/{session_id}/abandon         -- abandon
@@ -234,6 +235,37 @@ def build_project_setup_router(ctx: WebContext) -> APIRouter:
             return _svc_error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to clarify repo scope")
+
+    # ── POST /api/project-setups/{sid}/proposals/{pid}/clarify-jira-scope
+
+    @router.post("/{session_id}/proposals/{proposal_id}/clarify-jira-scope")
+    async def clarify_jira_scope(
+        session_id: str, proposal_id: str, request: Request,
+    ) -> Any:
+        """Clarify the Jira scope for a Jira proposal (HS-166-04)."""
+        try:
+            body = await request.json()
+            result = ctx.project_setup_service.clarify_jira_scope(
+                principal(request), session_id, proposal_id,
+                connection_ref=body.get("connection_ref", ""),
+                projects=body.get("projects", []),
+                issue_types=body.get("issue_types", []),
+            )
+            return JSONResponse(result)
+        except NotFound as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=404,
+            )
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=400,
+            )
+        except ServiceError as exc:
+            return _svc_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to clarify Jira scope")
 
     # ── POST /api/project-setups/{sid}/proposals/{pid}/test ──────
 

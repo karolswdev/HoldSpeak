@@ -1,0 +1,68 @@
+/* HS-166-04 round 2 — Jira wizard layout ONLY.
+   Zero species restyling — every visual comes from the surface library.
+   Feature CSS may lay out (gaps, the footer), never restyle species. */
+
+.jira-wizard-flow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Footer: lamp + spacer + keys */
+.jira-wizard-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  margin-top: auto;
+}
+
+.jira-wizard-spacer {
+  flex: 1;
+}
+
+/* The big count (D2 preview, D3 matches) */
+.jira-wizard-big {
+  font-size: 26px;
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.jira-wizard-big small {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-left: var(--space-2);
+}
+
+/* DUE token on ledger rows */
+.jira-wizard-token {
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
+  color: var(--text-tertiary);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Toggle row: forces inline wrapping for CheckGadget toggles in the
+   gadget column. The library's gadget-row-gadget is single-line flex;
+   this wrapper's flex-wrap overrides inside our own element. */
+.jira-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+}
+
+/* Ghost card marker (the dashed Add card) -- feature scope, not library */
+.jira-ghost-card {
+  border-style: dashed;
+  border-top-width: 1px;
+  background: transparent;
+}

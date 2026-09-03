@@ -110,6 +110,8 @@ class WebContext:
     # HS-161-01: the V0 GitHub provider adapter. Routes come in P3;
     # construction only here.
     github_provider: Optional[Any] = None
+    # HS-166-01: the V0 Jira (acli) provider adapter.
+    jira_provider: Optional[Any] = None
     # HS-159-03: the durable setup interview service. Composes
     # ProjectService + WatchService; routes come in P4.
     project_setup_service: Optional[Any] = None

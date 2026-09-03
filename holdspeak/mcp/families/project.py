@@ -540,6 +540,111 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    # ── Jira provider driver tools (HS-166-01) ─────────────────────
+    {
+        "name": "provider.jira_connections",
+        "description": "List all Jira connections (site+email pairs) and their status.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.jira_connections@1",
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.jira_add_connection",
+        "description": "Add a Jira connection by site and email (no credentials stored).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.jira_add_connection@1",
+            "type": "object",
+            "properties": {
+                "site": {"type": "string", "description": "Atlassian site (e.g. 'mysite' or 'mysite.atlassian.net')."},
+                "email": {"type": "string", "description": "Account email address."},
+            },
+            "required": ["site", "email"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.jira_connection",
+        "description": "Recheck one Jira connection status (switch + auth status probe).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.jira_connection@1",
+            "type": "object",
+            "properties": {
+                "connection_ref": {"type": "string", "description": "Connection ref (site|email)."},
+            },
+            "required": ["connection_ref"],
+            "additionalProperties": False,
+        },
+    },
+    # ── Jira discovery + search tools (HS-166-02) ─────────────────
+    {
+        "name": "provider.jira_discover",
+        "description": "Discover Jira resources (projects, issue types, statuses) for a connection.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.jira_discover@1",
+            "type": "object",
+            "properties": {
+                "connection_ref": {"type": "string", "description": "Connection ref (site|email)."},
+                "kind": {"type": "string", "description": "Resource kind: projects, issue_types, statuses.", "default": "projects"},
+                "query": {"type": "string", "description": "Filter text (substring match on key/name for projects).", "default": ""},
+                "project_key": {"type": "string", "description": "Project key (required for issue_types and statuses).", "default": ""},
+                "cursor": {"type": "integer", "description": "Offset cursor for pagination."},
+                "limit": {"type": "integer", "description": "Max items to return (capped at 100).", "default": 30},
+            },
+            "required": ["connection_ref"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.jira_search",
+        "description": "Search Jira issues by JQL query.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.jira_search@1",
+            "type": "object",
+            "properties": {
+                "connection_ref": {"type": "string", "description": "Connection ref (site|email)."},
+                "jql": {"type": "string", "description": "JQL query (passed through verbatim)."},
+                "limit": {"type": "integer", "description": "Max items to return (capped at 200).", "default": 50},
+                "enrich": {"type": "boolean", "description": "Enrich each item with duedate, resolution, etc. via workitem view.", "default": False},
+            },
+            "required": ["connection_ref", "jql"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.jira_validate_scope",
+        "description": "Validate a Jira project key (the validate_repo twin).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.jira_validate_scope@1",
+            "type": "object",
+            "properties": {
+                "connection_ref": {"type": "string", "description": "Connection ref (site|email)."},
+                "project_key": {"type": "string", "description": "Jira project key (e.g. 'KAN')."},
+            },
+            "required": ["connection_ref", "project_key"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.setup.clarify_jira_scope",
+        "description": "Clarify the Jira scope for a Jira proposal in a setup session.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.setup.clarify_jira_scope@1",
+            "type": "object",
+            "properties": {
+                "session_id": {"type": "string", "description": "Setup session ID."},
+                "proposal_id": {"type": "string", "description": "Proposal ID."},
+                "connection_ref": {"type": "string", "description": "Jira connection ref (site|email)."},
+                "projects": {"type": "array", "items": {"type": "string"}, "description": "Project keys."},
+                "issue_types": {"type": "array", "items": {"type": "string"}, "description": "Issue type names."},
+            },
+            "required": ["session_id", "proposal_id"],
+            "additionalProperties": False,
+        },
+    },
     # ── graduated watch driver tools (HS-165-03) ────────────────────
     # The 164 boundary rule's MCP twin: these tools operate ONLY on
     # graduated rows (state in active/tested/paused/retired).  Legacy
@@ -707,20 +812,26 @@ def _setup_service():
     from holdspeak.services.project_service import ProjectService
     from holdspeak.services.project_setup_service import ProjectSetupService
     from holdspeak.services.watch_service import WatchService
+    from holdspeak.services.watch_sources import default_snapshot_fetcher
     db = get_database()
     ps = ProjectService(db)
-    ws = WatchService(db)
-    # github_adapter=None is safe: discovery/validate_repo calls
-    # will surface typed provider_not_configured, same as the web
-    # route when the adapter is absent.
-    return ProjectSetupService(db, project_service=ps, watch_service=ws)
+    ja = _jira_adapter()
+    fetcher = default_snapshot_fetcher(jira_adapter=ja)
+    ws = WatchService(db, snapshot_fetcher=fetcher)
+    return ProjectSetupService(
+        db, project_service=ps, watch_service=ws,
+        jira_adapter=ja,
+    )
 
 
 def _watch_service():
-    """Compose WatchService (same wiring as web context)."""
+    """Compose WatchService (same wiring as web context, HS-166-03 rider-a)."""
     from holdspeak.services.watch_service import WatchService
+    from holdspeak.services.watch_sources import default_snapshot_fetcher
     db = get_database()
-    return WatchService(db)
+    ja = _jira_adapter()
+    fetcher = default_snapshot_fetcher(jira_adapter=ja)
+    return WatchService(db, snapshot_fetcher=fetcher)
 
 
 def _github_adapter():
@@ -729,6 +840,16 @@ def _github_adapter():
     db = get_database()
     try:
         return GitHubProviderAdapter(db)
+    except Exception:
+        return None
+
+
+def _jira_adapter():
+    """Return the JiraProviderAdapter or None (same as web context)."""
+    from holdspeak.services.jira_provider import JiraProviderAdapter
+    db = get_database()
+    try:
+        return JiraProviderAdapter(db)
     except Exception:
         return None
 
@@ -772,6 +893,8 @@ def _record_steward_command(
 # The native provider families (mirrors providers.py:31-43).
 # One source of truth for the native provider list (counsel S-3):
 from holdspeak.web.routes.providers import _NATIVE_PROVIDERS  # noqa: E402
+# HS-166-01: shared helper for provider list (ONE function, never duplicate).
+from holdspeak.web.routes.providers import collect_provider_manifests  # noqa: E402
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -1343,17 +1466,27 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             principal, session_id, command_id=cmd_id,
         )
 
+    if name == "project.setup.clarify_jira_scope":
+        session_id = _require_id(arguments, "session_id")
+        proposal_id = _require_id(arguments, "proposal_id")
+        return _setup_service().clarify_jira_scope(
+            principal, session_id, proposal_id,
+            connection_ref=arguments.get("connection_ref", ""),
+            projects=arguments.get("projects", []),
+            issue_types=arguments.get("issue_types", []),
+        )
+
     # ── provider driver tools (HS-165-03) ───────────────────────────
     # Mirrors: holdspeak/web/routes/providers.py
 
     if name == "provider.list":
-        # Web parity: providers.py:54 list_providers
-        # Service seam: GitHubProviderAdapter.manifest + _NATIVE_PROVIDERS
-        providers: list[dict[str, Any]] = list(_NATIVE_PROVIDERS)
-        adapter = _github_adapter()
-        if adapter is not None:
-            providers.append(adapter.manifest())
-        return {"providers": providers}
+        # Web parity: providers.py list_providers
+        # HS-166-01: ONE shared helper, never duplicate the enumeration.
+        return {"providers": collect_provider_manifests(
+            github_adapter=_github_adapter(),
+            jira_adapter=_jira_adapter(),
+            principal=principal,
+        )}
 
     if name == "provider.github_connection":
         # Web parity: providers.py:68 github_connection
@@ -1398,6 +1531,114 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         if not owner_repo:
             raise ValidationError("owner_repo is required")
         return adapter.validate_repo(principal, owner_repo)
+
+    # ── Jira provider driver tools (HS-166-01) ──────────────────────
+    # Mirrors: holdspeak/web/routes/providers.py Jira routes.
+    # Serializers DELEGATE to the adapter (the 165 law: copies drift).
+
+    if name == "provider.jira_connections":
+        # Web parity: providers.py jira_connections
+        adapter = _jira_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Jira provider is not configured",
+                context={"status": 404},
+            )
+        return {
+            "connections": adapter.list_connections(principal),
+            "known_accounts": adapter.known_accounts(principal),
+        }
+
+    if name == "provider.jira_add_connection":
+        # Web parity: providers.py jira_add_connection
+        adapter = _jira_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Jira provider is not configured",
+                context={"status": 404},
+            )
+        site = str(arguments.get("site", "")).strip()
+        email = str(arguments.get("email", "")).strip()
+        if not site or not email:
+            raise ValidationError("site and email are required")
+        return adapter.add_connection(principal, site, email)
+
+    if name == "provider.jira_connection":
+        # Web parity: providers.py jira_connection_recheck
+        adapter = _jira_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Jira provider is not configured",
+                context={"status": 404},
+            )
+        ref = str(arguments.get("connection_ref", "")).strip()
+        if not ref:
+            raise ValidationError("connection_ref is required")
+        return adapter.connection_status(principal, ref)
+
+    # ── Jira discovery + search tools (HS-166-02) ──────────────────
+    # Mirrors: holdspeak/web/routes/providers.py Jira discover/search/validate routes.
+
+    if name == "provider.jira_discover":
+        # Web parity: providers.py jira_discover
+        adapter = _jira_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Jira provider is not configured",
+                context={"status": 404},
+            )
+        ref = str(arguments.get("connection_ref", "")).strip()
+        if not ref:
+            raise ValidationError("connection_ref is required")
+        return adapter.discover(
+            principal,
+            ref,
+            kind=arguments.get("kind", "projects"),
+            query=arguments.get("query", ""),
+            project_key=arguments.get("project_key", ""),
+            cursor=arguments.get("cursor"),
+            limit=arguments.get("limit", 30),
+        )
+
+    if name == "provider.jira_search":
+        # Web parity: providers.py jira_search
+        adapter = _jira_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Jira provider is not configured",
+                context={"status": 404},
+            )
+        ref = str(arguments.get("connection_ref", "")).strip()
+        jql = str(arguments.get("jql", "")).strip()
+        if not ref or not jql:
+            raise ValidationError("connection_ref and jql are required")
+        return adapter.search(
+            principal,
+            ref,
+            jql=jql,
+            limit=arguments.get("limit", 50),
+            enrich=bool(arguments.get("enrich", False)),
+        )
+
+    if name == "provider.jira_validate_scope":
+        # Web parity: providers.py jira_validate_scope
+        adapter = _jira_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Jira provider is not configured",
+                context={"status": 404},
+            )
+        ref = str(arguments.get("connection_ref", "")).strip()
+        project_key = str(arguments.get("project_key", "")).strip()
+        if not ref or not project_key:
+            raise ValidationError("connection_ref and project_key are required")
+        return adapter.validate_scope(principal, ref, project_key)
 
     # ── graduated watch driver tools (HS-165-03) ────────────────────
     # Mirrors: holdspeak/web/routes/watches.py + providers.py:158

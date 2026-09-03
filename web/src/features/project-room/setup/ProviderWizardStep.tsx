@@ -1,9 +1,10 @@
-// HS-161-05 -- the provider wizard step: Check connection -> Discover ->
+// HS-161-05 -- the GitHub provider wizard step: Check connection -> Discover ->
 // Test -> Activate. ONE next action per state. Recheck flow. Discovery list
 // (searchable, bounded) + typed-repo fallback. SETFLOW-003: auth-recovery
 // preserves setup state, names recovery, offers Recheck. GitHub NEVER
 // appears active before a passing test. Egress badge (EgressChip) on every
 // card and test action -- these reads leave the machine (local+cloud).
+// HS-166-04: Jira wizard lives in JiraWizard.tsx (the D5 rebuild).
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -17,7 +18,6 @@ import {
   PROVIDER_STATE_ACTION,
   conditionPlainWords,
   queryPlainWords,
-  type ProviderState,
   type ProviderConnectionStatus,
   type DiscoveryItem,
   type DiscoveryResponse,
@@ -645,3 +645,4 @@ export function ProviderWizardFlow({
     </div>
   );
 }
+

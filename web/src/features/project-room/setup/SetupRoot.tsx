@@ -15,6 +15,7 @@ import { SuggestionCards } from "./SuggestionCards";
 import { ClarifyStep } from "./ClarifyStep";
 import { ActivationReview } from "./ActivationReview";
 import { ProviderWizardFlow } from "./ProviderWizardStep";
+import { JiraWizardFlow } from "./JiraWizard";
 import "./setup.css";
 
 export function SetupCore({ scope }: CoreProps) {
@@ -145,8 +146,8 @@ export function SetupCore({ scope }: CoreProps) {
                 <div className="setup-step-token" aria-hidden="true" data-testid="setup-step-token">
                   Step {STAGE_META["proposals"].index} of {STAGE_COUNT}
                 </div>
-                {/* HS-161-05: provider wizard takes priority when active */}
-                {providerWizardId && wizardProposal ? (
+                {/* HS-161-05 + HS-166-04: provider wizard takes priority when active */}
+                {providerWizardId && wizardProposal && wizardProposal.providerId === "github" ? (
                   <ProviderWizardFlow
                     proposal={wizardProposal}
                     connection={ctrl.providerConnection}
@@ -169,6 +170,75 @@ export function SetupCore({ scope }: CoreProps) {
                       ctrl.resetProviderState();
                     }}
                   />
+                ) : providerWizardId && wizardProposal && wizardProposal.providerId === "jira" ? (
+                  <JiraWizardFlow
+                    proposal={wizardProposal}
+                    connections={ctrl.jiraConnections}
+                    knownAccounts={ctrl.jiraKnownAccounts}
+                    selectedRef={ctrl.selectedJiraRef}
+                    projects={ctrl.jiraProjects}
+                    issueTypes={ctrl.jiraIssueTypes}
+                    statuses={ctrl.jiraStatuses}
+                    scope={ctrl.jiraScope}
+                    preview={ctrl.jiraPreview}
+                    loading={ctrl.jiraLoading}
+                    discovering={ctrl.jiraDiscovering}
+                    previewing={ctrl.jiraPreviewing}
+                    onLoadConnections={ctrl.loadJiraConnections}
+                    onAddConnection={ctrl.addJiraConnection}
+                    onRecheckConnection={ctrl.recheckJiraConnection}
+                    onSelectConnection={ctrl.selectJiraConnection}
+                    onSelectProject={(key) => {
+                      const current = ctrl.jiraScope.projects;
+                      const next = current.includes(key)
+                        ? current.filter((k) => k !== key)
+                        : [...current, key];
+                      ctrl.updateJiraScope({ projects: next });
+                      // Auto-discover types/statuses for the first selected project
+                      if (!current.includes(key) && next.length === 1) {
+                        void ctrl.discoverJiraTypes(key);
+                        void ctrl.discoverJiraStatuses(key);
+                      }
+                    }}
+                    onToggleType={(name) => {
+                      const current = ctrl.jiraScope.issueTypes;
+                      const next = current.includes(name)
+                        ? current.filter((n) => n !== name)
+                        : [...current, name];
+                      ctrl.updateJiraScope({ issueTypes: next });
+                    }}
+                    onToggleStatus={(category) => {
+                      const current = ctrl.jiraScope.statusCategories;
+                      const next = current.includes(category)
+                        ? current.filter((c) => c !== category)
+                        : [...current, category];
+                      ctrl.updateJiraScope({ statusCategories: next });
+                    }}
+                    onJqlChange={(jql) => ctrl.updateJiraScope({ jql })}
+                    onPreview={() => {
+                      // Preview with user JQL if provided, otherwise
+                      // with a project-scoped query from the scope.
+                      const jql = ctrl.jiraScope.jql.trim()
+                        || (ctrl.jiraScope.projects.length > 0
+                          ? `project in (${ctrl.jiraScope.projects.map((p) => `"${p}"`).join(", ")})`
+                          : "");
+                      if (jql) {
+                        void ctrl.previewJiraPopulation(jql);
+                      }
+                    }}
+                    onSearchProjects={(q) => void ctrl.discoverJiraProjects(q)}
+                    onClarifyScope={() =>
+                      ctrl.clarifyJiraProposalScope(wizardProposal.id)
+                    }
+                    onTest={() => {
+                      void ctrl.testProp(wizardProposal.id);
+                    }}
+                    onDone={() => {
+                      setProviderWizardId(null);
+                      ctrl.resetJiraState();
+                    }}
+                    onUpdateScope={ctrl.updateJiraScope}
+                  />
                 ) : clarifyingProposal ? (
                   <ClarifyStep
                     proposal={clarifyingProposal}
@@ -179,7 +249,7 @@ export function SetupCore({ scope }: CoreProps) {
                   <SuggestionCards
                     proposals={ctrl.state.proposals}
                     onSelect={(id) => {
-                      // HS-161-05: GitHub proposals enter the provider wizard
+                      // HS-161-05 + HS-166-04: provider proposals enter the wizard
                       const prop = ctrl.state.kind === "proposals"
                         ? ctrl.state.proposals.find((p) => p.id === id)
                         : undefined;
@@ -187,6 +257,9 @@ export function SetupCore({ scope }: CoreProps) {
                       if (prop?.providerId === "github") {
                         setProviderWizardId(id);
                         void ctrl.checkConnection();
+                      } else if (prop?.providerId === "jira") {
+                        setProviderWizardId(id);
+                        void ctrl.loadJiraConnections();
                       }
                     }}
                     onDeselect={(id) => {
@@ -199,8 +272,8 @@ export function SetupCore({ scope }: CoreProps) {
                   />
                 )}
 
-                {/* Proceed to review */}
-                {ctrl.state.proposals.length > 0 && !clarifyingProposal ? (
+                {/* Proceed to review (hidden while provider wizard is active) */}
+                {ctrl.state.proposals.length > 0 && !clarifyingProposal && !providerWizardId ? (
                   <div className="setup-proceed">
                     <button
                       type="button"

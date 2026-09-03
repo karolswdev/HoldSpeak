@@ -204,3 +204,23 @@ def test_owner_can_enable_six_hour_two_per_night_resourcefulness(
     assert client.get("/api/workbenches/wb-review/resourceful/history").json() == {
         "history": []
     }
+
+
+def test_jira_watch_adapter_status_is_ready() -> None:
+    """Counsel S-1 (HS-166-07): jira graduated the watch_sources gate, so the
+    automations read model must not call its adapter unavailable."""
+    from holdspeak.web.routes.automations import _automation_view
+
+    jira = _automation_view({
+        "reaction": {"id": "r1", "enabled": True},
+        "watch": {"connector_id": "jira", "enabled": True},
+    })
+    assert jira["provider"] == "jira"
+    assert jira["adapter_status"] == "ready"
+    assert jira["status"] == "active"
+    custom = _automation_view({
+        "reaction": {"id": "r2", "enabled": True},
+        "watch": {"connector_id": "custom", "enabled": True},
+    })
+    assert custom["adapter_status"] == "unavailable"
+    assert custom["status"] == "unavailable"

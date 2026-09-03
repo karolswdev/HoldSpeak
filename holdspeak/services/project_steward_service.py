@@ -265,27 +265,23 @@ class ProjectStewardService:
 
         # Gate 4: same-watermark dedup — ANY run (active or terminal)
         # at (project_id, watermark) resolves to that run.
-        if watermark:
-            existing_runs = self._db.steward_runs.list_runs(
-                project_id, limit=100,
+        existing = self.find_run_by_watermark(project_id, watermark)
+        if existing is not None:
+            existing_run_id = existing["id"]
+            self._db.automations.update_effect(
+                effect_id,
+                state="completed",
+                target_ref=existing_run_id,
+                verification_state=existing.get("state", ""),
             )
-            for run in existing_runs:
-                if run.get("watermark") == watermark:
-                    existing_run_id = run["id"]
-                    self._db.automations.update_effect(
-                        effect_id,
-                        state="completed",
-                        target_ref=existing_run_id,
-                        verification_state=run.get("state", ""),
-                    )
-                    return {
-                        "effect_id": effect_id,
-                        "outcome": "resolved_existing_run",
-                        "project_id": project_id,
-                        "watermark": watermark,
-                        "run_id": existing_run_id,
-                        "run_state": run.get("state", ""),
-                    }
+            return {
+                "effect_id": effect_id,
+                "outcome": "resolved_existing_run",
+                "project_id": project_id,
+                "watermark": watermark,
+                "run_id": existing_run_id,
+                "run_state": existing.get("state", ""),
+            }
 
         # Gate 5: start a new run.
         try:
@@ -357,6 +353,22 @@ class ProjectStewardService:
         self.execute_phases(principal, run_id, project_id)
 
         return run_id
+
+    def find_run_by_watermark(
+        self, project_id: str, watermark: str,
+    ) -> dict[str, Any] | None:
+        """Find an existing run with the given watermark (Gate 4 dedup).
+
+        Returns the run row dict if a match is found, else None.
+        One source for the same-watermark scan used by both
+        _drain_one_run_effect and the HTTP route.
+        """
+        if not watermark:
+            return None
+        for run in self._db.steward_runs.list_runs(project_id, limit=100):
+            if run.get("watermark") == watermark:
+                return run
+        return None
 
     def insert_run(
         self,
