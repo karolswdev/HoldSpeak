@@ -322,19 +322,22 @@ def test_stopwatch_and_retention(
                         f"Banner should mention unverified, got: {banner_text!r}"
                     )
 
-                # Back to list
+                # HS-167-05: Back button is in SurfaceVerbs inside the editor
                 back_btn = page.locator(
                     '[data-testid="update-editor"] button',
                 ).filter(has_text="Back")
                 if back_btn.count() > 0:
                     back_btn.first.click()
-                    page.wait_for_function(
-                        """() => {
-                            const el = document.querySelector('[data-testid="update-posture"]');
-                            return el && el.getAttribute('data-phase') === 'list';
-                        }""",
-                        timeout=10000,
-                    )
+                else:
+                    # Fallback: try testid on the footer
+                    page.get_by_test_id("update-verb-back").click()
+                page.wait_for_function(
+                    """() => {
+                        const el = document.querySelector('[data-testid="update-posture"]');
+                        return el && el.getAttribute('data-phase') === 'list';
+                    }""",
+                    timeout=10000,
+                )
 
             # -- Draft (deterministic) --
             t0 = time.monotonic()

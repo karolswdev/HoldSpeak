@@ -450,9 +450,10 @@ describe("Mounted-path: run once and view detail", () => {
       expect(stateEl.textContent).toBe("Completed");
     });
 
-    // Steps should be visible
-    const stepItems = screen.getAllByTestId("steward-step-item");
-    expect(stepItems.length).toBe(4);
+    // HS-167-05: ProgressPlan renders six canonical phases, not per-step rows
+    const planSteps = screen.getByTestId("steward-run-plan")
+      .querySelectorAll(".surface-plan-step");
+    expect(planSteps.length).toBe(6);
   });
 });
 
@@ -474,18 +475,20 @@ describe("Step rows: human labels and receipt refs", () => {
 
     await waitFor(() => screen.getByTestId("steward-detail"));
 
-    // Check that step rows use human labels
-    const stepRows = screen.getAllByTestId("steward-step-row");
-    expect(stepRows.length).toBe(4);
+    // HS-167-05 R4: ProgressPlan rate = counts only; effect labels in the chip row
+    const planSteps = screen.getByTestId("steward-run-plan")
+      .querySelectorAll(".surface-plan-step");
+    expect(planSteps.length).toBe(6);
 
-    // First step: refresh_sources -> "Refreshed sources"
-    expect(stepRows[0].textContent).toContain("Refreshed sources");
-    // Second step: create_proposals -> "Created proposals"
-    expect(stepRows[1].textContent).toContain("Created proposals");
-    // Third step: draft_update -> "Drafted update"
-    expect(stepRows[2].textContent).toContain("Drafted update");
-    // Fourth step: create_door_item -> "Door item created"
-    expect(stepRows[3].textContent).toContain("Door item created");
+    // Observe phase: counts only (no effect-kind name)
+    expect(planSteps[0].textContent).toContain("1 source");
+
+    // Effect-kind labels are in the receipt-ref chip row
+    const refChipArea = screen.getByTestId("steward-receipt-refs");
+    expect(refChipArea.textContent).toContain("Refreshed sources");
+    expect(refChipArea.textContent).toContain("Created proposals");
+    expect(refChipArea.textContent).toContain("Drafted update");
+    expect(refChipArea.textContent).toContain("Door item created");
   });
 
   it("receipt refs render as openable chips with human labels", async () => {
@@ -580,10 +583,11 @@ describe("No raw IDs on glass", () => {
     fireEvent.click(listItems[0]);
     await waitFor(() => screen.getByTestId("steward-detail"));
 
-    // Check all visible text in the detail
+    // HS-167-05: ProgressPlan phases replace individual step rows
     const detail = screen.getByTestId("steward-detail");
-    const stepItems = screen.getAllByTestId("steward-step-item");
-    for (const item of stepItems) {
+    const planSteps = screen.getByTestId("steward-run-plan")
+      .querySelectorAll(".surface-plan-step");
+    for (const item of planSteps) {
       expect(item.textContent).not.toMatch(rawIdPattern);
     }
 
@@ -822,14 +826,14 @@ describe("Policy: round-trip", () => {
 
     expect(screen.getByTestId("steward-posture").getAttribute("data-phase")).toBe("policy");
 
-    // Numeric fields are present
-    const maxRetries = screen.getByTestId("steward-policy-max-retries") as HTMLInputElement;
+    // HS-167-05: StepperGadgets wrap the input; query the input inside the testid span
+    const maxRetries = screen.getByTestId("steward-policy-max-retries").querySelector("input") as HTMLInputElement;
     expect(maxRetries.value).toBe("5");
 
-    const maxActions = screen.getByTestId("steward-policy-max-actions") as HTMLInputElement;
+    const maxActions = screen.getByTestId("steward-policy-max-actions").querySelector("input") as HTMLInputElement;
     expect(maxActions.value).toBe("20");
 
-    const cooldown = screen.getByTestId("steward-policy-cooldown") as HTMLInputElement;
+    const cooldown = screen.getByTestId("steward-policy-cooldown").querySelector("input") as HTMLInputElement;
     expect(cooldown.value).toBe("60");
 
     // Effect kind toggles are present
@@ -868,11 +872,11 @@ describe("Policy: round-trip", () => {
       expect(screen.getByTestId("steward-policy")).toBeTruthy();
     });
 
-    // Default values
-    const maxRetries = screen.getByTestId("steward-policy-max-retries") as HTMLInputElement;
+    // HS-167-05: StepperGadgets wrap the input; query the input inside
+    const maxRetries = screen.getByTestId("steward-policy-max-retries").querySelector("input") as HTMLInputElement;
     expect(maxRetries.value).toBe("3");
 
-    const maxActions = screen.getByTestId("steward-policy-max-actions") as HTMLInputElement;
+    const maxActions = screen.getByTestId("steward-policy-max-actions").querySelector("input") as HTMLInputElement;
     expect(maxActions.value).toBe("10");
   });
 
@@ -1147,8 +1151,9 @@ describe("Degraded coverage: visible warning", () => {
 
 // ── FINDING 4: Footer pluralization ──
 
+// HS-167-05 R4: footer reads RUN N · STATE · N PHASES (not N STEPS)
 describe("Footer: honest pluralization", () => {
-  it("1 step renders '1 STEP' not '1 STEPS'", async () => {
+  it("detail footer reads RUN N · COMPLETED · N PHASES", async () => {
     const run = completedRunFixture();
     setupStewardPosture({
       listRuns: [run],
@@ -1166,11 +1171,11 @@ describe("Footer: honest pluralization", () => {
     await waitFor(() => screen.getByTestId("steward-detail"));
 
     const footer = screen.getByTestId("steward-footer-receipt");
-    expect(footer.textContent).toContain("1 STEP");
-    expect(footer.textContent).not.toMatch(/1 STEPS/);
+    expect(footer.textContent).toContain("COMPLETED");
+    expect(footer.textContent).toContain("PHASE");
   });
 
-  it("4 steps renders '4 STEPS'", async () => {
+  it("completed run with all 6 phases shows '6 PHASES'", async () => {
     setupStewardPosture({
       listRuns: [completedRunFixture()],
     });
@@ -1183,7 +1188,7 @@ describe("Footer: honest pluralization", () => {
     await waitFor(() => screen.getByTestId("steward-detail"));
 
     const footer = screen.getByTestId("steward-footer-receipt");
-    expect(footer.textContent).toContain("4 STEPS");
+    expect(footer.textContent).toContain("6 PHASES");
   });
 });
 
@@ -1286,11 +1291,12 @@ describe("Unattended toggle and grant text assembly", () => {
     const section = screen.getByTestId("steward-unattended-section");
     expect(section).toBeTruthy();
 
+    // HS-167-05 R4: grant tokens — "UNATTENDED OFF" when disabled
     const grantText = screen.getByTestId("steward-grant-text");
-    expect(grantText.textContent).toBe("Unattended operation is off.");
+    expect(grantText.textContent).toContain("UNATTENDED OFF");
   });
 
-  it("enabling unattended shows assembled grant text with real values", async () => {
+  it("enabling unattended shows grant tokens with real values", async () => {
     setupStewardPosture({
       policy: policyFixture({
         unattended_enabled: true,
@@ -1309,11 +1315,13 @@ describe("Unattended toggle and grant text assembly", () => {
     fireEvent.click(screen.getByTestId("steward-verb-policy"));
     await waitFor(() => screen.getByTestId("steward-policy"));
 
+    // HS-167-05 R4: separate uppercase tokens
     const grantText = screen.getByTestId("steward-grant-text");
-    expect(grantText.textContent).toContain("every 30 minutes");
-    expect(grantText.textContent).toContain("refresh sources");
-    expect(grantText.textContent).toContain("draft updates");
-    expect(grantText.textContent).toContain("at most 20 actions per run");
+    expect(grantText.textContent).toContain("EVERY");
+    expect(grantText.textContent).toContain("MIN");
+    expect(grantText.textContent).toContain("REFRESH SOURCES");
+    expect(grantText.textContent).toContain("DRAFT UPDATE");
+    expect(grantText.textContent).toContain("MAX 20 / RUN");
   });
 
   it("toggle round-trips through PUT with unattended_enabled", async () => {
@@ -1367,8 +1375,9 @@ describe("Unattended toggle and grant text assembly", () => {
     fireEvent.click(screen.getByTestId("steward-verb-policy"));
     await waitFor(() => screen.getByTestId("steward-policy"));
 
+    // HS-167-05 R4: "NO EFFECTS" token when empty
     const grantText = screen.getByTestId("steward-grant-text");
-    expect(grantText.textContent).toContain("no effects are eligible");
+    expect(grantText.textContent).toContain("NO EFFECTS");
   });
 });
 

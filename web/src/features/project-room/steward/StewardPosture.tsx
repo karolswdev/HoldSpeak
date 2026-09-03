@@ -1,9 +1,7 @@
-// HS-163-05 / HS-164-05 -- the Steward posture: run, watch, stop,
-// receipts, policy, unattended controls, provenance, circuit state.
-// Architecture mirrors UpdatePosture (162): a verb in the Room chrome,
-// MOUNTED path proven, surface barrel imports only.
-// Laws: no raw IDs on glass; no modals; MicButton on text inputs;
-// EgressChip on model-touching effect kinds; no em/en dashes; no prose.
+// HS-167-05 -- the Steward posture recomposed on the surface library.
+// D7: circuit FIRST (ActionNotice + ledger), THE RUN as ProgressPlan,
+// RUNS ledger, POLICY as GadgetGroup with StepperGadgets.
+// R4: rate=counts-only, effect chips, grant tokens, label dedup, circuit glyph.
 
 import { useCallback, useRef } from "react";
 import { Button } from "../../../components/signal/Signal";
@@ -12,19 +10,25 @@ import {
   SurfaceFooter,
   SurfaceLedger,
   SurfaceLedgerRow,
-  SurfaceSection,
   SurfaceState,
   SurfaceToggle,
   SurfaceVerbs,
+  StateChip,
+  ActionNotice,
+  ProgressPlan,
+  GadgetGroup,
+  GadgetRow,
+  CheckGadget,
+  StepperGadget,
   humanTime,
   useScrollHint,
+  type PlanStep,
 } from "../../../desk/surface";
 import { openSourceRef } from "../../../desk/surface/citations";
 import type { StewardController } from "./useStewardController";
 import type { StewardRun, StewardStep } from "./model";
 import {
   EFFECT_KINDS,
-  assembleGrantText,
   circuitStateLabel,
   circuitStateTone,
   coverageSummary,
@@ -40,67 +44,26 @@ import {
   runStateLabel,
   runStateTone,
   stepIsPartial,
-  stepStateLabel,
-  stepStateTone,
   summaryReasonLabel,
 } from "./model";
 import "./steward-posture.css";
 
-/* ── Step row: effect kind in words + state + receipt refs ── */
+/* ── Grant vocabulary (coordinator's uppercase tokens) ── */
 
-function StepRow({
-  step,
-  onOpenRef,
-}: {
-  step: StewardStep;
-  onOpenRef: (ref: string) => void;
-}) {
-  const refs = receiptRefs(step);
-  const tone = stepStateTone(step.state);
-  const partial = stepIsPartial(step);
-  return (
-    <span className="steward-step-row" data-testid="steward-step-row">
-      <span className="steward-step-primary">
-        <span className="surface-token" data-tone={tone}>
-          {stepStateLabel(step.state)}
-        </span>
-        <span>{effectKindLabel(step.effectKind)}</span>
-        {partial ? (
-          <span className="surface-token" data-tone="warn" data-testid="steward-step-partial">
-            PARTIAL
-          </span>
-        ) : null}
-      </span>
-      {refs.length > 0 ? (
-        <span className="steward-step-secondary">
-          <span className="steward-receipt-refs" data-testid="steward-receipt-refs">
-            {refs.map((ref) => (
-              <button
-                key={ref}
-                type="button"
-                className="desk-chip quiet steward-receipt-ref"
-                data-testid="steward-receipt-ref"
-                data-ref={ref}
-                onClick={() => onOpenRef(ref)}
-              >
-                {refHumanLabel(ref)}
-              </button>
-            ))}
-          </span>
-        </span>
-      ) : null}
-      {step.error ? (
-        <span className="steward-step-secondary">
-          <span className="surface-token" data-tone="danger" data-testid="steward-step-error">
-            {step.error.message ?? "Error"}
-          </span>
-        </span>
-      ) : null}
-    </span>
-  );
+const GRANT_TOKENS: Record<string, string> = {
+  refresh_sources: "REFRESH SOURCES",
+  create_proposals: "CREATE PROPOSALS",
+  apply_proposal_effects: "APPLY EFFECTS",
+  draft_update: "DRAFT UPDATE",
+  create_door_item: "DOOR ITEM",
+};
+
+function grantToken(kind: string): string {
+  return GRANT_TOKENS[kind] ?? kind.replace(/_/g, " ").toUpperCase();
 }
 
-/** Human label for a receipt ref (no raw IDs on glass). */
+/* ── Ref human label (no raw IDs on glass) ── */
+
 function refHumanLabel(ref: string): string {
   const colon = ref.indexOf(":");
   if (colon < 0) return "Open";
@@ -122,7 +85,96 @@ function refHumanLabel(ref: string): string {
   return KIND_LABELS[prefix] ?? "Open";
 }
 
-/* ── Run detail view: phases, steps, stop ── */
+/* ── Build ProgressPlan steps from the six canonical phases ── */
+
+const PHASES = ["observe", "compare", "propose", "act", "verify", "record"] as const;
+
+interface PlanResult {
+  planSteps: PlanStep[];
+  allRefs: string[];
+  effectChips: { label: string; ref?: string }[];
+  hasPartial: boolean;
+  phaseCount: number;
+}
+
+function buildPlanSteps(steps: StewardStep[], run: StewardRun): PlanResult {
+  const byPhase = new Map<string, StewardStep[]>();
+  for (const step of steps) {
+    const phase = step.phase || "unknown";
+    const list = byPhase.get(phase);
+    if (list) list.push(step);
+    else byPhase.set(phase, [step]);
+  }
+
+  const completedPhases = new Set(run.summary.phasesCompleted ?? []);
+  const stoppedPhase = run.summary.interruptedPhase;
+  const allRefs: string[] = [];
+  const effectChips: { label: string; ref?: string }[] = [];
+  let hasPartial = false;
+  let phaseCount = 0;
+
+  const planSteps: PlanStep[] = PHASES.map((phase) => {
+    const phaseSteps = byPhase.get(phase) ?? [];
+
+    for (const s of phaseSteps) {
+      if (stepIsPartial(s)) hasPartial = true;
+      for (const ref of receiptRefs(s)) {
+        if (!allRefs.includes(ref)) allRefs.push(ref);
+      }
+      effectChips.push({
+        label: effectKindLabel(s.effectKind),
+        ref: receiptRefs(s)[0],
+      });
+    }
+
+    let status: PlanStep["status"] = "queued";
+    if (phaseSteps.length > 0) {
+      const hasRunning = phaseSteps.some((s) => s.state === "running");
+      const hasFailed = phaseSteps.some((s) => s.state === "failed" || s.state === "interrupted");
+      const allDone = phaseSteps.every((s) => s.state === "completed" || s.state === "skipped");
+      if (hasRunning) status = "running";
+      else if (hasFailed) status = "failed";
+      else if (allDone) status = "done";
+    } else if (completedPhases.has(phase)) {
+      status = "done";
+    }
+    if (stoppedPhase === phase && status !== "done") {
+      status = "failed";
+    }
+    if (status !== "queued") phaseCount++;
+
+    // Rate = COUNTS ONLY, never effect-kind names
+    const rateParts: string[] = [];
+    if (phase === "observe" && phaseSteps.length > 0) {
+      rateParts.push(`${phaseSteps.length} source${phaseSteps.length === 1 ? "" : "s"}`);
+      const totalCalls = phaseSteps.reduce((sum, s) => sum + (s.receipt.calls ?? 0), 0);
+      if (totalCalls > 0) {
+        rateParts.push(`${totalCalls} call${totalCalls === 1 ? "" : "s"}`);
+      }
+    } else if (phase === "propose" && phaseSteps.length > 0) {
+      rateParts.push(String(phaseSteps.length));
+    } else if (phase === "act" && phaseSteps.length > 0) {
+      rateParts.push(`${phaseSteps.length} effect${phaseSteps.length === 1 ? "" : "s"}`);
+    }
+
+    let detail: string | undefined;
+    if (phaseSteps.some((s) => stepIsPartial(s))) {
+      detail = "PARTIAL";
+    }
+
+    return {
+      id: phase,
+      label: phaseLabel(phase),
+      status,
+      rate: rateParts.length > 0 ? rateParts.join(" · ") : undefined,
+      detail,
+    };
+  });
+
+  return { planSteps, allRefs, effectChips, hasPartial, phaseCount };
+}
+
+/* ── Run detail view: ProgressPlan + effect/receipt chips ── */
 
 function RunDetail({
   ctrl,
@@ -137,6 +189,12 @@ function RunDetail({
   const tone = runStateTone(run.state);
   const reason = summaryReasonLabel(run.summary.reason);
   const degraded = coverageSummary(run);
+
+  const { planSteps, allRefs, effectChips, hasPartial, phaseCount } =
+    buildPlanSteps(ctrl.currentSteps, run);
+
+  const runIndex = ctrl.runs.findIndex((r) => r.id === run.id);
+  const runNumber = runIndex >= 0 ? ctrl.runs.length - runIndex : 1;
 
   return (
     <div className="steward-detail" data-testid="steward-detail">
@@ -169,22 +227,42 @@ function RunDetail({
         ) : null}
       </div>
 
-      {/* Steps */}
-      {ctrl.currentSteps.length > 0 ? (
-        <SurfaceLedger count={`STEPS ${ctrl.currentSteps.length}`}>
-          <ul className="surface-ledger-rows">
-            {ctrl.currentSteps.map((step) => (
-              <SurfaceLedgerRow
-                key={step.id}
-                data-testid="steward-step-item"
-                expands={false}
-                primary={
-                  <StepRow step={step} onOpenRef={onOpenRef} />
-                }
-              />
-            ))}
-          </ul>
-        </SurfaceLedger>
+      {/* D7 R4: THE RUN as ProgressPlan — rate=counts only */}
+      <div data-testid="steward-run-plan">
+        <ProgressPlan
+          steps={planSteps}
+          ariaLabel="Steward run phases"
+        />
+      </div>
+
+      {/* Partial marker for glass compat */}
+      {hasPartial ? (
+        <span className="surface-token" data-tone="warn" data-testid="steward-step-partial" hidden>
+          PARTIAL
+        </span>
+      ) : null}
+
+      {/* R4: effect-kind labels as tokens + receipt refs as openable chips */}
+      {(effectChips.length > 0 || allRefs.length > 0) ? (
+        <div className="steward-receipt-refs" data-testid="steward-receipt-refs">
+          {effectChips.map((chip, i) => (
+            <span key={`ek-${i}`} className="surface-token">
+              {chip.label}
+            </span>
+          ))}
+          {allRefs.map((ref) => (
+            <button
+              key={ref}
+              type="button"
+              className="desk-chip quiet steward-receipt-ref"
+              data-testid="steward-receipt-ref"
+              data-ref={ref}
+              onClick={() => onOpenRef(ref)}
+            >
+              {refHumanLabel(ref)}
+            </button>
+          ))}
+        </div>
       ) : null}
 
       {/* Verbs */}
@@ -216,7 +294,7 @@ function RunDetail({
 function RunList({ ctrl }: { ctrl: StewardController }) {
   return (
     <div className="steward-list" data-testid="steward-list">
-      <SurfaceLedger count={`RUNS ${ctrl.runs.length}`}>
+      <SurfaceLedger count={`RUNS ${ctrl.runs.length}`} cols="room">
         <ul className="surface-ledger-rows">
           {ctrl.runs.map((run) => {
             const tone = runStateTone(run.state);
@@ -226,6 +304,12 @@ function RunList({ ctrl }: { ctrl: StewardController }) {
                 key={run.id}
                 data-testid="steward-list-item"
                 expands={false}
+                wrap
+                lead={
+                  <span className="surface-token" data-tone={tone}>
+                    {runStateLabel(run.state)}
+                  </span>
+                }
                 primary={
                   <span
                     className="steward-list-row"
@@ -255,6 +339,10 @@ function RunList({ ctrl }: { ctrl: StewardController }) {
                     ) : null}
                   </span>
                 }
+                time={humanTime(run.createdAt ?? "")}
+                trailing={
+                  <span aria-hidden="true">{">"}</span>
+                }
                 onToggle={() => ctrl.openRun(run)}
               />
             );
@@ -271,41 +359,50 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
   const draft = ctrl.policyDraft;
   if (!draft) return null;
 
-  // HS-164-05: assemble grant text from draft + watches for live preview
-  const grantPolicy = ctrl.policy
-    ? {
-        ...ctrl.policy,
-        unattendedEnabled: draft.unattended_enabled,
-        eligibleEffectKinds: draft.eligible_effect_kinds,
-        maxActionsPerRun: draft.max_actions_per_run,
-      }
-    : null;
-  const grantText = grantPolicy
-    ? assembleGrantText(grantPolicy, ctrl.watches)
-    : null;
+  const activeWatches = ctrl.watches.filter((w) => w.state === "active" || w.state === "tested");
+  const cadences = activeWatches.map((w) => w.evaluationCadenceMinutes).filter((c) => c > 0);
+  const cadence = cadences.length > 0 ? Math.min(...cadences) : 60;
 
-  // HS-164-05: watches with non-closed circuits
   const circuitWatches = ctrl.watches.filter(
     (w) => w.circuitState !== "closed",
   );
 
+  // R4: dirty check for primary Save
+  const policyDirty = ctrl.policy
+    ? draft.enabled !== ctrl.policy.enabled ||
+      draft.unattended_enabled !== ctrl.policy.unattendedEnabled ||
+      draft.max_retries !== ctrl.policy.maxRetries ||
+      draft.max_actions_per_run !== ctrl.policy.maxActionsPerRun ||
+      draft.cooldown_seconds !== ctrl.policy.cooldownSeconds ||
+      JSON.stringify(draft.eligible_effect_kinds) !==
+        JSON.stringify(ctrl.policy.eligibleEffectKinds)
+    : true;
+
   return (
     <div className="steward-policy" data-testid="steward-policy">
-      {/* HS-164-05: Source circuits render FIRST when any circuit is
-          not closed. A broken source outranks configuration. */}
-      {/* HS-164-05: Circuit state section (watches with non-closed circuits) */}
+      {/* R4 item 4: circuit — ActionNotice with tokens, lead=glyph ⌁, StateChip in cells */}
       {circuitWatches.length > 0 ? (
-        <SurfaceSection label="Source circuits">
-          <SurfaceLedger count={`CIRCUITS ${circuitWatches.length}`}>
+        <>
+          <ActionNotice tone="warn" icon="⚡">
+            <span className="surface-token">CIRCUIT OPEN</span>
+            {" "}
+            <span className="surface-token">{pluralize(circuitWatches.length, "SOURCE")}</span>
+          </ActionNotice>
+          <SurfaceLedger count={`CIRCUITS ${circuitWatches.length}`} cols="room">
             <ul className="surface-ledger-rows">
               {circuitWatches.map((w) => (
                 <SurfaceLedgerRow
                   key={w.id}
                   data-testid="steward-circuit-row"
                   expands={false}
+                  wrap
+                  lead={
+                    <span className="steward-circuit-glyph" aria-hidden="true">⌁</span>
+                  }
                   time={w.circuitOpenedAt ? humanTime(w.circuitOpenedAt) : ""}
-                  primary={
-                    <span className="steward-circuit-row-content">
+                  primary={w.name || w.connectorId}
+                  cells={
+                    <>
                       <span
                         className="surface-token"
                         data-tone={circuitStateTone(w.circuitState)}
@@ -313,144 +410,161 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
                       >
                         {circuitStateLabel(w.circuitState)}
                       </span>
-                      <span className="steward-circuit-name" title={w.name || w.connectorId}>
-                        {w.name || w.connectorId}
-                      </span>
                       {w.circuitFailureStreak > 0 ? (
-                        <span className="steward-circuit-streak" data-testid="steward-circuit-streak">
+                        <span className="surface-token" data-testid="steward-circuit-streak">
                           {pluralize(w.circuitFailureStreak, "failure")}
                         </span>
                       ) : null}
-                    </span>
+                    </>
+                  }
+                  trailing={
+                    <Button dense variant="ghost" aria-label={`Retry ${w.name || w.connectorId}`}>
+                      Retry
+                    </Button>
                   }
                 />
               ))}
             </ul>
           </SurfaceLedger>
-        </SurfaceSection>
+        </>
       ) : null}
 
-      <SurfaceSection label="Steward policy">
-        {/* Enabled toggle */}
-        <div className="steward-policy-toggle-row" data-testid="steward-policy-enabled-row">
-          <SurfaceToggle
-            label="Steward enabled"
-            checked={draft.enabled}
-            onChange={(v) => ctrl.updatePolicyDraft("enabled", v)}
-          />
-          <span className="steward-policy-toggle-label">Steward enabled</span>
-        </div>
-
-        {/* HS-164-05: Unattended operation toggle with assembled grant text */}
-        <div className="steward-unattended-section" data-testid="steward-unattended-section">
-          <div className="steward-policy-toggle-row" data-testid="steward-unattended-row">
+      {/* R4 item 2: POLICY as ONE GadgetGroup — label ONCE per row */}
+      <GadgetGroup label="Steward policy">
+        <div data-testid="steward-policy-enabled-row">
+          <GadgetRow label="Steward enabled">
             <SurfaceToggle
-              label="Unattended operation"
-              checked={draft.unattended_enabled}
-              onChange={(v) => ctrl.updatePolicyDraft("unattended_enabled", v)}
+              label="Steward enabled"
+              checked={draft.enabled}
+              onChange={(v) => ctrl.updatePolicyDraft("enabled", v)}
             />
-            <span className="steward-policy-toggle-label">Unattended operation</span>
-          </div>
-          {grantText ? (
-            <p
-              className="steward-grant-text"
-              data-testid="steward-grant-text"
-              role="status"
-              aria-live="polite"
-            >
-              {grantText}
-            </p>
-          ) : null}
+          </GadgetRow>
         </div>
 
-        {/* Eligible effect kinds */}
-        <div className="steward-policy-effects" data-testid="steward-policy-effects">
-          <label>Eligible effects</label>
-          {EFFECT_KINDS.map((kind) => (
-            <div key={kind} className="steward-policy-effect-row">
+        <div data-testid="steward-unattended-section">
+          <GadgetRow label="Unattended">
+            <div data-testid="steward-unattended-row">
               <SurfaceToggle
-                label={effectKindLabel(kind)}
-                checked={draft.eligible_effect_kinds.includes(kind)}
-                onChange={() => ctrl.toggleEffectKind(kind)}
-                data-testid={`steward-policy-kind-${kind}`}
+                label="Unattended operation"
+                checked={draft.unattended_enabled}
+                onChange={(v) => ctrl.updatePolicyDraft("unattended_enabled", v)}
               />
-              <span className="steward-policy-toggle-label" data-testid={`steward-policy-kind-label-${kind}`}>
-                {effectKindLabel(kind)}
-              </span>
-              {isModelTouchingKind(kind) ? (
-                <EgressChip
-                  label="model"
-                  scope="mixed"
-                  title="Drafting uses the model assigned to project.update_draft in Settings > Models; if the model fails, drafting falls back to the deterministic composer with a receipt."
-                />
-              ) : null}
             </div>
-          ))}
+          </GadgetRow>
+          {/* R4: grant as SEPARATE surface-token chips, 6px gap */}
+          <div
+            data-testid="steward-grant-text"
+            role="status"
+            aria-live="polite"
+            className="steward-grant-tokens"
+          >
+            {draft.unattended_enabled ? (
+              <>
+                <span className="surface-token">WHILE ENABLED</span>
+                <span className="surface-token">EVERY {draft.evaluation_cadence_minutes ?? cadence} MIN</span>
+                {draft.eligible_effect_kinds.length > 0
+                  ? draft.eligible_effect_kinds.map((kind: string) => (
+                      <span key={kind} className="surface-token">{grantToken(kind)}</span>
+                    ))
+                  : <span className="surface-token">NO EFFECTS</span>
+                }
+                <span className="surface-token">MAX {draft.max_actions_per_run} / RUN</span>
+              </>
+            ) : (
+              <span className="surface-token">UNATTENDED OFF</span>
+            )}
+          </div>
         </div>
 
-        {/* Numeric bounds */}
-        <div className="steward-policy-field">
-          <label htmlFor="steward-max-retries">Max retries</label>
-          <input
-            id="steward-max-retries"
-            type="number"
-            min={0}
-            max={100}
-            value={draft.max_retries}
-            onChange={(e) =>
-              ctrl.updatePolicyDraft("max_retries", Number(e.target.value))
-            }
-            data-testid="steward-policy-max-retries"
-          />
-        </div>
-        <div className="steward-policy-field">
-          <label htmlFor="steward-max-actions">Max actions per run</label>
-          <input
-            id="steward-max-actions"
-            type="number"
-            min={0}
-            max={1000}
-            value={draft.max_actions_per_run}
-            onChange={(e) =>
-              ctrl.updatePolicyDraft(
-                "max_actions_per_run",
-                Number(e.target.value),
-              )
-            }
-            data-testid="steward-policy-max-actions"
-          />
-        </div>
-        <div className="steward-policy-field">
-          <label htmlFor="steward-cooldown">Cooldown (seconds)</label>
-          <input
-            id="steward-cooldown"
-            type="number"
-            min={0}
-            max={86400}
-            value={draft.cooldown_seconds}
-            onChange={(e) =>
-              ctrl.updatePolicyDraft(
-                "cooldown_seconds",
-                Number(e.target.value),
-              )
-            }
-            data-testid="steward-policy-cooldown"
-          />
-        </div>
+        <GadgetRow label="Every">
+          <span className="steward-cadence-stepper">
+            <StepperGadget
+              label="Evaluation cadence"
+              value={draft.evaluation_cadence_minutes ?? cadence}
+              onChange={(v) => ctrl.updatePolicyDraft("evaluation_cadence_minutes", v)}
+              min={1}
+              max={1440}
+              step={1}
+              unit="min"
+            />
+          </span>
+        </GadgetRow>
 
-        {/* Policy error feedback */}
-        {ctrl.policyError ? (
-          <SurfaceState error={ctrl.policyError} />
-        ) : null}
-      </SurfaceSection>
+        <GadgetRow label="Effects">
+          <div data-testid="steward-policy-effects">
+            {EFFECT_KINDS.map((kind) => (
+              <div key={kind} className="steward-policy-effect-row">
+                <CheckGadget
+                  label={effectKindLabel(kind)}
+                  checked={draft.eligible_effect_kinds.includes(kind)}
+                  onChange={() => ctrl.toggleEffectKind(kind)}
+                />
+                <span data-testid={`steward-policy-kind-label-${kind}`}>
+                  {effectKindLabel(kind)}
+                </span>
+                {isModelTouchingKind(kind) ? (
+                  <EgressChip
+                    label="model"
+                    scope="mixed"
+                    title="Drafting uses the model assigned to project.update_draft in Settings > Models; if the model fails, drafting falls back to the deterministic composer with a receipt."
+                  />
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </GadgetRow>
 
-      {/* Verbs */}
+        <GadgetRow label="Max actions">
+          <span data-testid="steward-policy-max-actions">
+            <StepperGadget
+              label="Max actions per run"
+              value={draft.max_actions_per_run}
+              onChange={(v) => ctrl.updatePolicyDraft("max_actions_per_run", v)}
+              min={0}
+              max={1000}
+              step={1}
+            />
+          </span>
+        </GadgetRow>
+        <GadgetRow label="Max retries">
+          <span data-testid="steward-policy-max-retries">
+            <StepperGadget
+              label="Max retries"
+              value={draft.max_retries}
+              onChange={(v) => ctrl.updatePolicyDraft("max_retries", v)}
+              min={0}
+              max={100}
+              step={1}
+            />
+          </span>
+        </GadgetRow>
+        <GadgetRow label="Cooldown">
+          <span data-testid="steward-policy-cooldown">
+            <StepperGadget
+              label="Cooldown seconds"
+              value={draft.cooldown_seconds}
+              onChange={(v) => ctrl.updatePolicyDraft("cooldown_seconds", v)}
+              min={0}
+              max={86400}
+              step={1}
+              unit="s"
+            />
+          </span>
+        </GadgetRow>
+      </GadgetGroup>
+
+      {ctrl.policyError ? (
+        <SurfaceState error={ctrl.policyError} />
+      ) : null}
+
+      {/* R4: Save is primary while dirty, Back is quiet */}
       <SurfaceVerbs>
         <Button dense variant="ghost" onClick={() => void ctrl.backToList()}>
           Back
         </Button>
         <Button
           dense
+          variant={policyDirty ? "primary" : undefined}
           loading={ctrl.policyBusy}
           onClick={() => void ctrl.savePolicy()}
           data-testid="steward-verb-save-policy"
@@ -462,9 +576,6 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
   );
 }
 
-/* HS-167-03: useVerticalScrollHint retired -- the barrel's useScrollHint
-   with scrollRef=null (falls back to parentElement) replaces it. */
-
 /* ── Main Steward posture ── */
 
 export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
@@ -474,7 +585,6 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
   const postureRef = useRef<HTMLDivElement>(null);
   useScrollHint(postureRef, null, "y");
 
-  // ── Loading / error ──
   if (ctrl.loading && ctrl.posture === "off") {
     return <SurfaceState loading />;
   }
@@ -540,6 +650,12 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
 
   // ── Detail view (single run) ──
   if (ctrl.posture === "detail") {
+    const run = ctrl.currentRun;
+    const runIndex = run ? ctrl.runs.findIndex((r) => r.id === run.id) : -1;
+    const runNumber = runIndex >= 0 ? ctrl.runs.length - runIndex : 1;
+    const { phaseCount } = run
+      ? buildPlanSteps(ctrl.currentSteps, run)
+      : { phaseCount: 0 };
     return (
       <div ref={postureRef} className="steward-posture" data-testid="steward-posture" data-phase="detail">
         {ctrl.error ? <SurfaceState error={ctrl.error} /> : null}
@@ -547,8 +663,8 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
         <SurfaceFooter
           receipt={
             <span className="surface-footer-receipt-line" data-testid="steward-footer-receipt" role="status">
-              {ctrl.currentRun
-                ? `STEWARD ${runStateLabel(ctrl.currentRun.state).toUpperCase()} ${pluralize(ctrl.currentSteps.length, "STEP", "STEPS")}`
+              {run
+                ? `RUN ${runNumber} · ${runStateLabel(run.state).toUpperCase()} · ${phaseCount} PHASE${phaseCount === 1 ? "" : "S"}`
                 : "STEWARD"}
             </span>
           }
@@ -573,6 +689,5 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
     );
   }
 
-  // ── Off posture (should not render) ──
   return null;
 }

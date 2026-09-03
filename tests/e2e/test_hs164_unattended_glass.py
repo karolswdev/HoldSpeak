@@ -759,9 +759,9 @@ def test_gate_a_two_unattended_runs(
             prov_text = prov_el.inner_text().strip().lower()
             assert prov_text == "scheduled", f"Expected 'Scheduled', got {prov_text!r}"
 
-            # Steps visible.
-            step_items = page.get_by_test_id("steward-step-item")
-            assert step_items.count() >= 1, "Expected at least 1 step in run detail"
+            # HS-167-05: ProgressPlan phases replace per-step rows.
+            step_items = page.locator('[data-testid="steward-run-plan"] .surface-plan-step')
+            assert step_items.count() >= 1, "Expected at least 1 plan phase in run detail"
 
             # -- SHOT: run detail --
             page.screenshot(

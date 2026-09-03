@@ -310,9 +310,9 @@ def test_dogfood_run_and_dedup(
                 f"Expected completed, got {state_text!r}"
             )
 
-            # -- Verify steps are visible --
-            step_items = page.get_by_test_id("steward-step-item")
-            assert step_items.count() >= 1, "Expected at least 1 step"
+            # -- HS-167-05: ProgressPlan phases replace per-step rows --
+            step_items = page.locator('[data-testid="steward-run-plan"] .surface-plan-step')
+            assert step_items.count() >= 1, "Expected at least 1 plan phase"
 
             # -- Verify >=1 step has receipt refs (real effect) --
             receipt_refs = page.get_by_test_id("steward-receipt-refs")
@@ -883,8 +883,8 @@ def test_degraded_partial_coverage(
             )
             assert (SHOTS / f"degraded-result-{width}.png").stat().st_size > 20_000
 
-            # -- Step rows should be visible --
-            step_items = page.get_by_test_id("steward-step-item")
+            # -- HS-167-05: ProgressPlan phases replace per-step rows --
+            step_items = page.locator('[data-testid="steward-run-plan"] .surface-plan-step')
             if step_items.count() > 0:
                 # Verify step error messages are visible for failed steps
                 step_errors_ui = page.get_by_test_id("steward-step-error")

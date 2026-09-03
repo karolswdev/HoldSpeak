@@ -366,10 +366,10 @@ describe("Plain-words card anchor (defect 1)", () => {
       expect(screen.getByTestId("review-posture")).toBeTruthy();
     });
 
-    // The card label should be a human headline, not the raw machine title
+    // The headline should be a human headline, not the raw machine title
     const detail = screen.getByTestId("review-detail");
-    // Check the ChoiceCardShell label is human-readable
-    const label = detail.querySelector(".surface-choice-card-label");
+    // HS-167-05: ChoiceCardShell replaced by inline expansion with data-testid
+    const label = detail.querySelector("[data-testid='review-detail-headline']");
     expect(label).toBeTruthy();
     expect(label!.textContent).toBe("Overdue commitment needs attention");
     expect(label!.textContent).not.toContain("risk_attention");
@@ -387,7 +387,8 @@ describe("Plain-words card anchor (defect 1)", () => {
     });
 
     const detail = screen.getByTestId("review-detail");
-    const desc = detail.querySelector(".surface-choice-card-desc");
+    // HS-167-05: ChoiceCardShell replaced by inline expansion with data-testid
+    const desc = detail.querySelector("[data-testid='review-detail-subject']");
     expect(desc).toBeTruthy();
     // Subject extracted from patch text field
     expect(desc!.textContent).toBe("Update PCI compliance docs");
@@ -427,8 +428,9 @@ describe("Hidden machine keys (defect 4)", () => {
     });
 
     // The comparison should not render card_id as a visible field label
+    // HS-167-05: SurfaceFacts renders <dt> elements instead of .review-field-key
     const fieldKeys = screen.getByTestId("review-comparison")
-      .querySelectorAll(".review-field-key");
+      .querySelectorAll(".surface-facts dt");
     const keyTexts = Array.from(fieldKeys).map((el) => el.textContent);
     expect(keyTexts).not.toContain("card_id");
     // But human fields should be present with humanized labels
@@ -447,8 +449,8 @@ describe("Hidden machine keys (defect 4)", () => {
       expect(screen.getByTestId("review-comparison")).toBeTruthy();
     });
 
-    const fields = screen.getByTestId("review-comparison")
-      .querySelector(".review-comparison-fields");
+    // HS-167-05: machine attrs are on the review-detail container
+    const fields = screen.getByTestId("review-detail");
     expect(fields).toBeTruthy();
     expect(fields!.getAttribute("data-card-id")).toBe("ai-01");
   });

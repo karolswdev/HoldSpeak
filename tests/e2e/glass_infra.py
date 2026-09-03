@@ -62,8 +62,14 @@ def _ensure_build() -> None:
     with open(lock_path, "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         try:
-            marker_mtime = built_marker.stat().st_mtime if built_marker.exists() else 0.0
-            if marker_mtime >= _newest_web_source_mtime():
+            # Trust the OLDEST built chunk, never index.html: the marker
+            # can be touched by anything; a build that raced or failed
+            # midway leaves stale chunks behind it (seen live 2026-09-03:
+            # a fresh marker over 13-minute-old chunks).
+            assets_dir = built_marker.parent / "assets"
+            chunk_mtimes = [f.stat().st_mtime for f in assets_dir.glob("*.js")] if assets_dir.exists() else []
+            built_mtime = min(chunk_mtimes) if (chunk_mtimes and built_marker.exists()) else 0.0
+            if built_mtime >= _newest_web_source_mtime():
                 _build_done = True
                 return
             started = time.monotonic()
@@ -75,8 +81,6 @@ def _ensure_build() -> None:
                 f"Web build failed:\n{result.stderr}\n{result.stdout}"
             )
             assert built_marker.exists(), "Web build produced no marker"
-            # The marker must now be the newest thing on disk.
-            os.utime(built_marker, None)
             _build_done = True
             print(f"[glass_infra] web bundle rebuilt in {time.monotonic() - started:.1f}s")
         finally:
