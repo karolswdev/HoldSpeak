@@ -1,7 +1,7 @@
 // HS-158-05 — ProjectRoomCore rendering tests: orientation band,
 // focus block, degraded section isolation, empty states.
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../../desk/api";
@@ -151,8 +151,13 @@ describe("ProjectRoomCore — orientation band (WEB-NOW-001, WEB-IA-001)", () =>
 
   it("renders purpose and outcome when present", async () => {
     render(<WindowHarness scope="project:p1" />);
-    expect(await screen.findByTestId("orientation-purpose")).toHaveTextContent("Ship the widget");
-    expect(screen.getByTestId("orientation-outcome")).toHaveTextContent("Widget shipped");
+    const band = await screen.findByTestId("orientation-band");
+    // HS-167-04: short purpose renders as plain text (no Disclosure)
+    const purpose = band.querySelector(".surface-identity-purpose")!;
+    expect(purpose).not.toBeNull();
+    expect(purpose.textContent).toContain("Ship the widget");
+    const outcome = band.querySelector(".surface-identity-outcome")!;
+    expect(outcome.textContent).toContain("Widget shipped");
   });
 
   it("renders lifecycle and posture as separate facts (WEB-LC-001/002)", async () => {
@@ -160,10 +165,10 @@ describe("ProjectRoomCore — orientation band (WEB-NOW-001, WEB-IA-001)", () =>
     await screen.findByTestId("orientation-band");
 
     const lifecycle = screen.getByTestId("orientation-lifecycle");
-    expect(lifecycle.textContent).toBe("Active");
+    expect(lifecycle.textContent).toContain("Active");
 
     const posture = screen.getByTestId("orientation-posture");
-    expect(posture.textContent).toBe("Green");
+    expect(posture.textContent).toContain("Green");
     expect(posture.getAttribute("title")).toBe("On track");
   });
 
@@ -191,8 +196,8 @@ describe("ProjectRoomCore — orientation band (WEB-NOW-001, WEB-IA-001)", () =>
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("orientation-band");
 
-    expect(screen.queryByTestId("orientation-purpose")).toBeNull();
-    expect(screen.queryByTestId("orientation-outcome")).toBeNull();
+    expect(document.querySelector(".surface-identity-purpose")).toBeNull();
+    expect(document.querySelector(".surface-identity-outcome")).toBeNull();
     expect(screen.queryByTestId("orientation-posture")).toBeNull();
   });
 
@@ -271,7 +276,7 @@ describe("ProjectRoomCore — degraded section isolation (WEB-STA-002)", () => {
 
     render(<WindowHarness scope="project:p1" />);
     // Orientation still renders
-    expect(await screen.findByTestId("project-room-name")).toHaveTextContent("Alpha Project");
+    expect((await screen.findByTestId("project-room-name")).textContent).toBe("Alpha Project");
     // Degraded notice shows
     expect(screen.getByTestId("degraded-meetings")).toBeTruthy();
     // Focus still shows
@@ -331,7 +336,7 @@ describe("ProjectRoomCore — beauty pass (HS-158-05)", () => {
     await screen.findByTestId("orientation-band");
 
     const posture = screen.getByTestId("orientation-posture");
-    expect(posture.textContent).toBe("On track");
+    expect(posture.textContent).toContain("On track");
     expect(posture.getAttribute("data-posture")).toBe("on_track");
   });
 
@@ -364,16 +369,16 @@ describe("ProjectRoomCore — beauty pass (HS-158-05)", () => {
 
     expect(critical).toBeTruthy();
     expect(critical!.getAttribute("data-tone")).toBe("danger");
-    expect(critical!.textContent).toBe("Critical");
+    expect(critical!.querySelector(".surface-state-chip")!.getAttribute("aria-label")).toBe("Critical");
 
     expect(high).toBeTruthy();
     expect(high!.getAttribute("data-tone")).toBe("warn");
-    expect(high!.textContent).toBe("High");
+    expect(high!.querySelector(".surface-state-chip")!.getAttribute("aria-label")).toBe("High");
 
     expect(medium).toBeTruthy();
     // medium/low are quiet (no tone)
     expect(medium!.getAttribute("data-tone")).toBeNull();
-    expect(medium!.textContent).toBe("Medium");
+    expect(medium!.querySelector(".surface-state-chip")!.getAttribute("aria-label")).toBe("Medium");
   });
 
   it("due date renders as a quiet text token, not an input-like chip", async () => {
@@ -382,28 +387,24 @@ describe("ProjectRoomCore — beauty pass (HS-158-05)", () => {
 
     const dueTokens = screen.getAllByTestId("focus-due");
     expect(dueTokens.length).toBeGreaterThan(0);
-    // R2: de-inputted — a date-token span, not a desk-chip with border
-    expect(dueTokens[0].className).toContain("project-room-date-token");
+    // HS-167-04: surface-token class (was project-room-date-token)
+    expect(dueTokens[0].className).toContain("surface-token");
     expect(dueTokens[0].className).not.toContain("desk-chip");
-    // Date value is present (glyph + date text)
+    // Date value is present
     expect(dueTokens[0].textContent).toMatch(/\d{4}-\d{2}-\d{2}/);
   });
 
-  it("outcome has its own OUTCOME eyebrow, purpose has PURPOSE (band label symmetry)", async () => {
+  it("purpose and outcome render through SurfaceIdentity species (HS-167-04)", async () => {
     render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
+    const band = await screen.findByTestId("orientation-band");
 
-    // R2: both purpose and outcome carry micro-eyebrows
-    const purposeEyebrow = screen.getByTestId("purpose-eyebrow");
-    expect(purposeEyebrow.textContent).toBe("PURPOSE");
-    expect(purposeEyebrow.className).toContain("project-room-eyebrow");
+    // HS-167-04: short purpose renders as plain text outside SurfaceIdentity
+    const purpose = band.querySelector(".surface-identity-purpose")!;
+    expect(purpose).not.toBeNull();
+    expect(purpose.textContent).toContain("Ship the widget");
 
-    const outcomeEyebrow = screen.getByTestId("outcome-eyebrow");
-    expect(outcomeEyebrow.textContent).toBe("OUTCOME");
-    expect(outcomeEyebrow.className).toContain("project-room-eyebrow");
-
-    // Outcome text is visually separate from purpose
-    const outcome = screen.getByTestId("orientation-outcome");
+    const outcome = band.querySelector(".surface-identity-outcome")!;
+    expect(outcome).not.toBeNull();
     expect(outcome.textContent).toContain("Widget shipped");
   });
 
@@ -530,23 +531,22 @@ describe("ProjectRoomCore — R2 desktop composition (HS-158-05)", () => {
   });
 });
 
-describe("ProjectRoomCore — R2 token hierarchy (HS-158-05)", () => {
-  it("identity facts (lifecycle, posture) left; meta facts (rev, time) right", async () => {
+describe("ProjectRoomCore — R2 token hierarchy (HS-167-04)", () => {
+  it("identity chips row contains lifecycle, posture; trailing holds activity", async () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("orientation-band");
 
-    // Identity group contains lifecycle and posture
-    const identity = screen.getByTestId("facts-identity");
-    expect(identity.querySelector("[data-testid='orientation-lifecycle']")).not.toBeNull();
-    expect(identity.querySelector("[data-testid='orientation-posture']")).not.toBeNull();
+    // HS-167-04: all chips live in .surface-identity-chips
+    const chips = document.querySelector(".surface-identity-chips")!;
+    expect(chips).not.toBeNull();
+    expect(chips.querySelector("[data-testid='orientation-lifecycle']")).not.toBeNull();
+    expect(chips.querySelector("[data-testid='orientation-posture']")).not.toBeNull();
+    expect(chips.querySelector("[data-testid='orientation-revision']")).not.toBeNull();
 
-    // Meta group contains revision and activity
-    const meta = screen.getByTestId("facts-meta");
-    expect(meta.querySelector("[data-testid='orientation-revision']")).not.toBeNull();
-    expect(meta.querySelector("[data-testid='orientation-activity']")).not.toBeNull();
-
-    // Meta group uses quieter styling (margin-left: auto pushes right)
-    expect(meta.className).toContain("project-room-facts-meta");
+    // HS-167-04: trailing holds the activity token (surface-identity-trailing)
+    const trailing = chips.querySelector(".surface-identity-trailing")!;
+    expect(trailing).not.toBeNull();
+    expect(trailing.querySelector("[data-testid='orientation-activity']")).not.toBeNull();
   });
 });
 

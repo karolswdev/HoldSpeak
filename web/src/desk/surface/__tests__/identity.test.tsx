@@ -36,7 +36,7 @@ describe("SurfaceIdentity", () => {
     expect(screen.getByTestId("trailing")).toBeInTheDocument();
   });
 
-  it("renders purpose inside a Disclosure (folded by default)", () => {
+  it("renders purpose inside a Disclosure (open by default, foldable)", () => {
     render(
       <SurfaceIdentity
         name="test"
@@ -44,13 +44,12 @@ describe("SurfaceIdentity", () => {
         purpose="Migrate the payment gateway to the new vendor without downtime."
       />,
     );
-    // The Disclosure trigger says "more" and is collapsed by default.
+    // Purpose is visible by default (Disclosure defaultOpen=true).
+    expect(screen.getByText(/Migrate the payment gateway/)).toBeInTheDocument();
+    // The Disclosure trigger says "more" and can fold the purpose.
     const trigger = screen.getByRole("button", { name: /more/i });
     expect(trigger).toBeInTheDocument();
-    expect(trigger).toHaveAttribute("aria-expanded", "false");
-    // Expand it.
-    fireEvent.click(trigger);
-    expect(screen.getByText(/Migrate the payment gateway/)).toBeInTheDocument();
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
   });
 
   it("renders outcome as a target token row with the target mark", () => {

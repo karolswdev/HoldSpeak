@@ -130,8 +130,9 @@ describe("SetupInterview", () => {
     );
 
     expect(screen.getByTestId("setup-question-outcome")).toBeTruthy();
+    // HS-167-04: question text is now the placeholder (D2 well species)
     expect(
-      screen.getByText("What outcome are you trying to create or protect?"),
+      screen.getByPlaceholderText("What outcome are you trying to create or protect?"),
     ).toBeTruthy();
   });
 
@@ -159,8 +160,9 @@ describe("SetupInterview", () => {
 
     // Active signals question
     expect(screen.getByTestId("setup-question-signals")).toBeTruthy();
+    // HS-167-04: question text is now the placeholder (D2 well species)
     expect(
-      screen.getByText("What would you want HoldSpeak to notice without being asked?"),
+      screen.getByPlaceholderText("What would you want HoldSpeak to notice without being asked?"),
     ).toBeTruthy();
   });
 
@@ -886,14 +888,14 @@ describe("SuggestionCards object structure", () => {
   });
 });
 
-/* ── Review ledger alignment and YOLO token (defects 3, 4) ── */
+/* ── Review: WHAT WILL RUN ledger + THE BRIEF facts (HS-167-04 D4) ── */
 
 describe("ActivationReview beauty", () => {
   const noop = () => {};
   const outcomeAnswer = makeAnswer("outcome", "Ship Q4");
   const signalsAnswer = makeAnswer("signals", "PRs stale");
 
-  it("renders ledger-aligned label/value rows for watch spec", () => {
+  it("renders one SurfaceLedgerRow per watch in WHAT WILL RUN", () => {
     const proposals = [makeProposal("wprop_1", { state: "selected", testState: "passed" })];
     render(
       <ActivationReview
@@ -906,19 +908,15 @@ describe("ActivationReview beauty", () => {
       />,
     );
 
-    const ledger = screen.getByTestId("review-ledger-wprop_1");
-    expect(ledger).toBeTruthy();
-
-    // Check label/value pairs
-    const rows = ledger.querySelectorAll(".setup-review-ledger-row");
-    expect(rows.length).toBe(5); // Subject, Conditions, Cadence, Action, Mode
-
-    // Labels aligned
-    const labels = Array.from(rows).map((r) => r.querySelector("dt")?.textContent);
-    expect(labels).toEqual(["Subject", "Conditions", "Cadence", "Action", "Mode"]);
+    // HS-167-04: watch row rendered as SurfaceLedgerRow (one row per watch)
+    const watchRow = screen.getByTestId("review-watch-wprop_1");
+    expect(watchRow).toBeTruthy();
+    // Watch name visible in the row's primary
+    const primary = watchRow.querySelector(".surface-ledger-primary");
+    expect(primary?.textContent).toContain("Meeting activity");
   });
 
-  it("renders mode as a posture token with data-mode (defect 3)", () => {
+  it("watch row carries cadence and action tokens in cells", () => {
     const proposals = [makeProposal("wprop_1", { state: "selected" })];
     render(
       <ActivationReview
@@ -931,13 +929,14 @@ describe("ActivationReview beauty", () => {
       />,
     );
 
-    const modeToken = screen.getByTestId("review-watch-wprop_1").querySelector(".setup-mode-token");
-    expect(modeToken).toBeTruthy();
-    expect(modeToken?.textContent).toBe("YOLO");
-    expect(modeToken?.getAttribute("data-mode")).toBe("yolo");
+    const watchRow = screen.getByTestId("review-watch-wprop_1");
+    // Cadence token
+    expect(watchRow.textContent).toContain("Every 35 min");
+    // Action token
+    expect(watchRow.textContent).toContain("Put it in Project attention");
   });
 
-  it("renders plain-words conditions in review (defect 2)", () => {
+  it("THE BRIEF renders outcome and signals as SurfaceFacts", () => {
     const proposals = [makeProposal("wprop_1", { state: "selected" })];
     render(
       <ActivationReview
@@ -950,80 +949,19 @@ describe("ActivationReview beauty", () => {
       />,
     );
 
-    // Find the Conditions row
-    const conditionValue = screen.getByTestId("review-ledger-wprop_1")
-      .querySelectorAll(".setup-review-ledger-row")[1]
-      .querySelector("dd");
-    expect(conditionValue?.textContent).toBe("When content changes");
-    // Machine value in data attribute
-    expect(conditionValue?.getAttribute("data-condition-raw")).toBe("content:changed");
-  });
-
-  it("shows step indicator on review (defect 6)", () => {
-    const proposals = [makeProposal("wprop_1", { state: "selected" })];
-    render(
-      <ActivationReview
-        outcomeAnswer={outcomeAnswer}
-        signalsAnswer={signalsAnswer}
-        proposals={proposals}
-        onFinalize={noop}
-        onBack={noop}
-        finalizing={false}
-      />,
-    );
-
-    const token = screen.getByTestId("setup-step-token");
-    expect(token.textContent).toBe("Step 4 of 4");
+    // HS-167-04: outcome and signals in SurfaceFacts (dl with dt/dd)
+    const outcome = screen.getByTestId("review-outcome");
+    expect(outcome).toBeTruthy();
+    const signals = screen.getByTestId("review-signals");
+    expect(signals).toBeTruthy();
+    expect(signals.getAttribute("data-section")).toBe("signals");
   });
 });
 
-/* ── Step token consistency (defect 6) ── */
+/* ── Step system consistency (defect 6) — HS-167-04: step tokens
+     replaced by ProgressPlan in SetupRoot; model constants kept ── */
 
-describe("Step token across stages", () => {
-  const noop = () => {};
-
-  it("outcome stage shows Step 1 of 4", () => {
-    const state: ControllerState = { kind: "outcome", draft: "" };
-    render(
-      <SetupInterview
-        state={state}
-        error=""
-        onSubmitOutcome={noop}
-        onSubmitSignals={noop}
-        onEditOutcome={noop}
-        onEditSignals={noop}
-        onSetDraft={noop}
-      />,
-    );
-
-    const token = screen.getByTestId("setup-step-token");
-    expect(token.textContent).toBe("Step 1 of 4");
-  });
-
-  it("signals stage shows Step 2 of 4", () => {
-    const state: ControllerState = {
-      kind: "signals",
-      draft: "",
-      outcomeAnswer: makeAnswer("outcome", "Ship Q4"),
-    };
-    render(
-      <SetupInterview
-        state={state}
-        error=""
-        onSubmitOutcome={noop}
-        onSubmitSignals={noop}
-        onEditOutcome={noop}
-        onEditSignals={noop}
-        onSetDraft={noop}
-      />,
-    );
-
-    const tokens = screen.getAllByTestId("setup-step-token");
-    // The active question has the token
-    const signalsToken = tokens[tokens.length - 1];
-    expect(signalsToken.textContent).toBe("Step 2 of 4");
-  });
-
+describe("Stage model consistency", () => {
   it("STAGE_META has consistent 4-stage system", () => {
     expect(STAGE_COUNT).toBe(4);
     expect(STAGE_META["outcome"].index).toBe(1);
@@ -1207,7 +1145,7 @@ describe("'What to notice' header (fix 4)", () => {
   const outcomeAnswer = makeAnswer("outcome", "Ship Q4");
   const signalsAnswer = makeAnswer("signals", "PRs stale");
 
-  it("review signals section is labeled 'What to notice'", () => {
+  it("review signals section carries machine key", () => {
     const proposals = [makeProposal("wprop_1", { state: "selected" })];
     render(
       <ActivationReview
@@ -1220,102 +1158,11 @@ describe("'What to notice' header (fix 4)", () => {
       />,
     );
 
+    // HS-167-04: signals data rendered through SurfaceFacts; machine key preserved
     const section = screen.getByTestId("review-signals");
-    const label = section.querySelector(".setup-review-label");
-    expect(label?.textContent).toBe("What to notice");
-    // data- attribute preserves machine key
     expect(section.getAttribute("data-section")).toBe("signals");
   });
 });
 
-describe("Framed test evidence (fix 5)", () => {
-  const noop = () => {};
-  const outcomeAnswer = makeAnswer("outcome", "Ship Q4");
-  const signalsAnswer = makeAnswer("signals", "PRs stale");
-
-  it("renders evidence as one framed block with pass token, count, entities, time", () => {
-    const proposals = [
-      makeProposal("wprop_1", {
-        state: "selected",
-        testState: "passed",
-        testResult: {
-          entityCount: 1,
-          representativeEntities: [{ title: "Sprint 7 Planning" }],
-          observedAt: "2026-08-31T10:04:00",
-          error: null,
-          message: "Test passed -- 1 current matches",
-        },
-      }),
-    ];
-    render(
-      <ActivationReview
-        outcomeAnswer={outcomeAnswer}
-        signalsAnswer={signalsAnswer}
-        proposals={proposals}
-        onFinalize={noop}
-        onBack={noop}
-        finalizing={false}
-      />,
-    );
-
-    const evidence = screen.getByTestId("review-test-evidence");
-    expect(evidence).toBeTruthy();
-    expect(evidence.getAttribute("data-test-state")).toBe("passed");
-
-    // One block contains: pass icon, count, entity, time
-    const header = evidence.querySelector(".setup-review-evidence-header");
-    expect(header).toBeTruthy();
-    expect(header?.textContent).toContain("Test passed");
-    expect(header?.textContent).toContain("1 current match");
-
-    // Entity in list
-    const entity = evidence.querySelector(".setup-review-evidence-entity");
-    expect(entity?.textContent).toBe("Sprint 7 Planning");
-
-    // Observed time
-    const time = evidence.querySelector(".setup-review-evidence-time");
-    expect(time?.textContent).toContain("Observed at");
-
-    // It is a bordered inset (has the evidence class with border)
-    expect(evidence.classList.contains("setup-review-evidence")).toBe(true);
-  });
-
-  it("uses plural matches for count > 1", () => {
-    const proposals = [
-      makeProposal("wprop_1", {
-        state: "selected",
-        testState: "passed",
-        testResult: {
-          entityCount: 3,
-          representativeEntities: [
-            { title: "Item 1" },
-            { title: "Item 2" },
-            { title: "Item 3" },
-          ],
-          observedAt: "2026-08-31T10:04:00",
-          error: null,
-          message: "Test passed -- 3 current matches",
-        },
-      }),
-    ];
-    render(
-      <ActivationReview
-        outcomeAnswer={outcomeAnswer}
-        signalsAnswer={signalsAnswer}
-        proposals={proposals}
-        onFinalize={noop}
-        onBack={noop}
-        finalizing={false}
-      />,
-    );
-
-    const header = screen.getByTestId("review-test-evidence")
-      .querySelector(".setup-review-evidence-header");
-    expect(header?.textContent).toContain("3 current matches");
-
-    // All three entities in list
-    const entities = screen.getByTestId("review-test-evidence")
-      .querySelectorAll(".setup-review-evidence-entity");
-    expect(entities.length).toBe(3);
-  });
-});
+/* ── HS-167-04: evidence blocks retired — watches are single ledger rows
+     with test state visible as CheckGadget + cadence/action tokens ── */

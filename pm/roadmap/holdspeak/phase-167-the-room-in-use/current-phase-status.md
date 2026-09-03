@@ -1,7 +1,7 @@
 # Phase 167 - Project Rooms: The Room in Use
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 3/8
+- **Status:** ACTIVE 4/8
 - **Chartered:** 2026-09-03 off main `31c072f5` (166 The Jira Parity MERGED via PR #532 on the owner's word — the ELEVENTH Project Rooms phase merged; the SRS V0 slices P0..P7 are all on main)
 - **Canon:** docs/internal/CONSTITUTION.md (Article III honest egress); docs/internal/POSITIONING.md (the voice rules); web/src/desk/surface/contract.md (the library contract, HS-156-03); docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §14 (the V0 slices this phase makes one thing); the owner's laws: face-design-before-build (2026-09-03), the beauty pass after every functional pass (2026-08-17), "will you use this on a Tuesday?" (Phase 139)
 
@@ -74,8 +74,8 @@ proof stays a ledgered debt); the door-title first-match choice
 | HS-167-01 | The audit + the settled design (the whole Room on the library; mockups at 1440 + 393; OWNER RATIFIES) | done | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-167-02 | The debts a user hits (toggles persisted; enrichment receipted; the acli file lock; the cadence write wire; the trigger route) | done | [story-02-the-debts](./story-02-the-debts.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-167-03 | The library reform (scroll-hint + egress species promoted; the design's new species; tokens fenced; the shared glass conftest) | done | [story-03-the-library-reform](./story-03-the-library-reform.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-167-04 | The faces recomposed I (the Room, the interview, the activation review, the GitHub wizard; shots) | backlog | [story-04-the-faces-i](./story-04-the-faces-i.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-167-05 | The faces recomposed II (Review, Update, Steward; shots; the beauty pass) | backlog | [story-05-the-faces-ii](./story-05-the-faces-ii.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-167-04 | The faces recomposed I (the Room, the interview, the activation review, the GitHub wizard; shots) | done | [story-04-the-faces-i](./story-04-the-faces-i.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-167-05 | The faces recomposed II (Review, Update, Steward; shots; the beauty pass) | in-progress | [story-05-the-faces-ii](./story-05-the-faces-ii.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-167-06 | The Tuesday walk (the owner's first project on his real desk, attended — OWNER VERDICT) | backlog | [story-06-the-tuesday-walk](./story-06-the-tuesday-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-167-07 | The docs (the Rooms guide re-shot; the library contract; MCP_SIDECAR counts guarded; the dedicated docs story) | backlog | [story-07-the-docs](./story-07-the-docs.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-167-08 | The close (gates, riders, debts, final summary) | backlog | [story-08-the-close](./story-08-the-close.md) | [evidence-story-08](./evidence-story-08.md) |
@@ -101,7 +101,12 @@ ONE glass infrastructure with an honest xdist-safe `_ensure_build`,
 Jira px tokenized; 252 vitest, 46 glass green). **02 DONE** (the five
 debts; three orchestrator catches paid: a submit inside a React state
 updater, a trigger route lying about project scope, a swallowed
-scheduler error; 72 python + 320 vitest). 04 and 05 build in parallel. 04/05 build to the ratified mockups.
+scheduler error; 72 python + 320 vitest). **04 DONE** (the Room,
+the interview, the activation review, the GitHub wizard recomposed
+to the mockups through three rounds; the `room` ledger template born
+in the barrel from a species-level overprint; the Review-verb law
+restored; 789 vitest + 18 glass). 05 (postures) finishing its rig
+selector edits; then the whole-Room beauty pass. 04/05 build to the ratified mockups.
 
 ## Active risks
 

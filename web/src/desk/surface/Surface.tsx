@@ -55,6 +55,8 @@ export function SurfaceIdentity({
   outcome,
   fold,
   trailing,
+  "data-testid": rootTestId,
+  nameTestId,
 }: {
   /** The project name, rendered at the Primary type step (15px/600). */
   name: string;
@@ -68,10 +70,14 @@ export function SurfaceIdentity({
   fold?: ReactNode;
   /** A trailing token (e.g. the read-time label), right-aligned on the chip row. */
   trailing?: ReactNode;
+  /** Pass-through data-testid for the root element. */
+  "data-testid"?: string;
+  /** Pass-through data-testid for the name element (glass readiness signal). */
+  nameTestId?: string;
 }) {
   return (
-    <div className="surface-identity" data-testid="surface-identity">
-      <div className="surface-identity-name">{name}</div>
+    <div className="surface-identity" data-testid={rootTestId ?? "surface-identity"}>
+      <div className="surface-identity-name" data-testid={nameTestId}>{name}</div>
       <div className="surface-identity-chips">
         {chips}
         {trailing != null ? (
@@ -79,7 +85,7 @@ export function SurfaceIdentity({
         ) : null}
       </div>
       {purpose ? (
-        <Disclosure label="more" defaultOpen={false} variant="raw">
+        <Disclosure label="more" defaultOpen={true} variant="raw">
           <div className="surface-identity-purpose">{purpose}</div>
         </Disclosure>
       ) : null}

@@ -12,15 +12,6 @@
 
 /* ── Step indicator token (defect 6: one system across all stages) ── */
 
-.setup-step-token {
-  font-size: var(--text-xs);
-  font-family: var(--font-mono, monospace);
-  font-weight: var(--font-semibold, 600);
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 /* ── Interview ── */
 
 .setup-interview {
@@ -51,56 +42,41 @@
   gap: var(--space-2);
 }
 
-.setup-question-label {
-  font-size: var(--text-base);
-  font-weight: var(--font-medium);
-  color: var(--text-primary);
-}
-
-.setup-question-input-row {
+.setup-well-container {
   display: flex;
-  gap: var(--space-2);
-  align-items: flex-start;
-}
-
-.setup-question-textarea {
-  flex: 1;
-  min-height: 3rem;
-  padding: var(--space-2);
+  align-items: stretch;
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-sm);
   background: var(--bg-primary);
+}
+
+.setup-well-container .setup-well-textarea {
+  flex: 1;
+  min-height: 3rem;
+  padding: var(--space-2);
+  border: none;
+  background: transparent;
   color: var(--text-primary);
   font: inherit;
   resize: vertical;
 }
 
-.setup-question-textarea:focus {
+.setup-well-container .setup-well-textarea:focus {
+  outline: none;
+}
+
+.setup-well-container:focus-within {
   outline: 2px solid var(--border-focus);
   outline-offset: -1px;
 }
 
-/* ── Answer row (collapsed previous answer) ── */
-
-.setup-answer-row {
+.setup-well-mic {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-1) var(--space-2);
-  padding: var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--bg-secondary);
+  align-items: flex-start;
+  padding: 4px 4px 0 0;
 }
 
-.setup-answer-row-editing {
-  flex-direction: column;
-}
-
-.setup-answer-question {
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-  flex-basis: 100%;
-}
+/* ── Answer row (collapsed previous answer) ── */
 
 .setup-answer-text {
   flex: 1;
@@ -121,11 +97,6 @@
 .setup-answer-edit:hover,
 .setup-answer-save:hover {
   text-decoration: underline;
-}
-
-.setup-answer-actions {
-  display: flex;
-  gap: var(--space-2);
 }
 
 /* ── Suggestion cards (defect 1: cards are OBJECTS) ── */
@@ -230,71 +201,12 @@
   background: var(--bg-secondary);
 }
 
-.setup-brief-heading {
-  font-size: var(--text-sm);
-  font-weight: var(--font-medium);
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.setup-brief-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.setup-brief-label {
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.setup-brief-value {
-  font-size: var(--text-sm);
-  color: var(--text-primary);
-}
-
-.setup-brief-empty {
-  font-size: var(--text-sm);
-  color: var(--text-tertiary);
-  font-style: italic;
-}
-
 .setup-brief-signals {
   font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
-.setup-brief-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
 /* Grouping header with count chip (the 158 count-chip grammar) */
-.setup-brief-group-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.setup-brief-group-label {
-  font-size: var(--text-xs);
-  font-weight: var(--font-medium);
-  color: var(--text-secondary);
-}
-
-.setup-brief-count-chip {
-  display: inline-block;
-  font-family: var(--font-mono, monospace);
-  font-size: 10px;
-  font-weight: var(--font-semibold, 600);
-  color: var(--text-tertiary);
-  min-width: 16px;
-  text-align: center;
-}
-
 /* Compact watch row: name + meta chips on one line */
 .setup-brief-watch {
   display: flex;
@@ -339,18 +251,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.setup-brief-watch-test {
-  font-size: var(--text-xs);
-}
-
-.setup-brief-watch-test[data-test-state="passed"] {
-  color: var(--text-success);
-}
-
-.setup-brief-watch-test[data-test-state="failed"] {
-  color: var(--text-danger);
 }
 
 /* ── Clarify ── */
@@ -496,209 +396,11 @@
 }
 
 /* Consequence headline -- the anchor sentence that says what activation MEANS */
-.setup-review-headline {
-  font-size: var(--text-lg, 1.125rem);
-  font-weight: var(--font-semibold, 600);
-  color: var(--text-primary);
-  margin: 0;
-  line-height: 1.3;
-}
-
-.setup-review-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.setup-review-label {
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.setup-review-value {
-  font-size: var(--text-sm);
-  color: var(--text-primary);
-}
-
-.setup-review-blank {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-.setup-review-warning {
-  font-size: var(--text-sm);
-  color: var(--text-warning);
-  padding: var(--space-2);
-  background: var(--bg-warning-subtle);
-  border-radius: var(--radius-sm);
-}
-
-.setup-review-watch {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-2);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
-}
-
-.setup-review-watch-name {
-  font-weight: var(--font-medium);
-  color: var(--text-primary);
-}
-
 /* Ledger-aligned dl: label column aligns, value column fills */
-.setup-review-ledger {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-}
-
-.setup-review-ledger-row {
-  display: flex;
-  gap: var(--space-2);
-  font-size: var(--text-xs);
-  align-items: baseline;
-}
-
-.setup-review-ledger-label {
-  color: var(--text-tertiary);
-  min-width: 6rem;
-  font-weight: normal;
-  margin: 0;
-}
-
-.setup-review-ledger-value {
-  color: var(--text-primary);
-  margin: 0;
-  padding: 0;
-}
-
 /* Mode posture token (defect 3: quiet restrained style, WEB-STW-001 spirit) */
-.setup-mode-token {
-  display: inline-block;
-  font-family: var(--font-mono, monospace);
-  font-size: 10px;
-  font-weight: var(--font-semibold, 600);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  padding: 0 var(--space-1);
-  border-radius: var(--radius-xs);
-  background: var(--bg-tertiary);
-}
-
-.setup-review-watch-untested {
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-  font-style: italic;
-}
-
 /* ── Framed test evidence (fix 5): one compact bordered inset ── */
 
-.setup-review-evidence {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-2);
-  border: 1px solid var(--border-secondary);
-  border-radius: var(--radius-sm);
-  background: var(--bg-secondary);
-  margin-top: var(--space-1);
-}
-
-.setup-review-evidence[data-test-state="passed"] {
-  border-color: var(--border-success, var(--border-secondary));
-}
-
-.setup-review-evidence[data-test-state="failed"] {
-  border-color: var(--border-danger, var(--border-secondary));
-}
-
-.setup-review-evidence-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: var(--text-xs);
-  font-weight: var(--font-medium);
-}
-
-.setup-review-evidence[data-test-state="passed"] .setup-review-evidence-header {
-  color: var(--text-success);
-}
-
-.setup-review-evidence[data-test-state="failed"] .setup-review-evidence-header {
-  color: var(--text-danger);
-}
-
-.setup-review-evidence-icon {
-  flex-shrink: 0;
-}
-
-.setup-review-evidence-count {
-  color: var(--text-secondary);
-  font-weight: normal;
-}
-
-.setup-review-evidence-entities {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.setup-review-evidence-entity {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  padding: 1px var(--space-1);
-  background: var(--bg-primary);
-  border-radius: var(--radius-xs);
-}
-
-.setup-review-evidence-time {
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-}
-
-.setup-review-evidence-error {
-  font-size: var(--text-xs);
-  color: var(--text-danger);
-}
-
 /* ── Footer verb buttons (pinned via SurfaceFooter) ── */
-
-.setup-review-back {
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-sm);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: var(--text-xs);
-}
-
-.setup-review-activate {
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border-accent);
-  border-radius: var(--radius-sm);
-  background: var(--bg-accent);
-  color: var(--text-on-accent);
-  font-weight: var(--font-medium);
-  cursor: pointer;
-  font-size: var(--text-xs);
-}
-
-.setup-review-activate:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
 
 /* ── Proceed / abandon ── */
 

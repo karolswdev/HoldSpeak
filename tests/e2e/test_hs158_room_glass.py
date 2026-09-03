@@ -205,7 +205,7 @@ def test_room_populated(
             focus.wait_for(timeout=10000)
             assert focus.is_visible()
             # At least one focus item row should be visible.
-            focus_rows = focus.locator(".surface-row")
+            focus_rows = focus.locator(".surface-ledger-row")
             focus_rows.first.wait_for(timeout=10000)
             assert focus_rows.count() >= 1
 

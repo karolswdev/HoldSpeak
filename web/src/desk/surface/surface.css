@@ -3173,6 +3173,53 @@ button.surface-edit-in-place:hover {
   grid-template-columns: 52px minmax(0, 1fr) max-content 6ch max-content max-content;
 }
 
+/* HS-167-04 — the "room" ledger template (the Project Room's grammar:
+   time · lead · primary · cells · trailing). A FLEX row, never the
+   fixed 6ch grid the meetings ledger uses — a date token in the cells
+   overprinted its neighbour there. Cells sit in a gapped run after the
+   primary; trailing hugs the right edge; at the narrow container the
+   primary takes the whole line and the cells fall under it. */
+.surface-ledger[data-cols="room"] .surface-ledger-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+.surface-ledger[data-cols="room"] .surface-ledger-time {
+  flex: 0 0 52px;
+}
+.surface-ledger[data-cols="room"] .surface-ledger-lead {
+  flex: none;
+  width: 16px;
+  text-align: center;
+}
+.surface-ledger[data-cols="room"] .surface-ledger-primary {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.surface-ledger[data-cols="room"] .surface-ledger-cell,
+.surface-ledger[data-cols="room"] .surface-token,
+.surface-ledger[data-cols="room"] .surface-state-chip,
+.surface-ledger[data-cols="room"] .surface-provenance-chip {
+  flex: none;
+  white-space: nowrap;
+}
+.surface-ledger[data-cols="room"] .surface-ledger-trailing {
+  flex: none;
+  margin-left: auto;
+}
+@container surface (max-width: 559.9px) {
+  .surface-ledger[data-cols="room"] .surface-ledger-primary {
+    flex-basis: calc(100% - 52px - 16px - 20px);
+  }
+  .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-primary ~ :not(.surface-ledger-trailing) {
+    margin-left: 78px;
+  }
+  .surface-ledger[data-cols="room"] .surface-ledger-line > .surface-ledger-primary ~ * + :not(.surface-ledger-trailing) {
+    margin-left: 0;
+  }
+}
+
 /* HS-167-03 — SurfaceLedgerRow wrap: primary wraps instead of
    ellipsizing; cells fall under at the narrow container. */
 .surface-ledger-row[data-wrap] .surface-ledger-primary {

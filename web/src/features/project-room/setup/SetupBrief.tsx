@@ -1,13 +1,14 @@
-// HS-159-05 -- the live brief: outcome, watches by state --
-// mentioned/proposed/tested/disabled/active per INT-011.
-// Compact rows: name anchor + cadence chip + action in plain words.
-// State grouping headers with count chips (the 158 grammar).
+// HS-167-04 — the brief recomposed: SurfaceFacts for OUTCOME/NOTICE/SOURCES,
+// watch summary with state groups and count chips.
 
+import {
+  SurfaceFacts,
+  SurfaceSection,
+} from "../../../desk/surface/Surface";
 import {
   cadenceLabel,
   proposalBriefState,
   ACTION_LABELS,
-  type SetupAnswer,
   type SetupProposal,
   type WatchBriefState,
 } from "./model";
@@ -22,68 +23,45 @@ const BRIEF_STATE_LABEL: Record<WatchBriefState, string> = {
 };
 
 export function SetupBrief({ state }: { state: ControllerState }) {
-  return (
-    <aside className="setup-brief" aria-label="Project brief" data-testid="setup-brief">
-      <h3 className="setup-brief-heading">Project brief</h3>
-
-      {/* Outcome */}
-      <BriefOutcome state={state} />
-
-      {/* Watch summary */}
-      <BriefWatches state={state} />
-    </aside>
-  );
-}
-
-function BriefOutcome({ state }: { state: ControllerState }) {
   let outcomeText = "";
+  let signalsText = "";
+  let proposals: SetupProposal[] = [];
 
   if (state.kind === "outcome") {
     outcomeText = state.draft;
   } else if (state.kind === "signals") {
     outcomeText = state.outcomeAnswer.answer.normalized;
+    signalsText = state.draft;
   } else if (state.kind === "proposals" || state.kind === "review") {
     outcomeText = state.outcomeAnswer.answer.normalized;
+    signalsText = state.signalsAnswer.answer.normalized;
+    proposals = state.proposals;
   }
 
-  if (!outcomeText) {
-    return (
-      <div className="setup-brief-section" data-testid="brief-outcome">
-        <div className="setup-brief-label">Outcome</div>
-        <div className="setup-brief-empty">Not yet defined</div>
-      </div>
-    );
-  }
+  const facts: Record<string, string> = {};
+  if (outcomeText) facts.OUTCOME = outcomeText;
+  if (signalsText) facts.NOTICE = signalsText;
 
   return (
-    <div className="setup-brief-section" data-testid="brief-outcome">
-      <div className="setup-brief-label">Outcome</div>
-      <div className="setup-brief-value">{outcomeText}</div>
-    </div>
+    <aside aria-label="Project brief" data-testid="setup-brief">
+      <SurfaceSection label="THE BRIEF">
+        <div data-testid="brief-outcome">
+          {Object.keys(facts).length > 0 ? (
+            <SurfaceFacts value={facts} />
+          ) : (
+            <span className="surface-fact-empty">Not yet defined</span>
+          )}
+        </div>
+      </SurfaceSection>
+
+      {(proposals.length > 0 || (signalsText && proposals.length === 0)) ? (
+        <BriefWatches proposals={proposals} signalsText={signalsText} />
+      ) : null}
+    </aside>
   );
 }
 
-function BriefWatches({ state }: { state: ControllerState }) {
-  let proposals: SetupProposal[] = [];
-  let signalsText = "";
-
-  if (state.kind === "signals") {
-    signalsText = state.draft;
-  }
-  if (state.kind === "proposals") {
-    proposals = state.proposals;
-    signalsText = state.signalsAnswer.answer.normalized;
-  }
-  if (state.kind === "review") {
-    proposals = state.proposals;
-    signalsText = state.signalsAnswer.answer.normalized;
-  }
-
-  if (proposals.length === 0 && !signalsText) {
-    return null;
-  }
-
-  // Group proposals by brief state (INT-011)
+function BriefWatches({ proposals, signalsText }: { proposals: SetupProposal[]; signalsText: string }) {
   const grouped: Record<WatchBriefState, SetupProposal[]> = {
     mentioned: [],
     proposed: [],
@@ -106,21 +84,17 @@ function BriefWatches({ state }: { state: ControllerState }) {
   ];
 
   return (
-    <div className="setup-brief-section" data-testid="brief-watches">
-      <div className="setup-brief-label">Watches</div>
-
+    <div data-testid="brief-watches">
       {signalsText && proposals.length === 0 ? (
-        <div className="setup-brief-signals">{signalsText}</div>
+        <div className="setup-brief-signals-text">{signalsText}</div>
       ) : null}
 
       {stateOrder.map((bs) =>
         grouped[bs].length > 0 ? (
-          <div key={bs} className="setup-brief-group" data-brief-state={bs}>
-            <div className="setup-brief-group-header">
-              <span className="setup-brief-group-label">
-                {BRIEF_STATE_LABEL[bs]}
-              </span>
-              <span className="setup-brief-count-chip" data-testid={`brief-count-${bs}`}>
+          <div key={bs} data-brief-state={bs}>
+            <div className="setup-brief-state-row">
+              <span>{BRIEF_STATE_LABEL[bs]}</span>
+              <span className="surface-token" data-testid={`brief-count-${bs}`}>
                 {grouped[bs].length}
               </span>
             </div>
@@ -137,7 +111,7 @@ function BriefWatches({ state }: { state: ControllerState }) {
 function BriefWatchRow({ proposal }: { proposal: SetupProposal }) {
   const spec = proposal.spec;
   return (
-    <div className="setup-brief-watch" data-testid={`brief-watch-${proposal.id}`}>
+    <div data-testid={`brief-watch-${proposal.id}`} className="setup-brief-watch-entry">
       <div className="setup-brief-watch-name">{spec.name}</div>
       <div className="setup-brief-watch-meta">
         <span className="setup-brief-watch-chip">{cadenceLabel(spec.trigger)}</span>
@@ -146,10 +120,7 @@ function BriefWatchRow({ proposal }: { proposal: SetupProposal }) {
         </span>
       </div>
       {proposal.testResult ? (
-        <div
-          className="setup-brief-watch-test"
-          data-test-state={proposal.testState}
-        >
+        <div data-test-state={proposal.testState}>
           {proposal.testResult.message}
         </div>
       ) : null}
