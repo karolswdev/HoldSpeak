@@ -17,8 +17,8 @@ receding sidewalks and curbs, a two-lane road, a crosswalk, gutter furniture,
 and seeded passing traffic whose headlights fracture across the wet road and
 puddle. A recessed late-night storefront on the right holds a hand-bent cafe
 neon behind rain-streaked glass. It flickers on its own seeded electrical
-rhythm, casting synchronized bloom into nearby rain trajectories and broken
-cyan/coral facets onto the wet asphalt.
+rhythm, casting synchronized bloom into nearby rain trajectories and a muted
+color falloff across the wet asphalt.
 Generated high-frequency masonry, asphalt, and concrete maps provide surface
 scale beneath the procedural lighting without turning the world into a painted
 backdrop; all composition, weather, traffic, and light behavior remains code.
