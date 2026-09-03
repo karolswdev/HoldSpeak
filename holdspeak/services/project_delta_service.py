@@ -252,6 +252,193 @@ _RULE_BY_KIND: dict[str, ProposalRule] = {
     r.observation_kind: r for r in PROPOSAL_RULES
 }
 
+# HS-166-05: risk classification from the watch's OWN matched conditions.
+# Severity map: comparison -> severity when the clause matches.
+_RISK_COMPARISONS: dict[str, str] = {
+    "due_within_days": "medium",
+    "overdue": "high",
+    "inactive_for": "medium",
+    "older_than": "medium",
+}
+_RISK_ENTERED_VALUES: frozenset[str] = frozenset({
+    "Blocked", "blocked", "broken", "Broken",
+})
+
+_WATCH_TRANSITION_RISK_RULE = ProposalRule(
+    observation_kind="watch.transition",
+    proposal_kind="risk_attention",
+    rationale_template="Watch source detected a risk-bearing transition",
+    provenance_class="observed_fact",
+)
+
+
+def _resolve_watch_transition_rule(
+    obs: dict[str, Any],
+    db: Any = None,
+) -> tuple[ProposalRule, str | None]:
+    """Resolve the proposal rule for a watch.transition observation.
+
+    Uses the watch's OWN rules (loaded from DB) and the condition matcher
+    to determine if the transition is risk-bearing.  Provider-agnostic:
+    jira and github templates ride the same path.
+
+    Returns (rule, severity_or_None).
+    """
+    if db is None:
+        return _RULE_BY_KIND["watch.transition"], None
+
+    # Resolve the watch_id from the observation's source_id.
+    # The source_id is either "watch:<id>" (legacy/fallback) or
+    # "psrc_<hex>" (a project_sources row whose source_ref is
+    # "watch:<id>").
+    source_id = obs.get("source_id", "")
+    watch_id = ""
+    if source_id.startswith("watch:"):
+        watch_id = source_id.split(":", 1)[1]
+    elif source_id.startswith("psrc_"):
+        # Look up the project source to find the watch ref
+        try:
+            with db._connection() as conn:
+                row = conn.execute(
+                    "SELECT source_ref FROM project_sources WHERE id=?",
+                    (source_id,),
+                ).fetchone()
+            if row and row[0] and row[0].startswith("watch:"):
+                watch_id = row[0].split(":", 1)[1]
+        except Exception:
+            pass
+    # Also try subject_ref as a fallback
+    if not watch_id:
+        subject_ref = obs.get("subject_ref", "")
+        if subject_ref.startswith("watch:"):
+            watch_id = subject_ref.split(":", 1)[1]
+
+    if not watch_id:
+        return _RULE_BY_KIND["watch.transition"], None
+
+    # Parse the observation's fact_json
+    raw = obs.get("fact_json", "{}")
+    if isinstance(raw, str):
+        try:
+            facts = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            facts = {}
+    else:
+        facts = raw
+
+    changed = facts.get("changed", {})
+
+    # Pure discovery is not a risk change (the entity just appeared
+    # in scope; no prior state to compare against).
+    if changed == {"entity": "new"}:
+        return _RULE_BY_KIND["watch.transition"], None
+
+    # Load the watch's rules and check each clause
+    try:
+        rule_rows = db.automations.list_rules(watch_id)
+    except Exception:
+        return _RULE_BY_KIND["watch.transition"], None
+
+    for rule_row in rule_rows:
+        try:
+            cond_raw = rule_row.get("condition", rule_row.get("condition_json", "{}"))
+            cond = json.loads(cond_raw) if isinstance(cond_raw, str) else (cond_raw or {})
+        except (json.JSONDecodeError, TypeError):
+            continue
+        for clause in cond.get("clauses", []):
+            comp = clause.get("comparison", "")
+            field = clause.get("field", "")
+            value = clause.get("value")
+
+            # Risk-class comparisons: the presence of such a clause
+            # in the watch's rules means this watch cares about risk.
+            # ANY transition on a risk-watching watch is risk-bearing
+            # (the watch matched this transition via its condition
+            # tree in evaluate_due; the observation exists because
+            # the full condition matched).
+            if comp in _RISK_COMPARISONS:
+                return _WATCH_TRANSITION_RISK_RULE, _RISK_COMPARISONS[comp]
+
+            # entered_state with a blocked value
+            if comp == "entered_state" and value in _RISK_ENTERED_VALUES:
+                return _WATCH_TRANSITION_RISK_RULE, "high"
+
+    return _RULE_BY_KIND["watch.transition"], None
+
+
+# Status category keys to human labels (Jira Cloud / Atlassian standard).
+_CATEGORY_LABELS: dict[str, str] = {
+    "new": "To do",
+    "indeterminate": "In progress",
+    "done": "Done",
+    "undefined": "No category",
+}
+
+
+def _human_category(key: str) -> str:
+    """Map a Jira status-category key to a human label."""
+    return _CATEGORY_LABELS.get(key.lower().strip(), key)
+
+
+def _build_risk_title(patch: dict[str, Any]) -> str:
+    """Build a human-readable title for a risk-bearing transition.
+
+    Format: "<KEY> <summary> <risk fact>".
+    Prefers status names over category keys.  When only category keys
+    are available, maps them to human labels.
+    """
+    entity_ref = patch.get("entity_ref", "")
+    changed = patch.get("changed", {})
+
+    # Prefer status names (human-readable) over category keys.
+    risk_fact = ""
+    if "status" in changed:
+        vals = changed["status"]
+        if isinstance(vals, list) and len(vals) == 2:
+            risk_fact = f"{vals[0]} -> {vals[1]}"
+        else:
+            risk_fact = "status changed"
+    elif "status_category" in changed:
+        # Fallback: map category keys to human labels
+        vals = changed["status_category"]
+        if isinstance(vals, list) and len(vals) == 2:
+            risk_fact = f"{_human_category(vals[0])} -> {_human_category(vals[1])}"
+        else:
+            risk_fact = "status changed"
+
+    if "due_at" in changed:
+        vals = changed["due_at"]
+        due_part = ""
+        if isinstance(vals, list) and len(vals) == 2:
+            due_part = f"due {vals[1] or 'removed'}"
+        else:
+            due_part = "due changed"
+        risk_fact = f"{risk_fact} / {due_part}" if risk_fact else due_part
+
+    if not risk_fact:
+        # Fallback: derive from event_type when changed is sparse
+        et = patch.get("event_type", "")
+        _ET_LABELS: dict[str, str] = {
+            "jira.issue.status_changed": "status changed",
+            "jira.issue.category_changed": "category changed",
+            "jira.issue.due_changed": "due changed",
+            "jira.issue.priority_changed": "priority changed",
+            "jira.issue.assigned": "reassigned",
+            "jira.issue.resolved": "resolved",
+            "jira.issue.discovered": "newly in scope",
+            "github.pr.checks_changed": "checks changed",
+            "github.pr.opened": "opened",
+        }
+        risk_fact = _ET_LABELS.get(et, "")
+
+    if not risk_fact:
+        risk_fact = "transition"
+
+    if entity_ref:
+        return f"{entity_ref} {risk_fact}"
+    return risk_fact
+
+
 # Observation kinds that are informational (no deterministic proposal).
 _INFORMATIONAL_KINDS: frozenset[str] = frozenset({
     "meeting.associated",
@@ -413,6 +600,16 @@ class ProjectDeltaService:
         self._collector = collector
         self._project_service = project_service
         self._ledger = ServiceEventLedger(db)
+
+    def attach_project_service(self, project_service: Any) -> None:
+        """Late-bind the project service (mutual composition).
+
+        ProjectDeltaService needs ProjectService for decide_proposal's
+        create_item handler.  ProjectService needs ProjectDeltaService
+        for the room review section.  This setter resolves the cycle:
+        construct both, then attach.
+        """
+        self._project_service = project_service
 
     # ── public API ────────────────────────────────────────────────────
 
@@ -1397,7 +1594,16 @@ class ProjectDeltaService:
         for target_ref, obs_list in sorted(grouped.items()):
             for obs in sorted(obs_list, key=lambda o: o.get("observed_at", "")):
                 kind = obs.get("observation_kind", "")
-                rule = _RULE_BY_KIND.get(kind)
+                # HS-166-05: watch.transition observations may be
+                # risk-bearing.  Key on the watch's OWN matched
+                # conditions (provider-agnostic).
+                matched_severity: str | None = None
+                if kind == "watch.transition":
+                    rule, matched_severity = _resolve_watch_transition_rule(
+                        obs, db=self._db,
+                    )
+                else:
+                    rule = _RULE_BY_KIND.get(kind)
                 if rule is None:
                     continue
 
@@ -1422,13 +1628,29 @@ class ProjectDeltaService:
                 except (json.JSONDecodeError, TypeError):
                     patch_obj = {}
                 patch_obj["_source_version"] = obs_source_version
+
+                # HS-166-05: inject severity + item fields for
+                # risk_attention proposals from watch.transition.
+                if (rule.proposal_kind == "risk_attention"
+                        and kind == "watch.transition"):
+                    if "severity" not in patch_obj:
+                        patch_obj["severity"] = matched_severity or "medium"
+                    # dependency type allows at_risk lifecycle
+                    # (risk type does not); needed for door eligibility.
+                    if "item_type" not in patch_obj:
+                        patch_obj["item_type"] = "dependency"
+                    if "lifecycle" not in patch_obj:
+                        patch_obj["lifecycle"] = "at_risk"
+                    # Human title: "<KEY> <summary> · <risk fact>"
+                    patch_obj["title"] = _build_risk_title(patch_obj)
+
                 patch_str_with_sv = _deterministic_json(patch_obj)
 
                 proposals.append({
                     "proposal_id": proposal_id,
                     "proposal_kind": rule.proposal_kind,
                     "target_ref": target_ref,
-                    "title": f"{rule.proposal_kind}: {target_ref}",
+                    "title": patch_obj.get("title") or f"{rule.proposal_kind}: {target_ref}",
                     "rationale": rule.rationale_template,
                     "patch_json": patch_str_with_sv,
                     "provenance_class": rule.provenance_class,

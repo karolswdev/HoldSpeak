@@ -1128,6 +1128,22 @@ export function jiraFieldLabel(field: string): string {
   return JIRA_FIELD_LABELS[field] ?? field.replace(/_/g, " ");
 }
 
+/** Format a date-only string (YYYY-MM-DD) as a DUE token without timezone shift.
+ *  Never use `new Date(iso)` for date-only values — that parses as UTC midnight
+ *  and shifts a day in negative-UTC-offset timezones. */
+const MONTH_NAMES = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+export function formatDueToken(dateStr: string | null | undefined): string {
+  if (!dateStr) return "";
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr);
+  if (match) {
+    const month = parseInt(match[2], 10) - 1;
+    const day = parseInt(match[3], 10);
+    return `DUE ${MONTH_NAMES[month] ?? "???"} ${day}`;
+  }
+  // Fallback for non-date strings
+  return `DUE ${dateStr}`;
+}
+
 /* ── Condition + action human labels (HS-166-04 catch 2) ────────── */
 
 /** Human-readable condition clause label from field/comparison/value. */
@@ -1147,6 +1163,12 @@ export function conditionLabel(clause: { field?: string; comparison?: string; va
   if (f === "resolution" && comp === "resolved") return "Resolved";
   if (comp === "older_than" && v) return `No activity ${v} days`;
   if (comp === "newer_than" && v) return `Activity within ${v} days`;
+
+  // Snapshot-level comparisons where the field is implied by the comparison
+  // (due_within_days, overdue, inactive_for — the field may be "due_at" or anything)
+  if (comp === "due_within_days" && v) return `Due within ${v} days`;
+  if (comp === "overdue") return "Overdue";
+  if (comp === "inactive_for" && v) return `No activity ${v} days`;
 
   // Fallback: humanize
   const humanComp = comp.replace(/_/g, " ");

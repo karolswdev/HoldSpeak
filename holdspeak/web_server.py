@@ -977,6 +977,11 @@ class MeetingWebServer:
             web_host=self.host,
             web_auth_token=self.auth_token,
         )
+        # HS-166-05: wire the project_service into the delta service
+        # (mutual composition: delta needs project for create_item in
+        # decide_proposal, project needs delta for room review section).
+        _project_delta_service.attach_project_service(_project_service)
+
         from .web.routes.actuator_shared import DeskActuatorLifecycle
         web_ctx.actuator_service = ActuatorProposalService(
             get_database(), config_provider=lambda: Config.load(path=__import__("holdspeak.config", fromlist=["CONFIG_FILE"]).CONFIG_FILE),

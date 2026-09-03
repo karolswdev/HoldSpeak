@@ -443,6 +443,8 @@ import {
   conditionLabel,
   actionLabel,
   plural,
+  formatDueToken,
+  cadenceLabel,
 } from "../model";
 
 /* Wire fixtures from jira_provider.py connection_status return shape */
@@ -854,5 +856,74 @@ describe("plural (HS-166-04 nit 3)", () => {
     expect(plural(0, "issue")).toBe("0 issues");
     expect(plural(3, "call")).toBe("3 calls");
     expect(plural(2, "match", "matches")).toBe("2 matches");
+  });
+});
+
+describe("formatDueToken (live walk defect 1)", () => {
+  it("formats date-only string without timezone shift", () => {
+    // This must produce SEP 10 in ANY timezone, not SEP 9
+    expect(formatDueToken("2026-09-10")).toBe("DUE SEP 10");
+    expect(formatDueToken("2026-01-01")).toBe("DUE JAN 1");
+    expect(formatDueToken("2026-12-31")).toBe("DUE DEC 31");
+  });
+
+  it("handles null/empty", () => {
+    expect(formatDueToken(null)).toBe("");
+    expect(formatDueToken("")).toBe("");
+    expect(formatDueToken(undefined)).toBe("");
+  });
+
+  it("falls back for non-date strings", () => {
+    expect(formatDueToken("tomorrow")).toBe("DUE tomorrow");
+  });
+});
+
+describe("conditionLabel snapshot-level comparisons (live walk defect 2)", () => {
+  it("maps due_within_days regardless of field", () => {
+    expect(conditionLabel({ field: "due_at", comparison: "due_within_days", value: 7 }))
+      .toBe("Due within 7 days");
+  });
+
+  it("maps overdue regardless of field", () => {
+    expect(conditionLabel({ field: "due_at", comparison: "overdue" }))
+      .toBe("Overdue");
+  });
+
+  it("maps inactive_for regardless of field", () => {
+    expect(conditionLabel({ field: "updated", comparison: "inactive_for", value: 14 }))
+      .toBe("No activity 14 days");
+  });
+
+  it("maps older_than regardless of field", () => {
+    expect(conditionLabel({ field: "any", comparison: "older_than", value: 30 }))
+      .toBe("No activity 30 days");
+  });
+
+  it("maps newer_than regardless of field", () => {
+    expect(conditionLabel({ field: "any", comparison: "newer_than", value: 7 }))
+      .toBe("Activity within 7 days");
+  });
+
+  it("keeps status enters Blocked", () => {
+    expect(conditionLabel({ field: "status", comparison: "entered_state", value: "Blocked" }))
+      .toBe("Status enters Blocked");
+  });
+});
+
+describe("cadenceLabel (live walk defect 3)", () => {
+  it("renders 1440 as Daily", () => {
+    expect(cadenceLabel({ kind: "poll", everyMinutes: 1440 })).toBe("Daily");
+  });
+
+  it("renders 35 as Every 35 min", () => {
+    expect(cadenceLabel({ kind: "poll", everyMinutes: 35 })).toBe("Every 35 min");
+  });
+
+  it("renders 15 as Every 15 min", () => {
+    expect(cadenceLabel({ kind: "poll", everyMinutes: 15 })).toBe("Every 15 min");
+  });
+
+  it("renders 1440 weekdays as Weekdays", () => {
+    expect(cadenceLabel({ kind: "poll", everyMinutes: 1440, weekdaysOnly: true })).toBe("Weekdays");
   });
 });

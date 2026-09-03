@@ -32,7 +32,7 @@ import type {
   SetupProposal,
   ProviderState,
 } from "./model";
-import { providerStateCopy, conditionLabel, actionLabel, transitionLabel, plural } from "./model";
+import { providerStateCopy, conditionLabel, actionLabel, transitionLabel, plural, cadenceLabel, formatDueToken } from "./model";
 import "./jira-wizard.css";
 
 /* ── Helpers ── */
@@ -60,16 +60,6 @@ function connChipLabel(state: string): string {
   if (state === "capability_missing") return "acli missing";
   if (state === "unavailable") return "Unavailable";
   return "Disconnected";
-}
-
-function formatDue(iso: string | null | undefined): string {
-  if (!iso) return "";
-  try {
-    const d = new Date(iso);
-    return `DUE ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()}`;
-  } catch {
-    return `DUE ${iso}`;
-  }
 }
 
 function formatTime(iso: string): string {
@@ -409,7 +399,7 @@ export function JiraScopeStep({
                         state={item.statusCategory === "done" ? "success" : item.statusCategory === "indeterminate" ? "working" : "idle"}
                         label={item.status}
                       />
-                      {item.dueDate ? <span className="jira-wizard-token">{formatDue(item.dueDate)}</span> : null}
+                      {item.dueDate ? <span className="jira-wizard-token">{formatDueToken(item.dueDate)}</span> : null}
                     </>
                   }
                   expands={false}
@@ -501,9 +491,7 @@ export function JiraTestStep({
     }
   }
 
-  const cadenceChip = spec.trigger?.everyMinutes
-    ? `Every ${spec.trigger.everyMinutes} min`
-    : "Manual";
+  const cadenceChip = cadenceLabel(spec.trigger ?? { kind: "manual" });
   const actionChip = actionLabel(spec.action?.kind ?? "");
 
   return (
@@ -551,7 +539,7 @@ export function JiraTestStep({
                             state={status.toLowerCase().includes("done") ? "success" : status.toLowerCase().includes("progress") ? "working" : "idle"}
                             label={status}
                           />
-                          {due ? <span className="jira-wizard-token">{formatDue(String(due))}</span> : null}
+                          {due ? <span className="jira-wizard-token">{formatDueToken(String(due))}</span> : null}
                         </>
                       }
                       expands={false}

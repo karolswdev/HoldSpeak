@@ -617,6 +617,29 @@ class ProjectSetupService:
             session_id=session_id,
         )
 
+        # HS-166-05: populate baseline snapshots AFTER the transaction
+        # commits. ACT-005 says baseline WITHOUT events -- it does NOT
+        # say baseline without a snapshot. An empty snapshot_json causes
+        # the first evaluate_due to "discover" everything and fire false
+        # effects from nothing.
+        activated = result.get("activated_watches", [])
+        if activated and self._watch_service is not None:
+            for aw in activated:
+                wid = aw.get("watch_id", "")
+                if not wid:
+                    continue
+                try:
+                    self._watch_service.baseline_watch(principal, wid)
+                except Exception:
+                    # Fetch failed -- degrade to pending so evaluate_due
+                    # knows the baseline is not real.
+                    try:
+                        self._watch_service._repo.update_watch_spec(
+                            wid, baseline_state="pending",
+                        )
+                    except Exception:
+                        pass
+
         # Attach refused proposals info
         result["refused_proposals"] = [
             {"id": p["id"], "test_state": p.get("test_state", "")}

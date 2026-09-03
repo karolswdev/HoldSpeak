@@ -1,7 +1,7 @@
 # Phase 166 - Project Rooms: The Jira Parity (P7)
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 5/7
+- **Status:** ACTIVE 6/7
 - **Chartered:** 2026-09-03 off main `493253d8` (165 The MCP Family MERGED via PR #531 — the TENTH Project Rooms phase merged; this is the LAST §14 slice)
 - **Canon:** docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §14 P7; SRS_PROJECT_INTERVIEW_WATCHES.md §6 PROV-001..012, §8.2 Jira issue parity, §15 V0-D, SETFLOW-005; SRS_PRODUCT_VALIDATION.md (Jira only with a real adapter); CONSTITUTION.md Article III (honest egress)
 
@@ -62,27 +62,26 @@ never deleted), the per-watch cadence write wire (stays ledgered).
 | HS-166-02 | Discovery + search (projects, issue types, statuses, JQL; routes + MCP) | done | [story-02-discovery-and-search](./story-02-discovery-and-search.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-166-03 | The JiraWatchSource + templates + candidates (the gate graduates; the fetcher-seam rider) | done | [story-03-the-watch-source](./story-03-the-watch-source.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-166-04 | The web face (provider-keyed wizard; the site egress badge; shots) | done | [story-04-the-web-face](./story-04-the-web-face.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-166-05 | The live walk (real acli, real site(s), SETFLOW-005 — OWNER VERDICT) | in-progress | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-166-05 | The live walk (real acli, real site(s), SETFLOW-005 — OWNER VERDICT) | done | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-166-06 | The docs (the acli transport canon edit; Jira honesty; the dedicated docs story) | done | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-166-07 | The close (gates, riders, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**ACTIVE 5/7 — HS-166-06 the docs DONE (760183a0) after HS-166-04
-the face (099c2206).** Canon says acli (§8.2 + V0-D); README
-prerequisites; docs/PROJECT_ROOMS.md new; MCP_SIDECAR + API_SURFACE +
-CONNECTOR_DEVELOPMENT carry the Jira surface; guards green on the
-shipping tree. HS-166-05 the live walk is in build. On 04: The Jira face is composed only from the
-surface library: account and project ChoiceCards, StateChips,
-ProvenanceChips naming the site, the population gadget sheet, a
-ProgressPlan that lights up during the test, ledger rows for matches
-and preview — zero sentences. Sixteen shots at 1440 + 393 read by the
-orchestrator; the gallery republished for the owner. The first build
-was rejected verbatim ("I absolutely hate the UX ... Walls of
-text..."); the redesign canvas earned "HECK YES, a BIG YES to this."
-Assets: settled-design-face.md (RATIFIED), story-04-shots/. NEXT:
-HS-166-06 the docs (ready, sequenced behind this commit) and
-HS-166-05 the live walk.
+**ACTIVE 6/7 — HS-166-05 THE LIVE WALK DONE: THE EXIT IS MET.** On
+the owner's real acli and real site, x2 deterministic: a clean
+first tick after finalize; one declared harness transition → 3
+transitions → 2 effects → 1 steward run → ONE door item ("[Steward]
+KAN-1 In progress → Done"); the Delta carries the jira evidence;
+an unchanged tick → zero new anything; the run replayed with its
+watermark → the same id; Web and MCP read the same revisions. The
+walk forced four product defects into the open and paid them with
+tests (the false baseline at finalize, the Delta service composed
+without project_service, no risk rule for watch transitions, no
+watermark gate on the route) — all provider-agnostic, all
+inherited. One account covered (the owner holds one). NEXT:
+HS-166-07 the close — full suite, counsel, sweep, final summary,
+PR — and the owner's verdict on the live face gallery.
 
 ## Recorded truths (the orchestrator's own acli runs, 2026-09-03)
 
@@ -161,6 +160,19 @@ at any time with the same commands).
   delivery_drift` has NEVER matched. §8.2's due-soon/overdue/
   inactive conditions are the same snapshot-level species; all six
   land in the ONE matcher against the transition's current entity.
+- **THE WALK'S FINDINGS (05, round 1, live on the owner's site):**
+  (1) FALSE BASELINE — finalize writes baseline_state=established
+  with NO snapshot, so the first unattended tick "discovers" every
+  issue and fires effects + a steward run from nothing (provider-
+  agnostic; 164's GitHub walk counted that discovery tick as a
+  useful run). Paid in 05: finalize baselines for real. (2) ZERO
+  DOOR ITEMS from a jira transition — the act chain breaks
+  somewhere between the jira observation and a project item; traced
+  and paid in 05. (3) REPLAY minted a new run — the walk passed no
+  watermark; re-run with the run's watermark. (4) Jira Cloud search
+  is eventually consistent (~3-6 s after a transition) — the walk
+  polls. (5) acli cannot set due dates; the due window is widened
+  through the product's own rules route, recorded.
 - Debts carried in: 165's eight counsel N + the legacy-side watch
   guard + the sidecar fetcher seam (both PAID here, 03) + per-watch
   cadence write wire + the scheduled-path trigger route; 164

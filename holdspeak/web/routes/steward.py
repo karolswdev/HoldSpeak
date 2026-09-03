@@ -93,6 +93,16 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
             svc = ctx.project_steward_service
             p = principal(request)
 
+            # HS-166-05: same-watermark dedup (one source in
+            # find_run_by_watermark, shared with _drain_one_run_effect).
+            existing = svc.find_run_by_watermark(project_id, watermark)
+            if existing is not None:
+                return JSONResponse({
+                    "success": True,
+                    "run_id": existing["id"],
+                    "resolved": True,
+                })
+
             # SS9.2 immediate-id contract: insert the queued run on the
             # request thread (STW-002 surfaces here), then spawn a
             # daemon thread for phase execution.
