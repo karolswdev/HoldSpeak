@@ -71,7 +71,7 @@ proof stays a ledgered debt); the door-title first-match choice
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-167-01 | The audit + the settled design (the whole Room on the library; mockups at 1440 + 393; OWNER RATIFIES) | in-progress | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-167-01 | The audit + the settled design (the whole Room on the library; mockups at 1440 + 393; OWNER RATIFIES) | done | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-167-02 | The debts a user hits (toggles persisted; enrichment receipted; the acli file lock; the cadence write wire; the trigger route) | backlog | [story-02-the-debts](./story-02-the-debts.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-167-03 | The library reform (scroll-hint + egress species promoted; the design's new species; tokens fenced; the shared glass conftest) | backlog | [story-03-the-library-reform](./story-03-the-library-reform.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-167-04 | The faces recomposed I (the Room, the interview, the activation review, the GitHub wizard; shots) | backlog | [story-04-the-faces-i](./story-04-the-faces-i.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -95,7 +95,9 @@ paid — the wings law: nothing retires); the atlas extracted; sixteen
 mockup artboards built and read at true size through three bounce
 rounds; the canvas published for the owner's word
 (https://claude.ai/code/artifact/1dd81936-2c1a-484f-a78e-f56e5a5cf22b).
-Nothing in 03-05 starts before his word.
+**HIS WORD (2026-09-03): "PASS — build it."** Story 01 DONE; 02 (the
+debts) and 03 (the library reform) run in parallel; 04/05 build to
+the ratified mockups.
 
 ## Active risks
 

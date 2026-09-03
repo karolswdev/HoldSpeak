@@ -8,7 +8,8 @@ judges BEFORE any rebuild: the Room in Use canvas
 sixteen artboards, eight faces × 1440/393; sources under
 assets/mockups/, shots under assets/story-01-shots/). Status: counsel read 2026-09-03 —
 RATIFY-WITH-CONDITIONS, eighteen findings (3 M, 9 S, 6 N) ALL paid
-below before the owner sees it. Awaiting the owner's word.
+below before the owner sees it. **RATIFIED by the owner 2026-09-03, verbatim: "PASS — build it."**
+Builders implement.
 
 ## The one sentence
 

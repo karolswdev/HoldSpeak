@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 167
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** -
 - **Unblocks:** HS-167-03, HS-167-04, HS-167-05
 - **Owner:** unassigned
@@ -42,9 +42,9 @@ zero product code.
 
 ## Acceptance criteria
 
-- [ ] The audit names every hand-rolled block with an anchor and the species that replaces it; counsel reads the design first and its findings are paid in the design.
-- [ ] Mockups for all eight faces at both widths published; sources committed; token values real (no raw px).
-- [ ] The owner's word recorded verbatim; PASS before 03/04/05 start.
+- [x] The audit names every hand-rolled block with an anchor and the species that replaces it; counsel reads the design first and its findings are paid in the design.
+- [x] Mockups for all eight faces at both widths published; sources committed; token values real (no raw px).
+- [x] The owner's word recorded verbatim; PASS before 03/04/05 start.
 
 ## Counsel round (2026-09-03)
 
@@ -77,7 +77,8 @@ host — an egress-honesty violation; a phone chrome missing a gem and
 two wings; unequal CURRENT|PROPOSED columns; a chevron colliding with
 the time cell; citation chips in a serif fallback; two footers
 colliding at 393). Sources committed: assets/mockups/*.dc.html +
-canvas.json; shots: assets/story-01-shots/. **Owner's word: PENDING.**
+canvas.json; shots: assets/story-01-shots/. **THE OWNER'S WORD (2026-09-03), verbatim: "PASS — build it."**
+Story 01 done; 02 and 03 start; 04/05 build to these mockups.
 
 ## Test plan
 
