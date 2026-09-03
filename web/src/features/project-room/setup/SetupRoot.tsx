@@ -324,6 +324,33 @@ export function SetupCore({ scope }: CoreProps) {
               <Button dense variant="ghost" className="setup-abandon-btn" onClick={ctrl.abandon}>
                 Cancel setup
               </Button>
+              {/* D2: Next always present during interview, disabled when empty */}
+              {ctrl.state.kind === "outcome" ? (
+                <Button
+                  dense
+                  variant="primary"
+                  disabled={!("draft" in ctrl.state && (ctrl.state as { draft: string }).draft.trim())}
+                  onClick={() => {
+                    if ("draft" in ctrl.state) void ctrl.submitOutcome((ctrl.state as { draft: string }).draft);
+                  }}
+                  data-testid="setup-next"
+                >
+                  Next
+                </Button>
+              ) : null}
+              {ctrl.state.kind === "signals" ? (
+                <Button
+                  dense
+                  variant="primary"
+                  disabled={!("draft" in ctrl.state && (ctrl.state as { draft: string }).draft.trim())}
+                  onClick={() => {
+                    if ("draft" in ctrl.state) void ctrl.submitSignals((ctrl.state as { draft: string }).draft);
+                  }}
+                  data-testid="setup-next"
+                >
+                  Next
+                </Button>
+              ) : null}
               {ctrl.state.kind === "proposals" && ctrl.state.proposals.length > 0 && !clarifyingProposal && !providerWizardId ? (
                 <Button dense variant="primary" onClick={ctrl.advanceToReview} data-testid="setup-proceed-review">
                   Review and activate

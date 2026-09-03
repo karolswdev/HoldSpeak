@@ -335,11 +335,14 @@ export function SurfaceSplit({
 export function MetricStrip({
   items,
   itemCount,
+  dense,
 }: {
   items: Array<{ label: string; value: unknown }>;
   /** HS-135-04 L10 — the total item count the surface holds.  Below
    *  SPARSE_THRESHOLD zero-valued metric tiles are hidden. */
   itemCount?: number;
+  /** HS-167-05 — 4-column grid so metrics sit on one row at 640. */
+  dense?: boolean;
 }) {
   const sparse = itemCount !== undefined && itemCount < SPARSE_THRESHOLD;
   const kept = items.filter((item) => {
@@ -351,7 +354,7 @@ export function MetricStrip({
   });
   if (!kept.length) return null;
   return (
-    <div className="surface-metrics">
+    <div className="surface-metrics" data-dense={dense || undefined}>
       {kept.map((item) => (
         <div key={item.label}>
           <strong>{presentValue(item.value)}</strong>
@@ -716,6 +719,7 @@ export function SurfaceStreamEntry({
   meta,
   verbs,
   aside,
+  dense,
   children,
 }: {
   when?: ReactNode;
@@ -724,10 +728,12 @@ export function SurfaceStreamEntry({
   /** Below-the-entry material (a receipt, a preview) — sits beside
    * the said-text in the grid, not inside it. */
   aside?: ReactNode;
+  /** HS-167-05 — 12px mono primary, 11px cells for compact Room rail. */
+  dense?: boolean;
   children: ReactNode;
 }) {
   return (
-    <li className="surface-stream-entry">
+    <li className="surface-stream-entry" data-dense={dense || undefined}>
       {when != null ? (
         <span className="surface-stream-when">{when}</span>
       ) : null}

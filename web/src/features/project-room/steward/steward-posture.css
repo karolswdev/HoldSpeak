@@ -63,7 +63,7 @@
 .steward-list-row {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--desk-surface-gap, 2px);
   min-width: 0;
   width: 100%;
 }
@@ -92,10 +92,10 @@
 
 .steward-list-chevron {
   color: var(--text-faint);
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1;
   opacity: 0.35;
-  transition: opacity 0.1s;
+  transition: opacity var(--duration-short, 120ms);
 }
 
 .surface-ledger-line:hover .steward-list-chevron,
@@ -165,12 +165,13 @@
 /* ── R4: circuit glyph lead ── */
 
 .steward-circuit-glyph {
-  font-size: 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
   line-height: 1;
   text-align: center;
   width: 20px;
   flex-shrink: 0;
-  color: var(--text-faint);
+  color: var(--text-muted, #9ba2b0);
 }
 
 /* ── Provenance chip in run list ── */

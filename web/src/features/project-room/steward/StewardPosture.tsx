@@ -121,10 +121,13 @@ function buildPlanSteps(steps: StewardStep[], run: StewardRun): PlanResult {
       for (const ref of receiptRefs(s)) {
         if (!allRefs.includes(ref)) allRefs.push(ref);
       }
-      effectChips.push({
-        label: effectKindLabel(s.effectKind),
-        ref: receiptRefs(s)[0],
-      });
+      // Effects only — skip phase-checkpoint steps (effect_kind "phase:*")
+      if (!s.effectKind.startsWith("phase:")) {
+        effectChips.push({
+          label: effectKindLabel(s.effectKind),
+          ref: receiptRefs(s)[0],
+        });
+      }
     }
 
     let status: PlanStep["status"] = "queued";
@@ -246,7 +249,7 @@ function RunDetail({
       {(effectChips.length > 0 || allRefs.length > 0) ? (
         <div className="steward-receipt-refs" data-testid="steward-receipt-refs">
           {effectChips.map((chip, i) => (
-            <span key={`ek-${i}`} className="surface-token">
+            <span key={`ek-${i}`} className="surface-token" data-chip>
               {chip.label}
             </span>
           ))}
@@ -384,9 +387,9 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
       {circuitWatches.length > 0 ? (
         <>
           <ActionNotice tone="warn" icon="⚡">
-            <span className="surface-token">CIRCUIT OPEN</span>
+            <span className="surface-token" data-chip>CIRCUIT OPEN</span>
             {" "}
-            <span className="surface-token">{pluralize(circuitWatches.length, "SOURCE")}</span>
+            <span className="surface-token" data-chip>{pluralize(circuitWatches.length, "SOURCE")}</span>
           </ActionNotice>
           <SurfaceLedger count={`CIRCUITS ${circuitWatches.length}`} cols="room">
             <ul className="surface-ledger-rows">
@@ -460,18 +463,18 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
           >
             {draft.unattended_enabled ? (
               <>
-                <span className="surface-token">WHILE ENABLED</span>
-                <span className="surface-token">EVERY {draft.evaluation_cadence_minutes ?? cadence} MIN</span>
+                <span className="surface-token" data-chip>WHILE ENABLED</span>
+                <span className="surface-token" data-chip>EVERY {draft.evaluation_cadence_minutes ?? cadence} MIN</span>
                 {draft.eligible_effect_kinds.length > 0
                   ? draft.eligible_effect_kinds.map((kind: string) => (
-                      <span key={kind} className="surface-token">{grantToken(kind)}</span>
+                      <span key={kind} className="surface-token" data-chip>{grantToken(kind)}</span>
                     ))
-                  : <span className="surface-token">NO EFFECTS</span>
+                  : <span className="surface-token" data-chip>NO EFFECTS</span>
                 }
-                <span className="surface-token">MAX {draft.max_actions_per_run} / RUN</span>
+                <span className="surface-token" data-chip>MAX {draft.max_actions_per_run} / RUN</span>
               </>
             ) : (
-              <span className="surface-token">UNATTENDED OFF</span>
+              <span className="surface-token" data-chip>UNATTENDED OFF</span>
             )}
           </div>
         </div>

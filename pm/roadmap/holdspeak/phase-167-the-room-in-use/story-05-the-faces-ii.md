@@ -72,6 +72,26 @@ by the orchestrator: project-room vitest 537/537; baseline zero
 branch-new; token gate clean; glass 160/162/163/164 26 passed; 51
 fresh after-shots harvested from the honest bundle.
 
+## Landed — the beauty pass (2026-09-03)
+
+Over all eight faces, two rounds: token rows and receipt refs with
+chip geometry (a `data-chip` variant on `surface-token` in the
+barrel; effects only on the run's refs), MetricStrip `dense` (one
+row at 640, 2×2 at 393), SurfaceStream `dense` (12px mono entries in
+the Room), the interview's Next primary present-disabled while the
+answer is empty, the proposed watches (SetupBrief) as a room ledger
+with provider emblems + cadence/action/provenance cells + a StateChip
+trailing, TestResult as receipt tokens + a ledger of matches (the
+last sentence gone), the mold made consistent (emblems, hover/open
+wells, one accent per footer, 10px section labels, ScrollHint on
+every scrolling well, no ellipsized identity at 393). Sheets:
+story-05-shots/beauty/whole-room-1440.png + whole-room-393.png (the
+eight faces side by side) + 98 after-shots. Gates read by the
+orchestrator: vitest 789/789; baseline zero branch-new; token gate
+clean; all eight glass rigs 46 passed + 1 honest skip. The live
+runner's glass assertions (tests/e2e/live167_walk.py) pass on the real
+DOM at both widths. The owner's shot verdict: PENDING (the gallery).
+
 ## Test plan
 
 - **Web + glass:** as 04, over the posture rigs.

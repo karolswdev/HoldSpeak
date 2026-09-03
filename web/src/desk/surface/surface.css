@@ -295,6 +295,13 @@
   font-size: var(--desk-surface-detail-size);
 }
 
+/* HS-167-05: dense variant — 4-column grid so metrics sit on one row at 640. */
+.surface-metrics[data-dense] {
+  display: grid;
+  grid-template-columns: repeat(4, max-content);
+  gap: 6px 18px;
+}
+
 /* Rule 4 — fact rows: de-snaked keys, meaningless values omitted. */
 .surface-facts {
   margin: 0;
@@ -562,6 +569,25 @@
 .surface-token[data-tone="ok"] {
   color: var(--ok);
 }
+
+/* HS-167-05: chip variant — the atlas geometry for token rows. */
+.surface-token[data-chip] {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--border, #2a2e3e);
+  border-radius: 0;
+  background: var(--desk-window-well, rgba(0,0,0,0.28));
+  box-shadow: var(--desk-window-etch, inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light));
+  font: 600 10px/1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, #9ba2b0);
+}
+.surface-token[data-chip][data-tone="warn"] { color: var(--warn); }
+.surface-token[data-chip][data-tone="danger"] { color: var(--danger); }
+.surface-token[data-chip][data-tone="ok"] { color: var(--ok); }
 
 /* A quiet in-flow verb cluster (result ratings, recovery actions). */
 .surface-actions {
@@ -1086,6 +1112,16 @@ button.surface-edit-in-place:hover {
   margin-top: 2px;
   color: var(--text-muted);
   font-size: var(--desk-surface-detail-size);
+}
+
+/* HS-167-05: dense variant — 12px mono primary, 11px cells for Room rail. */
+.surface-stream-entry[data-dense] .surface-stream-said {
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+.surface-stream-entry[data-dense] .surface-stream-meta {
+  font-size: 11px;
 }
 .surface-stream-verbs {
   margin-left: auto;

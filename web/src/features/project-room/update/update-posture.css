@@ -15,12 +15,13 @@
 /* ── Lead emblem ── */
 
 .update-lead-emblem {
+  font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1;
   text-align: center;
   width: 20px;
   flex-shrink: 0;
-  color: var(--text-faint);
+  color: var(--text-muted, #9ba2b0);
 }
 
 /* ── Editor ── */

@@ -17,6 +17,9 @@ Every state renders icon + text; never color alone.
 ## Tokens
 All styling uses design tokens from design-tokens.json. Raw values are forbidden (validate-tokens.cjs enforces).
 
+## surface-token[data-chip] (HS-167-05)
+The chip variant of `surface-token` gives it the full chip geometry (border, well bg, etch shadow, 10px mono, 0.06em tracking) used by token rows (steward grant, run receipt refs). Stamp `data-chip` on any `surface-token` that should render as a discrete chip rather than inline text. Tone data-attrs still work.
+
 ## Motion
 All transitions use --duration-* tokens and --ease-* curves. prefers-reduced-motion removes animation.
 

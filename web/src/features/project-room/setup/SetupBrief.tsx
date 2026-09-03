@@ -1,10 +1,17 @@
-// HS-167-04 — the brief recomposed: SurfaceFacts for OUTCOME/NOTICE/SOURCES,
-// watch summary with state groups and count chips.
+// HS-167-05 — the brief recomposed: SurfaceFacts for OUTCOME/NOTICE/SOURCES,
+// proposed watches as a SurfaceLedger cols="room" with provider emblems,
+// cadence tokens, action chips, and ProvenanceChips.
 
 import {
   SurfaceFacts,
+  SurfaceLedger,
+  SurfaceLedgerRow,
   SurfaceSection,
-} from "../../../desk/surface/Surface";
+  ProvenanceChip,
+  StateChip,
+  CheckGadget,
+  type ChipState,
+} from "../../../desk/surface";
 import {
   cadenceLabel,
   proposalBriefState,
@@ -20,6 +27,22 @@ const BRIEF_STATE_LABEL: Record<WatchBriefState, string> = {
   tested: "Tested",
   disabled: "Disabled",
   active: "Active",
+};
+
+const BRIEF_STATE_CHIP: Record<WatchBriefState, ChipState> = {
+  mentioned: "idle",
+  proposed: "active",
+  tested: "success",
+  disabled: "unreachable",
+  active: "success",
+};
+
+/** Provider emblem glyph. */
+const PROVIDER_EMBLEM: Record<string, string> = {
+  github: "◉",
+  jira: "◆",
+  meeting: "▶",
+  local: "⌁",
 };
 
 export function SetupBrief({ state }: { state: ControllerState }) {
@@ -92,15 +115,18 @@ function BriefWatches({ proposals, signalsText }: { proposals: SetupProposal[]; 
       {stateOrder.map((bs) =>
         grouped[bs].length > 0 ? (
           <div key={bs} data-brief-state={bs}>
-            <div className="setup-brief-state-row">
-              <span>{BRIEF_STATE_LABEL[bs]}</span>
-              <span className="surface-token" data-testid={`brief-count-${bs}`}>
+            <SurfaceSection label={`${BRIEF_STATE_LABEL[bs]} ${grouped[bs].length}`}>
+              <span data-testid={`brief-count-${bs}`} hidden aria-hidden="true">
                 {grouped[bs].length}
               </span>
-            </div>
-            {grouped[bs].map((p) => (
-              <BriefWatchRow key={p.id} proposal={p} />
-            ))}
+              <SurfaceLedger count={`${BRIEF_STATE_LABEL[bs].toUpperCase()} ${grouped[bs].length}`} cols="room">
+                <ul className="surface-ledger-rows">
+                  {grouped[bs].map((p) => (
+                    <BriefWatchRow key={p.id} proposal={p} briefState={bs} />
+                  ))}
+                </ul>
+              </SurfaceLedger>
+            </SurfaceSection>
           </div>
         ) : null,
       )}
@@ -108,22 +134,39 @@ function BriefWatches({ proposals, signalsText }: { proposals: SetupProposal[]; 
   );
 }
 
-function BriefWatchRow({ proposal }: { proposal: SetupProposal }) {
+function BriefWatchRow({ proposal, briefState }: { proposal: SetupProposal; briefState: WatchBriefState }) {
   const spec = proposal.spec;
+  const emblem = PROVIDER_EMBLEM[proposal.providerId] ?? "◉";
+
   return (
-    <div data-testid={`brief-watch-${proposal.id}`} className="setup-brief-watch-entry">
-      <div className="setup-brief-watch-name">{spec.name}</div>
-      <div className="setup-brief-watch-meta">
-        <span className="setup-brief-watch-chip">{cadenceLabel(spec.trigger)}</span>
-        <span className="setup-brief-watch-action">
-          {ACTION_LABELS[spec.action.kind] ?? spec.action.kind}
+    <SurfaceLedgerRow
+      data-testid={`brief-watch-${proposal.id}`}
+      expands={false}
+      wrap
+      lead={
+        <span className="setup-brief-watch-emblem" aria-hidden="true">
+          {emblem}
         </span>
-      </div>
-      {proposal.testResult ? (
-        <div data-test-state={proposal.testState}>
-          {proposal.testResult.message}
-        </div>
-      ) : null}
-    </div>
+      }
+      primary={
+        <span className="setup-brief-watch-name">{spec.name}</span>
+      }
+      cells={
+        <>
+          <span className="surface-token setup-brief-watch-chip" data-chip>
+            {cadenceLabel(spec.trigger)}
+          </span>
+          <span className="surface-token setup-brief-watch-action" data-chip>
+            {ACTION_LABELS[spec.action.kind] ?? spec.action.kind}
+          </span>
+          {proposal.providerId ? (
+            <ProvenanceChip source={proposal.providerId} />
+          ) : null}
+        </>
+      }
+      trailing={
+        <StateChip state={BRIEF_STATE_CHIP[briefState]} label={BRIEF_STATE_LABEL[briefState]} />
+      }
+    />
   );
 }

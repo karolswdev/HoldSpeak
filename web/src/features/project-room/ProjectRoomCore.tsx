@@ -440,6 +440,7 @@ function RightRail({ room }: { room: RoomSnapshot }) {
   return (
     <div data-testid="project-room-rail">
       <MetricStrip
+        dense
         items={[
           { label: "Meetings", value: meetingsCount },
           { label: "Resources", value: resourcesCount },
@@ -488,7 +489,7 @@ function RightRail({ room }: { room: RoomSnapshot }) {
                   }
                   return grouped.map((group, gi) =>
                     group.items.length > 1 ? (
-                      <SurfaceStreamEntry key={gi}>
+                      <SurfaceStreamEntry key={gi} dense>
                         <Disclosure label={`${group.items.length} ${group.label}`} defaultOpen={false} variant="raw">
                           {group.items.map((c, ci) => (
                             <div key={c.id || ci} style={{ fontSize: 12, fontFamily: "var(--font-mono)" }}>
@@ -502,6 +503,7 @@ function RightRail({ room }: { room: RoomSnapshot }) {
                       <SurfaceStreamEntry
                         key={group.items[0].id || gi}
                         when={group.items[0].occurredAt ? humanTime(group.items[0].occurredAt) : undefined}
+                        dense
                       >
                         <span data-testid="rail-change-row">{group.items[0].label}</span>
                       </SurfaceStreamEntry>

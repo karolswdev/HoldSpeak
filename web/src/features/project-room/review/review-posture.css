@@ -11,16 +11,23 @@
   outline: none;
 }
 
-/* ── Severity emblem lead (kind-colored) ── */
+/* ── Queue header scroll-margin: don't hide under sticky posture strip ── */
+.review-posture .surface-ledger-head {
+  scroll-margin-top: 48px;
+}
+
+/* ── Severity emblem lead (kind-colored, 12px mono muted) ── */
 .review-severity-emblem {
+  font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1;
   text-align: center;
   width: 20px;
   flex-shrink: 0;
+  color: var(--text-muted, #9ba2b0);
 }
 .review-severity-emblem[data-tone="warn"] {
-  color: var(--color-warn, #fbbf24);
+  color: var(--warn, #fbbf24);
 }
 
 /* ── Queue row text: wrap, never ellipsize (D10 law) ── */
@@ -36,9 +43,9 @@
 
 /* ── Row chevron ── */
 .review-row-chevron {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-faint);
-  transition: transform 0.1s;
+  transition: transform var(--duration-short, 120ms);
 }
 
 /* ── Expanded detail (D5: inline in the ledger row) ── */
@@ -65,7 +72,7 @@
 .review-detail-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1, 4px);
+  gap: 6px;
 }
 
 .review-rationale-text {
@@ -87,22 +94,22 @@
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 6px;
-  padding: 4px 0;
+  gap: var(--space-2, 8px);
+  padding: var(--space-1, 4px) 0;
 }
 
 .review-defer-group {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1, 4px);
 }
 
 .review-defer-date {
   font-family: var(--font-mono);
-  font-size: 11px;
-  padding: 2px 4px;
-  border: 1px solid var(--border);
-  border-radius: 3px;
+  font-size: 12px;
+  padding: 2px var(--space-1, 4px);
+  border: 1px solid var(--border, #2a2e3e);
+  border-radius: 2px;
   background: var(--bg-input, transparent);
   color: var(--text-primary, inherit);
   width: 120px;
@@ -124,9 +131,11 @@
 
 .review-edit-label {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  color: var(--text-faint);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, #9ba2b0);
   min-width: 60px;
   flex-shrink: 0;
 }
@@ -144,9 +153,9 @@
   min-width: 0;
   font-family: var(--font-mono);
   font-size: 12px;
-  padding: 2px 4px;
-  border: 1px solid var(--border);
-  border-radius: 3px;
+  padding: 2px var(--space-1, 4px);
+  border: 1px solid var(--border, #2a2e3e);
+  border-radius: 2px;
   background: var(--bg-input, transparent);
   color: var(--text-primary, inherit);
 }
@@ -155,8 +164,8 @@
 .review-undo-notice {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px var(--desk-surface-row-pad-x, 14px);
+  gap: var(--space-2, 8px);
+  padding: var(--space-1, 4px) var(--desk-surface-row-pad-x, 14px);
   font-size: var(--desk-surface-body-size, 13px);
   color: var(--text-muted);
 }
@@ -165,25 +174,26 @@
 .review-summary-counts {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 0;
+  gap: var(--space-2, 8px);
+  padding: var(--space-2, 8px) 0;
 }
 
 .review-summary-accepted {
-  margin: 4px 0;
+  margin: var(--space-1, 4px) 0;
   font-size: var(--desk-surface-body-size, 13px);
   color: var(--text-muted);
 }
 
 .review-no-delta {
-  padding: 8px 0;
+  padding: var(--space-2, 8px) 0;
 }
 
 /* ── Position indicator ── */
 .review-position {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
+  letter-spacing: 0.06em;
   color: var(--text-faint);
 }
 
