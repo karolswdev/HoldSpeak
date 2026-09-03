@@ -14,6 +14,7 @@ const MAX_RENDER_WIDTH = 1_600;
 const MAX_RENDER_HEIGHT = 1_000;
 const RAIN_COUNT = 720;
 const LAMP_RAIN_COUNT = 40;
+const NEON_RAIN_COUNT = 34;
 const SPLASH_COUNT = 84;
 const PUDDLE_Y = 0.035;
 const PUDDLE_RADIUS = 2.25;
@@ -26,9 +27,15 @@ const LAMP_Z = -5.2;
 const BULB_X = -4.75;
 const BULB_Y = 7.35;
 const LAMP_INTENSITY = 28;
-const CAMERA_X = 0;
-const CAMERA_Y = 2.25;
+const CAMERA_X = 4.8;
+const CAMERA_Y = 2.85;
 const CAMERA_Z = 18;
+const CAMERA_TARGET_X = -2.4;
+const CAMERA_TARGET_Y = 4.7;
+const CAMERA_TARGET_Z = -34;
+const NEON_X = 9.4;
+const NEON_Y = 7.6;
+const NEON_Z = -21.5;
 
 interface RainDrop {
   x: number;
@@ -69,6 +76,18 @@ interface ReflectionStreak {
   baseOpacity: number;
 }
 
+interface TrafficReflection {
+  mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
+  lateral: number;
+  ahead: number;
+  baseOpacity: number;
+}
+
+interface NeonTube {
+  material: THREE.MeshBasicMaterial | THREE.SpriteMaterial;
+  baseOpacity: number;
+}
+
 /** A deterministic authored seed makes each atmosphere repeatable while a
  * second derived stream keeps weather motion irregular within that world. */
 export function makeAtmosphereRandom(seed: number): () => number {
@@ -93,6 +112,33 @@ export function lightningIntensityAt(age: number): number {
 
 export function nextLightningDelay(random: () => number): number {
   return 9 + random() * 17;
+}
+
+export function nextTrafficDelay(random: () => number): number {
+  return 11 + random() * 18;
+}
+
+export function trafficProgressAt(
+  elapsed: number,
+  startedAt: number,
+  duration: number,
+): number {
+  return THREE.MathUtils.clamp((elapsed - startedAt) / duration, 0, 1);
+}
+
+export function nextNeonFlickerDelay(random: () => number): number {
+  return 4 + random() * 12;
+}
+
+/** A deterministic stepped electrical flutter. The phase is drawn once per
+ * event, so frame rate never changes the shape of a flicker. */
+export function neonFlickerIntensityAt(age: number, phase: number): number {
+  if (age < 0 || age > 0.72) return 1;
+  if (age > 0.56) return 0.45 + ((age - 0.56) / 0.16) * 0.55;
+  const step = Math.floor(age * 28);
+  const value = Math.sin((step + 1) * 12.9898 + phase * 78.233) * 43758.5453;
+  const noise = value - Math.floor(value);
+  return noise > 0.42 ? 0.94 : 0.08 + noise * 0.28;
 }
 
 function disposeScene(scene: THREE.Scene): void {
@@ -152,7 +198,10 @@ function beamBetween(
 
 /** A generated radial falloff keeps the lamp glow resolution-independent and
  * avoids shipping a painted halo asset for an otherwise procedural world. */
-function radialGlowTexture(size = 64): THREE.DataTexture {
+function radialGlowTexture(
+  size = 64,
+  color: [number, number, number] = [255, 174, 78],
+): THREE.DataTexture {
   const pixels = new Uint8Array(size * size * 4);
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
@@ -161,9 +210,9 @@ function radialGlowTexture(size = 64): THREE.DataTexture {
       const distance = Math.sqrt(dx * dx + dy * dy) * 2;
       const falloff = Math.pow(Math.max(0, 1 - distance), 2.35);
       const offset = (y * size + x) * 4;
-      pixels[offset] = 255;
-      pixels[offset + 1] = 174;
-      pixels[offset + 2] = 78;
+      pixels[offset] = color[0];
+      pixels[offset + 1] = color[1];
+      pixels[offset + 2] = color[2];
       pixels[offset + 3] = Math.round(falloff * 255);
     }
   }
@@ -224,38 +273,62 @@ class RainyCityScene implements AtmosphereScene {
   private readonly outputPass: OutputPass;
   private readonly layoutRandom: () => number;
   private readonly weatherRandom: () => number;
+  private readonly trafficRandom: () => number;
+  private readonly neonRandom: () => number;
   private readonly rainDrops: RainDrop[] = [];
   private readonly lampRainDrops: RainDrop[] = [];
+  private readonly neonRainDrops: RainDrop[] = [];
   private readonly splashDrops: SplashDrop[] = [];
   private readonly ripples: Ripple[] = [];
   private readonly windowBanks: WindowBank[] = [];
   private readonly reflections: ReflectionStreak[] = [];
+  private readonly trafficReflections: TrafficReflection[] = [];
+  private readonly neonTubes: NeonTube[] = [];
   private readonly baseSky = new THREE.Color(0x07131f);
   private readonly lightningSky = new THREE.Color(0x7393ad);
   private readonly sky = new THREE.Color();
   private readonly fogBase = new THREE.Color(0x0a1a2a);
   private readonly fogLightning = new THREE.Color(0x66869f);
-  private readonly cameraTarget = new THREE.Vector3(0, 5.3, -31);
+  private readonly cameraTarget = new THREE.Vector3(
+    CAMERA_TARGET_X,
+    CAMERA_TARGET_Y,
+    CAMERA_TARGET_Z,
+  );
   private readonly lightningBolts: Array<
     THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial>
   > = [];
   private rain!: THREE.InstancedMesh;
   private lampRain!: THREE.InstancedMesh;
+  private neonRain!: THREE.InstancedMesh;
   private lampGlowTexture!: THREE.DataTexture;
+  private neonGlowTexture!: THREE.DataTexture;
   private splashes!: THREE.InstancedMesh;
   private hemisphere!: THREE.HemisphereLight;
   private lightning!: THREE.DirectionalLight;
   private lampLight!: THREE.PointLight;
+  private carPaint!: THREE.MeshStandardMaterial;
+  private neonLight!: THREE.PointLight;
+  private readonly trafficCar = new THREE.Group();
   private readonly cloudBank = new THREE.Group();
   private nextLightning = 0;
   private lightningStarted = -1;
   private currentLightning = 0;
   private lastElapsed = 0;
+  private nextCar = 0;
+  private carStarted = -1;
+  private carDuration = 6.8;
+  private carLaneX = 0;
+  private nextNeonFlicker = 0;
+  private neonFlickerStarted = -1;
+  private neonFlickerPhase = 0;
+  private currentNeonIntensity = 1;
   private destroyed = false;
 
   constructor(context: AtmosphereSceneContext) {
     this.layoutRandom = makeAtmosphereRandom(context.seed);
     this.weatherRandom = makeAtmosphereRandom(context.seed ^ 0x9e3779b9);
+    this.trafficRandom = makeAtmosphereRandom(context.seed ^ 0x6c8e9cf5);
+    this.neonRandom = makeAtmosphereRandom(context.seed ^ 0x3c6ef372);
     this.renderer = new THREE.WebGLRenderer({
       canvas: context.canvas,
       antialias: true,
@@ -289,12 +362,20 @@ class RainyCityScene implements AtmosphereScene {
     this.buildStreet();
     this.buildSkyline();
     this.buildLamp();
+    this.buildTrafficCar();
     this.buildRain();
     this.buildLampRain();
+    this.buildNeonRain();
     this.buildSplashes();
     this.nextLightning = context.reducedMotion
       ? Number.POSITIVE_INFINITY
       : 4.5 + this.weatherRandom() * 4;
+    this.nextCar = context.reducedMotion
+      ? Number.POSITIVE_INFINITY
+      : 3.8 + this.trafficRandom() * 4.5;
+    this.nextNeonFlicker = context.reducedMotion
+      ? Number.POSITIVE_INFINITY
+      : 1.8 + this.neonRandom() * 3.4;
   }
 
   private buildLights(): void {
@@ -399,16 +480,37 @@ class RainyCityScene implements AtmosphereScene {
       roughness: 0.72,
       metalness: 0.12,
     });
-    box(this.scene, [90, 0.26, 1.15], [0, 0.13, -13.6], sidewalkMaterial);
-    box(this.scene, [90, 0.2, 7.5], [0, 0.27, -17.9], sidewalkMaterial);
+    // The curb runs toward the skyline. With the off-axis camera this strong
+    // diagonal is what makes the scene read as a street rather than a stage.
+    box(this.scene, [10.4, 0.26, 95], [-12.1, 0.13, -5], sidewalkMaterial);
+    box(this.scene, [9.5, 0.22, 95], [16.9, 0.11, -5], sidewalkMaterial);
+
+    const curbMaterial = new THREE.MeshStandardMaterial({
+      color: 0x35434a,
+      roughness: 0.66,
+      metalness: 0.18,
+    });
+    box(this.scene, [0.42, 0.44, 95], [-6.72, 0.22, -5], curbMaterial);
+    box(this.scene, [0.34, 0.34, 95], [12.05, 0.17, -5], curbMaterial);
 
     const curbSeamMaterial = new THREE.MeshBasicMaterial({
       color: 0x80909a,
       transparent: true,
       opacity: 0.2,
     });
-    for (let x = -40; x < 42; x += 2.8) {
-      box(this.scene, [0.035, 0.025, 6.7], [x, 0.39, -18], curbSeamMaterial);
+    for (let z = -48; z < 40; z += 3.6) {
+      box(
+        this.scene,
+        [9.4, 0.025, 0.035],
+        [-12.15, 0.275, z],
+        curbSeamMaterial,
+      );
+      box(
+        this.scene,
+        [8.7, 0.025, 0.035],
+        [16.85, 0.235, z + 1.2],
+        curbSeamMaterial,
+      );
     }
 
     const puddle = new THREE.Mesh(
@@ -453,21 +555,119 @@ class RainyCityScene implements AtmosphereScene {
     }
 
     this.buildWetReflections();
+    this.buildStreetFurniture();
 
     const laneMaterial = new THREE.MeshBasicMaterial({
       color: 0x9ca7ab,
       transparent: true,
       opacity: 0.14,
     });
-    for (let x = -30; x <= 30; x += 8.5) {
+    for (let z = -44; z <= 16; z += 8.5) {
       const lane = new THREE.Mesh(
-        new THREE.PlaneGeometry(3.7, 0.1),
+        new THREE.PlaneGeometry(0.12, 3.7),
         laneMaterial,
       );
       lane.rotation.x = -Math.PI / 2;
-      lane.position.set(x, 0.018, 10.5);
+      lane.position.set(3.05, 0.018, z);
       this.scene.add(lane);
     }
+  }
+
+  private buildStreetFurniture(): void {
+    const roadMark = new THREE.MeshBasicMaterial({
+      color: 0xc8d0cf,
+      transparent: true,
+      opacity: 0.16,
+    });
+    for (let z = -19.5; z <= -15.2; z += 0.85) {
+      const stripe = new THREE.Mesh(
+        new THREE.PlaneGeometry(15.8, 0.42),
+        roadMark,
+      );
+      stripe.rotation.x = -Math.PI / 2;
+      stripe.position.set(2.65, 0.022, z);
+      this.scene.add(stripe);
+    }
+
+    const darkMetal = new THREE.MeshStandardMaterial({
+      color: 0x1a272d,
+      roughness: 0.55,
+      metalness: 0.62,
+    });
+    const grateLine = new THREE.MeshBasicMaterial({
+      color: 0x89959b,
+      transparent: true,
+      opacity: 0.22,
+    });
+    const paintedRed = new THREE.MeshStandardMaterial({
+      color: 0x6f2526,
+      roughness: 0.64,
+      metalness: 0.28,
+    });
+
+    // Hydrant and parking meter: small but unmistakable street-scale cues.
+    const hydrant = new THREE.Group();
+    hydrant.position.set(-8.25, 0.27, 2.9);
+    const hydrantBody = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.25, 0.3, 0.72, 10),
+      paintedRed,
+    );
+    hydrantBody.position.y = 0.42;
+    hydrant.add(hydrantBody);
+    box(hydrant, [0.72, 0.18, 0.2], [0, 0.5, 0], paintedRed);
+    box(hydrant, [0.46, 0.16, 0.46], [0, 0.84, 0], paintedRed);
+    this.scene.add(hydrant);
+
+    const meter = new THREE.Group();
+    meter.position.set(-8.1, 0.27, -1.8);
+    box(meter, [0.1, 2.25, 0.1], [0, 1.12, 0], darkMetal);
+    box(meter, [0.48, 0.62, 0.32], [0, 2.22, 0], darkMetal);
+    box(
+      meter,
+      [0.28, 0.16, 0.02],
+      [0, 2.3, 0.171],
+      new THREE.MeshBasicMaterial({ color: 0x6f9cad }),
+    );
+    this.scene.add(meter);
+
+    // A grated gutter explicitly locates the puddle beside the curb.
+    box(this.scene, [0.72, 0.025, 1.65], [-6.2, 0.028, 4.25], darkMetal);
+    for (let z = 3.58; z < 5; z += 0.22) {
+      box(this.scene, [0.56, 0.012, 0.055], [-6.2, 0.046, z], grateLine);
+    }
+
+    const manhole = new THREE.Mesh(
+      new THREE.RingGeometry(0.62, 0.72, 24),
+      new THREE.MeshBasicMaterial({
+        color: 0x53616a,
+        transparent: true,
+        opacity: 0.22,
+        side: THREE.DoubleSide,
+      }),
+    );
+    manhole.rotation.x = -Math.PI / 2;
+    manhole.position.set(6.4, 0.027, 2.8);
+    this.scene.add(manhole);
+
+    // A distant signal closes the block and reinforces the vanishing point.
+    const signal = new THREE.Group();
+    signal.position.set(-6.85, 0.44, -21.6);
+    box(signal, [0.12, 6.2, 0.12], [0, 3.1, 0], darkMetal);
+    box(signal, [4.2, 0.12, 0.12], [2.05, 5.9, 0], darkMetal);
+    box(signal, [0.58, 1.45, 0.5], [3.78, 5.25, 0], darkMetal);
+    for (const [y, color] of [
+      [5.7, 0x9c2f2e],
+      [5.25, 0x8f7128],
+      [4.8, 0x3d7656],
+    ] as Array<[number, number]>) {
+      box(
+        signal,
+        [0.2, 0.2, 0.025],
+        [3.78, y, 0.265],
+        new THREE.MeshBasicMaterial({ color, toneMapped: false }),
+      );
+    }
+    this.scene.add(signal);
   }
 
   private addReflectionGlint(
@@ -700,6 +900,137 @@ class RainyCityScene implements AtmosphereScene {
       sign.position.set(x, y, z);
       this.scene.add(sign);
     }
+    this.buildForegroundNeonSign();
+  }
+
+  private buildForegroundNeonSign(): void {
+    const sign = new THREE.Group();
+    sign.position.set(NEON_X, NEON_Y, NEON_Z);
+    const backing = new THREE.MeshStandardMaterial({
+      color: 0x090e15,
+      roughness: 0.54,
+      metalness: 0.5,
+    });
+    const frame = new THREE.MeshStandardMaterial({
+      color: 0x27343c,
+      roughness: 0.48,
+      metalness: 0.66,
+    });
+    box(sign, [4.35, 2.65, 0.24], [0, 0, 0], backing);
+    box(sign, [4.58, 0.12, 0.3], [0, 1.38, 0], frame);
+    box(sign, [4.58, 0.12, 0.3], [0, -1.38, 0], frame);
+    box(sign, [0.12, 2.65, 0.3], [-2.23, 0, 0], frame);
+    box(sign, [0.12, 2.65, 0.3], [2.23, 0, 0], frame);
+
+    const cyan = new THREE.MeshBasicMaterial({
+      color: 0x3bdde4,
+      transparent: true,
+      opacity: 0.96,
+      toneMapped: false,
+    });
+    const magenta = new THREE.MeshBasicMaterial({
+      color: 0xec55bc,
+      transparent: true,
+      opacity: 0.9,
+      toneMapped: false,
+    });
+    this.neonTubes.push(
+      { material: cyan, baseOpacity: 0.96 },
+      { material: magenta, baseOpacity: 0.9 },
+    );
+    const tube = (
+      size: [number, number, number],
+      position: [number, number, number],
+      material: THREE.MeshBasicMaterial,
+    ) => box(sign, size, position, material);
+
+    // Block-built “24” tubing keeps the retro language while reading as a
+    // proper city sign at a distance.
+    tube([1.35, 0.11, 0.08], [-1.05, 0.91, 0.18], cyan);
+    tube([0.11, 0.85, 0.08], [-0.43, 0.52, 0.18], cyan);
+    tube([1.35, 0.11, 0.08], [-1.05, 0.08, 0.18], cyan);
+    tube([0.11, 0.83, 0.08], [-1.67, -0.35, 0.18], cyan);
+    tube([1.35, 0.11, 0.08], [-1.05, -0.79, 0.18], cyan);
+
+    tube([0.11, 1.02, 0.08], [0.52, 0.48, 0.18], magenta);
+    const diagonal = beamBetween(
+      sign,
+      new THREE.Vector3(0.52, 0.05, 0.18),
+      new THREE.Vector3(1.48, 0.93, 0.18),
+      0.11,
+      magenta,
+    );
+    diagonal.scale.z = 0.72;
+    tube([1.38, 0.11, 0.08], [1.12, 0.04, 0.18], magenta);
+    tube([0.11, 1.82, 0.08], [1.48, 0.04, 0.18], magenta);
+
+    // A slim bracket grounds the panel against the curbside architecture.
+    box(sign, [0.13, 5.9, 0.13], [2.05, -4.32, -0.12], frame);
+    box(sign, [1.05, 0.13, 0.13], [1.58, -1.25, -0.12], frame);
+
+    this.neonGlowTexture = radialGlowTexture(64, [255, 255, 255]);
+    const addNeonHalo = (
+      color: number,
+      size: [number, number],
+      opacity: number,
+    ) => {
+      const halo = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: this.neonGlowTexture,
+          color,
+          transparent: true,
+          opacity,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          toneMapped: false,
+        }),
+      );
+      halo.position.set(0, 0, 0.36);
+      halo.scale.set(size[0], size[1], 1);
+      sign.add(halo);
+      this.neonTubes.push({
+        material: halo.material,
+        baseOpacity: opacity,
+      });
+    };
+    addNeonHalo(0x36cedb, [6.7, 4.2], 0.18);
+    addNeonHalo(0xe94db5, [4.5, 3.2], 0.11);
+
+    this.neonLight = new THREE.PointLight(0x4bd4dc, 5.2, 13, 1.8);
+    this.neonLight.position.set(0, 0, 1.1);
+    sign.add(this.neonLight);
+    this.scene.add(sign);
+    this.buildNeonWetReflection();
+  }
+
+  private buildNeonWetReflection(): void {
+    for (let index = 0; index < 24; index += 1) {
+      const progress = Math.pow(this.layoutRandom(), 0.82);
+      const baseOpacity = 0.025 + this.layoutRandom() * 0.085;
+      const material = new THREE.MeshBasicMaterial({
+        color: this.layoutRandom() > 0.38 ? 0x42bfc7 : 0xb84994,
+        transparent: true,
+        opacity: baseOpacity,
+        depthWrite: false,
+        toneMapped: false,
+      });
+      const facet = new THREE.Mesh(
+        new THREE.PlaneGeometry(
+          0.12 + progress * 0.72 + this.layoutRandom() * 0.4,
+          0.025 + this.layoutRandom() * 0.085,
+        ),
+        material,
+      );
+      facet.rotation.x = -Math.PI / 2;
+      facet.position.set(
+        THREE.MathUtils.lerp(NEON_X, 4.6, progress) +
+          (this.layoutRandom() - 0.5) * (0.18 + progress * 1.25),
+        PUDDLE_Y + 0.013,
+        -16.4 + progress * 24.5,
+      );
+      this.scene.add(facet);
+      this.neonTubes.push({ material, baseOpacity });
+    }
   }
 
   private buildLamp(): void {
@@ -787,6 +1118,122 @@ class RainyCityScene implements AtmosphereScene {
     this.scene.add(lampWash, lampWash.target);
   }
 
+  private buildTrafficCar(): void {
+    this.carPaint = new THREE.MeshStandardMaterial({
+      color: 0x263f52,
+      roughness: 0.36,
+      metalness: 0.68,
+    });
+    const trim = new THREE.MeshStandardMaterial({
+      color: 0x0b1116,
+      roughness: 0.46,
+      metalness: 0.5,
+    });
+    const glass = new THREE.MeshPhysicalMaterial({
+      color: 0x0b1b26,
+      roughness: 0.12,
+      metalness: 0.25,
+      transparent: true,
+      opacity: 0.78,
+    });
+    const headlamp = new THREE.MeshBasicMaterial({
+      color: 0xffe1a3,
+      toneMapped: false,
+    });
+    const tailLamp = new THREE.MeshBasicMaterial({
+      color: 0xd42d24,
+      toneMapped: false,
+    });
+
+    box(this.trafficCar, [3.15, 0.78, 5.05], [0, 0.84, 0], this.carPaint);
+    const hood = box(
+      this.trafficCar,
+      [3.02, 0.34, 1.42],
+      [0, 1.31, 1.62],
+      this.carPaint,
+    );
+    hood.rotation.x = -0.05;
+    const cabin = box(
+      this.trafficCar,
+      [2.62, 1.02, 2.28],
+      [0, 1.62, -0.25],
+      glass,
+    );
+    cabin.rotation.x = 0.025;
+    box(this.trafficCar, [3.2, 0.18, 0.24], [0, 0.62, 2.57], trim);
+    box(this.trafficCar, [3.2, 0.16, 0.2], [0, 0.64, -2.56], trim);
+
+    const tire = new THREE.MeshStandardMaterial({
+      color: 0x05080a,
+      roughness: 0.9,
+      metalness: 0.08,
+    });
+    for (const x of [-1.52, 1.52]) {
+      for (const z of [-1.62, 1.62]) {
+        const wheel = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.42, 0.42, 0.3, 12),
+          tire,
+        );
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(x, 0.49, z);
+        this.trafficCar.add(wheel);
+      }
+    }
+
+    for (const x of [-0.96, 0.96]) {
+      box(this.trafficCar, [0.52, 0.27, 0.06], [x, 0.9, 2.56], headlamp);
+      box(this.trafficCar, [0.44, 0.2, 0.06], [x, 0.87, -2.57], tailLamp);
+      const halo = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: this.lampGlowTexture,
+          color: 0xfff1c7,
+          transparent: true,
+          opacity: 0.38,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          toneMapped: false,
+        }),
+      );
+      halo.position.set(x, 0.9, 2.68);
+      halo.scale.set(1.45, 1.45, 1);
+      this.trafficCar.add(halo);
+    }
+    const headlightWash = new THREE.PointLight(0xffd18a, 3, 10, 1.9);
+    headlightWash.position.set(0, 1.05, 3.05);
+    this.trafficCar.add(headlightWash);
+    this.trafficCar.visible = false;
+    this.scene.add(this.trafficCar);
+
+    // The car's headlamps fracture into moving horizontal facets on wet
+    // asphalt. Near the puddle they bend toward its surface instead of acting
+    // like a rigid duplicate of the car.
+    for (let index = 0; index < 15; index += 1) {
+      const baseOpacity = 0.045 + this.trafficRandom() * 0.085;
+      const material = new THREE.MeshBasicMaterial({
+        color: this.trafficRandom() > 0.3 ? 0x9c7444 : 0xb0a47e,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+      });
+      const reflection = new THREE.Mesh(
+        new THREE.PlaneGeometry(
+          0.24 + this.trafficRandom() * 1.05,
+          0.04 + this.trafficRandom() * 0.13,
+        ),
+        material,
+      );
+      reflection.rotation.x = -Math.PI / 2;
+      reflection.visible = false;
+      this.scene.add(reflection);
+      this.trafficReflections.push({
+        mesh: reflection,
+        lateral: (this.trafficRandom() - 0.5) * 2.15,
+        ahead: 3 + index * 0.68 + this.trafficRandom() * 1.2,
+        baseOpacity,
+      });
+    }
+  }
+
   private buildRain(): void {
     const geometry = new THREE.BoxGeometry(0.026, 1, 0.026);
     const material = new THREE.MeshBasicMaterial({
@@ -824,6 +1271,32 @@ class RainyCityScene implements AtmosphereScene {
     }
   }
 
+  private buildNeonRain(): void {
+    const geometry = new THREE.BoxGeometry(0.026, 1, 0.026);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.62,
+      depthWrite: false,
+      toneMapped: false,
+    });
+    this.neonRain = new THREE.InstancedMesh(
+      geometry,
+      material,
+      NEON_RAIN_COUNT,
+    );
+    this.neonRain.frustumCulled = false;
+    this.scene.add(this.neonRain);
+    for (let index = 0; index < NEON_RAIN_COUNT; index += 1) {
+      this.neonRainDrops.push(this.newNeonRainDrop(true));
+      this.neonRain.setColorAt(index, new THREE.Color(0x23474d));
+    }
+    if (this.neonRain.instanceColor) {
+      this.neonRain.instanceColor.needsUpdate = true;
+    }
+  }
+
   private newRainDrop(initial = false): RainDrop {
     return {
       x: -30 + this.weatherRandom() * 60,
@@ -847,6 +1320,19 @@ class RainyCityScene implements AtmosphereScene {
       speed: 10 + this.weatherRandom() * 7,
       length: 0.24 + this.weatherRandom() * 0.52,
       drift: 0.45 + this.weatherRandom() * 0.6,
+    };
+  }
+
+  private newNeonRainDrop(initial = false): RainDrop {
+    return {
+      x: NEON_X - 3.1 + this.neonRandom() * 6.2,
+      y: initial
+        ? NEON_Y - 4.3 + this.neonRandom() * 9.2
+        : NEON_Y + 4.2 + this.neonRandom() * 2.2,
+      z: NEON_Z - 3.7 + this.neonRandom() * 7.4,
+      speed: 10 + this.neonRandom() * 9,
+      length: 0.24 + this.neonRandom() * 0.68,
+      drift: 0.42 + this.neonRandom() * 0.72,
     };
   }
 
@@ -962,6 +1448,36 @@ class RainyCityScene implements AtmosphereScene {
       this.lampRain.setMatrixAt(index, transform.matrix);
     }
     this.lampRain.instanceMatrix.needsUpdate = true;
+
+    // These drops are not a second weather system: they sample the same gust
+    // while crossing a small ellipsoidal volume around the sign. Their color
+    // and HDR brightness follow the electrical flicker, so bloom catches only
+    // the part of each trajectory that is actually inside neon spill.
+    const neonColor = new THREE.Color();
+    for (let index = 0; index < this.neonRainDrops.length; index += 1) {
+      const drop = this.neonRainDrops[index];
+      drop.y -= drop.speed * frame.delta;
+      drop.x -= gust * drop.drift * frame.delta;
+      if (drop.y < NEON_Y - 4.5 || drop.x < NEON_X - 4) {
+        Object.assign(drop, this.newNeonRainDrop());
+      }
+      const dx = (drop.x - NEON_X) / 3.1;
+      const dy = (drop.y - NEON_Y) / 4.8;
+      const dz = (drop.z - NEON_Z) / 4;
+      const influence = Math.max(0, 1 - Math.sqrt(dx * dx + dy * dy + dz * dz));
+      transform.position.set(drop.x, drop.y, drop.z);
+      transform.scale.set(0.7, drop.length, 0.7);
+      transform.updateMatrix();
+      this.neonRain.setMatrixAt(index, transform.matrix);
+      neonColor
+        .setHex(index % 3 === 0 ? 0xef67c6 : 0x56e6eb)
+        .multiplyScalar(0.11 + influence * this.currentNeonIntensity * 1.75);
+      this.neonRain.setColorAt(index, neonColor);
+    }
+    this.neonRain.instanceMatrix.needsUpdate = true;
+    if (this.neonRain.instanceColor) {
+      this.neonRain.instanceColor.needsUpdate = true;
+    }
   }
 
   private updateSplashes(frame: AtmosphereFrame): void {
@@ -1004,6 +1520,92 @@ class RainyCityScene implements AtmosphereScene {
       const progress = Math.min(local / 1.35, 1);
       ripple.mesh.scale.setScalar(0.45 + progress * 4.2);
       ripple.mesh.material.opacity = progress < 1 ? 0.28 * (1 - progress) : 0;
+    }
+  }
+
+  private updateNeon(frame: AtmosphereFrame): void {
+    if (this.neonFlickerStarted < 0 && frame.elapsed >= this.nextNeonFlicker) {
+      this.neonFlickerStarted = frame.elapsed;
+      this.neonFlickerPhase = this.neonRandom();
+    }
+
+    let electrical = 1;
+    if (this.neonFlickerStarted >= 0) {
+      const age = frame.elapsed - this.neonFlickerStarted;
+      electrical = neonFlickerIntensityAt(age, this.neonFlickerPhase);
+      if (age > 0.72) {
+        this.neonFlickerStarted = -1;
+        this.nextNeonFlicker =
+          frame.elapsed + nextNeonFlickerDelay(this.neonRandom);
+        electrical = 1;
+      }
+    }
+
+    const transformerHum = 0.975 + Math.sin(frame.elapsed * 2.15) * 0.025;
+    this.currentNeonIntensity = electrical * transformerHum;
+    for (const emitter of this.neonTubes) {
+      emitter.material.opacity =
+        emitter.baseOpacity * (0.08 + this.currentNeonIntensity * 0.92);
+    }
+    this.neonLight.intensity = 5.2 * this.currentNeonIntensity;
+  }
+
+  private updateTraffic(frame: AtmosphereFrame): void {
+    if (this.carStarted < 0 && frame.elapsed >= this.nextCar) {
+      this.carStarted = frame.elapsed;
+      this.carDuration = 6.2 + this.trafficRandom() * 2.2;
+      this.carLaneX = -0.8 + this.trafficRandom() * 2.25;
+      const trafficPalette = [0x8a6a20, 0x263f52, 0x542c2c, 0x343b40];
+      this.carPaint.color.setHex(
+        trafficPalette[
+          Math.floor(this.trafficRandom() * trafficPalette.length)
+        ],
+      );
+      this.trafficCar.visible = true;
+      for (const reflection of this.trafficReflections) {
+        reflection.mesh.visible = true;
+      }
+    }
+    if (this.carStarted < 0) return;
+
+    const progress = trafficProgressAt(
+      frame.elapsed,
+      this.carStarted,
+      this.carDuration,
+    );
+    const z = THREE.MathUtils.lerp(-48, 23, progress);
+    const fade = Math.min(1, progress * 8, (1 - progress) * 10);
+    this.trafficCar.position.set(
+      this.carLaneX + Math.sin(progress * Math.PI) * 0.16,
+      0.05 + Math.sin(frame.elapsed * 5.5) * 0.012,
+      z,
+    );
+
+    for (const reflection of this.trafficReflections) {
+      const reflectionZ = z + reflection.ahead;
+      const puddleInfluence = Math.exp(
+        -Math.abs(reflectionZ - PUDDLE_Z) * 0.32,
+      );
+      reflection.mesh.position.set(
+        THREE.MathUtils.lerp(
+          this.carLaneX + reflection.lateral,
+          PUDDLE_X,
+          puddleInfluence * 0.62,
+        ),
+        PUDDLE_Y + 0.018,
+        reflectionZ,
+      );
+      reflection.mesh.material.opacity =
+        reflection.baseOpacity * fade * (0.42 + puddleInfluence * 0.9);
+    }
+
+    if (progress >= 1) {
+      this.carStarted = -1;
+      this.nextCar = frame.elapsed + nextTrafficDelay(this.trafficRandom);
+      this.trafficCar.visible = false;
+      for (const reflection of this.trafficReflections) {
+        reflection.mesh.visible = false;
+      }
     }
   }
 
@@ -1059,15 +1661,17 @@ class RainyCityScene implements AtmosphereScene {
   update(frame: AtmosphereFrame): void {
     if (this.destroyed) return;
     this.lastElapsed = frame.elapsed;
+    this.updateNeon(frame);
     this.updateRain(frame);
     this.updateSplashes(frame);
+    this.updateTraffic(frame);
     this.updateWeather(frame);
 
     const targetX = CAMERA_X + frame.pointer.x * 0.72;
     const targetY = CAMERA_Y - frame.pointer.y * 0.16;
     this.camera.position.x += (targetX - this.camera.position.x) * 0.022;
     this.camera.position.y += (targetY - this.camera.position.y) * 0.022;
-    this.cameraTarget.x = frame.pointer.x * 0.32;
+    this.cameraTarget.x = CAMERA_TARGET_X + frame.pointer.x * 0.32;
     this.camera.lookAt(this.cameraTarget);
   }
 
@@ -1078,8 +1682,23 @@ class RainyCityScene implements AtmosphereScene {
       this.nextLightning = Number.POSITIVE_INFINITY;
       this.lightning.intensity = 0;
       for (const bolt of this.lightningBolts) bolt.visible = false;
+      this.carStarted = -1;
+      this.nextCar = Number.POSITIVE_INFINITY;
+      this.trafficCar.visible = false;
+      for (const reflection of this.trafficReflections) {
+        reflection.mesh.visible = false;
+      }
+      this.neonFlickerStarted = -1;
+      this.nextNeonFlicker = Number.POSITIVE_INFINITY;
+      this.currentNeonIntensity = 1;
+      for (const emitter of this.neonTubes) {
+        emitter.material.opacity = emitter.baseOpacity;
+      }
+      this.neonLight.intensity = 5.2;
     } else {
       this.nextLightning = this.lastElapsed + 4.5 + this.weatherRandom() * 4;
+      this.nextCar = this.lastElapsed + 3.8 + this.trafficRandom() * 4.5;
+      this.nextNeonFlicker = this.lastElapsed + 1.8 + this.neonRandom() * 3.4;
     }
   }
 
@@ -1109,6 +1728,7 @@ class RainyCityScene implements AtmosphereScene {
     this.destroyed = true;
     disposeScene(this.scene);
     this.lampGlowTexture.dispose();
+    this.neonGlowTexture.dispose();
     this.bloomPass.dispose();
     this.outputPass.dispose();
     this.composer.dispose();
