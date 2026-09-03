@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 167
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-167-05, HS-167-06
 - **Unblocks:** HS-167-08
 - **Owner:** unassigned
@@ -29,9 +29,31 @@ listed) with no guard — the 166 ledger's D4.
 
 ## Acceptance criteria
 
-- [ ] The guide's every shot is of a recomposed face; its walk matches the walk script step for step.
-- [ ] MCP_SIDECAR.md counts equal the registry's, proven by the guard; zero drift-guard failures.
-- [ ] contract.md names every species in the barrel.
+- [x] The guide's every shot is of a recomposed face; its walk matches the walk script step for step.
+- [x] MCP_SIDECAR.md counts equal the registry's, proven by the guard; zero drift-guard failures.
+- [x] contract.md names every species in the barrel.
+
+## Landed (2026-09-03)
+
+docs/MCP_SIDECAR.md is now GENERATED from the registry
+(scripts/gen_mcp_sidecar_doc.py, the gen_api_surface precedent) with a
+drift guard (tests/unit/test_mcp_sidecar_doc_drift.py) that fails on
+any stale count or missing family — the corrections it forced: 186 →
+187 tools, desk 47 → 52 (scheduled_recording/zone/kb/decision.supersede
+/dictation were uncounted), project 34 → 35, people 14 → 16, the
+project palette 44 → 45; docs/README.md follows. The new surface
+documented where 166 documented Jira: project.steward.trigger (desk-
+wide, typed 503 `scheduler_not_wired`, never route-level dedup),
+project.setup.clarify_jira_scope, evaluation_cadence_minutes (1..10080)
+on the policy PUT + set_rules, the cross-process acli file lock +
+HOLDSPEAK_ACLI_LOCK_TIMEOUT. docs/PROJECT_ROOMS.md (166-06's guide had
+NO images and no walk) now carries fourteen shots of the recomposed
+faces (docs/assets/project-rooms/) and the walk re-told in the
+Tuesday order, no promotion. contract.md was completed by 03. Guards
+read by the orchestrator: the sidecar drift guard + the doc drift guard
++ the vocabulary guard green; the generator idempotent. Note: the
+product-copy guard's failures on this branch all pre-exist on main
+(verified by git grep) — baseline.
 
 ## Test plan
 

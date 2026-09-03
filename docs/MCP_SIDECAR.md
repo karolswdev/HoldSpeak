@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-186 tools across 33 families. The default non-owner discovery lists 34
+187 tools across 33 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -57,11 +57,11 @@ default.
 
 ## Tool families
 
-The 186 tools are organized into domain families. Each tool follows the
+The 187 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
-### desk (47 tools)
+### desk (52 tools)
 
 The original surface. CRUD for desk primitives (meetings, notes, artifacts,
 projects, decision records, zones, workbenches, recipes, agents, sequences,
@@ -97,7 +97,7 @@ Door has no MCP resource. Its
 Follow-Through People overlay respects `HOLDSPEAK_MCP_PEOPLE_ACCESS` and is
 safely empty when that encrypted disclosure capability is unavailable or off.
 
-### project (34 tools)
+### project (35 tools)
 
 Three read tools: `project.list` returns all projects (optionally
 including archived). `project.get` returns one project by id with room
@@ -112,14 +112,19 @@ Fourteen command tools mirror the web routes exactly (MCP-001 parity):
 accepts an optional command_id for idempotent replay (MCP-002); where the
 web route enforces expected_revision, the tool does too.
 
-Four steward driver tools: `project.configure_steward` (policy read/write
+Five steward driver tools: `project.configure_steward` (policy read/write
 including `unattended_enabled`), `project.run_steward` (returns run_id
 PROMPTLY via MCP-003; phase execution on a daemon thread; typed refusals
 for STW-002/disabled/cooldown), `project.stop_steward` (durable STW-003),
-`project.get_steward_run` (pollable state with steps and receipts).
+`project.get_steward_run` (pollable state with steps and receipts), and
+`project.steward.trigger` (desk-wide, principal-scoped evaluate_due +
+run_due NOW through the conductor's scheduler seam; unwired returns a typed
+503 `scheduler_not_wired` refusal; never route-level dedup).
 
-Five setup interview drivers: `project.setup.start`, `project.setup.resume`,
-`project.setup.answer`, `project.setup.suggest`, `project.setup.finalize`.
+Six setup interview drivers: `project.setup.start`, `project.setup.resume`,
+`project.setup.answer`, `project.setup.suggest`, `project.setup.finalize`,
+and `project.setup.clarify_jira_scope` (refines a Jira proposal's project
+keys and issue types within a setup session).
 The durable session resumes across tool calls; finalize activates atomically
 through the same ProjectService.create_from_setup seam as the web route.
 
@@ -129,7 +134,10 @@ Seven graduated watch tools: `project.watch.inspect`, `project.watch.test`,
 graduated WatchSpec@1 rows (state in active/tested/paused/retired). Legacy
 rows (state='') belong to the reactions family; the graduated tools
 refuse legacy rows with typed `legacy_watch_boundary` errors. The
-legacy side is not yet guarded in code (backlog).
+legacy side is not yet guarded in code (backlog). `project.watch.set_rules`
+accepts an optional `evaluation_cadence_minutes` field (integer, 1..10080)
+that sets the per-watch evaluation interval; the same field is accepted by
+the HTTP `PUT /api/projects/{id}/steward/policy` route.
 
 Five resource templates expose project data: `holdspeak://projects/{id}`,
 `.../room`, `.../delta`, `.../updates/{update_id}`, and
@@ -167,8 +175,11 @@ account authenticated (`acli jira auth login --site <site>.atlassian.net
 --email <email> --token`). A connection is identified by (site, email);
 one owner may hold many across multiple `*.atlassian.net` sites. Every call
 follows the switch-and-verify law: `auth switch`, then the command, then
-`auth status` read-back, under one process lock. A read-back mismatch is a
-typed error, never a silent wrong read. All access is read-only.
+`auth status` read-back, under a cross-process file lock (`fcntl.flock` on
+a lockfile in the data directory). The lock timeout defaults to 10 seconds
+and is configurable via `HOLDSPEAK_ACLI_LOCK_TIMEOUT` (seconds, float).
+A read-back mismatch is a typed error, never a silent wrong read. All
+access is read-only.
 The search field cap: `workitem search --fields` accepts only issuetype,
 key, assignee, priority, status, summary, labels, reporter, creator,
 description; fields such as duedate, resolution, and updated come from
@@ -312,7 +323,7 @@ id.
 project, time, and pagination filters. Valid kinds are `decision`, `artifact`,
 `note`, and `thread`.
 
-### people (14 tools)
+### people (16 tools)
 
 The encrypted People ledger defaults to `write` for the local owner process.
 `people.readiness` is content-free and also works while access is explicitly
@@ -323,7 +334,10 @@ agenda items, grounding notes, linked Project refs, requests, and commitments.
 evidence bundle; it does not invoke a model or infer an assessment. The default
 `write` capability additionally admits relationship and grounding-note creation,
 notes-only 1:1 and agenda creation, request creation/explicit acceptance, and
-done/dismiss/reopen for shared commitments.
+done/dismiss/reopen for shared commitments. `people.calendar.link` and
+`people.calendar.unlink` manage ICS calendar source association for a
+relationship. `people.owner_alias.link` and `people.owner_alias.unlink`
+bind and unbind the owner's own alias within the People boundary.
 
 MCP never initializes or recovers the encrypted store and never returns
 leader-private sessions, private prep, agenda, grounding notes, requests, or commitments. It
@@ -337,6 +351,298 @@ not written to HoldSpeak's plaintext database, observer, FTS, or Cadence.
 `plugin_job.list` and `plugin_job.summary` read deferred plugin job state.
 `plugin_job.retry` re-queues a failed or completed job. `plugin_job.cancel`
 marks a job done. Both refuse running jobs.
+
+<!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
+
+**Registry totals:** 187 tools across 33 families.
+
+#### ask (4)
+
+- `ask.cancel`
+- `ask.keep`
+- `ask.resolve_grounding`
+- `ask.run`
+
+#### cadence (11)
+
+- `cadence.apply_closeout`
+- `cadence.audit`
+- `cadence.brief`
+- `cadence.closeout`
+- `cadence.get_loop`
+- `cadence.history`
+- `cadence.loops`
+- `cadence.run_now`
+- `cadence.set_status`
+- `cadence.snooze`
+- `cadence.status`
+
+#### coder (3)
+
+- `coder.audit`
+- `coder.get`
+- `coder.list`
+
+#### decision (1)
+
+- `decision.supersede`
+
+#### decision_record (5)
+
+- `decision_record.create_from_desk`
+- `decision_record.create_from_meeting`
+- `decision_record.get`
+- `decision_record.list`
+- `decision_record.search`
+
+#### desk (7)
+
+- `desk.create`
+- `desk.delete`
+- `desk.get`
+- `desk.list`
+- `desk.snapshot`
+- `desk.update`
+- `desk.verb`
+
+#### dictation (2)
+
+- `dictation.get`
+- `dictation.list`
+
+#### door (2)
+
+- `door.add_item`
+- `door.get`
+
+#### event (1)
+
+- `event.list`
+
+#### follow_through (3)
+
+- `follow_through.board`
+- `follow_through.commit_decision`
+- `follow_through.complete`
+
+#### inference (1)
+
+- `inference.cancel_model_acquisition`
+
+#### inference_assignment (5)
+
+- `inference_assignment.clear`
+- `inference_assignment.editor`
+- `inference_assignment.preview_use_default`
+- `inference_assignment.set`
+- `inference_assignment.summary`
+
+#### kb (3)
+
+- `kb.add_member`
+- `kb.list_members`
+- `kb.remove_member`
+
+#### meeting (6)
+
+- `meeting.delete`
+- `meeting.export`
+- `meeting.get`
+- `meeting.list`
+- `meeting.start_capture`
+- `meeting.stop_capture`
+
+#### memory (1)
+
+- `memory.search`
+
+#### model_library (7)
+
+- `model_library.add_to_library`
+- `model_library.connect_hosted_model`
+- `model_library.connect_paired_device`
+- `model_library.define_endpoint`
+- `model_library.download`
+- `model_library.get`
+- `model_library.use_model_file`
+
+#### monday_brief (2)
+
+- `monday_brief.generate`
+- `monday_brief.get`
+
+#### people (16)
+
+- `people.agenda.add`
+- `people.calendar.link`
+- `people.calendar.unlink`
+- `people.commitment.transition`
+- `people.grounding.get`
+- `people.note.create`
+- `people.one_on_one.brief`
+- `people.one_on_one.create`
+- `people.owner_alias.link`
+- `people.owner_alias.unlink`
+- `people.readiness`
+- `people.relationship.create`
+- `people.relationship.get`
+- `people.relationship.list`
+- `people.request.accept`
+- `people.request.create`
+
+#### pipeline (1)
+
+- `pipeline.events`
+
+#### plugin_job (4)
+
+- `plugin_job.cancel`
+- `plugin_job.list`
+- `plugin_job.retry`
+- `plugin_job.summary`
+
+#### project (35)
+
+- `project.accept_review`
+- `project.archive`
+- `project.configure_steward`
+- `project.create`
+- `project.decide_proposal`
+- `project.draft_update`
+- `project.get`
+- `project.get_delta`
+- `project.get_room`
+- `project.get_steward_run`
+- `project.link`
+- `project.list`
+- `project.list_updates`
+- `project.open_review`
+- `project.publish_update`
+- `project.restore`
+- `project.run_steward`
+- `project.setup.answer`
+- `project.setup.clarify_jira_scope`
+- `project.setup.finalize`
+- `project.setup.resume`
+- `project.setup.start`
+- `project.setup.suggest`
+- `project.steward.trigger`
+- `project.stop_steward`
+- `project.unlink`
+- `project.update`
+- `project.update_draft`
+- `project.watch.evaluate`
+- `project.watch.inspect`
+- `project.watch.pause`
+- `project.watch.resume`
+- `project.watch.retire`
+- `project.watch.set_rules`
+- `project.watch.test`
+
+#### provider (10)
+
+- `provider.github_connection`
+- `provider.github_discover`
+- `provider.github_validate_repo`
+- `provider.jira_add_connection`
+- `provider.jira_connection`
+- `provider.jira_connections`
+- `provider.jira_discover`
+- `provider.jira_search`
+- `provider.jira_validate_scope`
+- `provider.list`
+
+#### reaction (5)
+
+- `reaction.create`
+- `reaction.list`
+- `reaction.presets`
+- `reaction.process`
+- `reaction.set_enabled`
+
+#### recipe (4)
+
+- `recipe.chat`
+- `recipe.get`
+- `recipe.list`
+- `recipe.run`
+
+#### scheduled_recording (5)
+
+- `scheduled_recording.cancel_armed`
+- `scheduled_recording.create`
+- `scheduled_recording.delete`
+- `scheduled_recording.list`
+- `scheduled_recording.update`
+
+#### sequence (2)
+
+- `sequence.cancel`
+- `sequence.run`
+
+#### settings (2)
+
+- `settings.get`
+- `settings.update`
+
+#### thought (18)
+
+- `thought.accept_review`
+- `thought.adopt_note`
+- `thought.answer_and_continue`
+- `thought.answer_review`
+- `thought.attach_context`
+- `thought.complete`
+- `thought.create`
+- `thought.detach_context`
+- `thought.get_default_context`
+- `thought.list_context`
+- `thought.reconcile`
+- `thought.refine`
+- `thought.refresh_context`
+- `thought.reject_review`
+- `thought.replace_default_context`
+- `thought.resume`
+- `thought.stop_refinement`
+- `thought.update_working`
+
+#### thread (1)
+
+- `thread.set_status`
+
+#### watch (5)
+
+- `watch.create`
+- `watch.list`
+- `watch.preview`
+- `watch.refresh`
+- `watch.set_enabled`
+
+#### workbench (10)
+
+- `workbench.add_item`
+- `workbench.create`
+- `workbench.delete`
+- `workbench.delete_item`
+- `workbench.get`
+- `workbench.list`
+- `workbench.list_runs`
+- `workbench.run`
+- `workbench.update`
+- `workbench.update_item`
+
+#### workflow (2)
+
+- `workflow.cancel`
+- `workflow.run`
+
+#### zone (3)
+
+- `zone.file`
+- `zone.list_members`
+- `zone.unfile`
+
+<!-- END MCP TOOL ROSTER -->
 
 ## Model-invoking tools
 
@@ -441,13 +747,13 @@ read.
 
 ## The project palette (MCP-007)
 
-The project family ships a `PROJECT_PALETTE`: a frozen set of the 44
+The project family ships a `PROJECT_PALETTE`: a frozen set of the 45
 project.* and provider.* tool names. Two functions in the MCP layer
 consume it.
 
 `tools_for_palette(palette)` returns only the tools whose names are in
-the palette. A client that lists tools through this filter sees 44 tools
-instead of 186.
+the palette. A client that lists tools through this filter sees 45 tools
+instead of 187.
 
 `dispatch_for_palette(name, arguments, principal, palette)` dispatches
 a tool call only if `name` is in the palette. A name outside the palette
