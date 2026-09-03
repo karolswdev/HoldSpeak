@@ -540,6 +540,45 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    # ── Jira provider driver tools (HS-166-01) ─────────────────────
+    {
+        "name": "provider.jira_connections",
+        "description": "List all Jira connections (site+email pairs) and their status.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.jira_connections@1",
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.jira_add_connection",
+        "description": "Add a Jira connection by site and email (no credentials stored).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.jira_add_connection@1",
+            "type": "object",
+            "properties": {
+                "site": {"type": "string", "description": "Atlassian site (e.g. 'mysite' or 'mysite.atlassian.net')."},
+                "email": {"type": "string", "description": "Account email address."},
+            },
+            "required": ["site", "email"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.jira_connection",
+        "description": "Recheck one Jira connection status (switch + auth status probe).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.jira_connection@1",
+            "type": "object",
+            "properties": {
+                "connection_ref": {"type": "string", "description": "Connection ref (site|email)."},
+            },
+            "required": ["connection_ref"],
+            "additionalProperties": False,
+        },
+    },
     # ── graduated watch driver tools (HS-165-03) ────────────────────
     # The 164 boundary rule's MCP twin: these tools operate ONLY on
     # graduated rows (state in active/tested/paused/retired).  Legacy
@@ -733,6 +772,16 @@ def _github_adapter():
         return None
 
 
+def _jira_adapter():
+    """Return the JiraProviderAdapter or None (same as web context)."""
+    from holdspeak.services.jira_provider import JiraProviderAdapter
+    db = get_database()
+    try:
+        return JiraProviderAdapter(db)
+    except Exception:
+        return None
+
+
 def _request_hash(payload: dict[str, Any]) -> str:
     """Deterministic hash for idempotency (mirrors steward route)."""
     material = json.dumps(payload, sort_keys=True, separators=(",", ":"),
@@ -772,6 +821,8 @@ def _record_steward_command(
 # The native provider families (mirrors providers.py:31-43).
 # One source of truth for the native provider list (counsel S-3):
 from holdspeak.web.routes.providers import _NATIVE_PROVIDERS  # noqa: E402
+# HS-166-01: shared helper for provider list (ONE function, never duplicate).
+from holdspeak.web.routes.providers import collect_provider_manifests  # noqa: E402
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -1347,13 +1398,13 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     # Mirrors: holdspeak/web/routes/providers.py
 
     if name == "provider.list":
-        # Web parity: providers.py:54 list_providers
-        # Service seam: GitHubProviderAdapter.manifest + _NATIVE_PROVIDERS
-        providers: list[dict[str, Any]] = list(_NATIVE_PROVIDERS)
-        adapter = _github_adapter()
-        if adapter is not None:
-            providers.append(adapter.manifest())
-        return {"providers": providers}
+        # Web parity: providers.py list_providers
+        # HS-166-01: ONE shared helper, never duplicate the enumeration.
+        return {"providers": collect_provider_manifests(
+            github_adapter=_github_adapter(),
+            jira_adapter=_jira_adapter(),
+            principal=principal,
+        )}
 
     if name == "provider.github_connection":
         # Web parity: providers.py:68 github_connection
@@ -1398,6 +1449,53 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         if not owner_repo:
             raise ValidationError("owner_repo is required")
         return adapter.validate_repo(principal, owner_repo)
+
+    # ── Jira provider driver tools (HS-166-01) ──────────────────────
+    # Mirrors: holdspeak/web/routes/providers.py Jira routes.
+    # Serializers DELEGATE to the adapter (the 165 law: copies drift).
+
+    if name == "provider.jira_connections":
+        # Web parity: providers.py jira_connections
+        adapter = _jira_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Jira provider is not configured",
+                context={"status": 404},
+            )
+        return {
+            "connections": adapter.list_connections(principal),
+            "known_accounts": adapter.known_accounts(principal),
+        }
+
+    if name == "provider.jira_add_connection":
+        # Web parity: providers.py jira_add_connection
+        adapter = _jira_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Jira provider is not configured",
+                context={"status": 404},
+            )
+        site = str(arguments.get("site", "")).strip()
+        email = str(arguments.get("email", "")).strip()
+        if not site or not email:
+            raise ValidationError("site and email are required")
+        return adapter.add_connection(principal, site, email)
+
+    if name == "provider.jira_connection":
+        # Web parity: providers.py jira_connection_recheck
+        adapter = _jira_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Jira provider is not configured",
+                context={"status": 404},
+            )
+        ref = str(arguments.get("connection_ref", "")).strip()
+        if not ref:
+            raise ValidationError("connection_ref is required")
+        return adapter.connection_status(principal, ref)
 
     # ── graduated watch driver tools (HS-165-03) ────────────────────
     # Mirrors: holdspeak/web/routes/watches.py + providers.py:158

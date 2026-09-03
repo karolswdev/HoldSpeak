@@ -48,6 +48,20 @@ only for GitHub (project_setup_service.py:748).
   skips graduated rows (state in active/tested/paused/retired).
 - **Out:** the face (04), live proof (05).
 
+## Charter ruling — the search field cap (recorded 2026-09-03)
+
+acli's `workitem search --fields` refuses duedate/resolution/
+updated/created (see the phase record's Recorded truths). The
+source therefore fetches by ONE JQL search (JQL-able conditions
+pushed into the query: `statusCategory != Done`, `due <= Nd`,
+`resolution is not EMPTY`, `status = "<blocked>"`) and enriches
+each entity with ONE `workitem view KEY --fields
+duedate,resolution,updated,statuscategorychangedate --json`, capped
+by the watch limit; the test block reports `calls: 1 + N`. Issue
+types are ENUMERATED from `project view` (not derived); statuses
+come from `status.statusCategory` on the population, labeled
+`observed`.
+
 ## Acceptance criteria
 
 - [ ] A jira watch tests, baselines, and evaluates through the unchanged WatchService path: same source_revision dedup, `jira.issue.status_changed` reaching `_match_and_record_effects`, one effect idem key — under test with a recorded transition.

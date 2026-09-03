@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 166
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** -
 - **Unblocks:** HS-166-02
 - **Owner:** unassigned
@@ -47,10 +47,46 @@ connection is (site, email), not "Jira".
 
 ## Acceptance criteria
 
-- [ ] Two connections (two sites, or two emails on one site) coexist; `connection_status` on each switches, reads back, and persists its own row; a read-back mismatch is a typed error under test.
-- [ ] Binary absent / not logged in / connected all typed, with the recovery command exact; Jira appears in `provider.list` and `GET /api/providers` in the honest state.
-- [ ] The lock serializes interleaved callers under test (two threads, two connections, zero cross-reads).
+- [x] Two connections (two sites, or two emails on one site) coexist; `connection_status` on each switches, reads back, and persists its own row; a read-back mismatch is a typed error under test.
+- [x] Binary absent / not logged in / connected all typed, with the recovery command exact; Jira appears in `provider.list` and `GET /api/providers` in the honest state.
+- [x] The lock serializes interleaved callers under test (two threads, two connections, zero cross-reads).
 
 ## Test plan
 
 - **Unit:** tests/unit/test_jira_provider.py (the test_github_provider.py fake-runner idiom; recorded acli outputs carry `recorded_from`), tests/unit/test_connector_packs.py (acli pack manifest + allowlist refusal).
+
+## Trace record (orchestrator round, 2026-09-03)
+
+- Shipped: connector_packs/acli_jira.py (3-tuple allowlist
+  `(jira, group, verb)`, read verbs only; the go-CLI jira_cli.py
+  pack untouched), services/jira_provider.py (JiraProviderAdapter;
+  the CODE_*/STATE_* constants IMPORTED from github_provider — one
+  source; STATE_DISCONNECTED added there for both), three routes +
+  three MCP twins + `collect_provider_manifests(principal=)` as the
+  ONE provider-list builder (readiness from persisted rows +
+  shutil.which only — never a CLI run inside a list call).
+- ORCHESTRATOR CATCHES, all four paid in-round: (1) readiness absent
+  from the provider list — SETFLOW-005 "partial" was a comment, not
+  an assertion (theater); (2) acli's own account registry
+  (~/.config/acli/jira_config.yaml, no tokens) unread —
+  `known_accounts()` now enumerates it, cloud_id/account_id never
+  surfaced; (3) `connection_ref` did not normalize — a URL-form site
+  split one identity into two rows and turned a good account into
+  "not authenticated" (found ONLY by the live run; the fake runner
+  could never see it); (4) new rows stamped `unavailable` against
+  the docstring's own `disconnected`.
+- LIVE PROOF (real acli 1.3.36, the owner's OAuth account): partial
+  → connected with last_connected_at; URL-form ref == bare ref;
+  known_accounts lists the registry's account as current; the
+  wrong-email path returns owner_action_required with the exact
+  login command; readiness {connected: 1 of 2}. The unit truth table
+  covers binary-absent / unauthenticated / account-not-found /
+  read-back-mismatch (degraded, scope_denied) / connected, plus the
+  two-thread lock test (zero cross-reads).
+- Pins updated honestly: ALL_PACKS 5→6, KNOWN_CONNECTORS 5→6, MCP
+  TOOLS 37→40 (provider.jira_*; the project.* pin 33 unchanged; the
+  _thread_side law holds — provider.* stays out of the thread
+  palettes).
+- Not built (by design): remove_connection is trivial and shipped;
+  no schema change; no PermissionGate widening needed (no binary
+  allowlist exists — recorded).

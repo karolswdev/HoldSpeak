@@ -696,8 +696,8 @@ def test_legacy_family_untouched() -> None:
 
 def test_project_family_tool_count() -> None:
     """The project family ships the expected number of tools."""
-    # 17 original (HS-165-01/02) + 4 steward + 5 setup + 4 provider + 7 watch = 37
-    assert len(project_family.TOOLS) == 37
+    # 17 original (HS-165-01/02) + 4 steward + 5 setup + 4 provider + 3 jira provider + 7 watch = 40
+    assert len(project_family.TOOLS) == 40  # HS-166-01: +3 provider.jira_* tools
 
 
 def test_graduated_watch_states_constant() -> None:

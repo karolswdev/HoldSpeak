@@ -1,7 +1,7 @@
 # Phase 166 - Project Rooms: The Jira Parity (P7)
 
 - **Project:** holdspeak
-- **Status:** CHARTERED 0/7
+- **Status:** ACTIVE 1/7
 - **Chartered:** 2026-09-03 off main `493253d8` (165 The MCP Family MERGED via PR #531 — the TENTH Project Rooms phase merged; this is the LAST §14 slice)
 - **Canon:** docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §14 P7; SRS_PROJECT_INTERVIEW_WATCHES.md §6 PROV-001..012, §8.2 Jira issue parity, §15 V0-D, SETFLOW-005; SRS_PRODUCT_VALIDATION.md (Jira only with a real adapter); CONSTITUTION.md Article III (honest egress)
 
@@ -58,7 +58,7 @@ never deleted), the per-watch cadence write wire (stays ledgered).
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-166-01 | The acli pack + the connection ledger (many accounts × many sites; switch-and-verify) | backlog | [story-01-the-connection-ledger](./story-01-the-connection-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-166-01 | The acli pack + the connection ledger (many accounts × many sites; switch-and-verify) | done | [story-01-the-connection-ledger](./story-01-the-connection-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-166-02 | Discovery + search (projects, issue types, statuses, JQL; routes + MCP) | backlog | [story-02-discovery-and-search](./story-02-discovery-and-search.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-166-03 | The JiraWatchSource + templates + candidates (the gate graduates; the fetcher-seam rider) | backlog | [story-03-the-watch-source](./story-03-the-watch-source.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-166-04 | The web face (provider-keyed wizard; the site egress badge; shots) | backlog | [story-04-the-web-face](./story-04-the-web-face.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -68,15 +68,66 @@ never deleted), the per-watch cadence write wire (stays ledgered).
 
 ## Where we are
 
-**CHARTERED 0/7.** Branch `feat/project-rooms-p7-the-jira-parity`
-off main `493253d8`. `acli` is NOT installed on the owner's machine
-at charter time (no binary, no config) — the owner installs
-(`brew tap atlassian/homebrew-acli && brew install acli`) and
-authenticates his account(s) (`acli jira auth login --site
-<x>.atlassian.net --email <e> --token`); stories 01-04 build against
-recorded acli output shapes with the fake-runner seam and are
-RE-RECORDED from the real CLI the moment it exists; story 05 is
-impossible without it by design (never pushed fixtures alone).
+**ACTIVE 1/7 — HS-166-01 DONE.** The acli pack, the
+JiraProviderAdapter, and the (site, email) connection ledger exist;
+Jira now appears in the provider list with honest readiness
+(unavailable / partial / connected) — SETFLOW-005 met at the list.
+PROVEN LIVE against the owner's real acli (OAuth, one account on a
+practice site): switch → status read-back → connected, persisted;
+the wrong-email path typed with the exact login command; acli's own
+account registry enumerated as `known_accounts`. Four orchestrator
+catches paid in-round (the URL-form identity split was found only
+by the live run). NEXT: HS-166-02 discovery + search.
+
+## Recorded truths (the orchestrator's own acli runs, 2026-09-03)
+
+acli 1.3.36-stable at /opt/homebrew/bin/acli; the owner authenticated
+ONE account by OAuth on a practice site (an "HR"-type team-managed
+project, key `KAN`, types Epic/Subtask/Task, three issues). Raw
+captures: the session scratchpad `acli-recorded/` (re-recordable
+at any time with the same commands).
+
+- `auth status` connected: exit 0, `✓ Authenticated / Site: <host>
+  / Email: <email> / Authentication Type: oauth`. Unauthenticated:
+  exit 1, `✗ Error: unauthorized: use 'acli jira auth login' to
+  authenticate`.
+- `auth switch --site S --email E`: exit 0 `✓ Switched to account:
+  S [E]`; unknown pair: exit 1 `✗ Error: account with email 'E' and
+  site 'S' not found, ...` — the "acli does not know this account"
+  signature, distinct from a read-back mismatch.
+- The account registry is `~/.config/acli/jira_config.yaml`
+  (`current_profile: <cloud_id>:<account_id>`, `profiles: [{site,
+  cloud_id, account_id, display_name, email, auth_type}]`) — tokens
+  are NOT in it; it is the non-secret enumeration of accounts acli
+  knows. Read-only for HoldSpeak.
+- `project list --json` returns the REST project objects (id, key,
+  name, projectTypeKey, style, lead...; `issueTypes: null` in the
+  list). `project view --key K --json` ENUMERATES `issueTypes`
+  (name, id) — types are enumerable, not derived. Statuses are NOT
+  in project view; `status.statusCategory` rides every issue, and
+  JQL filters `statusCategory != Done` / `due <= 30d` work
+  server-side (`--count` proves it).
+- **THE SEARCH FIELD CAP** (the phase's real surprise):
+  `workitem search --fields` ALLOWS only issuetype, key, assignee,
+  priority, status (with statusCategory), summary, labels,
+  reporter, creator, description; it REFUSES duedate, resolution,
+  updated, created, project, components, fixVersions, issuelinks,
+  subtasks, parent, statusCategory, `*all`, `*navigable` (exit 1,
+  `✗ Error: fields '...' are not allowed`). `workitem view KEY
+  --fields ... --json` allows EVERYTHING (duedate, resolution,
+  resolutiondate, updated, created, statuscategorychangedate,
+  components, labels, ...). `--paginate` and `--limit` both work;
+  `--count` returns `✓ Number of work items in the search: N`.
+  RULING for 03: the JiraWatchSource fetches the population by ONE
+  JQL search (conditions that can be JQL — blocked status,
+  due-within, resolved — are pushed INTO the JQL), then enriches
+  each entity with ONE bounded `view --fields
+  duedate,resolution,updated,statuscategorychangedate` call, capped
+  by the watch's limit (N+1 calls per evaluation, N ≤ limit; the
+  test result reports the call count). The diff's due_at/resolution
+  come from view; never invented, never null-dressed.
+- Bad JQL: exit 1 `✗ Error: failed to parse JQL query: <Jira's
+  message>` → `query_invalid` with the message verbatim.
 
 ## Active risks
 

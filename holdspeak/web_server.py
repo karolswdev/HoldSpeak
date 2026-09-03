@@ -709,6 +709,7 @@ class MeetingWebServer:
         from .services.reaction_service import ReactionService
         from .services.watch_service import WatchService
         from .services.github_provider import GitHubProviderAdapter
+        from .services.jira_provider import JiraProviderAdapter
         from .services.project_setup_service import ProjectSetupService
         from .services.project_evidence_collector import ProjectEvidenceCollector
         from .services.project_delta_service import ProjectDeltaService
@@ -902,6 +903,9 @@ class MeetingWebServer:
             ),
             github_provider=GitHubProviderAdapter(
                 db=get_database(), runner=self._gh_runner,
+            ),
+            jira_provider=JiraProviderAdapter(
+                db=get_database(),
             ),
             project_setup_service=ProjectSetupService(
                 get_database(),

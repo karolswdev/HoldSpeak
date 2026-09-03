@@ -13,6 +13,7 @@ import pytest
 
 from holdspeak.connector_packs import (
     ALL_PACKS,
+    acli_jira,
     calendar_activity,
     firefox_ext,
     github_cli,
@@ -31,7 +32,7 @@ def test_all_packs_export_a_validated_manifest():
     via `validate_manifest`. This test asserts the imports
     survived (no ConnectorManifestError) and the manifests are
     instances of the immutable dataclass."""
-    assert len(ALL_PACKS) == 5
+    assert len(ALL_PACKS) == 6  # HS-166-01: +1 acli_jira
     for pack in ALL_PACKS:
         assert isinstance(pack.MANIFEST, ConnectorManifest)
         # Round-trip: the payload validates again, so any loader
@@ -155,6 +156,47 @@ def test_jira_pack_command_policy(command, allowed):
     assert jira_cli.is_command_allowed(command) is allowed
 
 
+# ─────────────────── HS-166-01 acli_jira ─────────────────────────
+
+
+def test_acli_jira_pack_manifest_shape():
+    manifest = acli_jira.MANIFEST
+    assert manifest.id == "acli_jira"
+    assert manifest.kind == "cli_enrichment"
+    assert "commands" in manifest.capabilities
+    assert manifest.requires_cli == "acli"
+    assert manifest.requires_network is True
+    assert "shell:exec" in manifest.permissions
+
+
+@pytest.mark.parametrize(
+    "command,allowed",
+    [
+        # Allowed: read-only verbs.
+        (("acli", "jira", "auth", "status"), True),
+        (("acli", "jira", "auth", "switch", "--site", "x.atlassian.net"), True),
+        (("acli", "jira", "project", "list", "--json"), True),
+        (("acli", "jira", "project", "view", "--key", "PROJ"), True),
+        (("acli", "jira", "workitem", "search", "--jql", "assignee=me"), True),
+        (("acli", "jira", "workitem", "view", "PROJ-123", "--json"), True),
+        (("/opt/homebrew/bin/acli", "jira", "auth", "status"), True),
+        # Rejected: write verbs.
+        (("acli", "jira", "workitem", "create", "--summary", "x"), False),
+        (("acli", "jira", "workitem", "edit", "PROJ-1"), False),
+        (("acli", "jira", "workitem", "delete", "PROJ-1"), False),
+        (("acli", "jira", "workitem", "transition", "PROJ-1", "Done"), False),
+        (("acli", "jira", "auth", "login", "--web"), False),
+        (("acli", "jira", "auth", "logout"), False),
+        # Rejected: too short.
+        (("acli",), False),
+        (("acli", "jira"), False),
+        (("acli", "jira", "auth"), False),
+    ],
+)
+def test_acli_jira_pack_command_policy(command, allowed):
+    assert acli_jira.is_command_allowed(command) is allowed
+
+
 # ─────────────────── HS-13-01 calendar_activity ──────────────────
 
 
@@ -193,11 +235,12 @@ def test_registry_is_derived_from_all_packs():
     calendar_activity) plus the meeting_context pipeline pack."""
     from holdspeak.activity_connectors import KNOWN_CONNECTORS
 
-    assert len(KNOWN_CONNECTORS) == 5
+    assert len(KNOWN_CONNECTORS) == 6  # HS-166-01: +1 acli_jira
     assert {c.id for c in KNOWN_CONNECTORS} == {
         "firefox_ext",
         "gh",
         "jira",
+        "acli_jira",
         "calendar_activity",
         "meeting_context",
     }

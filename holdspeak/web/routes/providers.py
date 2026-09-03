@@ -1,13 +1,16 @@
-"""HS-161-04: Provider routes -- connection, discovery, validation on the wire.
+"""HS-161-04 + HS-166-01: Provider routes -- connection, discovery, validation.
 
 GET  /api/providers                                    -- manifest list
 GET  /api/providers/github/connection                  -- live probe result
 POST /api/providers/github/connection/recheck          -- re-probe live
 GET  /api/providers/github/discover                    -- bounded discovery
 POST /api/providers/github/validate-repo               -- typed repo fallback
+GET  /api/providers/jira/connections                   -- all Jira connections
+POST /api/providers/jira/connections                   -- add a Jira connection
+POST /api/providers/jira/connections/{ref}/recheck     -- recheck one connection
 POST /api/watches/{watch_id}/evaluate                  -- manual evaluate_once
 
-Parse-and-serialize ONLY: the GitHubProviderAdapter + WatchService docstring law.
+Parse-and-serialize ONLY: the ProviderAdapter + WatchService docstring law.
 Owner-scoped; typed errors -> correct statuses.
 """
 from __future__ import annotations
@@ -43,6 +46,36 @@ _NATIVE_PROVIDERS: list[dict[str, Any]] = [
 ]
 
 
+def collect_provider_manifests(
+    *,
+    github_adapter: Any = None,
+    jira_adapter: Any = None,
+    principal: Any = None,
+) -> list[dict[str, Any]]:
+    """Shared helper: build the manifest list for both HTTP and MCP surfaces.
+
+    HS-166-01: ONE function builds the provider list; the HTTP route and
+    the MCP ``provider.list`` tool both call this -- never duplicate the
+    enumeration.  Adapters are optional: ``None`` means the provider is
+    not configured (omitted from the list).
+
+    Each provider entry carries a ``readiness`` object computed from
+    persisted rows + ``shutil.which`` only (NEVER runs the CLI).
+    """
+    providers: list[dict[str, Any]] = list(_NATIVE_PROVIDERS)
+    if github_adapter is not None:
+        entry = github_adapter.manifest()
+        if principal is not None and hasattr(github_adapter, "readiness"):
+            entry["readiness"] = github_adapter.readiness(principal)
+        providers.append(entry)
+    if jira_adapter is not None:
+        entry = jira_adapter.manifest()
+        if principal is not None and hasattr(jira_adapter, "readiness"):
+            entry["readiness"] = jira_adapter.readiness(principal)
+        providers.append(entry)
+    return providers
+
+
 def build_providers_router(ctx: WebContext) -> APIRouter:
     router = APIRouter(tags=["providers"])
 
@@ -53,12 +86,13 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
 
     @router.get("/api/providers")
     async def list_providers(request: Request) -> Any:
-        """The manifest list: github + native providers."""
+        """The manifest list: native + github + jira providers."""
         try:
-            providers: list[dict[str, Any]] = list(_NATIVE_PROVIDERS)
-            adapter = ctx.github_provider
-            if adapter is not None:
-                providers.append(adapter.manifest())
+            providers = collect_provider_manifests(
+                github_adapter=ctx.github_provider,
+                jira_adapter=ctx.jira_provider,
+                principal=principal(request),
+            )
             return JSONResponse({"providers": providers})
         except Exception as exc:
             return error_500(exc, log, "Failed to list providers")
@@ -152,6 +186,81 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(result)
         except Exception as exc:
             return error_500(exc, log, "Failed to validate GitHub repository")
+
+    # ── GET /api/providers/jira/connections ───────────────────────────
+
+    @router.get("/api/providers/jira/connections")
+    async def jira_connections(request: Request) -> Any:
+        """List all Jira connections + known acli accounts."""
+        try:
+            adapter = ctx.jira_provider
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": "Jira provider is not configured"},
+                    status_code=404,
+                )
+            p = principal(request)
+            rows = adapter.list_connections(p)
+            known = adapter.known_accounts(p)
+            return JSONResponse({"connections": rows, "known_accounts": known})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list Jira connections")
+
+    # ── POST /api/providers/jira/connections ──────────────────────────
+
+    @router.post("/api/providers/jira/connections")
+    async def jira_add_connection(request: Request) -> Any:
+        """Add a Jira connection: body {site, email}."""
+        try:
+            adapter = ctx.jira_provider
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": "Jira provider is not configured"},
+                    status_code=404,
+                )
+            body = await request.json()
+            site = body.get("site", "")
+            email = body.get("email", "")
+            if not site or not email:
+                return JSONResponse(
+                    {"code": "validation_error",
+                     "message": "site and email are required"},
+                    status_code=400,
+                )
+            result = adapter.add_connection(principal(request), site, email)
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=400,
+            )
+        except Exception as exc:
+            return error_500(exc, log, "Failed to add Jira connection")
+
+    # ── POST /api/providers/jira/connections/{ref}/recheck ────────────
+
+    @router.post("/api/providers/jira/connections/{ref}/recheck")
+    async def jira_connection_recheck(ref: str, request: Request) -> Any:
+        """Recheck one Jira connection (switch + status probe)."""
+        try:
+            adapter = ctx.jira_provider
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": "Jira provider is not configured"},
+                    status_code=404,
+                )
+            result = adapter.connection_status(principal(request), ref)
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=400,
+            )
+        except Exception as exc:
+            return error_500(exc, log, "Failed to recheck Jira connection")
 
     # ── POST /api/watches/{watch_id}/evaluate ────────────────────────
 
