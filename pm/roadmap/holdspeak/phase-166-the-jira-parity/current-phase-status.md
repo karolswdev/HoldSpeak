@@ -74,9 +74,10 @@ sweep zero unexplained (8 baseline, 9 real paid in-round incl. the
 163 same-watermark law restored, 1 proven flake, 2 honest skips);
 web 2358 zero branch-new; counsel RATIFY-W-C (one M + three S paid,
 seven N ledgered). The owner's verdicts so far: the first face
-BOUNCED ("walls of text"), the redesign RATIFIED ("HECK YES"). The PR
-opens on the local gates; the MERGE waits for his word on the two
-galleries. See final-summary.md. After P7: the SRS arc's V0 is
+BOUNCED ("walls of text"), the redesign RATIFIED ("HECK YES"). PR #532
+opened on the local gates and MERGED on his word (2026-09-03, "yes
+the PR is fine, I gave my word..., you know?") → main `31c072f5`.
+See final-summary.md. Next: Phase 167 The Room in Use (his pick). After P7: the SRS arc's V0 is
 COMPLETE; post-arc = Gate B partner feedback, MCP-008, the debt
 ledger, the parked backlog.
 

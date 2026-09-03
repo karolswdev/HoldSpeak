@@ -21,7 +21,11 @@ owner has ratified its design on the library.
 
 ## 1. The state of the world (2026-09-03)
 
-- **PR #532** feat/project-rooms-p7-the-jira-parity → main is OPEN
+- **PR #532 MERGED** → main `31c072f5` on the owner's word (2026-09-03,
+  "yes the PR is fine, I gave my word..., you know?"); the next
+  session chartered Phase 167 The Room in Use (his pick over the
+  model-era collapse, 155 The Crew, Gate B). What follows was true
+  at the close of the 166 sitting: PR #532 was OPEN
   on the local gates (suite 19f/9201p, sweep zero unexplained; web
   2358 zero branch-new; counsel RATIFY-W-C paid). **MERGE WAITS FOR
   THE OWNER'S WORD** on the two galleries (the face on the rig
