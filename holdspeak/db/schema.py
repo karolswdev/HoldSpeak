@@ -3747,6 +3747,7 @@ CREATE TABLE IF NOT EXISTS watch_evaluations (
     completed_at TEXT,
     error_code TEXT,
     error_detail TEXT,
+    metadata_json TEXT NOT NULL DEFAULT '{}',
     UNIQUE(watch_id, watch_revision, source_revision)
 );
 CREATE INDEX IF NOT EXISTS idx_watch_evaluations_watch

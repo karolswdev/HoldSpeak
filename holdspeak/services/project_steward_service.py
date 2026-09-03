@@ -575,6 +575,17 @@ class ProjectStewardService:
                     phase_results[phase] = result
 
                     # Mark step completed.
+                    # HS-167-02: OBSERVE receipt carries enrichment metadata
+                    # (calls count) for the glass to render.
+                    receipt = None
+                    if phase == "observe" and isinstance(result, dict):
+                        receipt_data: dict[str, Any] = {}
+                        if result.get("calls") is not None:
+                            receipt_data["calls"] = result["calls"]
+                        if result.get("source_meta"):
+                            receipt_data["source_meta"] = result["source_meta"]
+                        if receipt_data:
+                            receipt = json.dumps(receipt_data, default=str)
                     self._db.steward_steps.update_step(
                         step_id,
                         state="completed",
@@ -582,6 +593,7 @@ class ProjectStewardService:
                             result if isinstance(result, dict) else {"ok": True},
                             default=str,
                         ),
+                        receipt_json=receipt,
                     )
 
                     # HS-164-04: steward.step_completed event.
@@ -713,9 +725,46 @@ class ProjectStewardService:
         principal: Principal,
         project_id: str,
     ) -> dict[str, Any]:
-        """Delegate to the 160 evidence collector (SS5.5)."""
+        """Delegate to the 160 evidence collector (SS5.5).
+
+        HS-167-02: enrichment receipted -- read the latest evaluation
+        metadata for each watch source and include provider-reported
+        calls counts in the result (flows to the step's receipt_json).
+        """
         coverage = self._collector.collect_all(project_id)
-        return {"coverage": coverage}
+
+        # HS-167-02: gather enrichment metadata from recent evaluations.
+        source_meta: dict[str, Any] = {}
+        total_calls = 0
+        try:
+            sources = self._db.automations.list_project_sources(project_id)
+            for src in sources:
+                source_ref = src.get("source_ref", "")
+                if not source_ref.startswith("watch:"):
+                    continue
+                watch_id = source_ref[len("watch:"):]
+                evals = self._db.automations.list_evaluations(watch_id, limit=1)
+                if evals:
+                    meta_raw = evals[0].get("metadata_json") or "{}"
+                    if isinstance(meta_raw, str):
+                        try:
+                            meta = json.loads(meta_raw)
+                        except (json.JSONDecodeError, TypeError):
+                            meta = {}
+                    else:
+                        meta = meta_raw
+                    calls = meta.get("calls")
+                    if calls is not None:
+                        source_meta[watch_id] = {"calls": int(calls)}
+                        total_calls += int(calls)
+        except Exception:
+            pass  # Metadata is best-effort; never fails the phase.
+
+        result: dict[str, Any] = {"coverage": coverage}
+        if source_meta:
+            result["source_meta"] = source_meta
+            result["calls"] = total_calls
+        return result
 
     # ── COMPARE ───────────────────────────────────────────────────────
 

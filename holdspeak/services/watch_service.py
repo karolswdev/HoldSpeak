@@ -615,6 +615,10 @@ class WatchService:
 
         # 1. Fetch fresh snapshot via the admitted adapter path.
         entities = self._fetch(principal, watch)
+        # HS-167-02: drain provider metadata (calls count) set by the
+        # snapshot adapter's thread-local before any other code runs.
+        from holdspeak.services.watch_sources import drain_fetch_meta
+        fetch_meta = drain_fetch_meta()
         snapshot = normalize_snapshot(connector_id, entities)
 
         # 2. Compute source_revision (deterministic hash of snapshot).
@@ -661,6 +665,9 @@ class WatchService:
         try:
             with self._db._connection() as conn:
                 # 5a. Evaluation row.
+                # HS-167-02: persist provider metadata (calls count)
+                # on the evaluation for the OBSERVE receipt to read.
+                meta_str = json.dumps(fetch_meta) if fetch_meta else "{}"
                 self._repo.create_evaluation_in_transaction(
                     conn,
                     evaluation_id=evaluation_id,
@@ -671,6 +678,7 @@ class WatchService:
                     state="completed",
                     started_at=now,
                     completed_at=now,
+                    metadata_json=meta_str,
                 )
 
                 # 5b. Observations for each transition (160 collector

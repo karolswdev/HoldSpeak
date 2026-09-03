@@ -15,6 +15,7 @@ export type SessionState = (typeof SESSION_STATES)[number];
 
 export const Q_OUTCOME = "outcome" as const;
 export const Q_SIGNALS = "signals" as const;
+export const Q_JIRA_SCOPE = "jira_scope" as const;  // HS-167-02
 
 export const QUESTION_TEXT: Record<string, string> = {
   [Q_OUTCOME]: "What outcome are you trying to create or protect?",

@@ -37,6 +37,7 @@ export function useStewardController(
     cooldown_seconds: number;
     enabled: boolean;
     unattended_enabled: boolean;
+    evaluation_cadence_minutes?: number;  // HS-167-02
   } | null>(null);
   const [policyError, setPolicyError] = useState("");
 
@@ -257,6 +258,8 @@ export function useStewardController(
       ]);
       setPolicy(p);
       setWatches(w);
+      // HS-167-02: cadence lives on the watch, shown alongside the policy.
+      const watchCadence = w.length > 0 ? w[0].evaluationCadenceMinutes : 60;
       if (p) {
         setPolicyDraft({
           eligible_effect_kinds: [...p.eligibleEffectKinds],
@@ -265,6 +268,7 @@ export function useStewardController(
           cooldown_seconds: p.cooldownSeconds,
           enabled: p.enabled,
           unattended_enabled: p.unattendedEnabled,
+          evaluation_cadence_minutes: watchCadence,
         });
       } else {
         setPolicyDraft({
@@ -274,6 +278,7 @@ export function useStewardController(
           cooldown_seconds: 0,
           enabled: true,
           unattended_enabled: false,
+          evaluation_cadence_minutes: watchCadence,
         });
       }
       setPosture("policy");

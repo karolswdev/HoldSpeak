@@ -92,6 +92,16 @@ class AutomationRepository(BaseRepository):
             rows = conn.execute("SELECT * FROM connector_watches ORDER BY created_at,id").fetchall()
         return [self._payload(row, "query", "snapshot") for row in rows]
 
+    def list_project_watches(self, project_id: str) -> list[dict[str, Any]]:
+        """HS-167-02: list watches bound to a project."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM connector_watches WHERE project_id=? "
+                "ORDER BY created_at,id",
+                (project_id,),
+            ).fetchall()
+        return [self._payload(row, "query", "snapshot") for row in rows]
+
     def set_watch_enabled(self, watch_id: str, enabled: bool) -> bool:
         with self._connection() as conn:
             cur = conn.execute(
@@ -700,6 +710,7 @@ class AutomationRepository(BaseRepository):
         completed_at: str | None = None,
         error_code: str | None = None,
         error_detail: str | None = None,
+        metadata_json: str = "{}",
     ) -> dict[str, Any]:
         with self._connection() as conn:
             conn.execute(
@@ -707,12 +718,13 @@ class AutomationRepository(BaseRepository):
                    (id,watch_id,watch_revision,provider_capability_revision,
                     source_revision,trigger_kind,state,matched_rule_ids_json,
                     observation_ids_json,started_at,completed_at,
-                    error_code,error_detail)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    error_code,error_detail,metadata_json)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (evaluation_id, watch_id, watch_revision,
                  provider_capability_revision, source_revision, trigger_kind,
                  state, matched_rule_ids_json, observation_ids_json,
-                 started_at, completed_at, error_code, error_detail),
+                 started_at, completed_at, error_code, error_detail,
+                 metadata_json),
             )
         return self.get_evaluation(evaluation_id) or {}
 
@@ -733,6 +745,7 @@ class AutomationRepository(BaseRepository):
         completed_at: str | None = None,
         error_code: str | None = None,
         error_detail: str | None = None,
+        metadata_json: str = "{}",
     ) -> None:
         """Insert a watch_evaluations row on a caller-owned connection.
 
@@ -744,12 +757,13 @@ class AutomationRepository(BaseRepository):
                (id, watch_id, watch_revision, provider_capability_revision,
                 source_revision, trigger_kind, state, matched_rule_ids_json,
                 observation_ids_json, started_at, completed_at,
-                error_code, error_detail)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                error_code, error_detail, metadata_json)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (evaluation_id, watch_id, watch_revision,
              provider_capability_revision, source_revision, trigger_kind,
              state, matched_rule_ids_json, observation_ids_json,
-             started_at, completed_at, error_code, error_detail),
+             started_at, completed_at, error_code, error_detail,
+             metadata_json),
         )
 
     def find_evaluation_by_source(

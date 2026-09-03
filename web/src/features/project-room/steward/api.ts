@@ -75,6 +75,7 @@ export async function putPolicy(
     bounds?: Record<string, unknown>;
     enabled?: boolean;
     unattended_enabled?: boolean;
+    evaluation_cadence_minutes?: number;  // HS-167-02
   },
 ): Promise<{ success: boolean; policy: StewardPolicy; error?: string }> {
   const raw = await apiFetch<Record<string, unknown>>(
