@@ -58,8 +58,8 @@ transition, with no duplicate on unchanged refresh.
   (status_changed + category_changed + resolved), 2 effects
   (observe + steward.run_once), 1 steward run completed, ONE door
   item "[Steward] KAN-1 In progress → Done"; the Delta review: 5
-  proposals with jira evidence; tick 3 unchanged → 0/0/0; the run
-  replayed with its watermark → the same run id; Web ↔ MCP parity
+  proposals with jira evidence; tick 3 unchanged → 0/0/0; a second manual run at the same watermark CREATED and
+  RECONCILED (the 163 §9.3 law; zero new door items); Web ↔ MCP parity
   (room revision, watch state, delta review id, door count) true via
   in-process dispatch (the stdio transport was proven in 165). The
   real DB untouched (guarded). Accounts covered: 1 (the owner holds
@@ -97,3 +97,8 @@ transition, with no duplicate on unchanged refresh.
   widths. Three face defects it exposed (date-only due dates
   rendering a day early; "DUE AT DUE WITHIN DAYS 7"; "EVERY 1440
   MIN") fixed in-round on the face and re-walked.
+- Close correction: the walk's first form asserted "replay → the
+  same run id" through a route-level watermark dedup; that broke
+  the 163 same-watermark law (a second manual run IS created and
+  reconciles at the act step). Reverted in the close; the walk now
+  measures replay_new_run + replay_reconciled = true.

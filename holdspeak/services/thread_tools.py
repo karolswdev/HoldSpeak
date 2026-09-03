@@ -207,6 +207,13 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "provider.github_discover": ("evidence_read", False),
     "provider.github_validate_repo": ("evidence_read", False),
     "provider.list": ("evidence_read", False),
+    # HS-166: the Jira provider family (reads) + the one row-creating verb.
+    "provider.jira_connections": ("evidence_read", False),
+    "provider.jira_connection": ("evidence_read", False),
+    "provider.jira_discover": ("evidence_read", False),
+    "provider.jira_search": ("evidence_read", False),
+    "provider.jira_validate_scope": ("evidence_read", False),
+    "provider.jira_add_connection": ("effect_proposal", False),
     "project.accept_review": ("effect_proposal", False),
     "project.archive": ("effect_proposal", False),
     "project.configure_steward": ("effect_proposal", False),
@@ -220,6 +227,7 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "project.run_steward": ("effect_proposal", False),
     "project.setup.answer": ("effect_proposal", False),
     "project.setup.finalize": ("effect_proposal", False),
+    "project.setup.clarify_jira_scope": ("effect_proposal", False),  # HS-166
     "project.setup.start": ("effect_proposal", False),
     "project.setup.suggest": ("effect_proposal", False),
     "project.stop_steward": ("effect_proposal", False),

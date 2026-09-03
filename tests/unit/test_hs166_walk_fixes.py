@@ -3,7 +3,7 @@
 (a) Baseline: finalize populates snapshot_json; first evaluate_due = 0 transitions.
 (b) Risk rule: due-risk transition -> risk_attention with severity; plain -> observation_attention.
 (c) Composition: the web context's delta service can create items from decide_proposal.
-(d) Watermark dedup: same watermark -> same run_id; empty watermark -> new run.
+(d) Watermark helper: find_run_by_watermark finds/misses correctly (Gate 4 drain helper).
 """
 from __future__ import annotations
 
@@ -438,7 +438,7 @@ class TestDeltaComposition:
 
 
 class TestWatermarkDedup:
-    """Same watermark -> same run_id; empty watermark -> new run."""
+    """Gate 4 drain helper: find_run_by_watermark finds/misses correctly."""
 
     def test_find_run_by_watermark_returns_existing(self, db: Any) -> None:
         """A run with a matching watermark is found."""

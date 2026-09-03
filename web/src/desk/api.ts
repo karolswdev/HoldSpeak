@@ -875,7 +875,7 @@ export async function fetchWorkbenchAutomations(
 /** The service's rich Watch + Reaction document becomes the compact row the
  * Workbench needs. Keeping this mapper tolerant also lets a later facade send
  * that compact shape directly. */
-function automationFromWire(value: Record<string, unknown>): WorkbenchAutomation {
+export function automationFromWire(value: Record<string, unknown>): WorkbenchAutomation {
   const reaction = value.reaction && typeof value.reaction === "object"
     ? value.reaction as Record<string, unknown>
     : value;
@@ -888,7 +888,8 @@ function automationFromWire(value: Record<string, unknown>): WorkbenchAutomation
     : connector === "jira" ? "jira" : "custom";
   const enabled = Boolean(reaction.enabled);
   const lastError = watch?.last_error ? String(watch.last_error) : null;
-  const adapterStatus = provider === "jira" ? "unavailable" : "ready";
+  // HS-166: jira has a live adapter (JiraWatchSource); only unknown connectors are unavailable.
+  const adapterStatus = provider === "custom" ? "unavailable" : "ready";
   return {
     id: String(reaction.id || value.id || ""),
     name: String(reaction.name || value.name || "Automation"),

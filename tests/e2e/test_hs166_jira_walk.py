@@ -36,6 +36,31 @@ import pytest
 
 pytest.importorskip("playwright.sync_api", reason="Jira walk needs Playwright")
 
+# ── Skip guard: acli must be present and authenticated ───────────────
+# Under an isolated HOME the walk must skip honestly, never fail — and
+# it must stay COLLECTABLE by node id (a module-level skip breaks a
+# sweep that names this test), so the guard is a skipif marker.
+def _acli_skip_reason() -> str:
+    if shutil.which("acli") is None:
+        return "acli CLI not found on PATH (required for live Jira walk)"
+    try:
+        _auth = subprocess.run(
+            ["acli", "jira", "auth", "status"],
+            capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:  # pragma: no cover
+        return f"acli jira auth status could not run: {exc}"
+    if _auth.returncode != 0:
+        return (
+            f"acli jira auth status failed (exit {_auth.returncode}): "
+            f"{_auth.stderr.strip()[:200]}"
+        )
+    return ""
+
+
+_ACLI_SKIP_REASON = _acli_skip_reason()
+pytestmark = pytest.mark.skipif(bool(_ACLI_SKIP_REASON), reason=_ACLI_SKIP_REASON or "live acli available")
+
 TOKEN = "hs166-jira-walk"
 REPO = Path(__file__).resolve().parents[2]
 PHASE_DIR = REPO / "pm/roadmap/holdspeak/phase-166-the-jira-parity"
@@ -1379,27 +1404,57 @@ def _walk(
             f"Tick 3 dedup violation: {new_door_t3} new door items"
         )
 
-        # Replay: steward run with the SAME watermark the tick-2 run
-        # carries.  Gate 4: same-watermark dedup returns the existing run.
+        # Replay: the 163 same-watermark law (SS9.3). POST a second run
+        # at the SAME watermark as the tick-2 run. The route creates a
+        # NEW run (not a dedup); the act phase reconciles at the
+        # watermark-scoped key -> ZERO additional Door items.
         tick2_watermark = ""
         tick2_run_resp = _api(page, "GET",
             f"/api/steward/runs/{tick2_run_id}")
         tick2_run_wire = tick2_run_resp.get("payload", tick2_run_resp)
         tick2_watermark = tick2_run_wire.get("run", {}).get("watermark", "")
 
+        door_before_replay = _count_door_items(page)
         replay_resp = _api(page, "POST",
             f"/api/projects/{project_id}/steward/runs",
             {"watermark": tick2_watermark} if tick2_watermark else {})
         replay_payload = replay_resp.get("payload", replay_resp)
         replay_run_id = replay_payload.get("run_id", "")
-        replay_same = (replay_run_id == tick2_run_id) if replay_run_id else None
+        replay_new_run = (replay_run_id != tick2_run_id) if replay_run_id else False
 
-        # With the watermark fix, same watermark must resolve to same run
-        if tick2_watermark:
-            assert replay_same, (
-                f"Replay with watermark {tick2_watermark!r} should resolve "
-                f"to {tick2_run_id}, got {replay_run_id}"
-            )
+        # The second run IS created (new id), then reconciles at act.
+        assert replay_new_run, (
+            f"Same-watermark replay must create a NEW run (163 law), "
+            f"but got same id {replay_run_id}"
+        )
+
+        # Poll the replay run to completion
+        replay_result = _poll_run_completed(page, replay_run_id)
+        replay_run_data = replay_result.get("run", {})
+
+        # Door items must NOT increase (reconciled, zero additional)
+        door_after_replay = _count_door_items(page)
+        assert door_after_replay == door_before_replay, (
+            f"Same-watermark dedup violation: replay created "
+            f"{door_after_replay - door_before_replay} new Door items"
+        )
+
+        # Check for reconciled receipt in the replay run's summary
+        replay_reconciled = False
+        replay_summary = replay_run_data.get("summary", {})
+        replay_receipts = (
+            replay_summary.get("phase_results", {})
+            .get("act", {})
+            .get("effect_receipts", [])
+            or replay_summary.get("effect_receipts", [])
+        )
+        door_receipts = [
+            r for r in replay_receipts
+            if r.get("effect_kind") == "create_door_item"
+        ]
+        replay_reconciled = any(
+            r.get("outcome") == "reconciled" for r in door_receipts
+        )
 
         steps.append({
             "step": "tick_3_dedup",
@@ -1409,13 +1464,15 @@ def _walk(
                 "new_runs": new_runs_t3,
                 "new_door_items": new_door_t3,
                 "replay_run_id": replay_run_id,
-                "replay_run_id_equal": replay_same,
+                "replay_new_run": replay_new_run,
+                "replay_reconciled": replay_reconciled,
             },
         })
         measured["tick3_new_effects"] = new_effects_t3
         measured["tick3_new_runs"] = new_runs_t3
         measured["tick3_new_door_items"] = new_door_t3
-        measured["replay_run_id_equal"] = replay_same
+        measured["replay_new_run"] = replay_new_run
+        measured["replay_reconciled"] = replay_reconciled
 
         # ── l. MCP parity: in-process dispatch ─────────────────────
         # The MCP families are called directly against the walk's

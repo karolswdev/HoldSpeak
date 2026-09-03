@@ -3979,6 +3979,14 @@
       "consumers": []
     },
     {
+      "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-jira-scope",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_setup",
+      "consumers": []
+    },
+    {
       "path": "/api/project-setups/{session_id}/proposals/{proposal_id}/clarify-scope",
       "methods": [
         "POST"
@@ -4368,6 +4376,54 @@
     },
     {
       "path": "/api/providers/github/validate-repo",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/jira/connections",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/jira/connections",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/jira/connections/{ref}/recheck",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/jira/discover",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/jira/search",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/jira/validate-scope",
       "methods": [
         "POST"
       ],

@@ -1,6 +1,6 @@
 {
   "schema": "jira-walk-transcript@1",
-  "generated_at": "2026-09-03T07:33:35.667917+00:00",
+  "generated_at": "2026-09-03T08:46:48.652465+00:00",
   "acli_version": "acli version 1.3.36-stable",
   "accounts": [
     {
@@ -32,7 +32,7 @@
       "steps": [
         {
           "step": "prerequisite_proof",
-          "elapsed_ms": 1335,
+          "elapsed_ms": 1338,
           "wire": {
             "acli_path": "/opt/homebrew/bin/acli",
             "acli_version": "acli version 1.3.36-stable",
@@ -43,7 +43,7 @@
         },
         {
           "step": "connections",
-          "elapsed_ms": 1086,
+          "elapsed_ms": 1031,
           "wire": {
             "known_accounts": 1,
             "connected_accounts": [
@@ -58,7 +58,7 @@
         },
         {
           "step": "discovery",
-          "elapsed_ms": 14952,
+          "elapsed_ms": 15266,
           "wire": {
             "project_key": "KAN",
             "project_name": "WRONG",
@@ -78,13 +78,13 @@
         },
         {
           "step": "interview",
-          "elapsed_ms": 8844,
+          "elapsed_ms": 8861,
           "wire": {
-            "session_id": "psetup_a302badfedc2",
+            "session_id": "psetup_d602c7809915",
             "proposal_count": 6,
-            "due_risk_proposal_id": "wprop_014ff7574312",
-            "project_id": "proj-7da2771842c2",
-            "watch_id": "watch_78f8312de56b",
+            "due_risk_proposal_id": "wprop_d70f321ee061",
+            "project_id": "proj-27a25232bfae",
+            "watch_id": "watch_0c62b2746165",
             "test_entity_count": 1,
             "counts_after_finalize": {
               "watch_evaluations": 0,
@@ -105,14 +105,14 @@
           "step": "make_watch_due",
           "elapsed_ms": 2,
           "wire": {
-            "watch_id": "watch_78f8312de56b",
+            "watch_id": "watch_0c62b2746165",
             "days_until_nearest_due": 7,
             "due_within_adaptation": null
           }
         },
         {
           "step": "tick_1_no_change",
-          "elapsed_ms": 3303,
+          "elapsed_ms": 3127,
           "wire": {
             "eval_outcomes": 1,
             "run_outcomes": 0,
@@ -124,7 +124,7 @@
         },
         {
           "step": "harness_transition",
-          "elapsed_ms": 6186,
+          "elapsed_ms": 5279,
           "harness": {
             "action": "transition",
             "key": "KAN-1",
@@ -136,7 +136,7 @@
         },
         {
           "step": "tick_2_after_transition",
-          "elapsed_ms": 19529,
+          "elapsed_ms": 19669,
           "wire": {
             "eval_outcomes": 1,
             "run_outcomes": 1,
@@ -145,16 +145,16 @@
             "new_effects": 2,
             "new_runs": 1,
             "new_door_items": 1,
-            "run_id": "pstrun_e4e591d18d904c5cbfb1b86ebf236be2",
+            "run_id": "pstrun_6233fc7c326540f0adf74b65594bac9a",
             "run_state": "completed",
             "door_items_api": 1
           }
         },
         {
           "step": "delta",
-          "elapsed_ms": 9,
+          "elapsed_ms": 8,
           "wire": {
-            "review_id": "prev_b96c70604c70486bb8b32915ea0e9e98",
+            "review_id": "prev_0166b53211b1442a9f3bbaf433e9580b",
             "observations": 0,
             "proposals": 5,
             "has_jira_evidence": true
@@ -162,18 +162,19 @@
         },
         {
           "step": "tick_3_dedup",
-          "elapsed_ms": 3814,
+          "elapsed_ms": 3580,
           "wire": {
             "new_effects": 0,
             "new_runs": 0,
             "new_door_items": 0,
-            "replay_run_id": "pstrun_e4e591d18d904c5cbfb1b86ebf236be2",
-            "replay_run_id_equal": true
+            "replay_run_id": "pstrun_94e79ef3d5bc4b428be0be9c972ea80f",
+            "replay_new_run": true,
+            "replay_reconciled": true
           }
         },
         {
           "step": "mcp_parity_inprocess",
-          "elapsed_ms": 43,
+          "elapsed_ms": 40,
           "wire": {
             "room_revision_match": true,
             "watch_state_match": true,
@@ -184,7 +185,7 @@
         },
         {
           "step": "face_shots",
-          "elapsed_ms": 24161,
+          "elapsed_ms": 23091,
           "wire": {
             "shots": [
               "accounts",
@@ -221,18 +222,19 @@
         "tick1_new_effects": 0,
         "tick1_new_runs": 0,
         "tick1_new_door_items": 0,
-        "door_title": "[Steward] KAN-1 resolved",
+        "door_title": "[Steward] KAN-1 In progress -> Done",
         "tick2_transitions": 3,
         "tick2_new_effects": 2,
         "tick2_new_runs": 1,
         "tick2_new_door_items": 1,
-        "tick2_run_id": "pstrun_e4e591d18d904c5cbfb1b86ebf236be2",
+        "tick2_run_id": "pstrun_6233fc7c326540f0adf74b65594bac9a",
         "delta_proposals": 5,
-        "delta_review_id": "prev_b96c70604c70486bb8b32915ea0e9e98",
+        "delta_review_id": "prev_0166b53211b1442a9f3bbaf433e9580b",
         "tick3_new_effects": 0,
         "tick3_new_runs": 0,
         "tick3_new_door_items": 0,
-        "replay_run_id_equal": true,
+        "replay_new_run": true,
+        "replay_reconciled": true,
         "mcp_parity": {
           "room_revision_match": true,
           "watch_state_match": true,
@@ -242,7 +244,7 @@
         },
         "evaluations": 2,
         "effects": 2,
-        "runs": 1,
+        "runs": 2,
         "door_items": 1,
         "accounts": 1
       }

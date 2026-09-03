@@ -566,6 +566,17 @@ class TestParseAcliAuthStatus:
         assert result["email"] == "user@example.com"
         assert result.get("auth_type") == "oauth"
 
+    def test_incomplete_readback_is_not_a_match(self) -> None:
+        """Counsel S-3 (HS-166-07): a read-back missing the Site or Email
+        line must NOT match by filling the blank from expectations."""
+        result = _parse_acli_auth_status(
+            "\u2713 Authenticated\n  Email: user@example.com\n",
+            "alpha.atlassian.net",
+            "user@example.com",
+        )
+        assert result["match"] is False
+        assert "incomplete" in result["detail"]
+
     def test_structured_format_mismatch(self) -> None:
         result = _parse_acli_auth_status(
             "✓ Authenticated\n  Site: other.atlassian.net\n  Email: other@example.com\n",

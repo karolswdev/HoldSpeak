@@ -379,6 +379,12 @@ _MIGRATED_CALLS: dict[tuple[str, str, str, int], str] = {
         1,
     ): "mandatory authenticated owner read",
     (
+        "holdspeak/services/jira_provider.py",
+        "JiraProviderAdapter._run_acli",
+        "run_read_subprocess",
+        1,
+    ): "mandatory authenticated owner read",  # HS-166: acli, the gh twin
+    (
         "holdspeak/missioncontrol_bridge.py",
         "_default_runner",
         "run",

@@ -277,7 +277,16 @@ def _parse_acli_auth_status(output: str, expected_site: str, expected_email: str
                     f"got {found_email}"
                 ),
             }
-        result = {"match": True, "site": found_site or expected_site, "email": found_email or expected_email}
+        if not found_site or not found_email:
+            # Counsel S-3: a read-back that names neither site nor email
+            # is NOT a match -- never fill the blanks from expectations.
+            return {
+                "match": False,
+                "site": found_site,
+                "email": found_email,
+                "detail": "read-back incomplete: site or email not found in auth status",
+            }
+        result = {"match": True, "site": found_site, "email": found_email}
         if auth_type:
             result["auth_type"] = auth_type
         return result

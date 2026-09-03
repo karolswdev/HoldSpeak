@@ -1,7 +1,7 @@
 # Phase 166 - Project Rooms: The Jira Parity (P7)
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 6/7
+- **Status:** COMPLETE 7/7
 - **Chartered:** 2026-09-03 off main `493253d8` (165 The MCP Family MERGED via PR #531 — the TENTH Project Rooms phase merged; this is the LAST §14 slice)
 - **Canon:** docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §14 P7; SRS_PROJECT_INTERVIEW_WATCHES.md §6 PROV-001..012, §8.2 Jira issue parity, §15 V0-D, SETFLOW-005; SRS_PRODUCT_VALIDATION.md (Jira only with a real adapter); CONSTITUTION.md Article III (honest egress)
 
@@ -64,24 +64,21 @@ never deleted), the per-watch cadence write wire (stays ledgered).
 | HS-166-04 | The web face (provider-keyed wizard; the site egress badge; shots) | done | [story-04-the-web-face](./story-04-the-web-face.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-166-05 | The live walk (real acli, real site(s), SETFLOW-005 — OWNER VERDICT) | done | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-166-06 | The docs (the acli transport canon edit; Jira honesty; the dedicated docs story) | done | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-166-07 | The close (gates, riders, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-166-07 | The close (gates, riders, debts, final summary) | done | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**ACTIVE 6/7 — HS-166-05 THE LIVE WALK DONE: THE EXIT IS MET.** On
-the owner's real acli and real site, x2 deterministic: a clean
-first tick after finalize; one declared harness transition → 3
-transitions → 2 effects → 1 steward run → ONE door item ("[Steward]
-KAN-1 In progress → Done"); the Delta carries the jira evidence;
-an unchanged tick → zero new anything; the run replayed with its
-watermark → the same id; Web and MCP read the same revisions. The
-walk forced four product defects into the open and paid them with
-tests (the false baseline at finalize, the Delta service composed
-without project_service, no risk rule for watch transitions, no
-watermark gate on the route) — all provider-agnostic, all
-inherited. One account covered (the owner holds one). NEXT:
-HS-166-07 the close — full suite, counsel, sweep, final summary,
-PR — and the owner's verdict on the live face gallery.
+**COMPLETE 7/7 — the P7 exit MET live; the SRS arc's V0 slices P0..P7
+are all built.** Full suite 19 failed / 9201 passed / 61 skipped →
+sweep zero unexplained (8 baseline, 9 real paid in-round incl. the
+163 same-watermark law restored, 1 proven flake, 2 honest skips);
+web 2358 zero branch-new; counsel RATIFY-W-C (one M + three S paid,
+seven N ledgered). The owner's verdicts so far: the first face
+BOUNCED ("walls of text"), the redesign RATIFIED ("HECK YES"). The PR
+opens on the local gates; the MERGE waits for his word on the two
+galleries. See final-summary.md. After P7: the SRS arc's V0 is
+COMPLETE; post-arc = Gate B partner feedback, MCP-008, the debt
+ledger, the parked backlog.
 
 ## Recorded truths (the orchestrator's own acli runs, 2026-09-03)
 
