@@ -1,4 +1,4 @@
-"""HS-161-04 + HS-166-01: Provider routes -- connection, discovery, validation.
+"""HS-161-04 + HS-166-01 + HS-166-02: Provider routes -- connection, discovery, validation.
 
 GET  /api/providers                                    -- manifest list
 GET  /api/providers/github/connection                  -- live probe result
@@ -8,6 +8,9 @@ POST /api/providers/github/validate-repo               -- typed repo fallback
 GET  /api/providers/jira/connections                   -- all Jira connections
 POST /api/providers/jira/connections                   -- add a Jira connection
 POST /api/providers/jira/connections/{ref}/recheck     -- recheck one connection
+GET  /api/providers/jira/discover                      -- bounded Jira discovery
+POST /api/providers/jira/search                        -- JQL search
+POST /api/providers/jira/validate-scope                -- typed project validation
 POST /api/watches/{watch_id}/evaluate                  -- manual evaluate_once
 
 Parse-and-serialize ONLY: the ProviderAdapter + WatchService docstring law.
@@ -261,6 +264,125 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
             )
         except Exception as exc:
             return error_500(exc, log, "Failed to recheck Jira connection")
+
+    # ── GET /api/providers/jira/discover ────────────────────────────
+
+    @router.get("/api/providers/jira/discover")
+    async def jira_discover(
+        request: Request,
+        connection_ref: str = "",
+        kind: str = "projects",
+        query: str = "",
+        project_key: str = "",
+        cursor: int | None = None,
+        limit: int = 30,
+    ) -> Any:
+        """Bounded Jira discovery (adapter.discover; pagination surfaced)."""
+        try:
+            adapter = ctx.jira_provider
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": "Jira provider is not configured"},
+                    status_code=404,
+                )
+            if not connection_ref:
+                return JSONResponse(
+                    {"code": "validation_error",
+                     "message": "connection_ref is required"},
+                    status_code=400,
+                )
+            result = adapter.discover(
+                principal(request),
+                connection_ref,
+                kind=kind,
+                query=query,
+                project_key=project_key,
+                cursor=cursor,
+                limit=limit,
+            )
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=400,
+            )
+        except Exception as exc:
+            return error_500(exc, log, "Failed to discover Jira resources")
+
+    # ── POST /api/providers/jira/search ──────────────────────────────
+
+    @router.post("/api/providers/jira/search")
+    async def jira_search(request: Request) -> Any:
+        """JQL search: body {connection_ref, jql, limit?, enrich?}."""
+        try:
+            adapter = ctx.jira_provider
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": "Jira provider is not configured"},
+                    status_code=404,
+                )
+            body = await request.json()
+            conn_ref = body.get("connection_ref", "")
+            jql = body.get("jql", "")
+            if not conn_ref or not jql:
+                return JSONResponse(
+                    {"code": "validation_error",
+                     "message": "connection_ref and jql are required"},
+                    status_code=400,
+                )
+            result = adapter.search(
+                principal(request),
+                conn_ref,
+                jql=jql,
+                limit=body.get("limit", 50),
+                enrich=bool(body.get("enrich", False)),
+            )
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=400,
+            )
+        except Exception as exc:
+            return error_500(exc, log, "Failed to search Jira issues")
+
+    # ── POST /api/providers/jira/validate-scope ──────────────────────
+
+    @router.post("/api/providers/jira/validate-scope")
+    async def jira_validate_scope(request: Request) -> Any:
+        """Typed project validation: body {connection_ref, project_key}."""
+        try:
+            adapter = ctx.jira_provider
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": "Jira provider is not configured"},
+                    status_code=404,
+                )
+            body = await request.json()
+            conn_ref = body.get("connection_ref", "")
+            project_key = body.get("project_key", "")
+            if not conn_ref or not project_key:
+                return JSONResponse(
+                    {"code": "validation_error",
+                     "message": "connection_ref and project_key are required"},
+                    status_code=400,
+                )
+            result = adapter.validate_scope(
+                principal(request),
+                conn_ref,
+                project_key,
+            )
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=400,
+            )
+        except Exception as exc:
+            return error_500(exc, log, "Failed to validate Jira scope")
 
     # ── POST /api/watches/{watch_id}/evaluate ────────────────────────
 

@@ -1,7 +1,7 @@
 # Phase 166 - Project Rooms: The Jira Parity (P7)
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 1/7
+- **Status:** ACTIVE 2/7
 - **Chartered:** 2026-09-03 off main `493253d8` (165 The MCP Family MERGED via PR #531 — the TENTH Project Rooms phase merged; this is the LAST §14 slice)
 - **Canon:** docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §14 P7; SRS_PROJECT_INTERVIEW_WATCHES.md §6 PROV-001..012, §8.2 Jira issue parity, §15 V0-D, SETFLOW-005; SRS_PRODUCT_VALIDATION.md (Jira only with a real adapter); CONSTITUTION.md Article III (honest egress)
 
@@ -59,7 +59,7 @@ never deleted), the per-watch cadence write wire (stays ledgered).
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-166-01 | The acli pack + the connection ledger (many accounts × many sites; switch-and-verify) | done | [story-01-the-connection-ledger](./story-01-the-connection-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-166-02 | Discovery + search (projects, issue types, statuses, JQL; routes + MCP) | backlog | [story-02-discovery-and-search](./story-02-discovery-and-search.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-166-02 | Discovery + search (projects, issue types, statuses, JQL; routes + MCP) | done | [story-02-discovery-and-search](./story-02-discovery-and-search.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-166-03 | The JiraWatchSource + templates + candidates (the gate graduates; the fetcher-seam rider) | backlog | [story-03-the-watch-source](./story-03-the-watch-source.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-166-04 | The web face (provider-keyed wizard; the site egress badge; shots) | backlog | [story-04-the-web-face](./story-04-the-web-face.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-166-05 | The live walk (real acli, real site(s), SETFLOW-005 — OWNER VERDICT) | backlog | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
@@ -68,16 +68,16 @@ never deleted), the per-watch cadence write wire (stays ledgered).
 
 ## Where we are
 
-**ACTIVE 1/7 — HS-166-01 DONE.** The acli pack, the
-JiraProviderAdapter, and the (site, email) connection ledger exist;
-Jira now appears in the provider list with honest readiness
-(unavailable / partial / connected) — SETFLOW-005 met at the list.
-PROVEN LIVE against the owner's real acli (OAuth, one account on a
-practice site): switch → status read-back → connected, persisted;
-the wrong-email path typed with the exact login command; acli's own
-account registry enumerated as `known_accounts`. Four orchestrator
-catches paid in-round (the URL-form identity split was found only
-by the live run). NEXT: HS-166-02 discovery + search.
+**ACTIVE 2/7 — HS-166-02 DONE.** Discovery + search over the real
+acli: projects paginated, issue types ENUMERATED, statuses OBSERVED
+(labeled), JQL search with per-issue enrichment under the search
+field cap (calls reported), count, validate_scope; three routes +
+three MCP twins; every call under `_with_account` (switch →
+read-back → command, one lock). PROVEN LIVE on the owner's site
+(2 projects, 3 issues, real due dates, bad JQL typed verbatim).
+Finding carried to 03: Done issues on team-managed sites carry no
+resolution — status_category is the completion signal. NEXT:
+HS-166-03 the JiraWatchSource + templates + candidates + riders.
 
 ## Recorded truths (the orchestrator's own acli runs, 2026-09-03)
 
@@ -150,6 +150,12 @@ at any time with the same commands).
   comparisons the GitHub templates never used. Extend
   watch_validation in ONE place, tests beside it — never a Jira
   fork of the evaluator.
+- **INHERITED LIE found by the 03 recon (paid in 03):** the condition
+  matcher's `older_than`/`newer_than` return False unconditionally
+  (watch_condition_matcher.py:183-190), so `watch.github.
+  delivery_drift` has NEVER matched. §8.2's due-soon/overdue/
+  inactive conditions are the same snapshot-level species; all six
+  land in the ONE matcher against the transition's current entity.
 - Debts carried in: 165's eight counsel N + the legacy-side watch
   guard + the sidecar fetcher seam (both PAID here, 03) + per-watch
   cadence write wire + the scheduled-path trigger route; 164

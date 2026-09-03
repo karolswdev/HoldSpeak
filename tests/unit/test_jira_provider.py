@@ -746,3 +746,611 @@ class TestReadinessConnectedCount:
         adapter, _ = _make_adapter(tmp_path, runner=None)
         r = adapter.readiness(OWNER)
         assert r["connected"] == 0
+
+
+# ════════════════════════════════════════════════════════════════════
+# HS-166-02: Discovery, search, count, validate_scope
+# ════════════════════════════════════════════════════════════════════
+
+
+# ── Recorded acli output shapes for discovery/search ────────────────
+# recorded_from: "acli 1.3.36-stable live, 2026-09-03"
+
+# project list --json --limit 10 (array of REST project objects)
+_PROJECT_LIST_STDOUT = json.dumps([
+    {
+        "id": "10001",
+        "key": "KAN",
+        "name": "WRONG",
+        "projectTypeKey": "software",
+        "style": "next-gen",
+        "isPrivate": False,
+        "lead": {"displayName": "Lead User", "accountId": "712020:abc"},
+        "issueTypes": None,
+    },
+    {
+        "id": "10000",
+        "key": "SAM1",
+        "name": "(Example) Bi-annual Benefits & Wellness Updates",
+        "projectTypeKey": "software",
+        "style": "next-gen",
+        "isPrivate": False,
+        "lead": {"displayName": "Lead User", "accountId": "712020:abc"},
+        "issueTypes": None,
+    },
+])
+
+# project view --key KAN --json (one object WITH issueTypes)
+_PROJECT_VIEW_STDOUT = json.dumps({
+    "id": "10001",
+    "key": "KAN",
+    "name": "WRONG",
+    "projectTypeKey": "software",
+    "style": "next-gen",
+    "isPrivate": False,
+    "issueTypes": [
+        {"id": "10004", "name": "Epic", "subtask": False, "hierarchyLevel": 1},
+        {"id": "10005", "name": "Subtask", "subtask": True, "hierarchyLevel": -1},
+        {"id": "10006", "name": "Task", "subtask": False, "hierarchyLevel": 0},
+    ],
+})
+
+# workitem search --jql "project = KAN" --json --limit 5
+_SEARCH_DEFAULT_STDOUT = json.dumps([
+    {
+        "id": "10006",
+        "key": "KAN-3",
+        "fields": {
+            "assignee": None,
+            "issuetype": {"id": "10005", "name": "Subtask", "subtask": True},
+            "priority": None,
+            "status": {
+                "id": "10006", "name": "Done",
+                "statusCategory": {"id": 3, "key": "done", "name": "Done"},
+            },
+            "summary": "Subtask 2.1",
+            "labels": [],
+        },
+    },
+    {
+        "id": "10004",
+        "key": "KAN-2",
+        "fields": {
+            "assignee": None,
+            "issuetype": {"id": "10006", "name": "Task", "subtask": False},
+            "priority": None,
+            "status": {
+                "id": "10005", "name": "In Progress",
+                "statusCategory": {"id": 4, "key": "indeterminate", "name": "In Progress"},
+            },
+            "summary": "Task 2",
+            "labels": [],
+        },
+    },
+    {
+        "id": "10002",
+        "key": "KAN-1",
+        "fields": {
+            "assignee": None,
+            "issuetype": {"id": "10006", "name": "Task", "subtask": False},
+            "priority": None,
+            "status": {
+                "id": "10005", "name": "In Progress",
+                "statusCategory": {"id": 4, "key": "indeterminate", "name": "In Progress"},
+            },
+            "summary": "Task 1",
+            "labels": [],
+        },
+    },
+])
+
+# workitem search --count
+_SEARCH_COUNT_STDOUT = "✓ Number of work items in the search: 3"
+
+# Bad JQL error
+_BAD_JQL_STDERR = (
+    "✗ Error: failed to parse JQL query: error in jql query: "
+    "expecting either a value, list or function but got '~'. "
+    "you must surround '~' in quotation marks to use it as a value. "
+    "(line 1, character 32)"
+)
+
+# No-project JQL error
+_NO_PROJECT_STDERR = (
+    "✗ Error: failed to parse JQL query: "
+    "the value 'nope' does not exist for the field 'project'."
+)
+
+# workitem view KAN-1 --fields "*all" --json (enrichment fields)
+_VIEW_ALL_STDOUT = json.dumps({
+    "id": "10002",
+    "key": "KAN-1",
+    "fields": {
+        "duedate": "2026-09-10",
+        "resolution": None,
+        "resolutiondate": None,
+        "updated": "2026-09-02T20:02:24.980-0600",
+        "created": "2026-09-02T20:02:24.540-0600",
+        "statuscategorychangedate": "2026-09-02T20:02:24.980-0600",
+        "project": {"key": "KAN", "name": "WRONG"},
+    },
+})
+
+# Standard ref for tests
+_REF = "alpha.atlassian.net|user@example.com"
+
+
+def _discovery_runner(
+    responses: list[dict[str, Any]],
+    call_log: list[list[str]] | None = None,
+) -> Any:
+    """A runner that handles switch + status + command(s) in sequence.
+
+    First two responses are always switch-ok and status-ok for the
+    switch-and-verify discipline; remaining responses are for the
+    actual command(s).
+    """
+    full_responses = [
+        {"stdout": _SWITCH_OK_STDOUT, "returncode": 0},
+        {"stdout": _CONNECTED_STATUS_STDOUT, "returncode": 0},
+        *responses,
+    ]
+    runner, log = _recording_runner(full_responses)
+    if call_log is not None:
+        # Share the same list reference
+        call_log.extend([])  # no-op, we'll use log directly
+
+    class _Wrapper:
+        """Wraps the runner and exposes the call log."""
+        def __init__(self) -> None:
+            self.runner = runner
+            self.call_log = log
+
+        def __call__(self, *args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+            return self.runner(*args, **kwargs)
+
+    w = _Wrapper()
+    return w
+
+
+# ── _with_account: switch + read-back verification ──────────────────
+
+class TestWithAccount:
+    """The switch-and-verify helper runs switch, status, then the command."""
+
+    def test_switch_then_status_then_command(self, tmp_path: Any) -> None:
+        """recorded_from: acli 1.3.36-stable live, 2026-09-03"""
+        w = _discovery_runner([
+            {"stdout": _PROJECT_LIST_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.discover(OWNER, _REF, kind="projects")
+
+        assert result["state"] == "ready"
+        # Verify call order: switch, status, then the actual command
+        assert len(w.call_log) == 3
+        assert w.call_log[0][0:4] == ["acli", "jira", "auth", "switch"]
+        assert w.call_log[1] == ["acli", "jira", "auth", "status"]
+        assert w.call_log[2][0:4] == ["acli", "jira", "project", "list"]
+
+    def test_readback_mismatch_aborts_before_command(self, tmp_path: Any) -> None:
+        """If status reads back a different account, the command NEVER runs."""
+        runner, call_log = _recording_runner([
+            # switch OK
+            {"stdout": _SWITCH_OK_STDOUT, "returncode": 0},
+            # status reads back DIFFERENT site
+            {"stdout": (
+                "✓ Authenticated\n"
+                "  Site: other.atlassian.net\n"
+                "  Email: other@example.com\n"
+                "  Authentication Type: oauth\n"
+            ), "returncode": 0},
+            # This should NEVER be reached:
+            {"stdout": _PROJECT_LIST_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=runner)
+        result = adapter.discover(OWNER, _REF, kind="projects")
+
+        assert result["state"] == "failed"
+        assert result["error_code"] == "scope_denied"
+        assert "read-back mismatch" in result["error_detail"]
+        # Only 2 calls: switch + status (command never ran)
+        assert len(call_log) == 2
+
+
+# ── Discover projects ───────────────────────────────────────────────
+
+class TestDiscoverProjects:
+    """recorded_from: acli 1.3.36-stable live, 2026-09-03"""
+
+    def test_discover_projects_real_fixture(self, tmp_path: Any) -> None:
+        w = _discovery_runner([
+            {"stdout": _PROJECT_LIST_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.discover(OWNER, _REF, kind="projects")
+
+        assert result["state"] == "ready"
+        assert result["error_code"] is None
+        assert result["connection_ref"] == _REF
+        items = result["items"]
+        assert len(items) == 2
+
+        # First item: KAN
+        kan = items[0]
+        assert kan["id"] == "KAN"
+        assert kan["key"] == "KAN"
+        assert kan["name"] == "WRONG"
+        assert kan["project_id"] == "10001"
+        assert kan["type"] == "software"
+        assert kan["style"] == "next-gen"
+        assert kan["private"] is False
+        assert kan["lead"] == "Lead User"
+
+    def test_discover_projects_client_filter(self, tmp_path: Any) -> None:
+        """Client-side filter on key/name (case-insensitive)."""
+        w = _discovery_runner([
+            {"stdout": _PROJECT_LIST_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.discover(OWNER, _REF, kind="projects", query="kan")
+
+        assert result["state"] == "ready"
+        items = result["items"]
+        assert len(items) == 1
+        assert items[0]["key"] == "KAN"
+
+    def test_discover_projects_offset_cursor(self, tmp_path: Any) -> None:
+        """Offset cursor paginates correctly."""
+        w = _discovery_runner([
+            {"stdout": _PROJECT_LIST_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.discover(OWNER, _REF, kind="projects", cursor=1, limit=1)
+
+        assert result["state"] == "ready"
+        items = result["items"]
+        assert len(items) == 1
+        assert items[0]["key"] == "SAM1"
+        assert result["cursor"] is None  # No more items
+
+    def test_discover_projects_limit_cap(self, tmp_path: Any) -> None:
+        """Limit is capped at 100."""
+        w = _discovery_runner([
+            {"stdout": _PROJECT_LIST_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        # The command should use min(999, 100) = 100
+        result = adapter.discover(OWNER, _REF, kind="projects", limit=999)
+
+        assert result["state"] == "ready"
+        # Verify the limit in the acli command
+        cmd = w.call_log[2]  # The project list command
+        limit_idx = cmd.index("--limit")
+        assert int(cmd[limit_idx + 1]) <= 100
+
+    def test_discover_projects_failure_typed(self, tmp_path: Any) -> None:
+        """Non-zero exit with unauthorized text -> CODE_AUTH_REQUIRED."""
+        w = _discovery_runner([
+            {"stderr": _UNAUTH_STATUS, "returncode": 1},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.discover(OWNER, _REF, kind="projects")
+
+        assert result["state"] == "failed"
+        assert result["error_code"] == "authentication_required"
+        assert result["items"] == []
+
+
+# ── Discover issue types ────────────────────────────────────────────
+
+class TestDiscoverIssueTypes:
+    """recorded_from: acli 1.3.36-stable live, 2026-09-03"""
+
+    def test_issue_types_enumerated_from_project_view(self, tmp_path: Any) -> None:
+        """Issue types come from project view (enumerated, not derived)."""
+        w = _discovery_runner([
+            {"stdout": _PROJECT_VIEW_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.discover(
+            OWNER, _REF, kind="issue_types", project_key="KAN",
+        )
+
+        assert result["state"] == "ready"
+        assert result["source"] == "enumerated"
+        items = result["items"]
+        assert len(items) == 3
+
+        names = {it["name"] for it in items}
+        assert names == {"Epic", "Subtask", "Task"}
+
+        # Verify subtask flag
+        subtask = next(it for it in items if it["name"] == "Subtask")
+        assert subtask["subtask"] is True
+        assert subtask["hierarchy_level"] == -1
+
+        epic = next(it for it in items if it["name"] == "Epic")
+        assert epic["subtask"] is False
+        assert epic["hierarchy_level"] == 1
+
+    def test_issue_types_missing_project_key(self, tmp_path: Any) -> None:
+        """Missing project_key -> CODE_QUERY_INVALID."""
+        adapter, _ = _make_adapter(tmp_path, runner=_fake_runner())
+        result = adapter.discover(OWNER, _REF, kind="issue_types")
+
+        assert result["state"] == "failed"
+        assert result["error_code"] == "query_invalid"
+        assert "project_key is required" in result["error_detail"]
+
+
+# ── Discover statuses ───────────────────────────────────────────────
+
+class TestDiscoverStatuses:
+    """recorded_from: acli 1.3.36-stable live, 2026-09-03"""
+
+    def test_statuses_observed_plus_static_categories(self, tmp_path: Any) -> None:
+        """Statuses derived from search, labeled 'observed'; static categories always present."""
+        w = _discovery_runner([
+            {"stdout": _SEARCH_DEFAULT_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.discover(
+            OWNER, _REF, kind="statuses", project_key="KAN",
+        )
+
+        assert result["state"] == "ready"
+        assert result["source"] == "observed"
+        items = result["items"]
+        # Two distinct statuses in the fixture: "Done" and "In Progress"
+        names = {s["name"] for s in items}
+        assert "Done" in names
+        assert "In Progress" in names
+
+        # Each status has category info
+        done = next(s for s in items if s["name"] == "Done")
+        assert done["category"] == "done"
+        assert done["category_name"] == "Done"
+
+        in_prog = next(s for s in items if s["name"] == "In Progress")
+        assert in_prog["category"] == "indeterminate"
+
+        # Static categories always present
+        assert "categories" in result
+        cat_keys = {c["key"] for c in result["categories"]}
+        assert cat_keys == {"new", "indeterminate", "done"}
+        # Every static category labeled
+        for cat in result["categories"]:
+            assert cat["source"] == "static"
+
+    def test_statuses_sorted_by_category_then_name(self, tmp_path: Any) -> None:
+        """Statuses are sorted by category key then name."""
+        w = _discovery_runner([
+            {"stdout": _SEARCH_DEFAULT_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.discover(
+            OWNER, _REF, kind="statuses", project_key="KAN",
+        )
+
+        items = result["items"]
+        # "done" < "indeterminate" alphabetically
+        assert items[0]["category"] == "done"
+        assert items[1]["category"] == "indeterminate"
+
+
+# ── Search ──────────────────────────────────────────────────────────
+
+class TestSearch:
+    """recorded_from: acli 1.3.36-stable live, 2026-09-03"""
+
+    def test_search_normalization_from_real_fixture(self, tmp_path: Any) -> None:
+        """Search normalizes issue objects from the real recorded shape."""
+        w = _discovery_runner([
+            {"stdout": _SEARCH_DEFAULT_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.search(
+            OWNER, _REF, jql='project = KAN',
+        )
+
+        assert result["state"] == "ready"
+        assert result["error_code"] is None
+        assert result["calls"] == 1
+        items = result["items"]
+        assert len(items) == 3
+
+        # First item: KAN-3 (Subtask 2.1, Done, null assignee/priority)
+        kan3 = items[0]
+        assert kan3["key"] == "KAN-3"
+        assert kan3["id"] == "10006"
+        assert kan3["summary"] == "Subtask 2.1"
+        assert kan3["issue_type"] == "Subtask"
+        assert kan3["status"] == "Done"
+        assert kan3["status_category"] == "done"
+        assert kan3["assignee"] is None
+        assert kan3["assignee_id"] is None
+        assert kan3["priority"] is None
+        assert kan3["labels"] == []
+        assert kan3["url"] == "https://alpha.atlassian.net/browse/KAN-3"
+
+    def test_search_url_uses_connection_site(self, tmp_path: Any) -> None:
+        """The url field uses the connection's site."""
+        w = _discovery_runner([
+            {"stdout": _SEARCH_DEFAULT_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.search(OWNER, _REF, jql='project = KAN')
+
+        for item in result["items"]:
+            assert item["url"].startswith("https://alpha.atlassian.net/browse/")
+
+    def test_search_bad_jql_verbatim(self, tmp_path: Any) -> None:
+        """Bad JQL returns query_invalid with acli's message verbatim (stripped prefix)."""
+        w = _discovery_runner([
+            {"stderr": _BAD_JQL_STDERR, "returncode": 1},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.search(OWNER, _REF, jql='project = KAN AND summary ~ ~')
+
+        assert result["state"] == "failed"
+        assert result["error_code"] == "query_invalid"
+        assert "query_invalid" in result
+        # The JQL error message should be present (verbatim, minus the prefix)
+        assert "failed to parse JQL query" in result["query_invalid"]
+
+    def test_search_switch_then_status_then_command(self, tmp_path: Any) -> None:
+        """Every search performs switch + status read-back before the command."""
+        w = _discovery_runner([
+            {"stdout": _SEARCH_DEFAULT_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        adapter.search(OWNER, _REF, jql='project = KAN')
+
+        assert len(w.call_log) == 3
+        assert w.call_log[0][0:4] == ["acli", "jira", "auth", "switch"]
+        assert w.call_log[1] == ["acli", "jira", "auth", "status"]
+        assert "workitem" in w.call_log[2]
+        assert "search" in w.call_log[2]
+
+
+# ── Enrich ──────────────────────────────────────────────────────────
+
+class TestEnrich:
+    """recorded_from: acli 1.3.36-stable live, 2026-09-03"""
+
+    def test_enrich_calls_1_plus_n(self, tmp_path: Any) -> None:
+        """enrich=True calls workitem view for each item (1 search + N views)."""
+        # 3 items in the search fixture -> 1 search + 3 views = 4 calls
+        # (plus 2 for switch+status = 6 total)
+        w = _discovery_runner([
+            {"stdout": _SEARCH_DEFAULT_STDOUT, "returncode": 0},
+            {"stdout": _VIEW_ALL_STDOUT, "returncode": 0},
+            {"stdout": _VIEW_ALL_STDOUT, "returncode": 0},
+            {"stdout": _VIEW_ALL_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.search(
+            OWNER, _REF, jql='project = KAN', enrich=True,
+        )
+
+        assert result["state"] == "ready"
+        assert result["calls"] == 4  # 1 search + 3 views
+
+    def test_enrich_due_at_from_real_view_fixture(self, tmp_path: Any) -> None:
+        """Enriched items carry due_at from the real view fixture."""
+        w = _discovery_runner([
+            # Search returns 1 item
+            {"stdout": json.dumps([{
+                "id": "10002", "key": "KAN-1",
+                "fields": {
+                    "assignee": None,
+                    "issuetype": {"id": "10006", "name": "Task", "subtask": False},
+                    "priority": None,
+                    "status": {
+                        "id": "10005", "name": "In Progress",
+                        "statusCategory": {"id": 4, "key": "indeterminate", "name": "In Progress"},
+                    },
+                    "summary": "Task 1",
+                    "labels": [],
+                },
+            }]), "returncode": 0},
+            # View for enrichment
+            {"stdout": _VIEW_ALL_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.search(
+            OWNER, _REF, jql='project = KAN', enrich=True,
+        )
+
+        assert result["calls"] == 2  # 1 search + 1 view
+        item = result["items"][0]
+        assert item["due_at"] == "2026-09-10"
+        assert item["resolution"] is None
+        assert item["resolved_at"] is None
+        assert item["updated_at"] == "2026-09-02T20:02:24.980-0600"
+        assert item["created_at"] == "2026-09-02T20:02:24.540-0600"
+        assert item["project_key"] == "KAN"
+
+
+# ── Count ───────────────────────────────────────────────────────────
+
+class TestCount:
+    """recorded_from: acli 1.3.36-stable live, 2026-09-03"""
+
+    def test_count_from_real_fixture(self, tmp_path: Any) -> None:
+        w = _discovery_runner([
+            {"stdout": _SEARCH_COUNT_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.count(OWNER, _REF, jql='project = KAN')
+
+        assert result["state"] == "ready"
+        assert result["count"] == 3
+        assert result["error_code"] is None
+
+    def test_count_bad_jql(self, tmp_path: Any) -> None:
+        w = _discovery_runner([
+            {"stderr": _BAD_JQL_STDERR, "returncode": 1},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.count(OWNER, _REF, jql='bad jql ~')
+
+        assert result["state"] == "failed"
+        assert result["error_code"] == "query_invalid"
+        assert result["count"] is None
+
+
+# ── Validate scope ──────────────────────────────────────────────────
+
+class TestValidateScope:
+    """recorded_from: acli 1.3.36-stable live, 2026-09-03"""
+
+    def test_validate_scope_valid(self, tmp_path: Any) -> None:
+        w = _discovery_runner([
+            {"stdout": _PROJECT_VIEW_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.validate_scope(OWNER, _REF, "KAN")
+
+        assert result["valid"] is True
+        assert result["error_code"] is None
+        assert result["connection_ref"] == _REF
+
+        # Project info
+        project = result["project"]
+        assert project["key"] == "KAN"
+        assert project["name"] == "WRONG"
+        assert project["type"] == "software"
+        assert project["style"] == "next-gen"
+
+        # Issue types ride along
+        types = result["issue_types"]
+        assert len(types) == 3
+        names = {t["name"] for t in types}
+        assert names == {"Epic", "Subtask", "Task"}
+
+    def test_validate_scope_invalid(self, tmp_path: Any) -> None:
+        w = _discovery_runner([
+            {"stderr": _NO_PROJECT_STDERR, "returncode": 1},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        result = adapter.validate_scope(OWNER, _REF, "NOPE")
+
+        assert result["valid"] is False
+        assert result["error_code"] == "query_invalid"
+        assert result["project"] is None
+        assert result["issue_types"] == []
+
+    def test_validate_scope_switch_then_status_then_command(self, tmp_path: Any) -> None:
+        """validate_scope also follows the switch + status discipline."""
+        w = _discovery_runner([
+            {"stdout": _PROJECT_VIEW_STDOUT, "returncode": 0},
+        ])
+        adapter, _ = _make_adapter(tmp_path, runner=w)
+        adapter.validate_scope(OWNER, _REF, "KAN")
+
+        assert len(w.call_log) == 3
+        assert w.call_log[0][0:4] == ["acli", "jira", "auth", "switch"]
+        assert w.call_log[1] == ["acli", "jira", "auth", "status"]
+        assert w.call_log[2][0:4] == ["acli", "jira", "project", "view"]

@@ -579,6 +579,55 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    # ── Jira discovery + search tools (HS-166-02) ─────────────────
+    {
+        "name": "provider.jira_discover",
+        "description": "Discover Jira resources (projects, issue types, statuses) for a connection.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.jira_discover@1",
+            "type": "object",
+            "properties": {
+                "connection_ref": {"type": "string", "description": "Connection ref (site|email)."},
+                "kind": {"type": "string", "description": "Resource kind: projects, issue_types, statuses.", "default": "projects"},
+                "query": {"type": "string", "description": "Filter text (substring match on key/name for projects).", "default": ""},
+                "project_key": {"type": "string", "description": "Project key (required for issue_types and statuses).", "default": ""},
+                "cursor": {"type": "integer", "description": "Offset cursor for pagination."},
+                "limit": {"type": "integer", "description": "Max items to return (capped at 100).", "default": 30},
+            },
+            "required": ["connection_ref"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.jira_search",
+        "description": "Search Jira issues by JQL query.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.jira_search@1",
+            "type": "object",
+            "properties": {
+                "connection_ref": {"type": "string", "description": "Connection ref (site|email)."},
+                "jql": {"type": "string", "description": "JQL query (passed through verbatim)."},
+                "limit": {"type": "integer", "description": "Max items to return (capped at 200).", "default": 50},
+                "enrich": {"type": "boolean", "description": "Enrich each item with duedate, resolution, etc. via workitem view.", "default": False},
+            },
+            "required": ["connection_ref", "jql"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.jira_validate_scope",
+        "description": "Validate a Jira project key (the validate_repo twin).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.jira_validate_scope@1",
+            "type": "object",
+            "properties": {
+                "connection_ref": {"type": "string", "description": "Connection ref (site|email)."},
+                "project_key": {"type": "string", "description": "Jira project key (e.g. 'KAN')."},
+            },
+            "required": ["connection_ref", "project_key"],
+            "additionalProperties": False,
+        },
+    },
     # ── graduated watch driver tools (HS-165-03) ────────────────────
     # The 164 boundary rule's MCP twin: these tools operate ONLY on
     # graduated rows (state in active/tested/paused/retired).  Legacy
@@ -1496,6 +1545,67 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         if not ref:
             raise ValidationError("connection_ref is required")
         return adapter.connection_status(principal, ref)
+
+    # ── Jira discovery + search tools (HS-166-02) ──────────────────
+    # Mirrors: holdspeak/web/routes/providers.py Jira discover/search/validate routes.
+
+    if name == "provider.jira_discover":
+        # Web parity: providers.py jira_discover
+        adapter = _jira_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Jira provider is not configured",
+                context={"status": 404},
+            )
+        ref = str(arguments.get("connection_ref", "")).strip()
+        if not ref:
+            raise ValidationError("connection_ref is required")
+        return adapter.discover(
+            principal,
+            ref,
+            kind=arguments.get("kind", "projects"),
+            query=arguments.get("query", ""),
+            project_key=arguments.get("project_key", ""),
+            cursor=arguments.get("cursor"),
+            limit=arguments.get("limit", 30),
+        )
+
+    if name == "provider.jira_search":
+        # Web parity: providers.py jira_search
+        adapter = _jira_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Jira provider is not configured",
+                context={"status": 404},
+            )
+        ref = str(arguments.get("connection_ref", "")).strip()
+        jql = str(arguments.get("jql", "")).strip()
+        if not ref or not jql:
+            raise ValidationError("connection_ref and jql are required")
+        return adapter.search(
+            principal,
+            ref,
+            jql=jql,
+            limit=arguments.get("limit", 50),
+            enrich=bool(arguments.get("enrich", False)),
+        )
+
+    if name == "provider.jira_validate_scope":
+        # Web parity: providers.py jira_validate_scope
+        adapter = _jira_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Jira provider is not configured",
+                context={"status": 404},
+            )
+        ref = str(arguments.get("connection_ref", "")).strip()
+        project_key = str(arguments.get("project_key", "")).strip()
+        if not ref or not project_key:
+            raise ValidationError("connection_ref and project_key are required")
+        return adapter.validate_scope(principal, ref, project_key)
 
     # ── graduated watch driver tools (HS-165-03) ────────────────────
     # Mirrors: holdspeak/web/routes/watches.py + providers.py:158

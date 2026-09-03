@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 166
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-166-01
 - **Unblocks:** HS-166-03
 - **Owner:** unassigned
@@ -45,11 +45,39 @@ searchable, bounded/paginated, stable-ID, tolerant of partial pages.
 
 ## Acceptance criteria
 
-- [ ] Projects paginate with a stable cursor; a partial page returns `partial` with what it got; a bad JQL returns `query_invalid` with acli's message.
-- [ ] Issue types + statuses resolve for a real project key — enumerated or honestly `derived`, never invented (PROV-011).
-- [ ] Routes and MCP tools return byte-equal shapes (parity assertions), each naming its connection ref.
+- [x] Projects paginate with a stable cursor; a partial page returns `partial` with what it got; a bad JQL returns `query_invalid` with acli's message.
+- [x] Issue types + statuses resolve for a real project key — enumerated or honestly `derived`, never invented (PROV-011).
+- [x] Routes and MCP tools return byte-equal shapes (parity assertions), each naming its connection ref.
 
 ## Test plan
 
 - **Unit:** tests/unit/test_jira_provider.py (discover/search/validate with recorded outputs).
 - **Integration:** tests/integration/test_provider_routes.py (the jira routes + MCP parity beside the github block).
+
+## Trace record (orchestrator round, 2026-09-03)
+
+- Shipped on JiraProviderAdapter: `_with_account` (ONE helper:
+  binary check → lock → switch → status read-back → the command
+  closure, all under the lock; a mismatch aborts BEFORE the command
+  — under test), `discover(kind=projects|issue_types|statuses)`,
+  `search(enrich=)`, `count`, `validate_scope`; three routes + three
+  MCP twins delegating to the route helpers; allowlist NOT widened;
+  no schema change. MCP TOOLS pin 40→43, honest.
+- Discovery truth on the real CLI: issue types are ENUMERATED
+  (`project view --key K --json` carries issueTypes: Epic/Subtask/
+  Task); statuses are OBSERVED from one bounded `--fields key,status`
+  search (labeled `observed`), with Jira's three fixed categories
+  labeled `static`. The search field cap honored: search fetches
+  the allowed fields; `enrich=True` adds due/resolution/updated per
+  issue via `workitem view` and reports `calls` (1 + N).
+- LIVE PROOF (the owner's real site): 2 projects discovered; types
+  enumerated; statuses observed (Done/done, In Progress/
+  indeterminate); search of 3 issues with enrichment = 4 calls,
+  due dates real (2026-09-10, 2026-09-17); count 2 not-done; bad
+  JQL → `query_invalid` with Jira's message verbatim; validate KAN
+  true with types, NOPE false typed.
+- FINDING for 03: on this team-managed site a Done issue carries
+  `resolution: null`. The existing `jira.issue.resolved` diff (fires
+  on resolution appearing) will never fire there; `status_category`
+  → `done` is the honest completion signal and the templates must
+  condition on it. Recorded, never invented.
