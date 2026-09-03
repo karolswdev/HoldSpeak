@@ -1,7 +1,7 @@
 # Phase 166 - Project Rooms: The Jira Parity (P7)
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 4/7
+- **Status:** ACTIVE 5/7
 - **Chartered:** 2026-09-03 off main `493253d8` (165 The MCP Family MERGED via PR #531 — the TENTH Project Rooms phase merged; this is the LAST §14 slice)
 - **Canon:** docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §14 P7; SRS_PROJECT_INTERVIEW_WATCHES.md §6 PROV-001..012, §8.2 Jira issue parity, §15 V0-D, SETFLOW-005; SRS_PRODUCT_VALIDATION.md (Jira only with a real adapter); CONSTITUTION.md Article III (honest egress)
 
@@ -68,8 +68,11 @@ never deleted), the per-watch cadence write wire (stays ledgered).
 
 ## Where we are
 
-**ACTIVE 4/7 — HS-166-04 DONE (after the owner's bounce and the
-redesign he ratified).** The Jira face is composed only from the
+**ACTIVE 5/7 — HS-166-06 the docs DONE (760183a0) after HS-166-04
+the face (099c2206).** Canon says acli (§8.2 + V0-D); README
+prerequisites; docs/PROJECT_ROOMS.md new; MCP_SIDECAR + API_SURFACE +
+CONNECTOR_DEVELOPMENT carry the Jira surface; guards green on the
+shipping tree. HS-166-05 the live walk is in build. On 04: The Jira face is composed only from the
 surface library: account and project ChoiceCards, StateChips,
 ProvenanceChips naming the site, the population gadget sheet, a
 ProgressPlan that lights up during the test, ledger rows for matches
