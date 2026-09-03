@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 167
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-167-01
 - **Unblocks:** HS-167-04, HS-167-05
 - **Owner:** unassigned
@@ -40,9 +40,32 @@ room enjoys them — no one-room-only species.
 
 ## Acceptance criteria
 
-- [ ] Every species in the design exists in the barrel with a contract.md entry, tokens, a11y, vitest; zero private copies remain (grep fence for computeScrollHint outside the barrel).
-- [ ] The eight glass rigs run on the shared conftest, each building first, all green on the UNCHANGED faces (the reform breaks nothing).
-- [ ] Web baseline zero branch-new; the token validator green.
+- [x] Every species in the design exists in the barrel with a contract.md entry, tokens, a11y, vitest; zero private copies remain (grep fence for computeScrollHint outside the barrel).
+- [x] The eight glass rigs run on the shared conftest, each building first, all green on the UNCHANGED faces (the reform breaks nothing).
+- [x] Web baseline zero branch-new; the token validator green.
+
+## Landed (2026-09-03)
+
+SurfaceIdentity, SurfaceLedgerRow `trailing` + `wrap`, SurfaceVerbs
+`active`, ScrollHint (axis prop; DoorBoardLane + the steward posture
+consume it; the private copies are thin re-exports — ledgered) in the
+barrel with contract.md sections + the DeskEditor note; JiraWizard's
+raw px tokenized (its glass rig unchanged); EgressBadge already
+delegated (six raw `.egress-badge` sites remain outside the barrel —
+04/05 debt). tests/e2e/glass_infra.py is the ONE `_boot`/`_api`/
+`_assert_clean`/`_ensure_build` (conftest.py is not importable as a
+module — pytest's own rule); two copies reconciled honestly
+(`_assert_clean` filters ResizeObserver noise; 166's raw-status `_api`
+became `_api_allow_error`). ORCHESTRATOR CATCH: the worker's
+`_ensure_build` trusted any existing marker — the 163 stale-pixels
+theater reborn; rewritten to build whenever a web source is newer
+than the marker, under a cross-process file lock (xdist-safe); the
+first honest run rebuilt in 4.1s — the marker HAD been stale. Gates
+read: surface vitest 252/252; token gate clean; the eight glass rigs
+46 passed + 1 honest skip (`gh` auth absent in the isolated HOME) in
+parallel; DoorBoardLane 55/55; web baseline zero branch-new (a first
+run's single Door hit was a mid-edit artifact, clean on the settled
+tree).
 
 ## Test plan
 

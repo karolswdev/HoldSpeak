@@ -3085,3 +3085,176 @@ button.surface-edit-in-place:hover {
   gap: 6px;
   padding: 2px 0;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   HS-167-03 — SurfaceIdentity: the project orientation band.
+   Name (the Primary type step), chip row, purpose, outcome.
+   ══════════════════════════════════════════════════════════════════════ */
+.surface-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 var(--desk-surface-row-pad-x) var(--space-2);
+}
+.surface-identity-name {
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
+  color: var(--text);
+  min-width: 0;
+}
+.surface-identity-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.surface-identity-trailing {
+  margin-left: auto;
+}
+.surface-identity-purpose {
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-body-size);
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+.surface-identity-outcome {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.surface-identity-outcome-mark {
+  flex: none;
+  color: var(--text-muted);
+}
+
+/* HS-167-03 — SurfaceVerbs active verb styling.
+   A verb with aria-current="true" inside the verb bar renders as
+   the etched lit state (sunken well). */
+.surface-verbs-actions [aria-current="true"] {
+  background: var(--desk-window-well);
+  box-shadow: var(--desk-window-etch);
+  color: var(--text);
+}
+/* HS-167-03 — count chip inside a verb button. */
+.surface-verb-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  background: var(--wash-1);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text);
+}
+
+/* HS-167-03 — SurfaceLedgerRow trailing slot: a quiet verb or chevron
+   right-aligned after cells, its own grid slot. */
+.surface-ledger-trailing {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--text-faint);
+  font-size: var(--desk-surface-label-size);
+}
+/* Extend the default grid to include the trailing column. */
+.surface-ledger-line[data-has-trailing] {
+  grid-template-columns: 52px minmax(0, 1fr) max-content 6ch max-content max-content;
+}
+
+/* HS-167-03 — SurfaceLedgerRow wrap: primary wraps instead of
+   ellipsizing; cells fall under at the narrow container. */
+.surface-ledger-row[data-wrap] .surface-ledger-primary {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+@container surface (max-width: 559.9px) {
+  .surface-ledger-row[data-wrap] .surface-ledger-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .surface-ledger-row[data-wrap] .surface-ledger-primary {
+    flex: 1 1 100%;
+  }
+  /* Trailing slot is not hidden -- sits inline at the narrow container. */
+  .surface-ledger-row[data-wrap] .surface-ledger-line[data-has-trailing]
+    .surface-ledger-trailing {
+    margin-left: auto;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HS-167-03 — ScrollHint: gradient edge fades for scrolling wells.
+   ONE species, axis prop (x or y).
+   ══════════════════════════════════════════════════════════════════════ */
+.surface-scroll-hint {
+  position: relative;
+}
+/* Horizontal (axis=x) — absolute pseudo-elements on the wrapper. */
+.surface-scroll-hint[data-axis="x"]::before,
+.surface-scroll-hint[data-axis="x"]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  display: none;
+  pointer-events: none;
+  z-index: var(--desk-z-local);
+}
+.surface-scroll-hint[data-axis="x"]::before {
+  left: 0;
+  background: linear-gradient(to right, var(--surface-1), transparent);
+}
+.surface-scroll-hint[data-axis="x"]::after {
+  right: 0;
+  background: linear-gradient(to left, var(--surface-1), transparent);
+}
+.surface-scroll-hint[data-axis="x"][data-scroll-hint="right"]::after,
+.surface-scroll-hint[data-axis="x"][data-scroll-hint="both"]::before,
+.surface-scroll-hint[data-axis="x"][data-scroll-hint="both"]::after,
+.surface-scroll-hint[data-axis="x"][data-scroll-hint="left"]::before {
+  display: block;
+}
+/* Vertical (axis=y) — sticky pseudo-elements within the flow. */
+.surface-scroll-hint[data-axis="y"]::before,
+.surface-scroll-hint[data-axis="y"]::after {
+  content: "";
+  position: sticky;
+  left: 0;
+  right: 0;
+  height: 28px;
+  display: none;
+  pointer-events: none;
+  z-index: var(--desk-z-local);
+  flex-shrink: 0;
+}
+.surface-scroll-hint[data-axis="y"]::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--surface-1), transparent);
+  margin-bottom: -28px;
+}
+.surface-scroll-hint[data-axis="y"]::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--surface-1), transparent);
+  margin-top: -28px;
+}
+.surface-scroll-hint[data-axis="y"][data-scroll-hint="bottom"]::after,
+.surface-scroll-hint[data-axis="y"][data-scroll-hint="both"]::before,
+.surface-scroll-hint[data-axis="y"][data-scroll-hint="both"]::after,
+.surface-scroll-hint[data-axis="y"][data-scroll-hint="top"]::before {
+  display: block;
+}

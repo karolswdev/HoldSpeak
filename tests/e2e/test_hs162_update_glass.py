@@ -32,6 +32,8 @@ from typing import Any
 
 import pytest
 
+from .glass_infra import _boot, _api, _assert_clean, _normal_chair, _ensure_build, _api_text
+
 pytest.importorskip("playwright.sync_api", reason="Update glass needs Playwright")
 
 TOKEN = "hs162-update-glass"
@@ -46,94 +48,7 @@ STOPWATCH_JSON = (
 # ── Boot / helpers ──────────────────────────────────────────────────
 
 
-def _boot(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> tuple[Any, str]:
-    """Boot a real MeetingWebServer with isolated DB.
-
-    In a fresh DB the hub has no inference assignments, so model drafting
-    fails at _resolve_for_capability -> fallback_reason="model_unavailable".
-    """
-    import holdspeak.config as config_module
-    import holdspeak.db.core as db_core
-    from holdspeak.db import reset_database
-    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
-
-    home = tmp_path / "home"
-    home.mkdir()
-    browser_cache = Path(
-        os.environ.get(
-            "PLAYWRIGHT_BROWSERS_PATH",
-            Path.home() / "Library/Caches/ms-playwright",
-        )
-    )
-    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
-    monkeypatch.setenv("HOME", str(home))
-    monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
-    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
-    reset_database()
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=lambda *_: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-        ),
-        auth_token=TOKEN,
-    )
-    return server, server.start()
-
-
-def _api(
-    page: Any, method: str, path: str,
-    body: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Browser-side fetch through the real hub."""
-    result = page.evaluate(
-        """async ([method, path, body, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: {
-              authorization: `Bearer ${token}`,
-              ...(body ? {"content-type": "application/json"} : {}),
-            },
-            body: body ? JSON.stringify(body) : undefined,
-          });
-          const contentType = response.headers.get("content-type") || "";
-          const payload = contentType.includes("json")
-            ? await response.json()
-            : await response.text();
-          return {status: response.status, payload};
-        }""",
-        [method, path, body, TOKEN],
-    )
-    assert result["status"] < 300, f"HTTP {result['status']}: {result}"
-    payload = result["payload"]
-    return payload if isinstance(payload, dict) else {}
-
-
-def _api_text(page: Any, method: str, path: str) -> str:
-    """Browser-side fetch returning raw text."""
-    return page.evaluate(
-        """async ([method, path, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: { authorization: `Bearer ${token}` },
-          });
-          return await response.text();
-        }""",
-        [method, path, TOKEN],
-    )
-
-
 _RAW_ID_RE = re.compile(r"^p[a-z]+_[0-9a-f]{16,}")
-
-
-def _assert_clean(page: Any, errors: list[str]) -> None:
-    """Overflow + JS error assertion."""
-    real_errors = [e for e in errors if "ResizeObserver" not in e]
-    assert not real_errors, real_errors
-    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
 
 
 def _assert_no_raw_ids(page: Any) -> None:
@@ -164,18 +79,10 @@ def _assert_no_raw_ids(page: Any) -> None:
             )
 
 
-def _normal_chair(page: Any) -> None:
-    chair = page.locator(".chair")
-    chair.wait_for()
-    if chair.evaluate("element => element.classList.contains('chair-first-value')"):
-        page.get_by_role("button", name="Continue later", exact=True).click()
-    page.locator(".chair:not(.chair-first-value)").wait_for()
-
-
 def _init_desk(page: Any, url: str) -> None:
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    _api(page, "POST", "/api/desk/seed")
-    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    _api(page, "POST", "/api/desk/seed", token=TOKEN)
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
 
 
 def _open_project_room(page: Any, url: str, project_id: str) -> None:
@@ -197,7 +104,7 @@ def _create_project_api(page: Any) -> str:
         "name": "Update Glass Project",
         "description": "Seeded for HS-162-06 update glass.",
         "command_id": "hs162-glass-create-proj",
-    })
+    }, token=TOKEN)
     return created["project"]["id"]
 
 
@@ -209,7 +116,7 @@ def _seed_room_items(page: Any, project_id: str) -> None:
         "title": "Q4 Payments Platform Integration",
         "lifecycle": "active",
         "summary": "Integrate payment gateway with event sourcing",
-    })
+    }, token=TOKEN)
     _api(page, "POST", base, {
         "item_type": "risk",
         "title": "PCI compliance deadline at risk",
@@ -218,7 +125,7 @@ def _seed_room_items(page: Any, project_id: str) -> None:
         "summary": "Compliance docs overdue; 30-day deadline approaching",
         "details": {"likelihood": "high", "impact": "critical",
                     "mitigation": "Escalate to compliance team this week"},
-    })
+    }, token=TOKEN)
     _api(page, "POST", base, {
         "item_type": "dependency",
         "title": "Infrastructure team load test environment",
@@ -226,7 +133,7 @@ def _seed_room_items(page: Any, project_id: str) -> None:
         "summary": "Black Friday load test env provisioning stalled",
         "details": {"direction": "upstream",
                     "counterpart_ref": "team:infrastructure"},
-    })
+    }, token=TOKEN)
     _api(page, "POST", base, {
         "item_type": "milestone",
         "title": "Gateway MVP sign-off",
@@ -234,7 +141,7 @@ def _seed_room_items(page: Any, project_id: str) -> None:
         "due_at": future_due,
         "summary": "Feature-complete milestone for the payment gateway",
         "details": {},
-    })
+    }, token=TOKEN)
 
 
 def _seed_unverified_update(page: Any, project_id: str) -> str:
@@ -321,10 +228,11 @@ def test_stopwatch_and_retention(
 
     Measures wall-clock per segment (bar < 300s) and retention (>= 0.70).
     """
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     segments: dict[str, float] = {}
@@ -436,12 +344,12 @@ def test_stopwatch_and_retention(
             segments["draft_deterministic"] = time.monotonic() - t0
 
             # -- Read the generated body via API (the body_md from the draft) --
-            updates_resp = _api(page, "GET", f"/api/projects/{project_id}/updates?lifecycle=draft")
+            updates_resp = _api(page, "GET", f"/api/projects/{project_id}/updates?lifecycle=draft", token=TOKEN)
             det_drafts = [u for u in updates_resp.get("updates", [])
                           if u.get("generator") == "deterministic"]
             assert len(det_drafts) >= 1, "No deterministic draft found"
             update_id = det_drafts[0]["id"]
-            generated_body = _api_text(page, "GET", f"/api/updates/{update_id}/markdown")
+            generated_body = _api_text(page, "GET", f"/api/updates/{update_id}/markdown", token=TOKEN)
             assert len(generated_body) > 50, f"Generated body too short ({len(generated_body)} chars)"
 
             # -- Verify CodeMirror editor is present --
@@ -514,7 +422,7 @@ def test_stopwatch_and_retention(
             segments["copy_markdown"] = time.monotonic() - t0
 
             # -- Verify via GET endpoint --
-            copied_md = _api_text(page, "GET", f"/api/updates/{update_id}/markdown")
+            copied_md = _api_text(page, "GET", f"/api/updates/{update_id}/markdown", token=TOKEN)
             assert len(copied_md) > 50
             assert "Owner note" in copied_md, "Human edit not preserved in the copied artifact"
 
@@ -557,10 +465,11 @@ def test_degraded_model_fallback(
     """No inference assignments -> Draft with model -> falls back to
     deterministic with honest generator provenance + fallback_reason.
     Source rows still resolve (UPD-003 on glass)."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
 
@@ -634,10 +543,11 @@ def test_publish_immutability_regenerate(
 ) -> None:
     """Draft -> publish -> Material rendered document with Sources rows ->
     regenerate mints NEW draft -> room revision advanced."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
 
@@ -654,7 +564,7 @@ def test_publish_immutability_regenerate(
             project_id = _create_project_api(page)
             _seed_room_items(page, project_id)
 
-            room_before = _api(page, "GET", f"/api/projects/{project_id}/room")
+            room_before = _api(page, "GET", f"/api/projects/{project_id}/room", token=TOKEN)
             rev_before = room_before.get("revision", 0)
 
             _open_project_room(page, url, project_id)
@@ -669,11 +579,11 @@ def test_publish_immutability_regenerate(
             editor.wait_for(timeout=15000)
 
             # Get the draft body via API for later comparison
-            updates_resp = _api(page, "GET", f"/api/projects/{project_id}/updates?lifecycle=draft")
+            updates_resp = _api(page, "GET", f"/api/projects/{project_id}/updates?lifecycle=draft", token=TOKEN)
             drafts = updates_resp.get("updates", [])
             assert len(drafts) >= 1
             update_id = drafts[0]["id"]
-            draft_body = _api_text(page, "GET", f"/api/updates/{update_id}/markdown")
+            draft_body = _api_text(page, "GET", f"/api/updates/{update_id}/markdown", token=TOKEN)
 
             # -- Publish --
             page.get_by_test_id("update-verb-publish").click()
@@ -728,7 +638,7 @@ def test_publish_immutability_regenerate(
             assert (SHOTS / f"published-readonly-{width}.png").stat().st_size > 20_000
 
             # -- Published body via API unchanged --
-            published_md = _api_text(page, "GET", f"/api/updates/{update_id}/markdown")
+            published_md = _api_text(page, "GET", f"/api/updates/{update_id}/markdown", token=TOKEN)
             assert published_md == draft_body
 
             # -- Regenerate --
@@ -741,16 +651,16 @@ def test_publish_immutability_regenerate(
                 timeout=15000,
             )
 
-            updates_resp2 = _api(page, "GET", f"/api/projects/{project_id}/updates?lifecycle=draft")
+            updates_resp2 = _api(page, "GET", f"/api/projects/{project_id}/updates?lifecycle=draft", token=TOKEN)
             new_drafts = updates_resp2.get("updates", [])
             assert len(new_drafts) >= 1
             assert new_drafts[0]["id"] != update_id, "Regenerate should create a NEW draft"
 
             # Published body immutable
-            assert _api_text(page, "GET", f"/api/updates/{update_id}/markdown") == published_md
+            assert _api_text(page, "GET", f"/api/updates/{update_id}/markdown", token=TOKEN) == published_md
 
             # Room revision advanced
-            rev_after = _api(page, "GET", f"/api/projects/{project_id}/room").get("revision", 0)
+            rev_after = _api(page, "GET", f"/api/projects/{project_id}/room", token=TOKEN).get("revision", 0)
             assert rev_after > rev_before, f"Room revision should advance: {rev_before} -> {rev_after}"
 
             _assert_clean(page, errors)

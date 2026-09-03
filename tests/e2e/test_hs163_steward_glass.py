@@ -20,7 +20,6 @@ Determinism: fixture legs x2 (run the file twice, both green).
 from __future__ import annotations
 
 import json
-import os
 import re
 import threading
 import time
@@ -29,6 +28,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
+from .glass_infra import _boot, _api, _assert_clean, _normal_chair, _ensure_build
 
 pytest.importorskip("playwright.sync_api", reason="Steward glass needs Playwright")
 
@@ -48,104 +49,6 @@ _RAW_ID_RE = re.compile(r"p[a-z]+_[0-9a-f]{16,}")
 
 
 # ── Boot / helpers ──────────────────────────────────────────────────
-
-
-def _boot(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> tuple[Any, str]:
-    """Boot a real MeetingWebServer with isolated DB.
-
-    Fully wired steward service (collector, delta, update, project, door).
-    """
-    import holdspeak.config as config_module
-    import holdspeak.db.core as db_core
-    from holdspeak.db import reset_database
-    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
-
-    home = tmp_path / "home"
-    home.mkdir()
-    browser_cache = Path(
-        os.environ.get(
-            "PLAYWRIGHT_BROWSERS_PATH",
-            Path.home() / "Library/Caches/ms-playwright",
-        )
-    )
-    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
-    monkeypatch.setenv("HOME", str(home))
-    monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
-    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
-    reset_database()
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=lambda *_: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-        ),
-        auth_token=TOKEN,
-    )
-    return server, server.start()
-
-
-def _api(
-    page: Any, method: str, path: str,
-    body: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Browser-side fetch through the real hub."""
-    result = page.evaluate(
-        """async ([method, path, body, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: {
-              authorization: `Bearer ${token}`,
-              ...(body ? {"content-type": "application/json"} : {}),
-            },
-            body: body ? JSON.stringify(body) : undefined,
-          });
-          const contentType = response.headers.get("content-type") || "";
-          const payload = contentType.includes("json")
-            ? await response.json()
-            : await response.text();
-          return {status: response.status, payload};
-        }""",
-        [method, path, body, TOKEN],
-    )
-    assert result["status"] < 300, f"HTTP {result['status']}: {result}"
-    payload = result["payload"]
-    return payload if isinstance(payload, dict) else {}
-
-
-def _api_allow_error(
-    page: Any, method: str, path: str,
-    body: dict[str, Any] | None = None,
-) -> tuple[int, Any]:
-    """Like _api but returns (status, payload) without asserting."""
-    result = page.evaluate(
-        """async ([method, path, body, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: {
-              authorization: `Bearer ${token}`,
-              ...(body ? {"content-type": "application/json"} : {}),
-            },
-            body: body ? JSON.stringify(body) : undefined,
-          });
-          const contentType = response.headers.get("content-type") || "";
-          const payload = contentType.includes("json")
-            ? await response.json()
-            : await response.text();
-          return {status: response.status, payload};
-        }""",
-        [method, path, body, TOKEN],
-    )
-    return result["status"], result["payload"]
-
-
-def _assert_clean(page: Any, errors: list[str]) -> None:
-    """Overflow + JS error assertion."""
-    real_errors = [e for e in errors if "ResizeObserver" not in e]
-    assert not real_errors, real_errors
-    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
 
 
 def _assert_no_raw_ids(page: Any, scope_testid: str = "steward-posture") -> None:
@@ -176,18 +79,10 @@ def _assert_no_raw_ids(page: Any, scope_testid: str = "steward-posture") -> None
             )
 
 
-def _normal_chair(page: Any) -> None:
-    chair = page.locator(".chair")
-    chair.wait_for()
-    if chair.evaluate("element => element.classList.contains('chair-first-value')"):
-        page.get_by_role("button", name="Continue later", exact=True).click()
-    page.locator(".chair:not(.chair-first-value)").wait_for()
-
-
 def _init_desk(page: Any, url: str) -> None:
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    _api(page, "POST", "/api/desk/seed")
-    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    _api(page, "POST", "/api/desk/seed", token=TOKEN)
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
 
 
 def _open_project_room(page: Any, url: str, project_id: str) -> None:
@@ -209,7 +104,7 @@ def _create_project_api(page: Any) -> str:
         "name": "Steward Glass Project",
         "description": "Seeded for HS-163-06 steward glass.",
         "command_id": "hs163-glass-create-proj",
-    })
+    }, token=TOKEN)
     return created["project"]["id"]
 
 
@@ -234,7 +129,7 @@ def _seed_room_items(page: Any, project_id: str) -> list[str]:
         "summary": "Compliance docs overdue; 30-day deadline approaching",
         "details": {"likelihood": "high", "impact": "critical",
                     "mitigation": "Escalate to compliance team this week"},
-    })
+    }, token=TOKEN)
     item_ids.append(resp.get("item", {}).get("id", ""))
 
     # 2. Active workstream (not overdue, not a Door candidate)
@@ -243,7 +138,7 @@ def _seed_room_items(page: Any, project_id: str) -> list[str]:
         "title": "Q4 Payments Platform Integration",
         "lifecycle": "active",
         "summary": "Integrate payment gateway with event sourcing",
-    })
+    }, token=TOKEN)
     item_ids.append(resp.get("item", {}).get("id", ""))
 
     # 3. Dependency at_risk (blocking, Door candidate but lower priority than HIGH risk)
@@ -254,7 +149,7 @@ def _seed_room_items(page: Any, project_id: str) -> list[str]:
         "summary": "Black Friday load test env provisioning stalled",
         "details": {"direction": "upstream",
                     "counterpart_ref": "team:infrastructure"},
-    })
+    }, token=TOKEN)
     item_ids.append(resp.get("item", {}).get("id", ""))
 
     # 4. Future milestone (not overdue)
@@ -264,7 +159,7 @@ def _seed_room_items(page: Any, project_id: str) -> list[str]:
         "lifecycle": "planned",
         "due_at": future_due,
         "summary": "Feature-complete milestone for the payment gateway",
-    })
+    }, token=TOKEN)
     item_ids.append(resp.get("item", {}).get("id", ""))
 
     return item_ids
@@ -287,12 +182,12 @@ def _set_policy(page: Any, project_id: str,
         "max_actions_per_run": 10,
         "cooldown_seconds": 0,
         "enabled": True,
-    })
+    }, token=TOKEN)
 
 
 def _count_door_items(page: Any) -> int:
     """Count all door action items via the wire."""
-    resp = _api(page, "GET", "/api/door")
+    resp = _api(page, "GET", "/api/door", token=TOKEN)
     board = resp.get("board", {})
     total = 0
     for bucket in ("now", "waiting", "unassigned", "overdue"):
@@ -304,7 +199,7 @@ def _poll_run_completed(page: Any, run_id: str, timeout: float = 60) -> dict[str
     """Poll GET /api/steward/runs/{run_id} until terminal state."""
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        resp = _api(page, "GET", f"/api/steward/runs/{run_id}")
+        resp = _api(page, "GET", f"/api/steward/runs/{run_id}", token=TOKEN)
         run = resp.get("run", {})
         state = run.get("state", "")
         if state in ("completed", "interrupted", "failed"):
@@ -328,10 +223,11 @@ def test_dogfood_run_and_dedup(
 
     STW-011 proven on glass.
     """
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     segments: dict[str, float] = {}
@@ -426,12 +322,12 @@ def test_dogfood_run_and_dedup(
 
             # -- Read run data via wire for inventory --
             # Get the run ID from the step rows or from the API
-            runs_resp = _api(page, "GET", f"/api/projects/{project_id}/steward/runs")
+            runs_resp = _api(page, "GET", f"/api/projects/{project_id}/steward/runs", token=TOKEN)
             runs = runs_resp.get("runs", [])
             assert len(runs) >= 1, "Expected at least 1 run"
             run_id = runs[0]["id"]
 
-            run_detail = _api(page, "GET", f"/api/steward/runs/{run_id}")
+            run_detail = _api(page, "GET", f"/api/steward/runs/{run_id}", token=TOKEN)
             run_data = run_detail.get("run", {})
             steps_data = run_detail.get("steps", [])
 
@@ -585,7 +481,7 @@ def test_dogfood_run_and_dedup(
             # each press may door the NEXT uncovered item, but NEVER a
             # duplicate of an already-covered one (the follow-through
             # read-back).  Assert: every Door item text is unique.
-            board_dump = _api(page, "GET", "/api/door").get("board", {})
+            board_dump = _api(page, "GET", "/api/door", token=TOKEN).get("board", {})
             door_texts = [
                 it.get("text", "")
                 for bucket in ("now", "waiting", "unassigned", "overdue")
@@ -604,6 +500,7 @@ def test_dogfood_run_and_dedup(
                 page, "POST",
                 f"/api/projects/{project_id}/steward/runs",
                 {"watermark": wm},
+            token=TOKEN,
             )
             _poll_run_completed(page, wire1["run_id"])
             door_after_wm1 = _count_door_items(page)
@@ -611,6 +508,7 @@ def test_dogfood_run_and_dedup(
                 page, "POST",
                 f"/api/projects/{project_id}/steward/runs",
                 {"watermark": wm},
+            token=TOKEN,
             )
             wire2_run = _poll_run_completed(page, wire2["run_id"]).get("run", {})
             door_after_wm2 = _count_door_items(page)
@@ -619,8 +517,8 @@ def test_dogfood_run_and_dedup(
                 f"{door_after_wm2 - door_after_wm1} new Door items"
             )
             wire2_steps = _api(
-                page, "GET", f"/api/steward/runs/{wire2['run_id']}"
-            ).get("steps", [])
+                page, "GET", f"/api/steward/runs/{wire2['run_id']}",
+            token=TOKEN).get("steps", [])
             wire2_door = [
                 st for st in wire2_steps
                 if st.get("effect_kind") == "create_door_item"
@@ -659,10 +557,10 @@ def test_dogfood_run_and_dedup(
             }
 
             # -- Get re-run details for inventory --
-            runs_resp2 = _api(page, "GET", f"/api/projects/{project_id}/steward/runs")
+            runs_resp2 = _api(page, "GET", f"/api/projects/{project_id}/steward/runs", token=TOKEN)
             runs2 = runs_resp2.get("runs", [])
             rerun_id = runs2[0]["id"]  # Most recent
-            rerun_detail = _api(page, "GET", f"/api/steward/runs/{rerun_id}")
+            rerun_detail = _api(page, "GET", f"/api/steward/runs/{rerun_id}", token=TOKEN)
             rerun_steps = rerun_detail.get("steps", [])
 
             rerun_applied = [
@@ -720,6 +618,7 @@ def test_stop_mid_run(
     Seam: monkeypatch ProjectEvidenceCollector.collect_all to block on
     a threading.Event (the house pattern from HS-161 fixture runner).
     """
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -740,7 +639,7 @@ def test_stop_mid_run(
     original_collect = ProjectEvidenceCollector.collect_all
     monkeypatch.setattr(ProjectEvidenceCollector, "collect_all", slow_collect)
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
 
@@ -873,10 +772,11 @@ def test_degraded_partial_coverage(
     The update_service in a fresh DB has no model assignments, so
     draft_update falls back to deterministic (STW-007).
     """
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import get_database, reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
 
@@ -945,12 +845,12 @@ def test_degraded_partial_coverage(
             state_text = state_el.inner_text().strip().lower()
 
             # -- Verify via wire: run summary shows partial coverage + fallback --
-            runs_resp = _api(page, "GET", f"/api/projects/{project_id}/steward/runs")
+            runs_resp = _api(page, "GET", f"/api/projects/{project_id}/steward/runs", token=TOKEN)
             runs = runs_resp.get("runs", [])
             assert len(runs) >= 1
             run_id = runs[0]["id"]
 
-            run_detail = _api(page, "GET", f"/api/steward/runs/{run_id}")
+            run_detail = _api(page, "GET", f"/api/steward/runs/{run_id}", token=TOKEN)
             run_data = run_detail.get("run", {})
             steps_data = run_detail.get("steps", [])
 
@@ -1013,10 +913,11 @@ def test_run_history_and_policy(
 
     Deterministic x2: no random state, fixture-only seeding.
     """
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
 

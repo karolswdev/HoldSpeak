@@ -30,6 +30,8 @@ from typing import Any
 
 import pytest
 
+from .glass_infra import _boot, _api, _assert_clean, _normal_chair, _ensure_build
+
 pytest.importorskip("playwright.sync_api", reason="GitHub glass needs Playwright")
 
 TOKEN = "hs161-github-glass"
@@ -162,113 +164,10 @@ def _write_fixture(path: Path, *, auth: dict[str, Any], **kwargs: Any) -> None:
 # ── Boot / helpers ────────────────────────────────────────────────
 
 
-def _boot(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    *,
-    gh_runner: Any = None,
-) -> tuple[Any, str]:
-    import holdspeak.config as config_module
-    import holdspeak.db.core as db_core
-    from holdspeak.db import reset_database
-    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
-
-    home = tmp_path / "home"
-    home.mkdir()
-    browser_cache = Path(
-        os.environ.get(
-            "PLAYWRIGHT_BROWSERS_PATH",
-            Path.home() / "Library/Caches/ms-playwright",
-        )
-    )
-    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
-    monkeypatch.setenv("HOME", str(home))
-    monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
-    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
-    reset_database()
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=lambda *_: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-        ),
-        auth_token=TOKEN,
-        gh_runner=gh_runner,
-    )
-    return server, server.start()
-
-
-def _api(
-    page: Any, method: str, path: str,
-    body: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    result = page.evaluate(
-        """async ([method, path, body, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: {
-              authorization: `Bearer ${token}`,
-              ...(body ? {"content-type": "application/json"} : {}),
-            },
-            body: body ? JSON.stringify(body) : undefined,
-          });
-          const contentType = response.headers.get("content-type") || "";
-          const payload = contentType.includes("json")
-            ? await response.json()
-            : await response.text();
-          return {status: response.status, payload};
-        }""",
-        [method, path, body, TOKEN],
-    )
-    assert result["status"] < 300, f"HTTP {result['status']}: {result}"
-    payload = result["payload"]
-    return payload if isinstance(payload, dict) else {}
-
-
-def _api_allow_error(
-    page: Any, method: str, path: str,
-    body: dict[str, Any] | None = None,
-) -> tuple[int, Any]:
-    """Like _api but returns (status, payload) without asserting."""
-    result = page.evaluate(
-        """async ([method, path, body, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: {
-              authorization: `Bearer ${token}`,
-              ...(body ? {"content-type": "application/json"} : {}),
-            },
-            body: body ? JSON.stringify(body) : undefined,
-          });
-          const contentType = response.headers.get("content-type") || "";
-          const payload = contentType.includes("json")
-            ? await response.json()
-            : await response.text();
-          return {status: response.status, payload};
-        }""",
-        [method, path, body, TOKEN],
-    )
-    return result["status"], result["payload"]
-
-
-def _assert_clean(page: Any, errors: list[str]) -> None:
-    real_errors = [e for e in errors if "ResizeObserver" not in e]
-    assert not real_errors, real_errors
-    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-
-
-def _normal_chair(page: Any) -> None:
-    chair = page.locator(".chair")
-    chair.wait_for()
-    if chair.evaluate("element => element.classList.contains('chair-first-value')"):
-        page.get_by_role("button", name="Continue later", exact=True).click()
-    page.locator(".chair:not(.chair-first-value)").wait_for()
-
-
 def _init_desk(page: Any, url: str) -> None:
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    _api(page, "POST", "/api/desk/seed")
-    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    _api(page, "POST", "/api/desk/seed", token=TOKEN)
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
 
 
 def _open_interview(page: Any, url: str) -> None:
@@ -372,6 +271,7 @@ def test_stopwatch_walk(
     """Full fixture-runner walk: outcome -> signals -> GitHub candidate
     appears -> clarify repo -> live test -> activate -> populated Now
     surface. Wall-clock per segment."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -385,7 +285,7 @@ def test_stopwatch_walk(
     )
     runner = _make_fixture_runner(fixture_path)
 
-    server, url = _boot(tmp_path, monkeypatch, gh_runner=runner)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=runner)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     segments: dict[str, float] = {}
@@ -563,7 +463,7 @@ def test_stopwatch_walk(
 
             # If we can't get project_id from DOM, get it from the API
             if not project_id:
-                projects = _api(page, "GET", "/api/projects")
+                projects = _api(page, "GET", "/api/projects", token=TOKEN)
                 project_list = projects.get("projects", [])
                 assert len(project_list) >= 1, "No projects created"
                 project_id = project_list[0].get("id", "")
@@ -571,7 +471,7 @@ def test_stopwatch_walk(
             assert project_id, "Could not determine project ID"
 
             # Verify watches exist for this project
-            watches = _api(page, "GET", f"/api/projects/{project_id}/watches")
+            watches = _api(page, "GET", f"/api/projects/{project_id}/watches", token=TOKEN)
             watch_list = watches.get("watches", [])
             assert len(watch_list) >= 1, (
                 f"Expected >=1 watch for project {project_id}, got {len(watch_list)}"
@@ -625,6 +525,7 @@ def test_auth_degraded(
     """Unauthenticated fixture -> owner_action_required card + Recheck
     visible -> recover (flip fixture to connected) -> the exact setup
     step resumes with state intact (SETFLOW-003 on glass)."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -633,7 +534,7 @@ def test_auth_degraded(
     _write_fixture(fixture_path, auth=_GH_AUTH_UNAUTH)
     runner = _make_fixture_runner(fixture_path)
 
-    server, url = _boot(tmp_path, monkeypatch, gh_runner=runner)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=runner)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
 
@@ -678,6 +579,7 @@ def test_auth_degraded(
             # -- Verify connection status via API shows owner_action_required --
             conn_status = _api(
                 page, "GET", "/api/providers/github/connection",
+            token=TOKEN,
             )
             assert conn_status.get("state") == "owner_action_required", (
                 f"Expected owner_action_required, got: {conn_status}"
@@ -703,6 +605,7 @@ def test_auth_degraded(
             # -- Recheck via API --
             recheck = _api(
                 page, "POST", "/api/providers/github/connection/recheck",
+            token=TOKEN,
             )
             assert recheck.get("state") == "connected", (
                 f"Expected connected after recheck, got: {recheck}"
@@ -719,6 +622,7 @@ def test_auth_degraded(
             session = _api(
                 page, "GET",
                 f"/api/project-setups/{session_id}",
+            token=TOKEN,
             )
             assert session.get("state") == "active", (
                 f"Expected active session, got: {session.get('state')}"
@@ -771,6 +675,7 @@ def test_evaluation_delta(
 ) -> None:
     """Activated watch, baseline, then changed fixture snapshot ->
     evaluate -> Delta review face shows PR transition evidence-linked."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -784,7 +689,7 @@ def test_evaluation_delta(
     )
     runner = _make_fixture_runner(fixture_path)
 
-    server, url = _boot(tmp_path, monkeypatch, gh_runner=runner)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=runner)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
 
@@ -840,7 +745,7 @@ def test_evaluation_delta(
             room_name = page.get_by_test_id("project-room-name")
             room_name.wait_for(timeout=20000)
 
-            projects = _api(page, "GET", "/api/projects")
+            projects = _api(page, "GET", "/api/projects", token=TOKEN)
             project_list = projects.get("projects", [])
             assert len(project_list) >= 1, "No projects created"
             project_id = project_list[0]["id"]
@@ -896,6 +801,7 @@ def test_evaluation_delta(
             # -- Test the watch --
             test_result = _api(
                 page, "POST", f"/api/watches/{watch_id}/test",
+            token=TOKEN,
             )
             assert test_result.get("test_state") == "passed", (
                 f"Watch test should pass: {test_result}"
@@ -906,6 +812,7 @@ def test_evaluation_delta(
             # -- Baseline the watch --
             baseline_result = _api(
                 page, "POST", f"/api/watches/{watch_id}/baseline",
+            token=TOKEN,
             )
             assert baseline_result.get("baseline_state") == "established"
 
@@ -921,6 +828,7 @@ def test_evaluation_delta(
             # -- Evaluate --
             eval_result = _api(
                 page, "POST", f"/api/watches/{watch_id}/evaluate",
+            token=TOKEN,
             )
             assert eval_result.get("state") == "completed", (
                 f"Evaluation should complete: {eval_result}"
@@ -937,6 +845,7 @@ def test_evaluation_delta(
             # -- Open review (triggers evidence collection) --
             review = _api(
                 page, "POST", f"/api/projects/{project_id}/reviews",
+            token=TOKEN,
             )
             review_id = review.get("review_id", "")
             proposals = review.get("proposals", [])
@@ -1015,6 +924,7 @@ def test_wizard_states(
     connection card (connected) -> discovery list -> clarify repo ->
     scoped -> test -> GitHubTestDisplay with fixture PRs.
     Plus degraded variant: unauthenticated wizard state."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -1028,7 +938,7 @@ def test_wizard_states(
     )
     runner = _make_fixture_runner(fixture_path)
 
-    server, url = _boot(tmp_path, monkeypatch, gh_runner=runner)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=runner)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
 
@@ -1297,6 +1207,7 @@ def test_real_metal(
     """Real gh against karolswdev/HoldSpeak: probe, discover, validate,
     one live snapshot test, and UI-driven wizard with real PR data.
     NO baseline/activation -- read-only."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -1481,6 +1392,7 @@ def test_real_metal(
                 )
             watch_test = _api(
                 page, "POST", f"/api/watches/{watch_id}/test",
+            token=TOKEN,
             )
             assert watch_test.get("test_state") == "passed"
             watch_entities = watch_test.get(

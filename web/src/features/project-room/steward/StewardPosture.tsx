@@ -5,7 +5,7 @@
 // Laws: no raw IDs on glass; no modals; MicButton on text inputs;
 // EgressChip on model-touching effect kinds; no em/en dashes; no prose.
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
   EgressChip,
@@ -17,6 +17,7 @@ import {
   SurfaceToggle,
   SurfaceVerbs,
   humanTime,
+  useScrollHint,
 } from "../../../desk/surface";
 import { openSourceRef } from "../../../desk/surface/citations";
 import type { StewardController } from "./useStewardController";
@@ -26,7 +27,6 @@ import {
   assembleGrantText,
   circuitStateLabel,
   circuitStateTone,
-  computeVerticalScrollHint,
   coverageSummary,
   effectKindLabel,
   isActive,
@@ -462,48 +462,8 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
   );
 }
 
-/* ── Vertical scroll-hint: the DoorBoardLane species on the Y axis ── */
-
-/**
- * Attach a vertical scroll-hint edge fade to the posture root.
- * The scroll parent is `.desk-surface-body` (the window body that owns
- * overflow:auto). Pattern reuses DoorBoardLane (HS-145-01): ref on the
- * child, parentElement for the scroll container, data attribute on the
- * ref element, CSS pseudo-elements for the gradient.
- * Constraint: no querySelector/document listeners -- refs only.
- */
-function useVerticalScrollHint(ref: React.RefObject<HTMLDivElement | null>) {
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    // The scroll container is the parent (.desk-surface-body).
-    const scrollParent = el.parentElement;
-    if (!scrollParent) return;
-
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const hint = computeVerticalScrollHint(
-        scrollParent.scrollTop,
-        scrollParent.scrollHeight,
-        scrollParent.clientHeight,
-      );
-      if (el.dataset.scrollHint !== hint) el.dataset.scrollHint = hint;
-    };
-    const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    scrollParent.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    return () => {
-      if (raf) cancelAnimationFrame(raf);
-      scrollParent.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-    };
-    // Counsel S-1: mount-once -- the ref identity is stable.
-  }, []);
-}
+/* HS-167-03: useVerticalScrollHint retired -- the barrel's useScrollHint
+   with scrollRef=null (falls back to parentElement) replaces it. */
 
 /* ── Main Steward posture ── */
 
@@ -512,7 +472,7 @@ export function StewardPosture({ ctrl }: { ctrl: StewardController }) {
     openSourceRef(ref);
   }, []);
   const postureRef = useRef<HTMLDivElement>(null);
-  useVerticalScrollHint(postureRef);
+  useScrollHint(postureRef, null, "y");
 
   // ── Loading / error ──
   if (ctrl.loading && ctrl.posture === "off") {

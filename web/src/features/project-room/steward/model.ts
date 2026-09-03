@@ -60,6 +60,8 @@ export type StepReceipt = {
   result?: string;
   ref?: string;
   refs?: string[];
+  /** HS-167-02: enrichment calls count from the OBSERVE checkpoint. */
+  calls?: number;
   [key: string]: unknown;
 };
 
@@ -243,26 +245,21 @@ export function isModelTouchingKind(kind: string): boolean {
   return kind === "draft_update";
 }
 
-/* ── Vertical scroll hint (the DoorBoardLane species, vertical axis) ── */
+/* HS-167-03: computeVerticalScrollHint promoted to the surface barrel.
+   Re-export with axis-mapped return values for backward compat. */
+import { computeScrollHint as _barrelHint } from "../../../desk/surface";
 
-/** The four vertical-overflow states for the scroll-hint edge fade. */
 export type VerticalScrollHint = "none" | "bottom" | "top" | "both";
 
-/** Pure function: derive a vertical scroll-hint from viewport geometry.
- *  Mirrors DoorBoardLane.computeScrollHint (HS-145-01) on the Y axis. */
 export function computeVerticalScrollHint(
   scrollTop: number,
   scrollHeight: number,
   clientHeight: number,
 ): VerticalScrollHint {
-  if (scrollHeight <= clientHeight) return "none";
-  const atTop = scrollTop <= 0;
-  // 20px tolerance mirrors the horizontal species (scrollbar-gutter stable).
-  const atBottom = scrollTop + clientHeight >= scrollHeight - 20;
-  if (atTop && atBottom) return "none";
-  if (atTop) return "bottom";
-  if (atBottom) return "top";
-  return "both";
+  const hint = _barrelHint(scrollTop, scrollHeight, clientHeight);
+  if (hint === "start") return "top";
+  if (hint === "end") return "bottom";
+  return hint as VerticalScrollHint;
 }
 
 /* ── Human labels: phases ── */

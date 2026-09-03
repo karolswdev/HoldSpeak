@@ -18,6 +18,7 @@ import { MicButton } from "../components/MicButton";
 import { CheckGadget, StringGadget } from "./gadgets";
 import type { PaneGeometry } from "./XtermPane";
 import { humanTime, presentValue } from "./format";
+import { Disclosure } from "./patterns";
 import { useRovingRows } from "./roving";
 import { SPARSE_THRESHOLD } from "./sparse";
 import "./surface.css";
@@ -27,15 +28,68 @@ import "./surface.css";
 export function SurfaceVerbs({
   children,
   status,
+  active,
 }: {
   children?: ReactNode;
   /** A quiet leading slot (state chip, scope chip). */
   status?: ReactNode;
+  /** HS-167-03 — the verb key rendered lit (aria-current="true"); the
+   *  posture strip stamps the active posture. */
+  active?: string;
 }) {
   return (
-    <div className="surface-verbs">
+    <div className="surface-verbs" data-active-verb={active || undefined}>
       {status ? <span className="surface-verbs-status">{status}</span> : null}
       <span className="surface-verbs-actions">{children}</span>
+    </div>
+  );
+}
+
+/** HS-167-03 — the project orientation band: name (the Primary type step),
+ *  chip row, optional purpose (folds past 2 lines), outcome as a target
+ *  token row, optional fold body, trailing token (e.g. read time). */
+export function SurfaceIdentity({
+  name,
+  chips,
+  purpose,
+  outcome,
+  fold,
+  trailing,
+}: {
+  /** The project name, rendered at the Primary type step (15px/600). */
+  name: string;
+  /** Chip row: StateChips + tokens. Wraps at the narrow container. */
+  chips: ReactNode;
+  /** One line of the owner's purpose text. Folds past two lines via Disclosure. */
+  purpose?: string;
+  /** Rendered as a target token row (prepended with a target mark). */
+  outcome?: string;
+  /** Additional content inside a fold (Disclosure body). */
+  fold?: ReactNode;
+  /** A trailing token (e.g. the read-time label), right-aligned on the chip row. */
+  trailing?: ReactNode;
+}) {
+  return (
+    <div className="surface-identity" data-testid="surface-identity">
+      <div className="surface-identity-name">{name}</div>
+      <div className="surface-identity-chips">
+        {chips}
+        {trailing != null ? (
+          <span className="surface-identity-trailing">{trailing}</span>
+        ) : null}
+      </div>
+      {purpose ? (
+        <Disclosure label="more" defaultOpen={false} variant="raw">
+          <div className="surface-identity-purpose">{purpose}</div>
+        </Disclosure>
+      ) : null}
+      {outcome ? (
+        <div className="surface-identity-outcome">
+          <span className="surface-identity-outcome-mark" aria-hidden="true">{"◎"}</span>
+          <span>{outcome}</span>
+        </div>
+      ) : null}
+      {fold ?? null}
     </div>
   );
 }
@@ -729,6 +783,8 @@ export function SurfaceLedgerRow({
   lead,
   primary,
   cells,
+  trailing,
+  wrap,
   open,
   onToggle,
   onLineKeyDown,
@@ -747,6 +803,12 @@ export function SurfaceLedgerRow({
   primary: ReactNode;
   /** Trailing fact cells (destination, ms, taught chip). */
   cells?: ReactNode;
+  /** HS-167-03 — a quiet verb or chevron, right-aligned after cells
+   *  (its own grid slot, never overlapping the 52px time column). */
+  trailing?: ReactNode;
+  /** HS-167-03 — when true the primary wraps instead of ellipsizing;
+   *  at the narrow container cells fall under. */
+  wrap?: boolean;
   open?: boolean;
   onToggle?: () => void;
   /** HS-111-07 — row keyboard verbs (Space = Ask-context on the desk
@@ -761,11 +823,12 @@ export function SurfaceLedgerRow({
   "data-testid"?: string;
 }) {
   return (
-    <li className="surface-ledger-row" data-open={open || undefined}>
+    <li className="surface-ledger-row" data-open={open || undefined} data-wrap={wrap || undefined}>
       <button
         type="button"
         className="surface-ledger-line"
         data-testid={dataTestId}
+        data-has-trailing={trailing != null || undefined}
         aria-expanded={expands ? open || false : undefined}
         aria-label={lineLabel}
         onClick={onToggle}
@@ -780,6 +843,9 @@ export function SurfaceLedgerRow({
         ) : null}
         <span className="surface-ledger-primary">{primary}</span>
         {cells}
+        {trailing != null ? (
+          <span className="surface-ledger-trailing">{trailing}</span>
+        ) : null}
       </button>
       {open && children ? (
         <div className="surface-ledger-open">{children}</div>
@@ -1146,5 +1212,101 @@ export function ConfirmVerb({
     >
       {armed ? confirmLabel : label}
     </Button>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HS-167-03 — ScrollHint: gradient edge fades for scrolling wells.
+   ONE species, axis prop. Promoted from DoorBoardLane (horizontal) and
+   steward/model.ts (vertical) — both copies deleted, this is canonical.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/** The four overflow states for a scroll-hint edge fade. */
+export type ScrollHintState = "none" | "start" | "end" | "both";
+
+/** Pure function: derive a scroll-hint from viewport geometry.
+ *  Works for both axes — the caller passes the scroll offset, total
+ *  scrollable extent, and visible extent. The 20px tolerance absorbs
+ *  scrollbar-gutter: stable both-edges. */
+export function computeScrollHint(
+  scrollOffset: number,
+  scrollExtent: number,
+  clientExtent: number,
+): ScrollHintState {
+  if (scrollExtent <= clientExtent) return "none";
+  const atStart = scrollOffset <= 0;
+  const atEnd = scrollOffset + clientExtent >= scrollExtent - 20;
+  if (atStart && atEnd) return "none";
+  if (atStart) return "end";
+  if (atEnd) return "start";
+  return "both";
+}
+
+/** Map the axis-neutral ScrollHintState to the data attribute values
+ *  the CSS expects (left/right for x, top/bottom for y). */
+function hintToAttr(hint: ScrollHintState, axis: "x" | "y"): string {
+  if (hint === "none" || hint === "both") return hint;
+  if (axis === "x") return hint === "start" ? "left" : "right";
+  return hint === "start" ? "top" : "bottom";
+}
+
+/** HS-167-03 — the scroll-hint hook: attaches scroll and resize
+ *  listeners and sets `data-scroll-hint` on the wrapper element. */
+export function useScrollHint(
+  wrapRef: React.RefObject<HTMLElement | null>,
+  scrollRef: React.RefObject<HTMLElement | null> | null,
+  axis: "x" | "y",
+) {
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    const el = scrollRef?.current ?? wrap?.parentElement ?? null;
+    if (!wrap || !el) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const offset = axis === "x" ? el.scrollLeft : el.scrollTop;
+      const extent = axis === "x" ? el.scrollWidth : el.scrollHeight;
+      const client = axis === "x" ? el.clientWidth : el.clientHeight;
+      const hint = computeScrollHint(offset, extent, client);
+      const attr = hintToAttr(hint, axis);
+      if (wrap.dataset.scrollHint !== attr) wrap.dataset.scrollHint = attr;
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    el.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      el.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  });
+}
+
+/** HS-167-03 — ScrollHint wrapper component. Renders a positioned
+ *  wrapper with gradient fades on the scrolled axis. */
+export function ScrollHint({
+  axis,
+  scrollRef,
+  className,
+  children,
+}: {
+  axis: "x" | "y";
+  scrollRef: React.RefObject<HTMLElement | null>;
+  className?: string;
+  children: ReactNode;
+}) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  useScrollHint(wrapRef, scrollRef, axis);
+  return (
+    <div
+      ref={wrapRef}
+      className={className ? `surface-scroll-hint ${className}` : "surface-scroll-hint"}
+      data-axis={axis}
+    >
+      {children}
+    </div>
   );
 }

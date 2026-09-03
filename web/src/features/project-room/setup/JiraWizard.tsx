@@ -71,10 +71,7 @@ function formatTime(iso: string): string {
   }
 }
 
-const INLINE_CHIPS: React.CSSProperties = { display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center", width: "100%" };
-const TOGGLE_LABEL: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: "6px", cursor: "pointer" };
-const TOGGLE_TEXT: React.CSSProperties = { fontSize: "var(--text-xs)", fontFamily: "var(--font-mono, monospace)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" };
-const FACT_SUB: React.CSSProperties = { fontSize: "10px", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em" };
+/* HS-167-03: raw-px inline CSSProperties retired — classes in jira-wizard.css. */
 
 /* ═══════════════════════════════════════════════════════════════════
    D1 — Accounts step
@@ -157,7 +154,7 @@ export function JiraAccountsStep({
               foldLabel={needsAuth ? "Login command" : undefined}
             >
               {/* Inline chips row: state + provenance + verb */}
-              <div style={INLINE_CHIPS}>
+              <div className="jira-inline-chips">
                 <StateChip state={connChipState(conn.state)} label={connChipLabel(conn.state)} />
                 <ProvenanceChip source="acli" boundary={site} />
                 {!needsAuth ? (
@@ -180,7 +177,7 @@ export function JiraAccountsStep({
             tier="cool"
             data-testid={`jira-known-${ka.ref}`}
           >
-            <div style={INLINE_CHIPS}>
+            <div className="jira-inline-chips">
               <StateChip state="active" label="Known to acli" />
               <button type="button" className="provider-action-btn" onClick={() => onAdd(ka.site, ka.email)}>
                 Use this account
@@ -307,13 +304,13 @@ export function JiraScopeStep({
             <GadgetRow label="Types" fact="enumerated" wide>
               <div className="jira-toggle-row">
                 {issueTypes.items.map((it) => (
-                  <label key={it.id} style={TOGGLE_LABEL}>
+                  <label key={it.id} className="jira-toggle-label">
                     <CheckGadget
                       label={it.name}
                       checked={scope.issueTypes.includes(it.name)}
                       onChange={() => onToggleType(it.name)}
                     />
-                    <span style={TOGGLE_TEXT}>{it.name}</span>
+                    <span className="jira-toggle-text">{it.name}</span>
                   </label>
                 ))}
               </div>
@@ -325,13 +322,13 @@ export function JiraScopeStep({
             <GadgetRow label="Status" fact="observed" wide>
               <div className="jira-toggle-row">
                 {statusItems.map((st) => (
-                  <label key={st.id} style={TOGGLE_LABEL}>
+                  <label key={st.id} className="jira-toggle-label">
                     <CheckGadget
                       label={st.name}
                       checked={scope.statusCategories.includes(st.category ?? "")}
                       onChange={() => onToggleStatus(st.category ?? "")}
                     />
-                    <span style={TOGGLE_TEXT}>{st.name}</span>
+                    <span className="jira-toggle-text">{st.name}</span>
                   </label>
                 ))}
                 <StateChip state="idle" label={`${distinctCategories.size} of ${totalStatusCategories} categories seen`} />
@@ -342,19 +339,19 @@ export function JiraScopeStep({
           {/* Due — wide row, highlighted */}
           <GadgetRow label="Due" wide highlight>
             <div className="jira-toggle-row">
-              <label style={TOGGLE_LABEL}>
+              <label className="jira-toggle-label">
                 <CheckGadget label="Within 7 days" checked={false} onChange={() => {}} />
-                <span style={TOGGLE_TEXT}>Within 7 days</span>
+                <span className="jira-toggle-text">Within 7 days</span>
               </label>
-              <label style={TOGGLE_LABEL}>
+              <label className="jira-toggle-label">
                 <CheckGadget label="Overdue" checked={false} onChange={() => {}} />
-                <span style={TOGGLE_TEXT}>Overdue</span>
+                <span className="jira-toggle-text">Overdue</span>
               </label>
             </div>
           </GadgetRow>
 
           {/* JQL (optional) */}
-          <GadgetRow label={<>JQL<br /><small style={FACT_SUB}>optional</small></>} wide>
+          <GadgetRow label={<>JQL<br /><small className="jira-fact-sub">optional</small></>} wide>
             <StringGadget
               label="JQL"
               value={scope.jql}
@@ -408,7 +405,7 @@ export function JiraScopeStep({
               ))}
             </ul>
           </SurfaceLedger>
-          <div style={INLINE_CHIPS}>
+          <div className="jira-inline-chips">
             <ProvenanceChip source="acli" boundary={site} />
           </div>
         </div>
@@ -556,7 +553,7 @@ export function JiraTestStep({
       {/* Will notice: conditions (accent) + transitions (quiet) + cadence + action */}
       {testDone ? (
         <div data-testid="jira-will-notice">
-          <div style={INLINE_CHIPS}>
+          <div className="jira-inline-chips">
             {conditionChips.map((c) => (
               <StateChip key={c} state="active" label={c} />
             ))}
@@ -564,7 +561,7 @@ export function JiraTestStep({
               <StateChip key={t} state="idle" label={transitionLabel(t)} />
             ))}
           </div>
-          <div style={{ ...INLINE_CHIPS, marginTop: "6px" }}>
+          <div className="jira-inline-chips" style={{ marginTop: "6px" }}>
             <StateChip state="idle" label={cadenceChip} />
             {actionChip ? <StateChip state="idle" label={actionChip} /> : null}
           </div>

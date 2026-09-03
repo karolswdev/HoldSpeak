@@ -2,6 +2,7 @@
 
 export {
   SurfaceVerbs,
+  SurfaceIdentity,
   SurfaceSection,
   SurfaceRows,
   SurfaceRow,
@@ -30,6 +31,10 @@ export {
   SurfaceBay,
   EditInPlace,
   ConfirmVerb,
+  ScrollHint,
+  useScrollHint,
+  computeScrollHint,
+  type ScrollHintState,
 } from "./Surface";
 
 export {

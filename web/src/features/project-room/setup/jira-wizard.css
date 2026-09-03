@@ -66,3 +66,31 @@
   border-top-width: 1px;
   background: transparent;
 }
+
+/* HS-167-03: raw-px CSSProperties promoted to token-legal CSS classes. */
+.jira-inline-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  width: 100%;
+}
+.jira-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.jira-toggle-text {
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-eyebrow);
+}
+.jira-fact-sub {
+  font-size: var(--desk-surface-label-size);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-label-compact);
+}

@@ -4,7 +4,7 @@ import { apiFetch, newDeliveryId, readableError } from "../../../lib/api";
 import { openIntelligence } from "../../intelligenceNavigation";
 import { useWriteReceipt } from "../../hooks/useWriteReceipt";
 import { StringGadget } from "../../surface/gadgets";
-import { SurfaceSection, SurfaceState } from "../../surface/Surface";
+import { SurfaceSection, SurfaceState, ScrollHint, useScrollHint, computeScrollHint as _barrelComputeScrollHint } from "../../surface/Surface";
 import { openSurfaceOr } from "../../shell";
 import { useDesk } from "../../store";
 import type { LaneProps } from "../laneContract";
@@ -249,24 +249,19 @@ function cardFacts(card: DoorCard): string[] {
   ].filter(Boolean);
 }
 
-/** HS-145-01: pure scroll-hint state from viewport geometry. */
+/** HS-167-03: re-export from the surface barrel (the canonical home). */
 export type ScrollHint = "none" | "right" | "left" | "both";
-
-export function computeScrollHint(
+export const computeScrollHint = (
   scrollLeft: number,
   scrollWidth: number,
   clientWidth: number,
-): ScrollHint {
-  if (scrollWidth <= clientWidth) return "none";
-  const atLeft = scrollLeft <= 0;
-  // The 20px tolerance absorbs scrollbar-gutter: stable both-edges
-  // which reduces the effective scrollable range by the gutter width.
-  const atRight = scrollLeft + clientWidth >= scrollWidth - 20;
-  if (atLeft && atRight) return "none";
-  if (atLeft) return "right";
-  if (atRight) return "left";
-  return "both";
-}
+): ScrollHint => {
+  const hint = _barrelComputeScrollHint(scrollLeft, scrollWidth, clientWidth);
+  // Map axis-neutral names back to directional for backward compat.
+  if (hint === "start") return "left";
+  if (hint === "end") return "right";
+  return hint as ScrollHint;
+};
 
 /** HS-149-01 L2: map the People store state to PeopleCore's gate vocabulary. */
 function peopleStateLabel(state: string | undefined): string | null {
@@ -645,27 +640,8 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
     void reload();
   }, [reload, scheduledRecordings]);
 
-  useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const wrap = el.parentElement;
-    if (!wrap) return;
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const hint = computeScrollHint(el.scrollLeft, el.scrollWidth, el.clientWidth);
-      if (wrap.dataset.scrollHint !== hint) wrap.dataset.scrollHint = hint;
-    };
-    const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
-    update();
-    el.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    return () => {
-      if (raf) cancelAnimationFrame(raf);
-      el.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-    };
-  });
+  /* HS-167-03: scroll-hint is now the barrel species (useScrollHint
+     inside <ScrollHint>) — the inline effect is retired. */
 
   const dispatch = async (card: DoorCard, verb: DoorVerb, payload: ActionPayload = {}) => {
     const command = commandForDoorVerb(verb, payload);
@@ -730,7 +706,7 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
       {/* HS-150-02: header person chips for filter. */}
       <PersonChipRow cards={cards} selectedPersonId={filterPersonId} onSelect={setFilterPersonId} />
       {cards.length ? (
-        <div className="door-board-hint-wrap">
+        <ScrollHint axis="x" scrollRef={viewportRef} className="door-board-hint-wrap">
         <div ref={viewportRef} className="door-board-viewport" tabIndex={0} aria-label="Door board, scroll horizontally for all columns">
           <div className="door-board-grid">
           {COLUMNS.map(({ id, label, count }) => {
@@ -865,7 +841,7 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
           })}
           </div>
         </div>
-        </div>
+        </ScrollHint>
       ) : <SurfaceState empty emptyLabel="Door clear" />}
       <UpcomingRail upcoming={projection.upcoming} calendarConfigured={projection.calendar_configured} onReload={() => void reload()} />
     </SurfaceSection>
