@@ -1,0 +1,106 @@
+# Phase 166 - Project Rooms: The Jira Parity (P7)
+
+- **Project:** holdspeak
+- **Status:** CHARTERED 0/7
+- **Chartered:** 2026-09-03 off main `493253d8` (165 The MCP Family MERGED via PR #531 — the TENTH Project Rooms phase merged; this is the LAST §14 slice)
+- **Canon:** docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §14 P7; SRS_PROJECT_INTERVIEW_WATCHES.md §6 PROV-001..012, §8.2 Jira issue parity, §15 V0-D, SETFLOW-005; SRS_PRODUCT_VALIDATION.md (Jira only with a real adapter); CONSTITUTION.md Article III (honest egress)
+
+## The charter
+
+P7's exit, verbatim: **Jira readiness is backed by live
+discovery/search and the same no-duplicate Delta/action behavior,
+never pushed fixtures alone.** The owner's word, twice: "Yes, I will
+want Jira parity." and, on the transport (2026-09-03): "`acli` is
+basically a prerequisite, and that's it" — and the focus: "being
+able to support multiple accounts, against multiple targets
+(*.atlassian.net)". So: the Atlassian CLI is to Jira exactly what
+`gh` is to GitHub. No REST client, no token in HoldSpeak's custody,
+no credential sheet — `acli jira auth login` is the provider-owned
+interaction (PROV-005), HoldSpeak only reads back `acli jira auth
+status`. The connection identity is **(site, email)** — acli's own
+identity for `auth switch --site --email` — and one owner may hold
+MANY of them (two sites, two accounts on one site); every Jira
+connection row, discovery call, WatchSpec and test names its
+connection ref. acli keeps ONE current account globally, so every
+HoldSpeak call is `switch → command → status read-back` under one
+process lock (the switch-and-verify law): a read that lands on the
+wrong site is a typed error, never a silent wrong answer.
+
+What exists already (recon, re-verified): the GitHub adapter shape
+(services/github_provider.py: manifest/connection_status/discover/
+validate_repo, typed PROV-009 codes, the runner seam), the generic
+`watch_provider_connections` table (provider_id + external ref —
+no schema change expected), the graduated Watch machinery (161/164:
+test/baseline/evaluate_core/evaluate_due, source_revision dedup,
+effect idem keys), the Jira semantic diff COMPLETE in
+reaction_service.py (assigned/status/priority/due/resolved) and
+the single gate at services/watch_sources.py:102-108 that today
+raises `connector_snapshot_adapter_unavailable` for every
+connector but gh. Jira is INVISIBLE in the provider list today —
+not partial (SETFLOW-005 unmet); story 01 makes it appear, honest.
+
+The chain: 01 the acli pack + the multi-account connection ledger
+-> 02 discovery + search (projects, types, statuses, JQL; routes +
+MCP) -> 03 the JiraWatchSource + the five watch.jira.* templates +
+the interview candidates + the fetcher-seam rider -> 04 the web
+face (provider-keyed wizard, many accounts × many sites, the
+`<site>.atlassian.net` egress badge; shots) -> 05 the live walk
+(OWNER VERDICT: real acli, real site(s), SETFLOW-005's transition
+-> one Delta + one action, no duplicate) || 06 the docs (canon edit:
+the acli transport) -> 07 the close.
+
+OUT: Jira write effects (V0-E), a REST/API-token transport, Jira
+Server/Data Center (acli is Cloud), the legacy `jira` go-CLI
+enrichment pack (connector_packs/jira_cli.py — PARKED, untouched,
+never deleted), the per-watch cadence write wire (stays ledgered).
+
+## Stories
+
+| ID | Story | Status | Story file | Evidence |
+| --- | --- | --- | --- | --- |
+| HS-166-01 | The acli pack + the connection ledger (many accounts × many sites; switch-and-verify) | backlog | [story-01-the-connection-ledger](./story-01-the-connection-ledger.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-166-02 | Discovery + search (projects, issue types, statuses, JQL; routes + MCP) | backlog | [story-02-discovery-and-search](./story-02-discovery-and-search.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-166-03 | The JiraWatchSource + templates + candidates (the gate graduates; the fetcher-seam rider) | backlog | [story-03-the-watch-source](./story-03-the-watch-source.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-166-04 | The web face (provider-keyed wizard; the site egress badge; shots) | backlog | [story-04-the-web-face](./story-04-the-web-face.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-166-05 | The live walk (real acli, real site(s), SETFLOW-005 — OWNER VERDICT) | backlog | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-166-06 | The docs (the acli transport canon edit; Jira honesty; the dedicated docs story) | backlog | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-166-07 | The close (gates, riders, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
+
+## Where we are
+
+**CHARTERED 0/7.** Branch `feat/project-rooms-p7-the-jira-parity`
+off main `493253d8`. `acli` is NOT installed on the owner's machine
+at charter time (no binary, no config) — the owner installs
+(`brew tap atlassian/homebrew-acli && brew install acli`) and
+authenticates his account(s) (`acli jira auth login --site
+<x>.atlassian.net --email <e> --token`); stories 01-04 build against
+recorded acli output shapes with the fake-runner seam and are
+RE-RECORDED from the real CLI the moment it exists; story 05 is
+impossible without it by design (never pushed fixtures alone).
+
+## Active risks
+
+- **acli's global current account** is the phase's honesty problem:
+  two HoldSpeak callers (the conductor's evaluate_due, a web
+  discover) interleaving `switch` calls would read the wrong site.
+  The lock + status read-back is the cure; counsel hunts exactly
+  this (a fetch without a read-back is the third door reborn).
+- **Issue types + status categories** may not be enumerable from
+  acli (`project view --json` shape unverified). The fallback is
+  derived-from-population, LABELED derived (PROV-007: partial stays
+  usable, never dressed as complete) — mirrors §8.1's typed
+  owner/repo fallback. Decided in 02 on the real CLI, recorded.
+- **Recorded shapes lie until re-recorded**: acli's JSON field names
+  come from the docs' examples, not from a run. Every recorded
+  fixture carries a `recorded_from` note; 05 fails on the first
+  mismatch and the adapter is fixed, not the fixture.
+- **The rule grammar**: §8.2's "due soon/overdue", "entered a
+  configured blocked state", "no activity for a duration" need
+  comparisons the GitHub templates never used. Extend
+  watch_validation in ONE place, tests beside it — never a Jira
+  fork of the evaluator.
+- Debts carried in: 165's eight counsel N + the legacy-side watch
+  guard + the sidecar fetcher seam (both PAID here, 03) + per-watch
+  cadence write wire + the scheduled-path trigger route; 164
+  N-1..N-5; 163 S-4/N-1/N-3; 160 N-5/N-1/N-2; 158 S-1/N-1/N-3; 159
+  seeding walls; 161 N-1.
