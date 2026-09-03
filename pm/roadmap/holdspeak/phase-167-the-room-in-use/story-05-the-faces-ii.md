@@ -37,7 +37,7 @@ every phase's beauty was judged alone.
 
 - [x] Every hand-rolled block the 01 audit named in these files is gone; dead CSS deleted; the cadence edits through the face and the change is visible on the next tick's schedule.
 - [x] The 160/162/163/164/166 glass rigs pass with unchanged assertions; web baseline zero branch-new.
-- [ ] The whole-Room sheet + before/after pairs in the gallery; the owner's shot verdict recorded verbatim (PASS required before 06's attended walk).
+- [x] The whole-Room sheet + before/after pairs in the gallery; the owner's shot verdict recorded verbatim (PASS required before 06's attended walk).
 
 ## Landed — the functional pass (2026-09-03)
 
@@ -90,7 +90,9 @@ eight faces side by side) + 98 after-shots. Gates read by the
 orchestrator: vitest 789/789; baseline zero branch-new; token gate
 clean; all eight glass rigs 46 passed + 1 honest skip. The live
 runner's glass assertions (tests/e2e/live167_walk.py) pass on the real
-DOM at both widths. The owner's shot verdict: PENDING (the gallery).
+DOM at both widths. **THE OWNER'S SHOT VERDICT (2026-09-03), verbatim: "PASS"** — on the
+gallery https://claude.ai/code/artifact/3d5a2a6a-d1b6-4a21-ad73-3c8c09417a6b
+(the two whole-Room sheets + ten before/after pairs).
 
 ## Test plan
 

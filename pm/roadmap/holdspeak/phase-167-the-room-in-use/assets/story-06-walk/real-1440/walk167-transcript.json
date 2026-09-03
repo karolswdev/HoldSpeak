@@ -1,0 +1,271 @@
+{
+  "schema": "tuesday-walk-transcript@1",
+  "generated_at": "2026-09-03T22:31:50.777508+00:00",
+  "mode": "real",
+  "width": 1440,
+  "steps": [
+    {
+      "step": "step1_interview",
+      "elapsed_ms": 728,
+      "wire": {
+        "session_id": "psetup_d3cfcde0ac2f",
+        "proposal_count": 8,
+        "proposal_ids": [
+          "wprop_1ed5c997d48b",
+          "wprop_4f0161ac93e2",
+          "wprop_3e8f2ec87e3f",
+          "wprop_80b0b84232a1",
+          "wprop_59c316bddf2d",
+          "wprop_c12c8249f22c",
+          "wprop_0927c8f823e3",
+          "wprop_2162d26b143b"
+        ],
+        "provider_ids": [
+          "github",
+          "github",
+          "github",
+          "github",
+          "github",
+          "jira",
+          "jira",
+          "jira"
+        ]
+      }
+    },
+    {
+      "step": "step2_github_connection",
+      "elapsed_ms": 1295,
+      "wire": {
+        "proposal_id": "wprop_1ed5c997d48b",
+        "test_provider": "",
+        "test_entity_count": 2,
+        "test_calls": 0
+      }
+    },
+    {
+      "step": "step3_jira_connection",
+      "elapsed_ms": 5559,
+      "wire": {
+        "proposal_id": "wprop_c12c8249f22c",
+        "walk_ref": "karolsaneapple.atlassian.net|karolsane+apple@gmail.com",
+        "test_provider": "jira",
+        "test_entity_count": 1,
+        "test_calls": 2
+      }
+    },
+    {
+      "step": "step4_activate",
+      "elapsed_ms": 4095,
+      "wire": {
+        "project_id": "proj-102233e71c47",
+        "activated_watch_count": 2,
+        "watch_ids": [
+          "watch_16d68f41420a",
+          "watch_9f63a9ce4f75"
+        ],
+        "baseline_states": {
+          "watch_16d68f41420a": "established",
+          "watch_9f63a9ce4f75": "established"
+        }
+      }
+    },
+    {
+      "step": "step5_room",
+      "elapsed_ms": 2908,
+      "wire": {
+        "project_name": "The first real project through the whole Room, attended",
+        "lifecycle": "active",
+        "revision": 1,
+        "delta_open_review": null
+      },
+      "glass": {
+        "name_visible": true,
+        "name_text": "The first real project through the whole Room, attended",
+        "lifecycle_visible": true,
+        "lifecycle_text": "\u2713Active",
+        "revision_visible": true,
+        "revision_text": "REV 1",
+        "review_verb_present": false,
+        "updates_verb_visible": true,
+        "steward_verb_visible": true,
+        "rail_visible": true,
+        "truncated_primaries": []
+      }
+    },
+    {
+      "step": "step6_real_change",
+      "elapsed_ms": 31713,
+      "wire": {
+        "gh_pr_number": "546",
+        "gh_pr_url": "https://github.com/karolswdev/HoldSpeak/pull/546",
+        "gh_probe_branch": "hs167-walk-probe-20260903T223052Z",
+        "kan_key": "KAN-1",
+        "kan_from": "Done",
+        "kan_to": "In Progress",
+        "trigger_attempts": 1,
+        "gh_transitions": 1,
+        "jira_transitions": 1,
+        "trigger_success": true,
+        "review_id": "prev_3c31a72d94d74254b27f681728b4402f",
+        "proposal_count": 7,
+        "dedup_proposal_count": 7,
+        "decided": [
+          {
+            "proposal_id": "pprop_2598d60cc932d9950dc72f47ab4c0535",
+            "verb": "accept",
+            "status": 200,
+            "proposal_kind": "observation_attention"
+          },
+          {
+            "proposal_id": "pprop_41dedd4fd13d68e6684fa4b160e7d682",
+            "verb": "defer",
+            "status": 200,
+            "proposal_kind": "conflict"
+          }
+        ],
+        "dedup_ok": true
+      },
+      "glass": {
+        "queue_visible": true,
+        "kind_group_count": 2,
+        "kind_counts": [
+          {
+            "label": "Conflicts",
+            "count": "1"
+          },
+          {
+            "label": "Observations",
+            "count": "4"
+          }
+        ],
+        "queue_item_count": 5,
+        "detail_visible": true,
+        "comparison_visible": true,
+        "tally_visible": true,
+        "tally_text": "5 left"
+      }
+    },
+    {
+      "step": "step7_steward",
+      "elapsed_ms": 15413,
+      "wire": {
+        "run1_id": "pstrun_7a7fdfe45b4643828386ed02714cb869",
+        "run1_state": "completed",
+        "observe_has_calls": true,
+        "observe_receipts": [
+          {
+            "calls": 5,
+            "source_meta": {
+              "watch_16d68f41420a": {
+                "calls": 2
+              },
+              "watch_9f63a9ce4f75": {
+                "calls": 3
+              }
+            }
+          }
+        ],
+        "probe_item_id": "pitem_7b865616e2f84de6924f9d33ee918f08",
+        "door_count_before": 0,
+        "door_count_after_run1": 1,
+        "door_count_after_run2": 1,
+        "cadence_minutes_written": 30,
+        "policy_readback": {
+          "enabled": true,
+          "unattended_enabled": true,
+          "eligible_effect_kinds": [
+            "refresh_sources",
+            "create_proposals",
+            "apply_proposal_effects",
+            "draft_update",
+            "create_door_item"
+          ]
+        },
+        "trigger_success": true,
+        "run2_id": "pstrun_7614a578f3714244977ed7e95a022da6",
+        "run2_created_new": true,
+        "run2_state": "completed"
+      },
+      "glass": {
+        "list_visible": true,
+        "list_item_count": 2,
+        "plan_visible": true,
+        "plan_step_count": 6,
+        "plan_steps": [
+          {
+            "label": "Observe",
+            "status": "done",
+            "rate": "1 source \u00b7 5 calls"
+          },
+          {
+            "label": "Compare",
+            "status": "done",
+            "rate": ""
+          },
+          {
+            "label": "Propose",
+            "status": "done",
+            "rate": "1"
+          },
+          {
+            "label": "Act",
+            "status": "done",
+            "rate": "6 effects"
+          },
+          {
+            "label": "Verify",
+            "status": "done",
+            "rate": ""
+          },
+          {
+            "label": "Record",
+            "status": "done",
+            "rate": ""
+          }
+        ],
+        "observe_rate": "1 source \u00b7 5 calls",
+        "egress_text": "",
+        "receipt_visible": true,
+        "door_count": 1,
+        "policy_visible": true,
+        "cadence_text": "EVERY 30 MIN"
+      }
+    },
+    {
+      "step": "step8_update",
+      "elapsed_ms": 4413,
+      "wire": {
+        "update_id": "pupd_0512b6f2455d4f48bd9b74551d557da0",
+        "draft_body_length": 922,
+        "published_lifecycle": "published",
+        "published_in_list_count": 1,
+        "generator": "deterministic"
+      },
+      "glass": {
+        "list_visible": true,
+        "list_item_count": 3,
+        "generator_label_visible": false,
+        "generator_label_text": "",
+        "receipt_visible": true,
+        "receipt_text": "UPDATES 3",
+        "egress_text": ""
+      }
+    }
+  ],
+  "shot_paths": [
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/01-interview-suggest.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/02-github-connection.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/03-jira-connection.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/04-activate-finalize.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/05-room-landed.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/06-review-deltas.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/07a-steward-run.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/07b-steward-policy.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/07c-steward-trigger.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/07d-steward-second-run.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/07e-steward-policy-view.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/08-update-published.png",
+    "/private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/walk167/real/1440/09-desk-final.png"
+  ],
+  "page_errors": []
+}

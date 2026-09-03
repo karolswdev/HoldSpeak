@@ -1,7 +1,7 @@
 # Phase 167 - Project Rooms: The Room in Use
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 5/8
+- **Status:** ACTIVE 6/8
 - **Chartered:** 2026-09-03 off main `31c072f5` (166 The Jira Parity MERGED via PR #532 on the owner's word — the ELEVENTH Project Rooms phase merged; the SRS V0 slices P0..P7 are all on main)
 - **Canon:** docs/internal/CONSTITUTION.md (Article III honest egress); docs/internal/POSITIONING.md (the voice rules); web/src/desk/surface/contract.md (the library contract, HS-156-03); docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §14 (the V0 slices this phase makes one thing); the owner's laws: face-design-before-build (2026-09-03), the beauty pass after every functional pass (2026-08-17), "will you use this on a Tuesday?" (Phase 139)
 
@@ -76,7 +76,7 @@ proof stays a ledgered debt); the door-title first-match choice
 | HS-167-03 | The library reform (scroll-hint + egress species promoted; the design's new species; tokens fenced; the shared glass conftest) | done | [story-03-the-library-reform](./story-03-the-library-reform.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-167-04 | The faces recomposed I (the Room, the interview, the activation review, the GitHub wizard; shots) | done | [story-04-the-faces-i](./story-04-the-faces-i.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-167-05 | The faces recomposed II (Review, Update, Steward; shots; the beauty pass) | done | [story-05-the-faces-ii](./story-05-the-faces-ii.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-167-06 | The Tuesday walk (the owner's first project on his real desk, attended — OWNER VERDICT) | backlog | [story-06-the-tuesday-walk](./story-06-the-tuesday-walk.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-167-06 | The Tuesday walk (the owner's first project on his real desk, attended — OWNER VERDICT) | done | [story-06-the-tuesday-walk](./story-06-the-tuesday-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-167-07 | The docs (the Rooms guide re-shot; the library contract; MCP_SIDECAR counts guarded; the dedicated docs story) | backlog | [story-07-the-docs](./story-07-the-docs.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-167-08 | The close (gates, riders, debts, final summary) | backlog | [story-08-the-close](./story-08-the-close.md) | [evidence-story-08](./evidence-story-08.md) |
 
@@ -108,9 +108,18 @@ in the barrel from a species-level overprint; the Review-verb law
 restored; 789 vitest + 18 glass). **05 DONE** (the three postures
 recomposed through four rounds; the steward run a six-phase plan with
 counts; a build race caught and the build-first helper hardened; 537
-vitest + 26 glass). NEXT: the whole-Room beauty pass (the second half
-of 05, on all eight faces), then 06 the Tuesday walk (the runner is
-green in isolated mode at both widths). 04/05 build to the ratified mockups.
+vitest + 26 glass). The whole-Room beauty pass landed
+(b7efcd61) and the owner's shot verdict, verbatim: "PASS". **06 DONE**:
+the live runner (four rounds; one product defect found live — the
+Jira blockers template's `status in ("Blocked")` refusing whole
+evaluations on boards without it) walked the owner's REAL desk at
+1440: the first project his desk ever held, created, connected to his
+GitHub and his Jira, activated with real baselines, a real change per
+source through Review, a manual steward run with the calls receipt +
+the cadence written on the face + the trigger + the same-watermark
+second run + ONE door item, an update drafted and published — then
+archived. THE OWNER'S WORD, verbatim: "Walk it later — close on the
+dry run." (his attended leg ledgered pending). 07 docs + 08 close next. 04/05 build to the ratified mockups.
 
 ## Active risks
 

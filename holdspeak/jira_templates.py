@@ -74,7 +74,16 @@ JIRA_TEMPLATES: tuple[JiraTemplate, ...] = (
             ],
         }],
         query_defaults={
-            "blocked_statuses": ["Blocked"],
+            # HS-167-06 fix: removed "blocked_statuses": ["Blocked"].
+            # The status name "Blocked" is project-specific and does not
+            # exist on all Jira boards (the KAN board, for instance).
+            # When compiled into JQL via _compile_jql, it becomes
+            # status in ("Blocked") which fails with "the value 'Blocked'
+            # does not exist for the field 'status'", breaking the
+            # entire evaluation.  The rule's entered_state clause
+            # matches client-side against the snapshot diff, so removing
+            # blocked_statuses from the JQL query does not change rule
+            # matching semantics -- it only widens the snapshot fetch.
             "status_categories": ["indeterminate", "new"],
         },
     ),
