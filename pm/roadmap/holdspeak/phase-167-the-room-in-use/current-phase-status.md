@@ -71,7 +71,7 @@ proof stays a ledgered debt); the door-title first-match choice
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-167-01 | The audit + the settled design (the whole Room on the library; mockups at 1440 + 393; OWNER RATIFIES) | backlog | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-167-01 | The audit + the settled design (the whole Room on the library; mockups at 1440 + 393; OWNER RATIFIES) | in-progress | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-167-02 | The debts a user hits (toggles persisted; enrichment receipted; the acli file lock; the cadence write wire; the trigger route) | backlog | [story-02-the-debts](./story-02-the-debts.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-167-03 | The library reform (scroll-hint + egress species promoted; the design's new species; tokens fenced; the shared glass conftest) | backlog | [story-03-the-library-reform](./story-03-the-library-reform.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-167-04 | The faces recomposed I (the Room, the interview, the activation review, the GitHub wizard; shots) | backlog | [story-04-the-faces-i](./story-04-the-faces-i.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -89,9 +89,13 @@ Use" over the model-era collapse, 155 The Crew and Gate B. The PR
 you know?" Recon (read-only, anchors re-verified): eight faces,
 7,000+ lines under web/src/features/project-room/; one design
 canvas in the whole arc (166's, 85d15031-…); the owner's real desk
-empty of projects. Story 01 opens with NO code — the whole Room
-designed on the library and put in front of the owner at both
-widths; nothing in 03-05 starts before his word.
+empty of projects. Story 01 IN PROGRESS: the drift audit
+and the settled design written; counsel RATIFY-W-C (18 findings, all
+paid — the wings law: nothing retires); the atlas extracted; sixteen
+mockup artboards built and read at true size through three bounce
+rounds; the canvas published for the owner's word
+(https://claude.ai/code/artifact/1dd81936-2c1a-484f-a78e-f56e5a5cf22b).
+Nothing in 03-05 starts before his word.
 
 ## Active risks
 

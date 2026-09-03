@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 167
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** -
 - **Unblocks:** HS-167-03, HS-167-04, HS-167-05
 - **Owner:** unassigned
@@ -45,6 +45,39 @@ zero product code.
 - [ ] The audit names every hand-rolled block with an anchor and the species that replaces it; counsel reads the design first and its findings are paid in the design.
 - [ ] Mockups for all eight faces at both widths published; sources committed; token values real (no raw px).
 - [ ] The owner's word recorded verbatim; PASS before 03/04/05 start.
+
+## Counsel round (2026-09-03)
+
+Counsel (opus-worker, read-only) read the design against the barrel,
+contract.md, the 166 precedent and the seven current faces: **RATIFY-
+WITH-CONDITIONS** — 3 M (SurfaceLedgerRow's real props are `cells`,
+not `tokens`/`trailing`; SurfaceIdentity had no typed contract; the
+"On track" health chip fabricated a field the Room wire lacks), 9 S
+(the design silently retired the TIMELINE/DECISIONS/SEARCH wings;
+SurfaceSplit is master/detail, not a comparison; SurfaceVerbs has no
+`active`; DeskEditor is not in the barrel; CitationChips is per
+section; Review's keyboard grammar and two-step Defer unnamed; the
+steward grant sentence dropped; the cadence stepper inert until 02;
+no absent/degraded states), 6 N (mic in Review; `REV` casing; the Ask
+well's runtime egress chip; LampGadget misused as a counter ×2;
+SurfaceStreamDay/Entry unnamed). ALL EIGHTEEN PAID in the design
+(D0 spine rows added: wings kept, absent/degraded, keyboard; D9 is
+now a props table). The wings law: nothing retires.
+
+## The mockups (2026-09-03)
+
+Canvas: https://claude.ai/code/artifact/1dd81936-2c1a-484f-a78e-f56e5a5cf22b — sixteen
+artboards (eight faces × 1440 window + 393 glass), two Fedaykin
+authors composing from the atlas (assets/mockups/library-atlas.md:
+every species' resolved values, extracted read-only from the barrel)
+and the settled design. The orchestrator read all sixteen PNGs at
+true size, three bounce rounds paid (primaries that ellipsized at 640
+and 393; provenance chips abbreviated to "GH"/"ACLI" dropping the
+host — an egress-honesty violation; a phone chrome missing a gem and
+two wings; unequal CURRENT|PROPOSED columns; a chevron colliding with
+the time cell; citation chips in a serif fallback; two footers
+colliding at 393). Sources committed: assets/mockups/*.dc.html +
+canvas.json; shots: assets/story-01-shots/. **Owner's word: PENDING.**
 
 ## Test plan
 
