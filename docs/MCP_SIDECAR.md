@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-179 tools across 33 families. The default non-owner discovery lists 34
+186 tools across 33 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -57,7 +57,7 @@ default.
 
 ## Tool families
 
-The 179 tools are organized into domain families. Each tool follows the
+The 186 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -97,7 +97,7 @@ Door has no MCP resource. Its
 Follow-Through People overlay respects `HOLDSPEAK_MCP_PEOPLE_ACCESS` and is
 safely empty when that encrypted disclosure capability is unavailable or off.
 
-### project (33 tools)
+### project (34 tools)
 
 Three read tools: `project.list` returns all projects (optionally
 including archived). `project.get` returns one project by id with room
@@ -135,16 +135,48 @@ Five resource templates expose project data: `holdspeak://projects/{id}`,
 `.../room`, `.../delta`, `.../updates/{update_id}`, and
 `.../steward/runs/{run_id}`. Unknown ids refuse typed.
 
-### provider (4 tools)
+### provider (10 tools)
 
-Provider discovery and connection status. `provider.list` returns all
-configured providers (native + GitHub) with their capabilities.
+Provider discovery and connection status for GitHub and Jira.
+
+**GitHub (4 tools).** `provider.list` returns all configured providers
+(native + GitHub + Jira) with their capabilities and readiness.
 `provider.github_connection` reads the GitHub adapter's connection status.
 `provider.github_discover` runs bounded repository discovery through the
 configured adapter (pagination surfaced). `provider.github_validate_repo`
 validates a repository by owner/repo string. All GitHub tools refuse typed
-with `provider_not_configured` when the adapter is absent. No provider
-writes.
+with `provider_not_configured` when the adapter is absent.
+
+**Jira (6 tools).** `provider.jira_connections` lists all Jira connections
+(site+email pairs) and their status. `provider.jira_add_connection` adds a
+connection by site and email (no credentials stored).
+`provider.jira_connection` rechecks one connection's status (switch + auth
+status probe). `provider.jira_discover` discovers Jira resources (projects,
+issue types, statuses) for a connection. `provider.jira_search` runs a JQL
+query and returns matching issues (optional per-issue enrichment for
+duedate, resolution, updated via `workitem view`).
+`provider.jira_validate_scope` validates a Jira project key. All Jira tools
+refuse typed when the `acli` binary is absent.
+
+No provider writes.
+
+**Jira over acli.** The Atlassian CLI (`acli`) is the Jira transport, the
+same relationship `gh` has with GitHub. Prerequisites: `acli` installed
+(`brew tap atlassian/homebrew-acli && brew install acli`) and at least one
+account authenticated (`acli jira auth login --site <site>.atlassian.net
+--email <email> --token`). A connection is identified by (site, email);
+one owner may hold many across multiple `*.atlassian.net` sites. Every call
+follows the switch-and-verify law: `auth switch`, then the command, then
+`auth status` read-back, under one process lock. A read-back mismatch is a
+typed error, never a silent wrong read. All access is read-only.
+The search field cap: `workitem search --fields` accepts only issuetype,
+key, assignee, priority, status, summary, labels, reporter, creator,
+description; fields such as duedate, resolution, and updated come from
+per-issue `workitem view` enrichment (calls reported in the result).
+Egress: Jira calls contact `<site>.atlassian.net` from this device.
+
+Recorded shapes are from a live `acli 1.3.36-stable` session
+(tests/unit/test_jira_provider.py carries the recorded fixtures).
 
 ### thread (1 tool)
 
@@ -409,13 +441,13 @@ read.
 
 ## The project palette (MCP-007)
 
-The project family ships a `PROJECT_PALETTE`: a frozen set of the 37
+The project family ships a `PROJECT_PALETTE`: a frozen set of the 44
 project.* and provider.* tool names. Two functions in the MCP layer
 consume it.
 
 `tools_for_palette(palette)` returns only the tools whose names are in
-the palette. A client that lists tools through this filter sees 37 tools
-instead of 179.
+the palette. A client that lists tools through this filter sees 44 tools
+instead of 186.
 
 `dispatch_for_palette(name, arguments, principal, palette)` dispatches
 a tool call only if `name` is in the palette. A name outside the palette

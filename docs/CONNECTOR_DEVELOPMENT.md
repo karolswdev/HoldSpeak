@@ -258,13 +258,17 @@ canonical reference implementations:
 |---|---|---|---|
 | Firefox companion | [firefox_ext.py](../holdspeak/connector_packs/firefox_ext.py) | `firefox_ext.MANIFEST` | none (coverage via [`tests/unit/test_activity_extension.py`](../tests/unit/test_activity_extension.py) parser-contract tests) |
 | GitHub CLI | [github_cli.py](../holdspeak/connector_packs/github_cli.py) | `github_cli.MANIFEST` | [`gh-happy-path.json`](../tests/fixtures/connectors/gh-happy-path.json), [`gh-empty-ledger.json`](../tests/fixtures/connectors/gh-empty-ledger.json) |
-| Jira CLI | [jira_cli.py](../holdspeak/connector_packs/jira_cli.py) | `jira_cli.MANIFEST` | [`jira-happy-path.json`](../tests/fixtures/connectors/jira-happy-path.json), [`jira-empty-ledger.json`](../tests/fixtures/connectors/jira-empty-ledger.json) |
+| Atlassian CLI (Jira) | [acli_jira.py](../holdspeak/connector_packs/acli_jira.py) | `acli_jira.MANIFEST` | none (coverage via [`tests/unit/test_jira_provider.py`](../tests/unit/test_jira_provider.py) recorded-shape tests) |
+| Jira CLI (legacy, parked) | [jira_cli.py](../holdspeak/connector_packs/jira_cli.py) | `jira_cli.MANIFEST` | [`jira-happy-path.json`](../tests/fixtures/connectors/jira-happy-path.json), [`jira-empty-ledger.json`](../tests/fixtures/connectors/jira-empty-ledger.json) |
 | Calendar candidates | [activity_candidates.py](../holdspeak/activity_candidates.py) | (built-in via the descriptor in [`activity_connectors.py`](../holdspeak/activity_connectors.py)) | [`calendar-happy-path.json`](../tests/fixtures/connectors/calendar-happy-path.json), [`calendar-empty-ledger.json`](../tests/fixtures/connectors/calendar-empty-ledger.json) |
 
-The github_cli + jira_cli packs are the cleanest references
-because they ship a read-only command allowlist + a policy
-validator (`is_command_allowed`) alongside the manifest. Read
-those before building your own.
+The github_cli, acli_jira, and jira_cli packs are the cleanest
+references because they ship a read-only command allowlist + a policy
+validator (`is_command_allowed`) alongside the manifest. The acli_jira
+pack uses 3-tuple allowlist entries `(product, group, verb)` for the
+`acli jira <group> <verb>` command shape; it is read-only and requires
+the `acli` CLI (`requires_cli: "acli"`). Read those before building
+your own.
 
 ---
 

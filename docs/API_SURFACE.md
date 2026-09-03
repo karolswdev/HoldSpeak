@@ -847,6 +847,12 @@ Routes: 618 (plus static mounts). iOS-consumed: 89. Web-consumed: 468.
 | POST | `/api/providers/github/connection/recheck` | server only |
 | GET | `/api/providers/github/discover` | server only |
 | POST | `/api/providers/github/validate-repo` | server only |
+| GET | `/api/providers/jira/connections` | server only |
+| POST | `/api/providers/jira/connections` | server only |
+| POST | `/api/providers/jira/connections/{ref}/recheck` | server only |
+| GET | `/api/providers/jira/discover` | server only |
+| POST | `/api/providers/jira/search` | server only |
+| POST | `/api/providers/jira/validate-scope` | server only |
 | POST | `/api/watches/{watch_id}/evaluate` | server only |
 
 ## web.routes.repositories

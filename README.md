@@ -377,6 +377,16 @@ pip install 'holdspeak[dictation-openai]' # the dictation pipeline via an OpenAI
 
 (From a clone, use the editable form instead, e.g. `uv pip install -e '.[meeting]'`.)
 
+### Prerequisites for Project Rooms
+
+Project Rooms connect a Project to external providers. Each provider
+requires its own CLI:
+
+- **GitHub:** [`gh`](https://cli.github.com/) (`brew install gh`, then `gh auth login`).
+- **Jira:** [`acli`](https://acli.atlassian.com/) (`brew tap atlassian/homebrew-acli && brew install acli`, then `acli jira auth login --site <yoursite>.atlassian.net --email <you> --token`).
+
+Jira access is read-only and contacts `<site>.atlassian.net` from this device.
+
 ### Upgrading and your data
 
 Your whole HoldSpeak database is a single SQLite file. Before a version jump you

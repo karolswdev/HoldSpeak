@@ -92,11 +92,14 @@ Studio, and Settings are focused workrooms.
 ## Extend: build on it
 
 - **[MCP sidecar](./MCP_SIDECAR.md)**: the desk's programmable surface over
-  stdio. 179 tools across 33 domain families, with 34 resources in default
+  stdio. 186 tools across 33 domain families, with 34 resources in default
   non-owner discovery and 37 for the owner, wired automatically
   in Claude Code via the repo's `.mcp.json`. The reference for families,
   model-invoking tools, trust model, resources, and the explicit opt-in,
   shared-intent-only People boundary.
+- **[Project Rooms](./PROJECT_ROOMS.md)**: connect a Project to GitHub
+  repositories and Jira sites, install Watches (Project-scoped) over pull
+  requests and issues, and let the Steward act on what changes.
 - **[The Desk](./WEB_DESK.md)**: work with Meetings, Notes, Knowledge,
   Agents, Sequences, Workflows, Artifacts, and Coder sessions; place durable
   items in Zones and inspect their results and Receipts.

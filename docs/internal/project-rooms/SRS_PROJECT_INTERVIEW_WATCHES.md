@@ -440,7 +440,45 @@ Recommended templates:
 - `watch.jira.scope_intake`;
 - `watch.jira.transformation`.
 
-The current Jira semantic diff and allowlisted `jira issue list` are not a live local Watch adapter. Jira MUST be labeled partially usable/pushed-snapshot-only until a provider implements discovery plus `jira.issue.search`. A fixture MUST NOT be used to claim readiness.
+The V0 Jira transport is the Atlassian CLI (`acli`), the same
+relationship `gh` has with GitHub. `acli` is an external prerequisite
+(`brew tap atlassian/homebrew-acli && brew install acli`); the owner
+authenticates via `acli jira auth login` and HoldSpeak never stores
+credentials.
+
+A connection is identified by **(site, email)**, which is acli's own
+identity for `auth switch --site --email`. One owner may hold many
+connections across many `*.atlassian.net` sites or multiple accounts on
+one site. Each combination is one row in `watch_provider_connections`
+with `provider_id="jira"` and `external_connection_ref="site|email"`.
+
+acli keeps ONE current account globally, so every HoldSpeak call
+follows the **switch-and-verify law**: `auth switch --site S --email E`,
+then the command, then `auth status` read-back, all under one
+process-wide lock. A read-back naming a different site or email is a
+typed error (`degraded`), never a silent wrong read.
+
+Issue types are **enumerated** from `project view --key K --json`
+(the `issueTypes` array). Statuses are **observed** from a bounded
+`workitem search --fields key,status` population, labeled `observed`;
+Jira's three status categories (`new`, `indeterminate`, `done`) are
+fixed and labeled `static`.
+
+**The search field cap:** `workitem search --fields` accepts only
+issuetype, key, assignee, priority, status, summary, labels, reporter,
+creator, description. Fields such as duedate, resolution, and updated
+are refused. `workitem view KEY --fields ... --json` accepts all fields.
+The JiraWatchSource therefore fetches the population by one JQL search,
+then enriches each entity with one bounded `workitem view --fields
+duedate,resolution,updated,statuscategorychangedate` call, capped by
+the watch limit (N+1 calls per evaluation, N = number of items).
+
+Read verbs only; no Jira write effects ship in this slice (V0-E).
+
+A fixture MUST NOT be used to claim readiness.
+
+Ratified 2026-09-03 by the owner: acli transport; multi-account,
+multi-site focus.
 
 ### 8.3 HoldSpeak-native Watches
 
@@ -675,7 +713,7 @@ No GitHub writes or webhooks are required.
 
 ### V0-D — Jira provider parity
 
-- real Jira connection/discovery/search adapter;
+- real Jira connection/discovery/search adapter (acli transport);
 - constrained Project/issue type/status Watch;
 - test, baseline, poll, semantic observations, and same Project actions.
 
