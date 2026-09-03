@@ -62,7 +62,7 @@ never deleted), the per-watch cadence write wire (stays ledgered).
 | HS-166-02 | Discovery + search (projects, issue types, statuses, JQL; routes + MCP) | done | [story-02-discovery-and-search](./story-02-discovery-and-search.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-166-03 | The JiraWatchSource + templates + candidates (the gate graduates; the fetcher-seam rider) | done | [story-03-the-watch-source](./story-03-the-watch-source.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-166-04 | The web face (provider-keyed wizard; the site egress badge; shots) | done | [story-04-the-web-face](./story-04-the-web-face.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-166-05 | The live walk (real acli, real site(s), SETFLOW-005 — OWNER VERDICT) | backlog | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-166-05 | The live walk (real acli, real site(s), SETFLOW-005 — OWNER VERDICT) | in-progress | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-166-06 | The docs (the acli transport canon edit; Jira honesty; the dedicated docs story) | done | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-166-07 | The close (gates, riders, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
