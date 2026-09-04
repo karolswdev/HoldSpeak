@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 168
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HS-168-03, HS-168-04
 - **Unblocks:** HS-168-07
 - **Owner:** unassigned
@@ -38,9 +38,51 @@ against the 01 baseline.
 
 ## Acceptance criteria
 
-- [ ] The runner drives the face and shoots the window; no step may be skipped; a step that cannot be asserted fails the walk (a hash-identical pair of step shots fails the walk).
-- [ ] The stopwatch: clicks and seconds for cold → two tested Watches, recorded beside the 01 baseline; one terminal visit per tool at most.
-- [ ] The owner's verdict recorded verbatim; his word on "no longer confuses me" is the exit.
+- [x] The runner drives the face and shoots the window; no step may be skipped; a step that cannot be asserted fails the walk (a hash-identical pair of step shots fails the walk).
+- [x] The stopwatch: clicks and seconds for cold → two tested Watches, recorded beside the 01 baseline; one terminal visit per tool at most.
+- [x] The owner's verdict recorded verbatim; his word on "no longer confuses me" is the exit.
+
+## Delivered (2026-09-04)
+
+The runner tests/e2e/live168_walk.py (HS168_WALK=1; HS168_WALK_DB=
+isolated|real; real HOME; build-first; every shot settled; every step
+asserted; consecutive shots hash-different) and assets/walk-script.md
++ assets/stopwatch.md. ISOLATED leg (real gh + acli, tmp DB): cold →
+Settings → Connections `Sign in` / `Not set up` → New Project → the
+TOOLS row with `Connect GitHub` / `Connect Jira` and zero provider
+cards → the connect round trip (Connections opens over the setup
+window; the session's answers survive) → re-boot connected → Settings
+→ Connections `Connected` for both → Sources with Connected chips →
+the GitHub wizard scope-only on karolswdev/HoldSpeak → Test → Use this
+Watch → a second GitHub suggestion offers the known-scope card `chosen
+for PR review queue` → Use this repo → Test → the Jira wizard on KAN
+(account step skipped) → Test → Review (3 watches, both baselines
+established) → Activate → the Room lands; 2 passed at 1440 + 393, 22
+steps each. THE REAL LEG on the owner's desk (HS168_WALK_DB=real,
+run by the orchestrator; DB backed up beside itself first): 2 passed
+in 89 s; at 1440 the connected part ran 18 clicks · 38.3 s to the
+Room (project_id=proj-4ed6be467d96; lifecycle=active); at 393 18 clicks · 35.5 s; both projects
+ARCHIVED in the finally with every watch paused (the DB read back:
+three archived projects, watches 2/2 · 3/3 · 3/3 paused; the 167
+project untouched). The stopwatch (assets/stopwatch.md): BEFORE 9
+clicks · 10.5 s to a tested GitHub Watch with two sentences and a
+terminal command inside the wizard → AFTER 7 clicks · 11.7 s, zero
+sentences, no terminal command in the interview; the second GitHub
+Watch 4 clicks from the first (the known scope); Jira 15 clicks, Test
+enabled by the pick; cold: from a SILENT dead end to `Connect GitHub`
+on the face at 4 clicks. Two species bugs the real-desk shots exposed
+and paid (b159bd71): the footer's egress slot clipped hosts at 156px
+(every truncated host on the branch), and an empty egress slot shifted
+the receipt into the narrow first column (`OF 4`). Runner scar paid:
+the real leg overwrote the isolated leg's shots — legs now write
+`real-` prefixed directories. Shots: assets/story-05-walk/{cold,
+connected,real-connected}-{desktop,phone}/ + the four transcripts.
+
+**THE OWNER'S ATTENDED WALK — pending.** His desk: the hub restarted
+on the branch build (`cd web && npm run build`, then restart
+`holdspeak web`); walk assets/walk-script.md's connected steps by hand
+at his hub and on the 393 glass; the Tuesday question. His verdict,
+verbatim, closes this story.
 
 ## Test plan
 

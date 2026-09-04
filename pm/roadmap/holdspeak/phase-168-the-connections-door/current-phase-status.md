@@ -147,9 +147,15 @@ orchestrator's probe and a settle helper added to glass_infra; the owner's
 live bounce paid (library Buttons everywhere in setup; the ledger-row wrap
 fixed at the species). **06 DONE:** the guide's Connect your tools, the Rooms
 walk rewritten to connect-once with nine shots, the architecture anchors, the
-README prerequisites, the stale tool counts. 05 (the walk) building — the
-isolated leg by the worker, the real leg on the owner's desk by the
-orchestrator, then his attended walk and verdict.
+README prerequisites, the stale tool counts. **05 BUILT and walked:** the
+isolated leg green at both widths; THE REAL LEG on the owner's desk passed
+(2 × 89 s, both projects archived with every watch paused, the DB backed up
+first); two footer species bugs the real-desk shots exposed paid. The
+stopwatch: 9 → 7 clicks to a tested GitHub Watch, zero sentences, no
+terminal command inside the interview, the second Watch 4 clicks via the
+known scope, cold from a silent dead end to `Connect GitHub` at 4 clicks.
+**05 flips on the owner's attended walk and verdict.** 07 (the close) in
+flight: counsel reading the diff; the full suite running.
 
 ## Active risks
 
