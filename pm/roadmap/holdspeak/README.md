@@ -330,7 +330,7 @@ counsel pass. GitHub Actions was not watched. The runner had no physical mic,
 so the real-mic and physical permission/no-speech legs remain open.
 
 **Parallel completion (2026-08-30):** [Phase 151 — The Live Intelligence Proof](./phase-151-live-intel-proof/current-phase-status.md) completed 7/7 on PR #512, fixing thirteen live meeting, transcription, intelligence, recording, and wiring defects. PR #511 consolidates it with the Desk Chat stream; both historical Phase 151 paths remain documented.
-**Last updated:** 2026-09-04 — **PHASE 169 THE STREAMLINED DOOR CHARTERED 0/7** on the owner's mandate ("really refine and really streamline the UX... world-freaking-class"): the settled design written (the one-screen door; the Room as four questions); eight artboards in flight for his ratification. 168 holds at 5/7 with both bounces paid @2e5b2429 + three live defects paid @1cd03962; its merge waits on his word.
+**Last updated:** 2026-09-04 — **PHASE 169 THE STREAMLINED DOOR ACTIVE 1/7:** the design RATIFIED by the owner on the canvas ("word") after the excellence round — eleven artboards, counsel paid; the build opens: 02 the Door ∥ 04 the wire for the four questions. 168 holds at 5/7; its merge waits on his word.
 backend architecture names the four caller calls, executor plane, journal/bus
 rule, all six registered operation types, and a rendered lifecycle diagram;
 Security leads with the cooperating-code-only boundary before any prevention

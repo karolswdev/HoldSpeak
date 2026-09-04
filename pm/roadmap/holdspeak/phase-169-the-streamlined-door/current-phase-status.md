@@ -55,7 +55,7 @@ module we are both proud of.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-169-01 | The settled design + the canvas (the one-screen door; the Room as four questions; eight artboards at 1440 + 393; counsel first; OWNER RATIFIES) | in-progress | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-169-01 | The settled design + the canvas (the one-screen door; the Room as four questions; eight artboards at 1440 + 393; counsel first; OWNER RATIFIES) | done | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-169-02 | The Door built to the canvas (one screen: the outcome line; source rows with in-world pickers and default Watches; the count is the test; Create Project) | backlog | [story-02-the-door](./story-02-the-door.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-169-03 | The Room rebuilt to the canvas (the head with the one headline; NEEDS YOU; SOURCES; SINCE YOU LOOKED; DECISIONS & COMMITMENTS; the ask well; two wings ROOM · HISTORY) | backlog | [story-03-the-room](./story-03-the-room.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-169-04 | The wire for the four questions (needs-you items derived from real Watch entities; the read marker; the health inputs; the meeting Watch never offered until it evaluates; MCP twins) | backlog | [story-04-the-wire-for-four-questions](./story-04-the-wire-for-four-questions.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -65,9 +65,15 @@ module we are both proud of.
 
 ## Where we are
 
-**ACTIVE 0/7.** Branch `feat/the-streamlined-door` off
-feat/connections-door `1f9798f9`. The settled design is written
-(D0-D6); two design workers are drawing the eight artboards on the
-168 shell; the orchestrator reads every shot against D3/D4, counsel
-reads the canvas, then the owner ratifies. No product code before
-his word.
+**ACTIVE 1/7.** Branch `feat/the-streamlined-door` off
+feat/connections-door `1f9798f9`. **01 DONE:** the settled design,
+eleven artboards over three rounds (every PNG read at true width),
+counsel RATIFY-W-C paid before the owner saw it, the canvas published
+(aa41070b-…), and his word — "Okay yeah this does look a lot better…
+perfect it even one more time" → "Just. Be excellent." → the
+excellence round → **"word"**. The build opens on his word: 02 the
+Door (the face + its two seams: the count through the evaluation
+compile; Create as one service call) in parallel with 04 the wire for
+the four questions (needsYou / sources / health / sinceRead read
+marker / decisions via the meeting link / `branch_ci` / the meeting
+template retired / MCP parity); then 03 the Room; then 05 his desk.
