@@ -451,6 +451,22 @@ a `CalendarSource` through the settings write path only. The review gate
 (`CalendarSnapshotReviewCore`) requires an explicit week anchor (never
 silently guessed) and lets the owner edit or remove events before confirm.
 
+**The connections readiness projection.** `ConnectionsService`
+(`holdspeak/services/connections_service.py:90`) provides one readiness shape
+over all provider adapters. `list_tools`
+(`holdspeak/services/connections_service.py:111`) returns one entry per known
+tool (GitHub, Jira, calendar, models) with `state`, `account`,
+`next_action`, `recovery_hint`, `error_detail`, `last_checked_at`, and
+`egress_host`. The five display states
+(`holdspeak/services/connections_service.py:36-40`) are mapped from each
+adapter's wire constants. The service stores no new state; it delegates to
+`github_provider`, `jira_provider`, the calendar config, and the inference
+assignment service. Routes (`holdspeak/web/routes/connections.py:24`)
+expose `GET /api/connections` and
+`POST /api/connections/{provider}/recheck`. MCP twins are
+`connection.list` and `connection.recheck`
+(`holdspeak/mcp/families/project.py:774,785`).
+
 ## Project memory and the process read model
 
 Meeting plugins still produce ordinary typed artifacts. When the shared

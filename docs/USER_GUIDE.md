@@ -41,6 +41,7 @@ Use these guides when you are ready for more than the first sentence:
 | iPad app | Drives both modes from another device over the hub's HTTP API: dictate into the desk, read a meeting back with its artifacts and sources, approve a proposal, browse the archive | [Companions](#companions) |
 | AIPI-Lite companion | Portable ESPHome device for meeting controls, status, and spoken replies to waiting Claude/Codex sessions | [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md), `/companion` |
 | Threads | Multi-turn streamed conversations grounded on desk material with `@`-refs, receipts, and search | The Desk, **Continue in thread** on any object |
+| Connections | See each external tool's readiness (GitHub, Jira, Calendar, Models), run Recheck, and follow the recovery command when a tool is not connected | Settings, Connections |
 | Models | Pick a recommended pack (Light, Balanced, Full) or set up manually with Model Library and Assignments; the topology map shows this Mac and every connected node | Settings, Models |
 
 ## Develop a thought
@@ -635,6 +636,69 @@ When a schedule is linked to a calendar event, it does not appear as a
 separate **SCHEDULED RECORDING** row while the event row is on the rail. The
 event row wears the **ARMED** chip instead. The schedule row reappears only
 if the event leaves the projection.
+
+## Connect your tools
+
+Open **Settings, Connections**. The tile shows one card per tool with its
+readiness state and one verb.
+
+![Settings Connections on a cold desk: four tool cards with their state chips](assets/connections/connections-cold.png)
+
+Four tools appear:
+
+| Tool | Emblem | State chip | Provenance | Command |
+|---|---|---|---|---|
+| **GitHub** | `GH` | `Connected`, `Sign in`, `gh missing`, `Unreachable`, `Off` | `gh` | `gh auth login` |
+| **Jira** | `J` (or site initial) | `Connected`, `Sign in`, `acli missing`, `Not set up` | `acli` | `acli jira auth login --site <site> --email <email> --token` |
+| **Calendar** | calendar outline | `Connected`, `Not set up` | `local` | (opens Settings, Meetings) |
+| **Models** | `M` | `Assigned`, `Unassigned` | `local` | (opens Settings, Models) |
+
+State chips render in uppercase via CSS; the label in the code and in
+this table is as-authored (e.g. `Sign in`).
+
+**GitHub.** When the `gh` CLI is authenticated, the card reads
+`Connected` with the logged-in account name and a quiet `Recheck`
+verb. When signed out or expired, the card reads `Sign in` and the
+fold opens with the recovery command (`gh auth login`) in a code well
+with `Copy`. When `gh` is not on PATH, the chip reads `gh missing`.
+When the probe times out or the network fails, the chip reads
+`Unreachable` with the error in the chip title. Every `Recheck`
+contacts `github.com` from this device; the egress chip names it.
+
+![Settings Connections with a real GitHub account connected](assets/connections/connections-connected.png)
+
+**Jira.** Each Jira connection is one (site, email) pair. With zero
+connections, the card shows `Not set up` and fields for site and email
+to add the first account. With one or more connections, each row shows
+its site, email, state, and the `acli` provenance chip naming the
+site. The recovery command is
+`acli jira auth login --site <site> --email <email> --token`.
+Every `Recheck` contacts `<site>.atlassian.net` from this device.
+HoldSpeak never stores Jira credentials; `acli` holds the token on
+this machine.
+
+![Settings Connections with the Sign in fold open showing the recovery command](assets/connections/connections-sign-in.png)
+
+**Calendar** and **Models** are link cards. Calendar opens **Settings,
+Meetings** (the calendar source setup from the Door). Models opens
+**Settings, Models** (the pack door and topology map). Neither card
+rechecks an external host.
+
+**The receipt.** After any `Recheck`, the tile footer shows the time
+of the last check and the egress host contacted.
+
+**No hosted relay.** `gh` and `acli` hold credentials on this machine.
+HoldSpeak stores no token and contacts no relay; each `Recheck` runs
+the CLI's own probe from this device to the named host.
+
+### The wire
+
+`GET /api/connections` returns one entry per tool with `state`,
+`account`, `next_action`, `recovery_hint`, `error_detail`,
+`last_checked_at`, and `egress_host`. `POST
+/api/connections/{provider}/recheck` rechecks one provider and returns
+its refreshed entry. The MCP twins are `connection.list` and
+`connection.recheck`.
 
 ## Models
 
