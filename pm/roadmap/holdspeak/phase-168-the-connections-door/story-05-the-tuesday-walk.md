@@ -179,6 +179,48 @@ Laws (into the handover + memory): "owns the body" means UNMOUNT;
 a card that is an entry carries its verb; a window's wings never
 leave the window — titles shrink first; walk it with HIM in mind.
 
+### Found live by the re-walk (his desk, read-only sqlite)
+
+1. **The Jira Watch was born broken — PAID.** Every walk project (both
+   sittings) and the owner's OWN project (proj-10b35905777c, created
+   08:29 local today) stored `issue_types: [""]`: JiraWizard.tsx fired
+   `onToggleType("")` 100 ms after the first project pick; the setup
+   route stored it (`issue_types or []` is truthy); finalize wrote it
+   into query_json; `_compile_jql` emitted `issuetype in ('')`; Jira
+   answered `failed to parse JQL query: the value '' does not exist for
+   the field 'issuetype'`; baseline_state stayed `pending` — while the
+   Test step said passed, because `_native_test_read` merged
+   `scope.projects` but never `scope.issue_types` (Test and evaluation
+   compiled DIFFERENT queries). Paid at three seams: the wizard no
+   longer injects a blank; `_compile_jql` drops blank entries in every
+   list clause (his saved watches heal on the next tick, no migration);
+   the Test path merges scope.issue_types (parity). Tests:
+   tests/unit/test_hs168_walk_fixes.py (10: blanks, parity, the
+   owner's exact stored query). Live: the compiled JQL for his stored
+   query ran through acli and returned KAN-2. Re-walk after the fix:
+   1440 passed, the new project's jira row `baseline_state =
+   established`, `last_error` empty, no `issue_types` key.
+2. **The Jira scope step showed a BLANK `PROJECT` section while
+   discovery ran** (no loading token) — the 393 shot caught it. Paid:
+   `LOADING PROJECTS` token (JiraWizard.test.tsx +2). The 393 leg then
+   failed three times at `LOADING PROJECTS` for >27 s while the unit
+   fast lane (`-n auto`, 12 min, every core) ran beside it; with the
+   wire timed and the machine idle, discovery took 2.2 s and the leg
+   passed. Law: a live desk walk never shares the machine with the
+   parallel suite. The runner now prints every /api/providers request
+   with its duration on failure.
+3. **Paused watches on ARCHIVED projects are still evaluated hourly**
+   by the automation conductor's legacy pump (holdspeak.log: `Watch
+   conductor: {'status': 'failed'…}` for watch_8a19439d72e4 /
+   watch_1c6c1382f526 every ~35 min since 06:16 — real acli egress for
+   archived projects; the 165 "legacy-side watch guard" debt made
+   visible). Being paid at the selection seam in this sitting.
+4. **The owner's own project carries a native `meeting` Watch that
+   fails every tick**: `native can accept pushed snapshots but has no
+   local query adapter yet` (watch_980edbb89697). A Watch the face let
+   him activate cannot evaluate — ledgered for the close (final-summary
+   debts); not paid here.
+
 **THE OWNER'S ATTENDED WALK — recorded above (BOUNCE).** His desk: the hub restarted
 on the branch build (`cd web && npm run build`, then restart
 `holdspeak web`); walk assets/walk-script.md's connected steps by hand

@@ -129,45 +129,64 @@ def _compile_jql(query: dict[str, Any]) -> str:
     """
     clauses: list[str] = []
 
+    # Helper: strip blank/whitespace-only entries so a stored [""]
+    # compiles to no clause (HS-168-05 belt).
+    def _clean(raw: list[str]) -> list[str]:
+        return [v for v in raw if isinstance(v, str) and v.strip()]
+
     # project in (...)
     projects = query.get("projects", [])
-    if isinstance(projects, list) and projects:
+    if isinstance(projects, list):
+        projects = _clean(projects)
+    if projects:
         vals = ", ".join(_jql_quote(p) for p in sorted(projects))
         clauses.append(f"project in ({vals})")
 
     # issuetype in (...)
     issue_types = query.get("issue_types", [])
-    if isinstance(issue_types, list) and issue_types:
+    if isinstance(issue_types, list):
+        issue_types = _clean(issue_types)
+    if issue_types:
         vals = ", ".join(_jql_quote(t) for t in sorted(issue_types))
         clauses.append(f"issuetype in ({vals})")
 
     # statusCategory in (...)
     status_categories = query.get("status_categories", [])
-    if isinstance(status_categories, list) and status_categories:
+    if isinstance(status_categories, list):
+        status_categories = _clean(status_categories)
+    if status_categories:
         vals = ", ".join(_jql_quote(c) for c in sorted(status_categories))
         clauses.append(f"statusCategory in ({vals})")
 
     # priority in (...)
     priorities = query.get("priorities", [])
-    if isinstance(priorities, list) and priorities:
+    if isinstance(priorities, list):
+        priorities = _clean(priorities)
+    if priorities:
         vals = ", ".join(_jql_quote(p) for p in sorted(priorities))
         clauses.append(f"priority in ({vals})")
 
     # assignee in (...)
     assignees = query.get("assignees", [])
-    if isinstance(assignees, list) and assignees:
+    if isinstance(assignees, list):
+        assignees = _clean(assignees)
+    if assignees:
         vals = ", ".join(_jql_quote(a) for a in sorted(assignees))
         clauses.append(f"assignee in ({vals})")
 
     # labels in (...)
     labels = query.get("labels", [])
-    if isinstance(labels, list) and labels:
+    if isinstance(labels, list):
+        labels = _clean(labels)
+    if labels:
         vals = ", ".join(_jql_quote(lb) for lb in sorted(labels))
         clauses.append(f"labels in ({vals})")
 
     # component in (...)
     components = query.get("components", [])
-    if isinstance(components, list) and components:
+    if isinstance(components, list):
+        components = _clean(components)
+    if components:
         vals = ", ".join(_jql_quote(c) for c in sorted(components))
         clauses.append(f"component in ({vals})")
 

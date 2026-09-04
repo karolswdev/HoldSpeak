@@ -1373,11 +1373,17 @@ class ProjectSetupService:
                 self._issue_test_calls = 0
                 return []
             # Build JQL from the spec query using the watch_sources compiler.
-            # Merge scope.projects into query so _compile_jql includes them.
+            # Merge scope fields into query so _compile_jql matches what
+            # the finalize path (create_from_setup) will store.
+            # HS-168-05: parity — test and evaluation must compile
+            # the same JQL for the same stored spec.
             from holdspeak.services.watch_sources import _compile_jql
             merged_query = dict(query)
             if projects and "projects" not in merged_query:
                 merged_query["projects"] = projects
+            scope_issue_types = scope.get("issue_types", [])
+            if scope_issue_types and "issue_types" not in merged_query:
+                merged_query["issue_types"] = list(scope_issue_types)
             jql = _compile_jql(merged_query) if merged_query else ""
             if not jql and projects:
                 jql = f"project IN ({', '.join(projects)})"

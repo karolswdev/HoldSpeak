@@ -918,8 +918,9 @@
   border-width: 0;
 }
 
-/* HS-168-05: the empty-sources token is a token, never a stretched bar. */
-.setup-brief-none {
+/* HS-168-05: a lone status token is a token, never a stretched bar. */
+.setup-brief-none,
+.setup-token-inline {
   width: max-content;
   align-self: flex-start;
   justify-self: start;

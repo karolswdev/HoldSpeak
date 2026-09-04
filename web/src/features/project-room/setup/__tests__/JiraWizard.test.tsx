@@ -274,6 +274,37 @@ describe("JiraScopeStep (HS-168-04)", () => {
   const noop = () => {};
   const defaultKnown = { github: [], jira: [] };
 
+  const scopeProps = {
+    issueTypes: null,
+    statuses: null,
+    scope: EMPTY_SCOPE,
+    preview: null,
+    site: "alpha.atlassian.net",
+    knownScopes: defaultKnown,
+    proposalId: "test-prop",
+    onSelectProject: noop,
+    onToggleType: noop,
+    onToggleStatus: noop,
+    onJqlChange: noop,
+    onPreview: noop,
+    onSearchProjects: noop,
+    previewing: false,
+    onApplyKnownScope: noop,
+  };
+
+  it("HS-168-05: discovery in flight shows LOADING PROJECTS, never a blank section", () => {
+    render(<JiraScopeStep {...scopeProps} projects={null} discovering={true} />);
+    expect(screen.getByTestId("jira-projects-loading").textContent).toContain("LOADING PROJECTS");
+  });
+
+  it("HS-168-05: no token once projects arrive or when idle", () => {
+    const { unmount } = render(<JiraScopeStep {...scopeProps} projects={PROJECTS_RESPONSE} discovering={true} />);
+    expect(screen.queryByTestId("jira-projects-loading")).toBeNull();
+    unmount();
+    render(<JiraScopeStep {...scopeProps} projects={null} discovering={false} />);
+    expect(screen.queryByTestId("jira-projects-loading")).toBeNull();
+  });
+
   it("renders project cards", () => {
     render(
       <JiraScopeStep

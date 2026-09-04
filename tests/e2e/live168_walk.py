@@ -1052,7 +1052,10 @@ def _run_connected_leg(
     if kan.count() == 0:
         # Try Kanban Board text
         kan = scope.locator("text=Kanban").first
-    kan.wait_for(timeout=10000)
+    # Live acli project discovery: the second consecutive leg has taken
+    # >12 s on the owner's site (2026-09-04) — a rig tolerance, not a wait
+    # the face imposes (the PROJECT section shows LOADING PROJECTS).
+    kan.wait_for(timeout=25000)
     clicks += 1
     kan.click()
     page.wait_for_timeout(1000)
@@ -1289,6 +1292,21 @@ def test_tuesday_walk(
                 )
                 page.emulate_media(reduced_motion="reduce")
                 page.on("pageerror", lambda e: errors.append(str(e)))
+                # HS-168-05: the provider wire, timed — printed on failure so a
+                # hang in discovery names its request, not just its locator.
+                _wire_t0 = time.monotonic()
+                _wire_open: dict[str, float] = {}
+                def _on_req(r: Any) -> None:
+                    if "/api/providers/" in r.url:
+                        _wire_open[r.url + r.method] = time.monotonic()
+                        print(f"[wire +{time.monotonic() - _wire_t0:6.1f}s] REQ  {r.method} {r.url.split('/api/')[-1][:120]}")
+                def _on_resp(r: Any) -> None:
+                    k = r.url + r.request.method
+                    if k in _wire_open:
+                        print(f"[wire +{time.monotonic() - _wire_t0:6.1f}s] RESP {r.status} {r.url.split('/api/')[-1][:120]} ({time.monotonic() - _wire_open.pop(k):.1f}s)")
+                page.on("request", _on_req)
+                page.on("response", _on_resp)
+                page.on("requestfailed", lambda r: print(f"[wire] FAILED {r.url.split('/api/')[-1][:120]} {r.failure}") if "/api/providers/" in r.url else None)
 
                 _init_desk(page, url)
                 _seed_desk_facts(conn_tmp if not is_real else tmp_path)

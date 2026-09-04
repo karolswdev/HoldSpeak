@@ -193,6 +193,13 @@ export function JiraScopeStep({
           </ChoiceCardShell>
         ) : null}
 
+        {/* HS-168-05: discovery in flight shows a token, never a blank section */}
+        {discovering && (projects?.items ?? []).length === 0 ? (
+          <span className="surface-token setup-token-inline" data-chip role="status" aria-live="polite" data-testid="jira-projects-loading">
+            LOADING PROJECTS
+          </span>
+        ) : null}
+
         {/* Project cards */}
         <ChoiceCardGroup
           name="jira-project"
@@ -592,14 +599,6 @@ export function JiraWizardFlow({
           proposalId={proposal.id}
           onSelectProject={(key) => {
             onSelectProject(key);
-            const current = scope.projects;
-            if (!current.includes(key)) {
-              if (current.length === 0) {
-                setTimeout(() => {
-                  onToggleType("");
-                }, 100);
-              }
-            }
           }}
           onToggleType={onToggleType}
           onToggleStatus={onToggleStatus}
