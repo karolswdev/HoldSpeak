@@ -1,7 +1,7 @@
 # Phase 168 - The Connections Door
 
 - **Project:** holdspeak
-- **Status:** CHARTERED 0/7
+- **Status:** ACTIVE 1/7
 - **Chartered:** 2026-09-04 off main `ce629cc2` (167 The Room in Use MERGED via PR #549 → `a47ae31f`; the handover PR #550 merged after it)
 - **Canon:** docs/internal/CONSTITUTION.md (Article III honest egress — every connection check names its host; Article XI — the caller supplies neither principal nor authority); docs/internal/POSITIONING.md (the voice rules — zero sentences in the UI); web/src/desk/surface/contract.md (the library contract); docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §7 (providers) + §9.5 (the wizard); the owner's laws: face-design-before-build (2026-09-03), setup flows must be joyful (2026-08-17), the front-door law from Settings → Models (2026-08-31), "will you use this on a Tuesday?" (Phase 139)
 
@@ -99,9 +99,9 @@ rechecks).
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-168-01 | The audit + the settled design (the stopwatch audit through the face; Connections + Sources on the library; mockups at 1440 + 393; OWNER RATIFIES) | in-progress | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-168-02 | The connections service (one readiness shape; the suggest step annotated; known scopes; MCP twins) | backlog | [story-02-the-connections-service](./story-02-the-connections-service.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-168-03 | The Connections face (Settings → Connections; one state, one verb per tool; the sign-in fold; glass rig at both widths) | backlog | [story-03-the-connections-face](./story-03-the-connections-face.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-168-01 | The audit + the settled design (the stopwatch audit through the face; Connections + Sources on the library; mockups at 1440 + 393; OWNER RATIFIES) | done | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-168-02 | The connections service (one readiness shape; the suggest step annotated; known scopes; MCP twins) | in-progress | [story-02-the-connections-service](./story-02-the-connections-service.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-168-03 | The Connections face (Settings → Connections; one state, one verb per tool; the sign-in fold; glass rig at both widths) | in-progress | [story-03-the-connections-face](./story-03-the-connections-face.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-168-04 | The Sources step connect-once (state on the cards; connect in place and return; the wizard asks scope only; scope carries; honest verbs; D3 settled) | backlog | [story-04-the-sources-step](./story-04-the-sources-step.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-168-05 | The Tuesday walk, face-driven (the owner's real desk; the window shot at every step; the stopwatch — OWNER VERDICT) | backlog | [story-05-the-tuesday-walk](./story-05-the-tuesday-walk.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-168-06 | The docs ("Connect your tools" in the guide; the Rooms guide re-shot; MCP_SIDECAR regenerated; README prerequisites) | backlog | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
@@ -109,7 +109,7 @@ rechecks).
 
 ## Where we are
 
-**CHARTERED 0/7.** Branch `feat/connections-door` off main
+**ACTIVE 1/7.** Branch `feat/connections-door` off main
 `ce629cc2`. The owner's bounce on his own walk (2026-09-04) and his
 word: "charter it". Recon (read-only, anchors verified): the
 connector has no face of its own — it hides inside Watch suggestion
@@ -130,7 +130,9 @@ cap drops every Jira suggestion on a three-fact desk. Counsel
 RATIFY-W-C (3 M · 4 S · 8 N) all paid in the design. Twelve
 artboards published — https://claude.ai/code/artifact/e3a6776b-151f-4d4c-991a-ef8952a596f6 —
 three bounce rounds paid by the orchestrator's own read. THE OWNER'S
-WORD: pending.
+WORD (2026-09-04), verbatim: "Okay." — read as PASS; 01 DONE; 02 (the
+connections service, wire-only) and 03 (the Connections face) start in
+parallel.
 
 ## Active risks
 

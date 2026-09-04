@@ -9,6 +9,7 @@ Connections Door canvas
 (https://claude.ai/code/artifact/e3a6776b-151f-4d4c-991a-ef8952a596f6 —
 twelve artboards; sources under assets/mockups/, shots under
 assets/story-01-shots/).
+**THE OWNER'S WORD (2026-09-04), verbatim: "Okay."** — read as PASS; builders implement.
 Status: counsel read 2026-09-04 (opus-worker, read-only) —
 RATIFY-WITH-CONDITIONS, 3 M · 4 S · 8 N; ALL PAID below before the
 owner sees it (M-1 the five wire states mapped; M-2 BASE a fact, not

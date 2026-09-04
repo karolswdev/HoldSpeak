@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 168
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** -
 - **Unblocks:** HS-168-02, HS-168-03, HS-168-04
 - **Owner:** unassigned
@@ -61,9 +61,9 @@ designs the flow — zero product code.
 
 ## Acceptance criteria
 
-- [ ] The audit records clicks, seconds, dead ends and on-screen sentences for today's path at both widths, with window shots — the baseline the 05 stopwatch is measured against.
-- [ ] The settled design covers D1-D4 with the species named from the barrel, the callers census for any module rename, and the D3 wire ruling; counsel's findings paid in the design.
-- [ ] Mockups at both widths published, sources committed, token values real; the owner's word recorded verbatim; PASS before 02/03/04 start.
+- [x] The audit records clicks, seconds, dead ends and on-screen sentences for today's path at both widths, with window shots — the baseline the 05 stopwatch is measured against.
+- [x] The settled design covers D1-D4 with the species named from the barrel, the callers census for any module rename, and the D3 wire ruling; counsel's findings paid in the design.
+- [x] Mockups at both widths published, sources committed, token values real; the owner's word recorded verbatim; PASS before 02/03/04 start.
 
 ## The audit (2026-09-04)
 
@@ -128,8 +128,9 @@ the GitHub card and stacked Jira's chips → one column of full-width
 tool rows; overprinting SecretRows at 393; a ghost Jira card with no
 identity; an empty cold footer → `local · Not checked`; abbreviated
 tile labels). Sources committed: assets/mockups/*.dc.html +
-canvas.json; shots: assets/story-01-shots/. **THE OWNER'S WORD:**
-pending.
+canvas.json; shots: assets/story-01-shots/. **THE OWNER'S WORD (2026-09-04), verbatim: "Okay."** — read as
+PASS (the orchestrator's reading, stated to him; a bounce halts 03).
+Story 01 done; 02 and 03 start; 04 builds to these mockups.
 
 ## Test plan
 
