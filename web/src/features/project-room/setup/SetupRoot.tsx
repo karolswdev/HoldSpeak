@@ -39,6 +39,8 @@ export function SetupCore({ scope }: CoreProps) {
   }, [setTitle]);
 
   const rootRef = useRef<HTMLDivElement | null>(null);
+  // The TOOLS row the disconnected-card click scrolls to (never a global DOM query).
+  const toolsRowRef = useRef<HTMLDivElement | null>(null);
   // Announce stage changes (WEB-A11Y-008) + keep the top of each stage in frame
   useEffect(() => {
     rootRef.current?.scrollIntoView({ block: "start" });
@@ -304,6 +306,7 @@ export function SetupCore({ scope }: CoreProps) {
                   <>
                     {/* HS-168-04: TOOLS row -- connector-pack providers from GET /api/connections */}
                     <ToolsRow
+                    rootRef={toolsRowRef}
                       tools={ctrl.connectionTools}
                       onConnect={ctrl.openConnectionsInPlace}
                       onRecheck={() => void ctrl.readConnections()}
@@ -318,8 +321,7 @@ export function SetupCore({ scope }: CoreProps) {
                         const conn = prop?.connection;
                         if (conn && conn.state !== "connected" && (prop?.providerId === "github" || prop?.providerId === "jira")) {
                           // Scroll to the TOOLS row connect card
-                          const toolsEl = document.querySelector('[data-testid="setup-tools-row"]');
-                          toolsEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+                          toolsRowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
                           return;
                         }
                         void ctrl.selectProp(id);

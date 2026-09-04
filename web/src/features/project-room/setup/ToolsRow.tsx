@@ -1,3 +1,4 @@
+import type React from "react";
 // HS-168-04 -- the TOOLS row: connector-pack providers from GET /api/connections.
 // One compact tool card per provider (GitHub, Jira -- native needs none).
 // Connected = no verb; disconnected = "Connect GitHub" / "Connect Jira"
@@ -59,16 +60,18 @@ export function ToolsRow({
   tools,
   onConnect,
   onRecheck,
+  rootRef,
 }: {
   tools: ConnectionTool[];
   onConnect: () => void;
   onRecheck: () => void;
+  rootRef?: React.RefObject<HTMLDivElement | null>;
 }) {
   const connectorTools = tools.filter((t) => CONNECTOR_PROVIDERS.has(t.provider_id));
   if (connectorTools.length === 0) return null;
 
   return (
-    <div data-testid="setup-tools-row">
+    <div data-testid="setup-tools-row" ref={rootRef}>
       <SurfaceSection label={`TOOLS ${connectorTools.length}`}>
         <div className="setup-tools-cards">
           {connectorTools.map((tool) => (

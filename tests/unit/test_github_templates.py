@@ -293,7 +293,10 @@ class TestReadinessGating:
             p for p in proposals
             if p.get("provider_id") == "github"
         ]
-        assert len(github_proposals) == 5
+        # HS-168-02: suggest keeps _MAX_PROPOSALS_PER_PROVIDER (4) per source so
+        # no connected provider is starved; five templates exist, four persist.
+        from holdspeak.services.project_setup_service import _MAX_PROPOSALS_PER_PROVIDER
+        assert len(github_proposals) == _MAX_PROPOSALS_PER_PROVIDER == 4
 
     def test_owner_action_required_yields_zero_github(self, tmp_path) -> None:
         """owner_action_required => zero github candidates."""

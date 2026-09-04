@@ -110,11 +110,13 @@ class TestKindFilter:
 
 class TestAllowLists:
     def test_desk_size(self) -> None:
-        assert len(_DESK_TOOLS) == 55
+        # HS-168-02: + connection.list / connection.recheck (evidence_read).
+        assert len(_DESK_TOOLS) == 57
 
     def test_chase_size(self) -> None:
         # Chase includes door.add_item which is a forward reference
-        assert len(_CHASE_TOOLS) == 61
+        # HS-168-02: + connection.list / connection.recheck (evidence_read).
+        assert len(_CHASE_TOOLS) == 63
 
     def test_draft_empty(self) -> None:
         assert len(_DRAFT_TOOLS) == 0
