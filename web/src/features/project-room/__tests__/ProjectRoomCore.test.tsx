@@ -591,3 +591,81 @@ describe("ProjectRoomCore — window title slot (HS-158-05, WEB-IA-001)", () => 
     expect(onTitle).toHaveBeenCalledWith(null);
   });
 });
+
+describe("ProjectRoomCore — identity dedup (HS-168-05)", () => {
+  it("suppresses outcome and purpose when they equal the name", async () => {
+    const SAME = "Ship the platform";
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room")) {
+        return Promise.resolve(
+          roomResponse({
+            project: { name: SAME, outcome_text: SAME, purpose: SAME },
+          }),
+        );
+      }
+      return Promise.resolve(detailResponse(url));
+    });
+
+    render(<WindowHarness scope="project:p1" />);
+    const band = await screen.findByTestId("orientation-band");
+
+    // Name renders once
+    const name = band.querySelector("[data-testid='project-room-name']");
+    expect(name).not.toBeNull();
+    expect(name!.textContent).toBe(SAME);
+
+    // Outcome token row is absent (would duplicate the name)
+    expect(band.querySelector(".surface-identity-outcome")).toBeNull();
+
+    // Purpose line is absent (would duplicate the name)
+    expect(band.querySelector(".surface-identity-purpose")).toBeNull();
+  });
+
+  it("keeps outcome and purpose when they differ from the name", async () => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room")) {
+        return Promise.resolve(
+          roomResponse({
+            project: {
+              name: "Alpha Project",
+              outcome_text: "Widget shipped",
+              purpose: "Ship the widget",
+            },
+          }),
+        );
+      }
+      return Promise.resolve(detailResponse(url));
+    });
+
+    render(<WindowHarness scope="project:p1" />);
+    const band = await screen.findByTestId("orientation-band");
+
+    expect(band.querySelector(".surface-identity-outcome")).not.toBeNull();
+    expect(band.querySelector(".surface-identity-purpose")).not.toBeNull();
+  });
+
+  it("suppresses purpose when it equals outcomeText but both differ from name", async () => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room")) {
+        return Promise.resolve(
+          roomResponse({
+            project: {
+              name: "Project X",
+              outcome_text: "Deliver the widget",
+              purpose: "Deliver the widget",
+            },
+          }),
+        );
+      }
+      return Promise.resolve(detailResponse(url));
+    });
+
+    render(<WindowHarness scope="project:p1" />);
+    const band = await screen.findByTestId("orientation-band");
+
+    // Outcome stays (different from name)
+    expect(band.querySelector(".surface-identity-outcome")).not.toBeNull();
+    // Purpose hidden (same as outcome)
+    expect(band.querySelector(".surface-identity-purpose")).toBeNull();
+  });
+});

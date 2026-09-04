@@ -12,6 +12,14 @@
 
 /* ── Step indicator token (defect 6: one system across all stages) ── */
 
+/* ── Answered band: full-width answered rows at proposals stage ── */
+
+.setup-answered-band {
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-secondary);
+  margin-bottom: var(--space-2);
+}
+
 /* ── Interview ── */
 
 .setup-interview {
@@ -187,6 +195,15 @@
   background: var(--bg-primary);
   color: var(--text-link);
   cursor: pointer;
+}
+
+/* ── HS-168-05: card verb row (one named verb per card species) ── */
+
+.setup-card-verbs {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-top: var(--space-2);
 }
 
 /* ── Brief (defect 5: compact rows, count chips) ── */
@@ -899,4 +916,11 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* HS-168-05: the empty-sources token is a token, never a stretched bar. */
+.setup-brief-none {
+  width: max-content;
+  align-self: flex-start;
+  justify-self: start;
 }

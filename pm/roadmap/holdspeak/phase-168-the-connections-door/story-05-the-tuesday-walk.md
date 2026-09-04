@@ -120,6 +120,65 @@ Roots (found in this sitting, NOT yet paid):
 
 Story 05 stays IN PROGRESS; the phase does not close on this verdict.
 
+## THE SECOND SITTING (2026-09-04, Muad'Dib VII) — both roots PAID
+
+Root 1 — the wings (window chrome, species level; every window that
+passes `wings=` is covered — nine callers):
+- pullout.css:129 `.desk-pullout-title` gains `min-width: 0` (the flex
+  item's `min-width: auto` had blocked the ellipsis everywhere);
+  :285 `.has-wings .desk-pullout-title` `flex: none` → `flex: 0 1 auto;
+  min-width: 0`; :295 `.desk-wings { flex-shrink: 0 }`;
+  DeskWindow.tsx:873 wraps `{actions}` in `.desk-window-actions`
+  (window-chrome.css: `flex-shrink: 0`).
+- Pinned: tests/e2e/test_hs168_window_wings_glass.py (a Room with a
+  70-char name at 1440 and 393; the wings' box inside the head and the
+  window; the title's scrollWidth > clientWidth). Before the fix:
+  `Wings right edge (898) exceeds head right edge (392)`; after: 2
+  passed. CSS-contract guard windowWings.test.ts (4). Shots:
+  assets/story-05-shots/wings-1440.png, wings-393.png.
+- Rider (he did not name it; he would have): the Room said the project
+  name four times — name, outcomeText and purpose all derive from the
+  ONE outcome answer at project_setup_service.py:689-710 (name =
+  outcome[:80]; purpose = the original text). The band now shows the
+  name once when they coincide (ProjectRoomCore.tsx RoomIdentityBand;
+  3 vitests). The derivation is untouched — ledgered for the close.
+
+Root 2 — the Sources step (built to the RATIFIED artboard, which the
+first build had left):
+- SetupRoot.tsx: an open wizard (GitHub, Jira) or ClarifyStep OWNS
+  the body — the answered rows, TOOLS, the brief and the setup footer
+  UNMOUNT (an early return, never CSS); Back / Use this Watch return
+  to the cards. In the proposals state the two answered rows span the
+  full window above the columns (`.setup-answered-band`), TOOLS +
+  SUGGESTIONS left, THE BRIEF right — as Sources.dc.html.
+- SuggestionCards.tsx: one named verb per card species, all library
+  Buttons — connected+untested `Set up` (primary; body click enters
+  too); tested `Tested · N` chip + `Remove` (ghost); disconnected
+  `Connect` (ghost → the same openConnectionsInPlace the TOOLS card
+  uses; the scroll-to-TOOLS hunt is deleted); native cards unchanged.
+  The cards sit under `SUGGESTIONS N`.
+- SetupBrief.tsx: the brief's watches block is `SOURCES N` = the chosen
+  ones only (`NONE YET` token when empty); the PROPOSED-9 ledger of
+  every proposal's chips is gone (noise the artboard never had).
+- Mockups amended first (D7c card verbs on Sources.dc.html +
+  SourcesPhone.dc.html; assets/story-01-shots/amend-sources-*.png) and
+  the canvas republished (same URL, version "D7c amendment: card verbs").
+- Pinned: ProviderWizardMounted.test.tsx ("wizard owns the body":
+  cards, TOOLS, brief, answered rows absent while open; back after
+  Back), SuggestionCardVerbs.test.tsx (9), SetupInterview.test.tsx
+  (brief = chosen only). Setup vitest 8 files / 244. The sources rig
+  (test_hs168_sources_glass.py) enters via `setup-card-setup-<id>`
+  and asserts TOOLS/cards count 0 while the wizard is open + the
+  wizard's top within 120px of the root: 4 passed; shots
+  github-wizard-owns-body-{1440,393}.png. The walk runner + walk-script
+  rows 12/16/20 click `Set up`.
+- Not taken: (c) the plan label — `Sources` stays (ratified); the
+  cards' section label and the card verbs carry what the step asks.
+
+Laws (into the handover + memory): "owns the body" means UNMOUNT;
+a card that is an entry carries its verb; a window's wings never
+leave the window — titles shrink first; walk it with HIM in mind.
+
 **THE OWNER'S ATTENDED WALK — recorded above (BOUNCE).** His desk: the hub restarted
 on the branch build (`cd web && npm run build`, then restart
 `holdspeak web`); walk assets/walk-script.md's connected steps by hand

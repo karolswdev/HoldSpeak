@@ -337,6 +337,10 @@
 .desk-next .desk-window-shell.is-front .desk-pullout-head {
   background: var(--desk-window-head-front);
 }
+/* HS-168-05 — actions slot: do not shrink, so wings stay in view. */
+.desk-next .desk-window-actions {
+  flex-shrink: 0;
+}
 
 /* ── HS-95-04: page cores hosted in desk windows ── */
 .desk-next .desk-surface-window {

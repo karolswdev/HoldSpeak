@@ -368,6 +368,13 @@ unmount; the footer carries the wizard's verbs only); closing returns
 to the cards. And the Room's window chrome: a long title must shrink
 (ellipsis) before the wings move — the wings never leave the window.
 
+### Card verb vocabulary (amended 2026-09-04)
+
+- Connected provider, untested (chip: Connected) — PRIMARY `Set up`
+- Connected provider, tested (chip: Tested · N matches) — GHOST `Remove`
+- Disconnected provider (chip: Sign in) — GHOST `Connect`
+- Native card (chip: LOCAL) — no verb
+
 ## D8 — laws and counsel's hunts
 
 - One readiness derivation: the hub's connections service; a face

@@ -39,8 +39,6 @@ export function SetupCore({ scope }: CoreProps) {
   }, [setTitle]);
 
   const rootRef = useRef<HTMLDivElement | null>(null);
-  // The TOOLS row the disconnected-card click scrolls to (never a global DOM query).
-  const toolsRowRef = useRef<HTMLDivElement | null>(null);
   // Announce stage changes (WEB-A11Y-008) + keep the top of each stage in frame
   useEffect(() => {
     rootRef.current?.scrollIntoView({ block: "start" });
@@ -164,14 +162,150 @@ export function SetupCore({ scope }: CoreProps) {
     );
   }
 
+  // HS-168-05: wizard / clarify owns the body (D7c -- "wizards own the
+  // whole body while open"). Answered rows, TOOLS, brief, and footer
+  // unmount; closing returns to the main flow.
+  if (
+    ctrl.state.kind === "proposals" &&
+    ((providerWizardId && wizardProposal) || clarifyingProposal)
+  ) {
+    return (
+      <div className="setup-root" data-testid="setup-root" ref={rootRef}>
+        <div className="sr-only" id="setup-stage-announce" aria-live="polite" role="status" />
+        {providerWizardId && wizardProposal && wizardProposal.providerId === "github" ? (
+          <ProviderWizardFlow
+            proposal={wizardProposal}
+            connection={ctrl.providerConnection}
+            discovery={ctrl.providerDiscovery}
+            checking={ctrl.providerChecking}
+            discovering={ctrl.providerDiscovering}
+            scopeState={ctrl.providerScopeState}
+            knownScopes={ctrl.knownScopes}
+            onCheckConnection={ctrl.checkConnection}
+            onRecheck={ctrl.recheckConnection}
+            onDiscover={ctrl.discoverRepos}
+            onValidateRepo={ctrl.validateRepo}
+            onClarifyScope={(repo) =>
+              ctrl.clarifyProposalScope(wizardProposal.id, repo)
+            }
+            onTest={() => {
+              void ctrl.testProp(wizardProposal.id);
+            }}
+            onBack={() => {
+              setProviderWizardId(null);
+              ctrl.resetProviderState();
+              // HS-168-04: Back restores the pre-wizard selection state
+              if (wizardProposal.state === "selected") {
+                void ctrl.deselectProp(wizardProposal.id);
+              }
+            }}
+            onDone={() => {
+              setProviderWizardId(null);
+              ctrl.resetProviderState();
+            }}
+          />
+        ) : providerWizardId && wizardProposal && wizardProposal.providerId === "jira" ? (
+          <JiraWizardFlow
+            proposal={wizardProposal}
+            connections={ctrl.jiraConnections}
+            knownAccounts={ctrl.jiraKnownAccounts}
+            selectedRef={ctrl.selectedJiraRef}
+            projects={ctrl.jiraProjects}
+            issueTypes={ctrl.jiraIssueTypes}
+            statuses={ctrl.jiraStatuses}
+            scope={ctrl.jiraScope}
+            preview={ctrl.jiraPreview}
+            loading={ctrl.jiraLoading}
+            discovering={ctrl.jiraDiscovering}
+            previewing={ctrl.jiraPreviewing}
+            knownScopes={ctrl.knownScopes}
+            onLoadConnections={ctrl.loadJiraConnections}
+            onAddConnection={ctrl.addJiraConnection}
+            onRecheckConnection={ctrl.recheckJiraConnection}
+            onSelectConnection={ctrl.selectJiraConnection}
+            onSelectProject={(key) => {
+              const current = ctrl.jiraScope.projects;
+              const next = current.includes(key)
+                ? current.filter((k) => k !== key)
+                : [...current, key];
+              ctrl.updateJiraScope({ projects: next });
+              // Auto-discover types/statuses for the first selected project
+              if (!current.includes(key) && next.length === 1) {
+                void ctrl.discoverJiraTypes(key);
+                void ctrl.discoverJiraStatuses(key);
+              }
+            }}
+            onToggleType={(name) => {
+              const current = ctrl.jiraScope.issueTypes;
+              const next = current.includes(name)
+                ? current.filter((n) => n !== name)
+                : [...current, name];
+              ctrl.updateJiraScope({ issueTypes: next });
+            }}
+            onToggleStatus={(category) => {
+              const current = ctrl.jiraScope.statusCategories;
+              const next = current.includes(category)
+                ? current.filter((c) => c !== category)
+                : [...current, category];
+              ctrl.updateJiraScope({ statusCategories: next });
+            }}
+            onJqlChange={(jql) => ctrl.updateJiraScope({ jql })}
+            onPreview={() => {
+              // Preview with user JQL if provided, otherwise
+              // with a project-scoped query from the scope.
+              const jql = ctrl.jiraScope.jql.trim()
+                || (ctrl.jiraScope.projects.length > 0
+                  ? `project in (${ctrl.jiraScope.projects.map((p) => `"${p}"`).join(", ")})`
+                  : "");
+              if (jql) {
+                void ctrl.previewJiraPopulation(jql);
+              }
+            }}
+            onSearchProjects={(q) => void ctrl.discoverJiraProjects(q)}
+            onClarifyScope={() =>
+              ctrl.clarifyJiraProposalScope(wizardProposal.id)
+            }
+            onTest={() => {
+              void ctrl.testProp(wizardProposal.id);
+            }}
+            onBack={() => {
+              setProviderWizardId(null);
+              ctrl.resetJiraState();
+              // HS-168-04: Back restores the pre-wizard selection state
+              if (wizardProposal.state === "selected") {
+                void ctrl.deselectProp(wizardProposal.id);
+              }
+            }}
+            onDone={() => {
+              setProviderWizardId(null);
+              ctrl.resetJiraState();
+            }}
+            onUpdateScope={ctrl.updateJiraScope}
+          />
+        ) : clarifyingProposal ? (
+          <ClarifyStep
+            proposal={clarifyingProposal}
+            onClarify={ctrl.clarifyProp}
+            onDone={() => setClarifyingId(null)}
+          />
+        ) : null}
+      </div>
+    );
+  }
+
   // Main flow: questions + proposals
   return (
     <div className="setup-root" data-testid="setup-root" ref={rootRef}>
       <div className="sr-only" id="setup-stage-announce" aria-live="polite" role="status" />
       <ProgressPlan steps={setupSteps} compact />
-      <SurfaceColumns
-        main={
-          <>
+
+      {/* HS-168-05: at proposals stage, answered rows span full width ABOVE
+          the columns; TOOLS + cards sit left, brief right.  During the
+          interview (outcome / signals), the question stays in the left
+          column beside the brief -- that is 167's ratified layout. */}
+      {ctrl.state.kind === "proposals" ? (
+        <>
+          <div className="setup-answered-band">
             <SetupInterview
               state={ctrl.state}
               error={ctrl.error}
@@ -181,179 +315,63 @@ export function SetupCore({ scope }: CoreProps) {
               onEditSignals={ctrl.editSignals}
               onSetDraft={ctrl.setDraft}
             />
-
-            {/* Suggestion cards (after both questions answered) */}
-            {ctrl.state.kind === "proposals" ? (
+          </div>
+          <SurfaceColumns
+            main={
               <>
-                {/* HS-161-05 + HS-166-04: provider wizard takes priority when active */}
-                {providerWizardId && wizardProposal && wizardProposal.providerId === "github" ? (
-                  <ProviderWizardFlow
-                    proposal={wizardProposal}
-                    connection={ctrl.providerConnection}
-                    discovery={ctrl.providerDiscovery}
-                    checking={ctrl.providerChecking}
-                    discovering={ctrl.providerDiscovering}
-                    scopeState={ctrl.providerScopeState}
-                    knownScopes={ctrl.knownScopes}
-                    onCheckConnection={ctrl.checkConnection}
-                    onRecheck={ctrl.recheckConnection}
-                    onDiscover={ctrl.discoverRepos}
-                    onValidateRepo={ctrl.validateRepo}
-                    onClarifyScope={(repo) =>
-                      ctrl.clarifyProposalScope(wizardProposal.id, repo)
+                <ToolsRow
+                  tools={ctrl.connectionTools}
+                  onConnect={ctrl.openConnectionsInPlace}
+                  onRecheck={() => void ctrl.readConnections()}
+                />
+                <SuggestionCards
+                  proposals={ctrl.state.proposals}
+                  onSelect={(id) => {
+                    void ctrl.selectProp(id);
+                    const prop = ctrl.state.kind === "proposals"
+                      ? ctrl.state.proposals.find((p) => p.id === id)
+                      : undefined;
+                    if (prop?.providerId === "github") {
+                      setProviderWizardId(id);
+                      void ctrl.checkConnection();
+                    } else if (prop?.providerId === "jira") {
+                      setProviderWizardId(id);
+                      void ctrl.loadJiraConnections();
                     }
-                    onTest={() => {
-                      void ctrl.testProp(wizardProposal.id);
-                    }}
-                    onBack={() => {
-                      setProviderWizardId(null);
-                      ctrl.resetProviderState();
-                      // HS-168-04: Back restores the pre-wizard selection state
-                      if (wizardProposal.state === "selected") {
-                        void ctrl.deselectProp(wizardProposal.id);
-                      }
-                    }}
-                    onDone={() => {
-                      setProviderWizardId(null);
-                      ctrl.resetProviderState();
-                    }}
-                  />
-                ) : providerWizardId && wizardProposal && wizardProposal.providerId === "jira" ? (
-                  <JiraWizardFlow
-                    proposal={wizardProposal}
-                    connections={ctrl.jiraConnections}
-                    knownAccounts={ctrl.jiraKnownAccounts}
-                    selectedRef={ctrl.selectedJiraRef}
-                    projects={ctrl.jiraProjects}
-                    issueTypes={ctrl.jiraIssueTypes}
-                    statuses={ctrl.jiraStatuses}
-                    scope={ctrl.jiraScope}
-                    preview={ctrl.jiraPreview}
-                    loading={ctrl.jiraLoading}
-                    discovering={ctrl.jiraDiscovering}
-                    previewing={ctrl.jiraPreviewing}
-                    knownScopes={ctrl.knownScopes}
-                    onLoadConnections={ctrl.loadJiraConnections}
-                    onAddConnection={ctrl.addJiraConnection}
-                    onRecheckConnection={ctrl.recheckJiraConnection}
-                    onSelectConnection={ctrl.selectJiraConnection}
-                    onSelectProject={(key) => {
-                      const current = ctrl.jiraScope.projects;
-                      const next = current.includes(key)
-                        ? current.filter((k) => k !== key)
-                        : [...current, key];
-                      ctrl.updateJiraScope({ projects: next });
-                      // Auto-discover types/statuses for the first selected project
-                      if (!current.includes(key) && next.length === 1) {
-                        void ctrl.discoverJiraTypes(key);
-                        void ctrl.discoverJiraStatuses(key);
-                      }
-                    }}
-                    onToggleType={(name) => {
-                      const current = ctrl.jiraScope.issueTypes;
-                      const next = current.includes(name)
-                        ? current.filter((n) => n !== name)
-                        : [...current, name];
-                      ctrl.updateJiraScope({ issueTypes: next });
-                    }}
-                    onToggleStatus={(category) => {
-                      const current = ctrl.jiraScope.statusCategories;
-                      const next = current.includes(category)
-                        ? current.filter((c) => c !== category)
-                        : [...current, category];
-                      ctrl.updateJiraScope({ statusCategories: next });
-                    }}
-                    onJqlChange={(jql) => ctrl.updateJiraScope({ jql })}
-                    onPreview={() => {
-                      // Preview with user JQL if provided, otherwise
-                      // with a project-scoped query from the scope.
-                      const jql = ctrl.jiraScope.jql.trim()
-                        || (ctrl.jiraScope.projects.length > 0
-                          ? `project in (${ctrl.jiraScope.projects.map((p) => `"${p}"`).join(", ")})`
-                          : "");
-                      if (jql) {
-                        void ctrl.previewJiraPopulation(jql);
-                      }
-                    }}
-                    onSearchProjects={(q) => void ctrl.discoverJiraProjects(q)}
-                    onClarifyScope={() =>
-                      ctrl.clarifyJiraProposalScope(wizardProposal.id)
-                    }
-                    onTest={() => {
-                      void ctrl.testProp(wizardProposal.id);
-                    }}
-                    onBack={() => {
-                      setProviderWizardId(null);
-                      ctrl.resetJiraState();
-                      // HS-168-04: Back restores the pre-wizard selection state
-                      if (wizardProposal.state === "selected") {
-                        void ctrl.deselectProp(wizardProposal.id);
-                      }
-                    }}
-                    onDone={() => {
-                      setProviderWizardId(null);
-                      ctrl.resetJiraState();
-                    }}
-                    onUpdateScope={ctrl.updateJiraScope}
-                  />
-                ) : clarifyingProposal ? (
-                  <ClarifyStep
-                    proposal={clarifyingProposal}
-                    onClarify={ctrl.clarifyProp}
-                    onDone={() => setClarifyingId(null)}
-                  />
-                ) : (
-                  <>
-                    {/* HS-168-04: TOOLS row -- connector-pack providers from GET /api/connections */}
-                    <ToolsRow
-                    rootRef={toolsRowRef}
-                      tools={ctrl.connectionTools}
-                      onConnect={ctrl.openConnectionsInPlace}
-                      onRecheck={() => void ctrl.readConnections()}
-                    />
-                    <SuggestionCards
-                      proposals={ctrl.state.proposals}
-                      onSelect={(id) => {
-                        // HS-168-04: disconnected provider cards light the TOOLS connect card
-                        const prop = ctrl.state.kind === "proposals"
-                          ? ctrl.state.proposals.find((p) => p.id === id)
-                          : undefined;
-                        const conn = prop?.connection;
-                        if (conn && conn.state !== "connected" && (prop?.providerId === "github" || prop?.providerId === "jira")) {
-                          // Scroll to the TOOLS row connect card
-                          toolsRowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                          return;
-                        }
-                        void ctrl.selectProp(id);
-                        if (prop?.providerId === "github") {
-                          setProviderWizardId(id);
-                          void ctrl.checkConnection();
-                        } else if (prop?.providerId === "jira") {
-                          setProviderWizardId(id);
-                          void ctrl.loadJiraConnections();
-                        }
-                      }}
-                      onDeselect={(id) => {
-                        void ctrl.deselectProp(id);
-                      }}
-                      onTest={(id) => {
-                        void ctrl.testProp(id);
-                      }}
-                      suggesting={ctrl.state.suggesting}
-                    />
-                  </>
-                )}
-
-                {/* Proceed/blank verbs moved to SurfaceFooter */}
+                  }}
+                  onDeselect={(id) => {
+                    void ctrl.deselectProp(id);
+                  }}
+                  onTest={(id) => {
+                    void ctrl.testProp(id);
+                  }}
+                  onConnect={() => ctrl.openConnectionsInPlace()}
+                  suggesting={ctrl.state.suggesting}
+                />
               </>
-            ) : null}
-          </>
-        }
-        side={<SetupBrief state={ctrl.state} connectionTools={ctrl.connectionTools} />}
-      />
+            }
+            side={<SetupBrief state={ctrl.state} connectionTools={ctrl.connectionTools} />}
+          />
+        </>
+      ) : (
+        <SurfaceColumns
+          main={
+            <SetupInterview
+              state={ctrl.state}
+              error={ctrl.error}
+              onSubmitOutcome={ctrl.submitOutcome}
+              onSubmitSignals={ctrl.submitSignals}
+              onEditOutcome={ctrl.editOutcome}
+              onEditSignals={ctrl.editSignals}
+              onSetDraft={ctrl.setDraft}
+            />
+          }
+          side={<SetupBrief state={ctrl.state} connectionTools={ctrl.connectionTools} />}
+        />
+      )}
 
       {/* Footer: receipt · Cancel · primary (hidden when wizard is active -- wizard has its own) */}
-      {ctrl.state.kind !== "loading" && ctrl.state.kind !== "error" && !providerWizardId ? (
+      {ctrl.state.kind !== "loading" && ctrl.state.kind !== "error" ? (
         <SurfaceFooter
           receipt={
             stepLabel ? (

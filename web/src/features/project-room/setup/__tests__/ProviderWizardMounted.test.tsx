@@ -288,7 +288,7 @@ describe("Provider wizard mounted path (HS-168-04)", () => {
     return result;
   }
 
-  it("selecting a GitHub proposal enters the wizard (wizard mounts)", async () => {
+  it("selecting a GitHub proposal via card body enters the wizard (wizard mounts)", async () => {
     mockGetGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
     mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
     mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
@@ -297,6 +297,22 @@ describe("Provider wizard mounted path (HS-168-04)", () => {
 
     await act(async () => {
       fireEvent.click(screen.getByTestId("setup-card-wprop_gh_01"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("provider-wizard-flow")).toBeInTheDocument();
+    });
+  });
+
+  it("selecting a GitHub proposal via Set up verb enters the wizard", async () => {
+    mockGetGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
+    mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
+    mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
+
+    await renderAtProposals();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("setup-card-setup-wprop_gh_01"));
     });
 
     await waitFor(() => {
@@ -457,13 +473,17 @@ describe("Provider wizard mounted path (HS-168-04)", () => {
     });
   });
 
-  it("setup state preserved: Back returns to suggestion cards", async () => {
+  it("wizard owns the body: cards, tools, brief, answered rows unmount", async () => {
     mockGetGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
     mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
     mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
     mockDeselectProposal.mockResolvedValue(githubProposal({ state: "proposed" }));
 
     await renderAtProposals();
+
+    // Verify pre-wizard: cards, tools-row, brief, answered rows present
+    expect(screen.getByTestId("setup-suggestion-cards")).toBeInTheDocument();
+    expect(screen.getByTestId("setup-brief")).toBeInTheDocument();
 
     await act(async () => {
       fireEvent.click(screen.getByTestId("setup-card-wprop_gh_01"));
@@ -473,8 +493,14 @@ describe("Provider wizard mounted path (HS-168-04)", () => {
       expect(screen.getByTestId("provider-wizard-flow")).toBeInTheDocument();
     });
 
+    // HS-168-05: wizard owns the body -- these must be gone
     expect(screen.queryByTestId("setup-suggestion-cards")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("setup-tools-row")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("setup-brief")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("setup-answer-outcome")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("setup-answer-signals")).not.toBeInTheDocument();
 
+    // Back returns everything
     await act(async () => {
       fireEvent.click(screen.getByTestId("provider-wizard-back"));
     });
@@ -484,6 +510,7 @@ describe("Provider wizard mounted path (HS-168-04)", () => {
     });
 
     expect(screen.queryByTestId("provider-wizard-flow")).not.toBeInTheDocument();
+    expect(screen.getByTestId("setup-brief")).toBeInTheDocument();
   });
 
   it("never-active-before-test: unselected GitHub proposal is not 'tested'", async () => {

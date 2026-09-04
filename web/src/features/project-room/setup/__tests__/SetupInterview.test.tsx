@@ -477,7 +477,7 @@ describe("SetupBrief", () => {
     expect(screen.getByText("Ship Q4")).toBeTruthy();
   });
 
-  it("distinguishes five watch states in brief (INT-011)", () => {
+  it("brief shows only chosen sources, not all proposals (HS-168-05)", () => {
     const proposals: SetupProposal[] = [
       makeProposal("wprop_proposed", { state: "proposed" }),
       makeProposal("wprop_tested", { state: "selected", testState: "passed" }),
@@ -493,20 +493,19 @@ describe("SetupBrief", () => {
     render(<SetupBrief state={state} />);
 
     expect(screen.getByTestId("brief-watches")).toBeTruthy();
-    // Should have groups for proposed, tested, disabled
-    const groups = screen.getByTestId("brief-watches").querySelectorAll("[data-brief-state]");
-    const states = Array.from(groups).map((g) => g.getAttribute("data-brief-state"));
-    expect(states).toContain("proposed");
-    expect(states).toContain("tested");
-    expect(states).toContain("disabled");
+    // Only the tested/selected one appears; proposed/disabled do NOT
+    expect(screen.getByTestId("brief-watch-wprop_tested")).toBeTruthy();
+    expect(screen.queryByTestId("brief-watch-wprop_proposed")).toBeNull();
+    expect(screen.queryByTestId("brief-watch-wprop_disabled")).toBeNull();
+    // SOURCES 1 label
+    const brief = screen.getByTestId("brief-watches");
+    expect(brief.textContent).toContain("SOURCES 1");
   });
 
-  // HS-168-04: brief groups use SurfaceLedger count labels instead of hidden testids
-  it("brief groups show count in ledger label (defect 5)", () => {
+  it("brief SOURCES shows NONE YET when nothing chosen (HS-168-05)", () => {
     const proposals: SetupProposal[] = [
       makeProposal("wprop_1", { state: "proposed" }),
       makeProposal("wprop_2", { state: "proposed" }),
-      makeProposal("wprop_3", { state: "selected", testState: "passed" }),
     ];
     const state: ControllerState = {
       kind: "proposals",
@@ -517,15 +516,15 @@ describe("SetupBrief", () => {
     };
     render(<SetupBrief state={state} />);
 
-    // Count shows in ledger count label
     const brief = screen.getByTestId("brief-watches");
-    expect(brief.textContent).toContain("PROPOSED 2");
-    expect(brief.textContent).toContain("TESTED 1");
+    expect(brief.textContent).toContain("SOURCES 0");
+    expect(brief.textContent).toContain("NONE YET");
+    expect(brief.textContent).not.toContain("PROPOSED");
   });
 
   it("brief watch rows show cadence chip and action (defect 5)", () => {
     const proposals: SetupProposal[] = [
-      makeProposal("wprop_1", { state: "proposed" }),
+      makeProposal("wprop_1", { state: "selected", testState: "passed" }),
     ];
     const state: ControllerState = {
       kind: "proposals",

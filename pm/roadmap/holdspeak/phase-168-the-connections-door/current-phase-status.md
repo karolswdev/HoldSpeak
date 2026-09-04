@@ -162,6 +162,24 @@ no verb on the cards says they are the entry). Neither paid yet; his word:
 "so prepare another Muad'Dib." The next sitting pays both, re-shoots,
 re-walks his desk, then asks again. 07's gates (suite, sweep, counsel,
 final-summary) are green and stay valid until the tree changes.
+**THE SECOND SITTING (Muad'Dib VII, 2026-09-04) — both roots PAID.** The
+wings: a window-chrome species fix (the title shrinks first, `min-width: 0`;
+wings and actions `flex-shrink: 0`; nine `wings=` callers covered) pinned by
+a Playwright glass test at 1440 + 393 on a 70-char name (before: wings' right
+edge 898 px past a 392 px head; after: 2 passed) and a CSS-contract vitest;
+the Room's fourfold name shown once at the band (name, outcome and purpose
+all derive from ONE interview answer — ledgered, backend untouched). The
+Sources step rebuilt to the RATIFIED artboard: an open wizard OWNS the body
+(everything else unmounts), every provider card carries its verb (`Set up` /
+`Remove` / `Connect`, library Buttons), `SUGGESTIONS N`, the answered rows
+full width, the brief shows chosen sources only; the mockups amended first
+and the canvas republished. Setup vitest 244, desk 172, the sources rig 4 +
+the wings rig 2 (captured), the real walk on his desk 2 passed at both
+widths (two more projects archived, watches paused). The walk exposed a
+PRE-EXISTING defect on every walk project: the Jira Watch stores
+`issue_types: [""]`, its JQL fails on first fetch, baseline stays pending
+while Test said passed — being paid at the root in the same sitting. Then the
+owner's re-walk and his word.
 
 ## Active risks
 

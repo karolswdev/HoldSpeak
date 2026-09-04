@@ -703,11 +703,15 @@ def _run_connected_leg(
         notes=f"GH cards={len(gh_card_indices)}; Jira cards={len(jira_card_indices)}; TOOLS=Connected",
     ))
 
-    # -- STEP 12: GitHub wizard (click first GH card) ------------------
+    # -- STEP 12: GitHub wizard (Set up verb on first GH card) ----------
     step_num += 1
     t0 = time.monotonic()
     clicks += 1
-    card_els.nth(gh_card_indices[0]).click()
+    # HS-168-05: enter via the "Set up" verb button; body click also lawful
+    gh_card = card_els.nth(gh_card_indices[0])
+    gh_card_id = gh_card.get_attribute("data-testid")
+    gh_prop_id = gh_card_id.replace("setup-card-", "")
+    page.get_by_test_id(f"setup-card-setup-{gh_prop_id}").click()
     wizard = page.get_by_test_id("provider-wizard-flow")
     wizard.wait_for(timeout=10000)
     _settle(page)
@@ -862,7 +866,11 @@ def _run_connected_leg(
                 break
     assert gh2_idx is not None, "Must find a second unselected GH card"
     clicks += 1
-    c2.nth(gh2_idx).click()
+    # HS-168-05: enter via "Set up" verb; body click also lawful
+    gh2_card = c2.nth(gh2_idx)
+    gh2_card_id = gh2_card.get_attribute("data-testid")
+    gh2_prop_id = gh2_card_id.replace("setup-card-", "")
+    page.get_by_test_id(f"setup-card-setup-{gh2_prop_id}").click()
     page.get_by_test_id("provider-wizard-flow").wait_for(timeout=10000)
     _settle(page)
 
@@ -1000,7 +1008,11 @@ def _run_connected_leg(
             break
     assert jira_idx is not None, "Must find a Jira card"
     clicks += 1
-    c3.nth(jira_idx).click()
+    # HS-168-05: enter via "Set up" verb; body click also lawful
+    jira_card = c3.nth(jira_idx)
+    jira_card_id = jira_card.get_attribute("data-testid")
+    jira_prop_id = jira_card_id.replace("setup-card-", "")
+    page.get_by_test_id(f"setup-card-setup-{jira_prop_id}").click()
     jira = page.get_by_test_id("jira-wizard-flow")
     jira.wait_for(timeout=10000)
     _settle(page)

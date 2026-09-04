@@ -18,6 +18,7 @@ import {
   EgressChip,
   StateChip,
   ProvenanceChip,
+  SurfaceSection,
   useRovingRows,
 } from "../../../desk/surface";
 import { Button } from "../../../components/signal/Signal";
@@ -76,12 +77,14 @@ export function SuggestionCards({
   onSelect,
   onDeselect,
   onTest,
+  onConnect,
   suggesting,
 }: {
   proposals: SetupProposal[];
   onSelect: (id: string) => void;
   onDeselect: (id: string) => void;
   onTest: (id: string) => void;
+  onConnect: (id: string) => void;
   suggesting: boolean;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
@@ -106,27 +109,30 @@ export function SuggestionCards({
   }
 
   return (
-    <div
-      ref={listRef}
-      className="setup-cards"
-      role="listbox"
-      aria-label="Watch suggestions"
-      aria-live="polite"
-      data-testid="setup-suggestion-cards"
-    >
-      <div className="sr-only" role="status">
-        {proposals.length} suggestion{proposals.length !== 1 ? "s" : ""} available
+    <SurfaceSection label={`SUGGESTIONS ${proposals.length}`}>
+      <div
+        ref={listRef}
+        className="setup-cards"
+        role="listbox"
+        aria-label="Watch suggestions"
+        aria-live="polite"
+        data-testid="setup-suggestion-cards"
+      >
+        <div className="sr-only" role="status">
+          {proposals.length} suggestion{proposals.length !== 1 ? "s" : ""} available
+        </div>
+        {proposals.map((p) => (
+          <SuggestionCard
+            key={p.id}
+            proposal={p}
+            onSelect={onSelect}
+            onDeselect={onDeselect}
+            onTest={onTest}
+            onConnect={onConnect}
+          />
+        ))}
       </div>
-      {proposals.map((p) => (
-        <SuggestionCard
-          key={p.id}
-          proposal={p}
-          onSelect={onSelect}
-          onDeselect={onDeselect}
-          onTest={onTest}
-        />
-      ))}
-    </div>
+    </SurfaceSection>
   );
 }
 
@@ -135,36 +141,50 @@ function SuggestionCard({
   onSelect,
   onDeselect,
   onTest,
+  onConnect,
 }: {
   proposal: SetupProposal;
   onSelect: (id: string) => void;
   onDeselect: (id: string) => void;
   onTest: (id: string) => void;
+  onConnect: (id: string) => void;
 }) {
   const isSelected = proposal.state === "selected";
   const briefState = proposalBriefState(proposal);
   const spec = proposal.spec;
   const connChip = connectionStateChip(proposal);
-  const isDisconnected = connChip && connChip.state !== "success" && (proposal.providerId === "github" || proposal.providerId === "jira");
+  const isProvider = proposal.providerId === "github" || proposal.providerId === "jira";
+  const isDisconnected = connChip && connChip.state !== "success" && isProvider;
+  const isConnectedProvider = isProvider && !isDisconnected;
+  const isTested = proposal.testState === "passed";
   const prov = provenanceSource(proposal.providerId);
 
   // HS-168-04: disconnected provider card = no tier
   const cardTier = isDisconnected ? undefined : (isSelected ? "ok" : undefined);
 
-  const handleToggle = useCallback(() => {
-    if (isSelected) onDeselect(proposal.id);
-    else onSelect(proposal.id);
-  }, [isSelected, proposal.id, onSelect, onDeselect]);
+  // HS-168-05: card click per species -- connected provider always enters
+  // the wizard (onSelect); disconnected opens connections (onConnect);
+  // native toggles selection.
+  const handleClick = useCallback(() => {
+    if (isDisconnected) {
+      onConnect(proposal.id);
+    } else if (isConnectedProvider) {
+      onSelect(proposal.id);
+    } else {
+      if (isSelected) onDeselect(proposal.id);
+      else onSelect(proposal.id);
+    }
+  }, [isDisconnected, isConnectedProvider, isSelected, proposal.id, onSelect, onDeselect, onConnect]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      // Space toggles selection (WEB-CMD-005)
+      // Space = same as body click (WEB-CMD-005)
       if (e.key === " ") {
         e.preventDefault();
-        handleToggle();
+        handleClick();
       }
     },
-    [handleToggle],
+    [handleClick],
   );
 
   // HS-168-04: tested state chip
@@ -183,7 +203,7 @@ function SuggestionCard({
       data-disconnected={isDisconnected || undefined}
       tabIndex={0}
       onKeyDown={handleKeyDown}
-      onClick={handleToggle}
+      onClick={handleClick}
     >
       {/* Chip row: cadence + action + provenance + connection state */}
       <div className="setup-card-chips">
@@ -223,15 +243,63 @@ function SuggestionCard({
         </Disclosure>
       ) : null}
 
-      {/* Test state */}
+      {/* Test state (non-passed) */}
       {proposal.testState && proposal.testState !== "passed" ? (
         <div className="setup-card-test" data-test-state={proposal.testState}>
           {proposal.testResult?.message ?? `Test: ${proposal.testState}`}
         </div>
       ) : null}
 
-      {/* Test button (only for selected proposals without test state) */}
-      {isSelected && !proposal.testState ? (
+      {/* HS-168-05: verb row -- one named verb per card species */}
+      {isConnectedProvider && !isTested ? (
+        <div className="setup-card-verbs">
+          <Button
+            dense
+            variant="primary"
+            data-testid={`setup-card-setup-${proposal.id}`}
+            aria-label={`Set up: ${spec.name}`}
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              onSelect(proposal.id);
+            }}
+          >
+            Set up
+          </Button>
+        </div>
+      ) : null}
+      {isConnectedProvider && isTested ? (
+        <div className="setup-card-verbs">
+          <Button
+            dense
+            variant="ghost"
+            data-testid={`setup-card-remove-${proposal.id}`}
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              onDeselect(proposal.id);
+            }}
+          >
+            Remove
+          </Button>
+        </div>
+      ) : null}
+      {isDisconnected ? (
+        <div className="setup-card-verbs">
+          <Button
+            dense
+            variant="ghost"
+            data-testid={`setup-card-connect-${proposal.id}`}
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              onConnect(proposal.id);
+            }}
+          >
+            Connect
+          </Button>
+        </div>
+      ) : null}
+
+      {/* Native: Test button when selected without test state (unchanged) */}
+      {!isProvider && isSelected && !proposal.testState ? (
         <Button
           dense
           variant="ghost"

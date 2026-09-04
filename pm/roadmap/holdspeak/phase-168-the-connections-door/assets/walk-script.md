@@ -30,15 +30,15 @@
 | 09 | New Project > Outcome | Interview opens; answer outcome | `POST /api/project-setups`; answer outcome | `setup-root` visible |
 | 10 | Notice answered | Signal question answered | answer signals | Suggestions appear |
 | 11 | Sources: TOOLS + cards | Suggestion cards + TOOLS row | `GET /api/connections` | `setup-tool-github` reads "Connected"; gh suggestion cards present; jira suggestion cards present |
-| 12 | GitHub wizard | Click first GH card | (card click) | `provider-wizard-flow` visible; `wizard-heading-name` shows Watch name; `provider-test-btn` disabled (no scope yet) |
+| 12 | GitHub wizard | Click `Set up` on first GH card (`setup-card-setup-<id>`) | (Set up verb) | `provider-wizard-flow` visible; `wizard-heading-name` shows Watch name; `provider-test-btn` disabled (no scope yet); TOOLS row + suggestion cards unmounted |
 | 13 | GitHub scope | Pick `karolswdev/HoldSpeak` from discovery | (card click) | `provider-test-btn` enabled |
 | 14 | GitHub test | Click "Test this Watch" | `POST .../proposals/{id}/test` | `provider-test-display[data-test-state="passed"]`; SUBJECT + MATCHES visible |
 | 15 | Use this Watch | Click `provider-wizard-done` | (done verb) | Returns to suggestion cards |
-| 16 | Second GH: known scope | Click second GH card | (card click) | `known-scope-card` visible; text contains "chosen for" |
+| 16 | Second GH: known scope | Click `Set up` on second GH card (`setup-card-setup-<id>`) | (Set up verb) | `known-scope-card` visible; text contains "chosen for" |
 | 17 | Use this repo | Click `known-scope-use` | (use verb) | Scope set; `provider-test-btn` enabled |
 | 18 | Second GH test | Click "Test this Watch" | `POST .../proposals/{id}/test` | `provider-test-display[data-test-state="passed"]` |
 | 19 | Use second Watch | Click `provider-wizard-done` | (done verb) | Returns to suggestion cards |
-| 20 | Jira wizard | Click Jira card | (card click) | `jira-wizard-flow` visible; account step skipped (1 connection); `jira-scope-step` visible |
+| 20 | Jira wizard | Click `Set up` on Jira card (`setup-card-setup-<id>`) | (Set up verb) | `jira-wizard-flow` visible; account step skipped (1 connection); `jira-scope-step` visible |
 | 21 | Jira scope: pick KAN | Click KAN project card | (card click) | `jira-test-btn` enabled |
 | 22 | Jira test | Click "Test this Watch" | `POST .../proposals/{id}/test` | Test step reached |
 | 23 | Use Jira Watch | Click `jira-wizard-done` | (done verb) | Returns to suggestion cards |

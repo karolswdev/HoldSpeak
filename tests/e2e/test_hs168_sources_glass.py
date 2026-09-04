@@ -428,17 +428,42 @@ def test_sources_connected(tmp_path, monkeypatch, width):
             card_els.first.wait_for(timeout=10000)
 
             gh_idx = None
+            gh_card_id = None
             for i in range(card_els.count()):
-                if card_els.nth(i).locator(
+                card = card_els.nth(i)
+                if card.locator(
                     ".surface-provenance-source", has_text="gh"
                 ).count() > 0:
                     gh_idx = i
+                    gh_card_id = card.get_attribute("data-testid")
                     break
             assert gh_idx is not None, "Must find a GH card"
+            assert gh_card_id is not None
 
-            card_els.nth(gh_idx).click()
+            # HS-168-05: enter via the "Set up" verb button (primary path)
+            prop_id = gh_card_id.replace("setup-card-", "")
+            setup_btn = page.get_by_test_id(f"setup-card-setup-{prop_id}")
+            setup_btn.wait_for(timeout=5000)
+            setup_btn.click()
             wizard = page.get_by_test_id("provider-wizard-flow")
             wizard.wait_for(timeout=10000)
+
+            # HS-168-05: wizard owns the body -- TOOLS, cards unmounted
+            assert page.get_by_test_id("setup-tools-row").count() == 0, \
+                "TOOLS row must unmount while wizard is open"
+            assert page.get_by_test_id("setup-suggestion-cards").count() == 0, \
+                "Suggestion cards must unmount while wizard is open"
+
+            # Wizard flow top within 120px of setup-root top
+            wiz_box = wizard.bounding_box()
+            root_box = page.get_by_test_id("setup-root").bounding_box()
+            assert wiz_box is not None and root_box is not None
+            assert abs(wiz_box["y"] - root_box["y"]) < 120, (
+                f"Wizard top ({wiz_box['y']:.0f}) must be within 120px of "
+                f"setup-root top ({root_box['y']:.0f})"
+            )
+
+            _shot(page, "github-wizard-owns-body", width)
 
             # Heading has the Watch name
             heading = page.get_by_test_id("wizard-heading-name")
@@ -489,20 +514,23 @@ def test_sources_connected(tmp_path, monkeypatch, width):
             page.get_by_test_id("provider-wizard-done").click()
             page.wait_for_timeout(500)
 
-            # ── Second GH card for known-scope ──
+            # ── Second GH card for known-scope (body click = alternate path) ──
             cards2 = page.get_by_test_id("setup-suggestion-cards")
             cards2.wait_for(timeout=10000)
             c2 = cards2.locator('[role="option"]')
             c2.first.wait_for(timeout=10000)
 
             gh2_idx = None
+            gh2_card_id = None
             for i in range(c2.count()):
                 card = c2.nth(i)
                 if card.locator(".surface-provenance-source", has_text="gh").count() > 0:
                     if card.get_attribute("aria-selected") != "true":
                         gh2_idx = i
+                        gh2_card_id = card.get_attribute("data-testid")
                         break
             if gh2_idx is not None:
+                # HS-168-05: body click also enters wizard for connected provider
                 c2.nth(gh2_idx).click()
                 page.get_by_test_id("provider-wizard-flow").wait_for(timeout=10000)
                 _settle(page)
@@ -527,17 +555,24 @@ def test_sources_connected(tmp_path, monkeypatch, width):
             c3.first.wait_for(timeout=10000)
 
             jira_idx = None
+            jira_card_id = None
             for i in range(c3.count()):
-                if c3.nth(i).locator(
+                card = c3.nth(i)
+                if card.locator(
                     ".surface-provenance-source", has_text="acli"
                 ).count() > 0:
                     jira_idx = i
+                    jira_card_id = card.get_attribute("data-testid")
                     break
             assert jira_idx is not None, (
                 "Must find a Jira card (acli connected + fixture yields candidates)"
             )
 
-            c3.nth(jira_idx).click()
+            # HS-168-05: enter via the "Set up" verb button
+            jira_prop_id = jira_card_id.replace("setup-card-", "")
+            jira_setup_btn = page.get_by_test_id(f"setup-card-setup-{jira_prop_id}")
+            jira_setup_btn.wait_for(timeout=5000)
+            jira_setup_btn.click()
             jira = page.get_by_test_id("jira-wizard-flow")
             jira.wait_for(timeout=10000)
 

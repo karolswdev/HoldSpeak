@@ -957,6 +957,21 @@ function postureChipState(posture: string): "active" | "idle" {
 function RoomIdentityBand({ room }: { room: RoomSnapshot }) {
   const { project } = room;
 
+  // HS-168-05 — dedup: the interview derives name, outcomeText, and
+  // purpose from the SAME answer (project_setup_service.py:689-710).
+  // When they coincide, show the name once instead of echoing it.
+  const nameNorm = project.name.trim().toLowerCase();
+  const outcomeNorm = (project.outcomeText || "").trim().toLowerCase();
+  const purposeNorm = (project.purpose || "").trim().toLowerCase();
+
+  const showOutcome =
+    (project.outcomeText || undefined) &&
+    outcomeNorm !== nameNorm;
+  const showPurpose =
+    !!project.purpose &&
+    purposeNorm !== nameNorm &&
+    purposeNorm !== outcomeNorm;
+
   return (
     <div data-testid="orientation-band" aria-label="Project orientation">
       <SurfaceIdentity
@@ -981,7 +996,7 @@ function RoomIdentityBand({ room }: { room: RoomSnapshot }) {
             ) : null}
           </>
         }
-        outcome={project.outcomeText || undefined}
+        outcome={showOutcome ? project.outcomeText : undefined}
         trailing={
           project.updatedAt ? (
             <span className="surface-token" data-testid="orientation-activity">
@@ -990,8 +1005,8 @@ function RoomIdentityBand({ room }: { room: RoomSnapshot }) {
           ) : undefined
         }
       />
-      {project.purpose ? (
-        project.purpose.length > 160 ? (
+      {showPurpose ? (
+        project.purpose!.length > 160 ? (
           <Disclosure label="more" defaultOpen variant="raw">
             <div className="surface-identity-purpose" data-testid="orientation-purpose">{project.purpose}</div>
           </Disclosure>

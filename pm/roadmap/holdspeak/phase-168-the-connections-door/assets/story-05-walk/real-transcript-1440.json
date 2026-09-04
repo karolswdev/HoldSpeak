@@ -1,6 +1,6 @@
 {
   "schema": "tuesday-walk-168-transcript@1",
-  "generated_at": "2026-09-04T00:59:37.485541",
+  "generated_at": "2026-09-04T09:21:54.617728",
   "mode": "real",
   "width": 1440,
   "steps": [
@@ -10,11 +10,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 1,
-      "seconds_cumulative": 3.49,
+      "seconds_cumulative": 3.56,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/01-settings-connections.png",
-      "shot_hash": "5e30716b8542b7d0",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/01-settings-connections.png",
+      "shot_hash": "ffdc2665bd94b75c",
       "notes": "GH: Connected; Jira: Connected"
     },
     {
@@ -23,10 +23,10 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 2,
-      "seconds_cumulative": 5.19,
+      "seconds_cumulative": 5.26,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/02-interview-open.png",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/02-interview-open.png",
       "shot_hash": "4584551a17e9ebda",
       "notes": ""
     },
@@ -36,11 +36,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 4,
-      "seconds_cumulative": 9.15,
+      "seconds_cumulative": 9.21,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/03-sources-tools-connected.png",
-      "shot_hash": "9968b9f6df061c79",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/03-sources-tools-connected.png",
+      "shot_hash": "43d4cfaebc96819a",
       "notes": "GH cards=4; Jira cards=4; TOOLS=Connected"
     },
     {
@@ -49,11 +49,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 5,
-      "seconds_cumulative": 9.31,
+      "seconds_cumulative": 9.36,
       "sentences_on_screen": 1,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/04-github-wizard.png",
-      "shot_hash": "b2ed6d1b7dbc6b88",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/04-github-wizard.png",
+      "shot_hash": "ba3b5f0c5a2a61b7",
       "notes": "heading=PR review queue; test_disabled=True"
     },
     {
@@ -62,11 +62,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 6,
-      "seconds_cumulative": 11.2,
+      "seconds_cumulative": 12.27,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/05-github-scoped.png",
-      "shot_hash": "7c40ff65ecb205dd",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/05-github-scoped.png",
+      "shot_hash": "4ed0615f2e8db7dc",
       "notes": ""
     },
     {
@@ -75,11 +75,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 7,
-      "seconds_cumulative": 12.29,
+      "seconds_cumulative": 13.18,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/06-github-test.png",
-      "shot_hash": "211a3c16f7f08f70",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/06-github-test.png",
+      "shot_hash": "ef93a13ac65ed513",
       "notes": "test display: POPULATION\nSUBJECT\npull requests\nQUERY\nkarolswdev/HoldSpeak\nTEST\n\u2713\nAuth\n\u2713\nRead karolswdev/HoldSpeak\n"
     },
     {
@@ -88,11 +88,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 8,
-      "seconds_cumulative": 12.94,
+      "seconds_cumulative": 13.84,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/07-github-done.png",
-      "shot_hash": "9a66b2d36db51566",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/07-github-done.png",
+      "shot_hash": "dc8538cef99940bb",
       "notes": ""
     },
     {
@@ -101,11 +101,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 9,
-      "seconds_cumulative": 15.9,
+      "seconds_cumulative": 16.79,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/08-github-known-scope.png",
-      "shot_hash": "4e27e87826925b29",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/08-github-known-scope.png",
+      "shot_hash": "dd259d36bb950a94",
       "notes": "known-scope: karolswdev/HoldSpeak\nchosen for PR review queue\nUse this repo"
     },
     {
@@ -114,11 +114,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 10,
-      "seconds_cumulative": 16.64,
+      "seconds_cumulative": 17.61,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/09-github2-scoped.png",
-      "shot_hash": "07a1a4d4a5a7c338",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/09-github2-scoped.png",
+      "shot_hash": "9fe078cc5af385c2",
       "notes": ""
     },
     {
@@ -127,11 +127,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 11,
-      "seconds_cumulative": 17.44,
+      "seconds_cumulative": 18.56,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/10-github2-test.png",
-      "shot_hash": "6a4b9caf30807b9d",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/10-github2-test.png",
+      "shot_hash": "5ce5aa61251c0ddd",
       "notes": ""
     },
     {
@@ -140,11 +140,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 12,
-      "seconds_cumulative": 18.09,
+      "seconds_cumulative": 19.22,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/11-github2-done.png",
-      "shot_hash": "8ca331ce54b88d01",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/11-github2-done.png",
+      "shot_hash": "287595e57c358950",
       "notes": ""
     },
     {
@@ -153,11 +153,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 13,
-      "seconds_cumulative": 18.26,
+      "seconds_cumulative": 19.4,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/12-jira-wizard.png",
-      "shot_hash": "b0d76bf43f696501",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/12-jira-wizard.png",
+      "shot_hash": "8bf8ce0f86f78910",
       "notes": "accounts_skipped=True; scope_step_visible=True"
     },
     {
@@ -166,11 +166,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 14,
-      "seconds_cumulative": 21.55,
+      "seconds_cumulative": 22.68,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/13-jira-scoped.png",
-      "shot_hash": "8662bc28d8e139b8",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/13-jira-scoped.png",
+      "shot_hash": "5ffa833552e04b97",
       "notes": ""
     },
     {
@@ -179,11 +179,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 15,
-      "seconds_cumulative": 33.69,
+      "seconds_cumulative": 32.49,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/14-jira-test-passed.png",
-      "shot_hash": "9b4c0161bf53fe24",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/14-jira-test-passed.png",
+      "shot_hash": "ba8f8b7e22443567",
       "notes": ""
     },
     {
@@ -192,11 +192,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 16,
-      "seconds_cumulative": 34.34,
+      "seconds_cumulative": 33.14,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/15-jira-done.png",
-      "shot_hash": "f59ef7dfc3c1a1fe",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/15-jira-done.png",
+      "shot_hash": "b369427b0854acfb",
       "notes": ""
     },
     {
@@ -205,11 +205,11 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 17,
-      "seconds_cumulative": 34.51,
+      "seconds_cumulative": 33.3,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/16-review.png",
-      "shot_hash": "4505f7d14def8cb6",
+      "shot_path": "assets/story-05-walk/real-connected-desktop/16-review.png",
+      "shot_hash": "0b14811fff6b9fc2",
       "notes": ""
     },
     {
@@ -218,12 +218,12 @@
       "leg": "connected",
       "width": 1440,
       "clicks_cumulative": 18,
-      "seconds_cumulative": 38.33,
+      "seconds_cumulative": 37.11,
       "sentences_on_screen": 0,
       "dead_end": false,
-      "shot_path": "assets/story-05-walk/connected-desktop/17-activated.png",
-      "shot_hash": "c2ce38c9153937ea",
-      "notes": "project_id=proj-4ed6be467d96; lifecycle=active"
+      "shot_path": "assets/story-05-walk/real-connected-desktop/17-activated.png",
+      "shot_hash": "f60fe4bef74d1403",
+      "notes": "project_id=proj-4db9f394af6f; lifecycle=active"
     }
   ],
   "page_errors": []

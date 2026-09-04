@@ -134,29 +134,9 @@ export function SetupBrief({
 }
 
 function BriefWatches({ proposals, signalsText }: { proposals: SetupProposal[]; signalsText: string }) {
-  const grouped: Record<WatchBriefState, SetupProposal[]> = {
-    mentioned: [],
-    proposed: [],
-    tested: [],
-    disabled: [],
-    active: [],
-  };
-
-  for (const p of proposals) {
-    const bs = proposalBriefState(p);
-    grouped[bs].push(p);
-  }
-
-  const stateOrder: WatchBriefState[] = [
-    "active",
-    "tested",
-    "proposed",
-    "mentioned",
-    "disabled",
-  ];
-
-  // HS-168-04: sources as selected proposals
-  const selectedCount = proposals.filter((p) => p.state === "selected" || p.testState === "passed").length;
+  // HS-168-05: brief shows only chosen sources (selected or tested).
+  // Unselected proposals live on the cards, not in the brief.
+  const chosen = proposals.filter((p) => p.state === "selected" || p.testState === "passed");
 
   return (
     <div data-testid="brief-watches">
@@ -164,29 +144,22 @@ function BriefWatches({ proposals, signalsText }: { proposals: SetupProposal[]; 
         <div className="setup-brief-signals-text">{signalsText}</div>
       ) : null}
 
-      {/* HS-168-04: SOURCES count -- ONE label, not a duplicate */}
-      {selectedCount > 0 ? (
-        <SurfaceSection label={`SOURCES ${selectedCount}`}>
-          <span data-testid="brief-sources-count" hidden aria-hidden="true">
-            {selectedCount}
-          </span>
-        </SurfaceSection>
-      ) : null}
-
-      {stateOrder.map((bs) =>
-        grouped[bs].length > 0 ? (
-          <div key={bs} data-brief-state={bs}>
-            {/* HS-168-04: one label per group -- the SurfaceLedger count IS the label */}
-            <SurfaceLedger count={`${BRIEF_STATE_LABEL[bs].toUpperCase()} ${grouped[bs].length}`} cols="room">
-              <ul className="surface-ledger-rows">
-                {grouped[bs].map((p) => (
-                  <BriefWatchRow key={p.id} proposal={p} briefState={bs} />
-                ))}
-              </ul>
-            </SurfaceLedger>
-          </div>
-        ) : null,
-      )}
+      <SurfaceSection label={`SOURCES ${chosen.length}`}>
+        <span data-testid="brief-sources-count" hidden aria-hidden="true">
+          {chosen.length}
+        </span>
+        {chosen.length > 0 ? (
+          <SurfaceLedger cols="room">
+            <ul className="surface-ledger-rows">
+              {chosen.map((p) => (
+                <BriefWatchRow key={p.id} proposal={p} briefState={proposalBriefState(p)} />
+              ))}
+            </ul>
+          </SurfaceLedger>
+        ) : (
+          <span className="surface-token setup-brief-none" data-chip>NONE YET</span>
+        )}
+      </SurfaceSection>
     </div>
   );
 }
