@@ -1,8 +1,24 @@
 {
  "artboards": [
   {
-   "file": "Main.dc.html",
+   "file": "DoorEmpty.dc.html",
    "x": 0,
+   "y": 0,
+   "w": 640,
+   "h": 388,
+   "title": "Door \u00b7 first open \u00b7 1440"
+  },
+  {
+   "file": "DoorChecking.dc.html",
+   "x": 760,
+   "y": 0,
+   "w": 640,
+   "h": 388,
+   "title": "Door \u00b7 checking \u00b7 1440"
+  },
+  {
+   "file": "Main.dc.html",
+   "x": 1520,
    "y": 0,
    "w": 640,
    "h": 388,
@@ -10,15 +26,23 @@
   },
   {
    "file": "DoorPicker.dc.html",
-   "x": 760,
+   "x": 2280,
    "y": 0,
    "w": 640,
    "h": 636,
    "title": "Door \u00b7 picker open \u00b7 1440"
   },
   {
+   "file": "DoorAdjust.dc.html",
+   "x": 3040,
+   "y": 0,
+   "w": 640,
+   "h": 454,
+   "title": "Door \u00b7 Adjust open \u00b7 1440"
+  },
+  {
    "file": "DoorCold.dc.html",
-   "x": 1520,
+   "x": 3800,
    "y": 0,
    "w": 640,
    "h": 328,
@@ -26,7 +50,7 @@
   },
   {
    "file": "DoorPhone.dc.html",
-   "x": 2280,
+   "x": 4560,
    "y": 0,
    "w": 393,
    "h": 488,
@@ -37,7 +61,7 @@
    "x": 0,
    "y": 848,
    "w": 800,
-   "h": 983,
+   "h": 988,
    "title": "Room \u00b7 3 need you \u00b7 1440"
   },
   {
@@ -61,7 +85,7 @@
    "x": 2760,
    "y": 848,
    "w": 393,
-   "h": 1170,
+   "h": 1190,
    "title": "Room \u00b7 393"
   }
  ],
@@ -70,8 +94,8 @@
    "id": "read-me",
    "x": 0,
    "y": -150,
-   "w": 720,
-   "text": "Phase 169 The Streamlined Door \u2014 for your ratification.\nTop row: the Door is ONE screen (the outcome line becomes the name; source rows with in-world pickers and default Watches; the count is the test; Create Project). Five clicks on a connected desk.\nBottom row: the Room answers four questions in order \u2014 what needs you \u00b7 what you watch and whether it works \u00b7 what changed since you looked \u00b7 what was decided and what you owe \u2014 then one ask box. Two wings: ROOM \u00b7 HISTORY."
+   "w": 760,
+   "text": "Phase 169 The Streamlined Door \u2014 for your ratification (the excellence round).\nTop row, left to right, the Door as you would meet it: first open \u00b7 checking \u00b7 picked \u00b7 the picker \u00b7 Adjust \u00b7 the cold desk \u00b7 393. One screen, five clicks on a connected desk.\nBottom row: the Room answers four questions in order \u2014 what needs you \u00b7 what you watch and whether it works \u00b7 what changed since you looked \u00b7 what was decided and what you owe \u2014 then one ask box. Two wings: ROOM \u00b7 HISTORY."
   }
  ],
  "launch": {

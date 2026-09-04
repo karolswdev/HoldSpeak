@@ -46,6 +46,10 @@
         <!-- StateChip: danger AT RISK -->
         <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; color:#f87171;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span>AT RISK</span>
         <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">3 OVERDUE</span>
+        <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&middot;</span>
+        <!-- surface-token: TARGET (muted) -->
+        <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">TARGET OCT 15 &middot; 41 DAYS</span>
+        <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&middot;</span>
         <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">CHECKED 3 MIN AGO</span>
       </div>
       <!-- Button (primary): Draft update — full width on phone -->
@@ -66,12 +70,12 @@
         </div>
       </div>
 
-      <!-- SurfaceLedgerRow 2 -->
+      <!-- SurfaceLedgerRow 2: CI red -->
       <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; padding:8px 0; border-top:1px solid #2a2e3e;">
         <span style="width:32px; flex-shrink:0; text-align:center; font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">GH</span>
-        <span style="font:600 14px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">main</span>
+        <span style="flex:1; min-width:0; font:600 14px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; overflow-wrap:anywhere;">CI failing on main</span>
         <div style="width:100%; padding-left:40px; display:flex; align-items:center; justify-content:space-between; gap:6px;">
-          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f87171; white-space:nowrap;">CI RED ON MAIN · 40 MIN</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f87171; white-space:nowrap;">40 MIN AGO</span>
           <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Open</button>
         </div>
       </div>
@@ -163,8 +167,9 @@
         <span style="flex:1; min-width:0; font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; overflow-wrap:anywhere;">Decided · use acli for Jira, never REST · Tue</span>
         <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Open</button>
       </div>
-      <div style="padding:6px 0; border-top:1px solid #2a2e3e;">
-        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; overflow-wrap:anywhere;">You owe · a review of #612 · by Fri</span>
+      <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="flex:1; min-width:0; font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; overflow-wrap:anywhere;">You owe · a review of #612 · by Fri</span>
+        <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Open</button>
       </div>
     </div>
 
