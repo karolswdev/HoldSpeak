@@ -48,6 +48,92 @@ is WHY you move fast.
   walk; Gate B partner feedback; MCP-008 remote; the model-era collapse
   (backend); 155 The Crew; the debt ledger (final-summary.md of 167).
 
+## 1b. THE NEXT SITTING: MCP-008 remote — charter it FIRST thing
+
+**The owner's word (2026-09-04), verbatim:** "I want you to prepare
+Muad'Dib IV for working on MCP-008, via a handover." That is his word
+lifting the SRS deferral — MCP-008 is LATER/V2 "until after product
+validation" (SRS_DOMAIN_DRIVER.md:512; Gate B in
+SRS_PRODUCT_VALIDATION.md:249-258). Record in the charter that the
+owner lifted the gate consciously; do not re-litigate it.
+
+**The row, verbatim:** "MCP-008 | LATER/V2 | Current remote
+transport/protocol, scoped remote identity, Tasks integration, and
+ecosystem publication are deferred until after product validation."
+MCP-001..007 are DONE (Phase 165, PR #531). This is the last MCP row.
+
+**What exists (recon 2026-09-04, anchors re-verified):**
+- The sidecar is stdio ONLY (holdspeak/mcp/server.py:116-151, protocol
+  `2024-11-05` at :14; MCP_SIDECAR.md:945 "no network listener"). Its
+  `handle_message()` is transport-agnostic (dict in, dict out).
+- The sidecar ALWAYS runs as OWNER (holdspeak/mcp/auth.py:32); the
+  HOLDSPEAK_TOKEN there is an identity LABEL, not a credential
+  (MCP_SIDECAR.md:674-676). It opens the DB directly and composes its
+  own bare services (the 165 fetcher-seam debt).
+- The hub ALREADY serves authenticated HTTP off loopback for
+  companions (iPad, AIPI-Lite) on LAN/Tailscale, no hosted relay
+  (USER_GUIDE.md:1178-1179): bearer token = `config.meeting.
+  web_auth_token` (holdspeak/web_auth.py:27-114 — header
+  `X-HoldSpeak-Token`, `Authorization: Bearer`, or `?token=`); the
+  middleware derives the principal from the credential
+  (holdspeak/web_server.py:560-590; owner → agent credentials → node
+  tokens → UNAUTHENTICATED); a non-loopback bind is REFUSED without a
+  token (web_auth.py:73-89). `HOLDSPEAK_WEB_PORT` pins the port.
+- `AgentCredentialStore` (holdspeak/principals.py:89-172) already
+  mints per-identity tokens with TTL + revocation — the substrate for
+  scoped remote identity. PROJECT_PALETTE (45 tools) is the palette
+  mechanism (MCP-007).
+- No SSE plumbing exists in the MCP layer (the hub's real-time channel
+  is the WebSocket at /api/ws). Streamable HTTP (the current remote
+  transport) arrived in spec revision `2025-03-26` — a protocol bump.
+- "Tasks": the recon could not confirm a ratified MCP Tasks feature;
+  MCP-003's run_id + explicit polling is the contract that exists.
+  Verify against the current spec before designing; never build to a
+  draft.
+
+**The charter-ready chain (six stories; the 165 liturgy):**
+01 The transport — a Streamable HTTP route ON THE HUB (FastAPI), behind
+the existing `_web_auth_gate`, calling `handle_message()`; the remote
+handler composes on the WEB runtime's live services (the conductor's
+`set_scheduler_services` seam, the wired fetcher) — never the sidecar's
+bare instances (this pays the 165 fetcher-seam debt); the protocol
+version bumped honestly with its census.
+02 Scoped remote identity — a non-OWNER principal per remote client
+minted from AgentCredentialStore (TTL, revocation, owner-issued from
+the desk), palette-restricted (PROJECT_PALETTE or a configured subset);
+the kernel derives authority from the credential (Article XI:3); a
+typed capability error for anything outside the palette (MCP-005).
+03 Egress + receipts — every remote call kernel-admitted with a
+terminal receipt (Article XI:2) and an EGRESS badge at the point of
+decision (Article III:2) — reads included, since they cross the
+network; the pipeline observer shows them; local stdio stays badgeless.
+04 The long-running contract — MCP-003's run_id + polling over HTTP;
+SSE push for run state ONLY if the spec's mechanism is ratified and
+the Streamable HTTP notification channel fits; documented, tested.
+05 The live proof — a second machine on the tailnet (the .43 Linux box
+is the natural one; sandboxed Bash cannot reach the LAN — run the
+client from a real shell) drives the SS15 scenario the 165 walk proved
+over stdio, measured, with a transcript; the OWNER VERDICT. His hub:
+`HOLDSPEAK_WEB_PORT=<port> holdspeak web` bound off loopback with the
+config token (never paste the token into the repo).
+06 The docs + the close — MCP_SIDECAR.md (generated — extend the
+generator, never hand-edit counts), the companions section of the
+guide, "ecosystem publication" named honestly as self-hosted
+discoverability (the no-hosted-relay law), the debt ledger.
+
+**Laws that bind it:** Article III (nothing leaves by default — the
+listener is opt-in, disclosed by badge; no hosted relay); Article XI
+(admission, receipts, the caller supplies neither principal nor
+authority; custody — remote agents get bounded delegation, never
+OWNER); MCP-001 parity (one implementation: remote = web = stdio);
+ledger-not-gate (a flight recorder, not ceremony); the yolo rigor bar.
+
+**Counsel's hunts to name in the charter:** a remote path composing
+bare services (the 164/165 scar); a palette that leaks a tool through
+an alias; an egress badge missing on a remote READ; a protocol bump
+that silently changes a wire shape the 165 walk pinned; a credential
+that never expires.
+
 ## 2. The laws this session added (append to §7 of the old canon)
 
 - **Design the whole Room, not a face**: one design doc with a shared
