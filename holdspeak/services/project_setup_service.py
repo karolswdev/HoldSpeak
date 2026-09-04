@@ -129,7 +129,7 @@ def _proposal_dedup_key(p: dict[str, Any]) -> str:
     """Stable key for deduplicating proposals across re-suggest calls.
 
     Provider proposals: (provider_id, rationale.template_id).
-    Native proposals:   (provider_id, spec.subject.kind).
+    Native proposals:   (provider_id, spec.subject.kind, spec.name).
     """
     pid = p.get("provider_id", "")
     # Provider proposals carry template_id in their rationale
@@ -152,7 +152,10 @@ def _proposal_dedup_key(p: dict[str, Any]) -> str:
         except Exception:
             spec = {}
     kind = spec.get("subject", {}).get("kind", "")
-    return f"{pid}:{kind}"
+    # Two native door proposals share a kind (counsel S-3): the spec name
+    # keeps them apart.
+    name = spec.get("name", "") or p.get("name", "")
+    return f"{pid}:{kind}:{name}"
 
 
 def _answer_id() -> str:

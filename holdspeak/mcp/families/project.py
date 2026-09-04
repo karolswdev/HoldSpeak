@@ -865,10 +865,17 @@ def _steward_service():
 
 def _connections_service():
     """Compose ConnectionsService (same wiring as web context, HS-168-02)."""
+    from holdspeak.config import Config
+    from holdspeak.mcp.families.inference_assignments import _service as _assignment_service
     from holdspeak.services.connections_service import ConnectionsService
+    # Parity with the web composition (counsel S-2): calendar reads the
+    # config, models reads the assignment summary — the sidecar must not
+    # report both as not_configured.
     return ConnectionsService(
         github_adapter=_github_adapter(),
         jira_adapter=_jira_adapter(),
+        config_loader=Config.load,
+        inference_assignment_service=_assignment_service(),
     )
 
 

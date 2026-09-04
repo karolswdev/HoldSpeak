@@ -24,7 +24,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _boot as _conftest_boot, _api, _ensure_build
+from .glass_infra import _boot as _conftest_boot, _api, _ensure_build, _settle
 
 pytest.importorskip("playwright.sync_api", reason="Connections glass needs Playwright")
 
@@ -157,6 +157,7 @@ def _prime_jira(page: Any) -> None:
 # ── Navigation ─────────────────────────────────────────────────────
 
 def _shot(page: Any, path: Path, name: str) -> Path:
+    _settle(page)  # never shoot mid surface-rise-in (counsel S-4)
     path.mkdir(parents=True, exist_ok=True)
     fp = path / f"{name}.png"
     page.screenshot(path=str(fp), full_page=True)

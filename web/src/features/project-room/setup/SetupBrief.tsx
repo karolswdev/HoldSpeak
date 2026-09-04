@@ -23,6 +23,8 @@ import {
 } from "./model";
 import type { ControllerState } from "./useSetupController";
 import type { ConnectionTool } from "../../../pages/cores/connections/api";
+import { connectionChipLabel } from "../../../pages/cores/connections";
+import type { ConnectionState } from "../../../pages/cores/connections/api";
 
 const BRIEF_STATE_LABEL: Record<WatchBriefState, string> = {
   mentioned: "Mentioned",
@@ -49,16 +51,9 @@ const PROVIDER_EMBLEM: Record<string, string> = {
   local: "◉",
 };
 
-/** Tool state label for the brief. */
-function toolBriefLabel(state: string): string {
-  switch (state) {
-    case "connected": return "Connected";
-    case "owner_action_required": return "Sign in";
-    case "unavailable": return "Unavailable";
-    case "degraded": return "Unreachable";
-    case "not_configured": return "Off";
-    default: return state;
-  }
+/** Tool state label for the brief — ONE vocabulary with Settings → Connections (counsel S-1). */
+function toolBriefLabel(state: string, providerId: string): string {
+  return connectionChipLabel(state as ConnectionState, providerId);
 }
 
 /** Tool provider display name. */
@@ -117,7 +112,7 @@ export function SetupBrief({
           <div className="setup-brief-tools" data-testid="brief-tools">
             {connectorTools.map((tool) => {
               const name = toolDisplayName(tool.provider_id);
-              const stateLabel = toolBriefLabel(tool.state);
+              const stateLabel = toolBriefLabel(tool.state, tool.provider_id);
               const isWarning = tool.state !== "connected";
               return (
                 <div key={tool.provider_id} className="setup-brief-tool-line" data-state={tool.state}>

@@ -30,6 +30,8 @@ import {
   type SetupProposal,
   type WatchBriefState,
 } from "./model";
+import { connectionChipLabel } from "../../../pages/cores/connections";
+import type { ConnectionState } from "../../../pages/cores/connections/api";
 
 const STATE_LABEL: Record<WatchBriefState, string> = {
   mentioned: "Mentioned",
@@ -39,16 +41,18 @@ const STATE_LABEL: Record<WatchBriefState, string> = {
   active: "Active",
 };
 
-/** Provider-specific StateChip from proposal.connection (HS-168-04). */
-function connectionStateChip(proposal: SetupProposal): { state: "success" | "warning" | "failure" | "idle"; label: string } | null {
+/** Provider-specific StateChip from proposal.connection (HS-168-04).
+ *  ONE label vocabulary with Settings → Connections (counsel S-1). */
+function connectionStateChip(proposal: SetupProposal): { state: "success" | "warning" | "failure" | "idle" | "unreachable"; label: string } | null {
   const conn = proposal.connection;
   if (!conn) return null;
+  const label = connectionChipLabel(conn.state as ConnectionState, proposal.providerId);
   switch (conn.state) {
-    case "connected": return { state: "success", label: "Connected" };
-    case "owner_action_required": return { state: "warning", label: "Sign in" };
-    case "unavailable": return { state: "failure", label: "Unavailable" };
-    case "degraded": return { state: "failure", label: "Unreachable" };
-    case "not_configured": return { state: "idle", label: "Off" };
+    case "connected": return { state: "success", label };
+    case "owner_action_required": return { state: "warning", label };
+    case "unavailable": return { state: "failure", label };
+    case "degraded": return { state: "unreachable", label };
+    case "not_configured": return { state: "idle", label };
     default: return null;
   }
 }

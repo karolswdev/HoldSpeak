@@ -39,6 +39,8 @@ import type {
 } from "./model";
 import { cadenceLabel, conditionLabel, actionLabel, transitionLabel, plural, formatDueToken } from "./model";
 import "./jira-wizard.css";
+import { connectionChipLabel } from "../../../pages/cores/connections";
+import type { ConnectionState } from "../../../pages/cores/connections/api";
 
 /* ── Helpers ── */
 
@@ -54,11 +56,12 @@ function connChipState(state: string): "success" | "warning" | "failure" | "unre
 }
 
 function connChipLabel(state: string): string {
-  if (state === "connected") return "Connected";
-  if (state === "owner_action_required") return "Sign in";
-  if (state === "capability_missing") return "acli missing";
-  if (state === "unavailable") return "Unavailable";
-  return "Disconnected";
+  // The accounts step reads the 166 per-connection route; its shared
+  // states speak the Connections face's vocabulary (counsel S-1).
+  if (state === "capability_missing") return connectionChipLabel("unavailable", "jira");
+  if (state === "connected" || state === "owner_action_required" || state === "unavailable" || state === "degraded")
+    return connectionChipLabel(state as ConnectionState, "jira");
+  return connectionChipLabel("owner_action_required", "jira");
 }
 
 function formatTime(iso: string): string {
