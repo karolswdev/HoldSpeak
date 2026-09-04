@@ -1,0 +1,80 @@
+{
+ "artboards": [
+  {
+   "file": "Main.dc.html",
+   "x": 0,
+   "y": 0,
+   "w": 640,
+   "h": 388,
+   "title": "Door \u00b7 picked \u00b7 1440"
+  },
+  {
+   "file": "DoorPicker.dc.html",
+   "x": 760,
+   "y": 0,
+   "w": 640,
+   "h": 636,
+   "title": "Door \u00b7 picker open \u00b7 1440"
+  },
+  {
+   "file": "DoorCold.dc.html",
+   "x": 1520,
+   "y": 0,
+   "w": 640,
+   "h": 328,
+   "title": "Door \u00b7 cold desk \u00b7 1440"
+  },
+  {
+   "file": "DoorPhone.dc.html",
+   "x": 2280,
+   "y": 0,
+   "w": 393,
+   "h": 488,
+   "title": "Door \u00b7 393"
+  },
+  {
+   "file": "Room.dc.html",
+   "x": 0,
+   "y": 848,
+   "w": 800,
+   "h": 1012,
+   "title": "Room \u00b7 3 need you \u00b7 1440"
+  },
+  {
+   "file": "RoomQuiet.dc.html",
+   "x": 920,
+   "y": 848,
+   "w": 800,
+   "h": 587,
+   "title": "Room \u00b7 nothing needs you \u00b7 1440"
+  },
+  {
+   "file": "History.dc.html",
+   "x": 1840,
+   "y": 848,
+   "w": 800,
+   "h": 702,
+   "title": "History \u00b7 1440"
+  },
+  {
+   "file": "RoomPhone.dc.html",
+   "x": 2760,
+   "y": 848,
+   "w": 393,
+   "h": 1194,
+   "title": "Room \u00b7 393"
+  }
+ ],
+ "annotations": [
+  {
+   "id": "read-me",
+   "x": 0,
+   "y": -150,
+   "w": 720,
+   "text": "Phase 169 The Streamlined Door \u2014 for your ratification.\nTop row: the Door is ONE screen (the outcome line becomes the name; source rows with in-world pickers and default Watches; the count is the test; Create Project). Five clicks on a connected desk.\nBottom row: the Room answers four questions in order \u2014 what needs you \u00b7 what you watch and whether it works \u00b7 what changed since you looked \u00b7 what was decided and what you owe \u2014 then one ask box. Two wings: ROOM \u00b7 HISTORY."
+  }
+ ],
+ "launch": {
+  "view": "canvas"
+ }
+}

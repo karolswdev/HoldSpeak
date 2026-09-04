@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+    a { color: #a86e4a; } a:hover { color: #bc8058; }
+  </style>
+</helmet>
+
+<!-- ═══ WINDOW SHELL (800) — History wing ═══ -->
+<div style="width:800px; border:1px solid #363b50; border-radius:2px; background:#15171d; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40), inset 0 0 0 1px #2a2e3e; display:flex; flex-direction:column;">
+
+  <!-- ─── TITLE BAR ─── -->
+  <div style="height:40px; padding:0 12px; display:flex; align-items:center; gap:10px; background:#242833; border-radius:1px 1px 0 0; flex-shrink:0;">
+    <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+      <span style="width:12px; height:12px; border-radius:2px; background:#f87171; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#fbbf24; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#34d399; display:block;"></span>
+    </div>
+    <span style="flex:1; min-width:0; font:700 14px/1 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Ship the Q4 platform on schedule with zero incidents</span>
+    <!-- desk-wings -->
+    <div style="display:flex; align-items:center; flex-shrink:0;">
+      <!-- ROOM wing (inactive) -->
+      <span style="padding:4px 12px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">Room</span>
+      <!-- HISTORY wing (active, sunken) -->
+      <span style="margin-left:-1px; padding:4px 12px; border:1px solid #a86e4a; border-radius:2px; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f2f3f5; cursor:pointer; white-space:nowrap;">History</span>
+    </div>
+  </div>
+
+  <!-- ─── BODY ─── -->
+  <div style="flex:1; padding:16px 20px 14px; display:flex; flex-direction:column; gap:20px;">
+
+    <!-- ═══ STREAM HEAD — display step count ═══ -->
+    <div style="font:650 26px/1.15 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">7 today</div>
+
+    <!-- ═══ LedgerFilterBar + search ═══ -->
+    <div style="display:flex; align-items:center; gap:8px;">
+      <!-- Filter tokens -->
+      <div style="display:flex; align-items:center; gap:2px; flex-shrink:0;">
+        <!-- ALL (active) -->
+        <span style="padding:4px 10px; border:1px solid #a86e4a; border-radius:2px; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f2f3f5; cursor:pointer; white-space:nowrap;">All</span>
+        <!-- GITHUB -->
+        <span style="margin-left:-1px; padding:4px 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">GitHub</span>
+        <!-- JIRA -->
+        <span style="margin-left:-1px; padding:4px 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">Jira</span>
+        <!-- ROOM -->
+        <span style="margin-left:-1px; padding:4px 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">Room</span>
+      </div>
+      <!-- Search typeahead well -->
+      <div style="flex:1; display:flex; align-items:center; gap:6px; padding:4px 10px; background:#1c1f27; border:1px solid #2a2e3e; border-radius:2px; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07);">
+        <span style="flex:1; font:12px/1.4 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">Search history&#8230;</span>
+        <!-- MicButton -->
+        <span style="width:20px; height:20px; display:flex; align-items:center; justify-content:center; border:1px solid #2a2e3e; border-radius:50%; cursor:pointer; flex-shrink:0;">
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="1" width="6" height="10" rx="3"></rect><path d="M3 8a5 5 0 0010 0"></path><line x1="8" y1="13" x2="8" y2="15"></line></svg>
+        </span>
+      </div>
+    </div>
+
+    <!-- ═══ SurfaceStream ═══ -->
+
+    <!-- ── TODAY · THU SEP 4 ── -->
+    <div style="display:flex; flex-direction:column; gap:0;">
+      <!-- Day header (caption step) -->
+      <div style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; padding-bottom:8px;">TODAY · THU SEP 4</div>
+
+      <!-- SurfaceStreamDay entries — time at lead slot -->
+      <div style="display:grid; grid-template-columns:72px 1fr; gap:0 8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-align:right;">09:21</span>
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">#618 opened by mira</span>
+      </div>
+      <div style="display:grid; grid-template-columns:72px 1fr; gap:0 8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-align:right;">09:18</span>
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">#617 opened by karolswdev</span>
+      </div>
+      <div style="display:grid; grid-template-columns:72px 1fr; gap:0 8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-align:right;">08:59</span>
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">KAN-2 moved to In Progress</span>
+      </div>
+      <div style="display:grid; grid-template-columns:72px 1fr; gap:0 8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-align:right;">08:41</span>
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">#611 Per-provider proposal cap · merged</span>
+      </div>
+      <div style="display:grid; grid-template-columns:72px 1fr; gap:0 8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-align:right;">08:20</span>
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">CI red on main · workflow Unit</span>
+      </div>
+      <div style="display:grid; grid-template-columns:72px 1fr; gap:0 8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-align:right;">07:55</span>
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">KAN-7 became overdue</span>
+      </div>
+      <div style="display:grid; grid-template-columns:72px 1fr; gap:0 8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-align:right;">07:30</span>
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">#612 review requested from you</span>
+      </div>
+    </div>
+
+    <!-- ── YESTERDAY ── -->
+    <div style="display:flex; flex-direction:column; gap:0;">
+      <div style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; padding-bottom:8px;">YESTERDAY</div>
+
+      <div style="display:grid; grid-template-columns:72px 1fr; gap:0 8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-align:right;">16:40</span>
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">#610 opened by mira</span>
+      </div>
+      <div style="display:grid; grid-template-columns:72px 1fr; gap:0 8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-align:right;">14:22</span>
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">KAN-5 moved to Done</span>
+      </div>
+      <div style="display:grid; grid-template-columns:72px 1fr; gap:0 8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-align:right;">11:05</span>
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">#609 merged</span>
+      </div>
+    </div>
+
+    <!-- ── TUE SEP 2 ── -->
+    <div style="display:flex; flex-direction:column; gap:0;">
+      <div style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; padding-bottom:8px;">TUE SEP 2</div>
+
+      <div style="display:grid; grid-template-columns:72px 1fr; gap:0 8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-align:right;">Tue</span>
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">Update drafted</span>
+      </div>
+      <div style="display:grid; grid-template-columns:72px 1fr; gap:0 8px; padding:6px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; text-align:right;">Tue</span>
+        <span style="font:12px/1.6 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">Decided · use acli for Jira, never REST</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── FOOTER (SurfaceFooter) ─── -->
+  <footer style="height:36px; padding:0 12px; background:#1c1f27; border-top:1px solid #2a2e3e; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); flex-shrink:0;">
+    <div style="display:flex; align-items:center; justify-content:space-between; height:100%; gap:8px;">
+      <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d;">7 TODAY · 23 THIS WEEK</span>
+      <span></span>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>
