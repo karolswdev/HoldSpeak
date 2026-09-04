@@ -57,9 +57,22 @@ written here. Every chip names a fact the wire has.
   #34d399 · warning #fbbf24 · danger #f87171 · info #56c7f5. Radius
   2px. Bevel: inset 1px 1px 0 rgba(255,255,255,.14), inset -1px -1px
   0 rgba(0,0,0,.40). The window shell markup is Main.dc.html's (168).
-- Motion (build): rows settle in (`surface-rise-in`), the count
-  arrives with a 200 ms crossfade from CHECKING, the picker unfolds
-  with the window's spring; idle never moves; reduced-motion = none.
+- **Motion — four moments, named (composition rule 5; nothing moves at
+  rest; reduced motion = instant):**
+  1. *The picker unfolds* — the well grows from the row's lower edge
+     with the window spring (`--duration-med`, `--ease-quart`); cards
+     settle in with `surface-rise-in` staggered 30 ms.
+  2. *The count arrives* — the `○ CHECKING` token pulses
+     (`surface-chip-pulse`); the count crossfades in over 200 ms and
+     the token fades out; the footer receipt's number ticks.
+  3. *First paint of the Room* — sections rise in order (head, NEEDS
+     YOU, SOURCES, …) 40 ms apart; the headline number is the last to
+     land.
+  4. *Something new needs you* — while the Room is open, a new NEEDS
+     YOU row rises in at the top with a faint accent-tinted field that
+     fades over 1.2 s, and the headline count re-lands with emphasis
+     (a 1.04 scale-settle); the desk's bell carries the same fact when
+     the Room is closed.
 
 ## D3 — the Door (window "New Project", 640 wide at 1440; 393 glass)
 
@@ -113,6 +126,24 @@ Body, top to bottom, gap 18px:
    sits first with a token `ALSO WATCHED BY <project>` — offered,
    never applied.
 
+3b. **The three states a row passes through:** UNPICKED — the trigger
+   reads `Choose a repository` in muted, the toggles present but
+   quiet (no count line); CHECKING — the moment after a pick: the
+   trigger holds the scope, the count slot shows `○ CHECKING` pulsing
+   and the receipt does not yet count the source; LIVE — the count in
+   secondary with the source counted. The very FIRST open of the Door
+   (nothing typed, nothing picked) is its most important face: the
+   outcome well's placeholder `What are you delivering?` at primary
+   weight is the only loud element; both rows UNPICKED; `Create
+   Project` present but disabled (a muted primary) until the outcome
+   has text; the receipt reads `NO SOURCES · BLANK PROJECT`.
+3c. **Adjust, open** (a Disclosure under the row, the same well as the
+   picker): GitHub → `BASE BRANCH` StringGadget (default `main`),
+   `LABELS` StringGadget (empty, placeholder `any`), `DRAFTS` toggle
+   (off); Jira → `ISSUE TYPES` toggles from discovery, `JQL` StringGadget
+   (optional). No verb inside; clicking `Adjust` again folds it. The
+   old wizard's population lives here and nowhere else.
+
 4. **Footer** (SurfaceFooter): receipt `2 SOURCES · 4 WATCHES` (live
    totals; `NO SOURCES · BLANK PROJECT` when none); egress slot empty
    (each row carries its own); verbs `Cancel` (ghost) ·
@@ -141,7 +172,10 @@ Body, top to bottom, gap 20px:
    step — `3 need you` (accent) or `Nothing needs you` (muted); a chip
    row: StateChip health `● AT RISK` (danger) / `● ON TRACK` (success)
    with its reason token (`3 OVERDUE` / `CI RED` / `REVIEW WAITING 3
-   DAYS`) and `CHECKED 3 MIN AGO`. Trailing: ONE primary Button `Draft
+   DAYS`), then — when the project has a target date (the wire's
+   `targetAt`) — `TARGET OCT 15 · 41 DAYS` (danger-toned `OVERDUE BY 3
+   DAYS` once passed; a passed target is an AT RISK input), then
+   `CHECKED 3 MIN AGO`. Trailing: ONE primary Button `Draft
    update`. The outcome line appears in the head ONLY when the title
    bar cannot show it whole (the name is the outcome's first 80 chars;
    when the title bar ellipsizes it — 393, or a long outcome — the
@@ -159,8 +193,9 @@ Body, top to bottom, gap 20px:
 2. **NEEDS YOU** (caption label + count). Ledger rows, severity-first:
    lead = source emblem; primary = the thing's title (`#612 Rig
    settles animations before every shot`); cells = WHY as one token
-   (`WAITING ON YOUR REVIEW · 3 DAYS`, `CI RED ON MAIN`, `OVERDUE · 2
-   DAYS`, `DECISION PENDING`); trailing = `Open` (ghost, external —
+   (`WAITING ON YOUR REVIEW · 3 DAYS`, `40 MIN AGO`, `OVERDUE · 2
+   DAYS`, `DECISION PENDING`); a CI row's TITLE is the thing itself —
+   `CI failing on main` — never a bare branch name; trailing = `Open` (ghost, external —
    the url the wire has) and, for a pending proposal, `Decide`.
    Sources of these rows, all real: PR entities with `reviewRequests`
    naming the owner or `reviewDecision` = CHANGES_REQUESTED aged by
@@ -192,8 +227,8 @@ Body, top to bottom, gap 20px:
 
 5. **DECISIONS & COMMITMENTS** — hidden entirely when empty. When
    present: rows `Decided · use acli for Jira · Tue` (from decision
-   records) and `You owe · review PR #612 · by Fri` (commitments)
-   with `Open`. The project link (counsel M2): decision records have no
+   records) and `You owe · review PR #612 · by Fri` (commitments),
+   EVERY row with `Open` (a row that can be acted on carries its verb). The project link (counsel M2): decision records have no
    project column; a project's decisions are the records whose source
    MEETING is linked to the project (the existing project ↔ meeting
    link the Room's meetings section already reads); commitments follow
@@ -249,6 +284,9 @@ Counsel's read (2026-09-04): RATIFY-W-C — M1 CI wire, M2 decisions' project li
 2. Door · picker open (GitHub repositories, known scope first)
 3. Door · cold (both providers Sign in / Connect)
 4. Door · 393 (connected · picked)
+4a. Door · first open (nothing typed, nothing picked; Create disabled)
+4b. Door · checking (the moment after a pick)
+4c. Door · Adjust open (GitHub: base branch, labels, drafts)
 5. Room · needs you (3 rows; sources 2 + 1 failing; since you looked; decisions present)
 6. Room · nothing needs you (fresh project: counts live, since-you-looked empty line, decisions hidden)
 7. Room · 393 (needs you)
