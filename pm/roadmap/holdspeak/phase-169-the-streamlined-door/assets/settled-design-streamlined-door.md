@@ -138,15 +138,23 @@ Title bar: the project name (ellipsis; wings never leave the window —
 Body, top to bottom, gap 20px:
 
 1. **The head** (SurfaceIdentity recomposed): the HEADLINE at display
-   step — `3 need you` (accent) or `Nothing needs you` (muted); under
-   it the outcome line at primary (`Ship the Q4 platform on schedule
-   with zero incidents`), said ONCE; a chip row: StateChip health
-   `● AT RISK` (danger) / `● ON TRACK` (success) with a reason token
-   beside it (`3 OVERDUE`) — derived from the source counts, never
-   typed; `CHECKED 3 MIN AGO`; the egress hosts as small chips
-   (`GITHUB.COM` `KAROLSANEAPPLE.ATLASSIAN.NET`). Trailing: ONE
-   primary Button `Draft update`. No REV, no ACTIVE chip (an archived
-   Room says `ARCHIVED` here instead), no time token twice.
+   step — `3 need you` (accent) or `Nothing needs you` (muted); a chip
+   row: StateChip health `● AT RISK` (danger) / `● ON TRACK` (success)
+   with its reason token (`3 OVERDUE` / `CI RED` / `REVIEW WAITING 3
+   DAYS`) and `CHECKED 3 MIN AGO`. Trailing: ONE primary Button `Draft
+   update`. The outcome line appears in the head ONLY when the title
+   bar cannot show it whole (the name is the outcome's first 80 chars;
+   when the title bar ellipsizes it — 393, or a long outcome — the
+   head carries the full line at primary; otherwise the title bar says
+   it once and the head does not repeat it — counsel S4, the 168
+   four-times scar). No host chips in the head (the source rows carry
+   them at their own decision points — counsel N1). No REV, no ACTIVE
+   chip (an archived Room says `ARCHIVED` here instead).
+   **Health derivation (counsel, hunt 6):** AT RISK when ANY of:
+   overdue Jira entities > 0 · CI failing on the base branch · a
+   review waiting on the owner > 3 days; ON TRACK when none. The reason
+   token names the first true input in that order. Named in code and
+   pinned by tests (story 04).
 
 2. **NEEDS YOU** (caption label + count). Ledger rows, severity-first:
    lead = source emblem; primary = the thing's title (`#612 Rig
@@ -156,8 +164,11 @@ Body, top to bottom, gap 20px:
    the url the wire has) and, for a pending proposal, `Decide`.
    Sources of these rows, all real: PR entities with `reviewRequests`
    naming the owner or `reviewDecision` = CHANGES_REQUESTED aged by
-   updated_at; CI check failures on the base branch; Jira entities
-   from the OVERDUE query; Delta proposals with review.pendingCount.
+   updated_at; CI on the base branch — NEW WIRE (counsel M1): a
+   `branch_ci` query kind on the GitHub source (`gh run list --branch
+   <base> --limit 1`, the conclusion + age), the default `CI` Watch
+   the Door offers; Jira entities from the OVERDUE query; Delta
+   proposals with review.pendingCount. Story 04 owns the new kind.
    Empty: ONE line, `Nothing needs you · next check 09:35` — no well.
 
 3. **SOURCES** (caption + count). One row per Watch: lead emblem;
@@ -171,7 +182,10 @@ Body, top to bottom, gap 20px:
    facts) sits last with `Add` — offered, never applied.
 
 4. **SINCE YOU LOOKED** (caption + the last-read time token `WED
-   09:21`). Grouped by source: a group line (`GitHub · 2 opened · 1
+   09:21`). The read marker is SERVER-SIDE (counsel S3): today
+   `readAt` is React local state that dies with the window; story 04
+   adds a per-project read marker (one nullable column, additive) the
+   Room writes when read. Grouped by source: a group line (`GitHub · 2 opened · 1
    merged`) over entry rows in phrases (`#618 opened by mira · 2 h
    ago`, `KAN-2 moved to In Progress · yesterday`, `Update drafted ·
    Tue`). Never a field name. Reading the Room moves the marker.
@@ -179,7 +193,12 @@ Body, top to bottom, gap 20px:
 5. **DECISIONS & COMMITMENTS** — hidden entirely when empty. When
    present: rows `Decided · use acli for Jira · Tue` (from decision
    records) and `You owe · review PR #612 · by Fri` (commitments)
-   with `Open`.
+   with `Open`. The project link (counsel M2): decision records have no
+   project column; a project's decisions are the records whose source
+   MEETING is linked to the project (the existing project ↔ meeting
+   link the Room's meetings section already reads); commitments follow
+   their decision. A query, not a column; when no meeting is linked
+   the section is hidden. Story 04 owns it.
 
 6. **Ask** — a well at the foot: `Ask this project…` with the mic; the
    model EgressChip (`MODEL · 192.168.1.43 LOCAL` or the assigned
@@ -198,6 +217,8 @@ rows wrap; the ask well is sticky at the foot.
 
 ## D5 — laws and counsel's hunts
 
+Counsel's read (2026-09-04): RATIFY-W-C — M1 CI wire, M2 decisions' project link, M3 mic shape; S1 glyph, S2 picker counts, S3 read marker, S4 outcome twice; N1 head hosts, N2 box-vs-hairline rows defensible (controls vs facts), N3 Create without Review lawful (the rows are the points of decision), N4 SUGGESTED row documented. All M+S paid on the design and the artboards before the owner saw it.
+
 - The count is the test: creation never asks for a Test; a scope
   whose count cannot be fetched still creates, and the Room's source
   row says why (Article VI).
@@ -209,7 +230,11 @@ rows wrap; the ask well is sticky at the foot.
 - Every empty state is one true line with the next time something
   happens; no empty wells; no counters of zero.
 - The name is said once per face (the title bar carries it; the head
-  carries the outcome).
+  repeats the outcome only when the title bar cannot show it whole).
+- The MicButton is the library's square (never round); the meeting
+  emblem is `▣` (the glyph vocabulary in tools.ts); a source row
+  counts as a SOURCE only once it has a scope (the Door's label and
+  receipt count scoped rows).
 - Counsel hunts: a chip the wire lacks (the health derivation must
   name its inputs); a verb that is not a library Button; a sentence
   in the UI beyond the copy above; a face collapsing to one type
