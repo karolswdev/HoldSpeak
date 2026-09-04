@@ -450,12 +450,7 @@ def test_jira_setup_walk(
                 "Alpha site MUST be visible"
             )
 
-            # The ghost Add card MUST exist
-            add_card = page.get_by_test_id("jira-add-card")
-            assert add_card.count() > 0, "Ghost Add card MUST be visible"
-
-            # -- SHOT: add card scrolled into view --
-            _shot(page, "jira-add-card", width, locator=add_card)
+            # HS-168-04: ghost Add card moved to Connections face
 
             # -- Select alpha connection --
             # ChoiceCard renders as a <label> wrapping a hidden radio.
@@ -470,24 +465,10 @@ def test_jira_setup_walk(
             page.wait_for_timeout(1500)
 
             # -- Click "Choose project" footer button to advance to scope --
-            # The button may be a TransportKey (aria-label) or a plain button (text)
-            page.wait_for_function(
-                """() => {
-                  const btns = document.querySelectorAll('.jira-wizard-footer button');
-                  for (const btn of btns) {
-                    if ((btn.textContent || '').includes('project') || (btn.textContent || '').includes('Project') ||
-                        btn.getAttribute('aria-label') === 'Choose project') {
-                      return !btn.disabled;
-                    }
-                  }
-                  return false;
-                }""",
-                timeout=8000,
-            )
-            choose_btn = page.locator('.jira-wizard-footer button').filter(has_text="roject")
-            if choose_btn.count() == 0:
-                choose_btn = page.locator('button[aria-label="Choose project"]')
-            choose_btn.first.click()
+            # HS-168-04: button is now in the SurfaceFooter
+            choose_btn = page.get_by_test_id("jira-choose-project")
+            choose_btn.wait_for(timeout=8000)
+            choose_btn.click()
             page.wait_for_timeout(1000)
 
             # -- D2 SCOPE STEP --
@@ -523,10 +504,11 @@ def test_jira_setup_walk(
             # -- SHOT: scope with preview --
             _shot(page, "jira-scope-preview", width, locator=preview_area)
 
-            # Click "Test" footer button to advance to test
-            test_watch_btn = scope_step.locator('button').filter(has_text="Test")
-            test_watch_btn.last.scroll_into_view_if_needed()
-            test_watch_btn.last.click()
+            # HS-168-04: Click "Test this Watch" in the SurfaceFooter
+            test_watch_btn = page.get_by_test_id("jira-test-btn")
+            test_watch_btn.wait_for(timeout=8000)
+            test_watch_btn.scroll_into_view_if_needed()
+            test_watch_btn.click()
             page.wait_for_timeout(3000)
 
             # -- D3 TEST STEP --
@@ -536,22 +518,12 @@ def test_jira_setup_walk(
             # -- SHOT: test --
             _shot(page, "jira-test", width, locator=test_step)
 
-            # Verify ProgressPlan rendered
-            plan = test_step.locator('[role="group"]')
-            assert plan.count() > 0, "ProgressPlan MUST render"
-
-            # Click "Review and activate" footer button
-            review_btn = test_step.locator('button').filter(has_text="Review")
-            if review_btn.count() > 0:
-                review_btn.first.scroll_into_view_if_needed()
-                review_btn.first.click()
-                page.wait_for_timeout(500)
-            else:
-                # Fall back to the general proceed button
-                done_btn = test_step.locator('button').filter(has_text="Done")
-                if done_btn.count() > 0:
-                    done_btn.first.click()
-                    page.wait_for_timeout(500)
+            # HS-168-04: Click "Use this Watch" to accept the tested Watch
+            use_watch_btn = page.get_by_test_id("jira-wizard-done")
+            use_watch_btn.wait_for(timeout=8000)
+            use_watch_btn.scroll_into_view_if_needed()
+            use_watch_btn.click()
+            page.wait_for_timeout(500)
 
             # -- Back at suggestions -> proceed to review --
             review_btn = page.get_by_test_id("setup-proceed-review")

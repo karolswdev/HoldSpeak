@@ -8,6 +8,7 @@ import {
   SurfaceLedgerRow,
 } from "../../../desk/surface/Surface";
 import { MicButton } from "../../../desk/surface/controls/MicButton";
+import { Button } from "../../../components/signal/Signal";
 import { QUESTION_TEXT, Q_OUTCOME, Q_SIGNALS, type SetupAnswer } from "./model";
 import type { ControllerState } from "./useSetupController";
 
@@ -253,8 +254,8 @@ function AnswerRow({
           </div>
         </div>
         <div className="setup-answer-verb-row">
-          <button type="button" className="setup-answer-save-btn" onClick={handleSave}>Save</button>
-          <button type="button" className="setup-answer-cancel-btn" onClick={() => { setEditDraft(answer.answer.normalized); setEditing(false); }}>Cancel</button>
+          <Button dense variant="primary" onClick={handleSave}>Save</Button>
+          <Button dense variant="ghost" onClick={() => { setEditDraft(answer.answer.normalized); setEditing(false); }}>Cancel</Button>
         </div>
       </div>
     );
@@ -268,14 +269,9 @@ function AnswerRow({
           primary={<span className="setup-answer-text">{answer.answer.normalized}</span>}
           wrap
           trailing={
-            <button
-              type="button"
-              className="setup-answer-edit-btn"
-              onClick={() => setEditing(true)}
-              aria-label={`Edit answer for: ${questionText}`}
-            >
+            <Button dense variant="ghost" onClick={() => setEditing(true)} aria-label={`Edit answer for: ${questionText}`}>
               Edit
-            </button>
+            </Button>
           }
           expands={false}
         />

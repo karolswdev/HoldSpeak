@@ -424,23 +424,27 @@ export function decodeSession(raw: Record<string, unknown>): SetupSession {
 }
 
 function decodeKnownScopes(raw: Record<string, unknown>): { knownScopes?: KnownScopes } {
-  const ks = raw.known_scopes as Record<string, unknown[]> | undefined;
+  const ks = raw.known_scopes as Record<string, unknown> | undefined;
   if (!ks || typeof ks !== "object") return {};
-  const github = Array.isArray(ks.github)
-    ? ks.github.map((s: Record<string, unknown>) => ({
-        repository: s.repository != null ? String(s.repository) : undefined,
-        forProposalId: String(s.for_proposal_id ?? ""),
-        watchName: s.watch_name != null ? String(s.watch_name) : undefined,
-      }))
-    : [];
-  const jira = Array.isArray(ks.jira)
-    ? ks.jira.map((s: Record<string, unknown>) => ({
-        projectKey: s.project_key != null ? String(s.project_key) : undefined,
-        site: s.site != null ? String(s.site) : undefined,
-        forProposalId: String(s.for_proposal_id ?? ""),
-        watchName: s.watch_name != null ? String(s.watch_name) : undefined,
-      }))
-    : [];
+  const githubArr = Array.isArray(ks.github) ? ks.github : [];
+  const jiraArr = Array.isArray(ks.jira) ? ks.jira : [];
+  const github = githubArr.map((s: unknown) => {
+    const obj = (s && typeof s === "object" ? s : {}) as Record<string, unknown>;
+    return {
+      repository: obj.repository != null ? String(obj.repository) : undefined,
+      forProposalId: String(obj.for_proposal_id ?? ""),
+      watchName: obj.watch_name != null ? String(obj.watch_name) : undefined,
+    };
+  });
+  const jira = jiraArr.map((s: unknown) => {
+    const obj = (s && typeof s === "object" ? s : {}) as Record<string, unknown>;
+    return {
+      projectKey: obj.project_key != null ? String(obj.project_key) : undefined,
+      site: obj.site != null ? String(obj.site) : undefined,
+      forProposalId: String(obj.for_proposal_id ?? ""),
+      watchName: obj.watch_name != null ? String(obj.watch_name) : undefined,
+    };
+  });
   return { knownScopes: { github, jira } };
 }
 

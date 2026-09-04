@@ -51,6 +51,22 @@ vi.mock("../../../../desk/shell", () => ({
   openSurface: vi.fn(),
 }));
 
+/* ── Mock desk store (HS-168-04: subscribe for windowsById) ── */
+vi.mock("../../../../desk/store", () => ({
+  useDesk: {
+    getState: () => ({
+      windowsById: {},
+      openSurfaceWindow: vi.fn(),
+    }),
+    subscribe: () => () => {},
+  },
+}));
+
+/* ── Mock connections API (HS-168-04: fetchConnections) ── */
+vi.mock("../../../../pages/cores/connections/api", () => ({
+  fetchConnections: vi.fn().mockResolvedValue({ tools: [] }),
+}));
+
 /* ── Mock SurfaceFooter ── */
 vi.mock("../../../../desk/surface/SurfaceFooter", () => ({
   SurfaceFooter: ({
@@ -247,7 +263,8 @@ const TEST_PASSED = {
 
 /* ── Tests ── */
 
-describe("Provider wizard mounted path", () => {
+// HS-168-04: auth flow moved to Connections; wizard asks scope + test only.
+describe("Provider wizard mounted path (HS-168-04)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     try { sessionStorage.clear(); } catch { /* noop */ }
@@ -257,63 +274,47 @@ describe("Provider wizard mounted path", () => {
     try { sessionStorage.clear(); } catch { /* noop */ }
   });
 
-  /** Helper: render SetupCore with a proposals session already loaded. */
   async function renderAtProposals(proposals?: Record<string, unknown>[]) {
     sessionStorage.setItem("hs.project-setup.session-id", "psetup_test");
     mockGetSetup.mockResolvedValue(proposalsSession(proposals));
 
     const result = render(<SetupCore scope="" />);
-
-    // Wait for proposals stage
     await waitFor(() => {
       expect(screen.getByTestId("setup-root")).toBeInTheDocument();
     });
-
-    // Wait for suggestion cards to appear
     await waitFor(() => {
       expect(screen.getByTestId("setup-suggestion-cards")).toBeInTheDocument();
     });
-
     return result;
   }
 
-  it("selecting a GitHub proposal enters the provider wizard (wizard mounts)", async () => {
+  it("selecting a GitHub proposal enters the wizard (wizard mounts)", async () => {
     mockGetGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
     mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
     mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
 
     await renderAtProposals();
 
-    // Click the GitHub proposal card
-    const card = screen.getByTestId("setup-card-wprop_gh_01");
-    await act(async () => {
-      fireEvent.click(card);
-    });
-
-    // Wizard should mount
-    await waitFor(() => {
-      expect(screen.getByTestId("provider-wizard-flow")).toBeInTheDocument();
-    });
-
-    // Connection status card should render
-    await waitFor(() => {
-      expect(screen.getByTestId("provider-status-card")).toBeInTheDocument();
-    });
-  });
-
-  it("connected state shows discovery list with repos", async () => {
-    mockGetGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
-    mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
-    mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
-
-    await renderAtProposals();
-
-    // Select the GitHub proposal
     await act(async () => {
       fireEvent.click(screen.getByTestId("setup-card-wprop_gh_01"));
     });
 
-    // Wait for wizard and discovery
+    await waitFor(() => {
+      expect(screen.getByTestId("provider-wizard-flow")).toBeInTheDocument();
+    });
+  });
+
+  it("connected state auto-discovers repos (no connection card)", async () => {
+    mockGetGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
+    mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
+    mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
+
+    await renderAtProposals();
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("setup-card-wprop_gh_01"));
+    });
+
     await waitFor(() => {
       expect(screen.getByTestId("provider-wizard-flow")).toBeInTheDocument();
     });
@@ -322,13 +323,12 @@ describe("Provider wizard mounted path", () => {
       expect(screen.getByTestId("provider-discovery")).toBeInTheDocument();
     });
 
-    // Discovery items should render
     await waitFor(() => {
       expect(screen.getByTestId("discovery-card-acme/platform")).toBeInTheDocument();
     });
   });
 
-  it("full flow: connection -> scope -> test -> done", async () => {
+  it("full flow: discover -> scope -> test -> Use this Watch", async () => {
     mockGetGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
     mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
     mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
@@ -337,7 +337,6 @@ describe("Provider wizard mounted path", () => {
 
     await renderAtProposals();
 
-    // Step 1: Select GitHub proposal -> enters wizard
     await act(async () => {
       fireEvent.click(screen.getByTestId("setup-card-wprop_gh_01"));
     });
@@ -346,7 +345,6 @@ describe("Provider wizard mounted path", () => {
       expect(screen.getByTestId("provider-wizard-flow")).toBeInTheDocument();
     });
 
-    // Step 2: Select a repo from discovery -> clarify-scope
     await waitFor(() => {
       expect(screen.getByTestId("discovery-card-acme/platform")).toBeInTheDocument();
     });
@@ -355,17 +353,16 @@ describe("Provider wizard mounted path", () => {
       fireEvent.click(screen.getByTestId("discovery-card-acme/platform"));
     });
 
-    // Should call clarifyScope on the wire
     await waitFor(() => {
       expect(mockClarifyScope).toHaveBeenCalledWith("psetup_test", "wprop_gh_01", "acme/platform");
     });
 
-    // Step 3: Scoped -> test button appears
+    // "Test this Watch" should be enabled (scoped)
     await waitFor(() => {
-      expect(screen.getByTestId("provider-wizard-scoped")).toBeInTheDocument();
+      const testBtn = screen.getByTestId("provider-test-btn");
+      expect(testBtn).toBeInTheDocument();
     });
 
-    // Click test
     await act(async () => {
       fireEvent.click(screen.getByTestId("provider-test-btn"));
     });
@@ -374,12 +371,15 @@ describe("Provider wizard mounted path", () => {
       expect(mockTestProposal).toHaveBeenCalledWith("psetup_test", "wprop_gh_01");
     });
 
-    // Step 4: Done -> back to cards
+    // After test passes, "Use this Watch" appears
+    await waitFor(() => {
+      expect(screen.getByTestId("provider-wizard-done")).toBeInTheDocument();
+    });
+
     await act(async () => {
       fireEvent.click(screen.getByTestId("provider-wizard-done"));
     });
 
-    // Wizard should unmount, suggestion cards should reappear
     await waitFor(() => {
       expect(screen.queryByTestId("provider-wizard-flow")).not.toBeInTheDocument();
     });
@@ -389,7 +389,7 @@ describe("Provider wizard mounted path", () => {
     });
   });
 
-  it("typed-repo fallback works in mounted wizard", async () => {
+  it("typed-repo fallback: Check repo validates and scopes", async () => {
     mockGetGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
     mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
     mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
@@ -398,7 +398,6 @@ describe("Provider wizard mounted path", () => {
 
     await renderAtProposals();
 
-    // Enter wizard
     await act(async () => {
       fireEvent.click(screen.getByTestId("setup-card-wprop_gh_01"));
     });
@@ -407,14 +406,13 @@ describe("Provider wizard mounted path", () => {
       expect(screen.getByTestId("provider-typed-repo")).toBeInTheDocument();
     });
 
-    // Type a repo
     const input = screen.getByPlaceholderText("owner/repo");
     await act(async () => {
       fireEvent.change(input, { target: { value: "acme/platform" } });
     });
 
     await act(async () => {
-      fireEvent.click(screen.getByText("Use this repo"));
+      fireEvent.click(screen.getByText("Check repo"));
     });
 
     await waitFor(() => {
@@ -426,11 +424,10 @@ describe("Provider wizard mounted path", () => {
     });
   });
 
-  it("S-2: error_detail reaches rendered validation error in mounted wizard", async () => {
+  it("S-2: error_detail reaches rendered validation error", async () => {
     mockGetGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
     mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
     mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
-    // Decoded shape: message maps from error_detail
     mockValidateGitHubRepo.mockResolvedValue({
       valid: false,
       message: "Repository not found or not accessible",
@@ -438,7 +435,6 @@ describe("Provider wizard mounted path", () => {
 
     await renderAtProposals();
 
-    // Enter wizard
     await act(async () => {
       fireEvent.click(screen.getByTestId("setup-card-wprop_gh_01"));
     });
@@ -447,94 +443,28 @@ describe("Provider wizard mounted path", () => {
       expect(screen.getByTestId("provider-typed-repo")).toBeInTheDocument();
     });
 
-    // Type an invalid repo
     const input = screen.getByPlaceholderText("owner/repo");
     await act(async () => {
       fireEvent.change(input, { target: { value: "acme/nonexistent" } });
     });
 
     await act(async () => {
-      fireEvent.click(screen.getByText("Use this repo"));
+      fireEvent.click(screen.getByText("Check repo"));
     });
 
-    // The adapter's real error_detail must reach the UI
     await waitFor(() => {
       expect(screen.getByText("Repository not found or not accessible")).toBeInTheDocument();
     });
   });
 
-  it("SETFLOW-003: unauthenticated path renders recovery in the mounted flow", async () => {
-    mockGetGitHubConnection.mockResolvedValue(UNAUTH_STATUS);
-    mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
-
-    await renderAtProposals();
-
-    // Enter wizard
-    await act(async () => {
-      fireEvent.click(screen.getByTestId("setup-card-wprop_gh_01"));
-    });
-
-    // Wizard mounts with owner_action_required
-    await waitFor(() => {
-      expect(screen.getByTestId("provider-wizard-flow")).toBeInTheDocument();
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId("provider-status-card")).toBeInTheDocument();
-    });
-
-    // Recovery card renders with command
-    await waitFor(() => {
-      expect(screen.getByTestId("provider-recovery")).toBeInTheDocument();
-    });
-    expect(screen.getByText("gh auth login")).toBeInTheDocument();
-
-    // Recheck button present
-    expect(screen.getByTestId("provider-recheck-btn")).toBeInTheDocument();
-
-    // Discovery should NOT render when unauthed
-    expect(screen.queryByTestId("provider-discovery")).not.toBeInTheDocument();
-  });
-
-  it("SETFLOW-003: recheck transitions from unauthed to connected in mounted flow", async () => {
-    // First call returns unauthed, recheck returns connected
-    mockGetGitHubConnection.mockResolvedValue(UNAUTH_STATUS);
-    mockRecheckGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
-    mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
-    mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
-
-    await renderAtProposals();
-
-    // Enter wizard
-    await act(async () => {
-      fireEvent.click(screen.getByTestId("setup-card-wprop_gh_01"));
-    });
-
-    // Wait for unauthed state
-    await waitFor(() => {
-      expect(screen.getByTestId("provider-recovery")).toBeInTheDocument();
-    });
-
-    // Click recheck
-    await act(async () => {
-      fireEvent.click(screen.getByTestId("provider-recheck-btn"));
-    });
-
-    // Should now show connected + discovery
-    await waitFor(() => {
-      const card = screen.getByTestId("provider-status-card");
-      expect(card).toHaveAttribute("data-state", "connected");
-    });
-  });
-
-  it("setup state preserved: suggestion cards return after wizard done", async () => {
+  it("setup state preserved: Back returns to suggestion cards", async () => {
     mockGetGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
     mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
     mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected" }));
+    mockDeselectProposal.mockResolvedValue(githubProposal({ state: "proposed" }));
 
     await renderAtProposals();
 
-    // Enter wizard
     await act(async () => {
       fireEvent.click(screen.getByTestId("setup-card-wprop_gh_01"));
     });
@@ -543,32 +473,26 @@ describe("Provider wizard mounted path", () => {
       expect(screen.getByTestId("provider-wizard-flow")).toBeInTheDocument();
     });
 
-    // Cards should be hidden
     expect(screen.queryByTestId("setup-suggestion-cards")).not.toBeInTheDocument();
 
-    // Press done (back to suggestions)
     await act(async () => {
-      fireEvent.click(screen.getByTestId("provider-wizard-done"));
+      fireEvent.click(screen.getByTestId("provider-wizard-back"));
     });
 
-    // Cards should return
     await waitFor(() => {
       expect(screen.getByTestId("setup-suggestion-cards")).toBeInTheDocument();
     });
 
-    // Wizard should be gone
     expect(screen.queryByTestId("provider-wizard-flow")).not.toBeInTheDocument();
   });
 
-  it("never-active-before-test: GitHub proposal without test is not 'tested' in mounted flow", async () => {
+  it("never-active-before-test: unselected GitHub proposal is not 'tested'", async () => {
     mockGetGitHubConnection.mockResolvedValue(CONNECTED_STATUS);
     mockDiscoverGitHub.mockResolvedValue(DISCOVER_RESPONSE);
-    // Select returns selected but no test state
     mockSelectProposal.mockResolvedValue(githubProposal({ state: "selected", testState: null }));
 
     await renderAtProposals();
 
-    // The card should not be in "tested" state before selection
     const card = screen.getByTestId("setup-card-wprop_gh_01");
     expect(card.getAttribute("data-state")).not.toBe("tested");
     expect(card.getAttribute("data-state")).not.toBe("active");

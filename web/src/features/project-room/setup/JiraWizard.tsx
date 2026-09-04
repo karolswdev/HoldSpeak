@@ -1,6 +1,9 @@
-// HS-166-04 round 2 — the Jira face, composed from the surface library.
-// D1 accounts = ChoiceCardGroup, D2 scope = project cards + gadget sheet,
-// D3 test = ProgressPlan. Zero feature CSS restyling — layout only.
+// HS-166-04 round 2 -- the Jira face, composed from the surface library.
+// HS-168-04: auth folds GONE from the interview; Account step = pick only
+// (skipped when exactly one connection); known-scope card on Project step;
+// heading = ledger row; ProgressPlan [Account .] Project . Population . Test;
+// verbs Back / Test this Watch -> Use this Watch; Test enabled by a picked
+// project (Preview = quiet verb, never a gate).
 
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -10,9 +13,10 @@ import {
   StateChip,
   ProvenanceChip,
   Receipt,
-  ActionNotice,
   ProgressPlan,
   type PlanStep,
+  SurfaceSection,
+  SurfaceFacts,
   SurfaceLedger,
   SurfaceLedgerRow,
   SurfaceWell,
@@ -20,9 +24,10 @@ import {
   GadgetRow,
   CheckGadget,
   StringGadget,
-  LampGadget,
-  TransportKey,
+  EgressChip,
 } from "../../../desk/surface";
+import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
+import { Button } from "../../../components/signal/Signal";
 import type {
   JiraConnection,
   JiraKnownAccount,
@@ -30,21 +35,15 @@ import type {
   JiraSearchResult,
   JiraScope,
   SetupProposal,
-  ProviderState,
+  KnownScopes,
 } from "./model";
-import { providerStateCopy, conditionLabel, actionLabel, transitionLabel, plural, cadenceLabel, formatDueToken } from "./model";
+import { cadenceLabel, conditionLabel, actionLabel, transitionLabel, plural, formatDueToken } from "./model";
 import "./jira-wizard.css";
 
 /* ── Helpers ── */
 
 function siteInitial(site: string): string {
   return (site[0] ?? "?").toUpperCase();
-}
-
-function connTier(state: string): string | undefined {
-  if (state === "connected") return "ok";
-  if (state === "owner_action_required") return "warn";
-  return undefined;
 }
 
 function connChipState(state: string): "success" | "warning" | "failure" | "unreachable" {
@@ -71,155 +70,61 @@ function formatTime(iso: string): string {
   }
 }
 
-/* HS-167-03: raw-px inline CSSProperties retired — classes in jira-wizard.css. */
-
 /* ═══════════════════════════════════════════════════════════════════
-   D1 — Accounts step
+   D1 — Accounts step (pick only -- auth folds moved to Connections)
    ═══════════════════════════════════════════════════════════════════ */
 
 export function JiraAccountsStep({
   connections,
-  knownAccounts,
   selectedRef,
   onSelect,
-  onRecheck,
-  onAdd,
-  onBack,
   onNext,
 }: {
   connections: JiraConnection[];
-  knownAccounts: JiraKnownAccount[];
   selectedRef: string | null;
   onSelect: (ref: string) => void;
-  onRecheck: (ref: string) => void;
-  onAdd: (site: string, email: string) => void;
-  onBack: () => void;
   onNext: () => void;
 }) {
-  const [addSite, setAddSite] = useState("");
-  const [addEmail, setAddEmail] = useState("");
-
-  const handleAdd = useCallback(() => {
-    const s = addSite.trim();
-    const e = addEmail.trim();
-    if (s && e) {
-      onAdd(s, e);
-      setAddSite("");
-      setAddEmail("");
-    }
-  }, [addSite, addEmail, onAdd]);
-
-  const addedRefs = new Set(connections.map((c) => c.connection_ref));
-  const unaddedKnown = knownAccounts.filter((ka) => !addedRefs.has(ka.ref));
   const connectedCount = connections.filter((c) => c.state === "connected").length;
 
   return (
     <div data-testid="jira-accounts-step">
-      <ChoiceCardGroup
-        name="jira-account"
-        value={selectedRef}
-        onChange={onSelect}
-        ariaLabel="Jira accounts"
-        layout="row"
-      >
-        {connections.map((conn) => {
-          const site = conn.account.site;
-          const loginCmd = conn.recovery?.command ?? `acli jira auth login --site ${site} --email ${conn.account.email} --token`;
-          const needsAuth = conn.state === "owner_action_required";
-
-          return (
-            <ChoiceCard
-              key={conn.connection_ref}
-              value={conn.connection_ref}
-              name="jira-account"
-              selectedValue={selectedRef}
-              onChange={onSelect}
-              label={site}
-              summary={conn.account.email}
-              emblem={siteInitial(site)}
-              tier={connTier(conn.state)}
-              fold={needsAuth ? (
-                <>
-                  <SurfaceWell>
-                    <code className="jira-code-wrap">{loginCmd}</code>
-                    <TransportKey label="Copy" glyph="C" compact onClick={() => {
-                      try { void navigator.clipboard.writeText(loginCmd); } catch { /* noop */ }
-                    }} />
-                  </SurfaceWell>
-                  <button type="button" className="provider-action-btn" data-primary="" onClick={() => onRecheck(conn.connection_ref)}>
-                    Recheck
-                  </button>
-                </>
-              ) : undefined}
-              foldLabel={needsAuth ? "Login command" : undefined}
-            >
-              {/* Inline chips row: state + provenance + verb */}
-              <div className="jira-inline-chips">
-                <StateChip state={connChipState(conn.state)} label={connChipLabel(conn.state)} />
-                <ProvenanceChip source="acli" boundary={site} />
-                {!needsAuth ? (
-                  <button type="button" className="provider-action-btn" onClick={() => onRecheck(conn.connection_ref)}>
-                    Recheck
-                  </button>
-                ) : null}
-              </div>
-            </ChoiceCard>
-          );
-        })}
-
-        {/* Known-to-acli cards */}
-        {unaddedKnown.map((ka) => (
-          <ChoiceCardShell
-            key={ka.ref}
-            label={ka.site}
-            summary={ka.email}
-            emblem={siteInitial(ka.site)}
-            tier="cool"
-            data-testid={`jira-known-${ka.ref}`}
-          >
-            <div className="jira-inline-chips">
-              <StateChip state="active" label="Known to acli" />
-              <button type="button" className="provider-action-btn" onClick={() => onAdd(ka.site, ka.email)}>
-                Use this account
-              </button>
-            </div>
-          </ChoiceCardShell>
-        ))}
-
-        {/* Ghost add card */}
-        <ChoiceCardShell
-          label="Add account"
-          emblem="+"
-          data-testid="jira-add-card"
-          className="jira-ghost-card"
+      <SurfaceSection label="ACCOUNT">
+        <ChoiceCardGroup
+          name="jira-account"
+          value={selectedRef}
+          onChange={onSelect}
+          ariaLabel="Jira accounts"
+          layout="row"
         >
-          <StringGadget label="Site" value={addSite} onChange={setAddSite} placeholder="site.atlassian.net" />
-          <StringGadget label="Email" value={addEmail} onChange={setAddEmail} placeholder="email" />
-          <button type="button" className="provider-action-btn" disabled={!addSite.trim() || !addEmail.trim()} onClick={handleAdd}>
-            Add
-          </button>
-        </ChoiceCardShell>
-      </ChoiceCardGroup>
-
-      {/* Footer */}
-      <div className="jira-wizard-footer">
-        <LampGadget
-          label={`${connectedCount} of ${connections.length} connected`}
-          on={connectedCount > 0}
-          tone={connectedCount > 0 ? "ok" : "warn"}
-        />
-        <span className="jira-wizard-spacer" />
-        <button type="button" className="provider-action-btn" onClick={onBack}>Back</button>
-        <button type="button" className="provider-action-btn" data-primary="" disabled={!selectedRef} onClick={onNext}>
-          Choose project
-        </button>
-      </div>
+          {connections.map((conn) => {
+            const site = conn.account.site;
+            return (
+              <ChoiceCard
+                key={conn.connection_ref}
+                value={conn.connection_ref}
+                name="jira-account"
+                selectedValue={selectedRef}
+                onChange={onSelect}
+                label={site}
+                summary={conn.account.email}
+                emblem={siteInitial(site)}
+              >
+                <div className="jira-inline-chips">
+                  <StateChip state={connChipState(conn.state)} label={connChipLabel(conn.state)} />
+                  <ProvenanceChip source="acli" boundary={site} />
+                </div>
+              </ChoiceCard>
+            );
+          })}
+        </ChoiceCardGroup>
+      </SurfaceSection>
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   D2 — Scope step
+   D2 — Scope step (project cards + population gadget sheet)
    ═══════════════════════════════════════════════════════════════════ */
 
 export function JiraScopeStep({
@@ -229,6 +134,8 @@ export function JiraScopeStep({
   scope,
   preview,
   site,
+  knownScopes,
+  proposalId,
   onSelectProject,
   onToggleType,
   onToggleStatus,
@@ -237,8 +144,7 @@ export function JiraScopeStep({
   onSearchProjects,
   discovering,
   previewing,
-  onBack,
-  onTest,
+  onApplyKnownScope,
 }: {
   projects: JiraDiscoveryResponse | null;
   issueTypes: JiraDiscoveryResponse | null;
@@ -246,6 +152,8 @@ export function JiraScopeStep({
   scope: JiraScope;
   preview: JiraSearchResult | null;
   site: string;
+  knownScopes: KnownScopes;
+  proposalId: string;
   onSelectProject: (key: string) => void;
   onToggleType: (name: string) => void;
   onToggleStatus: (category: string) => void;
@@ -254,52 +162,68 @@ export function JiraScopeStep({
   onSearchProjects: (query?: string) => void;
   discovering: boolean;
   previewing: boolean;
-  onBack: () => void;
-  onTest: () => void;
+  onApplyKnownScope: (projectKey: string) => void;
 }) {
   const selectedProject = scope.projects[0] ?? null;
 
   const statusItems = statuses?.items ?? [];
   const distinctCategories = new Set(statusItems.map((s) => s.category).filter(Boolean));
-  // Jira has 3 fixed status categories (new, indeterminate, done).
-  // The discover response carries a static `categories` list.
   const totalStatusCategories = statuses?.categories?.length ?? 3;
+
+  // Known-scope card for Jira
+  const knownJira = knownScopes.jira.find((ks) => ks.forProposalId !== proposalId && ks.projectKey);
 
   return (
     <div data-testid="jira-scope-step">
-      {/* Project cards */}
-      <ChoiceCardGroup
-        name="jira-project"
-        value={selectedProject}
-        onChange={onSelectProject}
-        ariaLabel="Projects"
-        layout="row"
-      >
-        {(projects?.items ?? []).map((proj) => (
-          <ChoiceCard
-            key={proj.id}
-            value={proj.key ?? proj.id}
-            name="jira-project"
-            selectedValue={selectedProject}
-            onChange={onSelectProject}
-            label={proj.name}
-            emblem={proj.key ?? proj.id}
-            tier={scope.projects.includes(proj.key ?? proj.id) ? "ok" : undefined}
-            facts={[
-              ...(proj.type ? [{ label: "type", value: proj.type }] : []),
-              ...(proj.style ? [{ label: "style", value: proj.style }] : []),
-            ]}
+      <SurfaceSection label="PROJECT">
+        {/* Known-scope card (offered, never applied) */}
+        {knownJira ? (
+          <ChoiceCardShell
+            label={`${knownJira.projectKey}`}
+            summary={`chosen for ${knownJira.watchName ?? "another Watch"}`}
+            tier="balanced"
+            data-testid="known-scope-card"
           >
-            <ProvenanceChip source="acli" boundary={site} />
-          </ChoiceCard>
-        ))}
-      </ChoiceCardGroup>
+            <Button dense variant="ghost" onClick={() => onApplyKnownScope(knownJira.projectKey!)} data-testid="known-scope-use">
+              Use this project
+            </Button>
+          </ChoiceCardShell>
+        ) : null}
 
-      {/* Population sheet — 12px gap from the project cards */}
+        {/* Project cards */}
+        <ChoiceCardGroup
+          name="jira-project"
+          value={selectedProject}
+          onChange={onSelectProject}
+          ariaLabel="Projects"
+          layout="row"
+        >
+          {(projects?.items ?? []).map((proj) => (
+            <ChoiceCard
+              key={proj.id}
+              value={proj.key ?? proj.id}
+              name="jira-project"
+              selectedValue={selectedProject}
+              onChange={onSelectProject}
+              label={proj.name}
+              emblem={proj.key ?? proj.id}
+              tier={scope.projects.includes(proj.key ?? proj.id) ? "ok" : undefined}
+              facts={[
+                ...(proj.type ? [{ label: "type", value: proj.type }] : []),
+                ...(proj.style ? [{ label: "style", value: proj.style }] : []),
+              ]}
+            >
+              <ProvenanceChip source="acli" boundary={site} />
+            </ChoiceCard>
+          ))}
+        </ChoiceCardGroup>
+      </SurfaceSection>
+
+      {/* Population sheet */}
       {selectedProject ? (
         <div className="jira-population-gap">
         <GadgetGroup label="Population">
-          {/* Types (enumerated) — wide row: inline label token + toggles */}
+          {/* Types (enumerated) */}
           {issueTypes && issueTypes.items.length > 0 ? (
             <GadgetRow label="Types" fact="enumerated" wide>
               <div className="jira-toggle-row">
@@ -317,7 +241,7 @@ export function JiraScopeStep({
             </GadgetRow>
           ) : null}
 
-          {/* Status (observed) — wide row */}
+          {/* Status (observed) */}
           {statusItems.length > 0 ? (
             <GadgetRow label="Status" fact="observed" wide>
               <div className="jira-toggle-row">
@@ -336,7 +260,7 @@ export function JiraScopeStep({
             </GadgetRow>
           ) : null}
 
-          {/* Due — wide row, highlighted */}
+          {/* Due */}
           <GadgetRow label="Due" wide highlight>
             <div className="jira-toggle-row">
               <label className="jira-toggle-label">
@@ -363,26 +287,22 @@ export function JiraScopeStep({
         </div>
       ) : null}
 
-      {/* Preview button — visible whenever a project is selected */}
+      {/* Preview (quiet verb -- not a gate) */}
       {selectedProject ? (
-        <button
-          type="button"
-          className="provider-action-btn"
+        <Button
+          dense
+          variant="ghost"
           onClick={onPreview}
           disabled={previewing}
           data-testid="jira-preview-btn"
         >
           {previewing ? "Previewing..." : "Preview"}
-        </button>
+        </Button>
       ) : null}
 
       {/* Preview result */}
       {preview && !preview.errorCode ? (
         <div data-testid="jira-preview">
-          <div className="jira-wizard-big">
-            {preview.items.length}
-            <small> {preview.items.length === 1 ? "issue" : "issues"} · {plural(preview.calls, "call")}</small>
-          </div>
           <SurfaceLedger count={plural(preview.items.length, "issue")}>
             <ul className="surface-ledger-rows">
               {preview.items.slice(0, 5).map((item) => (
@@ -405,28 +325,8 @@ export function JiraScopeStep({
               ))}
             </ul>
           </SurfaceLedger>
-          <div className="jira-inline-chips">
-            <ProvenanceChip source="acli" boundary={site} />
-          </div>
         </div>
       ) : null}
-
-      {/* query_invalid */}
-      {preview?.errorCode === "query_invalid" && preview.queryInvalid ? (
-        <ActionNotice tone="warn" icon="⚠" role="alert">
-          {preview.queryInvalid}
-        </ActionNotice>
-      ) : null}
-
-      {/* Footer */}
-      <div className="jira-wizard-footer">
-        <LampGadget label="Scoped" on={scope.projects.length > 0} />
-        <span className="jira-wizard-spacer" />
-        <button type="button" className="provider-action-btn" onClick={onBack}>Back</button>
-        <button type="button" className="provider-action-btn" data-primary="" disabled={scope.projects.length === 0} onClick={onTest}>
-          Test this Watch
-        </button>
-      </div>
     </div>
   );
 }
@@ -439,16 +339,10 @@ export function JiraTestStep({
   proposal,
   site,
   email,
-  onTestAgain,
-  onReview,
-  onBack,
 }: {
   proposal: SetupProposal;
   site: string;
   email: string;
-  onTestAgain: () => void;
-  onReview: () => void;
-  onBack: () => void;
 }) {
   const tr = proposal.testResult;
   const isPassed = proposal.testState === "passed";
@@ -460,63 +354,46 @@ export function JiraTestStep({
   const entityCount = tr?.entityCount ?? 0;
   const calls = tr?.calls ?? 0;
   const durationMs = tr?.durationMs ?? 0;
-  const normalizedJql = tr?.normalizedJql ?? "";
-  const matchedConditions = tr?.matchedConditions ?? "";
-  const supportedTransitions = tr?.supportedTransitions ?? [];
   const representativeEntities = tr?.representativeEntities ?? [];
 
   const enrichCount = Math.max(0, calls - 1);
 
   const steps: PlanStep[] = [
-    { id: "switch", label: `Switch to ${site}`, status: testDone ? stepStatus : "queued", rate: testDone ? "" : undefined, progress: testDone ? 1 : 0 },
-    { id: "readback", label: `Read back account · ${email}`, status: testDone ? stepStatus : "queued", progress: testDone ? 1 : 0 },
-    { id: "search", label: `Search ${projects[0] ?? "project"}`, status: testDone ? stepStatus : "queued", rate: testDone ? `${entityCount} found` : undefined, progress: testDone ? 1 : 0 },
-    { id: "enrich", label: "Enrich due dates, resolution, activity", status: testDone ? stepStatus : "queued", rate: testDone ? `${enrichCount} of ${entityCount}` : undefined, progress: testDone ? 1 : 0 },
-    { id: "baseline", label: "Baseline ready", status: testDone ? stepStatus : "queued", rate: testDone ? `${(durationMs / 1000).toFixed(1)}s` : undefined, progress: testDone ? 1 : 0 },
+    { id: "switch", label: `Switch to ${site}`, status: testDone ? stepStatus : "queued" },
+    { id: "readback", label: `Read back account`, status: testDone ? stepStatus : "queued" },
+    { id: "search", label: `Search ${projects[0] ?? "project"}`, status: testDone ? stepStatus : "queued", rate: testDone ? `${entityCount} found` : undefined },
+    { id: "enrich", label: "Enrich", status: testDone ? stepStatus : "queued", rate: testDone ? `${enrichCount} of ${entityCount}` : undefined },
+    { id: "baseline", label: "Baseline ready", status: testDone ? stepStatus : "queued", rate: testDone ? `${(durationMs / 1000).toFixed(1)}s` : undefined },
   ];
-
-  // Conditions: prefer matched_conditions from test result, fall back to spec rules
-  const spec = proposal.spec;
-  // Condition chips: human labels from spec rules (conditionLabel map)
-  let conditionChips: string[] = [];
-  if (spec.rules) {
-    for (const rule of spec.rules) {
-      const clauses = rule?.condition?.clauses ?? [];
-      for (const clause of clauses) {
-        conditionChips.push(conditionLabel(clause));
-      }
-    }
-  }
-
-  const cadenceChip = cadenceLabel(spec.trigger ?? { kind: "manual" });
-  const actionChip = actionLabel(spec.action?.kind ?? "");
 
   return (
     <div data-testid="jira-test-step">
-      {/* Progress plan */}
-      <ProgressPlan
-        steps={steps}
-        receipt={
-          testDone ? (
-            <Receipt
-              status={isPassed ? "ok" : "danger"}
-              label={isPassed ? "Test passed" : "Test failed"}
-              timestamp={tr?.observedAt ? formatTime(tr.observedAt) : undefined}
-            />
-          ) : undefined
-        }
-        egress={<ProvenanceChip source="acli" boundary={site} />}
-        ariaLabel="Jira watch test"
-      />
+      <SurfaceSection label="TEST">
+        <ProgressPlan
+          steps={steps}
+          receipt={
+            testDone ? (
+              <Receipt
+                status={isPassed ? "ok" : "danger"}
+                label={isPassed ? "Passed" : "Failed"}
+                timestamp={tr?.observedAt ? formatTime(tr.observedAt) : undefined}
+              />
+            ) : undefined
+          }
+          egress={<ProvenanceChip source="acli" boundary={site} />}
+          ariaLabel="Jira watch test"
+        />
+      </SurfaceSection>
 
-      {/* Matches — always show when test is done, even with 0 entities */}
+      {/* Matches */}
       {testDone ? (
-        <>
-          <div className="jira-wizard-big" data-testid="jira-test-match-count">
-            {entityCount}
-            <small> {entityCount === 1 ? "issue" : "issues"} · {plural(calls, "call")}</small>
-          </div>
-          {representativeEntities.length > 0 ? (
+        <SurfaceSection label={`MATCHES ${entityCount}`}>
+          {entityCount === 0 ? (
+            <StateChip
+              state="success"
+              label="0 matches"
+            />
+          ) : representativeEntities.length > 0 ? (
             <SurfaceLedger count={`${representativeEntities.length} shown`}>
               <ul className="surface-ledger-rows">
                 {representativeEntities.slice(0, 5).map((entity: Record<string, unknown>, i: number) => {
@@ -547,44 +424,14 @@ export function JiraTestStep({
               </ul>
             </SurfaceLedger>
           ) : null}
-        </>
+        </SurfaceSection>
       ) : null}
-
-      {/* Will notice: conditions (accent) + transitions (quiet) + cadence + action */}
-      {testDone ? (
-        <div data-testid="jira-will-notice">
-          <div className="jira-inline-chips">
-            {conditionChips.map((c) => (
-              <StateChip key={c} state="active" label={c} />
-            ))}
-            {supportedTransitions.map((t) => (
-              <StateChip key={t} state="idle" label={transitionLabel(t)} />
-            ))}
-          </div>
-          <div className="jira-inline-chips jira-chips-gap">
-            <StateChip state="idle" label={cadenceChip} />
-            {actionChip ? <StateChip state="idle" label={actionChip} /> : null}
-          </div>
-        </div>
-      ) : null}
-
-      {/* Footer */}
-      <div className="jira-wizard-footer">
-        <LampGadget label={testDone ? "Tested" : "Testing"} on={isPassed} tone={isPassed ? "ok" : "warn"} />
-        <span className="jira-wizard-spacer" />
-        {testDone ? (
-          <button type="button" className="provider-action-btn" onClick={onTestAgain}>Test again</button>
-        ) : null}
-        <button type="button" className="provider-action-btn" data-primary="" disabled={!isPassed} onClick={onReview}>
-          Review and activate
-        </button>
-      </div>
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   JiraWizardFlow — sequences accounts → scope → test
+   JiraWizardFlow — sequences [accounts ->] scope -> test
    ═══════════════════════════════════════════════════════════════════ */
 
 type WizardStep = "accounts" | "scope" | "test";
@@ -602,6 +449,7 @@ export function JiraWizardFlow({
   loading,
   discovering,
   previewing,
+  knownScopes,
   onLoadConnections,
   onAddConnection,
   onRecheckConnection,
@@ -614,6 +462,7 @@ export function JiraWizardFlow({
   onSearchProjects,
   onClarifyScope,
   onTest,
+  onBack,
   onDone,
   onUpdateScope,
 }: {
@@ -629,6 +478,7 @@ export function JiraWizardFlow({
   loading: boolean;
   discovering: boolean;
   previewing: boolean;
+  knownScopes: KnownScopes;
   onLoadConnections: () => void;
   onAddConnection: (site: string, email: string) => void;
   onRecheckConnection: (ref: string) => void;
@@ -641,10 +491,13 @@ export function JiraWizardFlow({
   onSearchProjects: (query?: string) => void;
   onClarifyScope: () => void | Promise<unknown>;
   onTest: () => void;
+  onBack: () => void;
   onDone: () => void;
   onUpdateScope: (partial: Partial<JiraScope>) => void;
 }) {
-  const [step, setStep] = useState<WizardStep>("accounts");
+  // HS-168-04: auto-skip accounts when exactly one connection exists (D2/D4)
+  const skipAccounts = connections.length === 1;
+  const [step, setStep] = useState<WizardStep>(skipAccounts ? "scope" : "accounts");
 
   useEffect(() => {
     if (connections.length === 0 && !loading) {
@@ -652,9 +505,32 @@ export function JiraWizardFlow({
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Auto-skip + auto-select when exactly one connection.
+  // selectConnection already discovers projects (the controller does it).
+  useEffect(() => {
+    if (connections.length === 1 && !selectedRef) {
+      onSelectConnection(connections[0].connection_ref);
+      if (step === "accounts") {
+        setStep("scope");
+      }
+    }
+  }, [connections.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const selectedConn = connections.find((c) => c.connection_ref === selectedRef);
   const site = selectedConn?.account.site ?? "";
   const email = selectedConn?.account.email ?? "";
+
+  const hasPassed = proposal.testState === "passed";
+  const hasScope = scope.projects.length > 0;
+
+  // HS-168-04: ProgressPlan wizard steps
+  const showAccountStep = !skipAccounts;
+  const wizardSteps: PlanStep[] = [
+    ...(showAccountStep ? [{ id: "account", label: "Account", status: (step === "scope" || step === "test" ? "done" : "running") as PlanStep["status"] }] : []),
+    { id: "project", label: "Project", status: step === "test" ? "done" : step === "scope" ? "running" : "queued" },
+    { id: "population", label: "Population", status: step === "test" && hasPassed ? "done" : step === "test" ? "running" : "queued" },
+    { id: "test", label: "Test", status: hasPassed ? "done" : step === "test" ? "running" : "queued" },
+  ];
 
   const goToScope = useCallback(() => {
     if (selectedRef) {
@@ -669,17 +545,34 @@ export function JiraWizardFlow({
     onTest();
   }, [onClarifyScope, onTest]);
 
+  // HS-168-04: apply known scope for Jira
+  const handleApplyKnownScope = useCallback((projectKey: string) => {
+    onSelectProject(projectKey);
+  }, [onSelectProject]);
+
+  // The Jira egress host
+  const egressHost = site || "Jira";
+
   return (
     <div className="jira-wizard-flow" data-testid="jira-wizard-flow" role="region" aria-label={`Configure: ${proposal.spec.name}`}>
+      {/* HS-168-04: heading = the Watch's ledger row as a flex composition */}
+      <div className="setup-wizard-heading" data-testid="wizard-heading">
+        <span className="setup-wizard-heading-name" data-testid="wizard-heading-name">
+          {proposal.spec.name}
+        </span>
+        <span className="surface-token" data-chip>{cadenceLabel(proposal.spec.trigger)}</span>
+        <span className="surface-token" data-chip>{proposal.spec.action.kind === "project.observe" ? "observe" : proposal.spec.action.kind}</span>
+        <ProvenanceChip source="acli" boundary={site || egressHost} />
+      </div>
+
+      {/* Wizard ProgressPlan */}
+      <ProgressPlan steps={wizardSteps} compact />
+
       {step === "accounts" ? (
         <JiraAccountsStep
           connections={connections}
-          knownAccounts={knownAccounts}
           selectedRef={selectedRef}
           onSelect={onSelectConnection}
-          onRecheck={onRecheckConnection}
-          onAdd={onAddConnection}
-          onBack={onDone}
           onNext={goToScope}
         />
       ) : null}
@@ -692,6 +585,8 @@ export function JiraWizardFlow({
           scope={scope}
           preview={preview}
           site={site}
+          knownScopes={knownScopes}
+          proposalId={proposal.id}
           onSelectProject={(key) => {
             onSelectProject(key);
             const current = scope.projects;
@@ -710,8 +605,7 @@ export function JiraWizardFlow({
           onSearchProjects={onSearchProjects}
           discovering={discovering}
           previewing={previewing}
-          onBack={() => setStep("accounts")}
-          onTest={goToTest}
+          onApplyKnownScope={handleApplyKnownScope}
         />
       ) : null}
 
@@ -720,11 +614,44 @@ export function JiraWizardFlow({
           proposal={proposal}
           site={site}
           email={email}
-          onTestAgain={onTest}
-          onReview={onDone}
-          onBack={() => setStep("scope")}
         />
       ) : null}
+
+      {/* Footer: EgressChip + Back + Test this Watch / Use this Watch */}
+      <SurfaceFooter
+        egress={<EgressChip label={egressHost} scope="mixed" title={`This Watch reads from ${egressHost}.`} />}
+        receipt={hasPassed ? (
+          <Receipt status="ok" label="Passed" timestamp={proposal.testResult?.observedAt ? formatTime(proposal.testResult.observedAt) : undefined} />
+        ) : hasScope ? (
+          <Receipt status="ok" label="Scoped" />
+        ) : undefined}
+        verbs={
+          <>
+            <Button dense variant="ghost" onClick={step === "accounts" ? onBack : step === "scope" && showAccountStep ? () => setStep("accounts") : onBack} data-testid="jira-wizard-back">
+              Back
+            </Button>
+            {step === "accounts" ? (
+              <Button dense variant="primary" disabled={!selectedRef} onClick={goToScope} data-testid="jira-choose-project">
+                Choose project
+              </Button>
+            ) : hasPassed ? (
+              <Button dense variant="primary" onClick={onDone} data-testid="jira-wizard-done">
+                Use this Watch
+              </Button>
+            ) : (
+              <Button
+                dense
+                variant="primary"
+                disabled={!hasScope}
+                onClick={goToTest}
+                data-testid="jira-test-btn"
+              >
+                Test this Watch
+              </Button>
+            )}
+          </>
+        }
+      />
     </div>
   );
 }

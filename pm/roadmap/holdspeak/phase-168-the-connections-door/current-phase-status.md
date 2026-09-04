@@ -1,7 +1,7 @@
 # Phase 168 - The Connections Door
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 3/7
+- **Status:** ACTIVE 4/7
 - **Chartered:** 2026-09-04 off main `ce629cc2` (167 The Room in Use MERGED via PR #549 → `a47ae31f`; the handover PR #550 merged after it)
 - **Canon:** docs/internal/CONSTITUTION.md (Article III honest egress — every connection check names its host; Article XI — the caller supplies neither principal nor authority); docs/internal/POSITIONING.md (the voice rules — zero sentences in the UI); web/src/desk/surface/contract.md (the library contract); docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §7 (providers) + §9.5 (the wizard); the owner's laws: face-design-before-build (2026-09-03), setup flows must be joyful (2026-08-17), the front-door law from Settings → Models (2026-08-31), "will you use this on a Tuesday?" (Phase 139)
 
@@ -102,14 +102,14 @@ rechecks).
 | HS-168-01 | The audit + the settled design (the stopwatch audit through the face; Connections + Sources on the library; mockups at 1440 + 393; OWNER RATIFIES) | done | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-168-02 | The connections service (one readiness shape; the suggest step annotated; known scopes; MCP twins) | done | [story-02-the-connections-service](./story-02-the-connections-service.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-168-03 | The Connections face (Settings → Connections; one state, one verb per tool; the sign-in fold; glass rig at both widths) | done | [story-03-the-connections-face](./story-03-the-connections-face.md) | [evidence-story-03](./evidence-story-03.md) |
-| HS-168-04 | The Sources step connect-once (state on the cards; connect in place and return; the wizard asks scope only; scope carries; honest verbs; D3 settled) | in-progress | [story-04-the-sources-step](./story-04-the-sources-step.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-168-05 | The Tuesday walk, face-driven (the owner's real desk; the window shot at every step; the stopwatch — OWNER VERDICT) | backlog | [story-05-the-tuesday-walk](./story-05-the-tuesday-walk.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-168-06 | The docs ("Connect your tools" in the guide; the Rooms guide re-shot; MCP_SIDECAR regenerated; README prerequisites) | backlog | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-168-04 | The Sources step connect-once (state on the cards; connect in place and return; the wizard asks scope only; scope carries; honest verbs; D3 settled) | done | [story-04-the-sources-step](./story-04-the-sources-step.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-168-05 | The Tuesday walk, face-driven (the owner's real desk; the window shot at every step; the stopwatch — OWNER VERDICT) | in-progress | [story-05-the-tuesday-walk](./story-05-the-tuesday-walk.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-168-06 | The docs ("Connect your tools" in the guide; the Rooms guide re-shot; MCP_SIDECAR regenerated; README prerequisites) | in-progress | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-168-07 | The close (gates, riders, debts, final summary) | backlog | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**ACTIVE 3/7.** Branch `feat/connections-door` off main
+**ACTIVE 4/7.** Branch `feat/connections-door` off main
 `ce629cc2`. The owner's bounce on his own walk (2026-09-04) and his
 word: "charter it". Recon (read-only, anchors verified): the
 connector has no face of its own — it hides inside Watch suggestion
@@ -138,7 +138,14 @@ providers), and a parity scar found on the way — the MCP family composed
 the setup service without the GitHub adapter. **03 DONE:** Settings → Connections
 built to the ratified rows, shot cold on an isolated HOME and connected
 on the owner's real gh + acli at both widths; seven bounces paid over two
-rounds. 04 (the Sources step connect-once) building.
+rounds. **04 DONE** (four rounds): the TOOLS
+row from the wire, the connect card round trip with the windowsById re-read
+and re-suggest, the wizards asking scope only, the known-scope offer, honest
+verbs; the re-suggest seam paid in the setup service (random ids per call
+had orphaned every selection); the rig's mid-animation shots diagnosed by the
+orchestrator's probe and a settle helper added to glass_infra; the owner's
+live bounce paid (library Buttons everywhere in setup; the ledger-row wrap
+fixed at the species). 05 (the walk) building; 06 (the docs) written, closing.
 
 ## Active risks
 

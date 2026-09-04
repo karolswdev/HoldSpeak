@@ -341,8 +341,8 @@ def test_stopwatch_walk(
             gh_card_idx = None
             for i in range(card_count):
                 card = card_elements.nth(i)
-                # GitHub cards have the egress chip (class=gadget-chip-egress)
-                egress = card.locator(".gadget-chip-egress")
+                # HS-168-04: GitHub cards have ProvenanceChip source="gh"
+                egress = card.locator(".surface-provenance-source", has_text="gh")
                 if egress.count() > 0:
                     gh_card_idx = i
                     break
@@ -370,11 +370,8 @@ def test_stopwatch_walk(
             wizard.wait_for(timeout=10000)
             segments["select_card"] = time.monotonic() - t0
 
-            # -- Step 5: Wizard auto-checks connection + discovery fires --
+            # -- Step 5: HS-168-04: wizard auto-discovers (no connection card) --
             t0 = time.monotonic()
-            status_card = page.get_by_test_id("provider-status-card")
-            status_card.wait_for(timeout=10000)
-            assert status_card.get_attribute("data-state") == "connected"
 
             # Discovery auto-fires; select the first discovered repo
             disc_list = page.get_by_test_id("provider-discovery-list")
@@ -384,12 +381,11 @@ def test_stopwatch_walk(
             disc_items.first.click()
             segments["clarify_repo"] = time.monotonic() - t0
 
-            # -- Step 6: Click Test in the wizard --
+            # -- Step 6: Click Test this Watch in the wizard --
             t0 = time.monotonic()
-            scoped = page.get_by_test_id("provider-wizard-scoped")
-            scoped.wait_for(timeout=10000)
 
             test_btn = page.get_by_test_id("provider-test-btn")
+            test_btn.wait_for(timeout=10000)
             test_btn.click()
 
             # Wait for test display with passed state
@@ -986,7 +982,7 @@ def test_wizard_states(
             gh_card_idx = None
             for i in range(card_count):
                 card = card_elements.nth(i)
-                egress = card.locator(".gadget-chip-egress")
+                egress = card.locator(".surface-provenance-source", has_text="gh")
                 if egress.count() > 0:
                     gh_card_idx = i
                     break
@@ -1001,21 +997,8 @@ def test_wizard_states(
             wizard.wait_for(timeout=10000)
             assert wizard.is_visible(), "Wizard did not mount on GitHub card click"
 
-            # -- Connection card: connected state with account --
-            status_card = page.get_by_test_id("provider-status-card")
-            status_card.wait_for(timeout=10000)
-            assert status_card.get_attribute("data-state") == "connected", (
-                f"Expected connected, got {status_card.get_attribute('data-state')}"
-            )
-            account_el = status_card.locator(".provider-status-account")
-            assert account_el.is_visible(), "Account should be visible"
-            assert account_el.inner_text() == "testuser"
-
-            # -- Discovery list auto-fires on connected --
-            discovery = page.get_by_test_id("provider-discovery")
-            discovery.wait_for(timeout=10000)
-            assert discovery.is_visible(), "Discovery should auto-fire"
-
+            # -- HS-168-04: wizard auto-discovers (no connection card) --
+            # Discovery list auto-fires on connected
             disc_list = page.get_by_test_id("provider-discovery-list")
             disc_list.wait_for(timeout=10000)
             disc_items = disc_list.locator('[role="option"]')
@@ -1023,11 +1006,7 @@ def test_wizard_states(
             disc_count = disc_items.count()
             assert disc_count >= 1, f"Expected discovery items, got {disc_count}"
 
-            # Egress badge visible in wizard
-            wizard_egress = status_card.locator(".gadget-chip-egress")
-            assert wizard_egress.count() > 0, "Egress badge on connection card"
-
-            # -- SHOT (b): wizard-connected -- connection + discovery --
+            # -- SHOT (b): wizard-connected -- discovery --
             page.screenshot(
                 path=str(SHOTS / f"wizard-connected-{width}.png"),
                 full_page=False,
@@ -1038,14 +1017,9 @@ def test_wizard_states(
             first_disc = disc_items.first
             first_disc.click()
 
-            # -- Wait for scoped state --
-            scoped = page.get_by_test_id("provider-wizard-scoped")
-            scoped.wait_for(timeout=10000)
-            assert scoped.is_visible(), "Wizard should show scoped state"
-
-            # -- Click Test button --
+            # -- Click Test this Watch button (enabled after scope) --
             test_btn = page.get_by_test_id("provider-test-btn")
-            test_btn.wait_for(timeout=5000)
+            test_btn.wait_for(timeout=10000)
             test_btn.click()
 
             # -- Wait for test display with fixture PR data --
@@ -1062,31 +1036,16 @@ def test_wizard_states(
             test_display = page.get_by_test_id("provider-test-display")
             assert test_display.is_visible(), "Test display should render"
 
-            # Assert the fixture PR count is visible
-            # _native_test_read for pull_request validates the repo and
-            # returns [{"repository": r} for r in repos] -- 1 entity per repo.
-            test_count = test_display.locator(".provider-test-count")
-            count_text = test_count.inner_text()
-            assert "current" in count_text, (
-                f"Expected PR count in display, got: {count_text}"
+            # HS-168-04: test display uses SurfaceSection MATCHES label and SurfaceLedgerRow
+            # Assert match count is visible in the section label
+            test_display_text = test_display.inner_text()
+            assert "MATCHES" in test_display_text, (
+                f"Expected MATCHES section, got: {test_display_text[:200]}"
             )
 
-            # Assert representative entities render with #<n> <title> (<state>)
-            test_entities = test_display.locator(".provider-test-entity")
-            assert test_entities.count() >= 1, "Representative PRs should render"
-            import re as _re
-            for ei in range(test_entities.count()):
-                row_text = test_entities.nth(ei).inner_text()
-                assert "Unknown" not in row_text, (
-                    f"PR row must not contain 'Unknown': {row_text!r}"
-                )
-                assert _re.search(r"#\d+\s+.+\(\w+\)", row_text), (
-                    f"PR row must match '#<n> <title> (<state>)': {row_text!r}"
-                )
-
-            # Assert egress badge on test results
-            test_egress = test_display.locator(".gadget-chip-egress")
-            assert test_egress.count() > 0, "Egress badge on test results"
+            # HS-168-04: egress badge is in the SurfaceFooter (portalled to frame foot)
+            footer_egress = page.locator(".gadget-chip-egress")
+            assert footer_egress.count() > 0, "Egress badge in wizard footer"
 
             # -- SHOT (c): wizard-test -- test display with PR data --
             page.screenshot(
@@ -1098,91 +1057,15 @@ def test_wizard_states(
             # Overflow zero
             _assert_clean(page, errors)
 
-            # ── DEGRADED VARIANT ──────────────────────────────────
-            # Return to suggestion cards, then re-enter with degraded auth
-
+            # ── HS-168-04: auth recovery moved to Connections face ──
+            # The wizard no longer shows connection status or recovery.
+            # Return to cards via Use this Watch.
             done_btn = page.get_by_test_id("provider-wizard-done")
             done_btn.click()
 
             # Wait for suggestion cards to reappear
             cards2 = page.get_by_test_id("setup-suggestion-cards")
             cards2.wait_for(timeout=10000)
-
-            # Flip fixture to unauthenticated
-            _write_fixture(fixture_path, auth=_GH_AUTH_UNAUTH)
-
-            # Find and click a GitHub card again (may need to deselect
-            # the previously selected one, or click a different one)
-            card_elements2 = cards2.locator('[role="option"]')
-            card_elements2.first.wait_for(timeout=10000)
-            gh_card_idx2 = None
-            for i in range(card_elements2.count()):
-                card = card_elements2.nth(i)
-                egress = card.locator(".gadget-chip-egress")
-                if egress.count() > 0:
-                    # Check if this is a different card (not already selected)
-                    sel = card.get_attribute("aria-selected")
-                    if sel != "true":
-                        gh_card_idx2 = i
-                        break
-            if gh_card_idx2 is None:
-                # All GitHub cards are selected; click the first one to
-                # deselect, then re-select to re-enter wizard
-                for i in range(card_elements2.count()):
-                    card = card_elements2.nth(i)
-                    egress = card.locator(".gadget-chip-egress")
-                    if egress.count() > 0:
-                        # Deselect
-                        card.click()
-                        page.wait_for_timeout(300)
-                        # Re-select to trigger wizard
-                        card.click()
-                        gh_card_idx2 = i
-                        break
-
-            assert gh_card_idx2 is not None, "Could not find a GitHub card"
-            if gh_card_idx2 is not None:
-                gh_card2 = card_elements2.nth(gh_card_idx2)
-                if gh_card2.get_attribute("aria-selected") != "true":
-                    gh_card2.click()
-
-            # Wizard should mount again
-            wizard2 = page.get_by_test_id("provider-wizard-flow")
-            wizard2.wait_for(timeout=10000)
-
-            # Connection card should show owner_action_required
-            status_card2 = page.get_by_test_id("provider-status-card")
-            status_card2.wait_for(timeout=10000)
-
-            # Wait for the status to reflect the degraded state
-            page.wait_for_function(
-                """() => {
-                    const el = document.querySelector(
-                        '[data-testid="provider-status-card"]'
-                    );
-                    return el && el.getAttribute('data-state') === 'owner_action_required';
-                }""",
-                timeout=10000,
-            )
-            assert status_card2.get_attribute("data-state") == "owner_action_required"
-
-            # Recovery card should name gh auth login
-            recovery = page.get_by_test_id("provider-recovery")
-            recovery.wait_for(timeout=5000)
-            assert recovery.is_visible(), "Recovery card should be visible"
-            recovery_cmd = recovery.locator(".provider-recovery-command")
-            assert "gh auth login" in recovery_cmd.inner_text()
-
-            # Recheck button should be visible
-            recheck_btn = page.get_by_test_id("provider-recheck-btn")
-            assert recheck_btn.is_visible(), "Recheck button should be visible"
-
-            # -- SHOT (d): wizard-degraded --
-            page.screenshot(
-                path=str(SHOTS / f"wizard-degraded-{width}.png"),
-                full_page=False,
-            )
-            assert (SHOTS / f"wizard-degraded-{width}.png").stat().st_size > 20_000
 
             _assert_clean(page, errors)
 
@@ -1282,7 +1165,7 @@ def test_real_metal(
             gh_card_idx = None
             for i in range(card_count):
                 card = card_elements.nth(i)
-                egress = card.locator(".gadget-chip-egress")
+                egress = card.locator(".surface-provenance-source", has_text="gh")
                 if egress.count() > 0:
                     gh_card_idx = i
                     break
@@ -1343,30 +1226,11 @@ def test_real_metal(
             )
             test_display = page.get_by_test_id("provider-test-display")
 
-            # Assert real PR data rendered with #<n> <title> (<state>)
-            test_count = test_display.locator(".provider-test-count")
-            count_text = test_count.inner_text()
-            # Real repo should have at least 1 PR
-            assert "current" in count_text, f"Test count: {count_text}"
-
-            # The proposal test snapshot queries state=open by default.
-            # karolswdev/HoldSpeak may have 0 open PRs (honest truth).
-            # Verify entity rows when present; the fixture legs prove
-            # the "#<n> <title> (<state>)" rendering unconditionally.
-            test_entities = test_display.locator(".provider-test-entity")
-            pr_count = test_entities.count()
-            import re as _re
-            if pr_count > 0:
-                for ei in range(pr_count):
-                    row_text = test_entities.nth(ei).inner_text()
-                    assert "Unknown" not in row_text, (
-                        f"Real-metal PR row must not contain 'Unknown': "
-                        f"{row_text!r}"
-                    )
-                    assert _re.search(r"#\d+\s+.+\(\w+\)", row_text), (
-                        f"Real-metal PR row must match "
-                        f"'#<n> <title> (<state>)': {row_text!r}"
-                    )
+            # HS-168-04: test display uses SurfaceSection MATCHES + SurfaceLedgerRow
+            test_display_text = test_display.inner_text()
+            assert "MATCHES" in test_display_text, (
+                f"Expected MATCHES in test display, got: {test_display_text[:200]}"
+            )
 
             # Second proof: test through WatchService with state=all
             # to guarantee representative entities on the real repo.

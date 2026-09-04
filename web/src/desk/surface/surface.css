@@ -3269,10 +3269,15 @@ button.surface-edit-in-place:hover {
     flex-wrap: wrap;
     align-items: center;
   }
+  /* HS-168-04: lead + primary stay on ONE line; only cells/trailing wrap under.
+     The old `flex: 1 1 100%` forced the primary onto its own line, splitting
+     the checkmark lead from the answer text (the owner's bounce). */
   .surface-ledger-row[data-wrap] .surface-ledger-primary {
-    flex: 1 1 100%;
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: normal;
   }
-  /* Trailing slot is not hidden -- sits inline at the narrow container. */
+  /* Trailing slot right-aligned, wraps under on its own line. */
   .surface-ledger-row[data-wrap] .surface-ledger-line[data-has-trailing]
     .surface-ledger-trailing {
     margin-left: auto;

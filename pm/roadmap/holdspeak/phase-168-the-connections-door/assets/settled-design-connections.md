@@ -341,6 +341,20 @@ census and attaches it.
   connected tools sort before native ones (the wire's order stays;
   the face groups by provider with the native section last).
 
+- **THE OWNER'S BOUNCE on the live face (2026-09-04), verbatim:**
+  "Why is the edit button such a generic HTML button, but not a
+  button of our design component library...? — and also, why is the
+  checkmark on one line and then the content on another..." Root
+  causes: the answered rows' Edit / Save / Cancel are raw `<button>`s
+  with unstyled classes (SetupInterview.tsx AnswerRow) — the 167
+  counsel's "design-level call" is now RULED: every verb in the setup
+  faces is the library Button (ghost for quiet, primary for the one
+  primary); and the split is a SPECIES bug — surface.css:3266-3280
+  `[data-wrap] .surface-ledger-primary { flex: 1 1 100% }` at the
+  narrow container forces the primary under the lead. The species is
+  fixed (lead + primary on one line, cells/trailing wrap under); 04
+  pays both.
+
 ## D8 — laws and counsel's hunts
 
 - One readiness derivation: the hub's connections service; a face

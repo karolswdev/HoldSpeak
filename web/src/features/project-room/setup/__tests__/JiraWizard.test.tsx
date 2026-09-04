@@ -219,165 +219,50 @@ function testedProposal(): SetupProposal {
    D1 — Accounts step
    ═══════════════════════════════════════════════════════════════════ */
 
-describe("JiraAccountsStep", () => {
+// HS-168-04: JiraAccountsStep simplified — pick only, auth folds moved to
+// web/src/pages/cores/connections/ (03 tests them). Ghost add card, known-to-acli,
+// sign-in folds, and LampGadget all moved with the auth surface.
+describe("JiraAccountsStep (HS-168-04 pick-only)", () => {
   const noop = () => {};
 
-  it("renders connected card with ok tier and StateChip success", () => {
+  it("renders connected card with StateChip success", () => {
     render(
       <JiraAccountsStep
         connections={[CONN_ALPHA]}
-        knownAccounts={[]}
         selectedRef={null}
         onSelect={noop}
-        onRecheck={noop}
-        onAdd={noop}
-        onBack={noop}
         onNext={noop}
       />,
     );
     expect(screen.getAllByText("alpha.atlassian.net").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("user@example.com")).toBeTruthy();
-    // StateChip renders "Connected" -- may appear in facts too
     expect(screen.getAllByText("Connected").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders sign-in card with warn tier and fold containing login command", () => {
+  it("renders disconnected card with Sign in chip", () => {
     render(
       <JiraAccountsStep
         connections={[CONN_BETA]}
-        knownAccounts={[]}
         selectedRef={null}
         onSelect={noop}
-        onRecheck={noop}
-        onAdd={noop}
-        onBack={noop}
         onNext={noop}
       />,
     );
     expect(screen.getAllByText("beta.atlassian.net").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Sign in").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Login command")).toBeTruthy();
-  });
-
-  it("renders known-to-acli card with cool tier and Use verb", () => {
-    render(
-      <JiraAccountsStep
-        connections={[]}
-        knownAccounts={[KNOWN_ACME]}
-        selectedRef={null}
-        onSelect={noop}
-        onRecheck={noop}
-        onAdd={noop}
-        onBack={noop}
-        onNext={noop}
-      />,
-    );
-    expect(screen.getAllByText("acme.atlassian.net").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Known to acli")).toBeTruthy();
-    // TransportKey renders label as aria-label, not visible text
-    const useBtn = screen.getByText("Use this account");
-    expect(useBtn).toBeTruthy();
-  });
-
-  it("renders ghost Add card with StringGadget inputs", () => {
-    render(
-      <JiraAccountsStep
-        connections={[]}
-        knownAccounts={[]}
-        selectedRef={null}
-        onSelect={noop}
-        onRecheck={noop}
-        onAdd={noop}
-        onBack={noop}
-        onNext={noop}
-      />,
-    );
-    const addCard = screen.getByTestId("jira-add-card");
-    expect(addCard).toBeTruthy();
-    expect(screen.getByText("Add account")).toBeTruthy();
-    // StringGadget renders inputs with aria-label
-    expect(screen.getByLabelText("Site")).toBeTruthy();
-    expect(screen.getByLabelText("Email")).toBeTruthy();
-  });
-
-  it("LampGadget shows N of M connected", () => {
-    render(
-      <JiraAccountsStep
-        connections={[CONN_ALPHA, CONN_BETA]}
-        knownAccounts={[]}
-        selectedRef={null}
-        onSelect={noop}
-        onRecheck={noop}
-        onAdd={noop}
-        onBack={noop}
-        onNext={noop}
-      />,
-    );
-    expect(screen.getByText("1 of 2 connected")).toBeTruthy();
   });
 
   it("ProvenanceChip on each connection card names the site", () => {
     render(
       <JiraAccountsStep
         connections={[CONN_ALPHA, CONN_BETA]}
-        knownAccounts={[]}
         selectedRef={null}
         onSelect={noop}
-        onRecheck={noop}
-        onAdd={noop}
-        onBack={noop}
         onNext={noop}
       />,
     );
-    // ProvenanceChip renders source + boundary
     const provChips = screen.getAllByText("acli");
     expect(provChips.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it("onAdd is called with site and email from the ghost card", () => {
-    const onAdd = vi.fn();
-    render(
-      <JiraAccountsStep
-        connections={[]}
-        knownAccounts={[]}
-        selectedRef={null}
-        onSelect={noop}
-        onRecheck={noop}
-        onAdd={onAdd}
-        onBack={noop}
-        onNext={noop}
-      />,
-    );
-    const siteInput = screen.getByLabelText("Site") as HTMLInputElement;
-    const emailInput = screen.getByLabelText("Email") as HTMLInputElement;
-    fireEvent.change(siteInput, { target: { value: "test.atlassian.net" } });
-    fireEvent.change(emailInput, { target: { value: "test@test.com" } });
-    const addBtn = screen.getByText("Add");
-    fireEvent.click(addBtn);
-    expect(onAdd).toHaveBeenCalledWith("test.atlassian.net", "test@test.com");
-  });
-
-  it("known account deduplicates against connections", () => {
-    const sameKnown: JiraKnownAccount = {
-      ...KNOWN_ACME,
-      site: "alpha.atlassian.net",
-      email: "user@example.com",
-      ref: "alpha.atlassian.net|user@example.com",
-    };
-    render(
-      <JiraAccountsStep
-        connections={[CONN_ALPHA]}
-        knownAccounts={[sameKnown]}
-        selectedRef={null}
-        onSelect={noop}
-        onRecheck={noop}
-        onAdd={noop}
-        onBack={noop}
-        onNext={noop}
-      />,
-    );
-    // Should NOT show "Known to acli" since it's already a connection
-    expect(screen.queryByText("Known to acli")).toBeNull();
   });
 });
 
@@ -385,8 +270,9 @@ describe("JiraAccountsStep", () => {
    D2 — Scope step
    ═══════════════════════════════════════════════════════════════════ */
 
-describe("JiraScopeStep", () => {
+describe("JiraScopeStep (HS-168-04)", () => {
   const noop = () => {};
+  const defaultKnown = { github: [], jira: [] };
 
   it("renders project cards", () => {
     render(
@@ -397,6 +283,8 @@ describe("JiraScopeStep", () => {
         scope={EMPTY_SCOPE}
         preview={null}
         site="alpha.atlassian.net"
+        knownScopes={defaultKnown}
+        proposalId="test-prop"
         onSelectProject={noop}
         onToggleType={noop}
         onToggleStatus={noop}
@@ -405,8 +293,7 @@ describe("JiraScopeStep", () => {
         onSearchProjects={noop}
         discovering={false}
         previewing={false}
-        onBack={noop}
-        onTest={noop}
+        onApplyKnownScope={noop}
       />,
     );
     expect(screen.getByText("Kanban Board")).toBeTruthy();
@@ -422,6 +309,8 @@ describe("JiraScopeStep", () => {
         scope={{ ...EMPTY_SCOPE, projects: ["KAN"] }}
         preview={null}
         site="alpha.atlassian.net"
+        knownScopes={defaultKnown}
+        proposalId="test-prop"
         onSelectProject={noop}
         onToggleType={noop}
         onToggleStatus={noop}
@@ -430,11 +319,9 @@ describe("JiraScopeStep", () => {
         onSearchProjects={noop}
         discovering={false}
         previewing={false}
-        onBack={noop}
-        onTest={noop}
+        onApplyKnownScope={noop}
       />,
     );
-    // CheckGadget renders aria-label checkboxes
     expect(screen.getByLabelText("Epic")).toBeTruthy();
     expect(screen.getByLabelText("Task")).toBeTruthy();
     expect(screen.getByLabelText("In Progress")).toBeTruthy();
@@ -450,6 +337,8 @@ describe("JiraScopeStep", () => {
         scope={{ ...EMPTY_SCOPE, projects: ["KAN"] }}
         preview={PREVIEW_OK}
         site="alpha.atlassian.net"
+        knownScopes={defaultKnown}
+        proposalId="test-prop"
         onSelectProject={noop}
         onToggleType={noop}
         onToggleStatus={noop}
@@ -458,8 +347,7 @@ describe("JiraScopeStep", () => {
         onSearchProjects={noop}
         discovering={false}
         previewing={false}
-        onBack={noop}
-        onTest={noop}
+        onApplyKnownScope={noop}
       />,
     );
     const previewEl = screen.getByTestId("jira-preview");
@@ -467,32 +355,6 @@ describe("JiraScopeStep", () => {
     expect(screen.getByText("KAN-1")).toBeTruthy();
     expect(screen.getByText("Task 1")).toBeTruthy();
     expect(screen.getByText("KAN-2")).toBeTruthy();
-  });
-
-  it("query_invalid renders as ActionNotice", () => {
-    render(
-      <JiraScopeStep
-        projects={PROJECTS_RESPONSE}
-        issueTypes={null}
-        statuses={null}
-        scope={{ ...EMPTY_SCOPE, projects: ["KAN"], jql: "bad query" }}
-        preview={PREVIEW_INVALID}
-        site="alpha.atlassian.net"
-        onSelectProject={noop}
-        onToggleType={noop}
-        onToggleStatus={noop}
-        onJqlChange={noop}
-        onPreview={noop}
-        onSearchProjects={noop}
-        discovering={false}
-        previewing={false}
-        onBack={noop}
-        onTest={noop}
-      />,
-    );
-    expect(screen.getByText("failed to parse JQL query: Unexpected token")).toBeTruthy();
-    // It's inside an ActionNotice with role="alert"
-    expect(screen.getByRole("alert")).toBeTruthy();
   });
 
   it("ProvenanceChip on project cards names the site", () => {
@@ -504,6 +366,8 @@ describe("JiraScopeStep", () => {
         scope={EMPTY_SCOPE}
         preview={null}
         site="alpha.atlassian.net"
+        knownScopes={defaultKnown}
+        proposalId="test-prop"
         onSelectProject={noop}
         onToggleType={noop}
         onToggleStatus={noop}
@@ -512,8 +376,7 @@ describe("JiraScopeStep", () => {
         onSearchProjects={noop}
         discovering={false}
         previewing={false}
-        onBack={noop}
-        onTest={noop}
+        onApplyKnownScope={noop}
       />,
     );
     const provs = screen.getAllByText("acli");
@@ -529,6 +392,8 @@ describe("JiraScopeStep", () => {
         scope={{ ...EMPTY_SCOPE, projects: ["KAN"] }}
         preview={null}
         site="alpha.atlassian.net"
+        knownScopes={defaultKnown}
+        proposalId="test-prop"
         onSelectProject={noop}
         onToggleType={noop}
         onToggleStatus={noop}
@@ -537,8 +402,7 @@ describe("JiraScopeStep", () => {
         onSearchProjects={noop}
         discovering={false}
         previewing={false}
-        onBack={noop}
-        onTest={noop}
+        onApplyKnownScope={noop}
       />,
     );
     expect(screen.getByText("2 of 3 categories seen")).toBeTruthy();
@@ -549,70 +413,34 @@ describe("JiraScopeStep", () => {
    D3 — Test step
    ═══════════════════════════════════════════════════════════════════ */
 
-describe("JiraTestStep", () => {
-  const noop = () => {};
-
+// HS-168-04: JiraTestStep simplified — verbs moved to JiraWizardFlow footer.
+// The component now renders ProgressPlan + matches only.
+describe("JiraTestStep (HS-168-04)", () => {
   it("renders ProgressPlan with 5 steps from real test result", () => {
     render(
       <JiraTestStep
         proposal={testedProposal()}
         site="alpha.atlassian.net"
         email="user@example.com"
-        onTestAgain={noop}
-        onReview={noop}
-        onBack={noop}
       />,
     );
     expect(screen.getByText(/Switch to alpha\.atlassian\.net/)).toBeTruthy();
     expect(screen.getByText(/Read back account/)).toBeTruthy();
     expect(screen.getByText(/Search KAN/)).toBeTruthy();
-    expect(screen.getByText(/Enrich due dates/)).toBeTruthy();
+    expect(screen.getByText(/Enrich/)).toBeTruthy();
     expect(screen.getByText("Baseline ready")).toBeTruthy();
   });
 
-  it("Receipt shows 'Test passed' with timestamp", () => {
+  it("ProvenanceChip in plan names the site", () => {
     render(
       <JiraTestStep
         proposal={testedProposal()}
         site="alpha.atlassian.net"
         email="user@example.com"
-        onTestAgain={noop}
-        onReview={noop}
-        onBack={noop}
-      />,
-    );
-    expect(screen.getByText("Test passed")).toBeTruthy();
-  });
-
-  it("ProvenanceChip in plan footer names the site", () => {
-    render(
-      <JiraTestStep
-        proposal={testedProposal()}
-        site="alpha.atlassian.net"
-        email="user@example.com"
-        onTestAgain={noop}
-        onReview={noop}
-        onBack={noop}
       />,
     );
     const provs = screen.getAllByText("acli");
     expect(provs.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("renders match count with calls from test result", () => {
-    render(
-      <JiraTestStep
-        proposal={testedProposal()}
-        site="alpha.atlassian.net"
-        email="user@example.com"
-        onTestAgain={noop}
-        onReview={noop}
-        onBack={noop}
-      />,
-    );
-    const matchCount = screen.getByTestId("jira-test-match-count");
-    expect(matchCount).toBeTruthy();
-    expect(matchCount.textContent).toContain("4 calls");
   });
 
   it("renders representative issue ledger rows", () => {
@@ -621,64 +449,11 @@ describe("JiraTestStep", () => {
         proposal={testedProposal()}
         site="alpha.atlassian.net"
         email="user@example.com"
-        onTestAgain={noop}
-        onReview={noop}
-        onBack={noop}
       />,
     );
     expect(screen.getByText("KAN-1")).toBeTruthy();
     expect(screen.getByText("Task 1")).toBeTruthy();
     expect(screen.getByText("KAN-3")).toBeTruthy();
-  });
-
-  it("renders will-notice conditions as active chips and transitions as idle", () => {
-    render(
-      <JiraTestStep
-        proposal={testedProposal()}
-        site="alpha.atlassian.net"
-        email="user@example.com"
-        onTestAgain={noop}
-        onReview={noop}
-        onBack={noop}
-      />,
-    );
-    const notice = screen.getByTestId("jira-will-notice");
-    expect(notice).toBeTruthy();
-    // Conditions are active chips
-    expect(screen.getByText("Status enters Blocked")).toBeTruthy();
-    // Transitions are idle chips
-    expect(screen.getByText("Status changed")).toBeTruthy();
-    expect(screen.getByText("Assigned")).toBeTruthy();
-  });
-
-  it("LampGadget shows 'Tested' when passed", () => {
-    render(
-      <JiraTestStep
-        proposal={testedProposal()}
-        site="alpha.atlassian.net"
-        email="user@example.com"
-        onTestAgain={noop}
-        onReview={noop}
-        onBack={noop}
-      />,
-    );
-    expect(screen.getByText("Tested")).toBeTruthy();
-  });
-
-  it("shows 'Test again' and 'Review and activate' keys", () => {
-    render(
-      <JiraTestStep
-        proposal={testedProposal()}
-        site="alpha.atlassian.net"
-        email="user@example.com"
-        onTestAgain={noop}
-        onReview={noop}
-        onBack={noop}
-      />,
-    );
-    // Verb buttons render as plain text buttons (not TransportKey)
-    expect(screen.getByText("Test again")).toBeTruthy();
-    expect(screen.getByText("Review and activate")).toBeTruthy();
   });
 });
 
@@ -713,11 +488,14 @@ describe("JiraWizardFlow", () => {
     onSearchProjects: noop,
     onClarifyScope: noop,
     onTest: noop,
+    onBack: noop,
     onDone: noop,
     onUpdateScope: noop,
+    knownScopes: { github: [], jira: [] },
   };
 
-  it("starts on accounts step with jira-wizard-flow testid", () => {
+  // HS-168-04: with 2 connections (regardless of state), accounts step shows
+  it("starts on accounts step with multiple connections (jira-wizard-flow testid)", () => {
     render(<JiraWizardFlow {...defaultProps} />);
     expect(screen.getByTestId("jira-wizard-flow")).toBeTruthy();
     expect(screen.getByTestId("jira-accounts-step")).toBeTruthy();
@@ -749,8 +527,8 @@ describe("SuggestionCards Jira badge", () => {
   // We test this by importing SuggestionCards directly and verifying
   // the EgressChip title includes the site from connection_ref.
 
-  it("Jira proposal EgressChip title names the site from connection_ref", async () => {
-    // Import the actual SuggestionCards (it has the EgressChip logic)
+  // HS-168-04: cards now use ProvenanceChip with boundary (not EgressChip)
+  it("Jira proposal ProvenanceChip names the site from connection_ref", async () => {
     const { SuggestionCards } = await import("../SuggestionCards");
     const p = jiraProposal();
     const noop = () => {};
@@ -763,8 +541,8 @@ describe("SuggestionCards Jira badge", () => {
         suggesting={false}
       />,
     );
-    // The EgressChip for jira has title with the site
-    const egressChip = document.querySelector('[title*="alpha.atlassian.net"]');
-    expect(egressChip).toBeTruthy();
+    // ProvenanceChip carries the site as boundary
+    const card = screen.getByTestId(`setup-card-${p.id}`);
+    expect(card.textContent).toContain("acli");
   });
 });

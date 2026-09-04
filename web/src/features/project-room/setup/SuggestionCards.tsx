@@ -2,6 +2,10 @@
 // library barrel. The shell owns the card visual language (HS-156-08);
 // this feature adds the multi-select listbox interaction model on top
 // (div[role="option"], aria-selected, Space toggle, roving focus).
+// HS-168-04: provider StateChip from proposal.connection; disconnected
+// cards have NO tier and their click lights the TOOLS connect card
+// (never a wizard). Connected provider cards sort before native ones
+// (the wire's order stays).
 //
 // Glass selectors preserved: setup-suggestion-cards (testid),
 // [role="option"], .setup-card-rationale, .setup-card-test-btn,
@@ -12,8 +16,11 @@ import {
   ChoiceCardShell,
   Disclosure,
   EgressChip,
+  StateChip,
+  ProvenanceChip,
   useRovingRows,
 } from "../../../desk/surface";
+import { Button } from "../../../components/signal/Signal";
 import {
   cadenceLabel,
   conditionPlainWords,
@@ -31,6 +38,34 @@ const STATE_LABEL: Record<WatchBriefState, string> = {
   disabled: "Disabled",
   active: "Active",
 };
+
+/** Provider-specific StateChip from proposal.connection (HS-168-04). */
+function connectionStateChip(proposal: SetupProposal): { state: "success" | "warning" | "failure" | "idle"; label: string } | null {
+  const conn = proposal.connection;
+  if (!conn) return null;
+  switch (conn.state) {
+    case "connected": return { state: "success", label: "Connected" };
+    case "owner_action_required": return { state: "warning", label: "Sign in" };
+    case "unavailable": return { state: "failure", label: "Unavailable" };
+    case "degraded": return { state: "failure", label: "Unreachable" };
+    case "not_configured": return { state: "idle", label: "Off" };
+    default: return null;
+  }
+}
+
+/** Provenance chip source from provider id. */
+function provenanceSource(providerId: string): { source: string; boundary: string } | null {
+  if (providerId === "github") return { source: "gh", boundary: "github.com" };
+  if (providerId === "jira") return { source: "acli", boundary: "" };
+  return null;
+}
+
+/** Test result chip label: "Tested . N matches". */
+function testedLabel(proposal: SetupProposal): string {
+  if (proposal.testState !== "passed") return "";
+  const count = proposal.testResult?.entityCount ?? 0;
+  return `Tested · ${count} ${count === 1 ? "match" : "matches"}`;
+}
 
 export function SuggestionCards({
   proposals,
@@ -105,6 +140,12 @@ function SuggestionCard({
   const isSelected = proposal.state === "selected";
   const briefState = proposalBriefState(proposal);
   const spec = proposal.spec;
+  const connChip = connectionStateChip(proposal);
+  const isDisconnected = connChip && connChip.state !== "success" && (proposal.providerId === "github" || proposal.providerId === "jira");
+  const prov = provenanceSource(proposal.providerId);
+
+  // HS-168-04: disconnected provider card = no tier
+  const cardTier = isDisconnected ? undefined : (isSelected ? "ok" : undefined);
 
   const handleToggle = useCallback(() => {
     if (isSelected) onDeselect(proposal.id);
@@ -122,89 +163,83 @@ function SuggestionCard({
     [handleToggle],
   );
 
+  // HS-168-04: tested state chip
+  const tested = testedLabel(proposal);
+
   return (
     <ChoiceCardShell
       label={spec.name}
-      summary={
-        <span
-          data-condition-raw={spec.rules.flatMap((r) =>
-            r.condition.clauses.map((c) => `${c.field}:${c.comparison}${c.value != null ? `:${c.value}` : ""}`),
-          ).join(",")}
-        >
-          {conditionPlainWords(spec)}
-        </span>
-      }
-      facts={[
-        { label: "source", value: proposal.providerId },
-        { label: "subject", value: spec.subject.kind },
-        { label: "cadence", value: cadenceLabel(spec.trigger) },
-        { label: "mode", value: modeLabel(spec.mode) },
-      ]}
-      fold={
-        <div className="setup-card-action-detail">
-          {ACTION_LABELS[spec.action.kind] ?? spec.action.kind}
-        </div>
-      }
-      foldLabel="Action"
+      emblem={proposal.providerId === "github" ? "GH" : proposal.providerId === "jira" ? "J" : proposal.providerId === "meeting" ? "◎" : undefined}
+      tier={cardTier}
       selected={isSelected}
-      onFoldClick={(e) => e.stopPropagation()}
       role="option"
       aria-selected={isSelected}
       data-testid={`setup-card-${proposal.id}`}
       data-state={briefState}
+      data-disconnected={isDisconnected || undefined}
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onClick={handleToggle}
     >
-      {/* Readiness state token (custom -- no ChoiceCard slot for this) */}
-      <span className="setup-card-readiness" data-state={briefState}>
-        {STATE_LABEL[briefState]}
-      </span>
-
-      {/* Rationale: visible footer -- glass test asserts is_visible */}
-      <div className="setup-card-rationale">
-        {proposal.rationale.fact}
-        {proposal.rationale.detail ? ` -- ${proposal.rationale.detail}` : ""}
+      {/* Chip row: cadence + action + provenance + connection state */}
+      <div className="setup-card-chips">
+        <span className="surface-token" data-chip>
+          CADENCE {cadenceLabel(spec.trigger)}
+        </span>
+        <span className="surface-token" data-chip>
+          ACTION {ACTION_LABELS[spec.action.kind] ? modeLabel(spec.action.kind).toLowerCase() : spec.action.kind}
+        </span>
+        {prov ? (
+          <ProvenanceChip
+            source={prov.source}
+            boundary={proposal.providerId === "jira"
+              ? String(spec.subject.scope?.connection_ref ?? "").split("|")[0] || prov.boundary
+              : prov.boundary}
+          />
+        ) : (
+          <ProvenanceChip source="local" />
+        )}
+        {/* HS-168-04: provider connection StateChip */}
+        {connChip ? (
+          <StateChip state={connChip.state} label={connChip.label} />
+        ) : null}
+        {/* HS-168-04: tested state chip */}
+        {tested ? (
+          <StateChip state="success" label={tested} />
+        ) : null}
       </div>
 
+      {/* Rationale: as facts/Disclosure instead of sentences (D7b) */}
+      {proposal.rationale.fact ? (
+        <Disclosure label="Rationale">
+          <div className="setup-card-rationale">
+            {proposal.rationale.fact}
+            {proposal.rationale.detail ? ` -- ${proposal.rationale.detail}` : ""}
+          </div>
+        </Disclosure>
+      ) : null}
+
       {/* Test state */}
-      {proposal.testState ? (
+      {proposal.testState && proposal.testState !== "passed" ? (
         <div className="setup-card-test" data-test-state={proposal.testState}>
           {proposal.testResult?.message ?? `Test: ${proposal.testState}`}
         </div>
       ) : null}
 
-      {/* Egress badge for provider cards (HS-161-05 + HS-166-04) */}
-      {proposal.providerId === "github" ? (
-        <EgressChip
-          label="local + cloud"
-          scope="mixed"
-          title="This Watch reads from github.com."
-        />
-      ) : null}
-      {proposal.providerId === "jira" ? (
-        <EgressChip
-          label="local + cloud"
-          scope="mixed"
-          title={`This Watch reads from ${spec.subject.scope?.connection_ref
-            ? String(spec.subject.scope.connection_ref).split("|")[0]
-            : "Jira"}.`}
-        />
-      ) : null}
-
       {/* Test button (only for selected proposals without test state) */}
       {isSelected && !proposal.testState ? (
-        <button
-          type="button"
+        <Button
+          dense
+          variant="ghost"
           className="setup-card-test-btn"
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             onTest(proposal.id);
           }}
           aria-label={`Test: ${spec.name}`}
         >
           Test
-        </button>
+        </Button>
       ) : null}
     </ChoiceCardShell>
   );

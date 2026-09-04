@@ -221,6 +221,29 @@ def _api_text(
     return result
 
 
+# ── _settle: wait for all CSS animations to finish ──
+
+def _settle(page: Any) -> None:
+    """Wait for all CSS animations to finish before screenshotting.
+
+    HS-168-04: surface.css animates sections/cards with surface-rise-in
+    (opacity 0 -> 1 over --duration-medium).  A shot taken mid-animation
+    captures elements at partial opacity -- the 163 stale-pixels family's
+    sibling: mid-animation pixels.
+    """
+    page.evaluate(
+        """() => {
+            const anims = document.getAnimations();
+            if (anims.length === 0) return;
+            return Promise.race([
+                Promise.all(anims.map(a => a.finished.catch(() => null))),
+                new Promise(r => setTimeout(r, 2000)),
+            ]);
+        }"""
+    )
+    page.wait_for_timeout(120)
+
+
 # ── _assert_clean: overflow + JS error check ──
 
 def _assert_clean(page: Any, errors: list[str]) -> None:

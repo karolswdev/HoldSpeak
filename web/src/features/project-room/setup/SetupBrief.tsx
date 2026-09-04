@@ -1,6 +1,8 @@
-// HS-167-05 — the brief recomposed: SurfaceFacts for OUTCOME/NOTICE/SOURCES,
+// HS-167-05 -- the brief recomposed: SurfaceFacts for OUTCOME/NOTICE/TOOLS/SOURCES,
 // proposed watches as a SurfaceLedger cols="room" with provider emblems,
 // cadence tokens, action chips, and ProvenanceChips.
+// HS-168-04: TOOLS fact row (GitHub . Connected, Jira . Sign in);
+// one section label per state group (the duplicate "PROPOSED N" retired).
 
 import {
   SurfaceFacts,
@@ -20,6 +22,7 @@ import {
   type WatchBriefState,
 } from "./model";
 import type { ControllerState } from "./useSetupController";
+import type { ConnectionTool } from "../../../pages/cores/connections/api";
 
 const BRIEF_STATE_LABEL: Record<WatchBriefState, string> = {
   mentioned: "Mentioned",
@@ -39,13 +42,39 @@ const BRIEF_STATE_CHIP: Record<WatchBriefState, ChipState> = {
 
 /** Provider emblem glyph. */
 const PROVIDER_EMBLEM: Record<string, string> = {
-  github: "◉",
-  jira: "◆",
-  meeting: "▶",
-  local: "⌁",
+  github: "GH",
+  jira: "J",
+  native: "◉",
+  meeting: "◉",
+  local: "◉",
 };
 
-export function SetupBrief({ state }: { state: ControllerState }) {
+/** Tool state label for the brief. */
+function toolBriefLabel(state: string): string {
+  switch (state) {
+    case "connected": return "Connected";
+    case "owner_action_required": return "Sign in";
+    case "unavailable": return "Unavailable";
+    case "degraded": return "Unreachable";
+    case "not_configured": return "Off";
+    default: return state;
+  }
+}
+
+/** Tool provider display name. */
+function toolDisplayName(providerId: string): string {
+  if (providerId === "github") return "GitHub";
+  if (providerId === "jira") return "Jira";
+  return providerId;
+}
+
+export function SetupBrief({
+  state,
+  connectionTools,
+}: {
+  state: ControllerState;
+  connectionTools?: ConnectionTool[];
+}) {
   let outcomeText = "";
   let signalsText = "";
   let proposals: SetupProposal[] = [];
@@ -65,6 +94,11 @@ export function SetupBrief({ state }: { state: ControllerState }) {
   if (outcomeText) facts.OUTCOME = outcomeText;
   if (signalsText) facts.NOTICE = signalsText;
 
+  // HS-168-04: TOOLS fact row -- only connector-pack providers
+  const connectorTools = (connectionTools ?? []).filter(
+    (t) => t.provider_id === "github" || t.provider_id === "jira",
+  );
+
   return (
     <aside aria-label="Project brief" data-testid="setup-brief">
       <SurfaceSection label="THE BRIEF">
@@ -76,6 +110,26 @@ export function SetupBrief({ state }: { state: ControllerState }) {
           )}
         </div>
       </SurfaceSection>
+
+      {/* HS-168-04: TOOLS fact row */}
+      {connectorTools.length > 0 ? (
+        <SurfaceSection label="TOOLS">
+          <div className="setup-brief-tools" data-testid="brief-tools">
+            {connectorTools.map((tool) => {
+              const name = toolDisplayName(tool.provider_id);
+              const stateLabel = toolBriefLabel(tool.state);
+              const isWarning = tool.state !== "connected";
+              return (
+                <div key={tool.provider_id} className="setup-brief-tool-line" data-state={tool.state}>
+                  <span>{name}</span>
+                  <span className="setup-brief-tool-sep">{" · "}</span>
+                  <span className={isWarning ? "setup-brief-tool-warn" : ""}>{stateLabel}</span>
+                </div>
+              );
+            })}
+          </div>
+        </SurfaceSection>
+      ) : null}
 
       {(proposals.length > 0 || (signalsText && proposals.length === 0)) ? (
         <BriefWatches proposals={proposals} signalsText={signalsText} />
@@ -106,27 +160,35 @@ function BriefWatches({ proposals, signalsText }: { proposals: SetupProposal[]; 
     "disabled",
   ];
 
+  // HS-168-04: sources as selected proposals
+  const selectedCount = proposals.filter((p) => p.state === "selected" || p.testState === "passed").length;
+
   return (
     <div data-testid="brief-watches">
       {signalsText && proposals.length === 0 ? (
         <div className="setup-brief-signals-text">{signalsText}</div>
       ) : null}
 
+      {/* HS-168-04: SOURCES count -- ONE label, not a duplicate */}
+      {selectedCount > 0 ? (
+        <SurfaceSection label={`SOURCES ${selectedCount}`}>
+          <span data-testid="brief-sources-count" hidden aria-hidden="true">
+            {selectedCount}
+          </span>
+        </SurfaceSection>
+      ) : null}
+
       {stateOrder.map((bs) =>
         grouped[bs].length > 0 ? (
           <div key={bs} data-brief-state={bs}>
-            <SurfaceSection label={`${BRIEF_STATE_LABEL[bs]} ${grouped[bs].length}`}>
-              <span data-testid={`brief-count-${bs}`} hidden aria-hidden="true">
-                {grouped[bs].length}
-              </span>
-              <SurfaceLedger count={`${BRIEF_STATE_LABEL[bs].toUpperCase()} ${grouped[bs].length}`} cols="room">
-                <ul className="surface-ledger-rows">
-                  {grouped[bs].map((p) => (
-                    <BriefWatchRow key={p.id} proposal={p} briefState={bs} />
-                  ))}
-                </ul>
-              </SurfaceLedger>
-            </SurfaceSection>
+            {/* HS-168-04: one label per group -- the SurfaceLedger count IS the label */}
+            <SurfaceLedger count={`${BRIEF_STATE_LABEL[bs].toUpperCase()} ${grouped[bs].length}`} cols="room">
+              <ul className="surface-ledger-rows">
+                {grouped[bs].map((p) => (
+                  <BriefWatchRow key={p.id} proposal={p} briefState={bs} />
+                ))}
+              </ul>
+            </SurfaceLedger>
           </div>
         ) : null,
       )}

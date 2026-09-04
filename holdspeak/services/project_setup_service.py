@@ -125,6 +125,36 @@ def _proposal_id() -> str:
     return f"wprop_{uuid.uuid4().hex[:12]}"
 
 
+def _proposal_dedup_key(p: dict[str, Any]) -> str:
+    """Stable key for deduplicating proposals across re-suggest calls.
+
+    Provider proposals: (provider_id, rationale.template_id).
+    Native proposals:   (provider_id, spec.subject.kind).
+    """
+    pid = p.get("provider_id", "")
+    # Provider proposals carry template_id in their rationale
+    rationale = p.get("rationale", {})
+    if isinstance(rationale, str):
+        import json as _json
+        try:
+            rationale = _json.loads(rationale)
+        except Exception:
+            rationale = {}
+    tmpl = rationale.get("template_id", "")
+    if tmpl:
+        return f"{pid}:{tmpl}"
+    # Native proposals: key by subject kind
+    spec = p.get("spec", {})
+    if isinstance(spec, str):
+        import json as _json
+        try:
+            spec = _json.loads(spec)
+        except Exception:
+            spec = {}
+    kind = spec.get("subject", {}).get("kind", "")
+    return f"{pid}:{kind}"
+
+
 def _answer_id() -> str:
     return f"pans_{uuid.uuid4().hex[:12]}"
 
@@ -385,19 +415,33 @@ class ProjectSetupService:
         # native LAST (the D7b fold fix).
         capped = _apply_per_provider_cap(proposals)
 
-        # Persist proposals (capped per provider)
-        persisted: list[dict[str, Any]] = []
+        # HS-168-04: idempotent re-suggest.  On a session that already
+        # holds proposals, return the EXISTING rows and ADD only candidates
+        # whose dedup key is not yet present.  Existing ids, states, scopes
+        # and test results are untouched.
+        existing = self._list_proposals(session_id)
+        existing_keys: set[str] = set()
+        for ep in existing:
+            existing_keys.add(_proposal_dedup_key(ep))
+
+        # Keep existing; add genuinely new candidates only
+        added: list[dict[str, Any]] = []
         for p in capped:
-            row = self._repo.create_setup_proposal(
-                proposal_id=p["id"],
-                session_id=session_id,
-                provider_id=p["provider_id"],
-                spec_schema="WatchSpec@1",
-                spec_json=json.dumps(p["spec"], sort_keys=True, separators=(",", ":")),
-                rationale_json=json.dumps(p["rationale"], ensure_ascii=False),
-                state="proposed",
-            )
-            persisted.append(row)
+            key = _proposal_dedup_key(p)
+            if key not in existing_keys:
+                existing_keys.add(key)
+                row = self._repo.create_setup_proposal(
+                    proposal_id=p["id"],
+                    session_id=session_id,
+                    provider_id=p["provider_id"],
+                    spec_schema="WatchSpec@1",
+                    spec_json=json.dumps(p["spec"], sort_keys=True, separators=(",", ":")),
+                    rationale_json=json.dumps(p["rationale"], ensure_ascii=False),
+                    state="proposed",
+                )
+                added.append(row)
+
+        persisted = existing + added
 
         # Advance to proposals stage
         if session["stage"] in ("outcome", "signals"):

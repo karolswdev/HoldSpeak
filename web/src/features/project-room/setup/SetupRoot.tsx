@@ -2,6 +2,11 @@
 // question-plane + live-brief at >=560px container; brief follows
 // in DOM order below (WEB-RSP-005).  This is a CoreProps-compatible
 // component loaded by the SurfaceWindow system.
+// HS-168-04: TOOLS row from GET /api/connections above suggestions;
+// wizard heading = ledger row; ProgressPlan scoped steps; verbs
+// Back / Test this Watch -> Use this Watch; connect card opens
+// Settings -> Connections in place; the re-read mechanism on
+// windowsById subscription.
 
 import { useContext, useEffect, useRef, useState } from "react";
 import { SurfaceColumns } from "../../../desk/surface/Surface";
@@ -15,6 +20,7 @@ import { useSetupController } from "./useSetupController";
 import { SetupInterview } from "./SetupInterview";
 import { SetupBrief } from "./SetupBrief";
 import { SuggestionCards } from "./SuggestionCards";
+import { ToolsRow } from "./ToolsRow";
 import { ClarifyStep } from "./ClarifyStep";
 import { ActivationReview } from "./ActivationReview";
 import { ProviderWizardFlow } from "./ProviderWizardStep";
@@ -80,7 +86,7 @@ export function SetupCore({ scope }: CoreProps) {
     : stateKind === "review" ? 4
     : stateKind === "finalizing" ? 4
     : 0;
-  const stepLabel = stepIndex > 0 ? `${stepIndex} of 4` : "";
+  const stepLabel = stepIndex > 0 ? `${stepIndex} of ${STAGE_COUNT}` : "";
 
   // The clarifying proposal
   const clarifyingProposal =
@@ -150,7 +156,7 @@ export function SetupCore({ scope }: CoreProps) {
               onSetDraft={ctrl.setDraft}
             />
           }
-          side={<SetupBrief state={ctrl.state} />}
+          side={<SetupBrief state={ctrl.state} connectionTools={ctrl.connectionTools} />}
         />
       </div>
     );
@@ -186,6 +192,7 @@ export function SetupCore({ scope }: CoreProps) {
                     checking={ctrl.providerChecking}
                     discovering={ctrl.providerDiscovering}
                     scopeState={ctrl.providerScopeState}
+                    knownScopes={ctrl.knownScopes}
                     onCheckConnection={ctrl.checkConnection}
                     onRecheck={ctrl.recheckConnection}
                     onDiscover={ctrl.discoverRepos}
@@ -195,6 +202,14 @@ export function SetupCore({ scope }: CoreProps) {
                     }
                     onTest={() => {
                       void ctrl.testProp(wizardProposal.id);
+                    }}
+                    onBack={() => {
+                      setProviderWizardId(null);
+                      ctrl.resetProviderState();
+                      // HS-168-04: Back restores the pre-wizard selection state
+                      if (wizardProposal.state === "selected") {
+                        void ctrl.deselectProp(wizardProposal.id);
+                      }
                     }}
                     onDone={() => {
                       setProviderWizardId(null);
@@ -215,6 +230,7 @@ export function SetupCore({ scope }: CoreProps) {
                     loading={ctrl.jiraLoading}
                     discovering={ctrl.jiraDiscovering}
                     previewing={ctrl.jiraPreviewing}
+                    knownScopes={ctrl.knownScopes}
                     onLoadConnections={ctrl.loadJiraConnections}
                     onAddConnection={ctrl.addJiraConnection}
                     onRecheckConnection={ctrl.recheckJiraConnection}
@@ -264,6 +280,14 @@ export function SetupCore({ scope }: CoreProps) {
                     onTest={() => {
                       void ctrl.testProp(wizardProposal.id);
                     }}
+                    onBack={() => {
+                      setProviderWizardId(null);
+                      ctrl.resetJiraState();
+                      // HS-168-04: Back restores the pre-wizard selection state
+                      if (wizardProposal.state === "selected") {
+                        void ctrl.deselectProp(wizardProposal.id);
+                      }
+                    }}
                     onDone={() => {
                       setProviderWizardId(null);
                       ctrl.resetJiraState();
@@ -277,30 +301,45 @@ export function SetupCore({ scope }: CoreProps) {
                     onDone={() => setClarifyingId(null)}
                   />
                 ) : (
-                  <SuggestionCards
-                    proposals={ctrl.state.proposals}
-                    onSelect={(id) => {
-                      // HS-161-05 + HS-166-04: provider proposals enter the wizard
-                      const prop = ctrl.state.kind === "proposals"
-                        ? ctrl.state.proposals.find((p) => p.id === id)
-                        : undefined;
-                      void ctrl.selectProp(id);
-                      if (prop?.providerId === "github") {
-                        setProviderWizardId(id);
-                        void ctrl.checkConnection();
-                      } else if (prop?.providerId === "jira") {
-                        setProviderWizardId(id);
-                        void ctrl.loadJiraConnections();
-                      }
-                    }}
-                    onDeselect={(id) => {
-                      void ctrl.deselectProp(id);
-                    }}
-                    onTest={(id) => {
-                      void ctrl.testProp(id);
-                    }}
-                    suggesting={ctrl.state.suggesting}
-                  />
+                  <>
+                    {/* HS-168-04: TOOLS row -- connector-pack providers from GET /api/connections */}
+                    <ToolsRow
+                      tools={ctrl.connectionTools}
+                      onConnect={ctrl.openConnectionsInPlace}
+                      onRecheck={() => void ctrl.readConnections()}
+                    />
+                    <SuggestionCards
+                      proposals={ctrl.state.proposals}
+                      onSelect={(id) => {
+                        // HS-168-04: disconnected provider cards light the TOOLS connect card
+                        const prop = ctrl.state.kind === "proposals"
+                          ? ctrl.state.proposals.find((p) => p.id === id)
+                          : undefined;
+                        const conn = prop?.connection;
+                        if (conn && conn.state !== "connected" && (prop?.providerId === "github" || prop?.providerId === "jira")) {
+                          // Scroll to the TOOLS row connect card
+                          const toolsEl = document.querySelector('[data-testid="setup-tools-row"]');
+                          toolsEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+                          return;
+                        }
+                        void ctrl.selectProp(id);
+                        if (prop?.providerId === "github") {
+                          setProviderWizardId(id);
+                          void ctrl.checkConnection();
+                        } else if (prop?.providerId === "jira") {
+                          setProviderWizardId(id);
+                          void ctrl.loadJiraConnections();
+                        }
+                      }}
+                      onDeselect={(id) => {
+                        void ctrl.deselectProp(id);
+                      }}
+                      onTest={(id) => {
+                        void ctrl.testProp(id);
+                      }}
+                      suggesting={ctrl.state.suggesting}
+                    />
+                  </>
                 )}
 
                 {/* Proceed/blank verbs moved to SurfaceFooter */}
@@ -308,15 +347,15 @@ export function SetupCore({ scope }: CoreProps) {
             ) : null}
           </>
         }
-        side={<SetupBrief state={ctrl.state} />}
+        side={<SetupBrief state={ctrl.state} connectionTools={ctrl.connectionTools} />}
       />
 
-      {/* Footer: receipt · Cancel · primary */}
-      {ctrl.state.kind !== "loading" && ctrl.state.kind !== "error" ? (
+      {/* Footer: receipt · Cancel · primary (hidden when wizard is active -- wizard has its own) */}
+      {ctrl.state.kind !== "loading" && ctrl.state.kind !== "error" && !providerWizardId ? (
         <SurfaceFooter
           receipt={
             stepLabel ? (
-              <span className="surface-footer-receipt-line">{stepLabel}</span>
+              <span className="surface-footer-receipt-line" data-testid="setup-step-count">{stepLabel}</span>
             ) : undefined
           }
           verbs={
