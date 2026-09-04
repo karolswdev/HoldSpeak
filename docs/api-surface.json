@@ -1172,6 +1172,26 @@
       ]
     },
     {
+      "path": "/api/connections",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.connections",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/connections/{provider}/recheck",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.connections",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/constitutional-context",
       "methods": [
         "GET"
@@ -6048,6 +6068,8 @@
   ],
   "unmatched_calls": {
     "ios": [],
-    "web": []
+    "web": [
+      "/api/jira/connections"
+    ]
   }
 }

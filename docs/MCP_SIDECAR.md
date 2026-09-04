@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-187 tools across 33 families. The default non-owner discovery lists 34
+189 tools across 34 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -354,7 +354,7 @@ marks a job done. Both refuse running jobs.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 187 tools across 33 families.
+**Registry totals:** 189 tools across 34 families.
 
 #### ask (4)
 
@@ -382,6 +382,11 @@ marks a job done. Both refuse running jobs.
 - `coder.audit`
 - `coder.get`
 - `coder.list`
+
+#### connection (2)
+
+- `connection.list`
+- `connection.recheck`
 
 #### decision (1)
 
@@ -747,13 +752,13 @@ read.
 
 ## The project palette (MCP-007)
 
-The project family ships a `PROJECT_PALETTE`: a frozen set of the 45
-project.* and provider.* tool names. Two functions in the MCP layer
+The project family ships a `PROJECT_PALETTE`: a frozen set of the 47
+project.*, provider.* and connection.* tool names. Two functions in the MCP layer
 consume it.
 
 `tools_for_palette(palette)` returns only the tools whose names are in
-the palette. A client that lists tools through this filter sees 45 tools
-instead of 187.
+the palette. A client that lists tools through this filter sees 47 tools
+instead of 189.
 
 `dispatch_for_palette(name, arguments, principal, palette)` dispatches
 a tool call only if `name` is in the palette. A name outside the palette

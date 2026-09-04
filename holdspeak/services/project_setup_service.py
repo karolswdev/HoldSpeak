@@ -28,6 +28,10 @@ from holdspeak.project_contracts import (
     generate_psrc_id,
 )
 from holdspeak.refs import format as format_ref, parse as parse_ref
+
+# HS-168-02: a minimal OWNER principal used only for the connection
+# annotation projection (list_tools reads persisted state, never probes).
+_ANNOTATION_PRINCIPAL = Principal(PrincipalKind.OWNER, "setup-annotation")
 from holdspeak.services.errors import NotFound, ServiceError, ValidationError
 from holdspeak.watch_validation import validate_rules
 
@@ -70,8 +74,47 @@ NATIVE_SUBJECT_KINDS = frozenset({
     "meetings", "decisions", "door", "evidence",
 })
 
-# Maximum proposals generated per suggest() call.
+# Maximum proposals generated per suggest() call (legacy; kept for reference).
 _MAX_PROPOSALS = 8
+
+# HS-168-02: per-provider cap so every connected provider keeps its top cards.
+# 5 GitHub + 5 Jira templates exist; cap at 4 per provider guarantees every
+# connected provider's top cards survive (a 3-native + 4-GitHub + 4-Jira = 11
+# desk persists cards for ALL THREE).  The value is 4 because each provider
+# has 5 templates and 4 is the tightest top that keeps the list usable
+# without starving any provider.
+_MAX_PROPOSALS_PER_PROVIDER = 4
+
+
+def _apply_per_provider_cap(
+    proposals: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Apply a per-provider cap and reorder: connected providers first, native LAST.
+
+    Each provider keeps at most ``_MAX_PROPOSALS_PER_PROVIDER`` proposals.
+    Order within a provider is preserved (the templates' original order).
+    The output puts github and jira proposals before native ones (the D7b
+    fold fix) so that provider cards are visible above the fold at 393.
+    """
+    buckets: dict[str, list[dict[str, Any]]] = {}
+    for p in proposals:
+        pid = p.get("provider_id", "native")
+        if pid not in buckets:
+            buckets[pid] = []
+        if len(buckets[pid]) < _MAX_PROPOSALS_PER_PROVIDER:
+            buckets[pid].append(p)
+
+    # Connected providers first, native LAST
+    result: list[dict[str, Any]] = []
+    for pid in ("github", "jira"):
+        result.extend(buckets.pop(pid, []))
+    # Any other provider we might have in the future
+    for pid in sorted(buckets):
+        if pid != "native":
+            result.extend(buckets.pop(pid, []))
+    # Native last
+    result.extend(buckets.pop("native", []))
+    return result
 
 
 def _session_id() -> str:
@@ -103,6 +146,7 @@ class ProjectSetupService:
         watch_service: Any | None = None,
         github_adapter: Any | None = None,
         jira_adapter: Any | None = None,
+        connections_service: Any | None = None,
     ) -> None:
         self._db = db
         self._repo = db.automations
@@ -110,6 +154,7 @@ class ProjectSetupService:
         self._watch_service = watch_service
         self._github_adapter = github_adapter
         self._jira_adapter = jira_adapter
+        self._connections_service = connections_service
         self._issue_test_calls: int = 0  # HS-166-04: set by _native_test_read
 
     # ── Guards ──────────────────────────────────────────────────────
@@ -180,13 +225,18 @@ class ProjectSetupService:
             if qid not in latest_answers or ans["revision"] > latest_answers[qid]["revision"]:
                 latest_answers[qid] = ans
 
-        # Proposals
+        # Proposals (HS-168-02: annotated with connection readiness)
         proposals = self._list_proposals(session_id)
+        self._annotate_proposals_with_connection(proposals)
+
+        # HS-168-02: known scopes from answers
+        known_scopes = self._extract_known_scopes(latest_answers, proposals)
 
         return {
             **session,
             "answers": latest_answers,
             "proposals": proposals,
+            "known_scopes": known_scopes,
         }
 
     def answer(
@@ -330,9 +380,14 @@ class ProjectSetupService:
             except Exception:
                 pass  # Degraded: no jira candidates
 
-        # Persist proposals (truncate to cap)
+        # HS-168-02: per-provider cap so every connected provider keeps its
+        # top cards (the D2 cap fix).  Order: connected providers first,
+        # native LAST (the D7b fold fix).
+        capped = _apply_per_provider_cap(proposals)
+
+        # Persist proposals (capped per provider)
         persisted: list[dict[str, Any]] = []
-        for p in proposals[:_MAX_PROPOSALS]:
+        for p in capped:
             row = self._repo.create_setup_proposal(
                 proposal_id=p["id"],
                 session_id=session_id,
@@ -347,6 +402,9 @@ class ProjectSetupService:
         # Advance to proposals stage
         if session["stage"] in ("outcome", "signals"):
             self._update_session(session_id, stage="proposals")
+
+        # HS-168-02: annotate proposals with connection readiness
+        self._annotate_proposals_with_connection(persisted, principal)
 
         return persisted
 
@@ -1292,6 +1350,101 @@ class ProjectSetupService:
             f"Unknown native subject kind: {subject_kind!r}",
             code="validation",
         )
+
+    # ── HS-168-02: connection annotation + known scopes ─────────────
+
+    def _annotate_proposals_with_connection(
+        self,
+        proposals: list[dict[str, Any]],
+        principal: Principal | None = None,
+    ) -> None:
+        """Inject ``connection: {state, account}`` on every proposal.
+
+        A computed projection at serialization time -- NOT a column.
+        When the connections service is None (e.g. unit tests with
+        no service wired), proposals carry no annotation.
+        """
+        if self._connections_service is None:
+            return
+
+        # Build a provider_id -> tool entry cache (one call per read)
+        p = principal if principal is not None else _ANNOTATION_PRINCIPAL
+        try:
+            result = self._connections_service.list_tools(p)
+            tool_map: dict[str, dict[str, Any]] = {
+                t["provider_id"]: t for t in result.get("tools", [])
+            }
+        except Exception:
+            return
+
+        for p in proposals:
+            pid = p.get("provider_id", "native")
+            tool = tool_map.get(pid)
+            if tool is not None:
+                p["connection"] = {
+                    "state": tool.get("state"),
+                    "account": tool.get("account"),
+                }
+
+    @staticmethod
+    def _extract_known_scopes(
+        answers: dict[str, dict[str, Any]],
+        proposals: list[dict[str, Any]],
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Build the known_scopes projection from recorded answers.
+
+        Known scopes are recorded by clarify_repo_scope (github) and
+        clarify_jira_scope (jira) on the session's answers JSON.  They
+        are recorded as question_id entries with structured payloads.
+
+        The face OFFERS them; the service NEVER applies one to another
+        proposal.
+        """
+        github_scopes: list[dict[str, Any]] = []
+        jira_scopes: list[dict[str, Any]] = []
+
+        # Walk proposals and read their committed scope from the spec
+        for p in proposals:
+            pid = p.get("provider_id", "")
+            spec = p.get("spec") or {}
+            if isinstance(spec, str):
+                try:
+                    spec = json.loads(spec)
+                except Exception:
+                    continue
+
+            subject = spec.get("subject", {})
+            scope = subject.get("scope", {})
+
+            if pid == "github" and scope.get("repositories"):
+                repos = scope["repositories"]
+                if repos:
+                    # Record the first repository as the known scope
+                    watch_name = spec.get("name", "")
+                    github_scopes.append({
+                        "repository": repos[0] if isinstance(repos, list) else str(repos),
+                        "for_proposal_id": p.get("id", ""),
+                        "watch_name": watch_name,
+                    })
+            elif pid == "jira":
+                # Check for jira scope data in the provider section or scope
+                provider = spec.get("provider", {})
+                conn_ref = provider.get("connection_ref", "")
+                projects = scope.get("projects", [])
+                if conn_ref and projects:
+                    site = ""
+                    if "|" in conn_ref:
+                        site = conn_ref.split("|", 1)[0]
+                    watch_name = spec.get("name", "")
+                    for pk in projects:
+                        jira_scopes.append({
+                            "project_key": pk if isinstance(pk, str) else str(pk),
+                            "site": site,
+                            "for_proposal_id": p.get("id", ""),
+                            "watch_name": watch_name,
+                        })
+
+        return {"github": github_scopes, "jira": jira_scopes}
 
     # ── Internal helpers ───────────────────────────────────────────
 

@@ -769,6 +769,38 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    # ── HS-168-02: connection tools ─────────────────────────────────
+    {
+        "name": "connection.list",
+        "description": "List all tool connections with their readiness state (HS-168-02). Returns the same shape as GET /api/connections.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/connection.list@1",
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "connection.recheck",
+        "description": "Recheck one provider connection (HS-168-02). Returns the refreshed tool entry.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/connection.recheck@1",
+            "type": "object",
+            "properties": {
+                "provider_id": {
+                    "type": "string",
+                    "description": "Provider to recheck: github, jira, calendar, models.",
+                },
+                "ref": {
+                    "type": "string",
+                    "description": "Optional Jira connection ref (site|email) to recheck a specific connection.",
+                },
+            },
+            "required": ["provider_id"],
+            "additionalProperties": False,
+        },
+    },
 ]
 
 
@@ -831,6 +863,15 @@ def _steward_service():
     )
 
 
+def _connections_service():
+    """Compose ConnectionsService (same wiring as web context, HS-168-02)."""
+    from holdspeak.services.connections_service import ConnectionsService
+    return ConnectionsService(
+        github_adapter=_github_adapter(),
+        jira_adapter=_jira_adapter(),
+    )
+
+
 def _setup_service():
     """Compose ProjectSetupService (same wiring as web context)."""
     from holdspeak.services.project_service import ProjectService
@@ -839,12 +880,15 @@ def _setup_service():
     from holdspeak.services.watch_sources import default_snapshot_fetcher
     db = get_database()
     ps = ProjectService(db)
+    ga = _github_adapter()
     ja = _jira_adapter()
     fetcher = default_snapshot_fetcher(jira_adapter=ja)
     ws = WatchService(db, snapshot_fetcher=fetcher)
     return ProjectSetupService(
         db, project_service=ps, watch_service=ws,
+        github_adapter=ga,
         jira_adapter=ja,
+        connections_service=_connections_service(),
     )
 
 
@@ -1780,6 +1824,20 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         watch_id = _require_id(arguments, "watch_id")
         _require_graduated_watch(watch_id)
         return _watch_service().retire_watch(principal, watch_id)
+
+    # ── HS-168-02: connection tools ─────────────────────────────────
+
+    if name == "connection.list":
+        # Web parity: connections.py list_connections
+        # Service seam: ConnectionsService.list_tools
+        return _connections_service().list_tools(principal)
+
+    if name == "connection.recheck":
+        # Web parity: connections.py recheck_connection
+        # Service seam: ConnectionsService.recheck
+        provider_id = _require_id(arguments, "provider_id")
+        ref = arguments.get("ref")
+        return _connections_service().recheck(principal, provider_id, ref=ref)
 
     raise LookupError(name)
 

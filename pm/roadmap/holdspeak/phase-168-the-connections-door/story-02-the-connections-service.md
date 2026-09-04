@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 168
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-168-01
 - **Unblocks:** HS-168-03, HS-168-04
 - **Owner:** unassigned
@@ -51,10 +51,37 @@ twin for "what is connected".
 
 ## Acceptance criteria
 
-- [ ] `GET /api/connections` returns the same state the per-provider routes return for gh connected / gh logged out / acli one account / nothing configured — pinned by tests that drive the adapters, not fixtures that hand-seed the row.
-- [ ] Suggest returns `connection` on every proposal and `known_scopes` on the session; scope recorded once is returned, never applied.
-- [ ] MCP twins registered, classified, censused; parity test web = MCP for list + recheck.
-- [ ] The per-provider cap: a 3 + 5 + 5 desk persists cards for every connected provider (failing-then-passing).
+- [x] `GET /api/connections` returns the same state the per-provider routes return for gh connected / gh logged out / acli one account / nothing configured — pinned by tests that drive the adapters, not fixtures that hand-seed the row.
+- [x] Suggest returns `connection` on every proposal and `known_scopes` on the session; scope recorded once is returned, never applied.
+- [x] MCP twins registered, classified, censused; parity test web = MCP for list + recheck.
+- [x] The per-provider cap: a 3 + 5 + 5 desk persists cards for every connected provider (failing-then-passing).
+
+## Delivered (2026-09-04)
+
+`holdspeak/services/connections_service.py` (ONE readiness shape over
+the existing adapters; the five wire constants mapped —
+`disconnected` + `owner_action_required` → owner_action_required,
+`degraded` kept, the 404 condition → not_configured; ONE
+`recovery_hint` normalized from GitHub's display and Jira's recovery
+command) + `holdspeak/web/routes/connections.py` (`GET
+/api/connections`, `POST /api/connections/{provider}/recheck`,
+delegating to the existing rechecks); suggest and resume annotate
+every proposal with `connection` (a computed projection — no column);
+`known_scopes` computed from what clarify-scope already writes;
+MCP twins `connection.list` / `connection.recheck` classified
+evidence_read, the palette 45 → 47, MCP_SIDECAR regenerated 187 →
+189 tools / 33 → 34 families, the census tests renamed honestly
+(`_is_45` → `_is_47`); the cap PER PROVIDER (`_MAX_PROPOSALS_PER_
+PROVIDER = 4` — each provider holds 5 templates; a 3-native +
+5-GitHub + 5-Jira desk persists all three, connected providers before
+native — failing-then-passing on the old cut). Orchestrator catches
+paid in-round: none needed on the wire; a parity gap the worker found
+and fixed — the MCP family composed ProjectSetupService WITHOUT the
+github_adapter (project.py:845), so GitHub suggestions never appeared
+through the sidecar (the 164/165 composition scar, again). Evidence:
+357 passed · 2 honest skips across the connections/setup/palette/
+gate/drift/provider suites in an isolated HOME; the sidecar generator
+check `189 tools across 34 families`.
 
 ## Test plan
 

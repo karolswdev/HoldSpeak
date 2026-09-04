@@ -1061,7 +1061,8 @@ class TestJiraCandidates:
         svc.answer(OWNER, session["id"], Q_OUTCOME, {"text": "Track Jira issues"})
         proposals = svc.suggest(OWNER, session["id"])
         jira_proposals = [p for p in proposals if p.get("provider_id") == "jira"]
-        assert len(jira_proposals) == 5
+        # HS-168-02: per-provider cap limits to _MAX_PROPOSALS_PER_PROVIDER (4)
+        assert len(jira_proposals) == 4
         for p in jira_proposals:
             assert p["rationale"]["readiness"] == "needs_scope"
             assert p["rationale"]["source"] == "jira"
