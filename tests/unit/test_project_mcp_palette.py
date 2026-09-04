@@ -93,9 +93,9 @@ def test_palette_contains_project_and_provider_only() -> None:
         )
 
 
-def test_palette_size_is_44() -> None:
-    """Pin: the project family has 44 tools (34 project.* + 10 provider.*; HS-166)."""
-    assert len(PROJECT_PALETTE) == 44
+def test_palette_size_is_45() -> None:
+    """Pin: the project family has 45 tools (35 project.* + 10 provider.*; HS-167-02 added project.steward.trigger)."""
+    assert len(PROJECT_PALETTE) == 45  # HS-167-02: project.steward.trigger
 
 
 # ────────────────────────────────────────────────────────────────────

@@ -366,6 +366,10 @@ TOOLS: list[dict[str, Any]] = [
                 "max_retries": {"type": "integer", "minimum": 0, "maximum": 100},
                 "max_actions_per_run": {"type": "integer", "minimum": 0, "maximum": 1000},
                 "cooldown_seconds": {"type": "integer", "minimum": 0, "maximum": 86400},
+                "evaluation_cadence_minutes": {
+                    "type": "integer", "minimum": 1, "maximum": 10080,
+                    "description": "Evaluation cadence in minutes (1..10080). Applied to all project watches.",
+                },
                 "bounds": {"type": "object", "description": "Arbitrary bounds object."},
                 "command_id": {"type": "string", "description": "Idempotency key."},
             },
@@ -1236,6 +1240,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         write_fields = {
             "enabled", "unattended_enabled", "eligible_effect_kinds",
             "max_retries", "max_actions_per_run", "cooldown_seconds", "bounds",
+            "evaluation_cadence_minutes",
         }
         is_write = any(arguments.get(f) is not None for f in write_fields)
 
@@ -1273,6 +1278,17 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         if unattended_enabled is not None and not isinstance(unattended_enabled, bool):
             raise ValidationError("unattended_enabled must be a boolean")
 
+        cadence_minutes = arguments.get("evaluation_cadence_minutes")
+        if cadence_minutes is not None:
+            if not isinstance(cadence_minutes, int) or cadence_minutes < 1:
+                raise ValidationError(
+                    "evaluation_cadence_minutes must be an integer >= 1"
+                )
+            if cadence_minutes > 10080:
+                raise ValidationError(
+                    "evaluation_cadence_minutes cannot exceed 10080 (7 days)"
+                )
+
         existing = svc._db.steward_policies.get_policy_for_project(project_id)
         if existing is None:
             policy_id = generate_pstpol_id()
@@ -1306,6 +1322,17 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                 update_kwargs["unattended_enabled"] = 1 if unattended_enabled else 0
             if update_kwargs:
                 svc._db.steward_policies.update_policy(policy_id, **update_kwargs)
+
+        if cadence_minutes is not None:
+            try:
+                watches = svc._db.automations.list_project_watches(project_id)
+                for w in watches:
+                    svc._db.automations.update_watch_spec(
+                        w["id"],
+                        evaluation_cadence_minutes=cadence_minutes,
+                    )
+            except Exception:
+                pass
 
         policy = svc._db.steward_policies.get_policy(policy_id)
 
@@ -1727,7 +1754,6 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                 raise ValidationError(
                     "evaluation_cadence_minutes must be 1..10080",
                 )
-            from holdspeak.db import get_database
             get_database().automations.update_watch_spec(
                 watch_id, evaluation_cadence_minutes=cadence,
             )

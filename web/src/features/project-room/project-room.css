@@ -6,3 +6,13 @@
   padding: 4px var(--desk-surface-row-pad-x, 14px);
   margin: 0;
 }
+
+/* HS-167-03: inline-px CSSProperties promoted to token-legal CSS. */
+.room-change-row {
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+}
+.room-change-time {
+  margin-left: var(--space-2);
+  color: var(--text-faint);
+}

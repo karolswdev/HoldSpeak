@@ -1,7 +1,7 @@
 # Phase 167 - Project Rooms: The Room in Use
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 7/8
+- **Status:** COMPLETE 8/8
 - **Chartered:** 2026-09-03 off main `31c072f5` (166 The Jira Parity MERGED via PR #532 on the owner's word — the ELEVENTH Project Rooms phase merged; the SRS V0 slices P0..P7 are all on main)
 - **Canon:** docs/internal/CONSTITUTION.md (Article III honest egress); docs/internal/POSITIONING.md (the voice rules); web/src/desk/surface/contract.md (the library contract, HS-156-03); docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §14 (the V0 slices this phase makes one thing); the owner's laws: face-design-before-build (2026-09-03), the beauty pass after every functional pass (2026-08-17), "will you use this on a Tuesday?" (Phase 139)
 
@@ -78,7 +78,7 @@ proof stays a ledgered debt); the door-title first-match choice
 | HS-167-05 | The faces recomposed II (Review, Update, Steward; shots; the beauty pass) | done | [story-05-the-faces-ii](./story-05-the-faces-ii.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-167-06 | The Tuesday walk (the owner's first project on his real desk, attended — OWNER VERDICT) | done | [story-06-the-tuesday-walk](./story-06-the-tuesday-walk.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-167-07 | The docs (the Rooms guide re-shot; the library contract; MCP_SIDECAR counts guarded; the dedicated docs story) | done | [story-07-the-docs](./story-07-the-docs.md) | [evidence-story-07](./evidence-story-07.md) |
-| HS-167-08 | The close (gates, riders, debts, final summary) | backlog | [story-08-the-close](./story-08-the-close.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-167-08 | The close (gates, riders, debts, final summary) | done | [story-08-the-close](./story-08-the-close.md) | [evidence-story-08](./evidence-story-08.md) |
 
 ## Where we are
 
@@ -122,8 +122,13 @@ archived. THE OWNER'S WORD, verbatim: "Walk it later — close on the
 dry run." (his attended leg ledgered pending). **07 DONE** (MCP_SIDECAR.md generated from
 the registry with a drift guard — five stale counts corrected; the
 new surface documented; the Rooms guide with fourteen shots of the
-recomposed faces and the Tuesday walk). 08 the close: the full suite,
-counsel, the sweep, the final summary, the PR. 04/05 build to the ratified mockups.
+recomposed faces and the Tuesday walk). **08 DONE — PHASE COMPLETE 8/8.**
+Full suite 24f/9220p, sweep 8 baseline + 15 branch-new paid + 1 flake
+(zero unexplained); counsel RATIFY-W-C with 2 M + 5 S paid (M-2 was
+live on the owner's desk: archive did not stop the watches — mitigated,
+then paid at the root); web 789 + zero branch-new; glass 46; the runner
+green. See final-summary.md. The PR waits for the owner's word; his
+attended walk is ledgered pending. 04/05 build to the ratified mockups.
 
 ## Active risks
 

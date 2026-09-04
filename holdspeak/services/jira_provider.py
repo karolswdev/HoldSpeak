@@ -110,8 +110,8 @@ class _CrossProcessLock:
 
     On acquire:
       1. Acquire the in-process RLock (thread reentrancy).
-      2. Acquire an exclusive flock on the lockfile (cross-process).
-    On release: reverse order.
+      2. On the outermost (depth 0→1) acquire only: open + flock the lockfile.
+    On release: reverse order; unlock + close only on the 1→0 transition.
 
     If the flock cannot be acquired within ``timeout`` seconds, raises
     a ServiceError with ``CODE_LOCK_TIMEOUT``.
@@ -120,23 +120,28 @@ class _CrossProcessLock:
     def __init__(self, timeout: float = 10.0) -> None:
         self._rlock = threading.RLock()
         self._timeout = timeout
-        self._fd: int | None = None
+        self._local = threading.local()
 
     def __enter__(self) -> "_CrossProcessLock":
         self._rlock.acquire()
+        depth = getattr(self._local, "depth", 0)
+        if depth > 0:
+            self._local.depth = depth + 1
+            return self
         try:
             path = _acli_lockfile_path()
             path.parent.mkdir(parents=True, exist_ok=True)
-            self._fd = os.open(str(path), os.O_CREAT | os.O_RDWR)
+            fd = os.open(str(path), os.O_CREAT | os.O_RDWR)
             deadline = _time.monotonic() + self._timeout
             while True:
                 try:
-                    fcntl.flock(self._fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    self._local.fd = fd
+                    self._local.depth = 1
                     return self
                 except (OSError, IOError):
                     if _time.monotonic() >= deadline:
-                        os.close(self._fd)
-                        self._fd = None
+                        os.close(fd)
                         self._rlock.release()
                         raise ServiceError(
                             CODE_LOCK_TIMEOUT,
@@ -153,10 +158,16 @@ class _CrossProcessLock:
 
     def __exit__(self, *exc: object) -> None:
         try:
-            if self._fd is not None:
-                fcntl.flock(self._fd, fcntl.LOCK_UN)
-                os.close(self._fd)
-                self._fd = None
+            depth = getattr(self._local, "depth", 0)
+            if depth <= 1:
+                fd = getattr(self._local, "fd", None)
+                if fd is not None:
+                    fcntl.flock(fd, fcntl.LOCK_UN)
+                    os.close(fd)
+                    self._local.fd = None
+                self._local.depth = 0
+            else:
+                self._local.depth = depth - 1
         finally:
             self._rlock.release()
 

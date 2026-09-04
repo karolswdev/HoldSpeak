@@ -1117,6 +1117,29 @@ class ProjectService:
                 ),
             )
 
+            # HS-167 M-2: pause active/tested watches bound to this
+            # project and disable unattended policy — in the SAME
+            # transaction — so an archived project never evaluates.
+            watch_rows = conn.execute(
+                "SELECT id FROM connector_watches "
+                "WHERE project_id = ? AND state IN ('active', 'tested')",
+                (project_id,),
+            ).fetchall()
+            for wr in watch_rows:
+                conn.execute(
+                    "UPDATE connector_watches "
+                    "SET state = 'paused', updated_at = ? WHERE id = ?",
+                    (now_iso, wr["id"]),
+                )
+
+            policy = self._db.steward_policies.get_policy_for_project_in_transaction(
+                conn, project_id,
+            )
+            if policy and policy.get("unattended_enabled"):
+                self._db.steward_policies.update_policy_in_transaction(
+                    conn, policy["id"], unattended_enabled=0,
+                )
+
             self._ledger.append_in_transaction(
                 conn, principal,
                 event_type="project.archived",
@@ -1149,6 +1172,9 @@ class ProjectService:
 
         If the project is not archived, returns a no_change result
         (API-002's honest reply).
+
+        Watches paused by archive_project are NOT auto-resumed here —
+        the owner resumes deliberately after restoring.
         """
         project = self._require_project(project_id)
 

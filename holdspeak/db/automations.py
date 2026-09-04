@@ -395,15 +395,23 @@ class AutomationRepository(BaseRepository):
         with a set next_evaluation_at that has passed.  Legacy watches
         (state='') are owned by ReactionService.refresh_due_watches --
         never two schedulers on one row.
+
+        HS-167 M-2: watches whose project is archived are excluded
+        defensively (archive_project pauses them, but a direct DB edit
+        or race could leave one active).
         """
         with self._connection() as conn:
             rows = conn.execute(
-                """SELECT * FROM connector_watches
-                   WHERE enabled = 1
-                     AND state IN ('active', 'tested')
-                     AND next_evaluation_at IS NOT NULL
-                     AND next_evaluation_at <= ?
-                   ORDER BY next_evaluation_at ASC""",
+                """SELECT cw.* FROM connector_watches cw
+                   LEFT JOIN projects p ON cw.project_id = p.id
+                   WHERE cw.enabled = 1
+                     AND cw.state IN ('active', 'tested')
+                     AND cw.next_evaluation_at IS NOT NULL
+                     AND cw.next_evaluation_at <= ?
+                     AND (cw.project_id = '' OR cw.project_id IS NULL
+                          OR p.lifecycle IS NULL
+                          OR p.lifecycle != 'archived')
+                   ORDER BY cw.next_evaluation_at ASC""",
                 (now_iso,),
             ).fetchall()
         return [self._payload(row, "query", "snapshot") for row in rows]

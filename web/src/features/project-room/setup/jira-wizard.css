@@ -68,6 +68,16 @@
 }
 
 /* HS-167-03: raw-px CSSProperties promoted to token-legal CSS classes. */
+.jira-code-wrap {
+  overflow-wrap: anywhere;
+  font: inherit;
+}
+.jira-population-gap {
+  margin-top: var(--space-3);
+}
+.jira-chips-gap {
+  margin-top: var(--space-1);
+}
 .jira-inline-chips {
   display: flex;
   flex-wrap: wrap;

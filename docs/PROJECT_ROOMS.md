@@ -110,8 +110,9 @@ Watches against the live population and activates them.
 ### 5. The Room
 
 The Room lands. The identity band shows the Project name, lifecycle,
-and revision. Four wings are visible: the Delta, the Watch ledger,
-the Steward, and the Update timeline. The Watch ledger rows show
+and revision. Four wings are visible: Timeline, Decisions, Search,
+and Ask. The posture strip's verbs (Review, Updates, Steward) switch
+the working view. The Watch ledger rows show
 each Watch's template and evaluation state.
 
 ![The populated Room with identity band, Watch ledger rows, and the four wings](assets/project-rooms/room-populated.png)

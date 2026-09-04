@@ -977,6 +977,11 @@ class WatchService:
                 outcomes.append(outcome_entry)
 
             except Exception as exc:
+                # M-1: drain stale thread-local fetch metadata so a
+                # failed Jira fetch never leaks calls into the next
+                # watch's evaluation on the same thread.
+                from holdspeak.services.watch_sources import drain_fetch_meta as _drain
+                _drain()
                 # Per-watch isolation: record failure, update circuit,
                 # advance bookkeeping, continue.
                 try:

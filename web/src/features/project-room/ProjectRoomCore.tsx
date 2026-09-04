@@ -492,9 +492,9 @@ function RightRail({ room }: { room: RoomSnapshot }) {
                       <SurfaceStreamEntry key={gi} dense>
                         <Disclosure label={`${group.items.length} ${group.label}`} defaultOpen={false} variant="raw">
                           {group.items.map((c, ci) => (
-                            <div key={c.id || ci} style={{ fontSize: 12, fontFamily: "var(--font-mono)" }}>
+                            <div key={c.id || ci} className="room-change-row">
                               <span data-testid="rail-change-row">{c.label}</span>
-                              {c.occurredAt ? <span style={{ marginLeft: 8, color: "var(--text-faint)" }}>{humanTime(c.occurredAt)}</span> : null}
+                              {c.occurredAt ? <span className="room-change-time">{humanTime(c.occurredAt)}</span> : null}
                             </div>
                           ))}
                         </Disclosure>

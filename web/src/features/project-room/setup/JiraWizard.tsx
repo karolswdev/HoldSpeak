@@ -141,7 +141,7 @@ export function JiraAccountsStep({
               fold={needsAuth ? (
                 <>
                   <SurfaceWell>
-                    <code style={{ overflowWrap: "anywhere", font: "inherit" }}>{loginCmd}</code>
+                    <code className="jira-code-wrap">{loginCmd}</code>
                     <TransportKey label="Copy" glyph="C" compact onClick={() => {
                       try { void navigator.clipboard.writeText(loginCmd); } catch { /* noop */ }
                     }} />
@@ -297,7 +297,7 @@ export function JiraScopeStep({
 
       {/* Population sheet — 12px gap from the project cards */}
       {selectedProject ? (
-        <div style={{ marginTop: "12px" }}>
+        <div className="jira-population-gap">
         <GadgetGroup label="Population">
           {/* Types (enumerated) — wide row: inline label token + toggles */}
           {issueTypes && issueTypes.items.length > 0 ? (
@@ -561,7 +561,7 @@ export function JiraTestStep({
               <StateChip key={t} state="idle" label={transitionLabel(t)} />
             ))}
           </div>
-          <div className="jira-inline-chips" style={{ marginTop: "6px" }}>
+          <div className="jira-inline-chips jira-chips-gap">
             <StateChip state="idle" label={cadenceChip} />
             {actionChip ? <StateChip state="idle" label={actionChip} /> : null}
           </div>

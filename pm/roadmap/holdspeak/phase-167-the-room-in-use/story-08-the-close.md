@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 167
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-167-01..07
 - **Unblocks:** post-arc (Gate B, MCP-008, the model-era collapse, 155 The Crew)
 - **Owner:** unassigned
@@ -29,8 +29,27 @@ The twelfth close. The liturgy is law; the scars ride.
 
 ## Acceptance criteria
 
-- [ ] Full suite READ; sweep zero unexplained; web gates green; counsel zero open must-fix.
-- [ ] Debt ledger updated; final-summary; COMPLETE 8/8; README true; PR merged.
+- [x] Full suite READ; sweep zero unexplained; web gates green; counsel zero open must-fix.
+- [x] Debt ledger updated; final-summary; COMPLETE 8/8; README true; PR opened (merge on the owner's word).
+
+## Landed (2026-09-04)
+
+The full CI-style suite in two halves: 24 failed / 9220 passed; the
+sweep vs main's baseline at the branch BASE (24 names @ run
+33784026156): 8 baseline + 15 branch-new paid at root (the schema
+snapshot; three count pins renamed honestly; the tool classification
+census; an ordered pin; NINE MCP failures with ONE root cause — a
+worker's local import making `get_database` unbound on every other
+tool path) + 1 proven flake (x2 green). Counsel RATIFY-W-C: 2 M + 5 S
+paid in-round with 53 tests — M-2 was LIVE on the owner's desk (an
+archived project's watches kept evaluating his real providers on the
+tick) — mitigated on his desk within minutes, then paid at the root
+(archive pauses watches + unattended off; list_due_watches excludes
+archived projects). Web 789 + baseline zero branch-new + token gate
+clean; the eight glass rigs 46 green; the runner green isolated and
+real. Churn restored before staging. final-summary.md written; the
+handover (Muad'Dib IV) serialized. The PR opened on the local gates;
+the merge waits for the owner's word.
 
 ## Test plan
 

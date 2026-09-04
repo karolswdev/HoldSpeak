@@ -224,6 +224,9 @@ class JiraWatchSource:
 
     def snapshot(self, principal: Principal, *, query_kind: str,
                  query: dict[str, Any]) -> list[dict[str, Any]]:
+        # M-1: clear-on-entry — prevent a previous call's stale metadata
+        # from leaking into a later watch if this fetch raises mid-flight.
+        drain_fetch_meta()
         if query_kind != "issues":
             raise ValidationError("Jira Watches support issues")
 
