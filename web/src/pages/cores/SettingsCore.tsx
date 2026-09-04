@@ -4,7 +4,7 @@
 // window body; the footer status bar carries the receipt and the
 // refusals; every control is a gadget from the surface kit. The pane
 // roster is a code constant — the wire never mints a pane again.
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type {
   CoreProps,
   SecretState,
@@ -30,6 +30,8 @@ import {
   StringGadget,
   type CycleOption,
 } from "../../desk/surface/gadgets";
+import { Receipt } from "../../desk/surface";
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { openSurface } from "../../desk/shell";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
@@ -39,6 +41,7 @@ import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
 import { ContextualAssignment } from "./ContextualAssignment";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
+import { ConnectionsPane, type ConnectionsFoot } from "./connections";
 // HS-139-05: activateLauncher removed (Delivery tile absorbed).
 import {
   CADENCE_PRESSURE_OPTIONS,
@@ -221,6 +224,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const [writtenAt, setWrittenAt] = useState("");
   const [refusal, setRefusal] = useState("");
   const [secretBusy, setSecretBusy] = useState("");
+  // HS-168-03: connections receipt for the integrations module footer.
+  const [connectionsFoot, setConnectionsFoot] = useState<ConnectionsFoot | null>(null);
+  const handleConnectionsFooter = useCallback((foot: ConnectionsFoot) => {
+    setConnectionsFoot(foot);
+  }, []);
   const [authorityBusy, setAuthorityBusy] = useState(false);
   const secrets = (resource.data._secrets ?? {}) as Record<string, SecretState>;
 
@@ -1039,7 +1047,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       /* ── Assignments: bounded server-projected routing truth ── */
       case "assignments":
         return <CapabilityAssignmentsCore />;
-      /* ── Integrations: credentials + RAW ── */
+      /* ── Connections: tools + credentials + RAW ── */
       case "integrations": {
         const RAW_SECRETS = new Set([
           "failure_webhook_url",
@@ -1066,6 +1074,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
         );
         return (
           <>
+            {/* HS-168-03: the Connections face above credentials + mesh. */}
+            <ConnectionsPane
+              onFooterUpdate={handleConnectionsFooter}
+              onOpenModule={openModule}
+            />
             <GadgetGroup label="Credentials">
               <div className="prefs-egress-line">
                 <EgressChip />
@@ -1139,17 +1152,32 @@ function SettingsFace({ hero, scope }: CoreProps) {
           />
         )}
       </SurfaceState>
-      <PrefStatusBar
-        onBack={
-          module
-            ? () => {
-                setModuleId(null);
-                setHighlight("");
-              }
-            : undefined
-        }
-        receipt={receipt}
-      />
+      {/* HS-168-03: connections module shows its own receipt footer. */}
+      {moduleId === "integrations" ? (
+        <SurfaceFooter verbs={<>
+          <EgressChip
+            label={connectionsFoot?.egressHost ? connectionsFoot.egressHost.toUpperCase() : undefined}
+            scope={connectionsFoot?.egressHost ? "cloud" : "local"}
+          />
+          {connectionsFoot?.checkedAt ? (
+            <Receipt status="ok" label="Checked" timestamp={connectionsFoot.checkedAt} />
+          ) : (
+            <span className="prefs-receipt">NOT CHECKED</span>
+          )}
+        </>} />
+      ) : (
+        <PrefStatusBar
+          onBack={
+            module
+              ? () => {
+                  setModuleId(null);
+                  setHighlight("");
+                }
+              : undefined
+          }
+          receipt={receipt}
+        />
+      )}
     </>
   );
 }

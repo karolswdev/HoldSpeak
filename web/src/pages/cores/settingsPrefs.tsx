@@ -39,8 +39,8 @@ export const PREF_MODULES: PrefModule[] = [
   { id: "models", label: "Models", glyph: "models", sprite: "models", keys: ["rails_observer"] },
   // Assignments is Models' peer: which compatible chain each job uses.
   { id: "assignments", label: "Assignments", glyph: "models", sprite: "models", keys: [] },
-  // Integrations: credentials + RAW.
-  { id: "integrations", label: "Integrations", glyph: "secret", sprite: "integrations", keys: [] },
+  // Connections: tool connections + credentials + RAW.
+  { id: "integrations", label: "Connections", glyph: "secret", sprite: "integrations", keys: [] },
   // System: device name, desk reset, devices RAW.
   { id: "system", label: "System", glyph: "system", sprite: "system", keys: ["device", "mesh"] },
 ];

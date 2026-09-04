@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 168
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-168-01, HS-168-02
 - **Unblocks:** HS-168-04, HS-168-05
 - **Owner:** unassigned
@@ -31,9 +31,37 @@ Jira have no home at all.
 
 ## Acceptance criteria
 
-- [ ] The face composes barrel species only (zero hand-rolled rows, zero sentences); the four states render as designed at 1440 and 393.
-- [ ] Every deep-link caller updated and pinned; the credentials + mesh tests green.
-- [ ] Glass rig shots read by the orchestrator at true size before the flip.
+- [x] The face composes barrel species only (zero hand-rolled rows, zero sentences); the four states render as designed at 1440 and 393.
+- [x] Every deep-link caller updated and pinned; the credentials + mesh tests green.
+- [x] Glass rig shots read by the orchestrator at true size before the flip.
+
+## Delivered (2026-09-04)
+
+`web/src/pages/cores/connections/` (ConnectionsPane + api client +
+layout css) rendered at the top of the `integrations` tile, whose id
+stays and whose label is now `Connections` in settingsPrefs.tsx AND
+applications.ts; the TOOLS group as one full-width row per tool from
+`GET /api/connections` only (no derivation on the face); GitHub's
+sign-in fold (the command in a well, COPY at the right edge, primary
+Recheck + ONE EgressChip beside the verb); the Jira connection rows
+in the 166 grammar + the ghost Add account card with labelled Site /
+Email wells and the mic; Calendar (inline SVG emblem) → Meetings;
+Models → the models tile; CREDENTIALS + MESH untouched beneath; the
+pane foot Receipt + the host last contacted, or `local · Not
+checked`. Two orchestrator rounds paid on the shots (seven bounces:
+an emoji emblem, a duplicated egress chip, COPY jammed on the
+command, unlabelled Jira wells, the identity line splitting at 393,
+no connected leg, and a POST to a route that does not exist — caught
+by test_api_surface). Shots (assets/story-03-shots/): cold + fold +
+recheck on an isolated HOME; connected-real at 1440 + 393 on the
+owner's real gh + acli (GitHub `Connected · karolswdev`, the Jira row
+with the full host, the foot naming the site last contacted). Gates
+read by the orchestrator: vitest 190/190 (pages/cores); api-surface
+5/5; glass 4 cold + 2 real; web baseline zero branch-new (with 04's
+in-flight files stashed). Riders: the emojiGuard sweeps only desk/
+(pages/cores/ is unswept — 07 ledgers it); StringGadget's `label`
+is aria-only (a visible label needed a wrapper); the tile glyph
+stays `secret`.
 
 ## Test plan
 

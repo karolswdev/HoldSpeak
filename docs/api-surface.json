@@ -4408,7 +4408,9 @@
         "GET"
       ],
       "module": "web.routes.providers",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/providers/jira/connections",
@@ -4416,7 +4418,9 @@
         "POST"
       ],
       "module": "web.routes.providers",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/providers/jira/connections/{ref}/recheck",
@@ -6068,8 +6072,6 @@
   ],
   "unmatched_calls": {
     "ios": [],
-    "web": [
-      "/api/jira/connections"
-    ]
+    "web": []
   }
 }

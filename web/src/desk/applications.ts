@@ -383,7 +383,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "configure-integrations",
     windowId: "surface-settings",
-    label: "Integrations",
+    label: "Connections",
     description: "Configure connected destinations and credentials.",
     glyph: "↗",
     href: "/settings",
