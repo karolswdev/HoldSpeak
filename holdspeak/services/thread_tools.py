@@ -225,6 +225,7 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "project.publish_update": ("effect_proposal", False),
     "project.restore": ("effect_proposal", False),
     "project.run_steward": ("effect_proposal", False),
+    "project.steward.trigger": ("effect_proposal", False),  # HS-167-02: desk-wide trigger, same class as run_steward
     "project.setup.answer": ("effect_proposal", False),
     "project.setup.finalize": ("effect_proposal", False),
     "project.setup.clarify_jira_scope": ("effect_proposal", False),  # HS-166

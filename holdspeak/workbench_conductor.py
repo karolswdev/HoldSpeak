@@ -32,6 +32,15 @@ _watch_service: Optional[Any] = None
 _steward_service: Optional[Any] = None
 
 
+def get_scheduler_services() -> tuple[Optional[Any], Optional[Any]]:
+    """Read the injected scheduler services (HS-167-02).
+
+    Returns ``(watch_service, steward_service)``; either is None when
+    set_scheduler_services has not wired it -- callers refuse honestly.
+    """
+    return _watch_service, _steward_service
+
+
 def set_scheduler_services(watch_service: Any, steward_service: Any) -> None:
     """Inject the app-wired scheduler services (HS-164-04).
 

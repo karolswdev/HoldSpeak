@@ -1,13 +1,25 @@
-// HS-159-05 -- the question plane: ONE question at a time (INT-003),
-// the two SS4 questions verbatim (WEB-CR-002), prior answers collapse
-// into editable rows (SS4.2).  Enter submits, Shift+Enter newline,
-// Cmd/Ctrl+Enter accepts (WEB-CMD-005).  Voice fills, never submits
-// (WEB-CMD-006).  Announcements per WEB-A11Y-008.
+// HS-167-04 — the question plane recomposed on the surface library.
+// SurfaceSection label = the question word (OUTCOME / NOTICE); helper = placeholder.
+// AnswerRow = SurfaceLedgerRow (lead ✓, primary = answer, wrap, trailing Edit).
 
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import {
+  SurfaceSection,
+  SurfaceLedgerRow,
+} from "../../../desk/surface/Surface";
 import { MicButton } from "../../../desk/surface/controls/MicButton";
-import { QUESTION_TEXT, Q_OUTCOME, Q_SIGNALS, STAGE_META, STAGE_COUNT, type SetupAnswer } from "./model";
+import { QUESTION_TEXT, Q_OUTCOME, Q_SIGNALS, type SetupAnswer } from "./model";
 import type { ControllerState } from "./useSetupController";
+
+const QUESTION_LABEL: Record<string, string> = {
+  [Q_OUTCOME]: "OUTCOME",
+  [Q_SIGNALS]: "NOTICE",
+};
+
+const QUESTION_PLACEHOLDER: Record<string, string> = {
+  [Q_OUTCOME]: QUESTION_TEXT[Q_OUTCOME],
+  [Q_SIGNALS]: QUESTION_TEXT[Q_SIGNALS],
+};
 
 export function SetupInterview({
   state,
@@ -45,7 +57,6 @@ export function SetupInterview({
           draft={state.draft}
           onDraft={onSetDraft}
           onSubmit={onSubmitOutcome}
-          stageKey="outcome"
         />
       ) : null}
 
@@ -63,7 +74,6 @@ export function SetupInterview({
             draft={state.draft}
             onDraft={onSetDraft}
             onSubmit={onSubmitSignals}
-            stageKey="signals"
           />
         </>
       ) : null}
@@ -100,7 +110,7 @@ export function SetupInterview({
   );
 }
 
-/* ── QuestionStep: one active question at a time ── */
+/* ── QuestionStep: SurfaceSection label + well with mic ── */
 
 function QuestionStep({
   questionId,
@@ -108,34 +118,22 @@ function QuestionStep({
   draft,
   onDraft,
   onSubmit,
-  stageKey,
 }: {
   questionId: string;
   questionText: string;
   draft: string;
   onDraft: (text: string) => void;
   onSubmit: (text: string) => void;
-  stageKey: string;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [submitting, setSubmitting] = useState(false);
-  const meta = STAGE_META[stageKey];
-  const stepLabel = meta ? `Step ${meta.index} of ${STAGE_COUNT}` : "";
 
-  // Focus the textarea on mount for keyboard-first flow
   useEffect(() => {
     textareaRef.current?.focus();
   }, [questionId]);
 
-  // Announce the step (WEB-A11Y-008)
-  useEffect(() => {
-    const el = document.getElementById(`setup-step-announce-${questionId}`);
-    if (el) el.textContent = `${stepLabel}: ${questionText}`;
-  }, [questionId, stepLabel, questionText]);
-
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
-      // Enter submits one-line answer; Shift+Enter = newline (WEB-CMD-005)
       if (e.key === "Enter" && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         if (draft.trim() && !submitting) {
@@ -143,7 +141,6 @@ function QuestionStep({
           onSubmit(draft);
         }
       }
-      // Cmd/Ctrl+Enter = accept (same as Enter for questions)
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         if (draft.trim() && !submitting) {
@@ -155,7 +152,6 @@ function QuestionStep({
     [draft, onSubmit, submitting],
   );
 
-  // Voice fills, never submits (WEB-CMD-006)
   const handleVoice = useCallback(
     (text: string) => {
       onDraft(draft ? `${draft} ${text}` : text);
@@ -164,49 +160,34 @@ function QuestionStep({
   );
 
   return (
-    <div className="setup-question" data-testid={`setup-question-${questionId}`}>
-      <div
-        className="setup-step-token"
-        aria-hidden="true"
-        data-testid="setup-step-token"
-      >
-        {stepLabel}
-      </div>
-      <label
-        className="setup-question-label"
-        htmlFor={`setup-input-${questionId}`}
-      >
-        {questionText}
-      </label>
-      <div className="setup-question-input-row">
-        <textarea
-          ref={textareaRef}
-          id={`setup-input-${questionId}`}
-          className="setup-question-textarea"
-          value={draft}
-          onChange={(e) => onDraft(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type or speak your answer..."
-          rows={2}
-          disabled={submitting}
-          aria-describedby={`setup-step-announce-${questionId}`}
-        />
-        <MicButton
-          onText={handleVoice}
-          label="Speak your answer"
-        />
-      </div>
-      <div
-        id={`setup-step-announce-${questionId}`}
-        className="sr-only"
-        aria-live="polite"
-        role="status"
-      />
+    <div data-testid={`setup-question-${questionId}`}>
+      <SurfaceSection label={QUESTION_LABEL[questionId] ?? questionId.toUpperCase()}>
+        <div className="setup-well-container">
+          <textarea
+            ref={textareaRef}
+            id={`setup-input-${questionId}`}
+            className="setup-well-textarea"
+            value={draft}
+            onChange={(e) => onDraft(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={QUESTION_PLACEHOLDER[questionId] ?? questionText}
+            rows={3}
+            disabled={submitting}
+            aria-label={questionText}
+          />
+          <div className="setup-well-mic">
+            <MicButton
+              onText={handleVoice}
+              label="Speak your answer"
+            />
+          </div>
+        </div>
+      </SurfaceSection>
     </div>
   );
 }
 
-/* ── AnswerRow: collapsed previous answer, editable (SS4.2) ── */
+/* ── AnswerRow: SurfaceLedgerRow (lead ✓, primary = answer, wrap, trailing Edit) ── */
 
 function AnswerRow({
   questionId,
@@ -248,7 +229,6 @@ function AnswerRow({
     [handleSave, answer.answer.normalized],
   );
 
-  // Voice fills (WEB-CMD-006)
   const handleVoice = useCallback(
     (text: string) => {
       setEditDraft((prev) => (prev ? `${prev} ${text}` : text));
@@ -258,54 +238,48 @@ function AnswerRow({
 
   if (editing) {
     return (
-      <div className="setup-answer-row setup-answer-row-editing" data-testid={`setup-answer-${questionId}`}>
-        <div className="setup-answer-question">{questionText}</div>
-        <div className="setup-question-input-row">
+      <div data-testid={`setup-answer-${questionId}`}>
+        <div className="setup-well-container">
           <textarea
             ref={inputRef}
-            className="setup-question-textarea"
+            className="setup-well-textarea"
             value={editDraft}
             onChange={(e) => setEditDraft(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={2}
           />
-          <MicButton onText={handleVoice} label="Speak" />
+          <div className="setup-well-mic">
+            <MicButton onText={handleVoice} label="Speak" />
+          </div>
         </div>
-        <div className="setup-answer-actions">
-          <button
-            type="button"
-            className="setup-answer-save"
-            onClick={handleSave}
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            className="setup-answer-cancel"
-            onClick={() => {
-              setEditDraft(answer.answer.normalized);
-              setEditing(false);
-            }}
-          >
-            Cancel
-          </button>
+        <div className="setup-answer-verb-row">
+          <button type="button" className="setup-answer-save-btn" onClick={handleSave}>Save</button>
+          <button type="button" className="setup-answer-cancel-btn" onClick={() => { setEditDraft(answer.answer.normalized); setEditing(false); }}>Cancel</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="setup-answer-row" data-testid={`setup-answer-${questionId}`}>
-      <div className="setup-answer-question">{questionText}</div>
-      <div className="setup-answer-text">{answer.answer.normalized}</div>
-      <button
-        type="button"
-        className="setup-answer-edit"
-        onClick={() => setEditing(true)}
-        aria-label={`Edit answer for: ${questionText}`}
-      >
-        Edit
-      </button>
+    <div data-testid={`setup-answer-${questionId}`}>
+      <ul className="surface-ledger-rows">
+        <SurfaceLedgerRow
+          lead={"✓"}
+          primary={<span className="setup-answer-text">{answer.answer.normalized}</span>}
+          wrap
+          trailing={
+            <button
+              type="button"
+              className="setup-answer-edit-btn"
+              onClick={() => setEditing(true)}
+              aria-label={`Edit answer for: ${questionText}`}
+            >
+              Edit
+            </button>
+          }
+          expands={false}
+        />
+      </ul>
     </div>
   );
 }

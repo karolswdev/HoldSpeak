@@ -11,8 +11,14 @@ import {
   ChoiceCardShell,
   EgressChip,
   useRovingRows,
+  StateChip,
+  ProvenanceChip,
+  Receipt,
+  ProgressPlan,
+  type PlanStep,
 } from "../../../desk/surface";
 import { MicButton } from "../../../desk/surface/controls/MicButton";
+import { Button } from "../../../components/signal/Signal";
 import {
   PROVIDER_STATE_COPY,
   PROVIDER_STATE_ACTION,
@@ -68,6 +74,9 @@ export function ConnectionStatusCard({
       </div>
       <div className="provider-status-detail">{copy.detail}</div>
 
+      <StateChip state={isOk ? "success" : needsAuth ? "warning" : "failure"} label={isOk ? "OK" : needsAuth ? "Sign in" : "Disconnected"} />
+      <ProvenanceChip source="gh" boundary="github.com" />
+
       {/* SETFLOW-003: auth-recovery card names the recovery command */}
       {needsAuth && status.display.recoveryHint ? (
         <div
@@ -89,15 +98,15 @@ export function ConnectionStatusCard({
 
       {/* The ONE next action */}
       {action.kind === "recheck" || action.kind === "retry" ? (
-        <button
-          type="button"
-          className="provider-action-btn"
+        <Button
+          dense
           data-testid="provider-recheck-btn"
           onClick={onRecheck}
           disabled={rechecking}
+          loading={rechecking}
         >
           {rechecking ? "Checking..." : action.label}
-        </button>
+        </Button>
       ) : null}
 
       {action.kind === "wait" ? (
@@ -353,6 +362,20 @@ export function GitHubTestDisplay({
       role="status"
       aria-live="polite"
     >
+      {/* ProgressPlan + Receipt (D3 recomposition) */}
+      <ProgressPlan
+        steps={[
+          { id: "auth", label: "Auth", status: (isPassed || isFailed) ? (isPassed ? "done" : "failed") : "queued" as PlanStep["status"] },
+          { id: "read", label: `Read ${repo}`, status: (isPassed || isFailed) ? (isPassed ? "done" : "failed") : "queued" as PlanStep["status"], rate: (isPassed || isFailed) ? `${entityCount} found` : undefined },
+          { id: "baseline", label: "Baseline ready", status: (isPassed || isFailed) ? (isPassed ? "done" : "failed") : "queued" as PlanStep["status"] },
+        ]}
+        receipt={(isPassed || isFailed) ? (
+          <Receipt status={isPassed ? "ok" : "danger"} label={isPassed ? "Passed" : "Failed"} timestamp={observedAt ? formatTestTime(observedAt) : undefined} />
+        ) : undefined}
+        egress={<ProvenanceChip source="gh" boundary="github.com" />}
+        ariaLabel="GitHub watch test"
+      />
+
       {/* Status + count */}
       <div className="provider-test-header">
         <span className="provider-test-icon" aria-hidden="true">
@@ -619,28 +642,30 @@ export function ProviderWizardFlow({
 
           {/* Test button (if not yet tested) */}
           {!proposal.testState ? (
-            <button
-              type="button"
-              className="provider-action-btn"
+            <Button
+              dense
+              variant="primary"
               data-testid="provider-test-btn"
               onClick={onTest}
             >
               Test this Watch
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}
 
-      {/* Done button */}
+      {/* Done button + EgressChip */}
       <div className="provider-wizard-actions">
-        <button
-          type="button"
+        <EgressChip label="github.com" scope="mixed" title="GitHub reads leave the machine." />
+        <Button
+          dense
+          variant="ghost"
           className="provider-wizard-done"
           data-testid="provider-wizard-done"
           onClick={onDone}
         >
           {isScoped ? "Done" : "Back to suggestions"}
-        </button>
+        </Button>
       </div>
     </div>
   );

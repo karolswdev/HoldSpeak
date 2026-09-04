@@ -24,6 +24,8 @@ from typing import Any
 
 import pytest
 
+from .glass_infra import _boot, _api, _assert_clean, _normal_chair, _ensure_build, _api_text
+
 pytest.importorskip("playwright.sync_api", reason="Delta glass needs Playwright")
 
 TOKEN = "hs160-delta-glass"
@@ -34,93 +36,11 @@ SHOTS = REPO / "pm/roadmap/holdspeak/phase-160-the-delta/assets/story-07-shots"
 # -- Boot / helpers ------------------------------------------------
 
 
-def _boot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, str]:
-    import holdspeak.config as config_module
-    import holdspeak.db.core as db_core
-    from holdspeak.db import reset_database
-    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
-
-    home = tmp_path / "home"
-    home.mkdir()
-    browser_cache = Path(
-        os.environ.get(
-            "PLAYWRIGHT_BROWSERS_PATH",
-            Path.home() / "Library/Caches/ms-playwright",
-        )
-    )
-    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
-    monkeypatch.setenv("HOME", str(home))
-    monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
-    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
-    reset_database()
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=lambda *_: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-        ),
-        auth_token=TOKEN,
-    )
-    return server, server.start()
-
-
-def _api(page: Any, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Browser-side fetch through the real hub."""
-    result = page.evaluate(
-        """async ([method, path, body, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: {
-              authorization: `Bearer ${token}`,
-              ...(body ? {"content-type": "application/json"} : {}),
-            },
-            body: body ? JSON.stringify(body) : undefined,
-          });
-          const contentType = response.headers.get("content-type") || "";
-          const payload = contentType.includes("json")
-            ? await response.json()
-            : await response.text();
-          return {status: response.status, payload};
-        }""",
-        [method, path, body, TOKEN],
-    )
-    assert result["status"] < 300, f"HTTP {result['status']}: {result}"
-    return result["payload"] if isinstance(result["payload"], dict) else {}
-
-
-def _api_raw_text(page: Any, method: str, path: str) -> str:
-    """Browser-side fetch returning the raw response text for byte-identity checks."""
-    return page.evaluate(
-        """async ([method, path, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: { authorization: `Bearer ${token}` },
-          });
-          return await response.text();
-        }""",
-        [method, path, TOKEN],
-    )
-
-
-def _assert_clean(page: Any, errors: list[str]) -> None:
-    assert not errors, errors
-    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-
-
-def _normal_chair(page: Any) -> None:
-    """Cross the First Sentence gate without blocking."""
-    chair = page.locator(".chair")
-    chair.wait_for()
-    if chair.evaluate("element => element.classList.contains('chair-first-value')"):
-        page.get_by_role("button", name="Continue later", exact=True).click()
-    page.locator(".chair:not(.chair-first-value)").wait_for()
-
-
 def _init_desk(page: Any, url: str) -> None:
     """Navigate to the hub root so relative fetch paths work, then seed."""
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    _api(page, "POST", "/api/desk/seed")
-    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    _api(page, "POST", "/api/desk/seed", token=TOKEN)
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
 
 
 def _open_interview(page: Any, url: str) -> None:
@@ -223,7 +143,7 @@ def _create_project_api(page: Any) -> str:
         "name": "Delta Glass API Project",
         "description": "Created via POST /api/projects for delta glass leg.",
         "command_id": "hs160-delta-glass-api",
-    })
+    }, token=TOKEN)
     return created["project"]["id"]
 
 
@@ -366,10 +286,11 @@ def test_delta_review_loop(
     room after review.
     Narrow (393): shot of one-card + footer verbs.
     """
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     try:
@@ -393,6 +314,7 @@ def test_delta_review_loop(
             # -- Open review via API (triggers evidence collection) --
             review = _api(
                 page, "POST", f"/api/projects/{project_id}/reviews",
+            token=TOKEN,
             )
             review_id = review["review_id"]
             assert review_id.startswith("prev_"), f"Unexpected review_id: {review_id}"
@@ -630,7 +552,7 @@ def test_delta_review_loop(
                 assert shot.exists() and shot.stat().st_size > 20_000
 
             # -- API verification: pending_count = 0, last_accepted_at set --
-            room = _api(page, "GET", f"/api/projects/{project_id}/room")
+            room = _api(page, "GET", f"/api/projects/{project_id}/room", token=TOKEN)
             review_section = room["review"]
             assert review_section["pending_count"] == 0
             assert review_section["open_review_id"] is None
@@ -669,10 +591,11 @@ def test_delta_repeat_api(
     """THE REPEAT (API): re-open with no new facts produces zero duplicate
     proposals, deferred suppressed. The accepted window is frozen:
     GET twice yields byte-identical responses (PV-J02, SYS-024)."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
     try:
         with sync_playwright() as pw:
@@ -688,6 +611,7 @@ def test_delta_repeat_api(
             # -- Open the first review --
             review = _api(
                 page, "POST", f"/api/projects/{project_id}/reviews",
+            token=TOKEN,
             )
             review_id = review["review_id"]
             proposals = review["proposals"]
@@ -709,6 +633,7 @@ def test_delta_repeat_api(
                     f"/api/projects/{project_id}/reviews/{review_id}"
                     f"/proposals/{p['id']}/decide",
                     body,
+                token=TOKEN,
                 )
 
             # Accept the review
@@ -716,16 +641,19 @@ def test_delta_repeat_api(
                 page, "POST",
                 f"/api/projects/{project_id}/reviews/{review_id}/accept",
                 {"command_id": "cmd-accept-repeat"},
+            token=TOKEN,
             )
 
             # -- Byte-identical: GET the accepted window twice --
-            raw1 = _api_raw_text(
+            raw1 = _api_text(
                 page, "GET",
                 f"/api/projects/{project_id}/reviews/{review_id}",
+            token=TOKEN,
             )
-            raw2 = _api_raw_text(
+            raw2 = _api_text(
                 page, "GET",
                 f"/api/projects/{project_id}/reviews/{review_id}",
+            token=TOKEN,
             )
             assert raw1 == raw2, (
                 "Frozen window must be byte-identical (SYS-024). "
@@ -735,6 +663,7 @@ def test_delta_repeat_api(
             # -- Re-open with no new facts --
             review2 = _api(
                 page, "POST", f"/api/projects/{project_id}/reviews",
+            token=TOKEN,
             )
             review2_id = review2["review_id"]
             assert review2_id != review_id, "Should be a new review window"
@@ -770,6 +699,7 @@ def test_delta_degraded_coverage(
     pre-boot (FollowThroughAdapter.collect raises). The review shows
     degraded coverage visibly; intact sources still deliver (WEB-STA-005).
     """
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
     from holdspeak.services.project_evidence_collector import FollowThroughAdapter
@@ -782,7 +712,7 @@ def test_delta_degraded_coverage(
 
     monkeypatch.setattr(FollowThroughAdapter, "collect", _forced_failure)
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     try:
@@ -799,6 +729,7 @@ def test_delta_degraded_coverage(
             # Open review: follow-through fails, others succeed
             review = _api(
                 page, "POST", f"/api/projects/{project_id}/reviews",
+            token=TOKEN,
             )
             proposals = review["proposals"]
 

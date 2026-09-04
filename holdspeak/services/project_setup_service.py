@@ -53,6 +53,7 @@ SESSION_TTL = timedelta(hours=24)
 
 Q_OUTCOME = "outcome"
 Q_SIGNALS = "signals"
+Q_JIRA_SCOPE = "jira_scope"  # HS-167-02: persisted Jira scope toggles
 
 # ── Cadence presets (SRS SS4.1) ───────────────────────────────────────
 
@@ -203,7 +204,7 @@ class ProjectSetupService:
         self._owner(principal)
         session = self._require_active(session_id)
 
-        if question_id not in (Q_OUTCOME, Q_SIGNALS):
+        if question_id not in (Q_OUTCOME, Q_SIGNALS, Q_JIRA_SCOPE):
             raise ValidationError(
                 f"Unknown question_id: {question_id!r}",
                 code="validation",
@@ -217,7 +218,9 @@ class ProjectSetupService:
                 current_rev = max(current_rev, ans["revision"])
         next_rev = current_rev + 1
 
-        # INT-004: preserve original and normalized separately
+        # INT-004: preserve original and normalized separately.
+        # HS-167-02: jira_scope rides the same shape -- the scope JSON
+        # string is the text, stored as original=normalized for symmetry.
         answer_data = {
             "original": payload.get("original", payload.get("text", "")),
             "normalized": payload.get("normalized", payload.get("text", "")),

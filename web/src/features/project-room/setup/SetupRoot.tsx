@@ -5,7 +5,10 @@
 
 import { useContext, useEffect, useRef, useState } from "react";
 import { SurfaceColumns } from "../../../desk/surface/Surface";
+import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
+import { ProgressPlan, type PlanStep } from "../../../desk/surface/patterns/ProgressPlan";
 import { TitleSlotContext } from "../../../desk/surface/title";
+import { Button } from "../../../components/signal/Signal";
 import type { CoreProps } from "../../../pages/cores/core-types";
 import { STAGE_META, STAGE_COUNT } from "./model";
 import { useSetupController } from "./useSetupController";
@@ -50,6 +53,35 @@ export function SetupCore({ scope }: CoreProps) {
     }
   }, [ctrl.state.kind]);
 
+  // HS-167-04: ProgressPlan steps computed from state
+  const stateKind = ctrl.state.kind;
+  const stepStatus = (step: string): PlanStep["status"] => {
+    const order = ["outcome", "signals", "proposals", "review"];
+    const stepIdx = order.indexOf(step);
+    const kindIdx = order.indexOf(
+      stateKind === "finalizing" || stateKind === "done" ? "done" : stateKind,
+    );
+    if (stateKind === "finalizing" || stateKind === "done") return "done";
+    if (stepIdx < kindIdx) return "done";
+    if (stepIdx === kindIdx) return "running";
+    return "queued";
+  };
+  const setupSteps: PlanStep[] = [
+    { id: "outcome", label: "Outcome", status: stepStatus("outcome") },
+    { id: "notice", label: "Notice", status: stepStatus("signals") },
+    { id: "sources", label: "Sources", status: stepStatus("proposals") },
+    { id: "review", label: "Review", status: stepStatus("review") },
+  ];
+
+  const stepIndex =
+    stateKind === "outcome" ? 1
+    : stateKind === "signals" ? 2
+    : stateKind === "proposals" ? 3
+    : stateKind === "review" ? 4
+    : stateKind === "finalizing" ? 4
+    : 0;
+  const stepLabel = stepIndex > 0 ? `${stepIndex} of 4` : "";
+
   // The clarifying proposal
   const clarifyingProposal =
     clarifyingId && (ctrl.state.kind === "proposals" || ctrl.state.kind === "review")
@@ -87,6 +119,7 @@ export function SetupCore({ scope }: CoreProps) {
     return (
       <div className="setup-root" data-testid="setup-root" ref={rootRef}>
         <div className="sr-only" id="setup-stage-announce" aria-live="polite" role="status" />
+        <ProgressPlan steps={setupSteps} compact />
         <ActivationReview
           outcomeAnswer={ctrl.state.outcomeAnswer}
           signalsAnswer={ctrl.state.signalsAnswer}
@@ -104,6 +137,7 @@ export function SetupCore({ scope }: CoreProps) {
     return (
       <div className="setup-root" data-testid="setup-root" ref={rootRef}>
         <div className="sr-only" id="setup-stage-announce" aria-live="polite" role="status" />
+        <ProgressPlan steps={setupSteps} compact />
         <SurfaceColumns
           main={
             <SetupInterview
@@ -126,6 +160,7 @@ export function SetupCore({ scope }: CoreProps) {
   return (
     <div className="setup-root" data-testid="setup-root" ref={rootRef}>
       <div className="sr-only" id="setup-stage-announce" aria-live="polite" role="status" />
+      <ProgressPlan steps={setupSteps} compact />
       <SurfaceColumns
         main={
           <>
@@ -142,10 +177,6 @@ export function SetupCore({ scope }: CoreProps) {
             {/* Suggestion cards (after both questions answered) */}
             {ctrl.state.kind === "proposals" ? (
               <>
-                {/* Step indicator for proposals stage (defect 6) */}
-                <div className="setup-step-token" aria-hidden="true" data-testid="setup-step-token">
-                  Step {STAGE_META["proposals"].index} of {STAGE_COUNT}
-                </div>
                 {/* HS-161-05 + HS-166-04: provider wizard takes priority when active */}
                 {providerWizardId && wizardProposal && wizardProposal.providerId === "github" ? (
                   <ProviderWizardFlow
@@ -272,41 +303,7 @@ export function SetupCore({ scope }: CoreProps) {
                   />
                 )}
 
-                {/* Proceed to review (hidden while provider wizard is active) */}
-                {ctrl.state.proposals.length > 0 && !clarifyingProposal && !providerWizardId ? (
-                  <div className="setup-proceed">
-                    <button
-                      type="button"
-                      className="setup-proceed-btn"
-                      onClick={ctrl.advanceToReview}
-                      data-testid="setup-proceed-review"
-                    >
-                      Review and activate
-                    </button>
-                    <button
-                      type="button"
-                      className="setup-proceed-blank"
-                      onClick={ctrl.finalize}
-                      data-testid="setup-proceed-blank"
-                    >
-                      Create blank Project
-                    </button>
-                  </div>
-                ) : null}
-
-                {/* Blank path explicit (INT-002) */}
-                {ctrl.state.proposals.length === 0 && !ctrl.state.suggesting ? (
-                  <div className="setup-proceed">
-                    <button
-                      type="button"
-                      className="setup-proceed-btn"
-                      onClick={ctrl.finalize}
-                      data-testid="setup-proceed-blank"
-                    >
-                      Create blank Project
-                    </button>
-                  </div>
-                ) : null}
+                {/* Proceed/blank verbs moved to SurfaceFooter */}
               </>
             ) : null}
           </>
@@ -314,17 +311,59 @@ export function SetupCore({ scope }: CoreProps) {
         side={<SetupBrief state={ctrl.state} />}
       />
 
-      {/* Abandon */}
+      {/* Footer: receipt · Cancel · primary */}
       {ctrl.state.kind !== "loading" && ctrl.state.kind !== "error" ? (
-        <div className="setup-abandon">
-          <button
-            type="button"
-            className="setup-abandon-btn"
-            onClick={ctrl.abandon}
-          >
-            Cancel setup
-          </button>
-        </div>
+        <SurfaceFooter
+          receipt={
+            stepLabel ? (
+              <span className="surface-footer-receipt-line">{stepLabel}</span>
+            ) : undefined
+          }
+          verbs={
+            <>
+              <Button dense variant="ghost" className="setup-abandon-btn" onClick={ctrl.abandon}>
+                Cancel setup
+              </Button>
+              {/* D2: Next always present during interview, disabled when empty */}
+              {ctrl.state.kind === "outcome" ? (
+                <Button
+                  dense
+                  variant="primary"
+                  disabled={!("draft" in ctrl.state && (ctrl.state as { draft: string }).draft.trim())}
+                  onClick={() => {
+                    if ("draft" in ctrl.state) void ctrl.submitOutcome((ctrl.state as { draft: string }).draft);
+                  }}
+                  data-testid="setup-next"
+                >
+                  Next
+                </Button>
+              ) : null}
+              {ctrl.state.kind === "signals" ? (
+                <Button
+                  dense
+                  variant="primary"
+                  disabled={!("draft" in ctrl.state && (ctrl.state as { draft: string }).draft.trim())}
+                  onClick={() => {
+                    if ("draft" in ctrl.state) void ctrl.submitSignals((ctrl.state as { draft: string }).draft);
+                  }}
+                  data-testid="setup-next"
+                >
+                  Next
+                </Button>
+              ) : null}
+              {ctrl.state.kind === "proposals" && ctrl.state.proposals.length > 0 && !clarifyingProposal && !providerWizardId ? (
+                <Button dense variant="primary" onClick={ctrl.advanceToReview} data-testid="setup-proceed-review">
+                  Review and activate
+                </Button>
+              ) : null}
+              {ctrl.state.kind === "proposals" && (ctrl.state.proposals.length === 0 && !ctrl.state.suggesting) ? (
+                <Button dense variant="primary" onClick={ctrl.finalize} data-testid="setup-proceed-blank">
+                  Create blank Project
+                </Button>
+              ) : null}
+            </>
+          }
+        />
       ) : null}
     </div>
   );

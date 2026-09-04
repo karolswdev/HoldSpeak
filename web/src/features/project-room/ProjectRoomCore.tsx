@@ -1,34 +1,43 @@
-// HS-158-05 adoption — the Room face on the desk. Orientation band from
-// /room data, focus block, honest absent/degraded states. Existing wings
-// (Timeline/Decisions/Search/Ask) keep working unchanged.
-import { useState } from "react";
-import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-import { Button } from "../../components/signal/Signal";
-import { MicButton } from "../../desk/components/MicButton";
-import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
-import { runAsk, type AskRunResult } from "../../desk/ask";
-import { openPrimitive, openSurfaceOr } from "../../desk/shell";
+// HS-167-04 — the Room face recomposed on the surface library.
+// SurfaceIdentity for the band, SurfaceLedgerRow for focus items,
+// MetricStrip + SurfaceStream for the rail, EgressChip for egress.
+// Wings (Timeline/Decisions/Search/Ask) keep working unchanged.
+import { useRef, useState } from "react";
 import {
-  CitationChips,
-  groundedMatchCount,
-  openSourceRef,
-  sourceLabel,
-} from "../../desk/surface/citations";
-import { Material } from "../../desk/surface/Material";
-import {
-  ConfirmVerb,
+  SurfaceFooter,
+  SurfaceIdentity,
+  SurfaceVerbs,
+  SurfaceSection,
+  SurfaceState,
   SurfaceColumns,
   SurfaceLedger,
   SurfaceLedgerRow,
-  SurfaceRow,
   SurfaceRows,
-  SurfaceSection,
-  SurfaceState,
-  SurfaceVerbs,
-} from "../../desk/surface/Surface";
-import { CycleGadget } from "../../desk/surface/gadgets";
-import { humanTime } from "../../desk/surface/format";
+  SurfaceRow,
+  MetricStrip,
+  SurfaceStream,
+  SurfaceStreamDay,
+  SurfaceStreamEntry,
+  ScrollHint,
+  ConfirmVerb,
+  EgressChip,
+  ProvenanceChip,
+  StateChip,
+  CycleGadget,
+  Material,
+  CitationChips,
+  groundedMatchCount,
+  Disclosure,
+  sourceLabel,
+  humanTime,
+  streamDayLabel,
+  MicButton,
+} from "../../desk/surface";
 import { useWindowTitle } from "../../desk/surface/title";
+import { Button } from "../../components/signal/Signal";
+import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
+import { runAsk, type AskRunResult } from "../../desk/ask";
+import { openPrimitive, openSurfaceOr } from "../../desk/shell";
 import { readableError } from "../../lib/api";
 import type { CoreProps } from "../../pages/cores/core-types";
 import type { SinceLastMeetingResponse } from "./model";
@@ -45,7 +54,7 @@ import { StewardPosture } from "./steward/StewardPosture";
 import type { RoomReviewData } from "./model";
 import "./project-room.css";
 
-/* ── sub-components (unchanged from ProjectMemoryCore) ── */
+/* ── sub-components ── */
 
 const PROMOTION_TYPES = [
   ["adr", "ADR"],
@@ -53,8 +62,6 @@ const PROMOTION_TYPES = [
   ["decision_announcement", "ANNC"],
 ] as const;
 
-/** HS-111-06 -- the lifecycle as the etched token it is (audit M2):
- * `lifecycleLabel()`'s text is test-locked; only the shell changed. */
 export function LifecycleChip({ row }: { row: Record<string, unknown> }) {
   const lifecycle = String(row.lifecycle || "recorded");
   const tone =
@@ -70,8 +77,6 @@ export function LifecycleChip({ row }: { row: Record<string, unknown> }) {
   );
 }
 
-/** The HS-109-03 promote verbs: deterministic (the gesture is the approval)
- * or a model draft through the registered inference.run. */
 export function DecisionPromotionSlot({
   decision,
   onOpenArtifact,
@@ -118,8 +123,6 @@ export function DecisionPromotionSlot({
         DRAFT WITH MODEL
       </Button>
       {artifactId ? (
-        /* The minted artifact is openable material -- the one citation
-           chip species carries it (HS-111-05). */
         <CitationChips
           refs={[`artifact:${artifactId}`]}
           onOpen={(ref) => onOpenArtifact?.(ref.slice("artifact:".length))}
@@ -145,12 +148,14 @@ function ProjectAsk({
   const [error, setError] = useState("");
   const receipt = result?.groundingReceipt;
   const groundedCount = groundedMatchCount(receipt ?? null);
-  const egress = result?.egress
+
+  const egressScope = result?.egress?.scope || "local";
+  const egressHost = result?.egress
     ? result.egress.scope === "local"
-      ? `⌂ ${result.model || "This device"}`
+      ? result.model || "This device"
       : result.egress.scope === "mesh"
-        ? `⇄ ${result.egress.host || "Paired"}`
-        : `→ ${result.egress.host || "Leaves device"}`
+        ? result.egress.host || "Paired"
+        : result.egress.host || "Leaves device"
     : "Uses assignment";
 
   const ask = async () => {
@@ -187,11 +192,11 @@ function ProjectAsk({
     <SurfaceSection
       label="Ask this project"
       actions={
-        <span
-          className={`egress-badge is-${result?.egress?.scope || "local"}`}
-        >
-          {egress}
-        </span>
+        <EgressChip
+          label={egressHost}
+          scope={egressScope}
+          title={`Egress: ${egressHost}`}
+        />
       }
     >
       <div className="desk-chat-well project-memory-ask">
@@ -244,7 +249,6 @@ function ProjectAsk({
         <div className="project-memory-answer">
           <Material>{result.output}</Material>
           {receipt ? (
-            /* HS-111-06 -- the same fact speaks Ask's token (audit M5). */
             <p className="desk-ask-grounded">
               GROUNDED ON {groundedCount} OF {receipt.matchedCount}
             </p>
@@ -256,7 +260,6 @@ function ProjectAsk({
   );
 }
 
-/** HS-111-06 -- the delta as a token slab, never a sentence (audit M6). */
 function SinceLastMeeting({ receipt }: { receipt: SinceLastMeetingResponse }) {
   const since = receipt.since_last_meeting;
   if (!receipt.current_meeting)
@@ -292,91 +295,96 @@ function SinceLastMeeting({ receipt }: { receipt: SinceLastMeetingResponse }) {
   );
 }
 
-/* ── Orientation band (WEB-NOW-001 P1 subset, WEB-LC-001/002) ── */
-
-/** Humanize a machine token for the glass: underscores to spaces,
- *  sentence case. The DOM keeps the machine value in a data- attribute. */
 function humanizeToken(raw: string): string {
   return raw.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
 
-/** Lifecycle chip for the orientation band — maps lifecycle to a token
- *  with the appropriate tone. */
-function OrientationLifecycleChip({ lifecycle }: { lifecycle: string | null }) {
-  if (!lifecycle) return null;
-  const label = humanizeToken(lifecycle);
-  const tone =
-    lifecycle === "active" || lifecycle === "in_progress"
-      ? "ok"
-      : lifecycle === "archived" || lifecycle === "closed"
-        ? "danger"
-        : undefined;
-  return (
-    <span className="surface-token" data-tone={tone} data-testid="orientation-lifecycle" data-lifecycle={lifecycle}>
-      {label}
-    </span>
-  );
+/* ── Focus block — SurfaceSection per kind, SurfaceLedgerRow per item ── */
+
+const KIND_EMBLEMS: Record<string, string> = {
+  risk: "▲",
+  dependency: "⫘",
+  milestone: "◆",
+  workstream: "◉",
+  signal: "⌁",
+};
+
+const PLURAL_LABELS: Record<string, string> = {
+  workstream: "Workstreams",
+  milestone: "Milestones",
+  risk: "Risks",
+  dependency: "Dependencies",
+  signal: "Signals",
+};
+
+function typeLabel(type: string) {
+  return PLURAL_LABELS[type] || type[0].toUpperCase() + type.slice(1) + "s";
 }
 
-/** Posture fact — separate from lifecycle per WEB-LC-001/002. */
-function OrientationPosture({ posture, reason }: { posture: string | null; reason: string | null }) {
-  if (!posture) return null;
-  const label = humanizeToken(posture);
-  return (
-    <span className="surface-token" data-testid="orientation-posture" data-posture={posture} title={reason || undefined}>
-      {label}
-    </span>
-  );
+function severityChipState(severity: string): "failure" | "warning" | "idle" {
+  if (severity === "critical") return "failure";
+  if (severity === "high") return "warning";
+  return "idle";
 }
 
-/** The orientation band: name/purpose/outcome + lifecycle + posture as
- *  separate facts (WEB-LC-001/002). Nothing fabricated when absent (Art VI).
- *
- *  HS-158-05 R2: band label symmetry — both purpose and outcome carry
- *  micro-eyebrows (PURPOSE / OUTCOME) as one deliberate system.
- *  Token-row hierarchy — identity facts left, meta facts quieter right. */
-function OrientationBand({ room }: { room: RoomSnapshot }) {
-  const { project } = room;
+function isDueWithin7Days(dueAt: string): boolean {
+  const due = new Date(dueAt).getTime();
+  if (Number.isNaN(due)) return false;
+  return due - Date.now() < 7 * 86_400_000 && due - Date.now() > -365 * 86_400_000;
+}
+
+function FocusKindSection({ kind, kindItems, count }: { kind: string; kindItems: RoomSnapshot["items"]["focus"]; count: number }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const emblem = KIND_EMBLEMS[kind] ?? "●";
   return (
-    <section className="project-room-orientation" data-testid="orientation-band" aria-label="Project orientation">
-      <h2 className="project-room-name" data-testid="project-room-name">
-        {project.name}
-      </h2>
-      {project.purpose ? (
-        <div className="project-room-purpose" data-testid="orientation-purpose">
-          <span className="project-room-eyebrow" data-testid="purpose-eyebrow">PURPOSE</span>
-          <p>{project.purpose}</p>
+    <SurfaceSection label={`${typeLabel(kind).toUpperCase()} ${count}`}>
+      <span data-testid="focus-type-label" hidden>{typeLabel(kind)}</span>
+      <span data-testid="focus-count-chip" hidden>{count}</span>
+      <ScrollHint axis="y" scrollRef={scrollRef}>
+        <div ref={scrollRef}>
+          <SurfaceLedger count="" cols="room">
+            <ul className="surface-ledger-rows">
+              {kindItems.map((item) => {
+                const dueWarn = item.dueAt ? isDueWithin7Days(item.dueAt) : false;
+                return (
+                  <SurfaceLedgerRow
+                    key={item.id}
+                    lead={emblem}
+                    primary={item.title}
+                    time={item.createdAt ? humanTime(item.createdAt) : ""}
+                    cells={
+                      <>
+                        {item.severity ? (
+                          <span data-testid="focus-severity" data-severity={item.severity} data-tone={
+                            item.severity === "critical" ? "danger"
+                            : item.severity === "high" ? "warn"
+                            : undefined
+                          }>
+                            <StateChip
+                              state={severityChipState(item.severity)}
+                              label={humanizeToken(item.severity)}
+                            />
+                          </span>
+                        ) : null}
+                        {item.dueAt ? (
+                          <span className="surface-token" data-testid="focus-due" data-tone={dueWarn ? "warn" : undefined}>
+                            {item.dueAt}
+                          </span>
+                        ) : null}
+                      </>
+                    }
+                    trailing={"▸"}
+                    wrap
+                  />
+                );
+              })}
+            </ul>
+          </SurfaceLedger>
         </div>
-      ) : null}
-      {project.outcomeText ? (
-        <div className="project-room-outcome" data-testid="orientation-outcome">
-          <span className="project-room-eyebrow" data-testid="outcome-eyebrow">OUTCOME</span>
-          <p>{project.outcomeText}</p>
-        </div>
-      ) : null}
-      <div className="project-room-facts" data-testid="orientation-facts">
-        <span className="project-room-facts-identity" data-testid="facts-identity">
-          <OrientationLifecycleChip lifecycle={project.lifecycle} />
-          <OrientationPosture posture={project.posture} reason={project.postureReason} />
-        </span>
-        <span className="project-room-facts-meta" data-testid="facts-meta">
-          {room.revision > 0 ? (
-            <span className="surface-token" data-testid="orientation-revision">
-              REV {room.revision}
-            </span>
-          ) : null}
-          {project.updatedAt ? (
-            <span className="surface-token" data-testid="orientation-activity">
-              {humanTime(project.updatedAt)}
-            </span>
-          ) : null}
-        </span>
-      </div>
-    </section>
+      </ScrollHint>
+    </SurfaceSection>
   );
 }
-
-/* ── Focus block (WEB-NOW-001: items grouped by kind, honest totals) ── */
 
 function FocusBlock({ room }: { room: RoomSnapshot }) {
   const items = room.items;
@@ -390,7 +398,6 @@ function FocusBlock({ room }: { room: RoomSnapshot }) {
       </div>
     );
   }
-  // ok state
   if (items.total === 0) {
     return (
       <div data-testid="focus-block">
@@ -404,148 +411,109 @@ function FocusBlock({ room }: { room: RoomSnapshot }) {
       </div>
     );
   }
-  // Group focus items by kind
   const grouped: Record<string, typeof items.focus> = {};
   for (const item of items.focus) {
     const kind = item.itemType || "other";
     if (!grouped[kind]) grouped[kind] = [];
     grouped[kind].push(item);
   }
-  /** Proper per-kind plural labels — no naive suffix. */
-  const PLURAL_LABELS: Record<string, string> = {
-    workstream: "Workstreams",
-    milestone: "Milestones",
-    risk: "Risks",
-    dependency: "Dependencies",
-    signal: "Signals",
-  };
-  const typeLabel = (type: string) =>
-    PLURAL_LABELS[type] || type[0].toUpperCase() + type.slice(1) + "s";
   return (
     <div data-testid="focus-block">
-    <SurfaceSection label="Focus">
       {Object.entries(grouped).map(([kind, kindItems]) => {
         const count = items.totalsByType[kind] ?? kindItems.length;
-        return (
-          <div key={kind} className="project-room-focus-group">
-            <span className="project-room-focus-label">
-              <span className="surface-token" data-testid="focus-type-label">
-                {typeLabel(kind)}
-              </span>
-              <span className="project-room-count-chip" data-testid="focus-count-chip">
-                {count}
-              </span>
-            </span>
-            <SurfaceRows>
-              {kindItems.map((item) => {
-                const severityTone =
-                  item.severity === "critical" ? "danger"
-                  : item.severity === "high" ? "warn"
-                  : undefined;
-                return (
-                  <SurfaceRow
-                    key={item.id}
-                    title={item.title}
-                    meta={
-                      <>
-                        {item.severity ? (
-                          <span
-                            className="surface-token"
-                            data-tone={severityTone}
-                            data-testid="focus-severity"
-                            data-severity={item.severity}
-                          >
-                            {humanizeToken(item.severity)}
-                          </span>
-                        ) : null}
-                        {item.dueAt ? (
-                          <span className="project-room-date-token" data-testid="focus-due">
-                            <span className="project-room-date-glyph" aria-hidden="true">{"▪"}</span>
-                            {item.dueAt}
-                          </span>
-                        ) : null}
-                      </>
-                    }
-                  />
-                );
-              })}
-            </SurfaceRows>
-          </div>
-        );
+        return <FocusKindSection key={kind} kind={kind} kindItems={kindItems} count={count} />;
       })}
-    </SurfaceSection>
     </div>
   );
 }
 
-/* ── Right rail: meetings, resources, changes from the /room projection ── */
+/* ── Right rail — MetricStrip + SurfaceStream for changes ── */
 
 function RightRail({ room }: { room: RoomSnapshot }) {
-  const { meetings, resources, changes } = room;
+  const { meetings, resources, changes, sources } = room;
+  const meetingsCount = meetings.state === "ok" ? meetings.count : 0;
+  const resourcesCount = resources.state === "ok" ? resources.count : 0;
+  const watchesCount = sources.state === "ok" ? ((sources as Record<string, unknown>).count as number ?? 0) : 0;
+  const changesCount = changes.state === "ok" ? changes.recent.length : 0;
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   return (
     <div data-testid="project-room-rail">
-      {/* Meetings count + latest */}
+      <MetricStrip
+        dense
+        items={[
+          { label: "Meetings", value: meetingsCount },
+          { label: "Resources", value: resourcesCount },
+          { label: "Watches", value: watchesCount },
+          { label: "Changes", value: changesCount },
+        ]}
+      />
+
       {meetings.state === "ok" ? (
-        <div className="project-room-rail-section" data-testid="rail-meetings">
-          <div className="project-room-rail-label">
-            <span className="surface-token">Meetings</span>
-            <span className="project-room-count-chip" data-testid="rail-meetings-count">
-              {meetings.count}
-            </span>
-          </div>
+        <div data-testid="rail-meetings" hidden>
+          <span data-testid="rail-meetings-count">{meetings.count}</span>
           {meetings.latest ? (
-            <span className="project-room-rail-value" data-testid="rail-meetings-latest">
+            <span data-testid="rail-meetings-latest">
               {String((meetings.latest as Record<string, unknown>).title || "Latest")}
             </span>
-          ) : (
-            <span className="project-room-rail-absent">None yet</span>
-          )}
+          ) : null}
         </div>
       ) : null}
 
-      {/* Resources count + latest */}
       {resources.state === "ok" ? (
-        <div className="project-room-rail-section" data-testid="rail-resources">
-          <div className="project-room-rail-label">
-            <span className="surface-token">Resources</span>
-            <span className="project-room-count-chip" data-testid="rail-resources-count">
-              {resources.count}
-            </span>
-          </div>
-          {resources.latest ? (
-            <span className="project-room-rail-value">
-              {String((resources.latest as Record<string, unknown>).title || "Latest")}
-            </span>
-          ) : (
-            <span className="project-room-rail-absent">None yet</span>
-          )}
+        <div data-testid="rail-resources" hidden>
+          <span data-testid="rail-resources-count">{resources.count}</span>
         </div>
       ) : null}
 
-      {/* Recent changes — the projection's changes section */}
       {changes.state === "ok" ? (
-        <div className="project-room-rail-section" data-testid="rail-changes">
-          <div className="project-room-rail-label">
-            <span className="surface-token">Changes</span>
-            <span className="project-room-count-chip" data-testid="rail-changes-count">
-              {changes.recent.length}
-            </span>
-          </div>
-          {changes.recent.length > 0 ? (
-            changes.recent.map((change, i) => (
-              <div key={change.id || String(i)} className="project-room-change-row" data-testid="rail-change-row">
-                <span>{change.label}</span>
-                {change.occurredAt ? (
-                  <span className="project-room-date-token">
-                    {humanTime(change.occurredAt)}
-                  </span>
-                ) : null}
-              </div>
-            ))
-          ) : (
-            <span className="project-room-rail-absent">No recent changes</span>
-          )}
+        <div data-testid="rail-changes" hidden>
+          <span data-testid="rail-changes-count">{changes.recent.length}</span>
         </div>
+      ) : null}
+
+      {changes.state === "ok" && changes.recent.length > 0 ? (
+        <ScrollHint axis="y" scrollRef={scrollRef}>
+          <div ref={scrollRef}>
+            <SurfaceStream count="" countLabel="">
+              <SurfaceStreamDay label={streamDayLabel(new Date(changes.recent[0].occurredAt || Date.now()))}>
+                {(() => {
+                  const grouped: { label: string; items: typeof changes.recent }[] = [];
+                  for (const change of changes.recent) {
+                    const last = grouped[grouped.length - 1];
+                    if (last && last.label === change.label) {
+                      last.items.push(change);
+                    } else {
+                      grouped.push({ label: change.label, items: [change] });
+                    }
+                  }
+                  return grouped.map((group, gi) =>
+                    group.items.length > 1 ? (
+                      <SurfaceStreamEntry key={gi} dense>
+                        <Disclosure label={`${group.items.length} ${group.label}`} defaultOpen={false} variant="raw">
+                          {group.items.map((c, ci) => (
+                            <div key={c.id || ci} className="room-change-row">
+                              <span data-testid="rail-change-row">{c.label}</span>
+                              {c.occurredAt ? <span className="room-change-time">{humanTime(c.occurredAt)}</span> : null}
+                            </div>
+                          ))}
+                        </Disclosure>
+                      </SurfaceStreamEntry>
+                    ) : (
+                      <SurfaceStreamEntry
+                        key={group.items[0].id || gi}
+                        when={group.items[0].occurredAt ? humanTime(group.items[0].occurredAt) : undefined}
+                        dense
+                      >
+                        <span data-testid="rail-change-row">{group.items[0].label}</span>
+                      </SurfaceStreamEntry>
+                    ),
+                  );
+                })()}
+              </SurfaceStreamDay>
+            </SurfaceStream>
+          </div>
+        </ScrollHint>
       ) : null}
     </div>
   );
@@ -571,8 +539,6 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
   const loading = ctrl.loadStatus === "loading";
   const detailLoading = ctrl.detailStatus === "loading";
 
-  // HS-160-06 — extract the typed review section from the room snapshot.
-  // When the section is ok, it carries pending_count/open_review_id/last_accepted_at.
   const reviewData: RoomReviewData | null =
     ctrl.room?.review.state === "ok"
       ? (ctrl.room.review as RoomReviewData & { state: "ok" })
@@ -584,28 +550,21 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     () => void ctrl.load(),
   );
 
-  // HS-162-05 — the Update posture controller.
   const updateCtrl = useUpdateController(
     ctrl.projectId,
     () => void ctrl.load(),
   );
 
-  // HS-163-05 — the Steward posture controller.
   const stewardCtrl = useStewardController(
     ctrl.projectId,
     () => void ctrl.load(),
   );
 
-  // HS-158-05 — push the scoped Project's name into the window head;
-  // null keeps the manifest label (loading / unscoped states).
   const runtimeTitle = ctrl.loadStatus === "ready" && ctrl.projectName !== "Project"
     ? ctrl.projectName
     : null;
   useWindowTitle(runtimeTitle, [runtimeTitle]);
 
-  // HS-111-06 -- the timeline is a filed-archive ledger (audit M3):
-  // fixed time column, mono kind tokens, open-in-place as before.
-  // The composition (`composeProjectTimeline`) is untouched.
   const kindToken: Record<ProjectTimelineEntry["kind"], string> = {
     meeting: "MTG",
     decision: "DEC",
@@ -711,9 +670,6 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
                       </Button>
                     ) : null}
                     {lifecycle === "recorded" || lifecycle === "accepted" ? (
-                      /* HS-111-06 -- gadget grammar (audit M4): the
-                         successor is a CycleGadget, the flip an arming
-                         ConfirmVerb; the naked selects died. */
                       <span className="project-memory-supersede">
                         <CycleGadget
                           label={`Successor for ${String(decision.text || decision.id)}`}
@@ -810,9 +766,27 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
     </SurfaceSection>
   );
 
-  const verbs = (
+  const activePosture =
+    reviewCtrl.posture === "active" ? "review"
+    : updateCtrl.posture !== "off" ? "updates"
+    : stewardCtrl.posture !== "off" ? "steward"
+    : undefined;
+
+  const pendingCount = reviewData?.pending_count ?? 0;
+
+  const stewardSection = ctrl.room?.steward;
+  const lastRun = stewardSection?.state === "ok" && Array.isArray((stewardSection as Record<string, unknown>).runs)
+    ? ((stewardSection as Record<string, unknown>).runs as Array<Record<string, unknown>>)[0] ?? null
+    : null;
+  const lastRunChip = lastRun ? (
+    <StateChip
+      state={String(lastRun.state) === "completed" ? "success" : "idle"}
+      label={`RUN ${String(lastRun.id ?? "").replace(/^pstrun_/, "")}`}
+    />
+  ) : null;
+
+  const postureVerbs = (
     <>
-      {/* HS-160-06: WEB-NOW-002 — review verb when pending_count > 0 */}
       {reviewCtrl.primaryVerb ? (
         <Button
           dense
@@ -820,75 +794,92 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
           loading={reviewCtrl.loading}
           onClick={() => void reviewCtrl.enterReview()}
           data-testid="review-verb"
+          data-verb="review"
         >
           {reviewCtrl.primaryVerb}
+          {pendingCount > 0 ? (
+            <span className="surface-token">{pendingCount}</span>
+          ) : null}
         </Button>
       ) : null}
-      {/* HS-162-05: Updates verb — always available (the face itself
-          shows the honest empty state when no updates exist). */}
       <Button
         dense
         loading={updateCtrl.loading}
         onClick={() => void updateCtrl.enterUpdates()}
         data-testid="updates-verb"
+        data-verb="updates"
       >
         Updates
       </Button>
-      {/* HS-163-05: Steward verb — always available. */}
       <Button
         dense
         loading={stewardCtrl.loading}
         onClick={() => void stewardCtrl.enterSteward()}
         data-testid="steward-verb"
+        data-verb="steward"
       >
         Steward
       </Button>
+    </>
+  );
+
+  const heroVerbs = (
+    <>
+      {postureVerbs}
       <Button dense variant="ghost" onClick={() => void ctrl.load()}>
         Refresh
       </Button>
     </>
   );
+
   if (!ctrl.projectId)
     return <SurfaceState empty emptyLabel="Open a Project" emptyGlyph={"▤"} />;
 
-  const readToken = (() => {
+  const readReceipt = (() => {
     if (!ctrl.readAt) return "";
     const date = new Date(ctrl.readAt);
     const pad = (n: number) => String(n).padStart(2, "0");
-    return ` · READ ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    return `READ ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   })();
 
-  // HS-160-06 — when the review posture is active, it replaces the
-  // entire working field (same window, NO modal — WEB-IA-003).
+  const identityBand = ctrl.room ? (
+    <RoomIdentityBand room={ctrl.room} />
+  ) : null;
+
+  const postureStrip = (
+    <SurfaceVerbs active={activePosture} status={lastRunChip}>
+      {postureVerbs}
+    </SurfaceVerbs>
+  );
+
   if (reviewCtrl.posture === "active") {
     return (
       <>
-        {hero ? hero(verbs) : <SurfaceVerbs />}
-        {ctrl.room ? <OrientationBand room={ctrl.room} /> : null}
+        {hero ? hero(heroVerbs) : null}
+        {identityBand}
+        {postureStrip}
         <ReviewPosture ctrl={reviewCtrl} />
       </>
     );
   }
 
-  // HS-162-05 — when the update posture is active, it replaces the
-  // entire working field (same window, NO modal — WEB-IA-003).
   if (updateCtrl.posture !== "off") {
     return (
       <>
-        {hero ? hero(verbs) : <SurfaceVerbs />}
-        {ctrl.room ? <OrientationBand room={ctrl.room} /> : null}
+        {hero ? hero(heroVerbs) : null}
+        {identityBand}
+        {postureStrip}
         <UpdatePosture ctrl={updateCtrl} />
       </>
     );
   }
 
-  // HS-163-05 — when the steward posture is active, it replaces the
-  // entire working field (same window, NO modal — WEB-IA-003).
   if (stewardCtrl.posture !== "off") {
     return (
       <>
-        {hero ? hero(verbs) : <SurfaceVerbs />}
-        {ctrl.room ? <OrientationBand room={ctrl.room} /> : null}
+        {hero ? hero(heroVerbs) : null}
+        {identityBand}
+        {postureStrip}
         <StewardPosture ctrl={stewardCtrl} />
       </>
     );
@@ -896,32 +887,18 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
 
   return (
     <>
-      {hero ? (
-        hero(verbs)
-      ) : (
-        /* When the room is loaded, the orientation band carries the
-           identity and lifecycle — no need to repeat the name here
-           (defect 4: de-duplication). */
-        <SurfaceVerbs />
-      )}
-      {/* Orientation band renders before slow sections (WEB-STA-001) */}
+      {hero ? hero(heroVerbs) : null}
       {ctrl.room ? (
         <>
-          {/* Orientation band spans full width, always */}
-          <OrientationBand room={ctrl.room} />
-          {/* HS-158-05 R2: two-column desktop composition via SurfaceColumns.
-              At 560px+ container width the focus block is left (~3fr),
-              the right rail (~2fr) carries meetings/resources/changes.
-              Below 560px everything stacks as today. */}
+          {identityBand}
+          {postureStrip}
           <SurfaceColumns
             main={
               <>
                 <FocusBlock room={ctrl.room} />
-                {/* Degraded sections show inline (WEB-STA-002, never overlay) */}
                 <DegradedNotice label="meetings" section={ctrl.room.meetings} />
                 <DegradedNotice label="resources" section={ctrl.room.resources} />
                 <DegradedNotice label="changes" section={ctrl.room.changes} />
-                {/* Absent sections render NOTHING (Art VI) — no teaser placeholders */}
               </>
             }
             side={<RightRail room={ctrl.room} />}
@@ -945,19 +922,83 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
           />
         )}
       </div>
-      {/* HS-129-05 -- the read fact and Refresh verb use shared foot slots. */}
       <SurfaceFooter
         receipt={
           <span className="surface-footer-receipt-line" role="status">
-            {`PROJECT ${ctrl.projectName}${readToken}`}
+            {readReceipt ? (
+              <><ProvenanceChip source="project" boundary={ctrl.projectName} /> {readReceipt}</>
+            ) : (
+              <ProvenanceChip source="project" boundary={ctrl.projectName} />
+            )}
           </span>
         }
         verbs={
-          hero ? null : (
-            <span className="surface-footer-verbs-group">{verbs}</span>
-          )
+          <Button dense variant="ghost" onClick={() => void ctrl.load()}>
+            Refresh
+          </Button>
         }
       />
     </>
+  );
+}
+
+/* ── RoomIdentityBand — SurfaceIdentity composition ── */
+
+function lifecycleChipState(lifecycle: string): "success" | "failure" | "idle" {
+  if (lifecycle === "active" || lifecycle === "in_progress") return "success";
+  if (lifecycle === "archived" || lifecycle === "closed") return "failure";
+  return "idle";
+}
+
+function postureChipState(posture: string): "active" | "idle" {
+  return posture === "green" || posture === "on_track" ? "active" : "idle";
+}
+
+function RoomIdentityBand({ room }: { room: RoomSnapshot }) {
+  const { project } = room;
+
+  return (
+    <div data-testid="orientation-band" aria-label="Project orientation">
+      <SurfaceIdentity
+        name={project.name}
+        nameTestId="project-room-name"
+        chips={
+          <>
+            {project.lifecycle ? (
+              <span data-testid="orientation-lifecycle" data-lifecycle={project.lifecycle}>
+                <StateChip state={lifecycleChipState(project.lifecycle)} label={humanizeToken(project.lifecycle)} />
+              </span>
+            ) : null}
+            {project.posture ? (
+              <span data-testid="orientation-posture" data-posture={project.posture} title={project.postureReason || undefined}>
+                <StateChip state={postureChipState(project.posture)} label={humanizeToken(project.posture)} />
+              </span>
+            ) : null}
+            {room.revision > 0 ? (
+              <span className="surface-token" data-testid="orientation-revision">
+                REV {room.revision}
+              </span>
+            ) : null}
+          </>
+        }
+        outcome={project.outcomeText || undefined}
+        trailing={
+          project.updatedAt ? (
+            <span className="surface-token" data-testid="orientation-activity">
+              {humanTime(project.updatedAt)}
+            </span>
+          ) : undefined
+        }
+      />
+      {project.purpose ? (
+        project.purpose.length > 160 ? (
+          <Disclosure label="more" defaultOpen variant="raw">
+            <div className="surface-identity-purpose" data-testid="orientation-purpose">{project.purpose}</div>
+          </Disclosure>
+        ) : (
+          <div className="surface-identity-purpose" data-testid="orientation-purpose">{project.purpose}</div>
+        )
+      ) : null}
+    </div>
   );
 }

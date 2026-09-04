@@ -25,6 +25,8 @@ from typing import Any
 
 import pytest
 
+from .glass_infra import _boot as _conftest_boot, _api, _api_allow_error, _assert_clean, _normal_chair, _ensure_build
+
 pytest.importorskip("playwright.sync_api", reason="Jira glass needs Playwright")
 
 TOKEN = "hs166-jira-glass"
@@ -214,35 +216,12 @@ def _make_acli_runner() -> Any:
 # ── Boot / helpers ────────────────────────────────────────────────
 
 
-def _boot(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    *,
-    acli_runner: Any = None,
-) -> tuple[Any, str]:
-    import holdspeak.config as config_module
-    import holdspeak.db.core as db_core
-    from holdspeak.db import reset_database
-    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
-
-    home = tmp_path / "home"
-    home.mkdir()
-    browser_cache = Path(
-        os.environ.get(
-            "PLAYWRIGHT_BROWSERS_PATH",
-            Path.home() / "Library/Caches/ms-playwright",
-        )
-    )
-    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
-    monkeypatch.setenv("HOME", str(home))
-    monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
-    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
-    reset_database()
-
-    # Write acli config so known_accounts returns something
-    acli_dir = home / ".config" / "acli"
-    acli_dir.mkdir(parents=True)
+def _seed_acli_config(tmp_path: Path) -> None:
+    """Write acli config so known_accounts returns something."""
     import yaml
+    home = tmp_path / "home"
+    acli_dir = home / ".config" / "acli"
+    acli_dir.mkdir(parents=True, exist_ok=True)
     (acli_dir / "jira_config.yaml").write_text(yaml.dump({
         "current_profile": "cloud1:acc1",
         "profiles": [
@@ -265,41 +244,15 @@ def _boot(
         ],
     }))
 
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=lambda *_: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-        ),
-        auth_token=TOKEN,
-        acli_runner=acli_runner,
-    )
-    return server, server.start()
 
-
-def _api(
-    page: Any, method: str, path: str,
-    body: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    result = page.evaluate(
-        """async ([method, path, body, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: {
-              authorization: `Bearer ${token}`,
-              ...(body ? {"content-type": "application/json"} : {}),
-            },
-            body: body ? JSON.stringify(body) : undefined,
-          });
-          const contentType = response.headers.get("content-type") || "";
-          const payload = contentType.includes("json")
-            ? await response.json()
-            : await response.text();
-          return {status: response.status, payload};
-        }""",
-        [method, path, body, TOKEN],
-    )
-    return result
+def _boot(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    acli_runner: Any = None,
+) -> tuple[Any, str]:
+    _seed_acli_config(tmp_path)
+    return _conftest_boot(tmp_path, monkeypatch, token=TOKEN, acli_runner=acli_runner)
 
 
 def _ref_encode(ref: str) -> str:
@@ -308,18 +261,10 @@ def _ref_encode(ref: str) -> str:
     return urllib.parse.quote(ref, safe="")
 
 
-def _normal_chair(page: Any) -> None:
-    chair = page.locator(".chair")
-    chair.wait_for()
-    if chair.evaluate("element => element.classList.contains('chair-first-value')"):
-        page.get_by_role("button", name="Continue later", exact=True).click()
-    page.locator(".chair:not(.chair-first-value)").wait_for()
-
-
 def _init_desk(page: Any, url: str) -> None:
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    _api(page, "POST", "/api/desk/seed")
-    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    _api(page, "POST", "/api/desk/seed", token=TOKEN)
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
 
 
 def _open_interview(page: Any, url: str) -> None:
@@ -350,18 +295,8 @@ def _seed_desk_facts(tmp_path: Path) -> None:
     ))
 
 
-def _ensure_bundle() -> None:
-    """Ensure the web bundle is built.  Fail loudly if stale."""
-    bundle = REPO / "holdspeak" / "static" / "_built"
-    if not bundle.exists():
-        subprocess.run(
-            ["npm", "run", "build"],
-            cwd=str(REPO / "web"),
-            check=True,
-            capture_output=True,
-        )
-    if not bundle.exists():
-        pytest.skip("Web bundle not built; run `cd web && npm run build`")
+
+
 
 
 def _shot(page: Any, name: str, width: int, *, locator: Any = None) -> Path:
@@ -396,7 +331,7 @@ def test_jira_setup_walk(
     """
     from playwright.sync_api import sync_playwright
 
-    _ensure_bundle()
+    _ensure_build()
 
     runner = _make_acli_runner()
     server, url = _boot(tmp_path, monkeypatch, acli_runner=runner)
@@ -417,28 +352,28 @@ def test_jira_setup_walk(
             _seed_desk_facts(tmp_path)
 
             # -- Prime Jira connections: add + recheck alpha (MUST become connected) --
-            r1 = _api(page, "POST", "/api/providers/jira/connections",
-                       {"site": "alpha.atlassian.net", "email": "user@example.com"})
-            assert r1["status"] == 200, f"Add alpha failed: {r1}"
+            r1s, r1p = _api_allow_error(page, "POST", "/api/providers/jira/connections",
+                       {"site": "alpha.atlassian.net", "email": "user@example.com"}, token=TOKEN)
+            assert r1s == 200, f"Add alpha failed: {r1s} {r1p}"
 
-            r2 = _api(page, "POST", "/api/providers/jira/connections",
-                       {"site": "beta.atlassian.net", "email": "admin@example.com"})
-            assert r2["status"] == 200, f"Add beta failed: {r2}"
+            r2s, r2p = _api_allow_error(page, "POST", "/api/providers/jira/connections",
+                       {"site": "beta.atlassian.net", "email": "admin@example.com"}, token=TOKEN)
+            assert r2s == 200, f"Add beta failed: {r2s} {r2p}"
 
             # Recheck alpha -- MUST become connected
-            r3 = _api(page, "POST",
-                       f"/api/providers/jira/connections/{_ref_encode('alpha.atlassian.net|user@example.com')}/recheck")
-            assert r3["status"] == 200, f"Recheck alpha HTTP failed: {r3}"
-            assert r3["payload"]["state"] == "connected", (
-                f"ROOT CAUSE CHECK: alpha recheck did not return connected: {r3['payload']}"
+            r3s, r3p = _api_allow_error(page, "POST",
+                       f"/api/providers/jira/connections/{_ref_encode('alpha.atlassian.net|user@example.com')}/recheck", token=TOKEN)
+            assert r3s == 200, f"Recheck alpha HTTP failed: {r3s} {r3p}"
+            assert r3p["state"] == "connected", (
+                f"ROOT CAUSE CHECK: alpha recheck did not return connected: {r3p}"
             )
 
             # Recheck beta -- MUST become owner_action_required
-            r4 = _api(page, "POST",
-                       f"/api/providers/jira/connections/{_ref_encode('beta.atlassian.net|admin@example.com')}/recheck")
-            assert r4["status"] == 200, f"Recheck beta HTTP failed: {r4}"
-            assert r4["payload"]["state"] == "owner_action_required", (
-                f"Beta should be owner_action_required: {r4['payload']}"
+            r4s, r4p = _api_allow_error(page, "POST",
+                       f"/api/providers/jira/connections/{_ref_encode('beta.atlassian.net|admin@example.com')}/recheck", token=TOKEN)
+            assert r4s == 200, f"Recheck beta HTTP failed: {r4s} {r4p}"
+            assert r4p["state"] == "owner_action_required", (
+                f"Beta should be owner_action_required: {r4p}"
             )
 
             # -- Open interview --

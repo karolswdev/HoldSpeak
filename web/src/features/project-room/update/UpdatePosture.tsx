@@ -1,11 +1,7 @@
-// HS-162-05 -- the Update posture: draft list, editor, claim chips,
-// five verbs, generator provenance, marked spans, egress badge.
-// Pays 160's S-4 debt: claim chip activation OPENS the source.
-// No modals. Mic on the editor. Surface barrel imports only.
-//
-// THE EDITOR IS THE NOTES EDITOR (DeskEditor — CodeMirror markdown).
-// THE PUBLISHED VIEW IS THE RENDERED DOCUMENT (Material) with claims
-// as subtle per-section source rows (deduplicated).
+// HS-167-05 -- the Update posture recomposed on the surface library.
+// DRAFTS ledger (D6): lead edit + primary + ProvenanceChip + StateChip + time + chevron.
+// DeskEditor stays (sanctioned non-barrel import). CitationChips per section.
+// ActionNotice for unverified claims. Dead hand-rolled blocks removed.
 
 import { useCallback, type KeyboardEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
@@ -20,7 +16,12 @@ import {
   EgressChip,
   MicButton,
   Material,
+  StateChip,
+  ProvenanceChip,
+  ActionNotice,
+  CitationChips,
   humanTime,
+  type ChipState,
 } from "../../../desk/surface";
 import { openSourceRef } from "../../../desk/surface/citations";
 import type { UpdateController } from "./useUpdateController";
@@ -37,7 +38,30 @@ import {
 } from "./model";
 import "./update-posture.css";
 
-/* ── Per-section source row: deduplicated ref chips for a section ── */
+/* ── Lifecycle to StateChip state mapping ── */
+
+function lifecycleChipState(lifecycle: string): ChipState {
+  if (lifecycle === "published") return "success";
+  if (lifecycle === "superseded") return "failure";
+  return "idle";
+}
+
+/* ── Provenance chip props from generator string ── */
+
+function generatorChipSource(generator: string): string {
+  if (generator === "deterministic") return "deterministic";
+  if (generator.startsWith("model:")) return "model";
+  return generator;
+}
+
+function generatorChipBoundary(generator: string): string | undefined {
+  if (generator.startsWith("model:")) {
+    return generator.slice("model:".length);
+  }
+  return undefined;
+}
+
+/* ── Per-section source row: deduplicated ref chips (D6: CitationChips grammar) ── */
 
 function SectionSourceRow({
   claims,
@@ -46,7 +70,6 @@ function SectionSourceRow({
   claims: UpdateClaim[];
   onOpen: (ref: string) => void;
 }) {
-  // Collect unique refs; carry the FIRST claim's text per ref for the label.
   const seen = new Set<string>();
   const uniqueRefs: { ref: string; title: string }[] = [];
   for (const claim of claims) {
@@ -61,20 +84,19 @@ function SectionSourceRow({
       }
     }
   }
-  // Also surface unverified claims that have no refs
   const hasUnverifiedNoRef = claims.some((c) => !c.verified && c.refs.length === 0);
 
   if (uniqueRefs.length === 0 && !hasUnverifiedNoRef) return null;
 
   return (
-    <div className="update-source-row" data-testid="update-source-row">
+    <div data-testid="update-source-row">
       {uniqueRefs.map(({ ref, title }) => {
         const kind = refChipLabel(ref);
         return (
           <button
             key={ref}
             type="button"
-            className="desk-chip quiet update-claim-ref"
+            className="desk-chip quiet"
             data-testid="update-claim-ref"
             data-ref={ref}
             data-ref-kind={refKind(ref)}
@@ -88,7 +110,7 @@ function SectionSourceRow({
       })}
       {hasUnverifiedNoRef ? (
         <span
-          className="surface-token update-unverified-notice"
+          className="surface-token"
           data-tone="warn"
           data-testid="update-claim-unverified"
         >
@@ -99,7 +121,7 @@ function SectionSourceRow({
   );
 }
 
-/* ── Rendered document view: Material body + subtle claim affordances ── */
+/* ── Rendered document view: Material body + citations + ActionNotice ── */
 
 function RenderedUpdateDocument({
   update,
@@ -110,7 +132,7 @@ function RenderedUpdateDocument({
 }) {
   const claims = update.claims;
 
-  // Group claims by section for per-section source rows
+  // Group claims by section for per-section citation rows
   const sectionOrder: string[] = [];
   const grouped: Record<string, UpdateClaim[]> = {};
   for (const claim of claims) {
@@ -122,43 +144,43 @@ function RenderedUpdateDocument({
     grouped[s].push(claim);
   }
 
-  // Check for any unverified claims to show a notice in the body
   const hasUnverified = claims.some((c) => !c.verified);
 
   return (
-    <div className="update-document" data-testid="update-document">
+    <div data-testid="update-document">
       {/* The rendered markdown body is the hero */}
       <div className="update-document-body" data-testid="update-document-body">
         <Material>{update.bodyMd}</Material>
       </div>
 
-      {/* Unverified notice when applicable */}
+      {/* D6: unverified claim as ActionNotice in flow */}
       {hasUnverified ? (
-        <div className="update-unverified-banner" data-testid="update-unverified-banner" role="status">
-          <span className="surface-token" data-tone="warn">
+        <div data-testid="update-unverified-banner" role="status">
+          <ActionNotice tone="warn">
             Some claims in this update could not be verified
-          </span>
+          </ActionNotice>
         </div>
       ) : null}
 
-      {/* Per-section source rows: subtle, deduplicated */}
+      {/* D6: source rows per section (CitationChips grammar, deduplicated) */}
       {sectionOrder.length > 0 ? (
-        <div className="update-sources" data-testid="update-sources">
-          <span className="update-sources-label surface-token">Sources</span>
-          {sectionOrder.map((section) => (
-            <SectionSourceRow
-              key={section}
-              claims={grouped[section]}
-              onOpen={onOpenRef}
-            />
-          ))}
-        </div>
+        <SurfaceSection label="SOURCES">
+          <div data-testid="update-sources">
+            {sectionOrder.map((section) => (
+              <SectionSourceRow
+                key={section}
+                claims={grouped[section]}
+                onOpen={onOpenRef}
+              />
+            ))}
+          </div>
+        </SurfaceSection>
       ) : null}
     </div>
   );
 }
 
-/* ── Draft list view ── */
+/* ── Draft list view (D6: DRAFTS SurfaceLedger) ── */
 
 function UpdateList({
   ctrl,
@@ -167,7 +189,7 @@ function UpdateList({
 }) {
   return (
     <div className="update-list" data-testid="update-list">
-      <SurfaceLedger count={`UPDATES ${ctrl.updates.length}`}>
+      <SurfaceLedger count={`DRAFTS ${ctrl.updates.length}`} cols="room">
         <ul className="surface-ledger-rows">
           {ctrl.updates.map((update) => {
             const tone = lifecycleTone(update.lifecycle);
@@ -176,6 +198,12 @@ function UpdateList({
                 key={update.id}
                 data-testid="update-list-item"
                 expands={false}
+                wrap
+                lead={
+                  <span className="update-lead-emblem" aria-hidden="true">
+                    {"✎"}
+                  </span>
+                }
                 primary={
                   <span
                     className="update-list-row"
@@ -183,7 +211,6 @@ function UpdateList({
                     data-generator={update.generator}
                     title={generatorLabel(update.generator)}
                   >
-                    {/* Primary line: lifecycle + rev + time + open chevron */}
                     <span className="update-list-primary">
                       <span className="surface-token" data-tone={tone}>
                         {lifecycleLabel(update.lifecycle)}
@@ -192,9 +219,7 @@ function UpdateList({
                       <span className="update-list-time">
                         {humanTime(update.publishedAt ?? update.updatedAt)}
                       </span>
-                      <span className="update-list-chevron" aria-hidden="true" data-testid="update-list-chevron">{"›"}</span>
                     </span>
-                    {/* Secondary line: provenance in plain words */}
                     <span className="update-list-secondary" data-testid="update-list-provenance">
                       {provenancePhrase(update.generator)}
                       {update.fallbackReason ? (
@@ -207,6 +232,18 @@ function UpdateList({
                         </span>
                       ) : null}
                     </span>
+                  </span>
+                }
+                cells={
+                  <ProvenanceChip
+                    source={generatorChipSource(update.generator)}
+                    boundary={generatorChipBoundary(update.generator)}
+                  />
+                }
+                time={humanTime(update.publishedAt ?? update.updatedAt)}
+                trailing={
+                  <span aria-hidden="true" data-testid="update-list-chevron">
+                    {"›"}
                   </span>
                 }
                 onToggle={() => ctrl.openUpdate(update)}
@@ -254,12 +291,10 @@ function UpdateEditor({
   if (!update) return null;
 
   const isDraft = ctrl.isDraft;
-  const isPublished = ctrl.isPublished;
 
   // Posture-scoped keyboard (WEB-CMD-002)
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
-      // DeskEditor handles its own Escape; only catch it outside the editor
       const target = e.target as HTMLElement;
       const inEditor =
         target.closest?.(".cm-editor") != null ||
@@ -290,16 +325,25 @@ function UpdateEditor({
     >
       {/* Provenance + lifecycle band */}
       <div className="update-editor-band" data-testid="update-editor-band">
-        <span className="surface-token" data-tone={lifecycleTone(update.lifecycle)}>
-          {lifecycleLabel(update.lifecycle)}
-        </span>
+        <StateChip
+          state={lifecycleChipState(update.lifecycle)}
+          label={lifecycleLabel(update.lifecycle)}
+        />
         <ProvenanceLabel update={update} />
         <span className="surface-token">Rev {update.draftRevision}</span>
       </div>
 
-      {/* Body: DeskEditor for drafts, Material rendered document for published */}
+      {/* Body: DeskEditor for drafts, Material for published */}
       {isDraft ? (
         <div className="update-body-editor" data-testid="update-body-editor">
+          <DeskEditor
+            value={ctrl.editBody}
+            onChange={ctrl.handleEditBody}
+            placeholder="Write your update"
+            ariaLabel="Update body"
+            autoFocus
+            minHeight="200px"
+          />
           <div className="update-body-editor-mic">
             <MicButton
               draftScope={`update-editor-${update.id}`}
@@ -310,14 +354,6 @@ function UpdateEditor({
               }}
             />
           </div>
-          <DeskEditor
-            value={ctrl.editBody}
-            onChange={ctrl.handleEditBody}
-            placeholder="Write your update"
-            ariaLabel="Update body"
-            autoFocus
-            minHeight="200px"
-          />
         </div>
       ) : (
         <div data-testid="update-body-readonly">
@@ -336,63 +372,16 @@ function UpdateEditor({
         </div>
       )}
 
-      {/* Draft claims: subtle source rows below the editor */}
+      {/* Draft claims: citations below the editor */}
       {isDraft && update.claims.length > 0 ? (
         <RenderedUpdateDocument update={update} onOpenRef={onOpenRef} />
       ) : null}
 
-      {/* Verb bar */}
+      {/* Back verb stays inside the editor (non-portalling, glass locator compat) */}
       <SurfaceVerbs>
-        {/* Back to list */}
-        <Button dense variant="ghost" onClick={() => void ctrl.backToList()}>
+        <Button dense variant="ghost" onClick={() => void ctrl.backToList()} data-testid="update-verb-back">
           Back
         </Button>
-
-        {/* Save (draft only) */}
-        {isDraft ? (
-          <Button
-            dense
-            loading={ctrl.saveBusy}
-            disabled={!ctrl.dirty}
-            onClick={() => void ctrl.save()}
-            data-testid="update-verb-save"
-          >
-            Save
-          </Button>
-        ) : null}
-
-        {/* Regenerate */}
-        <Button
-          dense
-          loading={ctrl.regenerateBusy}
-          onClick={() => void ctrl.regenerate("deterministic")}
-          data-testid="update-verb-regenerate"
-        >
-          Regenerate
-        </Button>
-
-        {/* Copy Markdown */}
-        <Button
-          dense
-          loading={ctrl.copyBusy}
-          onClick={() => void ctrl.copyMarkdown()}
-          data-testid="update-verb-copy"
-        >
-          {ctrl.copyState === "copied" ? "Copied" : ctrl.copyState === "failed" ? "Copy failed" : "Copy Markdown"}
-        </Button>
-
-        {/* Publish (draft only, consequential styling) */}
-        {isDraft ? (
-          <Button
-            dense
-            variant="primary"
-            loading={ctrl.publishBusy}
-            onClick={() => void ctrl.publish()}
-            data-testid="update-verb-publish"
-          >
-            Publish
-          </Button>
-        ) : null}
       </SurfaceVerbs>
     </div>
   );
@@ -418,7 +407,6 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
           <Button dense variant="ghost" onClick={ctrl.exitUpdates}>
             Close
           </Button>
-          {/* Draft verbs with generator choice */}
           <Button
             dense
             loading={ctrl.draftBusy}
@@ -480,6 +468,11 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
         <UpdateEditor ctrl={ctrl} onOpenRef={onOpenRef} />
 
         <SurfaceFooter
+          egress={
+            ctrl.current?.generator.startsWith("model:")
+              ? <EgressChip label="model" scope="mixed" title={`Model: ${generatorChipBoundary(ctrl.current.generator)}`} />
+              : <ProvenanceChip source="deterministic" />
+          }
           receipt={
             <span className="surface-footer-receipt-line" data-testid="update-footer-receipt" role="status">
               {ctrl.current
@@ -487,11 +480,53 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
                 : "UPDATE"}
             </span>
           }
+          verbs={
+            <>
+              {ctrl.isDraft ? (
+                <Button
+                  dense
+                  loading={ctrl.saveBusy}
+                  disabled={!ctrl.dirty}
+                  onClick={() => void ctrl.save()}
+                  data-testid="update-verb-save"
+                >
+                  Save
+                </Button>
+              ) : null}
+              <Button
+                dense
+                loading={ctrl.regenerateBusy}
+                onClick={() => void ctrl.regenerate("deterministic")}
+                data-testid="update-verb-regenerate"
+              >
+                Regenerate
+              </Button>
+              <Button
+                dense
+                loading={ctrl.copyBusy}
+                onClick={() => void ctrl.copyMarkdown()}
+                data-testid="update-verb-copy"
+              >
+                {ctrl.copyState === "copied" ? "Copied" : ctrl.copyState === "failed" ? "Copy failed" : "Copy"}
+              </Button>
+              {ctrl.isDraft ? (
+                <Button
+                  dense
+                  variant="primary"
+                  loading={ctrl.publishBusy}
+                  onClick={() => void ctrl.publish()}
+                  data-testid="update-verb-publish"
+                >
+                  Publish
+                </Button>
+              ) : null}
+            </>
+          }
         />
       </div>
     );
   }
 
-  // ── Off posture (should not render) ──
+  // ── Off posture ──
   return null;
 }

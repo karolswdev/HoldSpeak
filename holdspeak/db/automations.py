@@ -92,6 +92,16 @@ class AutomationRepository(BaseRepository):
             rows = conn.execute("SELECT * FROM connector_watches ORDER BY created_at,id").fetchall()
         return [self._payload(row, "query", "snapshot") for row in rows]
 
+    def list_project_watches(self, project_id: str) -> list[dict[str, Any]]:
+        """HS-167-02: list watches bound to a project."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM connector_watches WHERE project_id=? "
+                "ORDER BY created_at,id",
+                (project_id,),
+            ).fetchall()
+        return [self._payload(row, "query", "snapshot") for row in rows]
+
     def set_watch_enabled(self, watch_id: str, enabled: bool) -> bool:
         with self._connection() as conn:
             cur = conn.execute(
@@ -385,15 +395,23 @@ class AutomationRepository(BaseRepository):
         with a set next_evaluation_at that has passed.  Legacy watches
         (state='') are owned by ReactionService.refresh_due_watches --
         never two schedulers on one row.
+
+        HS-167 M-2: watches whose project is archived are excluded
+        defensively (archive_project pauses them, but a direct DB edit
+        or race could leave one active).
         """
         with self._connection() as conn:
             rows = conn.execute(
-                """SELECT * FROM connector_watches
-                   WHERE enabled = 1
-                     AND state IN ('active', 'tested')
-                     AND next_evaluation_at IS NOT NULL
-                     AND next_evaluation_at <= ?
-                   ORDER BY next_evaluation_at ASC""",
+                """SELECT cw.* FROM connector_watches cw
+                   LEFT JOIN projects p ON cw.project_id = p.id
+                   WHERE cw.enabled = 1
+                     AND cw.state IN ('active', 'tested')
+                     AND cw.next_evaluation_at IS NOT NULL
+                     AND cw.next_evaluation_at <= ?
+                     AND (cw.project_id = '' OR cw.project_id IS NULL
+                          OR p.lifecycle IS NULL
+                          OR p.lifecycle != 'archived')
+                   ORDER BY cw.next_evaluation_at ASC""",
                 (now_iso,),
             ).fetchall()
         return [self._payload(row, "query", "snapshot") for row in rows]
@@ -700,6 +718,7 @@ class AutomationRepository(BaseRepository):
         completed_at: str | None = None,
         error_code: str | None = None,
         error_detail: str | None = None,
+        metadata_json: str = "{}",
     ) -> dict[str, Any]:
         with self._connection() as conn:
             conn.execute(
@@ -707,12 +726,13 @@ class AutomationRepository(BaseRepository):
                    (id,watch_id,watch_revision,provider_capability_revision,
                     source_revision,trigger_kind,state,matched_rule_ids_json,
                     observation_ids_json,started_at,completed_at,
-                    error_code,error_detail)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    error_code,error_detail,metadata_json)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (evaluation_id, watch_id, watch_revision,
                  provider_capability_revision, source_revision, trigger_kind,
                  state, matched_rule_ids_json, observation_ids_json,
-                 started_at, completed_at, error_code, error_detail),
+                 started_at, completed_at, error_code, error_detail,
+                 metadata_json),
             )
         return self.get_evaluation(evaluation_id) or {}
 
@@ -733,6 +753,7 @@ class AutomationRepository(BaseRepository):
         completed_at: str | None = None,
         error_code: str | None = None,
         error_detail: str | None = None,
+        metadata_json: str = "{}",
     ) -> None:
         """Insert a watch_evaluations row on a caller-owned connection.
 
@@ -744,12 +765,13 @@ class AutomationRepository(BaseRepository):
                (id, watch_id, watch_revision, provider_capability_revision,
                 source_revision, trigger_kind, state, matched_rule_ids_json,
                 observation_ids_json, started_at, completed_at,
-                error_code, error_detail)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                error_code, error_detail, metadata_json)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (evaluation_id, watch_id, watch_revision,
              provider_capability_revision, source_revision, trigger_kind,
              state, matched_rule_ids_json, observation_ids_json,
-             started_at, completed_at, error_code, error_detail),
+             started_at, completed_at, error_code, error_detail,
+             metadata_json),
         )
 
     def find_evaluation_by_source(

@@ -17,6 +17,9 @@ Every state renders icon + text; never color alone.
 ## Tokens
 All styling uses design tokens from design-tokens.json. Raw values are forbidden (validate-tokens.cjs enforces).
 
+## surface-token[data-chip] (HS-167-05)
+The chip variant of `surface-token` gives it the full chip geometry (border, well bg, etch shadow, 10px mono, 0.06em tracking) used by token rows (steward grant, run receipt refs). Stamp `data-chip` on any `surface-token` that should render as a discrete chip rather than inline text. Tone data-attrs still work.
+
 ## Motion
 All transitions use --duration-* tokens and --ease-* curves. prefers-reduced-motion removes animation.
 
@@ -40,6 +43,36 @@ The card visual language without an interaction model. Owns all `surface-choice-
 - `children` — rendered after the built-in slots, before the fold
 - All extra props pass through to the wrapper element (role, aria-*, data-*, event handlers)
 - ChoiceCard composes the shell internally (one source of material)
+
+## SurfaceIdentity (HS-167-03)
+The project orientation band: name (the Primary type step, 15px/600), chip row (wraps at the narrow container), optional purpose (folds past two lines via Disclosure), outcome as a target token row, optional fold body, trailing token (e.g. read time).
+- `name: string` -- rendered at `--desk-type-primary-size`
+- `chips: ReactNode` -- StateChips + tokens, one row, wraps
+- `purpose?: string` -- one line, folds past two lines via Disclosure
+- `outcome?: string` -- rendered as a target token row with a target mark
+- `fold?: ReactNode` -- Disclosure body (additional content)
+- `trailing?: ReactNode` -- right-aligned on the chip row (e.g. read-time token)
+
+## SurfaceLedgerRow.trailing (HS-167-03)
+A new prop: one quiet verb or a chevron, right-aligned after `cells`, its own grid slot (never overlapping the 52px time column). The grid extends to 6 columns when `trailing` is present (stamped via `data-has-trailing`).
+- `trailing?: ReactNode` -- quiet Button or chevron
+- `wrap?: boolean` -- when true, primary wraps instead of ellipsizing; at the narrow container cells fall under
+
+## SurfaceVerbs.active (HS-167-03)
+A new prop: the verb key rendered lit (`aria-current="true"` on the verb button, the verb bar stamps `data-active-verb` on the wrapper). The active verb gets the etched lit state (sunken well via `--desk-window-etch`). Count chips inside verb buttons use the `.surface-verb-count` class.
+- `active?: string` -- the verb key rendered lit
+
+## ScrollHint (HS-167-03)
+Gradient edge fades for scrolling wells. ONE species with an `axis` prop. Promoted from DoorBoardLane.tsx (horizontal) and steward/model.ts (vertical); both copies replaced with barrel imports.
+- `axis: "x" | "y"` -- fade direction
+- `scrollRef: RefObject<HTMLElement | null>` -- the scrollable element (when null, falls back to wrapRef.parentElement)
+- `className?: string` -- additional class on the wrapper
+- Pure function: `computeScrollHint(scrollOffset, scrollExtent, clientExtent)` returns `ScrollHintState` ("none" | "start" | "end" | "both")
+- Hook: `useScrollHint(wrapRef, scrollRef, axis)` -- attaches scroll/resize listeners, sets `data-scroll-hint` on the wrapper
+- Fence: `computeScrollHint`/`computeVerticalScrollHint` must not be defined outside `desk/surface/`, `desk/chair/lanes/DoorBoardLane.tsx` (thin re-export), and `features/project-room/steward/model.ts` (thin re-export)
+
+## DeskEditor (sanctioned non-barrel import)
+`web/src/desk/components/DeskEditor.tsx` is the ONE sanctioned non-barrel import for feature code. It provides the rich text editor used by the Update posture. Feature code may import DeskEditor directly from `desk/components/DeskEditor` without going through the barrel.
 
 ## ChoiceCard object slots (HS-156-08)
 A ChoiceCard is an OBJECT, not a list. Beyond label/description/facts/cost:

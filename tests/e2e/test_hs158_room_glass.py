@@ -8,11 +8,12 @@ yet (honest gap: update_project_room_fields has no PATCH route).
 """
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 
 import pytest
+
+from .glass_infra import _boot, _api, _assert_clean, _normal_chair, _ensure_build
 
 pytest.importorskip("playwright.sync_api", reason="Room glass needs Playwright")
 
@@ -21,78 +22,11 @@ REPO = Path(__file__).resolve().parents[2]
 SHOTS = REPO / "pm/roadmap/holdspeak/phase-158-the-room/assets/story-05-shots"
 
 
-def _boot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, str]:
-    import holdspeak.config as config_module
-    import holdspeak.db.core as db_core
-    from holdspeak.db import reset_database
-    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
-
-    home = tmp_path / "home"
-    home.mkdir()
-    browser_cache = Path(
-        os.environ.get(
-            "PLAYWRIGHT_BROWSERS_PATH",
-            Path.home() / "Library/Caches/ms-playwright",
-        )
-    )
-    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
-    monkeypatch.setenv("HOME", str(home))
-    monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
-    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
-    reset_database()
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=lambda *_: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-        ),
-        auth_token=TOKEN,
-    )
-    return server, server.start()
-
-
-def _api(page: Any, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
-    result = page.evaluate(
-        """async ([method, path, body, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: {
-              authorization: `Bearer ${token}`,
-              ...(body ? {"content-type": "application/json"} : {}),
-            },
-            body: body ? JSON.stringify(body) : undefined,
-          });
-          const contentType = response.headers.get("content-type") || "";
-          const payload = contentType.includes("json")
-            ? await response.json()
-            : await response.text();
-          return {status: response.status, payload};
-        }""",
-        [method, path, body, TOKEN],
-    )
-    assert result["status"] < 300, f"HTTP {result['status']}: {result}"
-    return result["payload"] if isinstance(result["payload"], dict) else {}
-
-
-def _assert_clean(page: Any, errors: list[str]) -> None:
-    assert not errors, errors
-    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-
-
-def _normal_chair(page: Any) -> None:
-    """Cross the First Sentence gate without blocking."""
-    chair = page.locator(".chair")
-    chair.wait_for()
-    if chair.evaluate("element => element.classList.contains('chair-first-value')"):
-        page.get_by_role("button", name="Continue later", exact=True).click()
-    page.locator(".chair:not(.chair-first-value)").wait_for()
-
-
 def _init_desk(page: Any, url: str) -> None:
     """Navigate to the hub root so relative fetch paths work, then seed."""
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    _api(page, "POST", "/api/desk/seed")
-    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    _api(page, "POST", "/api/desk/seed", token=TOKEN)
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
 
 
 def _open_project_room(page: Any, url: str, project_id: str) -> None:
@@ -134,7 +68,7 @@ def _seed_populated_project(page: Any) -> str:
         "name": "Payments Platform Rewrite",
         "description": "Migrate from legacy payment gateway to modern event-driven architecture.",
         "command_id": "hs158-glass-create",
-    })
+    }, token=TOKEN)
     project = created["project"]
     project_id = project["id"]
 
@@ -212,7 +146,7 @@ def _seed_populated_project(page: Any) -> str:
     for item_payload in items:
         _api(page, "POST", f"/api/projects/{project_id}/items", {
             **{k: v for k, v in item_payload.items() if v is not None},
-        })
+        }, token=TOKEN)
 
     return project_id
 
@@ -222,7 +156,7 @@ def _seed_empty_project(page: Any) -> str:
     created = _api(page, "POST", "/api/projects", {
         "name": "Empty Glass Project",
         "command_id": "hs158-glass-empty",
-    })
+    }, token=TOKEN)
     return created["project"]["id"]
 
 
@@ -236,10 +170,11 @@ def test_room_populated(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
 ) -> None:
     """Seeded Project with items opens in the Room and renders truthfully."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     try:
@@ -270,7 +205,7 @@ def test_room_populated(
             focus.wait_for(timeout=10000)
             assert focus.is_visible()
             # At least one focus item row should be visible.
-            focus_rows = focus.locator(".surface-row")
+            focus_rows = focus.locator(".surface-ledger-row")
             focus_rows.first.wait_for(timeout=10000)
             assert focus_rows.count() >= 1
 
@@ -295,10 +230,11 @@ def test_room_empty(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
 ) -> None:
     """A bare project with no items shows the honest empty state."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     try:
@@ -346,6 +282,7 @@ def test_room_degraded(
     the /room endpoint returns items.state=degraded while orientation
     and other sections remain ok.
     """
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
     from holdspeak.services.project_service import ProjectService
@@ -357,7 +294,7 @@ def test_room_degraded(
 
     monkeypatch.setattr(ProjectService, "_read_room_items", _degraded_items)
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     try:

@@ -96,6 +96,29 @@ vi.mock("../../../../desk/surface/Surface", () => ({
       <div data-testid="surface-side">{side}</div>
     </div>
   ),
+  SurfaceSection: ({ label, children }: { label?: string; children: React.ReactNode }) => (
+    <section data-testid={`surface-section-${label ?? ""}`}>{label ? <h3>{label}</h3> : null}{children}</section>
+  ),
+  SurfaceFacts: ({ value }: { value: unknown }) => {
+    if (!value || typeof value !== "object") return null;
+    return (
+      <dl data-testid="surface-facts">
+        {Object.entries(value as Record<string, unknown>).map(([k, v]) => (
+          <React.Fragment key={k}><dt>{k}</dt><dd>{String(v)}</dd></React.Fragment>
+        ))}
+      </dl>
+    );
+  },
+  SurfaceLedger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SurfaceLedgerRow: ({ primary, lead, cells, trailing, wrap, expands, children, ...rest }: Record<string, unknown>) => (
+    <li className="surface-ledger-row" {...(rest["data-testid"] ? { "data-testid": rest["data-testid"] } : {})}>
+      {lead != null ? <span className="surface-ledger-lead">{lead as React.ReactNode}</span> : null}
+      <span className="surface-ledger-primary">{primary as React.ReactNode}</span>
+      {cells != null ? <span>{cells as React.ReactNode}</span> : null}
+      {trailing != null ? <span className="surface-ledger-trailing">{trailing as React.ReactNode}</span> : null}
+      {children as React.ReactNode}
+    </li>
+  ),
 }));
 
 // jsdom doesn't have scrollIntoView

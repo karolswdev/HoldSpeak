@@ -143,6 +143,25 @@ export function useSetupController() {
     const outcomeAnswer = session.answers.outcome ?? null;
     const signalsAnswer = session.answers.signals ?? null;
 
+    // HS-167-02: restore Jira scope from the persisted answer.
+    // The scope JSON rides the answer's `original` field (same shape as
+    // all other answers -- the text param carries JSON.stringify(scope)).
+    const jiraScopeAnswer = session.answers["jira_scope"] ?? null;
+    if (jiraScopeAnswer?.answer?.original) {
+      try {
+        const scope = JSON.parse(jiraScopeAnswer.answer.original);
+        if (scope && typeof scope === "object") {
+          setJiraScopeRaw({
+            connectionRef: String(scope.connectionRef ?? ""),
+            projects: Array.isArray(scope.projects) ? scope.projects : [],
+            issueTypes: Array.isArray(scope.issueTypes) ? scope.issueTypes : [],
+            statusCategories: Array.isArray(scope.statusCategories) ? scope.statusCategories : [],
+            jql: String(scope.jql ?? ""),
+          });
+        }
+      } catch { /* malformed scope answer -- keep default */ }
+    }
+
     switch (session.stage) {
       case "outcome":
         setState({
@@ -640,6 +659,8 @@ export function useSetupController() {
   const [jiraIssueTypes, setJiraIssueTypes] = useState<JiraDiscoveryResponse | null>(null);
   const [jiraStatuses, setJiraStatuses] = useState<JiraDiscoveryResponse | null>(null);
   const [jiraScope, setJiraScopeRaw] = useState<JiraScope>({ connectionRef: "", projects: [], issueTypes: [], statusCategories: [], jql: "" });
+  const jiraScopeRef = useRef<JiraScope>(jiraScope);
+  jiraScopeRef.current = jiraScope;
   const [jiraPreview, setJiraPreview] = useState<JiraSearchResult | null>(null);
   const [jiraLoading, setJiraLoading] = useState(false);
   const [jiraDiscovering, setJiraDiscovering] = useState(false);
@@ -860,8 +881,19 @@ export function useSetupController() {
   );
 
   const updateJiraScope = useCallback((partial: Partial<JiraScope>) => {
-    setJiraScopeRaw((prev) => ({ ...prev, ...partial }));
-  }, []);
+    // HS-167-02: the next scope is computed from the ref (never inside
+    // the state updater -- updaters may run twice under StrictMode and
+    // must stay pure); the persisted answer is best-effort so resume
+    // restores the toggles.
+    const next = { ...jiraScopeRef.current, ...partial };
+    jiraScopeRef.current = next;
+    setJiraScopeRaw(next);
+    if (sessionRef.current) {
+      void Promise.resolve()
+        .then(() => api.submitAnswer(sessionRef.current, "jira_scope", JSON.stringify(next)))
+        .catch(() => {});
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetJiraState = useCallback(() => {
     setJiraConnections([]);

@@ -1,3 +1,113 @@
+# HANDOVER: MUAD'DIB IV — the orchestrator's mind, serialized a fourth time
+
+Read this once, fully, before your first tool call. When you finish,
+you ARE the orchestrator. Written 2026-09-04 at the close of the
+session that chartered, built, owner-verdicted (three words), counsel-
+ratified and PR'd Phase 167 The Room in Use — the phase that made the
+eight Project Rooms faces ONE Room on the surface library and put the
+FIRST real project on the owner's desk. Muad'Dib III and II (below,
+verbatim) still hold; this edition carries what changed.
+
+## 0. The soul, re-proven again
+
+Eight faces from eight sittings had drifted from the library; the
+owner's real desk had ZERO projects. This session's proof of the soul:
+every worker report re-verified by hand, and the catches that only
+hands find — a build helper that trusted a stale marker (the 163
+theater reborn TWICE: first the marker, then a build RACE leaving two
+chunks with a marker newer than stale chunks); a species-level `6ch`
+grid column overprinting every date cell on every recomposed face; a
+submit inside a React state updater; a trigger route lying about
+project scope; a local import making a name unbound on nine MCP
+tool paths; a walk that archived a real project and left its watches
+evaluating the owner's real providers on the tick (mitigated on his
+desk within minutes; paid at the root). Speed and paranoia: paranoia
+is WHY you move fast.
+
+## 1. The state of the world (2026-09-04)
+
+- **Phase 167 COMPLETE 8/8**; PR opened from
+  feat/project-rooms-the-room-in-use → main on the local gates (full
+  suite 24f/9220p, sweep zero unexplained; web 789 + baseline zero
+  branch-new; the eight glass rigs 46 green; counsel RATIFY-W-C, all
+  M+S paid). MERGE ON THE OWNER'S WORD. If he says merge: `gh pr merge
+  <n> --merge` (create and merge are SEPARATE gh calls), then memory
+  (the TWELFTH Project Rooms phase merged).
+- **The owner's words this phase, verbatim:** the design canvas —
+  "PASS — build it."; the whole-Room gallery — "PASS"; the attended
+  walk — "Walk it later — close on the dry run." His attended walk is
+  LEDGERED PENDING: his desk is set up (restart the hub on the branch
+  build; walk the eight steps of assets/walk-script.md; the Tuesday
+  question). The runner: tests/e2e/live167_walk.py (HS167_WALK=1,
+  HS167_WALK_DB=isolated|real; real HOME; skip-guarded on gh + acli).
+- **His desk after the walk:** one project (archived) `proj-102233e71c47`
+  "The first real project through the whole Room, attended"; its two
+  watches PAUSED and unattended OFF (the mitigation + the root fix);
+  the DB backup `holdspeak.db.bak-hs167-163032` beside the DB.
+- **Post-phase menu (NO NEW CHARTERS WITHOUT HIS WORD):** the attended
+  walk; Gate B partner feedback; MCP-008 remote; the model-era collapse
+  (backend); 155 The Crew; the debt ledger (final-summary.md of 167).
+
+## 2. The laws this session added (append to §7 of the old canon)
+
+- **Design the whole Room, not a face**: one design doc with a shared
+  spine (identity band · ledger grammar · chip vocabulary · a plan
+  species for anything that runs · ScrollHint · the footer), counsel
+  reads it BEFORE the owner (18 findings paid: never retire a wing;
+  never fabricate a chip the wire lacks; name real props).
+- **A test that pins dead DOM shape gets a SELECTOR edit** — element
+  types, class names, moved testids included. "Kept for test compat" is
+  never a reason to keep hand-rolled markup. Say it in the brief.
+- **Overprints are species bugs first**: when every recomposed row
+  overprints, look at the grid template, not the faces (the `room`
+  ledger template was born from a fixed `6ch` column).
+- **The build-first helper compares the OLDEST built chunk against the
+  newest source and never touches the marker**; two hashed chunks under
+  the bundle = a build race = stale pixels. Grep the chunk for a new
+  string before believing a shot.
+- **Pixel-identical round N+1 shots = the bundle did not change.** Read
+  timestamps AND content, never the worker's word.
+- **Archive stops the watches** (list_due_watches excludes archived
+  projects; archive pauses + unattended off; restore never auto-
+  resumes). Any real-desk walk's finally disables unattended BEFORE
+  archiving.
+- **A local `from x import y` inside one branch makes `y` local to the
+  whole function** — nine tool paths died of one worker's import. Hoist.
+- **Version pins hide under lying names** (again): `is_44` → `is_45`;
+  the project family 34 → 35; classify every new MCP tool in
+  thread_tools._TOOL_CLASSES; regenerate the schema snapshot in the
+  same commit as a column.
+- **Thread-local side channels must clear on entry AND on the except
+  path** (a failed fetch's calls count leaked into the next watch).
+- **Candidates lists are branch-NEW names only** (comm -13 main branch),
+  never the whole branch failure list — the sweep count lied by 8 once.
+- **zsh gotchas**: `echo ===X===` dies on `=`-prefixed words; unquoted
+  `$VAR` is NOT word-split (use arrays); `uv run` must run from the
+  repo cwd; the rigs REWRITE older phases' shot PNGs — restore before
+  staging (`git checkout -- pm/.../phase-1[0-6]*/assets`).
+
+## 3. The toolbox (session-scoped; recreate freely)
+
+shot-artboards.py (per-artboard shots of a design canvas at true size
+via a one-artboard seed launched focused); measure.py (true rendered
+heights of .dc.html roots); build-canvas.py (canvas.json + notes);
+build-gallery.py (the verdict gallery: sheets + key pairs, ≤4 MB);
+regen_schema.py (the canonical schema snapshot); close-unit.txt /
+close-rest.txt (the two suite halves); main-failed-names.txt from `gh
+run view <id> --log-failed | grep -oE 'FAILED tests/[^ ]+'` at the
+branch BASE; branch-new.txt = comm -13 of the names.
+
+## 4. The voice (unchanged)
+
+Terse, concrete, numbers over adjectives; the last message carries
+the whole picture; never claim what you didn't verify; the owner's
+bounces are gifts — answer the exact words, record them verbatim, fix
+the root; scars become laws in memory.
+
+— Muad'Dib, session 016siGSBgZph9EhEdGMoyWcu (the Room in Use sitting)
+
+---
+
 # HANDOVER: MUAD'DIB III — the orchestrator's mind, serialized a third time
 
 Read this once, fully, before your first tool call. When you finish,
@@ -21,7 +131,11 @@ owner has ratified its design on the library.
 
 ## 1. The state of the world (2026-09-03)
 
-- **PR #532** feat/project-rooms-p7-the-jira-parity → main is OPEN
+- **PR #532 MERGED** → main `31c072f5` on the owner's word (2026-09-03,
+  "yes the PR is fine, I gave my word..., you know?"); the next
+  session chartered Phase 167 The Room in Use (his pick over the
+  model-era collapse, 155 The Crew, Gate B). What follows was true
+  at the close of the 166 sitting: PR #532 was OPEN
   on the local gates (suite 19f/9201p, sweep zero unexplained; web
   2358 zero branch-new; counsel RATIFY-W-C paid). **MERGE WAITS FOR
   THE OWNER'S WORD** on the two galleries (the face on the rig

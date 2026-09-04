@@ -22,7 +22,6 @@ Determinism: fixture legs x2 (run the file twice, both green).
 from __future__ import annotations
 
 import json
-import os
 import re
 import subprocess
 import time
@@ -31,6 +30,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
+from .glass_infra import _boot, _api, _assert_clean, _normal_chair, _ensure_build
 
 pytest.importorskip("playwright.sync_api", reason="Unattended glass needs Playwright")
 
@@ -167,125 +168,10 @@ def _write_fixture(path: Path, *, auth: dict[str, Any], **kwargs: Any) -> None:
 # ── Boot / helpers ────────────────────────────────────────────────
 
 
-def _boot(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    *,
-    gh_runner: Any = None,
-) -> tuple[Any, str]:
-    """Boot a real MeetingWebServer with isolated DB."""
-    import holdspeak.config as config_module
-    import holdspeak.db.core as db_core
-    from holdspeak.db import reset_database
-    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
-
-    home = tmp_path / "home"
-    home.mkdir()
-    browser_cache = Path(
-        os.environ.get(
-            "PLAYWRIGHT_BROWSERS_PATH",
-            Path.home() / "Library/Caches/ms-playwright",
-        )
-    )
-    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
-    monkeypatch.setenv("HOME", str(home))
-    monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
-    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
-    reset_database()
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=lambda *_: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-        ),
-        auth_token=TOKEN,
-        gh_runner=gh_runner,
-    )
-    return server, server.start()
-
-
 # ── Module-scope build ────────────────────────────────────────────
-
-_build_done = False
-
-
-def _ensure_build() -> None:
-    """Build the web bundle once per module (163 stale-bundle law)."""
-    global _build_done
-    if _build_done:
-        return
-    result = subprocess.run(
-        ["npm", "--prefix", str(REPO / "web"), "run", "build"],
-        capture_output=True, text=True, timeout=120,
-    )
-    assert result.returncode == 0, (
-        f"Web build failed:\n{result.stderr}\n{result.stdout}"
-    )
-    _build_done = True
 
 
 # ── Wire helpers ──────────────────────────────────────────────────
-
-
-def _api(
-    page: Any, method: str, path: str,
-    body: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Browser-side fetch through the real hub."""
-    result = page.evaluate(
-        """async ([method, path, body, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: {
-              authorization: `Bearer ${token}`,
-              ...(body ? {"content-type": "application/json"} : {}),
-            },
-            body: body ? JSON.stringify(body) : undefined,
-          });
-          const contentType = response.headers.get("content-type") || "";
-          const payload = contentType.includes("json")
-            ? await response.json()
-            : await response.text();
-          return {status: response.status, payload};
-        }""",
-        [method, path, body, TOKEN],
-    )
-    assert result["status"] < 300, f"HTTP {result['status']}: {result}"
-    payload = result["payload"]
-    return payload if isinstance(payload, dict) else {}
-
-
-def _api_allow_error(
-    page: Any, method: str, path: str,
-    body: dict[str, Any] | None = None,
-) -> tuple[int, Any]:
-    """Like _api but returns (status, payload) without asserting."""
-    result = page.evaluate(
-        """async ([method, path, body, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: {
-              authorization: `Bearer ${token}`,
-              ...(body ? {"content-type": "application/json"} : {}),
-            },
-            body: body ? JSON.stringify(body) : undefined,
-          });
-          const contentType = response.headers.get("content-type") || "";
-          const payload = contentType.includes("json")
-            ? await response.json()
-            : await response.text();
-          return {status: response.status, payload};
-        }""",
-        [method, path, body, TOKEN],
-    )
-    return result["status"], result["payload"]
-
-
-def _assert_clean(page: Any, errors: list[str]) -> None:
-    """Overflow + JS error assertion."""
-    real_errors = [e for e in errors if "ResizeObserver" not in e]
-    assert not real_errors, real_errors
-    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
 
 
 def _assert_no_raw_ids(page: Any, scope_testid: str = "steward-posture") -> None:
@@ -330,18 +216,10 @@ def _assert_no_confirm_dialogs(page: Any) -> None:
     assert not has_dialog, "STW-010: confirmation dialog/prompt detected during unattended flow"
 
 
-def _normal_chair(page: Any) -> None:
-    chair = page.locator(".chair")
-    chair.wait_for()
-    if chair.evaluate("element => element.classList.contains('chair-first-value')"):
-        page.get_by_role("button", name="Continue later", exact=True).click()
-    page.locator(".chair:not(.chair-first-value)").wait_for()
-
-
 def _init_desk(page: Any, url: str) -> None:
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    _api(page, "POST", "/api/desk/seed")
-    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    _api(page, "POST", "/api/desk/seed", token=TOKEN)
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
 
 
 def _open_project_room(page: Any, url: str, project_id: str) -> None:
@@ -363,7 +241,7 @@ def _create_project_api(page: Any) -> str:
         "name": "Unattended Glass Project",
         "description": "Seeded for HS-164-06 unattended glass.",
         "command_id": "hs164-glass-create-proj",
-    })
+    }, token=TOKEN)
     return created["project"]["id"]
 
 
@@ -382,7 +260,7 @@ def _seed_room_items(page: Any, project_id: str) -> list[str]:
         "summary": "Compliance docs overdue; 30-day deadline approaching",
         "details": {"likelihood": "high", "impact": "critical",
                     "mitigation": "Escalate to compliance team this week"},
-    })
+    }, token=TOKEN)
     item_ids.append(resp.get("item", {}).get("id", ""))
 
     resp = _api(page, "POST", base, {
@@ -390,7 +268,7 @@ def _seed_room_items(page: Any, project_id: str) -> list[str]:
         "title": "Q4 Payments Platform Integration",
         "lifecycle": "active",
         "summary": "Integrate payment gateway with event sourcing",
-    })
+    }, token=TOKEN)
     item_ids.append(resp.get("item", {}).get("id", ""))
 
     resp = _api(page, "POST", base, {
@@ -400,7 +278,7 @@ def _seed_room_items(page: Any, project_id: str) -> list[str]:
         "summary": "Black Friday load test env provisioning stalled",
         "details": {"direction": "upstream",
                     "counterpart_ref": "team:infrastructure"},
-    })
+    }, token=TOKEN)
     item_ids.append(resp.get("item", {}).get("id", ""))
 
     return item_ids
@@ -429,7 +307,7 @@ def _set_policy(
         "cooldown_seconds": 0,
         "enabled": enabled,
         "unattended_enabled": unattended_enabled,
-    })
+    }, token=TOKEN)
 
 
 def _seed_graduated_watch(
@@ -575,7 +453,7 @@ def _drive_tick() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
 
 
 def _count_door_items(page: Any) -> int:
-    resp = _api(page, "GET", "/api/door")
+    resp = _api(page, "GET", "/api/door", token=TOKEN)
     board = resp.get("board", {})
     total = 0
     for bucket in ("now", "waiting", "unassigned", "overdue"):
@@ -584,14 +462,14 @@ def _count_door_items(page: Any) -> int:
 
 
 def _count_project_updates(page: Any, project_id: str) -> int:
-    resp = _api(page, "GET", f"/api/projects/{project_id}/updates")
+    resp = _api(page, "GET", f"/api/projects/{project_id}/updates", token=TOKEN)
     return len(resp.get("updates", []))
 
 
 def _poll_run_completed(page: Any, run_id: str, timeout: float = 60) -> dict[str, Any]:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        resp = _api(page, "GET", f"/api/steward/runs/{run_id}")
+        resp = _api(page, "GET", f"/api/steward/runs/{run_id}", token=TOKEN)
         run = resp.get("run", {})
         state = run.get("state", "")
         if state in ("completed", "interrupted", "failed"):
@@ -626,7 +504,7 @@ def test_gate_a_two_unattended_runs(
         pr_list={"stdout": _GH_PR_SNAPSHOT_BASELINE, "returncode": 0},
     )
     runner = _make_fixture_runner(fixture_path)
-    server, url = _boot(tmp_path, monkeypatch, gh_runner=runner)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=runner)
 
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
@@ -768,7 +646,7 @@ def test_gate_a_two_unattended_runs(
 
             # -- Verify ZERO duplicate effects across ticks --
             # Collect all Door items and check uniqueness.
-            board_dump = _api(page, "GET", "/api/door").get("board", {})
+            board_dump = _api(page, "GET", "/api/door", token=TOKEN).get("board", {})
             door_texts = [
                 it.get("text", "")
                 for bucket in ("now", "waiting", "unassigned", "overdue")
@@ -798,7 +676,7 @@ def test_gate_a_two_unattended_runs(
             # The real bar: the runs completed, the steward acted.
             # Even if the effects count is 0, the runs themselves are useful
             # (they evaluated, collected, planned). But we want at least one.
-            runs_resp = _api(page, "GET", f"/api/projects/{project_id}/steward/runs")
+            runs_resp = _api(page, "GET", f"/api/projects/{project_id}/steward/runs", token=TOKEN)
             all_runs = runs_resp.get("runs", [])
             completed_runs = [r for r in all_runs if r.get("state") == "completed"]
             assert len(completed_runs) >= 2, (
@@ -808,7 +686,7 @@ def test_gate_a_two_unattended_runs(
 
             # Verify both runs have steps with receipts.
             for run in [tick1_run_id, tick2_run_id]:
-                detail = _api(page, "GET", f"/api/steward/runs/{run}")
+                detail = _api(page, "GET", f"/api/steward/runs/{run}", token=TOKEN)
                 steps = detail.get("steps", [])
                 assert len(steps) >= 1, f"Run {run} has no steps"
 
@@ -834,7 +712,7 @@ def test_gate_a_two_unattended_runs(
             )
 
             # -- Verify runs have conductor requested_by via wire --
-            runs_wire = _api(page, "GET", f"/api/projects/{project_id}/steward/runs")
+            runs_wire = _api(page, "GET", f"/api/projects/{project_id}/steward/runs", token=TOKEN)
             all_wire_runs = runs_wire.get("runs", [])
             wire_requested_bys = [
                 r.get("requested_by", "") for r in all_wire_runs
@@ -881,9 +759,9 @@ def test_gate_a_two_unattended_runs(
             prov_text = prov_el.inner_text().strip().lower()
             assert prov_text == "scheduled", f"Expected 'Scheduled', got {prov_text!r}"
 
-            # Steps visible.
-            step_items = page.get_by_test_id("steward-step-item")
-            assert step_items.count() >= 1, "Expected at least 1 step in run detail"
+            # HS-167-05: ProgressPlan phases replace per-step rows.
+            step_items = page.locator('[data-testid="steward-run-plan"] .surface-plan-step')
+            assert step_items.count() >= 1, "Expected at least 1 plan phase in run detail"
 
             # -- SHOT: run detail --
             page.screenshot(
@@ -961,7 +839,7 @@ def test_dedup_across_ticks(
         pr_list={"stdout": _GH_PR_SNAPSHOT_TICK1, "returncode": 0},
     )
     runner = _make_fixture_runner(fixture_path)
-    server, url = _boot(tmp_path, monkeypatch, gh_runner=runner)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=runner)
 
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
@@ -1041,7 +919,7 @@ def test_dedup_across_ticks(
             page.get_by_test_id("steward-posture").wait_for(timeout=10000)
 
             # Only 1 run should exist (dedup prevented the second).
-            runs_resp = _api(page, "GET", f"/api/projects/{project_id}/steward/runs")
+            runs_resp = _api(page, "GET", f"/api/projects/{project_id}/steward/runs", token=TOKEN)
             runs = runs_resp.get("runs", [])
             assert len(runs) == 1, (
                 f"Dedup: expected exactly 1 run, got {len(runs)}. "
@@ -1089,7 +967,7 @@ def test_circuit_open_and_recovery(
         pr_list={"stdout": "", "returncode": 1, "stderr": "Connection timeout"},
     )
     runner = _make_fixture_runner(fixture_path)
-    server, url = _boot(tmp_path, monkeypatch, gh_runner=runner)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=runner)
 
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
@@ -1277,7 +1155,7 @@ def test_opt_out_mid_cadence(
         pr_list={"stdout": _GH_PR_SNAPSHOT_TICK1, "returncode": 0},
     )
     runner = _make_fixture_runner(fixture_path)
-    server, url = _boot(tmp_path, monkeypatch, gh_runner=runner)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN, gh_runner=runner)
 
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
@@ -1362,7 +1240,7 @@ def test_opt_out_mid_cadence(
             page.get_by_test_id("steward-verb").click()
             page.get_by_test_id("steward-posture").wait_for(timeout=10000)
 
-            runs_resp = _api(page, "GET", f"/api/projects/{project_id}/steward/runs")
+            runs_resp = _api(page, "GET", f"/api/projects/{project_id}/steward/runs", token=TOKEN)
             runs = runs_resp.get("runs", [])
             completed_runs = [r for r in runs if r.get("state") == "completed"]
             assert len(completed_runs) == 1, (

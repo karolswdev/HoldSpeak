@@ -780,6 +780,7 @@ def test_all_command_tools_discoverable() -> None:
         # HS-165-03: steward, setup, watch drivers
         "project.configure_steward", "project.run_steward",
         "project.stop_steward", "project.get_steward_run",
+        "project.steward.trigger",  # HS-167-02
         "project.setup.start", "project.setup.resume",
         "project.setup.answer", "project.setup.suggest",
         "project.setup.finalize", "project.setup.clarify_jira_scope",  # HS-166

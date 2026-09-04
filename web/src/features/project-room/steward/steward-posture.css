@@ -1,19 +1,14 @@
-/* HS-163-05 -- Steward posture styles: run view, step rows, history list,
-   policy editor. No modals. Designed rows at 1440 and 393. */
+/* HS-167-05 R4 -- Steward posture layout.
+   Feature CSS lays out, never restyles (D10). */
 
 .steward-posture {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  /* Scroll-hint edge fade anchor (species: DoorBoardLane HS-145-01). */
   position: relative;
 }
 
-/* ── Vertical scroll-hint: DoorBoardLane species on the Y axis ── */
-/* The scroll parent (.desk-surface-body) owns overflow:auto; the
-   posture root carries the data-scroll-hint attribute and the
-   pseudo-element fades.  Pattern: same mechanics as the horizontal
-   door-board-hint-wrap, same gradient from surface-1 -> transparent. */
+/* ── Vertical scroll-hint ── */
 .steward-posture::before,
 .steward-posture::after {
   content: "";
@@ -43,7 +38,7 @@
   display: block;
 }
 
-/* ── Run detail: phase progression + step rows ── */
+/* ── Run detail ── */
 
 .steward-detail {
   display: flex;
@@ -63,44 +58,12 @@
   color: var(--text-secondary);
 }
 
-/* ── Step rows ── */
-
-.steward-step-row {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  width: 100%;
-}
-
-.steward-step-primary {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  white-space: nowrap;
-}
-
-.steward-step-secondary {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-/* Override surface-ledger-primary nowrap for two-line step rows. */
-.surface-ledger-primary:has(.steward-step-row) {
-  white-space: normal;
-  overflow: visible;
-}
-
 /* ── History list rows ── */
 
 .steward-list-row {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--desk-surface-gap, 2px);
   min-width: 0;
   width: 100%;
 }
@@ -129,10 +92,10 @@
 
 .steward-list-chevron {
   color: var(--text-faint);
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1;
   opacity: 0.35;
-  transition: opacity 0.1s;
+  transition: opacity var(--duration-short, 120ms);
 }
 
 .surface-ledger-line:hover .steward-list-chevron,
@@ -140,13 +103,12 @@
   opacity: 1;
 }
 
-/* Override surface-ledger-primary nowrap for two-line run list rows. */
 .surface-ledger-primary:has(.steward-list-row) {
   white-space: normal;
   overflow: visible;
 }
 
-/* ── Receipt refs ── */
+/* ── Receipt refs (wrapping chip row) ── */
 
 .steward-receipt-refs {
   display: flex;
@@ -160,7 +122,7 @@
   font-size: var(--text-xs);
 }
 
-/* ── Policy editor (in-world, no modals) ── */
+/* ── Policy ── */
 
 .steward-policy {
   display: flex;
@@ -168,43 +130,10 @@
   gap: var(--space-3);
 }
 
-.steward-policy-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.steward-policy-field label {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-
-.steward-policy-field input[type="number"] {
-  max-width: 12ch;
-  font: inherit;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-}
-
 .steward-policy-effects {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-}
-
-.steward-policy-toggle-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.steward-policy-toggle-label {
-  font-size: var(--text-sm);
-  color: var(--text-primary);
-  cursor: default;
 }
 
 .steward-policy-effect-row {
@@ -217,62 +146,39 @@
   flex-shrink: 0;
 }
 
-/* ── HS-164-05: Unattended section ── */
+/* ── R4: grant tokens — separate chips, 6px gap ── */
 
-.steward-unattended-section {
+.steward-grant-tokens {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-2) 0;
-  border-top: 1px solid var(--border-primary);
-  border-bottom: 1px solid var(--border-primary);
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
 }
 
-.steward-grant-text {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0;
-  padding: 0 var(--space-1);
+/* ── R4: cadence stepper natural width ── */
+
+.steward-cadence-stepper {
+  max-width: 140px;
+  display: inline-block;
 }
 
-/* ── HS-164-05: Provenance chip in run list ── */
+/* ── R4: circuit glyph lead ── */
+
+.steward-circuit-glyph {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1;
+  text-align: center;
+  width: 20px;
+  flex-shrink: 0;
+  color: var(--text-muted, #9ba2b0);
+}
+
+/* ── Provenance chip in run list ── */
 
 .steward-provenance-chip {
   font-size: var(--text-xs);
   flex-shrink: 0;
-}
-
-/* ── HS-164-05: Circuit state rows ── */
-
-.steward-circuit-row-content {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-  width: 100%;
-}
-
-.steward-circuit-name {
-  font-size: var(--text-sm);
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-
-.steward-circuit-streak {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  flex-shrink: 0;
-}
-
-.steward-circuit-since {
-  font-size: var(--text-xs);
-  color: var(--text-faint);
-  flex-shrink: 0;
-  margin-left: auto;
 }
 
 /* ── Consequential stop styling ── */
@@ -281,12 +187,4 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-}
-
-/* HS-164-06 shot round: the state token holds ONE line inside the
-   circuit row -- a wrapped token clips the row's siblings (the 162
-   house-ledger nowrap scar). */
-.steward-circuit-row-content .surface-token {
-  white-space: nowrap;
-  flex-shrink: 0;
 }

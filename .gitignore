@@ -81,3 +81,4 @@ web/.shots/
 # Root-level npm install (web/ has its own ignore); keeps `git add -A` from sweeping build caches
 node_modules/
 web/test-results/
+web/.glass-build.lock

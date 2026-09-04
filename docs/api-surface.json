@@ -4966,6 +4966,16 @@
       ]
     },
     {
+      "path": "/api/steward/trigger",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.steward",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/stop",
       "methods": [
         "POST"

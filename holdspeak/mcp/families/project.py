@@ -366,6 +366,10 @@ TOOLS: list[dict[str, Any]] = [
                 "max_retries": {"type": "integer", "minimum": 0, "maximum": 100},
                 "max_actions_per_run": {"type": "integer", "minimum": 0, "maximum": 1000},
                 "cooldown_seconds": {"type": "integer", "minimum": 0, "maximum": 86400},
+                "evaluation_cadence_minutes": {
+                    "type": "integer", "minimum": 1, "maximum": 10080,
+                    "description": "Evaluation cadence in minutes (1..10080). Applied to all project watches.",
+                },
                 "bounds": {"type": "object", "description": "Arbitrary bounds object."},
                 "command_id": {"type": "string", "description": "Idempotency key."},
             },
@@ -415,6 +419,18 @@ TOOLS: list[dict[str, Any]] = [
                 "run_id": {"type": "string", "description": "Steward run identifier."},
             },
             "required": ["run_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.steward.trigger",
+        "description": "Trigger evaluate_due + run_due NOW through the conductor seam. "
+                       "Unwired = typed refusal. Reuses the 163 same-watermark contract.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.steward.trigger@1",
+            "type": "object",
+            "properties": {},
+            "required": [],
             "additionalProperties": False,
         },
     },
@@ -690,9 +706,10 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "project.watch.set_rules",
-        "description": "Replace rules for a graduated watch (WatchCondition@1 + WatchAction@1).",
+        "description": "Replace rules for a graduated watch (WatchCondition@1 + WatchAction@1). "
+                       "Optionally set evaluation_cadence_minutes (1..10080).",
         "inputSchema": {
-            "$id": "holdspeak://mcp/project.watch.set_rules@1",
+            "$id": "holdspeak://mcp/project.watch.set_rules@2",
             "type": "object",
             "properties": {
                 "watch_id": {"type": "string", "description": "Watch identifier."},
@@ -700,6 +717,13 @@ TOOLS: list[dict[str, Any]] = [
                     "type": "array",
                     "items": {"type": "object"},
                     "description": "Ordered rule list (condition + actions).",
+                },
+                "evaluation_cadence_minutes": {
+                    "type": "integer",
+                    "description": "Evaluation cadence in minutes (1..10080). "
+                                   "Floor = 1 min (conductor tick), ceiling = 7 days.",
+                    "minimum": 1,
+                    "maximum": 10080,
                 },
             },
             "required": ["watch_id", "rules"],
@@ -1216,6 +1240,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         write_fields = {
             "enabled", "unattended_enabled", "eligible_effect_kinds",
             "max_retries", "max_actions_per_run", "cooldown_seconds", "bounds",
+            "evaluation_cadence_minutes",
         }
         is_write = any(arguments.get(f) is not None for f in write_fields)
 
@@ -1253,6 +1278,17 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         if unattended_enabled is not None and not isinstance(unattended_enabled, bool):
             raise ValidationError("unattended_enabled must be a boolean")
 
+        cadence_minutes = arguments.get("evaluation_cadence_minutes")
+        if cadence_minutes is not None:
+            if not isinstance(cadence_minutes, int) or cadence_minutes < 1:
+                raise ValidationError(
+                    "evaluation_cadence_minutes must be an integer >= 1"
+                )
+            if cadence_minutes > 10080:
+                raise ValidationError(
+                    "evaluation_cadence_minutes cannot exceed 10080 (7 days)"
+                )
+
         existing = svc._db.steward_policies.get_policy_for_project(project_id)
         if existing is None:
             policy_id = generate_pstpol_id()
@@ -1286,6 +1322,17 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
                 update_kwargs["unattended_enabled"] = 1 if unattended_enabled else 0
             if update_kwargs:
                 svc._db.steward_policies.update_policy(policy_id, **update_kwargs)
+
+        if cadence_minutes is not None:
+            try:
+                watches = svc._db.automations.list_project_watches(project_id)
+                for w in watches:
+                    svc._db.automations.update_watch_spec(
+                        w["id"],
+                        evaluation_cadence_minutes=cadence_minutes,
+                    )
+            except Exception:
+                pass
 
         policy = svc._db.steward_policies.get_policy(policy_id)
 
@@ -1423,6 +1470,32 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return {
             "run": _serialize_run(run),
             "steps": [_serialize_step(s) for s in steps],
+        }
+
+    if name == "project.steward.trigger":
+        # HS-167-02: evaluate_due + run_due NOW through the conductor's
+        # get_scheduler_services seam. Web parity: steward.py trigger
+        # route. Desk-wide (principal-scoped) by contract; unwired =
+        # typed refusal (honest); a raised error is surfaced, never
+        # dressed as success.
+        from holdspeak.workbench_conductor import get_scheduler_services
+        wired_watch, wired_steward = get_scheduler_services()
+
+        if wired_watch is None and wired_steward is None:
+            return {
+                "success": False,
+                "code": "scheduler_not_wired",
+                "message": "The conductor's scheduler services are not wired "
+                           "(set_scheduler_services has not been called)",
+            }
+
+        eval_outcomes = wired_watch.evaluate_due(principal) if wired_watch is not None else []
+        run_outcomes = wired_steward.run_due(principal) if wired_steward is not None else []
+
+        return {
+            "success": True,
+            "evaluate_outcomes": eval_outcomes,
+            "run_outcomes": run_outcomes,
         }
 
     # ── setup driver tools (HS-165-03) ──────────────────────────────
@@ -1672,7 +1745,20 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         watch_id = _require_id(arguments, "watch_id")
         _require_graduated_watch(watch_id)
         rules = arguments.get("rules") or []
-        return _watch_service().set_rules(principal, watch_id, rules)
+        result = _watch_service().set_rules(principal, watch_id, rules)
+        # HS-167-02: optional cadence write (range-fenced by schema).
+        cadence = arguments.get("evaluation_cadence_minutes")
+        if cadence is not None:
+            cadence = int(cadence)
+            if cadence < 1 or cadence > 10080:
+                raise ValidationError(
+                    "evaluation_cadence_minutes must be 1..10080",
+                )
+            get_database().automations.update_watch_spec(
+                watch_id, evaluation_cadence_minutes=cadence,
+            )
+            result["evaluation_cadence_minutes"] = cadence
+        return result
 
     if name == "project.watch.pause":
         # Web parity: watches.py:163 pause_watch

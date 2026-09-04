@@ -13,7 +13,6 @@ Each gap is noted for the next phase (the 158 precedent).
 """
 from __future__ import annotations
 
-import os
 import json
 import uuid
 from datetime import datetime, timedelta
@@ -21,6 +20,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
+from .glass_infra import _boot, _api, _assert_clean, _normal_chair, _ensure_build
 
 pytest.importorskip("playwright.sync_api", reason="Interview glass needs Playwright")
 
@@ -35,81 +36,11 @@ SIGNALS_TEXT = "Missed sprint commitments, overdue action items, stale decisions
 # ── Boot / helpers ────────────────────────────────────────────────
 
 
-def _boot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, str]:
-    import holdspeak.config as config_module
-    import holdspeak.db.core as db_core
-    from holdspeak.db import reset_database
-    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
-
-    home = tmp_path / "home"
-    home.mkdir()
-    browser_cache = Path(
-        os.environ.get(
-            "PLAYWRIGHT_BROWSERS_PATH",
-            Path.home() / "Library/Caches/ms-playwright",
-        )
-    )
-    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(browser_cache))
-    monkeypatch.setenv("HOME", str(home))
-    monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
-    monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
-    reset_database()
-    server = MeetingWebServer(
-        WebRuntimeCallbacks(
-            on_bookmark=lambda *_: None,
-            on_stop=lambda: None,
-            get_state=lambda: {},
-        ),
-        auth_token=TOKEN,
-    )
-    return server, server.start()
-
-
-def _api(page: Any, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
-    result = page.evaluate(
-        """async ([method, path, body, token]) => {
-          const response = await fetch(path, {
-            method,
-            headers: {
-              authorization: `Bearer ${token}`,
-              ...(body ? {"content-type": "application/json"} : {}),
-            },
-            body: body ? JSON.stringify(body) : undefined,
-          });
-          const contentType = response.headers.get("content-type") || "";
-          const payload = contentType.includes("json")
-            ? await response.json()
-            : await response.text();
-          return {status: response.status, payload};
-        }""",
-        [method, path, body, TOKEN],
-    )
-    assert result["status"] < 300, f"HTTP {result['status']}: {result}"
-    payload = result["payload"]
-    return payload if isinstance(payload, dict) else {}
-
-
-def _assert_clean(page: Any, errors: list[str]) -> None:
-    # Filter out non-critical page errors (e.g. ResizeObserver)
-    real_errors = [e for e in errors if "ResizeObserver" not in e]
-    assert not real_errors, real_errors
-    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-
-
-def _normal_chair(page: Any) -> None:
-    """Cross the First Sentence gate without blocking."""
-    chair = page.locator(".chair")
-    chair.wait_for()
-    if chair.evaluate("element => element.classList.contains('chair-first-value')"):
-        page.get_by_role("button", name="Continue later", exact=True).click()
-    page.locator(".chair:not(.chair-first-value)").wait_for()
-
-
 def _init_desk(page: Any, url: str) -> None:
     """Navigate to the hub root, seed the desk, complete onboarding."""
     page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    _api(page, "POST", "/api/desk/seed")
-    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    _api(page, "POST", "/api/desk/seed", token=TOKEN)
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
 
 
 def _open_interview(page: Any, url: str) -> None:
@@ -218,10 +149,11 @@ def test_interview_walk(
     """Full interview walk: questions -> suggestions -> select -> test
     -> RELOAD resume -> review -> finalize -> Room opens non-empty.
     Zero false historical events."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     try:
@@ -460,10 +392,11 @@ def test_interview_face_shots(
     Shot: face-questions-1440 -- question plane with live brief and
     a collapsed answer visible.
     """
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     try:
@@ -520,10 +453,11 @@ def test_blank_leg(
 ) -> None:
     """Blank path: answer both questions -> finalize with nothing selected
     -> active Project, no Watch, honest empty Room (INT-002)."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     SHOTS.mkdir(parents=True, exist_ok=True)
     errors: list[str] = []
     try:
@@ -610,10 +544,11 @@ def test_abandon_leg(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Abandon: start -> answer once -> cancel -> no Project exists."""
+    _ensure_build()
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
-    server, url = _boot(tmp_path, monkeypatch)
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
     errors: list[str] = []
     try:
         with sync_playwright() as pw:

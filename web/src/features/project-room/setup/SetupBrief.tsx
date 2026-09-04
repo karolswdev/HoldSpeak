@@ -1,13 +1,21 @@
-// HS-159-05 -- the live brief: outcome, watches by state --
-// mentioned/proposed/tested/disabled/active per INT-011.
-// Compact rows: name anchor + cadence chip + action in plain words.
-// State grouping headers with count chips (the 158 grammar).
+// HS-167-05 — the brief recomposed: SurfaceFacts for OUTCOME/NOTICE/SOURCES,
+// proposed watches as a SurfaceLedger cols="room" with provider emblems,
+// cadence tokens, action chips, and ProvenanceChips.
 
+import {
+  SurfaceFacts,
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  SurfaceSection,
+  ProvenanceChip,
+  StateChip,
+  CheckGadget,
+  type ChipState,
+} from "../../../desk/surface";
 import {
   cadenceLabel,
   proposalBriefState,
   ACTION_LABELS,
-  type SetupAnswer,
   type SetupProposal,
   type WatchBriefState,
 } from "./model";
@@ -21,69 +29,62 @@ const BRIEF_STATE_LABEL: Record<WatchBriefState, string> = {
   active: "Active",
 };
 
+const BRIEF_STATE_CHIP: Record<WatchBriefState, ChipState> = {
+  mentioned: "idle",
+  proposed: "active",
+  tested: "success",
+  disabled: "unreachable",
+  active: "success",
+};
+
+/** Provider emblem glyph. */
+const PROVIDER_EMBLEM: Record<string, string> = {
+  github: "◉",
+  jira: "◆",
+  meeting: "▶",
+  local: "⌁",
+};
+
 export function SetupBrief({ state }: { state: ControllerState }) {
-  return (
-    <aside className="setup-brief" aria-label="Project brief" data-testid="setup-brief">
-      <h3 className="setup-brief-heading">Project brief</h3>
-
-      {/* Outcome */}
-      <BriefOutcome state={state} />
-
-      {/* Watch summary */}
-      <BriefWatches state={state} />
-    </aside>
-  );
-}
-
-function BriefOutcome({ state }: { state: ControllerState }) {
   let outcomeText = "";
+  let signalsText = "";
+  let proposals: SetupProposal[] = [];
 
   if (state.kind === "outcome") {
     outcomeText = state.draft;
   } else if (state.kind === "signals") {
     outcomeText = state.outcomeAnswer.answer.normalized;
+    signalsText = state.draft;
   } else if (state.kind === "proposals" || state.kind === "review") {
     outcomeText = state.outcomeAnswer.answer.normalized;
+    signalsText = state.signalsAnswer.answer.normalized;
+    proposals = state.proposals;
   }
 
-  if (!outcomeText) {
-    return (
-      <div className="setup-brief-section" data-testid="brief-outcome">
-        <div className="setup-brief-label">Outcome</div>
-        <div className="setup-brief-empty">Not yet defined</div>
-      </div>
-    );
-  }
+  const facts: Record<string, string> = {};
+  if (outcomeText) facts.OUTCOME = outcomeText;
+  if (signalsText) facts.NOTICE = signalsText;
 
   return (
-    <div className="setup-brief-section" data-testid="brief-outcome">
-      <div className="setup-brief-label">Outcome</div>
-      <div className="setup-brief-value">{outcomeText}</div>
-    </div>
+    <aside aria-label="Project brief" data-testid="setup-brief">
+      <SurfaceSection label="THE BRIEF">
+        <div data-testid="brief-outcome">
+          {Object.keys(facts).length > 0 ? (
+            <SurfaceFacts value={facts} />
+          ) : (
+            <span className="surface-fact-empty">Not yet defined</span>
+          )}
+        </div>
+      </SurfaceSection>
+
+      {(proposals.length > 0 || (signalsText && proposals.length === 0)) ? (
+        <BriefWatches proposals={proposals} signalsText={signalsText} />
+      ) : null}
+    </aside>
   );
 }
 
-function BriefWatches({ state }: { state: ControllerState }) {
-  let proposals: SetupProposal[] = [];
-  let signalsText = "";
-
-  if (state.kind === "signals") {
-    signalsText = state.draft;
-  }
-  if (state.kind === "proposals") {
-    proposals = state.proposals;
-    signalsText = state.signalsAnswer.answer.normalized;
-  }
-  if (state.kind === "review") {
-    proposals = state.proposals;
-    signalsText = state.signalsAnswer.answer.normalized;
-  }
-
-  if (proposals.length === 0 && !signalsText) {
-    return null;
-  }
-
-  // Group proposals by brief state (INT-011)
+function BriefWatches({ proposals, signalsText }: { proposals: SetupProposal[]; signalsText: string }) {
   const grouped: Record<WatchBriefState, SetupProposal[]> = {
     mentioned: [],
     proposed: [],
@@ -106,27 +107,26 @@ function BriefWatches({ state }: { state: ControllerState }) {
   ];
 
   return (
-    <div className="setup-brief-section" data-testid="brief-watches">
-      <div className="setup-brief-label">Watches</div>
-
+    <div data-testid="brief-watches">
       {signalsText && proposals.length === 0 ? (
-        <div className="setup-brief-signals">{signalsText}</div>
+        <div className="setup-brief-signals-text">{signalsText}</div>
       ) : null}
 
       {stateOrder.map((bs) =>
         grouped[bs].length > 0 ? (
-          <div key={bs} className="setup-brief-group" data-brief-state={bs}>
-            <div className="setup-brief-group-header">
-              <span className="setup-brief-group-label">
-                {BRIEF_STATE_LABEL[bs]}
-              </span>
-              <span className="setup-brief-count-chip" data-testid={`brief-count-${bs}`}>
+          <div key={bs} data-brief-state={bs}>
+            <SurfaceSection label={`${BRIEF_STATE_LABEL[bs]} ${grouped[bs].length}`}>
+              <span data-testid={`brief-count-${bs}`} hidden aria-hidden="true">
                 {grouped[bs].length}
               </span>
-            </div>
-            {grouped[bs].map((p) => (
-              <BriefWatchRow key={p.id} proposal={p} />
-            ))}
+              <SurfaceLedger count={`${BRIEF_STATE_LABEL[bs].toUpperCase()} ${grouped[bs].length}`} cols="room">
+                <ul className="surface-ledger-rows">
+                  {grouped[bs].map((p) => (
+                    <BriefWatchRow key={p.id} proposal={p} briefState={bs} />
+                  ))}
+                </ul>
+              </SurfaceLedger>
+            </SurfaceSection>
           </div>
         ) : null,
       )}
@@ -134,25 +134,39 @@ function BriefWatches({ state }: { state: ControllerState }) {
   );
 }
 
-function BriefWatchRow({ proposal }: { proposal: SetupProposal }) {
+function BriefWatchRow({ proposal, briefState }: { proposal: SetupProposal; briefState: WatchBriefState }) {
   const spec = proposal.spec;
+  const emblem = PROVIDER_EMBLEM[proposal.providerId] ?? "◉";
+
   return (
-    <div className="setup-brief-watch" data-testid={`brief-watch-${proposal.id}`}>
-      <div className="setup-brief-watch-name">{spec.name}</div>
-      <div className="setup-brief-watch-meta">
-        <span className="setup-brief-watch-chip">{cadenceLabel(spec.trigger)}</span>
-        <span className="setup-brief-watch-action">
-          {ACTION_LABELS[spec.action.kind] ?? spec.action.kind}
+    <SurfaceLedgerRow
+      data-testid={`brief-watch-${proposal.id}`}
+      expands={false}
+      wrap
+      lead={
+        <span className="setup-brief-watch-emblem" aria-hidden="true">
+          {emblem}
         </span>
-      </div>
-      {proposal.testResult ? (
-        <div
-          className="setup-brief-watch-test"
-          data-test-state={proposal.testState}
-        >
-          {proposal.testResult.message}
-        </div>
-      ) : null}
-    </div>
+      }
+      primary={
+        <span className="setup-brief-watch-name">{spec.name}</span>
+      }
+      cells={
+        <>
+          <span className="surface-token setup-brief-watch-chip" data-chip>
+            {cadenceLabel(spec.trigger)}
+          </span>
+          <span className="surface-token setup-brief-watch-action" data-chip>
+            {ACTION_LABELS[spec.action.kind] ?? spec.action.kind}
+          </span>
+          {proposal.providerId ? (
+            <ProvenanceChip source={proposal.providerId} />
+          ) : null}
+        </>
+      }
+      trailing={
+        <StateChip state={BRIEF_STATE_CHIP[briefState]} label={BRIEF_STATE_LABEL[briefState]} />
+      }
+    />
   );
 }

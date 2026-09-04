@@ -6,6 +6,7 @@ GET  /api/steward/runs/{run_id}            -- pollable state (phase, steps, rece
 POST /api/steward/runs/{run_id}/stop       -- STW-003 on the wire
 GET  /api/projects/{id}/steward/policy     -- get steward policy
 PUT  /api/projects/{id}/steward/policy     -- update steward policy
+POST /api/projects/{id}/steward/trigger    -- HS-167-02: evaluate_due + run_due NOW
 
 Parse-and-serialize ONLY; the service owns logic.
 Owner-scoped; typed errors -> correct statuses.
@@ -291,6 +292,24 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
                     status_code=400,
                 )
 
+            # HS-167-02: evaluation_cadence_minutes validation + range fence.
+            # Floor = 1 minute (conductor tick = 60s can honor this).
+            # Ceiling = 10080 minutes (7 days).
+            cadence_minutes = payload.get("evaluation_cadence_minutes")
+            if cadence_minutes is not None:
+                if not isinstance(cadence_minutes, int) or cadence_minutes < 1:
+                    return JSONResponse(
+                        {"success": False, "code": "validation_error",
+                         "message": "evaluation_cadence_minutes must be an integer >= 1"},
+                        status_code=400,
+                    )
+                if cadence_minutes > 10080:
+                    return JSONResponse(
+                        {"success": False, "code": "validation_error",
+                         "message": "evaluation_cadence_minutes cannot exceed 10080 (7 days)"},
+                        status_code=400,
+                    )
+
             # Upsert: get or create policy
             existing = svc._db.steward_policies.get_policy_for_project(project_id)
             if existing is None:
@@ -328,6 +347,18 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
                         policy_id, **update_kwargs,
                     )
 
+            # HS-167-02: apply cadence to all watches for this project.
+            if cadence_minutes is not None:
+                try:
+                    watches = svc._db.automations.list_project_watches(project_id)
+                    for w in watches:
+                        svc._db.automations.update_watch_spec(
+                            w["id"],
+                            evaluation_cadence_minutes=cadence_minutes,
+                        )
+                except Exception:
+                    pass  # Best-effort; the policy save must succeed.
+
             # Return the updated policy
             policy = svc._db.steward_policies.get_policy(policy_id)
 
@@ -363,6 +394,41 @@ def build_steward_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"success": True, "policy": _serialize_policy(policy)})
         except Exception as exc:
             return error_500(exc, log, "Failed to update steward policy")
+
+    # ── POST /api/projects/{project_id}/steward/trigger ──────────────
+    # HS-167-02: evaluate_due + run_due NOW through set_scheduler_services.
+    # Unwired = typed refusal (honest).  Reuses the 163 same-watermark
+    # contract -- never route-level dedup.
+
+    @router.post("/api/steward/trigger")
+    async def api_trigger_steward(request: Request) -> Any:
+        try:
+            from ...workbench_conductor import get_scheduler_services
+            p = principal(request)
+            wired_watch, wired_steward = get_scheduler_services()
+
+            if wired_watch is None and wired_steward is None:
+                return JSONResponse(
+                    {"success": False, "code": "scheduler_not_wired",
+                     "message": "The conductor's scheduler services are not wired "
+                                "(set_scheduler_services has not been called)"},
+                    status_code=503,
+                )
+
+            # Desk-wide by contract: evaluate_due/run_due are principal-
+            # scoped and never raise (per-watch isolation inside); an
+            # exception here is a real fault and is surfaced, not dressed
+            # as success.
+            eval_outcomes = wired_watch.evaluate_due(p) if wired_watch is not None else []
+            run_outcomes = wired_steward.run_due(p) if wired_steward is not None else []
+
+            return JSONResponse({
+                "success": True,
+                "evaluate_outcomes": eval_outcomes,
+                "run_outcomes": run_outcomes,
+            })
+        except Exception as exc:
+            return error_500(exc, log, "Failed to trigger steward")
 
     return router
 

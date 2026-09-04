@@ -11,8 +11,8 @@ zero new anything; a second manual run at the same watermark created and
 reconciled (the 163 law); Web and MCP reading the same revisions. THE OWNER'S VERDICTS:
 the first face BOUNCED verbatim ("I absolutely hate the UX ... Walls
 of text..."); the redesign on the library: "HECK YES, a BIG YES to
-this."; the live walk gallery: PENDING — the PR waits for his word before
-merge.
+this."; the live walk gallery: his word given 2026-09-03 ("yes the PR is
+fine, I gave my word..., you know?") — PR #532 MERGED, main `31c072f5`.
 
 ## The seven stories
 

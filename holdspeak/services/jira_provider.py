@@ -78,16 +78,101 @@ _CAPABILITY_HASH = hashlib.sha256(
 
 _CAPABILITY_REVISION = 1
 
-# ── The switch-and-verify lock ──────────────────────────────────────
-# Module-level RLock.  acli's ``current_profile`` is a PROCESS-GLOBAL
-# setting: ``acli jira auth switch`` changes which site+email every
-# subsequent command targets.  Two concurrent HoldSpeak callers (the
-# conductor's evaluate_due, a web discover) interleaving ``switch``
-# calls would read the wrong site.  This lock serializes every
-# switch-then-read sequence so a status read-back always matches the
-# preceding switch.
+# ── The switch-and-verify lock (HS-167-02: file lock) ──────────────
+# acli's ``current_profile`` is a PROCESS-GLOBAL setting: ``acli jira
+# auth switch`` changes which site+email every subsequent command
+# targets.  The MCP sidecar runs in a SEPARATE process from the web
+# server, so a per-process threading.RLock is not enough.  This lock
+# uses ``fcntl.flock`` on a lockfile under the data dir the web server
+# and the sidecar share, wrapped with in-process RLock semantics
+# (reentrancy within one thread) and a bounded wait that raises a
+# typed PROV-009-class error (never a hang).
 
-_ACLI_LOCK = threading.RLock()
+import fcntl
+import os
+import time as _time
+
+# Env-tunable bounded wait (seconds).  Default 10s.
+_ACLI_LOCK_TIMEOUT = float(os.environ.get("HOLDSPEAK_ACLI_LOCK_TIMEOUT", "10"))
+
+# Typed error code for lock timeout (PROV-009 class).
+CODE_LOCK_TIMEOUT = "lock_timeout"
+
+
+def _acli_lockfile_path() -> Path:
+    """Return the lockfile path under the data dir shared by web + MCP."""
+    from holdspeak.db.core import DEFAULT_DB_PATH
+    return DEFAULT_DB_PATH.parent / ".acli.lock"
+
+
+class _CrossProcessLock:
+    """File-backed lock with in-process RLock reentrancy and bounded wait.
+
+    On acquire:
+      1. Acquire the in-process RLock (thread reentrancy).
+      2. On the outermost (depth 0→1) acquire only: open + flock the lockfile.
+    On release: reverse order; unlock + close only on the 1→0 transition.
+
+    If the flock cannot be acquired within ``timeout`` seconds, raises
+    a ServiceError with ``CODE_LOCK_TIMEOUT``.
+    """
+
+    def __init__(self, timeout: float = 10.0) -> None:
+        self._rlock = threading.RLock()
+        self._timeout = timeout
+        self._local = threading.local()
+
+    def __enter__(self) -> "_CrossProcessLock":
+        self._rlock.acquire()
+        depth = getattr(self._local, "depth", 0)
+        if depth > 0:
+            self._local.depth = depth + 1
+            return self
+        try:
+            path = _acli_lockfile_path()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            fd = os.open(str(path), os.O_CREAT | os.O_RDWR)
+            deadline = _time.monotonic() + self._timeout
+            while True:
+                try:
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    self._local.fd = fd
+                    self._local.depth = 1
+                    return self
+                except (OSError, IOError):
+                    if _time.monotonic() >= deadline:
+                        os.close(fd)
+                        self._rlock.release()
+                        raise ServiceError(
+                            CODE_LOCK_TIMEOUT,
+                            f"Could not acquire acli lock within {self._timeout}s "
+                            "(another HoldSpeak process holds it)",
+                            context={"status": 503},
+                        )
+                    _time.sleep(0.05)
+        except ServiceError:
+            raise
+        except Exception:
+            self._rlock.release()
+            raise
+
+    def __exit__(self, *exc: object) -> None:
+        try:
+            depth = getattr(self._local, "depth", 0)
+            if depth <= 1:
+                fd = getattr(self._local, "fd", None)
+                if fd is not None:
+                    fcntl.flock(fd, fcntl.LOCK_UN)
+                    os.close(fd)
+                    self._local.fd = None
+                self._local.depth = 0
+            else:
+                self._local.depth = depth - 1
+        finally:
+            self._rlock.release()
+
+
+_ACLI_LOCK = _CrossProcessLock(timeout=_ACLI_LOCK_TIMEOUT)
 
 # ── Connection ref separator ────────────────────────────────────────
 # ``|`` is illegal in both Atlassian site hosts and email addresses,

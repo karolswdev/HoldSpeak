@@ -14,6 +14,7 @@ import json
 import re
 import shutil
 import subprocess
+import threading
 from collections.abc import Callable
 from typing import Any
 
@@ -22,6 +23,11 @@ from holdspeak.connector_runtime import PermissionGate
 from holdspeak.delivery.pr_receipts import rollup_conclusion
 from holdspeak.principals import Principal
 from holdspeak.services.errors import ServiceError, ValidationError
+
+# HS-167-02: thread-local to carry provider fetch metadata (calls count)
+# from the snapshot adapter to the evaluate_core caller without changing
+# the snapshot_fetcher return type.
+_fetch_meta = threading.local()
 
 
 Runner = Callable[..., subprocess.CompletedProcess[str]]
@@ -218,6 +224,9 @@ class JiraWatchSource:
 
     def snapshot(self, principal: Principal, *, query_kind: str,
                  query: dict[str, Any]) -> list[dict[str, Any]]:
+        # M-1: clear-on-entry — prevent a previous call's stale metadata
+        # from leaking into a later watch if this fetch raises mid-flight.
+        drain_fetch_meta()
         if query_kind != "issues":
             raise ValidationError("Jira Watches support issues")
 
@@ -256,6 +265,12 @@ class JiraWatchSource:
             detail = result.get("error_detail") or result.get("query_invalid") or "Jira query failed"
             raise ServiceError(se_code, str(detail)[:500])
 
+        # HS-167-02: store calls count on thread-local for the evaluate
+        # caller to pick up and persist on the evaluation record.
+        calls = result.get("calls")
+        if calls is not None:
+            _fetch_meta.calls = int(calls)
+
         items = result.get("items", [])
         entities: list[dict[str, Any]] = []
         for item in items:
@@ -282,6 +297,20 @@ class JiraWatchSource:
                 "project_key": item.get("project_key") or "",
             })
         return entities
+
+
+def drain_fetch_meta() -> dict[str, Any]:
+    """Read and clear the thread-local fetch metadata (HS-167-02).
+
+    Returns a dict with provider-reported metrics (e.g. ``calls``)
+    from the most recent snapshot fetch on this thread, or ``{}``.
+    """
+    meta: dict[str, Any] = {}
+    calls = getattr(_fetch_meta, "calls", None)
+    if calls is not None:
+        meta["calls"] = calls
+        _fetch_meta.calls = None
+    return meta
 
 
 # ── Snapshot fetcher factory (rider-a: one shape for all callers) ───
