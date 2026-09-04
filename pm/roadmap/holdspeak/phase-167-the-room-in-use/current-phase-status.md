@@ -1,7 +1,7 @@
 # Phase 167 - Project Rooms: The Room in Use
 
 - **Project:** holdspeak
-- **Status:** COMPLETE 8/8
+- **Status:** COMPLETE 8/8 — MERGED via PR #549 → main `a47ae31f` (2026-09-04); the owner's attended walk stays ledgered PENDING; his connector bounce on that walk chartered Phase 168
 - **Chartered:** 2026-09-03 off main `31c072f5` (166 The Jira Parity MERGED via PR #532 on the owner's word — the ELEVENTH Project Rooms phase merged; the SRS V0 slices P0..P7 are all on main)
 - **Canon:** docs/internal/CONSTITUTION.md (Article III honest egress); docs/internal/POSITIONING.md (the voice rules); web/src/desk/surface/contract.md (the library contract, HS-156-03); docs/internal/project-rooms/SRS_DOMAIN_DRIVER.md §14 (the V0 slices this phase makes one thing); the owner's laws: face-design-before-build (2026-09-03), the beauty pass after every functional pass (2026-08-17), "will you use this on a Tuesday?" (Phase 139)
 
