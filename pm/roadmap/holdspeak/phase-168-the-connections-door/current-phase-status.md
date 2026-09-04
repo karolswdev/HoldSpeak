@@ -178,8 +178,13 @@ the wings rig 2 (captured), the real walk on his desk 2 passed at both
 widths (two more projects archived, watches paused). The walk exposed a
 PRE-EXISTING defect on every walk project: the Jira Watch stores
 `issue_types: [""]`, its JQL fails on first fetch, baseline stays pending
-while Test said passed — being paid at the root in the same sitting. Then the
-owner's re-walk and his word.
+while Test said passed — PAID @1cd03962 at three seams (the wizard, the compile,
+the Test path), with two more: the legacy pump evaluating paused watches on
+archived projects hourly (guarded at the repo seam) and a blank PROJECT section
+while discovering (a token). Re-walk after the fixes: 1440 + 393 passed, the jira
+rows baseline established. Ledgered, not paid: the owner's own project's native
+`meeting` Watch fails every tick (no local query adapter). Then the owner's
+re-walk on 127.0.0.1:63725 and his word.
 
 ## Active risks
 

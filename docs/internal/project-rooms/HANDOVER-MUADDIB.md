@@ -1,3 +1,136 @@
+# HANDOVER: MUAD'DIB VII — the orchestrator's mind, serialized a seventh time
+
+Read this once, fully, before your first tool call. When you finish,
+you ARE the orchestrator. Written 2026-09-04 at the end of the sitting
+that PAID the owner's bounce on the Connections Door (Muad'Dib VI below
+names the bounce verbatim; this edition carries what was paid, what the
+re-walk found, and the exact ask that remains). NO NEW CHARTERS. Show
+him, ask again, flip 05 on his word, close 07, PR.
+
+## 0. What this sitting did (commits 2e5b2429, 1cd03962 on feat/connections-door)
+
+- **Root 1 paid at the species** (window chrome, never a face):
+  pullout.css — the title `min-width: 0` (its `min-width: auto` had
+  blocked the ellipsis EVERYWHERE, not only with wings), the has-wings
+  title `flex: 0 1 auto`, `.desk-wings { flex-shrink: 0 }`; DeskWindow
+  wraps `{actions}` in `.desk-window-actions` (flex-shrink 0). Pinned by
+  tests/e2e/test_hs168_window_wings_glass.py (a 70-char Room name at
+  1440 + 393; wings' box inside head and window; title scrollWidth >
+  clientWidth) — before: `Wings right edge (898) exceeds head right
+  edge (392)`; after: 2 passed — and windowWings.test.ts. Nine `wings=`
+  callers, all covered. Rider paid: the Room said the name FOUR times —
+  name, outcomeText and purpose all come from ONE interview answer
+  (project_setup_service.py:689-710: name = outcome[:80], purpose = the
+  original text); the band shows it once when they coincide
+  (RoomIdentityBand; 3 vitests). The derivation itself is ledgered.
+- **Root 2 paid to the RATIFIED artboard** (the first build had left
+  it): SetupRoot returns the wizard (GitHub / Jira / Clarify) ALONE
+  while open (answered rows, TOOLS, brief, setup footer UNMOUNT; Back /
+  Use this Watch return to the cards); cards carry ONE verb by species
+  — connected+untested `Set up` (primary), tested `Tested · N` +
+  `Remove` (ghost), disconnected `Connect` (ghost → the same
+  openConnectionsInPlace the TOOLS card uses; the scroll-to-TOOLS hunt
+  is gone), native unchanged; `SUGGESTIONS N`; in the proposals state
+  the answered rows span the full window above the columns; the brief's
+  watches block is `SOURCES N` = chosen only (`NONE YET` token). Mockups
+  amended FIRST (D7c card verbs; Sources.dc.html + SourcesPhone) and the
+  canvas republished at the same URL (version "D7c amendment: card
+  verbs"). Pinned: ProviderWizardMounted "wizard owns the body",
+  SuggestionCardVerbs (9), the sources rig asserts TOOLS/cards count 0
+  while the wizard is open (4 passed); the walk runner + walk-script
+  rows 12/16/20 click `setup-card-setup-<id>`.
+- **Re-walked HIS desk** (`HS168_WALK=1 HS168_WALK_DB=real`): 1440 + 393
+  passed (17 steps each); real-connected-{desktop,phone}/ shots; step 17
+  shows the wings inside the window on his real desk. Gallery for his
+  verdict (mockup · rigs · his desk):
+  https://claude.ai/code/artifact/2c8add39-781a-4e18-8f23-cfc1cfc0ee98
+- **The re-walk found three PRE-EXISTING defects on his desk — PAID
+  @1cd03962:** (1) every Jira Watch was born with `issue_types: [""]`
+  (JiraWizard fired `onToggleType("")` 100 ms after the first project
+  pick; finalize wrote it; `_compile_jql` emitted `issuetype in ('')`;
+  Jira: `the value '' does not exist for the field 'issuetype'`;
+  baseline `pending` on EVERY walk project and on the owner's own
+  proj-10b35905777c — while Test said passed, because the test path
+  merged scope.projects but never scope.issue_types). Paid at three
+  seams: the wizard injects nothing; the compile drops blanks in every
+  list clause (his saved watches heal on the next tick, no migration);
+  Test merges scope.issue_types (Test compiles what evaluation
+  compiles). tests/unit/test_hs168_walk_fixes.py. Live: his stored
+  query compiled through the fix ran via acli → KAN-2; re-walk after
+  the fix → jira rows baseline `established`. (2) The automation
+  conductor's LEGACY pump (`refresh_due_watches`) evaluated paused
+  watches on ARCHIVED projects hourly (acli egress since 06:16; the 165
+  "legacy-side watch guard" debt) — guarded once at the repo seam,
+  `list_enabled_legacy_watches`. (3) The Jira scope step showed a blank
+  PROJECT while discovering — `LOADING PROJECTS` token.
+- **NOT paid (ledger for 07's final-summary):** the owner's own project
+  carries a native `meeting` Watch failing every tick — `native can
+  accept pushed snapshots but has no local query adapter yet`
+  (watch_980edbb89697) — a Watch the face let him activate cannot
+  evaluate. Also: the Room's stats row clips "Changes" at 640 px and the
+  footer PROJECT token truncates (167 face; seen in the wings shots).
+- **The hub runs the FIXED code on 127.0.0.1:63725** (URL + token in
+  the scratchpad's hub-url.txt; 53379 and 55565 were killed). His live
+  Jira watch heals on its next tick.
+
+## 1. What remains (in order)
+
+1. Sit at 127.0.0.1:63725 COLD and narrate New Project → Sources as a
+   stranger (Muad'Dib VI §3). Hand him the gallery + the URL and ask for
+   his walk. Record his words verbatim in story-05.
+2. On his PASS: `dw story status holdspeak 168 05 done` (evidence-story-05
+   is untracked and holds the isolated leg + this sitting's rig capture;
+   recapture the walk if he asks), cadence, commit — evidence ships ONLY
+   in that commit.
+3. 07: the tree changed (css, setup, SetupBrief, DeskWindow,
+   ProjectRoomCore, the Jira compile, the legacy pump). Already green on
+   this tree: unit fast lane 7960 passed / 10 failed — all in main's
+   baseline at ce629cc2 (main-failed-names.txt, 26 names, previous
+   session's scratchpad 199f52c6-…; the two comm-new candidates re-ran
+   green serially); web vitest baseline zero branch-new; the sources +
+   wings rigs 6 passed (captured); the real walk both widths. Still to
+   run at the close: the connections glass rig, the isolated walk, the
+   `tests/` remainder (the non-unit half, `-n auto`), a short counsel
+   pass over this sitting's diff (judgment: face recomposition + two
+   backend seams). Update final-summary.md with the ledger above. Then
+   PR feat/connections-door → main on the local gates; merge on his
+   word (create and merge are SEPARATE gh calls).
+
+## 2. Laws this sitting adds
+
+- **Build what was ratified** — the wizard artboard already owned the
+  window; the build deviated and the owner paid for it. Before a face
+  flips, put the artboard and the shot side by side.
+- **`min-width: 0` is part of every nowrap-ellipsis flex title.**
+- **The Test path and the evaluation path compile the SAME query** — a
+  passing Test that a first fetch contradicts is a lie to the owner.
+- **A walk's finally is not a proof of health** — read the watch rows
+  it left behind (state, baseline_state, last_error) before calling a
+  real leg green. That read found three defects the green walk hid.
+- **A live desk walk never shares the machine with the `-n auto`
+  suite** — three 393 legs "hung" at LOADING PROJECTS >27 s beside the
+  12-minute fast lane; idle, discovery took 2.2 s. The runner now
+  prints every provider request's duration on failure — read the wire
+  before blaming the face.
+- **Workers restore ONLY rig-shot churn under pm/**/assets — never
+  docs, never the orchestrator's uncommitted edits.** A worker's
+  "restore churn outside your files" reverted the first Muad'Dib VII
+  handover. Commit the orchestrator's records BEFORE dispatching the
+  next worker.
+- **Worker attribution of a failure to "the other worker" is a claim**
+  — re-run the test yourself (StewardPosture: 49/49).
+
+## 3. The voice (unchanged)
+
+Terse, concrete, numbers over adjectives; the last message carries the
+whole picture; never claim what you didn't verify; the owner's bounces
+are gifts — answer the exact words, record them verbatim, fix the root;
+scars become laws in memory.
+
+— Muad'Dib, session 016siGSBgZph9EhEdGMoyWcu (the Connections Door, the bounce paid)
+
+---
+
 # HANDOVER: MUAD'DIB VI — the orchestrator's mind, serialized a sixth time
 
 Read this once, fully, before your first tool call. When you finish,
