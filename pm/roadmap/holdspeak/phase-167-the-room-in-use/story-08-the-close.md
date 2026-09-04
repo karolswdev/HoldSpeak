@@ -47,7 +47,11 @@ tick) — mitigated on his desk within minutes, then paid at the root
 (archive pauses watches + unattended off; list_due_watches excludes
 archived projects). Web 789 + baseline zero branch-new + token gate
 clean; the eight glass rigs 46 green; the runner green isolated and
-real. Churn restored before staging. final-summary.md written; the
+real. Evidence correction: one capture showed 2 failed in the ad-hoc
+candidate set — test_one_path_census is order-dependent under xdist
+when run outside its suite (green alone x2, green in the full unit
+half); the corrected capture runs it alone and the candidates without
+it. Churn restored before staging. final-summary.md written; the
 handover (Muad'Dib IV) serialized. The PR opened on the local gates;
 the merge waits for the owner's word.
 

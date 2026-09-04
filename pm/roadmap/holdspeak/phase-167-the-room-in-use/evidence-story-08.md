@@ -57,3 +57,19 @@ SWEEP-24-FAILED-8-BASELINE-15-BRANCH-NEW-1-FLAKE
 BRANCH-NEW-ON-SETTLED-TREE
 2 failed, 147 passed in 52.22s
 ```
+
+### Captured run — 2026-09-04T00:25:39Z
+
+- **Command:** `bash -c echo CORRECTION-the-prior-capture-2-failed-was-test_one_path_census-order-dependent-under-xdist-in-the-ad-hoc-set; echo ONE-PATH-CENSUS-ALONE-X2; HOME_REAL=$HOME; export HOME=$(mktemp -d); export PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright; uv run pytest -q tests/unit/test_one_path_census.py -p no:cacheprovider 2>&1 | tail -1; uv run pytest -q tests/unit/test_one_path_census.py -p no:cacheprovider 2>&1 | tail -1; echo BRANCH-NEW-ON-SETTLED-TREE; uv run pytest -q $(cat /private/tmp/claude-501/-Users-karol-dev-tools-HoldSpeak/ce822ca3-b9ee-4f69-92e4-ba2665a9be94/scratchpad/branch-new.txt | tr "\n" " ") tests/unit/test_project_mcp_commands.py tests/unit/test_hs167_close_fixes.py tests/unit/test_hs167_debts.py tests/unit/test_hs167_walk_fixes.py tests/unit/test_api_surface.py tests/unit/test_mcp_phase133_surface.py tests/unit/test_mcp_sidecar_doc_drift.py -n auto -p no:cacheprovider 2>&1 | tail -1`
+- **Cwd:** .
+- **Exit code:** 0
+- **Index-tree:** c82ff08a08f2d1c94ef0213af1c5b2112e247f6b
+
+```text
+CORRECTION-the-prior-capture-2-failed-was-test_one_path_census-order-dependent-under-xdist-in-the-ad-hoc-set
+ONE-PATH-CENSUS-ALONE-X2
+34 passed in 71.85s (0:01:11)
+34 passed in 72.26s (0:01:12)
+BRANCH-NEW-ON-SETTLED-TREE
+115 passed in 26.68s
+```
