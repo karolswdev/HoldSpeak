@@ -1,0 +1,234 @@
+# The Streamlined Door and the Room — the settled design (Phase 169)
+
+Written 2026-09-04 from the owner's words on his walk of Phase 168:
+"I really don't understand why everything's still so complicated...
+this stuff is still not streamlined at all"; on the Room: "that
+interface I really didn't honestly like and/or understand"; the
+mandate: "really refine and really streamline the UX... this module
+to be the first one that we BOTH will be proud of... absolutely
+world-freaking-class". He ratified the thesis below in conversation
+(2026-09-04): the one-screen door, and the Room as four questions.
+
+Canon this rides on: CONSTITUTION Articles III (egress at the point
+of decision), VI (honest), VII (the interface serves), VIII
+(native-grade craft); DESIGN_SYSTEM.md — the interior canon (type
+scale, composition rules 1-6, the aerogel receipt, the banned left
+rail); the surface library species (web/src/desk/surface). Every
+verb is the library Button. Zero sentences in the UI except the ones
+written here. Every chip names a fact the wire has.
+
+## D0 — the two jobs
+
+1. **The Door** (New Project): "Tell HoldSpeak what you are
+   delivering and which tools to watch." ONE screen, no plan, no
+   wizard, no review page. Connected desk: repo + Jira project to a
+   live Room in 5 clicks, no scrolling at 1440.
+2. **The Room** (a project, opened): answers four questions, in this
+   order, every time: What needs me now? What am I watching, and is
+   it working? What changed since I last looked? What did we decide
+   and what do I owe people? Then one ask box.
+
+## D1 — what is cut (and where it goes)
+
+| Cut | Where it goes |
+|---|---|
+| The Notice question | Gone from the door. Meeting-derived suggestions surface later INSIDE the Room (a "Suggested" row under SOURCES), never blocking creation. |
+| Suggestion cards, rationale disclosures | Gone. Sources are rows with pickers. |
+| THE BRIEF side panel | Gone. The rows are the brief. |
+| The 4-step ProgressPlan (Outcome · Notice · Sources · Review) | Gone. One screen has no steps. |
+| Provider wizards (Repository · Population · Test) | Gone. A picker + defaults + an Adjust disclosure. |
+| The Test button / Review page | Gone. The count IS the test: picking a scope fetches the count at once; the row reads it. |
+| The native `meeting` Watch | Never offered until it can evaluate (no local query adapter). Existing ones show their failure in plain words with `Remove`. |
+| Room counters (Meetings 0 · Resources 0 · Watches 0 · Changes 1), `REV n`, raw journal lines (`Created · name, source, watches_activated`), the footer PROJECT token | Gone. Counts live on the source rows; the journal speaks in phrases; the name is said once. |
+| Wings TIMELINE · DECISIONS · SEARCH · ASK | Two wings: ROOM · HISTORY. Ask is a box at the foot of the Room. Search lives in History. |
+| The Updates and Steward peer verbs | One primary verb in the head: `Draft update`. The steward's automation settings live under the source rows (`Adjust`). |
+
+## D2 — the type scale and the palette (from the ratified 168 mockups; real tokens at the build)
+
+- display 26/650 `--font-display` (Space Grotesk) — ONCE per face: the
+  Room's headline count ("3 need you" / "Nothing needs you").
+- primary 15/600 Inter — the outcome line; a row's title.
+- body 13 — continuous copy (rare).
+- secondary 12 JetBrains Mono — counts, times, sources.
+- caption 11/600 mono uppercase 0.06em — section labels, chips.
+- Palette: desk #0e0f13 · window #15171d · head #242833 · well
+  #1c1f27 · hairline #2a2e3e · edge #363b50 · text #f2f3f5 · muted
+  #9ba2b0 · faint #767e8d · accent #a86e4a (hover #bc8058) · success
+  #34d399 · warning #fbbf24 · danger #f87171 · info #56c7f5. Radius
+  2px. Bevel: inset 1px 1px 0 rgba(255,255,255,.14), inset -1px -1px
+  0 rgba(0,0,0,.40). The window shell markup is Main.dc.html's (168).
+- Motion (build): rows settle in (`surface-rise-in`), the count
+  arrives with a 200 ms crossfade from CHECKING, the picker unfolds
+  with the window's spring; idle never moves; reduced-motion = none.
+
+## D3 — the Door (window "New Project", 640 wide at 1440; 393 glass)
+
+Body, top to bottom, gap 18px:
+
+1. **The outcome line.** An EditInPlace well (well fill, 15/600
+   primary text, min-height 44px, the MicButton at its right edge —
+   the voice law). Placeholder, faint: `What are you delivering?`.
+   Filled example: `Ship the Q4 platform on schedule with zero
+   incidents`. This one line is the project's name (first 80 chars)
+   and its outcome. No label above it — the placeholder is the
+   question. A small caption under it, faint: `THIS BECOMES THE
+   PROJECT'S NAME`.
+
+2. **SOURCES** (caption label with a count token, e.g. `SOURCES 2`).
+   One ledger row per connector provider from `GET /api/connections`
+   (GitHub, Jira; calendar and models are NOT project sources). Row
+   grammar (SurfaceLedgerRow, lead slot 52px):
+   - lead: the provider emblem (`GH`, `J`) in mono 600.
+   - primary: the SCOPE PICKER trigger — a ghost Button whose label is
+     the picked scope or the verb: `Choose a repository` /
+     `karolswdev/HoldSpeak ▾`; Jira: `Choose a project` /
+     `KAN · WRONG ▾`. The trigger is the only click to scope.
+   - cells: the DEFAULT WATCHES as toggle tokens (CheckGadget species,
+     pressed = on): GitHub `OPEN PRS` `CI` ; Jira `OVERDUE` `DUE 7
+     DAYS` `BLOCKED` (BLOCKED off by default). Then the LIVE COUNT in
+     secondary mono, arriving as soon as a scope is picked: `12 open
+     PRs · CI green` / `3 overdue · 5 due this week`; before it
+     arrives a StateChip `○ CHECKING` (pulse); on failure a StateChip
+     `⚠ CAN'T CHECK` + the plain reason as a secondary line.
+   - trailing: EgressChip naming the host (`GITHUB.COM`,
+     `KAROLSANEAPPLE.ATLASSIAN.NET`) — the point of decision — and a
+     ghost `Adjust` (Disclosure) that unfolds under the row: GitHub →
+     base branch (StringGadget, default `main`), labels; Jira → issue
+     types, JQL (optional). Adjust is the ONLY place the old wizard's
+     population lives.
+   - A NOT-CONNECTED provider row: emblem · the provider name ·
+     StateChip `⚠ SIGN IN` (the 168 vocabulary: Sign in / Not set up /
+     Unreachable) · one primary Button `Connect` → opens Settings →
+     Connections in place (168 D2 round trip) · no picker, no
+     toggles. On return the row re-reads and becomes a picker row.
+   - Rows sort: connected first, then not connected.
+
+3. **The picker, open** (no modal — in-world, under the row): a well
+   that unfolds below the row with a typeahead StringGadget + mic
+   (`Search repositories`), then ChoiceCards in a single column:
+   `K karolswdev/HoldSpeak · public · GH GITHUB.COM`, recent first,
+   max 6 then `Show more`. Jira: projects `KAN · WRONG · software`,
+   `SAM1 · (Example) Bi-annual…`. Picking collapses the picker and
+   fires the count. A KNOWN SCOPE (a repo another project watches)
+   sits first with a token `ALSO WATCHED BY <project>` — offered,
+   never applied.
+
+4. **Footer** (SurfaceFooter): receipt `2 SOURCES · 4 WATCHES` (live
+   totals; `NO SOURCES · BLANK PROJECT` when none); egress slot empty
+   (each row carries its own); verbs `Cancel` (ghost) ·
+   `Create Project` (primary; enabled when the outcome line has text;
+   with zero sources it creates a blank project — allowed, named by
+   the receipt).
+
+Click count, connected desk: outcome text (typing) → GitHub trigger
+(1) → repo card (2) → Jira trigger (3) → project card (4) → Create
+Project (5). The counts arrived while he picked. Cold desk: Connect
+(1) → the command well in Connections (copy = 2) → Recheck (3) →
+back on the same door, then the five above.
+
+393: the same rows, one column; the cells wrap under the primary
+(the row's `wrap`); the picker is full-width; the footer stacks
+verbs right.
+
+## D4 — the Room (window default 800 wide at 1440; 393 glass)
+
+Title bar: the project name (ellipsis; wings never leave the window —
+168's law). Wings: `ROOM` (active) · `HISTORY`.
+
+Body, top to bottom, gap 20px:
+
+1. **The head** (SurfaceIdentity recomposed): the HEADLINE at display
+   step — `3 need you` (accent) or `Nothing needs you` (muted); under
+   it the outcome line at primary (`Ship the Q4 platform on schedule
+   with zero incidents`), said ONCE; a chip row: StateChip health
+   `● AT RISK` (danger) / `● ON TRACK` (success) with a reason token
+   beside it (`3 OVERDUE`) — derived from the source counts, never
+   typed; `CHECKED 3 MIN AGO`; the egress hosts as small chips
+   (`GITHUB.COM` `KAROLSANEAPPLE.ATLASSIAN.NET`). Trailing: ONE
+   primary Button `Draft update`. No REV, no ACTIVE chip (an archived
+   Room says `ARCHIVED` here instead), no time token twice.
+
+2. **NEEDS YOU** (caption label + count). Ledger rows, severity-first:
+   lead = source emblem; primary = the thing's title (`#612 Rig
+   settles animations before every shot`); cells = WHY as one token
+   (`WAITING ON YOUR REVIEW · 3 DAYS`, `CI RED ON MAIN`, `OVERDUE · 2
+   DAYS`, `DECISION PENDING`); trailing = `Open` (ghost, external —
+   the url the wire has) and, for a pending proposal, `Decide`.
+   Sources of these rows, all real: PR entities with `reviewRequests`
+   naming the owner or `reviewDecision` = CHANGES_REQUESTED aged by
+   updated_at; CI check failures on the base branch; Jira entities
+   from the OVERDUE query; Delta proposals with review.pendingCount.
+   Empty: ONE line, `Nothing needs you · next check 09:35` — no well.
+
+3. **SOURCES** (caption + count). One row per Watch: lead emblem;
+   primary the scope (`karolswdev/HoldSpeak`); cells the live counts
+   as tokens (`12 OPEN PRS` `2 WAITING ON YOU` `CI GREEN`); secondary
+   `checked 3 min ago`; trailing EgressChip host + hover verbs
+   `Adjust` · `Pause`. A failing Watch: StateChip `⚠ CAN'T CHECK` and
+   the reason in plain words on the secondary line (`Jira rejected
+   the query` / `No local adapter for meeting activity yet`) with
+   `Fix` (opens Adjust) or `Remove`. A `SUGGESTED` row (from meeting
+   facts) sits last with `Add` — offered, never applied.
+
+4. **SINCE YOU LOOKED** (caption + the last-read time token `WED
+   09:21`). Grouped by source: a group line (`GitHub · 2 opened · 1
+   merged`) over entry rows in phrases (`#618 opened by mira · 2 h
+   ago`, `KAN-2 moved to In Progress · yesterday`, `Update drafted ·
+   Tue`). Never a field name. Reading the Room moves the marker.
+
+5. **DECISIONS & COMMITMENTS** — hidden entirely when empty. When
+   present: rows `Decided · use acli for Jira · Tue` (from decision
+   records) and `You owe · review PR #612 · by Fri` (commitments)
+   with `Open`.
+
+6. **Ask** — a well at the foot: `Ask this project…` with the mic; the
+   model EgressChip (`MODEL · 192.168.1.43 LOCAL` or the assigned
+   host) at the well's right; answers arrive as an aerogel inset above
+   the well (rule 6), never a modal.
+
+Footer: receipt `READ 09:21 · NEXT CHECK 09:35` · ghost `Refresh`.
+
+HISTORY wing: the dated stream (SurfaceStream): day headers, entries
+in phrases, a filter bar (LedgerFilterBar) by source; search is the
+stream's typeahead. The day's count at display step in the stream
+head (the one display fact of that face).
+
+393: the head stacks (headline, outcome, chips, the verb full-width);
+rows wrap; the ask well is sticky at the foot.
+
+## D5 — laws and counsel's hunts
+
+- The count is the test: creation never asks for a Test; a scope
+  whose count cannot be fetched still creates, and the Room's source
+  row says why (Article VI).
+- Egress exactly where egress happens: every source row and the ask
+  well carry the host chip; the Door's footer egress slot stays
+  empty on purpose.
+- Offered, never applied: known scopes, suggested sources.
+- No credential crosses the face (168 D8).
+- Every empty state is one true line with the next time something
+  happens; no empty wells; no counters of zero.
+- The name is said once per face (the title bar carries it; the head
+  carries the outcome).
+- Counsel hunts: a chip the wire lacks (the health derivation must
+  name its inputs); a verb that is not a library Button; a sentence
+  in the UI beyond the copy above; a face collapsing to one type
+  step; an accent left rail; a modal; a Test path that compiles a
+  different query than the Watch (168's scar); a "since you looked"
+  that has no read marker on the wire (a build need, not a face
+  promise).
+
+## D6 — the artboards (both widths; the sources are .dc.html on the 168 shell)
+
+1. Door · connected · picked (GitHub + Jira, counts live)
+2. Door · picker open (GitHub repositories, known scope first)
+3. Door · cold (both providers Sign in / Connect)
+4. Door · 393 (connected · picked)
+5. Room · needs you (3 rows; sources 2 + 1 failing; since you looked; decisions present)
+6. Room · nothing needs you (fresh project: counts live, since-you-looked empty line, decisions hidden)
+7. Room · 393 (needs you)
+8. History · 1440
+
+The owner ratifies the canvas before any build. Counsel reads it
+first (the hunts above). The build brief hands workers these sources
+and the species names; the rig asserts every step at both widths.
