@@ -30,7 +30,7 @@
       <!-- ROOM wing (inactive) -->
       <span style="padding:4px 12px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">Room</span>
       <!-- HISTORY wing (active, sunken) -->
-      <span style="margin-left:-1px; padding:4px 12px; border:1px solid #a86e4a; border-radius:2px; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f2f3f5; cursor:pointer; white-space:nowrap;">History</span>
+      <span style="margin-left:-1px; padding:4px 12px; border:1px solid #2a2e3e; border-radius:2px; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f2f3f5; cursor:pointer; white-space:nowrap;">History</span>
     </div>
   </div>
 
@@ -44,20 +44,20 @@
     <div style="display:flex; align-items:center; gap:8px;">
       <!-- Filter tokens -->
       <div style="display:flex; align-items:center; gap:2px; flex-shrink:0;">
-        <!-- ALL (active) -->
-        <span style="padding:4px 10px; border:1px solid #a86e4a; border-radius:2px; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f2f3f5; cursor:pointer; white-space:nowrap;">All</span>
-        <!-- GITHUB -->
-        <span style="margin-left:-1px; padding:4px 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">GitHub</span>
-        <!-- JIRA -->
-        <span style="margin-left:-1px; padding:4px 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">Jira</span>
-        <!-- ROOM -->
-        <span style="margin-left:-1px; padding:4px 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">Room</span>
+        <!-- ALL (active — surface-token, filled, no bevel) -->
+        <span style="padding:4px 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f2f3f5; cursor:pointer; white-space:nowrap;">All</span>
+        <!-- GITHUB (surface-token, flat, no bevel) -->
+        <span style="margin-left:-1px; padding:4px 10px; border:1px solid #2a2e3e; border-radius:2px; background:transparent; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">GitHub</span>
+        <!-- JIRA (surface-token, flat, no bevel) -->
+        <span style="margin-left:-1px; padding:4px 10px; border:1px solid #2a2e3e; border-radius:2px; background:transparent; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">Jira</span>
+        <!-- ROOM (surface-token, flat, no bevel) -->
+        <span style="margin-left:-1px; padding:4px 10px; border:1px solid #2a2e3e; border-radius:2px; background:transparent; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">Room</span>
       </div>
       <!-- Search typeahead well -->
       <div style="flex:1; display:flex; align-items:center; gap:6px; padding:4px 10px; background:#1c1f27; border:1px solid #2a2e3e; border-radius:2px; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07);">
         <span style="flex:1; font:12px/1.4 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">Search history&#8230;</span>
         <!-- MicButton -->
-        <span style="width:20px; height:20px; display:flex; align-items:center; justify-content:center; border:1px solid #2a2e3e; border-radius:50%; cursor:pointer; flex-shrink:0;">
+        <span style="width:20px; height:20px; display:flex; align-items:center; justify-content:center; border:1px solid #2a2e3e; border-radius:0; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); cursor:pointer; flex-shrink:0;">
           <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="1" width="6" height="10" rx="3"></rect><path d="M3 8a5 5 0 0010 0"></path><line x1="8" y1="13" x2="8" y2="15"></line></svg>
         </span>
       </div>

@@ -28,7 +28,7 @@
     <!-- desk-wings -->
     <div style="display:flex; align-items:center; flex-shrink:0;">
       <!-- ROOM wing (active, sunken) -->
-      <span style="padding:4px 12px; border:1px solid #a86e4a; border-radius:2px; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Room</span>
+      <span style="padding:4px 12px; border:1px solid #2a2e3e; border-radius:2px; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Room</span>
       <!-- HISTORY wing (inactive) -->
       <span style="margin-left:-1px; padding:4px 12px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">History</span>
     </div>
@@ -41,8 +41,6 @@
     <div style="display:flex; flex-direction:column; gap:8px;">
       <!-- Headline — display step, accent, ONE per face -->
       <div style="font:650 26px/1.15 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#a86e4a;">3 need you</div>
-      <!-- Outcome — primary step, said once -->
-      <div style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Ship the Q4 platform on schedule with zero incidents</div>
       <!-- Chip row + trailing Button -->
       <div style="display:flex; align-items:center; gap:8px;">
         <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px; flex:1; min-width:0;">
@@ -52,10 +50,6 @@
           <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">3 OVERDUE</span>
           <!-- surface-token: CHECKED 3 MIN AGO -->
           <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">CHECKED 3 MIN AGO</span>
-          <!-- EgressChip (small): GITHUB.COM -->
-          <span style="display:inline-flex; align-items:center; min-height:16px; padding:0 6px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 9px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">GITHUB.COM</span>
-          <!-- EgressChip (small): KAROLSANEAPPLE.ATLASSIAN.NET -->
-          <span style="display:inline-flex; align-items:center; min-height:16px; padding:0 6px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 9px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">KAROLSANEAPPLE.ATLASSIAN.NET</span>
         </div>
         <!-- Button (primary): Draft update -->
         <button type="button" style="flex-shrink:0; min-height:28px; padding:4px 12px; border:1px solid #a86e4a; border-radius:0; background:#a86e4a; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; box-shadow:inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 2px rgba(0,0,0,0.3); cursor:pointer;">Draft update</button>
@@ -114,9 +108,7 @@
           <!-- Primary: scope + count tokens -->
           <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px;">
             <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">karolswdev/HoldSpeak</span>
-            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">12 OPEN PRS</span>
-            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">2 WAITING ON YOU</span>
-            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f87171; white-space:nowrap;">CI RED</span>
+            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">12 OPEN PRS · 2 WAITING ON YOU · <span style="color:#f87171;">CI RED</span></span>
           </div>
           <!-- Secondary: checked + egress + hover verbs -->
           <div style="display:flex; align-items:center; gap:6px;">
@@ -138,8 +130,7 @@
         <div style="display:flex; flex-direction:column; gap:4px;">
           <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px;">
             <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">KAN</span>
-            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">3 OVERDUE</span>
-            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">5 DUE THIS WEEK</span>
+            <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">3 OVERDUE · 5 DUE THIS WEEK</span>
           </div>
           <div style="display:flex; align-items:center; gap:6px;">
             <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">checked 3 min ago</span>
@@ -151,7 +142,7 @@
 
       <!-- SurfaceLedgerRow: Meeting activity (failing) -->
       <div style="display:grid; grid-template-columns:52px 1fr; gap:0 8px; padding:8px 0; border-top:1px solid #2a2e3e;">
-        <span style="padding-top:3px; text-align:center; font:700 15px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&#9678;</span>
+        <span style="padding-top:3px; text-align:center; font:700 15px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&#9635;</span>
         <div style="display:flex; flex-direction:column; gap:4px;">
           <div style="display:flex; align-items:center; gap:6px;">
             <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Meeting activity</span>
@@ -229,7 +220,7 @@
     <div style="display:flex; align-items:center; gap:8px; padding:10px 12px; background:#1c1f27; border:1px solid #2a2e3e; border-radius:2px; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07);">
       <span style="flex:1; font:15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#767e8d;">Ask this project&#8230;</span>
       <!-- MicButton -->
-      <span style="width:24px; height:24px; display:flex; align-items:center; justify-content:center; border:1px solid #2a2e3e; border-radius:50%; cursor:pointer; flex-shrink:0;">
+      <span style="width:24px; height:24px; display:flex; align-items:center; justify-content:center; border:1px solid #2a2e3e; border-radius:0; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); cursor:pointer; flex-shrink:0;">
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="1" width="6" height="10" rx="3"></rect><path d="M3 8a5 5 0 0010 0"></path><line x1="8" y1="13" x2="8" y2="15"></line></svg>
       </span>
       <!-- EgressChip: MODEL · 192.168.1.43 LOCAL -->
