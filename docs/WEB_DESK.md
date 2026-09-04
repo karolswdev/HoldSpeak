@@ -32,6 +32,17 @@ stays crisp at the display's real size. It is decorative and
 pointer-transparent—the Pixi world above it still owns every object and
 gesture.
 
+The second rendered mood, **Lantern Garden**, looks from a rain-darkened patio
+down a winding flagstone path toward a timber gate. Warm path lanterns cast
+bounded light onto the stone and planting beds; a house edge, downspout,
+violet flowers, tree canopy, and the restrained edge of an above-ground pool
+keep the proportions grounded in an ordinary lived-in yard. Leaf movement,
+foliage drips, water rings, lamp variation, and pointer parallax provide quiet
+motion. A very fine drizzle is nearly lost in the dark except
+where sparse drops cross each lantern's local glow. Its mulch grain and every
+glow texture are generated at runtime, so the atmosphere remains procedural
+rather than shipping a painted backdrop or source photograph.
+
 The atmosphere host is also a personalization primitive. A registry entry owns
 the background's stable id, user-facing metadata, seed, visual grade, and lazy
 scene loader. The shared runtime owns resize quality, normalized pointer input,
@@ -39,17 +50,17 @@ visibility suspension, reduced-motion behavior, frame clamping, and teardown.
 A new atmosphere therefore supplies one isolated scene factory instead of
 reimplementing Desk integration or joining the initial bundle. The current
 default is `rainy-city`; **Settings → Wallpaper** renders catalog previews and
-switches the Floor live between Rainy City and the no-WebGL Quiet Desk. The
-selection is a browser-local Desk view preference, survives reloads, and falls
-back safely when a retired or unknown atmosphere id is found. Future worlds
-only add a registry entry and isolated scene factory; the picker and Floor do
-not need another integration path.
+switches the Floor live between Rainy City, Lantern Garden, and the no-WebGL
+Quiet Desk. The selection is a browser-local Desk view preference, survives
+reloads, and falls back safely when a retired or unknown atmosphere id is
+found. Future worlds only add a registry entry and isolated scene factory; the
+picker and Floor do not need another integration path.
 
 When the tab is hidden, the runtime pauses every atmosphere. The operating
-system's reduced-motion setting freezes rain, steam, splashes, ripples, camera
-drift, and storm flashes while preserving the composed city. Lightning is
-visual and deliberately moderate; the decorative layer never starts ambient
-audio on its own.
+system's reduced-motion setting freezes weather, ambient particles, foliage,
+water, and camera drift while preserving each composition. Lightning is visual
+and deliberately moderate; the decorative layer never starts ambient audio on
+its own.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/karolswdev/HoldSpeak/main/docs/assets/screenshots/desk.png" alt="The HoldSpeak Desk: pixel-art objects floating on a warm dark stage; a Zone tray holding a filed Meeting; Coder session avatars on a right-edge rail; a record orb bottom-center; the compact HoldSpeak menu and an egress badge top-left; Create controls top-right." width="760">

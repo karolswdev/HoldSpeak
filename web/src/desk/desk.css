@@ -51,6 +51,19 @@
       var(--desk-atmosphere-edge) 88%
     );
 }
+.desk-next .desk-atmosphere-grade--lantern-garden {
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, #06100d 34%, transparent),
+      transparent 46%
+    ),
+    radial-gradient(
+      ellipse at 46% 64%,
+      transparent 0 30%,
+      color-mix(in srgb, #020706 52%, transparent) 92%
+    );
+}
 .desk-next .desk-atmosphere-grade--quiet-desk {
   background: radial-gradient(
     ellipse at 50% 44%,
@@ -211,8 +224,13 @@
   animation: sprite-active-pulse 1.6s ease-in-out infinite;
 }
 @keyframes sprite-active-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 /* Fresh: opacity+scale flash (workbench just completed a run). */
@@ -220,8 +238,14 @@
   animation: sprite-fresh-flash 0.8s ease-out 1;
 }
 @keyframes sprite-fresh-flash {
-  0% { opacity: 0.5; transform: scale(1.12); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0.5;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Pending: dimmed opacity (workbench waiting, artifact in draft/review). */

@@ -19,6 +19,13 @@ describe("atmosphere registry", () => {
           load: expect.any(Function),
         }),
         expect.objectContaining({
+          id: "lantern-garden",
+          name: "Lantern Garden",
+          seed: expect.any(Number),
+          previewUrl: expect.stringContaining("lantern-garden.png"),
+          load: expect.any(Function),
+        }),
+        expect.objectContaining({
           id: "quiet-desk",
           previewUrl: null,
           load: null,
@@ -27,8 +34,10 @@ describe("atmosphere registry", () => {
     );
     expect(ATMOSPHERES.map(({ id }) => id)).toEqual([
       "rainy-city",
+      "lantern-garden",
       "quiet-desk",
     ]);
+    expect(isAtmosphereId("lantern-garden")).toBe(true);
     expect(isAtmosphereId("quiet-desk")).toBe(true);
     expect(isAtmosphereId("unknown")).toBe(false);
     expect(resolveAtmosphere("unknown").id).toBe(DEFAULT_ATMOSPHERE_ID);

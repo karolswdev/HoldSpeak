@@ -26,6 +26,19 @@ const rainyCity = {
     import("./rainyCityScene").then((module) => module.createRainyCityScene),
 } satisfies AtmosphereDefinition;
 
+const lanternGarden = {
+  id: "lantern-garden",
+  name: "Lantern Garden",
+  description: "A rain-dark flagstone path lit through a fine garden drizzle.",
+  seed: 0x59415244,
+  gradeClassName: "desk-atmosphere-grade--lantern-garden",
+  previewUrl: `${PUBLIC_BASE}desk/atmospheres/lantern-garden.png`,
+  load: () =>
+    import("./lanternGardenScene").then(
+      (module) => module.createLanternGardenScene,
+    ),
+} satisfies AtmosphereDefinition;
+
 const quietDesk = {
   id: "quiet-desk",
   name: "Quiet Desk",
@@ -41,6 +54,7 @@ const quietDesk = {
  * initial Desk bundle or couple one scene's runtime to another. */
 export const ATMOSPHERES = [
   rainyCity,
+  lanternGarden,
   quietDesk,
 ] as const satisfies readonly AtmosphereDefinition[];
 
