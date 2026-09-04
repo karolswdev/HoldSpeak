@@ -355,6 +355,19 @@ census and attaches it.
   fixed (lead + primary on one line, cells/trailing wrap under); 04
   pays both.
 
+## D7c — the owner's walk verdict (2026-09-04): BOUNCE
+
+Verbatim: "The tool suggestions are still not obvious AT ALL, it's
+not obvious I have to click them to then scroll within that same
+dialog to test them, validate them, and so on." The build broke the
+inherited D0 law ("wizards own the whole body while open"): the
+wizard renders inline under the answered rows beside THE BRIEF. The
+amendment: a provider suggestion card carries ONE verb (`Set up` →
+`Tested · N`); an open wizard OWNS the body (rows, TOOLS, brief
+unmount; the footer carries the wizard's verbs only); closing returns
+to the cards. And the Room's window chrome: a long title must shrink
+(ellipsis) before the wings move — the wings never leave the window.
+
 ## D8 — laws and counsel's hunts
 
 - One readiness derivation: the hub's connections service; a face

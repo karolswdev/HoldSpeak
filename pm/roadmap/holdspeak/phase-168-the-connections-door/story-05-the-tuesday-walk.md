@@ -78,7 +78,49 @@ the real leg overwrote the isolated leg's shots — legs now write
 `real-` prefixed directories. Shots: assets/story-05-walk/{cold,
 connected,real-connected}-{desktop,phone}/ + the four transcripts.
 
-**THE OWNER'S ATTENDED WALK — pending.** His desk: the hub restarted
+## THE OWNER'S ATTENDED WALK (2026-09-04) — BOUNCE, verbatim
+
+On the hub built from the branch (http://127.0.0.1:53379, real desk):
+"unacceptable UI work..., see how the TIMELINE, DECISIONS, SEARCH,
+ASK are just completely off to the side of the window, as on this
+screenshot... second to this..., I really don't understand why
+everything's still so complicated. The tool suggestions are still not
+obvious AT ALL, it's not obvious I have to click them to then scroll
+within that same dialog to test them, validate them, and so on. I'm
+telling you - this stuff is still not streamlined at all..." — then:
+"so prepare another Muad'Dib."
+
+Roots (found in this sitting, NOT yet paid):
+1. **The wings escape the window** — a long project name in the Room's
+   title bar pushes TIMELINE · DECISIONS · SEARCH · ASK past the
+   window's right edge: web/src/desk/components/pullout.css:284
+   `.desk-pullout-head.has-wings .desk-pullout-title { flex: none }`
+   (HS-100-07) — the title never shrinks when wings are present. A
+   window-chrome species bug: `flex: 0 1 auto; min-width: 0` (the
+   ellipsis rule at :130-134 already exists) and the wings
+   `flex-shrink: 0`. Every Room with a long name shows it.
+2. **The Sources step is not legible** — the built face renders a
+   provider's wizard INLINE inside the main column under the answered
+   rows, beside THE BRIEF (SetupRoot.tsx:167-283: SurfaceColumns
+   main=[SetupInterview, ToolsRow, wizard-or-cards], side=SetupBrief),
+   so the user clicks a card and must scroll the same dialog to find
+   the wizard; nothing on a card says it is the entry. The ratified
+   law (167 D0, inherited by 168 D2) says "wizards own the whole body
+   while open" — the build violated it. The fix is design-level and
+   small: (a) every provider suggestion card carries ONE verb (`Set
+   up`, primary on the card; `Tested · N` after), the click target
+   named; (b) while a wizard is open it OWNS the body — the answered
+   rows, the TOOLS row and THE BRIEF unmount; the ProgressPlan of the
+   wizard's steps sits under the window's own plan; the footer carries
+   only `Back · Test this Watch / Use this Watch`; closing returns to
+   the cards with the chip flipped; (c) the Sources step's ProgressPlan
+   label reads what the step is (`Sources · pick what to watch`), never
+   just `Sources` — if a token can carry it; (d) re-shoot at both widths
+   and re-walk on his desk BEFORE asking him again.
+
+Story 05 stays IN PROGRESS; the phase does not close on this verdict.
+
+**THE OWNER'S ATTENDED WALK — recorded above (BOUNCE).** His desk: the hub restarted
 on the branch build (`cd web && npm run build`, then restart
 `holdspeak web`); walk assets/walk-script.md's connected steps by hand
 at his hub and on the 393 glass; the Tuesday question. His verdict,

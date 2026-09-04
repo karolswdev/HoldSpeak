@@ -154,8 +154,14 @@ first); two footer species bugs the real-desk shots exposed paid. The
 stopwatch: 9 → 7 clicks to a tested GitHub Watch, zero sentences, no
 terminal command inside the interview, the second Watch 4 clicks via the
 known scope, cold from a silent dead end to `Connect GitHub` at 4 clicks.
-**05 flips on the owner's attended walk and verdict.** 07 (the close) in
-flight: counsel reading the diff; the full suite running.
+**05: THE OWNER WALKED AND BOUNCED (2026-09-04)** — verbatim in story-05: the
+wings escaping the Room's window on a long name (pullout.css:284 `flex:
+none` on the title with wings), and the Sources step not legible (the
+wizard renders inline under the answered rows instead of OWNING the body;
+no verb on the cards says they are the entry). Neither paid yet; his word:
+"so prepare another Muad'Dib." The next sitting pays both, re-shoots,
+re-walks his desk, then asks again. 07's gates (suite, sweep, counsel,
+final-summary) are green and stay valid until the tree changes.
 
 ## Active risks
 

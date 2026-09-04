@@ -1,3 +1,110 @@
+# HANDOVER: MUAD'DIB VI — the orchestrator's mind, serialized a sixth time
+
+Read this once, fully, before your first tool call. When you finish,
+you ARE the orchestrator. Written 2026-09-04 at the END of the
+Connections Door sitting — after the owner WALKED THE BRANCH ON HIS
+DESK AND BOUNCED. Muad'Dib V (below) describes the phase's build and
+close gates and still holds; this edition carries the bounce and the
+exact work the next sitting opens with. NO NEW CHARTERS. Pay the
+bounce, re-walk his desk, ask again.
+
+## 0. His words, verbatim (2026-09-04, on http://127.0.0.1:53379)
+
+"unacceptable UI work..., see how the TIMELINE, DECISIONS, SEARCH, ASK
+are just completely off to the side of the window, as on this
+screenshot... second to this..., I really don't understand why
+everything's still so complicated. The tool suggestions are still not
+obvious AT ALL, it's not obvious I have to click them to then scroll
+within that same dialog to test them, validate them, and so on. I'm
+telling you - this stuff is still not streamlined at all..." — "so
+prepare another Muad'Dib."
+
+## 1. The two roots (anchored this sitting; NOT paid)
+
+1. **Wings escape the Room window on a long title.**
+   web/src/desk/components/pullout.css:284 —
+   `.desk-pullout-head.has-wings .desk-pullout-title { flex: none }`
+   (HS-100-07). The title never shrinks when wings are present; a
+   long project name pushes TIMELINE · DECISIONS · SEARCH · ASK past
+   the window's edge. Species fix in the window chrome: the title
+   `flex: 0 1 auto; min-width: 0` (its ellipsis rule at :130-134
+   already exists), the wings `flex-shrink: 0`. Pin it with a vitest
+   on DeskWindow (long title + wings → the wings' box inside the
+   head's box) and a glass shot of a Room with a 70-char name at 1440
+   and 393. Check every OTHER head with wings (grep `has-wings`).
+   While there: the Room repeats the project name FOUR times
+   (title bar · h1 · the target token row · the purpose line) — the
+   167 identity band's purpose/outcome fold; he did not name it, but
+   he will.
+2. **The Sources step is not legible.** SetupRoot.tsx:167-283 renders
+   `SurfaceColumns main=[SetupInterview (answered rows), ToolsRow,
+   wizard-or-SuggestionCards] side=SetupBrief` — a provider's wizard
+   appears INLINE below the answered rows, beside the brief, so a card
+   click leads to scrolling the same dialog to find it; nothing on a
+   card says it is the entry. This broke the ratified law (167 D0,
+   inherited by 168 D2): "wizards own the whole body while open". The
+   amendment is recorded in assets/settled-design-connections.md D7c:
+   (a) every provider suggestion card carries ONE verb — `Set up`
+   (primary on the card; `Tested · N` after) — the click target NAMED;
+   (b) an open wizard OWNS the body: the answered rows, the TOOLS row
+   and THE BRIEF unmount; the wizard's ProgressPlan sits under the
+   window's plan; the footer carries only `Back · Test this Watch /
+   Use this Watch`; closing returns to the cards with the chip
+   flipped; (c) consider the ProgressPlan step label carrying what the
+   step asks (`Sources` alone told him nothing) — a token, not a
+   sentence; (d) re-shoot both widths (the 04 rig + the walk) and
+   RE-WALK HIS DESK (`HS168_WALK=1 HS168_WALK_DB=real uv run pytest -q
+   tests/e2e/live168_walk.py`) before asking him again.
+   Design first? The amendment is small and inside the ratified
+   grammar; a one-artboard mockup (Sources with the verb; the wizard
+   owning the body) on the existing canvas (artifact e3a6776b-…; the
+   sources are assets/mockups/*.dc.html) is cheap insurance — do it,
+   show him, then build. His bounce says the last build was not what
+   he pictured; do not guess twice.
+
+## 2. The state of the world
+
+- Branch feat/connections-door, HEAD = this handover's commit. 01-04
+  + 06 DONE; 05 IN PROGRESS (his bounce recorded in story-05; its
+  evidence-story-05.md sits UNTRACKED — the isolated leg; re-capture
+  after the fixes); 07 IN PROGRESS with every gate green at the
+  pre-bounce tree (suite 7946+1350 passed, sweep zero unexplained,
+  counsel RATIFY-W-C paid, final-summary.md written) — the tree will
+  change, so the close re-runs the affected suites + the sweep on the
+  candidates, not necessarily the whole 24-minute suite (judgment:
+  css + SetupRoot + rigs → vitest setup/surface/desk, the four rigs,
+  the baseline, the null-read/product-copy guards).
+- The hub from this sitting may still be running in the background
+  on 127.0.0.1:53379 (real desk, token in his config); kill it before
+  re-building (`pgrep -fl "holdspeak web"`), rebuild `cd web && npm
+  run build`, restart, hand him the URL with `?token=` again.
+- His desk: three archived projects (167's + two from the 168 real
+  leg), watches paused; DB backup holdspeak.db.bak-hs168-005512.
+- Post-phase menu unchanged (Muad'Dib V §1).
+
+## 3. Laws this bounce adds
+
+- **"Owns the body" means UNMOUNT the rest** — an inline wizard under
+  other content is a scroll hunt, not a step.
+- **A card that is an entry carries its verb** — a chip row is not an
+  affordance.
+- **A window's wings never leave the window** — titles shrink first.
+- **Walk it with HIM in mind, not the rig**: the rig proved every step
+  reachable; it did not ask whether a human would find the next step.
+  Before asking him again, sit at the face cold and narrate each step
+  as a stranger — if a step needs the narration, the face is wrong.
+
+## 4. The voice (unchanged)
+
+Terse, concrete, numbers over adjectives; the last message carries
+the whole picture; never claim what you didn't verify; the owner's
+bounces are gifts — answer the exact words, record them verbatim, fix
+the root; scars become laws in memory.
+
+— Muad'Dib, session 016siGSBgZph9EhEdGMoyWcu (the Connections Door sitting, second close)
+
+---
+
 # HANDOVER: MUAD'DIB V — the orchestrator's mind, serialized a fifth time
 
 Read this once, fully, before your first tool call. When you finish,
