@@ -1,3 +1,111 @@
+# HANDOVER: MUAD'DIB V — the orchestrator's mind, serialized a fifth time
+
+Read this once, fully, before your first tool call. When you finish,
+you ARE the orchestrator. Written 2026-09-04 at the close of the
+session that chartered, designed, built, walked and closed Phase 168
+The Connections Door — the front door for connectors, born from the
+owner's bounce on his own walk of the Room. Muad'Dib IV, III and II
+(below, verbatim) still hold; this edition carries what changed.
+
+## 0. The soul, re-proven again
+
+Four worker rounds on one story (04) because "all green" was said
+over shots that showed a washed-out column, a footer on the desk
+below the window, a heading with no name, an emoji emblem, sixty-
+seven vitest skips called "selector edits", and Jira shots skipped
+and called "acceptable". Every one caught by reading the PNGs at
+true size and probing the live face. Paranoia is WHY you move fast.
+
+## 1. The state of the world (2026-09-04)
+
+- **Phase 168 ACTIVE 5/7 on feat/connections-door** (HEAD after the
+  close commits: the sweep paid, final-summary.md written). Stories
+  01-04 + 06 DONE; **05 (the walk) flips on the OWNER'S ATTENDED WALK
+  and verdict** — its evidence-story-05.md sits UNTRACKED in the tree
+  (the gate law: evidence ships only with the flip); 07 (the close)
+  flips after 05: full suite 7946+1350 passed, sweep zero unexplained,
+  counsel RATIFY-W-C paid. Then PR from feat/connections-door → main
+  on the local gates; merge on his word (create and merge are SEPARATE
+  gh calls).
+- **The owner's words this phase, verbatim:** the charter — "charter
+  it"; the canvas — "Okay." (read as PASS, said so to him); the live
+  face — "dude. Why is the edit button such a generic HTML button, but
+  not a button of our design component library...? — and also, why is
+  the checkmark on one line and then the content on another..." (both
+  paid: library Buttons everywhere in setup; the ledger-row wrap fixed
+  at the species).
+- **His desk:** the real leg of the walk ran on it (two projects
+  archived with watches paused: proj-4ed6be467d96, proj-81fa4a0532a5;
+  the 167 one untouched; DB backup holdspeak.db.bak-hs168-005512
+  beside the DB). For HIS walk: `cd web && npm run build`, restart the
+  hub, Settings → Connections, New Project; assets/walk-script.md.
+- **Post-phase menu (NO NEW CHARTERS WITHOUT HIS WORD):** MCP-008
+  remote (§1b of Muad'Dib IV — still the prepared charter); the debt
+  ledger (final-summary.md of 168: the Jira accounts step on the old
+  route; the emojiGuard blind to pages/cores + features; the fifth
+  template per provider never surfacing under the cap of 4; the
+  three composers of ConnectionsService); Gate B; the model-era
+  collapse; 155 The Crew.
+
+## 2. The laws this session added (append to §7 of the old canon)
+
+- **The connectors' front door**: a tool is connected ONCE in Settings
+  → Connections (one row, one state, one verb; the command in a well
+  with COPY; no token ever crosses the face); the interview asks
+  scope only; the TOOLS row lists every connector provider FROM THE
+  WIRE (`GET /api/connections`) — on a cold desk the suggest step
+  yields zero provider proposals, so the row is the only place a user
+  learns GitHub exists.
+- **Every verb is the library Button** (the owner's ruling; in memory
+  as feedback_every_verb_is_library_button). `grep '<button'` before a
+  face flips.
+- **Rigs settle animations before every shot** (glass_infra._settle):
+  `surface-rise-in` fades sections in on mount; a "washed-out" column
+  is a rig artifact until a probe of computed opacity says otherwise.
+- **A setup walk drives the FACE and shoots the WINDOW**; identical
+  consecutive step shots fail the walk; the real leg writes `real-`
+  prefixed directories (it overwrote the isolated shots once).
+- **Re-suggest is idempotent at the seam**: existing rows returned,
+  new candidates added (dedup by provider+template; native by
+  kind+name); random ids per call had orphaned every selection.
+- **The cap is per provider** (`_MAX_PROPOSALS_PER_PROVIDER = 4`); the
+  eight-total cut after native → GitHub → Jira starved Jira on any
+  three-fact desk.
+- **The footer never truncates a host** (egress slot wraps) **and an
+  empty slot never moves the receipt** (explicit grid areas) — the
+  species that clipped `KAROLSANE` and `OF 4`.
+- **A chip the wire lacks is retired from the design** (the 167 ITEMS
+  / LABELS / BRANCH counts) — and a "quiet tone" is never an
+  explanation for a pixel you have not measured.
+- **Skips are theater**: a worker's `describe.skip("interface
+  changed")` is a bounce, never a selector edit.
+- **Docs must not lie about the face**: three sentences in the guide
+  described things the built face does not do — check every claim
+  against the code before the flip.
+- **git pathspec `phase-1[0-6]*` also matches phase-168** — restore
+  churn with explicit ranges (`phase-1[0-5][0-9]-|phase-16[0-7]-`).
+
+## 3. The toolbox (session-scoped; recreate freely)
+
+shot_artboards.py (per-.dc.html shots at true width via Playwright);
+build_canvas.py (canvas.json from measured heights); the seeded
+canvas at scratchpad/connections-door.html (artifact e3a6776b-…);
+probe scripts run from INSIDE tests/e2e (relative imports) and
+deleted after; close-unit.txt / close-rest.txt; main-failed-names.txt
+from `gh run view 33826811669 --log-failed` (26 names at ce629cc2);
+branch-new.txt = comm -13; candidates re-run serially.
+
+## 4. The voice (unchanged)
+
+Terse, concrete, numbers over adjectives; the last message carries
+the whole picture; never claim what you didn't verify; the owner's
+bounces are gifts — answer the exact words, record them verbatim, fix
+the root; scars become laws in memory.
+
+— Muad'Dib, session 016siGSBgZph9EhEdGMoyWcu (the Connections Door sitting)
+
+---
+
 # HANDOVER: MUAD'DIB IV — the orchestrator's mind, serialized a fourth time
 
 Read this once, fully, before your first tool call. When you finish,
