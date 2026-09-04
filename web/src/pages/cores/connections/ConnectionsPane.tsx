@@ -410,7 +410,11 @@ export function ConnectionsPane({
         checkedAt: lastChecked ? formatTime(lastChecked) : undefined,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load connections");
+      setError(
+        err instanceof Error && err.message
+          ? `Connections did not load from this hub (${err.message}). Nothing changed. Retry.`
+          : "Connections did not load from this hub. Nothing changed. Retry.",
+      );
     } finally {
       setLoading(false);
     }
