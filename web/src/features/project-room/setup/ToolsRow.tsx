@@ -13,6 +13,8 @@ import {
 } from "../../../desk/surface";
 import { Button } from "../../../components/signal/Signal";
 import type { ConnectionTool } from "../../../pages/cores/connections/api";
+import { connectionChipLabel } from "../../../pages/cores/connections";
+import type { ConnectionState } from "../../../pages/cores/connections/api";
 
 /** Provider emblem glyph (HS-167-05 vocabulary). */
 const PROVIDER_EMBLEM: Record<string, string> = {
@@ -26,13 +28,15 @@ const PROVIDER_PROVENANCE: Record<string, { source: string; boundary: string }> 
   jira: { source: "acli", boundary: "" },
 };
 
-function toolStateChip(tool: ConnectionTool): { state: "success" | "warning" | "failure" | "idle"; label: string } {
+function toolStateChip(tool: ConnectionTool): { state: "success" | "warning" | "failure" | "idle" | "unreachable"; label: string } {
+  // ONE label vocabulary with Settings → Connections (the 03 face).
+  const label = connectionChipLabel(tool.state as ConnectionState, tool.provider_id);
   switch (tool.state) {
-    case "connected": return { state: "success", label: "Connected" };
-    case "owner_action_required": return { state: "warning", label: "Sign in" };
-    case "unavailable": return { state: "failure", label: "Unavailable" };
-    case "degraded": return { state: "failure", label: "Unreachable" };
-    case "not_configured": return { state: "idle", label: "Off" };
+    case "connected": return { state: "success", label };
+    case "owner_action_required": return { state: "warning", label };
+    case "unavailable": return { state: "failure", label };
+    case "degraded": return { state: "unreachable", label };
+    case "not_configured": return { state: "idle", label };
     default: return { state: "idle", label: "Unknown" };
   }
 }

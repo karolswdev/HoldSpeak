@@ -7,3 +7,5 @@ export type {
   JiraSubConnection,
 } from "./api";
 export { fetchConnections, recheckProvider, decodeConnectionsResponse } from "./api";
+
+export { chipLabel as connectionChipLabel } from "./ConnectionsPane";

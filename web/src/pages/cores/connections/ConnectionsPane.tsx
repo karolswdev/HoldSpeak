@@ -37,7 +37,7 @@ function chipState(state: ConnectionState): ChipState {
   }
 }
 
-function chipLabel(state: ConnectionState, providerId: string): string {
+export function chipLabel(state: ConnectionState, providerId: string): string {
   switch (state) {
     case "connected": return "Connected";
     case "owner_action_required": return "Sign in";
