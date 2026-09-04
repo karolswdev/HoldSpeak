@@ -41,6 +41,12 @@ twin for "what is connected".
   regenerated in the same commit; the family count renamed
   honestly. (e) the schema untouched (session answers are JSON);
   if a column is needed the snapshot regenerates in the same commit.
+  (f) THE CAP (the audit's F7): suggest's `_MAX_PROPOSALS = 8` cut
+  after native → GitHub → Jira drops every Jira card on a desk with
+  three native facts (project_setup_service.py:74, :333-336). The cap
+  becomes PER PROVIDER (native · github · jira; the connected
+  providers never starved) with a failing-then-passing test on a
+  3-native + 5-GitHub + 5-Jira desk.
 - **Out:** OAuth, token capture, new providers, calendar setup.
 
 ## Acceptance criteria
@@ -48,6 +54,7 @@ twin for "what is connected".
 - [ ] `GET /api/connections` returns the same state the per-provider routes return for gh connected / gh logged out / acli one account / nothing configured — pinned by tests that drive the adapters, not fixtures that hand-seed the row.
 - [ ] Suggest returns `connection` on every proposal and `known_scopes` on the session; scope recorded once is returned, never applied.
 - [ ] MCP twins registered, classified, censused; parity test web = MCP for list + recheck.
+- [ ] The per-provider cap: a 3 + 5 + 5 desk persists cards for every connected provider (failing-then-passing).
 
 ## Test plan
 

@@ -99,7 +99,7 @@ rechecks).
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-168-01 | The audit + the settled design (the stopwatch audit through the face; Connections + Sources on the library; mockups at 1440 + 393; OWNER RATIFIES) | backlog | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-168-01 | The audit + the settled design (the stopwatch audit through the face; Connections + Sources on the library; mockups at 1440 + 393; OWNER RATIFIES) | in-progress | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-168-02 | The connections service (one readiness shape; the suggest step annotated; known scopes; MCP twins) | backlog | [story-02-the-connections-service](./story-02-the-connections-service.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-168-03 | The Connections face (Settings → Connections; one state, one verb per tool; the sign-in fold; glass rig at both widths) | backlog | [story-03-the-connections-face](./story-03-the-connections-face.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-168-04 | The Sources step connect-once (state on the cards; connect in place and return; the wizard asks scope only; scope carries; honest verbs; D3 settled) | backlog | [story-04-the-sources-step](./story-04-the-sources-step.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -121,7 +121,16 @@ mockup's ITEMS/LABELS sheet never landed and would have fabricated
 chips the wire lacks; the 167 walk shot the desk, not the setup
 window. Next: 01 — the stopwatch audit through the face on a fresh
 HOME, before-shots at both widths, the settled design, the mockups,
-counsel, then the owner's word.
+counsel, then the owner's word. **01 IN PROGRESS (2026-09-04):** the
+audit ran face-driven on an isolated hub (connected 9 clicks · 10.5 s
+to a tested GitHub Watch; Jira 15 clicks · 28.2 s with Test gated on
+Preview; cold 6 clicks to a SILENT dead end — no provider card, no
+hint; 52 window shots) and found a product defect: the eight-proposal
+cap drops every Jira suggestion on a three-fact desk. Counsel
+RATIFY-W-C (3 M · 4 S · 8 N) all paid in the design. Twelve
+artboards published — https://claude.ai/code/artifact/e3a6776b-151f-4d4c-991a-ef8952a596f6 —
+three bounce rounds paid by the orchestrator's own read. THE OWNER'S
+WORD: pending.
 
 ## Active risks
 
@@ -142,6 +151,11 @@ counsel, then the owner's word.
   `openSurfaceWindow("configure-settings", "<module>")` ids are
   called from the Door and the Front Door; the design decides the
   module name and the census names every caller before it moves.
+- **The eight-proposal cap starves Jira** (found by the 01 audit's
+  second pass, verified by hand: project_setup_service.py:74,
+  :333-336 — native → GitHub → Jira appended, cut at 8). Until 02
+  pays it per provider, any desk with three native facts shows no
+  Jira card; the 05 walk asserts every connected provider's cards.
 - **The credentials rows must survive.** Whatever the Connections
   face becomes, the web token / Telegram / webhook rows and the mesh
   group keep a home and their tests keep passing.
