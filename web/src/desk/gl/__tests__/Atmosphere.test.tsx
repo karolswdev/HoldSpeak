@@ -14,14 +14,26 @@ const { cleanup, factory, load, mountAtmosphereScene } = vi.hoisted(() => {
 
 vi.mock("../atmosphereRegistry", () => ({
   DEFAULT_ATMOSPHERE_ID: "rainy-city",
-  resolveAtmosphere: () => ({
-    id: "rainy-city",
-    name: "Rainy City",
-    description: "A test storm.",
-    seed: 72,
-    gradeClassName: "desk-atmosphere-grade--rainy-city",
-    load,
-  }),
+  resolveAtmosphere: (id = "rainy-city") =>
+    id === "quiet-desk"
+      ? {
+          id: "quiet-desk",
+          name: "Quiet Desk",
+          description: "No scene.",
+          seed: 0,
+          gradeClassName: "desk-atmosphere-grade--quiet-desk",
+          previewUrl: null,
+          load: null,
+        }
+      : {
+          id: "rainy-city",
+          name: "Rainy City",
+          description: "A test storm.",
+          seed: 72,
+          gradeClassName: "desk-atmosphere-grade--rainy-city",
+          previewUrl: "/rainy-city.png",
+          load,
+        },
 }));
 vi.mock("../atmosphereRuntime", () => ({ mountAtmosphereScene }));
 
@@ -55,6 +67,27 @@ describe("Desk atmosphere host", () => {
     );
 
     view.unmount();
+    expect(cleanup).toHaveBeenCalledOnce();
+  });
+
+  it("selects the quiet Desk without allocating a WebGL canvas", () => {
+    const view = render(<Atmosphere id="quiet-desk" />);
+    expect(view.container.querySelector(".desk-stage")).toHaveAttribute(
+      "data-atmosphere",
+      "quiet-desk",
+    );
+    expect(view.container.querySelector("canvas")).toBeNull();
+    expect(load).not.toHaveBeenCalled();
+    expect(mountAtmosphereScene).not.toHaveBeenCalled();
+  });
+
+  it("releases the active scene when a live selection disables it", async () => {
+    const view = render(<Atmosphere id="rainy-city" />);
+    await waitFor(() => expect(mountAtmosphereScene).toHaveBeenCalledOnce());
+
+    view.rerender(<Atmosphere id="quiet-desk" />);
+
+    expect(view.container.querySelector("canvas")).toBeNull();
     expect(cleanup).toHaveBeenCalledOnce();
   });
 });

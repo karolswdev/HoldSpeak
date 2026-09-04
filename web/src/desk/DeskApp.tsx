@@ -34,6 +34,7 @@ import { ApplicationBoundary } from "./components/ApplicationBoundary";
 import { objectByRef } from "./world";
 import { useProjections } from "./projections";
 import { takeFirstValueNoteOpen } from "./firstValue";
+import { useAtmospherePreference } from "./gl/atmospherePreference";
 import "./desk.css";
 
 // The Chair is HOME. Floor/GL and object-specific heavyweight windows cross
@@ -85,6 +86,7 @@ export default function DeskApp() {
   const error = useDesk((s) => s.error);
   const { refresh } = useDesk.getState();
   const [refreshFailure, setRefreshFailure] = useState<string | null>(null);
+  const [atmosphereId] = useAtmospherePreference();
 
   const refreshDesk = useCallback(async () => {
     setRefreshFailure(null);
@@ -168,7 +170,7 @@ export default function DeskApp() {
       {showFloor && (
         <ApplicationBoundary label="Floor atmosphere">
           <Suspense fallback={null}>
-            <Atmosphere />
+            <Atmosphere id={atmosphereId} />
           </Suspense>
         </ApplicationBoundary>
       )}

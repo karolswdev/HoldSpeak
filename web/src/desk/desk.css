@@ -51,6 +51,13 @@
       var(--desk-atmosphere-edge) 88%
     );
 }
+.desk-next .desk-atmosphere-grade--quiet-desk {
+  background: radial-gradient(
+    ellipse at 50% 44%,
+    color-mix(in srgb, var(--surface-2) 42%, transparent),
+    transparent 72%
+  );
+}
 
 /* ── HS-110 system sprite utilities ── */
 .desk-chrome-sprite,

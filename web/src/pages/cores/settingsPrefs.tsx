@@ -26,11 +26,13 @@ export type PrefModule = {
 };
 
 export const PREF_MODULES: PrefModule[] = [
-  // HS-139-05: collapsed from 14 tiles to 7.
+  // HS-139-05 established the compact owner-facing roster. Wallpaper is the
+  // local personalization drawer; it does not claim an /api/settings key.
   // Voice merges Hotkey + Transcription + Voice Typing + Wake Word.
   { id: "voice", label: "Voice", glyph: "dictation", sprite: "voice", keys: ["hotkey", "model", "dictation", "wake_word"] },
   // Sounds & Presence merges Appearance (desk sounds only) + Presence.
   { id: "sounds", label: "Sounds & Presence", glyph: "presence", sprite: "sounds", keys: ["ui", "presence"] },
+  { id: "wallpaper", label: "Wallpaper", glyph: "wallpaper", sprite: "wallpaper", keys: [] },
   // Meetings: capture pointer + calendar source + actuators + RAW well.
   { id: "meetings", label: "Meetings", glyph: "meeting", sprite: "meetings", keys: ["meeting", "calendar"] },
   // Rhythm: cadence user-facing + Telegram + RAW.
@@ -200,7 +202,7 @@ export const LANGUAGE_OPTIONS = [
 ];
 
 /* ── HS-139-07: the tile sprites (bright mold, 32x32 retina) ──
-   The seven tile icons are PixelLab-generated pixel sprites in the
+   The settings tile icons use the owner-ratified bright pixel mold in the
    owner-ratified bright mold (Phase 135 icon-palette.png: silver-white
    forward, ink outline, ember + blue-grey accents). They live under
    web/public/desk/sprites/settings/ and render at 32px displayed
@@ -337,7 +339,7 @@ export function PrefsFace({
   /** The precedence chain as data (etched fact line, never a paragraph). */
   precedence: string[];
 }) {
-  // HS-139-05: FILTER dropped — 7 tiles all visible at once, the filter
+  // HS-139-05: FILTER dropped — the compact roster stays visible at once.
   // earns nothing in a room this small.
   // HS-139-07: precedence chain folded into the POSTURE title attribute
   // (defect 3 — raw operator lore demoted from the face).

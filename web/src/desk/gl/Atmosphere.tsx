@@ -19,12 +19,13 @@ export function Atmosphere({ id = DEFAULT_ATMOSPHERE_ID }: AtmosphereProps) {
   const definition = useMemo(() => resolveAtmosphere(id), [id]);
 
   useEffect(() => {
+    const load = definition.load;
+    if (!load) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     let cancelled = false;
     let cleanup: (() => void) | undefined;
-    void definition
-      .load()
+    void load()
       .then((factory) => {
         if (cancelled) return;
         cleanup = mountAtmosphereScene(canvas, factory, {
@@ -44,7 +45,9 @@ export function Atmosphere({ id = DEFAULT_ATMOSPHERE_ID }: AtmosphereProps) {
       data-atmosphere={definition.id}
       aria-hidden="true"
     >
-      <canvas ref={canvasRef} className="desk-atmosphere-canvas" />
+      {definition.load ? (
+        <canvas ref={canvasRef} className="desk-atmosphere-canvas" />
+      ) : null}
       <div className={`desk-atmosphere-grade ${definition.gradeClassName}`} />
     </div>
   );

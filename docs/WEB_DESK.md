@@ -38,9 +38,12 @@ scene loader. The shared runtime owns resize quality, normalized pointer input,
 visibility suspension, reduced-motion behavior, frame clamping, and teardown.
 A new atmosphere therefore supplies one isolated scene factory instead of
 reimplementing Desk integration or joining the initial bundle. The current
-default is `rainy-city`; the component accepts any registered atmosphere id so
-a future preference surface can switch among many worlds without changing the
-Floor.
+default is `rainy-city`; **Settings → Wallpaper** renders catalog previews and
+switches the Floor live between Rainy City and the no-WebGL Quiet Desk. The
+selection is a browser-local Desk view preference, survives reloads, and falls
+back safely when a retired or unknown atmosphere id is found. Future worlds
+only add a registry entry and isolated scene factory; the picker and Floor do
+not need another integration path.
 
 When the tab is hidden, the runtime pauses every atmosphere. The operating
 system's reduced-motion setting freezes rain, steam, splashes, ripples, camera
