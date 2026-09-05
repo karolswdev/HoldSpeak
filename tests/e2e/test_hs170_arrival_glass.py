@@ -495,9 +495,11 @@ def _run_quiet_rig(
                 "NEEDS YOU section should be absent when empty"
             assert page.get_by_test_id("arrival-thoughts").count() == 0, \
                 "THOUGHTS section should be absent when empty"
-            # Brief might or might not exist (depends on whether latest returns null)
-            assert page.get_by_test_id("arrival-brief").count() == 0, \
-                "BRIEF section should be absent when empty"
+            # Brief: no brief exists, so the "No brief yet" + Generate row shows (M-2)
+            assert page.get_by_test_id("arrival-brief").count() == 1, \
+                "BRIEF section should show 'No brief yet' + Generate when no brief"
+            assert page.get_by_test_id("arrival-brief-generate").count() == 1, \
+                "Generate button should be present when no brief"
 
             # ── CAPTURE BAR always present ──
             capture_bar = page.get_by_test_id("arrival-capture-bar")

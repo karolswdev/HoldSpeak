@@ -143,6 +143,16 @@
   opacity: 0.6;
 }
 
+/* ── Brief empty state (M-2) ───────────────────────────────────────── */
+.arrival-brief-empty {
+  display: block;
+  padding: 4px 6px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--desk-surface-detail-size, 12px);
+  letter-spacing: 0.03em;
+}
+
 /* ── Thoughts ──────────────────────────────────────────────────────── */
 .arrival-thought-state {
   color: var(--text-muted);

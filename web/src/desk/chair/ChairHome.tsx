@@ -4,11 +4,11 @@
 // The lane vocabulary is PARKED; the arrival composes directly from
 // the surface library and the needs-you wire.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Chair } from "./Chair";
 import { FirstWords } from "../components/FirstWords";
 import { useDesk } from "../store";
-import { openSurface, openSurfaceOr } from "../shell";
+import { openSurface, openSurfaceOr, openCoderSession } from "../shell";
 import { apiFetch } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
@@ -17,6 +17,7 @@ import {
   SurfaceSection,
   SurfaceLedger,
   SurfaceLedgerRow,
+  EgressChip,
   countLabel,
   countToken,
 } from "../surface";
@@ -183,6 +184,31 @@ function Arrival() {
   // ── meetings ──
   const meetings = useDesk((s) => s.items.meeting);
 
+  // ── agents (coders sessions) ──
+  const [agentSessions, setAgentSessions] = useState<Record<string, unknown>[]>([]);
+  useEffect(() => {
+    void apiFetch<Record<string, unknown>>("/api/coders/status")
+      .then((res) => {
+        const sessions = (res as any)?.agent?.sessions;
+        const raw = Array.isArray(sessions)
+          ? sessions
+          : (sessions as any)?.items;
+        if (Array.isArray(raw)) setAgentSessions(raw.filter(Boolean));
+      })
+      .catch(() => undefined);
+  }, []);
+
+  // ── brief generate ──
+  const [generating, setGenerating] = useState(false);
+  const generateBrief = async () => {
+    setGenerating(true);
+    try {
+      const data = await apiFetch<MondayBrief>("/api/brief/generate", { method: "POST" });
+      setBrief(data);
+    } catch { /* stays */ }
+    finally { setGenerating(false); }
+  };
+
   // ── headline ──
   const count = needsYou?.count ?? 0;
   const projectCount = needsYou?.projects?.length ?? 0;
@@ -225,14 +251,18 @@ function Arrival() {
     finally { setBusyBriefId(null); }
   };
 
-  // ── intel run ──
+  // ── intel run (S-2: response carries host for the egress chip) ──
   const [runningIntel, setRunningIntel] = useState<string | null>(null);
+  const [intelReceipt, setIntelReceipt] = useState<{ meetingId: string; host: string } | null>(null);
   const runIntelligence = async (meetingId: string) => {
     setRunningIntel(meetingId);
+    setIntelReceipt(null);
     try {
-      await apiFetch(`/api/meetings/${encodeURIComponent(meetingId)}/intelligence/run`, {
-        method: "POST",
-      });
+      const result = await apiFetch<{ jobId: string; state: string; host: string }>(
+        `/api/meetings/${encodeURIComponent(meetingId)}/intelligence/run`,
+        { method: "POST" },
+      );
+      setIntelReceipt({ meetingId, host: result.host || "THIS DEVICE" });
       void useDesk.getState().refresh();
     } catch { /* receipt stays */ }
     finally { setRunningIntel(null); }
@@ -273,8 +303,27 @@ function Arrival() {
         </div>
       ) : null}
 
-      {/* ── Brief ── */}
-      {!briefLoading && untriagedBrief.length > 0 ? (
+      {/* ── Brief (M-2: no-brief-yet generates; existing brief with human items shows) ── */}
+      {!briefLoading && !brief ? (
+        <div data-testid="arrival-brief">
+          <SurfaceSection
+            label="BRIEF"
+            actions={
+              <Button
+                variant="ghost"
+                dense
+                disabled={generating}
+                onClick={() => void generateBrief()}
+                data-testid="arrival-brief-generate"
+              >
+                {generating ? "Generating..." : "Generate"}
+              </Button>
+            }
+          >
+            <span className="arrival-brief-empty">No brief yet</span>
+          </SurfaceSection>
+        </div>
+      ) : !briefLoading && untriagedBrief.length > 0 ? (
         <div data-testid="arrival-brief">
           <BriefSection
             items={untriagedBrief}
@@ -290,8 +339,16 @@ function Arrival() {
           <MeetingsSection
             meetings={meetings}
             runningIntel={runningIntel}
+            intelReceipt={intelReceipt}
             onRunIntel={runIntelligence}
           />
+        </div>
+      ) : null}
+
+      {/* ── Agents (M-3: only when sessions exist) ── */}
+      {agentSessions.length > 0 ? (
+        <div data-testid="arrival-agents">
+          <AgentsSection sessions={agentSessions} />
         </div>
       ) : null}
 
@@ -475,10 +532,12 @@ function BriefSection({
 function MeetingsSection({
   meetings,
   runningIntel,
+  intelReceipt,
   onRunIntel,
 }: {
   meetings: Meeting[];
   runningIntel: string | null;
+  intelReceipt: { meetingId: string; host: string } | null;
   onRunIntel: (id: string) => void;
 }) {
   // Sort by startedAt descending, limit to 3.
@@ -490,7 +549,8 @@ function MeetingsSection({
     <SurfaceSection label={countLabel("MEETINGS", sorted.length)}>
       <SurfaceLedger count={null} cols="room">
         {sorted.map((m) => {
-          const badge = intelBadge(m.intelStatus);
+          const receipt = intelReceipt?.meetingId === m.id ? intelReceipt : null;
+          const badge = receipt ? "QUEUED" : intelBadge(m.intelStatus);
           const hasTranscript = m.transcriptWords != null && m.transcriptWords > 0;
           const isOff = badge === "OFF";
           const isSaved = badge === "SAVED";
@@ -513,6 +573,12 @@ function MeetingsSection({
                   >
                     {badge}
                   </span>
+                  {receipt ? (
+                    <EgressChip
+                      label={receipt.host === "local" ? "THIS DEVICE" : receipt.host}
+                      scope={receipt.host === "local" ? "local" : "cloud"}
+                    />
+                  ) : null}
                 </>
               }
               trailing={
@@ -524,7 +590,7 @@ function MeetingsSection({
                     onClick={() => onRunIntel(m.id)}
                     data-testid="arrival-run-intel"
                   >
-                    {runningIntel === m.id ? "Running…" : "Run intelligence"}
+                    {runningIntel === m.id ? "Running..." : "Run intelligence"}
                   </Button>
                 ) : isSaved ? (
                   <Button
@@ -544,6 +610,80 @@ function MeetingsSection({
               expands={false}
               wrap
               data-testid="arrival-meeting-row"
+            />
+          );
+        })}
+      </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
+// ── Agents (M-3) ──────────────────────────────────────────────────
+
+/** Blocked predicate (from parked AgentsLane). */
+function isBlocked(row: Record<string, unknown>): boolean {
+  const session = (row.session as Record<string, unknown> | undefined) ?? row;
+  return Boolean(
+    session.awaiting_response ?? row.awaiting_response ?? row.state === "waiting",
+  );
+}
+
+function sessionKey(row: Record<string, unknown>): string {
+  const session = (row.session as Record<string, unknown> | undefined) ?? row;
+  return String(
+    row.key ?? session.key ??
+      `${String(session.agent ?? "claude")}:${String(session.session_id ?? "")}`,
+  );
+}
+
+function sessionName(row: Record<string, unknown>): string {
+  const session = (row.session as Record<string, unknown> | undefined) ?? row;
+  return String(session.project ?? session.cwd ?? session.session_id ?? "session");
+}
+
+function AgentsSection({ sessions }: { sessions: Record<string, unknown>[] }) {
+  const blocked = useMemo(() => sessions.filter(isBlocked), [sessions]);
+  const running = useMemo(() => sessions.filter((r) => !isBlocked(r)), [sessions]);
+  const ordered = [...blocked, ...running];
+
+  return (
+    <SurfaceSection label={countLabel("AGENTS", ordered.length)}>
+      <SurfaceLedger count={null} cols="room">
+        {ordered.map((row) => {
+          const key = sessionKey(row);
+          const name = sessionName(row);
+          const rowBlocked = isBlocked(row);
+          return (
+            <SurfaceLedgerRow
+              key={key}
+              primary={name}
+              cells={
+                <span className="arrival-meeting-badge" data-badge={rowBlocked ? "off" : "saved"}>
+                  {rowBlocked ? "BLOCKED" : "RUNNING"}
+                </span>
+              }
+              trailing={
+                rowBlocked ? (
+                  <Button
+                    variant="primary"
+                    dense
+                    onClick={() => openCoderSession(key)}
+                  >
+                    Answer
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    dense
+                    onClick={() => openCoderSession(key)}
+                  >
+                    Open
+                  </Button>
+                )
+              }
+              onToggle={() => openCoderSession(key)}
+              expands={false}
+              data-testid="arrival-agent-row"
             />
           );
         })}
