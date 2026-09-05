@@ -108,6 +108,40 @@ function humanizeValue(v: unknown): string {
   return String(v).replace(/[._]/g, " ").replace(/^./, (c) => c.toUpperCase());
 }
 
+/** Map raw field names to human words; drop machine-only names. */
+const FIELD_LABELS: Record<string, string> = {
+  name: "name",
+  purpose: "purpose",
+  outcome_text: "outcome",
+  posture: "posture",
+  lifecycle: "lifecycle",
+  target_at: "target date",
+  start_at: "start date",
+  description: "description",
+  watches_activated: "watches activated",
+  source: "",  // drop: machine-only
+  keywords_json: "",
+  context_json: "",
+  detection_threshold: "",
+  team_members_json: "",
+};
+
+function humanizeFieldList(summary: Record<string, unknown>): string {
+  const fields = Object.keys(summary);
+  if (fields.length === 0) return "";
+  // Special case: watches_activated carries a count
+  const watchCount = summary.watches_activated;
+  if (typeof watchCount === "number" && watchCount > 0) {
+    return `${watchCount} watches activated`;
+  }
+  // Map fields to human labels; drop empty ones
+  const labels = fields
+    .map((f) => FIELD_LABELS[f] ?? f.replace(/_/g, " "))
+    .filter((l) => l.length > 0);
+  if (labels.length === 0) return "";
+  return labels.slice(0, 3).join(", ") + (labels.length > 3 ? "…" : "");
+}
+
 function changeLabel(kind: string, summary: Record<string, unknown>): string {
   // Action-shaped summaries (item mutations): the VALUES are the story.
   if (typeof summary.action === "string" && summary.action) {
@@ -118,10 +152,10 @@ function changeLabel(kind: string, summary: Record<string, unknown>): string {
   }
   const base = CHANGE_KIND_LABELS[kind]
     ?? (kind.split(".").pop() ?? "Change").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
-  // Field-patch summaries: the changed field NAMES are the story.
-  const fields = Object.keys(summary);
-  if (fields.length === 0) return base;
-  return `${base} · ${fields.slice(0, 3).join(", ")}${fields.length > 3 ? "…" : ""}`;
+  // Humanize field names; never expose raw snake_case on the face.
+  const detail = humanizeFieldList(summary);
+  if (!detail) return base;
+  return `${base} · ${detail}`;
 }
 
 export function decodeChangeRow(raw: Record<string, unknown>): RoomChangeRow {
@@ -172,9 +206,12 @@ export type RoomNeedsYouData = {
   count: number;
 };
 
-/** A source row: per-Watch status. */
+/** A source row: per-Watch status.
+ *  HS-169-04 merges watches of the same (provider, scope) into one row.
+ *  `watchIds` carries every watch id; `watchId` is the first (compat). */
 export type RoomSourceItem = {
   watchId: string;
+  watchIds: string[];
   provider: string;
   scope: string;
   tokens: string[];
@@ -380,10 +417,14 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
         : [],
       count: Number(s.count ?? 0),
     })),
-    sources: decodeSection<RoomSourcesData>(raw.sources, (s) => ({
-      items: Array.isArray(s.items)
+    sources: decodeSection<RoomSourcesData>(raw.sources, (s) => {
+      // Decode items, then group by (provider, scope) — merges tokens and watchIds.
+      const rawItems: RoomSourceItem[] = Array.isArray(s.items)
         ? (s.items as Record<string, unknown>[]).map((r) => ({
             watchId: String(r.watchId ?? ""),
+            watchIds: Array.isArray(r.watchIds)
+              ? (r.watchIds as unknown[]).map(String)
+              : [String(r.watchId ?? "")].filter(Boolean),
             provider: String(r.provider ?? ""),
             scope: String(r.scope ?? ""),
             tokens: Array.isArray(r.tokens) ? (r.tokens as unknown[]).map(String) : [],
@@ -395,10 +436,41 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             plainReason: r.plainReason != null ? String(r.plainReason) : null,
             suggested: Boolean(r.suggested),
           }))
-        : [],
-      count: Number(s.count ?? 0),
-      nextCheckAt: s.nextCheckAt != null ? String(s.nextCheckAt) : null,
-    })),
+        : [];
+      // Group by (provider, scope): merge tokens and watchIds.
+      const grouped = new Map<string, RoomSourceItem>();
+      for (const item of rawItems) {
+        const key = `${item.provider}::${item.scope}`;
+        const existing = grouped.get(key);
+        if (existing) {
+          for (const wid of item.watchIds) {
+            if (!existing.watchIds.includes(wid)) existing.watchIds.push(wid);
+          }
+          for (const tok of item.tokens) {
+            if (!existing.tokens.includes(tok)) existing.tokens.push(tok);
+          }
+          if (item.checkedAt && (!existing.checkedAt || item.checkedAt > existing.checkedAt)) {
+            existing.checkedAt = item.checkedAt;
+          }
+          if (item.nextCheckAt && (!existing.nextCheckAt || item.nextCheckAt < existing.nextCheckAt)) {
+            existing.nextCheckAt = item.nextCheckAt;
+          }
+          const stateOrder: Record<string, number> = { cant_check: 2, paused: 1, live: 0 };
+          if ((stateOrder[item.state] ?? 0) > (stateOrder[existing.state] ?? 0)) {
+            existing.state = item.state;
+            existing.plainReason = item.plainReason;
+          }
+        } else {
+          grouped.set(key, { ...item });
+        }
+      }
+      const items = [...grouped.values()];
+      return {
+        items,
+        count: items.length,
+        nextCheckAt: s.nextCheckAt != null ? String(s.nextCheckAt) : null,
+      };
+    }),
     health: decodeSection<RoomHealthData>(raw.health, (s) => ({
       assessment: (s.assessment === "at_risk" ? "at_risk" : "on_track") as "at_risk" | "on_track",
       reason: s.reason != null ? String(s.reason) : null,

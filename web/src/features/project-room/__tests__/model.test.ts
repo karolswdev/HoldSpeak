@@ -236,7 +236,7 @@ function okRoomPayload(): Record<string, unknown> {
     sources: {
       state: "ok",
       items: [
-        { watchId: "w-1", provider: "github", scope: "acme/app",
+        { watchId: "w-1", watchIds: ["w-1", "w-2"], provider: "github", scope: "acme/app",
           tokens: ["12 OPEN PRS", "2 WAITING ON YOU"], checkedAt: "2026-09-04T10:00:00",
           nextCheckAt: "2026-09-04T10:35:00",
           host: "github.com", state: "live", plainReason: null, suggested: false },
@@ -403,6 +403,7 @@ describe("decodeRoomSnapshot", () => {
     if (snap.sources.state !== "ok") throw new Error("expected ok");
     expect(snap.sources.items).toHaveLength(1);
     expect(snap.sources.items[0].provider).toBe("github");
+    expect(snap.sources.items[0].watchIds).toEqual(["w-1", "w-2"]);
     expect(snap.sources.items[0].scope).toBe("acme/app");
     expect(snap.sources.items[0].tokens).toEqual(["12 OPEN PRS", "2 WAITING ON YOU"]);
     expect(snap.sources.items[0].host).toBe("github.com");

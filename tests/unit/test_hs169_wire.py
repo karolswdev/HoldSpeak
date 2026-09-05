@@ -64,7 +64,7 @@ def _seed_watch(
     connector_id: str = "gh",
     query_kind: str = "pull_requests",
     query: dict[str, Any] | None = None,
-    snapshot: list[dict[str, Any]] | None = None,
+    snapshot: list[dict[str, Any]] | dict[str, Any] | None = None,
     last_success_at: str | None = "2026-09-04T10:00:00",
     last_error: str | None = None,
     enabled: bool = True,
@@ -607,8 +607,8 @@ class TestMcpParity:
 class TestSources:
     """Sources section with count tokens."""
 
-    def test_zero_count_tokens_omitted(self, db: Database) -> None:
-        """Zero-count tokens are omitted (D5 law)."""
+    def test_zero_count_tokens_yield_clear(self, db: Database) -> None:
+        """Zero-count tokens are omitted; a live source reads CLEAR (D5 law)."""
         project_id = _seed_project(db)
         # Empty snapshot = zero counts everywhere
         _seed_watch(db, project_id, watch_id="w-empty", connector_id="gh",
@@ -622,8 +622,8 @@ class TestSources:
         assert sources["state"] == "ok"
         items = sources["items"]
         assert len(items) == 1
-        # With zero entities, no tokens should be generated
-        assert items[0]["tokens"] == []
+        # A live source with nothing to report shows CLEAR
+        assert items[0]["tokens"] == ["CLEAR"]
 
     def test_source_host_egress(self, db: Database) -> None:
         """Each source row carries its host (egress chip)."""
@@ -692,6 +692,56 @@ class TestSources:
         room = svc.room(OWNER, project_id)
         assert room["nextCheckAt"] is None
 
+    def test_two_github_watches_one_repo_merged(self, db: Database) -> None:
+        """Two GitHub watches on the same repo merge into one source item."""
+        project_id = _seed_project(db)
+
+        # Watch 1: OPEN PRS
+        _seed_watch(db, project_id, watch_id="w-pr-merge",
+                    connector_id="gh", query_kind="pull_requests",
+                    query={"repository": "karolswdev/HoldSpeak", "state": "open"},
+                    snapshot={"schema": 1, "entities": {
+                        "500": {"id": "500", "title": "A PR", "state": "open",
+                                "review_requests": [], "review_decision": "",
+                                "checks": "passing", "updated_at": "2026-09-04T10:00:00Z"},
+                    }},
+                    last_success_at="2026-09-04T10:00:00")
+
+        # Watch 2: CI on the same repo
+        _seed_watch(db, project_id, watch_id="w-ci-merge",
+                    connector_id="gh", query_kind="branch_ci",
+                    query={"repository": "karolswdev/HoldSpeak", "base": "main"},
+                    snapshot={"schema": 1, "entities": {
+                        "1": {"id": "1", "conclusion": "success", "status": "completed",
+                              "name": "CI", "branch": "main"},
+                    }},
+                    last_success_at="2026-09-04T10:05:00")
+
+        svc = ProjectService(db)
+        room = svc.room(OWNER, project_id)
+        sources = room["sources"]
+        assert sources["state"] == "ok"
+
+        # ONE item, not two
+        gh_items = [s for s in sources["items"] if s["provider"] == "github"]
+        assert len(gh_items) == 1
+        item = gh_items[0]
+
+        # Both watchIds present
+        assert "w-pr-merge" in item["watchIds"]
+        assert "w-ci-merge" in item["watchIds"]
+        assert len(item["watchIds"]) == 2
+
+        # Tokens from both watches merged
+        assert "1 OPEN PRS" in item["tokens"]
+        assert "CI GREEN" in item["tokens"]
+
+        # checkedAt is the latest
+        assert item["checkedAt"] == "2026-09-04T10:05:00"
+
+        # sources.count reflects the group count
+        assert sources["count"] == 1
+
 
 # ── target ────────────────────────────────────────────────────────────
 
@@ -728,3 +778,162 @@ class TestTarget:
         assert target["state"] == "ok"
         assert target["targetAt"] is None
         assert target["passed"] is False
+
+
+# ── real-desk characterization (HS-169-05 defect) ─────────────────────
+
+class TestRealDeskSnapshot:
+    """Characterization against the REAL desk's snapshot shape:
+    entities stored as a DICT keyed by PR number (normalize_snapshot),
+    Jira connection_ref with pipe separator, CLEAR token for empty live,
+    and PR-level checks failing rule."""
+
+    # The real snapshot shape from the owner's desk: dict entities
+    REAL_GH_SNAPSHOT = {
+        "schema": 1,
+        "entities": {
+            "526": {
+                "id": "526",
+                "title": "Footer never truncates a host",
+                "url": "https://github.com/karolswdev/HoldSpeak/pull/526",
+                "state": "open",
+                "is_draft": False,
+                "review_requests": ["wire-owner"],
+                "review_decision": "review_required",
+                "checks": "failing",
+                "head_sha": "3d4bd46ab",
+                "updated_at": "2026-09-03T10:00:00Z",
+            },
+        },
+    }
+
+    def test_dict_entities_produce_tokens(self, db: Database) -> None:
+        """A dict-keyed snapshot yields correct source tokens."""
+        project_id = _seed_project(db)
+
+        # Seed provider connection so owner login resolves
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT INTO watch_provider_connections "
+                "(id, provider_id, external_connection_ref, state, "
+                " created_at, updated_at) "
+                "VALUES ('wpc-real', 'github', 'wire-owner', 'connected', "
+                " datetime('now'), datetime('now'))"
+            )
+
+        _seed_watch(db, project_id, watch_id="w-real-gh",
+                    connector_id="gh", query_kind="pull_requests",
+                    query={"repository": "karolswdev/HoldSpeak", "state": "open", "base": "main"},
+                    snapshot=self.REAL_GH_SNAPSHOT)
+
+        svc = ProjectService(db)
+        room = svc.room(OWNER, project_id)
+
+        # Sources tokens: 1 open PR + 1 waiting on you + 1 checks failing
+        sources = room["sources"]
+        assert sources["state"] == "ok"
+        gh_source = [s for s in sources["items"] if s["provider"] == "github"][0]
+        assert "1 OPEN PRS" in gh_source["tokens"]
+        assert "1 WAITING ON YOU" in gh_source["tokens"]
+        assert "1 CHECKS FAILING" in gh_source["tokens"]
+
+    def test_dict_entities_produce_needs_you(self, db: Database) -> None:
+        """A PR with checks failing that awaits the owner's review is a needs-you row."""
+        project_id = _seed_project(db)
+
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT INTO watch_provider_connections "
+                "(id, provider_id, external_connection_ref, state, "
+                " created_at, updated_at) "
+                "VALUES ('wpc-ny', 'github', 'wire-owner', 'connected', "
+                " datetime('now'), datetime('now'))"
+            )
+
+        _seed_watch(db, project_id, watch_id="w-ny-gh",
+                    connector_id="gh", query_kind="pull_requests",
+                    query={"repository": "karolswdev/HoldSpeak"},
+                    snapshot=self.REAL_GH_SNAPSHOT)
+
+        svc = ProjectService(db)
+        room = svc.room(OWNER, project_id)
+
+        needs = room["needsYou"]
+        assert needs["state"] == "ok"
+        assert needs["count"] == 1
+        item = needs["items"][0]
+        assert item["source"] == "github"
+        assert "526" in item["title"]
+        # PR awaits the owner's review AND checks are failing -> CHECKS FAILING
+        assert item["why"].startswith("CHECKS FAILING")
+        assert item["severity"] == "danger"
+
+    def test_jira_host_strips_pipe_email(self, db: Database) -> None:
+        """Jira connection_ref 'site|email' -> host is the site part."""
+        project_id = _seed_project(db)
+        _seed_watch(db, project_id, watch_id="w-jira-host",
+                    connector_id="jira", query_kind="issues",
+                    query={
+                        "connection_ref": "karolsaneapple.atlassian.net|karolsane+apple@gmail.com",
+                        "projects": ["KAN"],
+                    },
+                    snapshot={"schema": 1, "entities": {}})
+
+        svc = ProjectService(db)
+        room = svc.room(OWNER, project_id)
+        sources = room["sources"]
+        jira_source = [s for s in sources["items"] if s["provider"] == "jira"][0]
+        assert jira_source["host"] == "karolsaneapple.atlassian.net"
+
+    def test_clear_token_for_empty_live_source(self, db: Database) -> None:
+        """A live source with no entities returns the CLEAR token, not []."""
+        project_id = _seed_project(db)
+        _seed_watch(db, project_id, watch_id="w-clear",
+                    connector_id="gh", query_kind="pull_requests",
+                    query={"repository": "acme/app"},
+                    snapshot={"schema": 1, "entities": {}})
+
+        svc = ProjectService(db)
+        room = svc.room(OWNER, project_id)
+        sources = room["sources"]
+        gh_source = [s for s in sources["items"] if s["provider"] == "github"][0]
+        assert gh_source["tokens"] == ["CLEAR"]
+
+    def test_pr_checks_failing_not_owner_is_source_token_only(self, db: Database) -> None:
+        """A PR with failing checks that does NOT await the owner's review
+        is a source token (CHECKS FAILING) but NOT a needs-you row."""
+        project_id = _seed_project(db)
+
+        with db._connection() as conn:
+            conn.execute(
+                "INSERT INTO watch_provider_connections "
+                "(id, provider_id, external_connection_ref, state, "
+                " created_at, updated_at) "
+                "VALUES ('wpc-no', 'github', 'wire-owner', 'connected', "
+                " datetime('now'), datetime('now'))"
+            )
+
+        _seed_watch(db, project_id, watch_id="w-other",
+                    connector_id="gh", query_kind="pull_requests",
+                    query={"repository": "acme/app"},
+                    snapshot={"schema": 1, "entities": {
+                        "99": {
+                            "id": "99", "title": "Someone else's PR",
+                            "state": "open", "review_requests": ["other-dev"],
+                            "review_decision": "", "checks": "failing",
+                            "updated_at": "2026-09-03T10:00:00Z",
+                        },
+                    }})
+
+        svc = ProjectService(db)
+        room = svc.room(OWNER, project_id)
+
+        # Source token: 1 CHECKS FAILING present
+        sources = room["sources"]
+        gh_source = [s for s in sources["items"] if s["provider"] == "github"][0]
+        assert "1 CHECKS FAILING" in gh_source["tokens"]
+
+        # Needs-you: no row for this PR (not the owner's review)
+        needs = room["needsYou"]
+        pr_rows = [n for n in needs["items"] if "99" in n.get("title", "")]
+        assert len(pr_rows) == 0

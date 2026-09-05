@@ -501,6 +501,25 @@ class ProjectService:
 
     # ── HS-169-04 room sub-readers (the four questions) ──────────────
 
+    @staticmethod
+    def _entities(snapshot: Any) -> list[dict[str, Any]]:
+        """Extract entity list from a watch snapshot.
+
+        The persisted snapshot is ``{"schema":1, "entities": {"526": {...}}}``
+        (a dict keyed by entity ID, written by normalize_snapshot).  Some
+        paths may pass the raw list from GitHubWatchSource.snapshot().
+        Returns a flat list either way.
+        """
+        if isinstance(snapshot, list):
+            return snapshot
+        if isinstance(snapshot, dict):
+            entities = snapshot.get("entities")
+            if isinstance(entities, dict):
+                return list(entities.values())
+            if isinstance(entities, list):
+                return entities
+        return []
+
     # Severity ordering for needsYou rows
     _SEVERITY_ORDER = {"danger": 0, "warning": 1, "info": 2}
 
@@ -562,33 +581,55 @@ class ProjectService:
             snapshot = watch.get("snapshot")
             if not snapshot:
                 continue
-            entities = snapshot if isinstance(snapshot, list) else []
+            entities = self._entities(snapshot)
             query_kind = watch.get("query_kind", "")
 
             if connector_id == "gh" and query_kind == "pull_requests":
-                # PRs whose reviewRequests name the owner or reviewDecision = CHANGES_REQUESTED
-                # Owner login: from the GitHub connection's account
+                # PRs whose review_requests name the owner or review_decision = changes_requested.
+                # Also: a PR with failing checks that the owner authored or
+                # is asked to review gets a CHECKS FAILING row (the base-branch
+                # CI row is the branch_ci kind; PR-level failing checks are a
+                # needs-you row ONLY when the PR is the owner's or awaits their
+                # review -- otherwise it is a source token only).
                 owner_login = self._get_github_owner_login()
                 for entity in entities:
-                    review_requests = entity.get("reviewRequests") or []
-                    review_decision = entity.get("reviewDecision")
+                    # Handle both raw (reviewRequests) and normalized (review_requests) field names
+                    review_requests = entity.get("review_requests") or entity.get("reviewRequests") or []
+                    review_decision = (
+                        entity.get("review_decision") or entity.get("reviewDecision") or ""
+                    ).lower()
+                    updated_at_str = entity.get("updated_at") or entity.get("updatedAt") or ""
+                    entity_id = entity.get("id") or entity.get("number") or ""
+                    entity_title = entity.get("title") or ""
+                    checks = str(entity.get("checks") or "").lower()
+
                     waiting_on_owner = (
                         (owner_login and owner_login.lower() in [r.lower() for r in review_requests])
-                        or review_decision == "CHANGES_REQUESTED"
+                        or review_decision == "changes_requested"
                     )
-                    if not waiting_on_owner:
-                        continue
-                    updated_at_str = entity.get("updatedAt") or entity.get("updated_at") or ""
-                    age_str = _format_age(updated_at_str, now)
-                    needs.append({
-                        "source": "github",
-                        "title": f"#{entity.get('number', '')} {entity.get('title', '')}".strip(),
-                        "why": f"WAITING ON YOUR REVIEW · {age_str}" if age_str else "WAITING ON YOUR REVIEW",
-                        "since": updated_at_str,
-                        "url": entity.get("url"),
-                        "verb": "open",
-                        "severity": "warning",
-                    })
+                    if waiting_on_owner:
+                        age_str = _format_age(updated_at_str, now)
+                        # PR-level failing checks on a PR awaiting the owner's review
+                        if checks == "failing":
+                            needs.append({
+                                "source": "github",
+                                "title": f"#{entity_id} {entity_title}".strip(),
+                                "why": f"CHECKS FAILING · {age_str}" if age_str else "CHECKS FAILING",
+                                "since": updated_at_str,
+                                "url": entity.get("url"),
+                                "verb": "open",
+                                "severity": "danger",
+                            })
+                        else:
+                            needs.append({
+                                "source": "github",
+                                "title": f"#{entity_id} {entity_title}".strip(),
+                                "why": f"WAITING ON YOUR REVIEW · {age_str}" if age_str else "WAITING ON YOUR REVIEW",
+                                "since": updated_at_str,
+                                "url": entity.get("url"),
+                                "verb": "open",
+                                "severity": "warning",
+                            })
 
             elif connector_id == "gh" and query_kind == "branch_ci":
                 # CI on the base branch
@@ -620,9 +661,11 @@ class ProjectService:
                     except (ValueError, TypeError):
                         continue
                     if overdue_days > 0:
+                        jira_id = entity.get("key") or entity.get("id") or ""
+                        jira_title = entity.get("summary") or entity.get("title") or ""
                         needs.append({
                             "source": "jira",
-                            "title": f"{entity.get('key', '')} {entity.get('summary', entity.get('title', ''))}".strip(),
+                            "title": f"{jira_id} {jira_title}".strip(),
                             "why": f"OVERDUE · {overdue_days} DAYS",
                             "since": due_at,
                             "url": entity.get("url"),
@@ -671,16 +714,20 @@ class ProjectService:
             pass
         return None
 
+    # State severity for merging: cant_check > paused > live
+    _STATE_SEVERITY = {"cant_check": 0, "paused": 1, "live": 2}
+
     def _read_room_sources(self, project_id: str) -> dict[str, Any]:
-        """SOURCES: per-Watch status, count tokens, host, state."""
+        """SOURCES: ONE item per (provider, scope), merged from all watches."""
         watches = self._db.automations.list_project_watches(project_id)
-        sources: list[dict[str, Any]] = []
+        # Intermediate: per-watch data, keyed by (provider, scope) for grouping
+        groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
 
         for watch in watches:
             connector_id = watch.get("connector_id", "")
             query = watch.get("query") or {}
             snapshot = watch.get("snapshot")
-            entities = snapshot if isinstance(snapshot, list) else []
+            entities = self._entities(snapshot)
             last_error = watch.get("last_error")
             enabled = watch.get("enabled", True)
             query_kind = watch.get("query_kind", "")
@@ -698,30 +745,44 @@ class ProjectService:
             host = "github.com" if connector_id == "gh" else ""
             if connector_id == "jira":
                 ref = query.get("connection_ref", "")
-                host = ref.split("//")[-1].split("/")[0] if "//" in ref else ref
+                # connection_ref may be "site.atlassian.net|email" -- host is before |
+                site = ref.split("|")[0] if "|" in ref else ref
+                host = site.split("//")[-1].split("/")[0] if "//" in site else site
 
             # State
             if not enabled:
-                state = "paused"
+                w_state = "paused"
             elif last_error:
-                state = "cant_check"
+                w_state = "cant_check"
             else:
-                state = "live"
+                w_state = "live"
 
             # Count tokens (zero-count omitted)
             tokens: list[str] = []
             if connector_id == "gh" and query_kind == "pull_requests":
-                open_count = sum(1 for e in entities if str(e.get("state", "")).upper() == "OPEN")
+                open_count = sum(1 for e in entities if str(e.get("state", "")).lower() == "open")
                 if open_count:
                     tokens.append(f"{open_count} OPEN PRS")
                 owner_login = self._get_github_owner_login()
                 if owner_login:
                     waiting = sum(
                         1 for e in entities
-                        if owner_login.lower() in [r.lower() for r in (e.get("reviewRequests") or [])]
+                        if owner_login.lower() in [
+                            r.lower() for r in (
+                                e.get("review_requests") or e.get("reviewRequests") or []
+                            )
+                        ]
                     )
                     if waiting:
                         tokens.append(f"{waiting} WAITING ON YOU")
+                # PR-level checks failing (source token, not a needsYou row
+                # unless the PR is the owner's or awaits their review)
+                checks_failing = sum(
+                    1 for e in entities
+                    if str(e.get("checks") or "").lower() == "failing"
+                )
+                if checks_failing:
+                    tokens.append(f"{checks_failing} CHECKS FAILING")
             elif connector_id == "gh" and query_kind == "branch_ci":
                 for entity in entities:
                     conclusion = str(entity.get("conclusion") or "").lower()
@@ -756,9 +817,9 @@ class ProjectService:
             if connector_id not in ("gh", "jira"):
                 if not last_error:
                     plain_reason = "No local adapter for meeting activity yet"
-                    state = "cant_check"
+                    w_state = "cant_check"
 
-            sources.append({
+            entry = {
                 "watchId": watch.get("id"),
                 "provider": provider,
                 "scope": scope,
@@ -766,10 +827,67 @@ class ProjectService:
                 "checkedAt": watch.get("last_success_at"),
                 "nextCheckAt": watch.get("next_evaluation_at"),
                 "host": host,
-                "state": state,
+                "state": w_state,
                 "plainReason": plain_reason,
                 "suggested": False,
-            })
+            }
+            groups.setdefault((provider, scope), []).append(entry)
+
+        # Merge groups: one source item per (provider, scope)
+        sources: list[dict[str, Any]] = []
+        for (_provider, _scope), items in groups.items():
+            if len(items) == 1:
+                merged = dict(items[0])
+                merged["watchIds"] = [merged["watchId"]]
+            else:
+                # Merge tokens (in template order, deduped by value)
+                all_tokens: list[str] = []
+                seen_tokens: set[str] = set()
+                for item in items:
+                    for tok in item["tokens"]:
+                        if tok not in seen_tokens:
+                            all_tokens.append(tok)
+                            seen_tokens.add(tok)
+
+                # checkedAt: latest non-null
+                checked_vals = [i["checkedAt"] for i in items if i["checkedAt"]]
+                merged_checked = max(checked_vals) if checked_vals else None
+
+                # nextCheckAt: soonest non-null
+                next_vals = [i["nextCheckAt"] for i in items if i["nextCheckAt"]]
+                merged_next = min(next_vals) if next_vals else None
+
+                # state: worst (cant_check > paused > live)
+                merged_state = min(
+                    (i["state"] for i in items),
+                    key=lambda s: self._STATE_SEVERITY.get(s, 2),
+                )
+
+                # plainReason: first non-null
+                merged_reason = next(
+                    (i["plainReason"] for i in items if i["plainReason"]),
+                    None,
+                )
+
+                merged = {
+                    "watchId": items[0]["watchId"],
+                    "watchIds": [i["watchId"] for i in items],
+                    "provider": items[0]["provider"],
+                    "scope": items[0]["scope"],
+                    "tokens": all_tokens,
+                    "checkedAt": merged_checked,
+                    "nextCheckAt": merged_next,
+                    "host": items[0]["host"],
+                    "state": merged_state,
+                    "plainReason": merged_reason,
+                    "suggested": False,
+                }
+
+            # CLEAR: a live source with no tokens after merging
+            if not merged["tokens"] and merged["state"] == "live" and _provider in ("github", "jira"):
+                merged["tokens"] = ["CLEAR"]
+
+            sources.append(merged)
 
         # Top-level nextCheckAt: soonest non-null over live sources
         live_next = [
@@ -793,7 +911,7 @@ class ProjectService:
             connector_id = watch.get("connector_id", "")
             query_kind = watch.get("query_kind", "")
             snapshot = watch.get("snapshot")
-            entities = snapshot if isinstance(snapshot, list) else []
+            entities = self._entities(snapshot)
 
             if connector_id == "jira" and query_kind == "issues":
                 for entity in entities:
@@ -817,9 +935,9 @@ class ProjectService:
             elif connector_id == "gh" and query_kind == "pull_requests":
                 owner_login = self._get_github_owner_login()
                 for entity in entities:
-                    review_requests = entity.get("reviewRequests") or []
+                    review_requests = entity.get("review_requests") or entity.get("reviewRequests") or []
                     if owner_login and owner_login.lower() in [r.lower() for r in review_requests]:
-                        updated_at_str = entity.get("updatedAt") or entity.get("updated_at") or ""
+                        updated_at_str = entity.get("updated_at") or entity.get("updatedAt") or ""
                         if updated_at_str:
                             try:
                                 updated_dt = datetime.fromisoformat(
