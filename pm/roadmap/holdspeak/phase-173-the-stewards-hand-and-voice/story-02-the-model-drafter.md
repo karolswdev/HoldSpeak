@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 173
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-173-01
 - **Unblocks:** HS-173-06
 - **Owner:** unassigned
@@ -41,18 +41,18 @@ egress chip on the draft."
 
 ## Acceptance criteria
 
-- [ ] The model drafter produces stakeholder-readable prose from the
+- [x] The model drafter produces stakeholder-readable prose from the
       deterministic inventory; verified by a unit test with a seeded
       Room state.
-- [ ] Every factual sentence in the model output carries a Claim ref
+- [x] Every factual sentence in the model output carries a Claim ref
       from the deterministic inventory; no invented refs.
-- [ ] Unverified claims are marked with `UNVERIFIED_MARKER`
+- [x] Unverified claims are marked with `UNVERIFIED_MARKER`
       (Article VI).
-- [ ] The egress chip appears on the draft card when the model drafter
+- [x] The egress chip appears on the draft card when the model drafter
       is used; absent when the deterministic fallback is used.
-- [ ] The deterministic drafter is the fallback; model unavailability
+- [x] The deterministic drafter is the fallback; model unavailability
       produces the deterministic draft, not an error.
-- [ ] The draft is editable before publish (Article IV).
+- [x] The draft is editable before publish (Article IV).
 
 ## Test plan
 

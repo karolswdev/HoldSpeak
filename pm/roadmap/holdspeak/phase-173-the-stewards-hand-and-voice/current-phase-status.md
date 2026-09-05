@@ -102,7 +102,7 @@ for reads only.
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-173-01 | The design (the Steward's faces on the canvas before build) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-173-02 | The model drafter (claims preserved, prose rewritten, unverified marked) | in-progress | [story-02-the-model-drafter](./story-02-the-model-drafter.md) | -- |
+| HS-173-02 | The model drafter (claims preserved, prose rewritten, unverified marked) | done | [story-02-the-model-drafter](./story-02-the-model-drafter.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-173-03 | The health signals (reviewer latency, issue aging, flaky CI, merge-queue depth) | in-progress | [story-03-the-health-signals](./story-03-the-health-signals.md) | -- |
 | HS-173-04 | The reviewer nudge (the first bounded external effect behind the policy gate) | in-progress | [story-04-the-reviewer-nudge](./story-04-the-reviewer-nudge.md) | -- |
 | HS-173-05 | The release-readiness scorecard (the Room token row) | in-progress | [story-05-the-release-readiness](./story-05-the-release-readiness.md) | -- |
