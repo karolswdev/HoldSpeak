@@ -113,6 +113,14 @@ for reads only.
 
 ## Where we are
 
+**2026-09-05 19:10 — 4/9 DONE on evidence (01 design · 02 drafter · 07
+docs · 08 hygiene); the wire for 03/04/05 committed; the Room faces
+checkpointed with seven small fixes landing (plurals, number format,
+NUDGED JUST NOW after Send, the name as stored, the 393 lead, no empty
+chip); the runner's selectors being filled. Then counsel-on-built →
+his-desk walk (every write denied) → full suite → close (09) → PR
+`--base feat/the-loop-closes`.**
+
 **2026-09-05 17:25 — ACTIVATED, STACKED.** Under the standing goal the
 faces build to counsel-ratified boards and his word gates the MERGE
 (the decision recorded for 170–172). Nine boards for D2 (a)–(e) on the canvas
