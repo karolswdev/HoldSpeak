@@ -105,3 +105,19 @@ noted; N1 the tool counts (201 / 36) fixed.
 3. His three answers: the notification's click target; one flat interval
    or active/idle; whether mute hides a Room from the shade (ruled for V0:
    dimmed and shown, out of every count — his to overrule).
+
+## Found after the close (2026-09-05, by the 174 runner lane) and paid here
+
+`heartbeat_notify` — the notification decision (count-only body, the
+edge rule, quiet hours held) — had no caller in the conductor loop; only
+the MCP `heartbeat.notify_test` reached the OS notifier. The phase's
+promise (a banner on the edge of the count) never fired from a sweep.
+Paid: `run_sweep` now runs the decision in its own failure boundary
+after the sweep receipt (`heartbeat_service.py` `_run_notification_
+decision`), receipts `heartbeat.notify` as `sent | held_quiet_hours |
+held_no_edge | off | error`, and persists `last_notified_count` on the
+heartbeat settings row so a restart never re-notifies the same count;
+`every_sweep` fires on any non-zero count. Six tests. **Law (from 172):
+a new entry point needs a production call site and one test through
+the real seam — the 171 rigs tested the notifier directly and missed
+the loop.**
