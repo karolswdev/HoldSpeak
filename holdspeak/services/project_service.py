@@ -691,6 +691,45 @@ class ProjectService:
             except Exception:
                 pass
 
+        # HS-172-03: follow-through proposals (intel-extracted decisions/actions).
+        try:
+            proposals = self._db.proposals.list_proposals(
+                project_id=project_id, state="proposed",
+            )
+            for prop in proposals:
+                # Resolve meeting title for provenance.
+                meeting_title = ""
+                try:
+                    mtg = self._db.meetings.get_meeting(prop.meeting_id)
+                    meeting_title = (mtg.title or "") if mtg else ""
+                except Exception:
+                    pass
+                why_parts = ["PROPOSED"]
+                if meeting_title:
+                    why_parts.append(meeting_title)
+                needs.append({
+                    "source": "proposal",
+                    "kind": "proposal",
+                    "title": prop.text,
+                    "why": " · ".join(why_parts),
+                    "since": prop.created_at,
+                    "url": None,
+                    "verb": "confirm",
+                    "verbHref": f"/api/proposals/{prop.id}/confirm",
+                    "severity": "info",
+                    "proposal_id": prop.id,
+                    "proposal_kind": prop.kind,
+                    "host": prop.model_host,
+                    "speaker_label": prop.speaker_label,
+                    "due_hint": prop.due_hint,
+                    "owner_hint": prop.owner_hint,
+                    "original_text": prop.original_text,
+                    "meeting_title": meeting_title,
+                    "created_at": prop.created_at,
+                })
+        except Exception:
+            pass
+
         # Sort: danger > warning > info, then by age (oldest first = most urgent)
         needs.sort(key=lambda r: (
             self._SEVERITY_ORDER.get(r.get("severity", "info"), 2),
@@ -1080,7 +1119,11 @@ class ProjectService:
         }
 
     def _read_room_decisions(self, project_id: str) -> dict[str, Any]:
-        """DECISIONS: records whose source meeting is linked to this project."""
+        """DECISIONS: records whose source meeting is linked to this project.
+
+        HS-172-03: LEFT JOINs confirmed proposals so the face can render
+        proposal provenance (source, meeting_title, confirmed_at, was).
+        """
         # Find meetings linked to this project
         with self._db._connection() as conn:
             meeting_rows = conn.execute(
@@ -1091,12 +1134,31 @@ class ProjectService:
             if not meeting_ids:
                 return {"items": []}
 
-            # Find decision records sourced from those meetings
+            # Find decision records sourced from those meetings,
+            # LEFT JOIN confirmed proposals on decision_record_id.
             placeholders = ",".join("?" * len(meeting_ids))
             decision_rows = conn.execute(
-                f"""SELECT DISTINCT r.id, r.decision_text, r.created_at, r.lifecycle
+                f"""SELECT DISTINCT r.id, r.decision_text, r.created_at, r.lifecycle,
+                           p.id AS proposal_id,
+                           p.meeting_id AS proposal_meeting_id,
+                           p.kind AS proposal_kind,
+                           p.original_text AS proposal_original_text,
+                           p.owner_hint AS proposal_owner_hint,
+                           p.due_hint AS proposal_due_hint,
+                           p.text AS proposal_confirmed_text,
+                           p.decided_at AS proposal_confirmed_at,
+                           p.model_host AS proposal_model_host,
+                           p.commitment_id AS proposal_commitment_id,
+                           r.owner AS record_owner,
+                           dc.due_at AS commitment_due_at,
+                           dc.owner AS commitment_owner
                     FROM decision_records r
                     JOIN decision_record_sources s ON s.record_id = r.id
+                    LEFT JOIN follow_through_proposals p
+                         ON p.decision_record_id = r.id
+                        AND p.state = 'confirmed'
+                    LEFT JOIN decision_commitments dc
+                         ON dc.id = p.commitment_id
                     WHERE s.source_type = 'meeting'
                       AND s.source_ref IN ({placeholders})
                       AND r.deleted = 0
@@ -1104,32 +1166,94 @@ class ProjectService:
                 meeting_ids,
             ).fetchall()
 
+            # Resolve meeting titles for proposal provenance.
+            mtg_titles: dict[str, str] = {}
+            for mid in meeting_ids:
+                try:
+                    mtg = conn.execute(
+                        "SELECT title FROM meetings WHERE id = ?", (mid,)
+                    ).fetchone()
+                    if mtg and mtg["title"]:
+                        mtg_titles[mid] = mtg["title"]
+                except Exception:
+                    pass
+
         items = []
+        seen_record_ids: set[str] = set()
         for row in decision_rows:
-            items.append({
-                "id": row["id"],
+            rid = row["id"]
+            if rid in seen_record_ids:
+                continue
+            seen_record_ids.add(rid)
+
+            item: dict[str, Any] = {
+                "id": rid,
                 "text": row["decision_text"],
                 "at": row["created_at"],
                 "url": None,
-            })
+            }
+
+            # HS-172-03: proposal provenance fields.
+            proposal_id = row["proposal_id"] if "proposal_id" in row.keys() else None
+            if proposal_id:
+                prop_meeting_id = row["proposal_meeting_id"] or ""
+                item["proposal_id"] = proposal_id
+                item["source"] = "meeting"
+                item["meeting_title"] = mtg_titles.get(prop_meeting_id, "")
+                item["confirmed_at"] = row["proposal_confirmed_at"]
+                item["commitment_id"] = row["proposal_commitment_id"]
+
+                # Build "was" dict: only fields the owner changed.
+                was: dict[str, str] = {}
+                orig_text = row["proposal_original_text"] or ""
+                conf_text = row["proposal_confirmed_text"] or ""
+                if orig_text and conf_text and orig_text != conf_text:
+                    was["text"] = orig_text
+                orig_owner = row["proposal_owner_hint"] or ""
+                conf_owner = row["commitment_owner"] or row["record_owner"] or ""
+                if orig_owner and conf_owner and orig_owner != conf_owner:
+                    was["owner"] = orig_owner
+                orig_due = row["proposal_due_hint"] or ""
+                conf_due = row["commitment_due_at"] or ""
+                if orig_due and conf_due and orig_due != conf_due:
+                    was["due"] = orig_due
+                if was:
+                    item["was"] = was
+
+            items.append(item)
         return {"items": items}
 
     def _read_room_commitments(self, project_id: str) -> dict[str, Any]:
-        """COMMITMENTS: via their decision (whose source meeting is linked)."""
-        # Get the decision IDs first
+        """COMMITMENTS: via their decision (whose source meeting is linked).
+
+        HS-172-03: joins through decision_records.source_id to reach
+        decision_commitments.decision_id (which references decisions.id,
+        not decision_records.id).
+        """
+        # Get the decision record IDs first.
         decisions_data = self._read_room_decisions(project_id)
-        decision_ids = [d["id"] for d in decisions_data.get("items", [])]
-        if not decision_ids:
+        record_ids = [d["id"] for d in decisions_data.get("items", [])]
+        if not record_ids:
             return {"items": []}
 
         with self._db._connection() as conn:
-            placeholders = ",".join("?" * len(decision_ids))
+            # Map decision_records.id -> decision_records.source_id (= decisions.id)
+            placeholders = ",".join("?" * len(record_ids))
+            source_rows = conn.execute(
+                f"SELECT id, source_id FROM decision_records WHERE id IN ({placeholders})",
+                record_ids,
+            ).fetchall()
+            decision_ids = [str(r["source_id"]) for r in source_rows if r["source_id"]]
+            if not decision_ids:
+                return {"items": []}
+
+            placeholders2 = ",".join("?" * len(decision_ids))
             commitment_rows = conn.execute(
                 f"""SELECT c.id, c.owner, c.due_at, c.status,
                            ai.task AS text
                     FROM decision_commitments c
                     LEFT JOIN action_items ai ON ai.id = c.action_item_id
-                    WHERE c.decision_id IN ({placeholders})
+                    WHERE c.decision_id IN ({placeholders2})
                       AND c.status != 'completed'
                     ORDER BY c.due_at ASC NULLS LAST, c.created_at ASC""",
                 decision_ids,

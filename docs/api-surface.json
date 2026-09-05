@@ -3258,6 +3258,16 @@
       ]
     },
     {
+      "path": "/api/meetings/{meeting_id}/follow-through-proposals",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.proposals",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/meetings/{meeting_id}/followup-draft",
       "methods": [
         "GET"
@@ -3903,6 +3913,16 @@
       ]
     },
     {
+      "path": "/api/people/resolve",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.people",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/people/setup",
       "methods": [
         "POST"
@@ -4279,6 +4299,26 @@
       "consumers": []
     },
     {
+      "path": "/api/projects/{project_id}/people",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/proposals",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.proposals",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}/resources",
       "methods": [
         "GET"
@@ -4421,6 +4461,36 @@
       ]
     },
     {
+      "path": "/api/projects/{project_id}/suggested-sources",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/suggested-sources/{ref}/add",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/projects/{project_id}/suggested-sources/{ref}/dismiss",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}/summary",
       "methods": [
         "GET"
@@ -4454,6 +4524,26 @@
         "GET"
       ],
       "module": "web.routes.watches",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/proposals/{proposal_id}/confirm",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.proposals",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/proposals/{proposal_id}/dismiss",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.proposals",
       "consumers": [
         "web"
       ]

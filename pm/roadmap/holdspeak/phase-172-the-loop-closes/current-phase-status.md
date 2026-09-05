@@ -1,6 +1,13 @@
 # Phase 172 - The Loop Closes
 
-**Last updated:** 2026-09-05.
+**Last updated:** 2026-09-05 10:50 — ACTIVATED, stacked.
+
+**Decision (2026-09-05 10:50, under the owner's standing goal):** 172 builds
+NOW on branch `feat/the-loop-closes`, stacked on `feat/the-heartbeat` (PR
+#554) on `feat/the-great-pass` (PR #553). Every merge stays his, in
+order. The design ground is assets/settled-design-loop-closes.md (DRAFT
+until his word); boards from it, counsel, the wire meanwhile, the faces to
+the boards, the walk on his desk (his real meetings), the close.
 
 ## Goal
 
@@ -93,20 +100,48 @@ between a person's name and a Watch entity's assignee/reviewer.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-172-01 | The design (the Loop's faces on the canvas before build) | backlog | [story-01-the-design](./story-01-the-design.md) | -- |
-| HS-172-02 | The auto-intel trigger (intelligence by default after every linked meeting) | backlog | [story-02-the-auto-intel-trigger](./story-02-the-auto-intel-trigger.md) | -- |
-| HS-172-03 | The proposal bridge (extracted items as PROPOSALS in NEEDS YOU; Confirm writes through the kernel) | backlog | [story-03-the-proposal-bridge](./story-03-the-proposal-bridge.md) | -- |
-| HS-172-04 | The People resolver (display name / alias to Watch assignee / reviewer; encrypted boundary) | backlog | [story-04-the-people-resolver](./story-04-the-people-resolver.md) | -- |
-| HS-172-05 | The 1:1 brief enrichment (Watches + commitments + meetings in the People card) | backlog | [story-05-the-brief-enrichment](./story-05-the-brief-enrichment.md) | -- |
-| HS-172-06 | The suggested source (meeting mention of a repo/issue as a suggested source row) | backlog | [story-06-the-suggested-source](./story-06-the-suggested-source.md) | -- |
-| HS-172-07 | People in the Room and the shade (the 393 gap; the face at both widths) | backlog | [story-07-people-in-the-room](./story-07-people-in-the-room.md) | -- |
-| HS-172-08 | The walk (his desk: a meeting that closes its loop) | backlog | [story-08-the-walk](./story-08-the-walk.md) | -- |
-| HS-172-09 | The docs (the loop in the architecture; the People card in the guide) | backlog | [story-09-the-docs](./story-09-the-docs.md) | -- |
+| HS-172-01 | The design (the Loop's faces on the canvas before build) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-172-02 | The auto-intel trigger (intelligence by default after every linked meeting) | done | [story-02-the-auto-intel-trigger](./story-02-the-auto-intel-trigger.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-172-03 | The proposal bridge (extracted items as PROPOSALS in NEEDS YOU; Confirm writes through the kernel) | done | [story-03-the-proposal-bridge](./story-03-the-proposal-bridge.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-172-04 | The People resolver (display name / alias to Watch assignee / reviewer; encrypted boundary) | done | [story-04-the-people-resolver](./story-04-the-people-resolver.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-172-05 | The 1:1 brief enrichment (Watches + commitments + meetings in the People card) | done | [story-05-the-brief-enrichment](./story-05-the-brief-enrichment.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-172-06 | The suggested source (meeting mention of a repo/issue as a suggested source row) | done | [story-06-the-suggested-source](./story-06-the-suggested-source.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-172-07 | People in the Room and the shade (the 393 gap; the face at both widths) | done | [story-07-people-in-the-room](./story-07-people-in-the-room.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-172-08 | The walk (his desk: a meeting that closes its loop) | done | [story-08-the-walk](./story-08-the-walk.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-172-09 | The docs (the loop in the architecture; the People card in the guide) | done | [story-09-the-docs](./story-09-the-docs.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-172-10 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-10-the-close](./story-10-the-close.md) | -- |
 
 ## Where we are
 
-PLANNED. Waiting for Phase 170 to merge (171 may run beside this phase
+**2026-09-05 17:10 -- 9/9 DONE on evidence. Counsel on the built
+phase RATIFY-W-C, both conditions and the P2s PAID (the P0: the bridge
+had no production call site; now the completion seam runs it, with an
+end-to-end test). Closing gate 331 green serially; web baseline zero
+branch-new; ratchet at its floor; the owner's-desk walk zero defects
+(the first run's failed-open write disclosed). Full suite (CI shape)
+running on the closing tree; final-summary.md carries its line. **PR #555 OPEN** (`--base feat/the-heartbeat`); his word gates the
+merge; merge order #553 -> #554 -> 172's.**
+
+**2026-09-05 15:40 -- 5/9 DONE on evidence (01 design, 04 resolver, 05
+brief, 06 suggested source, 07 people in the Room); 02/03 faces built
+and checkpointed, two last wire/face fixes landing (recorded host, never
+a config fallback; the chip inline); 08 the walk runner being filled;
+09 docs await the verify-at-build pass. Then: full suite, counsel on
+the built phase, final summary, PR stacked on #554.**
+
+**2026-09-05 morning -- ACTIVE, STACKED on 171 (#554) on 170 (#553).** The
+thirteen boards are on the canvas
+(https://claude.ai/code/artifact/b153c331-cd38-4856-b38b-837407dd6fba),
+two bounces paid (Dismiss not Drop; Edit is a Button; the lead slot is
+the source; no clipped text; no pronoun from a name; case-insensitive
+dedup; the display step is a fact); counsel reading. Wire B (People
+resolver, 1:1 enrichment, suggested sources) is in the tree green on
+181 scoped tests; Wire A (auto-run trigger + the proposal bridge) is
+landing. Docs (09) and the walk runner (08) are drafted and committed
+in progress. Next: counsel -> faces -> rigs -> his-desk walk -> close
+-> PR stacked on #554.
+
+Earlier: PLANNED. Waiting for Phase 170 to merge (171 may run beside this phase
 -- different seams: meetings/People vs scheduler/shade). The recon is
 complete: 14 intelligence plugins exist (plugins/builtin/) but the
 owner's desk has 0 plugin runs and 6/8 meetings with intelligence

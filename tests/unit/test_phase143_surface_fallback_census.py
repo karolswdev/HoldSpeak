@@ -87,6 +87,8 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/front_door_service.py", "_resolve_group_assignments"): ("front-door plan assignment composition from completed provisioning items", "156-04"),
     ("holdspeak/services/front_door_service.py", "_select_preset_for_tier"): ("front-door catalog preset selection for pack recommendation; not assignment authority", "156-04"),
     ("holdspeak/speaker_intel.py", "_get_fallback_speaker"): ("speaker identity fallback, not inference", "143-01"),
+    ("holdspeak/web/routes/system/settings.py", "_resolve_meetings_host"): ("host display at enqueue; resolve_meeting_placement for settings read, not assignment", "172-02"),
+    ("holdspeak/web/routes/system/settings.py", "_placement_host"): ("endpoint host extraction from resolved placement; no route selection", "172-02"),
     ("holdspeak/target_profile.py", "_build_model_target_prompt"): ("model-assisted target prompt", "143-07"),
     ("holdspeak/target_profile.py", "_profile"): ("legacy target-profile lookup", "143-07"),
 }

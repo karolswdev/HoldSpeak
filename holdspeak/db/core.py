@@ -34,6 +34,7 @@ from . import (  # noqa: F401
     front_door as _m31, delta as _m32,
     updates as _m33,
     steward as _m34,
+    proposals as _m35,
 )
 
 from .schema import SCHEMA_VERSION, SCHEMA_SQL  # noqa: F401  re-exported

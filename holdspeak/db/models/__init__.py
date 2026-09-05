@@ -49,6 +49,11 @@ class MeetingSummary:
     provenance: str = "desktop"
     calendar_event_id: Optional[str] = None
     transcript_words: Optional[int] = None  # HS-170-04: None when no transcript, never 0
+    needs_you_count: int = 0  # HS-172: proposed follow-through proposals count
+    # HS-172-02: intel timing for the RAN chip.
+    intel_requested_at: Optional[datetime] = None
+    intel_completed_at: Optional[datetime] = None
+    intel_model_host: Optional[str] = None
 
 
 @dataclass

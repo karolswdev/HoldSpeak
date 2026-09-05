@@ -80,6 +80,10 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "follow_through.board":            ("evidence_read",     False),
     "follow_through.complete":         ("effect_proposal",   False),
     "follow_through.commit_decision":  ("effect_proposal",   False),
+    # --- HS-172-03: proposals ---
+    "meeting.proposals":       ("evidence_read",     False),
+    "proposal.confirm":        ("effect_proposal",   False),
+    "proposal.dismiss":        ("effect_proposal",   False),
     # --- monday brief ---
     "monday_brief.get":       ("evidence_read",     False),
     "monday_brief.generate":  ("candidate_builder", False),
@@ -146,6 +150,7 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "people.calendar.unlink":      ("effect_proposal",   True),
     "people.owner_alias.link":     ("effect_proposal",   True),
     "people.owner_alias.unlink":   ("effect_proposal",   True),
+    "people.resolve":              ("evidence_read",     True),   # HS-172-04
     # --- plugin_job ---
     "plugin_job.list":    ("evidence_read",     False),
     "plugin_job.summary": ("evidence_read",     False),
@@ -250,6 +255,10 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "project.watch.retire": ("effect_proposal", False),
     "project.watch.set_rules": ("effect_proposal", False),
     "project.watch.test": ("effect_proposal", False),
+    # HS-172-06: suggested source tools
+    "project.suggested_sources":         ("evidence_read",     False),
+    "project.add_suggested_source":      ("effect_proposal",   False),
+    "project.dismiss_suggested_source":  ("effect_proposal",   False),
     # HS-168-02: connection tools (reads only -- no state mutation)
     "connection.list": ("evidence_read", False),
     "connection.recheck": ("evidence_read", False),

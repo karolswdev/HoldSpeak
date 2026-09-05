@@ -103,6 +103,9 @@ describe("HS-93-06 Meeting intelligence recovery", () => {
   });
 
   it("protects a running attempt from competing recovery actions", async () => {
+    // HS-172: RUNNING state is now shown in the header chip; the legacy
+    // recovery panel is suppressed (returns null). The component fetches
+    // but renders nothing for running/queued states.
     mockedApiFetch.mockResolvedValueOnce({
       ...failedRecovery,
       state: "running",
@@ -111,9 +114,11 @@ describe("HS-93-06 Meeting intelligence recovery", () => {
       actions: { retry: false, skip: false },
     });
 
-    render(<MeetingIntelRecovery meetingId="meeting-1" />);
-
-    expect(await screen.findByText("RUNNING")).toBeInTheDocument();
+    const { container } = render(<MeetingIntelRecovery meetingId="meeting-1" />);
+    // Wait for fetch to complete.
+    await waitFor(() => expect(mockedApiFetch).toHaveBeenCalledTimes(1));
+    // The panel should NOT render for running state.
+    expect(container.querySelector(".meeting-intel-recovery")).toBeNull();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });

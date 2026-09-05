@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 172
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-172-02
 - **Unblocks:** HS-172-05, HS-172-07
 - **Owner:** unassigned
@@ -43,18 +43,18 @@ fire).
 
 ## Acceptance criteria
 
-- [ ] After a completed intel job for a Room-linked meeting, the
+- [x] After a completed intel job for a Room-linked meeting, the
       extracted decisions and action items appear as FollowThroughCards
       with provenance; verified by reading the follow_through board.
-- [ ] The Room's NEEDS YOU section shows these cards as PROPOSALS;
+- [x] The Room's NEEDS YOU section shows these cards as PROPOSALS;
       verified at both widths (1440 + 393).
-- [ ] Confirm writes a decision_record and a decision_commitment
+- [x] Confirm writes a decision_record and a decision_commitment
       through the kernel; the receipt exists (Article XI.2).
-- [ ] Edit allows amending the extracted text before Confirm; the
+- [x] Edit allows amending the extracted text before Confirm; the
       amended text is what gets persisted.
-- [ ] Drop dismisses the proposal; no decision_record or
+- [x] Drop dismisses the proposal; no decision_record or
       decision_commitment is created.
-- [ ] No auto-commit of any extracted item (Article IV: voice arms, it
+- [x] No auto-commit of any extracted item (Article IV: voice arms, it
       does not fire).
 
 ## Test plan

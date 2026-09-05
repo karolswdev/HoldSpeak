@@ -670,6 +670,7 @@ class MeetingWebServer:
             build_concierge_router,
             build_front_door_router,
             build_follow_through_router,
+            build_proposal_router,
             build_people_router,
             build_desk_actuators_router,
             build_desk_seed_router,
@@ -1029,6 +1030,7 @@ class MeetingWebServer:
         app.include_router(build_cadence_router(web_ctx))
         app.include_router(build_calendar_snapshot_router(web_ctx))
         app.include_router(build_follow_through_router(web_ctx))
+        app.include_router(build_proposal_router(web_ctx))
         app.include_router(build_door_router(web_ctx))
         app.include_router(build_concierge_router(web_ctx))
         app.include_router(build_front_door_router(web_ctx))

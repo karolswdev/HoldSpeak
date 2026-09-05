@@ -769,6 +769,48 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    # ── HS-172-06: suggested source tools ──────────────────────────
+    {
+        "name": "project.suggested_sources",
+        "description": "List pending suggested sources for a Room (HS-172-06). Returns transcript-derived repo and issue mentions not yet added as Watch sources.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.suggested_sources@1",
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "Project / Room identifier."},
+            },
+            "required": ["project_id"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.add_suggested_source",
+        "description": "Accept a suggested source and create a Watch source on the Room (HS-172-06). Receipted (Article V).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.add_suggested_source@1",
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "Project / Room identifier."},
+                "reference": {"type": "string", "description": "The source reference to accept (e.g. owner/repo or PROJ-123)."},
+            },
+            "required": ["project_id", "reference"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "project.dismiss_suggested_source",
+        "description": "Dismiss a suggested source so it never recurs for this Room (HS-172-06).",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/project.dismiss_suggested_source@1",
+            "type": "object",
+            "properties": {
+                "project_id": {"type": "string", "description": "Project / Room identifier."},
+                "reference": {"type": "string", "description": "The source reference to dismiss (e.g. owner/repo or PROJ-123)."},
+            },
+            "required": ["project_id", "reference"],
+            "additionalProperties": False,
+        },
+    },
     # ── HS-168-02: connection tools ─────────────────────────────────
     {
         "name": "connection.list",
@@ -1831,6 +1873,43 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         watch_id = _require_id(arguments, "watch_id")
         _require_graduated_watch(watch_id)
         return _watch_service().retire_watch(principal, watch_id)
+
+    # ── HS-172-06: suggested source tools ──────────────────────────
+
+    if name == "project.suggested_sources":
+        project_id = _require_id(arguments, "project_id")
+        from holdspeak.services.suggested_source_service import SuggestedSourceService
+        sug = SuggestedSourceService(svc._db)
+        return {"suggestions": sug.list_suggestions(project_id, status="pending")}
+
+    if name == "project.add_suggested_source":
+        project_id = _require_id(arguments, "project_id")
+        reference = str(arguments.get("reference") or "").strip()
+        if not reference:
+            raise ValidationError("reference is required")
+        from holdspeak.services.suggested_source_service import SuggestedSourceService
+        sug = SuggestedSourceService(svc._db)
+        pending = sug.find_pending_by_reference(project_id, reference)
+        suggestion = sug.accept_suggestion(pending["id"])
+        resource_ref = f"{suggestion['provider']}:{suggestion['reference']}"
+        try:
+            resource = svc.add_resource(
+                principal, project_id, resource_ref,
+                {"relationship": "source", "provider": suggestion["provider"]},
+            )
+        except Exception:
+            resource = {"resource_ref": resource_ref, "state": "accepted_no_watch"}
+        return {"suggestion": suggestion, "resource": resource}
+
+    if name == "project.dismiss_suggested_source":
+        project_id = _require_id(arguments, "project_id")
+        reference = str(arguments.get("reference") or "").strip()
+        if not reference:
+            raise ValidationError("reference is required")
+        from holdspeak.services.suggested_source_service import SuggestedSourceService
+        sug = SuggestedSourceService(svc._db)
+        pending = sug.find_pending_by_reference(project_id, reference)
+        return {"suggestion": sug.dismiss_suggestion(pending["id"])}
 
     # ── HS-168-02: connection tools ─────────────────────────────────
 

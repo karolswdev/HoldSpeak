@@ -1,7 +1,8 @@
-// HS-170-04 — the detail's NEEDS YOU section.
+// HS-172 — the detail's NEEDS YOU section.
 // Board: caption `NEEDS YOU 3` with optional `Run intelligence` at trailing.
-// Each row: outcome text + its verb (Decide / Open).
+// Each row: Decide:/Confirm: prefix (accent) + text + verbs.
 // UX-CANON A.8: when zero rows AND not OFF-with-words, the section is ABSENT.
+// HS-172: QUEUED/FAILED verbs (Skip, Retry) in the header verb slot.
 import { Button } from "../../../components/signal/Signal";
 import { countLabel } from "../../../desk/surface";
 import type { NeedsRow } from "./helpers";
@@ -10,27 +11,37 @@ export function NeedsYouTable({
   needsRows,
   needsCount,
   intelOff,
+  intelState,
   hasTranscript,
   onRunIntelligence,
+  onRetryIntelligence,
+  onSkipIntelligence,
 }: {
   needsRows: NeedsRow[];
   needsCount: number;
   intelOff: boolean;
+  /** The raw intel state string: "disabled", "queued", "running", "error", "failed", "complete". */
+  intelState?: string;
   hasTranscript: boolean;
   onRunIntelligence?: () => void;
+  onRetryIntelligence?: () => void;
+  onSkipIntelligence?: () => void;
 }) {
   const showRunIntel = intelOff && hasTranscript && Boolean(onRunIntelligence);
+  const isFailed = intelState === "error" || intelState === "failed";
+  const isQueued = intelState === "queued" || intelState === "pending";
+  const showRetry = isFailed && Boolean(onRetryIntelligence);
+  const showSkip = (isFailed || isQueued) && Boolean(onSkipIntelligence);
+  const hasVerbs = showRunIntel || showRetry || showSkip;
 
-  // Section absent when zero rows AND no Run intelligence verb
-  if (needsRows.length === 0 && !showRunIntel) return null;
+  if (needsRows.length === 0 && !hasVerbs) return null;
 
   return (
-    <div className="meetings-detail-needs">
+    <div className="meetings-detail-needs" data-testid="meeting-needs-you">
       <div className="meetings-detail-needs-head">
         <span className="surface-caption">
           {countLabel("NEEDS YOU", needsCount)}
         </span>
-        {/* When OFF with transcript, Run intelligence at trailing edge */}
         {showRunIntel ? (
           <Button
             dense
@@ -39,6 +50,26 @@ export function NeedsYouTable({
             data-testid="detail-run-intelligence-btn"
           >
             Run intelligence
+          </Button>
+        ) : null}
+        {showRetry ? (
+          <Button
+            dense
+            variant="ghost"
+            onClick={onRetryIntelligence}
+            data-testid="detail-retry-btn"
+          >
+            Retry
+          </Button>
+        ) : null}
+        {showSkip ? (
+          <Button
+            dense
+            variant="ghost"
+            onClick={onSkipIntelligence}
+            data-testid="detail-skip-btn"
+          >
+            Skip
           </Button>
         ) : null}
       </div>

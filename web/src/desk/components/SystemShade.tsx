@@ -212,6 +212,12 @@ export function SystemShade({
         onClose={onClose}
       />
 
+      <ShadePeople
+        needsYou={needsYou}
+        onClose={onClose}
+        open={open}
+      />
+
       {/* HS-171-04: sections with zero items are ABSENT (A.8). When
           every section is empty the shade shows one muted line. */}
       {(needsAttentionCount + gate.held.length) > 0 ? (
@@ -544,5 +550,169 @@ function ShadeBrief({
         </div>
       </div>
     </section>
+  );
+}
+
+
+// ── HS-172-07: PEOPLE lane in the shade ──────────────────────────────
+//
+// Board: ShadePeople (393). Caption `PEOPLE . <ROOM NAME UPPER>` for
+// each Room that has resolved people. Rows: display name + terse tokens
+// (`N PRS WAITING N OVERDUE`) + Open. Absent when no people.
+// Reads the Room people endpoint; polls every 60 s while open.
+
+type ShadePerson = {
+  relationship_id: string;
+  display_name: string;
+  prs_waiting?: number;
+  assignments_open?: number;
+  assignments_overdue?: number;
+};
+
+type ShadeRoomPeople = {
+  projectId: string;
+  projectName: string;
+  people: ShadePerson[];
+};
+
+function monogramShade(displayName: string): string {
+  const words = displayName.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+function ShadePeople({
+  needsYou,
+  onClose,
+  open: shadeOpen,
+}: {
+  needsYou: NeedsYouAggregate | null;
+  onClose: () => void;
+  open: boolean;
+}) {
+  const [roomPeople, setRoomPeople] = useState<ShadeRoomPeople[]>([]);
+
+  // Derive distinct Room ids from the needs-you aggregate
+  const roomIds = needsYou
+    ? groupByRoom(needsYou.items)
+        .filter((r) => !r.muted)
+        .map((r) => ({ id: r.projectId, name: r.projectName }))
+    : [];
+
+  useEffect(() => {
+    if (!shadeOpen || roomIds.length === 0) {
+      setRoomPeople([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchAll = () => {
+      Promise.all(
+        roomIds.map((room) =>
+          apiFetch<{ people: ShadePerson[] }>(
+            `/api/projects/${encodeURIComponent(room.id)}/people`,
+          )
+            .then((data) => ({
+              projectId: room.id,
+              projectName: room.name,
+              people: data.people || [],
+            }))
+            .catch(() => ({
+              projectId: room.id,
+              projectName: room.name,
+              people: [] as ShadePerson[],
+            })),
+        ),
+      ).then((results) => {
+        if (!cancelled) {
+          setRoomPeople(results.filter((r) => r.people.length > 0));
+        }
+      });
+    };
+    fetchAll();
+    // Poll every 60 s
+    const timer = window.setInterval(fetchAll, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shadeOpen, roomIds.map((r) => r.id).join(",")]);
+
+  // Absent when no people
+  if (roomPeople.length === 0) return null;
+
+  return (
+    <>
+      {roomPeople.map((room) => (
+        <section
+          className="desk-shade-group"
+          aria-label={`People ${room.projectName}`}
+          data-testid="shade-people"
+          key={`people-${room.projectId}`}
+        >
+          <h4>
+            People <b>&middot; {room.projectName.toUpperCase()}</b>
+          </h4>
+          {room.people.map((person) => {
+            const mono = monogramShade(person.display_name);
+            const prs = person.prs_waiting
+              ? countToken(person.prs_waiting, "PR WAITING", "PRS WAITING")
+              : null;
+            const overdue = person.assignments_overdue
+              ? countToken(person.assignments_overdue, "OVERDUE")
+              : null;
+            return (
+              <div
+                className="desk-shade-item"
+                key={person.relationship_id}
+                data-testid="shade-people-row"
+              >
+                <span className="desk-shade-glyph desk-shade-monogram" aria-hidden="true">
+                  {mono}
+                </span>
+                <div className="desk-shade-what">
+                  <strong>{person.display_name}</strong>
+                  <small>
+                    <span className="desk-shade-project-tokens">
+                      {prs ? (
+                        <span className="surface-token" data-chip>
+                          {prs}
+                        </span>
+                      ) : null}
+                      {overdue ? (
+                        <span
+                          className="surface-token"
+                          data-chip
+                          data-tone="warn"
+                        >
+                          {overdue}
+                        </span>
+                      ) : null}
+                    </span>
+                  </small>
+                  <span className="desk-shade-do">
+                    <Button
+                      dense
+                      variant="ghost"
+                      onClick={() => {
+                        onClose();
+                        openSurfaceOr(
+                          "open-people",
+                          "/",
+                          `people:${person.relationship_id}`,
+                        );
+                      }}
+                    >
+                      Open
+                    </Button>
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      ))}
+    </>
   );
 }

@@ -104,7 +104,7 @@ def test_project_tools_are_discoverable_with_versioned_schemas() -> None:
     assert project_tools[1]["name"] == "project.get"
     assert project_tools[2]["name"] == "project.get_room"
     # HS-165-02 adds 14 command tools (17), HS-165-03 adds 16 driver tools (33 total)
-    assert len(project_tools) == 35  # HS-167-02: + project.steward.trigger (HS-166-04 added clarify_jira_scope)
+    assert len(project_tools) == 38  # HS-172-06: + 3 suggested_source tools (35 -> 38)
     # Versioned $id schemas
     assert project_tools[0]["inputSchema"]["$id"] == "holdspeak://mcp/project.list@1"
     assert project_tools[1]["inputSchema"]["$id"] == "holdspeak://mcp/project.get@1"
