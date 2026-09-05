@@ -1572,6 +1572,12 @@ class ProjectService:
         when none.
         """
         _LIMIT = 10
+        # Scoping is a substring match on args_summary (counsel-on-built
+        # 174, condition 3).  Project ids are ``proj-<12 hex>``, so a
+        # collision needs one id to be a substring of another summary's
+        # id -- improbable, not impossible.  The exact form is
+        # ``json_extract(args_summary, '$.project_id') = ?``; V0 keeps
+        # LIKE because summaries are not guaranteed to be JSON objects.
         with self._db._connection() as conn:
             rows = conn.execute(
                 "SELECT event_id, timestamp, service, method, "

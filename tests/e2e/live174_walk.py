@@ -231,6 +231,46 @@ def _fact(face: str, fld: str, expected: str, observed: str) -> FaceFact:
                     observed=observed, verdict=v, why=w)
 
 
+# The canonical raw-button exclusion list (from live173_walk.py).
+# Every library button species is excluded; anything that survives
+# is a raw <button> outside the library (UX-CANON A.5).
+_RAW_BUTTON_JS = """
+function countRawButtons(root) {
+    const allBtns = root.querySelectorAll('button');
+    let count = 0;
+    for (const btn of allBtns) {
+        if (btn.classList.contains('btn') ||
+            btn.classList.contains('signal-button') ||
+            btn.classList.contains('surface-ledger-line') ||
+            btn.classList.contains('surface-edit-in-place') ||
+            btn.classList.contains('desk-mic') ||
+            btn.classList.contains('desk-chip') ||
+            btn.classList.contains('surface-disclosure-trigger') ||
+            btn.classList.contains('gadget-transport-key') ||
+            btn.classList.contains('desk-light-close') ||
+            btn.classList.contains('desk-light-min') ||
+            btn.classList.contains('desk-light-max') ||
+            btn.closest('.gadget-string') ||
+            btn.closest('.mic-button') ||
+            btn.closest('.gadget-cycle') ||
+            btn.closest('.fold-gadget') ||
+            btn.closest('.check-gadget') ||
+            btn.closest('.stepper-gadget') ||
+            btn.closest('.scroll-hint') ||
+            btn.closest('.cm-editor') ||
+            btn.closest('.desk-traffic') ||
+            btn.closest('.desk-wings') ||
+            btn.closest('.desk-surface-foot') ||
+            btn.closest('.desk-shade') ||
+            btn.closest('.surface-ledger-row') ||
+            btn.closest('[role="tablist"]')) continue;
+        count++;
+    }
+    return count;
+}
+"""
+
+
 def _open_surface(page: Any, token: str, action: str, scope: str | None = None) -> None:
     payload: dict[str, str] = {"key": action}
     if scope:
@@ -384,86 +424,122 @@ def _step_settings_system(page: Any, out_dir: Path, w: int, token: str,
     face = "settings-system"
     remote_on = remote_state.get("remote_on", False)
 
-    # Open Settings, then navigate to the System module.
-    _open_surface(page, token, "open-settings", "system")
+    # Open Settings hub, then click into the System module (the way
+    # test_hs174_remote_settings_glass.py does: click the System row's
+    # Open, then wait for the "Remote access" GadgetGroup label).
+    _open_surface(page, token, "configure-settings")
     _settle(page)
     page.wait_for_timeout(2000)
     _settle(page)
+
+    # Click the System row's Open button to enter the System module.
+    system_open = page.locator(
+        ".surface-ledger-row",
+        has=page.locator(".surface-ledger-primary", has_text="System"),
+    ).locator(".btn", has_text="Open")
+    if system_open.count() > 0 and system_open.is_visible():
+        system_open.click()
+        page.wait_for_timeout(2000)
+        _settle(page)
+    else:
+        report.errors.append(
+            f"settings-system@{w}: System hub row not found; "
+            "cannot navigate to the Remote Access section"
+        )
+        _close_surface(page)
+        return
+
+    # Assert the Remote access GadgetGroup is present.
+    remote_label = page.locator(
+        ".gadget-group-label", has_text="Remote access"
+    )
+    if remote_label.count() == 0:
+        report.errors.append(
+            f"settings-system@{w}: Remote access section absent "
+            "after opening the System module"
+        )
+        _close_surface(page)
+        return
 
     shot = _shoot(page, out_dir, "walk-remote", w, window=True)
     report.shots.append({"face": face, "width": w, "path": str(shot)})
 
     # Read the System module face.
-    # TODO selectors: the face lanes are building now. Named for D2
-    # elements; the real data-testid values will be filled when the
-    # Settings System module remote section lands.
-    #
-    # Expected selectors (from D2(a)):
-    #   [data-testid="system-remote-toggle"]   -- CycleGadget OFF/ON
-    #   [data-testid="system-remote-address"]   -- muted token with bind address
-    #   [data-testid="system-remote-cred-count"] -- N CREDENTIALS token
-    #   [data-testid="system-credential-row"]   -- each credential row
-    #   [data-testid="system-issue-credential"] -- Issue credential button
-    #   [data-testid="system-revoke-credential"] -- Revoke button per row
+    # Real selectors (from SettingsCore.tsx SystemModule + RemoteAccessModule):
+    #   [data-testid="system-display"]         -- "This device" display
+    #   [data-testid="system-hub-chips"]       -- hub chips (host, MESH, REMOTE)
+    #   [data-testid="remote-address"]         -- bind address token
+    #   [data-testid="remote-total-count"]     -- N CREDENTIALS token
+    #   [data-testid="remote-active-count"]    -- N ACTIVE token
+    #   [data-testid^="credential-row-"]       -- each credential row (by id)
+    #   [data-testid="issue-credential-btn"]   -- Issue credential button
+    #   [data-testid="token-value"]            -- one-time token display
     system_data = page.evaluate("""([remoteOn]) => {
         const body = document.querySelector('.desk-surface-body') ||
                      document.querySelector('[data-testid="room-body"]') ||
                      document.body;
         const bodyText = body.textContent || '';
 
-        /* Hub row REMOTE cell: look for REMOTE OFF or REMOTE ON tokens */
-        const hubRow = body.querySelector('.surface-token[data-chip]');
-        const allTokens = body.querySelectorAll('.surface-token[data-chip]');
+        /* Hub chips: [data-testid="system-hub-chips"] contains REMOTE OFF/ON */
+        const hubChips = body.querySelector('[data-testid="system-hub-chips"]');
+        const allTokens = (hubChips || body).querySelectorAll('.surface-token[data-chip]');
         let remoteCell = '---';
-        for (const tok of allTokens) {
-            const t = tok.textContent.trim();
-            if (/^REMOTE\\s+(ON|OFF)$/i.test(t)) {
-                remoteCell = t;
-                break;
+        /* Also check StateChip for REMOTE ON (it's a StateChip, not a
+           .surface-token; textContent includes the icon glyph prefix). */
+        if (hubChips) {
+            const stateChips = hubChips.querySelectorAll('.surface-state-chip');
+            for (const sc of stateChips) {
+                const label = sc.getAttribute('aria-label') || sc.textContent.trim();
+                if (/REMOTE\\s+ON/i.test(label)) { remoteCell = 'REMOTE ON'; break; }
+            }
+        }
+        if (remoteCell === '---') {
+            for (const tok of allTokens) {
+                const t = tok.textContent.trim();
+                if (/^REMOTE\\s+(ON|OFF)$/i.test(t)) { remoteCell = t; break; }
             }
         }
 
-        /* Streamable HTTP row: TODO selector [data-testid="system-remote-toggle"] */
-        const toggleEl = body.querySelector('[data-testid="system-remote-toggle"]');
-        const toggleState = toggleEl
-            ? toggleEl.textContent.trim()
-            : (bodyText.includes('Streamable HTTP')
-                ? (bodyText.includes('ON') ? 'ON (inferred)' : 'OFF (inferred)')
-                : '--- (face not landed)');
-
-        /* Credentials count: TODO selector [data-testid="system-remote-cred-count"] */
-        let credCountToken = '---';
-        for (const tok of allTokens) {
-            const t = tok.textContent.trim();
-            if (/\\d+\\s+CREDENTIALS/i.test(t)) {
-                credCountToken = t;
-                break;
+        /* Streamable HTTP row: the CycleGadget inside the GadgetGroup
+           labeled "Remote access".  The CycleGadget renders as
+           span.gadget-cycle > select; read the select value. */
+        const gadgetGroups = body.querySelectorAll('.gadget-group');
+        let remoteGroup = null;
+        for (const grp of gadgetGroups) {
+            const lbl = grp.querySelector('.gadget-group-label');
+            if (lbl && /remote access/i.test(lbl.textContent)) {
+                remoteGroup = grp; break;
             }
         }
-        let activeCountToken = '---';
-        for (const tok of allTokens) {
-            const t = tok.textContent.trim();
-            if (/\\d+\\s+ACTIVE/i.test(t)) {
-                activeCountToken = t;
-                break;
+        let toggleState = '--- (face not landed)';
+        if (remoteGroup) {
+            const sel = remoteGroup.querySelector('.gadget-cycle select') ||
+                        remoteGroup.querySelector('select[aria-label="Remote transport"]');
+            if (sel) {
+                const idx = sel.selectedIndex;
+                toggleState = idx >= 0 && sel.options[idx]
+                    ? sel.options[idx].text.trim()
+                    : sel.value;
+            } else {
+                toggleState = remoteGroup.textContent.includes('ON') ? 'ON (inferred)' : 'OFF (inferred)';
             }
+        } else if (bodyText.includes('Streamable HTTP')) {
+            toggleState = bodyText.includes('REMOTE ON') ? 'ON (inferred)' : 'OFF (inferred)';
         }
 
-        /* Issue credential button: TODO selector [data-testid="system-issue-credential"] */
-        const issueBtn = body.querySelector('[data-testid="system-issue-credential"]');
-        const issueBtnByText = !issueBtn
-            ? (() => {
-                const btns = body.querySelectorAll('button');
-                for (const b of btns) {
-                    if (/issue credential/i.test(b.textContent)) return b;
-                }
-                return null;
-            })()
-            : null;
-        const issuePresent = Boolean(issueBtn || issueBtnByText);
+        /* Credentials count: [data-testid="remote-total-count"] */
+        const totalCountEl = body.querySelector('[data-testid="remote-total-count"]');
+        let credCountToken = totalCountEl ? totalCountEl.textContent.trim() : '---';
+        /* Active count: [data-testid="remote-active-count"] */
+        const activeCountEl = body.querySelector('[data-testid="remote-active-count"]');
+        let activeCountToken = activeCountEl ? activeCountEl.textContent.trim() : '---';
 
-        /* Credential rows: TODO selector [data-testid="system-credential-row"] */
-        const credRows = body.querySelectorAll('[data-testid="system-credential-row"]');
+        /* Issue credential button: [data-testid="issue-credential-btn"] */
+        const issueBtn = body.querySelector('[data-testid="issue-credential-btn"]');
+        const issuePresent = Boolean(issueBtn);
+
+        /* Credential rows: [data-testid^="credential-row-"] */
+        const credRows = body.querySelectorAll('[data-testid^="credential-row-"]');
         const credRowCount = credRows.length;
 
         /* Defect scans */
@@ -474,29 +550,8 @@ def _step_settings_system(page: Any, out_dir: Path, w: int, token: str,
             zeroCounters.push(zcMatch[0]);
         }
 
-        const allBtns = body.querySelectorAll('button');
-        let rawBtnCount = 0;
-        for (const btn of allBtns) {
-            if (btn.classList.contains('btn') ||
-                btn.classList.contains('signal-button') ||
-                btn.classList.contains('surface-ledger-line') ||
-                btn.classList.contains('surface-edit-in-place') ||
-                btn.classList.contains('desk-mic') ||
-                btn.classList.contains('surface-disclosure-trigger') ||
-                btn.classList.contains('gadget-transport-key') ||
-                btn.closest('.gadget-string') ||
-                btn.closest('.mic-button') ||
-                btn.closest('.cycle-gadget') ||
-                btn.closest('.fold-gadget') ||
-                btn.closest('.check-gadget') ||
-                btn.closest('.stepper-gadget') ||
-                btn.closest('.scroll-hint') ||
-                btn.closest('.desk-traffic') ||
-                btn.closest('.desk-wings') ||
-                btn.closest('.surface-ledger-row') ||
-                btn.closest('[role="tablist"]')) continue;
-            rawBtnCount++;
-        }
+        """ + _RAW_BUTTON_JS + """
+        const rawBtnCount = countRawButtons(body);
 
         const hasLocal = bodyText.includes('LOCAL');
 
@@ -900,31 +955,40 @@ def _step_rhythm(page: Any, out_dir: Path, w: int, token: str,
     report.shots.append({"face": face, "width": w, "path": str(shot)})
 
     # Read Rhythm face data.
-    # TODO selectors: the Runs on row is a D2(d) element being built now.
-    # Expected selectors:
-    #   [data-testid="rhythm-runs-on"]      -- the Runs on row
-    #   [data-testid="rhythm-runs-on-host"] -- the CycleGadget host picker
-    #   [data-testid="rhythm-awake-caption"] -- WHILE THIS MAC IS AWAKE caption
+    # Real selectors (from CadenceCore.tsx):
+    #   [data-testid="rhythm-runs-on-row"]     -- the Runs on SurfaceLedgerRow
+    #   [data-testid="rhythm-runs-on-gadget"]  -- the CycleGadget host picker
+    #   [data-testid="rhythm-runs-on-caption"] -- WHILE THIS MAC IS AWAKE caption
+    #   [data-testid="rhythm-run-now"]         -- Run now button (on sweep row)
+    #   [data-testid="rhythm-sweep-row"]       -- the Sweep SurfaceLedgerRow
     rhythm_data = page.evaluate("""() => {
         const body = document.querySelector('.desk-surface-body') ||
                      document.querySelector('[data-testid="room-body"]') ||
                      document.body;
         const bodyText = body.textContent || '';
 
-        /* Runs on row: TODO [data-testid="rhythm-runs-on"] */
-        const runsOnRow = body.querySelector('[data-testid="rhythm-runs-on"]');
+        /* Runs on row: [data-testid="rhythm-runs-on-row"] */
+        const runsOnRow = body.querySelector('[data-testid="rhythm-runs-on-row"]');
         let runsOnValue = '---';
         if (runsOnRow) {
-            const cycle = runsOnRow.querySelector('.cycle-gadget');
-            runsOnValue = cycle ? cycle.textContent.trim() : runsOnRow.textContent.trim();
+            /* The CycleGadget renders as span.gadget-cycle > select.
+               Read the select's selected option text for the display value. */
+            const sel = runsOnRow.querySelector('.gadget-cycle select') ||
+                        runsOnRow.querySelector('select[aria-label="Runner host"]');
+            if (sel) {
+                const idx = sel.selectedIndex;
+                runsOnValue = idx >= 0 && sel.options[idx]
+                    ? sel.options[idx].text.trim()
+                    : sel.value;
+            } else {
+                /* fallback: whole row text minus the primary label */
+                runsOnValue = runsOnRow.textContent.trim();
+            }
         } else {
-            /* Fallback: look for "Runs on" text then the adjacent token */
-            const match = bodyText.match(/Runs on[\\s\\S]{0,60}?(THIS DEVICE|\\d+\\.\\d+\\.\\d+\\.\\d+)/);
-            if (match) runsOnValue = match[1];
-            else runsOnValue = '--- (face not landed)';
+            runsOnValue = '--- (face not landed)';
         }
 
-        /* Run now: count occurrences (expected exactly 1 on the sweep row) */
+        /* Run now: [data-testid="rhythm-run-now"] (expected exactly 1 on the sweep row) */
         const runNowBtns = body.querySelectorAll('[data-testid="rhythm-run-now"]');
         let runNowCount = runNowBtns.length;
         if (runNowCount === 0) {
@@ -935,12 +999,9 @@ def _step_rhythm(page: Any, out_dir: Path, w: int, token: str,
             }
         }
 
-        /* WHILE THIS MAC IS AWAKE caption: present only when remote host selected */
-        const awakeCaption = body.querySelector('[data-testid="rhythm-awake-caption"]');
+        /* WHILE THIS MAC IS AWAKE caption: [data-testid="rhythm-runs-on-caption"] */
+        const awakeCaption = body.querySelector('[data-testid="rhythm-runs-on-caption"]');
         let awakeCaptionPresent = Boolean(awakeCaption);
-        if (!awakeCaptionPresent) {
-            awakeCaptionPresent = /WHILE THIS MAC IS AWAKE/i.test(bodyText);
-        }
 
         /* Defect scans */
         const zeroCounters = [];
@@ -950,29 +1011,8 @@ def _step_rhythm(page: Any, out_dir: Path, w: int, token: str,
             zeroCounters.push(zcMatch[0]);
         }
 
-        const allBtns = body.querySelectorAll('button');
-        let rawBtnCount = 0;
-        for (const btn of allBtns) {
-            if (btn.classList.contains('btn') ||
-                btn.classList.contains('signal-button') ||
-                btn.classList.contains('surface-ledger-line') ||
-                btn.classList.contains('surface-edit-in-place') ||
-                btn.classList.contains('desk-mic') ||
-                btn.classList.contains('surface-disclosure-trigger') ||
-                btn.classList.contains('gadget-transport-key') ||
-                btn.closest('.gadget-string') ||
-                btn.closest('.mic-button') ||
-                btn.closest('.cycle-gadget') ||
-                btn.closest('.fold-gadget') ||
-                btn.closest('.check-gadget') ||
-                btn.closest('.stepper-gadget') ||
-                btn.closest('.scroll-hint') ||
-                btn.closest('.desk-traffic') ||
-                btn.closest('.desk-wings') ||
-                btn.closest('.surface-ledger-row') ||
-                btn.closest('[role="tablist"]')) continue;
-            rawBtnCount++;
-        }
+        """ + _RAW_BUTTON_JS + """
+        const rawBtnCount = countRawButtons(body);
 
         const hasLocal = bodyText.includes('LOCAL');
 
@@ -1055,10 +1095,40 @@ def _step_door(page: Any, out_dir: Path, w: int, token: str,
     Records whether the Confluence row exists and its state (NOT INSTALLED /
     SIGN IN / SIGNED IN AS), that its defaults read RECENT BLOGS / PAGES BY ID,
     then Cancel without creating.
+
+    When GET /api/connections lists no providers, records NO CONNECTIONS
+    as DATA and skips the per-row checks. When a provider IS listed but
+    its row is missing on the face, records a DEFECT.
     """
     face = "door"
 
-    _open_surface(page, token, "new-project")
+    # Check the connections API first: are providers available?
+    conn_resp = _api(page, "GET", "/api/connections", None, token)
+    has_connections = False
+    known_providers: list[str] = []
+    if conn_resp.get("status", 0) < 300:
+        payload = conn_resp.get("payload", conn_resp)
+        tools = payload.get("tools", []) if isinstance(payload, dict) else []
+        source_providers = {"github", "jira", "confluence"}
+        known_providers = [
+            t.get("provider_id", "")
+            for t in tools
+            if isinstance(t, dict)
+            and t.get("provider_id", "") in source_providers
+        ]
+        has_connections = len(known_providers) > 0
+
+    if not has_connections:
+        report.facts.append(asdict(FaceFact(
+            face=face, field="connections",
+            expected="(at least one provider)",
+            observed="NO CONNECTIONS",
+            verdict="DATA",
+            why="GET /api/connections returned no source providers; "
+                "row checks skipped",
+        )))
+
+    _open_surface(page, token, "project-setup")
     _settle(page)
     page.wait_for_timeout(2000)
     _settle(page)
@@ -1127,29 +1197,8 @@ def _step_door(page: Any, out_dir: Path, w: int, token: str,
             zeroCounters.push(zcMatch[0]);
         }
 
-        const allBtns = body.querySelectorAll('button');
-        let rawBtnCount = 0;
-        for (const btn of allBtns) {
-            if (btn.classList.contains('btn') ||
-                btn.classList.contains('signal-button') ||
-                btn.classList.contains('surface-ledger-line') ||
-                btn.classList.contains('surface-edit-in-place') ||
-                btn.classList.contains('desk-mic') ||
-                btn.classList.contains('surface-disclosure-trigger') ||
-                btn.classList.contains('gadget-transport-key') ||
-                btn.closest('.gadget-string') ||
-                btn.closest('.mic-button') ||
-                btn.closest('.cycle-gadget') ||
-                btn.closest('.fold-gadget') ||
-                btn.closest('.check-gadget') ||
-                btn.closest('.stepper-gadget') ||
-                btn.closest('.scroll-hint') ||
-                btn.closest('.desk-traffic') ||
-                btn.closest('.desk-wings') ||
-                btn.closest('.surface-ledger-row') ||
-                btn.closest('[role="tablist"]')) continue;
-            rawBtnCount++;
-        }
+        """ + _RAW_BUTTON_JS + """
+        const rawBtnCount = countRawButtons(body);
 
         const hasLocal = bodyText.includes('LOCAL');
 
@@ -1172,37 +1221,62 @@ def _step_door(page: Any, out_dir: Path, w: int, token: str,
         };
     }""")
 
-    report.facts.append(asdict(FaceFact(
-        face=face, field="confluence_row_state",
-        expected="(NOT INSTALLED / SIGN IN / SIGNED IN AS)",
-        observed=door_data.get("confState", "---"),
-        verdict="DATA", why="Confluence source row connection state",
-    )))
-    report.facts.append(asdict(FaceFact(
-        face=face, field="confluence_defaults",
-        expected="['RECENT BLOGS', 'PAGES BY ID']",
-        observed=json.dumps(door_data.get("confDefaults", [])),
-        verdict=(
-            "MATCH"
-            if door_data.get("confDefaults") == ["RECENT BLOGS", "PAGES BY ID"]
-            else "DATA"
-        ),
-        why="Confluence default watch labels",
-    )))
-    report.facts.append(asdict(FaceFact(
-        face=face, field="github_row_present",
-        expected="true",
-        observed=str(door_data.get("ghPresent", False)),
-        verdict="MATCH" if door_data.get("ghPresent") else "DATA",
-        why="GitHub source row present",
-    )))
-    report.facts.append(asdict(FaceFact(
-        face=face, field="jira_row_present",
-        expected="true",
-        observed=str(door_data.get("jiraPresent", False)),
-        verdict="MATCH" if door_data.get("jiraPresent") else "DATA",
-        why="Jira source row present",
-    )))
+    # Per-row facts: skip when no connections, DEFECT when a listed
+    # provider's row is missing on the face.
+    if has_connections:
+        conf_state = door_data.get("confState", "---")
+        report.facts.append(asdict(FaceFact(
+            face=face, field="confluence_row_state",
+            expected="(NOT INSTALLED / SIGN IN / SIGNED IN AS)",
+            observed=conf_state,
+            verdict="DATA", why="Confluence source row connection state",
+        )))
+        report.facts.append(asdict(FaceFact(
+            face=face, field="confluence_defaults",
+            expected="['RECENT BLOGS', 'PAGES BY ID']",
+            observed=json.dumps(door_data.get("confDefaults", [])),
+            verdict=(
+                "MATCH"
+                if door_data.get("confDefaults") == ["RECENT BLOGS", "PAGES BY ID"]
+                else "DATA"
+            ),
+            why="Confluence default watch labels",
+        )))
+
+        # Provider-listed-but-row-missing: DEFECT.
+        provider_row_map = {
+            "github": door_data.get("ghPresent", False),
+            "jira": door_data.get("jiraPresent", False),
+            "confluence": "NOT FOUND" not in conf_state,
+        }
+        for prov in known_providers:
+            present = provider_row_map.get(prov, False)
+            report.facts.append(asdict(FaceFact(
+                face=face, field=f"{prov}_row_present",
+                expected="true (provider listed in connections)",
+                observed=str(present),
+                verdict="MATCH" if present else "DATA",
+                why=f"{prov} row presence (provider in connections API)",
+            )))
+            if not present:
+                report.defects.append(
+                    f"DOOR: {prov} listed in connections API but "
+                    f"its row is missing on the Door face"
+                )
+    else:
+        # No connections: record DATA, skip row checks.
+        report.facts.append(asdict(FaceFact(
+            face=face, field="github_row_present",
+            expected="(skipped: no connections)",
+            observed=str(door_data.get("ghPresent", False)),
+            verdict="DATA", why="no connections -- row check skipped",
+        )))
+        report.facts.append(asdict(FaceFact(
+            face=face, field="jira_row_present",
+            expected="(skipped: no connections)",
+            observed=str(door_data.get("jiraPresent", False)),
+            verdict="DATA", why="no connections -- row check skipped",
+        )))
 
     # Defects.
     for z in door_data.get("zeroCounters", []):

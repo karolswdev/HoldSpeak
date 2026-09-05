@@ -128,16 +128,11 @@ const SOURCE_PROVIDERS = new Set(PROVIDER_ORDER);
 
 function buildRows(tools: ConnectionTool[]): SourceRow[] {
   const sourceTools = tools.filter((t) => SOURCE_PROVIDERS.has(t.provider_id));
-  const connected = sourceTools.filter((t) => t.state === "connected");
-  const notConnected = sourceTools.filter((t) => t.state !== "connected");
-  const sorted = [...connected, ...notConnected];
-  sorted.sort((a, b) => {
-    const ai = PROVIDER_ORDER.indexOf(a.provider_id);
-    const bi = PROVIDER_ORDER.indexOf(b.provider_id);
-    if (a.state === "connected" && b.state !== "connected") return -1;
-    if (a.state !== "connected" && b.state === "connected") return 1;
-    return ai - bi;
-  });
+  /* Fixed order GH, Jira, Confluence whatever is connected -- the board's
+     order (counsel-on-built 174, condition 2). */
+  const sorted = [...sourceTools].sort(
+    (a, b) => PROVIDER_ORDER.indexOf(a.provider_id) - PROVIDER_ORDER.indexOf(b.provider_id),
+  );
   return sorted.map(makeRow);
 }
 

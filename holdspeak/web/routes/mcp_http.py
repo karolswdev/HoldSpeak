@@ -74,6 +74,17 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
                 status_code=404,
             )
 
+        # Counsel-on-built 174, condition 1: a credential never rides the
+        # URL on this route (query strings land in access, proxy and
+        # history logs), whatever principal the middleware derived from
+        # it.  The runner sends ``Authorization: Bearer``.
+        if request.query_params.get("token"):
+            return JSONResponse(
+                {"error": "token_in_query_refused",
+                 "detail": "send the credential as Authorization: Bearer"},
+                status_code=401,
+            )
+
         principal = getattr(request.state, "principal", UNAUTHENTICATED)
 
         # HS-174 C5: per-route loopback guard -- OWNER from non-loopback
@@ -104,7 +115,7 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         token = extract_request_token(
             authorization=request.headers.get("authorization"),
             header_token=request.headers.get("x-holdspeak-token"),
-            query_token=request.query_params.get("token"),
+            query_token=None,
         )
         cred = credential_store.derive_credential(token) if token else None
         if cred and cred.palette is not None:

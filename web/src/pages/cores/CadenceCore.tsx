@@ -376,7 +376,11 @@ export function CadenceCore({ hero }: CoreProps) {
               <span className="surface-token" data-chip data-muted>
                 LAST RUN {humanTime(settings.last_remote_run_at)}
               </span>
-            ) : null}
+            ) : (
+              <span className="surface-token" data-chip data-muted data-testid="rhythm-runs-on-no-runs">
+                NO RUNS YET
+              </span>
+            )}
             {receipt ? (
               <>
                 <span className="surface-token" data-chip data-muted>
