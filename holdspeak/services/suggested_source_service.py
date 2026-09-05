@@ -189,6 +189,24 @@ class SuggestedSourceService:
             raise NotFound("suggestion", suggestion_id)
         return dict(row)
 
+    def find_pending_by_reference(
+        self, project_id: str, reference: str,
+    ) -> dict[str, Any]:
+        """Look up a pending suggestion by (project_id, reference).
+
+        Raises ``NotFound`` when no matching pending row exists.
+        """
+        with self._db._connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM source_suggestions "
+                "WHERE project_id=? AND reference=? AND status='pending'",
+                (project_id, reference),
+            ).fetchone()
+        if row is None:
+            from .errors import NotFound
+            raise NotFound("suggestion", reference)
+        return dict(row)
+
     # ---- Helpers -------------------------------------------------------------
 
     def _existing_ref_pairs(self, project_id: str) -> set[tuple[str, str]]:

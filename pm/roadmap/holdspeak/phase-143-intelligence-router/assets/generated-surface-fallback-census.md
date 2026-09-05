@@ -143,3 +143,20 @@ honest error record. It never selects a model, route, or provider -- all
 inference the steward touches flows through the already-admitted 160/162
 verbs. Classified in `BACKEND_PRIVATE_DECISIONS` with review tag
 `163-07`.
+
+## Story 172-02 addendum (Phase 172, The Loop Closes)
+
+Story 172-02 adds `holdspeak/web/routes/system/settings.py` as a
+guarded backend surface. Two private helpers record the model host at
+settings read time:
+
+- `_resolve_meetings_host`: reads the meetings group's assigned
+  `intel_profile_id`, calls `resolve_meeting_placement` to derive a
+  `MeetingPlacement`, and returns the egress host for display. It
+  never selects or assigns a model -- it projects the already-resolved
+  placement for the settings UI.
+- `_placement_host`: extracts the bare hostname from a resolved
+  `MeetingPlacement` via `endpoint_host`. Pure derivation, no route
+  selection.
+
+Classified in `BACKEND_PRIVATE_DECISIONS` with review tag `172-02`.

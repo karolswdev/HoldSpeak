@@ -108,7 +108,17 @@ Auto-run on imported transcripts; the actuator proposals route rename;
   RATIFY-W-C — C1 (P0: the bridge had no production call site) and C2
   (the RAN header from a recorded job) PAID, the P2s paid, every
   design-stage ruling verified paid (design addendum three).
-- Suite (CI shape, -n auto): PENDING.
+- Suite (CI shape, -n auto, the closing tree): **9597 passed · 99
+  skipped · 27 failed** = 6 inherited (zero diff vs main: ask grounding
+  ×2, ask runner migration, kernel broker density ×2, product copy) +
+  10 xdist-only (the set rotates between runs; all 10 green serially:
+  141/151/153×2/163/171 rigs, the 144 door deep link, the actuator
+  presence broadcast, an inference-runner deadline, a placement
+  provenance case) + 11 branch-new FENCES the phase moved (schema 72→73
+  expectations ×5, the schema snapshot, MCP project-family 47→50 and
+  the closed catalogue ×5, three Phase 143 censuses, one 169 decisions
+  test that asserted the old broken commitments join) — paid in the
+  fence commit that follows this line.
 - Web: vitest green; baseline zero branch-new; ratchet at its floor.
 - Rigs + wire (closing gate): 331 green serially (six hs172 rigs, three
   170 siblings, the 171 shade rig, the 172/171/170 wire tests, the

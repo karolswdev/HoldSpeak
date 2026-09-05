@@ -131,8 +131,8 @@ def _make_conn(tmp_path: Path, db_name: str = "test.db") -> sqlite3.Connection:
 class TestFreshSchema:
     """A fresh DB built from SCHEMA_SQL has the HS-164-01 columns."""
 
-    def test_schema_version_is_72(self) -> None:
-        assert SCHEMA_VERSION == 72
+    def test_schema_version_is_73(self) -> None:
+        assert SCHEMA_VERSION == 73
 
     def test_connector_watches_has_cadence_column(self, tmp_path: Path) -> None:
         conn = _make_conn(tmp_path)

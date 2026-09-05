@@ -1889,14 +1889,8 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             raise ValidationError("reference is required")
         from holdspeak.services.suggested_source_service import SuggestedSourceService
         sug = SuggestedSourceService(svc._db)
-        conn = svc._db._connection()
-        row = conn.execute(
-            "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
-            (project_id, reference),
-        ).fetchone()
-        if row is None:
-            raise NotFound("suggestion", reference)
-        suggestion = sug.accept_suggestion(dict(row)["id"])
+        pending = sug.find_pending_by_reference(project_id, reference)
+        suggestion = sug.accept_suggestion(pending["id"])
         resource_ref = f"{suggestion['provider']}:{suggestion['reference']}"
         try:
             resource = svc.add_resource(
@@ -1914,14 +1908,8 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             raise ValidationError("reference is required")
         from holdspeak.services.suggested_source_service import SuggestedSourceService
         sug = SuggestedSourceService(svc._db)
-        conn = svc._db._connection()
-        row = conn.execute(
-            "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
-            (project_id, reference),
-        ).fetchone()
-        if row is None:
-            raise NotFound("suggestion", reference)
-        return {"suggestion": sug.dismiss_suggestion(dict(row)["id"])}
+        pending = sug.find_pending_by_reference(project_id, reference)
+        return {"suggestion": sug.dismiss_suggestion(pending["id"])}
 
     # ── HS-168-02: connection tools ─────────────────────────────────
 

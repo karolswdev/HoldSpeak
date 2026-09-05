@@ -117,15 +117,43 @@ def _seed_decision_record(
     record_id: str,
     meeting_id: str,
     decision_text: str = "Use acli for Jira",
+    *,
+    decisions_id: str | None = None,
 ) -> str:
-    """Seed a decision record with a meeting source."""
+    """Seed a decision record with a meeting source.
+
+    *decisions_id*: the id of the corresponding row in the ``decisions``
+    table.  When given, a ``decisions`` row is seeded and
+    ``decision_records.source_id`` points to it (HS-172-03 join path:
+    ``decision_records.source_id = decisions.id``).  Callers that verify
+    commitments MUST supply this so the ``_read_room_commitments`` join
+    can resolve.
+    """
     with db._connection() as conn:
+        # If a decisions row is expected, seed it.
+        if decisions_id:
+            conn.execute(
+                "INSERT OR IGNORE INTO meetings "
+                "(id, title, started_at, created_at) "
+                "VALUES (?, 'Seeded meeting', datetime('now'), datetime('now'))",
+                (meeting_id,),
+            )
+            conn.execute(
+                "INSERT OR IGNORE INTO decisions "
+                "(id, text, decided_at, source_artifact_id, "
+                " source_meeting_id, created_at, updated_at, last_modified) "
+                "VALUES (?, ?, datetime('now'), ?, ?, "
+                " datetime('now'), datetime('now'), datetime('now'))",
+                (decisions_id, decision_text, f"art-{decisions_id}", meeting_id),
+            )
+
+        source_id = decisions_id or meeting_id
         conn.execute(
             "INSERT INTO decision_records "
             "(id, decision_text, source_type, source_id, lifecycle, "
             " created_at, updated_at) "
             "VALUES (?, ?, 'meeting', ?, 'active', datetime('now'), datetime('now'))",
-            (record_id, decision_text, meeting_id),
+            (record_id, decision_text, source_id),
         )
         conn.execute(
             "INSERT INTO decision_record_sources "
@@ -409,8 +437,13 @@ class TestDecisions:
         project_id = _seed_project(db)
         meeting_id = "mtg-wire-2"
         _seed_meeting_link(db, project_id, meeting_id)
-        _seed_decision_record(db, "dr-2", meeting_id, "Ship it")
-        _seed_commitment(db, "cmt-1", "dr-2", "Review PR #612",
+        # HS-172-03: the commitment join walks
+        # decision_records.source_id -> decisions.id ->
+        # decision_commitments.decision_id, so the seed must supply
+        # a decisions_id and the commitment must reference it.
+        _seed_decision_record(db, "dr-2", meeting_id, "Ship it",
+                              decisions_id="dec-2")
+        _seed_commitment(db, "cmt-1", "dec-2", "Review PR #612",
                          due_at="2026-09-10", owner="karol")
 
         svc = ProjectService(db)
