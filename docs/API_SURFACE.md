@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 486.
+Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 483.
 
 ## device_audio_ws
 
@@ -82,7 +82,7 @@ Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 486.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/plugin-jobs` | web |
+| GET | `/api/plugin-jobs` | server only |
 | POST | `/api/plugin-jobs/process` | web |
 | GET | `/api/plugin-jobs/summary` | web |
 | POST | `/api/plugin-jobs/{job_id}/cancel` | server only |
@@ -423,7 +423,7 @@ Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 486.
 | PATCH | `/api/action-items/{item_id}` | web |
 | PATCH | `/api/action-items/{item_id}/edit` | server only |
 | PATCH | `/api/action-items/{item_id}/review` | server only |
-| GET | `/api/all-action-items` | web |
+| GET | `/api/all-action-items` | server only |
 | PATCH | `/api/all-action-items/{item_id}` | web |
 | PATCH | `/api/all-action-items/{item_id}/edit` | server only |
 | PATCH | `/api/all-action-items/{item_id}/review` | server only |
@@ -448,7 +448,7 @@ Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 486.
 | DELETE | `/api/meetings/{meeting_id}` | ios, web |
 | GET | `/api/meetings/{meeting_id}` | ios, web |
 | PUT | `/api/meetings/{meeting_id}` | ios, web |
-| POST | `/api/meetings/{meeting_id}/capture/recover` | web |
+| POST | `/api/meetings/{meeting_id}/capture/recover` | server only |
 | GET | `/api/meetings/{meeting_id}/export` | web |
 | GET | `/api/meetings/{meeting_id}/sync-conflicts` | web |
 | POST | `/api/meetings/{meeting_id}/sync-conflicts/{conflict_id}/resolve` | web |
@@ -472,7 +472,7 @@ Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 486.
 | GET | `/api/meetings/{meeting_id}/intel-recovery` | web |
 | POST | `/api/meetings/{meeting_id}/intel-recovery/retry` | web |
 | POST | `/api/meetings/{meeting_id}/intel-recovery/skip` | web |
-| POST | `/api/meetings/{meeting_id}/intelligence/run` | server only |
+| POST | `/api/meetings/{meeting_id}/intelligence/run` | web |
 
 ## web.routes.meetings.live
 
@@ -488,7 +488,7 @@ Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 486.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/speakers` | web |
+| GET | `/api/speakers` | server only |
 | GET | `/api/speakers/{speaker_id}` | web |
 | PATCH | `/api/speakers/{speaker_id}` | web |
 

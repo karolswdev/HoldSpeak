@@ -37,7 +37,7 @@ desk we are both proud of.
 | HS-170-03 | The Concierge — the model front door designed and built to the canon (the Tuesday Arc's 170) | in-progress | [story-03-the-concierge](./story-03-the-concierge.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-170-04 | The top faces re-designed and rebuilt (the Tuesday faces ranked by the census: Settings, Meetings aftercare, People/1:1, the Thread, the shade) | backlog | [story-04-the-top-faces](./story-04-the-top-faces.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-170-05 | The walk (the owner's attended walk of the whole desk on a Tuesday; the stopwatch per face; his verdict) | backlog | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-170-06 | The docs (the guide re-shot for every rebuilt face; UX-CANON linked from CLAUDE.md and the design system) | in-progress | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-170-06 | The docs (the guide re-shot for every rebuilt face; UX-CANON linked from CLAUDE.md and the design system) | done | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-170-07 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are

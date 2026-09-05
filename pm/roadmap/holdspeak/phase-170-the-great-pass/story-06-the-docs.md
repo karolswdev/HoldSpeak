@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 170
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-170-04
 - **Unblocks:** HS-170-07
 - **Owner:** unassigned
@@ -18,7 +18,7 @@ Docs must not lie about the face.
 
 ## Acceptance criteria
 
-- [ ] Every claim checked against code; the drift guards green.
+- [x] Every claim checked against code; the drift guards green. (Written to the ratified designs, then every build-dependent sentence re-verified against the built faces — zero markers left; test_doc_drift_guard 26 green; the product-copy fence inherited-red at 27, unchanged.)
 
 ## Test plan
 

@@ -404,9 +404,7 @@
         "GET"
       ],
       "module": "web.routes.meetings.action_items",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/all-action-items/{item_id}",
@@ -3235,9 +3233,7 @@
         "POST"
       ],
       "module": "web.routes.meetings.crud",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/meetings/{meeting_id}/export",
@@ -3303,7 +3299,9 @@
         "POST"
       ],
       "module": "web.routes.meetings.intel",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/meetings/{meeting_id}/intent-timeline",
@@ -3918,9 +3916,7 @@
         "GET"
       ],
       "module": "web.routes.activity.plugin_jobs",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/plugin-jobs/process",
@@ -5043,9 +5039,7 @@
         "GET"
       ],
       "module": "web.routes.meetings.speakers",
-      "consumers": [
-        "web"
-      ]
+      "consumers": []
     },
     {
       "path": "/api/speakers/{speaker_id}",

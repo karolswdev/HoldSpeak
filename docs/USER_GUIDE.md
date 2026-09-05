@@ -282,10 +282,11 @@ it land, teach once.
 **The transport** at the top carries the **Talk** button (the one primary)
 and the **Open** latch. The level meter shows audio input while you talk.
 
-**The utterance well** shows what you said as it lands. **LANDS IN** is one
-line naming the target and its last latency (e.g. `Claude Code · 41 MS`).
-The **FOCUSED APP** picker sits at its right; the **DRY RUN** toggle
-previews without typing.
+**The utterance well** shows what you said as it lands. You can also type
+text into the well and press **Ctrl+Enter** to land it (dry run when
+**DRY RUN** is on). **LANDS IN** is one line naming the target and its
+last latency (e.g. `Claude Code · 41 MS`). The **FOCUSED APP** picker
+sits at its right; the **DRY RUN** toggle previews without typing.
 
 When a result lands, the **RESULT** section shows the final text. **OK**
 accepts it. **Wrong** unfolds the teach row in place: pick the field,
@@ -293,7 +294,8 @@ type the correction with the mic, and choose **Teach**.
 
 **ENGINE** is one row naming the dictation model and its host (`THIS
 DEVICE` or a LAN address). When unset, its state reads **NOT SET** with a
-**Choose** verb that opens the Concierge in place. <!-- verify at build -->
+**Choose** verb that opens the Concierge as its own window (titled
+**Models**).
 
 **Details** (folded by default) shows the pipeline state register, the
 latency budget, and the raw trace.
@@ -531,7 +533,7 @@ duration, state). States: **SAVED** (intelligence ran), **OFF** with **Run
 intelligence** (has a transcript, never ran), **REC** (recording now),
 **NO TRANSCRIPT**. Empty: absent.
 
-**AGENTS** lists blocked sessions with **Answer**. Empty: absent.
+Agents live in their own window in the dock, not on the arrival.
 
 The capture bar at the foot carries **Talk**, **Develop a thought**, and
 **Record meeting**. At phone width, the compact **Go** menu opens
@@ -934,21 +936,19 @@ is missing, or `All set` when everything is configured.
 
 Each module is a row with its name, its state tokens, and **Open**:
 
-| Row | Example state tokens |
+| Row | State tokens |
 |---|---|
-| **MODELS** | `3 ENGINES · 7 GROUPS SET` or `NO DEFAULT` |
-| **CONNECTIONS** | `2 CONNECTED` |
-| **VOICE** | `LIVE · CLAUDE CODE` |
-| **MEETINGS** | `INTELLIGENCE OFF` |
-| **RHYTHM** | `NO LOOPS` |
-| **SOUNDS & PRESENCE** | `ON` |
-| **SYSTEM** | `THIS DEVICE · MESH OFF` |
-
-<!-- verify at build -->
+| **MODELS** | `NO DEFAULT` when unset; `N GROUPS SET · N ENGINES` when configured |
+| **CONNECTIONS** | `N CONNECTED` (absent at zero) |
+| **VOICE** | `LIVE` + the current target name |
+| **MEETINGS** | `INTELLIGENCE ON` or `INTELLIGENCE OFF` |
+| **RHYTHM** | `N LOOPS` or `NO LOOPS` |
+| **SOUNDS & PRESENCE** | `ON` or `OFF` |
+| **SYSTEM** | `THIS DEVICE` + `MESH ON` or `MESH OFF` |
 
 The **POSTURE** row carries a cycle control for the security posture
-(`YOLO`, `Normal`, `Secure`). The footer names the host chip and shows
-the PrefStatusBar receipt. Choose a row to open its module.
+(`YOLO`, `Normal`, `Secure`), stated once. The footer carries `THIS DEVICE`
+and a receipt (`WRITTEN hh:mm`). Choose a row to open its module.
 
 ## Models: the Concierge
 
@@ -1018,9 +1018,10 @@ this explicit verb.
 ### Download
 
 A catalog preset in the FOUND list that is not on disk shows **Download**
-with its file size. Choosing it starts the download with an inline progress
-token on the row. Dependent set rows show **WAITING** until the download
-completes. <!-- verify at build -->
+with its file size. Choosing it starts the download; the row shows a
+progress token (`received / total`, with the received part absent at zero).
+Dependent set rows stay **WAITING** and **Use these** stays disabled until
+the file is **READY**.
 
 ### The footer
 
