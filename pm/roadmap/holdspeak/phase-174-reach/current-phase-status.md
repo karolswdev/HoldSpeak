@@ -128,6 +128,18 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 
 ## Where we are
 
+**2026-09-05 20:45 — 2/11 DONE (01 design · 06 the decision); the wire
+LANDED for 02/03/04/05 (2cc6f07c: POST /api/mcp on the live runtime,
+hashed scoped credentials, origin on receipts, MCP-005), 07 (1dabc8f7:
+the Confluence connector, page listing typed unsupported_by_cli), 08/09
+(2175bf3d: the stdlib runner client + the mesh event); docs 10 drafted;
+the walk runner drafted (one guarded reversible write). Faces for the
+System module and the receipts/Door/Rhythm building; the runner's
+loopback proof filling. Then counsel-on-built → his-desk walk → suite →
+close → PR `--base feat/the-stewards-hand`. The 171 notify-loop P0 found
+by this phase's runner lane is paid on feat/the-heartbeat (d0f6d89f) and
+merged forward through 172 · 173 · 174.**
+
 **2026-09-05 19:35 — ACTIVATED, STACKED.** Under the standing goal the
 faces build to counsel-ratified boards and his word gates the MERGE (the
 decision recorded for 170–173). Eleven boards for D2 (a)–(d) on the canvas
