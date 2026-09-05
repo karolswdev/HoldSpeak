@@ -366,52 +366,54 @@ def _step_shade(page: Any, out_dir: Path, w: int, token: str,
                 report: WalkReport) -> None:
     """Open the system shade, shoot, record PROJECTS + brief rows."""
     face = "shade"
-    # The shade opens via the bell/missed button in the menu bar
-    # TODO: refine selector once the shade's PROJECTS section lands
-    shade_toggle = page.locator('.desk-shade-toggle, .desk-chrome-missed, [aria-label="Missed"]').first
+    # The shade opens via the AttentionBell (.desk-bell) in the chrome bar.
+    # Its aria-label is "Desk memory: N need attention" or "Desk memory".
+    shade_toggle = page.locator('.desk-bell').first
     if shade_toggle.count() > 0 and shade_toggle.is_visible():
         shade_toggle.click()
         page.wait_for_timeout(1500)
         _settle(page)
     else:
-        # Fallback: try the attention drawer
-        page.evaluate("""() => {
-            const toggle = document.querySelector('[aria-label="Missed"], .desk-tools-missed');
-            if (toggle) toggle.click();
-        }""")
-        page.wait_for_timeout(1500)
-        _settle(page)
+        report.surprises.append(f"SHADE: .desk-bell not found at {w}")
 
     shot = _shoot(page, out_dir, "walk-shade", w)
     report.shots.append({"face": face, "width": w, "path": str(shot)})
 
-    # PROJECTS section: caption + rows
-    # TODO: refine selectors once the PROJECTS section lands in SystemShade
+    # PROJECTS section: aria-label="Projects", data-testid="shade-projects"
+    # Project rows: data-testid="shade-project-row", .is-muted for muted
+    # Brief row: data-testid="shade-brief-row"
     projects_data = page.evaluate("""() => {
-        // Look for a section with "PROJECTS" caption in the shade
-        const shade = document.querySelector('.desk-shade');
-        if (!shade) return { caption: '---', rows: [], briefRow: '---' };
-        const groups = shade.querySelectorAll('.desk-shade-group, section');
-        let projectsCaption = '---';
-        const projectRows = [];
-        let briefRow = '---';
-        for (const group of groups) {
-            const label = group.getAttribute('aria-label') || '';
-            const headText = (group.querySelector('.desk-shade-section-caption, h3, .surface-section-head')?.textContent || '').trim();
-            if (label.includes('Projects') || label.includes('projects') || headText.includes('PROJECTS')) {
-                projectsCaption = headText || label;
-                const rows = group.querySelectorAll('.desk-shade-item, .surface-ledger-row');
-                for (const row of rows) {
-                    const text = (row.textContent || '').trim();
-                    if (text.includes('Monday brief') || text.includes('brief')) {
-                        briefRow = text.substring(0, 120);
-                    } else {
-                        projectRows.push(text.substring(0, 120));
-                    }
-                }
-            }
+        const section = document.querySelector('[data-testid="shade-projects"]');
+        if (!section) return { caption: '---', rows: [], briefRow: '---' };
+
+        // Caption: the <h4> inside the section ("Projects · N NEED YOU")
+        const h4 = section.querySelector('h4');
+        const caption = h4 ? h4.textContent.trim() : '---';
+
+        // Project rows: data-testid="shade-project-row"
+        const rowEls = section.querySelectorAll('[data-testid="shade-project-row"]');
+        const rows = [];
+        for (const row of rowEls) {
+            const name = (row.querySelector('strong')?.textContent || '').trim();
+            const token = (row.querySelector('.surface-token[data-chip]')?.textContent || '').trim();
+            const why = (row.querySelector('.desk-shade-why')?.textContent || '').trim();
+            const isMuted = row.classList.contains('is-muted');
+            const verb = (row.querySelector('.btn')?.textContent || '').trim();
+            rows.push({ name, token, why, muted: isMuted, verb });
         }
-        return { caption: projectsCaption, rows: projectRows, briefRow };
+
+        // Brief row: data-testid="shade-brief-row"
+        const briefEl = section.querySelector('[data-testid="shade-brief-row"]');
+        let briefRow = '---';
+        if (briefEl) {
+            const bName = (briefEl.querySelector('strong')?.textContent || '').trim();
+            const bToken = (briefEl.querySelector('.surface-token[data-chip]')?.textContent || '').trim();
+            const bDate = (briefEl.querySelector('.desk-shade-why')?.textContent || '').trim();
+            const bVerb = (briefEl.querySelector('.btn')?.textContent || '').trim();
+            briefRow = [bName, bToken, bDate, bVerb].filter(Boolean).join(' ');
+        }
+
+        return { caption, rows, briefRow };
     }""")
 
     report.facts.append(asdict(FaceFact(
@@ -421,11 +423,13 @@ def _step_shade(page: Any, out_dir: Path, w: int, token: str,
         verdict="DATA", why="real desk content",
     )))
 
-    for i, row_text in enumerate(projects_data["rows"]):
+    for i, row in enumerate(projects_data["rows"]):
+        muted_tag = " [MUTED]" if row.get("muted") else ""
+        observed = f"{row['name']} | {row['token']} | {row['why']} | {row['verb']}{muted_tag}"
         report.facts.append(asdict(FaceFact(
             face=face, field=f"project_row:{i}",
-            expected="(project name + count + WHY + Open)",
-            observed=row_text,
+            expected="(name + count + WHY + Open)",
+            observed=observed,
             verdict="DATA", why="real desk content",
         )))
 
@@ -436,24 +440,14 @@ def _step_shade(page: Any, out_dir: Path, w: int, token: str,
         verdict="DATA", why="real desk content",
     )))
 
-    # Check for MUTED rows
-    muted = page.evaluate("""() => {
-        const shade = document.querySelector('.desk-shade');
-        if (!shade) return [];
-        const items = shade.querySelectorAll('.desk-shade-item, .surface-ledger-row');
-        const muted = [];
-        for (const item of items) {
-            const text = (item.textContent || '').trim();
-            if (text.includes('MUTED')) muted.push(text.substring(0, 80));
-        }
-        return muted;
-    }""")
-    for i, m in enumerate(muted):
+    # Count muted rows separately for the report
+    muted_rows = [r for r in projects_data["rows"] if r.get("muted")]
+    if muted_rows:
         report.facts.append(asdict(FaceFact(
-            face=face, field=f"muted_row:{i}",
-            expected="(project) MUTED",
-            observed=m,
-            verdict="DATA", why="real desk content",
+            face=face, field="muted_count",
+            expected="(varies)",
+            observed=str(len(muted_rows)),
+            verdict="DATA", why="muted projects in shade",
         )))
 
     # Close shade
@@ -511,35 +505,30 @@ def _step_command_deck(page: Any, out_dir: Path, w: int,
     shot = _shoot(page, out_dir, "walk-command-deck", w)
     report.shots.append({"face": face, "width": w, "path": str(shot)})
 
-    # Read the PROJECTS group's entries
-    # The deck renders groups as .desk-deck-band captions and .desk-deck-row items
+    # Read the deck's grouped rows.
+    # Structure: #desk-palette-listbox > li > .desk-deck-band (group caption)
+    #            #desk-palette-listbox > li > .desk-deck-row (entry)
+    #   inside each .desk-deck-row: .desk-deck-label, .desk-deck-badge
+    #   (needs-you count chip, HS-171-07), .desk-deck-kind
     deck_data = page.evaluate("""() => {
-        const list = document.querySelector('.desk-deck-list, #desk-palette-listbox');
+        const list = document.getElementById('desk-palette-listbox');
         if (!list) return { groups: {} };
         const groups = {};
         let currentGroup = '';
-        const rows = list.querySelectorAll('.desk-deck-band, .desk-deck-row, li');
-        for (const el of rows) {
-            const band = el.querySelector('.desk-deck-band');
+        for (const li of list.children) {
+            const band = li.querySelector('.desk-deck-band');
             if (band) {
-                currentGroup = (band.textContent || '').trim();
+                currentGroup = band.textContent.trim();
+                if (!groups[currentGroup]) groups[currentGroup] = [];
                 continue;
             }
-            if (el.classList.contains('desk-deck-band')) {
-                currentGroup = (el.textContent || '').trim();
-                continue;
-            }
-            const row = el.classList.contains('desk-deck-row') ? el : el.querySelector('.desk-deck-row');
+            const row = li.querySelector('.desk-deck-row');
             if (!row) continue;
-            const label = row.querySelector('.desk-deck-label');
-            const kind = row.querySelector('.desk-deck-kind');
-            const badge = row.querySelector('.desk-deck-badge, .surface-token[data-chip]');
             if (!groups[currentGroup]) groups[currentGroup] = [];
-            groups[currentGroup].push({
-                label: (label?.textContent || '').trim(),
-                kind: (kind?.textContent || '').trim(),
-                badge: badge ? (badge.textContent || '').trim() : '',
-            });
+            const label = (row.querySelector('.desk-deck-label')?.textContent || '').trim();
+            const badge = (row.querySelector('.desk-deck-badge')?.textContent || '').trim();
+            const kind = (row.querySelector('.desk-deck-kind')?.textContent || '').trim();
+            groups[currentGroup].push({ label, badge, kind });
         }
         return { groups };
     }""")
