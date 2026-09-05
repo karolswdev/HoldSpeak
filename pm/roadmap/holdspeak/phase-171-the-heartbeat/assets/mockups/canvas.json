@@ -65,8 +65,16 @@
    "title": "Rhythm · sweep mid-run · 640"
   },
   {
-   "file": "RhythmCadenceQuiet.dc.html",
+   "file": "RhythmCadenceGenerating.dc.html",
    "x": 1520,
+   "y": 1400,
+   "w": 640,
+   "h": 491,
+   "title": "Rhythm · brief mid-generation · 640"
+  },
+  {
+   "file": "RhythmCadenceQuiet.dc.html",
+   "x": 2280,
    "y": 1400,
    "w": 640,
    "h": 492,
@@ -74,7 +82,7 @@
   },
   {
    "file": "RhythmPhone.dc.html",
-   "x": 2280,
+   "x": 3040,
    "y": 1400,
    "w": 393,
    "h": 595,
@@ -82,7 +90,7 @@
   },
   {
    "file": "SettingsHubHeartbeat.dc.html",
-   "x": 2800,
+   "x": 3560,
    "y": 1400,
    "w": 640,
    "h": 571,
