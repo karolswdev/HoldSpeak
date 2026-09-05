@@ -1,5 +1,11 @@
 """HS-159-06 real-hub Interview glass.
 
+RETIRED by HS-169-07: the interview (SetupCore: 4-step plan, suggestion
+cards, provider wizards, Review page) was replaced by the one-screen Door
+(web/src/features/project-room/door/). The replacement rig is
+test_hs169_door_glass.py. The blank/abandon legs are ported to
+test_hs169_door_legs_glass.py.
+
 The browser receives the production bundle and talks to a real
 MeetingWebServer.  The interview setup flow -- answer two questions,
 receive native suggestions seeded from real desk facts, select/test
@@ -140,6 +146,7 @@ def _seed_desk_facts(tmp_path: Path) -> None:
 # ── Tests ─────────────────────────────────────────────────────────
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
@@ -386,6 +393,7 @@ def test_interview_walk(
         reset_database()
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); see test_hs169_door_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 def test_interview_face_shots(
@@ -450,6 +458,7 @@ def test_interview_face_shots(
         reset_database()
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); blank leg ported to test_hs169_door_legs_glass.py")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 def test_blank_leg(
@@ -542,6 +551,7 @@ def test_blank_leg(
         reset_database()
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview (SetupCore, suggestion cards, wizards, Review page); abandon leg ported to test_hs169_door_legs_glass.py")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 def test_abandon_leg(

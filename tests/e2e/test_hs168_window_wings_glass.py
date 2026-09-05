@@ -1,8 +1,12 @@
 """HS-168-05 -- window wings glass: a 70-character project name must NOT
-push the wings (TIMELINE, DECISIONS, SEARCH, ASK) past the window edge.
+push the wings (ROOM, HISTORY) past the window edge.
 
 The title shrinks with ellipsis; the wings bounding box stays inside both
 the head and the window.  Parametrized at 1440 and 393.
+
+HS-169-07 selector edit: wings changed from TIMELINE/DECISIONS/SEARCH/ASK
+to ROOM/HISTORY; wait selector changed from project-room-name to room-body
+(the 169 Room has no project-room-name test-id).
 """
 from __future__ import annotations
 
@@ -92,9 +96,10 @@ def test_wings_inside_head(
             project_id = _create_project(page)
             _open_project_room(page, url, project_id)
 
-            # Wait for room name to appear
-            room_name = page.get_by_test_id("project-room-name")
-            room_name.wait_for(timeout=15000)
+            # Wait for the 169 Room body to appear (the 169 Room has
+            # no project-room-name test-id; room-body is the anchor).
+            room_body = page.get_by_test_id("room-body")
+            room_body.wait_for(timeout=15000)
 
             _settle(page)
 
@@ -144,13 +149,19 @@ def test_wings_inside_head(
                     f"({head_box['x']:.0f})"
                 )
 
-            # Title must be truncated: scrollWidth > clientWidth (ellipsis fired)
+            # HS-169-07: with only ROOM + HISTORY wings (2 instead of 4),
+            # the title may fit without truncation at 1440. The primary
+            # invariant (wings inside head/window) is asserted above.
+            # Truncation is a secondary signal that the name is long
+            # enough to matter -- assert it only at 393 where the head
+            # is narrow enough to force it.
             title_scroll = title.evaluate("el => el.scrollWidth")
             title_client = title.evaluate("el => el.clientWidth")
-            assert title_scroll > title_client, (
-                f"Title not truncated: scrollWidth={title_scroll}, "
-                f"clientWidth={title_client} -- ellipsis did not fire"
-            )
+            if width < 560:
+                assert title_scroll > title_client, (
+                    f"Title not truncated at {width}: scrollWidth={title_scroll}, "
+                    f"clientWidth={title_client} -- ellipsis did not fire"
+                )
 
             _assert_clean(page, errors)
             browser.close()

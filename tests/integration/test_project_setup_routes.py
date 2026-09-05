@@ -44,6 +44,27 @@ OWNER = Principal(PrincipalKind.OWNER, "route-test-owner")
 # ── Fixtures ──────────────────────────────────────────────────────────
 
 
+class _FakeGitHubAdapter:
+    """HS-169-07: meeting proposals retired; use a GitHub adapter mock
+    so _github_candidates returns at least one template proposal."""
+
+    def connection_status(self, principal):
+        return {"state": "connected", "display": {"account": "test"}}
+
+    def snapshot(self, principal, spec):
+        return [
+            {"number": 1, "title": "Test PR", "state": "open",
+             "headRefOid": "abc123", "updatedAt": "2026-09-01T00:00:00Z"},
+        ]
+
+
+def _fake_fetcher(principal, *, connector_id, query_kind, query):
+    return [
+        {"key": "ITEM-1", "title": "Test Item", "status": "Open",
+         "due_at": "2026-09-10", "updated_at": "2026-09-01T00:00:00Z"},
+    ]
+
+
 @pytest.fixture
 def rig(tmp_path, monkeypatch):
     """Full route rig: project-setup + watches + projects routers."""
@@ -52,11 +73,12 @@ def rig(tmp_path, monkeypatch):
     monkeypatch.setattr(hsdb, "get_database", lambda *a, **k: db)
 
     project_svc = ProjectService(db)
-    watch_svc = WatchService(db)
+    watch_svc = WatchService(db, snapshot_fetcher=_fake_fetcher)
     setup_svc = ProjectSetupService(
         db,
         project_service=project_svc,
         watch_service=watch_svc,
+        github_adapter=_FakeGitHubAdapter(),
     )
 
     ctx = WebContext(
@@ -603,11 +625,21 @@ class TestReSuggestIdempotence:
             f"Selected state must survive; got: {original['state']}"
         )
 
-        # No duplicate subject keys
-        keys = [
-            (p["provider_id"], p.get("spec", {}).get("subject", {}).get("kind", ""))
-            for p in second_proposals
-        ]
+        # No duplicate dedup keys (HS-169-07: GitHub proposals share
+        # subject.kind; the real dedup key is provider_id:template_id for
+        # provider proposals, provider_id:kind:name for native ones).
+        def _dedup_key(p):
+            pid = p.get("provider_id", "")
+            rationale = p.get("rationale") or {}
+            tmpl = rationale.get("template_id", "")
+            if tmpl:
+                return f"{pid}:{tmpl}"
+            spec = p.get("spec") or {}
+            kind = spec.get("subject", {}).get("kind", "")
+            name = spec.get("name", "") or p.get("name", "")
+            return f"{pid}:{kind}:{name}"
+
+        keys = [_dedup_key(p) for p in second_proposals]
         assert len(keys) == len(set(keys)), (
-            f"Duplicate subject keys: {keys}"
+            f"Duplicate dedup keys: {keys}"
         )

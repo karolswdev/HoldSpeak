@@ -35,7 +35,9 @@ def test_basic_value_precedes_optional_runs_on_setup() -> None:
     first_words = (_REPO / "web/src/desk/components/FirstWords.tsx").read_text()
     assert "Dictate one sentence" in first_words
     basic_value = first_words.index("Keep as Note")
-    optional_setup = first_words.index('openSurfaceOr("configure-setup", "/setup")')
+    # HS-169-07: surface key changed from configure-setup to project-setup;
+    # fallback URL changed from /setup to / (the Door is a desk surface).
+    optional_setup = first_words.index('openSurfaceOr("project-setup", "/")')
     assert basic_value < optional_setup
     # Setup remains a failure-only recovery door after the first-value actions;
     # Models/destination choice no longer competes with the initial sentence.

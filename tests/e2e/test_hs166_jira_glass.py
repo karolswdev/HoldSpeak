@@ -1,5 +1,11 @@
 """HS-166-04 real-hub Jira Watch glass.
 
+RETIRED by HS-169-07: the interview (SetupCore, suggestion cards,
+provider wizards) was replaced by the one-screen Door. The Jira setup
+walk pinned the retired Jira wizard within the old interview DOM.
+The replacement rig is test_hs169_door_glass.py (which covers Jira
+picker + defaults in the Door).
+
 FIXTURE SEAM: MeetingWebServer(acli_runner=...) injects a fake runner
 into JiraProviderAdapter so the booted hub uses canned acli responses.
 Everything above the runner stays real: routes, services, adapter
@@ -318,6 +324,7 @@ def _shot(page: Any, name: str, width: int, *, locator: Any = None) -> Path:
 # ── Tests ─────────────────────────────────────────────────────────
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview + Jira wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])

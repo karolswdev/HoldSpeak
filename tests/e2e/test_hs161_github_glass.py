@@ -1,7 +1,12 @@
 """HS-161-06 real-hub GitHub Watch glass.
 
-Four legs: the stopwatch (fixture runner), the auth-degraded leg,
-the evaluation leg, and the real-metal leg.
+RETIRED by HS-169-07: the interview (SetupCore, suggestion cards,
+provider wizards) was replaced by the one-screen Door. The stopwatch
+walk, auth-degraded, and wizard-states legs pin the retired interview
+and GitHub wizard DOM. The evaluation-delta leg exercises a live
+capability (watch baseline + snapshot delta + review) through the
+retired interview entry point; noted in the close ledger for
+re-pointing. The replacement rig is test_hs169_door_glass.py.
 
 FIXTURE SEAM: MeetingWebServer(gh_runner=...) injects a fake runner
 into GitHubProviderAdapter and WatchService snapshot_fetcher so the
@@ -262,6 +267,7 @@ def _open_project_room(page: Any, url: str, project_id: str) -> None:
 # ── Leg 1: THE STOPWATCH ─────────────────────────────────────────
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
@@ -512,6 +518,7 @@ def test_stopwatch_walk(
 # ── Leg 2: THE AUTH-DEGRADED LEG ──────────────────────────────────
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
@@ -663,6 +670,7 @@ def test_auth_degraded(
 # ── Leg 3: THE EVALUATION LEG ────────────────────────────────────
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview entry point this leg used for project creation; evaluation/delta review is a live capability noted in the close ledger for re-pointing")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
@@ -910,6 +918,7 @@ def _gh_real_available() -> bool:
 # ── Leg 5: THE WIZARD-STATES LEG ──────────────────────────────────
 
 
+@pytest.mark.skip(reason="HS-169-07 retired the interview + GitHub wizard (SetupCore, suggestion cards, wizards); see test_hs169_door_glass.py for the replacement rig")
 @pytest.mark.e2e
 @pytest.mark.requires_meeting
 @pytest.mark.parametrize("width", [1440, 393])
