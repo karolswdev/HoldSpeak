@@ -27,6 +27,11 @@ split `$FILES` — wrap captures in `bash -c`.
 once (reset 12:20pm Denver); every lane was resumed by message and
 finished; the tree compiled throughout.
 
+**Counsel on the built 173: RATIFY-W-C, paid** (the cooldown token in
+hours under a day; the nudge text bounded; the vacuous capture redone).
+Its questions, ruled: hours in the first day; `Open` on a bottleneck row
+opens the People card; `PER-NUDGE APPROVAL` stays a token.
+
 **Merge order stays his:** #553 → #554 → #555 → #556.
 
 ## Muad'Dib XI — 2026-09-05 17:10, the Loop Closes BUILT
