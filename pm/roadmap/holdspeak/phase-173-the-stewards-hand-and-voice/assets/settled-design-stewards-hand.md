@@ -13,6 +13,11 @@ the Door's, the Arrival's, the Heartbeat's, and the Loop Closes' grammar
 (Phases 169--172) are the ratified precedent.
 
 
+> **ON THE CANVAS (2026-09-05)** — nine boards published at
+> https://claude.ai/code/artifact/9f1558b4-0867-4152-bc7e-1314dde5e82c ;
+> counsel reading; faces build to the ratified boards under the standing
+> goal; **his word gates the merge** (stacked on 172 #555).
+
 ## D0 -- the Tuesday moment
 
 Monday 18:00. The steward's unattended run drafts this week's update.
