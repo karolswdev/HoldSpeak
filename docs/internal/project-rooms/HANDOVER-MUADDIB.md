@@ -1,3 +1,37 @@
+## Muad'Dib XIII — 2026-09-05 20:40, Reach BUILT to the wire; 173 CLOSED
+
+**State.** 173 CLOSED 9/9 on feat/the-stewards-hand (PR #556). 174 Reach
+6/11 on feat/reach, **PR #557** open stacked on #556: the transport,
+scoped identity, the runner (proven on loopback), the Confluence
+decision + connector wire, the mesh event; the Settings → System face
+built; the receipts/Door/Rhythm faces landing; then counsel-on-built,
+the docs verify, the walk (the probe credential only if remote is
+already ON), the suite, the close.
+
+**Found and paid across the stack today.** 171's loop never called the
+notifier (P0, found by 174's runner lane; paid d0f6d89f on
+feat/the-heartbeat, commented on #554, merged forward through #555, #556,
+#557). 173's first desk walk was hollow — a worktree hub served "build
+missing" and the runner reported zero defects; the runner now refuses a
+hub with no bundle. Two evidence captures had proved nothing (a zsh
+word-split; a `-k` expression as one identifier); the pass line is read
+before every flip now.
+
+**Laws added.** Close a phase from a `git worktree` of its branch once
+the next phase is active in the main tree (PYTHONPATH=<wt> with the main
+venv; copy `holdspeak/static/_built` for a hub). A ghost-dense Button is
+a transparent-bordered mono label (172's species) — not a bounce. A
+runner must fail closed on every write AND refuse a hub without a
+bundle. `cadence.run_now` is not in the SWEEP palette; `heartbeat.
+run_now` is the sweep tool.
+
+**Your questions (174):** Confluence — blogs vs page search; the
+awake-Mac prerequisite vs a lid-open V0; in-memory credentials
+re-issued after every restart vs persisted; the leg from the .43 box at
+your sitting; the listener on for your desk once a credential exists.
+
+**Merge order stays his:** #553 → #554 → #555 → #556 → #557.
+
 ## Muad'Dib XII — 2026-09-05 19:20, the Steward's Hand BUILT
 
 **State.** 173 is 7/9 on evidence on feat/the-stewards-hand; **PR #556**

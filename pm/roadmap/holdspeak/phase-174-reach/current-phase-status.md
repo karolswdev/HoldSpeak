@@ -128,6 +128,8 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 
 ## Where we are
 
+**2026-09-05 20:40 — 6/11 DONE; PR #557 OPEN** (`--base feat/the-stewards-hand`).
+
 **2026-09-05 20:35 — 4/11 DONE (01 · 06 · 08 · 09).** The runner is proven
 on this machine (the real hub on loopback, a SWEEP credential, receipts
 origin=remote, the owner token refused off-loopback); the .43 leg waits
