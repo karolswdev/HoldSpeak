@@ -132,6 +132,17 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
   his hub (run-now on his real Rooms; a banner at a real edge is his to
   see) → docs markers → counsel-on-built → close → PR stacked on #553.
 
+- **171 at 09:50 — 6/10 on evidence** (02 cadence · 03 aggregate · 04
+  shade + badge · 06 brief · 07 ⌘K · 09 docs), counsel-on-built
+  RATIFY-W-C paid; the first walk on his real desk found his Monday
+  brief was the kernel ledger (`1839 THINGS · AUG 19`) — the SOURCE is
+  fixed (human items only; `LedgerSummary` no face counts); a `PROJECTS`
+  caption over nothing → the brief under its own `BRIEF` caption. 05
+  keeps its click-to-open box open (osascript; the bundle); 01/08/10 are
+  his word. The second walk runs; then the full suite; then
+  `gh pr create --base feat/the-great-pass` (stacked on #553). Evidence
+  captures for 01/05/08/10 wait for his word.
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on
