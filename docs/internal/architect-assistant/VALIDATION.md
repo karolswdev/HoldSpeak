@@ -51,3 +51,19 @@ TypeScript, tokens, architecture guard and bundle gate were checked again on the
 ```
 
 Screenshots were inspected at both widths. Logs remain under the integration worktree’s ignored `.tmp/delivery-*`; refreshed assertions and screenshots are committed under `assets/`. The earlier failed browser fixture, draft-remount failure, and canon failures were corrected and rerun. Scripted-model success establishes mechanics; live-model recommendation quality and physical audio remain outside this verification. GitHub CI status is available on the delivery PRs and is not inferred from these local results.
+
+## Thread and published contract regression
+
+The generated HTTP and MCP documentation was refreshed with the repository generators, in an isolated Python home. It now records 664 HTTP route entries and 222 MCP tools across 40 families, with the Project palette at 57 tools.
+
+Command: `python docs/internal/architect-assistant/proof/run_tests.py -q --tb=short tests/unit/test_thread_*.py tests/unit/test_mcp_sidecar_doc_drift.py tests/unit/test_api_surface.py`. Actual output:
+
+```text
+........................................................................ [ 27%]
+........................................................................ [ 55%]
+........................................................................ [ 83%]
+..........................................                               [100%]
+258 passed in 102.76s (0:01:42)
+```
+
+This overlaps the earlier Thread coverage; test counts should not be added as a unique total. The existing preview also returned HTTP 200 at closeout, and its active SQLite conversation was backed up again with `integrity_check = ok`, without a runtime restart.

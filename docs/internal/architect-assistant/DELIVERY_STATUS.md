@@ -2,7 +2,7 @@
 
 Status: initial manual increment implemented and integrated with the desktop changes. Updated 2026-09-05. Owner authorization: “I want you to drive the delivery of this” and “run it to full completion.” Delivery branch: `feat/repeatable-interview-delivery`, based on desktop merge `860ad7d2`.
 
-[Integration record](INTEGRATION.md) and [final verification](VALIDATION.md) cover the shipped scope, repaired web checks, and exact limits. Desktop PR #528 and prerequisite repair #560 are merged. This Interview increment is delivered through its own PR; the running preview and its conversation remain intact. The broader SRS and daily-use pilot remain future work.
+[Integration record](INTEGRATION.md) and [final verification](VALIDATION.md) cover the shipped scope, repaired web checks, and exact limits. Desktop PR #528 and prerequisite repair #560 are merged. This Interview increment is delivered through [PR #561](https://github.com/karolswdev/HoldSpeak/pull/561); the running preview and its conversation remain intact. The broader SRS and daily-use pilot remain future work.
 
 ## Reviewable behavior
 

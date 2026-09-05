@@ -1,6 +1,6 @@
 # Architect assistant: SRS and execution recipes
 
-Status: target specification with an implemented first Interview increment under validation. Version 0.2, 2026-09-05. See [delivery status and evidence](DELIVERY_STATUS.md) for implemented behavior and remaining work.
+Status: target specification with an implemented first manual Interview increment. Version 0.2, 2026-09-05. See [delivery status and evidence](DELIVERY_STATUS.md) for implemented behavior and remaining work.
 
 HoldSpeak shall help a Senior Software Architect preserve context, make and recover decisions, follow through on commitments, and direct agent work during an organizational transformation. Success means useful work completed and time recovered across an ordinary working week.
 
@@ -69,4 +69,4 @@ R0–R2 form the first owner pilot. R3 begins with bounded preparation and analy
 
 The interview can discuss every section at R1 and keep useful drafts/manual recipes or precise handoffs. Actual scheduling and agent effects retain their R2/R3 gates. R0 is an implementation/runtime proof obligation; the owner is not forced through every diagnostic or section before capturing a goal and seeing a useful first result.
 
-No portfolio workspace or transformation initiative was created by writing this package. The first DP-00A Interview path is implemented on its delivery branch; runtime attestation, owner acceptance, and later release gates remain open. Current proof and reproduction instructions are in [delivery status](DELIVERY_STATUS.md).
+No portfolio workspace or transformation initiative was created by writing this package. The first DP-00A Interview path is delivered through [PR #561](https://github.com/karolswdev/HoldSpeak/pull/561); runtime attestation, owner acceptance, and later release gates remain open. Current proof and reproduction instructions are in [delivery status](DELIVERY_STATUS.md).
