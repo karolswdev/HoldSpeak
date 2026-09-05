@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 170
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** HS-170-05, HS-170-06
 - **Unblocks:** -
 - **Owner:** unassigned
@@ -18,7 +18,7 @@ Every phase closes on the gates.
 
 ## Acceptance criteria
 
-- [ ] Zero unexplained branch-new failures; counsel RATIFY; final-summary; PR; merge on his word.
+- [ ] Zero unexplained branch-new failures; counsel RATIFY; final-summary; PR; merge on his word. (2026-09-05 03:20: counsel RATIFY-W-C on the built phase — conditions being paid; final-summary DRAFT written; the suite re-runs after the last condition; the PR opens then; the merge is his.)
 
 ## Test plan
 
