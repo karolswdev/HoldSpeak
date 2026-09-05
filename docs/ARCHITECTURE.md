@@ -501,6 +501,59 @@ checks the receipt ledger before proposing again. A recent
 `steward.effect.github_comment` on the same PR and reviewer within the cooldown
 window suppresses the proposal.
 
+### Reach
+
+<!-- verify at build --> The hub's Streamable HTTP route (`POST /api/mcp`)
+exposes the same `handle_message` entry point that the stdio sidecar and
+the web runtime's in-process fetcher use. One implementation, three
+transports. The remote path composes on the web runtime's live services
+(the conductor, the wired fetcher, the scheduler), not the sidecar's bare
+instances.
+
+```mermaid
+sequenceDiagram
+  participant C as .43 MCP client
+  participant R as POST /api/mcp<br/>(web_server.py)
+  participant AG as Auth gate<br/>(_web_auth_gate)
+  participant HM as handle_message<br/>(server.py)
+  participant CS as cadence_run_now<br/>(live HeartbeatService)
+  participant ST as project_run_steward<br/>(live ProjectService)
+  participant PO as poll<br/>(project_get_steward_run)
+  participant KO as Kernel<br/>(receipt, origin=remote)
+
+  C->>R: Bearer credential
+  R->>AG: extract token
+  alt owner web token + non-loopback
+    AG--xR: 403 (OWNER refused off-loopback)
+  else agent credential
+    AG->>HM: AGENT principal + palette
+  end
+  HM->>CS: cadence_run_now
+  CS->>KO: sweep receipts (origin=remote)
+  CS-->>HM: sweep result
+  HM-->>C: JSON-RPC response
+  C->>R: project_run_steward(project=gov)
+  R->>HM: dispatch
+  HM->>ST: run steward
+  ST-->>HM: run_id (prompt return)
+  HM-->>C: run_id
+  loop poll until terminal
+    C->>R: project_get_steward_run(run_id)
+    R->>PO: check state
+    PO-->>C: status
+  end
+  ST->>KO: steward receipts (origin=remote)
+```
+
+<!-- verify at build --> The Confluence adapter sits beside the Jira adapter.
+Both use the `(site, email)` identity and the switch-and-verify pattern.
+The connector pack (`acli_confluence.py`) names a read-only allowlist:
+`auth status`, `auth switch`, `space list`, `space view`, `page view`,
+`blog list`, `blog view`. No REST call is made; the CLI holds the
+credentials. The `ConfluenceWatchSource` watches blog posts via `blog list`
+and pages by known ID via `page view --id`. Entities follow the same shape
+as Jira (id, title, url, status, timestamps).
+
 ### The scheduled recording conductor
 
 The hub can start a recording on its own at a scheduled time. The scheduled

@@ -258,6 +258,32 @@ deployment revision (for example `192.168.1.43` on the LAN, or a configured
 cloud endpoint). The model's display name and host appear in the update
 footer's egress chip. The deterministic fallback has no egress.
 
+**The remote boundary.** <!-- verify at build --> The Streamable HTTP listener
+(`POST /api/mcp`) is opt-in and off by default. When enabled, it accepts
+connections on the tailnet address only. An `OWNER` principal is never derived
+from a non-loopback request on this route; the owner's web token presented from
+a remote address returns 403. `X-Forwarded-For` is never read for principal
+derivation on any route.
+
+Scoped credentials carry a palette (which tool families the caller may invoke)
+and a TTL (capped at 30 days). The hub stores `sha256(token)` at rest and
+compares hashes in constant time. The plaintext exists only in the issue
+response, shown once. Credentials are in-memory; a hub restart clears them and
+the owner re-issues. Every remote tool call writes a receipt with `origin:
+remote`, the caller's identity label, and the caller's tailnet IP. The receipt
+persists in the kernel journal.
+
+No relay: the two machines speak directly on the tailnet. No cloud proxy, no
+intermediate server. The `.43` runner triggers the hub's sweep and drafter; it
+does not perform inference itself (the hub calls the `.43` model through the
+existing inference runner, and the response returns to the hub).
+
+**The Confluence connector's boundary.** <!-- verify at build --> The connector
+uses the `acli` CLI with a read-only allowlist (`auth status`, `auth switch`,
+`space list`, `space view`, `page view`, `blog list`, `blog view`). No
+Confluence REST API call is ever made; the CLI holds the credentials. The
+`(site, email)` identity and switch-and-verify pattern are the same as Jira.
+
 **Residual risk:** if the machine is compromised at the file level and full-disk
 encryption is off, transcripts, voice embeddings, and the activity ledger are
 readable. We accept this for the local-first, single-user model and **recommend

@@ -1054,8 +1054,40 @@ coexist.
 Provider writes are not available through MCP. The provider.* tools
 are read-only (list, connection status, bounded discovery, validation).
 
-Remote MCP transport (MCP-008) is deferred. The sidecar speaks stdio
-only; no network listener is opened.
+### The transports
+
+<!-- verify at build --> The MCP protocol exposes `handle_message` over three
+transports. All three announce the same protocol version.
+
+| Transport | Entry point | Principal | Palette |
+|---|---|---|---|
+| **stdio** (the sidecar) | `server.py` stdio loop | `OWNER` | unrestricted |
+| **in-process** (the web runtime's wired fetcher) | direct call to `handle_message` | inherited from the web session | inherited |
+| **Streamable HTTP** (the remote path) | `POST /api/mcp` on the hub | `AGENT` (from a scoped credential; `OWNER` refused off-loopback) | from the credential's palette |
+
+The Streamable HTTP listener is opt-in (off by default). When enabled, it
+accepts connections on the hub's tailnet address. A non-loopback request
+presenting the owner's web token is refused with 403. `X-Forwarded-For` is
+never read for principal derivation.
+
+Scoped credentials carry a palette and a TTL. The palette names which tool
+families the caller may invoke; calls outside the palette return a typed
+capability error. The TTL caps at 30 days. The token is shown once at issue
+time; the hub stores the hash.
+
+### Confluence provider tools
+
+<!-- verify at build --> The Confluence connector adds provider tools beside
+the existing Jira and GitHub tools:
+
+| Tool | Family | What it does |
+|---|---|---|
+| `provider_confluence_connections` | `project` | List Confluence connections |
+| `provider_confluence_discover` | `project` | Discover spaces on a connected site |
+| `provider_confluence_validate_space` | `project` | Validate a space key |
+
+The tools follow the same read-only provider pattern as `provider_jira_*` and
+`provider_github_*`. No provider writes are available through MCP.
 
 ### The fetcher seam
 
