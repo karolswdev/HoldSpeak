@@ -1,0 +1,111 @@
+{
+ "artboards": [
+  {
+   "file": "Main.dc.html",
+   "x": 0,
+   "y": 0,
+   "w": 382,
+   "h": 566,
+   "title": "Shade · PROJECTS · 3 need you · 1440"
+  },
+  {
+   "file": "ShadeProjectsQuiet.dc.html",
+   "x": 500,
+   "y": 0,
+   "w": 382,
+   "h": 375,
+   "title": "Shade · quiet (no Rooms) · 1440"
+  },
+  {
+   "file": "ShadePhone.dc.html",
+   "x": 1000,
+   "y": 0,
+   "w": 379,
+   "h": 505,
+   "title": "Shade · PROJECTS · 393"
+  },
+  {
+   "file": "Notification.dc.html",
+   "x": 0,
+   "y": 720,
+   "w": 360,
+   "h": 168,
+   "title": "macOS notification · needs you + quiet"
+  },
+  {
+   "file": "DockBadge.dc.html",
+   "x": 500,
+   "y": 720,
+   "w": 501,
+   "h": 152,
+   "title": "Dock · badge + zero state"
+  },
+  {
+   "file": "CommandDeckProjects.dc.html",
+   "x": 0,
+   "y": 1050,
+   "w": 418,
+   "h": 268,
+   "title": "Cmd+K · PROJECTS group · 1440"
+  },
+  {
+   "file": "RhythmCadence.dc.html",
+   "x": 0,
+   "y": 1400,
+   "w": 640,
+   "h": 482,
+   "title": "Rhythm · cadence module · active sweep · 640"
+  },
+  {
+   "file": "RhythmCadenceRunning.dc.html",
+   "x": 760,
+   "y": 1400,
+   "w": 640,
+   "h": 492,
+   "title": "Rhythm · sweep mid-run · 640"
+  },
+  {
+   "file": "RhythmCadenceQuiet.dc.html",
+   "x": 1520,
+   "y": 1400,
+   "w": 640,
+   "h": 492,
+   "title": "Rhythm · quiet hours · 640"
+  },
+  {
+   "file": "RhythmPhone.dc.html",
+   "x": 2280,
+   "y": 1400,
+   "w": 393,
+   "h": 595,
+   "title": "Rhythm · 393"
+  },
+  {
+   "file": "SettingsHubHeartbeat.dc.html",
+   "x": 2800,
+   "y": 1400,
+   "w": 640,
+   "h": 571,
+   "title": "Settings · hub with heartbeat · 640"
+  }
+ ],
+ "annotations": [
+  {
+   "id": "read-me",
+   "x": 0,
+   "y": -100,
+   "w": 600,
+   "text": "Phase 171 The Heartbeat — story 01 the design: the shade's PROJECTS section, the macOS notification, the dock badge, PROJECTS in Cmd+K. D2 faces a, b, c, e from the settled design."
+  },
+  {
+   "id": "rhythm-lane",
+   "x": 0,
+   "y": 1300,
+   "w": 760,
+   "text": "Phase 171 The Heartbeat — D2 faces d+f: the Rhythm cadence module (sweep, brief, notify) and the hub row update. Three states: idle, mid-run, quiet hours."
+  }
+ ],
+ "launch": {
+  "view": "canvas"
+ }
+}

@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+  </style>
+</helmet>
+
+<!-- ═══ SYSTEM SHADE — QUIET state: no Rooms need him ═══ -->
+<!-- PROJECTS section is ABSENT (rule A.8: no counters of zero). -->
+<!-- Monday brief row still present as its own section. -->
+<div style="width:380px; display:flex; flex-direction:column; border:1px solid #2a2e3e; border-radius:2px; background:#15171d; box-shadow:0 8px 32px rgba(0,0,0,0.5); backdrop-filter:blur(12px);">
+
+  <!-- ─── SHADE HEAD ─── -->
+  <div style="display:flex; align-items:baseline; gap:10px; padding:12px 14px 6px; background:#1c1f27; border-radius:1px 1px 0 0;">
+    <span style="font:650 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#767e8d;">Missed</span>
+    <span style="flex:1;"></span>
+    <button type="button" style="padding:2px 6px; border:0; border-radius:2px; background:none; color:#767e8d; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Desk memory</button>
+  </div>
+
+  <!-- ═══ BRIEF SECTION (standalone when no PROJECTS) ═══ -->
+  <div style="padding:4px 8px 8px;">
+    <h4 style="margin:0; padding:6px 6px 4px; font:650 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#767e8d;">BRIEF</h4>
+
+    <!-- Monday brief row -->
+    <div style="display:grid; grid-template-columns:24px minmax(0, 1fr); gap:2px 8px; padding:7px 6px 9px; border-radius:2px;">
+      <span style="text-align:center; padding-top:1px; font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&#9776;</span>
+      <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+        <strong style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Monday brief</strong>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">4 THINGS</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">SEP 04</span>
+          <span style="flex:1;"></span>
+          <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Open</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ NEEDS YOU SECTION (existing) ═══ -->
+  <div style="padding:4px 8px 8px; border-top:1px solid rgba(42,46,62,0.5);">
+    <h4 style="margin:0; padding:6px 6px 4px; font:650 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#767e8d;">Needs you <b style="font-weight:400; color:#9ba2b0;">&middot; 1</b></h4>
+
+    <div style="display:grid; grid-template-columns:24px minmax(0, 1fr); gap:2px 8px; padding:7px 6px 9px; border-radius:2px; background:rgba(42,46,62,0.25);">
+      <span style="text-align:center; padding-top:1px; color:#767e8d;">&#8856;</span>
+      <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+        <strong style="font:600 13px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; overflow-wrap:anywhere;">people_note_create held</strong>
+        <small style="color:#9ba2b0; font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;">waiting 3 min</small>
+        <span style="display:flex; align-items:center; gap:6px; margin-top:5px;">
+          <button type="button" style="display:inline-flex; align-items:center; height:24px; padding:0 10px; border:1px solid #a86e4a; border-radius:0; background:#a86e4a; color:#f2f3f5; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; box-shadow:inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 2px rgba(0,0,0,0.3); cursor:pointer;">Approve</button>
+          <button type="button" style="display:inline-flex; align-items:center; height:24px; padding:0 10px; border:0; border-radius:2px; background:rgba(42,46,62,0.4); color:#f2f3f5; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Deny</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FINISHED SECTION (existing) ═══ -->
+  <div style="padding:4px 8px 8px; border-top:1px solid rgba(42,46,62,0.5);">
+    <h4 style="margin:0; padding:6px 6px 4px; font:650 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#767e8d;">Finished <b style="font-weight:400; color:#9ba2b0;">&middot; 2</b></h4>
+
+    <div style="display:grid; grid-template-columns:24px minmax(0, 1fr); gap:2px 8px; padding:7px 6px 9px; border-radius:2px;">
+      <span style="text-align:center; padding-top:1px; color:#767e8d;">&#10003;</span>
+      <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+        <strong style="font:600 13px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; overflow-wrap:anywhere;">Schema reconciled</strong>
+        <small style="color:#9ba2b0; font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;">2 hr ago</small>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:24px minmax(0, 1fr); gap:2px 8px; padding:7px 6px 9px; border-radius:2px;">
+      <span style="text-align:center; padding-top:1px; color:#767e8d;">&#10003;</span>
+      <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+        <strong style="font:600 13px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; overflow-wrap:anywhere;">Watch evaluated</strong>
+        <small style="color:#9ba2b0; font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace;">4 hr ago</small>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
