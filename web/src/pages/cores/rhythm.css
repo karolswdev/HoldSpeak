@@ -1,5 +1,13 @@
 /* HS-171-02 — the Rhythm face layout (CadenceCore.tsx). */
 
+/* Display headline: accent when the sweep runs, muted when not */
+.surface-display[data-tone="accent"] {
+  color: var(--accent);
+}
+.surface-display[data-muted] {
+  color: var(--text-muted);
+}
+
 /* Fact token rows below each ledger section */
 .rhythm-facts {
   display: flex;

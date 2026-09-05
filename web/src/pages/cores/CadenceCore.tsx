@@ -253,14 +253,16 @@ export function CadenceCore({ hero }: CoreProps) {
 
   return (
     <>
-      {renderHeroSlot(hero, null, <>{sweepLabel}</>)}
+      {renderHeroSlot(hero, null, null)}
 
-      {/* Display headline (accent step, 26/650) */}
+      {/* Display headline: accent when the sweep runs, muted when not */}
       <span
         className="surface-display"
         data-testid="rhythm-headline"
+        data-tone={settings.sweep_every_minutes > 0 ? "accent" : undefined}
+        data-muted={settings.sweep_every_minutes <= 0 || undefined}
       >
-        {sweepLabel}
+        {settings.sweep_every_minutes > 0 ? sweepLabel : "Not running"}
       </span>
 
       {/* ── SWEEP row ──────────────────────────────────────────── */}
@@ -526,11 +528,11 @@ export function CadenceCore({ hero }: CoreProps) {
       <SurfaceFooter
         egress={<EgressChip />}
         receipt={
-          writtenAt ? (
-            <span className="surface-token" data-chip data-muted>
-              WRITTEN {fmtEpoch(writtenAt)}
-            </span>
-          ) : null
+          <span className="surface-token" data-chip data-muted>
+            WRITTEN {writtenAt
+              ? fmtEpoch(writtenAt)
+              : fmtTime(settings.last_sweep_at) ?? new Date().toTimeString().slice(0, 5)}
+          </span>
         }
       />
     </>

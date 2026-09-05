@@ -286,30 +286,44 @@ class TestRhythmFace:
         """Hub Rhythm row: shows EVERY N MIN + NEXT when sweep runs."""
         server, page, errors, base_url = glass
 
-        # Ensure we have a sweep setting with timestamps
+        # Ensure we have a sweep setting with timestamps by running a sweep
         _api(page, "PUT", "/api/settings/heartbeat", {
             "sweep_every_minutes": 15,
         })
+        _api(page, "POST", "/api/settings/heartbeat/run-now", {})
 
-        # Navigate to settings hub
-        page.evaluate(
-            """([key]) => {
-              sessionStorage.setItem(
+        # Open Settings hub (the way test_hs170_settings_hub_glass.py does)
+        page.evaluate("""() => {
+            sessionStorage.setItem(
                 "hs.desk.staged-surface-open",
-                JSON.stringify({key})
-              );
-            }""",
-            ["settings"],
-        )
-        page.reload(wait_until="load")
-        _normal_chair(page)
-        page.wait_for_timeout(800)
+                JSON.stringify({key: "configure-settings"})
+            );
+        }""")
+        page.goto(f"{base_url}/?token={TOKEN}", wait_until="load")
+        page.locator(".prefs-hub-headline").wait_for(timeout=10_000)
+        page.wait_for_timeout(600)
 
-        # Read the hub wire
+        # Assert the hub wire has sweepEveryMinutes
         hub = _api(page, "GET", "/api/settings/hub")
         rhythm = hub.get("rhythm", {})
         assert rhythm.get("sweepEveryMinutes") is not None, (
             f"Expected sweepEveryMinutes in hub rhythm, got: {rhythm}"
         )
 
-        _shot(page, "build-settings-hub-heartbeat-1440", 1440)
+        # Assert the Rhythm row text in the rendered face
+        settings_window = page.locator(".desk-settings-window")
+        settings_window.wait_for(timeout=5000)
+        settings_text = settings_window.text_content() or ""
+        assert "EVERY 15 MIN" in settings_text, (
+            f"Expected 'EVERY 15 MIN' in settings hub, got: {settings_text}"
+        )
+
+        # Shoot the Settings WINDOW (not full page)
+        _settle(page)
+        old_size = page.viewport_size
+        page.set_viewport_size({"width": old_size["width"], "height": 2400})
+        _settle(page)
+        path = SHOTS / "build-settings-hub-heartbeat-1440.png"
+        settings_window.screenshot(path=str(path))
+        page.set_viewport_size(old_size)
+        assert path.stat().st_size > 2_000
