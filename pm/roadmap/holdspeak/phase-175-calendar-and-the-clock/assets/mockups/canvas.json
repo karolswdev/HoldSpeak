@@ -1,0 +1,39 @@
+{
+  "artboards": [
+    {
+      "file": "ArrivalWeek.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Arrival · WEEK strip + event rows · 1440"
+    },
+    {
+      "file": "ArrivalWeekPhone.dc.html",
+      "x": 1560,
+      "y": 0,
+      "w": 393,
+      "h": 860,
+      "title": "Arrival · WEEK strip + event rows · 393"
+    },
+    {
+      "file": "ArrivalWeekNoCalendar.dc.html",
+      "x": 2080,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Arrival · no calendar connected · 1440"
+    },
+    {
+      "file": "ArrivalWeekQuiet.dc.html",
+      "x": 3640,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Arrival · quiet week (zero meetings) · 1440"
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

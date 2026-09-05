@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+  </style>
+</helmet>
+
+<!-- ═══ WINDOW "Meetings" (640) — connect well open ═══ -->
+<div style="width:640px; border:1px solid #363b50; border-radius:2px; background:#15171d; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40), inset 0 0 0 1px #2a2e3e; display:flex; flex-direction:column;">
+
+  <!-- ─── TITLE BAR ─── -->
+  <div style="height:40px; padding:0 12px; display:flex; align-items:center; gap:10px; background:#242833; border-radius:1px 1px 0 0; flex-shrink:0;">
+    <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+      <span style="width:12px; height:12px; border-radius:2px; background:#f87171; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#fbbf24; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#34d399; display:block;"></span>
+    </div>
+    <span style="flex:1; min-width:0; font:700 17px/1 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Meetings</span>
+    <div style="display:flex; align-items:center; flex-shrink:0;">
+      <span style="padding:4px 12px; border:1px solid #2a2e3e; border-radius:2px; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Settings</span>
+      <span style="margin-left:-1px; padding:4px 12px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">Guide</span>
+    </div>
+  </div>
+
+  <!-- ─── BODY ─── -->
+  <div style="flex:1; padding:16px 20px 14px; display:flex; flex-direction:column; gap:20px;">
+
+    <!-- ═══ HEAD ═══ -->
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="font:650 26px/1.15 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">After room meetings</div>
+    </div>
+
+    <!-- ═══ CALENDAR section ═══ -->
+    <div style="display:flex; flex-direction:column;">
+      <div style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; margin-bottom:6px;">CALENDAR</div>
+
+      <!-- Source row 1: WORK -->
+      <div style="display:grid; grid-template-columns:52px 1fr; gap:0 8px; padding:8px 0; border-top:1px solid #2a2e3e;">
+        <span style="padding-top:3px; text-align:center;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#34d399;"></span>
+        </span>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px;">
+          <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">WORK</span>
+          <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">ICS</span>
+          <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">OUTLOOK.OFFICE365.COM</span>
+          <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">2 CALENDARS</span>
+          <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d; white-space:nowrap;">LAST READ 07:40</span>
+        </div>
+      </div>
+
+      <!-- Connect row (label) -->
+      <div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#9ba2b0; white-space:nowrap;">Connect calendar</span>
+        <span style="flex:1;"></span>
+        <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Add</button>
+      </div>
+
+      <!-- ═══ SurfaceWell — the connect well (open under Add) ═══ -->
+      <div style="margin:0 0 4px; padding:12px 14px; background:#1a1c24; border:1px solid #2a2e3e; border-radius:2px; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.06), inset -1px -1px 0 rgba(0,0,0,0.30); display:flex; flex-direction:column; gap:10px;">
+        <!-- StringGadget with mic -->
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="flex:1; display:flex; align-items:center; height:36px; padding:0 10px; background:#15171d; border:1px solid #2a2e3e; border-radius:2px; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07);">
+            <span style="font:13px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#767e8d;">Paste an ICS URL or a file path</span>
+          </div>
+          <!-- MicButton (square) -->
+          <button type="button" style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); cursor:pointer; flex-shrink:0;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4.5" y="1" width="5" height="8" rx="2.5"></rect>
+              <path d="M2.5 6.5C2.5 9 4.5 11 7 11C9.5 11 11.5 9 11.5 6.5"></path>
+              <line x1="7" y1="11" x2="7" y2="13"></line>
+            </svg>
+          </button>
+        </div>
+        <!-- Verbs row -->
+        <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
+          <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Cancel</button>
+          <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid #2a2e3e; border-radius:2px; background:#f2f3f5; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.10); color:#15171d; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Save</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── FOOTER ─── -->
+  <footer style="height:36px; padding:0 12px; background:#1c1f27; border-top:1px solid #2a2e3e; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); flex-shrink:0;">
+    <div style="display:flex; align-items:center; height:100%; gap:8px;">
+      <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">THIS DEVICE</span>
+      <span style="flex:1;"></span>
+      <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d;">WRITTEN 09:41</span>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>

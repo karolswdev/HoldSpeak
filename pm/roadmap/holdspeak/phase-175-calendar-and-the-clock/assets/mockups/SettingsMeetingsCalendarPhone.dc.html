@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+  </style>
+</helmet>
+
+<!-- ═══ WINDOW "Meetings" (393) — CALENDAR rows stacked, phone ═══ -->
+<div style="width:393px; border:1px solid #363b50; border-radius:2px; background:#15171d; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40), inset 0 0 0 1px #2a2e3e; display:flex; flex-direction:column;">
+
+  <!-- ─── TITLE BAR ─── -->
+  <div style="height:40px; padding:0 10px; display:flex; align-items:center; gap:8px; background:#242833; border-radius:1px 1px 0 0; flex-shrink:0;">
+    <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+      <span style="width:12px; height:12px; border-radius:2px; background:#f87171; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#fbbf24; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#34d399; display:block;"></span>
+    </div>
+    <span style="flex:1; min-width:0; font:700 13px/1 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Meetings</span>
+  </div>
+
+  <!-- ─── BODY ─── -->
+  <div style="flex:1; padding:14px 14px 10px; display:flex; flex-direction:column; gap:18px;">
+
+    <!-- ═══ HEAD ═══ -->
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="font:650 26px/1.15 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">After room meetings</div>
+    </div>
+
+    <!-- ═══ INTELLIGENCE ROW (stacked 393) ═══ -->
+    <div style="display:flex; flex-direction:column; gap:4px; padding:10px 0; border-top:1px solid #2a2e3e;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font:600 14px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Intelligence</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+        <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">AFTER ROOM MEETINGS<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+        <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">192.168.1.43 &middot; LAN</span>
+      </div>
+    </div>
+
+    <!-- ═══ CALENDAR section (stacked 393) ═══ -->
+    <div style="display:flex; flex-direction:column;">
+      <div style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; margin-bottom:6px;">CALENDAR</div>
+
+      <!-- Source row 1: WORK — stacked -->
+      <div style="display:flex; flex-direction:column; gap:4px; padding:8px 0; border-top:1px solid #2a2e3e;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#34d399; flex-shrink:0;"></span>
+          <span style="font:600 14px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">WORK</span>
+          <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">ICS</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; padding-left:14px;">
+          <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">OUTLOOK.OFFICE365.COM</span>
+          <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">2 CALENDARS</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; padding-left:14px;">
+          <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">LAST READ 07:40</span>
+        </div>
+      </div>
+
+      <!-- Source row 2: O365 SNAPSHOT — stacked -->
+      <div style="display:flex; flex-direction:column; gap:4px; padding:8px 0; border-top:1px solid #2a2e3e;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#34d399; flex-shrink:0;"></span>
+          <span style="font:600 14px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">O365 SNAPSHOT</span>
+          <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">SNAPSHOT</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; padding-left:14px;">
+          <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">THIS DEVICE</span>
+          <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">1 CALENDAR</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; padding-left:14px;">
+          <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">LAST READ 07:12</span>
+        </div>
+      </div>
+
+      <!-- Connect row -->
+      <div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid #2a2e3e;">
+        <span style="font:600 14px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#9ba2b0;">Connect calendar</span>
+        <span style="flex:1;"></span>
+        <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Add</button>
+      </div>
+    </div>
+
+    <!-- ═══ AUTO-RECORD row (stacked 393) ═══ -->
+    <div style="display:flex; flex-direction:column; gap:4px; padding:10px 0; border-top:1px solid #2a2e3e;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font:600 14px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Auto-record</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+        <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">ARM ROOM MEETINGS ONLY<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+        <span style="font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">5 MIN BEFORE</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── FOOTER ─── -->
+  <footer style="height:auto; min-height:36px; padding:4px 8px; background:#1c1f27; border-top:1px solid #2a2e3e; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); flex-shrink:0;">
+    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px;">
+      <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">THIS DEVICE</span>
+      <span style="flex:1;"></span>
+      <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d;">WRITTEN 09:41</span>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>

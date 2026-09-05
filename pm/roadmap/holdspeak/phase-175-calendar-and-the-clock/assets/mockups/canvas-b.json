@@ -1,0 +1,39 @@
+{
+  "boards": [
+    {
+      "file": "SettingsMeetingsCalendar.dc.html",
+      "title": "Settings > Meetings — CALENDAR rows",
+      "x": 0, "y": 1400, "w": 642, "h": 800
+    },
+    {
+      "file": "SettingsMeetingsCalendarWell.dc.html",
+      "title": "Settings > Meetings — connect well open",
+      "x": 760, "y": 1400, "w": 642, "h": 600
+    },
+    {
+      "file": "SettingsMeetingsCalendarPhone.dc.html",
+      "title": "Settings > Meetings — CALENDAR (393)",
+      "x": 1520, "y": 1400, "w": 395, "h": 800
+    },
+    {
+      "file": "RoomSourcesMeetings.dc.html",
+      "title": "Room SOURCES — MTG meeting watch row",
+      "x": 2040, "y": 1400, "w": 642, "h": 600
+    },
+    {
+      "file": "RoomSourcesMeetingsPhone.dc.html",
+      "title": "Room SOURCES — MTG row (393)",
+      "x": 2800, "y": 1400, "w": 395, "h": 700
+    },
+    {
+      "file": "RhythmWeeklyBrief.dc.html",
+      "title": "Rhythm — Weekly brief row (175)",
+      "x": 3320, "y": 1400, "w": 642, "h": 500
+    },
+    {
+      "file": "BriefWeek.dc.html",
+      "title": "Brief detail — THIS WEEK + SINCE FRIDAY",
+      "x": 4080, "y": 1400, "w": 642, "h": 700
+    }
+  ]
+}
