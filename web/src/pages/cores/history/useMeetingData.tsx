@@ -226,7 +226,7 @@ export function useMeetingData(
                   title={String(commitment?.approve ?? "")}
                   onClick={() => void decide(row, "approved")}
                 >
-                  Approve
+                  Decide
                 </Button>
                 <Button
                   dense
@@ -234,7 +234,7 @@ export function useMeetingData(
                   title={String(commitment?.reject ?? "")}
                   onClick={() => void decide(row, "rejected")}
                 >
-                  Reject
+                  Dismiss
                 </Button>
               </>
             ) : (

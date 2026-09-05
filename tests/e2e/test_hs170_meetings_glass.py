@@ -219,7 +219,7 @@ class TestMeetingsGlass:
         self.tmp_path = tmp_path
 
     def test_meetings_face(self) -> None:
-        from playwright.sync_api import sync_playwright
+        from playwright.sync_api import sync_playwright, expect
 
         errors: list[str] = []
         with sync_playwright() as pw:
@@ -241,12 +241,12 @@ class TestMeetingsGlass:
                 found = _wait_for_surface_window(page, timeout=12000)
                 assert found, f"Meetings surface window did not open at {width}"
 
-                page.wait_for_timeout(1500)
+                # Wait for data to render (headline is the signal)
+                headline = page.locator("[data-testid='meetings-headline']")
+                headline.wait_for(timeout=8_000)
                 _settle(page)
 
                 # ── Assert: headline ──
-                headline = page.locator("[data-testid='meetings-headline']")
-                headline.wait_for(timeout=5_000)
                 headline_text = headline.text_content() or ""
                 assert "1" in headline_text and "intelligence" in headline_text.lower(), (
                     f"Headline at {width}: expected '1 ... intelligence', got '{headline_text}'"
@@ -254,16 +254,14 @@ class TestMeetingsGlass:
 
                 # ── Assert: Run intelligence on OFF-with-words row ──
                 run_btns = page.locator("[data-testid='run-intelligence-btn']")
-                run_btn_count = run_btns.count()
-                assert run_btn_count == 1, (
-                    f"Expected exactly 1 'Run intelligence' at {width}, got {run_btn_count}"
+                expect(run_btns.first).to_be_visible(timeout=5_000)
+                assert run_btns.count() == 1, (
+                    f"Expected exactly 1 'Run intelligence' at {width}, got {run_btns.count()}"
                 )
 
                 # ── Assert: NO TRANSCRIPT renders ──
                 no_transcript = page.locator("[data-testid='no-transcript-token']")
-                assert no_transcript.count() >= 1, (
-                    f"'NO TRANSCRIPT' token not found at {width}"
-                )
+                expect(no_transcript.first).to_be_visible(timeout=3_000)
 
                 # ── Assert: 0 SEG never appears ──
                 win = page.locator(".desk-surface-window")
@@ -276,7 +274,6 @@ class TestMeetingsGlass:
                 assert "INTERRUPTED" in page_text, (
                     f"'INTERRUPTED' not found at {width} for dead capture"
                 )
-                # REC must never appear as a state token (only INTERRUPTED)
                 state_tokens_text = page.evaluate("""() => {
                     const body = document.querySelector('.desk-surface-body');
                     if (!body) return '';
@@ -312,19 +309,27 @@ class TestMeetingsGlass:
                 )
 
                 if width == 1440:
-                    # ── Click Run intelligence ──
+                    # ── S-3: Click Run intelligence, assert host chip (Article III) ──
                     run_btns.first.click()
-                    page.wait_for_timeout(500)
+                    # The monkeypatch returns host="THIS DEVICE"; the
+                    # EgressChip should appear on the row after the POST.
+                    host_chip = page.locator(
+                        "[data-testid='meeting-row-m-off-words'] .gadget-chip-egress"
+                    )
+                    expect(host_chip).to_be_visible(timeout=5_000)
 
                     # ── Click Design review to open detail ──
-                    design_row = page.locator("[data-testid='meeting-row-m-saved-outcomes']")
-                    design_row.locator(".meetings-stream-row-body").click()
-                    page.wait_for_timeout(2000)
+                    design_body = page.locator(
+                        "[data-testid='meeting-row-m-saved-outcomes'] "
+                        ".meetings-stream-row-body"
+                    )
+                    design_body.click()
+
+                    # Wait for detail to render (the display title is the signal)
+                    detail_display = page.locator(".surface-split-detail .surface-display")
+                    detail_display.wait_for(timeout=8_000)
                     _settle(page)
 
-                    # Assert: detail has a display element
-                    detail_display = page.locator(".surface-split-detail .surface-display")
-                    detail_display.wait_for(timeout=5_000)
                     detail_text = detail_display.text_content() or ""
                     assert "Design review" in detail_text, (
                         f"Detail display expected 'Design review', got '{detail_text}'"
@@ -332,6 +337,7 @@ class TestMeetingsGlass:
 
                     # Assert: NEEDS YOU 3 with 3 outcome rows
                     needs_head = page.locator(".meetings-detail-needs-head .surface-caption")
+                    expect(needs_head).to_be_visible(timeout=5_000)
                     needs_text = needs_head.text_content() or ""
                     assert "3" in needs_text, (
                         f"Expected 'NEEDS YOU 3', got '{needs_text}'"
@@ -340,13 +346,18 @@ class TestMeetingsGlass:
                     assert outcome_rows.count() == 3, (
                         f"Expected 3 outcome rows, got {outcome_rows.count()}"
                     )
-                    # Each outcome row should have a verb (Approve/Reject buttons)
-                    outcome_verbs = page.locator(".meetings-detail-outcome-verb .btn")
-                    assert outcome_verbs.count() >= 3, (
-                        f"Expected >= 3 verb buttons, got {outcome_verbs.count()}"
+
+                    # S-5: Each outcome row has Decide / Dismiss verbs
+                    decide_btns = page.locator(".meetings-detail-outcome-verb .btn", has_text="Decide")
+                    dismiss_btns = page.locator(".meetings-detail-outcome-verb .btn", has_text="Dismiss")
+                    assert decide_btns.count() == 3, (
+                        f"Expected 3 'Decide' buttons, got {decide_btns.count()}"
+                    )
+                    assert dismiss_btns.count() == 3, (
+                        f"Expected 3 'Dismiss' buttons, got {dismiss_btns.count()}"
                     )
 
-                    # Assert: proposal preview text renders (not "Proposed action")
+                    # Assert: proposal preview text renders
                     detail_text_full = page.locator(".surface-split-detail").text_content() or ""
                     assert "Decide: the PostgreSQL migration date" in detail_text_full, (
                         f"Expected proposal preview text in detail, got: {detail_text_full[:200]}"
@@ -359,6 +370,7 @@ class TestMeetingsGlass:
                     )
 
                     # Screenshot: detail
+                    _settle(page)
                     page.screenshot(
                         path=str(SHOTS_DIR / f"build-meetings-detail-{width}.png"),
                         full_page=True,
