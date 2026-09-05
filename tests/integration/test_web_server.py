@@ -1729,9 +1729,11 @@ class TestHistoryUiSmoke:
         assert "/api/meetings/" in js
         assert "/artifacts" in js
         assert "/export?format=" in js
-        # HS-111-03: the empty needs-you face is the honest queue token,
-        # never a celebratory sentence.
-        assert "QUEUE 0" in js
+        # HS-170-04: the empty needs-you section is ABSENT (UX-CANON A.8:
+        # no counters of zero). NeedsYouTable returns null at zero instead
+        # of the old "QUEUE 0" token.
+        assert "return null" in js  # NeedsYouTable: section-absent at zero
+        assert "needsRows.length === 0" in js  # the honest guard
 
     def test_settings_route_serves_the_global_settings_page(self, test_client):
         response = test_client.get("/settings")

@@ -291,7 +291,8 @@ class TestMeetingsGlass:
                     const all = body.querySelectorAll('button');
                     const raw = [];
                     for (const b of all) {
-                        if (!b.classList.contains('btn')) {
+                        // .btn = library Button; .desk-mic = library MicButton
+                        if (!b.classList.contains('btn') && !b.classList.contains('desk-mic')) {
                             raw.push((b.textContent || '').trim().slice(0, 40));
                         }
                     }
@@ -300,6 +301,16 @@ class TestMeetingsGlass:
                 assert len(raw_buttons) == 0, (
                     f"Raw buttons at {width}: {raw_buttons}"
                 )
+
+                # ── Assert: HS-170-04 restored doors ──
+                if width == 1440:
+                    # Search StringGadget with mic in the list head
+                    search_input = page.locator(".meetings-search .gadget-string input")
+                    expect(search_input).to_be_visible(timeout=3_000)
+
+                    # Facet token toggles on the caption row
+                    facet_area = page.locator("[data-testid='meetings-facets']")
+                    expect(facet_area).to_be_visible(timeout=3_000)
 
                 # ── Screenshot: list ──
                 _settle(page)

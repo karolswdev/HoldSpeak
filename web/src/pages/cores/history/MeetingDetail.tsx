@@ -9,6 +9,7 @@ import { useMeetingData } from "./useMeetingData";
 import { MeetingHeader } from "./MeetingHeader";
 import { CaptureSlab } from "./CaptureSlab";
 import { ArtifactsLibrary } from "./ArtifactsLibrary";
+import { AftercareGadgets } from "./AftercareGadgets";
 import { NeedsYouTable } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
 import { SettledList } from "./SettledList";
@@ -44,6 +45,11 @@ export function MeetingDetail({
     needsRows,
     needsCount,
     settledActions,
+    aftercare,
+    authority,
+    busy,
+    proposeSlack,
+    timelineRows,
   } = data;
 
   if (!meeting) return null;
@@ -93,6 +99,23 @@ export function MeetingDetail({
             id={id}
             segments={segments}
             momentSegmentIndex={momentSegmentIndex}
+          />
+          {/* RAW · ROUTING — the intent timeline section (only when data present) */}
+          {timelineRows.length > 0 ? (
+            <div className="meetings-detail-routing">
+              <span className="surface-caption">RAW · ROUTING</span>
+              <ul>
+                {timelineRows.map((row, i) => (
+                  <li key={i}>{String(row.kind ?? row.intent ?? row.text ?? "")}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <AftercareGadgets
+            aftercare={aftercare}
+            authority={authority}
+            busy={busy}
+            proposeSlack={proposeSlack}
           />
           <SettledList settledActions={settledActions} />
         </>

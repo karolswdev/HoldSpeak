@@ -153,8 +153,12 @@ def test_proposal_rows_render_the_central_policy_and_refusal_truth():
     assert "operation.effect_class" in page
     assert "operation.destination" in page
     assert "policy.authority_basis" in page
-    # HS-111-03: an empty needs-you face says so honestly, as a token.
-    assert "QUEUE 0" in _flat(_HISTORY / "NeedsYouTable.tsx")
+    # HS-170-04: the empty needs-you section is ABSENT (UX-CANON A.8:
+    # no counters of zero, empty sections absent). NeedsYouTable returns
+    # null at zero — the honest guard, not a celebratory sentence.
+    flat = _flat(_HISTORY / "NeedsYouTable.tsx")
+    assert "needsRows.length === 0" in flat  # the honest guard
+    assert "return null" in flat  # section-absent at zero
 
 
 def test_history_app_wires_the_export_route():

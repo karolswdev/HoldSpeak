@@ -10,12 +10,12 @@ import { asRows } from "../pageSupport";
 import { useResource } from "../pageSupport";
 import { ConfirmVerb, SurfaceSplit } from "../../desk/surface/Surface";
 import { countToken } from "../../desk/surface";
-import { EgressChip } from "../../desk/surface/gadgets";
+import { EgressChip, StringGadget, CheckGadget } from "../../desk/surface/gadgets";
 import { useCoreWings } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
 import {
   WINGS, clockTime, download, needsIntelligence, type Receipt,
-  MeetingDetail, ImportSection, CatalogRail,
+  MeetingDetail, ImportSection, CatalogRail, DoorSection,
 } from "./history";
 
 /** HS-170-04 — the display headline: `N meeting(s) need intelligence` (accent)
@@ -57,7 +57,44 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const [runningId, setRunningId] = useState<string | null>(null);
   const [runHost, setRunHost] = useState<string | null>(null);
 
-  const meetings = useResource<MeetingsListResponse>("/api/meetings?limit=100", {});
+  // HS-170-04: search (StringGadget with mic in the list head)
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // HS-170-04: server-side facets (token toggles on the caption row)
+  const [facets, setFacets] = useState<{
+    date_from: string;
+    date_to: string;
+    speaker: string;
+    tag: string;
+    has_open_actions: boolean;
+  }>({ date_from: "", date_to: "", speaker: "", tag: "", has_open_actions: false });
+  const facetsResource = useResource<Record<string, unknown>>("/api/meetings/facets", {});
+
+  // Build meeting params from search + facets.
+  const meetingParams = useMemo(() => {
+    const meetingParams = new URLSearchParams();
+    meetingParams.set("limit", "100");
+    const query = searchQuery;
+    if (query) meetingParams.set("search", query);
+    if (facets.date_from) meetingParams.set("date_from", facets.date_from);
+    if (facets.date_to) meetingParams.set("date_to", facets.date_to);
+    if (facets.speaker) meetingParams.set("speaker", facets.speaker);
+    if (facets.tag) meetingParams.set("tag", facets.tag);
+    if (facets.has_open_actions) meetingParams.set("has_open_actions", "true");
+    return meetingParams;
+  }, [searchQuery, facets]);
+
+  const meetings = useResource<MeetingsListResponse>(
+    `/api/meetings?${meetingParams.toString()}`, {},
+  );
+
+  // HS-170-04: gear door plumbing data (DoorSection)
+  const doorActions = useResource<Record<string, unknown>>("/api/all-action-items", {});
+  const doorSpeakers = useResource<Record<string, unknown>>("/api/speakers", {});
+  const doorProjects = useResource<Record<string, unknown>>("/api/meetings/projects", {});
+  const doorIntel = useResource<Record<string, unknown>>("/api/intel/jobs", {});
+  const doorPlugin = useResource<Record<string, unknown>>("/api/plugin-jobs", {});
+  const [queueStatus, setQueueStatus] = useState("pending");
   const meetingRows = useMemo(
     () => asRows(meetings.data, ["meetings"]),
     [meetings.data],
@@ -248,7 +285,17 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     />
   );
 
-  const face = wings.view === "record" ? (
+  const face = wings.doorOpen ? (
+    <DoorSection
+      actions={doorActions}
+      speakers={doorSpeakers}
+      projects={doorProjects}
+      intel={doorIntel}
+      plugin={doorPlugin}
+      queueStatus={queueStatus}
+      setQueueStatus={setQueueStatus}
+    />
+  ) : wings.view === "record" ? (
     <ImportSection
       onDone={() => wings.setView("outcomes")}
       onImported={() => void meetings.reload()}
@@ -272,6 +319,26 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       {/* Head verbs */}
       <div className="meetings-head-verbs">
         {verbs}
+      </div>
+
+      {/* HS-170-04: search (StringGadget with mic in the list head) */}
+      <div className="meetings-search">
+        <StringGadget
+          label="Search meetings"
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search meetings"
+        />
+      </div>
+
+      {/* HS-170-04: server-side facets (token toggles on the caption row) */}
+      <div className="meetings-facets" data-testid="meetings-facets">
+        <CheckGadget
+          label="HAS OPEN ACTIONS"
+          variant="token"
+          checked={facets.has_open_actions}
+          onChange={(next) => setFacets((f) => ({ ...f, has_open_actions: next }))}
+        />
       </div>
 
       {/* The stream + detail split */}
