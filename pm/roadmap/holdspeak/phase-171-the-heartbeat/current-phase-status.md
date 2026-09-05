@@ -1,6 +1,15 @@
 # Phase 171 - The Heartbeat
 
-**Last updated:** 2026-09-05.
+**Last updated:** 2026-09-05 06:20 — ACTIVATED, stacked.
+
+**Decision (2026-09-05 06:20, under the owner's standing goal «all phases
+to 180… do not pause to ask»):** 171 builds NOW on branch
+`feat/the-heartbeat`, stacked on `feat/the-great-pass` (PR #553, which
+awaits his word). A stacked branch is reversible; a merge is not — every
+merge stays his. If he bounces 170's faces, 171 rebuilds on his ruling.
+The design ground is assets/settled-design-heartbeat.md (DRAFT until his
+word); the boards are drawn from it, counsel reads them, the wire builds
+meanwhile, the faces build to the boards, the walk on his desk closes.
 
 ## Goal
 
@@ -89,7 +98,7 @@ brief ran ONCE (1839 items on 2026-08-24) and never again.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-171-01 | The design (the Heartbeat's faces on the canvas before build) | backlog | [story-01-the-design](./story-01-the-design.md) | -- |
+| HS-171-01 | The design (the Heartbeat's faces on the canvas before build) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
 | HS-171-02 | The cadence row (the scheduler, the unattended sweep, parallel conductor loops) | backlog | [story-02-the-cadence-row](./story-02-the-cadence-row.md) | -- |
 | HS-171-03 | The needs-you aggregate (cache + cadence-driven refresh; 170's N+1 paid) | backlog | [story-03-the-needs-you-aggregate](./story-03-the-needs-you-aggregate.md) | -- |
 | HS-171-04 | PROJECTS in the shade + the dock badge | backlog | [story-04-projects-in-the-shade](./story-04-projects-in-the-shade.md) | -- |
