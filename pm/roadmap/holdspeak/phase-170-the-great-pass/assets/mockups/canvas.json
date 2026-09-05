@@ -37,7 +37,7 @@
    "x": 3040,
    "y": 0,
    "w": 640,
-   "h": 738,
+   "h": 1187,
    "title": "Models · downloading · 1440"
   },
   {
@@ -47,6 +47,102 @@
    "w": 393,
    "h": 1843,
    "title": "Models · 393"
+  },
+  {
+   "file": "ArrivalNeedsYou.dc.html",
+   "x": 0,
+   "y": 2100,
+   "w": 1440,
+   "h": 900,
+   "title": "Arrival · 3 need you · 1440"
+  },
+  {
+   "file": "ArrivalQuiet.dc.html",
+   "x": 1560,
+   "y": 2100,
+   "w": 1440,
+   "h": 900,
+   "title": "Arrival · nothing needs you · 1440"
+  },
+  {
+   "file": "ArrivalPhone.dc.html",
+   "x": 3120,
+   "y": 2100,
+   "w": 393,
+   "h": 852,
+   "title": "Arrival · 393"
+  },
+  {
+   "file": "SettingsHub.dc.html",
+   "x": 0,
+   "y": 3200,
+   "w": 640,
+   "h": 571,
+   "title": "Settings · the hub · 1440"
+  },
+  {
+   "file": "SettingsHubPhone.dc.html",
+   "x": 760,
+   "y": 3200,
+   "w": 393,
+   "h": 649,
+   "title": "Settings · 393"
+  },
+  {
+   "file": "SpeakIdle.dc.html",
+   "x": 0,
+   "y": 4000,
+   "w": 640,
+   "h": 408,
+   "title": "Speak · idle · 1440"
+  },
+  {
+   "file": "SpeakLanded.dc.html",
+   "x": 760,
+   "y": 4000,
+   "w": 640,
+   "h": 519,
+   "title": "Speak · landed · 1440"
+  },
+  {
+   "file": "SpeakUnset.dc.html",
+   "x": 1520,
+   "y": 4000,
+   "w": 640,
+   "h": 416,
+   "title": "Speak · engine not set · 1440"
+  },
+  {
+   "file": "SpeakPhone.dc.html",
+   "x": 2280,
+   "y": 4000,
+   "w": 393,
+   "h": 452,
+   "title": "Speak · 393"
+  },
+  {
+   "file": "MeetingsList.dc.html",
+   "x": 0,
+   "y": 4700,
+   "w": 640,
+   "h": 447,
+   "title": "Meetings · list · 1440"
+  },
+  {
+   "file": "MeetingsDetail.dc.html",
+   "x": 760,
+   "y": 4700,
+   "w": 640,
+   "h": 536,
+   "title": "Meetings · detail · 1440"
+  },
+  {
+   "file": "MeetingsPhone.dc.html",
+   "x": 1520,
+   "y": 4700,
+   "w": 393,
+   "h": 525,
+   "title": "Meetings · 393"
   }
  ],
  "annotations": [
@@ -56,6 +152,13 @@
    "y": -150,
    "w": 760,
    "text": "Phase 170 The Concierge — Settings → Models becomes ONE screen: what was found, one proposed set, Use these."
+  },
+  {
+   "id": "four-faces",
+   "x": 0,
+   "y": 1950,
+   "w": 760,
+   "text": "Story 04 — the four Tuesday faces: the arrival, the Settings hub, Speak, Meetings. Counsel reading; conditions paid before your word."
   }
  ],
  "launch": {
