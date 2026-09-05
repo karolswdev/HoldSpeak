@@ -788,6 +788,10 @@ def test_all_command_tools_discoverable() -> None:
         "project.watch.evaluate", "project.watch.set_rules",
         "project.watch.pause", "project.watch.resume",
         "project.watch.retire",
+        # HS-172-06: suggested sources
+        "project.suggested_sources",
+        "project.add_suggested_source",
+        "project.dismiss_suggested_source",
     ]
     assert project_tools == expected
     # All have versioned $id and closed schemas

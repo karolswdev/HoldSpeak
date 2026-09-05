@@ -93,9 +93,9 @@ def test_palette_contains_project_provider_connection_only() -> None:
         )
 
 
-def test_palette_size_is_47() -> None:
-    """Pin: the project family has 47 tools (35 project.* + 10 provider.* + 2 connection.*; HS-168-02 added connection.list + connection.recheck)."""
-    assert len(PROJECT_PALETTE) == 47  # HS-168-02: connection.list + connection.recheck
+def test_palette_size_is_50() -> None:
+    """Pin: the project family has 50 tools (35 project.* + 10 provider.* + 2 connection.* + 3 suggested_source; HS-172-06)."""
+    assert len(PROJECT_PALETTE) == 50  # HS-172-06: + 3 suggested_source tools (47 -> 50)
 
 
 # ────────────────────────────────────────────────────────────────────

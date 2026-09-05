@@ -515,6 +515,7 @@ class TestMCPCatalogue:
             "people.calendar.unlink",
             "people.owner_alias.link",
             "people.owner_alias.unlink",
+            "people.resolve",
         }
         assert not any(
             fragment in name
