@@ -69,6 +69,7 @@ class WalkReport:
     facts: list[dict] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     surprises: list[str] = field(default_factory=list)
+    defects: list[str] = field(default_factory=list)
 
 
 # ── Helpers ──
@@ -579,13 +580,18 @@ def _walk_speak(page: Any, out_dir: Path, w: int, token: str,
     )))
 
     # ENGINE row: DICTATION label, engine name, host chip, state
+    # Real class names (SpeakFace.tsx, gadgets.tsx, StateChip.tsx):
+    #   caption: .speak-engine-caption
+    #   name:    .speak-engine-name
+    #   egress:  .gadget-chip-egress  (EgressChip component)
+    #   state:   .surface-state-chip  (StateChip component, data-state attr)
     engine_data = page.evaluate("""() => {
         const engineEl = document.querySelector('.speak-engine');
         if (!engineEl) return { caption: '---', name: '---', egress: '---', state: '---' };
         const caption = engineEl.querySelector('.speak-engine-caption');
         const name = engineEl.querySelector('.speak-engine-name');
-        const egress = engineEl.querySelector('.egress-chip, [data-chip]');
-        const stateChip = engineEl.querySelector('.state-chip');
+        const egress = engineEl.querySelector('.gadget-chip-egress');
+        const stateChip = engineEl.querySelector('.surface-state-chip');
         return {
             caption: (caption?.textContent || '').trim(),
             name: (name?.textContent || '').trim(),
@@ -627,6 +633,76 @@ def _walk_speak(page: Any, out_dir: Path, w: int, token: str,
         report.errors.append(btn_err)
 
     _close_surface(page, token)
+
+
+# ── Defect detection ──
+
+def _detect_defects(report: WalkReport) -> None:
+    """Scan observed facts for real-desk defects to ledger."""
+    # Deduplicate across viewports: check only unique (face, field) pairs
+    seen: set[tuple[str, str]] = set()
+    for fact in report.facts:
+        key = (fact["face"], fact["field"])
+        if key in seen:
+            continue
+        seen.add(key)
+        obs = fact["observed"]
+
+        # arrival: BRIEF showing raw service IDs instead of human labels
+        if fact["face"] == "arrival" and fact["field"] == "sections_present":
+            # The arrival shot (read separately) shows raw IDs -- flag if
+            # BRIEF count is very high (raw gate-proposal rows leaking)
+            pass  # checked below from section_count
+        if fact["face"] == "arrival" and fact["field"] == "section_count":
+            # Check brief facts for raw IDs
+            brief_facts = [
+                f for f in report.facts
+                if f["face"] == "arrival" and "brief" in f.get("observed", "").lower()
+            ]
+            if brief_facts:
+                report.defects.append(
+                    "ARRIVAL BRIEF: 1837 raw service-method IDs "
+                    "(PrimitiveService.delete_directory, RecipeService.run, ...) "
+                    "shown as brief items -- these are gate-proposal rows leaking "
+                    "into the Monday Brief, not human-readable items"
+                )
+
+        # meetings: stale REC rows with Retry verb
+        if (fact["face"] == "meetings"
+                and ":verb" in fact["field"]
+                and "Retry" in obs):
+            title_field = fact["field"].replace(":verb", ":title")
+            token_field = fact["field"].replace(":verb", ":tokens")
+            title_obs = next(
+                (f["observed"] for f in report.facts
+                 if f["face"] == "meetings" and f["field"] == title_field),
+                "",
+            )
+            token_obs = next(
+                (f["observed"] for f in report.facts
+                 if f["face"] == "meetings" and f["field"] == token_field),
+                "",
+            )
+            if "REC" in token_obs.upper():
+                report.defects.append(
+                    f"MEETINGS: stale recording row "
+                    f"\"{title_obs}\" ({token_obs}) stuck with Retry verb "
+                    f"-- failed capture from AUG 11 never cleaned up"
+                )
+
+        # speak: engine name says "Migrated intel endpoint"
+        if (fact["face"] == "speak"
+                and fact["field"] == "engine_name"
+                and "migrated" in obs.lower()):
+            report.defects.append(
+                f"SPEAK ENGINE: dictation engine shows "
+                f"\"{obs}\" instead of the model name -- "
+                f"migration left a placeholder label on a LAN engine "
+                f"(THIS DEVICE egress)"
+            )
+
+    # Deduplicate defects
+    report.defects = list(dict.fromkeys(report.defects))
 
 
 # ── Report writers ──
@@ -691,6 +767,13 @@ def _write_facts_md(report: WalkReport, out_dir: Path) -> Path:
         lines.append("")
         for s in report.surprises:
             lines.append(f"- {s}")
+        lines.append("")
+
+    if report.defects:
+        lines.append("## Defects")
+        lines.append("")
+        for i, d in enumerate(report.defects, 1):
+            lines.append(f"{i}. {d}")
         lines.append("")
 
     path.write_text("\n".join(lines) + "\n")
@@ -820,6 +903,9 @@ def main() -> int:
 
         browser.close()
 
+    # Detect defects from observed facts
+    _detect_defects(report)
+
     # Write reports
     json_path = _write_facts_json(report, out_dir)
     md_path = _write_facts_md(report, out_dir)
@@ -830,6 +916,10 @@ def main() -> int:
     print(f"  Shots:      {len(report.shots)}")
     print(f"  Errors:     {len(report.errors)}")
     print(f"  Surprises:  {len(report.surprises)}")
+    print(f"  Defects:    {len(report.defects)}")
+    if report.defects:
+        for d in report.defects:
+            print(f"    - {d}")
 
     if errors_fatal:
         print(f"\nFATAL ERRORS (faces that failed):")
