@@ -164,6 +164,13 @@ class TestSettingsRemoteAccess:
             # Wait for the Issue credential button to appear (remote is ON)
             page.locator(".btn", has_text="Issue credential").wait_for(timeout=8_000)
 
+            # Hub chips must reflect REMOTE ON after the toggle lands
+            chips_el = page.locator("[data-testid='system-hub-chips']")
+            chips_text = chips_el.text_content() or ""
+            assert "REMOTE ON" in chips_text, (
+                f"Hub chips did not update to REMOTE ON at {width}: {chips_text}"
+            )
+
             # Screenshot: remote ON, no credentials
             SHOTS.mkdir(parents=True, exist_ok=True)
             _settle(page)

@@ -266,7 +266,49 @@ function paletteLabel(palette: string | string[] | null): string {
   return palette[0];
 }
 
-export function RemoteAccessModule() {
+/** HS-174: the System module face — owns the display step + hub chips
+ *  so the REMOTE chip updates live when the toggle fires. */
+function SystemModule({
+  hubSystem,
+  deviceName,
+  deskModule,
+  rawWell,
+}: {
+  hubSystem: { host: string; mesh: boolean; remote?: boolean };
+  deviceName: ReactNode;
+  deskModule: ReactNode;
+  rawWell: ReactNode;
+}) {
+  const [remoteOn, setRemoteOn] = useState(hubSystem.remote ?? false);
+  return (
+    <>
+      <div className="surface-display" data-testid="system-display">
+        This device
+      </div>
+      <div className="prefs-hub-chips" data-testid="system-hub-chips">
+        <span className="surface-token" data-chip>{hubSystem.host}</span>
+        <span className="surface-token" data-chip>{hubSystem.mesh ? "MESH ON" : "MESH OFF"}</span>
+        {remoteOn
+          ? <StateChip state="success" label="REMOTE ON" />
+          : <span className="surface-token" data-chip>REMOTE OFF</span>}
+      </div>
+      <div className="prefs-rule" aria-hidden="true" />
+      <GadgetGroup label="Mesh">
+        {deviceName}
+      </GadgetGroup>
+      <RemoteAccessModule onEnabledChange={setRemoteOn} />
+      {deskModule}
+      {rawWell}
+    </>
+  );
+}
+
+export function RemoteAccessModule({
+  onEnabledChange,
+}: {
+  /** Report the live enabled state so the parent can update hub chips. */
+  onEnabledChange?: (enabled: boolean) => void;
+} = {}) {
   const [wire, setWire] = useState<RemoteWire | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -284,12 +326,13 @@ export function RemoteAccessModule() {
       const data = await apiFetch<RemoteWire>("/api/settings/remote");
       setWire(data);
       setError("");
+      onEnabledChange?.(data.enabled);
     } catch (err) {
       setError(readableError(err));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [onEnabledChange]);
 
   useEffect(() => { void fetchRemote(); }, [fetchRemote]);
 
@@ -488,7 +531,7 @@ export function RemoteAccessModule() {
                 />
               </GadgetRow>
               <div className="prefs-issue-actions">
-                <Button disabled={issuing || !issueName.trim()} onClick={() => void issueCredential()} data-testid="issue-submit">
+                <Button variant="primary" disabled={issuing || !issueName.trim()} onClick={() => void issueCredential()} data-testid="issue-submit">
                   Issue
                 </Button>
                 <Button variant="ghost" onClick={() => { setIssueOpen(false); setIssueName(""); }} data-testid="issue-cancel">
@@ -1504,35 +1547,18 @@ function SettingsFace({ hero, scope }: CoreProps) {
       case "system": {
         const device = (data.device ?? {}) as Record<string, unknown>;
         const deviceCount = Object.keys(device).length;
-        const systemHub = hub.data.system;
-        return (
-          <>
-            <div className="surface-display" data-testid="system-display">
-              This device
-            </div>
-            <div className="prefs-hub-chips">
-              <span className="surface-token" data-chip>{systemHub.host}</span>
-              <span className="surface-token" data-chip>{systemHub.mesh ? "MESH ON" : "MESH OFF"}</span>
-              {systemHub.remote
-                ? <StateChip state="success" label="REMOTE ON" />
-                : <span className="surface-token" data-chip>REMOTE OFF</span>}
-            </div>
-            <div className="prefs-rule" aria-hidden="true" />
-            <GadgetGroup label="Mesh">
-              {str(["mesh", "device_name"], "Device name")}
-            </GadgetGroup>
-            <RemoteAccessModule />
-            <DeskModule />
-            {/* HS-139-04/05: device walker knobs fold behind RAW. */}
-            {deviceCount ? (
-              <FoldGadget title="RAW" token={String(deviceCount)}>
-                <GadgetGroup label="Device">
-                  {walkerRows(device, ["device"])}
-                </GadgetGroup>
-              </FoldGadget>
-            ) : null}
-          </>
-        );
+        return <SystemModule
+          hubSystem={hub.data.system}
+          deviceName={str(["mesh", "device_name"], "Device name")}
+          deskModule={<DeskModule />}
+          rawWell={deviceCount ? (
+            <FoldGadget title="RAW" token={String(deviceCount)}>
+              <GadgetGroup label="Device">
+                {walkerRows(device, ["device"])}
+              </GadgetGroup>
+            </FoldGadget>
+          ) : null}
+        />;
       }
       default:
         return null;
