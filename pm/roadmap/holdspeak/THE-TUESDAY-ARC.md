@@ -242,3 +242,37 @@ tagline true fastest, 172 may run in parallel with 171 once 170 lands
 
 The first ask of the next sitting: his word on this order — and his
 attended walk of 169's door, which every phase above assumes he owns.
+
+## 6. The long arc to 180 (the owner's goal, 2026-09-05)
+
+The owner's words, verbatim: **"Goal set: Fedaykin satisfied all phases
+all the way up to 180, delivering all their might into making
+HoldSpeak an ultimately useful, beautiful, cohesive system."** — and,
+the same night: "Fedaykin need to make a huge UX pass of everything.
+Is our canon kept?"
+
+The road, one phase active at a time, each face ratified by him on the
+canvas before build, each phase merged on its gates and his word:
+
+| Phase | Name | The Tuesday it buys |
+|---|---|---|
+| 170 | **The Great Pass** (horizontal) | the face canon written and mechanical; every surface shot and swept at the species; the Concierge and the top Tuesday faces rebuilt to their artboards |
+| 171 | The Heartbeat | the desk reaches him: the sweep runs unattended, needs-you across Rooms in the shade and the dock, macOS notifications on the edge, the brief recurring |
+| 172 | The Loop Closes | meetings → decisions and action items as proposals → commitments → the 1:1 brief from real signals (the People ↔ Watch resolver) |
+| 173 | The Steward's Hand and Voice | the update that writes itself with claim refs; review latency and issue aging; the first bounded external effect (the reviewer nudge) behind the gate with a receipt |
+| 174 | Reach | MCP remote on the .43 runner; one CLI-backed third connector; companion notifications over the mesh |
+| 175 | The Calendar and the Clock | real calendar events on the desk (the 146 adapter used); scheduled recordings born from events; the meeting Watch adapter; the week as the brief's frame |
+| 176 | The Speak Loop | dictation as a daily tool: the correction taught once and kept, the journal as a stream, the voice law on every input, the desk answering the hand |
+| 177 | The Thread at Work | the desk chat as a work tool: Draft / Chase / Plan recipes over real Room data; the ask grounded on Watches and the Room; every effect admitted with a receipt |
+| 178 | The Portfolio | many Rooms as one desk: a Projects surface, cross-project needs-you in depth, release readiness, dependency alerts, ⌘K to any Room |
+| 179 | The Companion | the phone and the iPad as the desk's reach — the Swift recreation from the finished web spec (the standing rule), LAN-only, no relay |
+| 180 | The Proof | a measured week of real use on his desk; Gate B partner feedback; the doctor's honest bill of health; the release candidate — "HoldSpeak not really released" becomes released |
+
+Laws that carry the whole road: the Constitution above all; design on the
+library before build and his word on the canvas; build what was ratified
+(artboard beside shot every round); every verb the library Button; no
+prose; no modals; no counters of zero; egress where egress happens;
+scoped tests by workers, the gates by the orchestrator; live walks never
+beside the parallel suite; scars become laws in UX-CANON.md. The order
+of 171–174 may bend to his word after 170's census; 175–180 are named,
+not chartered — each is chartered on his word when its turn comes.
