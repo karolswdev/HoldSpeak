@@ -1,7 +1,7 @@
 # Phase 170 - The Great Pass
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 0/7
+- **Status:** ACTIVE 1/7
 - **Chartered:** 2026-09-05 off main `f8e2739d` (169 The Streamlined Door MERGED via PR #551 → `27eabf0c`; the handover addendum #552)
 - **Canon:** docs/internal/CONSTITUTION.md; docs/internal/DESIGN_SYSTEM.md (the interior canon); web/src/desk/surface/contract.md (the species); **docs/internal/UX-CANON.md (the face canon, born this phase)**; pm/roadmap/holdspeak/THE-TUESDAY-ARC.md (the order of the arc; this phase is its horizontal frame + its 170)
 
@@ -32,7 +32,7 @@ desk we are both proud of.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-170-01 | The census (every surface shot at 1440 + 393 on an isolated desk; the canon-violation scan across the web tree; one ranked table per face by Tuesday use × canon debt) | in-progress | [story-01-the-census](./story-01-the-census.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-170-01 | The census (every surface shot at 1440 + 393 on an isolated desk; the canon-violation scan across the web tree; one ranked table per face by Tuesday use × canon debt) | done | [story-01-the-census](./story-01-the-census.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-170-02 | The species sweep (library-level fixes that lift every face at once; the canon guards made mechanical) | in-progress | [story-02-the-species-sweep](./story-02-the-species-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-170-03 | The Concierge — the model front door designed and built to the canon (the Tuesday Arc's 170) | backlog | [story-03-the-concierge](./story-03-the-concierge.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-170-04 | The top faces re-designed and rebuilt (the Tuesday faces ranked by the census: Settings, Meetings aftercare, People/1:1, the Thread, the shade) | backlog | [story-04-the-top-faces](./story-04-the-top-faces.md) | [evidence-story-04](./evidence-story-04.md) |
@@ -42,8 +42,13 @@ desk we are both proud of.
 
 ## Where we are
 
-**ACTIVE 0/7.** Branch `feat/the-great-pass` off main `f8e2739d`.
-UX-CANON.md written; two Fable Fedaykin are shooting every surface at
-both widths and scanning the web tree for canon violations; the ranked
-table follows; the orchestrator reads every PNG. No fix before the
-census is read.
+**ACTIVE 1/7.** Branch `feat/the-great-pass` off main `f8e2739d`.
+**01 DONE:** UX-CANON.md; 17 surfaces × 2 widths shot; 671 canon
+violations located and ranked; the orchestrator's read names the four
+faces for the canvas (the arrival, Speak, the Settings hub, Meetings) —
+his word on that N is the ask. **02 in flight:** three Fable lanes sweep
+the species by file ownership (pages/cores · desk chrome · thought/
+threads/project-room + parking the retired setup); `countToken` in the
+library. **03 in flight:** the Concierge settled design written; its
+five artboards being drawn for his word. Recon for the four faces of 04
+running.
