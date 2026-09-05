@@ -545,6 +545,62 @@ class TestBranchCi:
         assert entities[0]["branch"] == "main"
         assert entities[0]["url"] == "https://github.com/acme/app/actions/runs/1"
 
+    def test_branch_ci_normalize_snapshot_with_url(self) -> None:
+        """HS-169-05 law: branch_ci entities carry a run id derived from
+        the URL, so normalize_snapshot validates them (the baseline_watch
+        path that every default CI watch hits)."""
+        from holdspeak.services.reaction_service import normalize_snapshot
+
+        def runner(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+            return subprocess.CompletedProcess(command, 0, json.dumps([{
+                "conclusion": "success",
+                "status": "completed",
+                "name": "CI",
+                "url": "https://github.com/acme/app/actions/runs/42",
+                "updatedAt": "2026-09-04T10:00:00Z",
+                "headBranch": "main",
+            }]), "")
+
+        source = GitHubWatchSource(runner=runner)
+        entities = source.snapshot(
+            OWNER, query_kind="branch_ci",
+            query={"repository": "acme/app", "base": "main"},
+        )
+        assert len(entities) == 1
+        assert entities[0]["id"] == "42", (
+            f"Run id must be derived from the URL; got: {entities[0].get('id')}"
+        )
+        # normalize_snapshot must not raise
+        result = normalize_snapshot("gh", entities)
+        assert "42" in result["entities"]
+
+    def test_branch_ci_normalize_snapshot_fallback_id(self) -> None:
+        """HS-169-05 law: when the URL has no run id, the entity id falls
+        back to {base}-{idx}."""
+        from holdspeak.services.reaction_service import normalize_snapshot
+
+        def runner(command: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+            return subprocess.CompletedProcess(command, 0, json.dumps([{
+                "conclusion": "success",
+                "status": "completed",
+                "name": "CI",
+                "url": "",
+                "updatedAt": "2026-09-04T10:00:00Z",
+                "headBranch": "develop",
+            }]), "")
+
+        source = GitHubWatchSource(runner=runner)
+        entities = source.snapshot(
+            OWNER, query_kind="branch_ci",
+            query={"repository": "acme/app", "base": "develop"},
+        )
+        assert len(entities) == 1
+        assert entities[0]["id"] == "develop-0", (
+            f"Fallback id must be base-idx; got: {entities[0].get('id')}"
+        )
+        result = normalize_snapshot("gh", entities)
+        assert "develop-0" in result["entities"]
+
     def test_branch_ci_requires_repository(self) -> None:
         """branch_ci validates repository."""
         source = GitHubWatchSource(runner=lambda *a, **kw: None)

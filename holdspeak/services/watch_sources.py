@@ -145,14 +145,24 @@ class GitHubWatchSource:
         if not isinstance(rows, list):
             raise ServiceError("connector_invalid_output", "GitHub CLI returned a non-array snapshot")
         entities: list[dict[str, Any]] = []
-        for row in rows:
+        for idx, row in enumerate(rows):
             if not isinstance(row, dict):
                 continue
+            # HS-169-05: normalize_snapshot requires every entity to carry
+            # id/number/key.  gh run list returns no native id in --json;
+            # derive one from the URL (unique per run) or fall back to the
+            # branch + index so baseline_watch does not fail with
+            # "Every snapshot entity requires id, number, or key".
+            run_url = str(row.get("url") or "")
+            run_id = run_url.rsplit("/", 1)[-1] if "/" in run_url else ""
+            if not run_id:
+                run_id = f"{base}-{idx}"
             entities.append({
+                "id": run_id,
                 "conclusion": row.get("conclusion"),
                 "status": row.get("status"),
                 "name": row.get("name"),
-                "url": row.get("url"),
+                "url": run_url,
                 "updated_at": row.get("updatedAt"),
                 "branch": row.get("headBranch"),
             })

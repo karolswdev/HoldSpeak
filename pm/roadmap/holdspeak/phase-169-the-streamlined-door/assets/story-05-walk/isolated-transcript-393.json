@@ -1,0 +1,120 @@
+{
+  "schema": "walk-169-transcript@1",
+  "generated_at": "2026-09-04T19:40:57.298269",
+  "mode": "isolated",
+  "width": 393,
+  "clicks": 5,
+  "steps": [
+    {
+      "step_num": 1,
+      "step_name": "settings-connections",
+      "width": 393,
+      "clicks_cumulative": 0,
+      "seconds_cumulative": 3.35,
+      "shot_path": "assets/story-05-walk/isolated-connected-phone/01-settings-connections.png",
+      "shot_hash": "28cd1ddae40d47d7",
+      "notes": "GH: Connected; Jira: Connected"
+    },
+    {
+      "step_num": 2,
+      "step_name": "door-empty",
+      "width": 393,
+      "clicks_cumulative": 0,
+      "seconds_cumulative": 4.82,
+      "shot_path": "assets/story-05-walk/isolated-connected-phone/02-door-empty.png",
+      "shot_hash": "cef825cbdaf791ba",
+      "notes": "empty state: placeholder + NO SOURCES + Create disabled"
+    },
+    {
+      "step_num": 3,
+      "step_name": "outcome-typed",
+      "width": 393,
+      "clicks_cumulative": 0,
+      "seconds_cumulative": 4.96,
+      "shot_path": "assets/story-05-walk/isolated-connected-phone/03-outcome-typed.png",
+      "shot_hash": "8bbde787f5ea41b6",
+      "notes": "outcome filled, Create enabled, still NO SOURCES"
+    },
+    {
+      "step_num": 4,
+      "step_name": "gh-picker",
+      "width": 393,
+      "clicks_cumulative": 1,
+      "seconds_cumulative": 7.13,
+      "shot_path": "assets/story-05-walk/isolated-connected-phone/04-gh-picker.png",
+      "shot_hash": "6d0216532227f452",
+      "notes": "GitHub picker open"
+    },
+    {
+      "step_num": 5,
+      "step_name": "gh-live",
+      "width": 393,
+      "clicks_cumulative": 2,
+      "seconds_cumulative": 7.73,
+      "shot_path": "assets/story-05-walk/isolated-connected-phone/05-gh-live.png",
+      "shot_hash": "909f4cc11b1a07c5",
+      "notes": "GH counts: 3 open PRs \u00b7 CI green"
+    },
+    {
+      "step_num": 6,
+      "step_name": "jira-picker",
+      "width": 393,
+      "clicks_cumulative": 3,
+      "seconds_cumulative": 9.88,
+      "shot_path": "assets/story-05-walk/isolated-connected-phone/06-jira-picker.png",
+      "shot_hash": "0aa3774b84dcb528",
+      "notes": "Jira picker open"
+    },
+    {
+      "step_num": 7,
+      "step_name": "jira-live",
+      "width": 393,
+      "clicks_cumulative": 4,
+      "seconds_cumulative": 13.04,
+      "shot_path": "assets/story-05-walk/isolated-connected-phone/07-jira-live.png",
+      "shot_hash": "27ad112c74dee094",
+      "notes": "receipt: 2 SOURCES \u00b7 4 WATCHES"
+    },
+    {
+      "step_num": 8,
+      "step_name": "create",
+      "width": 393,
+      "clicks_cumulative": 5,
+      "seconds_cumulative": 13.43,
+      "shot_path": "assets/story-05-walk/isolated-connected-phone/08-create.png",
+      "shot_hash": "1b89ef365f9ae14b",
+      "notes": "5 clicks, Room opening"
+    },
+    {
+      "step_num": 9,
+      "step_name": "room-first-paint",
+      "width": 393,
+      "clicks_cumulative": 5,
+      "seconds_cumulative": 13.63,
+      "shot_path": "assets/story-05-walk/isolated-connected-phone/09-room-first-paint.png",
+      "shot_hash": "1b89ef365f9ae14b",
+      "notes": "headline=Nothing needs you; sources=SOURCES 2; door_to_room=11.4s; project_id=proj-19070544665e"
+    },
+    {
+      "step_num": 10,
+      "step_name": "history",
+      "width": 393,
+      "clicks_cumulative": 5,
+      "seconds_cumulative": 13.79,
+      "shot_path": "assets/story-05-walk/isolated-connected-phone/10-history.png",
+      "shot_hash": "728a6f60c4f2202d",
+      "notes": ""
+    },
+    {
+      "step_num": 11,
+      "step_name": "room-return",
+      "width": 393,
+      "clicks_cumulative": 5,
+      "seconds_cumulative": 13.96,
+      "shot_path": "assets/story-05-walk/isolated-connected-phone/11-room-return.png",
+      "shot_hash": "b708c9a64978b8d8",
+      "notes": ""
+    }
+  ],
+  "page_errors": []
+}
