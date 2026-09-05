@@ -30,14 +30,16 @@ import {
   StringGadget,
   type CycleOption,
 } from "../../desk/surface/gadgets";
-import { Receipt } from "../../desk/surface";
+import { Receipt, countToken } from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { openSurface } from "../../desk/shell";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
-import { ModelsModule } from "./settingsModels";
+// PARKED (HS-170-03): ModelsModule retired — the Concierge is its own window now.
+// import { ModelsModule } from "./settingsModels";
 import { TtsSettingsBlock } from "./settingsTts";
-import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
+// PARKED (HS-170-03): CapabilityAssignmentsCore — reached via Concierge Adjust.
+// import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
 import { ContextualAssignment } from "./ContextualAssignment";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
@@ -53,6 +55,7 @@ import {
   PrefsFace,
   PrefStatusBar,
   WAKE_ACTION_OPTIONS,
+  type SettingsHubWire,
 } from "./settingsPrefs";
 
 const SECRET_LABELS: Record<string, string> = {
@@ -215,6 +218,18 @@ function SettingsFace({ hero, scope }: CoreProps) {
     "/api/authority/policy",
     {},
   );
+  // HS-170-04: the hub wire — one read for all seven module rows' state tokens.
+  const hub = useResource<SettingsHubWire>("/api/settings/hub", {
+    models: { engines: 0, groupsSet: 0, defaultSet: false },
+    connections: { connected: 0 },
+    voice: { live: false, target: "" },
+    meetings: { intelligence: false },
+    rhythm: { loops: 0 },
+    sounds: { on: false },
+    system: { host: "THIS DEVICE", mesh: false },
+    posture: "neutral",
+    writtenAt: null,
+  });
   // null = the drawer face; a module id = that module owns the body.
   const [moduleId, setModuleId] = useState<string | null>(
     integrationSubject ? "integrations" : scopedModule,
@@ -630,7 +645,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               {check(
                 ["dictation", "macros", "enabled"],
                 "Voice commands",
-                `${macroItems.length} configured`,
+                countToken(macroItems.length, "CONFIGURED") ?? undefined,
               )}
             </GadgetGroup>
             <GadgetGroup label="Spoken symbols">
@@ -1039,14 +1054,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </FoldGadget>
           </>
         );
-      /* ── Models: availability-only Model Library ── */
+      /* ── Models: PARKED (HS-170-03) — the Concierge is its own window now.
+         Opening models/assignments redirects to the Concierge surface. ── */
       case "models":
-        return (
-          <ModelsModule onRefuse={setRefusal} />
-        );
-      /* ── Assignments: bounded server-projected routing truth ── */
-      case "assignments":
-        return <CapabilityAssignmentsCore />;
+      case "assignments": {
+        import("../../desk/shell").then(({ openSurface }) => {
+          openSurface("open-concierge");
+        });
+        return null;
+      }
       /* ── Connections: tools + credentials + RAW ── */
       case "integrations": {
         const RAW_SECRETS = new Set([
@@ -1141,7 +1157,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
         ) : (
           <PrefsFace
             onOpen={openModule}
-            posture={String(authority.data.control_mode ?? "neutral")}
+            hub={hub.data}
+            posture={String(hub.data.posture || authority.data.control_mode || "neutral")}
             postureBusy={authorityBusy || authority.loading}
             onPosture={(mode) => void setControlMode(mode)}
             precedence={
@@ -1176,6 +1193,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
               : undefined
           }
           receipt={receipt}
+          hubWrittenAt={
+            hub.data.writtenAt != null
+              ? new Date(hub.data.writtenAt * 1000).toTimeString().slice(0, 5)
+              : null
+          }
         />
       )}
     </>

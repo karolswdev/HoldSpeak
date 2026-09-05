@@ -1,3 +1,195 @@
+# HANDOVER: MUAD'DIB IX — Phase 170 The Great Pass, mid-flight (2026-09-05, late)
+
+Read this once, fully, before your first tool call. When you finish,
+you ARE the orchestrator. The owner's standing goal (Stop-hook, verbatim):
+«Fedaykin satisfied all phases all the way up to 180, delivering all
+their might into making HoldSpeak an ultimately useful, beautiful,
+cohesive system». The road: pm/roadmap/holdspeak/THE-TUESDAY-ARC.md
+§6. The face canon: docs/internal/UX-CANON.md. One phase active at a
+time; every face still needs his word on its canvas; each phase merges
+on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
+
+## 0. State (branch `feat/the-great-pass`, Phase 170 ACTIVE 2/7)
+
+- **01 DONE** the census (36 after-shots re-captured green after the
+  sweep). **02 DONE** the species sweep: three Fable lanes (P pages/
+  cores @3dbe8a82 · T thought/threads/project-room + parking @b540dd3a
+  · D desk chrome/pullouts/chair/voice/patterns @bd47897e); tree
+  671 → 222 → 151 real hits after the scanner's own false positives
+  were fixed; raw `<button>` 147 → 4 (allowlisted with reasons), accent
+  rails 0, egress misses 0; vitest 2184 green, zero branch-new; build
+  ok. **The ratchet**: `tests/unit/test_ux_canon_ratchet.py` +
+  `tests/ux_canon_ceiling.json` (per rule + per face; lower it only via
+  `python scripts/ux_canon_scan.py --write-ceiling tests/ux_canon_ceiling.json`;
+  hard zeros DS6 + A9). Library gained `countToken`/`countLabel`
+  (web/src/desk/surface/count.ts). The retired setup wizard is PARKED
+  under web/src/features/project-room/_parked/setup/ (vitest excludes
+  `**/_parked/**`).
+- **03 DESIGNED** the Concierge: settled-design-concierge.md + six
+  boards (Main = found+proposed, Picker, Adjust, Cold, Downloading,
+  Phone). Counsel RATIFY-W-C, every condition PAID (Use these disabled
+  beside any WAITING row; Anthropic in FOUND; headline = FOUND count;
+  cloud rows carry ghost `Check` + `1 TOKEN · $`; Adjust unfolds UNDER
+  the set with a host chip per capability row; `Chat` not `Chat
+  practice`; the `MLX` runtime token is vocabulary).
+- **04 DESIGNED** the four faces: settled-design-four-faces.md + twelve
+  boards (arrival needs-you/quiet/393 · Settings hub 640/393 · Speak
+  idle/landed/unset/393 · Meetings list/detail/393). Counsel RATIFY-W-C
+  PAID (one egress vocabulary — `THIS DEVICE`, `LOCAL` retired; the OFF
+  detail placement; the two wire reads behind the Models row;
+  the THOUGHTS section of the arrival is its OWN section fed by the
+  unfinished-thoughts read — the Chair lane vocabulary is retired by the
+  doc-drift guard, so no lane is revived; the needs-you aggregate is
+  N+1 until 171).
+- **THE CANVAS (18 boards, both pages, counsel paid):**
+  https://claude.ai/code/artifact/3fc26e25-1d5f-4796-b2e9-0d4bae9bff20
+  Seeded from pm/roadmap/holdspeak/phase-170-the-great-pass/assets/mockups/
+  (`*.dc.html` + canvas.json) into the session scratchpad
+  `the-great-pass.html`; republish = same path, `contract: "0.1.31"`,
+  favicon 🧭, no capabilities. Every board needs the head line
+  `<script src="./support.js"></script>` (seven Speak/Meetings boards
+  were born without it — the helper warns, the editor cannot edit
+  without it).
+- **IN FLIGHT when this was written:** two WIRE workers (no face work
+  — faces wait for his word): the Concierge routes
+  `/api/concierge/detect|propose|probe|apply|download` + MCP parity +
+  tests/unit/test_hs170_concierge_wire.py; the four faces' routes
+  `POST /api/meetings/{id}/intelligence/run` (+ `transcriptWords`),
+  `GET /api/desk/needs-you`, `GET /api/settings/hub` + MCP parity +
+  tests/unit/test_hs170_faces_wire.py. Verify by hand (scoped pytest
+  with `HOME=$(mktemp -d)`), then commit under 03 / 04 (stories stay
+  in-progress until the faces are built and rigged).
+
+- **The suite (2026-09-05 01:50, CI shape):** 9392 passed / 9 failed —
+  6 inherited or environment-bound (zero diff vs main in every file
+  involved; three need the owner's real gguf under an isolated HOME),
+  3 xdist-only (green serially). Both wires are committed. Triage law:
+  after any `-n auto` run, re-run the FAILED ids SERIALLY before
+  believing them (106 → 13 real on the same tree), and capture the
+  full list with `-rf > file`, never `| tail`.
+
+- **Decision 02:00:** faces build NOW to the ratified boards (the
+  standing goal says do not pause); his word gates the MERGE, not the
+  build. Five builders by file ownership: Concierge (Settings → Models),
+  the arrival (desk/chair), the Settings hub (pages/cores/SettingsCore
+  + settingsPrefs), Speak (features/dictation), Meetings
+  (features/meetings). Each ships its glass rig asserting its boards.
+
+- **State at 04:40 (the close):** every face built and bounced to its
+  board; counsel on the built phase RATIFY-W-C, all conditions PAID;
+  the lost-doors audit paid (five doors re-homed on the arrival); the
+  real-desk pre-walk at ZERO defects after seven runs (the last defect
+  was DATA — the 143 migration's `legacy-legacy-intel` entry — found by
+  reading his projection in-process, see memory
+  reference_legacy_double_prefixed_profile_ids); 06 DONE; the final
+  summary written; the PR body drafted (scratchpad/pr-170-body.md).
+  The full suite (CI shape) is the last gate before `gh pr create`;
+  stories 03/04/05/07 keep the boxes that name HIS word open. The
+  faces' evidence captures live untracked until the flips (the gate
+  refuses orphan evidence).
+
+- **PR #553 is OPEN** (https://github.com/karolswdev/HoldSpeak/pull/553,
+  05:50): 99 commits; the final suite 9404 green / 6 inherited / 11
+  xdist-only green alone. On his word: merge → flip 03/04/05/07 with
+  the untracked evidence captures (`dw evidence capture` again if stale)
+  → final-summary loses its DRAFT tag → Phase 171 activates
+  (`.githooks/dw story status holdspeak phase-171-the-heartbeat
+  story-01-the-design in-progress`, README "Current phase" line).
+
+- **171's design ground is DRAFTED** (pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/settled-design-heartbeat.md, pending 170's merge): six faces with species; recon binds the wire (the txn hook already writes `next_evaluation_at` — nothing ever calls `evaluate_due`; the Cocoa host has AppKit and zero notification calls; the daily brief push never regenerates). His three new questions: the notification's click target (shade or desk); one flat 15-min interval or an active/idle split; whether a muted project vanishes from the shade or only from the count.
+
+## 1. The asks of the owner (in order)
+
+1. His word on the Concierge page of the canvas → build 03's face on
+   the Door's grammar (web/src/features/project-room/door/ is the
+   pattern) to the artboards; rig at 640 + 393 asserting the boards;
+   walk on his desk (his real engines: llama.cpp on 192.168.1.43, the
+   keys in his keychain, his local files).
+2. His word on the four faces AND on the N (four; the census ranking
+   names the next in line) → build 04 face by face; each with its rig;
+   the arrival retires the Chair hero (the `Develop a thought` button in
+   a void, `PEOPLE NOT SET UP`, `No calendar connected.`, `CREW 0`).
+3. His attended walk of the 169 Door + Room — STILL OWED.
+4. **Phase 171 The Heartbeat is CHARTERED as PLANNED** (10 stories,
+   pm/roadmap/holdspeak/phase-171-the-heartbeat/); it activates when 170
+   merges. Its five open questions for him: the cadence row's home
+   (Settings → Rhythm or another name); the notification body (count
+   only by default — offer the content opt-in at launch or on ask); the
+   Monday brief cadence (daily or every N hours); whether the
+   transcription warm-up is one of the conductor's loops; 171 ∥ 172 or
+   strictly sequential. 172 + 173 are CHARTERED as PLANNED the same way
+   (pm/roadmap/holdspeak/phase-172-the-loop-closes/ 10 stories L;
+   phase-173-the-stewards-hand-and-voice/ 9 stories M–L). Recon facts
+   that bind them: NO People↔Watch join exists today (the owner_alias
+   mechanism at people_service.py:637 is uncalled from the Watch path);
+   intelligence has NO trigger after capture (stop_capture never
+   enqueues; the run verb is manual); the model drafter
+   (_draft_with_model) is real code that has never run for lack of an
+   assignment; steward effects are all internal, `gh` read-only. His
+   questions for 172: trigger on stop_capture only or import too; which
+   plugin extracts decisions/actions or a new extractor; resolver on
+   display_name too; Confirm one-step through the kernel; People as a
+   section or as needs-you rows. For 173: nudge wording (named or
+   steward-anonymous); 48 h latency default; the readiness signal set;
+   nudge per-PR or per-person; `github.comment` as a sixth effect kind.
+   **174 Reach is CHARTERED as PLANNED** (11 stories, L). Recon that
+   binds it: the MCP server is stdio-only but `handle_message()`
+   (holdspeak/mcp/server.py:30) is transport-agnostic — the Streamable
+   HTTP route calls it behind the existing `_web_auth_gate`;
+   AgentCredentialStore mints TTL tokens but has NO palette scope yet;
+   the only CLI-backed third-connector candidate installed is `acli
+   confluence`. His questions: can .43 reach the Mac's hub over the
+   tailnet (unverified); Confluence as the third connector or install
+   another CLI; the `remote` egress badge as a fourth chip state;
+   credential scope = PROJECT_PALETTE or finer; polling-only V0 for
+   long runs or SSE per the current spec.
+   **175–177 CHARTERED as PLANNED**: 175 Calendar and the Clock (9; on
+   171 — calendar_events exists but is empty on his desk; no
+   MeetingWatchSource; the brief has no week window), 176 The Speak
+   Loop (8; on 170 — 0 corrections; ring buffer of 20; MicButton on 7
+   of ~92 inputs), 177 The Thread at Work (8; on 172 — story 01 is a
+   MEASURED DECISION with the kill criterion 0 work threads + 0 runs in
+   a week = CUT; project.* tools are in no thread palette today). His
+   questions: 175 the week boundary; event-born recordings for all
+   meetings or Room-linked only; decisions as entities or rolled up.
+   176 MicButton on every input or a size threshold; 20 corrections
+   enough; the journal in the shade too. 177 when the measured week
+   starts; project.* into Chase/Plan or a Room mode; a softer CUT.
+   **178–180 CHARTERED as PLANNED** — the arc to 180 is chartered end
+   to end: 178 The Portfolio (10; on 173 + 177 — no cross-Room read
+   exists, the needs-you aggregate is flat), 179 The Companion (11; on
+   174 + the web spec finished through 178 — apple/App/ holds
+   pre-Constitution Swift; mesh.py advertises, never pushes), 180 The
+   Proof (10; the measured week, the census at the ratchet floor, the
+   Constitution audit article by article, the suite + live legs, the
+   performance ledger, the positioning re-read, the retrospective, the
+   release candidate). His questions: 178 portfolio as a window or the
+   shade's PROJECTS deepened; cross-source dependency alerts; the
+   brief's portfolio row. 179 iPad-only or universal; off-LAN honest
+   disconnect or cached; QR pairing. 180 Gate B advisory or blocking;
+   the week's journal structured; 1.0.0 or 0.x.
+
+## 2. Laws learned this sitting (add to the canon of habit)
+
+- **Count = rows.** A caption `FOUND 5` over three rows is a lie; a
+  board never abbreviates — it shows every row the count claims.
+- **No dead verbs on a board.** A verb whose precondition the row says
+  is unmet (`NO TRANSCRIPT` beside `Run intelligence`) is a design bug,
+  not a build bug. Counsel hunts for it; so should the first read.
+- **One egress vocabulary.** `THIS DEVICE` · `LAN` · a host. Never a
+  synonym on one face.
+- **The scanner lies until it is taught.** Property access is not a
+  raw id; a JSX comment is not a raw button; TypeScript is not a
+  sentence; `!rows.length` is not a counter. Fix the scanner before
+  fixing a face it accuses.
+- **Commit before dispatching; the tree is a snapshot.** A PMO commit
+  may catch another worker's half-drawn board; that is fine — the next
+  commit finishes it. What is never fine is a worker restoring files.
+- **Publish once, right.** The canvas went to the owner only after
+  counsel's conditions were paid on both pages.
+
+---
+
 # HANDOVER: MUAD'DIB VIII — addendum after the merge (2026-09-05)
 
 - **Phase 169 MERGED**: PR #551 → main `27eabf0c` (carries Phase 168,

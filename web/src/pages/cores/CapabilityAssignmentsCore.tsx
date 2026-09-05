@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { SurfaceState, SurfaceVerbs } from "../../desk/surface/Surface";
+import { countLabel } from "../../desk/surface";
 import { readableError } from "../../lib/api";
 import { AssignmentEditor } from "./AssignmentEditor";
 import { AssignmentSummary } from "./AssignmentSummary";
@@ -72,7 +74,7 @@ export function CapabilityAssignmentsCore() {
   // This is a server-summary readiness fact, not a browser-derived route state.
   // Real-hub consumers may wait for it before measuring the bounded row roster.
   return <section className="capability-assignments" aria-labelledby="assignments-title" data-assignment-summary-state="loaded" data-editor-open={selected && editor ? "true" : undefined}>
-    <SurfaceVerbs status={summary?.issue_count ? <span role="status">{summary.issue_count} issue{summary.issue_count === 1 ? "" : "s"}</span> : null} />
+    <SurfaceVerbs status={summary?.issue_count ? <span role="status">{countLabel("ISSUES", summary.issue_count)}</span> : null} />
     <header className="capability-assignments-head"><h2 id="assignments-title">Assignments</h2><span>Next run</span></header>
     {receipt ? <div className="assignment-receipt" role="status">{receipt}</div> : null}
     <div className="assignment-editor-layout">
@@ -88,8 +90,8 @@ export function CapabilityAssignmentsCore() {
         </div>
         <details className="assignment-overrides" open={showOverrides} onToggle={(event) => setShowOverrides((event.currentTarget as HTMLDetailsElement).open)}>
           <summary>Show task overrides</summary>
-          <div className="assignment-override-filter"><button type="button" aria-pressed={!allTasks} onClick={() => setAllTasks(false)}>Overrides & issues</button><button type="button" aria-pressed={allTasks} onClick={() => setAllTasks(true)}>All tasks</button></div>
-          {taskRows.length ? <div className="assignment-task-rows">{taskRows.map((task: AssignmentTaskOverride) => <article key={task.id}><span>{task.group.label}</span><strong>{task.label}</strong><small>{task.effective.assignment ? chain(task.effective.assignment.entries) : "No default model"}</small></article>)}</div> : <SurfaceState empty emptyContent={<span>No task overrides</span>} />}
+          <div className="assignment-override-filter"><Button dense variant={!allTasks ? "primary" : "ghost"} aria-pressed={!allTasks} onClick={() => setAllTasks(false)}>Overrides & issues</Button><Button dense variant={allTasks ? "primary" : "ghost"} aria-pressed={allTasks} onClick={() => setAllTasks(true)}>All tasks</Button></div>
+          {taskRows.length ? <div className="assignment-task-rows">{taskRows.map((task: AssignmentTaskOverride) => <article key={task.id}><span>{task.group.label}</span><strong>{task.label}</strong><span className="surface-token">{task.effective.assignment ? chain(task.effective.assignment.entries) : "No default model"}</span></article>)}</div> : <SurfaceState empty emptyContent={<span>No task overrides</span>} />}
         </details>
       </div>
       {selected && editor ? <AssignmentEditor

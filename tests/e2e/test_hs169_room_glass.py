@@ -159,15 +159,22 @@ def _seed_changes(project_id: str) -> None:
     from holdspeak.db import get_database
     db = get_database()
     now = datetime.now()
+    # HS-170: the entries must land on TODAY's local date whatever the
+    # hour — "now - 5h" at 00:30 is yesterday, and the TODAY count is
+    # then honestly zero (a midnight flake, seen 2026-09-05 00:04).
+    today0 = now.replace(hour=0, minute=0, second=30, microsecond=0)
+    t1 = max(today0, now - timedelta(hours=5))
+    t2 = max(today0 + timedelta(minutes=1), now - timedelta(hours=3))
+    t3 = max(today0 + timedelta(minutes=2), now - timedelta(hours=1))
     rows = [
         ("chg-1", project_id, 1, "project.created", None, None, None, None, None, "{}",
-         (now - timedelta(hours=5)).isoformat()),
+         t1.isoformat()),
         ("chg-2", project_id, 2, "project.updated", None, None, None, None, None,
          '{"purpose": "Ship Q4"}',
-         (now - timedelta(hours=3)).isoformat()),
+         t2.isoformat()),
         ("chg-3", project_id, 3, "project.updated", None, None, None, None, None,
          '{"action": "item.created", "item_type": "risk"}',
-         (now - timedelta(hours=1)).isoformat()),
+         t3.isoformat()),
     ]
     with db._connection() as conn:
         for row in rows:
@@ -461,7 +468,7 @@ def _run_room_rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
 
             # Hover the first source row before the shot (for hover-reveal verbs)
             if width >= 1440:
-                first_source = page.locator(".surface-ledger-row").first
+                first_source = page.locator("[data-testid='room-body'] .surface-ledger-row").first
                 if first_source.count() > 0:
                     first_source.hover()
                     _settle(page)

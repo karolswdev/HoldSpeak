@@ -9,7 +9,7 @@ import {
   fetchConnections,
   type ConnectionTool,
 } from "../../../pages/cores/connections/api";
-import { discoverGitHub, discoverJira } from "../setup/api";
+import { discoverGitHub, discoverJira } from "./api";
 import * as doorApi from "./api";
 import type { CountToken } from "./api";
 

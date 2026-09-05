@@ -20,6 +20,7 @@ import {
   ProvenanceChip,
   ActionNotice,
   CitationChips,
+  countLabel,
   humanTime,
   type ChipState,
 } from "../../../desk/surface";
@@ -189,7 +190,7 @@ function UpdateList({
 }) {
   return (
     <div className="update-list" data-testid="update-list">
-      <SurfaceLedger count={`DRAFTS ${ctrl.updates.length}`} cols="room">
+      <SurfaceLedger count={countLabel("DRAFTS", ctrl.updates.length)} cols="room">
         <ul className="surface-ledger-rows">
           {ctrl.updates.map((update) => {
             const tone = lifecycleTone(update.lifecycle);
@@ -201,7 +202,7 @@ function UpdateList({
                 wrap
                 lead={
                   <span className="update-lead-emblem" aria-hidden="true">
-                    {"✎"}
+                    {"E"}
                   </span>
                 }
                 primary={
@@ -427,7 +428,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
             <EgressChip
               label="local + cloud"
               scope="mixed"
-              title="Model drafting may send project data to the configured inference provider."
+              title="May send project data to the inference provider."
             />
           </span>
         </SurfaceVerbs>
@@ -449,7 +450,7 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
         <SurfaceFooter
           receipt={
             <span className="surface-footer-receipt-line" data-testid="update-footer-receipt" role="status">
-              {`UPDATES ${ctrl.updates.length}`}
+              {countLabel("UPDATES", ctrl.updates.length)}
             </span>
           }
         />

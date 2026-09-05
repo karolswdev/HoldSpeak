@@ -16,7 +16,7 @@ export function AgentAvatar({
   className,
   spriteState,
 }: {
-  /** The wire avatar (free text). Empty or the legacy 🤖 default -> sprite. */
+  /** The wire avatar (free text). Empty or the legacy robot default -> sprite. */
   avatar?: string | null;
   id: string;
   /** Sprite pool: "agent" (automaton) or "model" (cartridge). */
@@ -27,7 +27,7 @@ export function AgentAvatar({
   spriteState?: string | null;
 }) {
   const custom = String(avatar || "").trim();
-  if (custom && custom !== "🤖")
+  if (custom && custom !== "\u{1F916}")
     return (
       <span className={className} aria-hidden="true">
         {custom}

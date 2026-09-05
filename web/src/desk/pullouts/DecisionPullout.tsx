@@ -2,6 +2,7 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Decision pullout content (HS-117-15). */
 import { useState } from "react";
 import { apiRequest } from "../../lib/api";
+import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
@@ -64,9 +65,9 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
       <div className="desk-pullout-body desk-surface-body">
         <section className="desk-decision-card">
           <div className="desk-pullout-facts">
-            <button type="button" className="desk-chip quiet" onClick={cycleDecisionStatus}>
+            <Button variant="ghost" dense onClick={cycleDecisionStatus}>
               {String(ir.status || "proposed")} ↻
-            </button>
+            </Button>
             {Array.isArray(ir.deciders) && ir.deciders.length ? (
               <span>{ir.deciders.join(" · ")}</span>
             ) : null}
@@ -105,14 +106,14 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
             </FoldGadget>
           ) : null}
           {(items.decision || []).filter((candidate) => candidate.supersededBy === o.id).map((candidate) => (
-            <button key={candidate.id} type="button" className="desk-chip quiet" onClick={() => openPullout(String(candidate.id))}>
+            <Button key={candidate.id} variant="ghost" dense onClick={() => openPullout(String(candidate.id))}>
               Supersedes {String(candidate.title || candidate.id)}
-            </button>
+            </Button>
           ))}
           {ir.supersededBy ? (
-            <button type="button" className="desk-chip quiet" onClick={() => openPullout(String(ir.supersededBy))}>
+            <Button variant="ghost" dense onClick={() => openPullout(String(ir.supersededBy))}>
               Superseded by {String(ir.supersededBy)}
-            </button>
+            </Button>
           ) : null}
         </section>
         <DeskFilingStrip
@@ -122,29 +123,29 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
         />
       </div>
       <SurfaceFooter receipt={copyReceipt} verbs={<>
-        <button
-          type="button"
-          className="desk-chip quiet"
+        <Button
+          variant="ghost"
+          dense
           onClick={() => void copy(decisionContent)}
         >
           Copy
-        </button>
-        <button
-          type="button"
-          className="desk-chip quiet"
+        </Button>
+        <Button
+          variant="ghost"
+          dense
           onClick={() =>
             openSurfaceOr("dictate", "/dictation", resourceRef)
           }
         >
           Dictate about this
-        </button>
+        </Button>
         {editingDecision ? (
           <>
-            <button type="button" className="desk-chip quiet" onClick={() => setEditingDecision(false)}>Cancel</button>
-            <button type="button" className="desk-chip is-primary" onClick={commitDecisionEdit}>Done</button>
+            <Button variant="ghost" dense onClick={() => setEditingDecision(false)}>Cancel</Button>
+            <Button variant="primary" dense onClick={commitDecisionEdit}>Done</Button>
           </>
         ) : (
-          <button type="button" className="desk-chip is-primary" onClick={startDecisionEdit}>Edit</button>
+          <Button variant="primary" dense onClick={startDecisionEdit}>Edit</Button>
         )} </>} />
     </>
   );

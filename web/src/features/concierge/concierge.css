@@ -1,0 +1,489 @@
+/* HS-170-03 — The Concierge face.
+   Own surface window; no Settings module chrome. */
+
+.concierge-root {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 4px 0 0;
+}
+
+/* ── 1. Headline — display step via surface-display class ── */
+
+.concierge-headline {
+  color: var(--accent, #a86e4a);
+  margin: 0;
+}
+
+.concierge-headline--cold {
+  color: var(--muted, #9ba2b0);
+}
+
+.concierge-hardware-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.concierge-hardware-token {
+  font: 600 11px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text, #f2f3f5);
+  background: var(--desk-window-well, #1c1f27);
+  border: 1px solid var(--border, #2a2e3e);
+  border-radius: 2px;
+  padding: 3px 8px;
+}
+
+.concierge-checked-at {
+  font: 400 11px/1 "JetBrains Mono", monospace;
+  letter-spacing: 0.06em;
+  color: var(--faint, #767e8d);
+  text-transform: uppercase;
+}
+
+/* ── 2. Sections ── */
+
+.concierge-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.concierge-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.concierge-section-label {
+  font: 600 11px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted, #9ba2b0);
+  padding-left: 2px;
+}
+
+.concierge-adjust-trigger {
+  margin-left: auto;
+}
+
+/* ── FOUND + SET lists ── */
+
+.concierge-found-list,
+.concierge-set-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Boxed rows */
+.concierge-found-list .surface-ledger-row,
+.concierge-set-list .surface-ledger-row {
+  background: var(--desk-window-well, #1c1f27);
+  border: 1px solid var(--border, #2a2e3e);
+  border-radius: 2px;
+  padding: 10px 12px;
+}
+
+.concierge-found-list .surface-ledger-line,
+.concierge-set-list .surface-ledger-line {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  grid-template-columns: unset !important;
+  padding: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.concierge-found-list .surface-ledger-lead,
+.concierge-set-list .surface-ledger-lead {
+  flex: 0 0 36px;
+  text-align: center;
+}
+
+.concierge-found-list .surface-ledger-primary,
+.concierge-set-list .surface-ledger-primary {
+  flex: 0 0 auto;
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.concierge-found-list .surface-ledger-trailing,
+.concierge-set-list .surface-ledger-trailing {
+  display: none;
+}
+
+.concierge-found-list .surface-ledger-cells,
+.concierge-set-list .surface-ledger-cells {
+  display: contents;
+}
+
+.concierge-found-list .surface-ledger-open,
+.concierge-set-list .surface-ledger-open {
+  padding: 4px 0 0;
+}
+
+/* ── Lead emblem ── */
+
+.concierge-lead {
+  font: 600 11px/1 "JetBrains Mono", monospace;
+  color: var(--muted, #9ba2b0);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Engine name (primary type step 15px/600) ── */
+
+.concierge-engine-name {
+  font: 600 15px/1.3 Inter, system-ui, sans-serif;
+  color: var(--text, #f2f3f5);
+}
+
+.concierge-group-name {
+  font: 600 15px/1.3 Inter, system-ui, sans-serif;
+  color: var(--text, #f2f3f5);
+}
+
+.concierge-group-glyph {
+  font: 400 14px/1 Inter, system-ui, sans-serif;
+  color: var(--muted, #9ba2b0);
+}
+
+/* ── Inline tokens ── */
+
+.concierge-token {
+  font: 400 12px/1 "JetBrains Mono", monospace;
+  color: var(--muted, #9ba2b0);
+}
+
+/* ── FOUND row cells: two-line grammar ──
+   Line 1: emblem . name . latency/size/runtime/key ... Check+cost / Download
+   Line 2: host chip + state chip ── */
+
+.concierge-found-cells {
+  display: contents;
+}
+
+/* State chip right-aligned on line 1 */
+.concierge-found-state {
+  margin-left: auto;
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Host chip on line 2 */
+.concierge-found-line2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 100%;
+  min-width: 0;
+  margin-left: 46px;
+}
+
+/* ── SET row cells: two-line grammar ──
+   Line 1: glyph . name . picker trigger
+   Line 2: latency + host + state ── */
+
+.concierge-set-cells {
+  display: contents;
+}
+
+/* State chip right-aligned on line 1 */
+.concierge-set-state {
+  margin-left: auto;
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Latency + host on line 2 */
+.concierge-set-line2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 100%;
+  min-width: 0;
+  margin-left: 46px;
+}
+
+/* ── Key chip ── */
+
+.concierge-key-chip {
+  font: 600 10px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid var(--border, #2a2e3e);
+}
+
+.concierge-key-chip[data-set] {
+  color: var(--success, #34d399);
+  border-color: color-mix(in srgb, var(--success, #34d399) 30%, transparent);
+}
+
+.concierge-key-chip[data-not-set] {
+  color: var(--warning, #f5a623);
+  border-color: color-mix(in srgb, var(--warning, #f5a623) 30%, transparent);
+}
+
+/* ── Cloud check + cost ── */
+
+.concierge-cloud-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.concierge-cost-chip {
+  font: 600 10px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--warning, #f5a623);
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--warning, #f5a623) 30%, transparent);
+}
+
+/* ── Progress token ── */
+
+.concierge-progress-token {
+  font: 600 11px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent, #a86e4a);
+  padding: 4px 10px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent, #a86e4a) 15%, transparent);
+}
+
+/* ── Picker trigger (beveled with chevron) ── */
+
+.concierge-picker-trigger {
+  font: 600 13px/1.3 Inter, system-ui, sans-serif !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--border, #2a2e3e) !important;
+  border-radius: 2px;
+  padding: 4px 10px !important;
+  background: var(--desk-window-well, #1c1f27) !important;
+}
+
+.concierge-chevron {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: var(--muted, #9ba2b0);
+}
+
+/* ── Picker well: ChoiceCard items ── */
+
+.concierge-picker-well {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0 8px;
+  animation: surface-rise-in var(--duration-medium, 200ms)
+    var(--ease-quart, cubic-bezier(0.25, 1, 0.5, 1)) both;
+}
+
+.concierge-picker-well .surface-choice-card-shell {
+  cursor: pointer;
+}
+
+.concierge-picker-card {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left !important;
+  padding: 8px 10px !important;
+  border-radius: 2px;
+  border: none !important;
+  background: transparent !important;
+}
+
+.concierge-picker-card:hover {
+  background: var(--wash-1, rgba(255, 255, 255, 0.04)) !important;
+}
+
+.concierge-picker-card-name {
+  font: 600 13px/1.3 Inter, system-ui, sans-serif;
+  color: var(--text, #f2f3f5);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.concierge-picker-card-facts {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Adjust well ── */
+
+.concierge-adjust-well {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 0 8px;
+  animation: surface-rise-in var(--duration-medium, 200ms)
+    var(--ease-quart, cubic-bezier(0.25, 1, 0.5, 1)) both;
+}
+
+.concierge-adjust-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  font: 400 12px/1.3 "JetBrains Mono", monospace;
+  color: var(--muted, #9ba2b0);
+}
+
+.concierge-adjust-cap {
+  flex: 0 0 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.concierge-adjust-group {
+  flex: 0 0 150px;
+  color: var(--text, #f2f3f5);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.concierge-adjust-engine {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 600 12px/1 "JetBrains Mono", monospace !important;
+  border: 1px solid var(--border, #2a2e3e) !important;
+  border-radius: 2px;
+  padding: 2px 8px !important;
+  background: var(--desk-window-well, #1c1f27) !important;
+}
+
+.concierge-adjust-host {
+  flex-shrink: 0;
+}
+
+/* ── Add an engine: ghost text aligned with names (no box) ── */
+
+.concierge-add-engine {
+  padding-left: 48px;
+  font: 400 13px/1.3 Inter, system-ui, sans-serif;
+  color: var(--faint, #767e8d);
+  cursor: pointer;
+}
+
+/* ── Add engine inline row (StringGadget + Check + Add) ── */
+
+.concierge-add-engine-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 48px;
+  animation: surface-rise-in var(--duration-medium, 200ms)
+    var(--ease-quart, cubic-bezier(0.25, 1, 0.5, 1)) both;
+}
+
+/* ── Footer: portaled, receipt left-aligned, never wraps ── */
+
+.desk-next .surface-footer-layout.concierge-footer {
+  grid-template-columns: minmax(0, 1fr) max-content;
+  grid-template-areas: "receipt verbs";
+}
+.desk-next .concierge-footer .surface-footer-egress {
+  display: none;
+}
+.desk-next .concierge-footer .surface-footer-receipt {
+  justify-content: flex-start;
+  grid-area: receipt;
+}
+.desk-next .concierge-footer .surface-footer-verbs {
+  grid-area: verbs;
+}
+
+.concierge-receipt {
+  font: 600 11px/1 "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted, #9ba2b0);
+  white-space: nowrap;
+}
+
+/* ── Error ── */
+
+.concierge-error {
+  font: 400 12px/1.3 "JetBrains Mono", monospace;
+  color: var(--danger, #f87171);
+  padding: 4px 2px;
+}
+
+/* ── 393 narrow: four-line stacked grammar ── */
+
+@container surface (max-width: 559.9px) {
+  .concierge-found-list .surface-ledger-primary,
+  .concierge-set-list .surface-ledger-primary {
+    flex: 1 1 calc(100% - 48px);
+    min-width: 0;
+  }
+
+  .concierge-found-line2,
+  .concierge-set-line2 {
+    margin-left: 0;
+  }
+
+  .concierge-picker-trigger {
+    max-width: 100%;
+  }
+
+  .concierge-cloud-actions {
+    flex-basis: 100%;
+  }
+
+  .concierge-adjust-row {
+    flex-wrap: wrap;
+  }
+
+  .concierge-adjust-cap,
+  .concierge-adjust-group {
+    flex-basis: auto;
+  }
+
+  .concierge-add-engine {
+    padding-left: 0;
+  }
+}
+
+/* ── Reduced motion ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .concierge-picker-well,
+  .concierge-adjust-well {
+    animation: none;
+  }
+}

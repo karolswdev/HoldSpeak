@@ -101,7 +101,7 @@ describe("Workbench STARTS WHEN automations", () => {
     expect(screen.getByLabelText("GitHub repository")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "7 AM daily" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /GitHub · Review requested/i })).toBeDisabled();
-    expect(screen.getByText("Repository required to add a GitHub trigger.")).toBeInTheDocument();
+    expect(screen.getByText("REPOSITORY REQUIRED")).toBeInTheDocument();
   });
 
   it("creates the GitHub review-requested preset with an explicit repository", async () => {
@@ -135,19 +135,19 @@ describe("Workbench STARTS WHEN automations", () => {
       .find((button) => !button.hasAttribute("disabled"));
     expect(automationButton).toBeDefined();
     await user.click(automationButton!);
-    expect(screen.getByText(/TEST NEVER ADDS WORK/)).toBeInTheDocument();
+    expect(screen.getByText(/SILENT BASELINE/)).toBeInTheDocument();
     expect(screen.queryByText(/auto-run/i)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Test match" }));
     await waitFor(() => expect(calls.mock.calls.some(([url]) => String(url).endsWith("/automations/auto-1/test"))).toBe(true));
     expect(calls.mock.calls.some(([url]) => /\/items(?:\/|$)/.test(String(url)))).toBe(false);
-    expect(screen.getByText(/TEST ONLY · NO ITEMS ADDED/)).toBeVisible();
+    expect(screen.getByText(/TEST ·/)).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: "Enable" }));
     await waitFor(() => expect(calls.mock.calls.some(([url, init]) =>
       String(url).endsWith("/automations/auto-1") && (init as RequestInit).method === "PATCH",
     )).toBe(true));
-    expect(screen.getByText("BASELINE ESTABLISHED · NO PAST ACTIVITY FIRED")).toBeInTheDocument();
+    expect(screen.getByText("BASELINE ESTABLISHED")).toBeInTheDocument();
     await screen.findByRole("button", { name: "Pause" });
     await user.click(screen.getByRole("button", { name: "Pause" }));
     await waitFor(() => expect(calls.mock.calls.filter(([url, init]) =>

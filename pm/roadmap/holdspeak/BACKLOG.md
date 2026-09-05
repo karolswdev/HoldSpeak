@@ -1025,3 +1025,11 @@ profile. Charter after Phase 156 proves the front door on the current
 seams (156's apply is the natural migration driver). Owner's words:
 "didn't we get rid of the whole compat kind of thing with that big
 revolution?" — the backend still owes him that revolution.
+
+- **Concierge apply in one transaction** (from HS-170-03, 2026-09-05): `POST /api/concierge/apply` writes per group through the `set_assignment` CAS path like the front door; an atomic seven-group write needs a new InferenceAssignmentService method. Fold into the next Settings→Models pass.
+
+- **The Monday brief carries the kernel operation ledger as "waiting" items** (found on the owner's real desk 2026-09-05 by live170_walk.py: 1837 `Service.method` rows). The arrival filters them client-side (ChairHome.tsx RAW_ID_RE) and caps at 3 + `N more`; the SOURCE fix — the brief service must not emit kernel operations as owner-facing items — belongs to Phase 171 story 06 (the brief recurring).
+
+- **settingsModels.tsx (`ModelsModule`) is dead code** after HS-170-03 (its SettingsCore import is parked; nothing else imports it; frontDoor.tsx renders its own FrontDoorView). Park under `_parked/` in the next Settings pass — never delete.
+
+- **The Concierge rig inherits the retired Models/Assignments rig intents** (HS-170-07, 2026-09-05): 25 tests across test_hs141_models_setup / hs142_model_acquisition / hs143_assignments / hs143_model_library were retired with module skips when the faces were parked. Their intents — download → verify → add WITHOUT assigning; the assignment editor's next-run preview + conflict (409) path; keyboard-only owner paths + accessibility; zoom 200% + reduced motion; provider custody retaining retries + assignment heads; a broken engine's repair visible — must be re-asserted on the Concierge (tests/e2e/test_hs170_concierge_glass.py) in the next Settings pass.

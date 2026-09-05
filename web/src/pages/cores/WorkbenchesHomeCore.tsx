@@ -1,5 +1,6 @@
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { useDesk } from "../../desk/store";
 import { boundaryEgressLamp } from "../../desk/inferenceEgress";
@@ -10,6 +11,7 @@ import {
   SurfaceLedgerRow,
   SurfaceState,
 } from "../../desk/surface/Surface";
+import { countToken } from "../../desk/surface/count";
 import { renderHeroSlot } from "./core-layout";
 import { humanTime } from "../../desk/surface/format";
 import type {
@@ -63,9 +65,9 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
   const createWorkbench = () => void useDesk.getState().createPrimitive("workbench");
 
   const verbs = (
-    <button type="button" className="desk-chip" onClick={createWorkbench}>
-      ＋ Create
-    </button>
+    <Button variant="ghost" dense onClick={createWorkbench}>
+      + Create
+    </Button>
   );
 
   if (loading) return <SurfaceState loading />;
@@ -78,7 +80,7 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
         <SurfaceState
           empty
           emptyLabel="No workbenches yet"
-          emptyGlyph="⚙"
+          emptyGlyph="⊞"
         />
       ) : (
         <div className="wb-home-grid">
@@ -108,13 +110,13 @@ export function WorkbenchesHomeCore({ hero }: CoreProps) {
                   <span className="wb-home-card-name">{wb.name}</span>
                 </div>
                 <div className="wb-home-card-stats">
-                  {wb.pending_count > 0 ? (
-                    <span>{wb.pending_count} pending</span>
+                  {countToken(wb.pending_count, "PENDING") ? (
+                    <span>{countToken(wb.pending_count, "PENDING")}</span>
                   ) : null}
-                  {wb.item_count - wb.pending_count > 0 ? (
-                    <span>{wb.item_count - wb.pending_count} done</span>
+                  {countToken(wb.item_count - wb.pending_count, "DONE") ? (
+                    <span>{countToken(wb.item_count - wb.pending_count, "DONE")}</span>
                   ) : null}
-                  {wb.item_count === 0 ? <span>0 items</span> : null}
+                  {wb.item_count === 0 ? <span>Empty</span> : null}
                 </div>
                 <div className="wb-home-card-meta">
                   <span className="wb-home-card-assignment">

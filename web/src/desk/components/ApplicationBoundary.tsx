@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Button } from "../../components/signal/Signal";
 
 interface ApplicationBoundaryProps {
   label: string;
@@ -42,9 +43,9 @@ export class ApplicationBoundary extends Component<
           {this.props.label} failed here because {reason}. Your other Desk work
           remains open. Reload the application.
         </p>
-        <button type="button" className="desk-chip" onClick={this.retry}>
+        <Button dense onClick={this.retry}>
           Reload application
-        </button>
+        </Button>
       </section>
     );
   }

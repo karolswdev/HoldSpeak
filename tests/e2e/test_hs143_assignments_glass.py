@@ -1,4 +1,11 @@
-"""HS-143-13 S2 — real-hub bounded Assignments overview at owner widths."""
+"""HS-143-13 S2 — real-hub bounded Assignments overview at owner widths.
+
+HS-170: RETIRED -- the Settings -> Assignments tile and the
+CapabilityAssignmentsCore module are PARKED (HS-170-03). The assignments
+overview is now the Concierge's THE SET section (set rows + Adjust well);
+the editor's save/preview/conflict live on the Concierge's picker wells +
+apply's 409 refusal path. ConciergeCore.tsx, own window open-concierge.
+"""
 from __future__ import annotations
 
 import os
@@ -6,6 +13,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
+pytest.skip(
+    "HS-170: Settings -> Assignments PARKED (HS-170-03, settled-design-four-faces.md Face 3); "
+    "capability now at the Concierge's THE SET section + Adjust well (ConciergeCore.tsx)",
+    allow_module_level=True,
+)
 
 pytest.importorskip("playwright.sync_api", reason="Assignments glass needs Playwright")
 

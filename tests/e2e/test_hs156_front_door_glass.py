@@ -542,7 +542,17 @@ def _start_stub_endpoint() -> "tuple[Any, int]":
 
 
 def test_beauty_cards(hub: dict) -> None:
-    """HS-156-08: pack cards as OBJECTS — tier row, summary anchor, folded detail."""
+    """HS-156-08: pack cards as OBJECTS — tier row, summary anchor, folded detail.
+
+    HS-170: RETIRED -- the front-door pack cards (.front-door-cards, surface-choice-card)
+    are PARKED (HS-170-03, settled-design-four-faces.md Face 3); the pack-card
+    recommender is replaced by the Concierge's FOUND engine rows + picker wells
+    (ConciergeCore.tsx, own window open-concierge).
+    """
+    pytest.skip(
+        "HS-170: front-door pack cards PARKED (HS-170-03); "
+        "capability now at the Concierge's FOUND section (ConciergeCore.tsx)"
+    )
     from playwright.sync_api import sync_playwright
 
     url = hub["url"]
@@ -598,7 +608,17 @@ def test_beauty_cards(hub: dict) -> None:
 
 
 def test_beauty_candidate_picker(hub: dict) -> None:
-    """HS-156-08: candidates are material cards (name, boundary, health), never raw rows."""
+    """HS-156-08: candidates are material cards (name, boundary, health), never raw rows.
+
+    HS-170: RETIRED -- the front-door candidate picker (.assignment-candidates)
+    is PARKED (HS-170-03, settled-design-four-faces.md Face 3); the picker is
+    replaced by the Concierge's per-group ChoiceCard picker wells
+    (ConciergeCore.tsx PickerWell, concierge-picker-well-{group} testid).
+    """
+    pytest.skip(
+        "HS-170: front-door candidate picker PARKED (HS-170-03); "
+        "capability now at the Concierge's picker ChoiceCards (ConciergeCore.tsx)"
+    )
     from playwright.sync_api import sync_playwright
 
     url = hub["url"]

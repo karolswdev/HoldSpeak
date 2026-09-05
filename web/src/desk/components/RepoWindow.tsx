@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
 import {
@@ -190,8 +191,8 @@ export function RepoWindow({
         {error ? <SurfaceState error={error} onRetry={retry ?? (() => void refresh())} /> : null}
         {!error && wing === "files" ? <>
           <nav className="repo-breadcrumb" aria-label="Repository path">
-            <button type="button" onClick={() => ascend(0)} disabled={!path}>root</button>
-            {breadcrumb.map((part, index) => <button type="button" key={`${part}-${index}`} onClick={() => ascend(index + 1)} disabled={index === breadcrumb.length - 1}>{part}</button>)}
+            <Button dense variant="ghost" onClick={() => ascend(0)} disabled={!path}>root</Button>
+            {breadcrumb.map((part, index) => <Button dense variant="ghost" key={`${part}-${index}`} onClick={() => ascend(index + 1)} disabled={index === breadcrumb.length - 1}>{part}</Button>)}
             {branches.length > 1 ? (
               <CycleGadget
                 label="Branch"
@@ -241,12 +242,12 @@ export function RepoWindow({
         {!error && wing === "issues" ? <SurfaceState empty emptyLabel="ISSUES UNAVAILABLE" emptyGlyph="○" /> : null}
       </div>
       <SurfaceFooter
-        receipt={<span className="quiet">{files.length} {files.length === 1 ? "item" : "items"}{status?.ahead ? ` · ${status.ahead} ahead` : ""}{status?.behind ? ` · ${status.behind} behind` : ""}</span>}
+        receipt={<span className="quiet">{files.length > 0 ? `${files.length} ${files.length === 1 ? "item" : "items"}` : "Empty"}{status?.ahead ? ` · ${status.ahead} ahead` : ""}{status?.behind ? ` · ${status.behind} behind` : ""}</span>}
         verbs={
           <div className="repo-footer-actions">
-            <button type="button" className="desk-chip" disabled={busy || !selected.size} onClick={() => void stage()}>
+            <Button dense disabled={busy || !selected.size} onClick={() => void stage()}>
               Stage {selected.size || ""}
-            </button>
+            </Button>
             <StringGadget
               label="Commit message"
               value={message}
@@ -256,15 +257,14 @@ export function RepoWindow({
                 if (event.key === "Enter") void commitSelected();
               }}
             />
-            <button
-              type="button"
-              className="desk-chip"
+            <Button
+              dense
               disabled={busy || !message.trim()}
               title={message.trim() ? `Commit: ${message.trim()}` : "Enter a commit message"}
               onClick={() => void commitSelected()}
             >
               Commit
-            </button>
+            </Button>
           </div>
         }
       />

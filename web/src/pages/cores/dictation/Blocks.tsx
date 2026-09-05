@@ -17,6 +17,7 @@ import {
   SurfaceSection,
   SurfaceState,
 } from "../../../desk/surface/Surface";
+import { countToken } from "../../../desk/surface";
 import {
   CycleGadget,
   PadGadget,
@@ -53,7 +54,7 @@ export function Blocks() {
       );
       await resource.reload();
     } catch (error) {
-      announce(`⚠ ${readableError(error)}`, "warn");
+      announce(readableError(error), "warn");
     }
   };
   const remove = async (row: Record<string, unknown>) => {
@@ -64,7 +65,7 @@ export function Blocks() {
       );
       await resource.reload();
     } catch (error) {
-      announce(`⚠ ${readableError(error)}`, "warn");
+      announce(readableError(error), "warn");
     }
   };
   const create = async () => {
@@ -91,14 +92,14 @@ export function Blocks() {
       setDrafting(false);
       await resource.reload();
     } catch (error) {
-      announce(`⚠ ${readableError(error)}`, "warn");
+      announce(readableError(error), "warn");
     }
   };
   return (
     <SurfaceSection className="speak-blocks">
       <SurfaceLibrary
-        count={rows.length}
-        countLabel={rows.length === 1 ? "block" : "blocks"}
+        count={rows.length || undefined}
+        countLabel={countToken(rows.length, "BLOCK") ?? undefined}
         controls={
           <CycleGadget
             label="Block scope"
@@ -135,7 +136,7 @@ export function Blocks() {
                 face={
                   <EditInPlace
                     value={String(inject.template ?? "")}
-                    label={`${String(row.description ?? row.id)} template`}
+                    label={`${String(row.description ?? "Block")} template`}
                     multiline
                     onCommit={(next) =>
                       void save(row, { inject: { ...inject, template: next } })
@@ -145,7 +146,7 @@ export function Blocks() {
                 name={
                   <EditInPlace
                     value={String(row.description ?? row.id ?? "Block")}
-                    label={`${String(row.id)} name`}
+                    label={`${String(row.description ?? "Block")} name`}
                     onCommit={(next) => void save(row, { description: next })}
                   />
                 }

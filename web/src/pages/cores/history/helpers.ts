@@ -47,9 +47,29 @@ export function displayState(value: unknown): string {
    losing the state. */
 export type StateToken = { axis?: string; label: string; tone?: "warn" | "danger" };
 
+/** HS-170-04: liveness heuristic for capture_status=recording rows.
+ *  No /api/meetings/active route exists (the active session is process-local
+ *  runtime state); the list query carries only DB columns.
+ *  Seam: ended_at is null AND started_at is within the last 6 hours →
+ *  likely still live (REC). Otherwise → INTERRUPTED (dead session). */
+function isLikelyLiveCapture(row: Record<string, unknown>): boolean {
+  if (row.ended_at != null) return false;
+  const started = new Date(String(row.started_at ?? ""));
+  if (Number.isNaN(started.getTime())) return false;
+  const sixHoursAgo = Date.now() - 6 * 60 * 60 * 1000;
+  return started.getTime() > sixHoursAgo;
+}
+
 export function stateToken(row: Record<string, unknown>): StateToken {
   const capture = String(row.capture_status ?? "");
-  if (capture === "recording") return { label: "REC", tone: "danger" };
+  // HS-170-04: capture_status=recording — REC when likely still live
+  // (no ended_at, started within 6 h); INTERRUPTED otherwise (dead
+  // session that never finalized, UX-CANON A.10 — honest states).
+  if (capture === "recording") {
+    return isLikelyLiveCapture(row)
+      ? { label: "REC", tone: "danger" }
+      : { label: "INTERRUPTED", tone: "warn" };
+  }
   if (capture === "capture_failed")
     return { label: "CAPTURE FAILED", tone: "danger" };
   if (capture === "recoverable") return { label: "RECOVERABLE", tone: "warn" };
@@ -116,3 +136,71 @@ export type Receipt = { text: string; tone?: "danger" };
 
 /** Needs-you table row shape shared between useMeetingData and NeedsYouTable. */
 export type NeedsRow = { cells: ReactNode[]; verbs: ReactNode };
+
+/** HS-170-04 — `1,204 WORDS` token from transcriptWords. Null when
+ *  the wire says None (no transcript) — the caller renders NO TRANSCRIPT. */
+export function wordsToken(transcriptWords: unknown): string | null {
+  if (transcriptWords == null) return null;
+  const n = Number(transcriptWords);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return `${n.toLocaleString()} WORDS`;
+}
+
+/** HS-170-04 — true when the meeting is OFF (intel disabled) AND has a
+ *  transcript (words > 0): the Run intelligence verb is honest. */
+export function needsIntelligence(row: Record<string, unknown>): boolean {
+  const token = stateToken(row);
+  if (token.label !== "OFF") return false;
+  return row.transcriptWords != null && Number(row.transcriptWords) > 0;
+}
+
+/** HS-170-04 — the face's meeting state for list rows: label + verb.
+ *  OFF with transcript: `Run intelligence` (primary dense).
+ *  NEEDS YOU N: `Open` (ghost). SAVED: `Open` (ghost). No transcript:
+ *  `Open` (ghost). The verb is null when the state alone says everything. */
+export type MeetingRowState = {
+  label: string;
+  tone?: "warn" | "danger" | "success" | "accent";
+  verb: string | null;
+  verbVariant: "primary" | "ghost";
+};
+
+export function meetingRowState(row: Record<string, unknown>): MeetingRowState {
+  const token = stateToken(row);
+  const hasTranscript = row.transcriptWords != null && Number(row.transcriptWords) > 0;
+
+  // OFF with transcript => Run intelligence
+  if (token.label === "OFF" && hasTranscript) {
+    return { label: "OFF", verb: "Run intelligence", verbVariant: "primary" };
+  }
+  // OFF without transcript => no Run verb, just Open
+  if (token.label === "OFF" && !hasTranscript) {
+    return { label: "OFF", verb: "Open", verbVariant: "ghost" };
+  }
+  // REC (live capture — no verb, the meeting is in the live room)
+  if (token.label === "REC") {
+    return { label: "REC", tone: "danger", verb: null, verbVariant: "ghost" };
+  }
+  // INTERRUPTED (dead capture session — ghost Open to view what exists)
+  if (token.label === "INTERRUPTED") {
+    return { label: "INTERRUPTED", tone: "warn", verb: "Open", verbVariant: "ghost" };
+  }
+  // RUNNING (intelligence)
+  if (token.label === "RUNNING") {
+    return { label: "RUNNING", tone: "warn", verb: null, verbVariant: "ghost" };
+  }
+  // QUEUED (intelligence queued — ghost Open)
+  if (token.label === "QUEUED") {
+    return { label: "QUEUED", tone: "warn", verb: "Open", verbVariant: "ghost" };
+  }
+  // FAILED
+  if (token.label === "FAILED" || token.tone === "danger") {
+    return { label: token.label, tone: "danger", verb: "Retry", verbVariant: "primary" };
+  }
+  // SAVED (complete)
+  if (token.label === "SAVED") {
+    return { label: "SAVED", tone: "success", verb: "Open", verbVariant: "ghost" };
+  }
+  // Catch-all
+  return { label: token.label, tone: token.tone, verb: "Open", verbVariant: "ghost" };
+}

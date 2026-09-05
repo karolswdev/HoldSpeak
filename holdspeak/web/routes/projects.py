@@ -375,4 +375,77 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             log.error(f"Failed to transition item: {exc}")
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
+    # ── HS-170-04: desk needs-you aggregate ─────────────────────────────
+
+    @router.get("/api/desk/needs-you")
+    async def api_desk_needs_you(request: Request) -> Any:
+        """HS-170-04: arrival headline aggregate.
+
+        Sums every ACTIVE project's Room needsYou (reuses ProjectService's
+        room section builder -- does NOT recompute; archived projects excluded)
+        into one flat payload. 171 owns the cadence; this is the one route,
+        one read.
+        """
+        try:
+            _SEVERITY_ORDER = {"danger": 0, "warning": 1, "info": 2}
+            projects = service.list_projects(principal(request), {"include_archived": False})
+            items: list[dict] = []
+            project_ids: set[str] = set()
+            for proj in projects:
+                pid = proj.get("id") or ""
+                if not pid:
+                    continue
+                try:
+                    room = service.room(principal(request), pid)
+                except Exception:
+                    continue
+                needs = room.get("needsYou", {})
+                if needs.get("state") != "ok":
+                    continue
+                need_items = needs.get("items") or []
+                for item in need_items:
+                    items.append({
+                        "projectId": pid,
+                        "projectName": proj.get("name") or proj.get("title") or "",
+                        "ref": item.get("title", ""),
+                        "title": item.get("title", ""),
+                        "why": item.get("why", ""),
+                        "ageToken": item.get("since", ""),
+                        "source": item.get("source", ""),
+                        "verbHref": item.get("url"),
+                        "severity": item.get("severity", "info"),
+                    })
+                    project_ids.add(pid)
+
+            # Sort: danger (overdue/red) first, then warning, then info.
+            items.sort(key=lambda r: (
+                _SEVERITY_ORDER.get(r.get("severity", "info"), 2),
+                r.get("ageToken") or "",
+            ))
+
+            # next: the next scheduled recording or calendar event.
+            next_item = None
+            door = ctx.door_service
+            if door is not None:
+                try:
+                    from datetime import datetime as _dt
+                    upcoming = door._upcoming(_dt.now())
+                    if upcoming:
+                        first = upcoming[0]
+                        next_item = {
+                            "label": first.get("title", ""),
+                            "at": first.get("starts_at"),
+                        }
+                except Exception:
+                    pass
+
+            return JSONResponse({
+                "count": len(items),
+                "projects": sorted(project_ids),
+                "items": items,
+                "next": next_item,
+            })
+        except Exception as exc:
+            return error_500(exc, log, "Failed to build desk needs-you")
+
     return router

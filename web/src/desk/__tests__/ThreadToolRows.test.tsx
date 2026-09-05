@@ -1164,11 +1164,11 @@ describe("HS-153-03 decision box defaultDecision", () => {
 
     const denyBtn = screen.queryByTestId("deny");
     expect(denyBtn).toBeTruthy();
-    expect(denyBtn!.classList.contains("is-primary")).toBe(true);
+    expect(denyBtn!.classList.contains("btn--primary")).toBe(true);
 
     const allowBtn = screen.queryByTestId("allow-once");
     expect(allowBtn).toBeTruthy();
-    expect(allowBtn!.classList.contains("is-primary")).toBe(false);
+    expect(allowBtn!.classList.contains("btn--primary")).toBe(false);
   });
 
   it("Allow-once button is primary when defaultDecision is allow (default)", () => {
@@ -1198,11 +1198,11 @@ describe("HS-153-03 decision box defaultDecision", () => {
 
     const allowBtn = screen.queryByTestId("allow-once");
     expect(allowBtn).toBeTruthy();
-    expect(allowBtn!.classList.contains("is-primary")).toBe(true);
+    expect(allowBtn!.classList.contains("btn--primary")).toBe(true);
 
     const denyBtn = screen.queryByTestId("deny");
     expect(denyBtn).toBeTruthy();
-    expect(denyBtn!.classList.contains("is-primary")).toBe(false);
+    expect(denyBtn!.classList.contains("btn--primary")).toBe(false);
   });
 
   it("Allow-once is primary when no defaultDecision is set", () => {
@@ -1228,6 +1228,6 @@ describe("HS-153-03 decision box defaultDecision", () => {
 
     const allowBtn = screen.queryByTestId("allow-once");
     expect(allowBtn).toBeTruthy();
-    expect(allowBtn!.classList.contains("is-primary")).toBe(true);
+    expect(allowBtn!.classList.contains("btn--primary")).toBe(true);
   });
 });

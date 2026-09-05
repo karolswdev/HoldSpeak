@@ -1,0 +1,1182 @@
+{
+  "totals": {
+    "per_rule": {
+      "A8": 28,
+      "A3-prose": 12,
+      "mic": 27,
+      "emoji": 21,
+      "B": 34,
+      "raw-ids": 20,
+      "A1": 4,
+      "C": 4,
+      "A3-sentence": 1
+    },
+    "per_face": {
+      "FinishThoughtsLane": 1,
+      "DoorBoardLane": 2,
+      "AskPanel": 8,
+      "DeskMenu": 1,
+      "DeskSortableTable": 1,
+      "DeskToolInspector": 1,
+      "DeskToolShelf": 2,
+      "EditorAIBar": 1,
+      "GlassDropLayer": 1,
+      "InfoWindow": 1,
+      "InletAutocomplete": 1,
+      "PrReceiptsSection": 1,
+      "Pullout": 1,
+      "RailsPicker": 1,
+      "RepoWindow": 1,
+      "ScheduleCreateWindow": 2,
+      "SessionPullout": 1,
+      "SystemShade": 1,
+      "ThreadComposer": 2,
+      "WhyControl": 1,
+      "WorkbenchAutomations": 2,
+      "WorkbenchWindow": 2,
+      "WorldStage": 1,
+      "CoderPullout": 1,
+      "MeetingPullout": 1,
+      "NotePullout": 1,
+      "ThoughtContextPicker": 2,
+      "ThreadPullout": 8,
+      "KbEditor": 1,
+      "NoteEditor": 1,
+      "ThoughtNoteEditor": 1,
+      "WorkflowEditor": 1,
+      "CapabilitySection": 1,
+      "FollowThroughView": 1,
+      "LedgerFilter": 1,
+      "Surface": 9,
+      "XtermPane": 1,
+      "gadgets": 2,
+      "TopologySurface": 3,
+      "ChoiceCardGroup": 1,
+      "ProgressPlan": 2,
+      "StateChip": 3,
+      "ThoughtDocumentPane": 2,
+      "ThoughtWorkspaceWindow": 6,
+      "ProjectRoomCore": 4,
+      "DoorCore": 1,
+      "ReviewPosture": 5,
+      "StewardPosture": 3,
+      "ActivityCore": 1,
+      "CadenceCore": 1,
+      "CalendarSnapshotReviewCore": 1,
+      "CapabilityAssignmentsCore": 1,
+      "CommandsCore": 1,
+      "ComponentsCore": 5,
+      "LiveCore": 2,
+      "ModelLibraryCore": 5,
+      "PeopleCore": 17,
+      "SettingsCore": 3,
+      "TopologyMapView": 2,
+      "ConnectionsPane": 1,
+      "Blocks": 1,
+      "Journal": 1,
+      "Knowledge": 1,
+      "ResultPanel": 1,
+      "UtteranceWell": 1,
+      "CatalogRail": 3,
+      "ImportSection": 2,
+      "MeetingDetail": 1,
+      "MeetingsConfig": 1,
+      "TranscriptWell": 1
+    }
+  },
+  "faces": {
+    "ActivityCore": [
+      {
+        "file": "pages/cores/ActivityCore.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "AskPanel": [
+      {
+        "file": "desk/components/AskPanel.tsx",
+        "line": 171,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): setSent({ prompt: prompt.trim(), lens, ctx: context.length });",
+        "confidence": "medium"
+      },
+      {
+        "file": "desk/components/AskPanel.tsx",
+        "line": 272,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: glyph=\"\u2726\""
+      },
+      {
+        "file": "desk/components/AskPanel.tsx",
+        "line": 277,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: \u2726"
+      },
+      {
+        "file": "desk/components/AskPanel.tsx",
+        "line": 401,
+        "rule": "A8",
+        "text": "Counter may render zero (count pattern): GROUNDED ON {groundedMatchCount(receipt)} OF{\" \"}",
+        "confidence": "low"
+      },
+      {
+        "file": "desk/components/AskPanel.tsx",
+        "line": 432,
+        "rule": "B",
+        "text": "Raw control element: <textarea"
+      },
+      {
+        "file": "desk/components/AskPanel.tsx",
+        "line": 483,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): CTX \u00b7 {context.length}{\" \"}",
+        "confidence": "medium"
+      },
+      {
+        "file": "desk/components/AskPanel.tsx",
+        "line": 496,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): CONTEXT \u00b7 {context.length}",
+        "confidence": "medium"
+      },
+      {
+        "file": "desk/components/AskPanel.tsx",
+        "line": 556,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): : `${selectedIds.length} selected`}",
+        "confidence": "medium"
+      }
+    ],
+    "Blocks": [
+      {
+        "file": "pages/cores/dictation/Blocks.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "CadenceCore": [
+      {
+        "file": "pages/cores/CadenceCore.tsx",
+        "line": 164,
+        "rule": "A3-prose",
+        "text": "Prose in <p>/<small> element: \"{String(next.body ?? next.body_markdown ?? \"\")}...\""
+      }
+    ],
+    "CalendarSnapshotReviewCore": [
+      {
+        "file": "pages/cores/CalendarSnapshotReviewCore.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "CapabilityAssignmentsCore": [
+      {
+        "file": "pages/cores/CapabilityAssignmentsCore.tsx",
+        "line": 94,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: {taskRows.length ? <div className=\"assignment-task-rows\">{taskRows.map((task: AssignmentTaskOverride",
+        "confidence": "medium"
+      }
+    ],
+    "CapabilitySection": [
+      {
+        "file": "desk/pullouts/shared/CapabilitySection.tsx",
+        "line": 129,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      }
+    ],
+    "CatalogRail": [
+      {
+        "file": "pages/cores/history/CatalogRail.tsx",
+        "line": 97,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): matchCount={meetingRows.length}",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/history/CatalogRail.tsx",
+        "line": 238,
+        "rule": "A8",
+        "text": "Zero fallback rendered (?? 0): {countToken(Number(row.segment_count ?? 0), \"SEG\") ?? \"\"}",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/history/CatalogRail.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "ChoiceCardGroup": [
+      {
+        "file": "desk/surface/patterns/ChoiceCardGroup.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "CoderPullout": [
+      {
+        "file": "desk/pullouts/CoderPullout.tsx",
+        "line": 109,
+        "rule": "B",
+        "text": "Raw control element: <textarea"
+      }
+    ],
+    "CommandsCore": [
+      {
+        "file": "pages/cores/CommandsCore.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "ComponentsCore": [
+      {
+        "file": "pages/cores/ComponentsCore.tsx",
+        "line": 128,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: <TransportKey label=\"KILL\" glyph=\"\u2715\" tone=\"danger\" />"
+      },
+      {
+        "file": "pages/cores/ComponentsCore.tsx",
+        "line": 291,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: <ActionNotice tone=\"ok\" icon={\"\u2713\"}>"
+      },
+      {
+        "file": "pages/cores/ComponentsCore.tsx",
+        "line": 296,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: icon={\"\u26a0\"}"
+      },
+      {
+        "file": "pages/cores/ComponentsCore.tsx",
+        "line": 301,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: <ActionNotice tone=\"danger\" icon={\"\u2717\"}>"
+      },
+      {
+        "file": "pages/cores/ComponentsCore.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "ConnectionsPane": [
+      {
+        "file": "pages/cores/connections/ConnectionsPane.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "DeskMenu": [
+      {
+        "file": "desk/components/DeskMenu.tsx",
+        "line": 603,
+        "rule": "A3-prose",
+        "text": "Prose helper class (hint/help/description): <span className=\"desk-menu-ghost-hint\">{collapsedReason}</span>"
+      }
+    ],
+    "DeskSortableTable": [
+      {
+        "file": "desk/components/DeskSortableTable.tsx",
+        "line": 174,
+        "rule": "A8",
+        "text": "Counter may render zero (count pattern): <th colSpan={columnCount} scope=\"colgroup\">{label}</th>",
+        "confidence": "low"
+      }
+    ],
+    "DeskToolInspector": [
+      {
+        "file": "desk/components/DeskToolInspector.tsx",
+        "line": 333,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: onClick={() => void createThread({ title: target.model, profile_override: target.model }).then((t) =",
+        "confidence": "medium"
+      }
+    ],
+    "DeskToolShelf": [
+      {
+        "file": "desk/components/DeskToolShelf.tsx",
+        "line": 351,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: run: () => void createThread({ title: model.name, profile_override: model.name }).then((t) => { open",
+        "confidence": "medium"
+      },
+      {
+        "file": "desk/components/DeskToolShelf.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "DoorBoardLane": [
+      {
+        "file": "desk/chair/lanes/DoorBoardLane.tsx",
+        "line": 708,
+        "rule": "A3-prose",
+        "text": "Prose helper class (hint/help/description): <ScrollHint axis=\"x\" scrollRef={viewportRef} className=\"door-board-hint-wrap\">"
+      },
+      {
+        "file": "desk/chair/lanes/DoorBoardLane.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "DoorCore": [
+      {
+        "file": "features/project-room/door/DoorCore.tsx",
+        "line": 345,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      }
+    ],
+    "EditorAIBar": [
+      {
+        "file": "desk/components/EditorAIBar.tsx",
+        "line": 63,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): const next = `${from}:${to}:${editorView.state.doc.length}`;",
+        "confidence": "medium"
+      }
+    ],
+    "FinishThoughtsLane": [
+      {
+        "file": "desk/chair/FinishThoughtsLane.tsx",
+        "line": 97,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): const count = items.length > 0 ? `${items.length}${nextCursor ? \"+\" : \"\"}` : null;",
+        "confidence": "medium"
+      }
+    ],
+    "FollowThroughView": [
+      {
+        "file": "desk/pullouts/views/FollowThroughView.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "GlassDropLayer": [
+      {
+        "file": "desk/components/GlassDropLayer.tsx",
+        "line": 122,
+        "rule": "A3-prose",
+        "text": "Prose in <p>/<small> element: \".vtt .srt .txt audio \u00b7 calendar screenshot...\""
+      }
+    ],
+    "ImportSection": [
+      {
+        "file": "pages/cores/history/ImportSection.tsx",
+        "line": 76,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      },
+      {
+        "file": "pages/cores/history/ImportSection.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "InfoWindow": [
+      {
+        "file": "desk/components/InfoWindow.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "InletAutocomplete": [
+      {
+        "file": "desk/components/InletAutocomplete.tsx",
+        "line": 71,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): detail: d.memberIds.length > 0 ? `${d.memberIds.length} ${d.memberIds.length === 1 ? \"item\" : \"items",
+        "confidence": "medium"
+      }
+    ],
+    "Journal": [
+      {
+        "file": "pages/cores/dictation/Journal.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "KbEditor": [
+      {
+        "file": "desk/pullouts/editors/KbEditor.tsx",
+        "line": 1,
+        "rule": "C",
+        "text": "Type-step collapse: only 1 distinct font-size (var(--desk-surface-detail-size))",
+        "confidence": "medium"
+      }
+    ],
+    "Knowledge": [
+      {
+        "file": "pages/cores/dictation/Knowledge.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "LedgerFilter": [
+      {
+        "file": "desk/surface/LedgerFilter.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "LiveCore": [
+      {
+        "file": "pages/cores/LiveCore.tsx",
+        "line": 595,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): count={segments.length}",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/LiveCore.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "MeetingDetail": [
+      {
+        "file": "pages/cores/history/MeetingDetail.tsx",
+        "line": 109,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): <SurfaceWell head={`RAW \u00b7 ROUTING \u00b7 ${timelineRows.length}`}>",
+        "confidence": "medium"
+      }
+    ],
+    "MeetingPullout": [
+      {
+        "file": "desk/pullouts/MeetingPullout.tsx",
+        "line": 76,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): ? `${detail.segments.length} segment${",
+        "confidence": "medium"
+      }
+    ],
+    "MeetingsConfig": [
+      {
+        "file": "pages/cores/history/MeetingsConfig.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "ModelLibraryCore": [
+      {
+        "file": "pages/cores/ModelLibraryCore.tsx",
+        "line": 383,
+        "rule": "B",
+        "text": "Raw control element: <input ref={secretRef} type=\"password\" autoComplete=\"new-password\" aria-label=\"Provider key\" />"
+      },
+      {
+        "file": "pages/cores/ModelLibraryCore.tsx",
+        "line": 396,
+        "rule": "B",
+        "text": "Raw control element: <input ref={secretRef} type=\"password\" autoComplete=\"new-password\" aria-label=\"Provider key\" />"
+      },
+      {
+        "file": "pages/cores/ModelLibraryCore.tsx",
+        "line": 404,
+        "rule": "B",
+        "text": "Raw control element: <label className=\"model-library-file\"><span>Model file</span><input type=\"file\" accept=\".gguf,.mlx\" "
+      },
+      {
+        "file": "pages/cores/ModelLibraryCore.tsx",
+        "line": 434,
+        "rule": "B",
+        "text": "Raw control element: <input ref={(element) => { rowRefs.current[row.id] = element; }} type=\"radio\" name={groupName} value"
+      },
+      {
+        "file": "pages/cores/ModelLibraryCore.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "NoteEditor": [
+      {
+        "file": "desk/pullouts/editors/NoteEditor.tsx",
+        "line": 1,
+        "rule": "C",
+        "text": "Type-step collapse: only 1 distinct font-size (var(--desk-surface-detail-size))",
+        "confidence": "medium"
+      }
+    ],
+    "NotePullout": [
+      {
+        "file": "desk/pullouts/NotePullout.tsx",
+        "line": 409,
+        "rule": "B",
+        "text": "Raw control element: return <section className=\"surface-aerogel\" aria-label=\"Refinement question\"><strong>{review.questio"
+      }
+    ],
+    "PeopleCore": [
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 237,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: {!ordered.length ? <div className=\"people-empty-roster\" data-testid=\"people-empty-roster\"><p classNa",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 312,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: {brief.open_commitments.length ? <SurfaceRows>{brief.open_commitments.map((item) => <SurfaceRow key=",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 315,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: {brief.agenda_items.length ? <SurfaceRows>{brief.agenda_items.map((item) => <SurfaceRow key={item.id",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 319,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: {brief.linked_meetings.length ? <SurfaceRows>{brief.linked_meetings.map((meeting) => <SurfaceRow key",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 320,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: {meeting.open_action_items.length ? <ul className=\"people-prep-actions\" data-testid=\"prep-meeting-ac",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 321,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: {meeting.decisions.length ? <ul className=\"people-prep-decisions\" data-testid=\"prep-meeting-decision",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 445,
+        "rule": "raw-ids",
+        "text": "Snake_case literal in rendered text: \"leader_private\""
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 454,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: <SurfaceSection label=\"Projects\"><div className=\"people-project-link\"><CycleGadget label=\"Project\" v",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 455,
+        "rule": "raw-ids",
+        "text": "Snake_case literal in rendered text: \"leader_private\""
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 455,
+        "rule": "raw-ids",
+        "text": "Snake_case literal in rendered text: \"shared_intent\""
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 455,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: <SurfaceSection label=\"Grounding notes\"><div className=\"people-context-add\"><StringGadget mic={false",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 471,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: <SurfaceSection label=\"You owe\"><SurfaceRows>{(relationship.commitments ?? []).length ? (relationshi",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 472,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: <SurfaceSection label=\"Open requests\"><div className=\"people-new\"><StringGadget mic={false} label=\"R",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 508,
+        "rule": "raw-ids",
+        "text": "Snake_case literal in rendered text: \"shared_intent\""
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 508,
+        "rule": "raw-ids",
+        "text": "Snake_case literal in rendered text: \"leader_private\""
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 508,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: return <SurfaceSection label=\"1:1s\"><div className=\"people-agenda-add\"><PadGadget mic={false} label=",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/PeopleCore.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "PrReceiptsSection": [
+      {
+        "file": "desk/components/PrReceiptsSection.tsx",
+        "line": 82,
+        "rule": "A3-prose",
+        "text": "Prose in <p>/<small> element: \"{source.status === \"live\" ? `OBSERVED ${observedAt}` : source.status === \"stale\"...\""
+      }
+    ],
+    "ProgressPlan": [
+      {
+        "file": "desk/surface/patterns/ProgressPlan.tsx",
+        "line": 19,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: done: \"\u2713\",     // check"
+      },
+      {
+        "file": "desk/surface/patterns/ProgressPlan.tsx",
+        "line": 20,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: failed: \"\u2717\",   // X mark"
+      }
+    ],
+    "ProjectRoomCore": [
+      {
+        "file": "features/project-room/ProjectRoomCore.tsx",
+        "line": 738,
+        "rule": "A8",
+        "text": "Counter may render zero (count pattern): GROUNDED ON {groundedCount} OF {receipt.matchedCount}",
+        "confidence": "low"
+      },
+      {
+        "file": "features/project-room/ProjectRoomCore.tsx",
+        "line": 746,
+        "rule": "B",
+        "text": "Raw control element: <input // UX-CANON: needs redesign (HS-170-04)"
+      },
+      {
+        "file": "features/project-room/ProjectRoomCore.tsx",
+        "line": 886,
+        "rule": "B",
+        "text": "Raw control element: <input // UX-CANON: needs redesign (HS-170-04)"
+      },
+      {
+        "file": "features/project-room/ProjectRoomCore.tsx",
+        "line": 1067,
+        "rule": "A8",
+        "text": "Counter may render zero (count pattern): <HistoryWing room={ctrl.room} todayCount={historyCounts.todayCount} weekCount={historyCounts.weekCou",
+        "confidence": "low"
+      }
+    ],
+    "Pullout": [
+      {
+        "file": "desk/components/Pullout.tsx",
+        "line": 125,
+        "rule": "A1",
+        "text": "Raw <button> element (use library Button): return <PulloutFrame o={o} origin={origin} overrideContent={<div className=\"desk-pullout-body desk-s"
+      }
+    ],
+    "RailsPicker": [
+      {
+        "file": "desk/components/RailsPicker.tsx",
+        "line": 117,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): : picks.length > 0 ? `Rails \u00b7 ${picks.length}` : \"Ground on the rails\"",
+        "confidence": "medium"
+      }
+    ],
+    "RepoWindow": [
+      {
+        "file": "desk/components/RepoWindow.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "ResultPanel": [
+      {
+        "file": "pages/cores/dictation/ResultPanel.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "ReviewPosture": [
+      {
+        "file": "features/project-room/review/ReviewPosture.tsx",
+        "line": 108,
+        "rule": "B",
+        "text": "Raw control element: <input // UX-CANON: needs redesign (HS-170-04)"
+      },
+      {
+        "file": "features/project-room/review/ReviewPosture.tsx",
+        "line": 278,
+        "rule": "B",
+        "text": "Raw control element: <input // UX-CANON: needs redesign (HS-170-04)"
+      },
+      {
+        "file": "features/project-room/review/ReviewPosture.tsx",
+        "line": 595,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): ? `Proposal ${ctrl.selectedIndex + 1} of ${ctrl.openProposals.length}, ${kindLabel(p.proposalKind)}`",
+        "confidence": "medium"
+      },
+      {
+        "file": "features/project-room/review/ReviewPosture.tsx",
+        "line": 600,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): ? `${ctrl.selectedIndex + 1} / ${ctrl.openProposals.length}`",
+        "confidence": "medium"
+      },
+      {
+        "file": "features/project-room/review/ReviewPosture.tsx",
+        "line": 645,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): {openInGroup.length}",
+        "confidence": "medium"
+      }
+    ],
+    "ScheduleCreateWindow": [
+      {
+        "file": "desk/components/ScheduleCreateWindow.tsx",
+        "line": 160,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      },
+      {
+        "file": "desk/components/ScheduleCreateWindow.tsx",
+        "line": 1,
+        "rule": "C",
+        "text": "Type-step collapse: only 1 distinct font-size (var(--font-size-xs))",
+        "confidence": "medium"
+      }
+    ],
+    "SessionPullout": [
+      {
+        "file": "desk/components/SessionPullout.tsx",
+        "line": 470,
+        "rule": "B",
+        "text": "Raw control element: <textarea"
+      }
+    ],
+    "SettingsCore": [
+      {
+        "file": "pages/cores/SettingsCore.tsx",
+        "line": 495,
+        "rule": "A8",
+        "text": "Zero fallback rendered (?? 0): value={Number(val(path) ?? 0)}",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/SettingsCore.tsx",
+        "line": 537,
+        "rule": "A8",
+        "text": "Zero fallback rendered (?? 0): value={Number(val(path) ?? opts?.min ?? 0)}",
+        "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/SettingsCore.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "StateChip": [
+      {
+        "file": "desk/surface/patterns/StateChip.tsx",
+        "line": 19,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: success: \"\u2713\",    // check"
+      },
+      {
+        "file": "desk/surface/patterns/StateChip.tsx",
+        "line": 20,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: warning: \"\u26a0\",    // warning triangle"
+      },
+      {
+        "file": "desk/surface/patterns/StateChip.tsx",
+        "line": 21,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: failure: \"\u2717\",    // X mark"
+      }
+    ],
+    "StewardPosture": [
+      {
+        "file": "features/project-room/steward/StewardPosture.tsx",
+        "line": 153,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): rateParts.push(`${phaseSteps.length} source${phaseSteps.length === 1 ? \"\" : \"s\"}`);",
+        "confidence": "medium"
+      },
+      {
+        "file": "features/project-room/steward/StewardPosture.tsx",
+        "line": 161,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): rateParts.push(`${phaseSteps.length} effect${phaseSteps.length === 1 ? \"\" : \"s\"}`);",
+        "confidence": "medium"
+      },
+      {
+        "file": "features/project-room/steward/StewardPosture.tsx",
+        "line": 513,
+        "rule": "A3-sentence",
+        "text": "Sentence in prop text: \"Uses the model assigned in Settings > Models. Falls back to deterministic....\""
+      }
+    ],
+    "Surface": [
+      {
+        "file": "desk/surface/Surface.tsx",
+        "line": 188,
+        "rule": "A1",
+        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"surface-row-open\" onClick={onOpen}>"
+      },
+      {
+        "file": "desk/surface/Surface.tsx",
+        "line": 245,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: \u26a0\ufe0e"
+      },
+      {
+        "file": "desk/surface/Surface.tsx",
+        "line": 478,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: /** The absence face content (\u2715 token + typed detail). */"
+      },
+      {
+        "file": "desk/surface/Surface.tsx",
+        "line": 576,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: /** An error turn keeps the \u2715 token beside its prefix. */"
+      },
+      {
+        "file": "desk/surface/Surface.tsx",
+        "line": 587,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: {error ? <span className=\"surface-traffic-x\">\u2715 </span> : null}"
+      },
+      {
+        "file": "desk/surface/Surface.tsx",
+        "line": 959,
+        "rule": "A1",
+        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"surface-tile-ghost-btn\" onClick={onCreate}>"
+      },
+      {
+        "file": "desk/surface/Surface.tsx",
+        "line": 1152,
+        "rule": "B",
+        "text": "Raw control element: <textarea"
+      },
+      {
+        "file": "desk/surface/Surface.tsx",
+        "line": 1161,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      },
+      {
+        "file": "desk/surface/Surface.tsx",
+        "line": 1318,
+        "rule": "A3-prose",
+        "text": "Prose helper class (hint/help/description): className={className ? `surface-scroll-hint ${className}` : \"surface-scroll-hint\"}"
+      }
+    ],
+    "SystemShade": [
+      {
+        "file": "desk/components/SystemShade.tsx",
+        "line": 241,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: \u2726"
+      }
+    ],
+    "ThoughtContextPicker": [
+      {
+        "file": "desk/pullouts/ThoughtContextPicker.tsx",
+        "line": 162,
+        "rule": "A1",
+        "text": "Raw <button> element (use library Button): return <li key={row.ref}><button type=\"button\""
+      },
+      {
+        "file": "desk/pullouts/ThoughtContextPicker.tsx",
+        "line": 191,
+        "rule": "B",
+        "text": "Raw control element: <label className=\"thought-context-search\"><span className=\"sr-only\">Search notes</span><span aria-hi"
+      }
+    ],
+    "ThoughtDocumentPane": [
+      {
+        "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
+        "line": 65,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      },
+      {
+        "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
+        "line": 90,
+        "rule": "B",
+        "text": "Raw control element: {tagsOpen ? <input aria-label=\"Tag names\" value={draft.tags} disabled={disabled} onChange={(event) ="
+      }
+    ],
+    "ThoughtNoteEditor": [
+      {
+        "file": "desk/pullouts/editors/ThoughtNoteEditor.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "ThoughtWorkspaceWindow": [
+      {
+        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+        "line": 412,
+        "rule": "A3-prose",
+        "text": "Prose helper class (hint/help/description): ? <div className=\"thought-interview-empty thought-interview-setup\"><p className=\"thought-question-ki"
+      },
+      {
+        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+        "line": 413,
+        "rule": "A3-prose",
+        "text": "Prose helper class (hint/help/description): : <div className=\"thought-interview-empty\"><p className=\"thought-question-kicker\">Ready when you are"
+      },
+      {
+        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+        "line": 415,
+        "rule": "B",
+        "text": "Raw control element: {currentQuestion ? <div className=\"thought-question\"><p className=\"thought-question-kicker\">One thin"
+      },
+      {
+        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+        "line": 428,
+        "rule": "A3-prose",
+        "text": "Prose in <p>/<small> element: \"{contextReceipt.action === \"attach\" ? \"Attached\" : contextReceipt.action === \"de...\""
+      },
+      {
+        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+        "line": 429,
+        "rule": "A3-prose",
+        "text": "Prose in <p>/<small> element: \"Default \u00b7 {defaultReceipt.attachments.map((item) => item.title).join(\" + \")}...\""
+      },
+      {
+        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
+        "line": 430,
+        "rule": "A3-prose",
+        "text": "Prose in <p>/<small> element: \"Default context skipped \u00b7 {defaultReceipt.failure?.selections.map((item) => item...\""
+      }
+    ],
+    "ThreadComposer": [
+      {
+        "file": "desk/components/ThreadComposer.tsx",
+        "line": 961,
+        "rule": "B",
+        "text": "Raw control element: <textarea"
+      },
+      {
+        "file": "desk/components/ThreadComposer.tsx",
+        "line": 1053,
+        "rule": "B",
+        "text": "Raw control element: <textarea"
+      }
+    ],
+    "ThreadPullout": [
+      {
+        "file": "desk/pullouts/ThreadPullout.tsx",
+        "line": 180,
+        "rule": "B",
+        "text": "Raw control element: <select"
+      },
+      {
+        "file": "desk/pullouts/ThreadPullout.tsx",
+        "line": 193,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      },
+      {
+        "file": "desk/pullouts/ThreadPullout.tsx",
+        "line": 202,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      },
+      {
+        "file": "desk/pullouts/ThreadPullout.tsx",
+        "line": 210,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      },
+      {
+        "file": "desk/pullouts/ThreadPullout.tsx",
+        "line": 451,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): <span className=\"thread-result-table-key\">+{objectEntries.length} object{objectEntries.length !== 1 ",
+        "confidence": "medium"
+      },
+      {
+        "file": "desk/pullouts/ThreadPullout.tsx",
+        "line": 736,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      },
+      {
+        "file": "desk/pullouts/ThreadPullout.tsx",
+        "line": 1600,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      },
+      {
+        "file": "desk/pullouts/ThreadPullout.tsx",
+        "line": 1643,
+        "rule": "A8",
+        "text": "Zero fallback rendered (?? 0): callMode={detail.thread?.call_mode ?? 0}",
+        "confidence": "medium"
+      }
+    ],
+    "TopologyMapView": [
+      {
+        "file": "pages/cores/TopologyMapView.tsx",
+        "line": 441,
+        "rule": "B",
+        "text": "Raw control element: <label className=\"surface-gadget-label\">Provider key<input ref={secretRef} className=\"hs-control\" ty"
+      },
+      {
+        "file": "pages/cores/TopologyMapView.tsx",
+        "line": 456,
+        "rule": "B",
+        "text": "Raw control element: <label className=\"surface-gadget-label\">Provider key<input ref={secretRef} className=\"hs-control\" ty"
+      }
+    ],
+    "TopologySurface": [
+      {
+        "file": "desk/surface/graph/TopologySurface.tsx",
+        "line": 168,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: success: \"\u2713\","
+      },
+      {
+        "file": "desk/surface/graph/TopologySurface.tsx",
+        "line": 169,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: warning: \"\u26a0\","
+      },
+      {
+        "file": "desk/surface/graph/TopologySurface.tsx",
+        "line": 170,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: failure: \"\u2717\","
+      }
+    ],
+    "TranscriptWell": [
+      {
+        "file": "pages/cores/history/TranscriptWell.tsx",
+        "line": 50,
+        "rule": "A3-prose",
+        "text": "Prose in <p>/<small> element: \"{String(row.text ?? row.transcript ?? \"\")}...\""
+      }
+    ],
+    "UtteranceWell": [
+      {
+        "file": "pages/cores/dictation/UtteranceWell.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "WhyControl": [
+      {
+        "file": "desk/components/WhyControl.tsx",
+        "line": 37,
+        "rule": "A8",
+        "text": "Zero fallback rendered (?? 0): aria-label={`${whyLabel} governing decision receipt${(receiptIds?.length ?? 0) === 1 ? \"\" : \"s\"}`}",
+        "confidence": "medium"
+      }
+    ],
+    "WorkbenchAutomations": [
+      {
+        "file": "desk/components/WorkbenchAutomations.tsx",
+        "line": 216,
+        "rule": "raw-ids",
+        "text": "ID field rendered as text: {!loading && !error ? <div className=\"wb-automations-list\">{automations.map((automation) => <Automat",
+        "confidence": "medium"
+      },
+      {
+        "file": "desk/components/WorkbenchAutomations.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "WorkbenchWindow": [
+      {
+        "file": "desk/components/WorkbenchWindow.tsx",
+        "line": 1135,
+        "rule": "A8",
+        "text": "Counter may render zero (count pattern): payload contract is {workbench_id, run_id, item_id, index, total} with",
+        "confidence": "low"
+      },
+      {
+        "file": "desk/components/WorkbenchWindow.tsx",
+        "line": 1705,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      }
+    ],
+    "WorkflowEditor": [
+      {
+        "file": "desk/pullouts/editors/WorkflowEditor.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
+      }
+    ],
+    "WorldStage": [
+      {
+        "file": "desk/gl/WorldStage.tsx",
+        "line": 444,
+        "rule": "B",
+        "text": "Raw control element: <input"
+      }
+    ],
+    "XtermPane": [
+      {
+        "file": "desk/surface/XtermPane.tsx",
+        "line": 1,
+        "rule": "C",
+        "text": "Type-step collapse: only 1 distinct font-size (11)",
+        "confidence": "medium"
+      }
+    ],
+    "gadgets": [
+      {
+        "file": "desk/surface/gadgets.tsx",
+        "line": 90,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: /** \"token\" renders a bordered mono-uppercase token with \u2713 glyph"
+      },
+      {
+        "file": "desk/surface/gadgets.tsx",
+        "line": 105,
+        "rule": "emoji",
+        "text": "Emoji in JSX text: {checked ? `\u2713 ${label}` : label}"
+      }
+    ]
+  }
+}

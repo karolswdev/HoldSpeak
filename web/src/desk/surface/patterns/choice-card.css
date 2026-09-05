@@ -177,6 +177,7 @@
 
 /* ── Summary: the one-line anchor the eye lands on ── */
 
+/* HS-170-02: accent rail banned (DESIGN_SYSTEM rule 6) — aerogel inset. */
 .surface-choice-card-summary {
   font-family: var(--font-mono);
   font-size: var(--desk-surface-detail-size, 12px);
@@ -184,9 +185,10 @@
   color: var(--text);
   line-height: 1.45;
   padding: 6px 8px;
-  border-left: 2px solid var(--choice-tier, var(--border));
-  background: var(--surface-2);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--desk-aerogel-fill);
+  border: 1px solid var(--desk-aerogel-edge);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--desk-window-etch);
 }
 
 /* ── Facts: chips, not rows ── */

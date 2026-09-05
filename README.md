@@ -79,18 +79,17 @@ Click selects, double-click opens.
 </p>
 <p align="center"><em>The Floor: the spatial world your voice work lives in. The orb records, the rail asks, the tray files.</em></p>
 
-**The Chair Door is home after first value.** Its board puts the work needing
-you first: **Overdue, Now, Waiting, Unassigned,** and **Active**. The board is
-a server projection. A card action appears only when its aggregate names a
-lawful verb; using it calls that verb and shows its Receipt in flow. A move or
-completion is never a cosmetic board edit. The one **Upcoming** rail orders
-**EVENT** and **SCHEDULED RECORDING** rows by time; tap **Record this** on
-any event to arm the hub for that meeting. Meetings keeps live and recent
-meetings, Agents remains, and the compact Brief entry point opens
-Intelligence. On a phone, **Go** is the compact application menu. The
-**Floor** button in the dock opens the spatial object world. A toggle in
-Settings, Sounds & Presence controls **Desk Sounds**, the six mechanical
-click sounds the Chair plays on key presses, window opens, and landings.
+**The arrival is home after first value.** Its headline tells you what needs
+you across your projects, or says so when nothing does. The **NEEDS YOU**
+section lists the items, each with its source and a one-tap **Open**. Below
+it: **THOUGHTS** (unfinished work with **Continue** on the first),
+**BRIEF** (waiting items with **Ack** / **Defer**), **MEETINGS** (recent
+meetings with their state: **SAVED**, **OFF** with **Run intelligence**,
+**REC**). Empty sections are absent; the agents' window stays one tap
+away in the dock. The capture bar at the foot carries **Talk**, **Develop a
+thought**, and **Record meeting**. On a phone, **Go** is the compact
+application menu. The **Floor** button in the dock opens the spatial object
+world. A toggle in Settings, Sounds & Presence controls **Desk Sounds**.
 
 The Desk is where the loops close. Press the orb and the hub records a
 meeting; when it ends, the meeting lands on the stage as an object. Rope a
@@ -164,11 +163,10 @@ hands-free. The default voice is the browser's own speech synthesis (zero
 deps, zero egress). Install `holdspeak[tts]` for server-side kokoro-onnx
 voices (GPL-3.0; phonemizer + espeak-ng). Click the call chip to stop.
 
-**Set up models.** Open **Settings, Models**. The door recommends a pack
-(Light, Balanced, or Full) for your hardware; pick one, confirm, and the desk
-wires everything. The health strip stays green while readiness holds. For
-manual control, open **Advanced** to see the topology map, Model Library, and
-Assignments.
+**Set up models.** Open **Settings, Models**. The Concierge detects what you
+have (local engines, LAN endpoints, cloud keys) and proposes one set covering
+every capability group. Choose **Use these** to apply it in one step. For
+manual control, choose **Adjust** to edit individual capability assignments.
 
 **The gate: your agent asks first.** Off by default, and armed only by two
 deliberate steps of yours, a Claude Code session's risky Bash call can stop
@@ -190,10 +188,10 @@ of reach by design.
 
 - **Every run names its boundary.** Model-backed work can use a local model, a
   paired device, a private endpoint, or an external OpenAI-compatible service.
-  Open **Settings, Models** and pick a recommended pack, or open **Advanced**
-  to add models manually in Model Library and choose model lists in
-  Assignments. Connection secrets stay in local custody and readiness is
-  checked against the exact bound model. See
+  Open **Settings, Models** and let the Concierge propose an assignment set, or
+  choose **Adjust** to edit individual capability assignments. Connection
+  secrets stay in local custody and readiness is checked against the exact
+  bound model. See
   [Security & privacy](https://github.com/karolswdev/HoldSpeak/blob/main/docs/SECURITY.md)
   and [Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
 - **It learns how you work, and shows you the receipts.** The dictation
@@ -339,12 +337,12 @@ first-value prerequisite.
 
 ### Set up models
 
-Open **Settings, Models**. The door shows up to three packs (Light, Balanced,
-Full) based on your hardware, what you already have downloaded, and any
-endpoints you have connected. Pick a pack, confirm with **Set up**, and the
-desk downloads what is missing, wires every assignment, and reports each step
-as a live plan. When the plan finishes, the door collapses to a health strip:
-green means everything is wired; a warning names the one thing to fix.
+Open **Settings, Models**. The Concierge scans your machine and any known
+endpoints, lists every engine it found, and proposes one assignment per
+capability group. Choose **Use these** and the entire set applies. A catalog
+preset you do not have yet shows **Download** with its file size; cloud keys
+show **KEY SET** or **KEY NOT SET**. Every engine row names its host
+(`THIS DEVICE`, a LAN address, or the cloud service).
 
 That is the whole A path. Talk to the desk: open a Thread, ask a question,
 and the reply streams with its receipt.
@@ -352,19 +350,19 @@ and the reply streams with its receipt.
 ### Later: voice typing, repairs, and advanced model setup
 
 For voice typing in another app, hold the global hotkey (Right Option on macOS,
-Right Alt on Linux), speak, and release. The Desk's **Speak** surface also has
-that action with an explicit Aim and a dry-run **Rehearse** control.
+Right Alt on Linux), speak, and release. **Speak** also has that action with
+an explicit Aim picker and a **DRY RUN** toggle. The **ENGINE** row names
+the model and its host; when unset, its state reads **NOT SET**.
 
 Automatic furnishing is the ordinary first-run path. For repair, `holdspeak
 seed` creates only starter objects HoldSpeak has never seen, preserving your
 edits and deletions. To deliberately restore the default Desk, use the
 destructive, confirmed **Settings, Desk, Reset to seed** action.
 
-For manual model control, open **Advanced** under Settings, Models. The topology
-map shows this Mac and every connected node, with the seven job groups as flows
-between them. Add a node, re-point a flow, or switch to **Table** view for the
-full Model Library and Assignments surface. `HOLDSPEAK_PROFILE_<ID>_KEY` remains
-a headless key fallback. See [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
+For manual model control, choose **Adjust** under the Concierge's proposed set.
+The capability table unfolds in place, showing every assignment with its
+engine and host. `HOLDSPEAK_PROFILE_<ID>_KEY` remains a headless key fallback.
+See [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
 
 Install only the extras you need for later features:
 
@@ -422,9 +420,10 @@ Record a meeting live, or bring one you already have: import a recording
 call.wav`, and it becomes a real meeting, run through the same intelligence.
 The transcript is scored for intent (architecture, delivery, product,
 incident, comms), a sequence of plugins runs, and each model attempt enters the
-admitted path before it can produce a typed artifact. The results render
-read-only in the Meetings window on the Desk (deep link `/history`).
-HoldSpeak ships 14 built-in plugins, all real and backed by an LLM.
+admitted path before it can produce a typed artifact. The results render read-only in the Meetings window on the Desk. A meeting
+that has a transcript but never ran intelligence shows **Run intelligence**
+on its row. HoldSpeak ships 14 built-in plugins, all real and backed by an
+LLM.
 
 Plugins can also propose actions. An actuator can produce an external side
 effect, like filing a ticket or posting an update. Fresh installs use YOLO with
@@ -508,9 +507,11 @@ are in the [AIPI-Lite Developer Workflow](https://github.com/karolswdev/HoldSpea
 ## MCP sidecar
 
 The MCP sidecar (`holdspeak-mcp`) is the desk's programmable surface over
-stdio. It exposes 142 tools across 31 families and 29 default, non-owner
+stdio. It exposes 197 tools across 35 families and 34 default, non-owner
 resources, so any MCP client can read and drive the desk without the web UI.
-The Door family adds one aggregate read tool, `door.get`, with no new resource.
+The Concierge family adds five tools (`concierge.detect`, `concierge.propose`,
+`concierge.probe`, `concierge.apply`, `concierge.download`) for engine
+detection and model assignment.
 
 Claude Code discovers the sidecar automatically: the repo ships a
 `.mcp.json` that wires it. For other MCP clients, the entry point is one
@@ -537,8 +538,8 @@ deliberate absences.
 | Understand how it works, with diagrams | [Architecture](https://github.com/karolswdev/HoldSpeak/blob/main/docs/ARCHITECTURE.md) |
 | Get it running and verify my setup | [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) |
 | Take the first-sentence loop or repair/deploy later | [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) |
-| Pick a pack and get models wired | [User Guide, Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/USER_GUIDE.md#models) |
-| Manual model setup (Library, Assignments, topology) | [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) |
+| Use the Concierge to set up models | [User Guide, Models](https://github.com/karolswdev/HoldSpeak/blob/main/docs/USER_GUIDE.md#models) |
+| Manual model setup (Adjust, Library, Assignments) | [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md) |
 | Understand technical routing and receipts | [Intelligence Router architecture](https://github.com/karolswdev/HoldSpeak/blob/main/docs/internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md) |
 | Live on the Desk (the web front door) | [The Desk](https://github.com/karolswdev/HoldSpeak/blob/main/docs/WEB_DESK.md) |
 | See speech become a project-grounded task | [The Dictation Copilot](https://github.com/karolswdev/HoldSpeak/blob/main/docs/DICTATION_COPILOT.md) |
@@ -559,9 +560,10 @@ deliberate absences.
 
 Config lives at `~/.config/holdspeak/config.json`, but you rarely edit it by hand.
 The Settings window on the Desk exposes the hotkey, meeting intelligence,
-dictation pipeline, and presence options. **Settings, Models** opens on the
-door: pick a recommended pack or open **Advanced** for the full topology map,
-Model Library, and Assignments. The full owner guide is
+dictation pipeline, and presence options. **Settings, Models** opens the
+Concierge: it detects engines, proposes one set, and applies with **Use
+these**. Choose **Adjust** for individual capability assignments. The full
+owner guide is
 [Models (bring your own)](https://github.com/karolswdev/HoldSpeak/blob/main/docs/MODELS.md).
 The full reference is in
 [Getting Started](https://github.com/karolswdev/HoldSpeak/blob/main/docs/GETTING_STARTED.md) and the guides above.

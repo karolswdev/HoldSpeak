@@ -1,5 +1,6 @@
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { CycleGadget, LampGadget, PadGadget } from "../../desk/surface/gadgets";
 import { SurfaceSection, SurfaceState } from "../../desk/surface/Surface";
 import { apiFetch } from "../../lib/api";
@@ -136,18 +137,18 @@ export function ConstitutionalContextCore() {
               />
             ) : null}
             {viewingRev !== null ? (
-              <button type="button" className="desk-chip quiet" onClick={exitHistory}>
+              <Button dense variant="ghost" onClick={exitHistory}>
                 Cancel
-              </button>
+              </Button>
             ) : null}
-            <button
-              type="button"
-              className="desk-chip"
+            <Button
+              dense
               disabled={!dirty || saving || overLimit}
+              loading={saving}
               onClick={() => void save()}
             >
-              {saving ? "Saving…" : viewingRev !== null ? "Restore" : "Save"}
-            </button>
+              {viewingRev !== null ? "Restore" : "Save"}
+            </Button>
           </div>
         }
       >
@@ -182,7 +183,7 @@ export function ConstitutionalContextCore() {
               if (dirty && !overLimit) void save();
             }
           }}
-          placeholder={"Write context that every agent receives.\n\nExample:\nI'm a senior architect at Acme Corp.\nWe use TypeScript, Python, and Go.\nOur LLM provider is OpenRouter.\nNever use React class components.\nPrefer concise, direct communication."}
+          placeholder={"Role, stack, rules\nOne fact per line"}
           rows={10}
           autoGrow
         />

@@ -87,12 +87,14 @@ describe("ProcessCore", () => {
 
     render(<ProcessCore />);
 
+    // UX-CANON A8: countLabel strips the zero — section heads read
+    // "NEEDS YOU" not "NEEDS YOU 0"; all five still render.
     for (const head of [
-      "NEEDS YOU 0",
-      "RUNNING 0",
-      "WAITING 0",
-      "UNKNOWN 0",
-      "RECENTLY ENDED 0",
+      "NEEDS YOU",
+      "RUNNING",
+      "WAITING",
+      "UNKNOWN",
+      "RECENTLY ENDED",
     ]) {
       expect(screen.getByText(head)).toBeTruthy();
     }

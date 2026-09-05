@@ -114,7 +114,7 @@ export function RailsPicker(props: {
         title={
           picks.length === 0
             ? "Ground on the rails"
-            : `Rails · ${picks.length}`
+            : picks.length > 0 ? `Rails · ${picks.length}` : "Ground on the rails"
         }
         token={
           picks.length > 0 ? (
@@ -131,7 +131,7 @@ export function RailsPicker(props: {
           {meter && picks.length > 0 && <LedMeter label="CTX" value={frac} />}
           {over && (
             <p className="desk-ground-refusal">
-              ✕ PAST THE WINDOW · PICK FEWER RAIL OBJECTS
+              <span aria-hidden="true">✕</span> PAST THE WINDOW
             </p>
           )}
           <ul className="desk-ground-list">

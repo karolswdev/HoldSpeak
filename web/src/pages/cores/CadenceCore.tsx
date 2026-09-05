@@ -91,7 +91,8 @@ export function CadenceCore({ hero }: CoreProps) {
       {action.message ? <SurfaceState error={action.message} /> : null}
       {replyReceipt ? (
         <p className="surface-receipt-line" data-tone="ok" role="status">
-          ✓ {replyReceipt}
+          <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          {replyReceipt}
         </p>
       ) : null}
       <SurfaceColumns
@@ -160,7 +161,7 @@ export function CadenceCore({ hero }: CoreProps) {
                       {next ? (
                         <div className="surface-next-move">
                           <strong>{String(next.title ?? "Next action")}</strong>
-                          <p>{String(next.body_markdown ?? "")}</p>
+                          <p>{String(next.body ?? next.body_markdown ?? "")}</p>
                         </div>
                       ) : null}
                       {isQuestion ? (

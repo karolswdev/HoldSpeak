@@ -47,12 +47,13 @@ describe("ScrollHint fence: no computeScrollHint outside the barrel", () => {
       .filter(Boolean);
     // Only allowed locations:
     // 1. desk/surface/Surface.tsx (the canonical definition)
-    // 2. desk/chair/lanes/DoorBoardLane.tsx (thin re-export wrapper)
+    // 2. desk/chair/lanes/DoorBoardLane.tsx or _parked/ (thin re-export wrapper)
     // 3. features/project-room/steward/model.ts (thin re-export wrapper)
     const forbidden = lines.filter(
       (line) =>
         !line.includes("desk/surface/Surface.tsx") &&
         !line.includes("desk/chair/lanes/DoorBoardLane.tsx") &&
+        !line.includes("desk/chair/_parked/lanes/DoorBoardLane.tsx") &&
         !line.includes("features/project-room/steward/model.ts"),
     );
     expect(

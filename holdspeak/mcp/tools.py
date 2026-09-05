@@ -277,6 +277,12 @@ TOOLS.extend([
         ["meeting_id", "format"],
     ),
     _mcp_tool(
+        "meeting.run_intelligence",
+        "Enqueue a fresh intelligence job for a meeting that has a transcript but never ran intelligence. Returns {jobId, state, host}. Refuses 409 when the meeting has no transcript.",
+        {"meeting_id": {"type": "string", "description": "Meeting identifier."}},
+        ["meeting_id"],
+    ),
+    _mcp_tool(
         "dictation.list",
         "Read the retained dictation journal, optionally paged and filtered by source.",
         {
@@ -292,6 +298,8 @@ TOOLS.extend([
         ["entry_id"],
     ),
     _mcp_tool("desk.snapshot", "Read one coherent snapshot of the durable HoldSpeak desk.", {}),
+    _mcp_tool("desk.needs_you", "Aggregate needs-you items across all active project rooms. Returns {count, projects, items, next}.", {}),
+    _mcp_tool("settings.hub", "Read the settings hub row facts: module state tokens for the settings truth table.", {}),
     _mcp_tool(
         "decision_record.list", "List durable decision records, newest first.",
         {"limit": {"type": "integer", "minimum": 1, "maximum": 500}, "offset": {"type": "integer", "minimum": 0}},
@@ -694,6 +702,77 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
         return dictation.get_entry(principal, entry_id)
     if name == "desk.snapshot":
         return desk.snapshot(principal)
+    if name == "desk.needs_you":
+        from holdspeak.services.project_service import ProjectService
+        project_service = ProjectService(db, observer=obs)
+        projects = project_service.list_projects(principal, {"include_archived": False})
+        _sev = {"danger": 0, "warning": 1, "info": 2}
+        items: list[dict] = []
+        project_ids: set[str] = set()
+        for proj in projects:
+            pid = proj.get("id") or ""
+            if not pid:
+                continue
+            try:
+                room = project_service.room(principal, pid)
+            except Exception:
+                continue
+            needs = room.get("needsYou", {})
+            if needs.get("state") != "ok":
+                continue
+            for item in (needs.get("items") or []):
+                items.append({"projectId": pid, "projectName": proj.get("name") or proj.get("title") or "", "ref": item.get("title", ""), "title": item.get("title", ""), "why": item.get("why", ""), "ageToken": item.get("since", ""), "source": item.get("source", ""), "verbHref": item.get("url"), "severity": item.get("severity", "info")})
+                project_ids.add(pid)
+        items.sort(key=lambda r: (_sev.get(r.get("severity", "info"), 2), r.get("ageToken") or ""))
+        return {"count": len(items), "projects": sorted(project_ids), "items": items, "next": None}
+    if name == "settings.hub":
+        from holdspeak.config import Config, CONFIG_FILE
+        from holdspeak.services.inference_assignment_service import InferenceAssignmentService
+        config = Config.load()
+        engines = 0; groups_set = 0; default_set = False
+        try:
+            from holdspeak.services.model_library_service import ModelLibraryApplicationService
+            from holdspeak.services.inference_setup_service import InferenceSetupApplicationService
+            setup = InferenceSetupApplicationService(db)
+            lib = ModelLibraryApplicationService(db, setup_service=setup)
+            lib_data = lib.get_library(principal)
+            engines = lib_data.get("summary", {}).get("ready_count", 0)
+        except Exception:
+            pass
+        try:
+            from holdspeak.kernel.runtime import _configure
+            broker = _configure(db)
+            asn_svc = InferenceAssignmentService(db, registry=broker.inference_capability_registry)
+            asn = asn_svc.assignment_summary(principal)
+            for row in asn.get("rows", []):
+                if row.get("id") == "global":
+                    default_set = row.get("status") == "assigned"
+                elif row.get("status") == "assigned":
+                    groups_set += 1
+        except Exception:
+            pass
+        connected = 0
+        try:
+            connected = len(db.automations.list_provider_connections())
+        except Exception:
+            pass
+        loops = 0
+        try:
+            loops = len(db.cadence.list_loops())
+        except Exception:
+            pass
+        import os
+        written_at = None
+        try:
+            if CONFIG_FILE.exists():
+                written_at = os.path.getmtime(CONFIG_FILE)
+        except Exception:
+            pass
+        return {"models": {"engines": engines, "groupsSet": groups_set, "defaultSet": default_set}, "connections": {"connected": connected}, "voice": {"live": config.dictation.pipeline.enabled, "target": config.dictation.pipeline.target_profile_override or "auto"}, "meetings": {"intelligence": config.meeting.intel_enabled}, "rhythm": {"loops": loops}, "sounds": {"on": config.ui.desk_sounds}, "system": {"host": "THIS DEVICE", "mesh": bool(getattr(config.mesh, "device_name", ""))}, "posture": config.control_mode, "writtenAt": written_at}
+    if name == "meeting.run_intelligence":
+        from holdspeak.services.meeting_intel_service import MeetingIntelService as _MIS
+        intel_svc = _MIS(db, observer=obs)
+        return intel_svc.run_intelligence(principal, str(args.get("meeting_id") or ""))
     if name == "decision_record.list":
         allowed = ("limit", "offset")
         return records.list_records(principal, **{key: args[key] for key in allowed if key in args})

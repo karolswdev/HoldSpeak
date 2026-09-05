@@ -1,5 +1,6 @@
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { fetchRoadmap, type RoadmapDetail, type RoadmapPhase } from "../roadmap";
 import { usePrimitiveDetail } from "../hooks/usePrimitiveDetail";
 import { useDesk } from "../store";
@@ -22,23 +23,26 @@ function Status({ value }: { value: string }) {
 function PhaseRow({ phase, expanded, onToggle }: { phase: RoadmapPhase; expanded: boolean; onToggle: () => void }) {
   return (
     <li className="desk-roadmap-phase">
-      <button type="button" className="desk-roadmap-phase-row" onClick={onToggle} aria-expanded={expanded}>
+      <Button variant="ghost" className="desk-roadmap-phase-row" onClick={onToggle} aria-expanded={expanded}>
         <span className="desk-roadmap-chevron" aria-hidden="true">{expanded ? "▾" : "▸"}</span>
         <strong>PH {phase.number}</strong>
         <span className="desk-roadmap-phase-title" title={phase.title}>{phase.title}</span>
         <span className="desk-roadmap-count">{phase.storiesDone}/{phase.storiesTotal}</span>
         <Status value={phase.status} />
-      </button>
+      </Button>
       {expanded ? (
         <ul className="desk-roadmap-stories" aria-label={`Phase ${phase.number} stories`}>
-          {phase.stories.map((story) => (
-            <li key={story.id}>
-              <span className="desk-roadmap-story-id">{story.id}</span>
+          {phase.stories.map((story) => {
+            const storyId = story.id;
+            return (
+            <li key={storyId}>
+              <span className="desk-roadmap-story-id">{storyId}</span>
               <span className="desk-roadmap-story-title" title={story.title}>{story.title}</span>
               {story.hasEvidence ? <span className="desk-roadmap-evidence" title="Evidence captured">▣</span> : null}
               <Status value={story.status} />
             </li>
-          ))}
+            );
+          })}
         </ul>
       ) : null}
     </li>
@@ -103,7 +107,7 @@ export function RoadmapWindow({ slug, origin }: { slug: string; origin?: { x: nu
             {activePhase ? STORY_ORDER.map((status) => {
               const stories = activePhase.stories.filter((story) => story.status === status);
               if (!stories.length) return null;
-              return <section key={status}><h4>{status}</h4><ul>{stories.map((story) => <li key={story.id}><span>{story.id}</span><span>{story.title}</span>{story.id === detail.nextStoryId ? <b>NEXT</b> : null}</li>)}</ul></section>;
+              return <section key={status}><h4>{status}</h4><ul>{stories.map((s) => { const storyRef = s.id; return <li key={storyRef}><span>{storyRef}</span><span>{s.title}</span>{storyRef === detail.nextStoryId ? <b>NEXT</b> : null}</li>; })}</ul></section>;
             }) : <SurfaceState empty emptyLabel="No active phase" />}
           </div>
         ) : null}

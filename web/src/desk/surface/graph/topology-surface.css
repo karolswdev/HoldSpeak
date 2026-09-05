@@ -229,7 +229,7 @@
   max-height: 100%;
   overflow-y: auto;
   padding: var(--space-2);
-  border-left: 1px solid var(--border-subtle);
+  box-shadow: -1px 0 0 var(--border-subtle);
   background: var(--surface-1);
   display: flex;
   flex-direction: column;
@@ -242,7 +242,7 @@
     inset: auto 0 0 0;
     flex: none;
     max-height: 50%;
-    border-left: none;
+    box-shadow: none;
     border-top: 1px solid var(--border-subtle);
     z-index: var(--z-overlay, 100);
   }

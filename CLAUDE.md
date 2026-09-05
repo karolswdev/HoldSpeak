@@ -43,6 +43,11 @@ disagrees with one of these, canon wins:
   articles every phase, story, and design decision is measured against.
   Where any doc below disagrees with it, the Constitution wins.
 - `README.md` — public install + usage surface.
+- `docs/internal/UX-CANON.md` — **the face canon**: the owner's rulings
+  every face must obey (every verb the library Button; no prose; no
+  modals; no counters of zero; egress where egress happens; design on
+  the canvas before build; build what was ratified) and the review
+  protocol. Read it before touching anything a user sees.
 - `docs/internal/POSITIONING.md` — the positioning canon: the story, the
   pillars, the named competitive frame, canonical feature names, and the
   voice rules every user-facing doc must align to.

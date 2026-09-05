@@ -28,7 +28,10 @@ import {
   SurfaceState,
   StringGadget,
   EgressChip,
+  MxRadio,
+  countToken,
 } from "../../desk/surface";
+import { MicButton } from "../../desk/components/MicButton";
 import { Button } from "../../components/signal/Signal";
 import {
   getTopologyFull,
@@ -97,6 +100,7 @@ function layoutNodes(wireNodes: TopologyNodeWire[]): GraphNode[] {
 }
 
 function NodeContent({ node }: { node: TopologyNodeWire }) {
+  const endpoint = node.base_url;
   return (
     <>
       <span className="topology-node-kind">{nodeKindLabel(node.kind)}</span>
@@ -115,8 +119,8 @@ function NodeContent({ node }: { node: TopologyNodeWire }) {
             : `${node.models[0]} +${node.models.length - 1}`}
         </span>
       ) : null}
-      {node.base_url ? (
-        <span className="topology-node-url">{node.base_url}</span>
+      {endpoint ? (
+        <span className="topology-node-url">{endpoint}</span>
       ) : null}
     </>
   );
@@ -194,12 +198,13 @@ function NodeInspector({
         {nodeKindLabel(node.kind)}
       </span>
 
-      {node.base_url ? (
-        <span className="topology-inspector-url">{node.base_url}</span>
-      ) : null}
+      {node.base_url ? (() => {
+        const url = node.base_url;
+        return <span className="topology-inspector-url">{url}</span>;
+      })() : null}
 
       {nodeModels.length > 0 ? (
-        <Disclosure label="Models" defaultOpen token={`${nodeModels.length}`}>
+        <Disclosure label="Models" defaultOpen token={countToken(nodeModels.length, "MODEL")}>
           <ul className="topology-inspector-list">
             {nodeModels.map((m) => (
               <li key={m.id}>
@@ -212,7 +217,7 @@ function NodeInspector({
       ) : null}
 
       {nodeJobs.length > 0 ? (
-        <Disclosure label="Jobs" defaultOpen token={`${nodeJobs.length}`}>
+        <Disclosure label="Jobs" defaultOpen token={countToken(nodeJobs.length, "JOB")}>
           <ul className="topology-inspector-list">
             {nodeJobs.map((j) => (
               <li key={j.id}>
@@ -230,13 +235,13 @@ function NodeInspector({
         </ActionNotice>
       ) : null}
 
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         className="topology-inspector-repoint"
         onClick={onRepoint}
       >
         Re-point a flow
-      </button>
+      </Button>
     </div>
   );
 }
@@ -307,21 +312,15 @@ function RepointPanel({
       <span className="topology-repoint-label">
         Re-point: {row.label}
       </span>
-      <div className="topology-repoint-candidates" role="radiogroup" aria-label={`Candidates for ${row.label}`}>
-        {editor.candidates.map((c) => (
-          <label key={c.profile_id} className="topology-repoint-candidate">
-            <input
-              type="radio"
-              name="repoint-candidate"
-              value={c.profile_id}
-              checked={selectedCandidate === c.profile_id}
-              onChange={() => setSelectedCandidate(c.profile_id)}
-            />
-            <span>{c.label}</span>
-            <small>{c.boundary} · {c.readiness}</small>
-          </label>
-        ))}
-      </div>
+      <MxRadio
+        label={`Candidates for ${row.label}`}
+        value={selectedCandidate ?? ""}
+        options={editor.candidates.map((c) => ({
+          value: c.profile_id,
+          label: `${c.label} · ${c.boundary} · ${c.readiness}`,
+        }))}
+        onChange={setSelectedCandidate}
+      />
       <div className="topology-repoint-actions">
         <Button
           variant="primary"
@@ -425,26 +424,24 @@ function AddNodePanel({
       {face === "choices" ? (
         <div className="topology-add-choices">
           <span className="topology-add-title">Add node</span>
-          <button type="button" onClick={() => setFace("endpoint")} data-testid="add-endpoint">
+          <Button variant="ghost" onClick={() => setFace("endpoint")} data-testid="add-endpoint">
             Define endpoint
-          </button>
-          <button type="button" onClick={() => setFace("hosted")} data-testid="add-hosted">
+          </Button>
+          <Button variant="ghost" onClick={() => setFace("hosted")} data-testid="add-hosted">
             Connect hosted
-          </button>
+          </Button>
         </div>
       ) : face === "endpoint" ? (
         <div className="topology-add-form">
           <span className="topology-add-title">Define endpoint</span>
           <StringGadget label="Name" value={endpoint.label} onChange={(v) => setEndpoint((c) => ({ ...c, label: v }))} placeholder="My server" />
+          <MicButton draftScope="topo-endpoint-name" onText={(t: string) => setEndpoint((c) => ({ ...c, label: t }))} />
           <StringGadget label="Endpoint" value={endpoint.url} onChange={(v) => setEndpoint((c) => ({ ...c, url: v }))} placeholder="http://192.168.1.43:8080/v1" />
           <StringGadget label="Model" value={endpoint.model} onChange={(v) => setEndpoint((c) => ({ ...c, model: v }))} placeholder="model-name" />
-          <label className="topology-add-secret">
-            <span>Key (optional)</span>
-            <input ref={secretRef} type="password" autoComplete="new-password" aria-label="Provider key" />
-          </label>
+          <label className="surface-gadget-label">Provider key<input ref={secretRef} className="hs-control" type="password" autoComplete="new-password" placeholder="Key (optional)" /></label>
           {error ? <ActionNotice tone="danger">{error}</ActionNotice> : null}
           <div className="topology-add-actions">
-            <button type="button" onClick={() => setFace("choices")}>Back</button>
+            <Button variant="ghost" dense onClick={() => setFace("choices")}>Back</Button>
             <Button variant="primary" loading={busy} disabled={busy} onClick={() => void submitEndpoint()}>
               Add
             </Button>
@@ -456,13 +453,10 @@ function AddNodePanel({
           <EgressChip label="Egress" scope="cloud" title="Request leaves this hub." />
           <StringGadget label="Name" value={hosted.label} onChange={(v) => setHosted((c) => ({ ...c, label: v }))} placeholder="Provider" />
           <StringGadget label="Model" value={hosted.model} onChange={(v) => setHosted((c) => ({ ...c, model: v }))} placeholder="model-name" />
-          <label className="topology-add-secret">
-            <span>Key</span>
-            <input ref={secretRef} type="password" autoComplete="new-password" aria-label="Provider key" />
-          </label>
+          <label className="surface-gadget-label">Provider key<input ref={secretRef} className="hs-control" type="password" autoComplete="new-password" placeholder="Key" /></label>
           {error ? <ActionNotice tone="danger">{error}</ActionNotice> : null}
           <div className="topology-add-actions">
-            <button type="button" onClick={() => setFace("choices")}>Back</button>
+            <Button variant="ghost" dense onClick={() => setFace("choices")}>Back</Button>
             <Button variant="primary" loading={busy} disabled={busy} onClick={() => void submitHosted()}>
               Connect
             </Button>

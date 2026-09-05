@@ -122,3 +122,5 @@ export {
   type GraphFlow,
   type TopologySurfaceProps,
 } from "./graph/TopologySurface";
+
+export { countToken, countLabel } from "./count";

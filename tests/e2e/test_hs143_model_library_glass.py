@@ -1,4 +1,12 @@
-"""HS-143-12 — real-hub Model Library glass at the owner working widths."""
+"""HS-143-12 — real-hub Model Library glass at the owner working widths.
+
+HS-170: RETIRED -- the Model Library module (ModelLibraryCore, reached via
+the front door's Advanced fold -> Table tab) is PARKED (HS-170-03).
+The engine inventory, radio selection, action seat, add-model choices,
+keyboard/accessibility, broken-repair rows, and zoom/reduced-motion glass
+now live on the Concierge's FOUND section + picker wells (ConciergeCore.tsx,
+own window open-concierge).
+"""
 from __future__ import annotations
 
 import os
@@ -7,6 +15,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
+pytest.skip(
+    "HS-170: ModelLibraryCore PARKED (HS-170-03, settled-design-four-faces.md Face 3); "
+    "capability now at the Concierge's FOUND section (ConciergeCore.tsx)",
+    allow_module_level=True,
+)
 
 pytest.importorskip("playwright.sync_api", reason="Model Library glass needs Playwright")
 

@@ -20,8 +20,8 @@ REPO = Path(__file__).resolve().parents[2]
 WEB_SRC = REPO / "web" / "src"
 
 SURFACE_DIRS = (
-    WEB_SRC / "desk" / "chair" / "lanes",
     WEB_SRC / "desk" / "pullouts" / "views",
+    WEB_SRC / "features" / "concierge",
 )
 
 # Barrel/registry files count as live importers only if they are
@@ -48,6 +48,7 @@ def _source_files() -> list[Path]:
         path
         for path in WEB_SRC.rglob("*.ts*")
         if not path.name.endswith(_IGNORED_SUFFIXES)
+        and "/_parked/" not in path.as_posix()
     ]
 
 
@@ -57,7 +58,7 @@ def test_every_surface_component_is_imported_by_live_code() -> None:
     for component in _candidates():
         stem = component.stem
         pattern = re.compile(
-            r"""from\s+["'][^"']*/""" + re.escape(stem) + r"""["']"""
+            r"""(?:from|import\()\s*["'][^"']*/""" + re.escape(stem) + r"""["']"""
         )
         imported = any(
             pattern.search(path.read_text(encoding="utf-8"))

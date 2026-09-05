@@ -68,7 +68,7 @@ export function directoryToItem(d: Directory): AutocompleteItem {
     kind: "zone",
     name: d.name,
     nameNormalized: d.nameNormalized,
-    detail: `${d.memberIds.length} ${d.memberIds.length === 1 ? "item" : "items"}`,
+    detail: d.memberIds.length > 0 ? `${d.memberIds.length} ${d.memberIds.length === 1 ? "item" : "items"}` : "Empty",
   };
 }
 
@@ -318,7 +318,7 @@ export function InletAutocomplete({
             ariaSelected={i === selectedIndex}
             glyph={<ZoneGlyph />}
             title={zone.name}
-            detail={`${zone.memberIds.length} ${zone.memberIds.length === 1 ? "item" : "items"}`}
+            detail={zone.memberIds.length > 0 ? `${zone.memberIds.length} ${zone.memberIds.length === 1 ? "item" : "items"}` : "Empty"}
             selected={i === selectedIndex}
             onOpen={() => onSelect?.(zone)}
           />

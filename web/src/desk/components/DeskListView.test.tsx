@@ -101,7 +101,7 @@ describe("HS-111-07 the ledger face: same records", () => {
 
     // The head is a mono fact line, not prose.
     expect(
-      screen.getByText("ITEMS 4 · ZONES 1 · ATTN 2"),
+      screen.getByText("4 ITEMS · 1 ZONE · 2 ATTNS"),
     ).toBeInTheDocument();
 
     // The attention count rides the row as a STATE token.
@@ -176,13 +176,13 @@ describe("HS-111-07 the ledger face: same records", () => {
     ).toBeInTheDocument();
     // The dived band head is the zone (the fact token repeats it).
     expect(screen.getAllByText("LAUNCH").length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole("button", { name: "← ALL" }));
+    fireEvent.click(screen.getByRole("button", { name: "ALL" }));
     expect(useDesk.getState().divedZone).toBeNull();
   });
 
   it("keeps the honest count status", () => {
     renderList();
-    expect(screen.getByRole("status")).toHaveTextContent("Showing 4 of 4");
+    expect(screen.getByRole("status")).toHaveTextContent("4 SHOWNS of 4");
   });
 
   it("keeps repository roadmaps out of the ordinary root list", () => {
@@ -210,7 +210,7 @@ describe("HS-111-07 the ledger face: same records", () => {
     renderList();
 
     expect(screen.queryByRole("button", { name: "HoldSpeak — Roadmap" })).toBeNull();
-    expect(screen.getByText("ITEMS 4 · ZONES 1 · ATTN 0")).toBeInTheDocument();
+    expect(screen.getByText("4 ITEMS · 1 ZONE")).toBeInTheDocument();
   });
 });
 
@@ -230,13 +230,13 @@ describe("HS-93-08 pagination at 1,000 items", () => {
   it("pages by 100 with an honest count and no focus loss", () => {
     renderList();
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Showing 100 of 1000",
+      "100 SHOWNS of 1000",
     );
     const more = screen.getByRole("button", { name: "Show 100 more" });
     more.focus();
     fireEvent.click(more);
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Showing 200 of 1000",
+      "200 SHOWNS of 1000",
     );
     expect(document.activeElement).toBe(
       screen.getByRole("button", { name: "Show 100 more" }),

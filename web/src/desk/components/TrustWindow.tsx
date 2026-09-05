@@ -89,7 +89,7 @@ export function TrustWindow() {
             label="Enabled destinations"
             control={
               <span className="surface-setting-value">
-                {enabledDestinations.length}
+                {enabledDestinations.length || "None"}
               </span>
             }
           />

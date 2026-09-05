@@ -353,7 +353,7 @@ export function FirstWords({
     <section className="desk-first-words" aria-labelledby="first-words-title">
       <span className="surface-eyebrow">Voice typing</span>
       <Heading id="first-words-title">Dictate one sentence</Heading>
-      <p>Click to speak. Your words stay editable here before you use them.</p>
+      <p>Tap to speak, edit here, then use</p>
       <button
         type="button"
         className={`desk-first-talk is-${state}`}

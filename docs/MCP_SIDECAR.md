@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-189 tools across 34 families. The default non-owner discovery lists 34
+197 tools across 35 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -57,7 +57,7 @@ default.
 
 ## Tool families
 
-The 189 tools are organized into domain families. Each tool follows the
+The 197 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -295,6 +295,18 @@ Read-only inspection of coder sessions. `coder.list` lists sessions
 (optionally filtered by agent). `coder.get` returns one session by id.
 `coder.audit` reads the bounded steering audit trail.
 
+### concierge (5 tools)
+
+Engine detection and model assignment. `concierge.detect` returns every
+reachable engine (LAN, local, cloud, catalog presets) with hardware facts
+and probe timestamps. `concierge.propose` returns a proposed assignment
+per capability group using the same rules as the Settings, Models face.
+`concierge.probe` runs a bounded latency check against one engine; a paid
+cloud probe requires the explicit `generate:true` flag. `concierge.apply`
+writes the complete assignment set in one step (refuses while any group is
+WAITING and not OFF). `concierge.download` starts a catalog preset download
+through the existing Model Library download path.
+
 ### cadence (11 tools)
 
 The cadence engine: reviews meetings, proposed actions, and waiting coder
@@ -354,7 +366,7 @@ marks a job done. Both refuse running jobs.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 189 tools across 34 families.
+**Registry totals:** 197 tools across 35 families.
 
 #### ask (4)
 
@@ -383,6 +395,14 @@ marks a job done. Both refuse running jobs.
 - `coder.get`
 - `coder.list`
 
+#### concierge (5)
+
+- `concierge.apply`
+- `concierge.detect`
+- `concierge.download`
+- `concierge.probe`
+- `concierge.propose`
+
 #### connection (2)
 
 - `connection.list`
@@ -400,12 +420,13 @@ marks a job done. Both refuse running jobs.
 - `decision_record.list`
 - `decision_record.search`
 
-#### desk (7)
+#### desk (8)
 
 - `desk.create`
 - `desk.delete`
 - `desk.get`
 - `desk.list`
+- `desk.needs_you`
 - `desk.snapshot`
 - `desk.update`
 - `desk.verb`
@@ -448,12 +469,13 @@ marks a job done. Both refuse running jobs.
 - `kb.list_members`
 - `kb.remove_member`
 
-#### meeting (6)
+#### meeting (7)
 
 - `meeting.delete`
 - `meeting.export`
 - `meeting.get`
 - `meeting.list`
+- `meeting.run_intelligence`
 - `meeting.start_capture`
 - `meeting.stop_capture`
 
@@ -585,9 +607,10 @@ marks a job done. Both refuse running jobs.
 - `sequence.cancel`
 - `sequence.run`
 
-#### settings (2)
+#### settings (3)
 
 - `settings.get`
+- `settings.hub`
 - `settings.update`
 
 #### thought (18)
@@ -758,7 +781,7 @@ consume it.
 
 `tools_for_palette(palette)` returns only the tools whose names are in
 the palette. A client that lists tools through this filter sees 47 tools
-instead of 189.
+instead of 197.
 
 `dispatch_for_palette(name, arguments, principal, palette)` dispatches
 a tool call only if `name` is in the palette. A name outside the palette

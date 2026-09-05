@@ -4,6 +4,11 @@ The byte server and durable verification proof remain Phase-142 behavior.  The
 retired capability picker is intentionally not resurrected: the owner presses
 Download in the Model Library, receives the library receipt, and assignments
 stay unchanged.
+
+HS-170: RETIRED -- the Model Library's front-door navigation path
+(.front-door -> Set up my own -> Table -> .model-library) is PARKED
+(HS-170-03); the download-verify-add walk now lives on the Concierge's
+preset Download button (ConciergeCore.tsx, concierge-download-{id} testid).
 """
 from __future__ import annotations
 
@@ -17,6 +22,12 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
+pytest.skip(
+    "HS-170: Model Library front-door PARKED (HS-170-03, settled-design-four-faces.md Face 3); "
+    "download-verify-add now at the Concierge's preset Download (ConciergeCore.tsx)",
+    allow_module_level=True,
+)
 
 pytest.importorskip("playwright.sync_api", reason="model acquisition glass needs Playwright")
 

@@ -26,7 +26,7 @@ export function WorkbenchRunsWing({
 }) {
   return (
     <div className="wb-runs-wing">
-      <SurfaceLedger count={`${runs.length} RUNS`}>
+      <SurfaceLedger count={runs.length > 0 ? `${runs.length} RUNS` : "RUNS"}>
         {runs.length === 0 ? (
           <SurfaceState
             empty
@@ -38,6 +38,8 @@ export function WorkbenchRunsWing({
         ) : null}
         {runs.map((run) => {
           const runLamp = boundaryEgressLamp(run.egress_boundary);
+          const totalTok = run.total_tokens;
+          const completedAt = run.completed_at;
           const statusChip =
             run.status === "completed"
               ? { label: "COMPLETED", tone: "ok" }
@@ -69,9 +71,9 @@ export function WorkbenchRunsWing({
                 <dl className="surface-facts">
                   <div><dt>egress</dt><dd>{runLamp.label}</dd></div>
                   <div><dt>model</dt><dd>{run.model || "—"}</dd></div>
-                  <div><dt>tokens</dt><dd>{run.total_tokens.toLocaleString()}</dd></div>
-                  {run.completed_at ? (
-                    <div><dt>completed</dt><dd>{humanTime(run.completed_at)}</dd></div>
+                  <div><dt>tokens</dt><dd>{totalTok.toLocaleString()}</dd></div>
+                  {completedAt ? (
+                    <div><dt>completed</dt><dd>{humanTime(completedAt)}</dd></div>
                   ) : null}
                 </dl>
               </div>

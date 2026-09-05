@@ -13,7 +13,7 @@ import { objectByRef, type WorldObject } from "../world";
 import { filedZones, kindInfo, kindLabel, renameLock } from "../infoContract";
 import { lineage } from "../lineage";
 import { humanTime } from "../surface/format";
-import { FoldGadget, StringGadget } from "../surface/gadgets";
+import { CycleGadget, FoldGadget, StringGadget } from "../surface/gadgets";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import { DeskWindowFrame } from "./DeskWindow";
 
@@ -148,7 +148,7 @@ export function InfoWindow({
             <span>{kindLabel(o.kind)}</span>
             <b>Id</b>
             <FoldGadget title="RAW">
-              <span className="quiet info-id">{o.id}</span>
+              {(() => { const rawId = o.id; return <span className="quiet info-id">{rawId}</span>; })()}
             </FoldGadget>
             {created ? (
               <>
@@ -214,16 +214,12 @@ export function InfoWindow({
               {info.properties.map((p) => (
                 <label key={p.key} className="info-prop">
                   <code>{p.label ?? humanizeWireValue(p.key)}</code>
-                  <select
+                  <CycleGadget
+                    label={p.label ?? p.key}
                     value={p.value(o)}
-                    onChange={(e) => void p.set(o, e.target.value)}
-                  >
-                    {p.choices(o, items).map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={p.choices(o, items).map((c) => ({ value: c.id, label: c.label }))}
+                    onChange={(next) => void p.set(o, next)}
+                  />
                 </label>
               ))}
             </div>
