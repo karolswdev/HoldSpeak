@@ -4324,7 +4324,9 @@
         "GET"
       ],
       "module": "web.routes.steward",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/projects/{project_id}/people",
