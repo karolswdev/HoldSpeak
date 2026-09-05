@@ -37,15 +37,15 @@ loop and land in the shade.
 
 ## Acceptance criteria
 
-- [ ] The brief regenerates once per day after quiet hours without the
+- [x] The brief regenerates once per day after quiet hours without the
       owner opening the desk; verified by reading the `monday_briefs`
       table timestamp (Article IX.1).
-- [ ] The shade shows the most recent brief (date, item count, a verb
+- [x] The shade shows the most recent brief (date, item count, a verb
       to open the full brief); the row is omitted when no brief exists
       (UX-CANON.md rule A.8).
-- [ ] Quiet hours suppress the regeneration until the window closes.
-- [ ] The regeneration leaves a pipeline_events receipt (Article XI.2).
-- [ ] Zero egress (Article III).
+- [x] Quiet hours suppress the regeneration until the window closes.
+- [x] The regeneration leaves a pipeline_events receipt (Article XI.2).
+- [x] Zero egress (Article III).
 
 ## Test plan
 
@@ -64,3 +64,7 @@ loop and land in the shade.
   already has the daily-push logic and quiet-hours check. The missing
   piece is calling `MondayBriefService.generate()` inside it. This may
   be a small change.
+
+## Proof (2026-09-05)
+
+tests/unit/test_hs171_aggregate_notify.py (one generate across the quiet-hours boundary; suppressed until the window closes; a pipeline_events receipt per regeneration) + tests/e2e/test_hs171_shade_glass.py::test_shade_brief_row_1440 (date · item count · Open).

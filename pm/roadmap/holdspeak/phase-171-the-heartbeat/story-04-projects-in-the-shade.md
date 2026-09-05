@@ -39,21 +39,21 @@ launcher.badge and carries coder-session counts, not project needs-you.
 
 ## Acceptance criteria
 
-- [ ] The PROJECTS section appears in the SystemShade when the
+- [x] The PROJECTS section appears in the SystemShade when the
       aggregate count > 0; omitted when zero (Article VI.1; UX-CANON.md
       rule A.8).
-- [ ] Each row shows project name, count, first WHY, severity chip,
+- [x] Each row shows project name, count, first WHY, severity chip,
       and an "Open" verb (Article VII.1: no prose; UX-CANON.md rule
       A.1: every verb is the library Button).
-- [ ] Clicking "Open" on a row opens the Room (via openPrimitive or
+- [x] Clicking "Open" on a row opens the Room (via openPrimitive or
       openSurfaceWhenReady, the existing shell helpers).
-- [ ] The dock badge carries the aggregate count; zero = no badge
+- [x] The dock badge carries the aggregate count; zero = no badge
       (UX-CANON.md rule A.8).
-- [ ] The shade polls the cached aggregate on open; closing stops the
+- [x] The shade polls the cached aggregate on open; closing stops the
       poll.
-- [ ] The rig asserts the artboard (UX-CANON.md rule E.2): type steps,
+- [x] The rig asserts the artboard (UX-CANON.md rule E.2): type steps,
       token positions, no intersecting row children.
-- [ ] Zero egress (Article III).
+- [x] Zero egress (Article III).
 
 ## Test plan
 
@@ -71,3 +71,7 @@ launcher.badge and carries coder-session counts, not project needs-you.
 - The shade currently uses `useProjections` for its data. The PROJECTS
   section reads from a separate fetch (`/api/desk/needs-you`), not the
   projections store.
+
+## Proof (2026-09-05)
+
+tests/e2e/test_hs171_shade_glass.py (12 green): PROJECTS present/absent, rows name · count · WHY · tone · Open, Open opens the Room, the badge = the count and absent at zero, polling only while open (5 s, stops on close), the board asserted (three type steps, no raw button, no sentence, no overflow at 393), zero egress. One count everywhere: muted Rooms dimmed with MUTED and uncounted.

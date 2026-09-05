@@ -41,16 +41,16 @@ unattended sweep actually runs on a cadence he sets in one row."
 
 ## Acceptance criteria
 
-- [ ] `next_evaluation_at` is stamped on watches after the sweep runs;
+- [x] `next_evaluation_at` is stamped on watches after the sweep runs;
       verified by reading the schema row (Article IX.1).
-- [ ] The cadence setting is exposed in Settings as one row matching
+- [x] The cadence setting is exposed in Settings as one row matching
       the HS-171-01 artboard; the owner can change the interval.
-- [ ] The five conductor loops run in parallel threads; killing one
+- [x] The five conductor loops run in parallel threads; killing one
       (simulated by raising in a test) does not halt the others.
-- [ ] `refresh_due_watches` runs on the cadence interval; verified by
+- [x] `refresh_due_watches` runs on the cadence interval; verified by
       a rig that asserts the call count over time.
-- [ ] Every tick leaves a pipeline_events receipt (Article XI.2).
-- [ ] Zero egress (Article III).
+- [x] Every tick leaves a pipeline_events receipt (Article XI.2).
+- [x] Zero egress (Article III).
 
 ## Test plan
 
@@ -71,3 +71,7 @@ unattended sweep actually runs on a cadence he sets in one row."
 - The existing `CadenceMixin._cadence_tick_once` already calls
   `_push_due_to_telegram` and `_maybe_push_daily_brief`
   (runtime/cadence.py:57-58); the sweep addition fits here.
+
+## Proof (2026-09-05)
+
+tests/unit/test_hs171_heartbeat_wire.py (the stamp advances after a sweep; the loops' boundaries — a raise in the heartbeat body leaves the cadence ticking; the 15-min interval; a pipeline_events receipt per tick, held ticks too; zero egress on LAN watches); the Rhythm face + the hub row in tests/e2e/test_hs171_rhythm_glass.py (7 green). Story 09's note: the brief's cadence is fixed daily, not a setting.

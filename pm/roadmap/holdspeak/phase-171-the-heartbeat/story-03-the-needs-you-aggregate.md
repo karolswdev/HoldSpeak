@@ -35,14 +35,14 @@ reads serve the cache until the next tick.
 
 ## Acceptance criteria
 
-- [ ] The route returns a cached response; a second call within the
+- [x] The route returns a cached response; a second call within the
       cadence interval does not re-query every Room (measured by
       counting `_read_room_needs_you` calls in a rig; Article IX.1).
-- [ ] Response time < 50 ms from cache (measured in the rig).
-- [ ] A cadence tick invalidates the cache; the next call re-queries.
-- [ ] A manual refresh (`?fresh=1` (the route's name for it) or a bus event) invalidates the
+- [x] Response time < 50 ms from cache (measured in the rig).
+- [x] A cadence tick invalidates the cache; the next call re-queries.
+- [x] A manual refresh (`?fresh=1` (the route's name for it) or a bus event) invalidates the
       cache.
-- [ ] Zero egress (Article III).
+- [x] Zero egress (Article III).
 
 ## Test plan
 
@@ -59,3 +59,7 @@ reads serve the cache until the next tick.
 - The cache lifetime equals the cadence interval (HS-171-02). If the
   owner sets 15 min, the cache is valid for 15 min. Stale-for-one-tick
   is acceptable (Article V: watching is free).
+
+## Proof (2026-09-05)
+
+tests/unit/test_hs171_aggregate_notify.py (warm cache never rebuilds; the tick invalidates; ?fresh=1 rebuilds; zero HTTP during a cached read) + tests/e2e/test_hs171_shade_glass.py::test_cache_timing — 1.9 ms from cache (< 50 ms) — and ::test_zero_egress_cached_read.
