@@ -65,6 +65,16 @@ report without a rig tail and shots on disk is not a report. The
 ratchet ceiling is restored with `git checkout` when a lane raises it.
 `SurfaceLedger` needs `cols="room"` or the primary collapses.
 
+**174 counsel on the design (2026-09-05 20:50): RATIFY-W-C, ruled.** The
+ground had claimed the presence host keeps the hub alive with the lid
+closed — false; the overnight run needs the Mac awake on AC (the face
+says `WHILE THIS MAC IS AWAKE`). **Your questions (174, counsel's):**
+(1) Confluence: does your team live in blog posts, or is page search the
+need (then V0 is a badge, not a tool)? (2) the awake-Mac prerequisite —
+a setting you already run, or would you rather a lid-open V0? (3)
+credentials are in-memory and re-issued after every hub restart — fine
+for the overnight runner, or persist them (with an at-rest story)?
+
 **Phase 174 Reach (2026-09-05 19:45) — activated, stacked on #556.**
 Boards dispatched. **Your questions (174):** (1) the third connector —
 Confluence is the reversible default, but its CLI cannot list or search

@@ -21,9 +21,10 @@ the Heartbeat's, the Loop Closes', and the Steward's grammar (Phases
 22:00. He closes the MacBook lid and leaves. The .43 box on the
 tailnet (192.168.1.43) runs an MCP client against the hub's Streamable
 HTTP endpoint, authenticated with a scoped credential restricted to
-PROJECT_PALETTE. The hub stays alive: the web runtime is a daemon
-thread and the Cocoa presence host keeps the process running even when
-the display sleeps. The .43 client triggers the sweep (the cadence
+PROJECT_PALETTE. The hub stays alive only if the Mac stays awake: on AC power with
+"Prevent automatic sleeping when the display is off" (or `caffeinate
+-s`); the presence host does not prevent sleep. The face says so where
+he meets it (D2(d)). The .43 client triggers the sweep (the cadence
 tick from 171) and the steward's drafter (173's unattended run) for
 each active Room. Every call is kernel-admitted; every receipt carries
 `origin: remote` and the credential's identity label.
@@ -270,8 +271,10 @@ heartbeat.md D2d).
   - When a remote host is selected: a muted token `LAST RUN 2 H AGO`
     (surface-token[data-chip], secondary step) or absent when no run
     has occurred.
-- Trailing: `Run now` (Button ghost) -- triggers one immediate remote
-  run (or local, depending on selection).
+- Trailing: none -- the host picker is the control; `Run now` stays on
+  the Sweep row above (one verb, once). Caption token under the row
+  while a remote host is selected: `WHILE THIS MAC IS AWAKE` (the honest
+  limit, Article VI:1).
 
 **The receipt naming the host:**
 
@@ -392,7 +395,7 @@ exists).
 
 ### The credential scope (palette + TTL on AgentCredentialStore)
 
-**Seam:** `principals.py:89-172` (AgentCredentialStore).
+**Seam:** `holdspeak/principals.py:89-172` (AgentCredentialStore).
 
 **Current shape:** `AgentCredential` (principals.py:83-87) carries
 `token`, `principal`, `expires_at`. The `issue` method (principals.py:
@@ -759,3 +762,43 @@ IX.2). His words verbatim. His verdict.
   <caller ip>`); a remote principal is never OWNER; the listener is off
   by default and the toggle lives in Settings → System with the
   credentials ledger beneath it.
+
+
+## Addendum — counsel RATIFY-W-C on the design (2026-09-05) and the orchestrator's rulings
+
+Six conditions, nine findings; every seam verified except one path.
+Ruled:
+
+- **C1 — the lid-closed claim was false.** No code prevents sleep. D0
+  corrected: the overnight run needs the Mac awake on AC (the macOS
+  setting or `caffeinate -s`). The Rhythm `Runs on` row carries the
+  token `WHILE THIS MAC IS AWAKE` while a remote host is selected;
+  story 08's transcript and docs name the prerequisite; the .43 client
+  reports a failed connect as `HUB ASLEEP OR OFF` rather than retrying
+  forever.
+- **C2 — the path** is `holdspeak/principals.py` (corrected throughout).
+- **C3 — one verb, once.** `Run now` lives on the Sweep row only; the
+  `Runs on` row has no trailing verb (D2(d) corrected; the phone board
+  corrected to match).
+- **C4 — hash at rest.** Story 03 stores `sha256(token)` in the
+  credential store and compares hashes constant-time; the plaintext
+  exists only in the issue response. The store stays in-memory in 174
+  (wiped on restart; D4 H6); persistence is the owner's question.
+- **C5 — the loopback guard is per-route.** Only `POST /api/mcp` refuses
+  an OWNER derivation from a non-loopback source; the owner's own
+  browser over the tailnet address keeps its session through the
+  existing gate. `X-Forwarded-For` is never read for principal
+  derivation, on any route.
+- **C6 — the migration named:** `pipeline_events.origin TEXT NOT NULL
+  DEFAULT 'local'`, additive.
+- **P2s:** `N CREDENTIALS` counts all (including expired), `N ACTIVE`
+  counts non-expired only; the REMOTE chip is the accent outline (a
+  fourth egress token `--egress-remote`, stroke not fill), never the
+  warning tone; a tool call triggered by a remote credential carries
+  `origin=remote`, the operation it spawns on the hub carries
+  `origin=local`; line numbers are best-effort and re-located by the
+  builder.
+
+Counsel's questions for the owner are in the handover (Confluence:
+blogs vs page search; the awake-Mac prerequisite vs a lid-open V0;
+in-memory credentials re-issued on every restart vs persisted ones).
