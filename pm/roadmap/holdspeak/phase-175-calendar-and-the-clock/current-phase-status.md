@@ -14,7 +14,9 @@ column.
 
 ## Status
 
-**ACTIVE 0/9 — STACKED on 174 (PR #557) on 173 (#556) on 172 (#555) on 171 (#554) on 170 (#553); branch `feat/calendar-clock` off `feat/reach`.**
+**ACTIVE 5/9 — wire done, faces NOT built; PAUSED on the owner's wind-down (2026-09-05). Branch `feat/calendar-clock` off `feat/reach` (PR #557); 170–173 merged to main the same day.**
+
+**Where we are (2026-09-05 21:45).** 01 the design ratified by counsel (RATIFY-W-C; five conditions paid in the design addendum; canvas republished). 02–05 the wire landed with tests: the calendar refresh rides the heartbeat sweep and the event→Room join with link/unlink routes (02); `meeting.auto_record` off|all_calendar|room_linked and event-born recordings with `born_from` (03); the MeetingWatchSource and the Room's SOURCES meeting row (04); the two-window brief — `compute_window` unchanged, `compute_lookahead` to Sunday (05). Not started: the four faces (arrival WEEK strip and event rows, Settings CALENDAR + auto-record, the Room MEETINGS row, Rhythm/brief WEEK) with their rigs, the docs verify pass (08 drafted), the hygiene lane (07), the walk (06 runner drafted), counsel-on-built, the close (09). Resume from the design addendum and the story files; every face composes library species and is shot beside its board before it counts.
 
 **Depends on:** Phase 171 merged (the cadence row drives the brief's
 recurrence and the scheduled-recording conductor's ticks).
