@@ -33,7 +33,7 @@ desk we are both proud of.
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-170-01 | The census (every surface shot at 1440 + 393 on an isolated desk; the canon-violation scan across the web tree; one ranked table per face by Tuesday use × canon debt) | in-progress | [story-01-the-census](./story-01-the-census.md) | [evidence-story-01](./evidence-story-01.md) |
-| HS-170-02 | The species sweep (library-level fixes that lift every face at once; the canon guards made mechanical) | backlog | [story-02-the-species-sweep](./story-02-the-species-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-170-02 | The species sweep (library-level fixes that lift every face at once; the canon guards made mechanical) | in-progress | [story-02-the-species-sweep](./story-02-the-species-sweep.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-170-03 | The Concierge — the model front door designed and built to the canon (the Tuesday Arc's 170) | backlog | [story-03-the-concierge](./story-03-the-concierge.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-170-04 | The top faces re-designed and rebuilt (the Tuesday faces ranked by the census: Settings, Meetings aftercare, People/1:1, the Thread, the shade) | backlog | [story-04-the-top-faces](./story-04-the-top-faces.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-170-05 | The walk (the owner's attended walk of the whole desk on a Tuesday; the stopwatch per face; his verdict) | backlog | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |

@@ -82,3 +82,8 @@ A ChoiceCard is an OBJECT, not a list. Beyond label/description/facts/cost:
 - `fold` + `foldLabel` — per-item detail behind a Disclosure; clicks inside the fold inspect, they never flip the radio
 - `facts` and `cost` render as chips, not rows
 - ChoiceCardGroup `layout="row"` lays cards out as equal siblings where width allows (stacks narrow); RECOMMENDED renders as presence (accent wash + rail), not just a corner tag
+
+## countToken / countLabel (HS-170-02)
+
+- `countToken(n, singular, plural?)` → `"N NOUN"` or `null` at zero — the one way a face says a count (UX-CANON A8: no counters of zero). Render nothing (or the face's one true line) when it returns null.
+- `countLabel(label, n)` → `"LABEL N"` at n>0, `"LABEL"` at zero — for section captions.
