@@ -172,7 +172,12 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
             content
         ))
         has_egress_chip = "EgressChip" in content
-        has_mic_button = "MicButton" in content
+        # The voice law is satisfied by the MicButton species OR by the
+        # library StringGadget (which renders MicButton itself) unless the
+        # face opted out with mic={false}.
+        has_mic_button = ("MicButton" in content) or (
+            "StringGadget" in content and "mic={false}" not in content
+        )
 
     for i, line_text in enumerate(lines, 1):
         stripped = line_text.strip()
