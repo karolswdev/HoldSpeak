@@ -14,7 +14,7 @@ implementation across stdio, web, and remote.
 
 ## Status
 
-**PLANNED 0/11.**
+**COMPLETE 11/11 — PR #557 (base main) merges on the owner's standing word; 170–173 merged to main 2026-09-05.**
 
 **Depends on:** Phase 171 (the heartbeat's cadence) + Phase 173 (the
 steward's hand and voice).
@@ -114,20 +114,70 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-174-01 | The design (the remote badge, the credential scope face, the third connector's Door card) | backlog | [story-01-the-design](./story-01-the-design.md) | -- |
-| HS-174-02 | The transport (Streamable HTTP on the hub behind scoped credentials) | backlog | [story-02-the-transport](./story-02-the-transport.md) | -- |
-| HS-174-03 | Scoped remote identity (non-OWNER principals, palette-restricted, owner-issued) | backlog | [story-03-scoped-remote-identity](./story-03-scoped-remote-identity.md) | -- |
-| HS-174-04 | Egress badges on remote reads (kernel receipt + badge; local stdio badgeless) | backlog | [story-04-egress-badges](./story-04-egress-badges.md) | -- |
-| HS-174-05 | The long-running contract (run_id + polling over HTTP) | backlog | [story-05-the-long-running-contract](./story-05-the-long-running-contract.md) | -- |
-| HS-174-06 | The third connector decision (candidates, CLI-backed, switch-and-verify) | backlog | [story-06-the-third-connector-decision](./story-06-the-third-connector-decision.md) | -- |
-| HS-174-07 | The third connector (implementation: WatchSource, Door card, templates) | backlog | [story-07-the-third-connector](./story-07-the-third-connector.md) | -- |
-| HS-174-08 | The .43 runner (the live proof: sweep + drafter overnight, receipts on the desk) | backlog | [story-08-the-43-runner](./story-08-the-43-runner.md) | -- |
-| HS-174-09 | LAN companion notifications (Bonjour mesh push; CONDITIONAL on the companion track) | backlog | [story-09-lan-companion-notifications](./story-09-lan-companion-notifications.md) | -- |
-| HS-174-10 | The docs (MCP_SIDECAR.md extended, the guide's companions section, remote in the architecture) | backlog | [story-10-the-docs](./story-10-the-docs.md) | -- |
-| HS-174-11 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-11-the-close](./story-11-the-close.md) | -- |
+| HS-174-01 | The design (the remote badge, the credential scope face, the third connector's Door card) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
+| HS-174-02 | The transport (Streamable HTTP on the hub behind scoped credentials) | done | [story-02-the-transport](./story-02-the-transport.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-174-03 | Scoped remote identity (non-OWNER principals, palette-restricted, owner-issued) | done | [story-03-scoped-remote-identity](./story-03-scoped-remote-identity.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-174-04 | Egress badges on remote reads (kernel receipt + badge; local stdio badgeless) | done | [story-04-egress-badges](./story-04-egress-badges.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-174-05 | The long-running contract (run_id + polling over HTTP) | done | [story-05-the-long-running-contract](./story-05-the-long-running-contract.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-174-06 | The third connector decision (candidates, CLI-backed, switch-and-verify) | done | [story-06-the-third-connector-decision](./story-06-the-third-connector-decision.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-174-07 | The third connector (implementation: WatchSource, Door card, templates) | done | [story-07-the-third-connector](./story-07-the-third-connector.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-174-08 | The .43 runner (the live proof: sweep + drafter overnight, receipts on the desk) | done | [story-08-the-43-runner](./story-08-the-43-runner.md) | [evidence-story-08](./evidence-story-08.md) |
+| HS-174-09 | LAN companion notifications (Bonjour mesh push; CONDITIONAL on the companion track) | done | [story-09-lan-companion-notifications](./story-09-lan-companion-notifications.md) | [evidence-story-09](./evidence-story-09.md) |
+| HS-174-10 | The docs (MCP_SIDECAR.md extended, the guide's companions section, remote in the architecture) | done | [story-10-the-docs](./story-10-the-docs.md) | [evidence-story-10](./evidence-story-10.md) |
+| HS-174-11 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | done | [story-11-the-close](./story-11-the-close.md) | [evidence-story-11](./evidence-story-11.md) |
 
 ## Where we are
 
+**2026-09-05 22:20 — 11/11 DONE. COMPLETE.** Counsel-on-built RATIFY-W-C paid; the walk on his desk with zero writes (remote OFF); the suite classified (6 inherited · 11 xdist-only · 10 fences paid); PR #557 retargeted to main. Merge is next, then 175 (parked at 5/9, draft #558) rebases on main.
+
+**2026-09-05 21:05 — 8/11 DONE (01 · 02 · 03 · 05 · 06 · 08 · 09 · 10).**
+The docs verified against the built product. Left: 04 and 07 (the last
+Door-row and Room-receipts shots), then counsel-on-built, the runner fill
++ his-desk walk, the suite, 11 the close.
+
+**2026-09-05 20:45 — 7/11 DONE (01 · 02 · 03 · 05 · 06 · 08 · 09); PR #557.**
+The receipts/Door/Rhythm faces are built but their rigs were hollow
+(no shade open; no Confluence seeded) — being redone on the wire that
+carries origin on projection rows, a Room RECEIPTS section, and
+`runs_on` on the heartbeat settings (landing). Then 04/07 flip →
+counsel-on-built → docs verify → the runner fill + his-desk walk →
+suite → 11 close.
+
+**2026-09-05 20:40 — 6/11 DONE; PR #557 OPEN** (`--base feat/the-stewards-hand`).
+
+**2026-09-05 20:35 — 4/11 DONE (01 · 06 · 08 · 09).** The runner is proven
+on this machine (the real hub on loopback, a SWEEP credential, receipts
+origin=remote, the owner token refused off-loopback); the .43 leg waits
+for his sitting. The Settings → System face is checkpointed with two
+last fixes landing; the receipts/Door/Rhythm faces building. Then
+counsel-on-built → docs verify → his-desk walk (the probe credential
+only if remote is already ON) → suite → close → PR.
+
+**2026-09-05 20:45 — 2/11 DONE (01 design · 06 the decision); the wire
+LANDED for 02/03/04/05 (2cc6f07c: POST /api/mcp on the live runtime,
+hashed scoped credentials, origin on receipts, MCP-005), 07 (1dabc8f7:
+the Confluence connector, page listing typed unsupported_by_cli), 08/09
+(2175bf3d: the stdlib runner client + the mesh event); docs 10 drafted;
+the walk runner drafted (one guarded reversible write). Faces for the
+System module and the receipts/Door/Rhythm building; the runner's
+loopback proof filling. Then counsel-on-built → his-desk walk → suite →
+close → PR `--base feat/the-stewards-hand`. The 171 notify-loop P0 found
+by this phase's runner lane is paid on feat/the-heartbeat (d0f6d89f) and
+merged forward through 172 · 173 · 174.**
+
+**2026-09-05 19:35 — ACTIVATED, STACKED.** Under the standing goal the
+faces build to counsel-ratified boards and his word gates the MERGE (the
+decision recorded for 170–173). Eleven boards for D2 (a)–(d) on the canvas
+(https://claude.ai/code/artifact/5719ec5d-4d70-4acc-9f7a-fbffa2d863a0),
+counsel reading; wire lanes follow the 173 suite. Story 06 (the third
+connector) proceeds on the design's leading candidate, Confluence, as a
+reversible default; his word on the choice is owed. Story 08 (the .43
+runner) builds the client and proves it against the hub on this machine;
+the leg on the .43 box itself waits for his sitting (the sandbox does
+not reach the LAN). Merge order stays his: #553 → #554 → #555 → #556 →
+174's.
+
+Earlier: 
 PLANNED. Waiting for Phase 171 (the heartbeat's cadence — without it
 the .43 runner has nothing to run unattended) and Phase 173 (the
 steward's hand and voice — without it the drafter has no model-drafted

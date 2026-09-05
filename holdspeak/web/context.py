@@ -114,6 +114,8 @@ class WebContext:
     github_provider: Optional[Any] = None
     # HS-166-01: the V0 Jira (acli) provider adapter.
     jira_provider: Optional[Any] = None
+    # HS-174-07: the V0 Confluence (acli) provider adapter.
+    confluence_provider: Optional[Any] = None
     # HS-168-02: ONE readiness shape over existing adapters.
     connections_service: Optional[Any] = None
     # HS-159-03: the durable setup interview service. Composes

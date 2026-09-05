@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 654 (plus static mounts). iOS-consumed: 89. Web-consumed: 501.
+Routes: 663 (plus static mounts). iOS-consumed: 89. Web-consumed: 505.
 
 ## device_audio_ws
 
@@ -409,6 +409,16 @@ Routes: 654 (plus static mounts). iOS-consumed: 89. Web-consumed: 501.
 | POST | `/api/inference/assignments/editor` | web |
 | POST | `/api/inference/assignments/preview-use-default` | web |
 | POST | `/api/inference/assignments/set` | web |
+
+## web.routes.mcp_http
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/mcp` | server only |
+| GET | `/api/settings/remote` | web |
+| PUT | `/api/settings/remote` | web |
+| POST | `/api/settings/remote/credentials` | web |
+| DELETE | `/api/settings/remote/credentials/{credential_id}` | web |
 
 ## web.routes.meeting_import
 
@@ -885,6 +895,10 @@ Routes: 654 (plus static mounts). iOS-consumed: 89. Web-consumed: 501.
 | Method | Path | Consumers |
 |---|---|---|
 | GET | `/api/providers` | web |
+| GET | `/api/providers/confluence/connections` | server only |
+| POST | `/api/providers/confluence/connections/{ref}/recheck` | server only |
+| GET | `/api/providers/confluence/discover` | server only |
+| POST | `/api/providers/confluence/validate` | server only |
 | GET | `/api/providers/github/connection` | server only |
 | POST | `/api/providers/github/connection/recheck` | server only |
 | GET | `/api/providers/github/discover` | server only |

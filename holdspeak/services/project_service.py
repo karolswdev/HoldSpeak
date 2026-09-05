@@ -387,6 +387,9 @@ class ProjectService:
                 "target", lambda: self._read_room_target(target_at)),
             "updates": dict(_ABSENT_SECTION),
             "steward": dict(_ABSENT_SECTION),
+            # HS-174-04: pipeline receipts scoped to this project.
+            "receipts": self._room_section(
+                "receipts", lambda: self._read_room_receipts(project_id)),
         }
 
     # ── room sub-readers (fault-isolated) ────────────────────────────
@@ -1559,6 +1562,49 @@ class ProjectService:
             }
         except (ValueError, TypeError):
             return {"targetAt": target_at, "daysLeft": None, "passed": False}
+
+    def _read_room_receipts(self, project_id: str) -> dict[str, Any]:
+        """HS-174-04: pipeline receipts scoped to this project (last 10).
+
+        Searches pipeline_events where the project_id appears in
+        args_summary.  Each receipt carries origin/caller so the face can
+        show the REMOTE badge.  Returns ``{items: [...]}``; empty list
+        when none.
+        """
+        _LIMIT = 10
+        # Scoping is a substring match on args_summary (counsel-on-built
+        # 174, condition 3).  Project ids are ``proj-<12 hex>``, so a
+        # collision needs one id to be a substring of another summary's
+        # id -- improbable, not impossible.  The exact form is
+        # ``json_extract(args_summary, '$.project_id') = ?``; V0 keeps
+        # LIKE because summaries are not guaranteed to be JSON objects.
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                "SELECT event_id, timestamp, service, method, "
+                "       origin, caller, caller_identity, "
+                "       result_summary, error "
+                "FROM pipeline_events "
+                "WHERE args_summary LIKE ? "
+                "ORDER BY timestamp DESC LIMIT ?",
+                (f"%{project_id}%", _LIMIT),
+            ).fetchall()
+        items = []
+        for row in rows:
+            origin_val = str(row["origin"]) if row["origin"] and row["origin"] != "local" else None
+            caller_val = str(row["caller"]) if row["caller"] else None
+            items.append({
+                "id": str(row["event_id"]),
+                "op": str(row["method"]),
+                "label": f"{row['service']}.{row['method']}",
+                "title": f"{row['service']}.{row['method']}",
+                "outcome": "error" if row["error"] else "ok",
+                "origin": origin_val,
+                "caller": caller_val,
+                "identity": str(row["caller_identity"]) if row["caller_identity"] else None,
+                "at": row["timestamp"],
+                "timestamp": row["timestamp"],
+            })
+        return {"items": items}
 
     # ── read marker (HS-169-04) ─────────────────────────────────────
 

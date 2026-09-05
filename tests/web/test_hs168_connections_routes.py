@@ -142,14 +142,14 @@ def setup_rig(tmp_path, monkeypatch):
 
 
 class TestListConnections:
-    def test_returns_four_tools(self, connections_rig) -> None:
+    def test_returns_five_tools(self, connections_rig) -> None:
         db, client, svc = connections_rig
         resp = client.get("/api/connections")
         assert resp.status_code == 200
         data = resp.json()
         assert "tools" in data
         ids = [t["provider_id"] for t in data["tools"]]
-        assert ids == ["github", "jira", "calendar", "models"]
+        assert ids == ["github", "jira", "confluence", "calendar", "models"]  # HS-174: Confluence is the third source
 
     def test_all_not_configured_when_no_adapters(self, connections_rig) -> None:
         db, client, svc = connections_rig

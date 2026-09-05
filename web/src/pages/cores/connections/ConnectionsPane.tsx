@@ -41,9 +41,13 @@ export function chipLabel(state: ConnectionState, providerId: string): string {
   switch (state) {
     case "connected": return "Connected";
     case "owner_action_required": return "Sign in";
-    case "unavailable": return providerId === "jira" ? "acli missing" : "gh missing";
+    case "unavailable":
+      if (providerId === "jira" || providerId === "confluence") return "acli missing";
+      return "gh missing";
     case "degraded": return "Unreachable";
-    case "not_configured": return providerId === "jira" ? "Not set up" : "Off";
+    case "not_configured":
+      if (providerId === "jira" || providerId === "confluence") return "Not set up";
+      return "Off";
   }
 }
 
@@ -300,6 +304,98 @@ function JiraCards({
   );
 }
 
+/* ── HS-174-07: Confluence connection rows (same grammar as Jira) ── */
+
+function ConfluenceConnectionRow({
+  conn,
+  onRecheck,
+  busy,
+}: {
+  conn: JiraSubConnection;
+  onRecheck: () => void;
+  busy: boolean;
+}) {
+  const state = conn.state;
+  const showFold = state === "owner_action_required";
+  const hint = conn.recovery_hint ?? `acli confluence auth login --site ${conn.account.site} --email ${conn.account.email} --token`;
+  const site = conn.account.site;
+
+  return (
+    <div className="connections-tool-row" data-testid={`connections-confluence-conn-${conn.connection_ref}`} data-tier={toolTier(state)}>
+      <span className="connections-tool-identity">
+        <span className="connections-tool-emblem">{siteInitial(site)}</span>
+        <span className="connections-tool-label">{site}</span>
+      </span>
+      <span className="connections-tool-summary">{conn.account.email}</span>
+      <div className="connections-tool-chips">
+        <StateChip state={chipState(state)} label={chipLabel(state, "confluence")} />
+        <ProvenanceChip source="acli" boundary={site} />
+      </div>
+      <div className="connections-tool-actions">
+        {!showFold ? (
+          <>
+            <Button dense variant="ghost" onClick={onRecheck} loading={busy}>
+              Recheck
+            </Button>
+            <EgressChip label={site.toUpperCase()} scope="cloud" />
+          </>
+        ) : null}
+      </div>
+      {showFold ? (
+        <div className="connections-fold">
+          <CommandWell hint={hint} />
+          <div className="connections-fold-actions">
+            <Button dense variant="primary" onClick={onRecheck} loading={busy}>
+              Recheck
+            </Button>
+            <EgressChip label={site.toUpperCase()} scope="cloud" />
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ConfluenceCards({
+  tool,
+  onRecheck,
+  busyRef,
+}: {
+  tool: ConnectionTool;
+  onRecheck: (ref?: string) => void;
+  busyRef: string | null;
+}) {
+  const connections = tool.connections ?? [];
+
+  if (connections.length === 0) {
+    return (
+      <div className="connections-tool-row" data-testid="connections-confluence" data-tier={undefined}>
+        <span className="connections-tool-identity">
+          <span className="connections-tool-emblem">C</span>
+          <span className="connections-tool-label">Confluence</span>
+        </span>
+        <div className="connections-tool-chips">
+          <StateChip state={chipState(tool.state)} label={chipLabel(tool.state, "confluence")} />
+          <ProvenanceChip source="acli" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {connections.map((conn) => (
+        <ConfluenceConnectionRow
+          key={conn.connection_ref}
+          conn={conn}
+          onRecheck={() => onRecheck(conn.connection_ref)}
+          busy={busyRef === conn.connection_ref}
+        />
+      ))}
+    </>
+  );
+}
+
 function CalendarCard({
   tool,
   onOpen,
@@ -465,10 +561,11 @@ export function ConnectionsPane({
   const tools = data?.tools ?? [];
   const github = tools.find((t) => t.provider_id === "github");
   const jira = tools.find((t) => t.provider_id === "jira");
+  const confluence = tools.find((t) => t.provider_id === "confluence");
   const calendar = tools.find((t) => t.provider_id === "calendar");
   const models = tools.find((t) => t.provider_id === "models");
 
-  const toolCount = tools.length || 4; // D1: always 4 if the wire returns them
+  const toolCount = tools.length || 5; // D1: always 5 if the wire returns them (GH, Jira, Confluence, Calendar, Models)
 
   return (
     <GadgetGroup label={`Tools ${toolCount}`}>
@@ -484,6 +581,13 @@ export function ConnectionsPane({
           tool={jira}
           onRecheck={(ref) => void handleRecheck("jira", ref)}
           onAddAccount={handleAddJiraAccount}
+          busyRef={recheckBusy}
+        />
+      ) : null}
+      {confluence ? (
+        <ConfluenceCards
+          tool={confluence}
+          onRecheck={(ref) => void handleRecheck("confluence", ref)}
           busyRef={recheckBusy}
         />
       ) : null}

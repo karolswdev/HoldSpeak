@@ -7,11 +7,14 @@ from typing import Any, TextIO
 
 from .auth import resolve_auth
 from .resources import ResourceError, list_resources, read_resource
-from .tools import TOOLS, ToolError, dispatch
+from .tools import TOOLS, ToolError, dispatch, dispatch_for_palette, tools_for_palette
+from holdspeak.principals import Principal
 from holdspeak.services.errors import ServiceError
 
 JSONRPC_VERSION = "2.0"
-MCP_PROTOCOL_VERSION = "2024-11-05"
+# HS-174: bumped to Streamable HTTP revision; both stdio and HTTP announce
+# the same version.
+MCP_PROTOCOL_VERSION = "2025-03-26"
 
 
 def _response(request_id: Any, result: dict[str, Any]) -> dict[str, Any]:
@@ -106,6 +109,103 @@ def handle_message(request: dict[str, Any]) -> dict[str, Any] | None:
         except (ToolError, ValueError, KeyError, TypeError) as exc:
             return _response(request_id, _tool_result({"error": str(exc)}, is_error=True))
         except Exception as exc:  # Service errors are tool results, never sidecar crashes.
+            return _response(request_id, _tool_result({"error": str(exc) or type(exc).__name__}, is_error=True))
+        return _response(request_id, _tool_result(value))
+    if method.startswith("notifications/"):
+        return None
+    return _error(request_id, -32601, f"Method not found: {method}")
+
+
+# HS-174: MCP-005 error code for palette refusal.
+_MCP_005_CODE = -32005
+
+
+def handle_message_for_principal(
+    request: dict[str, Any],
+    principal: Principal,
+    *,
+    palette: frozenset[str] | None = None,
+) -> dict[str, Any] | None:
+    """Handle one MCP JSON-RPC request with an externally-derived principal.
+
+    Used by the Streamable HTTP transport (POST /api/mcp) where the principal
+    comes from the web-auth middleware, not the stdio environment.  When
+    *palette* is non-None, tools outside it are refused with MCP-005.
+    """
+    request_id = request.get("id")
+    method = request.get("method")
+    params = request.get("params") or {}
+    if not isinstance(method, str):
+        return _error(request_id, -32600, "Invalid Request: method is required")
+    if not isinstance(params, dict):
+        return _error(request_id, -32602, "Invalid params")
+
+    if method == "notifications/initialized":
+        return None
+    if method == "initialize":
+        available_tools = tools_for_palette(palette) if palette else TOOLS
+        return _response(request_id, {
+            "protocolVersion": MCP_PROTOCOL_VERSION,
+            "capabilities": {
+                "tools": {"listChanged": False},
+                "resources": {"listChanged": False, "subscribe": False},
+            },
+            "serverInfo": {"name": "holdspeak-mcp", "version": "0.4.0"},
+        })
+    if method == "ping":
+        return _response(request_id, {})
+    if method == "tools/list":
+        available_tools = tools_for_palette(palette) if palette else TOOLS
+        return _response(request_id, {"tools": available_tools})
+    if method == "resources/list":
+        return _response(request_id, list_resources(principal))
+    if method == "resources/read":
+        uri = params.get("uri")
+        if not isinstance(uri, str):
+            return _error(request_id, -32602, "Invalid params: uri is required")
+        try:
+            return _response(request_id, read_resource(uri, principal))
+        except ServiceError as exc:
+            return _error(
+                request_id, -32002, exc.detail,
+                data={"code": exc.code, **exc.context},
+            )
+        except (ResourceError, ValueError, KeyError, TypeError) as exc:
+            return _error(request_id, -32002, str(exc))
+        except Exception as exc:
+            return _error(request_id, -32000, str(exc) or type(exc).__name__)
+    if method == "tools/call":
+        name = params.get("name")
+        arguments = params.get("arguments", {})
+        if not isinstance(name, str):
+            return _response(request_id, _tool_result({"error": "Tool name is required"}, is_error=True))
+        if not isinstance(arguments, dict):
+            return _response(request_id, _tool_result({"error": "Tool arguments must be an object"}, is_error=True))
+        try:
+            if palette is not None:
+                value = dispatch_for_palette(name, arguments, principal, palette)
+            else:
+                value = dispatch(name, arguments, principal)
+        except ToolError as exc:
+            # HS-174: palette refusal carries MCP-005.
+            msg = str(exc)
+            if "not in the configured palette" in msg:
+                return _error(
+                    request_id, _MCP_005_CODE, msg,
+                    data={"code": "MCP-005", "tool": name},
+                )
+            return _response(request_id, _tool_result({"error": msg}, is_error=True))
+        except ServiceError as exc:
+            return _response(
+                request_id,
+                _tool_result(
+                    {"error": exc.detail, "code": exc.code, **exc.context},
+                    is_error=True,
+                ),
+            )
+        except (ValueError, KeyError, TypeError) as exc:
+            return _response(request_id, _tool_result({"error": str(exc)}, is_error=True))
+        except Exception as exc:
             return _response(request_id, _tool_result({"error": str(exc) or type(exc).__name__}, is_error=True))
         return _response(request_id, _tool_result(value))
     if method.startswith("notifications/"):

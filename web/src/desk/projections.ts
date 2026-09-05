@@ -27,6 +27,10 @@ export interface DeskProjection {
   effect_class?: string | null;
   severity: "normal" | "warning" | "error";
   dismissed: boolean;
+  /** HS-174-04 — origin of the pipeline event: "local" or "remote". */
+  origin?: string | null;
+  /** HS-174-04 — caller IP when origin is "remote". */
+  caller?: string | null;
 }
 
 interface ProjectionEnvelope {

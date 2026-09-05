@@ -412,6 +412,23 @@ export type RoomTargetData = {
   passed: boolean;
 };
 
+/** HS-174-04: a pipeline receipt event (tolerant: wire may not exist yet). */
+export type RoomReceiptItem = {
+  id: string;
+  /** Raw method name (e.g. "list_meetings", "run_sweep"). */
+  op: string;
+  title: string;
+  outcome: string;
+  timestamp: string;
+  origin: string | null;
+  caller: string | null;
+};
+
+/** HS-174-04: receipts section data. */
+export type RoomReceiptsData = {
+  items: RoomReceiptItem[];
+};
+
 /** The full room snapshot (typed, WEB-ARC-004). */
 export type RoomSnapshot = {
   projectId: string;
@@ -434,6 +451,8 @@ export type RoomSnapshot = {
   target: RoomSection<RoomTargetData>;
   updates: RoomSection<Record<string, never>>;
   steward: RoomSection<Record<string, never>>;
+  /** HS-174-04: pipeline receipts (tolerant: absent when wire not landed). */
+  receipts: RoomSection<RoomReceiptsData>;
 };
 
 /* ── Room snapshot decoder ── */
@@ -750,6 +769,20 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
     })),
     updates: decodeSection<Record<string, never>>(raw.updates, () => ({} as Record<string, never>)),
     steward: decodeSection<Record<string, never>>(raw.steward, () => ({} as Record<string, never>)),
+    // HS-174-04: pipeline receipts (tolerant: absent when wire not landed)
+    receipts: decodeSection<RoomReceiptsData>(raw.receipts, (s) => ({
+      items: Array.isArray(s.items)
+        ? (s.items as Record<string, unknown>[]).map((r) => ({
+            id: String(r.id ?? ""),
+            op: String(r.op ?? r.method ?? ""),
+            title: String(r.title ?? ""),
+            outcome: String(r.outcome ?? ""),
+            timestamp: String(r.timestamp ?? r.created_at ?? ""),
+            origin: typeof r.origin === "string" ? r.origin : null,
+            caller: typeof r.caller === "string" ? r.caller : null,
+          }))
+        : [],
+    })),
   };
 }
 

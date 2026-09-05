@@ -98,11 +98,13 @@ class ConnectionsService:
         *,
         github_adapter: Any | None = None,
         jira_adapter: Any | None = None,
+        confluence_adapter: Any | None = None,
         config_loader: Callable[[], Any] | None = None,
         inference_assignment_service: Any | None = None,
     ) -> None:
         self._github = github_adapter
         self._jira = jira_adapter
+        self._confluence = confluence_adapter
         self._config_loader = config_loader
         self._inference_assignment = inference_assignment_service
 
@@ -113,6 +115,7 @@ class ConnectionsService:
         tools: list[dict[str, Any]] = []
         tools.append(self._github_entry(principal))
         tools.append(self._jira_entry(principal))
+        tools.append(self._confluence_entry(principal))
         tools.append(self._calendar_entry())
         tools.append(self._models_entry(principal))
         return {"tools": tools}
@@ -129,6 +132,8 @@ class ConnectionsService:
             return self._recheck_github(principal)
         if provider_id == "jira":
             return self._recheck_jira(principal, ref=ref)
+        if provider_id == "confluence":
+            return self._confluence_entry(principal)
         if provider_id == "calendar":
             return self._calendar_entry()
         if provider_id == "models":
@@ -303,6 +308,84 @@ class ConnectionsService:
                         pass  # degraded: continue checking others
 
         return self._jira_entry(principal)
+
+    # ── Confluence (HS-174-07) ──────────────────────────────────────────
+
+    def _confluence_entry(self, principal: Principal) -> dict[str, Any]:
+        """Build the Confluence tool entry from the adapter, mirroring Jira."""
+        if self._confluence is None:
+            return self._not_configured_entry("confluence")
+
+        try:
+            readiness = self._confluence.readiness(principal) if hasattr(self._confluence, "readiness") else {}
+        except Exception:
+            readiness = {}
+
+        # readiness.connections is an int count; get the actual rows.
+        try:
+            connections = self._confluence.list_connections(principal) if hasattr(self._confluence, "list_connections") else []
+        except Exception:
+            connections = []
+        if not connections:
+            return {
+                "provider_id": "confluence",
+                "state": DISPLAY_NOT_CONFIGURED,
+                "account": None,
+                "next_action": {"kind": "setup", "label": "Set up"},
+                "recovery_hint": "acli confluence auth login --site <site> --email <email> --token",
+                "error_detail": None,
+                "last_checked_at": readiness.get("checked_at"),
+                "egress_host": None,
+                "connections": [],
+            }
+
+        # Map each connection to a sub-row (same grammar as Jira)
+        sub_rows: list[dict[str, Any]] = []
+        overall_state = DISPLAY_NOT_CONFIGURED
+        overall_egress = None
+        for conn in connections:
+            state = conn.get("state", "not_configured")
+            display = _map_jira_state(state)  # reuse the Jira state mapper
+            # Parse site|email from external_connection_ref (the confluence identity).
+            ext_ref = str(conn.get("external_connection_ref", ""))
+            if "|" in ext_ref:
+                site, email = ext_ref.split("|", 1)
+            else:
+                site = conn.get("site", "")
+                email = conn.get("email", "")
+            ref = ext_ref or f"{site}|{email}"
+            sub_rows.append({
+                "connection_ref": ref,
+                "state": display,
+                "account": {"site": site, "email": email},
+                "recovery_hint": conn.get("recovery_hint", f"acli confluence auth login --site {site} --email {email} --token"),
+                "error_detail": conn.get("error_detail"),
+                "egress_host": site,
+            })
+            if display == "connected":
+                overall_state = "connected"
+                overall_egress = site
+                first_site = site
+                first_email = email
+
+        first = connections[0] if connections else {}
+        first_ext = str(first.get("external_connection_ref", ""))
+        if "|" in first_ext:
+            f_site, f_email = first_ext.split("|", 1)
+        else:
+            f_site = first.get("site", "")
+            f_email = first.get("email", "")
+        return {
+            "provider_id": "confluence",
+            "state": overall_state,
+            "account": {"site": f_site, "email": f_email},
+            "next_action": None,
+            "recovery_hint": None,
+            "error_detail": None,
+            "last_checked_at": readiness.get("checked_at"),
+            "egress_host": overall_egress,
+            "connections": sub_rows,
+        }
 
     # ── Calendar ──────────────────────────────────────────────────────
 

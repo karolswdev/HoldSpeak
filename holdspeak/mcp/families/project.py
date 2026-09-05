@@ -644,6 +644,49 @@ TOOLS: list[dict[str, Any]] = [
             "additionalProperties": False,
         },
     },
+    # ── Confluence provider driver tools (HS-174-07) ─────────────────
+    {
+        "name": "provider.confluence_connections",
+        "description": "List all Confluence connections (site+email pairs) and their status.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.confluence_connections@1",
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.confluence_discover",
+        "description": "Discover Confluence spaces for a connection.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.confluence_discover@1",
+            "type": "object",
+            "properties": {
+                "connection_ref": {"type": "string", "description": "Connection ref (site|email)."},
+                "kind": {"type": "string", "description": "Resource kind: spaces.", "default": "spaces"},
+                "query": {"type": "string", "description": "Filter text (substring match on key/name).", "default": ""},
+                "cursor": {"type": "integer", "description": "Offset cursor for pagination."},
+                "limit": {"type": "integer", "description": "Max items to return (capped at 100).", "default": 30},
+            },
+            "required": ["connection_ref"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "provider.confluence_validate_space",
+        "description": "Validate a Confluence space key.",
+        "inputSchema": {
+            "$id": "holdspeak://mcp/provider.confluence_validate_space@1",
+            "type": "object",
+            "properties": {
+                "connection_ref": {"type": "string", "description": "Connection ref (site|email)."},
+                "space_key": {"type": "string", "description": "Confluence space key (e.g. 'GOV')."},
+            },
+            "required": ["connection_ref", "space_key"],
+            "additionalProperties": False,
+        },
+    },
     {
         "name": "project.setup.clarify_jira_scope",
         "description": "Clarify the Jira scope for a Jira proposal in a setup session.",
@@ -931,7 +974,8 @@ def _setup_service():
     ps = ProjectService(db)
     ga = _github_adapter()
     ja = _jira_adapter()
-    fetcher = default_snapshot_fetcher(jira_adapter=ja)
+    ca = _confluence_adapter()
+    fetcher = default_snapshot_fetcher(jira_adapter=ja, confluence_adapter=ca)
     ws = WatchService(db, snapshot_fetcher=fetcher)
     return ProjectSetupService(
         db, project_service=ps, watch_service=ws,
@@ -942,12 +986,13 @@ def _setup_service():
 
 
 def _watch_service():
-    """Compose WatchService (same wiring as web context, HS-166-03 rider-a)."""
+    """Compose WatchService (same wiring as web context, HS-174-07 rider)."""
     from holdspeak.services.watch_service import WatchService
     from holdspeak.services.watch_sources import default_snapshot_fetcher
     db = get_database()
     ja = _jira_adapter()
-    fetcher = default_snapshot_fetcher(jira_adapter=ja)
+    ca = _confluence_adapter()
+    fetcher = default_snapshot_fetcher(jira_adapter=ja, confluence_adapter=ca)
     return WatchService(db, snapshot_fetcher=fetcher)
 
 
@@ -967,6 +1012,16 @@ def _jira_adapter():
     db = get_database()
     try:
         return JiraProviderAdapter(db)
+    except Exception:
+        return None
+
+
+def _confluence_adapter():
+    """Return the ConfluenceProviderAdapter or None (same as web context)."""
+    from holdspeak.services.confluence_provider import ConfluenceProviderAdapter
+    db = get_database()
+    try:
+        return ConfluenceProviderAdapter(db)
     except Exception:
         return None
 
@@ -1651,6 +1706,7 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         return {"providers": collect_provider_manifests(
             github_adapter=_github_adapter(),
             jira_adapter=_jira_adapter(),
+            confluence_adapter=_confluence_adapter(),
             principal=principal,
         )}
 
@@ -1805,6 +1861,58 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
         if not ref or not project_key:
             raise ValidationError("connection_ref and project_key are required")
         return adapter.validate_scope(principal, ref, project_key)
+
+    # ── Confluence provider driver tools (HS-174-07) ──────────────────
+    # Mirrors: holdspeak/web/routes/providers.py Confluence routes.
+
+    if name == "provider.confluence_connections":
+        # Web parity: providers.py confluence_connections
+        adapter = _confluence_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Confluence provider is not configured",
+                context={"status": 404},
+            )
+        return {
+            "connections": adapter.list_connections(principal),
+        }
+
+    if name == "provider.confluence_discover":
+        # Web parity: providers.py confluence_discover
+        adapter = _confluence_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Confluence provider is not configured",
+                context={"status": 404},
+            )
+        ref = str(arguments.get("connection_ref", "")).strip()
+        if not ref:
+            raise ValidationError("connection_ref is required")
+        return adapter.discover(
+            principal,
+            ref,
+            kind=arguments.get("kind", "spaces"),
+            query=arguments.get("query", ""),
+            cursor=arguments.get("cursor"),
+            limit=arguments.get("limit", 30),
+        )
+
+    if name == "provider.confluence_validate_space":
+        # Web parity: providers.py confluence_validate_scope
+        adapter = _confluence_adapter()
+        if adapter is None:
+            raise ServiceError(
+                "provider_not_configured",
+                "Confluence provider is not configured",
+                context={"status": 404},
+            )
+        ref = str(arguments.get("connection_ref", "")).strip()
+        space_key = str(arguments.get("space_key", "")).strip()
+        if not ref or not space_key:
+            raise ValidationError("connection_ref and space_key are required")
+        return adapter.validate_scope(principal, ref, space_key)
 
     # ── graduated watch driver tools (HS-165-03) ────────────────────
     # Mirrors: holdspeak/web/routes/watches.py + providers.py:158

@@ -33,3 +33,14 @@
   gap: 6px;
   padding: 2px 12px 4px;
 }
+
+/* HS-174-08: Runs on caption — caption step (11 mono uppercase). */
+.rhythm-runs-on-caption {
+  display: block;
+  width: 100%;
+  font: 600 11px / 1.2 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding: 2px 0 0;
+}

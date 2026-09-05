@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-211 tools across 39 families. The default non-owner discovery lists 34
+214 tools across 39 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -57,7 +57,7 @@ default.
 
 ## Tool families
 
-The 211 tools are organized into domain families. Each tool follows the
+The 214 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -424,7 +424,7 @@ marks a job done. Both refuse running jobs.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 211 tools across 39 families.
+**Registry totals:** 214 tools across 39 families.
 
 #### ask (4)
 
@@ -646,8 +646,11 @@ marks a job done. Both refuse running jobs.
 - `proposal.confirm`
 - `proposal.dismiss`
 
-#### provider (10)
+#### provider (13)
 
+- `provider.confluence_connections`
+- `provider.confluence_discover`
+- `provider.confluence_validate_space`
 - `provider.github_connection`
 - `provider.github_discover`
 - `provider.github_validate_repo`
@@ -859,13 +862,13 @@ read.
 
 ## The project palette (MCP-007)
 
-The project family ships a `PROJECT_PALETTE`: a frozen set of the 50
+The project family ships a `PROJECT_PALETTE`: a frozen set of the 53
 project.*, provider.* and connection.* tool names. Two functions in the MCP layer
 consume it.
 
 `tools_for_palette(palette)` returns only the tools whose names are in
-the palette. A client that lists tools through this filter sees 50 tools
-instead of 211.
+the palette. A client that lists tools through this filter sees 53 tools
+instead of 214.
 
 `dispatch_for_palette(name, arguments, principal, palette)` dispatches
 a tool call only if `name` is in the palette. A name outside the palette
@@ -1054,8 +1057,40 @@ coexist.
 Provider writes are not available through MCP. The provider.* tools
 are read-only (list, connection status, bounded discovery, validation).
 
-Remote MCP transport (MCP-008) is deferred. The sidecar speaks stdio
-only; no network listener is opened.
+### The transports
+
+The MCP protocol exposes `handle_message` over three
+transports. All three announce the same protocol version.
+
+| Transport | Entry point | Principal | Palette |
+|---|---|---|---|
+| **stdio** (the sidecar) | `server.py` stdio loop | `OWNER` | unrestricted |
+| **in-process** (the web runtime's wired fetcher) | direct call to `handle_message` | inherited from the web session | inherited |
+| **Streamable HTTP** (the remote path) | `POST /api/mcp` on the hub | `AGENT` (from a scoped credential; `OWNER` refused off-loopback) | from the credential's palette |
+
+The Streamable HTTP listener is opt-in (off by default). When enabled, it
+accepts connections on the hub's tailnet address. A non-loopback request
+presenting the owner's web token is refused with 403. `X-Forwarded-For` is
+never read for principal derivation.
+
+Scoped credentials carry a palette and a TTL. The palette names which tool
+families the caller may invoke; calls outside the palette return a typed
+capability error. The TTL caps at 30 days. The token is shown once at issue
+time; the hub stores the hash.
+
+### Confluence provider tools
+
+The Confluence connector adds provider tools beside
+the existing Jira and GitHub tools:
+
+| Tool | Family | What it does |
+|---|---|---|
+| `provider.confluence_connections` | `project` | List Confluence connections |
+| `provider.confluence_discover` | `project` | Discover spaces on a connected site |
+| `provider.confluence_validate_space` | `project` | Validate a space key |
+
+The tools follow the same read-only provider pattern as `provider_jira_*` and
+`provider_github_*`. No provider writes are available through MCP.
 
 ### The fetcher seam
 

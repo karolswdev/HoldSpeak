@@ -689,6 +689,109 @@ Nudge verb.
 cooldown still applies, so the steward will not re-propose the same nudge
 until the cooldown expires.
 
+## Reach
+
+Reach lets a second machine on your tailnet trigger the hub's sweep and the
+steward's drafter remotely, so the work runs overnight while you are away from
+the desk. The hub speaks Streamable HTTP; a scoped credential controls what the
+caller may do; every remote call is receipted. No relay, no cloud proxy: the
+two machines talk directly on the tailnet.
+
+### Turning remote access on
+
+Open **Settings, System**. The hub row gains a `REMOTE OFF` token. Toggle it
+to `REMOTE ON`; the row shows the tailnet address the hub listens on (for
+example `100.64.0.2:8765`). The listener is off by
+default. No traffic is accepted on the remote path until you turn it on.
+
+### Issuing a credential
+
+Below the toggle, a `CREDENTIALS` section appears (absent when remote is off).
+Choose **Issue credential**. A well opens in-world with three fields:
+
+| Field | Options | Default |
+|---|---|---|
+| **Name** | Any label you will recognize (for example `sweep-runner`) | (required) |
+| **Palette** | `PROJECT` / `SWEEP` / `DESK` / `ALL` | `PROJECT` |
+| **TTL** | `12 H` / `24 H` / `7 D` / `30 D` | `12 H` |
+
+The palette controls which tool families the credential
+may call. `PROJECT` restricts to project tools only. `ALL` grants the full
+non-owner tool set. The TTL caps the credential's lifetime at 30 days.
+
+Press **Issue**. The well shows the token once: `TOKEN SHOWN ONCE -- COPY IT
+NOW`. Copy it. The plaintext is never shown again; the hub stores a hash.
+
+Each credential row in the ledger shows its name, palette, expiry, and last-used
+age. The section caption reads `N CREDENTIALS` (total
+including expired) and `N ACTIVE` (non-expired only). Both are absent at zero.
+**Revoke** on any row invalidates the credential immediately.
+
+Credentials are in-memory. A hub restart clears them;
+re-issue after a restart.
+
+### What a remote caller can and cannot do
+
+A remote credential derives an `AGENT` principal, never `OWNER`. The owner's
+web token is refused on a non-loopback request. The caller may invoke only the
+tool families named in its palette; calls outside the palette return a capability
+error. `X-Forwarded-For` is never read for principal
+derivation on any route.
+
+Every remote tool call writes a receipt carrying `origin: remote` and the
+caller's identity label. The receipt rows in the shade and the Room's pipeline
+observer wear the `REMOTE` badge with the caller's tailnet IP (for example
+`REMOTE · 192.168.1.43`).
+
+### The overnight runner
+
+A headless machine on the tailnet (the `.43` box, for example) runs a client
+script that connects to the hub's Streamable HTTP endpoint with a scoped
+credential. The script calls `cadence_run_now` (one sweep tick) and
+`project_run_steward` for each active Room (the steward's drafter). The
+receipts land on the Mac's desk.
+
+The Mac must stay awake while the runner operates: on AC power with "Prevent
+automatic sleeping when the display is off" enabled in System Settings, or
+`caffeinate -s` in a terminal. The hub does not prevent sleep.
+
+See [Reach Runner](REACH_RUNNER.md) for the install guide and the transcript
+shape.
+
+### Rhythm's `Runs on` row
+
+Open **Settings, Rhythm**. Below the sweep cadence row, the `Runs on` row
+carries a picker: `THIS DEVICE` or a configured remote host (for example
+`192.168.1.43`). When a remote host is selected, a caption reads
+`WHILE THIS MAC IS AWAKE`. `Run now` stays on the
+sweep row (one verb, once); the `Runs on` row has no trailing verb.
+
+### Confluence on the Door
+
+Confluence joins GitHub and Jira on the Door. The
+source row shows the Confluence emblem, the site host (for example
+`karolswdev.atlassian.net`), and the connection state. Default watch templates:
+`RECENT BLOGS` (on by default) and `PAGES BY ID` (off by default).
+
+The Confluence connector uses the same `acli` CLI and the same `(site, email)`
+identity as Jira. Connection, recheck, and discovery follow the switch-and-verify
+law: each `(site, email)` combination is one connection row in **Settings,
+Connections**.
+
+**Honest limit:** V0 watches blog posts via `blog list` and pages by known ID
+via `page view --id`. Full-space page search is not available until the CLI
+supports `page list`. The Door defaults name what works today, not what might
+work later. No Confluence REST API call is ever made;
+the CLI holds the credentials.
+
+### Receipt rows
+
+Remote operations appear in the shade's pipeline observer and each Room's
+observer pane. Each receipt from a remote caller carries a `REMOTE` badge
+naming the caller's tailnet IP. Steward runs triggered remotely read
+`STEWARD RUN · draft · REMOTE · 192.168.1.43`. Local operations continue to
+read `THIS DEVICE`.
+
 ## The Arrival
 
 The arrival is the desk's home screen. Its headline tells you the one fact

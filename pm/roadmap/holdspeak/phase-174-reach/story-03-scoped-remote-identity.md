@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 174
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-174-01, HS-174-02
 - **Unblocks:** HS-174-04, HS-174-08
 - **Owner:** unassigned
@@ -42,16 +42,16 @@ restricted to the bounded delegation the owner configured.
 
 ## Acceptance criteria
 
-- [ ] A credential minted with a palette restriction limits the remote
+- [x] A credential minted with a palette restriction limits the remote
       client to that palette; tools outside it return a typed
       capability error (MCP-005; Article XI:3).
-- [ ] OWNER is never derivable from a remote credential: the remote
+- [x] OWNER is never derivable from a remote credential: the remote
       transport path always uses AgentCredentialStore, never the
       owner's web token (Article XI:4).
-- [ ] The owner can mint and revoke credentials from the desk; the
+- [x] The owner can mint and revoke credentials from the desk; the
       credential row shows identity, palette, TTL, last-used, expiry,
       and revoke.
-- [ ] A revoked credential is immediately rejected; an expired
+- [x] A revoked credential is immediately rejected; an expired
       credential is rejected on the next derive call.
 
 ## Test plan

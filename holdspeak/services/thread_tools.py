@@ -232,6 +232,10 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "provider.jira_search": ("evidence_read", False),
     "provider.jira_validate_scope": ("evidence_read", False),
     "provider.jira_add_connection": ("effect_proposal", False),
+    # HS-174: the Confluence provider family (reads only in V0).
+    "provider.confluence_connections": ("evidence_read", False),
+    "provider.confluence_discover": ("evidence_read", False),
+    "provider.confluence_validate_space": ("evidence_read", False),
     "project.accept_review": ("effect_proposal", False),
     "project.archive": ("effect_proposal", False),
     "project.configure_steward": ("effect_proposal", False),

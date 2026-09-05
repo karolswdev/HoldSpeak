@@ -28,6 +28,7 @@ import {
   countLabel,
 } from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
+import { egressForEvent } from "../../desk/surface/egress";
 import {
   ConfirmVerb,
   SurfaceRows,
@@ -50,6 +51,12 @@ type HeartbeatSettings = {
   muted_projects: string[];
   last_sweep_at: string | null;
   next_sweep_at: string | null;
+  /** HS-174-08: host the sweep runs on ("local" or a remote host). */
+  runs_on?: string | null;
+  /** HS-174-08: known remote hosts from pipeline events. */
+  remote_hosts?: string[];
+  /** HS-174-08: last remote run timestamp (ISO). */
+  last_remote_run_at?: string | null;
 };
 
 type SweepReceipt = {
@@ -171,6 +178,9 @@ export function CadenceCore({ hero }: CoreProps) {
     muted_projects: raw?.muted_projects ?? [],
     last_sweep_at: raw?.last_sweep_at ?? null,
     next_sweep_at: raw?.next_sweep_at ?? null,
+    runs_on: raw?.runs_on ?? null,
+    remote_hosts: Array.isArray(raw?.remote_hosts) ? raw.remote_hosts : [],
+    last_remote_run_at: raw?.last_remote_run_at ?? null,
   };
   const projects = projectsRes.data?.projects ?? [];
 
@@ -337,6 +347,64 @@ export function CadenceCore({ hero }: CoreProps) {
         )}
       </div>
       </div>{/* /rhythm-section sweep */}
+
+      {/* ── RUNS ON row (HS-174-08) ────────────────────────────── */}
+      <div className="rhythm-section">
+      <SurfaceLedger count="" cols="hub">
+        <SurfaceLedgerRow
+          primary="Runs on"
+          expands={false}
+          data-testid="rhythm-runs-on-row"
+          cells={
+            <CycleGadget
+              label="Runner host"
+              value={settings.runs_on || "local"}
+              options={[
+                { value: "local", label: "THIS DEVICE" },
+                ...(settings.remote_hosts ?? []).map((h) => ({ value: h, label: h })),
+              ]}
+              onChange={(v) => void putSetting({ runs_on: v })}
+              data-testid="rhythm-runs-on-gadget"
+            />
+          }
+        />
+      </SurfaceLedger>
+      <div className="rhythm-facts" data-testid="rhythm-runs-on-facts">
+        {settings.runs_on && settings.runs_on !== "local" ? (
+          <>
+            {settings.last_remote_run_at ? (
+              <span className="surface-token" data-chip data-muted>
+                LAST RUN {humanTime(settings.last_remote_run_at)}
+              </span>
+            ) : (
+              <span className="surface-token" data-chip data-muted data-testid="rhythm-runs-on-no-runs">
+                NO RUNS YET
+              </span>
+            )}
+            {receipt ? (
+              <>
+                <span className="surface-token" data-chip data-muted>
+                  SWEEP · {receipt.rooms} {receipt.rooms === 1 ? "ROOM" : "ROOMS"}
+                </span>
+                <EgressChip
+                  label={`REMOTE · ${settings.runs_on}`}
+                  scope="remote"
+                  data-testid="rhythm-receipt-egress"
+                />
+                {settings.last_remote_run_at ? (
+                  <span className="surface-token" data-chip data-muted>
+                    {fmtTime(settings.last_remote_run_at)}
+                  </span>
+                ) : null}
+              </>
+            ) : null}
+            <span className="rhythm-runs-on-caption" data-testid="rhythm-runs-on-caption">
+              WHILE THIS MAC IS AWAKE
+            </span>
+          </>
+        ) : null}
+      </div>
+      </div>{/* /rhythm-section runs-on */}
 
       {/* ── MONDAY BRIEF row ───────────────────────────────────── */}
       <div className="rhythm-section">

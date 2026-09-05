@@ -3223,6 +3223,47 @@ button.surface-edit-in-place:hover {
   padding: 2px 0;
 }
 
+/* ── HS-174-02/03: Remote Access credential token + issue well ── */
+.prefs-token-once {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.prefs-token-value {
+  flex: 1;
+  min-width: 0;
+  font: 400 12px / 1.4 var(--font-mono);
+  color: var(--text);
+  word-break: break-all;
+}
+.prefs-token-caption {
+  display: block;
+  font: 600 11px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding-top: 4px;
+}
+.prefs-token-caption[data-tone="warning"] {
+  color: var(--warning);
+}
+.prefs-issue-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 4px 0;
+}
+.prefs-issue-start {
+  display: flex;
+  justify-content: flex-start;
+  padding: 4px 0;
+}
+.prefs-hub-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 0 8px;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
    HS-167-03 — SurfaceIdentity: the project orientation band.
    Name (the Primary type step), chip row, purpose, outcome.

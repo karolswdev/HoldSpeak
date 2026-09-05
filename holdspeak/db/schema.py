@@ -2243,7 +2243,13 @@ CREATE TABLE IF NOT EXISTS pipeline_events (
     error_code TEXT,
     duration_ms REAL NOT NULL DEFAULT 0,
     correlation_id TEXT NOT NULL DEFAULT '',
-    is_async INTEGER NOT NULL DEFAULT 0
+    is_async INTEGER NOT NULL DEFAULT 0,
+    -- HS-174: origin of the call (local stdio/in-process vs remote HTTP).
+    origin TEXT NOT NULL DEFAULT 'local',
+    -- HS-174: caller address for remote calls (e.g. tailnet IP).
+    caller TEXT NOT NULL DEFAULT '',
+    -- HS-174: credential identity label for remote calls.
+    caller_identity TEXT NOT NULL DEFAULT ''
 );
 
 CREATE INDEX IF NOT EXISTS idx_pipeline_events_timestamp

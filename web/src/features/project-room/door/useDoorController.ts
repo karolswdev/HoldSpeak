@@ -9,7 +9,7 @@ import {
   fetchConnections,
   type ConnectionTool,
 } from "../../../pages/cores/connections/api";
-import { discoverGitHub, discoverJira } from "./api";
+import { discoverGitHub, discoverJira, discoverConfluence } from "./api";
 import * as doorApi from "./api";
 import type { CountToken } from "./api";
 
@@ -55,6 +55,8 @@ export interface SourceRow {
   counts: CountToken[];
   plain: string;
   host: string;
+  /** HS-174-07: connection email for Confluence SIGNED IN chip. */
+  connectionEmail: string;
   reason: string | null;
   pickerOpen: boolean;
   adjustOpen: boolean;
@@ -64,6 +66,8 @@ export interface SourceRow {
     drafts?: boolean;
     issueTypes?: string[];
     jql?: string;
+    /** HS-174-07: Confluence space key. */
+    spaceKey?: string;
   };
   pickerQuery: string;
   pickerItems: PickerItem[];
@@ -71,8 +75,16 @@ export interface SourceRow {
   pickerLoading: boolean;
 }
 
+/* HS-174-07: Confluence default toggles. */
+const CONFLUENCE_DEFAULTS: WatchDefault[] = [
+  { key: "recent_blogs", label: "RECENT BLOGS", templateId: "watch.confluence.recent_blogs", on: true },
+  { key: "pages_by_id", label: "PAGES BY ID", templateId: "watch.confluence.pages_by_id", on: false },
+];
+
 function defaultToggles(provider: string): Record<string, boolean> {
-  const defs = provider === "github" ? GITHUB_DEFAULTS : JIRA_DEFAULTS;
+  const defs = provider === "github" ? GITHUB_DEFAULTS
+    : provider === "confluence" ? CONFLUENCE_DEFAULTS
+    : JIRA_DEFAULTS;
   const result: Record<string, boolean> = {};
   for (const d of defs) result[d.key] = d.on;
   return result;
@@ -96,6 +108,7 @@ function makeRow(tool: ConnectionTool): SourceRow {
     counts: [],
     plain: "",
     host: tool.egress_host ?? "",
+    connectionEmail: tool.account?.email ?? "",
     reason: null,
     pickerOpen: false,
     adjustOpen: false,
@@ -109,21 +122,17 @@ function makeRow(tool: ConnectionTool): SourceRow {
 
 /* ── Provider source ordering ── */
 
-const PROVIDER_ORDER = ["github", "jira"];
+/* HS-174-07: Confluence is the third source provider. */
+const PROVIDER_ORDER = ["github", "jira", "confluence"];
 const SOURCE_PROVIDERS = new Set(PROVIDER_ORDER);
 
 function buildRows(tools: ConnectionTool[]): SourceRow[] {
   const sourceTools = tools.filter((t) => SOURCE_PROVIDERS.has(t.provider_id));
-  const connected = sourceTools.filter((t) => t.state === "connected");
-  const notConnected = sourceTools.filter((t) => t.state !== "connected");
-  const sorted = [...connected, ...notConnected];
-  sorted.sort((a, b) => {
-    const ai = PROVIDER_ORDER.indexOf(a.provider_id);
-    const bi = PROVIDER_ORDER.indexOf(b.provider_id);
-    if (a.state === "connected" && b.state !== "connected") return -1;
-    if (a.state !== "connected" && b.state === "connected") return 1;
-    return ai - bi;
-  });
+  /* Fixed order GH, Jira, Confluence whatever is connected -- the board's
+     order (counsel-on-built 174, condition 2). */
+  const sorted = [...sourceTools].sort(
+    (a, b) => PROVIDER_ORDER.indexOf(a.provider_id) - PROVIDER_ORDER.indexOf(b.provider_id),
+  );
   return sorted.map(makeRow);
 }
 
@@ -390,6 +399,21 @@ export function useDoorController(): DoorController {
                 ? [...(sources.find((r) => r.provider === provider)?.pickerItems ?? []), ...items]
                 : items,
               pickerCursor: resp.cursor != null ? String(resp.cursor) : null,
+              pickerLoading: false,
+            }),
+          );
+        } else if (provider === "confluence") {
+          /* HS-174-07: Confluence space discovery. */
+          const resp = await discoverConfluence(query || undefined);
+          const items: PickerItem[] = resp.items.map((item) => ({
+            value: item.key,
+            label: item.key,
+            detail: item.name,
+          }));
+          safe(() =>
+            updateRow(provider, {
+              pickerItems: items,
+              pickerCursor: null,
               pickerLoading: false,
             }),
           );

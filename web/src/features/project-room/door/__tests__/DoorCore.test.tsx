@@ -10,12 +10,14 @@ const mockDoorCount = vi.fn();
 const mockDoorCreate = vi.fn();
 const mockDiscoverGitHub = vi.fn();
 const mockDiscoverJira = vi.fn();
+const mockDiscoverConfluence = vi.fn();
 
 vi.mock("../api", () => ({
   doorCount: (...args: unknown[]) => mockDoorCount(...args),
   doorCreate: (...args: unknown[]) => mockDoorCreate(...args),
   discoverGitHub: (...args: unknown[]) => mockDiscoverGitHub(...args),
   discoverJira: (...args: unknown[]) => mockDiscoverJira(...args),
+  discoverConfluence: (...args: unknown[]) => mockDiscoverConfluence(...args),
 }));
 
 /* ── Mock connections API ── */
@@ -737,6 +739,87 @@ describe("DoorCore", () => {
       expect(mockCloseSurfaceWindow).toHaveBeenCalledWith(
         "surface-project-setup",
       );
+    });
+  });
+
+  /* ── HS-174-07: Confluence connector ── */
+
+  describe("confluence source row", () => {
+    it("shows C emblem and Confluence defaults (RECENT BLOGS on, PAGES BY ID off)", async () => {
+      mockFetchConnections.mockResolvedValue({
+        tools: [
+          {
+            provider_id: "github",
+            state: "connected",
+            account: { login: "karolswdev" },
+            egress_host: "github.com",
+          },
+          {
+            provider_id: "jira",
+            state: "connected",
+            account: { site: "karolsaneapple.atlassian.net", email: "karol@sane.com" },
+            egress_host: "karolsaneapple.atlassian.net",
+            connections: [
+              {
+                connection_ref: "karolsaneapple.atlassian.net|karol@sane.com",
+                state: "connected",
+                account: { site: "karolsaneapple.atlassian.net", email: "karol@sane.com" },
+              },
+            ],
+          },
+          {
+            provider_id: "confluence",
+            state: "connected",
+            account: { site: "karolswdev.atlassian.net", email: "karolsane@gmail.com" },
+            egress_host: "karolswdev.atlassian.net",
+            connections: [
+              {
+                connection_ref: "karolswdev.atlassian.net|karolsane@gmail.com",
+                state: "connected",
+                account: { site: "karolswdev.atlassian.net", email: "karolsane@gmail.com" },
+              },
+            ],
+          },
+        ],
+      });
+
+      render(<DoorCore scope="" />);
+
+      // Wait for the Confluence row to appear
+      await waitFor(() => {
+        expect(screen.getByTestId("door-row-confluence")).toBeTruthy();
+      });
+
+      // The emblem should be "C"
+      const row = screen.getByTestId("door-row-confluence");
+      expect(row.querySelector(".door-lead")?.textContent).toBe("C");
+
+      // Defaults: RECENT BLOGS (on), PAGES BY ID (off)
+      const recentBlogs = row.querySelector('[data-testid="door-row-confluence"] [aria-label="RECENT BLOGS"]')
+        ?? row.textContent;
+      expect(row.textContent).toContain("RECENT BLOGS");
+      expect(row.textContent).toContain("PAGES BY ID");
+    });
+
+    it("shows NOT SET UP for a disconnected Confluence row", async () => {
+      mockFetchConnections.mockResolvedValue({
+        tools: [
+          {
+            provider_id: "confluence",
+            state: "not_configured",
+          },
+        ],
+      });
+
+      render(<DoorCore scope="" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("door-row-confluence")).toBeTruthy();
+      });
+
+      const row = screen.getByTestId("door-row-confluence");
+      expect(row.textContent).toContain("NOT SET UP");
+      expect(screen.getByTestId("door-connect-confluence")).toBeTruthy();
     });
   });
 });

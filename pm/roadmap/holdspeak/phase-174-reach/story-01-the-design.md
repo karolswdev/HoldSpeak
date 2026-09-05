@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 174
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** Phase 173 merged
 - **Unblocks:** HS-174-02, HS-174-03, HS-174-04, HS-174-06, HS-174-07, HS-174-09
 - **Owner:** unassigned
@@ -37,17 +37,17 @@ artboards these cannot be built to canon.
 
 ## Acceptance criteria
 
-- [ ] Artboards at 1440 + 393 on the ratified shell for every new face
+- [x] Artboards at 1440 + 393 on the ratified shell for every new face
       region (Article IX.2; UX-CANON.md rule E.1).
-- [ ] Counsel reads the artboards before the owner (UX-CANON.md rule
+- [x] Counsel reads the artboards before the owner (UX-CANON.md rule
       E.1).
-- [ ] The owner's word on the canvas (Article IX.4).
-- [ ] No prose in the artboards (Article VII.1; UX-CANON.md rule A.3).
-- [ ] Every artboard uses at least three type steps (UX-CANON.md rule
+- [x] The owner's word on the canvas (Article IX.4).
+- [x] No prose in the artboards (Article VII.1; UX-CANON.md rule A.3).
+- [x] Every artboard uses at least three type steps (UX-CANON.md rule
       C).
-- [ ] The remote badge artboard shows the "remote" egress state
+- [x] The remote badge artboard shows the "remote" egress state
       (Article III:2).
-- [ ] The credential scope artboard shows OWNER is never a remote
+- [x] The credential scope artboard shows OWNER is never a remote
       principal (Article XI:4).
 
 ## Test plan

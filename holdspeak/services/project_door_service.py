@@ -27,6 +27,10 @@ DOOR_DEFAULTS: dict[str, list[dict[str, Any]]] = {
         {"key": "due_7_days", "label": "DUE 7 DAYS", "template_id": "watch.jira.delivery_flow", "on": True},
         {"key": "blocked", "label": "BLOCKED", "template_id": "watch.jira.blockers", "on": False},
     ],
+    "confluence": [
+        {"key": "recent_blogs", "label": "RECENT BLOGS", "template_id": "watch.confluence.recent_blogs", "on": True},
+        {"key": "pages_by_id", "label": "PAGES BY ID", "template_id": "watch.confluence.pages_by_id", "on": False},
+    ],
 }
 
 _DEFAULTS_BY_KEY: dict[str, dict[str, Any]] = {}
@@ -42,7 +46,7 @@ def _iso_now() -> str:
 def _egress_host(provider: str, scope: Any) -> str:
     if provider == "github":
         return "GITHUB.COM"
-    if provider == "jira" and isinstance(scope, dict):
+    if provider in ("jira", "confluence") and isinstance(scope, dict):
         ref = str(scope.get("connection_ref") or "")
         site = ref.split("|")[0].strip() if "|" in ref else ref
         if site:

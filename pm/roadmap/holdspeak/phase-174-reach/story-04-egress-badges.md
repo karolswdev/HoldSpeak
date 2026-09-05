@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 174
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-174-02, HS-174-03
 - **Unblocks:** HS-174-05, HS-174-08
 - **Owner:** unassigned
@@ -33,12 +33,12 @@ see that a call came from outside the machine.
 
 ## Acceptance criteria
 
-- [ ] Every remote MCP call produces a kernel receipt with the remote
+- [x] Every remote MCP call produces a kernel receipt with the remote
       principal's identity and the operation (Article XI:2).
-- [ ] The pipeline observer shows a "remote" EGRESS badge on every
+- [x] The pipeline observer shows a "remote" EGRESS badge on every
       remote call.
-- [ ] Local stdio calls produce no egress badge.
-- [ ] The receipt for a remote read names the caller, the tool, and
+- [x] Local stdio calls produce no egress badge.
+- [x] The receipt for a remote read names the caller, the tool, and
       the outcome (Article V:2).
 
 ## Test plan

@@ -745,9 +745,10 @@ export function EgressChip({
   /** HS-111-04 — an off-device reply names its honest boundary; the
    * default stays the on-device promise. */
   title?: string;
-  /** HS-111-07 — scope color variant (local = ok, mixed/cloud = accent);
+  /** HS-111-07 + HS-174-04 — scope color variant (local = ok,
+   * mixed/cloud = accent, remote = accent outline stroke);
    * unset keeps the on-device tone. */
-  scope?: "local" | "mixed" | "cloud";
+  scope?: "local" | "mixed" | "cloud" | "remote";
   className?: string;
   ariaLabel?: string;
   /** HS-111-07 — the chrome badge is this SAME species with a click

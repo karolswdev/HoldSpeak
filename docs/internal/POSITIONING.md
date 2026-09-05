@@ -201,6 +201,11 @@ left column is the name; do not alternate with the synonyms.
 | a reviewer nudge (a proposed comment on a waiting PR) | "a ping", "a reminder", "a review request", "a poke" |
 | the health rows (the Room's HEALTH signal section) | "the health dashboard", "the health panel", "the status board" |
 | the drafted update (the model-rewritten weekly update) | "the AI update", "the generated update", "the smart update" |
+| Reach (remote access over Streamable HTTP) | "remote mode", "the remote transport", "the listener" |
+| a scoped credential (palette + TTL, shown once) | "an API key", "an access token", "a remote token" |
+| the REMOTE badge (the fourth egress state) | "the remote chip", "the network badge", "the external badge" |
+| the overnight runner (the .43 client script) | "the cron job", "the scheduled runner", "the background agent" |
+| the Confluence connector (blog posts + pages by ID) | "the wiki connector", "the Confluence integration", "the Confluence plugin" |
 
 ## Voice rules (the editing standard for every user-facing doc)
 

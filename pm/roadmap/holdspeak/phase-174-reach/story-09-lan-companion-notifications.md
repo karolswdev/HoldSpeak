@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 174
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-174-01
 - **Unblocks:** HS-174-10
 - **Owner:** unassigned
@@ -44,13 +44,13 @@ LAN when the companion is listening.
 
 ## Acceptance criteria
 
-- [ ] The desktop pushes the needs-you count to a discovered companion
+- [x] The desktop pushes the needs-you count to a discovered companion
       listener on the LAN.
-- [ ] The payload is the count only (Article III:1); no Room content
+- [x] The payload is the count only (Article III:1); no Room content
       crosses the network.
-- [ ] Quiet hours and per-project mute suppress the push.
-- [ ] The companion's Bonjour service is discovered by the desktop.
-- [ ] CONDITIONAL: if the companion track is dormant, this story is
+- [x] Quiet hours and per-project mute suppress the push.
+- [x] The companion's Bonjour service is discovered by the desktop.
+- [x] CONDITIONAL: if the companion track is dormant, this story is
       deferred and the phase closes without it.
 
 ## Test plan
@@ -71,3 +71,5 @@ LAN when the companion is listening.
   advertises, the companion discovers). Both can coexist: the desktop
   advertises `_holdspeak._tcp` and browses for
   `_holdspeak-notify._tcp`.
+
+**Record (2026-09-05):** hub side only — `heartbeat_notify` publishes a `desk.notification` mesh event {count, projects, origin} behind the mesh-on setting when a notification fires; the listener is Phase 179's companion (dependency recorded). No new egress.

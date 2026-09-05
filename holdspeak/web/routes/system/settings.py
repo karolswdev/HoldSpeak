@@ -237,7 +237,14 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 },
                 "rhythm": heartbeat_rhythm,
                 "sounds": {"on": sounds_on},
-                "system": {"host": "THIS DEVICE", "mesh": mesh_on},
+                "system": {
+                    "host": "THIS DEVICE",
+                    "mesh": mesh_on,
+                    "remote": bool(
+                        getattr(request.app.state, "_remote_settings", None)
+                        and getattr(request.app.state, "_remote_settings", {}).get("enabled", False)
+                    ),
+                },
                 "posture": posture,
                 "writtenAt": written_at,
             })

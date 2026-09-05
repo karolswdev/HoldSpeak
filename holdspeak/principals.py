@@ -6,11 +6,13 @@ but never their identity or rights.
 """
 from __future__ import annotations
 
+import hashlib
 import hmac
 import secrets
 import threading
 import time
-from dataclasses import dataclass
+import uuid
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterable, Optional
 
@@ -84,18 +86,43 @@ class AgentCredential:
     token: str
     principal: Principal
     expires_at: float
+    palette: Optional[frozenset[str]] = None
+    id: str = field(default_factory=lambda: uuid.uuid4().hex[:16])
+    last_used_at: Optional[float] = None
+
+
+# HS-174 max TTL cap (counsel H2: 30 days).
+_MAX_TTL_SECONDS: float = 30 * 24 * 3600.0
+
+
+def _hash_token(plaintext: str) -> str:
+    """SHA-256 hash for credential-at-rest (C4: plaintext only at issue)."""
+    return hashlib.sha256(plaintext.encode("utf-8")).hexdigest()
 
 
 class AgentCredentialStore:
-    """In-memory, revocable credentials minted once per supervised process."""
+    """In-memory, revocable credentials minted once per supervised process.
+
+    HS-174: credentials store ``sha256(token)`` at rest and compare hashes
+    constant-time.  The plaintext token is returned ONLY from ``issue()`` and
+    is never stored.  The store is wiped on process restart (persistence
+    deferred; see D4 H6).
+    """
 
     def __init__(self, *, clock=time.monotonic) -> None:
         self._lock = threading.RLock()
         self._clock = clock
-        self._by_token: dict[str, AgentCredential] = {}
-        self._by_identity: dict[str, str] = {}
+        # Keyed by sha256(token) -- the plaintext is never stored.
+        self._by_hash: dict[str, AgentCredential] = {}
+        self._by_identity: dict[str, str] = {}  # identity -> hash
+        self._by_id: dict[str, str] = {}  # credential id -> hash
         self._target_to_identity: dict[str, str] = {}
         self._hub_url = "http://127.0.0.1:8765"
+
+    # -- Legacy compat: _by_token property for old callers (read-only). --
+    @property
+    def _by_token(self) -> dict[str, AgentCredential]:
+        return self._by_hash
 
     @property
     def hub_url(self) -> str:
@@ -106,34 +133,79 @@ class AgentCredentialStore:
         with self._lock:
             self._hub_url = str(url or self._hub_url).rstrip("/")
 
-    def issue(self, identity: str, *, ttl_seconds: float = 43_200.0) -> AgentCredential:
+    def issue(
+        self,
+        identity: str,
+        *,
+        ttl_seconds: float = 43_200.0,
+        palette: Optional[frozenset[str]] = None,
+    ) -> AgentCredential:
+        """Mint a new credential.  Returns the credential with the plaintext
+        token; the store keeps only the hash (C4)."""
         clean = str(identity or "").strip()
         if not clean:
             raise ValueError("agent identity is required")
         with self._lock:
             self.revoke(clean)
-            ttl = max(1.0, float(ttl_seconds))
+            ttl = min(max(1.0, float(ttl_seconds)), _MAX_TTL_SECONDS)
+            plaintext = secrets.token_urlsafe(32)
+            token_hash = _hash_token(plaintext)
+            cred_id = uuid.uuid4().hex[:16]
             credential = AgentCredential(
-                token=secrets.token_urlsafe(32),
+                token=token_hash,  # stored form is the hash
                 principal=Principal(PrincipalKind.AGENT, clean),
                 expires_at=self._clock() + ttl,
+                palette=palette,
+                id=cred_id,
+                last_used_at=None,
             )
-            self._by_token[credential.token] = credential
-            self._by_identity[clean] = credential.token
-            return credential
+            self._by_hash[token_hash] = credential
+            self._by_identity[clean] = token_hash
+            self._by_id[cred_id] = token_hash
+            # Return a copy with the plaintext so the caller can show it once.
+            return AgentCredential(
+                token=plaintext,
+                principal=credential.principal,
+                expires_at=credential.expires_at,
+                palette=credential.palette,
+                id=credential.id,
+                last_used_at=credential.last_used_at,
+            )
 
     def derive(self, token: Optional[str]) -> Optional[Principal]:
+        """Derive a principal from a bearer token (backward-compat signature)."""
+        cred = self.derive_credential(token)
+        return cred.principal if cred else None
+
+    def derive_credential(self, token: Optional[str]) -> Optional[AgentCredential]:
+        """Derive the full credential from a bearer token.
+
+        Hashes the provided token and compares against stored hashes
+        constant-time.  Updates ``last_used_at`` on match.  Returns
+        ``None`` on miss or expiry.
+        """
         provided = str(token or "")
         if not provided:
             return None
+        provided_hash = _hash_token(provided)
         with self._lock:
             # Do not expose dict lookup timing as a credential oracle.
-            for expected, credential in list(self._by_token.items()):
+            for stored_hash, credential in list(self._by_hash.items()):
                 if credential.expires_at <= self._clock():
                     self.revoke(credential.principal.identity)
                     continue
-                if hmac.compare_digest(provided.encode(), expected.encode()):
-                    return credential.principal
+                if hmac.compare_digest(provided_hash.encode(), stored_hash.encode()):
+                    # Touch last_used_at (frozen dataclass -> replace).
+                    updated = AgentCredential(
+                        token=credential.token,
+                        principal=credential.principal,
+                        expires_at=credential.expires_at,
+                        palette=credential.palette,
+                        id=credential.id,
+                        last_used_at=self._clock(),
+                    )
+                    self._by_hash[stored_hash] = updated
+                    return updated
         return None
 
     def bind_target(self, identity: str, *targets: Optional[str]) -> None:
@@ -146,14 +218,42 @@ class AgentCredentialStore:
     def revoke(self, identity: str) -> bool:
         clean = str(identity or "").strip()
         with self._lock:
-            token = self._by_identity.pop(clean, None)
-            if token is None:
+            token_hash = self._by_identity.pop(clean, None)
+            if token_hash is None:
                 return False
-            self._by_token.pop(token, None)
+            cred = self._by_hash.pop(token_hash, None)
+            if cred:
+                self._by_id.pop(cred.id, None)
             stale = [target for target, owner in self._target_to_identity.items() if owner == clean]
             for target in stale:
                 self._target_to_identity.pop(target, None)
             return True
+
+    def revoke_by_id(self, credential_id: str) -> bool:
+        """Revoke a credential by its id (for the settings face)."""
+        clean = str(credential_id or "").strip()
+        with self._lock:
+            token_hash = self._by_id.get(clean)
+            if token_hash is None:
+                return False
+            cred = self._by_hash.get(token_hash)
+            if cred:
+                return self.revoke(cred.principal.identity)
+        return False
+
+    def list_credentials(self) -> list[AgentCredential]:
+        """Return all credentials (including expired) for the settings face.
+
+        ``N CREDENTIALS`` counts all; ``N ACTIVE`` counts non-expired (P2s).
+        """
+        with self._lock:
+            return list(self._by_hash.values())
+
+    def count_active(self) -> int:
+        """Count non-expired credentials."""
+        now = self._clock()
+        with self._lock:
+            return sum(1 for c in self._by_hash.values() if c.expires_at > now)
 
     def revoke_targets(self, targets: Iterable[Optional[str]]) -> bool:
         with self._lock:
@@ -190,6 +290,10 @@ def required_right(method: str, path: str) -> Optional[PrincipalRight]:
     verb = str(method or "GET").upper()
     if path in {"/health", "/api/devices/audio", "/api/mesh/info"}:
         return None
+    # HS-174: the MCP HTTP transport accepts AGENT credentials; its own
+    # route handler enforces the per-route loopback guard and palette.
+    if path == "/api/mcp" and verb == "POST":
+        return PrincipalRight.AGENT_SUBMIT
     if path.startswith("/_built") or not path.startswith("/api/"):
         return None
     if (

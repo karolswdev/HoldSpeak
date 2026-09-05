@@ -17,6 +17,7 @@ a thin wrapper over the pack manifests).
 from __future__ import annotations
 
 from . import (
+    acli_confluence,
     acli_jira,
     calendar_activity,
     firefox_ext,
@@ -30,12 +31,14 @@ ALL_PACKS = (
     github_cli,
     jira_cli,
     acli_jira,
+    acli_confluence,
     calendar_activity,
     meeting_context,
 )
 
 __all__ = [
     "ALL_PACKS",
+    "acli_confluence",
     "acli_jira",
     "calendar_activity",
     "firefox_ext",

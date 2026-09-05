@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 174
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-174-06
 - **Unblocks:** HS-174-08
 - **Owner:** unassigned
@@ -40,16 +40,16 @@ the adapter, WatchSource, templates, Door card, and provider routes.
 
 ## Acceptance criteria
 
-- [ ] The WatchSource adapter passes the same test/baseline/evaluate
+- [x] The WatchSource adapter passes the same test/baseline/evaluate
       path as GitHub and Jira (watch_sources.py gate).
-- [ ] The Door card shows the source row with default Watches and the
+- [x] The Door card shows the source row with default Watches and the
       provider chip.
-- [ ] The Connections face in Settings shows the tool with its
+- [x] The Connections face in Settings shows the tool with its
       connection state and one verb.
-- [ ] Watch templates for the tool produce entities on a connected
+- [x] Watch templates for the tool produce entities on a connected
       account.
-- [ ] MCP twins for the provider routes pass parity tests (MCP-001).
-- [ ] The switch-and-verify law holds: connection is verified before
+- [x] MCP twins for the provider routes pass parity tests (MCP-001).
+- [x] The switch-and-verify law holds: connection is verified before
       trusting (Article III; Phase 166's precedent).
 
 ## Test plan

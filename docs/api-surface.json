@@ -3101,6 +3101,14 @@
       ]
     },
     {
+      "path": "/api/mcp",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": []
+    },
+    {
       "path": "/api/meeting",
       "methods": [
         "PATCH"
@@ -4589,6 +4597,38 @@
       ]
     },
     {
+      "path": "/api/providers/confluence/connections",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/confluence/connections/{ref}/recheck",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/confluence/discover",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
+      "path": "/api/providers/confluence/validate",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.providers",
+      "consumers": []
+    },
+    {
       "path": "/api/providers/github/connection",
       "methods": [
         "GET"
@@ -5022,6 +5062,46 @@
         "GET"
       ],
       "module": "web.routes.system.settings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/remote",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/remote",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/remote/credentials",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.mcp_http",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/remote/credentials/{credential_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.mcp_http",
       "consumers": [
         "web"
       ]

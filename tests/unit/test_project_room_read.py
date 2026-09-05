@@ -39,6 +39,7 @@ REQUIRED_SECTIONS = {
     "review", "sources", "updates", "steward",
     # HS-169-04: the four questions
     "needsYou", "health", "sinceRead", "decisions", "commitments", "target",
+    "receipts",  # HS-174: the Room's RECEIPTS section (remote receipts wear REMOTE · host)
 }
 TOP_LEVEL_KEYS = {"project_id", "revision", "observed_at", "nextCheckAt"} | REQUIRED_SECTIONS
 

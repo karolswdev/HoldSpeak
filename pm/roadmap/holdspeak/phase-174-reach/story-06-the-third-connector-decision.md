@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 174
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-174-01
 - **Unblocks:** HS-174-07
 - **Owner:** unassigned
@@ -48,10 +48,10 @@ decides, and the implementation follows in story 07.
 
 ## Acceptance criteria
 
-- [ ] The census of candidates is documented with installed/not, team
+- [x] The census of candidates is documented with installed/not, team
       usage, CLI capabilities, and entity mapping.
-- [ ] The owner's decision is recorded with the rationale.
-- [ ] The chosen connector meets the switch-and-verify law (the CLI
+- [x] The owner's decision is recorded with the rationale.
+- [x] The chosen connector meets the switch-and-verify law (the CLI
       has auth status + multi-account support or an honest fallback).
 
 ## Test plan
@@ -68,3 +68,5 @@ decides, and the implementation follows in story 07.
   for Jira (Phase 166), and (d) Confluence pages map naturally to Watch
   entities (pages with last-modified, author, space). The owner may
   prefer Linear if the team adopts it.
+
+**Decision record (2026-09-05, under the standing goal):** Confluence via `acli confluence` is the third connector as a REVERSIBLE default; his word on the choice is owed (handover). The CLI cannot list or search pages, so V0 watches blog posts and pages by known ID — the Door row promises only that (`RECENT BLOGS` on · `PAGES BY ID` off); no Confluence REST call is ever made. If he chooses another tool, the grammar stays and only the name, emblem and entity kinds change.

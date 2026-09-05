@@ -51,6 +51,14 @@ the steward proposes a comment on the waiting PR. You see the exact text and
 the receipt names who, which PR, when, and where. Nothing posts without your
 word on that one.
 
+The hub speaks Streamable HTTP on the tailnet, off until
+you turn it on, with no relay. A scoped credential carries a palette (which tool
+families it may call) and a TTL; the token is shown once at issue time. Every
+receipt from a remote caller wears the `REMOTE` badge with the caller's address.
+A second machine on the tailnet (the `.43` box, for example) runs the sweep and
+the steward's drafter overnight while the Mac stays awake. Confluence joins
+GitHub and Jira on the Door for blog posts and pages by known ID.
+
 **Every model attempt has one door and one receipt.** HoldSpeak freezes an
 assigned compatible route before it executes a physical provider attempt. Each
 attempt uses one immutable deployment revision and receives one terminal receipt.
@@ -410,12 +418,13 @@ requires its own CLI:
 
 - **GitHub:** [`gh`](https://cli.github.com/) (`brew install gh`, then `gh auth login`).
 - **Jira:** [`acli`](https://acli.atlassian.com/) (`brew tap atlassian/homebrew-acli && brew install acli`, then `acli jira auth login --site <yoursite>.atlassian.net --email <you> --token`).
+- **Confluence:** the same `acli` binary (`acli confluence auth login --site <yoursite>.atlassian.net --email <you> --token`). V0 watches blog posts and pages by known ID; no page search until the CLI supports it.
 
 Open **Settings, Connections** to see each tool's readiness, run
-`Recheck`, and follow the recovery command when needed. Jira access
-is read-only and contacts `<site>.atlassian.net` from this device.
-HoldSpeak stores no token; `gh` and `acli` hold credentials on this
-machine.
+`Recheck`, and follow the recovery command when needed. Jira and
+Confluence access is read-only and contacts `<site>.atlassian.net` from
+this device. HoldSpeak stores no token; `gh` and `acli` hold credentials
+on this machine.
 
 ### Upgrading and your data
 

@@ -35,15 +35,58 @@ const JIRA_WATCH_DEFS: WatchDefault[] = [
   { key: "blocked", label: "BLOCKED", templateId: "watch.jira.blockers", on: false },
 ];
 
+/* HS-174-07: Confluence defaults -- RECENT BLOGS (on) + PAGES BY ID (off).
+   The CLI cannot list pages; honest and limited. */
+const CONFLUENCE_WATCH_DEFS: WatchDefault[] = [
+  { key: "recent_blogs", label: "RECENT BLOGS", templateId: "watch.confluence.recent_blogs", on: true },
+  { key: "pages_by_id", label: "PAGES BY ID", templateId: "watch.confluence.pages_by_id", on: false },
+];
+
 function watchDefs(provider: string): WatchDefault[] {
-  return provider === "github" ? GITHUB_WATCH_DEFS : JIRA_WATCH_DEFS;
+  if (provider === "github") return GITHUB_WATCH_DEFS;
+  if (provider === "confluence") return CONFLUENCE_WATCH_DEFS;
+  return JIRA_WATCH_DEFS;
+}
+
+/* ── Provider display helpers ── */
+
+const PROVIDER_EMBLEM: Record<string, string> = {
+  github: "GH",
+  jira: "J",
+  confluence: "C",
+};
+
+const PROVIDER_NAME: Record<string, string> = {
+  github: "GitHub",
+  jira: "Jira",
+  confluence: "Confluence",
+};
+
+function providerEmblem(provider: string): string {
+  return PROVIDER_EMBLEM[provider] ?? provider.slice(0, 2).toUpperCase();
+}
+
+function providerName(provider: string): string {
+  return PROVIDER_NAME[provider] ?? provider;
+}
+
+function providerPlaceholder(provider: string): string {
+  if (provider === "github") return "Choose a repository";
+  if (provider === "confluence") return "Choose a space";
+  return "Choose a project";
+}
+
+function providerSearchPlaceholder(provider: string): string {
+  if (provider === "github") return "Search repositories";
+  if (provider === "confluence") return "Search spaces";
+  return "Search projects";
 }
 
 /* ── Not-connected row ── */
 
 function NotConnectedRow({ row, ctrl }: { row: SourceRow; ctrl: DoorController }) {
-  const emblem = row.provider === "github" ? "GH" : "J";
-  const name = row.provider === "github" ? "GitHub" : "Jira";
+  const emblem = providerEmblem(row.provider);
+  const name = providerName(row.provider);
   const chipState = row.connectionState === "owner_action_required" ? "warning" : "idle";
   const chipLabel =
     row.connectionState === "owner_action_required"
@@ -77,10 +120,9 @@ function NotConnectedRow({ row, ctrl }: { row: SourceRow; ctrl: DoorController }
 /* ── Connected row ── */
 
 function ConnectedRow({ row, ctrl }: { row: SourceRow; ctrl: DoorController }) {
-  const emblem = row.provider === "github" ? "GH" : "J";
+  const emblem = providerEmblem(row.provider);
   const defs = watchDefs(row.provider);
-  const placeholder =
-    row.provider === "github" ? "Choose a repository" : "Choose a project";
+  const placeholder = providerPlaceholder(row.provider);
 
   const triggerText = row.scope ?? placeholder;
 
@@ -136,11 +178,16 @@ function ConnectedRow({ row, ctrl }: { row: SourceRow; ctrl: DoorController }) {
               {row.plain}
             </span>
           ) : null}
+
+          {/* HS-174-07: Confluence shows SIGNED IN AS <email> */}
+          {row.provider === "confluence" && row.connectionEmail ? (
+            <StateChip state="success" label={`SIGNED IN AS ${row.connectionEmail.toUpperCase()}`} />
+          ) : null}
         </span>
       }
       trailing={
         <span className="door-row-trailing">
-          <EgressChip label={row.host.toUpperCase() || "—"} scope="cloud" />
+          {row.host ? <EgressChip label={row.host.toUpperCase()} scope="cloud" /> : null}
           <Button
             dense
             variant="ghost"
@@ -177,8 +224,7 @@ function ConnectedRow({ row, ctrl }: { row: SourceRow; ctrl: DoorController }) {
 /* ── Picker well ── */
 
 function PickerWell({ row, ctrl }: { row: SourceRow; ctrl: DoorController }) {
-  const placeholder =
-    row.provider === "github" ? "Search repositories" : "Search projects";
+  const placeholder = providerSearchPlaceholder(row.provider);
 
   return (
     <div className="door-picker-well" data-testid={`door-picker-${row.provider}`}>
@@ -234,6 +280,23 @@ function PickerWell({ row, ctrl }: { row: SourceRow; ctrl: DoorController }) {
 /* ── Adjust well ── */
 
 function AdjustWell({ row, ctrl }: { row: SourceRow; ctrl: DoorController }) {
+  /* HS-174-07: Confluence adjust -- space key only (no page list). */
+  if (row.provider === "confluence") {
+    return (
+      <div className="door-adjust-well" data-testid={`door-adjust-well-${row.provider}`}>
+        <div className="door-adjust-field">
+          <span className="door-adjust-label">SPACE KEY</span>
+          <StringGadget
+            label="Space key"
+            value={row.adjust.spaceKey ?? ""}
+            onChange={(v) => ctrl.updateAdjust(row.provider, { spaceKey: v })}
+            placeholder="GOV"
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (row.provider === "github") {
     return (
       <div className="door-adjust-well" data-testid={`door-adjust-well-${row.provider}`}>

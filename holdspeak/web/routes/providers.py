@@ -1,17 +1,21 @@
-"""HS-161-04 + HS-166-01 + HS-166-02: Provider routes -- connection, discovery, validation.
+"""HS-161-04 + HS-166-01 + HS-166-02 + HS-174-07: Provider routes.
 
-GET  /api/providers                                    -- manifest list
-GET  /api/providers/github/connection                  -- live probe result
-POST /api/providers/github/connection/recheck          -- re-probe live
-GET  /api/providers/github/discover                    -- bounded discovery
-POST /api/providers/github/validate-repo               -- typed repo fallback
-GET  /api/providers/jira/connections                   -- all Jira connections
-POST /api/providers/jira/connections                   -- add a Jira connection
-POST /api/providers/jira/connections/{ref}/recheck     -- recheck one connection
-GET  /api/providers/jira/discover                      -- bounded Jira discovery
-POST /api/providers/jira/search                        -- JQL search
-POST /api/providers/jira/validate-scope                -- typed project validation
-POST /api/watches/{watch_id}/evaluate                  -- manual evaluate_once
+GET  /api/providers                                         -- manifest list
+GET  /api/providers/github/connection                       -- live probe result
+POST /api/providers/github/connection/recheck               -- re-probe live
+GET  /api/providers/github/discover                         -- bounded discovery
+POST /api/providers/github/validate-repo                    -- typed repo fallback
+GET  /api/providers/jira/connections                        -- all Jira connections
+POST /api/providers/jira/connections                        -- add a Jira connection
+POST /api/providers/jira/connections/{ref}/recheck          -- recheck one connection
+GET  /api/providers/jira/discover                           -- bounded Jira discovery
+POST /api/providers/jira/search                             -- JQL search
+POST /api/providers/jira/validate-scope                     -- typed project validation
+GET  /api/providers/confluence/connections                   -- all Confluence connections
+POST /api/providers/confluence/connections/{ref}/recheck     -- recheck one connection
+GET  /api/providers/confluence/discover                      -- bounded space discovery
+POST /api/providers/confluence/validate                      -- typed space validation
+POST /api/watches/{watch_id}/evaluate                        -- manual evaluate_once
 
 Parse-and-serialize ONLY: the ProviderAdapter + WatchService docstring law.
 Owner-scoped; typed errors -> correct statuses.
@@ -53,14 +57,15 @@ def collect_provider_manifests(
     *,
     github_adapter: Any = None,
     jira_adapter: Any = None,
+    confluence_adapter: Any = None,
     principal: Any = None,
 ) -> list[dict[str, Any]]:
     """Shared helper: build the manifest list for both HTTP and MCP surfaces.
 
-    HS-166-01: ONE function builds the provider list; the HTTP route and
-    the MCP ``provider.list`` tool both call this -- never duplicate the
-    enumeration.  Adapters are optional: ``None`` means the provider is
-    not configured (omitted from the list).
+    HS-166-01 / HS-174-07: ONE function builds the provider list; the HTTP
+    route and the MCP ``provider.list`` tool both call this -- never
+    duplicate the enumeration.  Adapters are optional: ``None`` means the
+    provider is not configured (omitted from the list).
 
     Each provider entry carries a ``readiness`` object computed from
     persisted rows + ``shutil.which`` only (NEVER runs the CLI).
@@ -75,6 +80,11 @@ def collect_provider_manifests(
         entry = jira_adapter.manifest()
         if principal is not None and hasattr(jira_adapter, "readiness"):
             entry["readiness"] = jira_adapter.readiness(principal)
+        providers.append(entry)
+    if confluence_adapter is not None:
+        entry = confluence_adapter.manifest()
+        if principal is not None and hasattr(confluence_adapter, "readiness"):
+            entry["readiness"] = confluence_adapter.readiness(principal)
         providers.append(entry)
     return providers
 
@@ -94,6 +104,7 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
             providers = collect_provider_manifests(
                 github_adapter=ctx.github_provider,
                 jira_adapter=ctx.jira_provider,
+                confluence_adapter=ctx.confluence_provider,
                 principal=principal(request),
             )
             return JSONResponse({"providers": providers})
@@ -410,6 +421,151 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
             )
         except Exception as exc:
             return error_500(exc, log, "Failed to validate Jira scope")
+
+    # ── GET /api/providers/confluence/connections ───────────────────────
+
+    def _enrich_confluence_row(row: dict[str, Any]) -> dict[str, Any]:
+        """Derive account + recovery from the raw DB row for the wire.
+
+        Same grammar as ``_enrich_jira_row``.  HS-174-07.
+        """
+        ref = row.get("external_connection_ref") or row.get("connection_ref") or ""
+        site, email = ("", "")
+        if "|" in ref:
+            parts = ref.split("|", 1)
+            site, email = parts[0], parts[1]
+        enriched = dict(row)
+        enriched["connection_ref"] = ref
+        enriched["account"] = {"site": site, "email": email}
+        state = row.get("state", "")
+        if state == "owner_action_required":
+            enriched["recovery"] = {
+                "command": f"acli confluence auth login --site {site} --email {email} --token",
+                "hint": "Authenticate with your Atlassian API token",
+            }
+        else:
+            enriched.setdefault("recovery", None)
+        return enriched
+
+    @router.get("/api/providers/confluence/connections")
+    async def confluence_connections(request: Request) -> Any:
+        """List all Confluence connections."""
+        try:
+            adapter = ctx.confluence_provider
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": "Confluence provider is not configured"},
+                    status_code=404,
+                )
+            p = principal(request)
+            rows = adapter.list_connections(p)
+            enriched = [_enrich_confluence_row(r) for r in rows]
+            return JSONResponse({"connections": enriched})
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list Confluence connections")
+
+    # ── POST /api/providers/confluence/connections/{ref}/recheck ────────
+
+    @router.post("/api/providers/confluence/connections/{ref}/recheck")
+    async def confluence_connection_recheck(ref: str, request: Request) -> Any:
+        """Recheck one Confluence connection (switch + status probe)."""
+        try:
+            adapter = ctx.confluence_provider
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": "Confluence provider is not configured"},
+                    status_code=404,
+                )
+            result = adapter.connection_status(principal(request), ref)
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=400,
+            )
+        except Exception as exc:
+            return error_500(exc, log, "Failed to recheck Confluence connection")
+
+    # ── GET /api/providers/confluence/discover ────────────────────────
+
+    @router.get("/api/providers/confluence/discover")
+    async def confluence_discover(
+        request: Request,
+        connection_ref: str = "",
+        kind: str = "spaces",
+        query: str = "",
+        cursor: int | None = None,
+        limit: int = 30,
+    ) -> Any:
+        """Bounded Confluence discovery (spaces)."""
+        try:
+            adapter = ctx.confluence_provider
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": "Confluence provider is not configured"},
+                    status_code=404,
+                )
+            if not connection_ref:
+                return JSONResponse(
+                    {"code": "validation_error",
+                     "message": "connection_ref is required"},
+                    status_code=400,
+                )
+            result = adapter.discover(
+                principal(request),
+                connection_ref,
+                kind=kind,
+                query=query,
+                cursor=cursor,
+                limit=limit,
+            )
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=400,
+            )
+        except Exception as exc:
+            return error_500(exc, log, "Failed to discover Confluence resources")
+
+    # ── POST /api/providers/confluence/validate ───────────────────────
+
+    @router.post("/api/providers/confluence/validate")
+    async def confluence_validate_scope(request: Request) -> Any:
+        """Typed space validation: body {connection_ref, space_key}."""
+        try:
+            adapter = ctx.confluence_provider
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": "Confluence provider is not configured"},
+                    status_code=404,
+                )
+            body = await request.json()
+            conn_ref = body.get("connection_ref", "")
+            space_key = body.get("space_key", "")
+            if not conn_ref or not space_key:
+                return JSONResponse(
+                    {"code": "validation_error",
+                     "message": "connection_ref and space_key are required"},
+                    status_code=400,
+                )
+            result = adapter.validate_scope(
+                principal(request),
+                conn_ref,
+                space_key,
+            )
+            return JSONResponse(result)
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail},
+                status_code=400,
+            )
+        except Exception as exc:
+            return error_500(exc, log, "Failed to validate Confluence scope")
 
     # ── POST /api/watches/{watch_id}/evaluate ────────────────────────
 

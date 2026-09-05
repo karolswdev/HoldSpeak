@@ -74,6 +74,17 @@ class HeartbeatMixin:
                     except (ValueError, TypeError):
                         should_sweep = True
 
+                # HS-174-08: check runs_on -- if a remote host is selected,
+                # the local loop holds and records a quiet receipt instead.
+                runs_on = settings.get("runs_on", "local")
+                if should_sweep and runs_on != "local":
+                    hb.record_held_remote(runs_on)
+                    log.info(
+                        "heartbeat sweep held: runs_on=%s (remote)",
+                        runs_on,
+                    )
+                    should_sweep = False
+
                 if should_sweep:
                     ws = WatchService(db, observer=obs)
                     hb_with_ws = HeartbeatService(db, observer=obs, watch_service=ws)

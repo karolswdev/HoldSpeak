@@ -226,3 +226,50 @@ export async function discoverJira(
   );
   return decodeJiraDiscoveryResponse(raw);
 }
+
+/* ── HS-174-07: Confluence space discovery ── */
+
+export interface ConfluenceSpaceItem {
+  key: string;
+  name: string;
+  type: string;
+}
+
+export interface ConfluenceDiscoveryResponse {
+  state: string;
+  items: ConfluenceSpaceItem[];
+  errorCode: string | null;
+}
+
+function decodeConfluenceSpaceItem(raw: Record<string, unknown>): ConfluenceSpaceItem {
+  return {
+    key: String(raw.key ?? ""),
+    name: String(raw.name ?? ""),
+    type: String(raw.type ?? ""),
+  };
+}
+
+function decodeConfluenceDiscoveryResponse(
+  raw: Record<string, unknown>,
+): ConfluenceDiscoveryResponse {
+  const items = Array.isArray(raw.items)
+    ? raw.items.map((i: Record<string, unknown>) => decodeConfluenceSpaceItem(i))
+    : [];
+  return {
+    state: String(raw.state ?? ""),
+    items,
+    errorCode: raw.error_code != null ? String(raw.error_code) : null,
+  };
+}
+
+export async function discoverConfluence(
+  query?: string,
+): Promise<ConfluenceDiscoveryResponse> {
+  const params = new URLSearchParams();
+  if (query) params.set("query", query);
+  const qs = params.toString();
+  const raw = await apiFetch<Record<string, unknown>>(
+    `${PROVIDERS}/confluence/discover${qs ? `?${qs}` : ""}`,
+  );
+  return decodeConfluenceDiscoveryResponse(raw);
+}
