@@ -1,0 +1,22 @@
+{
+  "result": "pass",
+  "model": "paused fixture",
+  "cases": [
+    {
+      "websocket": "connected",
+      "prompt_before_ack": true,
+      "partial_before_completion": true,
+      "completion_without_reload": true,
+      "reader_scroll_preserved": true,
+      "one_saved_turn": true
+    },
+    {
+      "websocket": "all frames dropped",
+      "prompt_before_ack": true,
+      "partial_before_completion": true,
+      "completion_without_reload": true,
+      "reader_scroll_preserved": true,
+      "one_saved_turn": true
+    }
+  ]
+}

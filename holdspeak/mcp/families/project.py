@@ -891,6 +891,28 @@ TOOLS: list[dict[str, Any]] = [
 
 # ── Service composition ──────────────────────────────────────────────
 
+def _setup_proposal_tool(verb: str, description: str, *, repo: bool = False) -> dict[str, Any]:
+    fields: dict[str, Any] = {
+        "session_id": {"type": "string", "minLength": 1},
+        "proposal_id": {"type": "string", "minLength": 1},
+    }
+    if repo:
+        fields["repo"] = {"type": "string", "minLength": 1}
+    return {
+        "name": f"project.setup.{verb}", "description": description,
+        "inputSchema": {"$id": f"holdspeak://mcp/project.setup.{verb}@1", "type": "object",
+                        "properties": fields, "required": ["session_id", "proposal_id"], "additionalProperties": False},
+    }
+
+
+TOOLS.extend([
+    _setup_proposal_tool("select_proposal", "Select an existing setup proposal before testing/finalizing it; creates no Watch yet."),
+    _setup_proposal_tool("deselect_proposal", "Deselect a setup proposal before finalization."),
+    _setup_proposal_tool("test_proposal", "Run the actual bounded source test for a setup proposal, recording its result before activation."),
+    _setup_proposal_tool("clarify_repo_scope", "Discover or validate a GitHub repository for an existing setup proposal; omitted repo discovers authorized repositories.", repo=True),
+])
+
+
 def _service():
     """Compose the same ProjectService the web application edge uses."""
     from holdspeak.services.project_service import ProjectService
@@ -1127,6 +1149,19 @@ def _serialize_policy(policy):
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Dispatch project tools (MCP-001: thin drivers over service seams)."""
+
+    if name in {"project.setup.select_proposal", "project.setup.deselect_proposal", "project.setup.test_proposal", "project.setup.clarify_repo_scope"}:
+        from jsonschema import Draft202012Validator
+        from holdspeak.services.project_setup_service import ProjectSetupService
+        ProjectSetupService._owner(principal)
+        schema = next(tool["inputSchema"] for tool in TOOLS if tool["name"] == name)
+        error = next(Draft202012Validator(schema).iter_errors(arguments), None)
+        if error:
+            raise ValidationError(error.message)
+        service = _setup_service()
+        method = getattr(service, name.rsplit(".", 1)[1])
+        extra = {"repo": arguments.get("repo")} if name.endswith("clarify_repo_scope") else {}
+        return method(principal, arguments["session_id"], arguments["proposal_id"], **extra)
 
     # ── reads (HS-165-01) ────────────────────────────────────────────
 

@@ -26,6 +26,7 @@ export interface ModeTabsProps {
 /** Fetch mode recipes from GET /api/recipes?kind=mode. Cached per session. */
 const SEED_ORDER = [
   "hs-seed-mode-desk",
+  "hs-seed-mode-interview",
   "hs-seed-mode-chase",
   "hs-seed-mode-draft",
   "hs-seed-mode-plan",
