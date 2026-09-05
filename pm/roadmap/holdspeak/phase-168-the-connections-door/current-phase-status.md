@@ -103,7 +103,7 @@ rechecks).
 | HS-168-02 | The connections service (one readiness shape; the suggest step annotated; known scopes; MCP twins) | done | [story-02-the-connections-service](./story-02-the-connections-service.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-168-03 | The Connections face (Settings → Connections; one state, one verb per tool; the sign-in fold; glass rig at both widths) | done | [story-03-the-connections-face](./story-03-the-connections-face.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-168-04 | The Sources step connect-once (state on the cards; connect in place and return; the wizard asks scope only; scope carries; honest verbs; D3 settled) | done | [story-04-the-sources-step](./story-04-the-sources-step.md) | [evidence-story-04](./evidence-story-04.md) |
-| HS-168-05 | The Tuesday walk, face-driven (the owner's real desk; the window shot at every step; the stopwatch — OWNER VERDICT) | in-progress | [story-05-the-tuesday-walk](./story-05-the-tuesday-walk.md) | [evidence-story-05](./evidence-story-05.md) |
+| HS-168-05 | The Tuesday walk, face-driven (the owner's real desk; the window shot at every step; the stopwatch — OWNER VERDICT) | done | [story-05-the-tuesday-walk](./story-05-the-tuesday-walk.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-168-06 | The docs ("Connect your tools" in the guide; the Rooms guide re-shot; MCP_SIDECAR regenerated; README prerequisites) | done | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-168-07 | The close (gates, riders, debts, final summary) | in-progress | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 

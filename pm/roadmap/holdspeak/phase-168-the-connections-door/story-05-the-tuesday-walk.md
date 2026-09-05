@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 168
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-168-03, HS-168-04
 - **Unblocks:** HS-168-07
 - **Owner:** unassigned
@@ -226,6 +226,19 @@ on the branch build (`cd web && npm run build`, then restart
 `holdspeak web`); walk assets/walk-script.md's connected steps by hand
 at his hub and on the 393 glass; the Tuesday question. His verdict,
 verbatim, closes this story.
+
+## SUPERSEDED (2026-09-05) — closed by Phase 169
+
+The owner's bounce on this door (above) was paid at its roots in the
+second sitting, and then his mandate went further: "really refine and
+really streamline the UX… the first module we BOTH will be proud of."
+Phase 169 The Streamlined Door replaced this phase's Sources step and
+the Room with the one-screen door and the four-question Room; its
+walk ran on his desk (5 clicks) and he gave his word to merge. This
+story's evidence is the OLD door's walk (isolated + real legs, green)
+and the two rigs captured after the roots were paid; its verdict is
+the bounce recorded above, answered by 169. Closed as superseded; the
+owner's own attended walk of the NEW door is owed in 169's ledger.
 
 ## Test plan
 
