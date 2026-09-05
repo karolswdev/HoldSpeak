@@ -70,6 +70,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     surface: {
       eyebrow: "Daily cockpit",
       minW: 560,
+      defaultH: 560,
       load: () =>
         import("../pages/cores/DictationCore").then((module) => ({
           default: module.DictationCore,
@@ -140,7 +141,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     aliases: [
       { key: "configure-integrations", scope: "integration:destinations" },
       { key: "configure-integration" },
-      { key: "configure-runs-on", scope: "models" },
+      // PARKED (HS-170-03): configure-runs-on now opens the Concierge window directly.
+      // { key: "configure-runs-on", scope: "models" },
       { key: "read-runtime-docs", scope: "guide" },
     ],
     surface: {
@@ -277,6 +279,24 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     },
   },
   // HS-169-02: the streamlined Door (replaces the setup interview)
+  // HS-170-03: the Concierge — the Models surface (replaces ModelLibraryCore + CapabilityAssignmentsCore)
+  {
+    action: "open-concierge",
+    windowId: "surface-concierge",
+    label: "Models",
+    description: "Engines found, the proposed set, Use these.",
+    glyph: "▣",
+    href: "/models",
+    surface: {
+      eyebrow: "Models",
+      minW: 560,
+      defaultH: 760,
+      load: () =>
+        import("../features/concierge/ConciergeCore").then((module) => ({
+          default: module.ConciergeCore,
+        })),
+    },
+  },
   {
     action: "project-setup",
     windowId: "surface-project-setup",
@@ -361,15 +381,15 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
         })),
     },
   },
+  // HS-170-03: configure-runs-on now opens the Concierge window.
   {
     action: "configure-runs-on",
-    windowId: "surface-settings",
-    label: "Runs on",
-    description: "Configure model and runtime destinations.",
+    windowId: "surface-concierge",
+    label: "Models",
+    description: "Engines found, the proposed set, Use these.",
     glyph: "▣",
-    href: "/profiles",
+    href: "/models",
     group: "tool",
-    subjectRef: "models",
   },
   {
     action: "configure-integrations",
