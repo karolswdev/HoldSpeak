@@ -38,10 +38,13 @@ interface NeedsYouItem {
   source: string;
   verbHref: string | null;
   severity: string;
+  /** HS-171: true when the item's Room is muted. */
+  muted?: boolean;
 }
 
 interface NeedsYouPayload {
   count: number;
+  mutedCount?: number;
   projects: string[];
   items: NeedsYouItem[];
   next: { label: string; at: string } | null;
@@ -173,6 +176,15 @@ function whySeverityTone(severity: string): string {
   return "idle";
 }
 
+/** Headline for the arrival — zero = "Nothing needs you" (UX-CANON A8). */
+function headlineFor(count: number, projectCount: number): string {
+  if (count <= 0) return "Nothing needs you";
+  if (projectCount > 0) {
+    return `${count} need you across ${projectCount} ${projectCount === 1 ? "project" : "projects"}`;
+  }
+  return `${count} need you`;
+}
+
 /** Format NEXT line from the payload. */
 function nextLine(next: NeedsYouPayload["next"]): string | null {
   if (!next) return null;
@@ -298,24 +310,25 @@ function Arrival() {
   }, [door]);
 
   const roomItems = needsYou?.items ?? [];
-  const allNeedsYouItems = useMemo(() => {
-    // Severity sort: danger first, then warning, then info.
+  // HS-171: separate muted from unmuted; muted render dimmed at the end.
+  const { unmutedItems, mutedItems } = useMemo(() => {
     const SEV: Record<string, number> = { danger: 0, warning: 1, info: 2 };
     const merged = [...doorItems, ...roomItems];
     merged.sort((a, b) => (SEV[a.severity] ?? 2) - (SEV[b.severity] ?? 2));
-    return merged;
+    const unmuted: NeedsYouItem[] = [];
+    const muted: NeedsYouItem[] = [];
+    for (const item of merged) {
+      if (item.muted) muted.push(item);
+      else unmuted.push(item);
+    }
+    return { unmutedItems: unmuted, mutedItems: muted };
   }, [doorItems, roomItems]);
 
-  // ── headline ──
-  const count = allNeedsYouItems.length;
+  // ── headline: uses the wire's count (excludes muted) + door items ──
+  const count = (needsYou?.count ?? 0) + doorItems.length;
   const projectCount = needsYou?.projects?.length ?? 0;
   const hasProjects = projectCount > 0;
-  const headline =
-    count > 0
-      ? hasProjects
-        ? `${count} need you across ${projectCount} ${projectCount === 1 ? "project" : "projects"}`
-        : `${count} need you`
-      : "Nothing needs you";
+  const headline = headlineFor(count, projectCount);
   const headlineAccent = count > 0;
 
   // ── NEXT line: prefer door upcoming (schedule/calendar), fall back to rooms ──
@@ -438,13 +451,25 @@ function Arrival() {
         ) : null}
       </div>
 
-      {/* ── Needs You ── */}
-      {count > 0 ? (
+      {/* ── Needs You (unmuted) ── */}
+      {unmutedItems.length > 0 ? (
         <div data-testid="arrival-needs-you">
           <NeedsYouSection
-            items={allNeedsYouItems}
+            items={unmutedItems}
             count={count}
             multipleProjects={hasProjects}
+          />
+        </div>
+      ) : null}
+
+      {/* ── Muted (dimmed, under a MUTED caption) ── */}
+      {mutedItems.length > 0 ? (
+        <div data-testid="arrival-muted" className="arrival-muted-section">
+          <NeedsYouSection
+            items={mutedItems}
+            count={mutedItems.length}
+            multipleProjects={hasProjects}
+            muted
           />
         </div>
       ) : null}
@@ -517,13 +542,15 @@ function NeedsYouSection({
   items,
   count,
   multipleProjects,
+  muted = false,
 }: {
   items: NeedsYouItem[];
   count: number;
   multipleProjects: boolean;
+  muted?: boolean;
 }) {
   return (
-    <SurfaceSection label={countLabel("NEEDS YOU", count)}>
+    <SurfaceSection label={countLabel(muted ? "MUTED" : "NEEDS YOU", count)}>
       <SurfaceLedger count={null} cols="room">
         {items.map((item, i) => {
           const ext = item as NeedsYouItem & { _isDoor?: boolean; _isUnassigned?: boolean; _doorCard?: DoorCard };
@@ -548,6 +575,9 @@ function NeedsYouSection({
                   >
                     {item.why}
                   </span>
+                  {muted ? (
+                    <span className="arrival-project-token">MUTED</span>
+                  ) : null}
                   {multipleProjects && item.projectName ? (
                     <span className="arrival-project-token">{item.projectName}</span>
                   ) : null}

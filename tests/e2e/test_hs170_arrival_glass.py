@@ -587,6 +587,69 @@ def _run_brief_rig(
         server.stop()
 
 
+def _run_muted_rig(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
+) -> None:
+    """HS-171: mute one Room; headline count excludes muted; dimmed rows show."""
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": 900})
+            page.on("pageerror", lambda e: errors.append(str(e)))
+
+            page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _api(page, "POST", "/api/desk/seed", token=TOKEN)
+            _api(page, "PUT", "/api/setup/onboarding",
+                 {"disposition": "completed"}, token=TOKEN)
+
+            # Seed two projects with needs-you
+            _seed_two_projects_with_needs_you()
+            _seed_scheduled_recording(page)
+
+            # Mute one project (proj-beta has 2 items)
+            _api(page, "PUT", "/api/settings/heartbeat",
+                 {"muted_projects": ["proj-beta"]}, token=TOKEN)
+
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            _settle(page)
+            page.get_by_test_id("arrival-headline").wait_for(timeout=15000)
+            _settle(page)
+
+            # ── HEADLINE: count excludes muted (only proj-alpha's 1 item) ──
+            headline = page.get_by_test_id("arrival-display")
+            headline_text = headline.text_content() or ""
+            # proj-alpha has 1 item, proj-beta has 2 items (muted)
+            # headline should say "1 need you" (not 3)
+            assert headline_text[0] == "1", \
+                f"Headline should start with 1 (muted excluded): {headline_text}"
+
+            # ── NEEDS YOU has 1 unmuted row ──
+            needs_you = page.get_by_test_id("arrival-needs-you")
+            assert needs_you.count() == 1, "NEEDS YOU should be present"
+
+            # ── MUTED section has dimmed rows ──
+            muted_section = page.get_by_test_id("arrival-muted")
+            assert muted_section.count() == 1, "MUTED section should be present"
+
+            # Dimmed (opacity ~.55)
+            muted_opacity = muted_section.evaluate(
+                "el => getComputedStyle(el).opacity"
+            )
+            assert float(muted_opacity) < 0.7, \
+                f"Muted section should be dimmed: {muted_opacity}"
+
+            _shot(page, "build-arrival-muted", width)
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+
 # ── Pytest entry points ───────────────────────────────────────────
 
 
@@ -617,3 +680,8 @@ class TestArrivalGlass:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _run_brief_rig(tmp_path, monkeypatch, 1440)
+
+    def test_arrival_muted_1440(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _run_muted_rig(tmp_path, monkeypatch, 1440)
