@@ -102,7 +102,7 @@ between a person's name and a Watch entity's assignee/reviewer.
 | --- | --- | --- | --- | --- |
 | HS-172-01 | The design (the Loop's faces on the canvas before build) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-172-02 | The auto-intel trigger (intelligence by default after every linked meeting) | done | [story-02-the-auto-intel-trigger](./story-02-the-auto-intel-trigger.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-172-03 | The proposal bridge (extracted items as PROPOSALS in NEEDS YOU; Confirm writes through the kernel) | in-progress | [story-03-the-proposal-bridge](./story-03-the-proposal-bridge.md) | -- |
+| HS-172-03 | The proposal bridge (extracted items as PROPOSALS in NEEDS YOU; Confirm writes through the kernel) | done | [story-03-the-proposal-bridge](./story-03-the-proposal-bridge.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-172-04 | The People resolver (display name / alias to Watch assignee / reviewer; encrypted boundary) | done | [story-04-the-people-resolver](./story-04-the-people-resolver.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-172-05 | The 1:1 brief enrichment (Watches + commitments + meetings in the People card) | done | [story-05-the-brief-enrichment](./story-05-the-brief-enrichment.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-172-06 | The suggested source (meeting mention of a repo/issue as a suggested source row) | done | [story-06-the-suggested-source](./story-06-the-suggested-source.md) | [evidence-story-06](./evidence-story-06.md) |
