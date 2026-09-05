@@ -12,7 +12,7 @@ import { openSurfaceOr } from "../../desk/shell";
 import { openSourceRef } from "../../desk/surface/citations";
 import { useCoreWings } from "../../pages/cores/core-hooks";
 import type { SinceLastMeetingResponse } from "./model";
-import type { RoomSnapshot } from "./model";
+import type { RoomSnapshot, RoomProposalItem, RoomSuggestedSourceItem } from "./model";
 import { composeProjectTimeline } from "./model";
 import * as api from "./api";
 
@@ -52,6 +52,14 @@ export function useProjectRoomController(
   const [decisionBusy, setDecisionBusy] = useState("");
   const [successors, setSuccessors] = useState<Record<string, string>>({});
   const [readAt, setReadAt] = useState<string | null>(null);
+
+  // HS-172-03: proposals
+  const [proposals, setProposals] = useState<RoomProposalItem[]>([]);
+  const [proposalBusy, setProposalBusy] = useState("");
+
+  // HS-172-06: suggested sources
+  const [suggestedSources, setSuggestedSources] = useState<RoomSuggestedSourceItem[]>([]);
+  const [suggestionBusy, setSuggestionBusy] = useState("");
 
   // HS-169-03: POST /room/read after first paint and on Refresh.
   const postRead = async () => {
@@ -113,6 +121,19 @@ export function useProjectRoomController(
       if (!error) setError(readableError(reason));
     } finally {
       setDetailStatus("ready");
+    }
+
+    // Phase 3: HS-172-03/06 proposals + suggested sources (non-blocking)
+    // Confirmed proposals are now in the /room decisions list (wire HS-172-03).
+    try {
+      const [pendingProps, suggestions] = await Promise.all([
+        api.fetchProjectProposals(projectId, "proposed"),
+        api.fetchSuggestedSources(projectId),
+      ]);
+      setProposals(pendingProps);
+      setSuggestedSources(suggestions);
+    } catch {
+      // Non-fatal: the face renders without proposals/suggestions
     }
   };
 
@@ -181,6 +202,63 @@ export function useProjectRoomController(
     openSourceRef(ref);
   };
 
+  // HS-172-03: proposal actions
+  const handleConfirmProposal = async (
+    proposalId: string,
+    edits?: { text?: string; owner?: string; due?: string },
+  ) => {
+    setProposalBusy(proposalId);
+    try {
+      await api.confirmProposal(proposalId, edits);
+      // Reload to pick up the confirmed state and new D&C row
+      void load();
+    } catch (reason) {
+      setError(readableError(reason));
+    } finally {
+      setProposalBusy("");
+    }
+  };
+
+  const handleDismissProposal = async (proposalId: string) => {
+    setProposalBusy(proposalId);
+    try {
+      await api.dismissProposal(proposalId);
+      // Optimistic remove
+      setProposals((prev) => prev.filter((p) => p.id !== proposalId));
+    } catch (reason) {
+      setError(readableError(reason));
+    } finally {
+      setProposalBusy("");
+    }
+  };
+
+  // HS-172-06: suggested source actions
+  const handleAddSuggestion = async (ref: string) => {
+    setSuggestionBusy(ref);
+    try {
+      await api.addSuggestedSource(projectId, ref);
+      // Reload to pick up the new Watch source
+      void load();
+    } catch (reason) {
+      setError(readableError(reason));
+    } finally {
+      setSuggestionBusy("");
+    }
+  };
+
+  const handleDismissSuggestion = async (ref: string) => {
+    setSuggestionBusy(ref);
+    try {
+      await api.dismissSuggestedSource(projectId, ref);
+      // Optimistic remove
+      setSuggestedSources((prev) => prev.filter((s) => s.reference !== ref));
+    } catch (reason) {
+      setError(readableError(reason));
+    } finally {
+      setSuggestionBusy("");
+    }
+  };
+
   const search = async () => {
     if (!searchQuery.trim()) return;
     setSearching(true);
@@ -226,6 +304,16 @@ export function useProjectRoomController(
     decisionBusy,
     successors,
     setSuccessors,
+    // HS-172-03: proposals
+    proposals,
+    proposalBusy,
+    handleConfirmProposal,
+    handleDismissProposal,
+    // HS-172-06: suggested sources
+    suggestedSources,
+    suggestionBusy,
+    handleAddSuggestion,
+    handleDismissSuggestion,
     // Actions
     load,
     postRead,

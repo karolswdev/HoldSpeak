@@ -38,8 +38,12 @@ import type {
   RoomSourceItem,
   RoomChangeRow,
   RoomReviewData,
+  RoomNeedsYouItem,
+  RoomProposalItem,
+  RoomSuggestedSourceItem,
 } from "./model";
 import { lifecycleLabel } from "./model";
+import { StringGadget } from "../../desk/surface/gadgets";
 import { useProjectRoomController } from "./useProjectRoomController";
 import { useReviewController } from "./review/useReviewController";
 import { ReviewPosture } from "./review/ReviewPosture";
@@ -48,6 +52,7 @@ import { UpdatePosture } from "./update/UpdatePosture";
 import { useStewardController } from "./steward/useStewardController";
 import { StewardPosture } from "./steward/StewardPosture";
 import * as api from "./api";
+import { RoomPeopleSection } from "./RoomPeopleSection";
 import "./project-room.css";
 
 /* ── sub-components (kept for backward-compat re-exports) ── */
@@ -89,7 +94,8 @@ export function DecisionPromotionSlot({
 const PROVIDER_EMBLEM: Record<string, string> = {
   github: "GH",
   jira: "J",
-  meeting: "▣",
+  meeting: "MTG",
+  proposal: "MTG",
   delta: "◇",
   room: "▣",
 };
@@ -125,6 +131,19 @@ function formatTargetDate(iso: string): string {
   return `${months[d.getMonth()]} ${d.getDate()}`;
 }
 
+/** Format a due date as a short day name (FRI) when within ~7 days, else MMM DD. */
+function formatDueShort(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  const now = new Date();
+  const diffMs = d.getTime() - now.getTime();
+  const diffDays = Math.abs(diffMs) / 86_400_000;
+  if (diffDays <= 7) return days[d.getDay()];
+  const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  return `${months[d.getMonth()]} ${d.getDate()}`;
+}
+
 /** Local-time YYYY-MM-DD (same derivation as streamDayLabel's sameDay). */
 function localDateStr(d: Date): string {
   if (Number.isNaN(d.getTime())) return "";
@@ -140,6 +159,35 @@ function maxCheckedAt(items: RoomSourceItem[]): string | null {
     }
   }
   return best;
+}
+
+/* ── proposal date formatting ── */
+
+function formatMMDD(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** Format a model host into the egress label.
+ *  THIS DEVICE stays as-is; an IP on 192.168.x.x or 10.x.x.x gains "LAN";
+ *  everything else names the host. Never "LOCAL". */
+function egressLabel(host: string | null | undefined): string {
+  if (!host) return "";
+  if (host === "local" || host === "LOCAL" || host === "this_device") return "THIS DEVICE";
+  if (host === "THIS DEVICE") return host;
+  // Private network IPs -> append LAN
+  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return `${host} · LAN`;
+  return host;
+}
+
+function egressScope(host: string | null | undefined): "local" | "cloud" | undefined {
+  if (!host) return undefined;
+  if (host === "local" || host === "LOCAL" || host === "this_device" || host === "THIS DEVICE") return "local";
+  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return "local";
+  return "cloud";
 }
 
 /* ── severity ── */
@@ -296,6 +344,146 @@ function RoomHead({
   );
 }
 
+/* ── HS-172-03: Proposal row sub-component ── */
+
+function ProposalRow({
+  item,
+  proposal,
+  ctrl,
+  isNewest,
+}: {
+  item: RoomNeedsYouItem;
+  proposal: RoomProposalItem | undefined;
+  ctrl: ReturnType<typeof useProjectRoomController>;
+  isNewest: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+  const [editOwner, setEditOwner] = useState("");
+  const [editDue, setEditDue] = useState("");
+
+  const proposalId = item.proposalId || "";
+  const kind = item.proposalKind || "action";
+  const prefix = kind === "decision" ? "Decide:" : "Confirm:";
+  const host = item.host || proposal?.modelHost || "";
+
+  // Caption: BY FRI · from Standup 09-05 · MAREK + EgressChip
+  const dueHint = proposal?.dueHint || item.dueHint;
+  const meetingTitle = item.meetingTitle || "";
+  const createdAt = proposal?.createdAt || item.createdAt || "";
+  const speaker = proposal?.speakerLabel || item.speakerLabel || "";
+  const ownerHint = proposal?.ownerHint || item.ownerHint || "";
+
+  const openEdit = () => {
+    setEditText(proposal?.text || item.title);
+    setEditOwner(ownerHint || "");
+    setEditDue(dueHint || "");
+    setEditing(true);
+  };
+
+  const handleSaveConfirm = () => {
+    const edits: { text?: string; owner?: string; due?: string } = {};
+    const origText = proposal?.originalText || proposal?.text || item.title;
+    if (editText && editText !== origText) edits.text = editText;
+    if (editOwner) edits.owner = editOwner;
+    if (editDue) edits.due = editDue;
+    void ctrl.handleConfirmProposal(proposalId, edits);
+    setEditing(false);
+  };
+
+  const cancelEdit = () => setEditing(false);
+
+  if (editing) {
+    // Board: RoomProposalEdit — text StringGadget + OWNER + DUE + was: caption + Save & confirm + Cancel
+    const origText = proposal?.originalText || proposal?.text || item.title;
+    const origDue = proposal?.dueHint || item.dueHint || "";
+    const wasCaption = `WAS: ${origText.toUpperCase()}${origDue ? ` · BY ${origDue.toUpperCase()}` : ""}`;
+
+    return (
+      <li className="surface-ledger-row room-proposal-edit-row" data-testid="proposal-edit-row" data-open>
+        <div className="surface-ledger-line room-proposal-edit-line">
+          <span className="surface-ledger-lead">MTG</span>
+          <span className="surface-ledger-primary">
+            <span className="surface-primary" data-testid="proposal-edit-text">{item.title}</span>
+          </span>
+        </div>
+        <div className="surface-ledger-open room-proposal-edit-well" data-testid="proposal-edit-well">
+          <div className="room-proposal-edit-fields">
+            <StringGadget label="Text" value={editText} onChange={setEditText} autoFocus />
+            <label className="room-proposal-edit-label">
+              <span className="room-proposal-edit-label-text">OWNER</span>
+              <StringGadget label="Owner" value={editOwner} onChange={setEditOwner} placeholder="Owner" />
+            </label>
+            <label className="room-proposal-edit-label">
+              <span className="room-proposal-edit-label-text">DUE</span>
+              <StringGadget label="Due" value={editDue} onChange={setEditDue} placeholder="Due" />
+            </label>
+          </div>
+          <p className="room-proposal-was-caption" data-testid="proposal-was-caption">{wasCaption}</p>
+          <div className="room-proposal-edit-verbs">
+            <Button dense variant="primary" loading={ctrl.proposalBusy === proposalId} onClick={handleSaveConfirm} data-testid="proposal-save-confirm">
+              Save & confirm
+            </Button>
+            <Button dense variant="ghost" onClick={cancelEdit} data-testid="proposal-cancel-edit">
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </li>
+    );
+  }
+
+  // Caption parts
+  const captionParts: string[] = [];
+  if (dueHint) captionParts.push(`BY ${dueHint.toUpperCase()}`);
+  if (meetingTitle) {
+    const dateStr = formatMMDD(createdAt);
+    captionParts.push(`from ${meetingTitle}${dateStr ? ` ${dateStr}` : ""}`);
+  }
+
+  return (
+    <SurfaceLedgerRow
+      data-testid="proposal-row"
+      lead="MTG"
+      primary={
+        <span className="surface-primary room-proposal-text" data-testid="proposal-primary">
+          <span className="room-proposal-prefix" data-proposal-kind={kind}>{prefix}</span>
+          {" "}{item.title}
+        </span>
+      }
+      wrap
+      cells={
+        <>
+          {captionParts.length > 0 ? (
+            <span className="room-proposal-caption" data-testid="proposal-caption">
+              {captionParts.join(" · ")}
+            </span>
+          ) : null}
+          {speaker ? (
+            <span className="room-proposal-caption room-proposal-speaker">{speaker.toUpperCase()}</span>
+          ) : null}
+          {host ? (
+            <EgressChip label={egressLabel(host)} scope={egressScope(host)} />
+          ) : null}
+        </>
+      }
+      trailing={
+        <span className="room-proposal-verbs" data-testid="proposal-verbs">
+          <Button dense variant="primary" loading={ctrl.proposalBusy === proposalId} onClick={() => void ctrl.handleConfirmProposal(proposalId)} data-testid="proposal-confirm">
+            Confirm
+          </Button>
+          <Button dense variant="ghost" onClick={openEdit} data-testid="proposal-edit">
+            Edit
+          </Button>
+          <Button dense variant="ghost" onClick={() => void ctrl.handleDismissProposal(proposalId)} data-testid="proposal-dismiss">
+            Dismiss
+          </Button>
+        </span>
+      }
+    />
+  );
+}
+
 /* ── NEEDS YOU section ── */
 
 function NeedsYouSection({
@@ -330,38 +518,65 @@ function NeedsYouSection({
     );
   }
 
+  // Build a lookup from proposalId to the full proposal data
+  const proposalMap = new Map<string, RoomProposalItem>();
+  for (const p of ctrl.proposals) proposalMap.set(p.id, p);
+
+  // Find the newest proposal for the accent frame
+  const newestProposalId = items
+    .filter((it) => it.proposalId)
+    .sort((a, b) => (b.createdAt || b.since || "").localeCompare(a.createdAt || a.since || ""))
+    [0]?.proposalId || "";
+
   return (
     <SurfaceSection label={`NEEDS YOU ${count}`} actions={reviewAction}>
       <SurfaceLedger count="" cols="room">
         <ul className="surface-ledger-rows">
-          {items.map((item, i) => (
-            <SurfaceLedgerRow
-              key={`${item.source}-${item.title}-${i}`}
-              data-testid="needs-you-row"
-              lead={emblemFor(item.source)}
-              primary={<span className="surface-primary">{item.title}</span>}
-              wrap
-              cells={
-                <span
-                  className="surface-token room-why-token"
-                  style={{ color: severityColor(item.severity) }}
-                  data-tone={severityTone(item.severity)}
-                  data-testid="needs-you-why"
+          {items.map((item, i) => {
+            if (item.proposalId) {
+              return (
+                <div
+                  key={`prop-${item.proposalId}`}
+                  className={item.proposalId === newestProposalId ? "room-needs-you-new" : undefined}
                 >
-                  {item.why}
-                </span>
-              }
-              trailing={
-                item.verb === "decide" ? (
-                  <Button dense variant="ghost" onClick={() => {
-                    if (item.url) window.open(item.url, "_blank", "noopener");
-                  }}>Decide</Button>
-                ) : item.url ? (
-                  <Button dense variant="ghost" onClick={() => window.open(item.url!, "_blank", "noopener")}>Open</Button>
-                ) : null
-              }
-            />
-          ))}
+                  <ProposalRow
+                    item={item}
+                    proposal={proposalMap.get(item.proposalId)}
+                    ctrl={ctrl}
+                    isNewest={item.proposalId === newestProposalId}
+                  />
+                </div>
+              );
+            }
+            return (
+              <SurfaceLedgerRow
+                key={`${item.source}-${item.title}-${i}`}
+                data-testid="needs-you-row"
+                lead={emblemFor(item.source)}
+                primary={<span className="surface-primary">{item.title}</span>}
+                wrap
+                cells={
+                  <span
+                    className="surface-token room-why-token"
+                    style={{ color: severityColor(item.severity) }}
+                    data-tone={severityTone(item.severity)}
+                    data-testid="needs-you-why"
+                  >
+                    {item.why}
+                  </span>
+                }
+                trailing={
+                  item.verb === "decide" ? (
+                    <Button dense variant="ghost" onClick={() => {
+                      if (item.url) window.open(item.url, "_blank", "noopener");
+                    }}>Decide</Button>
+                  ) : item.url ? (
+                    <Button dense variant="ghost" onClick={() => window.open(item.url!, "_blank", "noopener")}>Open</Button>
+                  ) : null
+                }
+              />
+            );
+          })}
         </ul>
       </SurfaceLedger>
     </SurfaceSection>
@@ -374,10 +589,12 @@ function SourcesSection({
   room,
   onReload,
   stewardCtrl,
+  ctrl,
 }: {
   room: RoomSnapshot;
   onReload: () => void;
   stewardCtrl: ReturnType<typeof useStewardController>;
+  ctrl: ReturnType<typeof useProjectRoomController>;
 }) {
   const [busyWatch, setBusyWatch] = useState<string>("");
 
@@ -413,9 +630,15 @@ function SourcesSection({
     return aOrder - bOrder;
   });
 
+  // HS-172-06: suggested sources sit ABOVE existing sources
+  const suggestions = ctrl.suggestedSources;
+
+  // SOURCES N counts accepted sources only (F9 ruling); count absent at zero
+  const acceptedCount = items.filter((s) => !s.suggested).length;
+
   return (
     <SurfaceSection
-      label={`SOURCES ${count}`}
+      label={acceptedCount > 0 ? `SOURCES ${acceptedCount}` : "SOURCES"}
       actions={
         /* HS-169-07 park candidate: the steward's settings live under the
            sources (D4/D5).  Until per-source Adjust exists, this ghost verb
@@ -427,6 +650,38 @@ function SourcesSection({
     >
       <SurfaceLedger count="" cols="room">
         <ul className="surface-ledger-rows">
+          {/* HS-172-06: suggested sources sit above existing */}
+          {suggestions.map((sug) => {
+            // Resolve meeting title from the needs-you items or proposals
+            const mtgItem = room.needsYou.state === "ok"
+              ? room.needsYou.items.find((it) => it.meetingTitle)
+              : undefined;
+            const sugMeetingTitle = mtgItem?.meetingTitle || "";
+            return (
+            <SurfaceLedgerRow
+              key={`sug-${sug.id}`}
+              data-testid="suggested-source-row"
+              lead={emblemFor(sug.provider)}
+              primary={<span className="surface-primary" data-testid="suggested-ref">{sug.reference}</span>}
+              wrap
+              cells={
+                <span className="surface-token room-chip-faint" data-testid="suggested-caption">
+                  {`SUGGESTED · FROM ${sugMeetingTitle ? sugMeetingTitle.toUpperCase() : "MEETING"} ${formatMMDD(sug.createdAt)}`}
+                </span>
+              }
+              trailing={
+                <span className="room-suggestion-verbs" data-testid="suggested-verbs">
+                  <Button dense variant="primary" loading={ctrl.suggestionBusy === sug.reference} onClick={() => void ctrl.handleAddSuggestion(sug.reference)} data-testid="suggested-add">
+                    Add
+                  </Button>
+                  <Button dense variant="ghost" onClick={() => void ctrl.handleDismissSuggestion(sug.reference)} data-testid="suggested-dismiss">
+                    Dismiss
+                  </Button>
+                </span>
+              }
+            />
+            );
+          })}
           {sorted.map((src) => {
             if (src.state === "cant_check") {
               return (
@@ -578,33 +833,104 @@ function SinceYouLookedSection({ room }: { room: RoomSnapshot }) {
 function DecisionsCommitmentsSection({ room }: { room: RoomSnapshot }) {
   const decisionItems = room.decisions.state === "ok" ? room.decisions.items : [];
   const commitmentItems = room.commitments.state === "ok" ? room.commitments.items : [];
-  if (decisionItems.length === 0 && commitmentItems.length === 0) return null;
-  const total = decisionItems.length + commitmentItems.length;
+
+  // HS-172-03: fold commitments into their decision row when the decision
+  // carries a commitmentId that matches a commitment's id. The merged row
+  // shows OWNER + BY DUE + CONFIRMED; the commitment is not listed separately.
+  const foldedCommitmentIds = new Set<string>();
+  const commitmentById = new Map(commitmentItems.map((c) => [c.id, c]));
+  for (const dec of decisionItems) {
+    if (dec.commitmentId && commitmentById.has(dec.commitmentId)) {
+      foldedCommitmentIds.add(dec.commitmentId);
+    }
+  }
+  const unfoldedCommitments = commitmentItems.filter((c) => !foldedCommitmentIds.has(c.id));
+
+  const total = decisionItems.length + unfoldedCommitments.length;
+  if (total === 0) return null;
 
   return (
     <SurfaceSection label={`DECISIONS & COMMITMENTS ${total}`}>
       <SurfaceLedger count="" cols="room">
         <ul className="surface-ledger-rows">
-          {decisionItems.map((dec) => (
-            <SurfaceLedgerRow
-              key={`dec-${dec.id}`}
-              primary={
-                <>
-                  <span className="room-dc-verb">Decided</span>
-                  {" · "}{dec.text}{" · "}{humanTime(dec.at)}
-                </>
+          {decisionItems.map((dec) => {
+            // HS-172-03: proposal-derived decisions carry source=meeting
+            const isProposal = dec.source === "meeting";
+            const confirmedTime = dec.confirmedAt ? formatTimeShort(dec.confirmedAt) : "";
+            const foldedCommitment = dec.commitmentId ? commitmentById.get(dec.commitmentId) : undefined;
+
+            // Build WAS tokens from changed fields only (F5 ruling)
+            const wasParts: string[] = [];
+            if (dec.was) {
+              if (dec.was.text) {
+                const truncated = dec.was.text.length > 40
+                  ? `${dec.was.text.slice(0, 40)}...`
+                  : dec.was.text;
+                wasParts.push(`WAS "${truncated}"`);
               }
-              wrap
-              trailing={
-                dec.url ? (
-                  <Button dense variant="ghost" onClick={() => window.open(dec.url!, "_blank", "noopener")}>Open</Button>
-                ) : (
-                  <Button dense variant="ghost" onClick={() => openPrimitive(`decision:${dec.id}`)}>Open</Button>
-                )
-              }
-            />
-          ))}
-          {commitmentItems.map((c) => (
+              if (dec.was.due) wasParts.push(`WAS BY ${dec.was.due.toUpperCase()}`);
+              if (dec.was.owner) wasParts.push(`WAS ${dec.was.owner}`);
+            }
+
+            if (isProposal) {
+              // Merged caption: OWNER MAREK · BY FRI · CONFIRMED 09:15 + WAS tokens
+              const ownerName = foldedCommitment?.owner;
+              const dueDateRaw = foldedCommitment?.dueAt;
+              // Format due as short day name (FRI) when within ~7 days, else date
+              const dueLabel = dueDateRaw ? formatDueShort(dueDateRaw) : "";
+
+              return (
+                <SurfaceLedgerRow
+                  key={`dec-${dec.id}`}
+                  data-testid="decision-row"
+                  lead="MTG"
+                  primary={<span className="surface-primary">{dec.text}</span>}
+                  wrap
+                  cells={
+                    <>
+                      {ownerName ? (
+                        <span className="surface-token">OWNER {ownerName.toUpperCase()}</span>
+                      ) : null}
+                      {dueLabel ? (
+                        <span className="surface-token">BY {dueLabel.toUpperCase()}</span>
+                      ) : null}
+                      <span className="surface-token room-confirmed-token" data-testid="confirmed-state">
+                        CONFIRMED {confirmedTime}
+                      </span>
+                      {wasParts.map((w, wi) => (
+                        <span key={wi} className="surface-token room-was-token">{w}</span>
+                      ))}
+                    </>
+                  }
+                  trailing={
+                    <Button dense variant="ghost" onClick={() => openPrimitive(`decision:${dec.id}`)}>Open</Button>
+                  }
+                />
+              );
+            }
+
+            return (
+              <SurfaceLedgerRow
+                key={`dec-${dec.id}`}
+                data-testid="decision-row"
+                primary={
+                  <>
+                    <span className="room-dc-verb">Decided</span>
+                    {" · "}{dec.text}{" · "}{humanTime(dec.at)}
+                  </>
+                }
+                wrap
+                trailing={
+                  dec.url ? (
+                    <Button dense variant="ghost" onClick={() => window.open(dec.url!, "_blank", "noopener")}>Open</Button>
+                  ) : (
+                    <Button dense variant="ghost" onClick={() => openPrimitive(`decision:${dec.id}`)}>Open</Button>
+                  )
+                }
+              />
+            );
+          })}
+          {unfoldedCommitments.map((c) => (
             <SurfaceLedgerRow
               key={`com-${c.id}`}
               primary={
@@ -1050,7 +1376,10 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
                 <NeedsYouSection room={ctrl.room} ctrl={ctrl} reviewCtrl={reviewCtrl} pendingCount={pendingCount} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "80ms" }}>
-                <SourcesSection room={ctrl.room} onReload={() => void ctrl.load()} stewardCtrl={stewardCtrl} />
+                <SourcesSection room={ctrl.room} onReload={() => void ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} />
+              </div>
+              <div className="room-section-rise" style={{ animationDelay: "100ms" }}>
+                <RoomPeopleSection projectId={ctrl.projectId} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "120ms" }}>
                 <SinceYouLookedSection room={ctrl.room} />

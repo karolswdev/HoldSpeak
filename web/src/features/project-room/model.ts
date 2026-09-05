@@ -196,14 +196,51 @@ export type RoomNeedsYouItem = {
   why: string;
   since: string;
   url: string | null;
-  verb: "open" | "decide";
+  verb: "open" | "decide" | "confirm";
   severity: "danger" | "warning" | "info";
+  proposalId?: string;
+  proposalKind?: "decision" | "action";
+  host?: string;
+  speakerLabel?: string;
+  dueHint?: string;
+  ownerHint?: string;
+  originalText?: string;
+  meetingTitle?: string;
+  createdAt?: string;
 };
 
 /** Needs-you section data shape (when ok). */
 export type RoomNeedsYouData = {
   items: RoomNeedsYouItem[];
   count: number;
+};
+
+/** HS-172-03: a proposal item from the proposals API (full shape). */
+export type RoomProposalItem = {
+  id: string;
+  meetingId: string;
+  projectId: string | null;
+  kind: "decision" | "action";
+  text: string;
+  ownerHint: string | null;
+  dueHint: string | null;
+  speakerLabel: string | null;
+  modelHost: string | null;
+  state: "proposed" | "confirmed" | "dismissed";
+  originalText: string | null;
+  createdAt: string;
+  decidedAt: string | null;
+};
+
+/** HS-172-06: a suggested source from the suggested-sources API. */
+export type RoomSuggestedSourceItem = {
+  id: string;
+  projectId: string;
+  meetingId: string;
+  provider: string;
+  reference: string;
+  status: "pending" | "accepted" | "dismissed";
+  createdAt: string;
 };
 
 /** A source row: per-Watch status.
@@ -262,12 +299,20 @@ export type RoomSinceReadData = {
   groups: RoomSinceReadGroup[];
 };
 
-/** A decision row. */
+/** A decision row.
+ *  HS-172-03: proposal-derived decisions carry extra provenance fields. */
 export type RoomDecisionItem = {
   id: string;
   text: string;
   at: string;
   url: string | null;
+  /** proposal provenance (absent on non-proposal decisions) */
+  proposalId?: string;
+  source?: string;
+  meetingTitle?: string;
+  confirmedAt?: string;
+  commitmentId?: string;
+  was?: { text?: string; owner?: string; due?: string };
 };
 
 /** A commitment row. */
@@ -410,9 +455,18 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             why: String(r.why ?? ""),
             since: String(r.since ?? ""),
             url: r.url != null ? String(r.url) : null,
-            verb: (r.verb === "decide" ? "decide" : "open") as "open" | "decide",
+            verb: (r.verb === "decide" ? "decide" : r.verb === "confirm" ? "confirm" : "open") as "open" | "decide" | "confirm",
             severity: (["danger", "warning", "info"].includes(String(r.severity ?? ""))
               ? String(r.severity) : "info") as "danger" | "warning" | "info",
+            proposalId: r.proposal_id != null ? String(r.proposal_id) : undefined,
+            proposalKind: r.proposal_kind === "decision" ? "decision" : r.proposal_kind === "action" ? "action" : undefined,
+            host: r.host != null ? String(r.host) : undefined,
+            speakerLabel: r.speaker_label != null ? String(r.speaker_label) : undefined,
+            dueHint: r.due_hint != null ? String(r.due_hint) : undefined,
+            ownerHint: r.owner_hint != null ? String(r.owner_hint) : undefined,
+            originalText: r.original_text != null ? String(r.original_text) : undefined,
+            meetingTitle: r.meeting_title != null ? String(r.meeting_title) : undefined,
+            createdAt: r.created_at != null ? String(r.created_at) : undefined,
           }))
         : [],
       count: Number(s.count ?? 0),
@@ -500,12 +554,28 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
     })),
     decisions: decodeSection<{ items: RoomDecisionItem[] }>(raw.decisions, (s) => ({
       items: Array.isArray(s.items)
-        ? (s.items as Record<string, unknown>[]).map((r) => ({
-            id: String(r.id ?? ""),
-            text: String(r.text ?? ""),
-            at: String(r.at ?? ""),
-            url: r.url != null ? String(r.url) : null,
-          }))
+        ? (s.items as Record<string, unknown>[]).map((r) => {
+            const item: RoomDecisionItem = {
+              id: String(r.id ?? ""),
+              text: String(r.text ?? ""),
+              at: String(r.at ?? ""),
+              url: r.url != null ? String(r.url) : null,
+            };
+            // HS-172-03: proposal provenance
+            if (r.proposal_id != null) item.proposalId = String(r.proposal_id);
+            if (r.source != null) item.source = String(r.source);
+            if (r.meeting_title != null) item.meetingTitle = String(r.meeting_title);
+            if (r.confirmed_at != null) item.confirmedAt = String(r.confirmed_at);
+            if (r.commitment_id != null) item.commitmentId = String(r.commitment_id);
+            if (r.was && typeof r.was === "object") {
+              const w = r.was as Record<string, unknown>;
+              item.was = {};
+              if (w.text != null) item.was.text = String(w.text);
+              if (w.owner != null) item.was.owner = String(w.owner);
+              if (w.due != null) item.was.due = String(w.due);
+            }
+            return item;
+          })
         : [],
     })),
     commitments: decodeSection<{ items: RoomCommitmentItem[] }>(raw.commitments, (s) => ({
@@ -623,5 +693,39 @@ export function decodeDecision(raw: Record<string, unknown>): {
     lifecycle: String(raw.lifecycle || "recorded"),
     decidedAt: String(raw.decided_at || raw.created_at || ""),
     rationale: String(raw.rationale || ""),
+  };
+}
+
+/* ── HS-172-03/06 decoders ── */
+
+export function decodeProposal(raw: Record<string, unknown>): RoomProposalItem {
+  return {
+    id: String(raw.id ?? ""),
+    meetingId: String(raw.meeting_id ?? ""),
+    projectId: raw.project_id != null ? String(raw.project_id) : null,
+    kind: raw.kind === "decision" ? "decision" : "action",
+    text: String(raw.text ?? ""),
+    ownerHint: raw.owner_hint != null ? String(raw.owner_hint) : null,
+    dueHint: raw.due_hint != null ? String(raw.due_hint) : null,
+    speakerLabel: raw.speaker_label != null ? String(raw.speaker_label) : null,
+    modelHost: raw.model_host != null ? String(raw.model_host) : null,
+    state: (["proposed", "confirmed", "dismissed"].includes(String(raw.state ?? ""))
+      ? String(raw.state) : "proposed") as "proposed" | "confirmed" | "dismissed",
+    originalText: raw.original_text != null ? String(raw.original_text) : null,
+    createdAt: String(raw.created_at ?? ""),
+    decidedAt: raw.decided_at != null ? String(raw.decided_at) : null,
+  };
+}
+
+export function decodeSuggestedSource(raw: Record<string, unknown>): RoomSuggestedSourceItem {
+  return {
+    id: String(raw.id ?? ""),
+    projectId: String(raw.project_id ?? ""),
+    meetingId: String(raw.meeting_id ?? ""),
+    provider: String(raw.provider ?? ""),
+    reference: String(raw.reference ?? ""),
+    status: (["pending", "accepted", "dismissed"].includes(String(raw.status ?? ""))
+      ? String(raw.status) : "pending") as "pending" | "accepted" | "dismissed",
+    createdAt: String(raw.created_at ?? ""),
   };
 }

@@ -133,6 +133,102 @@
 }
 .room-since-time { color: var(--text-faint); }
 
+/* ── HS-172-03: proposal rows ── */
+.room-proposal-prefix {
+  font-weight: 600;
+  color: var(--accent, #a86e4a);
+}
+.room-proposal-text {
+  word-break: break-word;
+}
+.room-proposal-caption {
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+/* Speaker token is uppercase per F8 but separated from the provenance */
+.room-proposal-speaker {
+  text-transform: uppercase;
+}
+.room-proposal-verbs {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  flex: none;
+}
+
+/* ── HS-172-03: proposal edit well ── */
+.room-proposal-edit-row {
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--surface-2, #1c1f27);
+}
+.room-proposal-edit-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 4px;
+}
+.room-proposal-edit-well {
+  padding: 4px 12px 12px 26px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.room-proposal-edit-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.room-proposal-edit-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--desk-surface-detail-size);
+  font-family: var(--font-mono);
+}
+.room-proposal-edit-label-text {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  min-width: 50px;
+}
+.room-proposal-was-caption {
+  margin: 0;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+.room-proposal-edit-verbs {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+/* ── HS-172-03: confirmed proposal in D&C ── */
+.room-confirmed-token {
+  color: var(--success, #4ade80);
+  font-weight: 600;
+}
+.room-was-token {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* ── HS-172-06: suggested source verbs ── */
+.room-suggestion-verbs {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  flex: none;
+}
+
 /* ── decisions & commitments ── */
 .room-dc-verb { font-weight: 600; color: var(--text-primary); }
 
@@ -301,7 +397,17 @@
     margin-left: auto;
   }
 
-  /* (WHY token alignment handled by the primary~ override above) */
+  /* HS-172-03: proposal verbs stack under caption at 393 */
+  .room-proposal-verbs {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .room-suggestion-verbs {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+  }
 
   /* Condition 9: history head stacks at 393 */
   .room-history .surface-stream-head {
@@ -314,6 +420,25 @@
   .room-history .room-history-controls {
     flex: 0 0 100%;
   }
+}
+
+/* ── HS-172-07: People section ── */
+.room-people-primary {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.room-people-tok {
+  flex: none;
+}
+.room-people-overdue {
+  color: var(--desk-warning, #fbbf24);
+}
+.room-people-sep {
+  color: var(--text-faint);
+  flex: none;
 }
 
 /* ── legacy ── */
