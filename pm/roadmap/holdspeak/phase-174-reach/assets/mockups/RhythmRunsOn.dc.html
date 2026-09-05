@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+  </style>
+</helmet>
+
+<!-- ═══ WINDOW "Rhythm" (640) — with Runs on row and remote receipt ═══ -->
+<div style="width:640px; border:1px solid #363b50; border-radius:2px; background:#15171d; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40), inset 0 0 0 1px #2a2e3e; display:flex; flex-direction:column;">
+
+  <!-- ─── TITLE BAR ─── -->
+  <div style="height:40px; padding:0 12px; display:flex; align-items:center; gap:10px; background:#242833; border-radius:1px 1px 0 0; flex-shrink:0;">
+    <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+      <span style="width:12px; height:12px; border-radius:2px; background:#f87171; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#fbbf24; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#34d399; display:block;"></span>
+    </div>
+    <span style="flex:1; min-width:0; font:700 17px/1 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Rhythm</span>
+  </div>
+
+  <!-- ─── BODY ─── -->
+  <div style="flex:1; padding:16px 20px 14px; display:flex; flex-direction:column; gap:20px;">
+
+    <!-- ═══ HEAD ═══ -->
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="font:650 26px/1.15 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#a86e4a;">Every 15 min</div>
+    </div>
+
+    <!-- ═══ MODULE ROWS ═══ -->
+    <div style="display:flex; flex-direction:column;">
+
+      <!-- Row: SWEEP -->
+      <div style="display:flex; flex-direction:column; gap:4px; padding:10px 0; border-top:1px solid #2a2e3e;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Sweep</span>
+          <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">EVERY 15 MIN<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+          <span style="flex:1;"></span>
+          <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Run now</button>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">QUIET 22:00&ndash;08:00 &middot; NEXT 08:05</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">&middot; LAST 07:40 &middot; 3 ROOMS &middot; 41 MS</span>
+        </div>
+      </div>
+
+      <!-- Row: RUNS ON (new — the runner host selection) -->
+      <div style="display:flex; flex-direction:column; gap:4px; padding:10px 0; border-top:1px solid #2a2e3e;">
+        <!-- Line 1: primary + CycleGadget + LAST RUN token (no trailing verb -- Run now lives on Sweep only) -->
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Runs on</span>
+          <!-- CycleGadget: host picker -->
+          <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">192.168.1.43<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+          <!-- Muted token: LAST RUN -->
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">LAST RUN 2 H AGO</span>
+        </div>
+        <!-- Line 2: the receipt from the last remote sweep -->
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">SWEEP &middot; 32 ENTITIES</span>
+          <!-- REMOTE chip: outlined (same family, stroked border) -->
+          <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #a86e4a; border-radius:0; background:transparent; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">REMOTE &middot; 192.168.1.43</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">07:40</span>
+        </div>
+      </div>
+
+      <!-- Row: MONDAY BRIEF -->
+      <div style="display:flex; flex-direction:column; gap:4px; padding:10px 0; border-top:1px solid #2a2e3e;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Monday brief</span>
+          <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">DAILY 08:00<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+          <span style="flex:1;"></span>
+          <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Generate now</button>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">NEXT MON 08:00</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">&middot; LAST 08-24</span>
+        </div>
+      </div>
+
+      <!-- Row: NOTIFY -->
+      <div style="display:flex; flex-direction:column; gap:4px; padding:10px 0; border-top:1px solid #2a2e3e;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Notify</span>
+          <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">ON THE EDGE<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+          <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">COUNT ONLY<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+          <button type="button" style="display:inline-flex; align-items:center; gap:4px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">Q4 PLATFORM <span style="color:#34d399;">&#10003;</span></button>
+          <button type="button" style="display:inline-flex; align-items:center; gap:4px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0; cursor:pointer; white-space:nowrap;">GOVERNANCE <span style="color:#34d399;">&#10003;</span></button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ─── FOOTER ─── -->
+  <footer style="height:36px; padding:0 12px; background:#1c1f27; border-top:1px solid #2a2e3e; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); flex-shrink:0;">
+    <div style="display:flex; align-items:center; height:100%; gap:8px;">
+      <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">THIS DEVICE</span>
+      <span style="flex:1;"></span>
+      <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d;">WRITTEN 09:41</span>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>

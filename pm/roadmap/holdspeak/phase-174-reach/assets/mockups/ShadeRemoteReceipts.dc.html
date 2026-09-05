@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+  </style>
+</helmet>
+
+<!-- ═══ SYSTEM SHADE — RECEIPTS with REMOTE badge (393 shade width) ═══ -->
+<!-- The overnight sweep ran from .43; receipts carry REMOTE + IP. -->
+<!-- One local row for contrast (STEWARD RUN from THIS DEVICE). -->
+<div style="width:380px; display:flex; flex-direction:column; border:1px solid #2a2e3e; border-radius:2px; background:#15171d; box-shadow:0 8px 32px rgba(0,0,0,0.5); backdrop-filter:blur(12px);">
+
+  <!-- ─── SHADE HEAD ─── -->
+  <div style="display:flex; align-items:baseline; gap:10px; padding:12px 14px 6px; background:#1c1f27; border-radius:1px 1px 0 0;">
+    <span style="font:650 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#767e8d;">Missed</span>
+    <span style="flex:1;"></span>
+    <button type="button" style="padding:2px 6px; border:0; border-radius:2px; background:none; color:#767e8d; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Desk memory</button>
+  </div>
+
+  <!-- ═══ PROJECTS SECTION ═══ -->
+  <div style="padding:4px 8px 8px;">
+    <h4 style="margin:0; padding:6px 6px 4px; font:650 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#767e8d;">PROJECTS <b style="font-weight:400; color:#9ba2b0;">&middot; 3 NEED YOU</b></h4>
+
+    <!-- Project row: Q4 Platform -->
+    <div style="display:grid; grid-template-columns:24px minmax(0, 1fr); gap:2px 8px; padding:7px 6px 9px; border-radius:2px;">
+      <span style="text-align:center; padding-top:1px; font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&#9635;</span>
+      <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+        <strong style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Q4 Platform</strong>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#fbbf24; white-space:nowrap;">2 NEED YOU</span>
+          <span style="flex:1;"></span>
+          <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Open</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project row: Governance -->
+    <div style="display:grid; grid-template-columns:24px minmax(0, 1fr); gap:2px 8px; padding:7px 6px 9px; border-top:1px solid rgba(42,46,62,0.5); border-radius:2px;">
+      <span style="text-align:center; padding-top:1px; font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&#9635;</span>
+      <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+        <strong style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Governance</strong>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#fbbf24; white-space:nowrap;">1 NEEDS YOU</span>
+          <span style="flex:1;"></span>
+          <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Open</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FINISHED SECTION — receipt rows with REMOTE badges ═══ -->
+  <div style="padding:4px 8px 8px; border-top:1px solid rgba(42,46,62,0.5);">
+    <h4 style="margin:0; padding:6px 6px 4px; font:650 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#767e8d;">Finished <b style="font-weight:400; color:#9ba2b0;">&middot; 3</b></h4>
+
+    <!-- Receipt 1: READ project_list — REMOTE 100.64.0.5 -->
+    <div style="display:grid; grid-template-columns:24px minmax(0, 1fr); gap:2px 8px; padding:7px 6px 9px; border-radius:2px;">
+      <span style="text-align:center; padding-top:1px; color:#767e8d;">&#10003;</span>
+      <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+          <strong style="font:600 13px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; overflow-wrap:anywhere;">READ</strong>
+          <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">project_list</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px;">
+          <!-- REMOTE chip: outlined/stroked — same family as local but distinct -->
+          <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #a86e4a; border-radius:0; background:transparent; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">REMOTE &middot; 100.64.0.5</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Receipt 2: SWEEP 32 ENTITIES — REMOTE 192.168.1.43 07:40 -->
+    <div style="display:grid; grid-template-columns:24px minmax(0, 1fr); gap:2px 8px; padding:7px 6px 9px; border-top:1px solid rgba(42,46,62,0.5); border-radius:2px;">
+      <span style="text-align:center; padding-top:1px; color:#767e8d;">&#10003;</span>
+      <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+          <strong style="font:600 13px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; overflow-wrap:anywhere;">SWEEP</strong>
+          <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">32 ENTITIES</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px;">
+          <!-- REMOTE chip -->
+          <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #a86e4a; border-radius:0; background:transparent; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">REMOTE &middot; 192.168.1.43</span>
+          <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">07:40</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Receipt 3: STEWARD RUN draft — THIS DEVICE (local, for contrast) -->
+    <div style="display:grid; grid-template-columns:24px minmax(0, 1fr); gap:2px 8px; padding:7px 6px 9px; border-top:1px solid rgba(42,46,62,0.5); border-radius:2px;">
+      <span style="text-align:center; padding-top:1px; color:#767e8d;">&#10003;</span>
+      <div style="display:flex; flex-direction:column; gap:4px; min-width:0;">
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+          <strong style="font:600 13px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; overflow-wrap:anywhere;">STEWARD RUN</strong>
+          <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0;">draft</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px;">
+          <!-- THIS DEVICE chip: solid recessed (the existing local style) -->
+          <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">THIS DEVICE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

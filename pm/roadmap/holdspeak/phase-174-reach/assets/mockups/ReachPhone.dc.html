@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+  </style>
+</helmet>
+
+<!-- ═══ PHONE (393) — Door Confluence row + Rhythm Runs on row ═══ -->
+<div style="width:393px; display:flex; flex-direction:column; gap:20px;">
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 1: DOOR — CONFLUENCE ROW (393 stacked) -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div style="border:1px solid #363b50; border-radius:2px; background:#15171d; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40), inset 0 0 0 1px #2a2e3e; display:flex; flex-direction:column;">
+
+    <!-- Caption -->
+    <div style="padding:10px 14px 0;">
+      <span style="font:650 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#767e8d;">DOOR &middot; CONFLUENCE</span>
+    </div>
+
+    <!-- Confluence connected row — stacked at 393 -->
+    <div style="display:flex; align-items:start; padding:10px 14px 12px;">
+      <div style="width:40px; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding-top:2px;">
+        <span style="font:700 15px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">C</span>
+      </div>
+      <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:6px;">
+        <!-- Name row -->
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font:600 14px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Confluence</span>
+        </div>
+        <!-- Space picker -->
+        <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap; align-self:flex-start;">GOV<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+        <!-- Watch defaults wrapped -->
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px;">
+          <span style="display:inline-flex; align-items:center; gap:4px; min-height:22px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#34d399; cursor:pointer; white-space:nowrap;"><span style="flex:none; font-size:11px; line-height:1;">&#10003;</span>RECENT BLOGS</span>
+          <span style="display:inline-flex; align-items:center; min-height:22px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#767e8d; cursor:pointer; white-space:nowrap;">PAGES BY ID</span>
+        </div>
+        <!-- State + host stacked -->
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px;">
+          <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span>SIGNED IN</span>
+          <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">KAROLSWDEV.ATLASSIAN.NET</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="flex:1;"></span>
+          <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Adjust</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- SECTION 2: RHYTHM — RUNS ON ROW (393 stacked) -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div style="border:1px solid #363b50; border-radius:2px; background:#15171d; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40), inset 0 0 0 1px #2a2e3e; display:flex; flex-direction:column;">
+
+    <!-- Caption -->
+    <div style="padding:10px 14px 0;">
+      <span style="font:650 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#767e8d;">RHYTHM &middot; RUNS ON</span>
+    </div>
+
+    <div style="padding:10px 14px 12px; display:flex; flex-direction:column; gap:6px;">
+      <!-- Line 1: primary + Run now -->
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font:600 14px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Runs on</span>
+        <span style="flex:1;"></span>
+        <button type="button" style="min-height:24px; padding:2px 8px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; flex-shrink:0;">Run now</button>
+      </div>
+      <!-- Line 2: CycleGadget -->
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+        <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">192.168.1.43<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+      </div>
+      <!-- Line 3: LAST RUN token -->
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+        <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">LAST RUN 2 H AGO</span>
+      </div>
+      <!-- Line 4: receipt -->
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+        <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">SWEEP &middot; 32 ENTITIES</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
+        <!-- REMOTE chip -->
+        <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #a86e4a; border-radius:0; background:transparent; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">REMOTE &middot; 192.168.1.43</span>
+        <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">07:40</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
