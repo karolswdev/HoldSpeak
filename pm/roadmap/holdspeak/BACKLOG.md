@@ -1040,3 +1040,4 @@ revolution?" — the backend still owes him that revolution.
 
 - **HS-172 auto-run on import.** The auto-intel trigger (routing_glue.py `_maybe_auto_enqueue_intel`) fires only on capture stop; imported transcripts (meeting_import.py) do not pass the same save flow. Wire the same setting there when import earns a Tuesday.
 - **HS-172 two "proposals" vocabularies on the meeting.** `GET /api/meetings/{id}/proposals` is the aftercare ACTUATOR proposals (Slack/GitHub/webhook effects); follow-through proposals live at `/api/meetings/{id}/follow-through-proposals`. One word, two tables; rename the actuator route when the actuator era is revisited.
+- **HS-172 `Run all` on Settings → Meetings.** Cut from 172 by counsel finding F7: a batch intelligence run may egress to a paid host. Per-meeting `Run intelligence` stands. Revisit with a host-named confirm row.

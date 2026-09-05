@@ -1,3 +1,35 @@
+## Muad'Dib X — 2026-09-05, the Loop Closes on the canvas
+
+**State.** 170 (#553) and 171 (#554) open on his word, stacked. 172
+ACTIVE on feat/the-loop-closes: thirteen boards published
+(https://claude.ai/code/artifact/b153c331-cd38-4856-b38b-837407dd6fba),
+two bounces paid, counsel **RATIFY-W-C** (three conditions, nine
+findings, all ruled in the design's second addendum). The whole wire is
+in (e11d1d21): auto-intel trigger, the proposal bridge (schema 73,
+`follow_through_proposals`, Confirm through the kernel, Dismiss
+receipted), the People resolver (opaque id only), 1:1 enrichment,
+suggested sources (case-insensitive dedup). Docs (09) and the walk
+runner (08) drafted. Four lanes building: Room faces (03/06), meeting +
+arrival + Settings→Meetings (02/03), the People card (05), and the
+story-07 boards (People in the Room, the shade at 393).
+
+**Counsel's three questions for the owner (172):**
+1. Decisions lead with `Decide:` and action items with `Confirm:` —
+   is the two-prefix vocabulary yours?
+2. The People card's Prep wing is one summary row per concern and
+   `Open` switches to Now for the per-entity rows — is that the shape
+   you want before a 1:1?
+3. Do Jira assignments belong on the 1:1 card, or only PRs and
+   commitments?
+
+**Laws added this sitting.** Dismiss, never Drop. The third verb is a
+Button. The lead slot is the source. No clipped text. No pronoun from a
+name. Suggestions dedup case-insensitively. The display step is a fact.
+`SOURCES N` counts accepted sources only. `Run all` parked (paid egress
+in a batch).
+
+**Merge order stays his:** #553 → #554 → 172's.
+
 # HANDOVER: MUAD'DIB IX — Phase 170 The Great Pass, mid-flight (2026-09-05, late)
 
 Read this once, fully, before your first tool call. When you finish,

@@ -731,3 +731,57 @@ Read beside the thirteen story-01 shots; each ruling binds the build.
 - **The People card display** is the person's name in the display
   step's normal color (no problem state on the card); wings Prep ·
   Now · History at 640, Prep · Now at 393.
+
+
+## Addendum — counsel RATIFY-W-C (2026-09-05) and the orchestrator's rulings
+
+Counsel read the thirteen boards, the doc, and the wire: **RATIFY-W-C**,
+three conditions, nine findings. Each is ruled here; the boards win
+where text and board disagreed, except where a board broke a law.
+
+**C1 — two prefixes.** Decision-kind proposals lead with `Decide:`;
+action-kind proposals lead with `Confirm:` (both accent, the rest of
+the text primary). D2.a's single `Confirm:` is superseded. The prefix
+is the kind; nothing else announces it.
+
+**C2 — the verb set per face.** Room proposal rows: `Confirm` · `Edit`
+· `Dismiss`. Meeting-detail NEEDS YOU rows: `Confirm` · `Dismiss`
+(Edit lives in the Room; the meeting is where you read, the Room is
+where you shape). Arrival rows: `Confirm` · `Open` (triage; Open lands
+in the Room scrolled to the proposal). D2.b and D2.c read accordingly.
+
+**C3 — the People card.** The Prep wing is the summary: one row per
+concern (`N PRS WAITING ON {name}` · `N ASSIGNMENTS OPEN` · `N
+COMMITMENTS OVERDUE` · `LAST MEETING`), each with its tokens and one
+`Open`. `Open` on a summary row switches to the **Now** wing, which
+lists the per-entity SurfaceLedgerRows (one per PR, one per issue,
+one per commitment) each with its own `Open` to the source URL. Inline
+reference tokens on a summary row cap at three, then `+N`. D2.d's
+per-entity rows live in Now, not Prep. Rows absent at zero.
+
+**F5 — after an edit.** The confirmed row's caption carries the changed
+fields as `WAS …` tokens after the state: `BY WED · CONFIRMED 09:41 ·
+WAS BY FRI`; text edits read `WAS "…"` truncated to 40 chars. Nothing
+when nothing changed.
+
+**F6 — OPEN ASSIGNMENTS** is a fourth Prep summary row of the same
+species (`1 ASSIGNMENT OPEN · KAN-7 · OVERDUE`), absent at zero. The
+board omitted it; the builder ships it and shoots it.
+
+**F7 — `Run all`** is cut from this phase (a batch effect that may
+egress to a paid host; the per-meeting `Run intelligence` stands).
+D2.f loses the verb; parked in BACKLOG.
+
+**F8 — speaker token.** On the Room's two-line proposal rows the
+caption reads `from Standup 09-05 · MAREK` when the speaker is known;
+nothing when unknown (no UNKNOWN). Same species as the provenance
+token.
+
+**F9 — SOURCES counts sources.** The `SOURCES N` caption counts
+accepted sources only; a SUGGESTED row sits above the count's rows
+and is not counted (UX-CANON A.8). Board corrected.
+
+Counsel's three questions for the owner are carried to the handover
+(prefix vocabulary; the People card's summary-then-Now shape; whether
+assignments belong on the card). The faces build to these rulings; his
+word gates the merge.
