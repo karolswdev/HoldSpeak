@@ -44,49 +44,156 @@ import {
   conciergeDetect,
   type Engine,
 } from "../../../features/concierge/api";
+import { apiFetch } from "../../../lib/api";
 import { DICTATION_FAILURES } from "../../../lib/dictationRecovery";
 import type { MicPhase } from "../../../lib/micSession";
 
-/** Derive the engine display name and egress from detect + assignment.
- *  The detect payload carries the real served model name and host;
- *  the assignment's label is often a stale migration artifact. */
+/** Whether a hostname is on a local/LAN network (RFC1918, loopback,
+ *  link-local, CGNAT/Tailscale, or named local suffixes). Mirrors
+ *  concierge_service._is_lan_host on the server. */
+export function isLanHost(host: string): boolean {
+  if (!host) return false;
+  // Named local suffixes
+  for (const suffix of [".local", ".internal", ".lan", ".home", ".localhost", ".ts.net"])
+    if (host.endsWith(suffix)) return true;
+  if (host === "localhost") return true;
+  // IPv4 classification
+  const parts = host.split(".");
+  if (parts.length === 4 && parts.every((p) => /^\d{1,3}$/.test(p))) {
+    const octets = parts.map(Number);
+    if (octets.some((o) => o > 255)) return false;
+    const [a, b] = octets;
+    // 10.0.0.0/8
+    if (a === 10) return true;
+    // 172.16.0.0/12
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    // 192.168.0.0/16
+    if (a === 192 && b === 168) return true;
+    // 127.0.0.0/8
+    if (a === 127) return true;
+    // 169.254.0.0/16 (link-local)
+    if (a === 169 && b === 254) return true;
+    // 100.64.0.0/10 (CGNAT / Tailscale)
+    if (a === 100 && b >= 64 && b <= 127) return true;
+  }
+  return false;
+}
+
+/** Extract hostname from a URL string. */
+function hostnameOf(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "";
+  }
+}
+
+/** Format the egress label from a host and its LAN classification. */
+function egressFromHost(host: string): { egressLabel: string; egressHost: string } {
+  if (!host || host === "localhost" || host === "127.0.0.1" || host === "::1")
+    return { egressLabel: "THIS DEVICE", egressHost: "" };
+  if (isLanHost(host))
+    return { egressLabel: `${host} · LAN`, egressHost: host };
+  return { egressLabel: "CLOUD", egressHost: host };
+}
+
+/** A lightweight profile record from /api/inference-targets. */
+export interface TargetProfile {
+  id: string;
+  profile_id: string | null;
+  name: string;
+  base_url?: string;
+  model?: string;
+  engine?: string;
+}
+
+/** Derive the engine display name and egress from detect + assignment +
+ *  optionally the legacy target profiles.
+ *
+ *  Resolution order:
+ *  (a) Match by profileId on the detect engine
+ *  (b) Match by base_url host: assignment profile's base_url host
+ *      matches a detect engine's host
+ *  (c) No match: name from the assignment's label (reject "Migrated ...")
+ *      and classify the host with the LAN rule
+ */
 export function resolveEngine(
   assignment: AssignmentEditorProjection | null,
   engines: Engine[],
+  targets?: TargetProfile[],
 ): { name: string | null; egressLabel: string; egressHost: string } {
   const entries = assignment?.effective?.assignment?.entries;
   if (!entries?.length) return { name: null, egressLabel: "THIS DEVICE", egressHost: "" };
 
   const profileId = entries[0].profile_id;
-  const boundary = entries[0].boundary;
-  const matched = engines.find(
+  const label = entries[0].label;
+
+  // (a) Match by profileId on the detect engine
+  const byProfile = engines.find(
     (e) => e.profileId === profileId || e.id === profileId,
   );
-
-  // Name: prefer the detect engine's name; fall back to assignment label.
-  const name = matched?.name || entries.map((e) => e.label).join(" + ");
-
-  // Host: the detect engine carries the real host (e.g. "192.168.1.43").
-  // Kind determines the chip label.
-  if (matched) {
-    switch (matched.kind) {
+  if (byProfile) {
+    const name = byProfile.name || label;
+    switch (byProfile.kind) {
       case "lan":
-        return { name, egressLabel: `${matched.host} · LAN`, egressHost: matched.host };
+        return { name, egressLabel: `${byProfile.host} · LAN`, egressHost: byProfile.host };
       case "cloud":
-        return { name, egressLabel: "CLOUD", egressHost: matched.host };
+        return { name, egressLabel: "CLOUD", egressHost: byProfile.host };
       default:
         return { name, egressLabel: "THIS DEVICE", egressHost: "" };
     }
   }
 
-  // No detect match — fall back to the assignment's boundary field.
-  switch (boundary) {
+  // Find the profile's base_url from the targets list
+  const targetProfile = targets?.find(
+    (t) => t.profile_id === profileId || t.id === profileId,
+  );
+  const baseUrl = targetProfile?.base_url ?? "";
+  const profileHost = hostnameOf(baseUrl);
+
+  // (b) Match by base_url host against detect engines
+  if (profileHost) {
+    const byHost = engines.find((e) => e.host === profileHost);
+    if (byHost) {
+      const name = byHost.name || label;
+      const egress = egressFromHost(profileHost);
+      return { name, ...egress };
+    }
+  }
+
+  // (c) No detect match — name and classify from what we have
+  const isMigrationLabel = label.startsWith("Migrated");
+
+  // Name: model id from the target, or host:port, never "Migrated ..."
+  let name: string;
+  if (!isMigrationLabel) {
+    name = label;
+  } else if (targetProfile?.model && targetProfile.model !== "default") {
+    name = targetProfile.model;
+  } else if (baseUrl) {
+    try {
+      const u = new URL(baseUrl);
+      name = u.port ? `${u.hostname}:${u.port}` : u.hostname;
+    } catch {
+      name = label;
+    }
+  } else {
+    name = label;
+  }
+
+  // Host classification
+  if (profileHost) {
+    return { name, ...egressFromHost(profileHost) };
+  }
+
+  // Last resort: assignment boundary
+  switch (entries[0].boundary) {
     case "private_network":
       return { name, egressLabel: "LAN", egressHost: "" };
-    case "cloud":
-      return { name, egressLabel: "CLOUD", egressHost: "" };
     case "mesh":
       return { name, egressLabel: "PAIRED", egressHost: "" };
+    case "cloud":
+      return { name, egressLabel: "CLOUD", egressHost: "" };
     default:
       return { name, egressLabel: "THIS DEVICE", egressHost: "" };
   }
@@ -96,9 +203,10 @@ export function SpeakFace() {
   const announce = useAnnounce();
   const deck = useSpeakDeck(announce);
 
-  // Engine: assignment projection + concierge detect for real name/host
+  // Engine: assignment projection + concierge detect + legacy targets
   const [assignment, setAssignment] = useState<AssignmentEditorProjection | null>(null);
   const [engines, setEngines] = useState<Engine[]>([]);
+  const [targets, setTargets] = useState<TargetProfile[]>([]);
   useEffect(() => {
     void getAssignmentEditor(
       { kind: "capability", capability_id: "speech.rewrite" },
@@ -107,9 +215,12 @@ export function SpeakFace() {
     void conciergeDetect()
       .then((r) => setEngines(r.engines))
       .catch(() => {});
+    void apiFetch<{ targets?: TargetProfile[] }>("/api/inference-targets")
+      .then((r) => setTargets(r.targets ?? []))
+      .catch(() => {});
   }, []);
 
-  const resolved = resolveEngine(assignment, engines);
+  const resolved = resolveEngine(assignment, engines, targets);
 
   return (
     <div className="speak-face">
