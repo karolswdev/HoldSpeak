@@ -19,7 +19,7 @@ The owner got lost in Settings → Models ("he doesn't know how to use this prod
 ## Acceptance criteria
 
 - [ ] The owner's word on the canvas; (canvas: https://claude.ai/code/artifact/3fc26e25-1d5f-4796-b2e9-0d4bae9bff20) the build matches the artboards at both widths (probes).
-- [ ] One screen: found → proposed → `Use these`; zero sentences; every host named.
+- [x] One screen: found → proposed → `Use these`; zero sentences; every host named. (Built to the six boards; rig asserts the headline = FOUND count, a host chip on every row, Use these disabled beside WAITING and freed by OFF, the picker in place with no dialog role, no raw button, no overflow at 393.)
 - [ ] His walk on his desk; his word.
 
 ## Test plan
