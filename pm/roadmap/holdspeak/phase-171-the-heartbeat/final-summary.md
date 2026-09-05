@@ -45,13 +45,39 @@
   the sweep's sequence; SECURITY's notification statement; the sidecar
   prose; POSITIONING's names (the Heartbeat, the sweep, Rhythm, the
   shade) — every claim re-verified against the code; zero markers.
-- **The walk (08):** `tests/e2e/live171_walk.py` — _filled at the walk_: a
-  sweep of his real Rooms receipted; the shade, the badge, ⌘K and Rhythm
-  on his desk; a banner at a real edge is his to see.
+- **The walk (08):** `tests/e2e/live171_walk.py` walked his real desk
+  (eight shots + the facts ledger): `run-now` receipted (`held: true` in
+  quiet hours, 4.4 ms), Rhythm reading `Every 15 min · HELD · QUIET UNTIL
+  08:00 · NEXT 13:20 · LAST 13:05`, his one Room in ⌘K's PROJECTS, the
+  brief row on the shade, no badge at a count of zero. A banner at a real
+  edge after 08:00 is his to see. Zero face defects; two desk truths
+  found (above).
+
+## Counsel on the built phase (2026-09-05 09:20): RATIFY-W-C
+
+All earlier conditions PAID; two residues of the one-count rule paid the
+same hour (`db49a315`): the deck's badges skipped muted items and the
+wire's project list counts only unmuted Rooms. S3 (rig seeding via the
+DB for the shade/deck) and S4 (board-level assertions on the Rhythm rig)
+noted; N1 the tool counts (201 / 36) fixed.
 
 ## Found live, paid in the phase
 
-- _filled at build_
+- **His Monday brief is the kernel ledger** — `1839 THINGS · AUG 19` on
+  his shade, seventeen days stale. The brief's collectors emitted kernel
+  operations as owner items (170 filtered them client-side); 06 pays it
+  at the source: only human items count, the ledger a separate summary.
+- **A caption over nothing** — with no Room needing him, his shade showed
+  `PROJECTS` over just the brief row; the brief gets its own `BRIEF`
+  caption and PROJECTS is absent (the quiet board).
+- **Quiet hours held the walk's sweep** at 07:05 (`held: true`,
+  `HELD · QUIET UNTIL 08:00` on Rhythm) — honest; his banner's edge is
+  after 08:00.
+- The presence child's notification path is `osascript` (no PyObjC
+  bridge in the venv; UNUserNotificationCenter refuses an unbundled
+  process) — the click target waits for the bundle (BACKLOG).
+- The 170 hub rig's cold assertion learned the default sweep
+  (`EVERY 15 MIN`, never `NO LOOPS` on a fresh install).
 
 ## The suite
 

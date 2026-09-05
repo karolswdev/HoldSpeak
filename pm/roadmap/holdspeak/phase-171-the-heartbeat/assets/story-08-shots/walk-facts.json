@@ -1,0 +1,491 @@
+{
+  "generated_at": "2026-09-05T07:05:37.429900",
+  "hub_host": "127.0.0.1:61402",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 393,
+      "height": 852
+    }
+  ],
+  "shots": [
+    {
+      "face": "rhythm",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-rhythm-1440.png"
+    },
+    {
+      "face": "shade",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-shade-1440.png"
+    },
+    {
+      "face": "dock",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-dock-1440.png"
+    },
+    {
+      "face": "command-deck",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-command-deck-1440.png"
+    },
+    {
+      "face": "rhythm",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-rhythm-393.png"
+    },
+    {
+      "face": "shade",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-shade-393.png"
+    },
+    {
+      "face": "dock",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-dock-393.png"
+    },
+    {
+      "face": "command-deck",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots/walk-command-deck-393.png"
+    }
+  ],
+  "facts": [
+    {
+      "face": "heartbeat-settings",
+      "field": "api_status",
+      "expected": "200",
+      "observed": "200",
+      "verdict": "MATCH",
+      "why": "ok"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "sweep_interval_minutes",
+      "expected": "(owner's setting)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "quiet_hours_start",
+      "expected": "(owner's setting)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "quiet_hours_end",
+      "expected": "(owner's setting)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "notify_mode",
+      "expected": "(owner's setting)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "notify_content",
+      "expected": "(owner's setting)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "heartbeat-settings",
+      "field": "sweep_enabled",
+      "expected": "(owner's setting)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "api_status",
+      "expected": "200",
+      "observed": "200",
+      "verdict": "MATCH",
+      "why": "ok"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:rooms",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:watches",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:duration_ms",
+      "expected": "(varies)",
+      "observed": "4.4",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:held",
+      "expected": "(varies)",
+      "observed": "True",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:errors",
+      "expected": "(varies)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:needs_you_count",
+      "expected": "(varies)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "sweep",
+      "field": "receipt:sweep_id",
+      "expected": "(varies)",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "headline",
+      "expected": "Every 15 min",
+      "observed": "Every 15 min",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_primary",
+      "expected": "Sweep",
+      "observed": "Sweep",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_interval",
+      "expected": "EVERY 15 MIN",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_run_now",
+      "expected": "Run now",
+      "observed": "Run now",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_facts",
+      "expected": "QUIET HH:00-HH:00 . NEXT HH:MM . LAST HH:MM",
+      "observed": "\u26a0HELD \u00b7 QUIET UNTIL 08:00QUIET 22:00\u201308:00\u00b7NEXT 13:20\u00b7LAST 13:05",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_primary",
+      "expected": "Monday brief",
+      "observed": "Monday brief",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_daily",
+      "expected": "DAILY 08:00",
+      "observed": "DAILY 08:00",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_generate_now",
+      "expected": "Generate now",
+      "observed": "Generate now",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_facts",
+      "expected": "NEXT MON HH:00 . LAST MON DD",
+      "observed": "NEXT MON 08:00\u00b7LAST AUG 19",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "notify_primary",
+      "expected": "Notify",
+      "observed": "Notify",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "notify_gadgets",
+      "expected": "ON THE EDGE | COUNT ONLY",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "notify_held",
+      "expected": "HELD (quiet hours)",
+      "observed": "HELD",
+      "verdict": "DATA",
+      "why": "quiet hours active"
+    },
+    {
+      "face": "rhythm",
+      "field": "footer_written",
+      "expected": "WRITTEN HH:MM",
+      "observed": "WRITTEN 13:05",
+      "verdict": "MATCH",
+      "why": "timestamp found"
+    },
+    {
+      "face": "shade",
+      "field": "projects_caption",
+      "expected": "PROJECTS . N NEED YOU",
+      "observed": "Projects",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "shade",
+      "field": "brief_row",
+      "expected": "Monday brief N THINGS SEP NN Open",
+      "observed": "Monday brief 1839 THINGS AUG 19 Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "dock",
+      "field": "badge_count",
+      "expected": "(aggregate needs-you count or absent)",
+      "observed": "\u2022",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "command-deck",
+      "field": "projects_group_count",
+      "expected": "(N project entries)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "command-deck",
+      "field": "groups",
+      "expected": "PROJECTS, VERBS, PROGRAMS, ...",
+      "observed": "PROJECTS, VERBS, PROGRAMS, SETTINGS",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "headline",
+      "expected": "Every 15 min",
+      "observed": "Every 15 min",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_primary",
+      "expected": "Sweep",
+      "observed": "Sweep",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_interval",
+      "expected": "EVERY 15 MIN",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_run_now",
+      "expected": "Run now",
+      "observed": "Run now",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "sweep_facts",
+      "expected": "QUIET HH:00-HH:00 . NEXT HH:MM . LAST HH:MM",
+      "observed": "\u26a0HELD \u00b7 QUIET UNTIL 08:00QUIET 22:00\u201308:00\u00b7NEXT 13:20\u00b7LAST 13:05",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_primary",
+      "expected": "Monday brief",
+      "observed": "Monday brief",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_daily",
+      "expected": "DAILY 08:00",
+      "observed": "DAILY 08:00",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_generate_now",
+      "expected": "Generate now",
+      "observed": "Generate now",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "brief_facts",
+      "expected": "NEXT MON HH:00 . LAST MON DD",
+      "observed": "NEXT MON 08:00\u00b7LAST AUG 19",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "notify_primary",
+      "expected": "Notify",
+      "observed": "Notify",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "notify_gadgets",
+      "expected": "ON THE EDGE | COUNT ONLY",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "rhythm",
+      "field": "notify_held",
+      "expected": "HELD (quiet hours)",
+      "observed": "HELD",
+      "verdict": "DATA",
+      "why": "quiet hours active"
+    },
+    {
+      "face": "rhythm",
+      "field": "footer_written",
+      "expected": "WRITTEN HH:MM",
+      "observed": "WRITTEN 13:05",
+      "verdict": "MATCH",
+      "why": "timestamp found"
+    },
+    {
+      "face": "shade",
+      "field": "projects_caption",
+      "expected": "PROJECTS . N NEED YOU",
+      "observed": "Projects",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "shade",
+      "field": "brief_row",
+      "expected": "Monday brief N THINGS SEP NN Open",
+      "observed": "Monday brief 1839 THINGS AUG 19 Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "dock",
+      "field": "badge_count",
+      "expected": "(aggregate needs-you count or absent)",
+      "observed": "\u2022",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "command-deck",
+      "field": "projects_group_count",
+      "expected": "(N project entries)",
+      "observed": "0",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "command-deck",
+      "field": "groups",
+      "expected": "PROJECTS, VERBS, PROGRAMS, ...",
+      "observed": "PROJECTS, VERBS, PROGRAMS, SETTINGS",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "notification",
+      "field": "pipeline_events_route",
+      "expected": "200",
+      "observed": "404 -- seam not wired yet",
+      "verdict": "DATA",
+      "why": "route not found"
+    }
+  ],
+  "errors": [],
+  "surprises": [],
+  "defects": [],
+  "sweep_receipt": {
+    "kind": "heartbeat.sweep",
+    "at": "2026-09-05T13:05:39+00:00",
+    "rooms": 0,
+    "watches": 0,
+    "duration_ms": 4.4,
+    "held": true,
+    "errors": 0,
+    "outcomes": {
+      "counts": {},
+      "total": 0,
+      "failed_watch_ids": []
+    }
+  }
+}

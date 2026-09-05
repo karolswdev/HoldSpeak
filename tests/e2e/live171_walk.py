@@ -34,7 +34,7 @@ from urllib.parse import urlparse, parse_qs
 collect_ignore_glob = ["live171_walk.py"]
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_OUT = REPO / "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-05-shots"
+DEFAULT_OUT = REPO / "pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/story-08-shots"
 
 VIEWPORTS = [
     {"width": 1440, "height": 900, "suffix": "1440"},
