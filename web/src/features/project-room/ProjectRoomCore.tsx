@@ -383,23 +383,24 @@ function SourcesSection({
   if (room.sources.state !== "ok") return null;
   const { items, count } = room.sources;
 
-  const handlePause = async (watchId: string) => {
-    setBusyWatch(watchId);
-    try { await api.pauseWatch(watchId); onReload(); }
+  // HS-169-04: act on every watchId in the merged row.
+  const handlePause = async (watchIds: string[]) => {
+    setBusyWatch(watchIds[0]);
+    try { await Promise.all(watchIds.map(api.pauseWatch)); onReload(); }
     catch { /* non-fatal */ }
     finally { setBusyWatch(""); }
   };
 
-  const handleResume = async (watchId: string) => {
-    setBusyWatch(watchId);
-    try { await api.resumeWatch(watchId); onReload(); }
+  const handleResume = async (watchIds: string[]) => {
+    setBusyWatch(watchIds[0]);
+    try { await Promise.all(watchIds.map(api.resumeWatch)); onReload(); }
     catch { /* non-fatal */ }
     finally { setBusyWatch(""); }
   };
 
-  const handleRetire = async (watchId: string) => {
-    setBusyWatch(watchId);
-    try { await api.retireWatch(watchId); onReload(); }
+  const handleRetire = async (watchIds: string[]) => {
+    setBusyWatch(watchIds[0]);
+    try { await Promise.all(watchIds.map(api.retireWatch)); onReload(); }
     catch { /* non-fatal */ }
     finally { setBusyWatch(""); }
   };
@@ -440,8 +441,8 @@ function SourcesSection({
                     <ConfirmVerb
                       label="Remove"
                       confirmLabel="Remove?"
-                      busy={busyWatch === src.watchId}
-                      onConfirm={() => void handleRetire(src.watchId)}
+                      busy={busyWatch === src.watchIds[0]}
+                      onConfirm={() => void handleRetire(src.watchIds)}
                     />
                   }
                 >
@@ -492,10 +493,10 @@ function SourcesSection({
                   <Button
                     dense
                     variant="ghost"
-                    loading={busyWatch === src.watchId}
+                    loading={busyWatch === src.watchIds[0]}
                     onClick={() => {
-                      if (src.state === "paused") void handleResume(src.watchId);
-                      else void handlePause(src.watchId);
+                      if (src.state === "paused") void handleResume(src.watchIds);
+                      else void handlePause(src.watchIds);
                     }}
                   >
                     {src.state === "paused" ? "Resume" : "Pause"}

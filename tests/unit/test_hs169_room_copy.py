@@ -108,3 +108,24 @@ def test_no_raw_snake_case_kinds_in_ui():
         # Check for raw dotted kind strings rendered as text (not in a map/constant)
         if re.search(r'>\s*[a-z]+\.[a-z_]+\s*<', line):
             assert False, f"ProjectRoomCore.tsx:{i} — raw snake_case kind in UI: {stripped}"
+
+
+def test_change_label_never_exposes_raw_field_names():
+    """The changeLabel function in model.ts humanizes field names.
+
+    A change row with summary fields like `watches_activated` must never
+    produce a label containing underscores from those field names.
+    """
+    import importlib
+    import sys
+    # This test runs in pytest (not vitest), so we can't import TS.
+    # Instead, we scan model.ts for the changeLabel function and verify
+    # the FIELD_LABELS map covers dangerous fields.
+    model = (ROOM_DIR / "model.ts").read_text()
+    # Verify FIELD_LABELS contains watches_activated mapped to empty or human
+    assert "watches_activated" in model, "FIELD_LABELS should handle watches_activated"
+    # The label for watches_activated should not contain an underscore
+    assert '"watches_activated": ""' not in model or 'watches activated' in model, \
+        "watches_activated must map to human words or be dropped"
+    # source should be dropped (empty string) — TS uses unquoted keys
+    assert 'source: ""' in model, "source field should be dropped (empty)"

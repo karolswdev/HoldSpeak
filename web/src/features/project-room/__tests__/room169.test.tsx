@@ -534,3 +534,89 @@ describe("HS-169-03: footer", () => {
     expect(btn.textContent).toBe("Refresh");
   });
 });
+
+/* ── change row field names guard ── */
+
+describe("HS-169-03: no raw field names in change labels", () => {
+  it("changeLabel humanizes field names, never exposing underscored raw names", async () => {
+    // The change rows come through model.ts decodeChangeRow.
+    // Import and test directly.
+    const { decodeChangeRow } = await import("../model");
+
+    // A project.created row with raw field names in summary
+    const row = decodeChangeRow({
+      id: "c-test",
+      change_kind: "project.created",
+      summary_json: JSON.stringify({ name: "Test", source: "manual", watches_activated: 4 }),
+      created_at: "2026-09-04T10:00:00",
+    });
+
+    // The label must not contain underscores from field names
+    expect(row.label).not.toContain("watches_activated");
+    expect(row.label).not.toContain("_");
+    // It should contain the humanized form
+    expect(row.label).toContain("4 watches activated");
+  });
+
+  it("project.updated with field-patch summary humanizes field names", async () => {
+    const { decodeChangeRow } = await import("../model");
+
+    const row = decodeChangeRow({
+      id: "c-test2",
+      change_kind: "project.updated",
+      summary_json: JSON.stringify({ purpose: "Ship Q4", outcome_text: "Done" }),
+      created_at: "2026-09-04T10:00:00",
+    });
+
+    expect(row.label).not.toContain("outcome_text");
+    expect(row.label).toContain("purpose");
+    expect(row.label).toContain("outcome");
+  });
+});
+
+/* ── source grouping ── */
+
+describe("HS-169-03: source grouping by (provider, scope)", () => {
+  it("two watches on the same repo merge into one row with combined tokens", async () => {
+    const { decodeRoomSnapshot } = await import("../model");
+
+    const snapshot = decodeRoomSnapshot({
+      project_id: "p1",
+      revision: 1,
+      observed_at: "2026-09-04T10:00:00",
+      project: { id: "p1", name: "Test" },
+      items: { state: "absent", reason: "n/a" },
+      meetings: { state: "absent", reason: "n/a" },
+      resources: { state: "absent", reason: "n/a" },
+      changes: { state: "absent", reason: "n/a" },
+      review: { state: "absent", reason: "n/a" },
+      needsYou: { state: "absent", reason: "n/a" },
+      sources: {
+        state: "ok",
+        items: [
+          { watchId: "w1", provider: "github", scope: "karolswdev/HoldSpeak", tokens: ["2 OPEN PRS"], checkedAt: "2026-09-04T10:00:00", host: "GITHUB.COM", state: "live", plainReason: null, suggested: false, nextCheckAt: null },
+          { watchId: "w2", provider: "github", scope: "karolswdev/HoldSpeak", tokens: ["CI RED"], checkedAt: "2026-09-04T09:50:00", host: "GITHUB.COM", state: "live", plainReason: null, suggested: false, nextCheckAt: null },
+        ],
+        count: 2,
+        nextCheckAt: null,
+      },
+      health: { state: "absent", reason: "n/a" },
+      sinceRead: { state: "absent", reason: "n/a" },
+      decisions: { state: "absent", reason: "n/a" },
+      commitments: { state: "absent", reason: "n/a" },
+      target: { state: "absent", reason: "n/a" },
+      updates: { state: "absent", reason: "n/a" },
+      steward: { state: "absent", reason: "n/a" },
+    });
+
+    if (snapshot.sources.state !== "ok") throw new Error("sources not ok");
+    // After grouping, one row with both tokens
+    expect(snapshot.sources.items.length).toBe(1);
+    expect(snapshot.sources.count).toBe(1);
+    expect(snapshot.sources.items[0].tokens).toContain("2 OPEN PRS");
+    expect(snapshot.sources.items[0].tokens).toContain("CI RED");
+    expect(snapshot.sources.items[0].watchIds).toEqual(["w1", "w2"]);
+    // checkedAt is the most recent
+    expect(snapshot.sources.items[0].checkedAt).toBe("2026-09-04T10:00:00");
+  });
+});
