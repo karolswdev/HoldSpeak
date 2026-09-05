@@ -143,6 +143,8 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
   `gh pr create --base feat/the-great-pass` (stacked on #553). Evidence
   captures for 01/05/08/10 wait for his word.
 
+- **172's design ground is DRAFTED** (pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/settled-design-loop-closes.md, pending 170's merge): six faces with species. Recon: the EXTRACTORS EXIST (`decision_capture`, `action_owner_enforcer` plugins) but their artifacts are opaque JSON nothing reads — story 03 is the bridge to proposals; the auto-run trigger belongs after `_associate_meeting_with_projects` (meeting_glue.py:447); `resolve_relationship_by_owner` is the resolver's seed, never called from the Watch path; the 1:1 brief has no Watch data. His three new questions: auto-run default ROOM-LINKED ONLY or AFTER EVERY MEETING; does an edited proposal keep its original as provenance; the People card from the Room at 393 inline or navigate.
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on
