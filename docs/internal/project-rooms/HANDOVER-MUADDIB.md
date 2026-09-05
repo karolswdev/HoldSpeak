@@ -149,6 +149,8 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
 
 - **176's design ground is DRAFTED** (phase-176-the-speak-loop/assets/settled-design-speak-loop.md). Recon: Teach's corrections ARE applied on the next dictation today (dictation_runner.py:335 snapshots the store per run; intent_router.py:206 + target_profile.py:126 apply them) and persist durably (ring of 20 in memory, the DB uncapped) — the loop exists and has never been taught (0 corrections on his desk); the mic gap is 31 raw inputs/textareas outside the gadget system (the gadgets default mic=true), not ~85. His questions: LEARNED as a wing or under Configure; the teach chip tap-to-detail or always visible; the raw-input allowlist.
 
+- **175's design ground is DRAFTED** (phase-175-calendar-and-the-clock/assets/settled-design-calendar-clock.md). Recon: the calendar adapter reads ICS only (a local file or an HTTPS subscription URL — integrations.py:18-26; no EventKit/Google); events reach the NEXT line via door_service.py:266 but carry no Room link (no `project_id`; a matcher or a `calendar_event_projects` table is needed); `scheduled_recordings.calendar_event_id` exists (db/scheduled_recordings.py:34) with a unique armed index (schema.py:3483) but auto-arming is unbuilt; the ICS parser drops ATTENDEE. His questions: event→Room auto-link or SUGGESTED rows; the auto-record default once a calendar is connected; the week strip MON–FRI or seven days.
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on
