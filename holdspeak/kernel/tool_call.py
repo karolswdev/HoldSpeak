@@ -26,6 +26,9 @@ class ToolCallCodec:
 
     name = "tool.call"
     version = 1
+    # Permit the controller's atomic child reservation. The opaque ParentRun
+    # context and authenticated parent scope are validated by the broker.
+    trusted_child = True
 
     def __init__(self, gate: Any, mode_loader: Any) -> None:
         self._gate = gate

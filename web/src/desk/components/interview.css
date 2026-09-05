@@ -1,0 +1,24 @@
+.interview-panel {
+  padding: 8px 12px;
+  min-width: 0;
+  border-bottom: 1px solid var(--border);
+}
+.interview-controls,
+.interview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.interview-controls { font-family: var(--font-mono); font-size: var(--desk-surface-label-size, 11px); }
+.interview-controls label { color: var(--text-muted); }
+.interview-controls select { width: auto; flex: 1; min-width: 100px; max-width: 100%; }
+.interview-context { overflow-wrap: anywhere; max-height: min(22vh, 180px); overflow-y: auto; }
+.interview-context h3 { font-size: var(--desk-surface-detail-size, 12px); margin: 12px 0 6px; }
+.interview-context h4 { font-size: var(--desk-surface-body-size, 13px); margin: 0 0 6px; }
+.interview-context p { margin: 6px 0; }
+.interview-context small { color: var(--text-muted); }
+.interview-fact,
+.interview-suggestion { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.interview-actions { margin-top: 8px; }
+.interview-context blockquote { margin: 8px 12px; }

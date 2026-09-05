@@ -3513,6 +3513,24 @@ CREATE INDEX IF NOT EXISTS idx_calendar_events_upcoming
 ON calendar_events(starts_at, id);
 
 -- HS-151-01: The thread ledger — persistent desk conversations.
+-- Interview control state composes Threads; citizen records retain their owners.
+CREATE TABLE IF NOT EXISTS interview_sessions (
+    thread_id TEXT PRIMARY KEY REFERENCES threads(id) ON DELETE CASCADE,
+    revision INTEGER NOT NULL CHECK (revision >= 1),
+    state_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS interview_events (
+    thread_id TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+    command_id TEXT NOT NULL,
+    request_digest TEXT NOT NULL,
+    revision INTEGER NOT NULL,
+    event_kind TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (thread_id, command_id),
+    UNIQUE (thread_id, revision)
+);
+
 CREATE TABLE IF NOT EXISTS threads (
     id TEXT PRIMARY KEY,
     title TEXT NOT NULL DEFAULT '',
@@ -3531,6 +3549,14 @@ CREATE TABLE IF NOT EXISTS threads (
 );
 CREATE INDEX IF NOT EXISTS idx_threads_updated
 ON threads(updated_at);
+
+CREATE TRIGGER IF NOT EXISTS interview_thread_deleted
+AFTER UPDATE OF deleted_at ON threads
+WHEN NEW.deleted_at IS NOT NULL
+BEGIN
+    DELETE FROM interview_sessions WHERE thread_id=NEW.id;
+    DELETE FROM interview_events WHERE thread_id=NEW.id;
+END;
 
 CREATE TABLE IF NOT EXISTS thread_messages (
     id TEXT PRIMARY KEY,

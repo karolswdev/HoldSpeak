@@ -275,6 +275,14 @@ _TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "heartbeat.run_now": ("effect_proposal", False),
     "heartbeat.set": ("effect_proposal", False),
     "heartbeat.notify_test": ("effect_proposal", False),
+    "project.setup.select_proposal": ("effect_proposal", False),
+    "project.setup.deselect_proposal": ("effect_proposal", False),
+    "project.setup.test_proposal": ("effect_proposal", False),
+    "project.setup.clarify_repo_scope": ("effect_proposal", False),
+    "interview.get": ("evidence_read", False),
+    "interview.record_fact": ("effect_proposal", False),
+    "interview.suggest": ("effect_proposal", False),
+    "interview.change_section": ("effect_proposal", False),
 }
 
 # Public accessors
@@ -497,6 +505,7 @@ class ThreadToolExecutor:
         control_mode_fn: Callable[[], str],
         broker: Optional[Any] = None,
         clock: Callable[[], float] = time.time,
+        allowed_names: frozenset[str] | None = None,
     ) -> None:
         self._db = db
         self._dispatch = dispatch_fn
@@ -504,6 +513,8 @@ class ThreadToolExecutor:
         self._control_mode_fn = control_mode_fn
         self._broker = broker
         self._clock = clock
+        self._allowed_names = allowed_names
+        self._parent_context: Any = None
         self._handles: dict[str, ToolCallHandle] = {}
         self._on_decided: Optional[Callable[[str], None]] = None
 
@@ -529,6 +540,8 @@ class ThreadToolExecutor:
         """
         call_id = str(call.get("id") or uuid.uuid4().hex[:16])
         name = str(call.get("name", ""))
+        if self._allowed_names is not None and name not in self._allowed_names:
+            raise ValueError(f"Tool outside the admitted palette: {name}")
         args = call.get("arguments", {}) or {}
         if isinstance(args, str):
             try:
@@ -568,9 +581,17 @@ class ThreadToolExecutor:
                 "placement": "node:thread-turn",
             }
             try:
-                result = self._broker.submit(request, self._principal)
+                if self._parent_context is not None:
+                    request["parent_operation_id"] = self._parent_context.operation_id
+                    result = self._broker.submit_trusted_child(request, self._principal, self._parent_context, planned_node="thread-turn")
+                    if result.get("state") not in {"awaiting_decision", "awaiting_execution"}:
+                        raise ValueError("Tool admission refused or requires reconciliation")
+                else:
+                    result = self._broker.submit(request, self._principal)
                 child_id = str(result.get("operation_id", ""))
-            except Exception:
+            except Exception as exc:
+                if self._parent_context is not None:
+                    raise ValueError(f"Tool admission failed: {exc}") from exc
                 child_id = f"child-{call_id}"
         else:
             child_id = f"child-{call_id}"
@@ -628,6 +649,9 @@ class ThreadToolExecutor:
         cap, honouring a {"elicit": {...}} return by holding the call, and a
         cancel threading.Event + 30 s deadline.
         """
+        if self._parent_context is not None:
+            return self._execute_receipted(handle)
+
         if handle.state == "denied":
             return ToolResult(
                 name=handle.name, kind="tool_denied", payload={"error": "tool_denied"},
@@ -715,6 +739,57 @@ class ThreadToolExecutor:
                 payload={"error": str(exc)},
                 bytes=0, receipt_id="", sensitive=handle.sensitive,
             )
+
+    def _execute_receipted(self, handle: ToolCallHandle) -> ToolResult:
+        """Interview tools execute under a claimed child of the live tool turn.
+
+        A refused/replayed/expired claim never reaches domain dispatch. Terminal
+        IDs come from the kernel journal, not a generated presentation receipt.
+        """
+        node = Principal(PrincipalKind.NODE, "thread-turn")
+        claimed = False
+        receipt_id = ""
+        try:
+            operation = self._broker.store.operation(handle.kernel_child_id)
+            if not operation:
+                raise ValueError("Tool operation missing")
+            if handle.state == "denied":
+                if operation["state"] == "awaiting_decision":
+                    result = self._broker.decide(handle.kernel_child_id, "reject", operation["revision"], self._principal)
+                    receipt_id = str((result.get("receipt") or {}).get("receipt_id", ""))
+                return ToolResult(handle.name, "tool_denied", {"error": "tool_denied"}, 0, receipt_id, handle.sensitive)
+            if handle.state != "admitted":
+                raise ValueError(f"Tool is not admitted: {handle.state}")
+            if operation["state"] == "awaiting_decision":
+                self._broker.decide(handle.kernel_child_id, "approve", operation["revision"], self._principal)
+            claim = self._broker.claim(node, handle.call_id)
+            if not any(item.get("operation_id") == handle.kernel_child_id for item in claim.get("operations", [])):
+                raise ValueError("Tool claim refused or already consumed; reconcile before retry")
+            claimed = True
+            if handle._cancel and handle._cancel.is_set():
+                receipt = self._broker.receipt(handle.kernel_child_id, "cancelled", f"thread:{handle.thread_id}", node)
+                return ToolResult(handle.name, "cancelled", None, 0, str(receipt.get("receipt_id", "")), handle.sensitive)
+            handle.state = "executing"
+            result = self._dispatch(handle.name, dict(handle.args), self._principal)
+            failed = isinstance(result, dict) and ("error" in result or "elicit" in result)
+            receipt = self._broker.receipt(handle.kernel_child_id, "failed" if failed else "succeeded", f"thread:{handle.thread_id}", node)
+            receipt_id = str(receipt.get("receipt_id", ""))
+            handle.state = "completed"
+            handle.receipt_id = receipt_id
+            size = len(json.dumps(result, default=str).encode())
+            return ToolResult(handle.name, "error" if failed else derive_result_kind(handle.name, handle.args), result, min(size, TOOL_RESULT_BYTE_CAP), receipt_id, handle.sensitive, truncated=size > TOOL_RESULT_BYTE_CAP, original_bytes=size)
+        except Exception as exc:
+            if claimed:
+                try:
+                    receipt = self._broker.receipt(handle.kernel_child_id, "failed", f"thread:{handle.thread_id}", node)
+                    receipt_id = str(receipt.get("receipt_id", ""))
+                except Exception:
+                    # A lost acknowledgement is visible and never a second effect.
+                    pass
+            handle.state = "completed"
+            return ToolResult(handle.name, "tool_execution_failed", {"error": str(exc)}, 0, receipt_id, handle.sensitive)
+        finally:
+            self._broker.parent_run_controller.end_child_dispatch(self._parent_context.operation_id)
 
     def cancel(self, handle: ToolCallHandle) -> None:
         """Signal cancellation for an in-flight call."""

@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Optional
 
 from .thread_tools import TOOL_NAMES, _TOOL_CLASSES
+from .interview_contracts import INTERVIEW_MODE_ID, INTERVIEW_TOOLS, SYSTEM_PROMPT
 
 _log = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ if TYPE_CHECKING:
 # for the tool GATE but belong to NO thread palette -- the thread
 # grammar stays bounded; agents reach those tools over MCP only.
 def _thread_side(name: str) -> bool:
-    return not (name.startswith("project.") or name.startswith("provider."))
+    return not name.startswith(("project.", "provider.", "interview."))
 
 
 _EVIDENCE_READ = frozenset(
@@ -110,6 +111,13 @@ _DESK_GUARDRAILS = (
 )
 
 MODE_SEEDS: tuple[Mode, ...] = (
+    Mode(
+        id=INTERVIEW_MODE_ID,
+        name="Interview",
+        avatar="#0F766E",
+        system_prompt=SYSTEM_PROMPT,
+        tools=INTERVIEW_TOOLS,
+    ),
     Mode(
         id="hs-seed-mode-desk",
         name="Desk",
@@ -227,6 +235,9 @@ def palette_for(db: "Database", thread_id: str) -> Optional[frozenset[str]]:
     mode = mode_for_thread(db, thread_id)
     if mode is None:
         return None
+    if mode.id == INTERVIEW_MODE_ID:
+        from .interview_service import InterviewService
+        return InterviewService(db).palette(thread_id) & TOOL_NAMES
     # Intersect with TOOL_NAMES; log unclassified names for custom modes
     unknown = mode.tools - TOOL_NAMES - FORWARD_TOOLS
     if unknown and mode.id not in _warned_modes:

@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-214 tools across 39 families. The default non-owner discovery lists 34
+222 tools across 40 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -422,9 +422,18 @@ desktop notification and returns `{fired: boolean}`.
 `plugin_job.retry` re-queues a failed or completed job. `plugin_job.cancel`
 marks a job done. Both refuse running jobs.
 
+### Repeatable Interview
+
+`interview.get`, `interview.change_section`, `interview.record_fact`, and
+`interview.suggest` expose the same Thread-scoped Interview state used by the
+Desk conversation. Commands retain revision checks and source provenance;
+manual suggestions become work only through the existing explicit Thread
+actions. The initial implementation and its limits are documented in the
+[Interview delivery record](internal/architect-assistant/DELIVERY_STATUS.md).
+
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 214 tools across 39 families.
+**Registry totals:** 222 tools across 40 families.
 
 #### ask (4)
 
@@ -528,6 +537,13 @@ marks a job done. Both refuse running jobs.
 - `inference_assignment.set`
 - `inference_assignment.summary`
 
+#### interview (4)
+
+- `interview.change_section`
+- `interview.get`
+- `interview.record_fact`
+- `interview.suggest`
+
 #### kb (3)
 
 - `kb.add_member`
@@ -600,7 +616,7 @@ marks a job done. Both refuse running jobs.
 - `plugin_job.retry`
 - `plugin_job.summary`
 
-#### project (38)
+#### project (42)
 
 - `project.accept_review`
 - `project.add_suggested_source`
@@ -623,10 +639,14 @@ marks a job done. Both refuse running jobs.
 - `project.run_steward`
 - `project.setup.answer`
 - `project.setup.clarify_jira_scope`
+- `project.setup.clarify_repo_scope`
+- `project.setup.deselect_proposal`
 - `project.setup.finalize`
 - `project.setup.resume`
+- `project.setup.select_proposal`
 - `project.setup.start`
 - `project.setup.suggest`
+- `project.setup.test_proposal`
 - `project.steward.trigger`
 - `project.stop_steward`
 - `project.suggested_sources`
@@ -862,13 +882,13 @@ read.
 
 ## The project palette (MCP-007)
 
-The project family ships a `PROJECT_PALETTE`: a frozen set of the 53
+The project family ships a `PROJECT_PALETTE`: a frozen set of the 57
 project.*, provider.* and connection.* tool names. Two functions in the MCP layer
 consume it.
 
 `tools_for_palette(palette)` returns only the tools whose names are in
-the palette. A client that lists tools through this filter sees 53 tools
-instead of 214.
+the palette. A client that lists tools through this filter sees 57 tools
+instead of 222.
 
 `dispatch_for_palette(name, arguments, principal, palette)` dispatches
 a tool call only if `name` is in the palette. A name outside the palette

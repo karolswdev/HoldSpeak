@@ -1,6 +1,6 @@
-// HS-154-02 — the submit seam IS the composer's send (sendTurn).
+// HS-154-02 — the submit seam IS the composer's visible send action.
 //
-// This test imports the callLoopWiring and spies on sendTurn to prove
+// This test imports the callLoopWiring and spies on submitTurn to prove
 // that the call loop's onSubmit path goes through the SAME function
 // the ThreadComposer uses — no parallel turn entrance; the loop never
 // issues its own network request to /api/threads/*/turns.
@@ -8,11 +8,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── mocks ───────────────────────────────────────────────────────────
 
-// Spy on sendTurn — the SAME function the ThreadComposer's handleSend calls
+// Spy on the SAME store action the ThreadComposer's handleSend calls.
 const mockSendTurn = vi.fn().mockResolvedValue({ user_message_id: "u1", assistant_message_id: "a1" });
 
 vi.mock("../threads", () => ({
-  sendTurn: (...args: unknown[]) => mockSendTurn(...args),
+  useThreadStore: { getState: () => ({ submitTurn: (...args: unknown[]) => mockSendTurn(...args) }) },
 }));
 
 // Capture the callbacks the callLoop receives
@@ -35,6 +35,7 @@ vi.mock("../../lib/callLoop", () => ({
 }));
 
 import { wireCallLoop } from "../callLoopWiring";
+import { clearWriteFailure, currentWriteFailure } from "../hooks/useWriteReceipt";
 
 // ── tests ───────────────────────────────────────────────────────────
 
@@ -46,13 +47,14 @@ describe("callLoopWiring", () => {
     mockStartCallLoop.mockClear();
     mockStopCallLoop.mockClear();
     capturedCallbacks = null;
+    clearWriteFailure();
   });
 
   afterEach(() => {
     // Clean up
   });
 
-  it("wires onSubmit to sendTurn (the composer's send path)", async () => {
+  it("wires voice to the composer's visible submission path", async () => {
     const onError = vi.fn();
     const wiring = wireCallLoop(THREAD_ID, onError);
     await wiring.start();
@@ -63,14 +65,26 @@ describe("callLoopWiring", () => {
     // Simulate the call loop delivering a transcript
     capturedCallbacks!.onSubmit("Hello from voice");
 
-    // The SAME sendTurn the composer uses — with the correct thread id
+    // The SAME action the composer uses — with the correct thread id.
     expect(mockSendTurn).toHaveBeenCalledOnce();
     expect(mockSendTurn).toHaveBeenCalledWith(THREAD_ID, { text: "Hello from voice" });
   });
 
+  it("reports a failed voice send and retains its transcript for manual retry", async () => {
+    mockSendTurn.mockRejectedValueOnce(new Error("Connection lost"));
+    const wiring = wireCallLoop(THREAD_ID, vi.fn());
+    await wiring.start();
+    capturedCallbacks!.onSubmit("My spoken prompt");
+    await Promise.resolve();
+    expect(currentWriteFailure()?.verb).toBe("SEND TURN");
+    currentWriteFailure()?.retry?.();
+    expect(mockSendTurn).toHaveBeenLastCalledWith(THREAD_ID, { text: "My spoken prompt" });
+    await Promise.resolve();
+    expect(currentWriteFailure()).toBeNull();
+  });
+
   it("the loop never issues its own /api/threads/*/turns request", async () => {
-    // The wiring proves this by construction: onSubmit calls sendTurn,
-    // which is the composer's OWN function. The callLoop module has no
+    // onSubmit calls the composer's action. The callLoop module has no
     // import of apiFetch or threads — it receives onSubmit as a callback.
     const onError = vi.fn();
     const wiring = wireCallLoop(THREAD_ID, onError);
@@ -78,7 +92,7 @@ describe("callLoopWiring", () => {
 
     capturedCallbacks!.onSubmit("Test text");
 
-    // sendTurn is the ONLY thing called — no direct network request
+    // The store action is called once; no direct network request.
     expect(mockSendTurn).toHaveBeenCalledOnce();
   });
 

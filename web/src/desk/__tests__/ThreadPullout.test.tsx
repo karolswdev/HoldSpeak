@@ -98,6 +98,24 @@ describe("ThreadPullout rows", () => {
     expect(screen.getByText("Hello")).toBeTruthy();
   });
 
+  it.each(["", " late suffix"])("keeps saved streaming text when live buffer is incomplete: %s", (text) => {
+    seedStore([makeMsg({ streaming: true, completedAt: null })]);
+    if (text) useThreadStore.setState({ buffers: {
+      "msg-1": { messageId: "msg-1", highSeq: 4, parts: new Map([[0, { kind: "text", text }]]) },
+    } });
+    renderPullout();
+    expect(screen.getByText("Hello")).toBeTruthy();
+  });
+
+  it("shows live text that extends the saved answer", () => {
+    seedStore([makeMsg({ streaming: true, completedAt: null })]);
+    useThreadStore.setState({ buffers: {
+      "msg-1": { messageId: "msg-1", highSeq: 4, parts: new Map([[0, { kind: "text", text: "Hello from the live answer" }]]) },
+    } });
+    renderPullout();
+    expect(screen.getByText("Hello from the live answer")).toBeTruthy();
+  });
+
   it("renders a user row with YOU label", () => {
     seedStore([
       makeMsg({
