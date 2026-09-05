@@ -169,7 +169,7 @@ export function AgentsLane({
 
   return (
     <ChairLane
-      title={`AGENTS · CREW ${crewCount}${blocked.length > 0 ? ` · BLOCKED ${blocked.length}` : ""}`}
+      title={`AGENTS${crewCount > 0 ? ` · CREW ${crewCount}` : ""}${blocked.length > 0 ? ` · BLOCKED ${blocked.length}` : ""}`}
       maxItems={maxItems}
       items={items}
       onOpenInWindow={(id) => {

@@ -336,12 +336,18 @@ def test_hs144_door_populated_glass_action_refusal_and_shots(
             agents = page.locator('[data-lane="agents"]')
             agents.get_by_text("No sessions", exact=True).wait_for()
             recipes = _api(page, "GET", "/api/recipes").get("recipes", [])
-            crew_count = sum(1 for recipe in recipes if not recipe.get("deleted"))
-            assert agents.get_by_role(
-                "heading",
-                name=f"AGENTS · CREW {crew_count} · BLOCKED 0",
-                exact=True,
-            ).is_visible()
+            # HS-153-01: a Thread mode (kind="mode") is a practice, not crew.
+            crew_count = sum(1 for recipe in recipes if not recipe.get("deleted") and recipe.get("kind") != "mode")
+            # UX-CANON A.8: no counters of zero — CREW appears only when > 0,
+            # BLOCKED only when > 0 (HS-170-02).
+            agents_heading = "AGENTS" + (f" · CREW {crew_count}" if crew_count else "")
+            try:
+                agents.get_by_role("heading", name=agents_heading, exact=True).wait_for(timeout=5000)
+            except Exception:
+                raise AssertionError(
+                    f"AGENTS heading expected {agents_heading!r}; headings seen: "
+                    f"{agents.get_by_role('heading').all_inner_texts()}"
+                )
 
             # At desk width the five-column Door is one workbench rail. It must
             # fit without a concealed fifth column or a horizontal scroll affordance.
