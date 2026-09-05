@@ -421,3 +421,20 @@ The walk is seven beats at both widths (1440 + 393). Stopwatch per face
 | 08 The walk | S | His desk, seven beats; no code |
 | 09 The docs | S | Re-shot for the new faces + the heartbeat Mermaid diagram |
 | 10 The close | S | Gates, sweep, the PR |
+
+
+## D3 addendum (2026-09-05 06:50) — the notifier as built
+
+`holdspeak/desktop_notify.py`: macOS posts through `osascript -e 'display
+notification …'` (the PyObjC `UserNotifications` bridge is not in the
+venv, and `UNUserNotificationCenter` refuses an unbundled python process
+anyway); Linux through the existing libnotify seam. Consequence, said
+plainly: an `osascript` banner carries NO click action — "one click →
+the shade" waits for the packaged app bundle (174/179). V0 honours
+Article III (the body is the count line only unless opted in), the
+edge rule, quiet hours, and writes a `heartbeat.notify` receipt per
+banner. The needs-you aggregate lives in
+`holdspeak/services/needs_you_aggregate.py` (the route reads a
+stale-while-refresh cache; `?fresh=1` rebuilds; `computedAt`, `stale`,
+`sweepId` on the wire). The brief regenerates once a day after quiet
+hours (`runtime/cadence.py::_maybe_regenerate_brief`) before any push.
