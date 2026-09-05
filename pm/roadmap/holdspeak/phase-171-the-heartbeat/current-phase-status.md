@@ -27,6 +27,14 @@ the gauntlet, the walk on his desk (run-now on his real Rooms; a banner
 at a real edge is his to see), counsel on the built tree, the flips, the
 close, the PR stacked on #553.
 
+**09:30:** counsel on the built phase RATIFY-W-C, residues paid (one
+count everywhere on the deck and in the wire's project list); the first
+walk on his real desk: the sweep held in quiet hours (honest), his
+Monday brief is the kernel ledger (`1839 THINGS · AUG 19` — 06 pays the
+source now), a `PROJECTS` caption over nothing but the brief row (fixed
+to its own `BRIEF` caption). **02 and 07 DONE** on evidence; 03/04/06
+flip when the brief and shade fixes land; 01/08/10 wait for his word.
+
 ## Goal
 
 The desk reaches him. The sweep runs unattended, needs-you aggregates
@@ -115,12 +123,12 @@ brief ran ONCE (1839 items on 2026-08-24) and never again.
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-171-01 | The design (the Heartbeat's faces on the canvas before build) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
-| HS-171-02 | The cadence row (the scheduler, the unattended sweep, parallel conductor loops) | in-progress | [story-02-the-cadence-row](./story-02-the-cadence-row.md) | -- |
+| HS-171-02 | The cadence row (the scheduler, the unattended sweep, parallel conductor loops) | done | [story-02-the-cadence-row](./story-02-the-cadence-row.md) | [evidence-story-02](./evidence-story-02.md) |
 | HS-171-03 | The needs-you aggregate (cache + cadence-driven refresh; 170's N+1 paid) | in-progress | [story-03-the-needs-you-aggregate](./story-03-the-needs-you-aggregate.md) | -- |
 | HS-171-04 | PROJECTS in the shade + the dock badge | in-progress | [story-04-projects-in-the-shade](./story-04-projects-in-the-shade.md) | -- |
 | HS-171-05 | macOS notifications on the edge (quiet hours, per-project mute, Article III) | in-progress | [story-05-macos-notifications](./story-05-macos-notifications.md) | -- |
 | HS-171-06 | The Monday brief recurring (its own cadence loop, lands in the shade) | in-progress | [story-06-monday-brief-recurring](./story-06-monday-brief-recurring.md) | -- |
-| HS-171-07 | PROJECTS in command-K (every active Room reachable from the deck) | in-progress | [story-07-projects-in-command-k](./story-07-projects-in-command-k.md) | -- |
+| HS-171-07 | PROJECTS in command-K (every active Room reachable from the deck) | done | [story-07-projects-in-command-k](./story-07-projects-in-command-k.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-171-08 | The walk (his desk: a notification he actually receives) | in-progress | [story-08-the-walk](./story-08-the-walk.md) | -- |
 | HS-171-09 | The docs (guide re-shot for every new face; the heartbeat in the architecture) | done | [story-09-the-docs](./story-09-the-docs.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-171-10 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-10-the-close](./story-10-the-close.md) | -- |
