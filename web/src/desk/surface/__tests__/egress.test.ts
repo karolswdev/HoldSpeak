@@ -1,6 +1,6 @@
-// HS-172-03 — egressFor: the one egress-label + scope mapper.
+// HS-172-03 + HS-174-04 — egressFor + egressForEvent: the egress-label + scope mapper.
 import { describe, expect, it } from "vitest";
-import { egressFor } from "../egress";
+import { egressFor, egressForEvent } from "../egress";
 
 describe("egressFor", () => {
   it("returns empty for null/undefined/empty", () => {
@@ -31,5 +31,39 @@ describe("egressFor", () => {
     for (const host of ["local", "LOCAL", "this_device", "192.168.1.43", "api.anthropic.com"]) {
       expect(egressFor(host).label).not.toBe("LOCAL");
     }
+  });
+});
+
+/* ── HS-174-04: egressForEvent — remote origin badge ── */
+
+describe("egressForEvent", () => {
+  it("returns REMOTE + caller IP with scope remote for origin=remote", () => {
+    const result = egressForEvent({ origin: "remote", caller: "100.64.0.5" });
+    expect(result).toEqual({ label: "REMOTE · 100.64.0.5", scope: "remote" });
+  });
+
+  it("returns REMOTE + caller IP for a tailnet address", () => {
+    const result = egressForEvent({ origin: "remote", caller: "192.168.1.43" });
+    expect(result).toEqual({ label: "REMOTE · 192.168.1.43", scope: "remote" });
+  });
+
+  it("falls through to egressFor for local origin", () => {
+    const result = egressForEvent({ origin: "local", host: "local" });
+    expect(result).toEqual({ label: "THIS DEVICE", scope: "local" });
+  });
+
+  it("falls through to egressFor when origin is missing", () => {
+    const result = egressForEvent({ host: "api.anthropic.com" });
+    expect(result).toEqual({ label: "api.anthropic.com", scope: "cloud" });
+  });
+
+  it("falls through to egressFor when origin is null", () => {
+    const result = egressForEvent({ origin: null, caller: null, host: null });
+    expect(result).toEqual({ label: "", scope: undefined });
+  });
+
+  it("the time is NEVER inside the label", () => {
+    const result = egressForEvent({ origin: "remote", caller: "100.64.0.5" });
+    expect(result.label).not.toMatch(/\d{2}:\d{2}/);
   });
 });

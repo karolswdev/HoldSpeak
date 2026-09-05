@@ -854,6 +854,13 @@
 .gadget-chip-egress[data-scope="cloud"] {
   color: var(--accent);
 }
+/* HS-174-04 — the REMOTE badge: accent outline (stroke not fill),
+   never the warning tone.  A fourth egress token --egress-remote. */
+.gadget-chip-egress[data-scope="remote"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: transparent;
+}
 button.gadget-chip-egress {
   cursor: pointer;
 }

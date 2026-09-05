@@ -11,7 +11,8 @@ import { gateAge, useGate } from "../gate";
 import { useProjections } from "../projections";
 import { humanTime } from "../surface/format";
 import { countToken } from "../surface/count";
-import { StringGadget } from "../surface/gadgets";
+import { EgressChip, StringGadget } from "../surface/gadgets";
+import { egressForEvent } from "../surface/egress";
 import { SurfaceState } from "../surface/Surface";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import { MicButton } from "./MicButton";
@@ -336,7 +337,10 @@ export function SystemShade({
           <h4>
             Finished {finished.length > 0 ? <b>&middot; {finished.length}</b> : null}
           </h4>
-          {finished.map((row) => (
+          {finished.map((row) => {
+            // HS-174-04: derive egress from origin + caller (tolerant: fields may be absent)
+            const egress = egressForEvent({ origin: row.origin, caller: row.caller });
+            return (
             <div className="desk-shade-item" key={row.id}>
               <span className="desk-shade-glyph" aria-hidden="true">
                 ✦
@@ -344,7 +348,11 @@ export function SystemShade({
               <div className="desk-shade-what">
                 <strong>{row.title}</strong>
                 <small>
-                  {row.outcome || row.subject_label} &middot; {humanTime(row.timestamp)}
+                  {row.outcome || row.subject_label}
+                  {egress.label ? (
+                    <> <EgressChip label={egress.label} scope={egress.scope} data-testid="shade-finished-egress" /></>
+                  ) : null}
+                  {" "}&middot; {humanTime(row.timestamp)}
                 </small>
                 <span className="desk-shade-do">
                   <Button dense variant="ghost" onClick={() => openSource(row)}>
@@ -353,7 +361,8 @@ export function SystemShade({
                 </span>
               </div>
             </div>
-          ))}
+            );
+          })}
         </section>
       ) : null}
 

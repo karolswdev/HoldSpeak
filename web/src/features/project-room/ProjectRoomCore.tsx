@@ -48,7 +48,7 @@ import type {
 } from "./model";
 import { lifecycleLabel, resolveHealthRows, nudgeCardReducer, formatDays } from "./model";
 import { StringGadget } from "../../desk/surface/gadgets";
-import { egressFor } from "../../desk/surface/egress";
+import { egressFor, egressForEvent } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
 import { useReviewController } from "./review/useReviewController";
 import { ReviewPosture } from "./review/ReviewPosture";
@@ -99,6 +99,7 @@ export function DecisionPromotionSlot({
 const PROVIDER_EMBLEM: Record<string, string> = {
   github: "GH",
   jira: "J",
+  confluence: "C",
   meeting: "MTG",
   proposal: "MTG",
   delta: "◇",
@@ -1067,6 +1068,49 @@ function SourcesSection({
   );
 }
 
+/* ── RECEIPTS section (HS-174-04: pipeline event receipts with origin badge) ── */
+
+function ReceiptsSection({ room }: { room: RoomSnapshot }) {
+  if (room.receipts.state !== "ok") return null;
+  const { items } = room.receipts;
+  if (items.length === 0) return null;
+
+  return (
+    <SurfaceSection label={`RECEIPTS ${items.length}`}>
+      <SurfaceLedger count="" cols="room">
+        <ul className="surface-ledger-rows">
+          {items.map((item) => {
+            const egress = egressForEvent({ origin: item.origin, caller: item.caller });
+            return (
+              <SurfaceLedgerRow
+                key={item.id}
+                lead={<StateChip state="success" label="" icon={"●"} />}
+                primary={<span className="surface-primary">{item.title}</span>}
+                wrap
+                expands={false}
+                data-testid="receipt-row"
+                cells={
+                  <>
+                    {item.outcome ? (
+                      <span className="surface-token">{item.outcome}</span>
+                    ) : null}
+                    {egress.label ? (
+                      <EgressChip label={egress.label} scope={egress.scope} data-testid="receipt-egress" />
+                    ) : null}
+                    {item.timestamp ? (
+                      <span className="surface-token" data-muted>{humanTime(item.timestamp)}</span>
+                    ) : null}
+                  </>
+                }
+              />
+            );
+          })}
+        </ul>
+      </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
 /* ── SINCE YOU LOOKED section ── */
 
 function SinceYouLookedSection({ room }: { room: RoomSnapshot }) {
@@ -1670,6 +1714,9 @@ export function ProjectRoomCore({ hero, scope, scopeLabel }: CoreProps) {
               </div>
               <div className="room-section-rise" style={{ animationDelay: "100ms" }}>
                 <RoomPeopleSection projectId={ctrl.projectId} />
+              </div>
+              <div className="room-section-rise" style={{ animationDelay: "110ms" }}>
+                <ReceiptsSection room={ctrl.room} />
               </div>
               <div className="room-section-rise" style={{ animationDelay: "120ms" }}>
                 <SinceYouLookedSection room={ctrl.room} />
