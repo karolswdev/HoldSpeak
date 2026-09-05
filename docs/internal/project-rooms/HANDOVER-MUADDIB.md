@@ -87,6 +87,14 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
    the arrival retires the Chair hero (the `Develop a thought` button in
    a void, `PEOPLE NOT SET UP`, `No calendar connected.`, `CREW 0`).
 3. His attended walk of the 169 Door + Room — STILL OWED.
+4. **Phase 171 The Heartbeat is CHARTERED as PLANNED** (10 stories,
+   pm/roadmap/holdspeak/phase-171-the-heartbeat/); it activates when 170
+   merges. Its five open questions for him: the cadence row's home
+   (Settings → Rhythm or another name); the notification body (count
+   only by default — offer the content opt-in at launch or on ask); the
+   Monday brief cadence (daily or every N hours); whether the
+   transcription warm-up is one of the conductor's loops; 171 ∥ 172 or
+   strictly sequential. 172 + 173 charters follow the same way.
 
 ## 2. Laws learned this sitting (add to the canon of habit)
 
