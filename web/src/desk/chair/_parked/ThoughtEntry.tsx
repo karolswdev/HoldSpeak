@@ -5,7 +5,7 @@ import { useDurableDraft } from "../../lib/durableDraft";
 import { openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import { createThought } from "../thoughts";
-import { PadGadget } from "../surface/gadgets";
+import { PadGadget } from "../../surface";
 import { micStreamSupported, startStreamSession, type StreamSession } from "../../lib/micStreamSession";
 
 function requestId(key: string): string {

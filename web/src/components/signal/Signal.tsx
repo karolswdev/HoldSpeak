@@ -10,7 +10,7 @@
 //   composes StringGadget/PadGadget/CycleGadget.
 // - Panel — the document-shell card (non-desk routes).
 import {
-  type ButtonHTMLAttributes,
+  type ComponentPropsWithRef,
   type InputHTMLAttributes,
   type ReactNode,
   type SelectHTMLAttributes,
@@ -26,7 +26,7 @@ export function Button({
   className = "",
   disabled,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & {
+}: ComponentPropsWithRef<"button"> & {
   variant?: "primary" | "secondary" | "ghost" | "danger";
   dense?: boolean;
   loading?: boolean;

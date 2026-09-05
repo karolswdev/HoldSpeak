@@ -228,6 +228,10 @@
   --shadow-ink-6: rgba(0, 0, 0, 0.7);
   --wash-1: rgba(255, 255, 255, 0.035); /* faintest white wash (hairline fills) */
   --wash-2: rgba(255, 255, 255, 0.05); /* hover-weight white wash */
+  --bevel-light-strong: rgba(255, 255, 255, 0.22); /* Raised voice and chair control highlight; preserves the existing material. */
+  --bevel-light-hover: rgba(255, 255, 255, 0.18); /* Hovered chrome control highlight. */
+  --bevel-dark-soft: rgba(0, 0, 0, 0.20); /* Soft inner bevel for controls and gadgets. */
+  --accent-tint-faint: rgba(168, 110, 74, 0.08); /* Faint accent wash for project controls. */
 
   /* ============================================================
    * 3. COMPONENT TOKENS (the Desk OS chrome — HS-95 values)

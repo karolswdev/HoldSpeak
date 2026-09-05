@@ -187,15 +187,15 @@
   color: var(--ok, #34d399);
   border-color: color-mix(in srgb, var(--ok, #34d399) 40%, transparent);
   box-shadow:
-    inset 1px 1px 0 rgba(0, 0, 0, 0.30),
-    inset -1px -1px 0 rgba(255, 255, 255, 0.06);
+    inset 1px 1px 0 var(--etch-dark),
+    inset -1px -1px 0 var(--border-subtle);
 }
 .gadget-check-token.is-off .gadget-check-token-face {
   color: var(--text-faint, #767e8d);
   border-color: var(--border, #2a2e3e);
   box-shadow:
-    inset 1px 1px 0 rgba(255, 255, 255, 0.08),
-    inset -1px -1px 0 rgba(0, 0, 0, 0.20);
+    inset 1px 1px 0 var(--p-color-wash-08),
+    inset -1px -1px 0 var(--bevel-dark-soft);
 }
 .gadget-check-token input:focus-visible + .gadget-check-token-face {
   border-color: var(--accent);
