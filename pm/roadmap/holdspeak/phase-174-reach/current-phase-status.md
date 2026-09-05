@@ -114,7 +114,7 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-174-01 | The design (the remote badge, the credential scope face, the third connector's Door card) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
+| HS-174-01 | The design (the remote badge, the credential scope face, the third connector's Door card) | done | [story-01-the-design](./story-01-the-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-174-02 | The transport (Streamable HTTP on the hub behind scoped credentials) | backlog | [story-02-the-transport](./story-02-the-transport.md) | -- |
 | HS-174-03 | Scoped remote identity (non-OWNER principals, palette-restricted, owner-issued) | backlog | [story-03-scoped-remote-identity](./story-03-scoped-remote-identity.md) | -- |
 | HS-174-04 | Egress badges on remote reads (kernel receipt + badge; local stdio badgeless) | backlog | [story-04-egress-badges](./story-04-egress-badges.md) | -- |
