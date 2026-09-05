@@ -158,6 +158,18 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
   01/08/10 flip on his word. Design grounds for 172–176 are drafted
   under their phase assets. Merge order: #553 → #554.
 
+- **10:55 — Phase 172 ACTIVATED, STACKED** on `feat/the-loop-closes` off
+  `feat/the-heartbeat` (PR #554) off `feat/the-great-pass` (PR #553).
+  In flight: two artboard lanes (Room proposals · meeting after run ·
+  arrival Confirm rows | the 1:1 card · the suggested source ·
+  Settings → Meetings auto-run) from settled-design-loop-closes.md; two
+  wire lanes (the auto-run trigger after `_associate_meeting_with_projects`
+  + the extractors→proposals bridge + confirm through the kernel | the
+  People↔Watch resolver + the 1:1 brief's watch_summary + suggested
+  sources); the docs to the design; live172_walk.py drafted. Then
+  counsel → faces → rigs → his-desk walk → close → PR stacked on #554.
+  Merge order stays his: #553 → #554 → 172's.
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on
