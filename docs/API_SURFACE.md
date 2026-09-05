@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 631 (plus static mounts). iOS-consumed: 89. Web-consumed: 479.
+Routes: 639 (plus static mounts). iOS-consumed: 89. Web-consumed: 486.
 
 ## device_audio_ws
 
@@ -159,6 +159,16 @@ Routes: 631 (plus static mounts). iOS-consumed: 89. Web-consumed: 479.
 |---|---|---|
 | POST | `/api/calendar/snapshot` | web |
 | POST | `/api/calendar/snapshot/confirm` | web |
+
+## web.routes.concierge
+
+| Method | Path | Consumers |
+|---|---|---|
+| POST | `/api/concierge/apply` | web |
+| GET | `/api/concierge/detect` | web |
+| POST | `/api/concierge/download` | web |
+| POST | `/api/concierge/probe` | web |
+| POST | `/api/concierge/propose` | web |
 
 ## web.routes.connections
 
@@ -462,6 +472,7 @@ Routes: 631 (plus static mounts). iOS-consumed: 89. Web-consumed: 479.
 | GET | `/api/meetings/{meeting_id}/intel-recovery` | web |
 | POST | `/api/meetings/{meeting_id}/intel-recovery/retry` | web |
 | POST | `/api/meetings/{meeting_id}/intel-recovery/skip` | web |
+| POST | `/api/meetings/{meeting_id}/intelligence/run` | server only |
 
 ## web.routes.meetings.live
 
@@ -828,6 +839,7 @@ Routes: 631 (plus static mounts). iOS-consumed: 89. Web-consumed: 479.
 
 | Method | Path | Consumers |
 |---|---|---|
+| GET | `/api/desk/needs-you` | web |
 | GET | `/api/desk/relationships/{resource_ref:path}` | web |
 | GET | `/api/meetings/{meeting_id}/projects` | server only |
 | GET | `/api/projects` | web |
@@ -1031,6 +1043,7 @@ Routes: 631 (plus static mounts). iOS-consumed: 89. Web-consumed: 479.
 |---|---|---|
 | GET | `/api/settings` | ios, web |
 | PUT | `/api/settings` | ios, web |
+| GET | `/api/settings/hub` | web |
 
 ## web.routes.system.settings_secrets
 

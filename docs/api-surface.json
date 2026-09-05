@@ -1172,6 +1172,56 @@
       ]
     },
     {
+      "path": "/api/concierge/apply",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/concierge/detect",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/concierge/download",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/concierge/probe",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/concierge/propose",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.concierge",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/connections",
       "methods": [
         "GET"
@@ -1804,6 +1854,16 @@
       "module": "web.routes.desk_actuators",
       "consumers": [
         "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/desk/needs-you",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.projects",
+      "consumers": [
         "web"
       ]
     },
@@ -3236,6 +3296,14 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/intelligence/run",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.intel",
+      "consumers": []
     },
     {
       "path": "/api/meetings/{meeting_id}/intent-timeline",
@@ -4795,6 +4863,16 @@
       "module": "web.routes.system.settings",
       "consumers": [
         "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/hub",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.settings",
+      "consumers": [
         "web"
       ]
     },

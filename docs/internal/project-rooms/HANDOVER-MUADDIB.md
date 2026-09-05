@@ -37,8 +37,10 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
   idle/landed/unset/393 · Meetings list/detail/393). Counsel RATIFY-W-C
   PAID (one egress vocabulary — `THIS DEVICE`, `LOCAL` retired; the OFF
   detail placement; the two wire reads behind the Models row;
-  FinishThoughtsLane between `door` and `brief` in LANE_ORDER; the
-  needs-you aggregate is N+1 until 171).
+  the THOUGHTS section of the arrival is its OWN section fed by the
+  unfinished-thoughts read — the Chair lane vocabulary is retired by the
+  doc-drift guard, so no lane is revived; the needs-you aggregate is
+  N+1 until 171).
 - **THE CANVAS (18 boards, both pages, counsel paid):**
   https://claude.ai/code/artifact/3fc26e25-1d5f-4796-b2e9-0d4bae9bff20
   Seeded from pm/roadmap/holdspeak/phase-170-the-great-pass/assets/mockups/

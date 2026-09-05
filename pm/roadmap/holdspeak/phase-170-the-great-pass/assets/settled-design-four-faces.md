@@ -28,9 +28,10 @@ thoughts) is built and NOT wired (laneContract.ts:28-33).
    emblem · the thing · WHY · `Open`), the Room's grammar; the row's
    project as a faint token when more than one Room. Empty: the section
    is absent (the headline said it).
-3. **THOUGHTS** — FinishThoughtsLane WIRED at last (`"thoughts"` enters
-   `laneContract.ts` LANE_ORDER between `door` and `brief`, registered in
-   the lane registry; ChairHome imports it): unfinished thoughts
+3. **THOUGHTS** — the arrival's own section (a SurfaceLedgerRow list fed
+   by the unfinished-thoughts read; the Chair LANE vocabulary is RETIRED
+   by `test_doc_drift_guard` — no lane is revived, no LANE_ORDER edit;
+   the old lane component's row logic may be lifted into the section): unfinished thoughts
    as rows (`Continue` / `Ready for you` / `Needs attention` as the
    state token; primary `Continue` on the first). Empty: absent.
 4. **BRIEF** — when a brief exists: `N things waiting` rows with `Ack` /
@@ -174,7 +175,8 @@ landed with result · 393. Settings hub: 1440 (`No default model`) ·
 RATIFY-W-C. M1 `LOCAL` vs `THIS DEVICE` on the Speak footer — paid on
 the boards and above. S1 the OFF detail placement — written above.
 S2 the Models row's two wire reads — above. S3 the N+1 aggregate — above,
-171 pays it. S4 FinishThoughtsLane's place in LANE_ORDER — above. N1 the
+171 pays it. S4 the THOUGHTS section — its own section, not a revived lane (the
+doc-drift guard retired the Chair lane vocabulary) — above. N1 the
 posture said twice in settingsPrefs.tsx:383 — the build removes the
 `gadget-fact` span. N5 `1,204 WORDS` = the transcript word count. N6 the
 intelligence run route — check `/api/intel/process` first.

@@ -28,6 +28,8 @@ class MeetingSummary(Serializable):
     capture_checkpoint_seconds: float = 0.0
     provenance: str = "desktop"
     calendar_event_id: Optional[str] = None
+    # HS-170-04: transcript word count for the face (omitted/None = no transcript).
+    transcript_words: Optional[int] = None
 
 
 @dataclass
