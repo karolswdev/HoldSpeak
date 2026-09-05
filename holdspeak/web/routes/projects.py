@@ -375,76 +375,71 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             log.error(f"Failed to transition item: {exc}")
             return JSONResponse({"success": False, "error": str(exc)}, status_code=500)
 
-    # ── HS-170-04: desk needs-you aggregate ─────────────────────────────
+    # ── HS-170-04 / HS-171-03: desk needs-you aggregate (cached) ────────
+
+    from ...services.needs_you_aggregate import NeedsYouCache, build_aggregate
+
+    # The owner principal for background rebuilds (the cache builder runs
+    # outside a request context).
+    _owner_principal = UNAUTHENTICATED  # will be replaced on first request
+
+    def _build_needs_you() -> dict:
+        door = ctx.door_service
+        door_upcoming = getattr(door, "_upcoming", None) if door else None
+        aggregate = build_aggregate(
+            list_projects=service.list_projects,
+            room=service.room,
+            principal=_owner_principal,
+            door_upcoming=door_upcoming,
+        )
+        # M1 (counsel): apply the mute list from heartbeat settings so
+        # the route's count matches the notification edge count (one count
+        # everywhere).  Muted items get ``muted: true`` and are excluded
+        # from ``count`` but included in ``mutedCount``.
+        try:
+            from ...services.heartbeat_service import HeartbeatService
+            from ...db import get_database
+            hb = HeartbeatService(get_database())
+            muted_ids = set(hb.get_settings().get("muted_projects", []))
+        except Exception:
+            muted_ids = set()
+        if muted_ids:
+            unmuted = []
+            muted_count = 0
+            for item in aggregate.get("items", []):
+                if item.get("projectId") in muted_ids:
+                    item["muted"] = True
+                    muted_count += 1
+                else:
+                    item["muted"] = False
+                    unmuted.append(item)
+            aggregate["count"] = len(unmuted)
+            aggregate["mutedCount"] = muted_count
+            # One count everywhere: "across M projects" counts only Rooms
+            # that still contribute (counsel C2).
+            aggregate["projects"] = sorted(
+                {str(i.get("projectId")) for i in unmuted if i.get("projectId")}
+            )
+        return aggregate
+
+    _needs_you_cache = NeedsYouCache(_build_needs_you, max_age_s=900.0)
+
+    # Expose the cache on the context so the cadence tick can invalidate it.
+    ctx._needs_you_cache = _needs_you_cache  # type: ignore[attr-defined]
 
     @router.get("/api/desk/needs-you")
-    async def api_desk_needs_you(request: Request) -> Any:
-        """HS-170-04: arrival headline aggregate.
+    async def api_desk_needs_you(request: Request, fresh: str | None = None) -> Any:
+        """HS-171-03: cached needs-you aggregate.
 
-        Sums every ACTIVE project's Room needsYou (reuses ProjectService's
-        room section builder -- does NOT recompute; archived projects excluded)
-        into one flat payload. 171 owns the cadence; this is the one route,
-        one read.
+        Reads from the in-memory cache; ``?fresh=1`` forces a rebuild.
+        Response includes ``computedAt``, ``stale``, ``sweepId``.
         """
         try:
-            _SEVERITY_ORDER = {"danger": 0, "warning": 1, "info": 2}
-            projects = service.list_projects(principal(request), {"include_archived": False})
-            items: list[dict] = []
-            project_ids: set[str] = set()
-            for proj in projects:
-                pid = proj.get("id") or ""
-                if not pid:
-                    continue
-                try:
-                    room = service.room(principal(request), pid)
-                except Exception:
-                    continue
-                needs = room.get("needsYou", {})
-                if needs.get("state") != "ok":
-                    continue
-                need_items = needs.get("items") or []
-                for item in need_items:
-                    items.append({
-                        "projectId": pid,
-                        "projectName": proj.get("name") or proj.get("title") or "",
-                        "ref": item.get("title", ""),
-                        "title": item.get("title", ""),
-                        "why": item.get("why", ""),
-                        "ageToken": item.get("since", ""),
-                        "source": item.get("source", ""),
-                        "verbHref": item.get("url"),
-                        "severity": item.get("severity", "info"),
-                    })
-                    project_ids.add(pid)
-
-            # Sort: danger (overdue/red) first, then warning, then info.
-            items.sort(key=lambda r: (
-                _SEVERITY_ORDER.get(r.get("severity", "info"), 2),
-                r.get("ageToken") or "",
-            ))
-
-            # next: the next scheduled recording or calendar event.
-            next_item = None
-            door = ctx.door_service
-            if door is not None:
-                try:
-                    from datetime import datetime as _dt
-                    upcoming = door._upcoming(_dt.now())
-                    if upcoming:
-                        first = upcoming[0]
-                        next_item = {
-                            "label": first.get("title", ""),
-                            "at": first.get("starts_at"),
-                        }
-                except Exception:
-                    pass
-
-            return JSONResponse({
-                "count": len(items),
-                "projects": sorted(project_ids),
-                "items": items,
-                "next": next_item,
-            })
+            nonlocal _owner_principal
+            _owner_principal = principal(request)
+            force = fresh == "1"
+            data = _needs_you_cache.get(force=force)
+            return JSONResponse(data)
         except Exception as exc:
             return error_500(exc, log, "Failed to build desk needs-you")
 

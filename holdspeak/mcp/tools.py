@@ -768,7 +768,18 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
                 written_at = os.path.getmtime(CONFIG_FILE)
         except Exception:
             pass
-        return {"models": {"engines": engines, "groupsSet": groups_set, "defaultSet": default_set}, "connections": {"connected": connected}, "voice": {"live": config.dictation.pipeline.enabled, "target": config.dictation.pipeline.target_profile_override or "auto"}, "meetings": {"intelligence": config.meeting.intel_enabled}, "rhythm": {"loops": loops}, "sounds": {"on": config.ui.desk_sounds}, "system": {"host": "THIS DEVICE", "mesh": bool(getattr(config.mesh, "device_name", ""))}, "posture": config.control_mode, "writtenAt": written_at}
+        # HS-171-02: heartbeat rhythm mirror.
+        heartbeat_rhythm: dict = {"loops": loops}
+        try:
+            from holdspeak.services.heartbeat_service import HeartbeatService
+            hb = HeartbeatService(db)
+            heartbeat_rhythm = hb.hub_rhythm()
+        except Exception:
+            heartbeat_rhythm["sweepEveryMinutes"] = 15
+            heartbeat_rhythm["nextSweepAt"] = None
+            heartbeat_rhythm["lastSweepAt"] = None
+            heartbeat_rhythm["quiet"] = {"start": 22, "end": 8, "held": False}
+        return {"models": {"engines": engines, "groupsSet": groups_set, "defaultSet": default_set}, "connections": {"connected": connected}, "voice": {"live": config.dictation.pipeline.enabled, "target": config.dictation.pipeline.target_profile_override or "auto"}, "meetings": {"intelligence": config.meeting.intel_enabled}, "rhythm": heartbeat_rhythm, "sounds": {"on": config.ui.desk_sounds}, "system": {"host": "THIS DEVICE", "mesh": bool(getattr(config.mesh, "device_name", ""))}, "posture": config.control_mode, "writtenAt": written_at}
     if name == "meeting.run_intelligence":
         from holdspeak.services.meeting_intel_service import MeetingIntelService as _MIS
         intel_svc = _MIS(db, observer=obs)

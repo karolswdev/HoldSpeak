@@ -1,0 +1,35 @@
+/* HS-171-02 — the Rhythm face layout (CadenceCore.tsx). */
+
+/* Display headline: accent when the sweep runs, muted when not */
+.surface-display[data-tone="accent"] {
+  color: var(--accent);
+}
+.surface-display[data-muted] {
+  color: var(--text-muted);
+}
+
+/* Each row group (ledger + facts) separated by a hairline */
+.rhythm-section {
+  border-bottom: 1px solid var(--desk-window-etch-color, rgba(255, 255, 255, 0.06));
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+/* Fact token rows tight under the name line */
+.rhythm-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 2px;
+  padding: 2px 12px 4px;
+  font: var(--desk-type-secondary);
+  letter-spacing: 0.06em;
+}
+
+/* Project mute toggles (CheckGadget variant="token") */
+.rhythm-mutes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 12px 4px;
+}

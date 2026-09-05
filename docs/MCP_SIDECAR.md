@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-197 tools across 35 families. The default non-owner discovery lists 34
+201 tools across 36 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -57,7 +57,7 @@ default.
 
 ## Tool families
 
-The 197 tools are organized into domain families. Each tool follows the
+The 201 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -358,6 +358,20 @@ search, sync, export, connector, or employment-decision tool. Tool results are
 transient stdio disclosure to the explicitly trusted parent client; they are
 not written to HoldSpeak's plaintext database, observer, FTS, or Cadence.
 
+### heartbeat (4 tools)
+
+The Heartbeat sweep: the unattended cadence that evaluates due Watches and
+caches the needs-you aggregate. `heartbeat.status` reads the current
+settings (interval, quiet hours, notification mode, last/next sweep
+timestamps, and whether the sweep is currently held by quiet hours).
+`heartbeat.run_now` triggers one immediate sweep and returns the receipt
+(watch count, room count, duration, outcome summary). `heartbeat.set`
+updates the sweep settings: `sweep_every_minutes` (1 to 1440, default
+15), `quiet_hours` (`{start, end}` as hour integers), `notify` (`off`,
+`edge`, or `every_sweep`), and `muted_projects` (project IDs excluded
+from the notification aggregate). `heartbeat.notify_test` fires one test
+desktop notification and returns `{fired: boolean}`.
+
 ### plugin_job (4 tools)
 
 `plugin_job.list` and `plugin_job.summary` read deferred plugin job state.
@@ -366,7 +380,7 @@ marks a job done. Both refuse running jobs.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 197 tools across 35 families.
+**Registry totals:** 201 tools across 36 families.
 
 #### ask (4)
 
@@ -450,6 +464,13 @@ marks a job done. Both refuse running jobs.
 - `follow_through.board`
 - `follow_through.commit_decision`
 - `follow_through.complete`
+
+#### heartbeat (4)
+
+- `heartbeat.notify_test`
+- `heartbeat.run_now`
+- `heartbeat.set`
+- `heartbeat.status`
 
 #### inference (1)
 

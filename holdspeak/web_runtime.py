@@ -128,6 +128,7 @@ def _dictation_journal_repo():
 
 from .runtime.activity import RuntimeActivityMixin
 from .runtime.cadence import CadenceMixin
+from .runtime.heartbeat import HeartbeatMixin
 from .runtime.device_glue import DeviceGlueMixin
 from .runtime.dictation_capture import DictationCaptureMixin
 from .runtime.meeting_glue import MeetingGlueMixin
@@ -147,6 +148,7 @@ class WebRuntime(
     WakeWordGlueMixin,
     DeviceGlueMixin,
     CadenceMixin,
+    HeartbeatMixin,
 ):
     """Web-first runtime: owns the web server, hotkey/device capture, the
     meeting session, and the MIR plugin pipeline.
@@ -532,6 +534,7 @@ class WebRuntime(
                 daemon=True,
             )
             self.cadence_thread.start()
+        self._start_heartbeat_thread()  # HS-171-02
         self._warm_transcriber_in_background()
 
         try:

@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 171
-- **Status:** backlog
+- **Status:** in-progress
 - **Depends on:** Phase 170 merged
 - **Unblocks:** HS-171-02, HS-171-03, HS-171-04, HS-171-05, HS-171-06, HS-171-07
 - **Owner:** unassigned
@@ -32,15 +32,15 @@ artboards these cannot be built to canon.
 
 ## Acceptance criteria
 
-- [ ] Artboards at 1440 + 393 on the ratified shell for every new face
+- [x] Artboards at 1440 + 393 on the ratified shell for every new face
       region (Article IX.2; UX-CANON.md rule E.1).
-- [ ] Counsel reads the artboards before the owner (UX-CANON.md rule
+- [x] Counsel reads the artboards before the owner (UX-CANON.md rule
       E.1).
 - [ ] The owner's word on the canvas (Article IX.4).
-- [ ] No prose in the artboards (Article VII.1; UX-CANON.md rule A.3).
-- [ ] Every artboard uses at least three type steps (UX-CANON.md rule
+- [x] No prose in the artboards (Article VII.1; UX-CANON.md rule A.3).
+- [x] Every artboard uses at least three type steps (UX-CANON.md rule
       C).
-- [ ] The notification artboard names no Room content beyond the count
+- [x] The notification artboard names no Room content beyond the count
       (Article III.1) in the default variant.
 
 ## Test plan
@@ -54,3 +54,7 @@ artboards these cannot be built to canon.
 - The artboard for Settings cadence row: does the owner want this under
   a "Rhythm" tile or a "Heartbeat" tile? Propose "Rhythm" (the existing
   cadence wiring uses that name internally); the owner decides.
+
+## Ledger (2026-09-05)
+
+Twelve boards (assets/mockups + story-01-shots); counsel RATIFY-W-C twice (the canvas, then the built tree) — every condition paid; canvas https://claude.ai/code/artifact/82c55045-4a19-4990-a8b5-569b91eb8647. Open: his word (after 170's).

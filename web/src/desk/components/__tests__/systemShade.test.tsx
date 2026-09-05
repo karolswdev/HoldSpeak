@@ -40,7 +40,7 @@ vi.mock("../../../lib/api", () => ({
 }));
 
 describe("SystemShade (canon §6.1)", () => {
-  it("groups honestly: needs-you verbs inline, finished with Open, learned zero says zero", async () => {
+  it("groups honestly: needs-you verbs inline, finished with Open, empty sections absent (A.8)", async () => {
     const onClose = vi.fn();
     const onOpenMemory = vi.fn();
     render(
@@ -52,8 +52,9 @@ describe("SystemShade (canon §6.1)", () => {
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Acknowledge" })).toBeTruthy();
     expect(screen.getByText("Dictation delivered")).toBeTruthy();
+    // A.8: empty sections are absent, never "No corrections" / "Clear".
     await waitFor(() =>
-      expect(screen.getByText("No corrections")).toBeTruthy(),
+      expect(screen.queryByText("No corrections")).toBeNull(),
     );
     fireEvent.click(screen.getByRole("button", { name: "Acknowledge" }));
     expect(present).toHaveBeenCalledWith("p1", "acknowledge");

@@ -98,6 +98,66 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
 
 - **171's design ground is DRAFTED** (pm/roadmap/holdspeak/phase-171-the-heartbeat/assets/settled-design-heartbeat.md, pending 170's merge): six faces with species; recon binds the wire (the txn hook already writes `next_evaluation_at` — nothing ever calls `evaluate_due`; the Cocoa host has AppKit and zero notification calls; the daily brief push never regenerates). His three new questions: the notification's click target (shade or desk); one flat 15-min interval or an active/idle split; whether a muted project vanishes from the shade or only from the count.
 
+- **06:20 — Phase 171 ACTIVATED, STACKED** on branch `feat/the-heartbeat`
+  off `feat/the-great-pass` (the standing goal outranks "one phase at a
+  time" the way it outranked "his word before build"; every MERGE stays
+  his — 170's PR #553 first, then 171's stacked PR). In flight: two
+  artboard lanes (shade PROJECTS · notification · dock badge · ⌘K;
+  Rhythm's cadence row · the brief) from settled-design-heartbeat.md,
+  and two wire lanes (the sweep loop + scheduler + `heartbeat` MCP
+  family; the aggregate cache + the brief's cadence + the notifier).
+  Then counsel on the boards → faces → rigs → his-desk walk → docs →
+  close → stacked PR. If he bounces 170's faces, 171 rebuilds on his
+  ruling.
+
+- **171 at 07:20:** boards + canvas
+  https://claude.ai/code/artifact/82c55045-4a19-4990-a8b5-569b91eb8647
+  (counsel reading); the wire built and committed (heartbeat setting in
+  `cadence_policies`, the third conductor loop `HoldSpeakHeartbeat`,
+  `needs_you_aggregate.py` cache, `desktop_notify.py` osascript V0,
+  brief regeneration in runtime/cadence.py). Next: counsel's conditions
+  → faces (shade PROJECTS + dock badge = 04; ⌘K = 07; Rhythm's row = 02's
+  face; the brief row = 06) → rigs → his-desk walk (a real notification
+  at a real edge) → docs → close → stacked PR.
+
+- **171 at 08:00:** the wire complete with counsel's conditions; the
+  shade's PROJECTS + dock badge and ⌘K PROJECTS built, read and
+  committed (one count everywhere — muted Rooms dimmed, `MUTED`,
+  uncounted; the shade's empty sections absent, `NOTHING MISSED` when
+  all are); Rhythm built and BOUNCED once (title `Rhythm`, no eyebrow,
+  accent headline, hug height, WRITTEN receipt, the hub shot); the
+  arrival learning the mutes; docs written with seven markers;
+  live171_walk.py written, selectors filling. Product-copy fence at 26
+  (< the inherited 27: `_parked` skipped). Next: gauntlet → the walk on
+  his hub (run-now on his real Rooms; a banner at a real edge is his to
+  see) → docs markers → counsel-on-built → close → PR stacked on #553.
+
+- **171 at 09:50 — 6/10 on evidence** (02 cadence · 03 aggregate · 04
+  shade + badge · 06 brief · 07 ⌘K · 09 docs), counsel-on-built
+  RATIFY-W-C paid; the first walk on his real desk found his Monday
+  brief was the kernel ledger (`1839 THINGS · AUG 19`) — the SOURCE is
+  fixed (human items only; `LedgerSummary` no face counts); a `PROJECTS`
+  caption over nothing → the brief under its own `BRIEF` caption. 05
+  keeps its click-to-open box open (osascript; the bundle); 01/08/10 are
+  his word. The second walk runs; then the full suite; then
+  `gh pr create --base feat/the-great-pass` (stacked on #553). Evidence
+  captures for 01/05/08/10 wait for his word.
+
+- **172's design ground is DRAFTED** (pm/roadmap/holdspeak/phase-172-the-loop-closes/assets/settled-design-loop-closes.md, pending 170's merge): six faces with species. Recon: the EXTRACTORS EXIST (`decision_capture`, `action_owner_enforcer` plugins) but their artifacts are opaque JSON nothing reads — story 03 is the bridge to proposals; the auto-run trigger belongs after `_associate_meeting_with_projects` (meeting_glue.py:447); `resolve_relationship_by_owner` is the resolver's seed, never called from the Watch path; the 1:1 brief has no Watch data. His three new questions: auto-run default ROOM-LINKED ONLY or AFTER EVERY MEETING; does an edited proposal keep its original as provenance; the People card from the Room at 393 inline or navigate.
+
+- **173's design ground is DRAFTED** (pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/settled-design-stewards-hand.md, pending 172). Recon: the snapshots lack review-request timestamps (add `createdAt` to `GH_WATCH_FIELDS`, watch_sources.py:35 — a read field, not a CLI verb); `gh` writes are gated by `WriteConnectorManifest` (gated_connector.py:128) and the PR-comment actuator already exists (github_pr_actuator.py:86) — the steward has never called it; the sixth effect kind is one `elif` in `_apply_effect` (project_steward_service.py:1094) behind the existing gate; flaky CI needs `run list --limit 10` (allow-listed). His three new questions: the nudge's wording (it goes out under his name); the health thresholds (24/48 h, 14 d, 3 failures); the nudge cooldown (7 d).
+
+- **176's design ground is DRAFTED** (phase-176-the-speak-loop/assets/settled-design-speak-loop.md). Recon: Teach's corrections ARE applied on the next dictation today (dictation_runner.py:335 snapshots the store per run; intent_router.py:206 + target_profile.py:126 apply them) and persist durably (ring of 20 in memory, the DB uncapped) — the loop exists and has never been taught (0 corrections on his desk); the mic gap is 31 raw inputs/textareas outside the gadget system (the gadgets default mic=true), not ~85. His questions: LEARNED as a wing or under Configure; the teach chip tap-to-detail or always visible; the raw-input allowlist.
+
+- **175's design ground is DRAFTED** (phase-175-calendar-and-the-clock/assets/settled-design-calendar-clock.md). Recon: the calendar adapter reads ICS only (a local file or an HTTPS subscription URL — integrations.py:18-26; no EventKit/Google); events reach the NEXT line via door_service.py:266 but carry no Room link (no `project_id`; a matcher or a `calendar_event_projects` table is needed); `scheduled_recordings.calendar_event_id` exists (db/scheduled_recordings.py:34) with a unique armed index (schema.py:3483) but auto-arming is unbuilt; the ICS parser drops ATTENDEE. His questions: event→Room auto-link or SUGGESTED rows; the auto-record default once a calendar is connected; the week strip MON–FRI or seven days.
+
+- **174's design ground is DRAFTED** (phase-174-reach/assets/settled-design-reach.md). Recon that changes the charter's assumptions: `acli confluence page` exposes only `view --id` — NO page list/search (only `blog list` and `space list` paginate) — so a Confluence WatchSource in V0 watches blog posts, not pages; the .43 is the CLIENT and the Mac the hub (.43 → hub → .43's llama.cpp → hub → receipt); `_web_auth_gate` (web_server.py:561-591) does not yet refuse OWNER derivation off-loopback — new code; AgentCredential has no palette field (principals.py:83-113) and the store is in-memory (dies with the hub); EgressChip has three scopes (`remote` is the fourth). His questions: Confluence still the third connector knowing V0 watches blogs only, or Linear; persist credentials or re-issue after restart; `caffeinate` for the lid-closed night or fail gracefully.
+
+- **PR #554 is OPEN for 171** (https://github.com/karolswdev/HoldSpeak/pull/554), stacked on #553 (base
+  `feat/the-great-pass`). 6/10 done on evidence; 05 keeps its click box;
+  01/08/10 flip on his word. Design grounds for 172–176 are drafted
+  under their phase assets. Merge order: #553 → #554.
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on

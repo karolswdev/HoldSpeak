@@ -15,6 +15,7 @@ import { createPortal } from "react-dom";
 import { openSurface } from "../shell";
 import { SYSTEM } from "../systemSprites";
 import { qualifiedRef } from "../api";
+import { apiFetch } from "../../lib/api";
 import { createThread } from "../threads";
 import {
   contextualCapabilityActions,
@@ -25,7 +26,7 @@ import { useDesk } from "../store";
 import { usePalette } from "../chromeState";
 import { StringGadget } from "../surface/gadgets";
 import { allObjects } from "../world";
-import { DESK_TOOLS, KIND_LABEL } from "../tools";
+import { DESK_TOOLS, KIND_GLYPH, KIND_LABEL } from "../tools";
 import { VERBS, verbLabel, type VerbContext } from "../verbRegistry";
 import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
 import { useLaunchers } from "./DeskWindow";
@@ -35,6 +36,7 @@ import { useLaunchers } from "./DeskWindow";
 export { DESK_TOOLS, KIND_LABEL };
 
 const SECTIONS = [
+  "PROJECTS",
   "VERBS",
   "PROGRAMS",
   "OBJECTS",
@@ -55,6 +57,8 @@ interface DeckRow {
   ghost?: string | null;
   /** Extra match terms beyond the label. */
   terms?: string;
+  /** HS-171-07: trailing badge chip (e.g. "2 NEED YOU"); absent when falsy. */
+  badge?: string;
   run(): void;
 }
 
@@ -130,6 +134,24 @@ export function DeskToolShelf() {
   const integrations = setup?.trust?.destinations ?? [];
   const launchers = useLaunchers();
 
+  // HS-171-07: needs-you counts per project for the PROJECTS section.
+  // Fetches the cached aggregate once on mount (the server cache is
+  // <= 50 ms; no second fetch storm -- the shade reads the same route).
+  const [projectNeedsYou, setProjectNeedsYou] = useState<Record<string, number>>({});
+  useEffect(() => {
+    void apiFetch<{ items?: Array<{ projectId?: string; muted?: boolean }> }>("/api/desk/needs-you")
+      .then((payload) => {
+        const counts: Record<string, number> = {};
+        // One count everywhere: muted Rooms' items never inflate a badge (counsel C1).
+        for (const item of (payload?.items ?? []).filter((i) => !i.muted)) {
+          const pid = item.projectId;
+          if (pid) counts[pid] = (counts[pid] ?? 0) + 1;
+        }
+        setProjectNeedsYou(counts);
+      })
+      .catch(() => null);
+  }, []);
+
   useEffect(() => {
     // ⌘K itself lives in desk/keymap.ts (the one binder); the deck
     // keeps only its own Escape ladder: query first, then the panel.
@@ -189,6 +211,33 @@ export function DeskToolShelf() {
   const rows: DeckRow[] = useMemo(() => {
     const out: DeckRow[] = [];
     const push = (row: DeckRow) => out.push(row);
+
+    // ── PROJECTS: one verb per active Room (HS-171-07) ──
+    // Sorted by needs-you count desc then name; capped at 10.
+    const projectRows = projects
+      .map((p) => ({ project: p, needs: projectNeedsYou[p.id] as number | undefined }))
+      .sort((a, b) =>
+        (b.needs ?? -1) !== (a.needs ?? -1)
+          ? (b.needs ?? -1) - (a.needs ?? -1)
+          : a.project.name.localeCompare(b.project.name),
+      )
+      .slice(0, 10);
+    for (const { project, needs } of projectRows) {
+      const badge =
+        needs && needs > 0
+          ? `${needs} ${needs === 1 ? "NEEDS YOU" : "NEED YOU"}`
+          : undefined;
+      push({
+        id: `project.open.${project.id}`,
+        section: "PROJECTS",
+        glyph: KIND_GLYPH.project ?? "▣",
+        label: `Open ${project.name}`,
+        kind: "PROJECT",
+        badge,
+        terms: `project room ${project.name}`.toLocaleLowerCase(),
+        run: () => openSurface("open-project-memory", `project:${project.id}`),
+      });
+    }
 
     // ── VERBS: the registry + the contextual actions for a selection ──
     for (const action of contextualCapabilityActions(items, selectedIds))
@@ -294,16 +343,7 @@ export function DeskToolShelf() {
         });
       }
     }
-    for (const project of projects)
-      push({
-        id: `project:${project.id}`,
-        section: "OBJECTS",
-        glyph: "▤",
-        label: project.name,
-        kind: "PROJECT",
-        terms: `project ${project.description}`.toLocaleLowerCase(),
-        run: () => openSurface("open-project-memory", `project:${project.id}`),
-      });
+    // HS-171-07: project rows moved to the PROJECTS section above.
 
     // ── SETTINGS: preference modules, integrations, runtime targets, models ──
     for (const module of PREF_MODULES)
@@ -370,13 +410,15 @@ export function DeskToolShelf() {
     // shows every PROGRAM (they are the launcher truth) and a short
     // head of everything else.
     const cap = (s: Section) =>
-      normalized
-        ? s === "OBJECTS"
-          ? 5
-          : 10
-        : s === "PROGRAMS"
-          ? Number.POSITIVE_INFINITY
-          : 6;
+      s === "PROJECTS"
+        ? 10
+        : normalized
+          ? s === "OBJECTS"
+            ? 5
+            : 10
+          : s === "PROGRAMS"
+            ? Number.POSITIVE_INFINITY
+            : 6;
     const byCount = new Map<Section, number>();
     return ranked
       .filter(({ row }) => {
@@ -395,6 +437,7 @@ export function DeskToolShelf() {
     models,
     normalized,
     openPullout,
+    projectNeedsYou,
     refresh,
     openToolInspector,
     projects,
@@ -534,6 +577,9 @@ export function DeskToolShelf() {
                               <small className="quiet"> · {row.ghost}</small>
                             ) : null}
                           </span>
+                          {row.badge ? (
+                            <span className="desk-deck-badge">{row.badge}</span>
+                          ) : null}
                           <span className="desk-deck-kind">{row.kind}</span>
                           {row.keycap ? <kbd>{row.keycap}</kbd> : null}
                         </button>

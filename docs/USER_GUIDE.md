@@ -942,13 +942,84 @@ Each module is a row with its name, its state tokens, and **Open**:
 | **CONNECTIONS** | `N CONNECTED` (absent at zero) |
 | **VOICE** | `LIVE` + the current target name |
 | **MEETINGS** | `INTELLIGENCE ON` or `INTELLIGENCE OFF` |
-| **RHYTHM** | `N LOOPS` or `NO LOOPS` |
+| **RHYTHM** | `EVERY 15 MIN . NEXT hh:mm` when the sweep runs; `NO LOOPS` at zero |
 | **SOUNDS & PRESENCE** | `ON` or `OFF` |
 | **SYSTEM** | `THIS DEVICE` + `MESH ON` or `MESH OFF` |
 
 The **POSTURE** row carries a cycle control for the security posture
 (`YOLO`, `Normal`, `Secure`), stated once. The footer carries `THIS DEVICE`
 and a receipt (`WRITTEN hh:mm`). Choose a row to open its module.
+
+## Rhythm
+
+Open **Settings, Rhythm**. The Rhythm module controls the Heartbeat: the
+unattended sweep that evaluates project Watches and refreshes the
+needs-you aggregate on a cadence.
+
+![Rhythm: the sweep, the brief and notify rows](assets/heartbeat/rhythm-1440.png)
+
+### The sweep row
+
+The **Sweep** row controls the sweep interval with a cycle control
+(`EVERY 5 MIN`, `EVERY 15 MIN`, `EVERY 30 MIN`, `EVERY 60 MIN`;
+default `EVERY 15 MIN`). **Run now** triggers one immediate sweep
+(allowed during quiet hours). Fact tokens below the row read
+`QUIET hh:mm-hh:mm`, `NEXT hh:mm`, `LAST hh:mm`, and after a sweep
+`N ROOMS` and `N MS`. During quiet hours a `HELD . QUIET UNTIL hh:mm`
+chip replaces the fact tokens.
+
+### The Monday brief row
+
+The **Monday brief** row shows a fixed `DAILY hh:mm` token (the hour
+is quiet hours end; this is not a setting). The brief regenerates once a
+day after quiet hours close. Fact tokens read `NEXT MON hh:mm` and
+`LAST <date>`. **Generate now** triggers immediate regeneration;
+disabled while generating (a `GENERATING` chip replaces the verb).
+
+### Notifications
+
+The **Notify** row carries two cycle controls:
+
+| Control | Options |
+|---|---|
+| **Mode** | `OFF`, `ON THE EDGE` (the default), `EVERY SWEEP` |
+| **Content** | `COUNT ONLY` (the default), `ROOM NAMES` |
+
+`ON THE EDGE` fires when the needs-you count crosses from 0 to
+positive, or when it increases since the last notification. `EVERY
+SWEEP` fires after every sweep that finds items. `COUNT ONLY` limits
+the body to the count (`3 need you across 2 projects`); `ROOM NAMES`
+adds the first WHY per project (at most three lines). During quiet
+hours a `HELD` chip appears on the row.
+
+### Per-Room mute
+
+Each project Room carries a mute toggle. A muted Room is excluded from
+the notification count and the dock badge count. Muted Rooms still
+appear in the shade's **PROJECTS** section, dimmed, with a `MUTED`
+token, and do not count toward the section caption.
+
+### The shade's PROJECTS section
+
+The shade lists one row per Room that has needs-you items: the project
+glyph, the project name, a count token, the first WHY, and an **Open**
+verb. The section caption reads `PROJECTS` with the aggregate count
+(`N NEED YOU`). The dock badge carries the same number. When the
+aggregate is zero, the section is absent.
+
+![The shade's PROJECTS section, one Room muted](assets/heartbeat/shade-projects-1440.png)
+
+![The dock badge carries the same count](assets/heartbeat/dock-badge-1440.png)
+
+### PROJECTS in the command deck
+
+Type a project name in the command deck (Cmd+K). Up to 10 Rooms appear
+as verb entries (sorted by needs-you count, then name), each with the
+project kind glyph, the project name, and a trailing count badge (zero
+badges omitted). Selecting a Room opens it. Additional Rooms are
+reachable through the Projects surface.
+
+![PROJECTS in the command deck](assets/heartbeat/command-deck-projects-1440.png)
 
 ## Models: the Concierge
 

@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+  </style>
+</helmet>
+
+<!-- ═══ DOCK STRIP — badge on the Intelligence launcher, 1440 ═══ -->
+<!-- Two states stacked: (1) badge=3, (2) zero state (no badge). -->
+<div style="display:inline-flex; flex-direction:column; gap:32px; padding:16px;">
+
+  <!-- ─── State 1: dock with badge "3" on Intelligence ─── -->
+  <div style="display:flex; align-items:center; gap:2px; padding:6px 12px; background:#15171d; border:1px solid #2a2e3e; border-radius:2px;">
+
+    <!-- Desk app -->
+    <button type="button" style="display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border:0; border-radius:2px; background:transparent; color:#f2f3f5; font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; white-space:nowrap; box-shadow:inset 0 -2px 0 #2a2e3e;">
+      <span style="width:20px; height:20px; background:#242833; border-radius:2px; display:grid; place-items:center; font:700 10px/1 'Space Grotesk',sans-serif; color:#a86e4a;">D</span>
+      Desk
+    </button>
+
+    <!-- Intelligence app — WITH BADGE -->
+    <button type="button" style="position:relative; display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border:0; border-radius:2px; background:transparent; color:#9ba2b0; font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; white-space:nowrap;">
+      <span style="width:20px; height:20px; background:#242833; border-radius:2px; display:grid; place-items:center; font:700 10px/1 'Space Grotesk',sans-serif; color:#a86e4a;">I</span>
+      Intelligence
+      <!-- desk-chip desk-dock-badge: the count badge -->
+      <span style="display:grid; min-width:18px; height:18px; place-items:center; border-radius:0; background:#f87171; color:#f2f3f5; font:700 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; padding:0 4px;" data-tone="warn">3</span>
+    </button>
+
+    <!-- Separator -->
+    <span style="width:1px; height:22px; background:#2a2e3e; margin:0 4px;"></span>
+
+    <!-- Floor toggle -->
+    <button type="button" style="display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border:0; border-radius:2px; background:transparent; color:#9ba2b0; font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; white-space:nowrap;">
+      <span style="width:20px; height:20px; background:#242833; border-radius:2px; display:grid; place-items:center; font:700 10px/1 'Space Grotesk',sans-serif; color:#767e8d;">F</span>
+      Floor
+    </button>
+
+    <!-- Attention launcher (the bell) -->
+    <button type="button" style="display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border:0; border-radius:2px; background:transparent; color:#9ba2b0; font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; white-space:nowrap;">
+      <span style="font-size:16px; line-height:1;">&#128276;</span>
+      Missed
+    </button>
+
+  </div>
+
+  <!-- ─── State 2: dock WITHOUT badge (zero state) ─── -->
+  <div style="display:flex; align-items:center; gap:2px; padding:6px 12px; background:#15171d; border:1px solid #2a2e3e; border-radius:2px;">
+
+    <!-- Desk app -->
+    <button type="button" style="display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border:0; border-radius:2px; background:transparent; color:#f2f3f5; font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; white-space:nowrap; box-shadow:inset 0 -2px 0 #2a2e3e;">
+      <span style="width:20px; height:20px; background:#242833; border-radius:2px; display:grid; place-items:center; font:700 10px/1 'Space Grotesk',sans-serif; color:#a86e4a;">D</span>
+      Desk
+    </button>
+
+    <!-- Intelligence app — NO BADGE (zero = absent, rule A.8) -->
+    <button type="button" style="display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border:0; border-radius:2px; background:transparent; color:#9ba2b0; font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; white-space:nowrap;">
+      <span style="width:20px; height:20px; background:#242833; border-radius:2px; display:grid; place-items:center; font:700 10px/1 'Space Grotesk',sans-serif; color:#a86e4a;">I</span>
+      Intelligence
+    </button>
+
+    <!-- Separator -->
+    <span style="width:1px; height:22px; background:#2a2e3e; margin:0 4px;"></span>
+
+    <!-- Floor toggle -->
+    <button type="button" style="display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border:0; border-radius:2px; background:transparent; color:#9ba2b0; font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; white-space:nowrap;">
+      <span style="width:20px; height:20px; background:#242833; border-radius:2px; display:grid; place-items:center; font:700 10px/1 'Space Grotesk',sans-serif; color:#767e8d;">F</span>
+      Floor
+    </button>
+
+    <!-- Attention launcher -->
+    <button type="button" style="display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border:0; border-radius:2px; background:transparent; color:#9ba2b0; font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer; white-space:nowrap;">
+      <span style="font-size:16px; line-height:1;">&#128276;</span>
+      Missed
+    </button>
+
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

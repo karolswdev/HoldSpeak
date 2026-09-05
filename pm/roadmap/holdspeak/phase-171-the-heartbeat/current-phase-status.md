@@ -1,6 +1,42 @@
 # Phase 171 - The Heartbeat
 
-**Last updated:** 2026-09-05.
+**Last updated:** 2026-09-05 06:20 — ACTIVATED, stacked.
+
+**Decision (2026-09-05 06:20, under the owner's standing goal «all phases
+to 180… do not pause to ask»):** 171 builds NOW on branch
+`feat/the-heartbeat`, stacked on `feat/the-great-pass` (PR #553, which
+awaits his word). A stacked branch is reversible; a merge is not — every
+merge stays his. If he bounces 170's faces, 171 rebuilds on his ruling.
+The design ground is assets/settled-design-heartbeat.md (DRAFT until his
+word); the boards are drawn from it, counsel reads them, the wire builds
+meanwhile, the faces build to the boards, the walk on his desk closes.
+
+**07:20:** eleven boards drawn and committed; **the canvas**
+https://claude.ai/code/artifact/82c55045-4a19-4990-a8b5-569b91eb8647
+(counsel reading; conditions paid before his word). The wire is BUILT:
+the heartbeat setting + scheduler + a third conductor loop + receipts
+(02), the aggregate cache (03), the notifier with the edge rule and
+quiet hours (05, osascript V0 — the click target waits for the bundle),
+the brief regenerating daily (06); MCP `heartbeat` family; 41 tests.
+
+**08:40:** all faces BUILT and read (the shade's PROJECTS + badge, ⌘K,
+Rhythm — each bounced once, paid; the arrival keeps one count with
+muted Rooms under `MUTED N`); **09 DONE** (the guide shot from the built
+faces). Two acceptance-closer lanes prove stories 02–07 box by box; then
+the gauntlet, the walk on his desk (run-now on his real Rooms; a banner
+at a real edge is his to see), counsel on the built tree, the flips, the
+close, the PR stacked on #553.
+
+**09:30:** counsel on the built phase RATIFY-W-C, residues paid (one
+count everywhere on the deck and in the wire's project list); the first
+walk on his real desk: the sweep held in quiet hours (honest), his
+Monday brief is the kernel ledger (`1839 THINGS · AUG 19` — 06 pays the
+source now), a `PROJECTS` caption over nothing but the brief row (fixed
+to its own `BRIEF` caption). **02, 03, 04, 07 and 09 DONE** on evidence; 06 DONE (the brief counts human items only; the kernel ledger a
+summary); 05 keeps its click-to-open box open (the bundle);
+01/08/10 wait for his word. The re-walk: zero defects. The full suite: 9501 green, 6 inherited, 4
+xdist-only, 4 branch-new paid. **PR #554 is OPEN** (https://github.com/karolswdev/HoldSpeak/pull/554) — stacked on
+#553; his word gates both merges; 01/08/10 flip on it.
 
 ## Goal
 
@@ -89,15 +125,15 @@ brief ran ONCE (1839 items on 2026-08-24) and never again.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-171-01 | The design (the Heartbeat's faces on the canvas before build) | backlog | [story-01-the-design](./story-01-the-design.md) | -- |
-| HS-171-02 | The cadence row (the scheduler, the unattended sweep, parallel conductor loops) | backlog | [story-02-the-cadence-row](./story-02-the-cadence-row.md) | -- |
-| HS-171-03 | The needs-you aggregate (cache + cadence-driven refresh; 170's N+1 paid) | backlog | [story-03-the-needs-you-aggregate](./story-03-the-needs-you-aggregate.md) | -- |
-| HS-171-04 | PROJECTS in the shade + the dock badge | backlog | [story-04-projects-in-the-shade](./story-04-projects-in-the-shade.md) | -- |
-| HS-171-05 | macOS notifications on the edge (quiet hours, per-project mute, Article III) | backlog | [story-05-macos-notifications](./story-05-macos-notifications.md) | -- |
-| HS-171-06 | The Monday brief recurring (its own cadence loop, lands in the shade) | backlog | [story-06-monday-brief-recurring](./story-06-monday-brief-recurring.md) | -- |
-| HS-171-07 | PROJECTS in command-K (every active Room reachable from the deck) | backlog | [story-07-projects-in-command-k](./story-07-projects-in-command-k.md) | -- |
-| HS-171-08 | The walk (his desk: a notification he actually receives) | backlog | [story-08-the-walk](./story-08-the-walk.md) | -- |
-| HS-171-09 | The docs (guide re-shot for every new face; the heartbeat in the architecture) | backlog | [story-09-the-docs](./story-09-the-docs.md) | -- |
+| HS-171-01 | The design (the Heartbeat's faces on the canvas before build) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
+| HS-171-02 | The cadence row (the scheduler, the unattended sweep, parallel conductor loops) | done | [story-02-the-cadence-row](./story-02-the-cadence-row.md) | [evidence-story-02](./evidence-story-02.md) |
+| HS-171-03 | The needs-you aggregate (cache + cadence-driven refresh; 170's N+1 paid) | done | [story-03-the-needs-you-aggregate](./story-03-the-needs-you-aggregate.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-171-04 | PROJECTS in the shade + the dock badge | done | [story-04-projects-in-the-shade](./story-04-projects-in-the-shade.md) | [evidence-story-04](./evidence-story-04.md) |
+| HS-171-05 | macOS notifications on the edge (quiet hours, per-project mute, Article III) | in-progress | [story-05-macos-notifications](./story-05-macos-notifications.md) | -- |
+| HS-171-06 | The Monday brief recurring (its own cadence loop, lands in the shade) | done | [story-06-monday-brief-recurring](./story-06-monday-brief-recurring.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-171-07 | PROJECTS in command-K (every active Room reachable from the deck) | done | [story-07-projects-in-command-k](./story-07-projects-in-command-k.md) | [evidence-story-07](./evidence-story-07.md) |
+| HS-171-08 | The walk (his desk: a notification he actually receives) | in-progress | [story-08-the-walk](./story-08-the-walk.md) | -- |
+| HS-171-09 | The docs (guide re-shot for every new face; the heartbeat in the architecture) | done | [story-09-the-docs](./story-09-the-docs.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-171-10 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-10-the-close](./story-10-the-close.md) | -- |
 
 ## Where we are

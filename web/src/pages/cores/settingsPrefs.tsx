@@ -337,7 +337,13 @@ export type SettingsHubWire = {
   connections: { connected: number };
   voice: { live: boolean; target: string };
   meetings: { intelligence: boolean };
-  rhythm: { loops: number };
+  rhythm: {
+    loops: number;
+    sweepEveryMinutes?: number;
+    nextSweepAt?: string | null;
+    lastSweepAt?: string | null;
+    quiet?: { start: number; end: number; held: boolean };
+  };
   sounds: { on: boolean };
   system: { host: string; mesh: boolean };
   posture: string;
@@ -460,16 +466,31 @@ export function PrefsFace({
               : <StateChip state="warning" label="INTELLIGENCE OFF" />}
           </>}
         />
-        {/* Rhythm: N LOOPS or NO LOOPS muted */}
+        {/* Rhythm: EVERY N MIN · NEXT HH:MM when sweep runs; NO LOOPS only at zero + no sweep */}
         <SurfaceLedgerRow
           primary="Rhythm"
           expands={false}
           onToggle={() => onOpen("rhythm")}
           trailing={openVerb("rhythm")}
           cells={<>
-            {hub.rhythm.loops > 0
+            {hub.rhythm.sweepEveryMinutes != null
+              ? <span className="surface-token" data-chip>
+                  {hub.rhythm.sweepEveryMinutes >= 60
+                    ? `EVERY ${Math.round(hub.rhythm.sweepEveryMinutes / 60)} HR`
+                    : `EVERY ${hub.rhythm.sweepEveryMinutes} MIN`}
+                </span>
+              : null}
+            {hub.rhythm.nextSweepAt
+              ? <span className="surface-token" data-chip data-muted>
+                  NEXT {hub.rhythm.nextSweepAt.slice(11, 16)}
+                </span>
+              : null}
+            {hub.rhythm.sweepEveryMinutes == null && hub.rhythm.loops > 0
               ? <span className="surface-token" data-chip>{countToken(hub.rhythm.loops, "LOOP", "LOOPS")}</span>
-              : <span className="surface-token" data-chip data-muted>NO LOOPS</span>}
+              : null}
+            {hub.rhythm.sweepEveryMinutes == null && hub.rhythm.loops === 0
+              ? <span className="surface-token" data-chip data-muted>NO LOOPS</span>
+              : null}
           </>}
         />
         {/* Sounds & Presence: ON green or OFF */}

@@ -174,14 +174,15 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "configure-cadence",
     windowId: "surface-cadence",
-    label: "Cadence",
-    description: "Configure scheduled background work.",
+    label: "Rhythm",
+    description: "Sweep, brief, and notification cadence.",
     glyph: "◷",
     href: "/cadence",
     group: "tool",
     surface: {
       eyebrow: "Follow-through",
       minW: 520,
+      defaultH: 520,
       load: () =>
         import("../pages/cores/CadenceCore").then((module) => ({
           default: module.CadenceCore,

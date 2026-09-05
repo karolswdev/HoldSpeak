@@ -4867,6 +4867,36 @@
       ]
     },
     {
+      "path": "/api/settings/heartbeat",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.settings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/heartbeat",
+      "methods": [
+        "PUT"
+      ],
+      "module": "web.routes.system.settings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/settings/heartbeat/run-now",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.settings",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/settings/hub",
       "methods": [
         "GET"
