@@ -95,6 +95,9 @@ def _post(
         if exc.code in (401, 403):
             raise _AuthError(exc.code, f"HTTP {exc.code}") from exc
         raise
+    if not body.strip():
+        # 204 No Content (notification acknowledged, no body)
+        return {"jsonrpc": "2.0", "id": payload.get("id"), "result": {}}
     return json.loads(body)
 
 
@@ -161,7 +164,7 @@ def run(
     # -- CONNECT -----------------------------------------------------------
     try:
         init_msg = _jsonrpc("initialize", {
-            "protocolVersion": "2024-11-05",
+            "protocolVersion": "2025-03-26",
             "capabilities": {},
             "clientInfo": {"name": "reach-runner", "version": "1.0.0"},
         })
@@ -207,15 +210,15 @@ def run(
     except Exception:
         pass  # notifications may not return a body
 
-    # -- CALL cadence_run_now ----------------------------------------------
+    # -- CALL heartbeat.run_now (the sweep) ----------------------------------
     _log("CALL cadence_run_now")
     try:
-        sweep = _call_tool(hub, token, "cadence.run_now")
+        sweep = _call_tool(hub, token, "heartbeat.run_now")
         summary_parts = []
-        if "evaluated" in sweep:
-            summary_parts.append(f"evaluated={sweep['evaluated']}")
-        if "due" in sweep:
-            summary_parts.append(f"due={sweep['due']}")
+        # heartbeat.run_now returns the sweep receipt with watches/rooms/held
+        for key in ("watches", "rooms", "evaluated", "due"):
+            if key in sweep:
+                summary_parts.append(f"{key}={sweep[key]}")
         summary = " ".join(summary_parts) if summary_parts else "completed"
         _log(f"OK sweep {summary}")
     except RuntimeError as exc:

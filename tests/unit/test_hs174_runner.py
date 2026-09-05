@@ -126,7 +126,7 @@ class _StubHandler(http.server.BaseHTTPRequestHandler):
                 },
             }
 
-        if name == "cadence.run_now":
+        if name in ("cadence.run_now", "heartbeat.run_now"):
             if self._behaviour.get("sweep_fail"):
                 return _err("sweep failed", "internal")
             return _ok({"evaluated": 5, "due": 2})
@@ -523,39 +523,6 @@ class TestCLITokenFile:
 
 
 # ---------------------------------------------------------------------------
-# Integration: end-to-end against the real hub on loopback
+# Integration: see tests/integration/test_hs174_runner_loopback.py
+# (moved there now that the transport lane has landed)
 # ---------------------------------------------------------------------------
-
-
-def _can_import_handle_message_for_principal() -> bool:
-    """True when the transport lane's handle_message_for_principal is importable."""
-    try:
-        from holdspeak.mcp.server import handle_message_for_principal  # noqa: F401
-        return True
-    except ImportError:
-        return False
-
-
-@pytest.mark.skipif(
-    not _can_import_handle_message_for_principal(),
-    reason=(
-        "handle_message_for_principal not yet in server.py -- "
-        "the transport lane (HS-174-02) has not merged this function; "
-        "integration test skipped until the seam is available"
-    ),
-)
-class TestIntegrationLoopback:
-    """Boot the real hub on loopback, issue a credential, and run the client.
-
-    This is the 'proven on this machine' evidence from the addendum.
-    Skipped cleanly when the transport route's function is not yet
-    importable (the lane is still in flight).
-    """
-
-    def test_end_to_end_on_loopback(self):
-        pytest.skip(
-            "Integration test placeholder: transport lane seam exists "
-            "but full hub boot + credential issue + runner e2e is deferred "
-            "until the transport lane is merged and the steward can be "
-            "stubbed to complete fast."
-        )
