@@ -48,6 +48,7 @@ import { toggleSfx } from "../../lib/sfx";
 import { TtsSettingsBlock } from "./settingsTts";
 // PARKED (HS-170-03): CapabilityAssignmentsCore — reached via Concierge Adjust.
 // import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
+import { WallpaperModule } from "./settingsWallpaper";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { useCoreWings } from "./core-hooks";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
@@ -578,7 +579,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     scope && scope.startsWith("integration:")
       ? scope.slice("integration:".length)
       : null;
-  // HS-139-05: resolve aliases from the retired 14-tile roster to the new 7.
+  // HS-139-05: resolve aliases from the retired roster to its successor.
   const resolvedScope = scope ? (MODULE_ALIASES[scope] ?? scope) : scope;
   const scopedModule = PREF_MODULES.some(
     (module) => module.id === resolvedScope,
@@ -821,7 +822,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     else if (scopedModule) setModuleId(scopedModule);
   }, [integrationSubject, scopedModule]);
 
-  // HS-139-05: deep-index and filter removed — 7 tiles all visible at once.
+  // HS-139-05: deep-index and filter removed — all tiles stay visible at once.
   const openModule = (id: string) => {
     setModuleId(id);
     setHighlight("");
@@ -1165,6 +1166,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
             <TtsSettingsBlock />
           </>
         );
+      case "wallpaper":
+        return <WallpaperModule />;
       /* ── Meetings: display fact + intel row + capture + calendar + actuators + RAW ── */
       case "meetings": {
         const autoVal = String(val(["meeting", "intelligence_auto"]) ?? "room_linked");

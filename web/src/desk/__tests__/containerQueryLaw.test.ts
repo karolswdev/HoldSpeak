@@ -19,6 +19,7 @@ const cssSources = import.meta.glob<string>("/src/**/*.css", {
 });
 
 const viewportWidthMediaAllowlist = new Set([
+  "/src/design/atmosphere-preview.css", // standalone Vite-only viewport shell, never a Desk window body
   "/src/desk/chair/chair.css", // Chair is shell furniture around its lanes
   "/src/desk/components/attention.css",
   "/src/desk/components/chrome-menus.css",
