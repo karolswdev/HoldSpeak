@@ -42,6 +42,42 @@ _CHANGE_METHOD_MARKERS = (
     "commit",
     "complete",
 )
+
+# HS-171-06: services whose pipeline_events carry human-meaningful state
+# changes (things with a title a person wrote or a state a person must
+# act on).  Everything else is a kernel-level operation that goes into
+# the ledger summary, not the item list.
+_HUMAN_SERVICES: frozenset[str] = frozenset({
+    "AskService",
+    "CadenceService",
+    "CoderService",
+    "DecisionLifecycleService",
+    "DecisionRecordService",
+    "DeskService",
+    "DictationService",
+    "FollowThroughService",
+    "MeetingService",
+    "MeetingIntelService",
+    "MeetingAftercareService",
+    "MemoryService",
+    "MondayBriefService",
+    "NoteService",
+    "PeopleService",
+    "ProjectService",
+    "ProjectDeltaService",
+    "ProjectSetupService",
+    "ProjectUpdateService",
+    "ProjectStewardService",
+    "ReactionService",
+    "RefinementThoughtService",
+    "ScheduledRecordingService",
+    "SequenceWorkflowService",
+    "SettingsService",
+    "ThreadService",
+    "ThoughtService",
+    "WatchService",
+    "WorkbenchService",
+})
 _CLOSE_HOUR = 17
 _RETRY_WINDOW_SECONDS = 5 * 60
 # HS-132-08: a recorded meeting is the most material thing a week contains, so
@@ -61,6 +97,13 @@ class BriefItem:
 
 
 @dataclass
+class LedgerSummary:
+    """HS-171-06: kernel operation count kept separate from human items."""
+    operations: int = 0
+    since: str | None = None
+
+
+@dataclass
 class MondayBrief:
     id: str
     period_start: str
@@ -71,6 +114,8 @@ class MondayBrief:
     is_empty: bool = False
     # item_id -> "acknowledged" | "deferred". An absent key is untouched work.
     shelf: dict[str, str] = field(default_factory=dict)
+    # HS-171-06: kernel operation ledger (not counted as items).
+    ledger: LedgerSummary = field(default_factory=LedgerSummary)
 
 
 @observe_service
@@ -125,10 +170,11 @@ class MondayBriefService:
             if row is not None:
                 return self._load_brief(conn, row)
 
+            human_changes, ledger = self._collect_changes(
+                period_start.isoformat(), period_end.isoformat()
+            )
             sections = {
-                "changed": self._collect_changes(
-                    period_start.isoformat(), period_end.isoformat()
-                )
+                "changed": human_changes
                 + self._collect_meetings(
                     period_start.isoformat(), period_end.isoformat()
                 ),
@@ -173,7 +219,9 @@ class MondayBriefService:
                 "SELECT * FROM monday_briefs WHERE id = ?", (brief_id,)
             ).fetchone()
             assert row is not None
-            return self._load_brief(conn, row)
+            brief = self._load_brief(conn, row)
+            brief.ledger = ledger
+            return brief
 
     def _compose(
         self, sections: dict[str, list[BriefItem]]
@@ -207,8 +255,17 @@ class MondayBriefService:
             )
         return ", ".join(headline_parts) + ".", finalized_sections
 
-    def _collect_changes(self, window_start: str, window_end: str) -> list[BriefItem]:
-        """Reduce pipeline events in the window to material state changes."""
+    def _collect_changes(
+        self, window_start: str, window_end: str
+    ) -> tuple[list[BriefItem], LedgerSummary]:
+        """Reduce pipeline events in the window to material state changes.
+
+        HS-171-06: returns ``(human_items, ledger)`` where *human_items*
+        are things with a title a person wrote or a state a person must
+        act on (_HUMAN_SERVICES), and *ledger* counts every other
+        operation (kernel ops, primitives, recipes, gates, etc.) without
+        surfacing them as items.
+        """
         start_timestamp = self._window_timestamp(window_start)
         end_timestamp = self._window_timestamp(window_end)
         with self._db._connection() as conn:
@@ -250,14 +307,26 @@ class MondayBriefService:
             uncorrelated_retries[signature] = (group_key, row)
 
         items: list[BriefItem] = []
+        ledger_count = 0
+        ledger_since: str | None = None
         for events in groups.values():
             first = events[0]
+            service_name = str(first["service"])
+
+            # HS-171-06: only human-meaningful services become items.
+            if service_name not in _HUMAN_SERVICES:
+                ledger_count += 1
+                ts_str = str(first["timestamp"])
+                if ledger_since is None or ts_str < ledger_since:
+                    ledger_since = ts_str
+                continue
+
             detail = _sanitize_detail(str(first["args_summary"]))
             items.append(
                 BriefItem(
                     id=f"brief-item-{uuid.uuid4().hex}",
                     section="changed",
-                    text=f"{first['service']}.{first['method']}",
+                    text=f"{service_name}.{first['method']}",
                     detail=detail,
                     source_ref=(
                         f"pipeline:{first['correlation_id']}"
@@ -266,7 +335,9 @@ class MondayBriefService:
                     ),
                 )
             )
-        return items
+
+        ledger = LedgerSummary(operations=ledger_count, since=ledger_since)
+        return items, ledger
 
     def _collect_meetings(self, window_start: str, window_end: str) -> list[BriefItem]:
         """Gather meetings recorded inside the window.

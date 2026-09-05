@@ -286,6 +286,157 @@ class TestNotifyContentDefault:
         assert bodies[0] == "2 need you"
 
 
+# ── HS-171-06: brief human items vs ledger ──────────────────────────
+
+
+class TestBriefHumanVsLedger:
+    """A brief over a DB with 1839 kernel ops + 2 human items reports
+    2 items and ledger.operations == 1839."""
+
+    def _service(self, tmp_path):
+        from holdspeak.db.core import Database
+        from holdspeak.services.monday_brief_service import MondayBriefService
+        return MondayBriefService(Database(tmp_path / "brief.db"))
+
+    def _insert_event(self, service, event_id, timestamp, service_name, method,
+                      correlation_id="", args_summary="{}", error=None):
+        with service._db._connection() as conn:
+            conn.execute(
+                """INSERT INTO pipeline_events
+                   (event_id, timestamp, service, method, principal_kind, args_summary,
+                    correlation_id, error)
+                   VALUES (?, ?, ?, ?, 'test', ?, ?, ?)""",
+                (event_id, timestamp, service_name, method, args_summary,
+                 correlation_id, error),
+            )
+
+    def test_brief_1839_kernel_ops_2_human_items(self, tmp_path):
+        import datetime as _dt
+        service = self._service(tmp_path)
+
+        # Insert 1839 kernel operations (PrimitiveService, RecipeService, etc.)
+        base_ts = _dt.datetime(2026, 8, 1, 12, tzinfo=_dt.UTC).timestamp()
+        kernel_services = [
+            ("PrimitiveService", "delete_directory"),
+            ("RecipeService", "run"),
+            ("GateService", "transition"),
+            ("InvocationService", "create"),
+            ("SyncService", "update"),
+        ]
+        for i in range(1839):
+            svc, method = kernel_services[i % len(kernel_services)]
+            self._insert_event(
+                service,
+                event_id=f"kernel-{i}",
+                timestamp=base_ts + i,
+                service_name=svc,
+                method=method,
+            )
+
+        # Insert 2 human items (NoteService, MeetingService)
+        self._insert_event(
+            service,
+            event_id="human-1",
+            timestamp=base_ts + 2000,
+            service_name="NoteService",
+            method="create_note",
+            args_summary='{"title":"Plan"}',
+        )
+        self._insert_event(
+            service,
+            event_id="human-2",
+            timestamp=base_ts + 2001,
+            service_name="MeetingService",
+            method="update",
+            args_summary='{"meeting_id":"m1"}',
+        )
+
+        brief = service.generate(
+            None, now=_dt.datetime(2026, 8, 3, 9, 30, tzinfo=_dt.UTC)
+        )
+
+        # Only 2 human items in the sections (meetings collector is separate,
+        # but pipeline changes should only have human items).
+        total_items = sum(len(items) for items in brief.sections.values())
+        assert total_items == 2, f"Expected 2 human items, got {total_items}"
+        assert brief.ledger.operations == 1839
+
+    def test_ledger_only_brief_is_empty(self, tmp_path):
+        """A brief with only kernel ops (no human items) is empty."""
+        import datetime as _dt
+        service = self._service(tmp_path)
+
+        base_ts = _dt.datetime(2026, 8, 1, 12, tzinfo=_dt.UTC).timestamp()
+        for i in range(10):
+            self._insert_event(
+                service,
+                event_id=f"kernel-{i}",
+                timestamp=base_ts + i,
+                service_name="PrimitiveService",
+                method="delete_directory",
+            )
+
+        brief = service.generate(
+            None, now=_dt.datetime(2026, 8, 3, 9, 30, tzinfo=_dt.UTC)
+        )
+
+        assert brief.is_empty is True
+        assert brief.ledger.operations == 10
+        assert brief.headline == "Nothing material changed."
+
+    def test_human_service_items_are_preserved(self, tmp_path):
+        """Items from human services appear in the changed section."""
+        import datetime as _dt
+        service = self._service(tmp_path)
+
+        base_ts = _dt.datetime(2026, 8, 1, 12, tzinfo=_dt.UTC).timestamp()
+        self._insert_event(
+            service,
+            event_id="note-created",
+            timestamp=base_ts,
+            service_name="NoteService",
+            method="create_note",
+            correlation_id="note-1",
+        )
+
+        items, ledger = service._collect_changes(
+            "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
+        )
+
+        assert len(items) == 1
+        assert items[0].text == "NoteService.create_note"
+        assert ledger.operations == 0
+
+    def test_kernel_ops_go_to_ledger_not_items(self, tmp_path):
+        """Kernel service operations land in the ledger, not in items."""
+        import datetime as _dt
+        service = self._service(tmp_path)
+
+        base_ts = _dt.datetime(2026, 8, 1, 12, tzinfo=_dt.UTC).timestamp()
+        self._insert_event(
+            service,
+            event_id="prim-delete",
+            timestamp=base_ts,
+            service_name="PrimitiveService",
+            method="delete_directory",
+        )
+        self._insert_event(
+            service,
+            event_id="recipe-run",
+            timestamp=base_ts + 1,
+            service_name="RecipeService",
+            method="run",
+        )
+
+        items, ledger = service._collect_changes(
+            "2026-08-01T00:00:00+00:00", "2026-08-02T00:00:00+00:00"
+        )
+
+        assert items == []
+        assert ledger.operations == 2
+        assert ledger.since is not None
+
+
 # ── HS-171-05: macOS notifier monkeypatched ─────────────────────────
 
 

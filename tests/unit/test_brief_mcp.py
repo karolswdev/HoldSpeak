@@ -42,7 +42,7 @@ def test_monday_brief_tool_returns_persisted_brief_structure(mcp_db: Database) -
     persisted_keys = set(latest) - _ADAPTER_KEYS
     assert persisted_keys == {
         "id", "period_start", "period_end", "headline", "sections", "generated_at",
-        "is_empty", "shelf",
+        "is_empty", "shelf", "ledger",
     }
     assert set(latest["sections"]) == {"changed", "broke", "waiting", "decisions"}
 
