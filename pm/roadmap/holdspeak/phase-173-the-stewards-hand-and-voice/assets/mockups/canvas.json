@@ -21,7 +21,7 @@
       "x": 1520,
       "y": 0,
       "w": 642,
-      "h": 530,
+      "h": 517,
       "title": "Room · NUDGE card unfolded · 640"
     },
     {
@@ -29,15 +29,15 @@
       "x": 2280,
       "y": 0,
       "w": 642,
-      "h": 364,
-      "title": "Room · SENT receipt row · 640"
+      "h": 380,
+      "title": "Room · SENT receipt + cooldown row · 640"
     },
     {
       "file": "RoomHealthPhone.dc.html",
       "x": 3040,
       "y": 0,
       "w": 395,
-      "h": 950,
+      "h": 930,
       "title": "Room · HEALTH + nudge card · 393"
     },
     {

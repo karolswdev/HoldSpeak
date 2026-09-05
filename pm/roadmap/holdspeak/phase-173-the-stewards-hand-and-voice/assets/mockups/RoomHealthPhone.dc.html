@@ -49,7 +49,10 @@
 
     <!-- HEALTH (phone: cells under primary, lead stays left) -->
     <div style="display:flex; flex-direction:column;">
-      <div style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; margin-bottom:6px;">HEALTH</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d;">HEALTH</span>
+        <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">CHECKED 3 MIN AGO</span>
+      </div>
 
       <!-- Row 1: REVIEW LATENCY (red) -->
       <div style="display:flex; flex-direction:column; gap:4px; padding:8px 0; border-top:1px solid #2a2e3e;">
@@ -57,10 +60,10 @@
           <span style="flex-shrink:0;">
             <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; white-space:nowrap; color:#f87171;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span></span>
           </span>
-          <span style="font:600 14px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">REVIEW LATENCY</span>
+          <span style="font:600 14px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">REVIEW WAIT</span>
         </div>
         <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; padding-left:42px;">
-          <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">47 H MEDIAN</span>
+          <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">3 D MEDIAN</span>
           <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&middot;</span>
           <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">3 WAITING</span>
         </div>
@@ -121,7 +124,7 @@
         <div style="display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px;">
           <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">REVIEW BOTTLENECK</span>
           <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&middot;</span>
-          <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">47 H MEDIAN</span>
+          <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">3 D MEDIAN</span>
           <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&middot;</span>
           <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#9ba2b0; white-space:nowrap;">3 PRS WAITING</span>
         </div>
@@ -135,7 +138,7 @@
         <span style="font:12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#a86e4a; overflow-wrap:anywhere;">#612 &middot; Rig settles animations before every shot</span>
         <!-- Comment (EditInPlace with mic) -->
         <div style="display:flex; align-items:flex-start; gap:8px; padding:8px 10px; background:rgba(0,0,0,0.28); border:1px solid #363b50; border-radius:2px;">
-          <span style="flex:1; font:13px/1.5 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">This PR has been waiting for review for 3 days. Flagged by HoldSpeak on behalf of Karol Sane.</span>
+          <span style="flex:1; font:13px/1.5 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">This PR has been waiting for review for 3 days. Flagged by HoldSpeak.</span>
           <span style="width:24px; height:24px; display:flex; align-items:center; justify-content:center; border:1px solid #2a2e3e; border-radius:0; box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); cursor:pointer; flex-shrink:0;">
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="round"><rect x="5" y="1" width="6" height="10" rx="3"></rect><path d="M3 8a5 5 0 0010 0"></path><line x1="8" y1="13" x2="8" y2="15"></line></svg>
           </span>
