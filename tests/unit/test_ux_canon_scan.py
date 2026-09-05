@@ -1,0 +1,177 @@
+"""Smoke test for scripts/ux_canon_scan.py.
+
+Plants a tiny fixture tree in tmp_path with one hit per rule class,
+runs the scanner, and asserts the JSON shape + at least one hit per class.
+"""
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "ux_canon_scan.py"
+
+
+def _plant_fixture(root: Path) -> None:
+    """Create a minimal web/src tree with one planted violation per rule class."""
+    src = root / "web" / "src"
+
+    # A face file with all TSX violations planted
+    face_dir = src / "features" / "test-face"
+    face_dir.mkdir(parents=True)
+
+    face_tsx = face_dir / "TestFace.tsx"
+    face_tsx.write_text("""\
+import React from "react";
+
+// A1: raw <button>
+export function TestFace() {
+  const items = [1, 2, 3];
+  return (
+    <div>
+      <button type="button" onClick={() => {}}>Click me</button>
+
+      {/* A3-sentence: text > 60 chars ending with period */}
+      <span>This is a very long sentence that exceeds sixty characters and ends with a period.</span>
+
+      {/* A3-prose: <p> with text > 40 chars */}
+      <p>This is a helper paragraph with more than forty characters of text content here.</p>
+
+      {/* A4: modal */}
+      <div role="dialog" aria-modal="true">Modal content</div>
+
+      {/* A8: counter of zero */}
+      <span>{items.length} items</span>
+
+      {/* B: raw control */}
+      <input type="text" placeholder="search" />
+
+      {/* raw-ids: snake_case in rendered text */}
+      <span>open_pull_requests</span>
+
+      {/* emoji in JSX */}
+      <span>\U0001F525 Hot</span>
+    </div>
+  );
+}
+
+// A9 trigger: provider fetch without the egress component
+fetch("/api/providers/discover");
+""")
+
+    # A CSS file with DS6 and C violations
+    face_css = face_dir / "test-face.css"
+    face_css.write_text("""\
+.test-rail {
+  border-left: 3px solid var(--accent);
+}
+
+.test-collapse {
+  font-size: 13px;
+}
+""")
+
+    # A face with a text input but no MicButton (mic rule)
+    mic_dir = src / "pages" / "cores"
+    mic_dir.mkdir(parents=True)
+    mic_face = mic_dir / "MicTestCore.tsx"
+    mic_face.write_text("""\
+import React from "react";
+
+export function MicTestCore() {
+  return (
+    <div>
+      <input type="text" placeholder="Type here" />
+    </div>
+  );
+}
+""")
+
+
+def test_scan_produces_valid_output(tmp_path: Path) -> None:
+    """Run the scanner on a fixture tree and check the JSON shape."""
+    _plant_fixture(tmp_path)
+
+    json_out = tmp_path / "violations.json"
+    md_out = tmp_path / "violations.md"
+    ranking_out = tmp_path / "ranking.md"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--root", str(tmp_path),
+            "--json", str(json_out),
+            "--md", str(md_out),
+            "--ranking", str(ranking_out),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, f"Script failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
+
+    # JSON exists and is valid
+    assert json_out.exists(), "violations.json not created"
+    data = json.loads(json_out.read_text())
+
+    # Shape: top-level keys
+    assert "totals" in data
+    assert "faces" in data
+    assert "per_rule" in data["totals"]
+    assert "per_face" in data["totals"]
+
+    # Shape: each violation has file, line, rule, text
+    for face, violations in data["faces"].items():
+        for v in violations:
+            assert "file" in v
+            assert "line" in v
+            assert "rule" in v
+            assert "text" in v
+            assert isinstance(v["line"], int)
+
+    # At least one hit per planted rule class
+    rules_found = set()
+    for face, violations in data["faces"].items():
+        for v in violations:
+            rules_found.add(v["rule"])
+
+    expected_rules = {"A1", "A3-sentence", "A3-prose", "A4", "A8", "B",
+                      "DS6", "raw-ids", "emoji", "A9", "mic"}
+    missing = expected_rules - rules_found
+    assert not missing, f"Missing planted rule classes: {missing}; found: {rules_found}"
+
+    # MD files exist and are non-empty
+    assert md_out.exists() and md_out.stat().st_size > 0
+    assert ranking_out.exists() and ranking_out.stat().st_size > 0
+
+
+def test_scan_empty_tree(tmp_path: Path) -> None:
+    """Scanner on an empty web/src produces zero violations."""
+    src = tmp_path / "web" / "src" / "features"
+    src.mkdir(parents=True)
+
+    json_out = tmp_path / "violations.json"
+    md_out = tmp_path / "violations.md"
+    ranking_out = tmp_path / "ranking.md"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--root", str(tmp_path),
+            "--json", str(json_out),
+            "--md", str(md_out),
+            "--ranking", str(ranking_out),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0
+    data = json.loads(json_out.read_text())
+    assert data["faces"] == {}
+    assert data["totals"]["per_rule"] == {}
