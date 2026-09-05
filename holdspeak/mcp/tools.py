@@ -805,7 +805,18 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
             heartbeat_rhythm["nextSweepAt"] = None
             heartbeat_rhythm["lastSweepAt"] = None
             heartbeat_rhythm["quiet"] = {"start": 22, "end": 8, "held": False}
-        return {"models": {"engines": engines, "groupsSet": groups_set, "defaultSet": default_set}, "connections": {"connected": connected}, "voice": {"live": config.dictation.pipeline.enabled, "target": config.dictation.pipeline.target_profile_override or "auto"}, "meetings": {"intelligence": config.meeting.intel_enabled, "auto": config.meeting.intelligence_auto, "host": "THIS DEVICE"}, "rhythm": heartbeat_rhythm, "sounds": {"on": config.ui.desk_sounds}, "system": {"host": "THIS DEVICE", "mesh": bool(getattr(config.mesh, "device_name", ""))}, "posture": config.control_mode, "writtenAt": written_at}
+        meetings_host = None
+        try:
+            if config.meeting.intel_profile_id:
+                from holdspeak.intel.providers import resolve_meeting_placement as _rmp
+                _pl = _rmp(config.meeting)
+                if _pl.profile_id:
+                    meetings_host = _pl.boundary if _pl.boundary == "local" else (_pl.profile_name or _pl.boundary or "local")
+                    if isinstance(meetings_host, str) and meetings_host.startswith("legacy-"):
+                        meetings_host = meetings_host[len("legacy-"):]
+        except Exception:
+            pass
+        return {"models": {"engines": engines, "groupsSet": groups_set, "defaultSet": default_set}, "connections": {"connected": connected}, "voice": {"live": config.dictation.pipeline.enabled, "target": config.dictation.pipeline.target_profile_override or "auto"}, "meetings": {"intelligence": config.meeting.intel_enabled, "auto": config.meeting.intelligence_auto, "host": meetings_host}, "rhythm": heartbeat_rhythm, "sounds": {"on": config.ui.desk_sounds}, "system": {"host": "THIS DEVICE", "mesh": bool(getattr(config.mesh, "device_name", ""))}, "posture": config.control_mode, "writtenAt": written_at}
     if name == "meeting.run_intelligence":
         from holdspeak.services.meeting_intel_service import MeetingIntelService as _MIS
         intel_svc = _MIS(db, observer=obs)

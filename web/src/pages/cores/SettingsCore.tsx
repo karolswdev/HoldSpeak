@@ -186,6 +186,19 @@ function title(key: string) {
     .join(" ");
 }
 
+/* ── HS-172: egress helpers for the intel model host ── */
+function intelHostLabel(host: string): string {
+  if (host === "local" || host === "LOCAL" || host === "this_device") return "THIS DEVICE";
+  if (host === "THIS DEVICE") return host;
+  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return `${host} · LAN`;
+  return `${host} · CLOUD`;
+}
+function intelHostScope(host: string): "local" | "cloud" {
+  if (host === "local" || host === "LOCAL" || host === "this_device" || host === "THIS DEVICE") return "local";
+  if (/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return "local";
+  return "cloud";
+}
+
 const SETTINGS_WINGS = [
   { id: "settings", label: "Settings" },
   { id: "guide", label: "Guide" },
@@ -798,8 +811,14 @@ function SettingsFace({ hero, scope }: CoreProps) {
       case "meetings": {
         const autoVal = String(val(["meeting", "intelligence_auto"]) ?? "room_linked");
         const meetingsHub = (hub.data as Record<string, unknown>).meetings as Record<string, unknown> | undefined;
-        const intelHost = String(meetingsHub?.host ?? "");
-        const hasModel = Boolean(intelHost) || hub.data.models?.defaultSet;
+        // HS-172: null host = no model assigned; real host = chip.
+        // The hub returns a host only when a model is actually assigned;
+        // until the wire fix lands, fall back to defaultSet as the signal.
+        const hubHost = meetingsHub?.host ? String(meetingsHub.host) : null;
+        const hasModel = Boolean(hubHost) && hubHost !== "THIS DEVICE"
+          ? true
+          : Boolean(hub.data.models?.defaultSet);
+        const intelHost = hasModel ? hubHost : null;
         const sourcesPath: string[] = ["calendar", "sources"];
         const sources: Array<{
           id: string;
@@ -830,22 +849,20 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 options={INTELLIGENCE_AUTO_OPTIONS}
                 onChange={(next) => update(["meeting", "intelligence_auto"], next)}
               />
-            </GadgetRow>
-            <div className="prefs-egress-line">
               {hasModel && intelHost ? (
                 <EgressChip
-                  label={intelHost}
-                  scope={intelHost === "THIS DEVICE" ? "local" : "cloud"}
+                  label={intelHostLabel(intelHost)}
+                  scope={intelHostScope(intelHost)}
                 />
               ) : !hasModel ? (
                 <>
-                  <StateChip state="warning" label="NO MODEL" />
-                  <Button variant="ghost" dense onClick={() => openSurface("open-concierge")}>
+                  <StateChip state="warning" label="NO MODEL" data-testid="settings-no-model" />
+                  <Button variant="ghost" dense onClick={() => openSurface("open-concierge")} data-testid="settings-choose-model">
                     Choose model
                   </Button>
                 </>
               ) : null}
-            </div>
+            </GadgetRow>
             <div className="prefs-rule" aria-hidden="true" />
             <GadgetGroup label="Capture + export">
               <GadgetRow label="Mic device" fact="device name">

@@ -590,14 +590,60 @@ class TestRoomDecisionsRead:
 class TestIntelStatusEnrichment:
     """HS-172-02: intel_model_host and intel_duration_s on meeting payloads."""
 
-    def test_summary_payload_has_intel_keys(self, db: Database) -> None:
-        """_summary_payload includes intel_model_host and intel_duration_s."""
+    def test_no_job_intel_model_host_null(self, db: Database) -> None:
+        """No intel job -> intel_model_host is null."""
         from holdspeak.services.meeting_service import MeetingService
 
         meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
         _seed_meeting(db, meeting_id)
 
-        # Set intel timestamps.
+        meetings = db.meetings.list_meetings(limit=10)
+        target = [m for m in meetings if m.id == meeting_id][0]
+        payload = MeetingService._summary_payload(target)
+
+        # Before enrichment, host is None (no job).
+        assert payload["intel_model_host"] is None
+
+        # After enrichment (reads from job row), still None.
+        svc = MeetingService(db)
+        svc._enrich_intel_status([payload])
+        assert payload["intel_model_host"] is None
+
+    def test_job_with_recorded_host(self, db: Database) -> None:
+        """Job with recorded model_host -> that host on the payload."""
+        from holdspeak.services.meeting_service import MeetingService
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id)
+
+        # Enqueue an intel job and record the host.
+        with db._connection() as conn:
+            conn.execute(
+                """INSERT INTO intel_jobs
+                   (job_id, meeting_id, work_descriptor_sha256,
+                    transcript_hash, status, model_host,
+                    requested_at, updated_at, attempts)
+                   VALUES (?, ?, 'desc', 'hash', 'queued', '192.168.1.43',
+                           '2026-09-04T09:35:00', '2026-09-04T09:35:00', 0)""",
+                (f"job-{uuid.uuid4().hex[:16]}", meeting_id),
+            )
+
+        meetings = db.meetings.list_meetings(limit=10)
+        target = [m for m in meetings if m.id == meeting_id][0]
+        payload = MeetingService._summary_payload(target)
+
+        svc = MeetingService(db)
+        svc._enrich_intel_status([payload])
+        assert payload["intel_model_host"] == "192.168.1.43"
+
+    def test_duration_from_timestamps(self, db: Database) -> None:
+        """intel_duration_s computed from requested_at to completed_at."""
+        from holdspeak.services.meeting_service import MeetingService
+
+        meeting_id = f"mtg-{uuid.uuid4().hex[:16]}"
+        _seed_meeting(db, meeting_id)
+
+        # Set intel timestamps on meeting.
         with db._connection() as conn:
             conn.execute(
                 "UPDATE meetings SET intel_requested_at = ?, intel_completed_at = ? WHERE id = ?",
@@ -605,15 +651,12 @@ class TestIntelStatusEnrichment:
             )
 
         meetings = db.meetings.list_meetings(limit=10)
-        assert len(meetings) >= 1
         target = [m for m in meetings if m.id == meeting_id][0]
 
         payload = MeetingService._summary_payload(target)
-        assert "intel_model_host" in payload
-        assert "intel_duration_s" in payload
         assert payload["intel_duration_s"] == 41
 
-    def test_summary_payload_null_when_not_completed(self, db: Database) -> None:
+    def test_duration_null_when_not_completed(self, db: Database) -> None:
         """duration_s is None when intel has not completed."""
         from holdspeak.services.meeting_service import MeetingService
 
@@ -625,3 +668,15 @@ class TestIntelStatusEnrichment:
 
         payload = MeetingService._summary_payload(target)
         assert payload["intel_duration_s"] is None
+
+    def test_hub_host_null_without_assignment(self, db: Database) -> None:
+        """Hub meetings.host is null when no intel profile is assigned."""
+        from holdspeak.web.routes.system.settings import _resolve_meetings_host
+
+        # Create a mock config with no intel_profile_id.
+        class _MockMeeting:
+            intel_profile_id = None
+        class _MockConfig:
+            meeting = _MockMeeting()
+        result = _resolve_meetings_host(_MockConfig())
+        assert result is None

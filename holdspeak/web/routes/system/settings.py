@@ -27,6 +27,31 @@ def _service(ctx: WebContext) -> SettingsService:
     return ctx.settings_service
 
 
+def _resolve_meetings_host(config: Any) -> str | None:
+    """HS-172-02: resolve the meetings group's assigned model host.
+
+    Returns the host from the assigned profile (stripping ``legacy-``),
+    or None when no model is assigned. Never a default placement.
+    """
+    try:
+        profile_id = config.meeting.intel_profile_id
+        if not profile_id:
+            return None
+        from ....intel.providers import resolve_meeting_placement
+        placement = resolve_meeting_placement(config.meeting)
+        if placement.profile_id:
+            host = placement.boundary if placement.boundary == "local" else (
+                placement.profile_name or placement.boundary or "local"
+            )
+            # Strip legacy- prefix (the Concierge/Speak resolver convention).
+            if isinstance(host, str) and host.startswith("legacy-"):
+                host = host[len("legacy-"):]
+            return host
+        return None
+    except Exception:
+        return None
+
+
 def build_settings_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
@@ -173,7 +198,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 "meetings": {
                     "intelligence": intel_on,
                     "auto": config.meeting.intelligence_auto,
-                    "host": "THIS DEVICE",
+                    "host": _resolve_meetings_host(config),
                 },
                 "rhythm": heartbeat_rhythm,
                 "sounds": {"on": sounds_on},

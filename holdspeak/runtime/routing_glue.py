@@ -362,7 +362,7 @@ class RoutingGlueMixin:
                 reason="auto-intel: Room-linked" if auto == "room_linked" else "auto-intel: every meeting",
             )
 
-            # Kernel receipt (Article XI).
+            # Resolve the host at the point of decision (Article III).
             try:
                 from ..intel.providers import resolve_meeting_placement
                 placement = resolve_meeting_placement(cfg)
@@ -371,6 +371,9 @@ class RoutingGlueMixin:
                 )
             except Exception:
                 host = "local"
+
+            # HS-172-02: record the host on the job row.
+            db.intel.set_intel_job_model_host(meeting_id, host)
 
             with db._connection() as conn:
                 ServiceEventLedger(db).append_in_transaction(

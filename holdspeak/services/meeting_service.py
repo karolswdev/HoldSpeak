@@ -719,25 +719,20 @@ class MeetingService:
                         pass
 
     def _enrich_intel_status(self, payloads: list[dict[str, Any]]) -> None:
-        """HS-172-02: stamp intel_model_host on meeting payloads.
+        """HS-172-02: stamp intel_model_host from the recorded job row.
 
-        The host is resolved from the config at the point of the read (the
-        model placement may have changed since the meeting ran; this is the
-        current assignment, consistent with the hub's meetings.host).
+        The host is read from ``intel_jobs.model_host`` (recorded at enqueue
+        time), never resolved from config in the read path. Null when no job
+        exists or the job has no recorded host.
         """
-        host: str | None = None
-        try:
-            from ..config import Config
-            from ..intel.providers import resolve_meeting_placement
-            placement = resolve_meeting_placement(Config.load().meeting)
-            host = placement.boundary if placement.boundary == "local" else (
-                placement.profile_name or placement.boundary or "local"
-            )
-        except Exception:
-            host = "local"
         for p in payloads:
-            if p.get("intel_model_host") is None:
-                p["intel_model_host"] = host
+            meeting_id = p.get("id") or ""
+            if p.get("intel_model_host") is None and meeting_id:
+                try:
+                    recorded = self._db.intel.get_intel_job_model_host(meeting_id)
+                    p["intel_model_host"] = recorded  # null when no job/no host
+                except Exception:
+                    pass
             # HS-172-02: compute duration from the detail payload's timestamps
             # when _summary_payload could not (detail path carries raw dicts).
             if p.get("intel_duration_s") is None:

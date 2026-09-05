@@ -2105,6 +2105,26 @@ class IntelRepository(BaseRepository):
                 (detail, now, meeting_id),
             )
 
+    def set_intel_job_model_host(self, meeting_id: str, model_host: str) -> None:
+        """HS-172-02: record the model host on the current intel job at enqueue time."""
+        with self._connection() as conn:
+            conn.execute(
+                """UPDATE intel_jobs SET model_host = ?
+                   WHERE meeting_id = ? AND status IN ('queued', 'claimed', 'running')""",
+                (model_host, meeting_id),
+            )
+
+    def get_intel_job_model_host(self, meeting_id: str) -> str | None:
+        """HS-172-02: read the recorded model host from any job for this meeting."""
+        with self._connection() as conn:
+            row = conn.execute(
+                """SELECT model_host FROM intel_jobs
+                   WHERE meeting_id = ? AND model_host IS NOT NULL
+                   ORDER BY requested_at DESC LIMIT 1""",
+                (meeting_id,),
+            ).fetchone()
+        return str(row["model_host"]) if row and row["model_host"] else None
+
     def complete_intel_job(self, meeting_id: str) -> None:
         """Retain completed job history while removing it from ordinary readers."""
         now = datetime.now().isoformat()

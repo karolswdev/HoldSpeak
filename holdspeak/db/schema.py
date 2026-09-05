@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS intel_jobs (
     executor_lease_token TEXT,
     executor_lease_epoch INTEGER NOT NULL DEFAULT 0,
     executor_lease_expires_at REAL,
+    model_host TEXT,
     requested_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     attempts INTEGER NOT NULL DEFAULT 0,

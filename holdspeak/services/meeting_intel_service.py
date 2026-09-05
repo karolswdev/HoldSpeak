@@ -75,6 +75,8 @@ class MeetingIntelService:
             )
         except Exception:
             host = "local"
+        # HS-172-02: record the host on the job row at enqueue time.
+        self._db.intel.set_intel_job_model_host(meeting_id, host)
         job = self._db.intel.get_intel_job(meeting_id)
         return {
             "jobId": job.job_id if job else meeting_id,

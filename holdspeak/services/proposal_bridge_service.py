@@ -37,13 +37,19 @@ class ProposalBridgeService:
         self,
         meeting_id: str,
         *,
-        model_host: str = "local",
+        model_host: str | None = None,
     ) -> list[Proposal]:
         """Read extractor artifacts for a meeting, create proposals.
 
         Returns the newly created proposals (empty if all were deduped).
+        ``model_host`` defaults to the recorded host on the intel job row;
+        never resolved from config in the read path.
         """
         created: list[Proposal] = []
+
+        # HS-172-02: read the recorded host from the job row.
+        if model_host is None:
+            model_host = self._db.intel.get_intel_job_model_host(meeting_id)
 
         # Resolve project_id for this meeting.
         project_ids = self._db.projects.get_meeting_projects(meeting_id)
