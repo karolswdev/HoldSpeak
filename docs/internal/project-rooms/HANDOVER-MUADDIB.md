@@ -75,6 +75,19 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
   + settingsPrefs), Speak (features/dictation), Meetings
   (features/meetings). Each ships its glass rig asserting its boards.
 
+- **State at 04:40 (the close):** every face built and bounced to its
+  board; counsel on the built phase RATIFY-W-C, all conditions PAID;
+  the lost-doors audit paid (five doors re-homed on the arrival); the
+  real-desk pre-walk at ZERO defects after seven runs (the last defect
+  was DATA — the 143 migration's `legacy-legacy-intel` entry — found by
+  reading his projection in-process, see memory
+  reference_legacy_double_prefixed_profile_ids); 06 DONE; the final
+  summary written; the PR body drafted (scratchpad/pr-170-body.md).
+  The full suite (CI shape) is the last gate before `gh pr create`;
+  stories 03/04/05/07 keep the boxes that name HIS word open. The
+  faces' evidence captures live untracked until the flips (the gate
+  refuses orphan evidence).
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on
