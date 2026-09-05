@@ -291,23 +291,25 @@ The brief gains two new subsections within its item list:
    - Absent when no calendar events and no commitments in the week
      (rule A.8).
 
-2. `LAST WEEK` / `SINCE FRIDAY` (what happened -- the existing items
-   from the day-windowed brief, now covering the full week):
+2. `SINCE FRIDAY` (what happened -- the existing items from the
+   existing lookback window, UNCHANGED; counsel's condition 2 ruled the
+   brief a two-window design):
    - The existing collectors (Watch changes, pipeline events, breakage,
-     meetings) widen to the week window.
+     meetings) keep today's window (Monday looks back to Friday 17:00,
+     other days to the preceding business day).
    - Each item carries its existing shape: `text`, `detail`,
      `source_ref`, `priority`.
 
-**The window change** (monday_brief_service.py:134-153):
+**The window ruling** (monday_brief_service.py:134-153):
 
-- `compute_window()` today: period_start = preceding business day at
-  17:00; period_end = now. Monday looks back 3 days (to Friday 17:00);
-  weekdays look back 1 day (monday_brief_service.py:140-147).
-- `compute_window()` with 175: period_start = Monday 00:00 of the
-  current week; period_end = Sunday 23:59 (or now, whichever is
-  earlier). The lookback is fixed at Monday 00:00 regardless of the
-  current day; the look-ahead extends to Sunday 23:59 for the "what's
-  coming" half.
+- `compute_window()` is UNCHANGED: period_start = preceding business
+  day at 17:00; period_end = now. Monday looks back 3 days (to Friday
+  17:00); weekdays look back 1 day (monday_brief_service.py:140-147).
+  The "what happened" half and its `SINCE FRIDAY` label keep it.
+- 175 ADDS a second, forward window for the "what's coming" half:
+  `now` to Sunday 23:59 local of the current ISO week. Only the
+  calendar-event, armed-recording and commitments-due collectors read
+  it. The two halves never overlap.
 - When no calendar is connected: the brief falls back to the existing
   day-windowed behaviour (the calendar collectors produce zero items;
   the existing collectors still run with the widened window; no harm
@@ -337,13 +339,15 @@ provenance chips.
 ### The calendar adapter's read cadence (the heartbeat's sweep)
 
 **Seam:** `calendar_ingest_conductor.py:146+` -- the conductor's
-`refresh_all()` method runs on the heartbeat's cadence tick (from 171).
+`refresh()` method (calendar_ingest_conductor.py:175; counsel's
+condition 3 corrected the name) runs on the heartbeat's cadence tick
+(from 171).
 Today it runs on its own standalone schedule via
 `start_calendar_ingest_conductor` (calendar_ingest_conductor.py:602).
 
 **What 175 changes:** the conductor's refresh hooks into the heartbeat's
 sweep cadence (the 171 design's `_cadence_loop` at web_runtime.py:529).
-Each cadence tick calls the conductor's `refresh_all()` as one of its
+Each cadence tick calls the conductor's `refresh()` as one of its
 sweep steps. The conductor's standalone thread (its own sleep loop) is
 replaced by the cadence-driven tick.
 
@@ -480,24 +484,14 @@ Article III satisfied.
 
 **Seam:** `monday_brief_service.py:134-153` -- `compute_window()`.
 
-**What 175 changes:**
-
-```python
-def compute_window(self, now=None):
-    period_end = now or datetime.datetime.now()
-    # Monday 00:00 of the current week
-    days_since_monday = period_end.weekday()  # 0=Mon
-    monday = (period_end - timedelta(days=days_since_monday)).date()
-    period_start = datetime.datetime.combine(
-        monday, datetime.time(0, 0), tzinfo=period_end.tzinfo
-    )
-    return period_start, period_end
-```
+**What 175 changes:** nothing in `compute_window()`. A new
+`compute_week_ahead(now)` returns `(now, sunday_23_59_local)`; the
+brief's forward half reads it.
 
 The look-ahead (for "what's coming") reads calendar_events where
 `starts_at > now AND starts_at <= sunday_23_59`. The look-back (for
-"what happened") reads the existing collectors from `period_start`
-(Monday 00:00) to `now`. The two halves compose into the brief's
+"what happened") reads the existing collectors over the existing
+`compute_window()` (unchanged). The two halves compose into the brief's
 sections without overlap.
 
 **New collectors:**
@@ -526,7 +520,7 @@ sections without overlap.
 | CalendarConfig | holdspeak/config/integrations.py:34 | Multi-source container |
 | validate_calendar_subscription | holdspeak/config/integrations.py:60 | Validates file path or HTTPS URL |
 | calendar_ingest.parse_calendar_bytes | holdspeak/calendar_ingest.py:57 | Pure ICS parser (no IO) |
-| CalendarIngestConductor.refresh_all | holdspeak/calendar_ingest_conductor.py:146+ | Periodic refresh of all sources |
+| CalendarIngestConductor.refresh | holdspeak/calendar_ingest_conductor.py:175 | Refresh of all sources, now driven by the sweep |
 | CalendarEventRepository.replace_projection | holdspeak/db/calendar_events.py:65 | Atomic replace-on-success |
 | CalendarEventRepository.list_upcoming | holdspeak/db/calendar_events.py:153 | Events after now, sorted by starts_at |
 | calendar_events table | holdspeak/db/schema.py:3490 | id, uid, title, starts_at, ends_at, location, meeting_url, source_id, source_label |
@@ -594,6 +588,15 @@ positive links the event to the wrong Room. Hunt:
   safer V0: no auto-link, only suggestions. The owner manually links.
   The brief's question: is auto-linking worth the false-positive risk,
   or should V0 be suggestion-only?
+- **Ruled (counsel's condition 4, the orchestrator under the open
+  throttle):** V0 AUTO-LINKS by title with the >= 4-character
+  whole-word rule and prefers the longest Room name; every link is a
+  receipt (`match_source=title`), the Room's MEETINGS row and the
+  arrival's event row wear the link, and `Unlink` on either face
+  removes it (`DELETE /api/calendar/events/{id}/link`). A wrong link
+  files a recording under the wrong Room; it never loses the
+  recording. His word can flip V0 to suggestion-only (question 1 in
+  the walk).
 
 ### H4: A week strip with a counter of zero
 
@@ -643,8 +646,8 @@ calendar:
    meeting's entity with decisions from the last intel run (from 172).
 6. **The week brief.** The brief in the shade (or Rhythm > Generate)
    shows the WEEK frame: meetings count, armed recordings, Watch
-   changes, commitments due. The window covers Monday-to-now, not
-   yesterday-to-now.
+   changes, commitments due. The backward window is the existing one;
+   the forward window runs to Sunday.
 7. **His word.** Stopwatch per face. Screenshots at both widths. His
    verdict recorded verbatim.
 
@@ -663,3 +666,25 @@ calendar:
 | 08 The docs | S | Screenshots + architecture diagrams |
 | 09 The close | S | Suite, baseline, canon ratchet, counsel, PR |
 | **Total** | **M** | The calendar ingest and scheduled recording machinery already exist; 175 connects them to the desk and the Room |
+
+
+## Addendum -- counsel on the design (2026-09-05): RATIFY-W-C, five conditions
+
+| # | Condition | Ruling | Paid where |
+|---|---|---|---|
+| 1 | ArrivalArmedOrphan: strip `3 MEETINGS THIS WEEK` vs section `MEETINGS 2` | The strip and the section count ONE set: the week's calendar events. The orphan armed recording is a recording, not an event; it sits in its own row grammar below the section and is never counted as a meeting. | Board: strip now reads `2 MEETINGS THIS WEEK` |
+| 2 | Brief window: D3 snippet said Monday 00:00; the board says SINCE FRIDAY | Two-window design. `compute_window()` UNCHANGED (the SINCE FRIDAY half); a new forward window `now -> Sunday 23:59` feeds THIS WEEK. | D2(e), D3 rewritten above; wire lane 04/05 briefed |
+| 3 | `refresh_all` does not exist | Corrected to `refresh` (calendar_ingest_conductor.py:175). | D3 and the wire summary |
+| 4 | Auto-link vs suggestion-only unsettled | V0 auto-links (>= 4-char whole word, longest Room name wins), every link a receipt, `Unlink` on both faces, nothing lost on a wrong link. His word may flip it. | H3 above; story 03 AC |
+| 5 | `ARM ROOM MEETINGS ONLY` consent is blind | The toggle row carries the matched fact `N MATCHED THIS WEEK` (absent at zero per A.8) so the rule's reach is on the same face. | The three Settings boards |
+
+P2s: P2-1 (the same event in two sources arms twice) is named in the
+risk table as accepted for V0 -- Cancel is one verb; P2-2 the snapshot
+model assignment gets a fence test in the hygiene lane (local-or-named);
+P2-3 NEXT vs the first row is headline-vs-detail, kept; P2-4 the Well
+board's missing Auto export row is a mockup simplification -- the build
+keeps the full Settings layout and unfolds the well inline.
+
+Counsel's three questions for the owner ride in the walk (story 06):
+auto-link vs suggestion-only; the two-window brief; a confirmation step
+before an auto-linked event arms.
