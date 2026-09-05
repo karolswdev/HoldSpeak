@@ -30,7 +30,14 @@ import {
   StringGadget,
   type CycleOption,
 } from "../../desk/surface/gadgets";
-import { Receipt, countToken, StateChip } from "../../desk/surface";
+import {
+  Receipt,
+  countToken,
+  StateChip,
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  SurfaceWell,
+} from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressFor } from "../../desk/surface/egress";
 import { openSurface } from "../../desk/shell";
@@ -195,6 +202,323 @@ const SETTINGS_WINGS = [
   { id: "guide", label: "Guide" },
 ];
 
+/* ── HS-174-02/03: Remote Access — the credential ledger + issue well ── */
+
+const PALETTE_OPTIONS: CycleOption[] = [
+  { value: "PROJECT" },
+  { value: "SWEEP" },
+  { value: "DESK" },
+  { value: "ALL" },
+];
+const TTL_OPTIONS: CycleOption[] = [
+  { value: "43200", label: "12 H" },
+  { value: "86400", label: "24 H" },
+  { value: "604800", label: "7 D" },
+  { value: "2592000", label: "30 D" },
+];
+type RemoteCredential = {
+  id: string;
+  identity: string;
+  /** Palette name (string like "PROJECT") or resolved tool list. */
+  palette: string | string[] | null;
+  /** Epoch seconds (converted from monotonic by the server). */
+  expires_at: number;
+  last_used_at: number | null;
+  /** Authoritative active flag from the server. */
+  active: boolean;
+};
+
+type RemoteWire = {
+  enabled: boolean;
+  bind_host: string | null;
+  port: number | null;
+  credentials: RemoteCredential[];
+  active_count: number;
+  total_count: number;
+};
+
+/** Format an epoch-seconds timestamp as `MMM D` (e.g. `SEP 12`). */
+function formatExpiry(epochSeconds: number): string {
+  const d = new Date(epochSeconds * 1000);
+  const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  return `${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+/** True when the credential has not expired (epoch seconds vs now). */
+function isActive(expiresAt: number): boolean {
+  return expiresAt * 1000 > Date.now();
+}
+
+/** Relative age string from epoch seconds (e.g. `2 H AGO`, `3 D AGO`). */
+function relativeAge(epochSeconds: number): string {
+  const seconds = Math.max(0, Math.floor((Date.now() - epochSeconds * 1000) / 1000));
+  if (seconds < 60) return `${seconds} S AGO`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} M AGO`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)} H AGO`;
+  return `${Math.floor(seconds / 86400)} D AGO`;
+}
+
+/** The palette label: the name when a string, or the first entry when a list. */
+function paletteLabel(palette: string | string[] | null): string {
+  if (!palette) return "ALL";
+  if (typeof palette === "string") return palette;
+  if (palette.length === 0) return "ALL";
+  return palette[0];
+}
+
+export function RemoteAccessModule() {
+  const [wire, setWire] = useState<RemoteWire | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [issueOpen, setIssueOpen] = useState(false);
+  const [issueName, setIssueName] = useState("");
+  const [issuePalette, setIssuePalette] = useState("PROJECT");
+  const [issueTtl, setIssueTtl] = useState("43200");
+  const [issuing, setIssuing] = useState(false);
+  const [oneTimeToken, setOneTimeToken] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState<string | null>(null);
+  const [toggleBusy, setToggleBusy] = useState(false);
+
+  const fetchRemote = useCallback(async () => {
+    try {
+      const data = await apiFetch<RemoteWire>("/api/settings/remote");
+      setWire(data);
+      setError("");
+    } catch (err) {
+      setError(readableError(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void fetchRemote(); }, [fetchRemote]);
+
+  const toggleEnabled = async (next: string) => {
+    const enabled = next === "ON";
+    setToggleBusy(true);
+    try {
+      await apiFetch("/api/settings/remote", {
+        method: "PUT",
+        json: { enabled },
+      });
+      await fetchRemote();
+    } catch (err) {
+      setError(readableError(err));
+    } finally {
+      setToggleBusy(false);
+    }
+  };
+
+  const issueCredential = async () => {
+    if (!issueName.trim()) return;
+    setIssuing(true);
+    setError("");
+    try {
+      const result = await apiFetch<{
+        token: string;
+        id: string;
+        identity: string;
+        palette: string;
+        expires_at: number;
+      }>("/api/settings/remote/credentials", {
+        method: "POST",
+        json: {
+          identity: issueName.trim(),
+          palette: issuePalette,
+          ttl_seconds: Number(issueTtl),
+        },
+      });
+      setOneTimeToken(result.token);
+      setIssueOpen(false);
+      setIssueName("");
+      setIssuePalette("PROJECT");
+      setIssueTtl("43200");
+      await fetchRemote();
+    } catch (err) {
+      setError(readableError(err));
+    } finally {
+      setIssuing(false);
+    }
+  };
+
+  const revokeCredential = async (id: string) => {
+    setRevoking(id);
+    setError("");
+    try {
+      await apiFetch(`/api/settings/remote/credentials/${id}`, {
+        method: "DELETE",
+      });
+      await fetchRemote();
+    } catch (err) {
+      setError(readableError(err));
+    } finally {
+      setRevoking(null);
+    }
+  };
+
+  const copyToken = () => {
+    if (oneTimeToken) {
+      void navigator.clipboard.writeText(oneTimeToken);
+    }
+  };
+
+  if (loading) return null;
+
+  const enabled = wire?.enabled ?? false;
+  const credentials = wire?.credentials ?? [];
+  const activeCount = credentials.filter((c) => c.active).length;
+  const totalCount = credentials.length;
+  const addressToken = enabled && wire?.port
+    ? `${wire.bind_host || "0.0.0.0"}:${wire.port}`
+    : null;
+
+  return (
+    <GadgetGroup label="Remote access">
+      {/* The toggle row */}
+      <GadgetRow label="Streamable HTTP">
+        <CycleGadget
+          label="Remote transport"
+          value={enabled ? "ON" : "OFF"}
+          options={[{ value: "OFF" }, { value: "ON" }]}
+          disabled={toggleBusy}
+          onChange={toggleEnabled}
+        />
+        {enabled && addressToken ? (
+          <span className="gadget-fact" data-testid="remote-address">{addressToken}</span>
+        ) : null}
+        {enabled && totalCount > 0 ? (
+          <span className="surface-token" data-chip data-testid="remote-total-count">
+            {countToken(totalCount, "CREDENTIAL", "CREDENTIALS")}
+          </span>
+        ) : null}
+      </GadgetRow>
+
+      {/* Everything below only when ON */}
+      {enabled ? (
+        <>
+          {/* Credentials ledger */}
+          {credentials.length > 0 ? (
+            <SurfaceLedger
+              count={<>
+                CREDENTIALS
+                {activeCount > 0 ? (
+                  <> <span className="surface-token" data-chip data-testid="remote-active-count">
+                    {countToken(activeCount, "ACTIVE", "ACTIVE")}
+                  </span></>
+                ) : null}
+              </>}
+              cols="room"
+            >
+              {credentials.map((cred) => (
+                  <SurfaceLedgerRow
+                    key={cred.id}
+                    lead={<StateChip state={cred.active ? "success" : "idle"} label="" icon="●" />}
+                    primary={cred.identity}
+                    expands={false}
+                    data-testid={`credential-row-${cred.id}`}
+                    cells={<>
+                      <span className="surface-token" data-chip>{paletteLabel(cred.palette)}</span>
+                      {cred.active ? (
+                        <span className="surface-token" data-chip>
+                          EXPIRES {formatExpiry(cred.expires_at)}
+                        </span>
+                      ) : (
+                        <StateChip state="warning" label="EXPIRED" />
+                      )}
+                      <span className="surface-token" data-chip data-muted>
+                        {cred.last_used_at ? `LAST USED ${relativeAge(cred.last_used_at)}` : "NEVER USED"}
+                      </span>
+                    </>}
+                    trailing={
+                      <Button
+                        variant="ghost"
+                        dense
+                        disabled={revoking === cred.id}
+                        onClick={() => void revokeCredential(cred.id)}
+                      >
+                        Revoke
+                      </Button>
+                    }
+                  />
+                ))}
+            </SurfaceLedger>
+          ) : null}
+
+          {/* One-time token display (after issue, before dismissal) */}
+          {oneTimeToken ? (
+            <SurfaceWell>
+              <div className="prefs-token-once">
+                <code className="prefs-token-value" data-testid="token-value">{oneTimeToken}</code>
+                <Button variant="ghost" dense onClick={copyToken} data-testid="token-copy">
+                  Copy
+                </Button>
+              </div>
+              <span className="prefs-token-caption" data-tone="warning">
+                TOKEN SHOWN ONCE — COPY IT NOW
+              </span>
+            </SurfaceWell>
+          ) : null}
+
+          {/* Issue credential verb + well */}
+          {issueOpen ? (
+            <SurfaceWell>
+              <GadgetRow label="Name">
+                <StringGadget
+                  label="Credential name"
+                  value={issueName}
+                  placeholder="e.g. sweep-runner"
+                  onChange={setIssueName}
+                  autoFocus
+                />
+              </GadgetRow>
+              <GadgetRow label="Palette">
+                <CycleGadget
+                  label="Palette"
+                  value={issuePalette}
+                  options={PALETTE_OPTIONS}
+                  onChange={setIssuePalette}
+                />
+              </GadgetRow>
+              <GadgetRow label="TTL">
+                <CycleGadget
+                  label="TTL"
+                  value={issueTtl}
+                  options={TTL_OPTIONS}
+                  onChange={setIssueTtl}
+                />
+              </GadgetRow>
+              <div className="prefs-issue-actions">
+                <Button disabled={issuing || !issueName.trim()} onClick={() => void issueCredential()} data-testid="issue-submit">
+                  Issue
+                </Button>
+                <Button variant="ghost" onClick={() => { setIssueOpen(false); setIssueName(""); }} data-testid="issue-cancel">
+                  Cancel
+                </Button>
+              </div>
+            </SurfaceWell>
+          ) : (
+            <div className="prefs-issue-start">
+              <Button
+                variant="ghost"
+                onClick={() => { setOneTimeToken(null); setIssueOpen(true); }}
+                data-testid="issue-credential-btn"
+              >
+                Issue credential
+              </Button>
+            </div>
+          )}
+        </>
+      ) : null}
+
+      {error ? (
+        <span className="gadget-fact" data-tone="danger" role="alert" data-testid="remote-error">
+          {error}
+        </span>
+      ) : null}
+    </GadgetGroup>
+  );
+}
+
 export function SettingsCore({ hero, scope }: CoreProps) {
   // HS-100-10 — the Runtime guide is the Guide wing (the standalone
   // doc-window died; deep links land here via the registry alias).
@@ -231,7 +555,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     meetings: { intelligence: false, auto: "off", host: "" },
     rhythm: { loops: 0 },
     sounds: { on: false },
-    system: { host: "THIS DEVICE", mesh: false },
+    system: { host: "THIS DEVICE", mesh: false, remote: false },
     posture: "neutral",
     writtenAt: null,
   });
@@ -1176,15 +1500,28 @@ function SettingsFace({ hero, scope }: CoreProps) {
           </>
         );
       }
-      /* ── System: device name + desk reset + devices RAW ── */
+      /* ── System: display + device name + remote access + desk reset + devices RAW ── */
       case "system": {
         const device = (data.device ?? {}) as Record<string, unknown>;
         const deviceCount = Object.keys(device).length;
+        const systemHub = hub.data.system;
         return (
           <>
+            <div className="surface-display" data-testid="system-display">
+              This device
+            </div>
+            <div className="prefs-hub-chips">
+              <span className="surface-token" data-chip>{systemHub.host}</span>
+              <span className="surface-token" data-chip>{systemHub.mesh ? "MESH ON" : "MESH OFF"}</span>
+              {systemHub.remote
+                ? <StateChip state="success" label="REMOTE ON" />
+                : <span className="surface-token" data-chip>REMOTE OFF</span>}
+            </div>
+            <div className="prefs-rule" aria-hidden="true" />
             <GadgetGroup label="Mesh">
               {str(["mesh", "device_name"], "Device name")}
             </GadgetGroup>
+            <RemoteAccessModule />
             <DeskModule />
             {/* HS-139-04/05: device walker knobs fold behind RAW. */}
             {deviceCount ? (

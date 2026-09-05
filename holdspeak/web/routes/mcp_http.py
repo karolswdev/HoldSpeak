@@ -155,17 +155,36 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
 
         store = getattr(request.app.state, "_remote_settings", None) or {}
         cred_store = _get_credential_store(request)
-        now = time.monotonic()
+        now_mono = time.monotonic()
+        now_epoch = time.time()
+
+        # HS-174-02: reverse-map resolved palette frozensets to names.
+        from ...mcp.palettes import PALETTE_NAMES, resolve_palette
+        _palette_reverse: dict[frozenset[str], str] = {}
+        for _pn in PALETTE_NAMES:
+            try:
+                _palette_reverse[resolve_palette(_pn)] = _pn
+            except Exception:
+                pass
 
         credentials = []
         for c in cred_store.list_credentials():
+            # Convert monotonic timestamps to epoch seconds for the face.
+            expires_epoch = now_epoch + (c.expires_at - now_mono)
+            last_used_epoch = (
+                now_epoch + (c.last_used_at - now_mono)
+                if c.last_used_at is not None
+                else None
+            )
+            # Palette: return the name if it maps to a known palette.
+            palette_name = _palette_reverse.get(c.palette, None) if c.palette else None
             credentials.append({
                 "id": c.id,
                 "identity": c.principal.identity,
-                "palette": sorted(c.palette) if c.palette else None,
-                "expires_at": c.expires_at,
-                "last_used_at": c.last_used_at,
-                "active": c.expires_at > now,
+                "palette": palette_name or (sorted(c.palette) if c.palette else None),
+                "expires_at": expires_epoch,
+                "last_used_at": last_used_epoch,
+                "active": c.expires_at > now_mono,
             })
 
         return JSONResponse({

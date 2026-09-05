@@ -345,7 +345,7 @@ export type SettingsHubWire = {
     quiet?: { start: number; end: number; held: boolean };
   };
   sounds: { on: boolean };
-  system: { host: string; mesh: boolean };
+  system: { host: string; mesh: boolean; remote?: boolean };
   posture: string;
   writtenAt: number | null;
 };
@@ -532,7 +532,7 @@ export function PrefsFace({
               : <span className="surface-token" data-chip data-muted>OFF</span>}
           </>}
         />
-        {/* System: THIS DEVICE + MESH OFF|ON */}
+        {/* System: THIS DEVICE + MESH OFF|ON + REMOTE OFF|ON */}
         <SurfaceLedgerRow
           primary="System"
           expands={false}
@@ -541,6 +541,9 @@ export function PrefsFace({
           cells={<>
             <span className="surface-token" data-chip>{hub.system.host}</span>
             <span className="surface-token" data-chip>{hub.system.mesh ? "MESH ON" : "MESH OFF"}</span>
+            {hub.system.remote
+              ? <StateChip state="success" label="REMOTE ON" />
+              : <span className="surface-token" data-chip>REMOTE OFF</span>}
           </>}
         />
       </SurfaceLedger>
