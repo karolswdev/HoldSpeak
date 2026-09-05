@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "../../components/signal/Signal";
+import { MicButton } from "../surface";
 import { DeskEditor, type DeskEditorHandle } from "../components/DeskEditor";
 import type { ThoughtDraft } from "../pullouts/editors/useThoughtNoteWriter";
 import { originalThought, sourceLabel, type Thought } from "../thoughts";
@@ -59,6 +61,7 @@ export function ThoughtDocumentPane({
 
   const tags = draft.tags.split(",").map((tag) => tag.trim()).filter(Boolean);
   return <section className="thought-document" aria-label="Note">
+    {/* UX-CANON: needs redesign (HS-170-04) */}
     <input
       className="thought-document-title"
       aria-label="Title"
@@ -66,6 +69,7 @@ export function ThoughtDocumentPane({
       disabled={disabled}
       onChange={(event) => onEdit({ title: event.target.value })}
     />
+    <MicButton draftScope="thought-title" onText={(text) => onEdit({ title: text })} />
     <DeskEditor
       ref={bodyRef}
       className="thought-document-body"
@@ -80,15 +84,16 @@ export function ThoughtDocumentPane({
     />
     <div className="thought-document-meta">
       <div className="thought-document-tags" aria-label="Tags">
-        {tags.map((tag) => <button key={tag} type="button" className="thought-tag" disabled={disabled} onClick={() => onEdit({ tags: tags.filter((item) => item !== tag).join(", ") })} aria-label={`Remove ${tag} tag`}>{tag}<span aria-hidden="true"> ×</span></button>)}
-        <button type="button" className="thought-tag-add" aria-expanded={tagsOpen} onClick={() => setTagsOpen((value) => !value)}>Add tag</button>
+        {tags.map((tag) => <Button key={tag} variant="ghost" dense className="thought-tag" disabled={disabled} onClick={() => onEdit({ tags: tags.filter((item) => item !== tag).join(", ") })} aria-label={`Remove ${tag} tag`}>{tag}<span aria-hidden="true"> ×</span></Button>)}
+        <Button variant="ghost" dense className="thought-tag-add" aria-expanded={tagsOpen} onClick={() => setTagsOpen((value) => !value)}>Add tag</Button>
+        {/* UX-CANON: needs redesign (HS-170-04) */}
         {tagsOpen ? <input aria-label="Tag names" value={draft.tags} disabled={disabled} onChange={(event) => onEdit({ tags: event.target.value })} onBlur={() => setTagsOpen(false)} autoFocus /> : null}
-        <button ref={infoRef} type="button" className="thought-tag-add" disabled={originalBusy} onClick={() => void showOriginal()}>Info</button>
+        <Button ref={infoRef} variant="ghost" dense className="thought-tag-add" disabled={originalBusy} onClick={() => void showOriginal()}>Info</Button>
       </div>
       {message ? <span className="thought-save-truth" role="status">{message}</span> : null}
     </div>
-    {original ? <section ref={originalRef} className="thought-document-original surface-aerogel" aria-label="Original kept" tabIndex={-1}><strong>Original kept · {sourceLabel(original.source.kind)}</strong><pre className="thought-original-raw">{original.raw_text}</pre><button type="button" className="desk-chip quiet" onClick={() => { setOriginal(null); requestAnimationFrame(() => infoRef.current?.focus()); }}>Close original</button></section> : null}
-    {originalError ? <p className="thought-document-original-error" role="alert">{originalError} <button type="button" className="desk-chip quiet" onClick={() => void showOriginal()}>Try again</button></p> : null}
-    {message.includes("Retry save") ? <button type="button" className="desk-chip quiet thought-save-retry" onClick={onRetry}>Retry save</button> : null}
+    {original ? <section ref={originalRef} className="thought-document-original surface-aerogel" aria-label="Original kept" tabIndex={-1}><strong>Original kept · {sourceLabel(original.source.kind)}</strong><pre className="thought-original-raw">{original.raw_text}</pre><Button variant="ghost" dense className="desk-chip quiet" onClick={() => { setOriginal(null); requestAnimationFrame(() => infoRef.current?.focus()); }}>Close original</Button></section> : null}
+    {originalError ? <p className="thought-document-original-error" role="alert">{originalError} <Button variant="ghost" dense className="desk-chip quiet" onClick={() => void showOriginal()}>Try again</Button></p> : null}
+    {message.includes("Retry save") ? <Button variant="ghost" dense className="desk-chip quiet thought-save-retry" onClick={onRetry}>Retry save</Button> : null}
   </section>;
 }

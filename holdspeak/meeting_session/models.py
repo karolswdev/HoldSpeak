@@ -233,6 +233,11 @@ class MeetingState:
             "capture_checkpoint_seconds": self.capture_checkpoint_seconds,
             "provenance": self.provenance,
             "calendar_event_id": self.calendar_event_id,
+            # HS-170-04: transcript word count for the face (omitted when no transcript).
+            "transcriptWords": (
+                sum(len(s.text.split()) for s in self.segments)
+                if self.segments else None
+            ),
             "sync_modified_at": (
                 self.sync_modified_at.isoformat() if self.sync_modified_at else None
             ),

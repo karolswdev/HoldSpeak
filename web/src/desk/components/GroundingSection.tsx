@@ -188,7 +188,7 @@ export function GroundingSection(props: {
           )}
           {over && (
             <p className="desk-ground-refusal">
-              ✕ PAST THE WINDOW · DROP THE TRANSCRIPT OR PICK LESS
+              <span aria-hidden="true">✕</span> PAST THE WINDOW
             </p>
           )}
           {meetings.length === 0 && (

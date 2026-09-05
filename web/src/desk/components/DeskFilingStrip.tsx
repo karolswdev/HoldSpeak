@@ -145,7 +145,7 @@ export function DeskFilingStrip({
                           : useDesk.getState().fileIntoDir(objectId, String(zone.id), objectKind))
                       }
                     >
-                      {inZone ? "✓ " : "+ "}
+                      {inZone ? <><span aria-hidden="true">✓</span>{" "}</> : "+ "}
                       {String(zone.name || zone.id)}
                     </button>
                   );
@@ -169,7 +169,7 @@ export function DeskFilingStrip({
                       aria-pressed={active}
                       onClick={() => void toggleRelationship("knowledge", knowledge.id, active)}
                     >
-                      {active ? "✓ " : "+ "}
+                      {active ? <><span aria-hidden="true">✓</span>{" "}</> : "+ "}
                       {knowledge.name}
                     </button>
                   );
@@ -194,7 +194,7 @@ export function DeskFilingStrip({
                         aria-pressed={active}
                         onClick={() => void toggleRelationship("projects", project.id, active)}
                       >
-                        {active ? "✓ " : "+ "}
+                        {active ? <><span aria-hidden="true">✓</span>{" "}</> : "+ "}
                         {project.name}
                       </button>
                       <button

@@ -1,5 +1,6 @@
 // HS-129-08 — editors are desk windows, never a modal layer.
 import "./inline-editor.css";
+import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import type { WorldObject } from "../world";
 import type { UnitPos } from "../store";
@@ -31,7 +32,7 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
   return (
     <DeskWindowFrame
       id={`editor:${o.kind}:${o.id}`}
-      glyph="✎"
+      glyph="E"
       label={`Edit ${o.title}`}
       className="desk-pullout is-card desk-editor-window"
       fitContent
@@ -46,12 +47,12 @@ export function InlineEditor({ o, u }: { o: WorldObject; u: UnitPos }) {
       <SurfaceFooter
         verbs={
           <>
-            <button type="button" className="desk-chip quiet" onClick={closeEditor}>
+            <Button dense variant="ghost" onClick={closeEditor}>
               Cancel
-            </button>
-            <button type="button" className="desk-chip is-primary" onClick={closeEditor}>
+            </Button>
+            <Button dense variant="primary" onClick={closeEditor}>
               Save
-            </button>
+            </Button>
           </>
         }
       />

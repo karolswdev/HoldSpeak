@@ -12,6 +12,7 @@ import { FoldGadget } from "../../../desk/surface/gadgets";
 import { Material } from "../../../desk/surface/Material";
 import { humanTime } from "../../../desk/surface/format";
 import { rowId } from "../../pageSupport";
+import { countToken } from "../../../desk/surface";
 import { clockTime } from "./helpers";
 
 export function ArtifactsLibrary({
@@ -26,8 +27,8 @@ export function ArtifactsLibrary({
   }
   return (
     <SurfaceLibrary
-      count={artifactRows.length}
-      token={`${artifactRows.length} ${artifactRows.length === 1 ? "ARTIFACT" : "ARTIFACTS"}`}
+      count={artifactRows.length || undefined}
+      token={countToken(artifactRows.length, "ARTIFACT") ?? undefined}
     >
       {artifactRows.map((row, index) => {
         const title = String(row.title ?? row.artifact_type ?? "Artifact");

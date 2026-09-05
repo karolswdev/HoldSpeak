@@ -112,7 +112,7 @@ export function WorkflowEditor({ object: o, autoFocusName }: InlineEditorContent
                   commitGraph(steps.filter((_, j) => j !== i))
                 }
               >
-                ✕
+                <span aria-hidden="true">{String.fromCodePoint(0x2715)}</span>
               </button>
             </div>
           ))}

@@ -48,6 +48,7 @@ class MeetingSummary:
     capture_checkpoint_seconds: float = 0.0
     provenance: str = "desktop"
     calendar_event_id: Optional[str] = None
+    transcript_words: Optional[int] = None  # HS-170-04: None when no transcript, never 0
 
 
 @dataclass

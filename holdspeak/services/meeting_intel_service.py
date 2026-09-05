@@ -44,6 +44,43 @@ class MeetingIntelService:
             raise ConflictError(errors[outcome], code=outcome)
         self._broadcast_queue(); return {"success": True, **({"recovery": self.get_recovery(None, meeting_id)} if recovery else {})}
     def retry_job(self, principal: Principal, meeting_id: str) -> dict[str, Any]: return self._retry(meeting_id, recovery=False)
+
+    def run_intelligence(self, principal: Principal, meeting_id: str) -> dict[str, Any]:
+        """HS-170-04: enqueue a fresh intelligence job for a meeting.
+
+        Named verb for the face's 'Run intelligence' button. Returns
+        ``{jobId, state, host}`` where host is the assigned model's egress
+        host at the point of decision (Article III).
+        """
+        outcome = self._db.intel.request_intel_retry(meeting_id, reason="Run intelligence")
+        errors = {
+            "missing": "Meeting not found",
+            "empty": "Meeting has no transcript",
+            "reserved": "Meeting intelligence is awaiting Stop settlement",
+            "running": "Meeting intelligence is already running",
+            "ready": "Meeting intelligence is already ready",
+        }
+        if outcome in errors:
+            if outcome == "missing":
+                raise NotFound("meeting", meeting_id)
+            raise ConflictError(errors[outcome], code=outcome)
+        self._broadcast_queue()
+        # Resolve the model placement at the point of decision (Article III).
+        from ..config import Config
+        from ..intel.providers import resolve_meeting_placement
+        try:
+            placement = resolve_meeting_placement(Config.load().meeting)
+            host = placement.boundary if placement.boundary == "local" else (
+                placement.profile_name or placement.boundary or "local"
+            )
+        except Exception:
+            host = "local"
+        job = self._db.intel.get_intel_job(meeting_id)
+        return {
+            "jobId": job.job_id if job else meeting_id,
+            "state": "queued",
+            "host": host,
+        }
     def get_recovery(self, principal: Principal | None, meeting_id: str) -> dict[str, Any]:
         meeting = self._db.meetings.get_meeting(meeting_id)
         if meeting is None: raise NotFound("meeting", meeting_id)

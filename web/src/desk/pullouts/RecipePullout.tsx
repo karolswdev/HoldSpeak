@@ -3,6 +3,7 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
  * HS-151-07: "Chat with" retired; "Continue in thread" creates/opens a
  * thread bound to the recipe via POST /api/threads {recipe_id}. */
 import { useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
@@ -52,14 +53,15 @@ export function RecipePullout({ object: o }: PulloutContentProps) {
               <strong className="surface-primary">{o.title}</strong>
               {ir.role ? <small>{String(ir.role)}</small> : null}
             </div>
-            <button
-              type="button"
-              className="desk-chip is-primary desk-pullout-agent-chat"
+            <Button
+              dense
+              variant="primary"
+              className="desk-pullout-agent-chat"
               disabled={threadBusy}
               onClick={() => void continueInThread()}
             >
               {threadBusy ? "Opening..." : "Continue in thread"}
-            </button>
+            </Button>
             <ContextualAssignment
               label="Thread assignment"
               capabilityId="chat.turn"
@@ -85,24 +87,26 @@ export function RecipePullout({ object: o }: PulloutContentProps) {
         </>}
       </div>
       <SurfaceFooter receipt={receipt} verbs={editing ? <>
-        <button type="button" className="desk-chip quiet" onClick={closeEditor}>Cancel</button>
-        <button type="button" className="desk-chip is-primary" onClick={closeEditor}>Save</button>
-      </> : <> <button
-          type="button"
-          className="desk-chip quiet"
+        <Button dense variant="ghost" onClick={closeEditor}>Cancel</Button>
+        <Button dense variant="primary" onClick={closeEditor}>Save</Button>
+      </> : <>
+        <Button
+          dense
+          variant="ghost"
           onClick={() =>
             openSurfaceOr("dictate", "/dictation", resourceRef)
           }
         >
           Dictate about this
-        </button>
-        <button
-          type="button"
-          className="desk-chip is-primary"
+        </Button>
+        <Button
+          dense
+          variant="primary"
           onClick={() => openEditor(o.id)}
         >
           Edit
-        </button> </>} />
+        </Button>
+      </>} />
     </>
   );
 }

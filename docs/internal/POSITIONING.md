@@ -181,6 +181,12 @@ left column is the name; do not alternate with the synonyms.
 | Automations (the watch/reaction surface) | "event triggers", "webhooks", "watches" (except the Project-scoped Watches of Project Rooms) |
 | Watches (Project-scoped) | "event triggers", "monitors", "subscriptions" |
 | Resourceful (overnight bounded maintenance) | "maintenance mode", "idle work", "overnight tasks" |
+| the Concierge (Settings, Models) | "the door", "the packs", "model setup wizard" |
+| the arrival (the desk's home screen) | "the Chair Door", "the board", "the dashboard" |
+| Speak (the voice-typing window) | "DictationCore", "the cockpit", "the voice panel" |
+| Meetings (the meetings window) | "HistoryCore", "the history page" |
+| needs you (the cross-project headline) | "pending items", "action required", "to-do" |
+| Run intelligence (the verb on an OFF meeting) | "process", "analyze", "run AI" |
 
 ## Voice rules (the editing standard for every user-facing doc)
 

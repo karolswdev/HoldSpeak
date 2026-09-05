@@ -1,16 +1,7 @@
 // HS-95-05 — the Dictation surface's core, hosted anywhere.
-// HS-98-02 — re-crafted native on the window material.
-// HS-100-07 — Speak: the application opens ON the job (speak, see it
-// land, judge it, teach it — trace B's loop is the entire front face);
-// Journal and Blocks are the wings; Memory/Knowledge/Runtime/Hooks/
-// Nudges and full readiness fold behind the one gear door
-// (APPLICATION_LAYER_THESIS.md §1.1). Wire calls and verbs unchanged.
-// HS-111-02 — the OS's dictation deck (audit §3): the cockpit is an
-// instrument strip (TALK transport key, LED level meter, STATE
-// register, etched readout cells); the Journal is a machine ledger
-// (SurfaceLedger); the gear door is ONE gadget sheet; and every toast
-// banner died into the footer receipt bar (the Prefs pattern).
-// HS-117-08 — decomposed: sub-components live under dictation/.
+// HS-170-04 — rebuilt to the settled artboards: one screen (talk, see
+// it land, teach); the old cockpit strip folds behind > Details; the
+// footer carries EgressChip THIS DEVICE + receipt + Review/Export.
 import "../../desk/components/speak.css";
 import { useCallback, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
@@ -18,12 +9,16 @@ import { download } from "./history";
 import type { CoreProps, DictationJournalResponse } from "./core-types";
 import { useCoreWings } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
+import { Button } from "../../components/signal/Signal";
+import { EgressChip } from "../../desk/surface/gadgets";
+import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
+import { countToken } from "../../desk/surface";
+import { useResource } from "../pageSupport";
 import {
   SpeakFace,
   Journal,
   Blocks,
   Readiness,
-  ReadinessFooter,
   Memory,
   Knowledge,
   Runtime,
@@ -63,6 +58,14 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
   const announce = useCallback((text: string, tone: ReceiptTone = "ok") => {
     setReceipt(text ? { text, tone } : null);
   }, []);
+
+  // Journal count for the footer receipt
+  const journalResource = useResource<DictationJournalResponse>(
+    "/api/dictation/journal?limit=1",
+    {},
+  );
+  const journalCount = Number(journalResource.data?.count ?? 0);
+
   const exportJournal = async () => {
     try {
       const overview = await apiFetch<DictationJournalResponse>(
@@ -106,6 +109,21 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
       })[active],
     [active],
   );
+
+  // Receipt slot for the footer
+  const receiptSlot = receipt ? (
+    <span
+      className="surface-footer-readiness"
+      data-tone={receipt.tone === "warn" ? "warn" : undefined}
+      role={receipt.tone === "warn" ? "alert" : "status"}
+    >
+      {receipt.text}
+    </span>
+  ) : null;
+
+  // Journal count as a token (null at zero per UX-CANON A8)
+  const journalToken = countToken(journalCount, "TODAY", "TODAY");
+
   return (
     <>
       {renderHeroSlot(hero, null)}
@@ -117,19 +135,35 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
       <ReceiptContext.Provider value={announce}>
         {current}
       </ReceiptContext.Provider>
-      {/* HS-129-05 — Speak publishes one frame-owned foot: pipeline state,
-          the landing receipt, Review, and Export share the same slots. */}
-      <ReadinessFooter
-        onOpenDoor={() => wings.setDoorOpen(true)}
-        receipt={receipt}
-        exportVerb={
-          <button
-            type="button"
-            className="desk-chip"
-            onClick={() => void exportJournal()}
-          >
-            Export
-          </button>
+      {/* HS-170-04 — the footer: EgressChip THIS DEVICE · receipt ·
+          Review (ghost) · Export (ghost). */}
+      <SurfaceFooter
+        className="speak-footer"
+        egress={<EgressChip label="THIS DEVICE" />}
+        receipt={
+          receiptSlot || (journalToken ? (
+            <span className="surface-footer-readiness" role="status">
+              {journalToken}
+            </span>
+          ) : null)
+        }
+        verbs={
+          <>
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => wings.setDoorOpen(true)}
+            >
+              Review
+            </Button>
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => void exportJournal()}
+            >
+              Export
+            </Button>
+          </>
         }
       />
     </>

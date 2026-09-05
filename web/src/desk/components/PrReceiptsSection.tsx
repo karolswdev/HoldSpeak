@@ -3,6 +3,7 @@
 // GitHub text before the owner approves or denies; no modal owns the loop.
 import "./delivery.css";
 import { Fragment, useEffect, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import {
   attributionLabel,
   prStateLabel,
@@ -70,13 +71,15 @@ export function PrReceiptsSection() {
     <section aria-labelledby="desk-pr-receipts-title" className="desk-dlv-list desk-pr-receipts">
       <h2 id="desk-pr-receipts-title">
         Pull requests <span className="egress-badge is-cloud" title="GitHub">GitHub</span>
-        <button type="button" className="desk-list-open desk-pr-refresh" disabled={store.busy} onClick={() => void store.refresh()}>
+        <Button dense variant="ghost" disabled={store.busy} onClick={() => void store.refresh()}>
           {store.busy ? "Refreshing" : "Refresh"}
-        </button>
+        </Button>
       </h2>
-      {sources.map((source) => (
+      {sources.map((source) => {
+        const observedAt = source.observed_at;
+        return (
         <div key={source.source_id} className="desk-pr-source">
-          <h3>{source.label}<small>{source.status === "live" ? `observed ${source.observed_at}` : source.status === "stale" ? `stale · ${source.observed_at} · ${source.detail}` : source.detail}</small></h3>
+          <h3>{source.label}<small>{source.status === "live" ? `OBSERVED ${observedAt}` : source.status === "stale" ? `STALE · ${observedAt}` : source.detail}</small></h3>
           {source.prs && source.prs.length === 0 ? <SurfaceState empty emptyLabel="Empty" /> : null}
           {source.prs ? (
             <div className="desk-list-scroll">
@@ -86,31 +89,36 @@ export function PrReceiptsSection() {
                   {source.prs.map((row) => {
                     const key = `${row.source_id}:${row.number}`;
                     const w = rowWork(key);
-                    const proposal = w.result?.proposal_id ? w.result : null;
+                    const proposalId = w.result?.proposal_id;
+                    const proposal = proposalId ? w.result : null;
+                    const gateLabel = (row.agent_gate || "ungated").toUpperCase();
+                    const headRef = row.head_ref;
+                    const rowObserved = row.observed_at;
+                    const rowGate = row.agent_gate;
                     return (
                       <Fragment key={key}>
                         <tr className={row.needs_you ? "is-needs-you" : undefined} data-desk-object="pr">
                           <th scope="row"><span className="desk-pr-number">#{row.number}</span> {row.title}</th>
-                          <td>{prStateLabel(row)} <span className={`desk-pr-gate is-${row.agent_gate || "ungated"}`}>{(row.agent_gate || "ungated").toUpperCase()}</span></td>
+                          <td>{prStateLabel(row)} <span className={`desk-pr-gate is-${rowGate || "ungated"}`}>{gateLabel}</span></td>
                           <td><span className={`desk-pr-attmeans is-${row.attribution}`} title={row.basis}>{attributionLabel(row)}</span></td>
                           <td>
                             <span className="desk-shade-do desk-pr-verbs">
-                              <button type="button" onClick={() => void seeDiff(row)}>Diff</button>
-                              <button type="button" onClick={() => patch(key, { info: !w.info })}>Info</button>
+                              <Button dense variant="ghost" onClick={() => void seeDiff(row)}>Diff</Button>
+                              <Button dense variant="ghost" onClick={() => patch(key, { info: !w.info })}>Info</Button>
                               {(["send_agent", "draft_review", "post_comment", "post_status"] as const).map((name) => {
                                 const a = availability(row, name);
                                 const labels = { send_agent: "Send agent", draft_review: "Draft review", post_comment: "Post comment", post_status: "Post status" };
                                 const click = name === "draft_review"
                                   ? () => void run(key, "Drafting", () => store.draftReview(row))
                                   : () => patch(key, { action: name === "send_agent" ? "send" : name === "post_comment" ? "comment" : "status", text: name === "post_status" ? "Review in progress" : w.text, result: null });
-                                return <button key={name} type="button" disabled={!a.available || Boolean(w.busy)} title={a.available ? labels[name] : a.reason} onClick={click}>{labels[name]}</button>;
+                                return <Button key={name} dense variant="ghost" disabled={!a.available || Boolean(w.busy)} title={a.available ? labels[name] : a.reason} onClick={click}>{labels[name]}</Button>;
                               })}
                               {Array.from(new Set((Object.values(row.verbs ?? {}) as Array<{ available: boolean; reason: string }>).filter((item) => !item.available && item.reason).map((item) => item.reason))).map((reason) => <small key={reason} className="desk-pr-refusal">{reason}</small>)}
                             </span>
                           </td>
                         </tr>
                         {w.info ? (
-                          <tr className="desk-pr-detail"><td colSpan={4}><dl><div><dt>Author</dt><dd>{row.author}</dd></div><div><dt>Branch</dt><dd>{row.head_ref}</dd></div><div><dt>Observed</dt><dd>{row.observed_at}</dd></div><div><dt>CI</dt><dd>{row.ci}</dd></div><div><dt>Agent</dt><dd>{(row.agent_gate || "ungated").toUpperCase()}</dd></div></dl></td></tr>
+                          <tr className="desk-pr-detail"><td colSpan={4}><dl><div><dt>Author</dt><dd>{row.author}</dd></div><div><dt>Branch</dt><dd>{headRef}</dd></div><div><dt>Observed</dt><dd>{rowObserved}</dd></div><div><dt>CI</dt><dd>{row.ci}</dd></div><div><dt>Agent</dt><dd>{gateLabel}</dd></div></dl></td></tr>
                         ) : null}
                         {w.action ? (
                           <tr className="desk-pr-action"><td colSpan={4}>
@@ -143,7 +151,7 @@ export function PrReceiptsSection() {
                                 }
                               />
                               <span className="desk-pr-compose-actions">
-                                <button type="button" onClick={() => patch(key, { action: null })}>Cancel</button>
+                                <Button dense variant="ghost" onClick={() => patch(key, { action: null })}>Cancel</Button>
                               </span>
                             </div>
                           </td></tr>
@@ -159,8 +167,8 @@ export function PrReceiptsSection() {
                               </SurfaceWell>
                             </FoldGadget>
                             <span className="desk-pr-compose-actions">
-                              <button type="button" onClick={() => void run(key, "Denying", () => store.decide(proposal.proposal_id!, "reject"))}>Deny</button>
-                              <button type="button" onClick={() => void run(key, "Posting", () => store.decide(proposal.proposal_id!, "approve"))}>Approve</button>
+                              <Button dense variant="ghost" onClick={() => void run(key, "Denying", () => store.decide(proposalId!, "reject"))}>Deny</Button>
+                              <Button dense variant="ghost" onClick={() => void run(key, "Posting", () => store.decide(proposalId!, "approve"))}>Approve</Button>
                             </span>
                           </td></tr>
                         ) : null}
@@ -191,7 +199,7 @@ export function PrReceiptsSection() {
                                 </SurfaceWell>
                               </FoldGadget>
                             ) : openDiff.diff.offer_fetch ? (
-                              <button type="button" className="desk-list-open" onClick={() => void fetchAndRetry(row)}>Fetch</button>
+                              <Button dense variant="ghost" onClick={() => void fetchAndRetry(row)}>Fetch</Button>
                             ) : (
                               <p className="desk-shade-quiet">{openDiff.diff.detail || "Unavailable"}</p>
                             )}
@@ -205,7 +213,8 @@ export function PrReceiptsSection() {
             </div>
           ) : <p className="desk-shade-quiet">Unobserved</p>}
         </div>
-      ))}
+        );
+      })}
     </section>
   );
 }

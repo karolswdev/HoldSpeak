@@ -4,22 +4,16 @@ import React from "react";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-/* ── Mock door API ── */
+/* ── Mock door API (includes discovery wires moved from setup/api by HS-170-02) ── */
 
 const mockDoorCount = vi.fn();
 const mockDoorCreate = vi.fn();
+const mockDiscoverGitHub = vi.fn();
+const mockDiscoverJira = vi.fn();
 
 vi.mock("../api", () => ({
   doorCount: (...args: unknown[]) => mockDoorCount(...args),
   doorCreate: (...args: unknown[]) => mockDoorCreate(...args),
-}));
-
-/* ── Mock setup/api (discovery wires) ── */
-
-const mockDiscoverGitHub = vi.fn();
-const mockDiscoverJira = vi.fn();
-
-vi.mock("../../setup/api", () => ({
   discoverGitHub: (...args: unknown[]) => mockDiscoverGitHub(...args),
   discoverJira: (...args: unknown[]) => mockDiscoverJira(...args),
 }));

@@ -119,7 +119,7 @@ export function GlassDropLayer() {
         {state.phase === "armed" ? (
           <>
             <strong>Drop to import</strong>
-            <small>Meeting (.vtt .srt .txt audio) or calendar screenshot (.png .jpg .webp)</small>
+            <small>.vtt .srt .txt audio · calendar screenshot</small>
           </>
         ) : null}
         {state.phase === "importing" ? (

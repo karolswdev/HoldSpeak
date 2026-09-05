@@ -1,0 +1,251 @@
+{
+  "faces": {
+    "ActivityCore": {
+      "mic": 1
+    },
+    "AskPanel": {
+      "A8": 5,
+      "B": 1,
+      "emoji": 2
+    },
+    "Blocks": {
+      "mic": 1
+    },
+    "CadenceCore": {
+      "A3-prose": 1
+    },
+    "CalendarSnapshotReviewCore": {
+      "mic": 1
+    },
+    "CapabilityAssignmentsCore": {
+      "raw-ids": 1
+    },
+    "CapabilitySection": {
+      "B": 1
+    },
+    "CatalogRail": {
+      "A8": 2,
+      "mic": 1
+    },
+    "ChoiceCardGroup": {
+      "mic": 1
+    },
+    "CoderPullout": {
+      "B": 1
+    },
+    "CommandsCore": {
+      "mic": 1
+    },
+    "ComponentsCore": {
+      "emoji": 4,
+      "mic": 1
+    },
+    "ConnectionsPane": {
+      "mic": 1
+    },
+    "DeskMenu": {
+      "A3-prose": 1
+    },
+    "DeskSortableTable": {
+      "A8": 1
+    },
+    "DeskToolInspector": {
+      "raw-ids": 1
+    },
+    "DeskToolShelf": {
+      "mic": 1,
+      "raw-ids": 1
+    },
+    "DoorBoardLane": {
+      "A3-prose": 1,
+      "mic": 1
+    },
+    "DoorCore": {
+      "B": 1
+    },
+    "EditorAIBar": {
+      "A8": 1
+    },
+    "FinishThoughtsLane": {
+      "A8": 1
+    },
+    "FollowThroughView": {
+      "mic": 1
+    },
+    "GlassDropLayer": {
+      "A3-prose": 1
+    },
+    "ImportSection": {
+      "B": 1,
+      "mic": 1
+    },
+    "InfoWindow": {
+      "mic": 1
+    },
+    "InletAutocomplete": {
+      "A8": 1
+    },
+    "Journal": {
+      "mic": 1
+    },
+    "KbEditor": {
+      "C": 1
+    },
+    "Knowledge": {
+      "mic": 1
+    },
+    "LedgerFilter": {
+      "mic": 1
+    },
+    "LiveCore": {
+      "A8": 1,
+      "mic": 1
+    },
+    "MeetingDetail": {
+      "A8": 1
+    },
+    "MeetingPullout": {
+      "A8": 1
+    },
+    "MeetingsConfig": {
+      "mic": 1
+    },
+    "ModelLibraryCore": {
+      "B": 4,
+      "mic": 1
+    },
+    "NoteEditor": {
+      "C": 1
+    },
+    "NotePullout": {
+      "B": 1
+    },
+    "PeopleCore": {
+      "mic": 1,
+      "raw-ids": 16
+    },
+    "PrReceiptsSection": {
+      "A3-prose": 1
+    },
+    "ProgressPlan": {
+      "emoji": 2
+    },
+    "ProjectRoomCore": {
+      "A8": 2,
+      "B": 2
+    },
+    "Pullout": {
+      "A1": 1
+    },
+    "RailsPicker": {
+      "A8": 1
+    },
+    "RepoWindow": {
+      "mic": 1
+    },
+    "ResultPanel": {
+      "mic": 1
+    },
+    "ReviewPosture": {
+      "A8": 3,
+      "B": 2
+    },
+    "ScheduleCreateWindow": {
+      "B": 1,
+      "C": 1
+    },
+    "SessionPullout": {
+      "B": 1
+    },
+    "SettingsCore": {
+      "A8": 2,
+      "mic": 1
+    },
+    "StateChip": {
+      "emoji": 3
+    },
+    "StewardPosture": {
+      "A3-sentence": 1,
+      "A8": 2
+    },
+    "Surface": {
+      "A1": 2,
+      "A3-prose": 1,
+      "B": 2,
+      "emoji": 4
+    },
+    "SystemShade": {
+      "emoji": 1
+    },
+    "ThoughtContextPicker": {
+      "A1": 1,
+      "B": 1
+    },
+    "ThoughtDocumentPane": {
+      "B": 2
+    },
+    "ThoughtNoteEditor": {
+      "mic": 1
+    },
+    "ThoughtWorkspaceWindow": {
+      "A3-prose": 5,
+      "B": 1
+    },
+    "ThreadComposer": {
+      "B": 2
+    },
+    "ThreadPullout": {
+      "A8": 2,
+      "B": 6
+    },
+    "TopologyMapView": {
+      "B": 2
+    },
+    "TopologySurface": {
+      "emoji": 3
+    },
+    "TranscriptWell": {
+      "A3-prose": 1
+    },
+    "UtteranceWell": {
+      "mic": 1
+    },
+    "WhyControl": {
+      "A8": 1
+    },
+    "WorkbenchAutomations": {
+      "mic": 1,
+      "raw-ids": 1
+    },
+    "WorkbenchWindow": {
+      "A8": 1,
+      "B": 1
+    },
+    "WorkflowEditor": {
+      "mic": 1
+    },
+    "WorldStage": {
+      "B": 1
+    },
+    "XtermPane": {
+      "C": 1
+    },
+    "gadgets": {
+      "emoji": 2
+    }
+  },
+  "per_rule": {
+    "A1": 4,
+    "A3-prose": 12,
+    "A3-sentence": 1,
+    "A4": 0,
+    "A8": 28,
+    "A9": 0,
+    "B": 34,
+    "C": 4,
+    "DS6": 0,
+    "emoji": 21,
+    "mic": 27,
+    "raw-ids": 20
+  }
+}

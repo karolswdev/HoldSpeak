@@ -3,13 +3,23 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // pref modules, authored — never wire-derived. The module registry is a
 // CODE CONSTANT: a new wire key never mints a pane again (unmapped keys
 // land in System, the one place the generic walker survives).
+// HS-170-04: the drawer face is now a hub of SurfaceLedgerRows showing
+// state tokens from GET /api/settings/hub. The tile grid is retired.
 import { useState, type ReactNode } from "react";
+import { Button } from "../../components/signal/Signal";
 import { CONTROL_MODES, controlModeLabel } from "../../lib/productLanguage";
 import {
   CycleGadget,
   EgressChip,
   GadgetGroup,
 } from "../../desk/surface/gadgets";
+import {
+  SurfaceLedger,
+  SurfaceLedgerRow,
+  StateChip,
+  countToken,
+  Receipt,
+} from "../../desk/surface";
 import { ConfirmVerb } from "../../desk/surface/Surface";
 import { useDesk } from "../../desk/store";
 
@@ -307,7 +317,8 @@ export function DeskModule() {
         />
         {refused ? (
           <span className="gadget-fact" data-tone="danger" role="alert">
-            ⚠ RESET REFUSED
+            <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M8 2 1.5 13.5h13Z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /><circle cx="8" cy="11.5" r="0.7" fill="currentColor" /></svg>{" "}
+            RESET REFUSED
           </span>
         ) : receipt ? (
           <span className="gadget-fact" role="status">
@@ -319,55 +330,175 @@ export function DeskModule() {
   );
 }
 
-/* ── the drawer face ── */
+/* ── HS-170-04: the hub wire shape (GET /api/settings/hub) ── */
+
+export type SettingsHubWire = {
+  models: { engines: number; groupsSet: number; defaultSet: boolean };
+  connections: { connected: number };
+  voice: { live: boolean; target: string };
+  meetings: { intelligence: boolean };
+  rhythm: { loops: number };
+  sounds: { on: boolean };
+  system: { host: string; mesh: boolean };
+  posture: string;
+  writtenAt: number | null;
+};
 
 export type DeepHit = { module: string; label: string; path: string[] };
 
+/* ── the drawer face ── */
+
+/** The hub headline: the one fact that most needs him (UX-CANON C). */
+function hubHeadline(hub: SettingsHubWire): { text: string; warning: boolean } {
+  if (!hub.models.defaultSet) return { text: "No default model", warning: true };
+  return { text: "All set", warning: false };
+}
+
+/** Format writtenAt (epoch seconds) as HH:MM for the receipt. */
+function formatWrittenAt(epoch: number | null): string | null {
+  if (epoch == null) return null;
+  const d = new Date(epoch * 1000);
+  return d.toTimeString().slice(0, 5);
+}
+
 export function PrefsFace({
   onOpen,
+  hub,
   posture,
   postureBusy,
   onPosture,
   precedence,
 }: {
   onOpen(moduleId: string): void;
+  hub: SettingsHubWire;
   posture: string;
   postureBusy?: boolean;
   onPosture(mode: string): void;
   /** The precedence chain as data (etched fact line, never a paragraph). */
   precedence: string[];
 }) {
-  // HS-139-05: FILTER dropped — 7 tiles all visible at once, the filter
-  // earns nothing in a room this small.
-  // HS-139-07: precedence chain folded into the POSTURE title attribute
-  // (defect 3 — raw operator lore demoted from the face).
+  // HS-170-04: the hub is rows that tell the truth before you open them.
+  // HS-139-07: precedence chain folded into the POSTURE title attribute.
   const precedenceText = (precedence.length
     ? precedence
     : ["hard invariants", "grants", "mode", "feature default"]
   )
     .join(" → ")
     .toUpperCase();
+
+  const headline = hubHeadline(hub);
+  const writtenAt = formatWrittenAt(hub.writtenAt);
+
+  // Module rows — each opens the module face (the hub is the truth table).
+  const openVerb = (moduleId: string) => (
+    <Button variant="ghost" dense onClick={() => onOpen(moduleId)}>Open</Button>
+  );
+
   return (
-    <div className="prefs-face">
-      <div className="prefs-grid" role="list">
-        {PREF_MODULES.map((module) => (
-          <button
-            key={module.id}
-            type="button"
-            role="listitem"
-            className="prefs-tile"
-            onClick={() => onOpen(module.id)}
-          >
-            <span className="prefs-tile-glyph">
-              <SettingSprite name={module.sprite} />
-            </span>
-            <span className="prefs-tile-label">{module.label}</span>
-          </button>
-        ))}
-      </div>
+    <div className="prefs-face prefs-hub">
+      <span
+        className="surface-display prefs-hub-headline"
+        data-warning={headline.warning || undefined}
+      >
+        {headline.text}
+      </span>
+      <SurfaceLedger count="" cols="hub">
+        {/* Models: NO DEFAULT warning or N GROUPS SET + N ENGINES */}
+        <SurfaceLedgerRow
+          primary="Models"
+          expands={false}
+          onToggle={() => onOpen("models")}
+          trailing={openVerb("models")}
+          cells={<>
+            {!hub.models.defaultSet
+              ? <StateChip state="warning" label="NO DEFAULT" />
+              : null}
+            {hub.models.defaultSet && hub.models.groupsSet > 0
+              ? <span className="surface-token" data-chip>{countToken(hub.models.groupsSet, "GROUP SET", "GROUPS SET")}</span>
+              : null}
+            {hub.models.engines > 0
+              ? <span className="surface-token" data-chip>{countToken(hub.models.engines, "ENGINE", "ENGINES")}</span>
+              : null}
+          </>}
+        />
+        {/* Connections: N CONNECTED */}
+        <SurfaceLedgerRow
+          primary="Connections"
+          expands={false}
+          onToggle={() => onOpen("integrations")}
+          trailing={openVerb("integrations")}
+          cells={<>
+            {hub.connections.connected > 0
+              ? <span className="surface-token" data-chip>{countToken(hub.connections.connected, "CONNECTED", "CONNECTED")}</span>
+              : null}
+          </>}
+        />
+        {/* Voice: LIVE green + target, or nothing */}
+        <SurfaceLedgerRow
+          primary="Voice"
+          expands={false}
+          onToggle={() => onOpen("voice")}
+          trailing={openVerb("voice")}
+          cells={<>
+            {hub.voice.live
+              ? <StateChip state="success" label="LIVE" />
+              : null}
+            {hub.voice.live && hub.voice.target
+              ? <span className="surface-token" data-chip>{hub.voice.target.toUpperCase()}</span>
+              : null}
+          </>}
+        />
+        {/* Meetings: INTELLIGENCE OFF warning or INTELLIGENCE ON */}
+        <SurfaceLedgerRow
+          primary="Meetings"
+          expands={false}
+          onToggle={() => onOpen("meetings")}
+          trailing={openVerb("meetings")}
+          cells={<>
+            {hub.meetings.intelligence
+              ? <StateChip state="success" label="INTELLIGENCE ON" />
+              : <StateChip state="warning" label="INTELLIGENCE OFF" />}
+          </>}
+        />
+        {/* Rhythm: N LOOPS or NO LOOPS muted */}
+        <SurfaceLedgerRow
+          primary="Rhythm"
+          expands={false}
+          onToggle={() => onOpen("rhythm")}
+          trailing={openVerb("rhythm")}
+          cells={<>
+            {hub.rhythm.loops > 0
+              ? <span className="surface-token" data-chip>{countToken(hub.rhythm.loops, "LOOP", "LOOPS")}</span>
+              : <span className="surface-token" data-chip data-muted>NO LOOPS</span>}
+          </>}
+        />
+        {/* Sounds & Presence: ON green or OFF */}
+        <SurfaceLedgerRow
+          primary="Sounds & Presence"
+          expands={false}
+          onToggle={() => onOpen("sounds")}
+          trailing={openVerb("sounds")}
+          cells={<>
+            {hub.sounds.on
+              ? <StateChip state="success" label="ON" />
+              : <span className="surface-token" data-chip data-muted>OFF</span>}
+          </>}
+        />
+        {/* System: THIS DEVICE + MESH OFF|ON */}
+        <SurfaceLedgerRow
+          primary="System"
+          expands={false}
+          onToggle={() => onOpen("system")}
+          trailing={openVerb("system")}
+          cells={<>
+            <span className="surface-token" data-chip>{hub.system.host}</span>
+            <span className="surface-token" data-chip>{hub.system.mesh ? "MESH ON" : "MESH OFF"}</span>
+          </>}
+        />
+      </SurfaceLedger>
       <div className="prefs-rule" aria-hidden="true" />
       <div className="prefs-posture" title={precedenceText}>
-        <span className="prefs-posture-label">POSTURE</span>
+        <span className="prefs-posture-label">Posture</span>
         <CycleGadget
           label="Control posture"
           value={posture}
@@ -378,7 +509,6 @@ export function PrefsFace({
           }))}
           onChange={onPosture}
         />
-        <span className="gadget-fact">{controlModeLabel(posture)}</span>
       </div>
     </div>
   );
@@ -395,16 +525,21 @@ export type PrefReceipt = {
 export function PrefStatusBar({
   onBack,
   receipt,
+  hubWrittenAt,
 }: {
   /** Absent on the drawer face — the egress badge sits there instead. */
   onBack?: () => void;
   receipt: PrefReceipt;
+  /** HS-170-04: writtenAt from the hub wire (epoch seconds), shown on
+   *  the drawer face as WRITTEN HH:MM; module-level receipt overrides. */
+  hubWrittenAt?: string | null;
 }) {
   let center: ReactNode;
   if (receipt.refusal)
     center = (
       <span className="prefs-receipt" data-tone="danger" role="alert">
-        ⚠ REFUSED · {receipt.refusal}
+        <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M8 2 1.5 13.5h13Z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /><circle cx="8" cy="11.5" r="0.7" fill="currentColor" /></svg>{" "}
+        REFUSED · {receipt.refusal}
       </span>
     );
   else if (receipt.saving)
@@ -419,13 +554,19 @@ export function PrefStatusBar({
         WRITTEN {receipt.writtenAt}
       </span>
     );
+  else if (!onBack && hubWrittenAt)
+    center = (
+      <span className="prefs-receipt" role="status">
+        WRITTEN {hubWrittenAt}
+      </span>
+    );
   else center = null; /* HS-139-07: no dangling "USING" when idle */
   return (
     <SurfaceFooter verbs={<>
       {onBack ? (
-        <button type="button" className="prefs-back" onClick={onBack}>
+        <Button variant="ghost" dense className="prefs-back" onClick={onBack}>
           « PREFS
-        </button>
+        </Button>
       ) : (
         <EgressChip />
       )}

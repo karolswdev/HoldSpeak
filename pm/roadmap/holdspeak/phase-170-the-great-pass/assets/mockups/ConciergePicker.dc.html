@@ -1,0 +1,251 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;650;700&amp;family=Space+Grotesk:wght@600;650;700&amp;display=swap">
+  <style>
+    body { margin: 0; background: #0e0f13; }
+  </style>
+</helmet>
+
+<!-- ═══ WINDOW "Models" (640) — picker open under Writing & dictation ═══ -->
+<div style="width:640px; border:1px solid #363b50; border-radius:2px; background:#15171d; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40), inset 0 0 0 1px #2a2e3e; display:flex; flex-direction:column;">
+
+  <!-- ─── TITLE BAR ─── -->
+  <div style="height:40px; padding:0 12px; display:flex; align-items:center; gap:10px; background:#242833; border-radius:1px 1px 0 0; flex-shrink:0;">
+    <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+      <span style="width:12px; height:12px; border-radius:2px; background:#f87171; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#fbbf24; display:block;"></span>
+      <span style="width:12px; height:12px; border-radius:2px; background:#34d399; display:block;"></span>
+    </div>
+    <span style="font:700 17px/1 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Models</span>
+  </div>
+
+  <!-- ─── BODY ─── -->
+  <div style="flex:1; padding:12px 14px 14px; display:flex; flex-direction:column; gap:18px;">
+
+    <!-- ═══ HEAD ═══ -->
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="font:650 26px/1.15 'Space Grotesk','Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#a86e4a;">5 engines found</div>
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px;">
+        <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#9ba2b0; white-space:nowrap;">THIS MAC &middot; M-SERIES &middot; 36 GB</span>
+        <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#767e8d; white-space:nowrap;">CHECKED 9:41</span>
+      </div>
+    </div>
+
+    <!-- ═══ THE SET (abbreviated — only showing around the picker) ═══ -->
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <div style="display:flex; align-items:baseline; gap:8px; border-top:1px solid rgba(255,255,255,0.035); padding-top:8px;">
+        <h3 style="margin:0; font:600 11px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">THE SET</h3>
+        <span style="flex:1;"></span>
+        <button type="button" style="min-height:28px; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Adjust</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:2px;">
+
+        <!-- ─── SET ROW 1: Thoughts & notes (collapsed) ─── -->
+        <div style="display:flex; align-items:start; border:1px solid #2a2e3e; border-radius:2px; background:#15171d;">
+          <div style="width:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding-top:10px;">
+            <span style="font:700 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&#9998;</span>
+          </div>
+          <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; padding:6px 12px 8px 0;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Thoughts &amp; notes</span>
+              <span style="flex:1;"></span>
+              <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Qwen3.6 35B<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">41 MS</span>
+              <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a;">LAN</span>
+              <span style="flex:1;"></span>
+              <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span>READY</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── SET ROW 2: Chat (collapsed) ─── -->
+        <div style="display:flex; align-items:start; border:1px solid #2a2e3e; border-radius:2px; background:#15171d;">
+          <div style="width:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding-top:10px;">
+            <span style="font:700 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&#9641;</span>
+          </div>
+          <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; padding:6px 12px 8px 0;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Chat</span>
+              <span style="flex:1;"></span>
+              <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Qwen3.6 35B<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">41 MS</span>
+              <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a;">LAN</span>
+              <span style="flex:1;"></span>
+              <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span>READY</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── SET ROW 3: Writing & dictation — picker TRIGGER (pressed/active) ─── -->
+        <div style="display:flex; align-items:start; border:1px solid #2a2e3e; border-radius:2px; background:#15171d;">
+          <div style="width:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding-top:10px;">
+            <span style="font:700 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&#9999;</span>
+          </div>
+          <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; padding:6px 12px 8px 0;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5; white-space:nowrap;">Writing &amp; dictation</span>
+              <span style="flex:1;"></span>
+              <!-- Picker trigger pressed (sunken) -->
+              <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Qwen 3.5 0.8B<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a;">THIS DEVICE</span>
+              <span style="flex:1;"></span>
+              <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#fbbf24;"><span style="flex:none; font-size:11px; line-height:1;">&#9675;</span>WAITING</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ PICKER WELL (ChoiceCards, unfolds under Writing & dictation) ═══ -->
+        <div style="margin-left:52px; display:flex; flex-direction:column; gap:2px; padding:6px 0;">
+
+          <!-- ChoiceCard 1: Qwen 3.5 0.8B (the proposal — first) -->
+          <div style="position:relative; display:flex; flex-direction:column; gap:6px; padding:10px 12px 8px; border:1px solid #2a2e3e; border-radius:2px; background:#15171d; cursor:pointer;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.02em; color:#f2f3f5;">Qwen 3.5 0.8B</span>
+              <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">532 MB</span>
+              <span style="margin-left:auto; font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#a86e4a;">Download</span>
+            </div>
+          </div>
+
+          <!-- ChoiceCard 2: Qwen3.6 35B -->
+          <div style="position:relative; display:flex; flex-direction:column; gap:6px; padding:10px 12px 8px; border:1px solid #2a2e3e; border-radius:2px; background:#15171d; cursor:pointer;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.02em; color:#f2f3f5;">Qwen3.6 35B</span>
+              <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">41 MS</span>
+              <span style="margin-left:auto; display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">192.168.1.43</span>
+            </div>
+          </div>
+
+          <!-- ChoiceCard 3: Anthropic (cloud, cost glyph) -->
+          <div style="position:relative; display:flex; flex-direction:column; gap:6px; padding:10px 12px 8px; border:1px solid #2a2e3e; border-radius:2px; background:#15171d; cursor:pointer;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.02em; color:#f2f3f5;">Anthropic</span>
+              <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 6px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#34d399;">KEY SET</span>
+              <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; color:#fbbf24;">$</span>
+              <span style="margin-left:auto; display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a; white-space:nowrap;">API.ANTHROPIC.COM</span>
+            </div>
+          </div>
+
+          <!-- ChoiceCard 4: OFF -->
+          <div style="position:relative; display:flex; flex-direction:column; gap:6px; padding:10px 12px 8px; border:1px solid #2a2e3e; border-radius:2px; background:#15171d; cursor:pointer;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font:700 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.02em; color:#767e8d;">OFF</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ─── SET ROW 4: Speech recognition (collapsed) ─── -->
+        <div style="display:flex; align-items:start; border:1px solid #2a2e3e; border-radius:2px; background:#15171d;">
+          <div style="width:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding-top:10px;">
+            <span style="font:700 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&#9834;</span>
+          </div>
+          <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; padding:6px 12px 8px 0;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Speech recognition</span>
+              <span style="flex:1;"></span>
+              <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Whisper base<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a;">THIS DEVICE</span>
+              <span style="flex:1;"></span>
+              <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span>READY</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- remaining rows abbreviated: just captions for Meetings, Agents & tools, Background -->
+        <!-- ─── SET ROW 5: Meetings ─── -->
+        <div style="display:flex; align-items:start; border:1px solid #2a2e3e; border-radius:2px; background:#15171d;">
+          <div style="width:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding-top:10px;">
+            <span style="font:700 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&#9635;</span>
+          </div>
+          <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; padding:6px 12px 8px 0;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Meetings</span>
+              <span style="flex:1;"></span>
+              <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Qwen3.6 35B<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">41 MS</span>
+              <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a;">LAN</span>
+              <span style="flex:1;"></span>
+              <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span>READY</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── SET ROW 6: Agents & tools ─── -->
+        <div style="display:flex; align-items:start; border:1px solid #2a2e3e; border-radius:2px; background:#15171d;">
+          <div style="width:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding-top:10px;">
+            <span style="font:700 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&#9881;</span>
+          </div>
+          <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; padding:6px 12px 8px 0;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Agents &amp; tools</span>
+              <span style="flex:1;"></span>
+              <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Qwen3.6 35B<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">41 MS</span>
+              <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a;">LAN</span>
+              <span style="flex:1;"></span>
+              <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span>READY</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── SET ROW 7: Background ─── -->
+        <div style="display:flex; align-items:start; border:1px solid #2a2e3e; border-radius:2px; background:#15171d;">
+          <div style="width:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding-top:10px;">
+            <span style="font:700 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#767e8d;">&#9711;</span>
+          </div>
+          <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; padding:6px 12px 8px 0;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font:600 15px/1.4 'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color:#f2f3f5;">Background</span>
+              <span style="flex:1;"></span>
+              <button type="button" style="display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid #2a2e3e; border-radius:2px; background:#1c1f27; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); font:600 13px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; color:#f2f3f5; cursor:pointer; white-space:nowrap;">Qwen3.6 35B<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#9ba2b0" stroke-width="1.5" stroke-linecap="square" style="flex-shrink:0;"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></button>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">41 MS</span>
+              <span style="display:inline-flex; align-items:center; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#a86e4a;">LAN</span>
+              <span style="flex:1;"></span>
+              <span style="display:inline-flex; align-items:center; gap:5px; min-height:18px; padding:0 8px; border:1px solid #2a2e3e; border-radius:0; background:rgba(0,0,0,0.28); box-shadow:inset 1px 1px 0 rgba(0,0,0,0.30), inset -1px -1px 0 rgba(255,255,255,0.07); font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; color:#34d399;"><span style="flex:none; font-size:11px; line-height:1;">&#9679;</span>READY</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── FOOTER ─── -->
+  <footer style="height:36px; padding:0 8px; background:#1c1f27; border-top:1px solid #2a2e3e; box-shadow:inset 1px 1px 0 rgba(255,255,255,0.14), inset -1px -1px 0 rgba(0,0,0,0.40); flex-shrink:0;">
+    <div style="display:grid; grid-template-columns:max-content minmax(0,1fr) max-content; align-items:center; height:100%; gap:6px;">
+      <span style="font:600 10px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; letter-spacing:0.06em; text-transform:uppercase; color:#9ba2b0;">7 GROUPS &middot; 4 ENGINES &middot; 1 WAITING</span>
+      <span></span>
+      <div style="display:flex; justify-content:flex-end; align-items:center; gap:4px;">
+        <button style="min-height:28px; display:inline-flex; align-items:center; justify-content:center; padding:4px 12px; border:1px solid transparent; border-radius:0; background:transparent; color:#9ba2b0; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:pointer;">Cancel</button>
+        <button disabled style="min-height:28px; display:inline-flex; align-items:center; justify-content:center; padding:4px 12px; border:1px solid #a86e4a; border-radius:0; background:#a86e4a; color:#f2f3f5; font:600 12px/1 'JetBrains Mono','SFMono-Regular','SF Mono',Consolas,'Liberation Mono',monospace; cursor:default; opacity:0.45;">Use these</button>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>

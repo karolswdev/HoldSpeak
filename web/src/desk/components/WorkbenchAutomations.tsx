@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import type { WriteAttempt } from "../hooks/useWriteReceipt";
 import type { AutomationHistoryEntry, AutomationTestResult, WorkbenchAutomation } from "../detail-types";
 import {
@@ -8,6 +9,7 @@ import {
   setWorkbenchAutomationEnabled,
   testWorkbenchAutomation,
 } from "../api";
+import { countLabel } from "../surface";
 import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../surface/Surface";
 import { humanTime } from "../surface/format";
 import { StringGadget } from "../surface/gadgets";
@@ -58,20 +60,24 @@ function AutomationHistory({ workbenchId, automationId }: { workbenchId: string;
   if (error) return <SurfaceState error={error} />;
   if (!history.length) return <SurfaceState empty emptyGlyph="○" emptyLabel="No receipts yet" />;
   return (
-    <SurfaceLedger count={`${history.length} RECEIPTS`}>
-      {history.map((entry) => (
+    <SurfaceLedger count={countLabel("RECEIPTS", history.length)}>
+      {history.map((entry) => {
+        const eventKind = entry.event_kind;
+        const receiptId = entry.receipt_id;
+        return (
         <SurfaceLedgerRow
           key={entry.id}
           time={humanTime(entry.occurred_at)}
-          primary={`${entry.event_kind} · ${entry.subject}`}
+          primary={`${eventKind} · ${entry.subject}`}
           cells={<span className="desk-chip" data-tone={historyTone(entry.outcome)}>{entry.outcome.toUpperCase()}</span>}
         >
           <dl className="surface-facts wb-automation-history-detail">
-            {entry.receipt_id ? <div><dt>receipt</dt><dd>{entry.receipt_id}</dd></div> : null}
+            {receiptId ? <div><dt>receipt</dt><dd>{receiptId}</dd></div> : null}
             {entry.detail ? <div><dt>detail</dt><dd>{entry.detail}</dd></div> : null}
           </dl>
         </SurfaceLedgerRow>
-      ))}
+        );
+      })}
     </SurfaceLedger>
   );
 }
@@ -89,28 +95,33 @@ function AutomationRow({
 }) {
   const [open, setOpen] = useState(false);
   const [testResult, setTestResult] = useState<AutomationTestResult | null>(null);
+  const wouldAdd = testResult?.would_add;
+  const entityCt = testResult?.entity_count;
   const [baselineMessage, setBaselineMessage] = useState("");
-  const adapterReady = automation.adapter_status === undefined || automation.adapter_status === "ready";
+  const eventKind = automation.event_kind;
+  const adapterStatus = automation.adapter_status;
+  const lastGoodAt = automation.last_good_at;
+  const adapterReady = adapterStatus === undefined || adapterStatus === "ready";
   const enableReason = adapterReady
     ? "Enable establishes a silent baseline; later matches add one item."
     : "Configure this adapter in Settings before enabling.";
 
   return (
     <div className="wb-automation">
-      <button type="button" className="wb-automation-head" onClick={() => setOpen(!open)} aria-expanded={open}>
+      <Button variant="ghost" className="wb-automation-head" onClick={() => setOpen(!open)} aria-expanded={open}>
         <span className="egress-badge is-cloud" title={providerLabel(automation.provider)}>{providerLabel(automation.provider)}</span>
         <span className="wb-automation-title">{automation.name}</span>
         <span className="desk-chip" data-tone={statusTone(automation.status)}>{automation.status.toUpperCase()}</span>
         <span aria-hidden="true">{open ? "▴" : "▾"}</span>
-      </button>
-      <p className="wb-automation-summary">WHEN {automation.event_kind} · ADD ITEM ONLY</p>
+      </Button>
+      <span className="wb-automation-summary surface-token">{`WHEN ${eventKind} · ADD ITEM ONLY`}</span>
       {open ? (
         <div className="wb-automation-detail">
-          <p className="wb-automation-safety">TEST NEVER ADDS WORK · ENABLE = SILENT BASELINE · LATER MATCHES ADD ONE GROUNDED ITEM</p>
+          <span className="wb-automation-safety surface-token">SILENT BASELINE · MATCH ADDS ONE ITEM</span>
           <div className="wb-automation-verbs">
-            <button
-              type="button"
-              className="desk-chip"
+            <Button
+              dense
+              variant="ghost"
               disabled={!adapterReady}
               title={adapterReady ? "Test matching without adding an item" : enableReason}
               onClick={() => void write("TEST AUTOMATION", async () => {
@@ -120,27 +131,25 @@ function AutomationRow({
               })}
             >
               Test match
-            </button>
-            <button
-              type="button"
-              className="desk-chip"
-              data-tone={automation.enabled ? "warn" : "ok"}
+            </Button>
+            <Button
+              dense
               disabled={!automation.enabled && !adapterReady}
               title={automation.enabled ? "Pause this trigger" : enableReason}
               onClick={() => void write(automation.enabled ? "PAUSE AUTOMATION" : "ENABLE AUTOMATION", async () => {
                 await setWorkbenchAutomationEnabled(workbenchId, automation.id, !automation.enabled);
-                setBaselineMessage(automation.enabled ? "" : "BASELINE ESTABLISHED · NO PAST ACTIVITY FIRED");
+                setBaselineMessage(automation.enabled ? "" : "BASELINE ESTABLISHED");
                 onChanged();
               })}
             >
               {automation.enabled ? "Pause" : "Enable"}
-            </button>
+            </Button>
           </div>
-          {testResult ? <p className="wb-automation-test" role="status">TEST ONLY · NO ITEMS ADDED · {testResult.would_add} MATCH{testResult.would_add === 1 ? "" : "ES"} FROM {testResult.entity_count} OBSERVED</p> : null}
+          {testResult ? <span className="wb-automation-test surface-token" role="status">{`TEST · ${wouldAdd} MATCH${wouldAdd === 1 ? "" : "ES"} / ${entityCt} OBSERVED`}</span> : null}
           {baselineMessage ? <p className="wb-automation-test" role="status">{baselineMessage}</p> : null}
           {automation.last_error ? <SurfaceState error={automation.last_error} /> : null}
-          {automation.last_good_at ? <p className="wb-automation-last">Last good {humanTime(automation.last_good_at)}</p> : null}
-          {!adapterReady ? <p className="wb-automation-adapter">Adapter {automation.adapter_status?.replace("_", " ")}. Configure credentials and readiness in Settings.</p> : null}
+          {lastGoodAt ? <span className="wb-automation-last surface-token">{`LAST GOOD ${humanTime(lastGoodAt)}`}</span> : null}
+          {!adapterReady ? <span className="wb-automation-adapter surface-token" data-tone="warn">{`ADAPTER ${(adapterStatus || "").replace("_", " ").toUpperCase()}`}</span> : null}
           <AutomationHistory workbenchId={workbenchId} automationId={automation.id} />
         </div>
       ) : null}
@@ -173,7 +182,7 @@ export function WorkbenchAutomations({ workbenchId, write, onChanged }: { workbe
 
   return (
     <>
-      <p className="wb-automation-safety">OBSERVED EVENTS PLACE GROUNDED ITEMS · REFRESH EVERY 35 MIN · READ-ONLY · NEVER RUNS THE WHOLE WORKBENCH</p>
+      <span className="wb-automation-safety surface-token">EVENT TRIGGER · READ-ONLY · 35 MIN REFRESH</span>
       <div className="wb-automation-repository">
         <StringGadget
           label="GitHub repository"
@@ -185,10 +194,10 @@ export function WorkbenchAutomations({ workbenchId, write, onChanged }: { workbe
       </div>
       <div className="wb-automation-presets" aria-label="Automation presets">
         {PRESETS.map((preset) => (
-          <button
+          <Button
             key={preset.id}
-            type="button"
-            className="desk-chip quiet"
+            dense
+            variant="ghost"
             disabled={!preset.available || !repository.trim()}
             title={preset.detail}
             onClick={() => void write("ADD AUTOMATION", async () => {
@@ -197,10 +206,10 @@ export function WorkbenchAutomations({ workbenchId, write, onChanged }: { workbe
             })}
           >
             + {preset.label}{preset.available ? "" : " · SETTINGS REQUIRED"}
-          </button>
+          </Button>
         ))}
       </div>
-      {!repository.trim() ? <p className="wb-automation-requirement">Repository required to add a GitHub trigger.</p> : null}
+      {!repository.trim() ? <span className="wb-automation-requirement surface-token">REPOSITORY REQUIRED</span> : null}
       {loading ? <SurfaceState loading /> : null}
       {error ? <SurfaceState error={error} onRetry={refresh} /> : null}
       {!loading && !error && !automations.length ? <SurfaceState empty emptyGlyph="◇" emptyLabel="No event triggers yet" /> : null}

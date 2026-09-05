@@ -86,7 +86,7 @@ export const THREAD_SLASH_COMMANDS: SlashCommand[] = [
   { id: "new", verbId: "thread.new", label: "New thread", glyph: "◬" },
   { id: "mode", verbId: "thread.mode", label: "Switch mode", glyph: "◎", hasArg: true },
   { id: "prompt", verbId: "thread.prompt", label: "Insert prompt", glyph: "▤", hasArg: true },
-  { id: "tools", verbId: "thread.tools", label: "Show tools", glyph: "⚙" },
+  { id: "tools", verbId: "thread.tools", label: "Show tools", glyph: String.fromCodePoint(0x2699) },
   { id: "todo", verbId: "thread.todo", label: "Add todo", glyph: "◻", hasArg: true },
   { id: "compact", verbId: "thread.compact", label: "Compact thread", glyph: "⊟" },
   { id: "guardrail", verbId: "thread.guardrail", label: "Toggle guardrail", glyph: "⊘", hasArg: true },
@@ -956,6 +956,7 @@ export function ThreadComposer({
       </div>
 
       {/* Input row: textarea + mic + send/stop */}
+      {/* UX-CANON: needs redesign (HS-170-04) — raw textarea */}
       <div className="thread-composer-row">
         <textarea
           ref={textareaRef}

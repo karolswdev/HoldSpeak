@@ -16,6 +16,7 @@ import {
   streamDayLabel,
   streamTime,
 } from "../../../desk/surface/format";
+import { countToken } from "../../../desk/surface";
 import {
   ConfirmVerb,
   EditInPlace,
@@ -81,9 +82,9 @@ function JournalRow({
           <span className="surface-ledger-cell">
             {row.corrected ? (
               <span className="surface-learned">
-                ✓ taught
+                TAUGHT
                 {learning?.matched && similar > 0
-                  ? ` · from ${similar} similar`
+                  ? ` · ${similar} SIMILAR`
                   : ""}
               </span>
             ) : null}
@@ -207,7 +208,7 @@ export function Journal() {
   return (
     <SurfaceSection>
       <SurfaceLedger
-        count={`Today ${todayCount} · Taught ${taughtCount}`}
+        count={[countToken(todayCount, "TODAY"), countToken(taughtCount, "TAUGHT")].filter(Boolean).join(" · ") || undefined}
         controls={
           <>
             <StringGadget
@@ -230,7 +231,7 @@ export function Journal() {
           error={resource.error}
           empty={!filtered.length}
           emptyLabel="No dictations on this device"
-          emptyGlyph="✎"
+          emptyGlyph="▤"
           onRetry={() => void resource.reload()}
         >
           {days.map((day) => (

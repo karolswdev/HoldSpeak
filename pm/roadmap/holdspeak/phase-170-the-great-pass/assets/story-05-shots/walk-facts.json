@@ -1,0 +1,1793 @@
+{
+  "generated_at": "2026-09-05T04:20:02.074603",
+  "hub_host": "127.0.0.1:60874",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "width": 393,
+      "height": 852
+    }
+  ],
+  "shots": [
+    {
+      "face": "arrival",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots/walk-arrival-1440.png"
+    },
+    {
+      "face": "settings-hub",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots/walk-settings-hub-1440.png"
+    },
+    {
+      "face": "meetings-list",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots/walk-meetings-list-1440.png"
+    },
+    {
+      "face": "meetings-detail",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots/walk-meetings-detail-1440.png"
+    },
+    {
+      "face": "speak",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots/walk-speak-idle-1440.png"
+    },
+    {
+      "face": "concierge",
+      "width": 1440,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots/walk-concierge-1440.png"
+    },
+    {
+      "face": "arrival",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots/walk-arrival-393.png"
+    },
+    {
+      "face": "settings-hub",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots/walk-settings-hub-393.png"
+    },
+    {
+      "face": "meetings-list",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots/walk-meetings-list-393.png"
+    },
+    {
+      "face": "meetings-detail",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots/walk-meetings-detail-393.png"
+    },
+    {
+      "face": "speak",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots/walk-speak-idle-393.png"
+    },
+    {
+      "face": "concierge",
+      "width": 393,
+      "path": "/Users/karol/dev/tools/HoldSpeak/pm/roadmap/holdspeak/phase-170-the-great-pass/assets/story-05-shots/walk-concierge-393.png"
+    }
+  ],
+  "facts": [
+    {
+      "face": "arrival",
+      "field": "headline",
+      "expected": "(owner's real desk)",
+      "observed": "Nothing needs you",
+      "verdict": "DATA",
+      "why": "board=(owner's real desk), real=Nothing needs you"
+    },
+    {
+      "face": "arrival",
+      "field": "sections_present",
+      "expected": "(varies by desk state)",
+      "observed": "meetings",
+      "verdict": "DATA",
+      "why": "real desk state"
+    },
+    {
+      "face": "arrival",
+      "field": "section_count",
+      "expected": "(varies)",
+      "observed": "1",
+      "verdict": "DATA",
+      "why": "1 sections visible"
+    },
+    {
+      "face": "arrival",
+      "field": "next_slot",
+      "expected": "(varies)",
+      "observed": "NEXT \u00b7 SCHEDULED RECORDING \u00b7 15:34",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "arrival",
+      "field": "capture_bar_verbs",
+      "expected": "(Talk, Develop a thought, Record meeting, ...)",
+      "observed": "TalkDevelop a thoughtRecord meetingSchedule",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "settings-hub",
+      "field": "headline",
+      "expected": "No default model",
+      "observed": "All set",
+      "verdict": "DATA",
+      "why": "board=No default model, real=All set"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:Models",
+      "expected": "NO DEFAULT 3 ENGINES",
+      "observed": "8 ENGINES",
+      "verdict": "DATA",
+      "why": "board=NO DEFAULT 3 ENGINES, real=8 ENGINES"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:Connections",
+      "expected": "2 CONNECTED",
+      "observed": "2 CONNECTED",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:Voice",
+      "expected": "LIVE CLAUDE CODE",
+      "observed": "\u2713LIVE CODEX_CLI",
+      "verdict": "DATA",
+      "why": "board=LIVE CLAUDE CODE, real=\u2713LIVE CODEX_CLI"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:Meetings",
+      "expected": "INTELLIGENCE OFF",
+      "observed": "\u2713INTELLIGENCE ON",
+      "verdict": "DATA",
+      "why": "board=INTELLIGENCE OFF, real=\u2713INTELLIGENCE ON"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:Rhythm",
+      "expected": "NO LOOPS",
+      "observed": "NO LOOPS",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:Sounds & Presence",
+      "expected": "ON",
+      "observed": "\u2713ON",
+      "verdict": "MATCH",
+      "why": "substring"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:System",
+      "expected": "THIS DEVICE MESH OFF",
+      "observed": "THIS DEVICE MESH OFF",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "settings-hub",
+      "field": "posture",
+      "expected": "YOLO",
+      "observed": "Posture\u21bbSecureNormalYOLO",
+      "verdict": "MATCH",
+      "why": "substring"
+    },
+    {
+      "face": "settings-hub",
+      "field": "footer_egress",
+      "expected": "THIS DEVICE",
+      "observed": "THIS DEVICE",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "settings-hub",
+      "field": "footer_written",
+      "expected": "WRITTEN HH:MM",
+      "observed": "WRITTEN 08:15",
+      "verdict": "MATCH",
+      "why": "timestamp found"
+    },
+    {
+      "face": "meetings",
+      "field": "headline",
+      "expected": "N meeting(s) need(s) intelligence",
+      "observed": "Nothing needs you",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:0:title",
+      "expected": "(real meeting)",
+      "observed": "Already titled",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:0:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 22\u00b72 WORDS\u00b7QUEUED",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:0:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:1:title",
+      "expected": "(real meeting)",
+      "observed": "Sprint Review",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:1:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 20\u00b7NO TRANSCRIPT",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:1:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:2:title",
+      "expected": "(real meeting)",
+      "observed": "Sprint Review",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:2:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 20\u00b7NO TRANSCRIPT",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:2:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:3:title",
+      "expected": "(real meeting)",
+      "observed": "Meeting",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:3:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 17\u00b71 MIN\u00b726 WORDS\u00b7SKIPPED",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:3:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:4:title",
+      "expected": "(real meeting)",
+      "observed": "Meeting",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:4:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 11\u00b7INTERRUPTED",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:4:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:5:title",
+      "expected": "(real meeting)",
+      "observed": "Meeting",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:5:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 11\u00b7INTERRUPTED",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:5:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:6:title",
+      "expected": "(real meeting)",
+      "observed": "Meeting",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:6:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 11\u00b7INTERRUPTED",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:6:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:7:title",
+      "expected": "(real meeting)",
+      "observed": "Meeting",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:7:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 11\u00b7INTERRUPTED",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:7:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "detail:needs_you_label",
+      "expected": "NEEDS YOU N",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "detail:needs_you_rows",
+      "expected": "(varies)",
+      "observed": "3",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "speak",
+      "field": "lands_in_target",
+      "expected": "Claude Code",
+      "observed": "Codex CLI",
+      "verdict": "DATA",
+      "why": "board=Claude Code, real=Codex CLI"
+    },
+    {
+      "face": "speak",
+      "field": "engine_caption",
+      "expected": "DICTATION",
+      "observed": "DICTATION",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "speak",
+      "field": "engine_name",
+      "expected": "Qwen 3.5 0.8B",
+      "observed": "GPT 5 mini",
+      "verdict": "DATA",
+      "why": "board=Qwen 3.5 0.8B, real=GPT 5 mini"
+    },
+    {
+      "face": "speak",
+      "field": "engine_egress",
+      "expected": "THIS DEVICE",
+      "observed": "API.OPENAI.COM",
+      "verdict": "DATA",
+      "why": "board=THIS DEVICE, real=API.OPENAI.COM"
+    },
+    {
+      "face": "speak",
+      "field": "engine_state",
+      "expected": "READY",
+      "observed": "\u26a0KEY NOT SET",
+      "verdict": "DATA",
+      "why": "board=READY, real=\u26a0KEY NOT SET"
+    },
+    {
+      "face": "speak",
+      "field": "footer_receipt",
+      "expected": "THIS DEVICE N TODAY",
+      "observed": "THIS DEVICE9 TODAYReviewExport",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "headline",
+      "expected": "N engine(s) found",
+      "observed": "8 engines found",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:0:name",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:0:host",
+      "expected": "(host chip)",
+      "observed": "192.168.1.43 \u00b7 LAN",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:0:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:1:name",
+      "expected": "(engine name)",
+      "observed": "Qwythos 9B Claude Mythos 5 1M",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:1:host",
+      "expected": "(host chip)",
+      "observed": "192.168.1.43 \u00b7 LAN",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:1:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:2:name",
+      "expected": "(engine name)",
+      "observed": "GPT 5 mini",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:2:host",
+      "expected": "(host chip)",
+      "observed": "API.OPENAI.COM",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:2:state",
+      "expected": "(state)",
+      "observed": "\u26a0NOT SET",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:3:name",
+      "expected": "(engine name)",
+      "observed": "Qwen3 8B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:3:host",
+      "expected": "(host chip)",
+      "observed": "OPENROUTER.AI",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:3:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:4:name",
+      "expected": "(engine name)",
+      "observed": "Qwen3 8B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:4:host",
+      "expected": "(host chip)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:4:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:5:name",
+      "expected": "(engine name)",
+      "observed": "Gemma 4 E4B it qat",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:5:host",
+      "expected": "(host chip)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:5:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:6:name",
+      "expected": "(engine name)",
+      "observed": "Qwen3 4B Instruct 2507",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:6:host",
+      "expected": "(host chip)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:6:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:7:name",
+      "expected": "(engine name)",
+      "observed": "Qwythos 9B Claude Mythos 5 1M",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:7:host",
+      "expected": "(host chip)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:7:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:8:name",
+      "expected": "(engine name)",
+      "observed": "Quick local Qwen",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:8:host",
+      "expected": "(host chip)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:8:state",
+      "expected": "(state)",
+      "observed": "\u25cbWAITING",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:9:name",
+      "expected": "(engine name)",
+      "observed": "Tiny local Qwen",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:9:host",
+      "expected": "(host chip)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:9:state",
+      "expected": "(state)",
+      "observed": "\u25cbWAITING",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:0:group",
+      "expected": "(group name)",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:0:engine",
+      "expected": "(engine name)",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:0:state",
+      "expected": "(state)",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:1:group",
+      "expected": "(group name)",
+      "observed": "Thoughts & notes",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:1:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:1:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:2:group",
+      "expected": "(group name)",
+      "observed": "Thoughts & notes",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:2:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:2:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:3:group",
+      "expected": "(group name)",
+      "observed": "Chat",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:3:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:3:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:4:group",
+      "expected": "(group name)",
+      "observed": "Writing & dictation",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:4:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3 4B Instruct 2507",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:4:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:5:group",
+      "expected": "(group name)",
+      "observed": "Speech recognition",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:5:engine",
+      "expected": "(engine name)",
+      "observed": "Quick local Qwen",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:5:state",
+      "expected": "(state)",
+      "observed": "\u25cbWAITING",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:6:group",
+      "expected": "(group name)",
+      "observed": "Meetings",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:6:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:6:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:7:group",
+      "expected": "(group name)",
+      "observed": "Agents & tools",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:7:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:7:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:8:group",
+      "expected": "(group name)",
+      "observed": "Background",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:8:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:8:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "arrival",
+      "field": "headline",
+      "expected": "(owner's real desk)",
+      "observed": "Nothing needs you",
+      "verdict": "DATA",
+      "why": "board=(owner's real desk), real=Nothing needs you"
+    },
+    {
+      "face": "arrival",
+      "field": "sections_present",
+      "expected": "(varies by desk state)",
+      "observed": "meetings",
+      "verdict": "DATA",
+      "why": "real desk state"
+    },
+    {
+      "face": "arrival",
+      "field": "section_count",
+      "expected": "(varies)",
+      "observed": "1",
+      "verdict": "DATA",
+      "why": "1 sections visible"
+    },
+    {
+      "face": "arrival",
+      "field": "next_slot",
+      "expected": "(varies)",
+      "observed": "NEXT \u00b7 SCHEDULED RECORDING \u00b7 15:34",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "arrival",
+      "field": "capture_bar_verbs",
+      "expected": "(Talk, Develop a thought, Record meeting, ...)",
+      "observed": "TalkDevelop a thoughtRecord meetingSchedule",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "settings-hub",
+      "field": "headline",
+      "expected": "No default model",
+      "observed": "All set",
+      "verdict": "DATA",
+      "why": "board=No default model, real=All set"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:Models",
+      "expected": "NO DEFAULT 3 ENGINES",
+      "observed": "8 ENGINES",
+      "verdict": "DATA",
+      "why": "board=NO DEFAULT 3 ENGINES, real=8 ENGINES"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:Connections",
+      "expected": "2 CONNECTED",
+      "observed": "2 CONNECTED",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:Voice",
+      "expected": "LIVE CLAUDE CODE",
+      "observed": "\u2713LIVE CODEX_CLI",
+      "verdict": "DATA",
+      "why": "board=LIVE CLAUDE CODE, real=\u2713LIVE CODEX_CLI"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:Meetings",
+      "expected": "INTELLIGENCE OFF",
+      "observed": "\u2713INTELLIGENCE ON",
+      "verdict": "DATA",
+      "why": "board=INTELLIGENCE OFF, real=\u2713INTELLIGENCE ON"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:Rhythm",
+      "expected": "NO LOOPS",
+      "observed": "NO LOOPS",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:Sounds & Presence",
+      "expected": "ON",
+      "observed": "\u2713ON",
+      "verdict": "MATCH",
+      "why": "substring"
+    },
+    {
+      "face": "settings-hub",
+      "field": "row:System",
+      "expected": "THIS DEVICE MESH OFF",
+      "observed": "THIS DEVICE MESH OFF",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "settings-hub",
+      "field": "posture",
+      "expected": "YOLO",
+      "observed": "Posture\u21bbSecureNormalYOLO",
+      "verdict": "MATCH",
+      "why": "substring"
+    },
+    {
+      "face": "settings-hub",
+      "field": "footer_egress",
+      "expected": "THIS DEVICE",
+      "observed": "THIS DEVICE",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "settings-hub",
+      "field": "footer_written",
+      "expected": "WRITTEN HH:MM",
+      "observed": "WRITTEN 08:15",
+      "verdict": "MATCH",
+      "why": "timestamp found"
+    },
+    {
+      "face": "meetings",
+      "field": "headline",
+      "expected": "N meeting(s) need(s) intelligence",
+      "observed": "Nothing needs you",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:0:title",
+      "expected": "(real meeting)",
+      "observed": "Already titled",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:0:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 22\u00b72 WORDS\u00b7QUEUED",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:0:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:1:title",
+      "expected": "(real meeting)",
+      "observed": "Sprint Review",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:1:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 20\u00b7NO TRANSCRIPT",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:1:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:2:title",
+      "expected": "(real meeting)",
+      "observed": "Sprint Review",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:2:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 20\u00b7NO TRANSCRIPT",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:2:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:3:title",
+      "expected": "(real meeting)",
+      "observed": "Meeting",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:3:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 17\u00b71 MIN\u00b726 WORDS\u00b7SKIPPED",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:3:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:4:title",
+      "expected": "(real meeting)",
+      "observed": "Meeting",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:4:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 11\u00b7INTERRUPTED",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:4:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:5:title",
+      "expected": "(real meeting)",
+      "observed": "Meeting",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:5:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 11\u00b7INTERRUPTED",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:5:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:6:title",
+      "expected": "(real meeting)",
+      "observed": "Meeting",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:6:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 11\u00b7INTERRUPTED",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:6:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:7:title",
+      "expected": "(real meeting)",
+      "observed": "Meeting",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:7:tokens",
+      "expected": "(date, duration, state)",
+      "observed": "AUG 11\u00b7INTERRUPTED",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "row:7:verb",
+      "expected": "Open or Run intelligence",
+      "observed": "Open",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "detail:needs_you_label",
+      "expected": "NEEDS YOU N",
+      "observed": "---",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "meetings",
+      "field": "detail:needs_you_rows",
+      "expected": "(varies)",
+      "observed": "3",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "speak",
+      "field": "lands_in_target",
+      "expected": "Claude Code",
+      "observed": "Codex CLI",
+      "verdict": "DATA",
+      "why": "board=Claude Code, real=Codex CLI"
+    },
+    {
+      "face": "speak",
+      "field": "engine_caption",
+      "expected": "DICTATION",
+      "observed": "DICTATION",
+      "verdict": "MATCH",
+      "why": "exact"
+    },
+    {
+      "face": "speak",
+      "field": "engine_name",
+      "expected": "Qwen 3.5 0.8B",
+      "observed": "GPT 5 mini",
+      "verdict": "DATA",
+      "why": "board=Qwen 3.5 0.8B, real=GPT 5 mini"
+    },
+    {
+      "face": "speak",
+      "field": "engine_egress",
+      "expected": "THIS DEVICE",
+      "observed": "API.OPENAI.COM",
+      "verdict": "DATA",
+      "why": "board=THIS DEVICE, real=API.OPENAI.COM"
+    },
+    {
+      "face": "speak",
+      "field": "engine_state",
+      "expected": "READY",
+      "observed": "\u26a0KEY NOT SET",
+      "verdict": "DATA",
+      "why": "board=READY, real=\u26a0KEY NOT SET"
+    },
+    {
+      "face": "speak",
+      "field": "footer_receipt",
+      "expected": "THIS DEVICE N TODAY",
+      "observed": "THIS DEVICE9 TODAYReviewExport",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "headline",
+      "expected": "N engine(s) found",
+      "observed": "8 engines found",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:0:name",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:0:host",
+      "expected": "(host chip)",
+      "observed": "192.168.1.43 \u00b7 LAN",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:0:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:1:name",
+      "expected": "(engine name)",
+      "observed": "Qwythos 9B Claude Mythos 5 1M",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:1:host",
+      "expected": "(host chip)",
+      "observed": "192.168.1.43 \u00b7 LAN",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:1:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:2:name",
+      "expected": "(engine name)",
+      "observed": "GPT 5 mini",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:2:host",
+      "expected": "(host chip)",
+      "observed": "API.OPENAI.COM",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:2:state",
+      "expected": "(state)",
+      "observed": "\u26a0NOT SET",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:3:name",
+      "expected": "(engine name)",
+      "observed": "Qwen3 8B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:3:host",
+      "expected": "(host chip)",
+      "observed": "OPENROUTER.AI",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:3:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:4:name",
+      "expected": "(engine name)",
+      "observed": "Qwen3 8B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:4:host",
+      "expected": "(host chip)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:4:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:5:name",
+      "expected": "(engine name)",
+      "observed": "Gemma 4 E4B it qat",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:5:host",
+      "expected": "(host chip)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:5:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:6:name",
+      "expected": "(engine name)",
+      "observed": "Qwen3 4B Instruct 2507",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:6:host",
+      "expected": "(host chip)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:6:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:7:name",
+      "expected": "(engine name)",
+      "observed": "Qwythos 9B Claude Mythos 5 1M",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:7:host",
+      "expected": "(host chip)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:7:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:8:name",
+      "expected": "(engine name)",
+      "observed": "Quick local Qwen",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:8:host",
+      "expected": "(host chip)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:8:state",
+      "expected": "(state)",
+      "observed": "\u25cbWAITING",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:9:name",
+      "expected": "(engine name)",
+      "observed": "Tiny local Qwen",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:9:host",
+      "expected": "(host chip)",
+      "observed": "THIS DEVICE",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "found:9:state",
+      "expected": "(state)",
+      "observed": "\u25cbWAITING",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:0:group",
+      "expected": "(group name)",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:0:engine",
+      "expected": "(engine name)",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:0:state",
+      "expected": "(state)",
+      "observed": "",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:1:group",
+      "expected": "(group name)",
+      "observed": "Thoughts & notes",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:1:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:1:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:2:group",
+      "expected": "(group name)",
+      "observed": "Thoughts & notes",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:2:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:2:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:3:group",
+      "expected": "(group name)",
+      "observed": "Chat",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:3:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:3:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:4:group",
+      "expected": "(group name)",
+      "observed": "Writing & dictation",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:4:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3 4B Instruct 2507",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:4:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:5:group",
+      "expected": "(group name)",
+      "observed": "Speech recognition",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:5:engine",
+      "expected": "(engine name)",
+      "observed": "Quick local Qwen",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:5:state",
+      "expected": "(state)",
+      "observed": "\u25cbWAITING",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:6:group",
+      "expected": "(group name)",
+      "observed": "Meetings",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:6:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:6:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:7:group",
+      "expected": "(group name)",
+      "observed": "Agents & tools",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:7:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:7:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:8:group",
+      "expected": "(group name)",
+      "observed": "Background",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:8:engine",
+      "expected": "(engine name)",
+      "observed": "Qwen3.6 35B A3B",
+      "verdict": "DATA",
+      "why": "real desk content"
+    },
+    {
+      "face": "concierge",
+      "field": "set:8:state",
+      "expected": "(state)",
+      "observed": "\u25cfREADY",
+      "verdict": "DATA",
+      "why": "real desk content"
+    }
+  ],
+  "errors": [],
+  "surprises": [],
+  "defects": []
+}

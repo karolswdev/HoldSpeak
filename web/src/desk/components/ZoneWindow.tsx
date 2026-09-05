@@ -4,6 +4,7 @@
 // (the versioned Desk workspace). Icons view speaks the world's cell contract;
 // List view is the shared DeskSortableTable density altitude.
 import { useMemo, useState } from "react";
+import { countToken } from "../surface/count";
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
 import { useDesk, type ZoneViewPref } from "../store";
@@ -187,7 +188,7 @@ export function ZoneWindow({
         )}
       </div>
       <SurfaceFooter receipt={<span className="quiet">
-            {members.length} {members.length === 1 ? "item" : "items"}
+            {countToken(members.length, "item") ?? "Empty"}
             {unresolved > 0 ? ` · ${unresolved} unavailable` : ""}
           </span>} />
     </DeskWindowFrame>

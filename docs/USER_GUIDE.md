@@ -36,13 +36,13 @@ Use these guides when you are ready for more than the first sentence:
 | Project facts | Keeps a `kb:` map in `.holdspeak/project.yaml`; exact values stamped into dictation verbatim, no LLM | `/dictation` -> Project Facts |
 | Project context | Keeps repo-local `.hs/` files that guide intelligent rewrites (optional LLM stage) | `/dictation` -> Project Context |
 | Automation hooks | Lets Claude Code and Codex report current cwd/session state to HoldSpeak | `/dictation` -> Hooks |
-| Meeting mode | Captures microphone plus optional system audio | Dashboard, `holdspeak meeting` command |
-| Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts | Dashboard and `/history` |
+| Meeting mode | Captures microphone plus optional system audio | Meetings, `holdspeak meeting` command |
+| Meeting intelligence | Produces transcript, topics, summaries, actions, artifacts; **Run intelligence** on any meeting that never ran | Meetings |
 | iPad app | Drives both modes from another device over the hub's HTTP API: dictate into the desk, read a meeting back with its artifacts and sources, approve a proposal, browse the archive | [Companions](#companions) |
 | AIPI-Lite companion | Portable ESPHome device for meeting controls, status, and spoken replies to waiting Claude/Codex sessions | [AIPI-Lite Developer Workflow](AIPI_LITE_DEV_WORKFLOW.md), `/companion` |
 | Threads | Multi-turn streamed conversations grounded on desk material with `@`-refs, receipts, and search | The Desk, **Continue in thread** on any object |
 | Connections | See each external tool's readiness (GitHub, Jira, Calendar, Models), run Recheck, and follow the recovery command when a tool is not connected | Settings, Connections |
-| Models | Pick a recommended pack (Light, Balanced, Full) or set up manually with Model Library and Assignments; the topology map shows this Mac and every connected node | Settings, Models |
+| Models | The Concierge detects engines, proposes one assignment set, and applies with **Use these**; choose **Adjust** for individual capability assignments | Settings, Models |
 
 ## Develop a thought
 
@@ -274,6 +274,36 @@ def total(items):
 could you refactor it?
 ```
 
+## Speak
+
+Speak is the voice-typing window on the Desk. It shows one loop: talk, see
+it land, teach once.
+
+**The transport** at the top carries the **Talk** button (the one primary)
+and the **Open** latch. The level meter shows audio input while you talk.
+
+**The utterance well** shows what you said as it lands. You can also type
+text into the well and press **Ctrl+Enter** to land it (dry run when
+**DRY RUN** is on). **LANDS IN** is one line naming the target and its
+last latency (e.g. `Claude Code · 41 MS`). The **FOCUSED APP** picker
+sits at its right; the **DRY RUN** toggle previews without typing.
+
+When a result lands, the **RESULT** section shows the final text. **OK**
+accepts it. **Wrong** unfolds the teach row in place: pick the field,
+type the correction with the mic, and choose **Teach**.
+
+**ENGINE** is one row naming the dictation model and its host (`THIS
+DEVICE` or a LAN address). When unset, its state reads **NOT SET** with a
+**Choose** verb that opens the Concierge as its own window (titled
+**Models**).
+
+**Details** (folded by default) shows the pipeline state register, the
+latency budget, and the raw trace.
+
+The footer carries the host chip (`THIS DEVICE`), the journal count
+(`9 TODAY`), and the **Review** and **Export** verbs. The wings are Speak,
+Journal, and Blocks; Journal is a stream of past utterances.
+
 ## The Dictation Pipeline For Coding Assistants
 
 HoldSpeak can do more than transcription. With the dictation pipeline enabled, it can transform a rough spoken thought into a useful prompt for Claude, Codex, a terminal, a browser, or another target.
@@ -459,40 +489,55 @@ Start HoldSpeak:
 holdspeak
 ```
 
-Use the web dashboard to start and stop meetings. During a meeting, HoldSpeak can show:
+Open **Meetings** to start and stop meetings. The headline tells you when a
+meeting needs intelligence, or says `Nothing needs you` when all are handled.
 
-- Live transcript.
-- Speaker labels.
-- Bookmarks.
-- Topics.
-- Action items.
-- Summaries.
-- Intelligence queue status.
+During a meeting HoldSpeak shows the live transcript with speaker labels,
+bookmarks, topics, action items, summaries, and the intelligence queue.
 
-After a meeting, open:
+After a meeting, its row in the Meetings stream shows one of these states:
 
-```text
-/history
-```
+| State | Meaning | Verb |
+|---|---|---|
+| **SAVED** | Intelligence ran and results are stored. | **Open** |
+| **OFF** | Has a transcript but intelligence never ran. | **Run intelligence** |
+| **NEEDS YOU** | Open items need your attention (count shown). | **Open** |
+| **NO TRANSCRIPT** | No transcript available yet. | |
+| **FAILED** | Intelligence failed. | **Retry** |
+| **REC** | Recording now. | |
 
-Use History to search meetings, review action items, edit accepted actions, inspect generated artifacts, and export local handoff files.
+Choose **Run intelligence** on any **OFF** meeting to process its transcript
+through the configured plugins. The detail view shows the outcomes, the
+transcript, and aftercare when a channel is configured.
 
-## The Door
+## The Arrival
 
-The Chair Door follows your first sentence. Its board puts work in five
-meaning-based columns: **Overdue, Now, Waiting, Unassigned,** and **Active**.
-The board is server-derived. A card action appears only when the aggregate
-names a lawful verb; choosing it invokes that verb and returns its Receipt in
-flow. Moving or completing a card is not a cosmetic board-position edit.
+The arrival is the desk's home screen. Its headline tells you the one fact
+that matters: how many items need you across your active projects, or
+`Nothing needs you` when none do. Under the headline, one line names your
+next scheduled recording or calendar event when one exists.
 
-The Door's **Upcoming** rail is one chronological timeline. **EVENT** rows
-come from your calendar sources; each carries a **Record this** button that
-arms the event for recording with one tap. **SCHEDULED RECORDING** rows name
-a recording the hub will start. A schedule is not an invitation. The rail
-can be empty or contain only schedules. Meetings keeps live and recent
-meetings.
+**NEEDS YOU** lists the items across all project rooms (source, the thing,
+why, **Open**). Each row carries its project token when more than one room
+contributes. When nothing needs you the section is absent.
 
-At phone width, the compact **Go** menu opens applications.
+**THOUGHTS** lists unfinished thoughts. The first carries **Continue**;
+others show their state (**Ready for you**, **Needs attention**). Empty:
+absent.
+
+**BRIEF** shows waiting items with **Ack** / **Defer**. When no brief
+exists, one line reads `No brief yet` with a **Generate** verb. Empty: absent.
+
+**MEETINGS** lists the last three meetings as stream rows (date, title,
+duration, state). States: **SAVED** (intelligence ran), **OFF** with **Run
+intelligence** (has a transcript, never ran), **REC** (recording now),
+**NO TRANSCRIPT**. Empty: absent.
+
+Agents live in their own window in the dock, not on the arrival.
+
+The capture bar at the foot carries **Talk**, **Develop a thought**, and
+**Record meeting**. At phone width, the compact **Go** menu opens
+applications.
 
 ### Calendars
 
@@ -883,70 +928,114 @@ entries in phrases with timestamps.
 
 ![The History wing with a dated stream of project events](assets/project-rooms/room-history.png)
 
-## Models
+## Settings
 
-Open **Settings, Models**. The surface opens on the door when any assignment
-group is unconfigured, and on the health strip once everything is wired.
+Settings is the one configuration window. Its headline states the most
+important thing that needs your attention: `No default model` when an engine
+is missing, or `All set` when everything is configured.
 
-### The packs
+Each module is a row with its name, its state tokens, and **Open**:
 
-The door recommends up to three packs: **Light**, **Balanced**, and **Full**.
-Each pack covers all seven assignment groups (Thoughts & notes, Chat practice,
-Writing & dictation, Speech recognition, Meetings, Agents & tools, Background)
-plus speech and TTS. What the recommendation considers:
+| Row | State tokens |
+|---|---|
+| **MODELS** | `NO DEFAULT` when unset; `N GROUPS SET · N ENGINES` when configured |
+| **CONNECTIONS** | `N CONNECTED` (absent at zero) |
+| **VOICE** | `LIVE` + the current target name |
+| **MEETINGS** | `INTELLIGENCE ON` or `INTELLIGENCE OFF` |
+| **RHYTHM** | `N LOOPS` or `NO LOOPS` |
+| **SOUNDS & PRESENCE** | `ON` or `OFF` |
+| **SYSTEM** | `THIS DEVICE` + `MESH ON` or `MESH OFF` |
 
-- Your hardware (memory, Apple Silicon, GPU).
-- Models already downloaded on this machine.
-- Endpoints you have connected (your own servers, paired devices).
-- Credentials already present (cloud providers).
+The **POSTURE** row carries a cycle control for the security posture
+(`YOLO`, `Normal`, `Secure`), stated once. The footer carries `THIS DEVICE`
+and a receipt (`WRITTEN hh:mm`). Choose a row to open its module.
 
-A pack that cannot be completed is not offered. The door never asks for an API
-key on this path.
+## Models: the Concierge
 
-### One confirmation
+Open **Settings, Models**. The Concierge is one screen that answers three
+questions: what engines exist, what should each capability use, and is
+everything ready.
 
-Pick a pack and choose **Set up**. The desk downloads what is missing, connects
-what is reachable, and wires every assignment. Each step renders as a live plan
-with its status (queued, running, done, failed). A failed step names the
-problem; choose **Resume** to retry from the failure.
+### What you see
 
-### The health strip
+The headline states the found count (`5 engines found`) or `No engine yet`.
+Under it, a chip row names your hardware (`THIS MAC · M-series · 36 GB`) and
+the last check time.
 
-When the plan finishes, the door collapses to a one-line health strip. Green
-means every group is wired and ready. A warning names the first group that needs
-attention and offers **Fix it** (which opens the advanced layer focused on that
-group). Choose **Change** on the strip to reload the recommendation.
+**FOUND** lists every detected engine as a ledger row. Each row shows:
 
-### Advanced: the topology map
+- A kind token: **LAN**, **THIS MAC**, or **CLOUD**.
+- The engine name (`Qwen3.6 35B`, `Whisper base`, `OpenRouter`).
+- Latency when probed (`41 MS`), file size for local engines (`26.5 GB`),
+  runtime (`MLX`, `LLAMA.CPP`), **KEY SET** / **KEY NOT SET** for cloud.
+- The host chip (`192.168.1.43 · LAN`, `THIS DEVICE`, `openrouter.ai`).
+- State: `READY` or `UNREACHABLE`.
 
-Below the health strip (or below the pack cards before setup), the **Advanced**
-disclosure opens on the topology map: this Mac as the home node, every connected
-endpoint as a separate node, and the seven job groups as flows between them.
+A catalog preset not yet on disk is a row too, with **Download** and its file
+size. `Add an engine...` at the bottom opens a field for a base URL and
+**Check** to probe it.
 
-- **Select a node** to see its models and the jobs it serves. The inspector
-  shows runtime, models served, and the base URL.
-- **Re-point a flow.** Click a job row in the inspector and the candidates
-  appear as a radio group. Pick one, confirm, and the assignment saves.
-- **Add a node.** The panel opens the existing connect grammar: define an
-  endpoint (label, base URL, optional key) or connect a hosted provider. The
-  new node appears on the map once connected.
+Cloud rows carry a **Check** verb with the cost chip `1 TOKEN · $`. That is
+the only way a cloud key is ever probed against the paid endpoint; no paid
+probe happens without your explicit verb.
 
-The **Table** toggle above the map switches to the full Model Library and
-Assignments view, the same surface documented in
-[Models (bring your own)](MODELS.md). Switch back to **Map** at any time.
+**THE SET** proposes one engine per capability group: Thoughts & notes, Chat,
+Writing & dictation, Speech recognition, Meetings, Agents & tools, Background.
+Each row carries a picker control (the stroke-chevron gadget) with the
+proposed engine, its latency token, its host chip, and a state token:
 
-### Model Library and Assignments (table view)
+| State | Meaning |
+|---|---|
+| **READY** | The engine responded to a probe. |
+| **CHECKING** | A probe is running. |
+| **WAITING** | Depends on a download or check that has not finished. |
+| **KEY NOT SET** | A cloud engine with no key configured. |
+| **OFF** | You set this group to `None` explicitly. |
 
-Model Library is where you make a model available: add from the catalog, add a
-model file, connect a provider, define an OpenAI-compatible endpoint, or connect
-a paired device. Check readiness after any change.
+The proposal rule: Speech recognition uses a local Whisper engine only (never
+LAN or cloud). Writing & dictation picks the smallest reachable low-latency
+engine. Every other group picks the strongest reachable LAN engine. Cloud
+appears only when you pick it in the picker.
 
-Assignments is where you choose the compatible ordered model list for each kind
-of work. Choose a group, pick one to four models in priority order, and save.
-**Use default** clears a row and reveals the inherited choice.
+**Use these** (the one primary verb) writes the whole set in one step. It is
+disabled until every group is **READY** or explicitly **OFF**.
 
-Adding a model does not change an Assignment. Changing an Assignment does not
-alter the Library. The full reference is [Models (bring your own)](MODELS.md).
+### Adjust
+
+Choose **Adjust** (the ghost verb by the set's caption) and the full
+capability table unfolds under the set rows. Every capability row shows its
+group, its explicit override, and its engine's host chip. This is the
+per-capability control for fine-grained assignments. The set rows stay
+visible above.
+
+### Cloud Check
+
+A cloud engine row's **Check** verb is the only path that sends a paid token.
+The cost chip (`1 TOKEN · $`) is visible before you press it. The probe
+returns the latency and confirms reachability. No cloud probe runs without
+this explicit verb.
+
+### Download
+
+A catalog preset in the FOUND list that is not on disk shows **Download**
+with its file size. Choosing it starts the download; the row shows a
+progress token (`received / total`, with the received part absent at zero).
+Dependent set rows stay **WAITING** and **Use these** stays disabled until
+the file is **READY**.
+
+### The footer
+
+The receipt reads `7 GROUPS · 3 ENGINES` (or `NO ENGINE · SET UP NOTHING`
+when nothing is found). **Cancel** appears when the set has unsaved changes.
+
+### First open on a cold machine
+
+The headline reads `No engine yet`. The FOUND section lists catalog presets
+as **Download** rows and the `Add an engine...` entry. **Use these** is
+disabled. One path forward: download a preset or add an engine, then apply.
+
+The full reference for model files, endpoints, and providers is
+[Models (bring your own)](MODELS.md).
 
 ## People
 

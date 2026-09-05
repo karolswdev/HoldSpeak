@@ -301,7 +301,7 @@ SEMANTIC_HELPER_CALLERS: dict[str, ProposedRoute] = {
     "holdspeak/web/routes/primitives/ask.py:49|build_ask_router.api_ask|ask": ProposedRoute(
         "ask.answer", "web.routes.primitives.ask", "AskService semantic caller",
     ),
-    "holdspeak/mcp/tools.py:641|dispatch|run": ProposedRoute(
+    "holdspeak/mcp/tools.py:649|dispatch|run": ProposedRoute(
         "recipe.run", "mcp.tools", "RecipeService semantic caller",
     ),
     # HS-151-02: recipe.chat retired; mcp/tools.py:613 and recipes.py:115

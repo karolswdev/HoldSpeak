@@ -1,9 +1,12 @@
-// HS-117-09 — extracted from MeetingDetail (lines 689-717).
+// HS-170-04 — the transcript well with speaker tokens.
+// Board: `KAROL` / `ANIA` in mono caption before each segment,
+// accent for the owner. Timestamp as secondary when no speaker.
 import { useEffect } from "react";
 import {
   SurfaceState,
   SurfaceWell,
 } from "../../../desk/surface/Surface";
+import { countLabel } from "../../../desk/surface";
 import { rowId } from "../../pageSupport";
 
 export function TranscriptWell({
@@ -26,29 +29,33 @@ export function TranscriptWell({
   }, [id, momentSegmentIndex, segments.length]);
 
   return (
-    <SurfaceWell head={`TRANSCRIPT · ${segments.length} SEG`}>
+    <SurfaceWell head={countLabel("TRANSCRIPT", segments.length)}>
       {segments.length ? (
         <ol className="transcript-list">
-          {segments.map((row, index) => (
-            <li
-              key={rowId(row, index)}
-              id={`transcript-${id}-${index}`}
-              data-moment={index === momentSegmentIndex || undefined}
-            >
-              <time>
-                {(() => {
-                  const s = Number(row.start_time ?? row.start ?? NaN);
-                  if (!Number.isFinite(s)) {
-                    return String(row.timestamp ?? "");
-                  }
-                  const m = Math.floor(s / 60);
-                  const sec = Math.floor(s % 60);
-                  return `${m}:${String(sec).padStart(2, "0")}`;
-                })()}
-              </time>
-              <p>{String(row.text ?? row.transcript ?? "")}</p>
-            </li>
-          ))}
+          {segments.map((row, index) => {
+            const speaker = String(row.speaker ?? "").trim();
+            const s = Number(row.start_time ?? row.start ?? NaN);
+            const timestamp = Number.isFinite(s)
+              ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
+              : String(row.timestamp ?? "");
+
+            return (
+              <li
+                key={rowId(row, index)}
+                id={`transcript-${id}-${index}`}
+                data-moment={index === momentSegmentIndex || undefined}
+              >
+                {speaker ? (
+                  <span className="transcript-speaker" data-testid="transcript-speaker">
+                    {speaker.toUpperCase()}
+                  </span>
+                ) : (
+                  <time>{timestamp}</time>
+                )}
+                <p>{String(row.text ?? row.transcript ?? "")}</p>
+              </li>
+            );
+          })}
         </ol>
       ) : (
         <SurfaceState empty emptyLabel="No transcript" emptyGlyph="¶" />

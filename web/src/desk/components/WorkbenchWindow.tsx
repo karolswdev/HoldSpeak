@@ -126,6 +126,7 @@ import {
   workbenchRunRequestFailure,
 } from "./workbench/runLifecycle";
 import { WorkbenchRunsWing } from "./workbench/WorkbenchRunsWing";
+import { countLabel, countToken } from "../surface";
 
 /* ── schedule presets ───────────────────────────────────────────────── */
 
@@ -498,9 +499,9 @@ function ConfigPanel({
       <SurfaceSection
         label="SKILLS"
         actions={
-          boundSkills.length > 0 ? (
+          countToken(boundSkills.length, "INHERITED") ? (
             <span className="wb-config-skill-count">
-              INHERITED {boundSkills.length}
+              {countToken(boundSkills.length, "INHERITED")}
             </span>
           ) : null
         }
@@ -705,7 +706,8 @@ function WorkbenchItemCard({
     setMinting(false);
   };
 
-  const hasMintedArtifact = !!item.result_artifact_id;
+  const artifactId = item.result_artifact_id;
+  const hasMintedArtifact = !!artifactId;
   // Issue 4 fix: use mint_attempted to distinguish "mint failed" from "legacy pre-mint item"
   const mintFailed = item.status === "done" && !!item.result && !hasMintedArtifact && !!item.mint_attempted;
   const legacyKeep = item.status === "done" && !!item.result && !hasMintedArtifact && !item.mint_attempted;
@@ -825,7 +827,7 @@ function WorkbenchItemCard({
                 <div className="wb-card-artifact-detail">
                   <div className="wb-card-artifact-detail-head">
                     <span className="desk-chip" data-tone="info">pending-review</span>
-                    <span className="wb-card-artifact-detail-id">{item.result_artifact_id}</span>
+                    <span className="wb-card-artifact-detail-id">{artifactId}</span>
                   </div>
                   <div className="wb-card-artifact-detail-body">
                     <Material>{item.result!}</Material>
@@ -1292,8 +1294,9 @@ export function WorkbenchWindow({
         const doneItems = (detail?.items || []).filter(
           (i) => i.status === "done" || i.status === "dismissed",
         );
+        if (!doneItems.length) break;
         remove(
-          `${doneItems.length} done items`,
+          countToken(doneItems.length, "DONE ITEM") ?? "done items",
           () =>
             void write("CLEAR DONE", async () => {
               for (const item of doneItems) {
@@ -1420,9 +1423,9 @@ export function WorkbenchWindow({
     ? skills.filter((s) => s.recipe_ids.includes(detail.recipe_id!)).length
     : 0;
   const startSummary = resourcefulPolicy?.enabled
-    ? `☾ Resourceful · ${resourcefulPolicy.nightly_target}/night · ${resourcefulPolicy.cooldown_hours}h`
+    ? `Resourceful · ${resourcefulPolicy.nightly_target}/night · ${resourcefulPolicy.cooldown_hours}h`
     : automations.length
-      ? `⚡ ${automations[0].name}${automations.length > 1 ? ` +${automations.length - 1}` : ""}`
+      ? `${automations[0].name}${automations.length > 1 ? ` +${automations.length - 1}` : ""}`
       : null;
 
   const WINGS: WingSpec[] = [
@@ -1450,7 +1453,7 @@ export function WorkbenchWindow({
   return (
     <DeskWindowFrame
       id={`workbench:${workbenchId}`}
-      glyph="⚙"
+      glyph="◉"
       label={name}
       title={
         <EditInPlace
@@ -1698,6 +1701,7 @@ export function WorkbenchWindow({
                   onProposalConfirm={(p) => setVoiceProposal(p)}
                   onState={handleMicState}
                 />
+                {/* UX-CANON: needs redesign (HS-170-04) — combobox inlet with autocomplete can't use StringGadget */}
                 <input
                   ref={inletInputRef}
                   type="text"
@@ -1819,7 +1823,7 @@ export function WorkbenchWindow({
         {activeWing === "memory" ? (
           <div className="wb-memory-wing">
             <SurfaceLedger
-              count={`${memoryEntries.length} MEMORIES`}
+              count={countLabel("MEMORIES", memoryEntries.length)}
               controls={
                 memoryEntries.length > 0 ? (
                   <ConfirmVerb
@@ -1860,9 +1864,9 @@ export function WorkbenchWindow({
                   >
                     <div className="wb-memory-detail">
                       <p className="wb-memory-content">{entry.content}</p>
-                      {entry.item_title ? (
-                        <span className="wb-memory-source">from: {entry.item_title}</span>
-                      ) : null}
+                      {(() => { const itemTitle = entry.item_title; return itemTitle ? (
+                        <span className="wb-memory-source">from: {itemTitle}</span>
+                      ) : null; })()}
                       <div className="wb-memory-verbs">
                         <button
                           type="button"
@@ -1893,7 +1897,7 @@ export function WorkbenchWindow({
           undoReceipt ||
           copyReceipt || (
             <span className="wb-footer-status">
-              {items.length} {items.length === 1 ? "item" : "items"}
+              {countToken(items.length, "ITEM") ?? "No items"}
               {lastRun
                 ? ` · last run ${humanTime(lastRun.completed_at || lastRun.started_at)}`
                 : ""}

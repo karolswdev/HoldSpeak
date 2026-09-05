@@ -6,6 +6,7 @@
 // HS-135-06: the Chair is HOME at `/`. The spatial floor stays intact
 // behind a dock button (counsel ruling B.Q1).
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { Button } from "../components/signal/Signal";
 import { defaultViewFor, useDesk } from "./store";
 import { useChairState } from "./chairState";
 import { ChairHome } from "./chair";
@@ -153,9 +154,9 @@ export default function DeskApp() {
         {setupFailure ? (
           <div role="alert">
             <p>{setupFailure}</p>
-            <button type="button" onClick={() => void refreshDesk()}>
+            <Button variant="primary" onClick={() => void refreshDesk()}>
               Retry
-            </button>
+            </Button>
           </div>
         ) : null}
       </div>

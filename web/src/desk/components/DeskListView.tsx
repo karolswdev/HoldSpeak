@@ -6,7 +6,9 @@
 // compact real table rows, sortable headers, sprites, and kind bands.
 import "./list-view.css";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { qualifiedRef } from "../api";
+import { countToken } from "../surface";
 import { useDesk } from "../store";
 import { useProjections } from "../projections";
 import { allObjects, objectByRef, worldObjects, worldZones, type WorldObject } from "../world";
@@ -209,22 +211,22 @@ export function DeskListView() {
       render: (row) => {
         if (row.type === "zone") {
           return (
-            <button type="button" className="desk-sortable-table-open" aria-label={`${row.title} zone, ${row.count} ${row.count === 1 ? "item" : "items"}`}>
+            <Button variant="ghost" dense className="desk-sortable-table-open" aria-label={`${row.title} zone, ${row.count} ${row.count === 1 ? "item" : "items"}`}>
               {row.title}
-            </button>
+            </Button>
           );
         }
         const ref = qualifiedRef(row.object.kind, row.object.id);
         const selected = selectedIds.includes(ref) || selectedIds.includes(row.object.id);
         return (
-          <button type="button" className="desk-sortable-table-open desk-list-name-cell" aria-label={selected ? `${row.object.title}, in Ask context` : row.object.title}>
+          <Button variant="ghost" dense className="desk-sortable-table-open desk-list-name-cell" aria-label={selected ? `${row.object.title}, in Ask context` : row.object.title}>
             <span className="desk-list-mark" data-selected={selected || undefined} aria-hidden="true">
               {selected ? "[x]" : "[ ]"}
             </span>
             {row.object.title}
             {row.zoneName ? <span className="sr-only"> {row.zoneName.toUpperCase()}</span> : null}
             {row.attention ? <span className="sr-only"> ATTN {row.attention}</span> : null}
-          </button>
+          </Button>
         );
       },
     },
@@ -271,11 +273,11 @@ export function DeskListView() {
         </h2>
         <div className="desk-list-census">
           <span>
-            {divedZone ? <button type="button" className="desk-list-open desk-surface" onClick={surface}>← ALL</button> : null}
-            {`ITEMS ${objects.length} · ZONES ${zones.length} · ATTN ${attnTotal}`}
+            {divedZone ? <Button dense variant="ghost" className="desk-list-open desk-surface" onClick={surface}>ALL</Button> : null}
+            {[countToken(objects.length, "ITEM"), countToken(zones.length, "ZONE"), countToken(attnTotal, "ATTN")].filter(Boolean).join(" · ") || "EMPTY"}
           </span>
           <p className="desk-list-status" role="status" tabIndex={-1} ref={statusRef}>
-            Showing {visible.length} of {objects.length}
+            {countToken(visible.length, "SHOWN") || "EMPTY"} of {objects.length}
           </p>
         </div>
         <DeskSortableTable
@@ -308,7 +310,7 @@ export function DeskListView() {
             openMenu(row.object, event.clientX, event.clientY);
           }}
         />
-        {remaining > 0 ? <button type="button" className="desk-chip desk-list-more" onClick={showMore}>Show {Math.min(LIST_PAGE, remaining)} more</button> : null}
+        {remaining > 0 ? <Button dense variant="ghost" className="desk-list-more" onClick={showMore}>Show {Math.min(LIST_PAGE, remaining)} more</Button> : null}
       </section>
       {rowMenu ? (
         <WorkMenu

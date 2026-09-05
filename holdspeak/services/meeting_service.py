@@ -733,4 +733,8 @@ class MeetingService:
             "capture_checkpoint_seconds": meeting.capture_checkpoint_seconds,
             "provenance": meeting.provenance,
             "calendar_event_id": getattr(meeting, "calendar_event_id", None),
+            # HS-170-04: transcript word count for the face. Omitted when no
+            # transcript (never 0). The list query computes it via subquery;
+            # the detail computes it from the loaded segments.
+            "transcriptWords": getattr(meeting, "transcript_words", None),
         }

@@ -35,7 +35,7 @@ export function ResultPanel({
 }) {
   return (
     <section className="speak-result" aria-label="Pipeline result">
-      <SurfaceCode>{`FINAL_TEXT: ${String(result.final_text ?? result.text ?? result.output ?? "")}`}</SurfaceCode>
+      <SurfaceCode>{`FINAL TEXT: ${String(result.final_text ?? result.text ?? result.output ?? "")}`}</SurfaceCode>
       <div className="speak-result-facts">
         {result.intent ? <span>INTENT {String(result.intent)}</span> : null}
         {result.total_ms ? (

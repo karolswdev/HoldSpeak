@@ -10,6 +10,7 @@ import {
   SurfaceState,
 } from "../../surface/Surface";
 import { StringGadget } from "../../surface/gadgets";
+import { countToken } from "../../surface/count";
 
 type FollowThroughVerb = "done" | "dismiss" | "snooze" | "delegate" | "reopen";
 type Lane = "now" | "waiting" | "unassigned" | "overdue";
@@ -75,8 +76,9 @@ function isOverdue(due: string | null): boolean {
   return dueLabel(due).startsWith("overdue");
 }
 
+const GLYPH_PEOPLE = String.fromCodePoint(0x2667);
 function sourceFor(card: FollowThroughCard): { glyph: string; label: string } {
-  if (card.source === "people_commitment") return { glyph: "♧", label: "people" };
+  if (card.source === "people_commitment") return { glyph: GLYPH_PEOPLE, label: "people" };
   if (card.source === "decision") return { glyph: "◇", label: "decision" };
   return { glyph: "⌁", label: "meeting" };
 }
@@ -210,11 +212,11 @@ export function FollowThroughView({
           <SurfaceSection
             key={lane.id}
             label={lane.label}
-            actions={<span className="follow-through-count">{cards.length}</span>}
+            actions={cards.length > 0 ? <span className="follow-through-count">{cards.length}</span> : undefined}
             className={`follow-through-lane${lane.id === "overdue" ? " is-overdue" : ""}`}
           >
             {cards.length ? (
-              <SurfaceLedger count={`${cards.length} ${lane.label.toUpperCase()}`} cols="follow-through">
+              <SurfaceLedger count={countToken(cards.length, lane.label.toUpperCase()) ?? lane.label.toUpperCase()} cols="follow-through">
                 {cards.map((card) => {
                   const open = openCardId === card.id;
                   const source = sourceFor(card);
@@ -262,7 +264,7 @@ export function FollowThroughView({
                     >
                       <div className="follow-through-expanded">
                         <div className="follow-through-verbs" aria-label={`Verbs for ${card.text}`}>
-                          <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "done")} aria-label="Mark done">✓</Button>
+                          <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "done")} aria-label="Mark done"><span aria-hidden="true">{String.fromCodePoint(0x2713)}</span></Button>
                           <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "dismiss")} aria-label="Dismiss">↷</Button>
                           {!peopleCommitment ? <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => void complete(card.id, "snooze", { until: tomorrow() })} aria-label="Snooze until tomorrow">◷</Button> : null}
                           {!peopleCommitment ? <Button dense variant="ghost" disabled={busyCardId === card.id} onClick={() => setDelegatingCardId(delegatingCardId === card.id ? null : card.id)} aria-label="Delegate">⇢</Button> : null}
@@ -274,12 +276,16 @@ export function FollowThroughView({
                             <Button dense disabled={!delegateTo.trim() || busyCardId === card.id} onClick={() => void complete(card.id, "delegate", { to: delegateTo.trim() })}>Assign</Button>
                           </div>
                         ) : null}
-                        {card.provenance?.available ? (
+                        {card.provenance?.available ? (() => {
+                          const speaker = card.provenance.segment_speaker;
+                          const segText = card.provenance.segment_text;
+                          return (
                           <blockquote className="follow-through-provenance">
-                            {card.provenance.segment_speaker ? <cite>{card.provenance.segment_speaker}</cite> : null}
-                            <span>{card.provenance.segment_text ?? "Source moment unavailable"}</span>
+                            {speaker ? <cite>{speaker}</cite> : null}
+                            <span>{segText ?? "Source moment unavailable"}</span>
                           </blockquote>
-                        ) : (
+                          );
+                        })() : (
                           <div className="follow-through-provenance is-unavailable">SOURCE MOMENT UNAVAILABLE</div>
                         )}
                       </div>

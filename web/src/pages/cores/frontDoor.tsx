@@ -11,11 +11,13 @@
  * furniture — the ratchet fence enforces it.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
 import {
   ActionNotice,
   ChoiceCardGroup,
   ChoiceCard,
+  countToken,
   Disclosure,
   ProgressPlan,
   type PlanStep,
@@ -143,9 +145,11 @@ type GroupedPack = ReturnType<typeof groupPackLines>;
 
 /** The one-line anchor: "6 jobs → Qwen3.5 9B (local) · Speech → Whisper small". */
 function packSummary(grouped: GroupedPack): string {
-  const parts = grouped.llm.map(
-    (group) => `${group.jobs.length} job${group.jobs.length === 1 ? "" : "s"} → ${group.source}`,
-  );
+  const parts = grouped.llm
+    .filter((group) => group.jobs.length > 0)
+    .map(
+      (group) => `${countToken(group.jobs.length, "job", "jobs") ?? group.source} → ${group.source}`,
+    );
   if (grouped.speech) parts.push(`Speech → ${lineValue(grouped.speech)}`);
   return parts.join(" · ");
 }
@@ -480,13 +484,13 @@ export function FrontDoorView({
             );
           })}
         </ChoiceCardGroup>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           className="front-door-own-setup"
           onClick={() => setShowAdvanced(true)}
         >
           Set up my own
-        </button>
+        </Button>
         {applyError ? (
           <ActionNotice tone="danger" role="alert">
             {applyError}
@@ -495,8 +499,8 @@ export function FrontDoorView({
         {showAdvanced ? (
           <div className="front-door-advanced-inline" data-testid="front-door-advanced">
             <div className="front-door-view-toggle" role="tablist" aria-label="Advanced view">
-              <button type="button" role="tab" aria-selected={advancedView === "map"} onClick={() => setAdvancedView("map")}>Map</button>
-              <button type="button" role="tab" aria-selected={advancedView === "table"} onClick={() => setAdvancedView("table")}>Table</button>
+              <Button variant="ghost" dense role="tab" aria-selected={advancedView === "map"} onClick={() => setAdvancedView("map")}>Map</Button>
+              <Button variant="ghost" dense role="tab" aria-selected={advancedView === "table"} onClick={() => setAdvancedView("table")}>Table</Button>
             </div>
             {advancedView === "map" ? (
               <TopologyMapView onOpenAssignments={() => setAdvancedView("table")} />
@@ -575,8 +579,8 @@ export function FrontDoorView({
       >
         <div className="front-door-advanced" data-testid="front-door-advanced">
           <div className="front-door-view-toggle" role="tablist" aria-label="Advanced view">
-            <button type="button" role="tab" aria-selected={advancedView === "map"} onClick={() => setAdvancedView("map")}>Map</button>
-            <button type="button" role="tab" aria-selected={advancedView === "table"} onClick={() => setAdvancedView("table")}>Table</button>
+            <Button variant="ghost" dense role="tab" aria-selected={advancedView === "map"} onClick={() => setAdvancedView("map")}>Map</Button>
+            <Button variant="ghost" dense role="tab" aria-selected={advancedView === "table"} onClick={() => setAdvancedView("table")}>Table</Button>
           </div>
           {advancedView === "map" ? (
             <TopologyMapView onOpenAssignments={() => setAdvancedView("table")} />

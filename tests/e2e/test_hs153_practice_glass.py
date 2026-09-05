@@ -579,7 +579,7 @@ def test_guardrail_row_renders_and_deny_focused(guardrail_hub: dict) -> None:
                 deny_btn = page.locator("[data-testid='deny']")
                 if deny_btn.count() > 0:
                     cls = deny_btn.first.get_attribute("class") or ""
-                    assert "is-primary" in cls, f"Deny not primary at {width}: {cls}"
+                    assert ("is-primary" in cls or "btn--primary" in cls), f"Deny not primary at {width}: {cls}"  # HS-170-02: the library Button
 
             body_w = page.evaluate("document.body.scrollWidth")
             vp_w = page.evaluate("window.innerWidth")

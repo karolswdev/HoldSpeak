@@ -346,7 +346,7 @@ function ModelsCard({
   const hasAssigned = assigned > 0;
   const state: ChipState = hasAssigned ? "active" : "idle";
   const label = hasAssigned ? "Assigned" : "Unassigned";
-  const summary = `${assigned} of ${total} assigned`;
+  const summary = hasAssigned ? `${assigned} of ${total} assigned` : "Unassigned";
 
   return (
     <div className="connections-tool-row" data-testid="connections-models">

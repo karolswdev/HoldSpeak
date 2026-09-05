@@ -82,3 +82,6 @@ web/.shots/
 node_modules/
 web/test-results/
 web/.glass-build.lock
+
+# playwright residue
+test-results/

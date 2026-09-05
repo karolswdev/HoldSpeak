@@ -149,6 +149,19 @@ def _event_row(page: Any, title: str) -> Any:
 def test_hs147_one_tap_arm_cancel_refusal_and_shots(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """HS-170: RETIRED -- the door-upcoming-rail's per-event RECORD THIS
+    one-tap arm and two-beat cancel are PARKED (HS-170-04,
+    settled-design-four-faces.md Face 1 Addendum). The arrival's capture bar
+    has Schedule (opens ScheduleCreate form, not per-event) + ARMED countdown
+    with Cancel. The schedule-create round trip and cancel are covered by
+    test_hs144_door_glass::test_upcoming_rail_schedule_create_round_trip_and_form_cancel.
+    The per-event one-tap stale-refusal path is intentionally gone.
+    """
+    pytest.skip(
+        "HS-170: door-rail one-tap arm PARKED (HS-170-04); "
+        "per-event RECORD THIS gone; Schedule + Cancel at the arrival's capture bar "
+        "covered by test_hs144_door_glass::test_upcoming_rail_schedule_create_round_trip_and_form_cancel"
+    )
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 

@@ -785,6 +785,17 @@ button.surface-edit-in-place:hover {
   margin: 0;
   min-width: 0;
 }
+/* HS-170-04 — speaker token in the transcript well. */
+.desk-surface-body .transcript-list .transcript-speaker {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  min-width: 5ch;
+}
 
 /* A float over a canvas (the workbench inspector): the one window
    material, transient elevation — never a Signal card. */
@@ -2110,6 +2121,97 @@ button.surface-edit-in-place:hover {
   flex-direction: column;
   gap: 10px;
 }
+/* HS-170-04: the hub face — SurfaceLedgerRows with state tokens,
+   ONE display headline, the posture row, and the footer receipt.
+   The hub template (data-cols="hub") is a flex row: name at primary,
+   inline tokens, trailing Open right-aligned at a fixed X.  At 393
+   tokens fall under the name; Open stays on the name line.  */
+.prefs-hub {
+  gap: 0;
+  padding: 0;
+}
+.prefs-hub-headline {
+  padding: 16px 12px 12px;
+}
+.prefs-hub-headline[data-warning] {
+  color: var(--warn);
+}
+.prefs-hub-headline:not([data-warning]) {
+  color: var(--text-muted);
+}
+.prefs-hub .surface-ledger-head {
+  display: none;
+}
+.prefs-hub .prefs-rule {
+  margin-top: 8px;
+}
+/* The hub ledger template. */
+.surface-ledger[data-cols="hub"] .surface-ledger-line {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+.surface-ledger[data-cols="hub"] .surface-ledger-row:first-child .surface-ledger-line {
+  border-top: none;
+}
+.surface-ledger[data-cols="hub"] .surface-ledger-primary {
+  flex: none;
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
+}
+.surface-ledger[data-cols="hub"] .surface-state-chip,
+.surface-ledger[data-cols="hub"] .surface-token {
+  flex: none;
+  white-space: nowrap;
+}
+.surface-ledger[data-cols="hub"] .surface-ledger-trailing {
+  flex: none;
+  margin-left: auto;
+}
+/* 393: tokens under the name, Open on the name line. */
+/* 393: name + Open on line 1, tokens on line 2.
+   Flex-wrap + order: primary and trailing (order 0) fill line 1;
+   a 100%-basis pseudo forces a line break; tokens (order 1) flow
+   inline on line 2.  Row gap is 0 so the pseudo break adds nothing. */
+@container surface (max-width: 559.9px) {
+  .surface-ledger[data-cols="hub"] .surface-ledger-line {
+    flex-wrap: wrap;
+    gap: 0 10px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .surface-ledger[data-cols="hub"] .surface-ledger-primary {
+    flex: 1 0 0;
+    min-width: 0;
+    order: 0;
+  }
+  .surface-ledger[data-cols="hub"] .surface-ledger-trailing {
+    order: 0;
+    margin-left: auto;
+  }
+  /* Force a line break after trailing. */
+  .surface-ledger[data-cols="hub"] .surface-ledger-line::after {
+    content: "";
+    flex-basis: 100%;
+    height: 0;
+    order: 0;
+  }
+  /* Tokens flow inline on line 2. */
+  .surface-ledger[data-cols="hub"] .surface-ledger-line > .surface-state-chip,
+  .surface-ledger[data-cols="hub"] .surface-ledger-line > .surface-token {
+    order: 1;
+    margin-top: 2px;
+  }
+}
 .prefs-filter {
   max-width: none;
 }
@@ -2240,15 +2342,14 @@ button.surface-edit-in-place:hover {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 26px;
-  padding: 0 6px;
+  min-height: 52px;
+  padding: 0 12px;
 }
 .prefs-posture-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: var(--letter-spacing-label-wide);
-  color: var(--text-muted);
+  flex: 1;
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+  line-height: var(--desk-type-primary-lh);
 }
 /* HS-139-07: .prefs-precedence removed from the face — the chain is now
    a title attribute on the POSTURE line. CSS kept as a no-op comment
@@ -3345,4 +3446,239 @@ button.surface-edit-in-place:hover {
 .surface-scroll-hint[data-axis="y"][data-scroll-hint="both"]::after,
 .surface-scroll-hint[data-axis="y"][data-scroll-hint="top"]::before {
   display: block;
+}
+
+/* ═══ HS-170-04 — MEETINGS FACE ═══════════════════════════════════ */
+
+/* The display headline (ONE per face). */
+.meetings-headline {
+  padding: 0 0 4px;
+}
+.meetings-headline .surface-display {
+  color: var(--text-muted);
+}
+.meetings-headline[data-accent] .surface-display {
+  color: var(--accent);
+}
+
+/* Head verbs row. */
+.meetings-head-verbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 0 0 8px;
+}
+
+/* The stream: the flat list of meeting rows. */
+.meetings-stream-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+/* A stream row: body left, verb right. */
+.meetings-stream-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.meetings-stream-row[data-selected] {
+  background: var(--desk-window-etch);
+  border-radius: 2px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+/* The body is a clickable div (role="button"), not a <button>. */
+.meetings-stream-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  cursor: pointer;
+  align-items: flex-start;
+  color: inherit;
+  font: inherit;
+}
+.meetings-stream-row-body:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Title at primary type step. */
+.meetings-stream-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Token line: SEP 04 · 30 MIN · 1,204 WORDS · OFF */
+.meetings-stream-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.meetings-stream-fact {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+/* Middle dot separator between tokens (U+00B7). */
+.meetings-stream-dot {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dimmed);
+  margin: 0 0.5ch;
+}
+.meetings-stream-no-transcript {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dimmed);
+  white-space: nowrap;
+}
+
+/* State token tones. */
+.meetings-stream-tokens [data-tone="success"] {
+  color: var(--success);
+}
+.meetings-stream-tokens [data-tone="warn"] {
+  color: var(--warning);
+}
+.meetings-stream-tokens [data-tone="danger"] {
+  color: var(--danger);
+}
+.meetings-stream-tokens [data-tone="accent"] {
+  color: var(--accent);
+}
+
+/* Row verb slot. */
+.meetings-stream-row-verb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Compact fact line: hidden in full mode, shown in narrowed mode. */
+.meetings-stream-compact-facts {
+  display: none;
+}
+
+/* The narrowed list in SurfaceSplit. */
+.meetings-stream[data-narrowed] .meetings-stream-tokens {
+  display: none;
+}
+.meetings-stream[data-narrowed] .meetings-stream-row-verb {
+  display: none;
+}
+.meetings-stream[data-narrowed] .meetings-stream-row {
+  padding: 6px 0;
+}
+.meetings-stream[data-narrowed] .meetings-stream-title {
+  font-size: 13px;
+}
+.meetings-stream[data-narrowed] .meetings-stream-compact-facts {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.meetings-stream[data-narrowed] .meetings-stream-row-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* HS-170-04 — detail head (display title + facts) */
+.meetings-detail-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 0 10px;
+}
+.meetings-detail-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* HS-170-04 — NEEDS YOU section in detail */
+.meetings-detail-needs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0;
+}
+.meetings-detail-needs-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.meetings-detail-needs-head .surface-caption {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.meetings-detail-outcomes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.meetings-detail-outcome-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.meetings-detail-outcome-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.meetings-detail-outcome-verb {
+  flex-shrink: 0;
+}
+
+/* HS-170-04 — 393 responsive layout */
+@container surface (max-width: 559.9px) {
+  .meetings-head-verbs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .meetings-stream-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .meetings-stream-row-verb {
+    justify-content: flex-end;
+  }
 }

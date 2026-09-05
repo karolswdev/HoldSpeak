@@ -5,6 +5,7 @@ import "./pullout.css";
 import { spriteUrl } from "../sprites";
 import { spriteVariantKey } from "../../lib/spriteVariants";
 import { spriteStateCssClass } from "../../lib/spriteStates";
+import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
@@ -42,7 +43,7 @@ function PulloutFrame({
       ? { scope: "local", text: "⌂ This device" }
       : {
           scope: "cloud",
-          text: `☁ ${
+          text: `${
             String(profile.base_url || "endpoint")
               .replace(/^https?:\/\//, "")
               .split("/")[0]
@@ -73,26 +74,26 @@ function PulloutFrame({
             </span>
           )}
           {o.kind === "meeting" && (
-            <button
-              type="button"
-              className="desk-chip quiet"
+            <Button
+              dense
+              variant="ghost"
               onClick={() =>
                 openSurfaceOr("review-meetings", "/history", resourceRef)
               }
             >
               Review meeting
-            </button>
+            </Button>
           )}
           {o.kind === "workflow" && (
-            <button
-              type="button"
-              className="desk-chip quiet"
+            <Button
+              dense
+              variant="ghost"
               onClick={() =>
                 openSurfaceOr("open-workbenches", "/workbenches", resourceRef)
               }
             >
               Edit Workflow
-            </button>
+            </Button>
           )}
         </>
       }

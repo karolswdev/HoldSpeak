@@ -137,7 +137,7 @@ export function useMeetingData(
         text: decision === "approved" ? "APPROVED" : "REJECTED",
       });
     } catch (reason) {
-      onReceipt({ text: `⚠ REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
     } finally {
       setBusy(false);
     }
@@ -156,7 +156,7 @@ export function useMeetingData(
         text: what === "digest" ? "PROPOSED DIGEST" : "PROPOSED FOLLOW-UP",
       });
     } catch (reason) {
-      onReceipt({ text: `⚠ REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
     } finally {
       setBusy(false);
     }
@@ -211,7 +211,7 @@ export function useMeetingData(
         return {
           cells: [
             <span key="what" title={presentValue(row.preview ?? row.body ?? "")}>
-              {String(row.title ?? row.kind ?? "Proposed action")}
+              {String(row.title ?? row.preview ?? row.kind ?? "Proposed action")}
             </span>,
             <span key="facts" title={facts}>
               {facts}
@@ -226,7 +226,7 @@ export function useMeetingData(
                   title={String(commitment?.approve ?? "")}
                   onClick={() => void decide(row, "approved")}
                 >
-                  Approve
+                  Decide
                 </Button>
                 <Button
                   dense
@@ -234,7 +234,7 @@ export function useMeetingData(
                   title={String(commitment?.reject ?? "")}
                   onClick={() => void decide(row, "rejected")}
                 >
-                  Reject
+                  Dismiss
                 </Button>
               </>
             ) : (

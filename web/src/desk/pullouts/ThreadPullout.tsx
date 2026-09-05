@@ -9,7 +9,7 @@ import {
   SurfaceRow,
 } from "../surface/Surface";
 import { Material } from "../surface/Material";
-import { intelBadge } from "../chair/lanes/MeetingsLane";
+import { intelBadge } from "../chair/intelBadge";
 import { LampGadget } from "../surface/gadgets";
 import { ContextualAssignment } from "../../pages/cores/ContextualAssignment";
 import { boundaryEgressLamp, egressScopeLamp, type EgressLamp } from "../inferenceEgress";
@@ -54,6 +54,7 @@ import {
 import { useDesk } from "../store";
 import { ThreadComposer, InlineEditor } from "../components/ThreadComposer";
 import { MicButton } from "../components/MicButton";
+import { Button } from "../../components/signal/Signal";
 import { ModeTabs } from "../components/ModeTabs";
 import { CallChip } from "../components/CallChip";
 import { SpeakerGlyph } from "../components/SpeakerGlyph";
@@ -175,6 +176,7 @@ function ElicitationForm({
               </label>
             )}
             {enumVals ? (
+              // UX-CANON: needs redesign (HS-170-04)
               <select
                 className="thread-elicitation-select"
                 value={String(values[key] ?? "")}
@@ -187,6 +189,7 @@ function ElicitationForm({
               </select>
             ) : type === "boolean" ? (
               <label className="thread-elicitation-boolean">
+                {/* UX-CANON: needs redesign (HS-170-04) */}
                 <input
                   type="checkbox"
                   checked={Boolean(values[key])}
@@ -195,6 +198,7 @@ function ElicitationForm({
                 <span className="thread-elicitation-label">{label}{isReq ? " *" : ""}</span>
               </label>
             ) : type === "number" || type === "integer" ? (
+              // UX-CANON: needs redesign (HS-170-04)
               <input
                 type="number"
                 className="thread-elicitation-input"
@@ -202,6 +206,7 @@ function ElicitationForm({
                 onChange={(e) => handleChange(key, Number(e.target.value))}
               />
             ) : (
+              // UX-CANON: needs redesign (HS-170-04)
               <input
                 type="text"
                 className="thread-elicitation-input"
@@ -213,22 +218,22 @@ function ElicitationForm({
         );
       })}
       <div className="thread-tool-decision-actions">
-        <button
-          type="button"
-          className="desk-chip is-primary"
+        <Button
+          variant="primary"
+          dense
           onClick={() => onSubmit(values)}
           data-testid="elicitation-submit"
         >
           Submit
-        </button>
-        <button
-          type="button"
-          className="desk-chip quiet"
+        </Button>
+        <Button
+          variant="ghost"
+          dense
           onClick={onDecline}
           data-testid="elicitation-decline"
         >
           Decline
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -528,7 +533,7 @@ function GuardrailRowView({ row }: { row: GuardrailRow }) {
       data-testid="guardrail-row"
     >
       <div className="thread-guardrail-head">
-        <span className="thread-guardrail-glyph">{hasViolations ? "⛔" : "⚠"}</span>
+        <span className="thread-guardrail-glyph">{hasViolations ? "X" : "!"}</span>
         <span className="thread-guardrail-label">
           {hasViolations ? "Guardrail violation" : "Guardrail warning"}
         </span>
@@ -626,32 +631,32 @@ function ToolRowView({
       {row.state === "awaiting_decision" && (
         <div className="thread-tool-decision-box" data-testid="decision-box" data-default-decision={row.defaultDecision || "allow"}>
           <div className="thread-tool-decision-actions">
-            <button
-              type="button"
-              className={`desk-chip ${row.defaultDecision === "deny" ? "quiet" : "is-primary"}`}
+            <Button
+              variant={row.defaultDecision === "deny" ? "ghost" : "primary"}
+              dense
               onClick={() => onDecide(row.callId, "approve")}
               data-testid="allow-once"
               autoFocus={row.defaultDecision !== "deny"}
             >
               Allow once
-            </button>
-            <button
-              type="button"
-              className="desk-chip quiet"
+            </Button>
+            <Button
+              variant="ghost"
+              dense
               onClick={() => onDecide(row.callId, "approve", { always: true })}
               data-testid="allow-always"
             >
               Allow always
-            </button>
-            <button
-              type="button"
-              className={`desk-chip ${row.defaultDecision === "deny" ? "is-primary" : "quiet"}`}
+            </Button>
+            <Button
+              variant={row.defaultDecision === "deny" ? "primary" : "ghost"}
+              dense
               onClick={() => onDecide(row.callId, "deny")}
               data-testid="deny"
               autoFocus={row.defaultDecision === "deny"}
             >
               Deny
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -727,6 +732,7 @@ function AnnotationPopover({
         {quoteHead}
       </div>
       <div className="thread-annotation-input-row">
+        {/* UX-CANON: needs redesign (HS-170-04) */}
         <input
           ref={inputRef}
           type="text"
@@ -748,23 +754,23 @@ function AnnotationPopover({
         />
       </div>
       <div className="thread-annotation-actions">
-        <button
-          type="button"
-          className="desk-chip is-primary"
+        <Button
+          variant="primary"
+          dense
           data-testid="annotation-save"
           disabled={!comment.trim()}
           onClick={() => onSave(comment.trim())}
         >
           Save
-        </button>
-        <button
-          type="button"
-          className="desk-chip quiet"
+        </Button>
+        <Button
+          variant="ghost"
+          dense
           data-testid="annotation-cancel"
           onClick={onCancel}
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -788,15 +794,16 @@ function AnnotationChips({
         return (
           <span key={a.id} className="thread-annotation-chip" data-testid="annotation-chip">
             <span className="thread-annotation-chip-text">{head}</span>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              dense
               className="thread-annotation-chip-remove"
               data-testid="annotation-chip-remove"
               aria-label="Remove annotation"
               onClick={() => onRemove(a.id)}
             >
               x
-            </button>
+            </Button>
           </span>
         );
       })}
@@ -920,13 +927,14 @@ function ThreadMessageList({
     <div className="thread-messages">
       {beforeCut.length > 0 && (
         <div className="thread-earlier-fold" data-testid="earlier-messages-fold">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            dense
             className="thread-earlier-toggle"
             onClick={() => setEarlierExpanded(!earlierExpanded)}
           >
             {earlierExpanded ? "Hide" : `${beforeCut.length} earlier message${beforeCut.length !== 1 ? "s" : ""}`}
-          </button>
+          </Button>
           {earlierExpanded && (
             <div className="thread-earlier-messages">
               {beforeCut.map(renderMsg)}
@@ -1041,7 +1049,7 @@ function MessageRow({
           {msg.modelId || "ASSISTANT"}
         </span>
         {receiptShort && (
-          <span className="thread-row-receipt" title={msg.receiptId ?? undefined}>
+          <span className="thread-row-receipt">
             {"receipt ····"}{receiptShort}
           </span>
         )}
@@ -1053,13 +1061,13 @@ function MessageRow({
       {crashed && (
         <div className="thread-row-crashed-body">
           <span className="thread-crash-label">CRASHED</span>
-          <button
-            type="button"
-            className="desk-chip is-primary"
+          <Button
+            variant="primary"
+            dense
             onClick={() => onRetry(msg.id)}
           >
             Retry
-          </button>
+          </Button>
         </div>
       )}
 
@@ -1122,27 +1130,27 @@ function MessageRow({
         />
         {isDone && !editing && (
           <>
-            <button
-              type="button"
-              className="desk-chip quiet"
+            <Button
+              variant="ghost"
+              dense
               onClick={() => onKeep(msg.id, "note")}
             >
               Keep as note
-            </button>
-            <button
-              type="button"
-              className="desk-chip quiet"
+            </Button>
+            <Button
+              variant="ghost"
+              dense
               onClick={() => onKeep(msg.id, "artifact")}
             >
               Keep as artifact
-            </button>
-            <button
-              type="button"
-              className="desk-chip quiet"
+            </Button>
+            <Button
+              variant="ghost"
+              dense
               onClick={() => setEditing(true)}
             >
               Fork here
-            </button>
+            </Button>
           </>
         )}
         {editing && (
@@ -1588,6 +1596,7 @@ function ThreadPulloutInner({
         {/* Head: title, egress, status, token meter */}
         <div className="thread-head">
           {editingTitle ? (
+            // UX-CANON: needs redesign (HS-170-04)
             <input
               ref={titleRef}
               className="thread-title-input"
