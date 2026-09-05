@@ -92,6 +92,26 @@ class AutomationRepository(BaseRepository):
             rows = conn.execute("SELECT * FROM connector_watches ORDER BY created_at,id").fetchall()
         return [self._payload(row, "query", "snapshot") for row in rows]
 
+    @staticmethod
+    def pause_project_watches_in_txn(conn: Any, project_id: str, now_iso: str) -> int:
+        """Pause every active/tested watch of a project INSIDE the caller's
+        open transaction (HS-167 M-2: an archive and its watch pause commit
+        together or not at all). The one sanctioned write to
+        connector_watches outside WatchService — see
+        tests/unit/test_watch_no_third_door.py. Returns the count paused."""
+        rows = conn.execute(
+            "SELECT id FROM connector_watches "
+            "WHERE project_id = ? AND state IN ('active', 'tested')",
+            (project_id,),
+        ).fetchall()
+        for wr in rows:
+            conn.execute(
+                "UPDATE connector_watches "
+                "SET state = 'paused', updated_at = ? WHERE id = ?",
+                (now_iso, wr["id"]),
+            )
+        return len(rows)
+
     def list_enabled_legacy_watches(self) -> list[dict[str, Any]]:
         """Select enabled watches eligible for legacy refresh_due_watches.
 

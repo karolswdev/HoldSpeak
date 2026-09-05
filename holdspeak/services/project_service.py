@@ -1842,17 +1842,8 @@ class ProjectService:
             # HS-167 M-2: pause active/tested watches bound to this
             # project and disable unattended policy — in the SAME
             # transaction — so an archived project never evaluates.
-            watch_rows = conn.execute(
-                "SELECT id FROM connector_watches "
-                "WHERE project_id = ? AND state IN ('active', 'tested')",
-                (project_id,),
-            ).fetchall()
-            for wr in watch_rows:
-                conn.execute(
-                    "UPDATE connector_watches "
-                    "SET state = 'paused', updated_at = ? WHERE id = ?",
-                    (now_iso, wr["id"]),
-                )
+            from holdspeak.db.automations import AutomationRepository as _WatchRepo
+            _WatchRepo.pause_project_watches_in_txn(conn, project_id, now_iso)
 
             policy = self._db.steward_policies.get_policy_for_project_in_transaction(
                 conn, project_id,
