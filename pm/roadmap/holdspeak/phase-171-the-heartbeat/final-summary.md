@@ -51,7 +51,10 @@
   08:00 · NEXT 13:20 · LAST 13:05`, his one Room in ⌘K's PROJECTS, the
   brief row on the shade, no badge at a count of zero. A banner at a real
   edge after 08:00 is his to see. Zero face defects; two desk truths
-  found (above).
+  found (above). The second walk, after the fixes: Rhythm's gadgets read
+  `EVERY 15 MIN` · `ON THE EDGE | COUNT ONLY`, his one Room's mute
+  toggle enabled, `BRIEF` its own caption on the shade, his Room in ⌘K
+  with no chip at zero, `NO BANNER (count=0)`, zero defects again.
 
 ## Counsel on the built phase (2026-09-05 09:20): RATIFY-W-C
 
