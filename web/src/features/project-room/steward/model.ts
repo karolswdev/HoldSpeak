@@ -84,6 +84,7 @@ export type StewardPolicy = {
   bounds: Record<string, unknown>;
   enabled: boolean;
   unattendedEnabled: boolean;
+  nudgeTemplate: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -198,6 +199,7 @@ export function decodePolicy(raw: Record<string, unknown>): StewardPolicy {
       : {}) as Record<string, unknown>,
     enabled: Boolean(raw.enabled),
     unattendedEnabled: Boolean(raw.unattended_enabled),
+    nudgeTemplate: raw.nudge_template != null ? String(raw.nudge_template) : null,
     createdAt: raw.created_at != null ? String(raw.created_at) : null,
     updatedAt: raw.updated_at != null ? String(raw.updated_at) : null,
   };
@@ -226,6 +228,7 @@ const EFFECT_KIND_LABELS: Record<string, string> = {
   apply_proposal_effects: "Applied proposal effects",
   draft_update: "Drafted update",
   create_door_item: "Door item created",
+  github_comment: "Reviewer nudge",
 };
 
 /** Effect kind as words a Senior Architect reads on a Tuesday. */
@@ -243,6 +246,13 @@ export function effectKindLabel(kind: string): string {
  *  draft_update actually calls the model today. */
 export function isModelTouchingKind(kind: string): boolean {
   return kind === "draft_update";
+}
+
+/** The external host an effect kind writes to (egress badge on policy row).
+ *  Returns null for internal-only kinds. */
+export function effectKindEgressHost(kind: string): string | null {
+  if (kind === "github_comment") return "GITHUB.COM";
+  return null;
 }
 
 /* HS-167-03: computeVerticalScrollHint promoted to the surface barrel.
@@ -392,7 +402,7 @@ export function receiptRefs(step: StewardStep): string[] {
   return refs;
 }
 
-/* ── The five canonical effect kinds (mirrors backend EFFECT_KINDS) ── */
+/* ── The six canonical effect kinds (mirrors backend EFFECT_KINDS) ── */
 
 export const EFFECT_KINDS: readonly string[] = [
   "refresh_sources",
@@ -400,6 +410,7 @@ export const EFFECT_KINDS: readonly string[] = [
   "apply_proposal_effects",
   "draft_update",
   "create_door_item",
+  "github_comment",
 ];
 
 /* ── Coverage: partial/degraded observe phase ── */
@@ -469,6 +480,7 @@ const EFFECT_GRANT_LABELS: Record<string, string> = {
   apply_proposal_effects: "apply proposal effects",
   draft_update: "draft updates",
   create_door_item: "create door items",
+  github_comment: "send reviewer nudges",
 };
 
 function effectGrantLabel(kind: string): string {

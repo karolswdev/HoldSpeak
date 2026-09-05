@@ -38,6 +38,7 @@ export function useStewardController(
     enabled: boolean;
     unattended_enabled: boolean;
     evaluation_cadence_minutes?: number;  // HS-167-02
+    nudge_template?: string | null;  // HS-173-04
   } | null>(null);
   const [policyError, setPolicyError] = useState("");
 
@@ -269,6 +270,7 @@ export function useStewardController(
           enabled: p.enabled,
           unattended_enabled: p.unattendedEnabled,
           evaluation_cadence_minutes: watchCadence,
+          nudge_template: p.nudgeTemplate,
         });
       } else {
         setPolicyDraft({
@@ -279,6 +281,7 @@ export function useStewardController(
           enabled: true,
           unattended_enabled: false,
           evaluation_cadence_minutes: watchCadence,
+          nudge_template: null,
         });
       }
       setPosture("policy");
@@ -308,6 +311,7 @@ export function useStewardController(
         cooldown_seconds: result.policy.cooldownSeconds,
         enabled: result.policy.enabled,
         unattended_enabled: result.policy.unattendedEnabled,
+        nudge_template: result.policy.nudgeTemplate,
       });
     } catch (reason) {
       setPolicyError(readableError(reason));

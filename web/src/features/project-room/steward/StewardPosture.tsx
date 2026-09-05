@@ -19,6 +19,7 @@ import {
   GadgetGroup,
   GadgetRow,
   CheckGadget,
+  StringGadget,
   StepperGadget,
   humanTime,
   countLabel,
@@ -33,6 +34,7 @@ import {
   circuitStateLabel,
   circuitStateTone,
   coverageSummary,
+  effectKindEgressHost,
   effectKindLabel,
   isActive,
   isModelTouchingKind,
@@ -57,6 +59,7 @@ const GRANT_TOKENS: Record<string, string> = {
   apply_proposal_effects: "APPLY EFFECTS",
   draft_update: "DRAFT UPDATE",
   create_door_item: "DOOR ITEM",
+  github_comment: "REVIEWER NUDGE",
 };
 
 function grantToken(kind: string): string {
@@ -379,7 +382,8 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
       draft.max_actions_per_run !== ctrl.policy.maxActionsPerRun ||
       draft.cooldown_seconds !== ctrl.policy.cooldownSeconds ||
       JSON.stringify(draft.eligible_effect_kinds) !==
-        JSON.stringify(ctrl.policy.eligibleEffectKinds)
+        JSON.stringify(ctrl.policy.eligibleEffectKinds) ||
+      (draft.nudge_template ?? null) !== (ctrl.policy.nudgeTemplate ?? null)
     : true;
 
   return (
@@ -496,25 +500,52 @@ function PolicyEditor({ ctrl }: { ctrl: StewardController }) {
 
         <GadgetRow label="Effects">
           <div data-testid="steward-policy-effects">
-            {EFFECT_KINDS.map((kind) => (
-              <div key={kind} className="steward-policy-effect-row">
-                <CheckGadget
-                  label={effectKindLabel(kind)}
-                  checked={draft.eligible_effect_kinds.includes(kind)}
-                  onChange={() => ctrl.toggleEffectKind(kind)}
-                />
-                <span data-testid={`steward-policy-kind-label-${kind}`}>
-                  {effectKindLabel(kind)}
-                </span>
-                {isModelTouchingKind(kind) ? (
-                  <EgressChip
-                    label="model"
-                    scope="mixed"
-                    title="Uses the model assigned in Settings > Models. Falls back to deterministic."
+            {EFFECT_KINDS.map((kind) => {
+              const egressHost = effectKindEgressHost(kind);
+              return (
+                <div key={kind} className="steward-policy-effect-row">
+                  <CheckGadget
+                    label={effectKindLabel(kind)}
+                    checked={draft.eligible_effect_kinds.includes(kind)}
+                    onChange={() => ctrl.toggleEffectKind(kind)}
                   />
-                ) : null}
+                  <span data-testid={`steward-policy-kind-label-${kind}`}>
+                    {effectKindLabel(kind)}
+                  </span>
+                  {isModelTouchingKind(kind) ? (
+                    <EgressChip
+                      label="model"
+                      scope="mixed"
+                      title="Uses the model assigned in Settings > Models. Falls back to deterministic."
+                    />
+                  ) : null}
+                  {egressHost ? (
+                    <EgressChip
+                      label={egressHost}
+                      scope="cloud"
+                      title={`This effect writes to ${egressHost}.`}
+                    />
+                  ) : null}
+                </div>
+              );
+            })}
+            {/* HS-173-04: the double gate -- per-nudge approval token */}
+            <div className="steward-policy-nudge-approval" data-testid="steward-policy-nudge-approval">
+              <span className="surface-token" data-chip>PER-NUDGE APPROVAL</span>
+            </div>
+            {/* HS-173-04: nudge template -- visible when github_comment is checked */}
+            {draft.eligible_effect_kinds.includes("github_comment") ? (
+              <div data-testid="steward-policy-nudge-template">
+                <GadgetRow label="Nudge text">
+                  <StringGadget
+                    label="Nudge text"
+                    value={draft.nudge_template ?? ""}
+                    onChange={(v) => ctrl.updatePolicyDraft("nudge_template", v)}
+                    placeholder="This PR has been waiting for review for {days} days."
+                  />
+                </GadgetRow>
               </div>
-            ))}
+            ) : null}
           </div>
         </GadgetRow>
 

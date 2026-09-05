@@ -391,28 +391,28 @@ describe("Source rows: deduplicated refs and open source", () => {
       expect(screen.getByTestId("update-editor")).toBeTruthy();
     });
 
-    // Source rows should be present (deduplicated)
-    const sourceRows = screen.getAllByTestId("update-source-row");
-    expect(sourceRows.length).toBeGreaterThanOrEqual(1);
+    // HS-173-02: inline claims render each sentence with identity ref chips
+    const claimRows = screen.getAllByTestId("update-inline-claim");
+    expect(claimRows.length).toBeGreaterThanOrEqual(1);
 
-    // Ref chips with human labels
+    // Ref chips with identity labels (no claim text, just the ref identity)
     const refChips = screen.getAllByTestId("update-claim-ref");
     expect(refChips.length).toBeGreaterThanOrEqual(4);
 
     const actionItemChip = refChips.find(
       (el) => el.getAttribute("data-ref") === "action_item:ai-01",
     );
-    expect(actionItemChip!.textContent).toBe("Widget development on track");
+    expect(actionItemChip!.textContent).toBe("AI-01");
 
     const decisionChip = refChips.find(
       (el) => el.getAttribute("data-ref") === "decision:d-01",
     );
-    expect(decisionChip!.textContent).toBe("Adopted event sourcing pattern");
+    expect(decisionChip!.textContent).toBe("D-01");
 
     const meetingChip = refChips.find(
       (el) => el.getAttribute("data-ref") === "meeting:m-01",
     );
-    expect(meetingChip!.textContent).toBe("Review meeting scheduled");
+    expect(meetingChip!.textContent).toBe("MTG M-01");
   });
 
   it("no raw IDs on glass: ref chip visible text never matches hash pattern", async () => {
@@ -458,7 +458,7 @@ describe("Source rows: deduplicated refs and open source", () => {
       (el) => el.getAttribute("data-ref") === "action_item:ai-01",
     );
     expect(actionItemChip).toBeTruthy();
-    expect(actionItemChip!.textContent).toBe("Widget development on track");
+    expect(actionItemChip!.textContent).toBe("AI-01");
     fireEvent.click(actionItemChip!);
 
     expect(mockOpenPrimitive).toHaveBeenCalledWith("action_item:ai-01");
@@ -481,7 +481,7 @@ describe("Source rows: deduplicated refs and open source", () => {
       (el) => el.getAttribute("data-ref") === "meeting:m-01",
     );
     expect(meetingChip).toBeTruthy();
-    expect(meetingChip!.textContent).toBe("Review meeting scheduled");
+    expect(meetingChip!.textContent).toBe("MTG M-01");
     fireEvent.click(meetingChip!);
 
     expect(mockOpenSurfaceOr).toHaveBeenCalledWith(
@@ -508,7 +508,7 @@ describe("Source rows: deduplicated refs and open source", () => {
       (el) => el.getAttribute("data-ref") === "decision:d-01",
     );
     expect(decisionChip).toBeTruthy();
-    expect(decisionChip!.textContent).toBe("Adopted event sourcing pattern");
+    expect(decisionChip!.textContent).toBe("D-01");
     fireEvent.click(decisionChip!);
 
     expect(mockOpenPrimitive).toHaveBeenCalledWith("decision:d-01");
@@ -531,8 +531,9 @@ describe("Unverified claims: banner in document view", () => {
     await waitFor(() => screen.getByTestId("update-editor"));
 
     // The unverified banner appears (the risks_blockers claim has verified:false + no refs)
-    const banner = screen.getByTestId("update-claim-unverified");
-    expect(banner.textContent).toBe("Contains unverified claims");
+    const badges = screen.getAllByTestId("update-claim-unverified");
+    expect(badges.length).toBeGreaterThanOrEqual(1);
+    expect(badges[0].textContent).toContain("UNVERIFIED");
   });
 });
 
