@@ -106,7 +106,7 @@ between a person's name and a Watch entity's assignee/reviewer.
 | HS-172-04 | The People resolver (display name / alias to Watch assignee / reviewer; encrypted boundary) | done | [story-04-the-people-resolver](./story-04-the-people-resolver.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-172-05 | The 1:1 brief enrichment (Watches + commitments + meetings in the People card) | done | [story-05-the-brief-enrichment](./story-05-the-brief-enrichment.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-172-06 | The suggested source (meeting mention of a repo/issue as a suggested source row) | done | [story-06-the-suggested-source](./story-06-the-suggested-source.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-172-07 | People in the Room and the shade (the 393 gap; the face at both widths) | in-progress | [story-07-people-in-the-room](./story-07-people-in-the-room.md) | -- |
+| HS-172-07 | People in the Room and the shade (the 393 gap; the face at both widths) | done | [story-07-people-in-the-room](./story-07-people-in-the-room.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-172-08 | The walk (his desk: a meeting that closes its loop) | in-progress | [story-08-the-walk](./story-08-the-walk.md) | -- |
 | HS-172-09 | The docs (the loop in the architecture; the People card in the guide) | in-progress | [story-09-the-docs](./story-09-the-docs.md) | -- |
 | HS-172-10 | The close (gates, sweep, counsel, the ledger, final summary; PR; merge on his word) | backlog | [story-10-the-close](./story-10-the-close.md) | -- |

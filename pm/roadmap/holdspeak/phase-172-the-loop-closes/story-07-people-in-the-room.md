@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 172
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-172-03, HS-172-05, HS-172-06
 - **Unblocks:** HS-172-08
 - **Owner:** unassigned
@@ -34,14 +34,14 @@ The shade has no People items.
 
 ## Acceptance criteria
 
-- [ ] The Room shows resolved People for the project's Watch entities
+- [x] The Room shows resolved People for the project's Watch entities
       at both widths (1440 + 393); verified by a rig with a seeded
       Watch snapshot and linked People aliases.
-- [ ] Tapping a person row in the Room opens the People card with the
+- [x] Tapping a person row in the Room opens the People card with the
       enriched 1:1 brief.
-- [ ] The shade at 393 allows reaching the People card from a Room
+- [x] The shade at 393 allows reaching the People card from a Room
       context.
-- [ ] When no People aliases are linked to Watch entities, the section
+- [x] When no People aliases are linked to Watch entities, the section
       is absent (UX-CANON.md rule A.8: no counters of zero).
 
 ## Test plan
