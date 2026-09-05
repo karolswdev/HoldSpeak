@@ -243,6 +243,10 @@ tagline true fastest, 172 may run in parallel with 171 once 170 lands
 The first ask of the next sitting: his word on this order — and his
 attended walk of 169's door, which every phase above assumes he owns.
 
+> **Chartered 2026-09-05:** every phase 171–180 now has a PLANNED folder
+> under pm/roadmap/holdspeak/ (stories in backlog; each activates when the
+> one before it merges; his questions per phase live in the handover).
+
 ## 6. The long arc to 180 (the owner's goal, 2026-09-05)
 
 The owner's words, verbatim: **"Goal set: Fedaykin satisfied all phases
