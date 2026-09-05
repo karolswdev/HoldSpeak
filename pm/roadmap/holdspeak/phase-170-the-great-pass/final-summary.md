@@ -89,6 +89,17 @@
   eight new MCP tools; the api-surface consumers regenerate after the
   parkings.
 
+## Boards vs build — where they differ, and why
+
+The arrival's three boards predate the two addenda (the Door's items in
+NEEDS YOU with their lawful verbs; `Schedule` as the capture bar's fourth
+verb; the armed countdown row; `NO CALENDAR` + `Connect calendar`; BRIEF's
+`Generate` door; AGENTS when sessions exist). The build shots under
+assets/story-04-shots/build-arrival-*.png are the truth for those; the
+grammar is the boards' (rows, tokens, the library Button). Meetings'
+detail verbs read `Decide` / `Dismiss` (the board's `Decide` / `Open`
+carried the wire's approve/reject). Everything else matches its board.
+
 ## Counsel on the built phase (2026-09-05 03:20): RATIFY-W-C
 
 M-1 raw buttons in the picker · M-2 the BRIEF's `Generate` door · M-3 the
