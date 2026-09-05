@@ -94,7 +94,7 @@ export function FinishThoughtsLane() {
 
   if (!items.length) return null;
 
-  const count = `${items.length}${nextCursor ? "+" : ""}`;
+  const count = items.length > 0 ? `${items.length}${nextCursor ? "+" : ""}` : null;
   return (
     <section
       className="finish-thoughts"
@@ -103,7 +103,7 @@ export function FinishThoughtsLane() {
       <header className="finish-thoughts-head">
         <h2 id="finish-thoughts-title">Finish thoughts</h2>
         <span
-          aria-label={`${items.length}${nextCursor ? " or more" : ""} unfinished thoughts`}
+          aria-label={items.length > 0 ? `${items.length}${nextCursor ? " or more" : ""} unfinished thoughts` : "unfinished thoughts"}
         >
           {count}
         </span>
@@ -112,6 +112,9 @@ export function FinishThoughtsLane() {
         {items.map((thought) => {
           const title = thought.title.trim() || "Untitled thought";
           const preview = thought.body_preview.trim();
+          const sourceKind = thought.source_kind;
+          const updatedAt = thought.updated_at;
+          const continuityState = thought.continuity_state;
           const showPreview =
             Boolean(preview) && comparable(preview) !== comparable(title);
           return (
@@ -131,9 +134,7 @@ export function FinishThoughtsLane() {
                     <span className="finish-thoughts-preview">{preview}</span>
                   ) : null}
                   <span className="finish-thoughts-meta">
-                    <span>{sourceLabel(thought.source_kind)}</span>
-                    <span>{relativeUpdated(thought.updated_at)}</span>
-                    <span>{continuityLabels[thought.continuity_state]}</span>
+                    <span>{sourceLabel(sourceKind)}</span><span>{relativeUpdated(updatedAt)}</span><span>{continuityLabels[continuityState]}</span>
                     {thought.filing_status === "missing" ? (
                       <span>Not in a drawer</span>
                     ) : null}

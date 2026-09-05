@@ -1,5 +1,6 @@
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Workflow pullout content (HS-117-15). */
+import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
@@ -45,24 +46,26 @@ export function WorkflowPullout({ object: o }: PulloutContentProps) {
         </>}
       </div>
       <SurfaceFooter verbs={editing ? <>
-        <button type="button" className="desk-chip quiet" onClick={closeEditor}>Cancel</button>
-        <button type="button" className="desk-chip is-primary" onClick={closeEditor}>Save</button>
-      </> : <> <button
-          type="button"
-          className="desk-chip quiet"
+        <Button dense variant="ghost" onClick={closeEditor}>Cancel</Button>
+        <Button dense variant="primary" onClick={closeEditor}>Save</Button>
+      </> : <>
+        <Button
+          dense
+          variant="ghost"
           onClick={() =>
             openSurfaceOr("dictate", "/dictation", resourceRef)
           }
         >
           Dictate about this
-        </button>
-        <button
-          type="button"
-          className="desk-chip is-primary"
+        </Button>
+        <Button
+          dense
+          variant="primary"
           onClick={() => openEditor(o.id)}
         >
           Edit
-        </button> </>} />
+        </Button>
+      </>} />
     </>
   );
 }

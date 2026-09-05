@@ -46,7 +46,7 @@ function RefusalPanel() {
   return (
     <div className="desk-dlv-refusal" role="status">
       <span className="desk-arm-refusal">
-        ✕ {refusal.code.replace(/_/g, " ")} · {refusal.detail || recovery.hint}
+        <span aria-hidden="true">✕</span> {refusal.code.replace(/_/g, " ")} · {refusal.detail || recovery.hint}
       </span>
       <Button dense variant="ghost" onClick={close}>
         {recovery.label}
@@ -109,19 +109,19 @@ export function DeliveryDossierWindow() {
                 {`HEAD ${dossier.headSha.slice(0, 12) || "uncommitted"}`}
               </span>
               <span className="surface-token">
-                {`RUNS ${dossier.summary.passing}✓ ${dossier.summary.failing}✕`}
+                {`RUNS ${dossier.summary.passing} PASS ${dossier.summary.failing} FAIL`}
               </span>
             </p>
             {dossier.bundleChanged ? (
               <p className="desk-arm-refusal" role="status">
-                ✕ BUNDLE CHANGED
+                <span aria-hidden="true">✕</span> BUNDLE CHANGED
               </p>
             ) : null}
 
             <section>
               <SurfaceLedger
                 cols="facts"
-                count={`CAPTURED RUNS ${dossier.capturedRuns.length}`}
+                count={dossier.capturedRuns.length > 0 ? `CAPTURED RUNS ${dossier.capturedRuns.length}` : "CAPTURED RUNS"}
               >
                 {dossier.capturedRuns.length ? (
                   <ul className="surface-ledger-rows">
@@ -134,7 +134,7 @@ export function DeliveryDossierWindow() {
                               className="surface-token"
                               data-tone={r.passed ? "ok" : "danger"}
                             >
-                              {r.passed ? "✓" : "✕"}
+                              {r.passed ? "PASS" : "FAIL"}
                             </span>{" "}
                             {r.command ? (
                               <code>{r.command}</code>
@@ -160,7 +160,7 @@ export function DeliveryDossierWindow() {
             </section>
 
             <section>
-              <SurfaceLedger cols="facts" count={`ASSETS ${dossier.members.length}`}>
+              <SurfaceLedger cols="facts" count={dossier.members.length > 0 ? `ASSETS ${dossier.members.length}` : "ASSETS"}>
                 {dossier.members.length ? (
                   <ul className="surface-ledger-rows">
                     {dossier.members.map((m) => (

@@ -310,7 +310,7 @@ export function DeskToolShelf() {
       push({
         id: `settings:${module.id}`,
         section: "SETTINGS",
-        glyph: "⚙",
+        glyph: "S",
         label: module.label,
         kind: "SETTINGS",
         terms: `${module.id} ${module.keys.join(" ")}`,

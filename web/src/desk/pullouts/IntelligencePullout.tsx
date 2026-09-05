@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 import { INTELLIGENCE_NAVIGATE, type IntelligenceNavigation, type IntelligenceView } from "../intelligenceNavigation";
 import { BriefView } from "./views/BriefView";
@@ -63,15 +64,13 @@ function FilterTokens({
   if (!navigation.overdueOnly) return null;
   return (
     <div className="intelligence-filters" aria-label="Active filters">
-      <button
-        type="button"
-        className="desk-chip"
-        data-tone="fail"
+      <Button
+        dense
         aria-label="Clear filter OVERDUE ONLY"
         onClick={clearOverdueOnly}
       >
-        FILTER · OVERDUE ONLY ✕
-      </button>
+        FILTER · OVERDUE ONLY <span aria-hidden="true">✕</span>
+      </Button>
     </div>
   );
 }
@@ -127,7 +126,7 @@ export function IntelligencePullout({ object }: PulloutContentProps) {
     setNavigation((current) => ({ ...current, overdueOnly: undefined }));
   const header = (
     <div className="intelligence-header">
-      {history.length ? <button type="button" className="receipt-back" onClick={goBack}>← BACK</button> : null}
+      {history.length ? <Button dense variant="ghost" className="receipt-back" onClick={goBack}>BACK</Button> : null}
       <IntelligenceHeader activeView={activeView} selectView={selectView} />
       <FilterTokens navigation={navigation} clearOverdueOnly={clearOverdueOnly} />
     </div>

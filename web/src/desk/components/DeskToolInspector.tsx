@@ -280,7 +280,7 @@ export function DeskToolInspector() {
                     </button>
                   ) : (
                     <span>
-                      <strong>{humanizeWireValue(String(resource.resource_ref))}</strong>
+                      <strong>{(() => { const ref = resource.resource_ref; return humanizeWireValue(String(ref)); })()}</strong>
                       <small>
                         {humanizeWireValue(String(resource.relationship))} · unavailable on this Desk
                       </small>

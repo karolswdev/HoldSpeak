@@ -536,16 +536,16 @@
 }
 
 .thread-tool-held {
-  border-left: 2px solid var(--accent, #3b82f6);
+  background: color-mix(in srgb, var(--accent, #3b82f6) 6%, transparent);
 }
 
 .thread-tool-running {
-  border-left: 2px solid var(--accent, #3b82f6);
+  background: color-mix(in srgb, var(--accent, #3b82f6) 6%, transparent);
   opacity: 0.85;
 }
 
 .thread-tool-error {
-  border-left: 2px solid var(--danger-signal, #ef4444);
+  background: color-mix(in srgb, var(--danger-signal, #ef4444) 6%, transparent);
 }
 
 .thread-tool-row-head {
@@ -1022,11 +1022,11 @@
 }
 
 .thread-guardrail-row.has-violations {
-  border-left: 2px solid var(--danger-signal, #ef4444);
+  background: color-mix(in srgb, var(--danger-signal, #ef4444) 6%, transparent);
 }
 
 .thread-guardrail-row.has-warnings {
-  border-left: 2px solid var(--warning-signal, #f59e0b);
+  background: color-mix(in srgb, var(--warning-signal, #f59e0b) 6%, transparent);
 }
 
 .thread-guardrail-head {
@@ -1086,7 +1086,7 @@
 .thread-annotation-popover {
   background: var(--desk-window-fill);
   border: 1px solid var(--border-subtle, rgba(128, 128, 128, 0.12));
-  border-left: 2px solid var(--accent, #4488ff);
+  border-inline-start: 1px solid color-mix(in srgb, var(--accent, #4488ff) 30%, transparent);
   border-radius: 2px;
   padding: 8px;
   min-width: 240px;

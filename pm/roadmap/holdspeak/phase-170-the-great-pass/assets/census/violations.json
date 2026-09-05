@@ -1,170 +1,96 @@
 {
   "totals": {
     "per_rule": {
-      "A1": 147,
-      "A8": 118,
-      "raw-ids": 140,
-      "B": 51,
-      "A3-prose": 43,
-      "mic": 35,
-      "emoji": 112,
-      "A9": 1,
-      "A3-sentence": 12,
+      "A8": 49,
+      "A3-prose": 12,
+      "raw-ids": 65,
+      "mic": 27,
+      "emoji": 21,
+      "B": 34,
+      "A1": 6,
       "C": 4,
-      "DS6": 8
+      "A3-sentence": 4
     },
     "per_face": {
-      "DeskApp": 1,
-      "FinishThoughtsLane": 5,
-      "ThoughtEntry": 5,
-      "AgentsLane": 1,
-      "DoorBoardLane": 6,
-      "AgentAvatar": 2,
-      "ApplicationBoundary": 1,
-      "AskPanel": 12,
-      "AttentionDrawer": 15,
-      "DeliveryBoard": 12,
-      "DeliveryDossierWindow": 6,
-      "DeliveryTerminalWindow": 6,
-      "DeskComposer": 2,
+      "FinishThoughtsLane": 1,
+      "DoorBoardLane": 3,
+      "AskPanel": 9,
       "DeskEditor": 5,
-      "DeskFilingStrip": 3,
-      "DeskListView": 6,
       "DeskMenu": 1,
       "DeskSortableTable": 1,
       "DeskToolInspector": 2,
-      "DeskToolShelf": 3,
-      "EditorAIBar": 2,
-      "FirstWords": 2,
+      "DeskToolShelf": 2,
+      "EditorAIBar": 1,
       "GlassDropLayer": 1,
-      "GroundingSection": 1,
-      "InfoWindow": 3,
-      "InletAutocomplete": 2,
-      "InlineEditor": 3,
-      "MissionControlConveyor": 15,
-      "NewWorkbenchChooser": 1,
-      "PrReceiptsSection": 17,
-      "Pullout": 2,
-      "RailsPicker": 2,
-      "RepoWindow": 5,
-      "RoadmapWindow": 3,
-      "ScheduleCreateWindow": 3,
-      "SessionPullout": 15,
-      "SystemShade": 5,
-      "ThreadComposer": 3,
-      "TrustWindow": 1,
-      "WhyControl": 2,
-      "WorkbenchAutomations": 19,
-      "WorkbenchResourceful": 7,
-      "WorkbenchWindow": 12,
-      "ZoneWindow": 1,
-      "WorkbenchRunsWing": 3,
+      "InfoWindow": 1,
+      "InletAutocomplete": 1,
+      "PrReceiptsSection": 1,
+      "Pullout": 1,
+      "RailsPicker": 1,
+      "RepoWindow": 1,
+      "ScheduleCreateWindow": 2,
+      "SessionPullout": 1,
+      "SystemShade": 2,
+      "ThreadComposer": 2,
+      "WhyControl": 1,
+      "WorkbenchAutomations": 2,
+      "WorkbenchResourceful": 2,
+      "WorkbenchWindow": 2,
       "WorldStage": 1,
       "CoderPullout": 1,
-      "DecisionPullout": 6,
-      "IntelligencePullout": 2,
-      "KbPullout": 2,
       "MeetingPullout": 1,
-      "NotePullout": 43,
-      "RecipePullout": 2,
-      "ThoughtContextPicker": 11,
-      "ThreadPullout": 10,
-      "WorkflowPullout": 2,
+      "NotePullout": 2,
+      "ThoughtContextPicker": 2,
+      "ThreadPullout": 9,
       "KbEditor": 2,
       "NoteEditor": 2,
-      "ThoughtNoteEditor": 3,
-      "WorkflowEditor": 2,
-      "CapabilitySection": 2,
-      "thread-pullout": 6,
-      "DecisionsView": 16,
-      "FollowThroughView": 7,
+      "ThoughtNoteEditor": 1,
+      "WorkflowEditor": 1,
+      "CapabilitySection": 1,
+      "FollowThroughView": 1,
       "LedgerFilter": 1,
       "Surface": 9,
       "XtermPane": 1,
       "gadgets": 3,
       "TopologySurface": 3,
-      "topology-surface": 1,
       "ChoiceCardGroup": 1,
       "ProgressPlan": 2,
       "StateChip": 3,
-      "choice-card": 1,
-      "ThoughtDocumentPane": 10,
-      "ThoughtWorkspaceWindow": 42,
-      "ProposalStrip": 2,
-      "ProjectRoomCore": 7,
+      "ThoughtDocumentPane": 3,
+      "ThoughtWorkspaceWindow": 18,
+      "ProjectRoomCore": 6,
       "DoorCore": 1,
-      "ReviewPosture": 9,
-      "ActivationReview": 2,
-      "ClarifyStep": 3,
-      "JiraWizard": 2,
-      "ProviderWizardStep": 2,
-      "SetupBrief": 2,
-      "SetupInterview": 4,
-      "SuggestionCards": 2,
-      "ToolsRow": 1,
-      "StewardPosture": 9,
-      "UpdatePosture": 4,
+      "ReviewPosture": 5,
+      "StewardPosture": 5,
       "ActivityCore": 2,
-      "AssignmentEditor": 12,
-      "AssignmentModelChooser": 1,
-      "AssignmentSummary": 1,
+      "AssignmentEditor": 3,
       "CadenceCore": 4,
-      "CalendarSnapshotReviewCore": 3,
-      "CapabilityAssignmentsCore": 5,
-      "CommandsCore": 5,
-      "CompanionCore": 1,
-      "ComponentsCore": 13,
-      "ConstitutionalContextCore": 2,
-      "HistoryCore": 3,
-      "LiveCore": 5,
-      "ModelLibraryCore": 20,
-      "PeopleCore": 35,
-      "ProcessCore": 1,
-      "RuntimeDocsCore": 2,
-      "SettingsCore": 4,
-      "SetupCore": 1,
-      "TopologyMapView": 12,
-      "WorkbenchesHomeCore": 8,
-      "ConnectionsPane": 2,
-      "Blocks": 7,
+      "CalendarSnapshotReviewCore": 1,
+      "CapabilityAssignmentsCore": 2,
+      "CommandsCore": 1,
+      "ComponentsCore": 5,
+      "LiveCore": 3,
+      "ModelLibraryCore": 7,
+      "PeopleCore": 33,
+      "SettingsCore": 3,
+      "TopologyMapView": 2,
+      "WorkbenchesHomeCore": 3,
+      "ConnectionsPane": 1,
+      "Blocks": 1,
       "DictationSections": 1,
-      "InstrumentStrip": 2,
-      "Journal": 5,
-      "Knowledge": 4,
+      "Journal": 3,
+      "Knowledge": 1,
       "Memory": 1,
-      "Readiness": 4,
       "ResultPanel": 4,
       "UtteranceWell": 1,
-      "frontDoor": 5,
-      "ArtifactsLibrary": 2,
-      "CatalogRail": 5,
-      "ImportSection": 3,
+      "CatalogRail": 4,
+      "ImportSection": 2,
       "MeetingDetail": 1,
-      "MeetingHeader": 2,
       "MeetingsConfig": 1,
-      "SettledList": 1,
-      "TranscriptWell": 2,
-      "useMeetingData": 2,
-      "settingsPrefs": 3
+      "TranscriptWell": 1
     }
   },
   "faces": {
-    "ActivationReview": [
-      {
-        "file": "features/project-room/setup/ActivationReview.tsx",
-        "line": 112,
-        "rule": "A8",
-        "text": "Zero fallback rendered (?? 0): ? `${selected.filter((p) => p.providerId === pid && p.testResult).reduce((n, p) => n + (p.testResult",
-        "confidence": "medium"
-      },
-      {
-        "file": "features/project-room/setup/ActivationReview.tsx",
-        "line": 131,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceSection label={`WHAT WILL RUN ${selected.length}`}>",
-        "confidence": "medium"
-      }
-    ],
     "ActivityCore": [
       {
         "file": "pages/cores/ActivityCore.tsx",
@@ -178,53 +104,6 @@
         "line": 1,
         "rule": "mic",
         "text": "Text input found but no MicButton in this face (the voice law)"
-      }
-    ],
-    "AgentAvatar": [
-      {
-        "file": "desk/components/AgentAvatar.tsx",
-        "line": 19,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: /** The wire avatar (free text). Empty or the legacy \ud83e\udd16 default -> sprite. */"
-      },
-      {
-        "file": "desk/components/AgentAvatar.tsx",
-        "line": 30,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: if (custom && custom !== \"\ud83e\udd16\")"
-      }
-    ],
-    "AgentsLane": [
-      {
-        "file": "desk/chair/lanes/AgentsLane.tsx",
-        "line": 172,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): title={`AGENTS \u00b7 CREW ${crewCount} \u00b7 BLOCKED ${blocked.length}`}",
-        "confidence": "medium"
-      }
-    ],
-    "ApplicationBoundary": [
-      {
-        "file": "desk/components/ApplicationBoundary.tsx",
-        "line": 45,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip\" onClick={this.retry}>"
-      }
-    ],
-    "ArtifactsLibrary": [
-      {
-        "file": "pages/cores/history/ArtifactsLibrary.tsx",
-        "line": 29,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): count={artifactRows.length}",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/history/ArtifactsLibrary.tsx",
-        "line": 30,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): token={`${artifactRows.length} ${artifactRows.length === 1 ? \"ARTIFACT\" : \"ARTIFACTS\"}`}",
-        "confidence": "medium"
       }
     ],
     "AskPanel": [
@@ -256,112 +135,45 @@
       },
       {
         "file": "desk/components/AskPanel.tsx",
-        "line": 402,
+        "line": 401,
         "rule": "A8",
         "text": "Counter may render zero (count pattern): GROUNDED ON {groundedMatchCount(receipt)} OF{\" \"}",
         "confidence": "low"
       },
       {
         "file": "desk/components/AskPanel.tsx",
-        "line": 433,
+        "line": 432,
         "rule": "B",
         "text": "Raw control element: <textarea"
       },
       {
         "file": "desk/components/AskPanel.tsx",
-        "line": 484,
+        "line": 483,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): CTX \u00b7 {context.length}{\" \"}",
         "confidence": "medium"
       },
       {
         "file": "desk/components/AskPanel.tsx",
-        "line": 497,
+        "line": 496,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): CONTEXT \u00b7 {context.length}",
         "confidence": "medium"
       },
       {
         "file": "desk/components/AskPanel.tsx",
-        "line": 557,
+        "line": 556,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): : `${selectedIds.length} selected`}",
         "confidence": "medium"
-      },
-      {
-        "file": "desk/components/AskPanel.tsx",
-        "line": 559,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip\" onClick={openAsk}>"
-      },
-      {
-        "file": "desk/components/AskPanel.tsx",
-        "line": 560,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2726 Ask AI"
-      },
-      {
-        "file": "desk/components/AskPanel.tsx",
-        "line": 568,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2715"
       }
     ],
     "AssignmentEditor": [
       {
         "file": "pages/cores/AssignmentEditor.tsx",
-        "line": 177,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <header className=\"assignment-sheet-head\"><div><span>Assignments</span><h2>{title}</h2></div><button"
-      },
-      {
-        "file": "pages/cores/AssignmentEditor.tsx",
-        "line": 179,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {error ? <div className=\"assignment-sheet-error\"><SurfaceState error={error} />{conflict ? <button t"
-      },
-      {
-        "file": "pages/cores/AssignmentEditor.tsx",
-        "line": 182,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {preview ? <button type=\"button\" disabled={busy} onClick={() => void clear()}>Use default</button> :"
-      },
-      {
-        "file": "pages/cores/AssignmentEditor.tsx",
         "line": 185,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"selected_capability\""
-      },
-      {
-        "file": "pages/cores/AssignmentEditor.tsx",
-        "line": 190,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <header><h3>Custom</h3><span>{draft.length}/4</span></header>",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/AssignmentEditor.tsx",
-        "line": 201,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {entry.readiness !== \"ready\" ? <button type=\"button\" className=\"assignment-leg-repair\" onClick={() ="
-      },
-      {
-        "file": "pages/cores/AssignmentEditor.tsx",
-        "line": 203,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" aria-label={`Move ${entry.label} up`} disabled={index === 0} onClick={() => mo"
-      },
-      {
-        "file": "pages/cores/AssignmentEditor.tsx",
-        "line": 204,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" aria-label={`Move ${entry.label} down`} disabled={index === draft.length - 1} "
-      },
-      {
-        "file": "pages/cores/AssignmentEditor.tsx",
-        "line": 205,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" aria-label={`Remove ${entry.label}`} onClick={() => remove(index)}>Remove</but"
       },
       {
         "file": "pages/cores/AssignmentEditor.tsx",
@@ -374,162 +186,9 @@
         "line": 212,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"default_id\""
-      },
-      {
-        "file": "pages/cores/AssignmentEditor.tsx",
-        "line": 214,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <footer className=\"assignment-sheet-footer\"><button type=\"button\" onClick={onClose}>Cancel</button><"
-      }
-    ],
-    "AssignmentModelChooser": [
-      {
-        "file": "pages/cores/AssignmentModelChooser.tsx",
-        "line": 88,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: {added ? \"\u2713 In the chain\" : \"Add to the chain\"}"
-      }
-    ],
-    "AssignmentSummary": [
-      {
-        "file": "pages/cores/AssignmentSummary.tsx",
-        "line": 19,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <div><button type=\"button\" onClick={(event) => onChange(event.currentTarget)}>{repair ?? \"Change\"}</"
-      }
-    ],
-    "AttentionDrawer": [
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 135,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"submit\" className=\"desk-chip quiet\">Filter</button>"
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 150,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={() => dismissAftercare()}>"
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 158,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {intelligence.briefReady ? <button type=\"button\" className=\"desk-chip quiet\" onClick={() => openInte"
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 159,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {intelligence.overdue ? <button type=\"button\" className=\"desk-chip\" data-tone=\"fail\" onClick={() => "
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 160,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {intelligence.review ? <button type=\"button\" className=\"desk-chip quiet\" onClick={() => openIntellig"
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 179,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={() => store.select(null)}>"
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 182,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"subject_label\""
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 188,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"reason_code\""
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 192,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"decision_kind\""
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 196,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"actual_destination\""
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 220,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"effect_class\""
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 241,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={() => openSource(selected)}>"
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 269,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => store.select(row.id)}>"
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 279,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"actual_destination\""
-      },
-      {
-        "file": "desk/components/AttentionDrawer.tsx",
-        "line": 1,
-        "rule": "mic",
-        "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
     "Blocks": [
-      {
-        "file": "pages/cores/dictation/Blocks.tsx",
-        "line": 56,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: announce(`\u26a0 ${readableError(error)}`, \"warn\");"
-      },
-      {
-        "file": "pages/cores/dictation/Blocks.tsx",
-        "line": 67,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: announce(`\u26a0 ${readableError(error)}`, \"warn\");"
-      },
-      {
-        "file": "pages/cores/dictation/Blocks.tsx",
-        "line": 94,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: announce(`\u26a0 ${readableError(error)}`, \"warn\");"
-      },
-      {
-        "file": "pages/cores/dictation/Blocks.tsx",
-        "line": 100,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): count={rows.length}",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/dictation/Blocks.tsx",
-        "line": 138,
-        "rule": "raw-ids",
-        "text": "ID rendered in visible prop: label={`${String(row.description ?? row.id)} template`}",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/dictation/Blocks.tsx",
-        "line": 148,
-        "rule": "raw-ids",
-        "text": "ID rendered in visible prop: label={`${String(row.id)} name`}",
-        "confidence": "medium"
-      },
       {
         "file": "pages/cores/dictation/Blocks.tsx",
         "line": 1,
@@ -540,45 +199,32 @@
     "CadenceCore": [
       {
         "file": "pages/cores/CadenceCore.tsx",
-        "line": 94,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2713 {replyReceipt}"
-      },
-      {
-        "file": "pages/cores/CadenceCore.tsx",
-        "line": 102,
+        "line": 103,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): empty={!loops.length}",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/CadenceCore.tsx",
-        "line": 163,
+        "line": 164,
+        "rule": "A3-prose",
+        "text": "Prose in <p>/<small> element: \"{String(next.body ?? next.body_markdown ?? \"\")}...\""
+      },
+      {
+        "file": "pages/cores/CadenceCore.tsx",
+        "line": 164,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"body_markdown\""
       },
       {
         "file": "pages/cores/CadenceCore.tsx",
-        "line": 186,
+        "line": 187,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): empty={!nudges.length}",
         "confidence": "medium"
       }
     ],
     "CalendarSnapshotReviewCore": [
-      {
-        "file": "pages/cores/CalendarSnapshotReviewCore.tsx",
-        "line": 195,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceSection label={`Events (${phase.events.length})`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/CalendarSnapshotReviewCore.tsx",
-        "line": 208,
-        "rule": "B",
-        "text": "Raw control element: <select"
-      },
       {
         "file": "pages/cores/CalendarSnapshotReviewCore.tsx",
         "line": 1,
@@ -589,31 +235,13 @@
     "CapabilityAssignmentsCore": [
       {
         "file": "pages/cores/CapabilityAssignmentsCore.tsx",
-        "line": 75,
+        "line": 77,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"issue_count\""
       },
       {
         "file": "pages/cores/CapabilityAssignmentsCore.tsx",
-        "line": 75,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"issue_count\""
-      },
-      {
-        "file": "pages/cores/CapabilityAssignmentsCore.tsx",
-        "line": 91,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <div className=\"assignment-override-filter\"><button type=\"button\" aria-pressed={!allTasks} onClick={"
-      },
-      {
-        "file": "pages/cores/CapabilityAssignmentsCore.tsx",
-        "line": 92,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"{task.effective.assignment ? chain(task.effective.assignment.entries) : \"No defa...\""
-      },
-      {
-        "file": "pages/cores/CapabilityAssignmentsCore.tsx",
-        "line": 92,
+        "line": 94,
         "rule": "raw-ids",
         "text": "ID field rendered as text: {taskRows.length ? <div className=\"assignment-task-rows\">{taskRows.map((task: AssignmentTaskOverride",
         "confidence": "medium"
@@ -625,41 +253,28 @@
         "line": 129,
         "rule": "B",
         "text": "Raw control element: <input"
-      },
-      {
-        "file": "desk/pullouts/shared/CapabilitySection.tsx",
-        "line": 197,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: {runWarning && <p className=\"desk-run-warning\">{\"\u26a0\"} {runWarning}</p>}"
       }
     ],
     "CatalogRail": [
       {
         "file": "pages/cores/history/CatalogRail.tsx",
-        "line": 86,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): count={`${meetingRows.length} RECORDS${needing ? ` \u00b7 ${needing} NEEDS YOU` : \"\"}`}",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/history/CatalogRail.tsx",
-        "line": 96,
+        "line": 97,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): matchCount={meetingRows.length}",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/history/CatalogRail.tsx",
-        "line": 191,
+        "line": 192,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): empty={!meetingRows.length}",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/history/CatalogRail.tsx",
-        "line": 237,
+        "line": 238,
         "rule": "A8",
-        "text": "Zero fallback rendered (?? 0): {`${Number(row.segment_count ?? 0)} SEG`}",
+        "text": "Zero fallback rendered (?? 0): {countToken(Number(row.segment_count ?? 0), \"SEG\") ?? \"\"}",
         "confidence": "medium"
       },
       {
@@ -677,26 +292,6 @@
         "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
-    "ClarifyStep": [
-      {
-        "file": "features/project-room/setup/ClarifyStep.tsx",
-        "line": 82,
-        "rule": "B",
-        "text": "Raw control element: <input"
-      },
-      {
-        "file": "features/project-room/setup/ClarifyStep.tsx",
-        "line": 117,
-        "rule": "B",
-        "text": "Raw control element: <input"
-      },
-      {
-        "file": "features/project-room/setup/ClarifyStep.tsx",
-        "line": 1,
-        "rule": "mic",
-        "text": "Text input found but no MicButton in this face (the voice law)"
-      }
-    ],
     "CoderPullout": [
       {
         "file": "desk/pullouts/CoderPullout.tsx",
@@ -708,43 +303,9 @@
     "CommandsCore": [
       {
         "file": "pages/cores/CommandsCore.tsx",
-        "line": 143,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): {renderHeroSlot(hero, verbs, `${items.length} ${items.length === 1 ? \"command\" : \"commands\"}`)}",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/CommandsCore.tsx",
-        "line": 149,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2713 {message.text}"
-      },
-      {
-        "file": "pages/cores/CommandsCore.tsx",
-        "line": 164,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: emptyGlyph=\"\u275d\""
-      },
-      {
-        "file": "pages/cores/CommandsCore.tsx",
-        "line": 288,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u26a0 RUNS CODE ON THIS MACHINE WHEN THE KEYWORD MATCHES"
-      },
-      {
-        "file": "pages/cores/CommandsCore.tsx",
         "line": 1,
         "rule": "mic",
         "text": "Text input found but no MicButton in this face (the voice law)"
-      }
-    ],
-    "CompanionCore": [
-      {
-        "file": "pages/cores/CompanionCore.tsx",
-        "line": 142,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): count={`CREW ${recipeRows.length} \u00b7 SESSIONS ${allSessions.length} \u00b7 BLOCKED ${blocked.length}`}",
-        "confidence": "medium"
       }
     ],
     "ComponentsCore": [
@@ -753,24 +314,6 @@
         "line": 128,
         "rule": "emoji",
         "text": "Emoji in JSX text: <TransportKey label=\"KILL\" glyph=\"\u2715\" tone=\"danger\" />"
-      },
-      {
-        "file": "pages/cores/ComponentsCore.tsx",
-        "line": 221,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"The fold is the ONE disclosure species: quiet row, caret,...\""
-      },
-      {
-        "file": "pages/cores/ComponentsCore.tsx",
-        "line": 222,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"trailing token slot; details semantics keep keyboard free....\""
-      },
-      {
-        "file": "pages/cores/ComponentsCore.tsx",
-        "line": 270,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2713 TWO-STEP FIRED \u00d7{confirmed} \u00b7 NO MODAL"
       },
       {
         "file": "pages/cores/ComponentsCore.tsx",
@@ -792,36 +335,6 @@
       },
       {
         "file": "pages/cores/ComponentsCore.tsx",
-        "line": 310,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Content pushed into the layout flow. Escape closes....\""
-      },
-      {
-        "file": "pages/cores/ComponentsCore.tsx",
-        "line": 313,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Started open. The caret rotates with the state....\""
-      },
-      {
-        "file": "pages/cores/ComponentsCore.tsx",
-        "line": 321,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"This fold is externally controlled. Token slot visible....\""
-      },
-      {
-        "file": "pages/cores/ComponentsCore.tsx",
-        "line": 324,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"The RAW variant for advanced/debug panels....\""
-      },
-      {
-        "file": "pages/cores/ComponentsCore.tsx",
-        "line": 439,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): addNodeSlot={<button type=\"button\" className=\"signal-btn\" style={{ fontSize: 10 }}>+ Add node</butto"
-      },
-      {
-        "file": "pages/cores/ComponentsCore.tsx",
         "line": 1,
         "rule": "mic",
         "text": "Text input found but no MicButton in this face (the voice law)"
@@ -830,344 +343,9 @@
     "ConnectionsPane": [
       {
         "file": "pages/cores/connections/ConnectionsPane.tsx",
-        "line": 349,
-        "rule": "A8",
-        "text": "Counter may render zero (count pattern): const summary = `${assigned} of ${total} assigned`;",
-        "confidence": "low"
-      },
-      {
-        "file": "pages/cores/connections/ConnectionsPane.tsx",
         "line": 1,
         "rule": "mic",
         "text": "Text input found but no MicButton in this face (the voice law)"
-      }
-    ],
-    "ConstitutionalContextCore": [
-      {
-        "file": "pages/cores/ConstitutionalContextCore.tsx",
-        "line": 139,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={exitHistory}>"
-      },
-      {
-        "file": "pages/cores/ConstitutionalContextCore.tsx",
-        "line": 185,
-        "rule": "A3-sentence",
-        "text": "Sentence in prop text: \"Write context that every agent receives.\\n\\nExample:\\nI'm a senior architect at ...\""
-      }
-    ],
-    "DecisionPullout": [
-      {
-        "file": "desk/pullouts/DecisionPullout.tsx",
-        "line": 67,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={cycleDecisionStatus}>"
-      },
-      {
-        "file": "desk/pullouts/DecisionPullout.tsx",
-        "line": 108,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button key={candidate.id} type=\"button\" className=\"desk-chip quiet\" onClick={() => openPullout(Stri"
-      },
-      {
-        "file": "desk/pullouts/DecisionPullout.tsx",
-        "line": 113,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={() => openPullout(String(ir.supersededBy)"
-      },
-      {
-        "file": "desk/pullouts/DecisionPullout.tsx",
-        "line": 143,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={() => setEditingDecision(false)}>Cancel</"
-      },
-      {
-        "file": "desk/pullouts/DecisionPullout.tsx",
-        "line": 144,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip is-primary\" onClick={commitDecisionEdit}>Done</button>"
-      },
-      {
-        "file": "desk/pullouts/DecisionPullout.tsx",
-        "line": 147,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip is-primary\" onClick={startDecisionEdit}>Edit</button>"
-      }
-    ],
-    "DecisionsView": [
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 177,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceLedger cols=\"facts\" count={`DECISIONS ${visibleResults.length}`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 236,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"receipt-back\" onClick={onBack}>\u2190 RESULTS</button>"
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 242,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"decision_text\""
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 259,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"receipt-go\" onClick={() => onOpenSource(provenance ?? receipt.sourc"
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 267,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button key={work.id} type=\"button\" className=\"receipt-work-chip\" onClick={() => onOpenWork(work)}>"
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 275,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {receipt.predecessor_id ? <button type=\"button\" onClick={() => onOpenReceipt(receipt.predecessor_id!"
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 275,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"predecessor_id\""
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 275,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"predecessor_id\""
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 277,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {receipt.successor_id ? <button type=\"button\" onClick={() => onOpenReceipt(receipt.successor_id!)}>D"
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 277,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"successor_id\""
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 277,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"successor_id\""
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 286,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"created_at\""
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 287,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"field_name\""
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 288,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"old_value\""
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 288,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"new_value\""
-      },
-      {
-        "file": "desk/pullouts/views/DecisionsView.tsx",
-        "line": 1,
-        "rule": "mic",
-        "text": "Text input found but no MicButton in this face (the voice law)"
-      }
-    ],
-    "DeliveryBoard": [
-      {
-        "file": "desk/components/DeliveryBoard.tsx",
-        "line": 80,
-        "rule": "A3-prose",
-        "text": "Prose helper class (hint/help/description): <span className=\"quiet desk-dlv-hint\">{recovery.hint}</span>"
-      },
-      {
-        "file": "desk/components/DeliveryBoard.tsx",
-        "line": 187,
-        "rule": "A3-prose",
-        "text": "Prose helper class (hint/help/description): <p className=\"desk-dlv-hint\">"
-      },
-      {
-        "file": "desk/components/DeliveryBoard.tsx",
-        "line": 188,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"surface-token\">\u2715 NO LIVE SOURCE TO LAUNCH ON</span>"
-      },
-      {
-        "file": "desk/components/DeliveryBoard.tsx",
-        "line": 252,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"desk-arm-refusal\">\u2715 {launchDetail}</span>"
-      },
-      {
-        "file": "desk/components/DeliveryBoard.tsx",
-        "line": 332,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u26a0 REFUSED \u00b7 {refusal}"
-      },
-      {
-        "file": "desk/components/DeliveryBoard.tsx",
-        "line": 441,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"desk-mc-warn\">\u26a0 {p.warnings}</span>"
-      },
-      {
-        "file": "desk/components/DeliveryBoard.tsx",
-        "line": 469,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2713"
-      },
-      {
-        "file": "desk/components/DeliveryBoard.tsx",
-        "line": 482,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceLedger cols=\"facts\" count={`WORK ${active.length}`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/DeliveryBoard.tsx",
-        "line": 499,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceLedger cols=\"facts\" count={`SESSIONS ${looseTargets.length}`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/DeliveryBoard.tsx",
-        "line": 547,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): {`SOURCES ${sources.length} \u00b7 WORK ${active.length}` +",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/DeliveryBoard.tsx",
-        "line": 1,
-        "rule": "A9",
-        "text": "Provider fetch found but no EgressChip rendered in this file"
-      },
-      {
-        "file": "desk/components/DeliveryBoard.tsx",
-        "line": 1,
-        "rule": "mic",
-        "text": "Text input found but no MicButton in this face (the voice law)"
-      }
-    ],
-    "DeliveryDossierWindow": [
-      {
-        "file": "desk/components/DeliveryDossierWindow.tsx",
-        "line": 49,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2715 {refusal.code.replace(/_/g, \" \")} \u00b7 {refusal.detail || recovery.hint}"
-      },
-      {
-        "file": "desk/components/DeliveryDossierWindow.tsx",
-        "line": 112,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: {`RUNS ${dossier.summary.passing}\u2713 ${dossier.summary.failing}\u2715`}"
-      },
-      {
-        "file": "desk/components/DeliveryDossierWindow.tsx",
-        "line": 117,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2715 BUNDLE CHANGED"
-      },
-      {
-        "file": "desk/components/DeliveryDossierWindow.tsx",
-        "line": 124,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): count={`CAPTURED RUNS ${dossier.capturedRuns.length}`}",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/DeliveryDossierWindow.tsx",
-        "line": 137,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: {r.passed ? \"\u2713\" : \"\u2715\"}"
-      },
-      {
-        "file": "desk/components/DeliveryDossierWindow.tsx",
-        "line": 163,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceLedger cols=\"facts\" count={`ASSETS ${dossier.members.length}`}>",
-        "confidence": "medium"
-      }
-    ],
-    "DeliveryTerminalWindow": [
-      {
-        "file": "desk/components/DeliveryTerminalWindow.tsx",
-        "line": 71,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"desk-key-fate desk-steer-sent\">\u2713 {sendDetail}</span>"
-      },
-      {
-        "file": "desk/components/DeliveryTerminalWindow.tsx",
-        "line": 74,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"desk-key-fate desk-arm-refusal\">\u2715 {sendDetail}</span>"
-      },
-      {
-        "file": "desk/components/DeliveryTerminalWindow.tsx",
-        "line": 105,
-        "rule": "B",
-        "text": "Raw control element: <textarea"
-      },
-      {
-        "file": "desk/components/DeliveryTerminalWindow.tsx",
-        "line": 142,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"desk-arm-refusal\">\u2715 {sendDetail}</span>"
-      },
-      {
-        "file": "desk/components/DeliveryTerminalWindow.tsx",
-        "line": 154,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"desk-steer-sent\">\u2713 {sendDetail}</span>"
-      },
-      {
-        "file": "desk/components/DeliveryTerminalWindow.tsx",
-        "line": 226,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2715 {ABSENCE_LABEL[status] || status}"
-      }
-    ],
-    "DeskApp": [
-      {
-        "file": "desk/DeskApp.tsx",
-        "line": 156,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => void refreshDesk()}>"
-      }
-    ],
-    "DeskComposer": [
-      {
-        "file": "desk/components/DeskComposer.tsx",
-        "line": 34,
-        "rule": "B",
-        "text": "Raw control element: <textarea"
-      },
-      {
-        "file": "desk/components/DeskComposer.tsx",
-        "line": 42,
-        "rule": "B",
-        "text": "Raw control element: <input"
       }
     ],
     "DeskEditor": [
@@ -1207,66 +385,6 @@
         "confidence": "medium"
       }
     ],
-    "DeskFilingStrip": [
-      {
-        "file": "desk/components/DeskFilingStrip.tsx",
-        "line": 148,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: {inZone ? \"\u2713 \" : \"+ \"}"
-      },
-      {
-        "file": "desk/components/DeskFilingStrip.tsx",
-        "line": 172,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: {active ? \"\u2713 \" : \"+ \"}"
-      },
-      {
-        "file": "desk/components/DeskFilingStrip.tsx",
-        "line": 197,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: {active ? \"\u2713 \" : \"+ \"}"
-      }
-    ],
-    "DeskListView": [
-      {
-        "file": "desk/components/DeskListView.tsx",
-        "line": 212,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-sortable-table-open\" aria-label={`${row.title} zone, ${row.cou"
-      },
-      {
-        "file": "desk/components/DeskListView.tsx",
-        "line": 220,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-sortable-table-open desk-list-name-cell\" aria-label={selected "
-      },
-      {
-        "file": "desk/components/DeskListView.tsx",
-        "line": 274,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {divedZone ? <button type=\"button\" className=\"desk-list-open desk-surface\" onClick={surface}>\u2190 ALL</"
-      },
-      {
-        "file": "desk/components/DeskListView.tsx",
-        "line": 275,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): {`ITEMS ${objects.length} \u00b7 ZONES ${zones.length} \u00b7 ATTN ${attnTotal}`}",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/DeskListView.tsx",
-        "line": 278,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): Showing {visible.length} of {objects.length}",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/DeskListView.tsx",
-        "line": 311,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {remaining > 0 ? <button type=\"button\" className=\"desk-chip desk-list-more\" onClick={showMore}>Show "
-      }
-    ],
     "DeskMenu": [
       {
         "file": "desk/components/DeskMenu.tsx",
@@ -1302,12 +420,6 @@
     "DeskToolShelf": [
       {
         "file": "desk/components/DeskToolShelf.tsx",
-        "line": 313,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: glyph: \"\u2699\","
-      },
-      {
-        "file": "desk/components/DeskToolShelf.tsx",
         "line": 351,
         "rule": "raw-ids",
         "text": "ID field rendered as text: run: () => void createThread({ title: model.name, profile_override: model.name }).then((t) => { open",
@@ -1332,31 +444,13 @@
     "DoorBoardLane": [
       {
         "file": "desk/chair/lanes/DoorBoardLane.tsx",
-        "line": 460,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"source_label\""
-      },
-      {
-        "file": "desk/chair/lanes/DoorBoardLane.tsx",
-        "line": 464,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"person_label\""
-      },
-      {
-        "file": "desk/chair/lanes/DoorBoardLane.tsx",
-        "line": 704,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"people_store_state\""
-      },
-      {
-        "file": "desk/chair/lanes/DoorBoardLane.tsx",
-        "line": 709,
+        "line": 708,
         "rule": "A3-prose",
         "text": "Prose helper class (hint/help/description): <ScrollHint axis=\"x\" scrollRef={viewportRef} className=\"door-board-hint-wrap\">"
       },
       {
         "file": "desk/chair/lanes/DoorBoardLane.tsx",
-        "line": 739,
+        "line": 738,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"body_preview\""
       },
@@ -1378,16 +472,10 @@
     "EditorAIBar": [
       {
         "file": "desk/components/EditorAIBar.tsx",
-        "line": 62,
+        "line": 63,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): const next = `${from}:${to}:${editorView.state.doc.length}`;",
         "confidence": "medium"
-      },
-      {
-        "file": "desk/components/EditorAIBar.tsx",
-        "line": 190,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={dismiss} aria-label=\"Dismiss AI controls\""
       }
     ],
     "FinishThoughtsLane": [
@@ -1395,88 +483,11 @@
         "file": "desk/chair/FinishThoughtsLane.tsx",
         "line": 97,
         "rule": "A8",
-        "text": "Counter may render zero (.length without guard): const count = `${items.length}${nextCursor ? \"+\" : \"\"}`;",
+        "text": "Counter may render zero (.length without guard): const count = items.length > 0 ? `${items.length}${nextCursor ? \"+\" : \"\"}` : null;",
         "confidence": "medium"
-      },
-      {
-        "file": "desk/chair/FinishThoughtsLane.tsx",
-        "line": 106,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): aria-label={`${items.length}${nextCursor ? \" or more\" : \"\"} unfinished thoughts`}",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/chair/FinishThoughtsLane.tsx",
-        "line": 134,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"source_kind\""
-      },
-      {
-        "file": "desk/chair/FinishThoughtsLane.tsx",
-        "line": 135,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"updated_at\""
-      },
-      {
-        "file": "desk/chair/FinishThoughtsLane.tsx",
-        "line": 136,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"continuity_state\""
-      }
-    ],
-    "FirstWords": [
-      {
-        "file": "desk/components/FirstWords.tsx",
-        "line": 356,
-        "rule": "A3-sentence",
-        "text": "Sentence in JSX text (>60 chars): \"Click to speak. Your words stay editable here before you use them....\""
-      },
-      {
-        "file": "desk/components/FirstWords.tsx",
-        "line": 356,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Click to speak. Your words stay editable here before you use them....\""
       }
     ],
     "FollowThroughView": [
-      {
-        "file": "desk/pullouts/views/FollowThroughView.tsx",
-        "line": 79,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: if (card.source === \"people_commitment\") return { glyph: \"\u2667\", label: \"people\" };"
-      },
-      {
-        "file": "desk/pullouts/views/FollowThroughView.tsx",
-        "line": 213,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): actions={<span className=\"follow-through-count\">{cards.length}</span>}",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/pullouts/views/FollowThroughView.tsx",
-        "line": 217,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceLedger count={`${cards.length} ${lane.label.toUpperCase()}`} cols=\"follow-through\">",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/pullouts/views/FollowThroughView.tsx",
-        "line": 265,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <Button dense variant=\"ghost\" disabled={busyCardId === card.id} onClick={() => void complete(card.id"
-      },
-      {
-        "file": "desk/pullouts/views/FollowThroughView.tsx",
-        "line": 279,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"segment_speaker\""
-      },
-      {
-        "file": "desk/pullouts/views/FollowThroughView.tsx",
-        "line": 280,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"segment_text\""
-      },
       {
         "file": "desk/pullouts/views/FollowThroughView.tsx",
         "line": 1,
@@ -1489,36 +500,7 @@
         "file": "desk/components/GlassDropLayer.tsx",
         "line": 122,
         "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Meeting (.vtt .srt .txt audio) or calendar screenshot (.png .jpg .webp)...\""
-      }
-    ],
-    "GroundingSection": [
-      {
-        "file": "desk/components/GroundingSection.tsx",
-        "line": 191,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2715 PAST THE WINDOW \u00b7 DROP THE TRANSCRIPT OR PICK LESS"
-      }
-    ],
-    "HistoryCore": [
-      {
-        "file": "pages/cores/HistoryCore.tsx",
-        "line": 179,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: text: `\u26a0 REFUSED \u00b7 ${readableError(reason)}`,"
-      },
-      {
-        "file": "pages/cores/HistoryCore.tsx",
-        "line": 196,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: text: `\u26a0 REFUSED \u00b7 ${readableError(reason)}`,"
-      },
-      {
-        "file": "pages/cores/HistoryCore.tsx",
-        "line": 308,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): : `${filteredMeetings.length} RECORDS${filtered ? \" \u00b7 FILTERED\" : \"\"}`}",
-        "confidence": "medium"
+        "text": "Prose in <p>/<small> element: \".vtt .srt .txt audio \u00b7 calendar screenshot...\""
       }
     ],
     "ImportSection": [
@@ -1530,31 +512,12 @@
       },
       {
         "file": "pages/cores/history/ImportSection.tsx",
-        "line": 97,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \".wav direct \u00b7 .mp3 .m4a .ogg .flac via ffmpeg \u00b7 .vtt .srt .txt...\""
-      },
-      {
-        "file": "pages/cores/history/ImportSection.tsx",
         "line": 1,
         "rule": "mic",
         "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
     "InfoWindow": [
-      {
-        "file": "desk/components/InfoWindow.tsx",
-        "line": 151,
-        "rule": "raw-ids",
-        "text": "ID field rendered as text: <span className=\"quiet info-id\">{o.id}</span>",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/InfoWindow.tsx",
-        "line": 217,
-        "rule": "B",
-        "text": "Raw control element: <select"
-      },
       {
         "file": "desk/components/InfoWindow.tsx",
         "line": 1,
@@ -1567,106 +530,24 @@
         "file": "desk/components/InletAutocomplete.tsx",
         "line": 71,
         "rule": "A8",
-        "text": "Counter may render zero (.length without guard): detail: `${d.memberIds.length} ${d.memberIds.length === 1 ? \"item\" : \"items\"}`,",
+        "text": "Counter may render zero (.length without guard): detail: d.memberIds.length > 0 ? `${d.memberIds.length} ${d.memberIds.length === 1 ? \"item\" : \"items",
         "confidence": "medium"
-      },
-      {
-        "file": "desk/components/InletAutocomplete.tsx",
-        "line": 321,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): detail={`${zone.memberIds.length} ${zone.memberIds.length === 1 ? \"item\" : \"items\"}`}",
-        "confidence": "medium"
-      }
-    ],
-    "InlineEditor": [
-      {
-        "file": "desk/components/InlineEditor.tsx",
-        "line": 34,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: glyph=\"\u270e\""
-      },
-      {
-        "file": "desk/components/InlineEditor.tsx",
-        "line": 49,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={closeEditor}>"
-      },
-      {
-        "file": "desk/components/InlineEditor.tsx",
-        "line": 52,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip is-primary\" onClick={closeEditor}>"
-      }
-    ],
-    "InstrumentStrip": [
-      {
-        "file": "pages/cores/dictation/InstrumentStrip.tsx",
-        "line": 101,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: announce(`\u26a0 COMMAND FAILED \u00b7 ${fired.preview}`, \"warn\");"
-      },
-      {
-        "file": "pages/cores/dictation/InstrumentStrip.tsx",
-        "line": 108,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: announce(`\u26a0 ${DICTATION_FAILURES[category].message}`, \"warn\");"
-      }
-    ],
-    "IntelligencePullout": [
-      {
-        "file": "desk/pullouts/IntelligencePullout.tsx",
-        "line": 73,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: FILTER \u00b7 OVERDUE ONLY \u2715"
-      },
-      {
-        "file": "desk/pullouts/IntelligencePullout.tsx",
-        "line": 130,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {history.length ? <button type=\"button\" className=\"receipt-back\" onClick={goBack}>\u2190 BACK</button> : "
-      }
-    ],
-    "JiraWizard": [
-      {
-        "file": "features/project-room/setup/JiraWizard.tsx",
-        "line": 407,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceLedger count={`${representativeEntities.length} shown`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "features/project-room/setup/JiraWizard.tsx",
-        "line": 1,
-        "rule": "mic",
-        "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
     "Journal": [
       {
         "file": "pages/cores/dictation/Journal.tsx",
-        "line": 84,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2713 taught"
-      },
-      {
-        "file": "pages/cores/dictation/Journal.tsx",
-        "line": 222,
+        "line": 223,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): disabled={!rows.length}",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/dictation/Journal.tsx",
-        "line": 231,
+        "line": 232,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): empty={!filtered.length}",
         "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/dictation/Journal.tsx",
-        "line": 233,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: emptyGlyph=\"\u270e\""
       },
       {
         "file": "pages/cores/dictation/Journal.tsx",
@@ -1691,39 +572,7 @@
         "confidence": "medium"
       }
     ],
-    "KbPullout": [
-      {
-        "file": "desk/pullouts/KbPullout.tsx",
-        "line": 80,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={closeEditor}>Cancel</button>"
-      },
-      {
-        "file": "desk/pullouts/KbPullout.tsx",
-        "line": 81,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip is-primary\" onClick={closeEditor}>Save</button>"
-      }
-    ],
     "Knowledge": [
-      {
-        "file": "pages/cores/dictation/Knowledge.tsx",
-        "line": 54,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: announce(`\u26a0 ${readableError(error)}`, \"warn\");"
-      },
-      {
-        "file": "pages/cores/dictation/Knowledge.tsx",
-        "line": 67,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: announce(\"\u26a0 Refused \u00b7 key format A-Z _ 0-9, letter first\", \"warn\");"
-      },
-      {
-        "file": "pages/cores/dictation/Knowledge.tsx",
-        "line": 85,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: announce(`\u26a0 ${readableError(error)}`, \"warn\");"
-      },
       {
         "file": "pages/cores/dictation/Knowledge.tsx",
         "line": 1,
@@ -1742,35 +591,23 @@
     "LiveCore": [
       {
         "file": "pages/cores/LiveCore.tsx",
-        "line": 404,
-        "rule": "B",
-        "text": "Raw control element: <textarea"
-      },
-      {
-        "file": "pages/cores/LiveCore.tsx",
-        "line": 484,
+        "line": 479,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): empty={!asRows(devices.data, [\"devices\", \"items\"]).length}",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/LiveCore.tsx",
-        "line": 534,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2713 {bookmarkReceipt.text}"
-      },
-      {
-        "file": "pages/cores/LiveCore.tsx",
-        "line": 539,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2713 Meeting saved{\" \"}"
-      },
-      {
-        "file": "pages/cores/LiveCore.tsx",
-        "line": 598,
+        "line": 595,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): count={segments.length}",
         "confidence": "medium"
+      },
+      {
+        "file": "pages/cores/LiveCore.tsx",
+        "line": 1,
+        "rule": "mic",
+        "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
     "MeetingDetail": [
@@ -1779,22 +616,6 @@
         "line": 109,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): <SurfaceWell head={`RAW \u00b7 ROUTING \u00b7 ${timelineRows.length}`}>",
-        "confidence": "medium"
-      }
-    ],
-    "MeetingHeader": [
-      {
-        "file": "pages/cores/history/MeetingHeader.tsx",
-        "line": 32,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): segments.length ? `${segments.length} SEG` : \"\",",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/history/MeetingHeader.tsx",
-        "line": 33,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): artifactRows.length ? `${artifactRows.length} ART` : \"\",",
         "confidence": "medium"
       }
     ],
@@ -1824,215 +645,40 @@
         "confidence": "medium"
       }
     ],
-    "MissionControlConveyor": [
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 135,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u26a0 {project.warnings}"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 183,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2713"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 213,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): \u26d3 {repo.prs.length}",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 213,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u26d3 {repo.prs.length}"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 226,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u26d3 \u2205"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 236,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u25a3 \u2715 {gate.rule}"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 263,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2715 {repoStateToken(repo.status)}"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 301,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"desk-arm-refusal\">\u2715 {evidenceDetail}</span>"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 340,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"desk-arm-refusal\">\u2715 {proposalError}</span>"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 368,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2715 Status change failed. {proposal.error}"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 514,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): count={`EVENTS ${events.length}${refusals ? ` \u00b7 REFUSALS ${refusals}` : \"\"}`}",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 535,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: {refusal ? \"\u2715 \" : \"\"}"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 596,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button className=\"desk-mc-tab\" onClick={toggle} title=\"Rails panel\">"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 603,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <span className=\"surface-token\">{`RUNS ${sessions.length}`}</span>",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/MissionControlConveyor.tsx",
-        "line": 624,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <span className=\"surface-token\">{`RUNS ${sessions.length}`}</span>",
-        "confidence": "medium"
-      }
-    ],
     "ModelLibraryCore": [
       {
         "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 336,
+        "line": 338,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"selected_action\""
       },
       {
         "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 358,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={chooseCatalog}>Download from catalog</button>"
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 359,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => setFace(\"hosted\")}>Connect hosted model</button>"
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 360,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => setFace(\"endpoint\")}>Define endpoint</button>"
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 361,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => setFace(\"file\")}>Use model file</button>"
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 369,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"model-library-back\" onClick={leaveAdd}>Back</button>"
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 375,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <header><h2>Connect hosted model</h2><button type=\"button\" className=\"model-library-back\" onClick={l"
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 380,
+        "line": 383,
         "rule": "B",
-        "text": "Raw control element: <label className=\"model-library-select\"><span>Provider</span><select aria-label=\"Hosted provider\" va"
+        "text": "Raw control element: <input ref={secretRef} type=\"password\" autoComplete=\"new-password\" aria-label=\"Provider key\" />"
       },
       {
         "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 381,
+        "line": 396,
         "rule": "B",
-        "text": "Raw control element: <label className=\"model-library-secret\"><span>Provider key</span><input ref={secretRef} type=\"passwo"
+        "text": "Raw control element: <input ref={secretRef} type=\"password\" autoComplete=\"new-password\" aria-label=\"Provider key\" />"
       },
       {
         "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 387,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <header><h2>Define endpoint</h2><button type=\"button\" className=\"model-library-back\" onClick={leaveA"
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 393,
-        "rule": "B",
-        "text": "Raw control element: <label className=\"model-library-select\"><span>Provider</span><select aria-label=\"Endpoint provider\" "
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 394,
-        "rule": "B",
-        "text": "Raw control element: <label className=\"model-library-secret\"><span>Provider key</span><input ref={secretRef} type=\"passwo"
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 400,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <header><h2>Use model file</h2><button type=\"button\" className=\"model-library-back\" onClick={leaveAd"
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 402,
+        "line": 404,
         "rule": "B",
         "text": "Raw control element: <label className=\"model-library-file\"><span>Model file</span><input type=\"file\" accept=\".gguf,.mlx\" "
       },
       {
         "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 411,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {face === \"inventory\" && allRows.length ? <button ref={addTriggerRef} type=\"button\" className=\"model"
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 421,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <div><h2 id=\"model-library-title\">Model Library</h2><span>{allRows.length} models</span></div>",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 425,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {SOURCES.map(([value, label]) => <button key={value} type=\"button\" role=\"tab\" aria-selected={source "
-      },
-      {
-        "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 432,
+        "line": 434,
         "rule": "B",
         "text": "Raw control element: <input ref={(element) => { rowRefs.current[row.id] = element; }} type=\"radio\" name={groupName} value"
       },
       {
         "file": "pages/cores/ModelLibraryCore.tsx",
-        "line": 434,
+        "line": 436,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"selected_action\""
       },
@@ -2041,14 +687,6 @@
         "line": 1,
         "rule": "mic",
         "text": "Text input found but no MicButton in this face (the voice law)"
-      }
-    ],
-    "NewWorkbenchChooser": [
-      {
-        "file": "desk/components/NewWorkbenchChooser.tsx",
-        "line": 20,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: glyph=\"\u2699\""
       }
     ],
     "NoteEditor": [
@@ -2070,477 +708,218 @@
     "NotePullout": [
       {
         "file": "desk/pullouts/NotePullout.tsx",
-        "line": 26,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"version_label\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 32,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"visible_count\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 32,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"visible_count\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 32,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"leaf_count\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 350,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {thought ? <button type=\"button\" className=\"desk-chip quiet\" onClick={() => void showOriginal()}>"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 353,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {original ? <section ref={originalReveal} className=\"surface-aerogel\" aria-label=\"Original kept\" ari"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 353,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"raw_text\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 361,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"leaf_count\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 361,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"leaf_count\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 361,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"is_default\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 364,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {attachment.state === \"stale\" ? <button type=\"button\" className=\"desk-chip quiet\" disabled={contextB"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 365,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" disabled={contextBusy} onClick={() => void changeC"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 368,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"{attachment.title} changed. Update it before asking another question....\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 369,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"{attachment.title} is no longer available....\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 372,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet thought-context-attach\" disabled={contextBusy} onCl"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 375,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"default_context_changed\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 376,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"version_label\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 379,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"{defaultApplicationReceipt.attachments.map((item) => item.title).join(\" + \")}...\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 380,
-        "rule": "A3-sentence",
-        "text": "Sentence in JSX text (>60 chars): \"item.title).join(\" + \") || \"This default AI context\"} could not be attached. Thi...\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 380,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"{defaultApplicationReceipt.failure?.selections.map((item) => item.title).join(\" ...\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 384,
+        "line": 409,
         "rule": "B",
-        "text": "Raw control element: {review?.kind === \"question\" ? <section className=\"surface-aerogel\" aria-label=\"Refinement question\""
+        "text": "Raw control element: return <section className=\"surface-aerogel\" aria-label=\"Refinement question\"><strong>{review.questio"
       },
       {
         "file": "desk/pullouts/NotePullout.tsx",
-        "line": 384,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"used_context\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 385,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"body_markdown\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 385,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"used_context\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 387,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {thought.continuity && [\"reserved\", \"in_flight\", \"awaiting_projection\"].includes(thought.continuity."
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 388,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={() => setMore(false)}>Close more</button>"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 417,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet thought-completion-secondary thought-editor-cancel\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 418,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip is-primary thought-completion-primary\" disabled={finishin"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 420,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={closeEditor}>Cancel</button>"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 421,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip is-primary\" onClick={closeEditor}>Save</button>"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 424,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <div className=\"thought-completion-verbs\"><button type=\"button\" className=\"desk-chip quiet thought-c"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 425,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip is-primary thought-completion-primary\" disabled={finishin"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 426,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): </> : thought.continuity && [\"reserved\", \"in_flight\", \"awaiting_projection\"].includes(thought.contin"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 426,
+        "line": 457,
         "rule": "A3-sentence",
-        "text": "Sentence in JSX text (>60 chars): \": thought.continuity && [\"reserved\", \"in_flight\", \"awaiting_projection\"].include...\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 426,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"in_flight\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 426,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"awaiting_projection\""
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 427,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <div className=\"thought-completion-verbs\"><button type=\"button\" className=\"desk-chip quiet thought-c"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 428,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet thought-completion-secondary\" onClick={() => openEd"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 429,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet thought-more\" onClick={() => setMore(true)}>More</b"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 430,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {modelReady ? <button type=\"button\" className=\"desk-chip is-primary thought-completion-primary\" disa"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 431,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className={modelReady ? \"desk-chip quiet thought-completion-secondary\" : \"desk"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 434,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip is-primary\" onClick={() => void loadOwnership()}>Retry ch"
-      },
-      {
-        "file": "desk/pullouts/NotePullout.tsx",
-        "line": 452,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {status?.ownership === \"ordinary\" ? <button type=\"button\" className=\"desk-chip is-primary\" disabled="
+        "text": "Sentence in JSX text (>60 chars): \": thought.continuity && isRefining(thought.continuity.state) ?...\""
       }
     ],
     "PeopleCore": [
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 236,
+        "line": 237,
         "rule": "raw-ids",
         "text": "ID field rendered as text: {!ordered.length ? <div className=\"people-empty-roster\" data-testid=\"people-empty-roster\"><p classNa",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 258,
+        "line": 259,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"display_name\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 261,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {([['now', 'Now'], ['prep', 'Prep'], ['one-on-ones', '1:1s'], ['context', 'Context'], ['history', 'H"
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 311,
+        "line": 312,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"open_commitments\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 311,
+        "line": 312,
         "rule": "raw-ids",
         "text": "ID field rendered as text: {brief.open_commitments.length ? <SurfaceRows>{brief.open_commitments.map((item) => <SurfaceRow key=",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 314,
+        "line": 315,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"agenda_items\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 314,
+        "line": 315,
         "rule": "raw-ids",
         "text": "ID field rendered as text: {brief.agenda_items.length ? <SurfaceRows>{brief.agenda_items.map((item) => <SurfaceRow key={item.id",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 316,
+        "line": 317,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"grounding_note_count\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 316,
+        "line": 317,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"grounding_note_count\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 318,
+        "line": 319,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"linked_meetings\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 318,
+        "line": 319,
         "rule": "raw-ids",
         "text": "ID field rendered as text: {brief.linked_meetings.length ? <SurfaceRows>{brief.linked_meetings.map((meeting) => <SurfaceRow key",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 319,
+        "line": 320,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"open_action_items\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 319,
+        "line": 320,
         "rule": "raw-ids",
         "text": "ID field rendered as text: {meeting.open_action_items.length ? <ul className=\"people-prep-actions\" data-testid=\"prep-meeting-ac",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 320,
+        "line": 321,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"decision_text\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 320,
+        "line": 321,
         "rule": "raw-ids",
         "text": "ID field rendered as text: {meeting.decisions.length ? <ul className=\"people-prep-decisions\" data-testid=\"prep-meeting-decision",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 323,
+        "line": 324,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"unlinked_meeting_count\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 323,
+        "line": 324,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"unlinked_meeting_count\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 444,
+        "line": 445,
         "rule": "A3-sentence",
         "text": "Sentence in JSX text (verb + comma): \"(\"leader_private\"); const [busy, setBusy] = useState(false); const [projects, se...\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 444,
+        "line": 445,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"leader_private\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 453,
+        "line": 454,
         "rule": "raw-ids",
         "text": "ID field rendered as text: <SurfaceSection label=\"Projects\"><div className=\"people-project-link\"><CycleGadget label=\"Project\" v",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 454,
+        "line": 455,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"leader_private\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 454,
+        "line": 455,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"shared_intent\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 454,
+        "line": 455,
         "rule": "raw-ids",
         "text": "ID field rendered as text: <SurfaceSection label=\"Grounding notes\"><div className=\"people-context-add\"><StringGadget mic={false",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 470,
+        "line": 471,
         "rule": "raw-ids",
         "text": "ID field rendered as text: <SurfaceSection label=\"You owe\"><SurfaceRows>{(relationship.commitments ?? []).length ? (relationshi",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 471,
+        "line": 472,
         "rule": "raw-ids",
         "text": "ID field rendered as text: <SurfaceSection label=\"Open requests\"><div className=\"people-new\"><StringGadget mic={false} label=\"R",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 472,
+        "line": 473,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"next_one_on_one\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 476,
+        "line": 477,
         "rule": "A3-sentence",
         "text": "Sentence in JSX text (verb + comma): \"([]); const [workbenchId, setWorkbenchId] = useState(\"\"); const [items, setItems...\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 490,
+        "line": 491,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"workbench_id\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 498,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): return <><SurfaceSection label=\"Follow-through\"><dl className=\"people-history-facts\"><div><dt>Accept",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/PeopleCore.tsx",
-        "line": 506,
+        "line": 508,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"shared_intent\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 506,
+        "line": 508,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"leader_private\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 506,
+        "line": 508,
         "rule": "raw-ids",
         "text": "ID field rendered as text: return <SurfaceSection label=\"1:1s\"><div className=\"people-agenda-add\"><PadGadget mic={false} label=",
         "confidence": "medium"
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 511,
+        "line": 513,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"relationship_kind\""
       },
       {
         "file": "pages/cores/PeopleCore.tsx",
-        "line": 511,
+        "line": 513,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"role_context\""
       },
@@ -2554,114 +933,9 @@
     "PrReceiptsSection": [
       {
         "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 73,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-list-open desk-pr-refresh\" disabled={store.busy} onClick={() ="
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 79,
+        "line": 82,
         "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"{source.status === \"live\" ? `observed ${source.observed_at}` : source.status ===...\""
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 79,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"observed_at\""
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 79,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"observed_at\""
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 94,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"agent_gate\""
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 98,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => void seeDiff(row)}>Diff</button>"
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 99,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => patch(key, { info: !w.info })}>Info</button>"
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 106,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): return <button key={name} type=\"button\" disabled={!a.available || Boolean(w.busy)} title={a.availabl"
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 113,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"head_ref\""
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 113,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"observed_at\""
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 113,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"agent_gate\""
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 146,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => patch(key, { action: null })}>Cancel</button>"
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 162,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => void run(key, \"Denying\", () => store.decide(proposal.proposal_i"
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 162,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"proposal_id\""
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 163,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => void run(key, \"Posting\", () => store.decide(proposal.proposal_i"
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 163,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"proposal_id\""
-      },
-      {
-        "file": "desk/components/PrReceiptsSection.tsx",
-        "line": 194,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-list-open\" onClick={() => void fetchAndRetry(row)}>Fetch</butt"
-      }
-    ],
-    "ProcessCore": [
-      {
-        "file": "pages/cores/ProcessCore.tsx",
-        "line": 160,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): count={`${section.label.toUpperCase()} ${section.rows.length}`}",
-        "confidence": "medium"
+        "text": "Prose in <p>/<small> element: \"{source.status === \"live\" ? `OBSERVED ${observedAt}` : source.status === \"stale\"...\""
       }
     ],
     "ProgressPlan": [
@@ -2681,13 +955,6 @@
     "ProjectRoomCore": [
       {
         "file": "features/project-room/ProjectRoomCore.tsx",
-        "line": 272,
-        "rule": "A8",
-        "text": "Zero fallback rendered (?? 0): ? `OVERDUE BY ${Math.abs(target.daysLeft ?? 0)} DAYS`",
-        "confidence": "medium"
-      },
-      {
-        "file": "features/project-room/ProjectRoomCore.tsx",
         "line": 738,
         "rule": "A8",
         "text": "Counter may render zero (count pattern): GROUNDED ON {groundedCount} OF {receipt.matchedCount}",
@@ -2697,7 +964,7 @@
         "file": "features/project-room/ProjectRoomCore.tsx",
         "line": 746,
         "rule": "B",
-        "text": "Raw control element: <input"
+        "text": "Raw control element: <input // UX-CANON: needs redesign (HS-170-04)"
       },
       {
         "file": "features/project-room/ProjectRoomCore.tsx",
@@ -2715,7 +982,7 @@
         "file": "features/project-room/ProjectRoomCore.tsx",
         "line": 886,
         "rule": "B",
-        "text": "Raw control element: <input"
+        "text": "Raw control element: <input // UX-CANON: needs redesign (HS-170-04)"
       },
       {
         "file": "features/project-room/ProjectRoomCore.tsx",
@@ -2725,44 +992,10 @@
         "confidence": "low"
       }
     ],
-    "ProposalStrip": [
-      {
-        "file": "desk/voice/ProposalStrip.tsx",
-        "line": 80,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={onConfirm}>Confirm</button>"
-      },
-      {
-        "file": "desk/voice/ProposalStrip.tsx",
-        "line": 81,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={onCancel}>Cancel</button>"
-      }
-    ],
-    "ProviderWizardStep": [
-      {
-        "file": "features/project-room/setup/ProviderWizardStep.tsx",
-        "line": 72,
-        "rule": "B",
-        "text": "Raw control element: <input"
-      },
-      {
-        "file": "features/project-room/setup/ProviderWizardStep.tsx",
-        "line": 205,
-        "rule": "B",
-        "text": "Raw control element: <input"
-      }
-    ],
     "Pullout": [
       {
         "file": "desk/components/Pullout.tsx",
-        "line": 45,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: text: `\u2601 ${"
-      },
-      {
-        "file": "desk/components/Pullout.tsx",
-        "line": 124,
+        "line": 125,
         "rule": "A1",
         "text": "Raw <button> element (use library Button): return <PulloutFrame o={o} origin={origin} overrideContent={<div className=\"desk-pullout-body desk-s"
       }
@@ -2772,83 +1005,11 @@
         "file": "desk/components/RailsPicker.tsx",
         "line": 117,
         "rule": "A8",
-        "text": "Counter may render zero (.length without guard): : `Rails \u00b7 ${picks.length}`",
+        "text": "Counter may render zero (.length without guard): : picks.length > 0 ? `Rails \u00b7 ${picks.length}` : \"Ground on the rails\"",
         "confidence": "medium"
-      },
-      {
-        "file": "desk/components/RailsPicker.tsx",
-        "line": 134,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2715 PAST THE WINDOW \u00b7 PICK FEWER RAIL OBJECTS"
-      }
-    ],
-    "Readiness": [
-      {
-        "file": "pages/cores/dictation/Readiness.tsx",
-        "line": 109,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u26a0 {presentValue(warning.message) || readableValue(warning)}"
-      },
-      {
-        "file": "pages/cores/dictation/Readiness.tsx",
-        "line": 182,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): verbs={<>{exportVerb}<button type=\"button\" className=\"desk-chip\" onClick={onOpenDoor}>Review</button"
-      },
-      {
-        "file": "pages/cores/dictation/Readiness.tsx",
-        "line": 200,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): ? `${warnings.length} ${warnings.length === 1 ? \"WARNING\" : \"WARNINGS\"}`",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/dictation/Readiness.tsx",
-        "line": 215,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {live ? null : <button type=\"button\" className=\"desk-chip\" onClick={onOpenDoor}>Review</button>}"
-      }
-    ],
-    "RecipePullout": [
-      {
-        "file": "desk/pullouts/RecipePullout.tsx",
-        "line": 88,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={closeEditor}>Cancel</button>"
-      },
-      {
-        "file": "desk/pullouts/RecipePullout.tsx",
-        "line": 89,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip is-primary\" onClick={closeEditor}>Save</button>"
       }
     ],
     "RepoWindow": [
-      {
-        "file": "desk/components/RepoWindow.tsx",
-        "line": 193,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => ascend(0)} disabled={!path}>root</button>"
-      },
-      {
-        "file": "desk/components/RepoWindow.tsx",
-        "line": 194,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {breadcrumb.map((part, index) => <button type=\"button\" key={`${part}-${index}`} onClick={() => ascen"
-      },
-      {
-        "file": "desk/components/RepoWindow.tsx",
-        "line": 244,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): receipt={<span className=\"quiet\">{files.length} {files.length === 1 ? \"item\" : \"items\"}{status?.ahea",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/RepoWindow.tsx",
-        "line": 247,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip\" disabled={busy || !selected.size} onClick={() => void st"
-      },
       {
         "file": "desk/components/RepoWindow.tsx",
         "line": 1,
@@ -2885,106 +1046,42 @@
     "ReviewPosture": [
       {
         "file": "features/project-room/review/ReviewPosture.tsx",
-        "line": 107,
+        "line": 108,
         "rule": "B",
-        "text": "Raw control element: <input"
+        "text": "Raw control element: <input // UX-CANON: needs redesign (HS-170-04)"
       },
       {
         "file": "features/project-room/review/ReviewPosture.tsx",
-        "line": 201,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <Disclosure label={`hashes ${hashEntries.length}`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "features/project-room/review/ReviewPosture.tsx",
-        "line": 277,
+        "line": 278,
         "rule": "B",
-        "text": "Raw control element: <input"
+        "text": "Raw control element: <input // UX-CANON: needs redesign (HS-170-04)"
       },
       {
         "file": "features/project-room/review/ReviewPosture.tsx",
-        "line": 594,
+        "line": 595,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): ? `Proposal ${ctrl.selectedIndex + 1} of ${ctrl.openProposals.length}, ${kindLabel(p.proposalKind)}`",
         "confidence": "medium"
       },
       {
         "file": "features/project-room/review/ReviewPosture.tsx",
-        "line": 599,
+        "line": 600,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): ? `${ctrl.selectedIndex + 1} / ${ctrl.openProposals.length}`",
         "confidence": "medium"
       },
       {
         "file": "features/project-room/review/ReviewPosture.tsx",
-        "line": 631,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceLedger count={`PROPOSALS ${ctrl.openProposals.length}`} cols=\"room\">",
-        "confidence": "medium"
-      },
-      {
-        "file": "features/project-room/review/ReviewPosture.tsx",
-        "line": 643,
+        "line": 645,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): {openInGroup.length}",
         "confidence": "medium"
-      },
-      {
-        "file": "features/project-room/review/ReviewPosture.tsx",
-        "line": 674,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): aria-label={`${rowText}, ${kindLabel(proposal.proposalKind)}, ${globalIndex + 1} of ${ctrl.openPropo",
-        "confidence": "medium"
-      },
-      {
-        "file": "features/project-room/review/ReviewPosture.tsx",
-        "line": 703,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): lineLabel={`${rowText}, ${globalIndex + 1} of ${ctrl.openProposals.length}`}",
-        "confidence": "medium"
-      }
-    ],
-    "RoadmapWindow": [
-      {
-        "file": "desk/components/RoadmapWindow.tsx",
-        "line": 25,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-roadmap-phase-row\" onClick={onToggle} aria-expanded={expanded}"
-      },
-      {
-        "file": "desk/components/RoadmapWindow.tsx",
-        "line": 36,
-        "rule": "raw-ids",
-        "text": "ID field rendered as text: <span className=\"desk-roadmap-story-id\">{story.id}</span>",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/RoadmapWindow.tsx",
-        "line": 106,
-        "rule": "raw-ids",
-        "text": "ID field rendered as text: return <section key={status}><h4>{status}</h4><ul>{stories.map((story) => <li key={story.id}><span>{",
-        "confidence": "medium"
-      }
-    ],
-    "RuntimeDocsCore": [
-      {
-        "file": "pages/cores/RuntimeDocsCore.tsx",
-        "line": 46,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): detail={<button type=\"button\" className=\"btn-link\" onClick={() => openSurfaceOr(\"configure-setup\", \""
-      },
-      {
-        "file": "pages/cores/RuntimeDocsCore.tsx",
-        "line": 50,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): detail={<button type=\"button\" className=\"btn-link\" onClick={() => openSurfaceOr(\"dictate\", \"/dictati"
       }
     ],
     "ScheduleCreateWindow": [
       {
         "file": "desk/components/ScheduleCreateWindow.tsx",
-        "line": 158,
+        "line": 160,
         "rule": "B",
         "text": "Raw control element: <input"
       },
@@ -2994,104 +1091,14 @@
         "rule": "C",
         "text": "Type-step collapse: only 1 distinct font-size (var(--font-size-xs))",
         "confidence": "medium"
-      },
-      {
-        "file": "desk/components/ScheduleCreateWindow.tsx",
-        "line": 1,
-        "rule": "mic",
-        "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
     "SessionPullout": [
       {
         "file": "desk/components/SessionPullout.tsx",
-        "line": 144,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: {armError && <span className=\"desk-arm-refusal\">\u2715 {armError}</span>}"
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 193,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2713 {keyDetail || lastKey}"
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 197,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"desk-key-fate desk-arm-refusal\">\u2715 {keyDetail}</span>"
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 289,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2715 {factoryDetail}"
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 362,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: glyph=\"\u270e\""
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 377,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: glyph=\"\u2715\""
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 385,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: glyph=\"\u270e\""
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 408,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: glyph=\"\u2715\""
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 464,
+        "line": 470,
         "rule": "B",
         "text": "Raw control element: <textarea"
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 523,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"desk-arm-refusal\">\u2715 {steerDetail}</span>"
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 526,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"desk-steer-sent\">\u2713 {steerDetail || \"sent\"}</span>"
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 581,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: ? \"\u2713 kept as note\""
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 614,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: pinned \u2192 {pinned} \u2715"
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 623,
-        "rule": "B",
-        "text": "Raw control element: <input"
-      },
-      {
-        "file": "desk/components/SessionPullout.tsx",
-        "line": 744,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2715 {PANE_STATE_LABEL[paneStatus] || humanizeWireValue(paneStatus)}"
       }
     ],
     "SettingsCore": [
@@ -3111,75 +1118,9 @@
       },
       {
         "file": "pages/cores/SettingsCore.tsx",
-        "line": 633,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): `${macroItems.length} configured`,",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/SettingsCore.tsx",
         "line": 1,
         "rule": "mic",
         "text": "Text input found but no MicButton in this face (the voice law)"
-      }
-    ],
-    "SettledList": [
-      {
-        "file": "pages/cores/history/SettledList.tsx",
-        "line": 14,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): {`Settled: ${settledActions.length}`}",
-        "confidence": "medium"
-      }
-    ],
-    "SetupBrief": [
-      {
-        "file": "features/project-room/setup/SetupBrief.tsx",
-        "line": 147,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceSection label={`SOURCES ${chosen.length}`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "features/project-room/setup/SetupBrief.tsx",
-        "line": 149,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): {chosen.length}",
-        "confidence": "medium"
-      }
-    ],
-    "SetupCore": [
-      {
-        "file": "pages/cores/SetupCore.tsx",
-        "line": 125,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2713 {testResult.detail}"
-      }
-    ],
-    "SetupInterview": [
-      {
-        "file": "features/project-room/setup/SetupInterview.tsx",
-        "line": 167,
-        "rule": "B",
-        "text": "Raw control element: <textarea"
-      },
-      {
-        "file": "features/project-room/setup/SetupInterview.tsx",
-        "line": 191,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: /* \u2500\u2500 AnswerRow: SurfaceLedgerRow (lead \u2713, primary = answer, wrap, trailing Edit) \u2500\u2500 */"
-      },
-      {
-        "file": "features/project-room/setup/SetupInterview.tsx",
-        "line": 244,
-        "rule": "B",
-        "text": "Raw control element: <textarea"
-      },
-      {
-        "file": "features/project-room/setup/SetupInterview.tsx",
-        "line": 268,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: lead={\"\u2713\"}"
       }
     ],
     "StateChip": [
@@ -3205,78 +1146,35 @@
     "StewardPosture": [
       {
         "file": "features/project-room/steward/StewardPosture.tsx",
-        "line": 152,
+        "line": 153,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): rateParts.push(`${phaseSteps.length} source${phaseSteps.length === 1 ? \"\" : \"s\"}`);",
         "confidence": "medium"
       },
       {
         "file": "features/project-room/steward/StewardPosture.tsx",
-        "line": 160,
+        "line": 161,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): rateParts.push(`${phaseSteps.length} effect${phaseSteps.length === 1 ? \"\" : \"s\"}`);",
         "confidence": "medium"
       },
       {
         "file": "features/project-room/steward/StewardPosture.tsx",
-        "line": 300,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceLedger count={`RUNS ${ctrl.runs.length}`} cols=\"room\">",
-        "confidence": "medium"
-      },
-      {
-        "file": "features/project-room/steward/StewardPosture.tsx",
-        "line": 389,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <ActionNotice tone=\"warn\" icon=\"\u26a1\">"
-      },
-      {
-        "file": "features/project-room/steward/StewardPosture.tsx",
-        "line": 394,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceLedger count={`CIRCUITS ${circuitWatches.length}`} cols=\"room\">",
-        "confidence": "medium"
-      },
-      {
-        "file": "features/project-room/steward/StewardPosture.tsx",
-        "line": 467,
+        "line": 468,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"evaluation_cadence_minutes\""
       },
       {
         "file": "features/project-room/steward/StewardPosture.tsx",
-        "line": 474,
+        "line": 475,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"max_actions_per_run\""
       },
       {
         "file": "features/project-room/steward/StewardPosture.tsx",
-        "line": 512,
+        "line": 513,
         "rule": "A3-sentence",
-        "text": "Sentence in prop text: \"Drafting uses the model assigned to project.update_draft in Settings > Models; i...\""
-      },
-      {
-        "file": "features/project-room/steward/StewardPosture.tsx",
-        "line": 646,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): {`STEWARD RUNS ${ctrl.runs.length}`}",
-        "confidence": "medium"
-      }
-    ],
-    "SuggestionCards": [
-      {
-        "file": "features/project-room/setup/SuggestionCards.tsx",
-        "line": 112,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceSection label={`SUGGESTIONS ${proposals.length}`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "features/project-room/setup/SuggestionCards.tsx",
-        "line": 122,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): {proposals.length} suggestion{proposals.length !== 1 ? \"s\" : \"\"} available",
-        "confidence": "medium"
+        "text": "Sentence in prop text: \"Uses the model assigned in Settings > Models. Falls back to deterministic....\""
       }
     ],
     "Surface": [
@@ -3338,210 +1236,53 @@
     "SystemShade": [
       {
         "file": "desk/components/SystemShade.tsx",
-        "line": 118,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"needs_attention\""
+        "line": 122,
+        "rule": "A8",
+        "text": "Counter may render zero (.length without guard): Needs you <b>\u00b7 {needsAttentionCount + gate.held.length}</b>",
+        "confidence": "medium"
       },
       {
         "file": "desk/components/SystemShade.tsx",
-        "line": 202,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => openSource(row)}>"
-      },
-      {
-        "file": "desk/components/SystemShade.tsx",
-        "line": 235,
+        "line": 241,
         "rule": "emoji",
         "text": "Emoji in JSX text: \u2726"
-      },
-      {
-        "file": "desk/components/SystemShade.tsx",
-        "line": 243,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => openSource(row)}>"
-      },
-      {
-        "file": "desk/components/SystemShade.tsx",
-        "line": 1,
-        "rule": "mic",
-        "text": "Text input found but no MicButton in this face (the voice law)"
       }
     ],
     "ThoughtContextPicker": [
       {
         "file": "desk/pullouts/ThoughtContextPicker.tsx",
-        "line": 171,
+        "line": 162,
         "rule": "A1",
-        "text": "Raw <button> element (use library Button): <header className=\"thought-context-picker-head\"><div><strong>Attach context</strong><small>Choose wh"
+        "text": "Raw <button> element (use library Button): return <li key={row.ref}><button type=\"button\""
       },
       {
         "file": "desk/pullouts/ThoughtContextPicker.tsx",
-        "line": 174,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"is_default\""
-      },
-      {
-        "file": "desk/pullouts/ThoughtContextPicker.tsx",
-        "line": 175,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"thought-context-row-action\" aria-label=\"Remove from this Thought\" d"
-      },
-      {
-        "file": "desk/pullouts/ThoughtContextPicker.tsx",
-        "line": 177,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {attachments.length ? <button type=\"button\" className=\"thought-context-policy-action\" aria-label=\"Us"
-      },
-      {
-        "file": "desk/pullouts/ThoughtContextPicker.tsx",
-        "line": 180,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"leaf_count\""
-      },
-      {
-        "file": "desk/pullouts/ThoughtContextPicker.tsx",
-        "line": 180,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"leaf_count\""
-      },
-      {
-        "file": "desk/pullouts/ThoughtContextPicker.tsx",
-        "line": 181,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {defaultContext?.selections.length ? <button type=\"button\" className=\"thought-context-policy-action\""
-      },
-      {
-        "file": "desk/pullouts/ThoughtContextPicker.tsx",
-        "line": 183,
+        "line": 191,
         "rule": "B",
         "text": "Raw control element: <label className=\"thought-context-search\"><span className=\"sr-only\">Search notes</span><span aria-hi"
-      },
-      {
-        "file": "desk/pullouts/ThoughtContextPicker.tsx",
-        "line": 190,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet thought-context-browse\" onClick={() => setView(\"bro"
-      },
-      {
-        "file": "desk/pullouts/ThoughtContextPicker.tsx",
-        "line": 193,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {nextCursor ? <button type=\"button\" className=\"desk-chip quiet thought-context-more-results\" disable"
-      },
-      {
-        "file": "desk/pullouts/ThoughtContextPicker.tsx",
-        "line": 194,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {!searching ? <button type=\"button\" className=\"desk-chip quiet\" onClick={() => setView(\"compact\")}>B"
       }
     ],
     "ThoughtDocumentPane": [
       {
         "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
-        "line": 62,
+        "line": 65,
         "rule": "B",
         "text": "Raw control element: <input"
       },
       {
         "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
-        "line": 83,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {tags.map((tag) => <button key={tag} type=\"button\" className=\"thought-tag\" disabled={disabled} onCli"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
-        "line": 84,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"thought-tag-add\" aria-expanded={tagsOpen} onClick={() => setTagsOpe"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
-        "line": 85,
+        "line": 90,
         "rule": "B",
         "text": "Raw control element: {tagsOpen ? <input aria-label=\"Tag names\" value={draft.tags} disabled={disabled} onChange={(event) ="
       },
       {
         "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
-        "line": 86,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button ref={infoRef} type=\"button\" className=\"thought-tag-add\" disabled={originalBusy} onClick={() "
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
-        "line": 90,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {original ? <section ref={originalRef} className=\"thought-document-original surface-aerogel\" aria-la"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
-        "line": 90,
+        "line": 95,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"raw_text\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
-        "line": 91,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {originalError ? <p className=\"thought-document-original-error\" role=\"alert\">{originalError} <button"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
-        "line": 92,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {message.includes(\"Retry save\") ? <button type=\"button\" className=\"desk-chip quiet thought-save-retr"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtDocumentPane.tsx",
-        "line": 1,
-        "rule": "mic",
-        "text": "Text input found but no MicButton in this face (the voice law)"
-      }
-    ],
-    "ThoughtEntry": [
-      {
-        "file": "desk/chair/ThoughtEntry.tsx",
-        "line": 69,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"btn btn--primary thought-entry-primary\" onClick={() => setComposing"
-      },
-      {
-        "file": "desk/chair/ThoughtEntry.tsx",
-        "line": 70,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={() => setMore((open) => !open)}>More capt"
-      },
-      {
-        "file": "desk/chair/ThoughtEntry.tsx",
-        "line": 71,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {more ? <div className=\"thought-entry-more\"><button type=\"button\" className=\"desk-chip quiet\" onClic"
-      },
-      {
-        "file": "desk/chair/ThoughtEntry.tsx",
-        "line": 74,
-        "rule": "B",
-        "text": "Raw control element: <textarea id=\"thought-compose\" value={value} onChange={(event) => setDraft(event.target.value)} auto"
-      },
-      {
-        "file": "desk/chair/ThoughtEntry.tsx",
-        "line": 76,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <div className=\"thought-entry-actions\"><button type=\"button\" className=\"btn btn--primary\" disabled={"
       }
     ],
     "ThoughtNoteEditor": [
-      {
-        "file": "desk/pullouts/editors/ThoughtNoteEditor.tsx",
-        "line": 23,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {writer.message ? <p role=\"status\" className=\"surface-receipt-line\">{writer.message} {writer.message"
-      },
-      {
-        "file": "desk/pullouts/editors/ThoughtNoteEditor.tsx",
-        "line": 23,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"{writer.message} {writer.message.includes(\"Retry save\") ?...\""
-      },
       {
         "file": "desk/pullouts/editors/ThoughtNoteEditor.tsx",
         "line": 1,
@@ -3552,273 +1293,123 @@
     "ThoughtWorkspaceWindow": [
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 102,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Will run on {projection.inference.intended_placement.target_name}...\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 102,
+        "line": 104,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"intended_placement\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 102,
+        "line": 104,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"target_name\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 106,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Ran on {placement.actual_placement.target_name} \u00b7 {location}...\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 106,
+        "line": 108,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"actual_placement\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 106,
+        "line": 108,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"target_name\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 112,
+        "line": 114,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"version_label\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 397,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" aria-current={tab === \"note\" ? \"page\" : undefined} onClick={() => setTab(\"note"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 398,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" aria-current={tab === \"interview\" ? \"page\" : undefined} onClick={() => setTab("
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 403,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {inserted && !narrow ? <button type=\"button\" className=\"thought-inserted-marker thought-inserted-mar"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 404,
+        "line": 406,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"filing_status\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 410,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): ? <div className=\"thought-interview-empty thought-interview-setup\"><p className=\"thought-question-ki"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 410,
-        "rule": "A3-sentence",
-        "text": "Sentence in JSX text (>60 chars): \"Choose this device or another configured destination. Your Note stays here until...\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 410,
+        "line": 412,
         "rule": "A3-prose",
         "text": "Prose helper class (hint/help/description): ? <div className=\"thought-interview-empty thought-interview-setup\"><p className=\"thought-question-ki"
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 411,
-        "rule": "A3-sentence",
-        "text": "Sentence in JSX text (>60 chars): \"One click reads the saved Note and asks the most useful next question....\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 411,
+        "line": 413,
         "rule": "A3-prose",
         "text": "Prose helper class (hint/help/description): : <div className=\"thought-interview-empty\"><p className=\"thought-question-kicker\">Ready when you are"
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 412,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Using saved Note v{projection.thought.working_revision}...\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 412,
+        "line": 414,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"working_revision\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 413,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {currentQuestion ? <div className=\"thought-question\"><p className=\"thought-question-kicker\">One thin"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 413,
+        "line": 415,
         "rule": "B",
         "text": "Raw control element: {currentQuestion ? <div className=\"thought-question\"><p className=\"thought-question-kicker\">One thin"
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 414,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {projection.workspace_state === \"synthesis\" && projection.review?.kind === \"synthesis\" ? <div classN"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 414,
+        "line": 416,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"body_markdown\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 415,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Repair AI context before asking another question....\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 416,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"{projection.terminal_status?.message || \"Your Note is unchanged. Try again or fi...\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 416,
+        "line": 418,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"terminal_status\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 417,
-        "rule": "A3-sentence",
-        "text": "Sentence in JSX text (>60 chars): \"The Note remains yours. Resume whenever there is more to work through....\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 417,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"The Note remains yours. Resume whenever there is more to work through....\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 418,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {inserted && narrow ? <button type=\"button\" className=\"thought-inserted-marker\" onClick={() => { set"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 423,
+        "line": 425,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"leaf_count\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 423,
+        "line": 425,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"leaf_count\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 423,
+        "line": 425,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"is_default\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 424,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" disabled={busy} onClick={() => void openPicker()}>"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 426,
+        "line": 428,
         "rule": "A3-prose",
         "text": "Prose in <p>/<small> element: \"{contextReceipt.action === \"attach\" ? \"Attached\" : contextReceipt.action === \"de...\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 427,
+        "line": 429,
         "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Attached by default \u00b7 {defaultReceipt.attachments.map((item) => item.title).join...\""
+        "text": "Prose in <p>/<small> element: \"Default \u00b7 {defaultReceipt.attachments.map((item) => item.title).join(\" + \")}...\""
       },
       {
         "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 428,
-        "rule": "A3-sentence",
-        "text": "Sentence in JSX text (>60 chars): \"item.title).join(\" + \") || \"The saved set\"} could not be attached; the whole set...\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 428,
+        "line": 430,
         "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Default AI context was not applied. {defaultReceipt.failure?.selections.map((ite...\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 431,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {projection.workspace_state !== \"completed\" && primaryKind !== \"complete\" ? <button type=\"button\" cl"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 432,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {primaryKind === \"configure_ai\" && !setupProxy ? <span aria-hidden=\"true\" /> : <button type=\"button\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 474,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {controller.opening ? <div className=\"thought-workspace-opening\" aria-busy=\"true\"><span>Opening Thou"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 474,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Could not open this Thought. The Note is unchanged....\""
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 478,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): {controller.restartDetected ? <div className=\"thought-workspace-opening thought-workspace-restart\" r"
-      },
-      {
-        "file": "desk/thought-workspace/ThoughtWorkspaceWindow.tsx",
-        "line": 478,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"This hub restarted. Reload the Thought before continuing....\""
+        "text": "Prose in <p>/<small> element: \"Default context skipped \u00b7 {defaultReceipt.failure?.selections.map((item) => item...\""
       }
     ],
     "ThreadComposer": [
       {
         "file": "desk/components/ThreadComposer.tsx",
-        "line": 89,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: { id: \"tools\", verbId: \"thread.tools\", label: \"Show tools\", glyph: \"\u2699\" },"
-      },
-      {
-        "file": "desk/components/ThreadComposer.tsx",
-        "line": 960,
+        "line": 961,
         "rule": "B",
         "text": "Raw control element: <textarea"
       },
       {
         "file": "desk/components/ThreadComposer.tsx",
-        "line": 1052,
+        "line": 1053,
         "rule": "B",
         "text": "Raw control element: <textarea"
       }
@@ -3826,150 +1417,73 @@
     "ThreadPullout": [
       {
         "file": "desk/pullouts/ThreadPullout.tsx",
-        "line": 178,
+        "line": 180,
         "rule": "B",
         "text": "Raw control element: <select"
       },
       {
         "file": "desk/pullouts/ThreadPullout.tsx",
-        "line": 190,
+        "line": 193,
         "rule": "B",
         "text": "Raw control element: <input"
       },
       {
         "file": "desk/pullouts/ThreadPullout.tsx",
-        "line": 198,
+        "line": 202,
         "rule": "B",
         "text": "Raw control element: <input"
       },
       {
         "file": "desk/pullouts/ThreadPullout.tsx",
-        "line": 205,
+        "line": 210,
         "rule": "B",
         "text": "Raw control element: <input"
       },
       {
         "file": "desk/pullouts/ThreadPullout.tsx",
-        "line": 446,
+        "line": 451,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): <span className=\"thread-result-table-key\">+{objectEntries.length} object{objectEntries.length !== 1 ",
         "confidence": "medium"
       },
       {
         "file": "desk/pullouts/ThreadPullout.tsx",
-        "line": 531,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: <span className=\"thread-guardrail-glyph\">{hasViolations ? \"\u26d4\" : \"\u26a0\"}</span>"
-      },
-      {
-        "file": "desk/pullouts/ThreadPullout.tsx",
-        "line": 730,
+        "line": 736,
         "rule": "B",
         "text": "Raw control element: <input"
       },
       {
         "file": "desk/pullouts/ThreadPullout.tsx",
-        "line": 1591,
+        "line": 1600,
         "rule": "B",
         "text": "Raw control element: <input"
       },
       {
         "file": "desk/pullouts/ThreadPullout.tsx",
-        "line": 1634,
+        "line": 1643,
         "rule": "A8",
         "text": "Zero fallback rendered (?? 0): callMode={detail.thread?.call_mode ?? 0}",
         "confidence": "medium"
       },
       {
         "file": "desk/pullouts/ThreadPullout.tsx",
-        "line": 1640,
+        "line": 1649,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"status_line\""
-      }
-    ],
-    "ToolsRow": [
-      {
-        "file": "features/project-room/setup/ToolsRow.tsx",
-        "line": 75,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceSection label={`TOOLS ${connectorTools.length}`}>",
-        "confidence": "medium"
       }
     ],
     "TopologyMapView": [
       {
         "file": "pages/cores/TopologyMapView.tsx",
-        "line": 119,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"base_url\""
-      },
-      {
-        "file": "pages/cores/TopologyMapView.tsx",
-        "line": 198,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"base_url\""
-      },
-      {
-        "file": "pages/cores/TopologyMapView.tsx",
-        "line": 202,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <Disclosure label=\"Models\" defaultOpen token={`${nodeModels.length}`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/TopologyMapView.tsx",
-        "line": 215,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <Disclosure label=\"Jobs\" defaultOpen token={`${nodeJobs.length}`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/TopologyMapView.tsx",
-        "line": 313,
+        "line": 441,
         "rule": "B",
-        "text": "Raw control element: <input"
+        "text": "Raw control element: <label className=\"surface-gadget-label\">Provider key<input ref={secretRef} className=\"hs-control\" ty"
       },
       {
         "file": "pages/cores/TopologyMapView.tsx",
-        "line": 428,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => setFace(\"endpoint\")} data-testid=\"add-endpoint\">"
-      },
-      {
-        "file": "pages/cores/TopologyMapView.tsx",
-        "line": 431,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => setFace(\"hosted\")} data-testid=\"add-hosted\">"
-      },
-      {
-        "file": "pages/cores/TopologyMapView.tsx",
-        "line": 443,
+        "line": 456,
         "rule": "B",
-        "text": "Raw control element: <input ref={secretRef} type=\"password\" autoComplete=\"new-password\" aria-label=\"Provider key\" />"
-      },
-      {
-        "file": "pages/cores/TopologyMapView.tsx",
-        "line": 447,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => setFace(\"choices\")}>Back</button>"
-      },
-      {
-        "file": "pages/cores/TopologyMapView.tsx",
-        "line": 461,
-        "rule": "B",
-        "text": "Raw control element: <input ref={secretRef} type=\"password\" autoComplete=\"new-password\" aria-label=\"Provider key\" />"
-      },
-      {
-        "file": "pages/cores/TopologyMapView.tsx",
-        "line": 465,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" onClick={() => setFace(\"choices\")}>Back</button>"
-      },
-      {
-        "file": "pages/cores/TopologyMapView.tsx",
-        "line": 1,
-        "rule": "mic",
-        "text": "Text input found but no MicButton in this face (the voice law)"
+        "text": "Raw control element: <label className=\"surface-gadget-label\">Provider key<input ref={secretRef} className=\"hs-control\" ty"
       }
     ],
     "TopologySurface": [
@@ -3995,53 +1509,9 @@
     "TranscriptWell": [
       {
         "file": "pages/cores/history/TranscriptWell.tsx",
-        "line": 29,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceWell head={`TRANSCRIPT \u00b7 ${segments.length} SEG`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/history/TranscriptWell.tsx",
-        "line": 49,
+        "line": 50,
         "rule": "A3-prose",
         "text": "Prose in <p>/<small> element: \"{String(row.text ?? row.transcript ?? \"\")}...\""
-      }
-    ],
-    "TrustWindow": [
-      {
-        "file": "desk/components/TrustWindow.tsx",
-        "line": 92,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): {enabledDestinations.length}",
-        "confidence": "medium"
-      }
-    ],
-    "UpdatePosture": [
-      {
-        "file": "features/project-room/update/UpdatePosture.tsx",
-        "line": 192,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceLedger count={`DRAFTS ${ctrl.updates.length}`} cols=\"room\">",
-        "confidence": "medium"
-      },
-      {
-        "file": "features/project-room/update/UpdatePosture.tsx",
-        "line": 204,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: {\"\u270e\"}"
-      },
-      {
-        "file": "features/project-room/update/UpdatePosture.tsx",
-        "line": 430,
-        "rule": "A3-sentence",
-        "text": "Sentence in prop text: \"Model drafting may send project data to the configured inference provider....\""
-      },
-      {
-        "file": "features/project-room/update/UpdatePosture.tsx",
-        "line": 452,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): {`UPDATES ${ctrl.updates.length}`}",
-        "confidence": "medium"
       }
     ],
     "UtteranceWell": [
@@ -4055,127 +1525,16 @@
     "WhyControl": [
       {
         "file": "desk/components/WhyControl.tsx",
-        "line": 33,
+        "line": 37,
         "rule": "A8",
-        "text": "Counter may render zero (.length without guard): aria-label={`Why: ${receiptIds.length} governing decision receipt${receiptIds.length === 1 ? \"\" : \"s",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/WhyControl.tsx",
-        "line": 39,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): WHY {receiptIds.length}",
+        "text": "Zero fallback rendered (?? 0): aria-label={`${whyLabel} governing decision receipt${(receiptIds?.length ?? 0) === 1 ? \"\" : \"s\"}`}",
         "confidence": "medium"
       }
     ],
     "WorkbenchAutomations": [
       {
         "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 61,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceLedger count={`${history.length} RECEIPTS`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 70,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"receipt_id\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 70,
-        "rule": "raw-ids",
-        "text": "ID field rendered as text: {entry.receipt_id ? <div><dt>receipt</dt><dd>{entry.receipt_id}</dd></div> : null}",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 100,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"wb-automation-head\" onClick={() => setOpen(!open)} aria-expanded={o"
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 106,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"WHEN {automation.event_kind} \u00b7 ADD ITEM ONLY...\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 106,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"event_kind\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 109,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"TEST NEVER ADDS WORK \u00b7 ENABLE = SILENT BASELINE \u00b7 LATER MATCHES ADD ONE GROUNDED...\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 139,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"TEST ONLY \u00b7 NO ITEMS ADDED \u00b7 {testResult.would_add} MATCH{testResult.would_add =...\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 139,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"would_add\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 139,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"would_add\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 139,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"entity_count\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 142,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Last good {humanTime(automation.last_good_at)}...\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 142,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"last_good_at\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 143,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Adapter {automation.adapter_status?.replace(\"_\", \" \")}. Configure credentials an...\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 143,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"adapter_status\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 176,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"OBSERVED EVENTS PLACE GROUNDED ITEMS \u00b7 REFRESH EVERY 35 MIN \u00b7 READ-ONLY \u00b7 NEVER ...\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 203,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Repository required to add a GitHub trigger....\""
-      },
-      {
-        "file": "desk/components/WorkbenchAutomations.tsx",
-        "line": 207,
+        "line": 216,
         "rule": "raw-ids",
         "text": "ID field rendered as text: {!loading && !error ? <div className=\"wb-automations-list\">{automations.map((automation) => <Automat",
         "confidence": "medium"
@@ -4190,229 +1549,60 @@
     "WorkbenchResourceful": [
       {
         "file": "desk/components/WorkbenchResourceful.tsx",
-        "line": 81,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"idle_after_minutes\""
-      },
-      {
-        "file": "desk/components/WorkbenchResourceful.tsx",
-        "line": 82,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"cooldown_hours\""
-      },
-      {
-        "file": "desk/components/WorkbenchResourceful.tsx",
-        "line": 83,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"nightly_target\""
-      },
-      {
-        "file": "desk/components/WorkbenchResourceful.tsx",
-        "line": 190,
+        "line": 195,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): disabled={!routines.length}",
         "confidence": "medium"
       },
       {
         "file": "desk/components/WorkbenchResourceful.tsx",
-        "line": 207,
+        "line": 212,
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): disabled={!routines.length}",
         "confidence": "medium"
-      },
-      {
-        "file": "desk/components/WorkbenchResourceful.tsx",
-        "line": 218,
-        "rule": "A3-prose",
-        "text": "Prose in <p>/<small> element: \"Last resourceful work {humanTime(policy.last_fired_at)}...\""
-      },
-      {
-        "file": "desk/components/WorkbenchResourceful.tsx",
-        "line": 218,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"last_fired_at\""
-      }
-    ],
-    "WorkbenchRunsWing": [
-      {
-        "file": "desk/components/workbench/WorkbenchRunsWing.tsx",
-        "line": 29,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): <SurfaceLedger count={`${runs.length} RUNS`}>",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/workbench/WorkbenchRunsWing.tsx",
-        "line": 72,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"total_tokens\""
-      },
-      {
-        "file": "desk/components/workbench/WorkbenchRunsWing.tsx",
-        "line": 74,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"completed_at\""
       }
     ],
     "WorkbenchWindow": [
       {
         "file": "desk/components/WorkbenchWindow.tsx",
-        "line": 503,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): INHERITED {boundSkills.length}",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/WorkbenchWindow.tsx",
-        "line": 828,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"result_artifact_id\""
-      },
-      {
-        "file": "desk/components/WorkbenchWindow.tsx",
-        "line": 828,
-        "rule": "raw-ids",
-        "text": "ID field rendered as text: <span className=\"wb-card-artifact-detail-id\">{item.result_artifact_id}</span>",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/WorkbenchWindow.tsx",
-        "line": 1133,
+        "line": 1135,
         "rule": "A8",
         "text": "Counter may render zero (count pattern): payload contract is {workbench_id, run_id, item_id, index, total} with",
         "confidence": "low"
       },
       {
         "file": "desk/components/WorkbenchWindow.tsx",
-        "line": 1296,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): `${doneItems.length} done items`,",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/WorkbenchWindow.tsx",
-        "line": 1423,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: ? `\u263e Resourceful \u00b7 ${resourcefulPolicy.nightly_target}/night \u00b7 ${resourcefulPolicy.cooldown_hours}h`"
-      },
-      {
-        "file": "desk/components/WorkbenchWindow.tsx",
-        "line": 1425,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: ? `\u26a1 ${automations[0].name}${automations.length > 1 ? ` +${automations.length - 1}` : \"\"}`"
-      },
-      {
-        "file": "desk/components/WorkbenchWindow.tsx",
-        "line": 1453,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: glyph=\"\u2699\""
-      },
-      {
-        "file": "desk/components/WorkbenchWindow.tsx",
-        "line": 1701,
+        "line": 1705,
         "rule": "B",
         "text": "Raw control element: <input"
-      },
-      {
-        "file": "desk/components/WorkbenchWindow.tsx",
-        "line": 1822,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): count={`${memoryEntries.length} MEMORIES`}",
-        "confidence": "medium"
-      },
-      {
-        "file": "desk/components/WorkbenchWindow.tsx",
-        "line": 1864,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"item_title\""
-      },
-      {
-        "file": "desk/components/WorkbenchWindow.tsx",
-        "line": 1896,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): {items.length} {items.length === 1 ? \"item\" : \"items\"}",
-        "confidence": "medium"
       }
     ],
     "WorkbenchesHomeCore": [
       {
         "file": "pages/cores/WorkbenchesHomeCore.tsx",
-        "line": 66,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip\" onClick={createWorkbench}>"
-      },
-      {
-        "file": "pages/cores/WorkbenchesHomeCore.tsx",
-        "line": 81,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: emptyGlyph=\"\u2699\""
-      },
-      {
-        "file": "pages/cores/WorkbenchesHomeCore.tsx",
-        "line": 112,
-        "rule": "A8",
-        "text": "Counter may render zero (count pattern): <span>{wb.pending_count} pending</span>",
-        "confidence": "low"
-      },
-      {
-        "file": "pages/cores/WorkbenchesHomeCore.tsx",
-        "line": 112,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"pending_count\""
-      },
-      {
-        "file": "pages/cores/WorkbenchesHomeCore.tsx",
-        "line": 115,
-        "rule": "A8",
-        "text": "Counter may render zero (count pattern): <span>{wb.item_count - wb.pending_count} done</span>",
-        "confidence": "low"
-      },
-      {
-        "file": "pages/cores/WorkbenchesHomeCore.tsx",
-        "line": 115,
-        "rule": "raw-ids",
-        "text": "Snake_case literal in rendered text: \"item_count\""
-      },
-      {
-        "file": "pages/cores/WorkbenchesHomeCore.tsx",
-        "line": 115,
+        "line": 114,
         "rule": "raw-ids",
         "text": "Snake_case literal in rendered text: \"pending_count\""
       },
       {
         "file": "pages/cores/WorkbenchesHomeCore.tsx",
         "line": 117,
-        "rule": "A8",
-        "text": "Literal zero counter in text: {wb.item_count === 0 ? <span>0 items</span> : null}",
-        "confidence": "medium"
+        "rule": "raw-ids",
+        "text": "Snake_case literal in rendered text: \"item_count\""
+      },
+      {
+        "file": "pages/cores/WorkbenchesHomeCore.tsx",
+        "line": 117,
+        "rule": "raw-ids",
+        "text": "Snake_case literal in rendered text: \"pending_count\""
       }
     ],
     "WorkflowEditor": [
       {
         "file": "desk/pullouts/editors/WorkflowEditor.tsx",
-        "line": 115,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u2715"
-      },
-      {
-        "file": "desk/pullouts/editors/WorkflowEditor.tsx",
         "line": 1,
         "rule": "mic",
         "text": "Text input found but no MicButton in this face (the voice law)"
-      }
-    ],
-    "WorkflowPullout": [
-      {
-        "file": "desk/pullouts/WorkflowPullout.tsx",
-        "line": 48,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip quiet\" onClick={closeEditor}>Cancel</button>"
-      },
-      {
-        "file": "desk/pullouts/WorkflowPullout.tsx",
-        "line": 49,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"desk-chip is-primary\" onClick={closeEditor}>Save</button>"
       }
     ],
     "WorldStage": [
@@ -4430,57 +1620,6 @@
         "rule": "C",
         "text": "Type-step collapse: only 1 distinct font-size (11)",
         "confidence": "medium"
-      }
-    ],
-    "ZoneWindow": [
-      {
-        "file": "desk/components/ZoneWindow.tsx",
-        "line": 190,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): {members.length} {members.length === 1 ? \"item\" : \"items\"}",
-        "confidence": "medium"
-      }
-    ],
-    "choice-card": [
-      {
-        "file": "desk/surface/patterns/choice-card.css",
-        "line": 187,
-        "rule": "DS6",
-        "text": "Border-left with token (check if accent): border-left: 2px solid var(--choice-tier, var(--border));",
-        "confidence": "medium"
-      }
-    ],
-    "frontDoor": [
-      {
-        "file": "pages/cores/frontDoor.tsx",
-        "line": 147,
-        "rule": "A8",
-        "text": "Counter may render zero (.length without guard): (group) => `${group.jobs.length} job${group.jobs.length === 1 ? \"\" : \"s\"} \u2192 ${group.source}`,",
-        "confidence": "medium"
-      },
-      {
-        "file": "pages/cores/frontDoor.tsx",
-        "line": 498,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" role=\"tab\" aria-selected={advancedView === \"map\"} onClick={() => setAdvancedVi"
-      },
-      {
-        "file": "pages/cores/frontDoor.tsx",
-        "line": 499,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" role=\"tab\" aria-selected={advancedView === \"table\"} onClick={() => setAdvanced"
-      },
-      {
-        "file": "pages/cores/frontDoor.tsx",
-        "line": 578,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" role=\"tab\" aria-selected={advancedView === \"map\"} onClick={() => setAdvancedVi"
-      },
-      {
-        "file": "pages/cores/frontDoor.tsx",
-        "line": 579,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" role=\"tab\" aria-selected={advancedView === \"table\"} onClick={() => setAdvanced"
       }
     ],
     "gadgets": [
@@ -4502,87 +1641,6 @@
         "rule": "A8",
         "text": "Counter may render zero (.length without guard): const cols = { \"--gadget-cols\": head.length } as CSSProperties;",
         "confidence": "medium"
-      }
-    ],
-    "settingsPrefs": [
-      {
-        "file": "pages/cores/settingsPrefs.tsx",
-        "line": 310,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u26a0 RESET REFUSED"
-      },
-      {
-        "file": "pages/cores/settingsPrefs.tsx",
-        "line": 407,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: \u26a0 REFUSED \u00b7 {receipt.refusal}"
-      },
-      {
-        "file": "pages/cores/settingsPrefs.tsx",
-        "line": 426,
-        "rule": "A1",
-        "text": "Raw <button> element (use library Button): <button type=\"button\" className=\"prefs-back\" onClick={onBack}>"
-      }
-    ],
-    "thread-pullout": [
-      {
-        "file": "desk/pullouts/thread-pullout.css",
-        "line": 539,
-        "rule": "DS6",
-        "text": "Accent left rail (banned by DESIGN_SYSTEM rule 6): border-left: 2px solid var(--accent, #3b82f6);"
-      },
-      {
-        "file": "desk/pullouts/thread-pullout.css",
-        "line": 543,
-        "rule": "DS6",
-        "text": "Accent left rail (banned by DESIGN_SYSTEM rule 6): border-left: 2px solid var(--accent, #3b82f6);"
-      },
-      {
-        "file": "desk/pullouts/thread-pullout.css",
-        "line": 548,
-        "rule": "DS6",
-        "text": "Accent left rail (banned by DESIGN_SYSTEM rule 6): border-left: 2px solid var(--danger-signal, #ef4444);"
-      },
-      {
-        "file": "desk/pullouts/thread-pullout.css",
-        "line": 1025,
-        "rule": "DS6",
-        "text": "Accent left rail (banned by DESIGN_SYSTEM rule 6): border-left: 2px solid var(--danger-signal, #ef4444);"
-      },
-      {
-        "file": "desk/pullouts/thread-pullout.css",
-        "line": 1029,
-        "rule": "DS6",
-        "text": "Accent left rail (banned by DESIGN_SYSTEM rule 6): border-left: 2px solid var(--warning-signal, #f59e0b);"
-      },
-      {
-        "file": "desk/pullouts/thread-pullout.css",
-        "line": 1089,
-        "rule": "DS6",
-        "text": "Accent left rail (banned by DESIGN_SYSTEM rule 6): border-left: 2px solid var(--accent, #4488ff);"
-      }
-    ],
-    "topology-surface": [
-      {
-        "file": "desk/surface/graph/topology-surface.css",
-        "line": 232,
-        "rule": "DS6",
-        "text": "Border-left with token (check if accent): border-left: 1px solid var(--border-subtle);",
-        "confidence": "medium"
-      }
-    ],
-    "useMeetingData": [
-      {
-        "file": "pages/cores/history/useMeetingData.tsx",
-        "line": 140,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: onReceipt({ text: `\u26a0 REFUSED \u00b7 ${readableError(reason)}`, tone: \"danger\" });"
-      },
-      {
-        "file": "pages/cores/history/useMeetingData.tsx",
-        "line": 159,
-        "rule": "emoji",
-        "text": "Emoji in JSX text: onReceipt({ text: `\u26a0 REFUSED \u00b7 ${readableError(reason)}`, tone: \"danger\" });"
       }
     ]
   }

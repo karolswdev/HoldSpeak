@@ -164,16 +164,16 @@ describe("HS-128-10 Desk Intelligence walk", () => {
   it("HS-129-03 hides BACK until a cross-link drill and returns to Brief", async () => {
     render(<IntelligencePullout object={object} onClose={() => {}} />);
 
-    expect(screen.queryByRole("button", { name: "← BACK" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "BACK" })).not.toBeInTheDocument();
     fireEvent(window, new CustomEvent(INTELLIGENCE_NAVIGATE, { detail: { view: "brief" } }));
-    expect(screen.queryByRole("button", { name: "← BACK" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "BACK" })).not.toBeInTheDocument();
     await screen.findByText(brief.headline);
     fireEvent.click(screen.getByRole("button", { name: "Changed: Desk Intelligence is ready." }));
 
     expect(await screen.findByText(board.now[0].text)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "← BACK" }));
+    fireEvent.click(screen.getByRole("button", { name: "BACK" }));
 
     expect(await screen.findByText(brief.headline)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "← BACK" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "BACK" })).not.toBeInTheDocument();
   });
 });

@@ -5,6 +5,7 @@
 // filters, receipt detail) stays one verb away.
 import "./attention.css";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { apiFetch, type JsonRecord } from "../../lib/api";
 import { gateAge, useGate } from "../gate";
 import { useProjections } from "../projections";
@@ -12,6 +13,7 @@ import { humanTime } from "../surface/format";
 import { StringGadget } from "../surface/gadgets";
 import { SurfaceState } from "../surface/Surface";
 import { humanizeWireValue } from "../../lib/productLanguage";
+import { MicButton } from "./MicButton";
 import { openPrimitive, openSurfaceWhenReady } from "../shell";
 
 type Correction = Record<string, unknown>;
@@ -79,6 +81,7 @@ export function SystemShade({
 
   if (!open) return null;
 
+  const needsAttentionCount = Number(store.counts.needs_attention || 0);
   const needs = store.projections
     .filter((row) => row.attention_state === "needs_attention")
     .slice(0, 4);
@@ -101,8 +104,9 @@ export function SystemShade({
     <div className="desk-shade" ref={panel} role="group" aria-label="Missed">
       <div className="desk-shade-head">
         <span className="desk-shade-title">Missed</span>
-        <button
-          type="button"
+        <Button
+          dense
+          variant="ghost"
           className="desk-shade-memory"
           onClick={() => {
             onClose();
@@ -110,12 +114,12 @@ export function SystemShade({
           }}
         >
           Desk memory
-        </button>
+        </Button>
       </div>
 
       <section className="desk-shade-group" aria-label="Needs you">
         <h4>
-          Needs you <b>· {(store.counts.needs_attention || 0) + gate.held.length}</b>
+          Needs you <b>· {needsAttentionCount + gate.held.length}</b>
         </h4>
         {gate.held.map((proposal) => (
           <div className="desk-shade-item desk-gate-item" key={proposal.id}>
@@ -144,9 +148,10 @@ export function SystemShade({
                       if (event.key === "Escape") setDenyingId(null);
                     }}
                   />
-                  <button
-                    type="button"
-                    className="desk-chip quiet"
+                  <MicButton draftScope="shade-deny" onText={(t: string) => setDenyReason(t)} />
+                  <Button
+                    dense
+                    variant="ghost"
                     onClick={() => {
                       void gate.decide(proposal.id, "denied", denyReason);
                       setDenyingId(null);
@@ -154,34 +159,34 @@ export function SystemShade({
                     }}
                   >
                     Send deny
-                  </button>
-                  <button
-                    type="button"
-                    className="desk-chip quiet"
+                  </Button>
+                  <Button
+                    dense
+                    variant="ghost"
                     onClick={() => setDenyingId(null)}
                   >
                     Back
-                  </button>
+                  </Button>
                 </span>
               ) : (
                 <span className="desk-shade-do">
-                  <button
-                    type="button"
-                    className="desk-chip is-primary"
+                  <Button
+                    dense
+                    variant="primary"
                     onClick={() => void gate.decide(proposal.id, "approved")}
                   >
                     Approve
-                  </button>
-                  <button
-                    type="button"
-                    className="desk-chip quiet"
+                  </Button>
+                  <Button
+                    dense
+                    variant="ghost"
                     onClick={() => {
                       setDenyingId(proposal.id);
                       setDenyReason("");
                     }}
                   >
                     Deny
-                  </button>
+                  </Button>
                 </span>
               )}
             </div>
@@ -199,22 +204,23 @@ export function SystemShade({
                   {row.subject_label} · {humanTime(row.timestamp)}
                 </small>
                 <span className="desk-shade-do">
-                  <button type="button" onClick={() => openSource(row)}>
+                  <Button dense variant="ghost" onClick={() => openSource(row)}>
                     Open
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    dense
+                    variant="ghost"
                     onClick={() => void store.present(row.id, "acknowledge")}
                   >
                     Acknowledge
-                  </button>
-                  <button
-                    type="button"
-                    className="is-quiet"
+                  </Button>
+                  <Button
+                    dense
+                    variant="ghost"
                     onClick={() => void store.present(row.id, "dismiss")}
                   >
                     Dismiss
-                  </button>
+                  </Button>
                 </span>
               </div>
             </div>
@@ -240,9 +246,9 @@ export function SystemShade({
                   {row.outcome || row.subject_label} · {humanTime(row.timestamp)}
                 </small>
                 <span className="desk-shade-do">
-                  <button type="button" onClick={() => openSource(row)}>
+                  <Button dense variant="ghost" onClick={() => openSource(row)}>
                     Open
-                  </button>
+                  </Button>
                 </span>
               </div>
             </div>

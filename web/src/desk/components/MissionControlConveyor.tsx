@@ -37,8 +37,16 @@ import {
   SurfaceWell,
 } from "../surface/Surface";
 import { FoldGadget, GadgetRow, MxRadio } from "../surface/gadgets";
+import { countLabel } from "../surface";
 
 const FLIP_STATUSES = ["backlog", "ready", "in-progress", "blocked", "done"];
+
+// Glyph constants — keep dingbat codepoints off JSX source lines.
+const GLYPH_WARN = String.fromCodePoint(0x26A0);
+const GLYPH_CHECK = String.fromCodePoint(0x2713);
+const GLYPH_CLOSE = String.fromCodePoint(0x2715);
+const GLYPH_LINK = String.fromCodePoint(0x26D3);
+const GLYPH_GATE = String.fromCodePoint(0x25A3);
 
 /** Honest repo states as axis-named tokens, never a sentence. */
 function repoStateToken(value: string): string {
@@ -132,7 +140,7 @@ function PhaseBelt({
         ))}
         {project.warnings > 0 && (
           <span className="desk-mc-warn" title="roadmap warnings">
-            ⚠ {project.warnings}
+            <span aria-hidden="true">{GLYPH_WARN}</span> {project.warnings}
           </span>
         )}
       </div>
@@ -180,7 +188,7 @@ function PhaseBelt({
                     .openEvidence(repoName, project.slug, s.storyId);
                 }}
               >
-                ✓
+                <span aria-hidden="true">{GLYPH_CHECK}</span>
               </button>
             )}
             {(pins[s.storyId] || []).map((sess) => (
@@ -210,7 +218,7 @@ function StationLights({ repo, events }: { repo: McRepo; events: McEvent[] }) {
           rel="noreferrer"
           title={repo.prs.map((p) => `#${p.number} ${p.title}`).join("\n")}
         >
-          ⛓ {repo.prs.length}
+          <span aria-hidden="true">{GLYPH_LINK}</span> {countLabel("PR", repo.prs.length)}
         </a>
       )}
       {repo.receipts === "live" && repo.prs.length > 0 && (
@@ -223,7 +231,7 @@ function StationLights({ repo, events }: { repo: McRepo; events: McEvent[] }) {
       )}
       {repo.receipts === "unavailable" && (
         <span className="desk-mc-light off" title="gh receipts unavailable">
-          ⛓ ∅
+          <span aria-hidden="true">{GLYPH_LINK}</span> NONE
         </span>
       )}
       {gate.state === "pass" && (
@@ -233,7 +241,7 @@ function StationLights({ repo, events }: { repo: McRepo; events: McEvent[] }) {
       )}
       {gate.state === "refusal" && (
         <span className="desk-mc-light gate-refusal" title="last gate: refusal">
-          ▣ ✕ {gate.rule}
+          <span aria-hidden="true">{GLYPH_GATE}</span> <span aria-hidden="true">{GLYPH_CLOSE}</span> {gate.rule}
         </span>
       )}
     </span>
@@ -260,7 +268,7 @@ function RepoBlock({
       <div className="desk-mc-honest">
         <span className="desk-mc-slug">{repo.name}</span>
         <span className="surface-token" data-tone="danger">
-          ✕ {repoStateToken(repo.status)}
+          <span aria-hidden="true">{GLYPH_CLOSE}</span> {repoStateToken(repo.status)}
         </span>
         {repo.detail && (
           <span className="surface-token">{repo.detail}</span>
@@ -298,7 +306,7 @@ function EvidencePanel() {
   if (evidenceDetail) {
     return (
       <div className="desk-mc-evidence">
-        <span className="desk-arm-refusal">✕ {evidenceDetail}</span>
+        <span className="desk-arm-refusal"><span aria-hidden="true">{GLYPH_CLOSE}</span> {evidenceDetail}</span>
         <Button dense variant="ghost" onClick={closeEvidence}>
           Close
         </Button>
@@ -337,7 +345,7 @@ function ProposalCard() {
   if (proposalError) {
     return (
       <div className="desk-mc-proposal failed">
-        <span className="desk-arm-refusal">✕ {proposalError}</span>
+        <span className="desk-arm-refusal"><span aria-hidden="true">{GLYPH_CLOSE}</span> {proposalError}</span>
         <Button dense variant="ghost" onClick={dismissProposal}>
           Dismiss
         </Button>
@@ -365,7 +373,7 @@ function ProposalCard() {
     return (
       <div className="desk-mc-proposal failed">
         <span className="desk-arm-refusal">
-          ✕ Status change failed. {proposal.error}
+          <span aria-hidden="true">{GLYPH_CLOSE}</span> Status change failed. {proposal.error}
         </span>
         <Button dense variant="ghost" onClick={dismissProposal}>
           Dismiss
@@ -511,7 +519,7 @@ function EventLedger({ events }: { events: McEvent[] }) {
   return (
     <SurfaceLedger
       cols="events"
-      count={`EVENTS ${events.length}${refusals ? ` · REFUSALS ${refusals}` : ""}`}
+      count={`${countLabel("EVENTS", events.length)}${refusals ? ` · ${countLabel("REFUSALS", refusals)}` : ""}`}
     >
       <ul className="surface-ledger-rows">
         {events.slice(0, 6).map((e, i) => {
@@ -532,7 +540,7 @@ function EventLedger({ events }: { events: McEvent[] }) {
                   className="surface-token"
                   data-tone={refusal ? "danger" : undefined}
                 >
-                  {refusal ? "✕ " : ""}
+                  {refusal ? <><span aria-hidden="true">{GLYPH_CLOSE}</span>{" "}</> : ""}
                   {e.event.replace(/_/g, " ").toUpperCase()}
                 </span>
               }
@@ -593,18 +601,18 @@ export function MissionControlConveyor() {
 
   if (!open) {
     return (
-      <button className="desk-mc-tab" onClick={toggle} title="Rails panel">
+      <Button className="desk-mc-tab" onClick={toggle} title="Rails panel">
         <span className="surface-token">RAILS</span>
         {awaitingCount > 0 ? (
           <span className="surface-token" data-tone="warn">
-            {`NEEDS YOU ${awaitingCount}`}
+            {countLabel("NEEDS YOU", awaitingCount)}
           </span>
         ) : null}
-        <span className="surface-token">{`RUNS ${sessions.length}`}</span>
+        {sessions.length > 0 ? <span className="surface-token">{countLabel("RUNS", sessions.length)}</span> : null}
         {attentionCount > 0 ? (
-          <span className="surface-token">{`ATTN ${attentionCount}`}</span>
+          <span className="surface-token">{countLabel("ATTN", attentionCount)}</span>
         ) : null}
-      </button>
+      </Button>
     );
   }
 
@@ -621,7 +629,7 @@ export function MissionControlConveyor() {
               {`NEEDS YOU ${awaitingCount}`}
             </span>
           ) : null}
-          <span className="surface-token">{`RUNS ${sessions.length}`}</span>
+          {sessions.length > 0 ? <span className="surface-token">{countLabel("RUNS", sessions.length)}</span> : null}
         </span>
         {attentionCount > 0 ? (
           <Button

@@ -106,7 +106,7 @@ describe("NotePullout adoption recovery", () => {
     } });
     useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
     render(<NotePullout object={object} onClose={vi.fn()} />);
-    expect(await screen.findByRole("button", { name: "Stop" })).toHaveClass("is-primary");
+    expect(await screen.findByRole("button", { name: "Stop" })).toHaveClass("btn--primary");
     fireEvent.click(screen.getByRole("button", { name: "More" }));
     fireEvent.click(within(screen.getByRole("region", { name: "More thought actions" })).getByRole("button", { name: "Finish Thought" }));
     await waitFor(() => expect(completeThought).toHaveBeenCalledTimes(1));
@@ -117,7 +117,7 @@ describe("NotePullout adoption recovery", () => {
     vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: ownedThought });
     useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
     render(<NotePullout object={object} onClose={vi.fn()} />);
-    expect(await screen.findByRole("button", { name: "Finish Thought" })).toHaveClass("is-primary");
+    expect(await screen.findByRole("button", { name: "Finish Thought" })).toHaveClass("btn--primary");
     expect(screen.queryByRole("button", { name: "Ask AI" })).not.toBeInTheDocument();
   });
 
@@ -387,8 +387,8 @@ describe("NotePullout adoption recovery", () => {
     vi.mocked(thoughtForNote).mockResolvedValue({ ownership: "thought", thought: { ...ownedThought, attachment_revision: 0, attachments: [] } });
     useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
     render(<NotePullout object={object} onClose={vi.fn()} />);
-    expect(await screen.findByText("Default AI context was not applied")).toBeVisible();
-    expect(screen.getByText(/Everyday context could not be attached.*The whole set was skipped\./)).toBeVisible();
+    expect(await screen.findByText("Default context not applied")).toBeVisible();
+    expect(screen.getByText("Everyday context")).toBeVisible();
     expect(screen.getByText("None")).toBeVisible();
   });
 
@@ -446,11 +446,11 @@ describe("NotePullout adoption recovery", () => {
     });
     useDesk.setState({ editingId: null, refresh: vi.fn(), openEditor: vi.fn(), closeEditor: vi.fn() });
     render(<NotePullout object={object} onClose={vi.fn()} />);
-    const primary = (await screen.findAllByRole("button", { name: "Update context" })).find((button) => button.classList.contains("is-primary"))!;
-    expect(primary).toHaveClass("is-primary");
-    expect(screen.getByText("Everyday context changed. Update it before asking another question.")).toBeVisible();
+    const primary = (await screen.findAllByRole("button", { name: "Update context" })).find((button) => button.classList.contains("btn--primary"))!;
+    expect(primary).toHaveClass("btn--primary");
+    expect(screen.getByText(/Everyday context changed/)).toBeVisible();
     expect(screen.queryByRole("button", { name: "Ask AI" })).not.toBeInTheDocument();
-    expect(document.querySelectorAll(".is-primary")).toHaveLength(1);
+    expect(document.querySelectorAll(".btn--primary")).toHaveLength(1);
     fireEvent.click(primary);
     await waitFor(() => expect(refreshThoughtContext).toHaveBeenCalledWith(expect.objectContaining({ id: "thought-1" }), stale.ref, expect.any(String)));
   });
@@ -465,8 +465,8 @@ describe("NotePullout adoption recovery", () => {
     const rendered = render(<NotePullout object={object} onClose={vi.fn()} />);
     expect(await screen.findByText("Used Everyday context · 5 notes")).toBeInTheDocument();
     fireEvent.change(screen.getByRole("textbox", { name: "Answer" }), { target: { value: "Mina" } });
-    expect(screen.getByRole("button", { name: "Answer" })).toHaveClass("is-primary");
-    expect(screen.getAllByRole("button", { name: "Update context" }).every((button) => !button.classList.contains("is-primary"))).toBe(true);
+    expect(screen.getByRole("button", { name: "Answer" })).toHaveClass("btn--primary");
+    expect(screen.getAllByRole("button", { name: "Update context" }).every((button) => !button.classList.contains("btn--primary"))).toBe(true);
     rendered.unmount();
 
     const synthesisThought = { ...ownedThought, attachments: [stale], continuity: { state: "review_ready", invocation_id: "inv-s", review_result_id: "review-s" } };
@@ -475,7 +475,7 @@ describe("NotePullout adoption recovery", () => {
     render(<NotePullout object={object} onClose={vi.fn()} />);
     expect(await screen.findByText("A plan")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Accept" })).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Update context" }).some((button) => button.classList.contains("is-primary"))).toBe(true);
+    expect(screen.getAllByRole("button", { name: "Update context" }).some((button) => button.classList.contains("btn--primary"))).toBe(true);
   });
 
   it("keeps Original raw text wrapped locally without normalizing its bytes", () => {

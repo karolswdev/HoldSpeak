@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Button } from "../../components/signal/Signal";
 import { EgressChip } from "../surface/gadgets";
 import type { VoiceProposal } from "./grammar";
 
@@ -77,8 +78,8 @@ export function VoiceProposalStrip({
         <span className="desk-voice-proposal-action">{receipt.text}</span>
       ) : pending ? null : (
         <>
-          <button type="button" className="desk-chip quiet" onClick={onConfirm}>Confirm</button>
-          <button type="button" className="desk-chip quiet" onClick={onCancel}>Cancel</button>
+          <Button dense variant="ghost" onClick={onConfirm}>Confirm</Button>
+          <Button dense variant="ghost" onClick={onCancel}>Cancel</Button>
         </>
       )}
       {receipt ? <EgressChip label={receipt.scope} scope={egressScope(receipt.scope)} /> : null}

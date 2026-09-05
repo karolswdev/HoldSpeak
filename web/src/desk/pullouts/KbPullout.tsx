@@ -2,6 +2,7 @@ import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Knowledge pullout content (HS-117-15). */
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
 import { spriteUrl } from "../sprites";
+import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
@@ -77,32 +78,32 @@ export function KbPullout({ object: o }: PulloutContentProps) {
         )}
       </div>
       <SurfaceFooter receipt={editing ? null : copyReceipt} verbs={editing ? <>
-        <button type="button" className="desk-chip quiet" onClick={closeEditor}>Cancel</button>
-        <button type="button" className="desk-chip is-primary" onClick={closeEditor}>Save</button>
+        <Button dense variant="ghost" onClick={closeEditor}>Cancel</Button>
+        <Button dense variant="primary" onClick={closeEditor}>Save</Button>
       </> : <>
-        <button
-          type="button"
-          className="desk-chip quiet"
+        <Button
+          dense
+          variant="ghost"
           onClick={() => void copy(body || members.map(({ member }) => member!.title).join("\n"))}
         >
           Copy
-        </button>
-        <button
-          type="button"
-          className="desk-chip quiet"
+        </Button>
+        <Button
+          dense
+          variant="ghost"
           onClick={() =>
             openSurfaceOr("dictate", "/dictation", resourceRef)
           }
         >
           Dictate about this
-        </button>
-        <button
-          type="button"
-          className="desk-chip is-primary"
+        </Button>
+        <Button
+          dense
+          variant="primary"
           onClick={() => openEditor(o.id)}
         >
           Edit
-        </button>
+        </Button>
       </>} />
     </>
   );

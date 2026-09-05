@@ -456,13 +456,12 @@ function UpcomingRail({ upcoming, calendarConfigured, onReload }: { upcoming: Do
                 {/* HS-147-02: arm/cancel verb on EVENT rows. */}
                 <UpcomingRowActions item={item} onReload={onReload} />
                 {/* HS-146-04: provenance chip on EVENT rows when >1 source. */}
-                {showChips && item.source === "calendar_event" && item.source_label ? (
-                  <span className="door-upcoming-provenance">{item.source_label.toUpperCase()}</span>
-                ) : null}
-                {/* HS-149-03: quiet mono person chip on linked EVENT rows. */}
-                {item.person_label ? (
-                  <span className="door-upcoming-person" data-testid="door-person-chip">{item.person_label}</span>
-                ) : null}
+                {(() => { const srcLabel = item.source_label; return showChips && item.source === "calendar_event" && srcLabel ? (
+                  <span className="door-upcoming-provenance">{srcLabel.toUpperCase()}</span>
+                ) : null; })()}
+                {(() => { const personLabel = item.person_label; return personLabel ? (
+                  <span className="door-upcoming-person" data-testid="door-person-chip">{personLabel}</span>
+                ) : null; })()}
                 {item.location ? <span className="door-upcoming-detail">{item.location}</span> : null}
                 {item.meeting_url ? (
                   <a className="door-upcoming-link" href={item.meeting_url} target="_blank" rel="noreferrer">
@@ -700,9 +699,9 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
       {receipt ? <div className="door-board-receipt">{receipt}</div> : null}
       {loadError ? <SurfaceState error={loadError} onRetry={() => void reload()} /> : null}
       {/* HS-149-01 L2: quiet named line when People store is not ready. */}
-      {peopleStateLabel(projection.people_store_state) ? (
-        <div className="door-board-people-state" data-testid="door-people-state">{peopleStateLabel(projection.people_store_state)}</div>
-      ) : null}
+      {(() => { const pState = projection.people_store_state; const pLabel = peopleStateLabel(pState); return pLabel ? (
+        <div className="door-board-people-state" data-testid="door-people-state">{pLabel}</div>
+      ) : null; })()}
       {/* HS-150-02: header person chips for filter. */}
       <PersonChipRow cards={cards} selectedPersonId={filterPersonId} onSelect={setFilterPersonId} />
       {cards.length ? (
@@ -736,7 +735,7 @@ export function DoorBoardLane({ onOpenInWindow }: LaneProps) {
                           onClick={() => onOpenInWindow(card.open_ref ?? card.target_ref)}
                         >
                           <strong>{titleFor(card)}</strong>
-                          {card.body_preview ? <span>{card.body_preview}</span> : null}
+                          {(() => { const bp = card.body_preview; return bp ? <span>{bp}</span> : null; })()}
                           <small>{cardFacts(card).join(" · ")}</small>
                         </button>
                         {/* HS-150-02: person chip for mapped owner (click filters). */}

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "../../components/signal/Signal";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
 import { createThought } from "../thoughts";
+import { PadGadget } from "../surface/gadgets";
 import { micStreamSupported, startStreamSession, type StreamSession } from "../../lib/micStreamSession";
 
 function requestId(key: string): string {
@@ -66,14 +68,14 @@ export function ThoughtEntry() {
 
   return <section className="thought-entry" data-testid="thought-entry">
     {!composing ? <>
-      <button type="button" className="btn btn--primary thought-entry-primary" onClick={() => setComposing(true)}>Develop a thought</button>
-      <button type="button" className="desk-chip quiet" onClick={() => setMore((open) => !open)}>More capture options</button>
-      {more ? <div className="thought-entry-more"><button type="button" className="desk-chip quiet" onClick={() => openSurfaceOr("dictate", "/dictation")}>Open advanced capture</button></div> : null}
+      <Button variant="primary" className="thought-entry-primary" onClick={() => setComposing(true)}>Develop a thought</Button>
+      <Button dense variant="ghost" onClick={() => setMore((open) => !open)}>More capture options</Button>
+      {more ? <div className="thought-entry-more"><Button dense variant="ghost" onClick={() => openSurfaceOr("dictate", "/dictation")}>Open advanced capture</Button></div> : null}
     </> : <>
       <label htmlFor="thought-compose">What are you working through?</label>
-      <textarea id="thought-compose" value={value} onChange={(event) => setDraft(event.target.value)} autoFocus rows={5} />
+      <PadGadget label="What are you working through?" value={value} onChange={(next) => setDraft(next)} rows={5} />
       {message ? <p role="status" className="surface-receipt-line">{message}</p> : null}
-      <div className="thought-entry-actions"><button type="button" className="btn btn--primary" disabled={!value.trim() || saving} onClick={() => void start()}>{saving ? "Starting…" : "Start developing"}</button><button type="button" className="desk-chip quiet" onClick={() => void dictate()} disabled={saving}>{dictating ? "Stop dictating" : "Dictate"}</button><button type="button" className="desk-chip quiet" onClick={() => setComposing(false)} disabled={saving || dictating}>Cancel</button></div>
+      <div className="thought-entry-actions"><Button variant="primary" disabled={!value.trim() || saving} onClick={() => void start()}>{saving ? "Starting…" : "Start developing"}</Button><Button dense variant="ghost" onClick={() => void dictate()} disabled={saving}>{dictating ? "Stop dictating" : "Dictate"}</Button><Button dense variant="ghost" onClick={() => setComposing(false)} disabled={saving || dictating}>Cancel</Button></div>
     </>}
   </section>;
 }
