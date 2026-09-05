@@ -10,13 +10,65 @@ import { apiFetch, type JsonRecord } from "../../lib/api";
 import { gateAge, useGate } from "../gate";
 import { useProjections } from "../projections";
 import { humanTime } from "../surface/format";
+import { countToken } from "../surface/count";
 import { StringGadget } from "../surface/gadgets";
 import { SurfaceState } from "../surface/Surface";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import { MicButton } from "./MicButton";
-import { openPrimitive, openSurfaceWhenReady } from "../shell";
+import { openPrimitive, openSurfaceOr, openSurfaceWhenReady } from "../shell";
 
 type Correction = Record<string, unknown>;
+
+// ── HS-171-04: needs-you aggregate wire shape ───────────────────────
+type NeedsYouItem = {
+  projectId: string;
+  projectName: string;
+  ref: string;
+  title: string;
+  why: string;
+  ageToken?: string;
+  source?: string;
+  verbHref?: string;
+  severity?: string;
+  muted?: boolean;
+};
+
+type NeedsYouAggregate = {
+  count: number;
+  mutedCount?: number;
+  projects: string[];
+  items: NeedsYouItem[];
+  next?: { label: string; at: string } | null;
+  computedAt?: string;
+  stale?: boolean;
+  sweepId?: string | null;
+};
+
+/** Group items by projectId, returning one entry per Room with items. */
+function groupByRoom(items: NeedsYouItem[]): {
+  projectId: string;
+  projectName: string;
+  items: NeedsYouItem[];
+  muted: boolean;
+}[] {
+  const map = new Map<string, { projectName: string; items: NeedsYouItem[]; muted: boolean }>();
+  for (const item of items) {
+    const existing = map.get(item.projectId);
+    if (existing) {
+      existing.items.push(item);
+    } else {
+      map.set(item.projectId, {
+        projectName: item.projectName,
+        items: [item],
+        muted: Boolean(item.muted),
+      });
+    }
+  }
+  // Non-muted first, then muted; within each group, preserve item order.
+  return Array.from(map.entries())
+    .map(([projectId, v]) => ({ projectId, ...v }))
+    .sort((a, b) => (a.muted === b.muted ? 0 : a.muted ? 1 : -1));
+}
 
 export function SystemShade({
   open,
@@ -30,6 +82,8 @@ export function SystemShade({
   const store = useProjections();
   const gate = useGate();
   const [corrections, setCorrections] = useState<Correction[] | null>(null);
+  const [needsYou, setNeedsYou] = useState<NeedsYouAggregate | null>(null);
+  const [brief, setBrief] = useState<{ itemCount: number; date: string } | null>(null);
   const [denyingId, setDenyingId] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState("");
   const panel = useRef<HTMLDivElement>(null);
@@ -58,6 +112,24 @@ export function SystemShade({
         setCorrections(rows as Correction[]);
       })
       .catch(() => setCorrections([]));
+    // HS-171-04: fetch needs-you aggregate (cached, cheap)
+    void apiFetch<NeedsYouAggregate>("/api/desk/needs-you")
+      .then((data) => setNeedsYou(data))
+      .catch(() => setNeedsYou(null));
+    // HS-171-04: fetch brief latest for the shade row
+    void apiFetch<Record<string, unknown> | null>("/api/brief/latest")
+      .then((data) => {
+        if (!data || data.is_empty) { setBrief(null); return; }
+        const sections = (data.sections ?? {}) as Record<string, unknown[]>;
+        const itemCount = Object.values(sections).flat().length;
+        const genAt = String(data.generated_at ?? "");
+        const d = genAt ? new Date(genAt) : null;
+        const date = d && !isNaN(d.getTime())
+          ? d.toLocaleDateString("en-US", { month: "short", day: "2-digit" }).toUpperCase()
+          : "";
+        setBrief(itemCount > 0 ? { itemCount, date } : null);
+      })
+      .catch(() => setBrief(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -117,9 +189,15 @@ export function SystemShade({
         </Button>
       </div>
 
+      <ShadeProjects
+        needsYou={needsYou}
+        brief={brief}
+        onClose={onClose}
+      />
+
       <section className="desk-shade-group" aria-label="Needs you">
         <h4>
-          Needs you <b>· {needsAttentionCount + gate.held.length}</b>
+          Needs you <b>&middot; {needsAttentionCount + gate.held.length}</b>
         </h4>
         {gate.held.map((proposal) => (
           <div className="desk-shade-item desk-gate-item" key={proposal.id}>
@@ -201,7 +279,7 @@ export function SystemShade({
               <div className="desk-shade-what">
                 <strong>{row.title}</strong>
                 <small>
-                  {row.subject_label} · {humanTime(row.timestamp)}
+                  {row.subject_label} &middot; {humanTime(row.timestamp)}
                 </small>
                 <span className="desk-shade-do">
                   <Button dense variant="ghost" onClick={() => openSource(row)}>
@@ -232,7 +310,7 @@ export function SystemShade({
 
       <section className="desk-shade-group" aria-label="Finished">
         <h4>
-          Finished <b>· {store.counts.receipts || 0}</b>
+          Finished <b>&middot; {store.counts.receipts || 0}</b>
         </h4>
         {finished.length ? (
           finished.map((row) => (
@@ -243,7 +321,7 @@ export function SystemShade({
               <div className="desk-shade-what">
                 <strong>{row.title}</strong>
                 <small>
-                  {row.outcome || row.subject_label} · {humanTime(row.timestamp)}
+                  {row.outcome || row.subject_label} &middot; {humanTime(row.timestamp)}
                 </small>
                 <span className="desk-shade-do">
                   <Button dense variant="ghost" onClick={() => openSource(row)}>
@@ -260,7 +338,7 @@ export function SystemShade({
 
       <section className="desk-shade-group" aria-label="Learned">
         <h4>
-          Learned <b>· {(corrections ?? []).length}</b>
+          Learned <b>&middot; {(corrections ?? []).length}</b>
         </h4>
         {learned.length ? (
           learned.map((row, index) => {
@@ -287,5 +365,147 @@ export function SystemShade({
         )}
       </section>
     </div>
+  );
+}
+
+
+// ── HS-171-04: PROJECTS section in the shade ─────────────────────────
+//
+// FIRST section, above Needs you. Absent when the aggregate count is 0
+// and no brief exists. One row per Room with items; muted Rooms dimmed
+// with a MUTED token and excluded from the caption count. The brief row
+// renders when a brief exists (item count + date).
+
+/** The severity tone for the count chip on a Room row. */
+function roomTone(items: NeedsYouItem[]): "warn" | undefined {
+  return items.some((i) => i.severity === "danger") ? "warn" : undefined;
+}
+
+function ShadeProjects({
+  needsYou,
+  brief,
+  onClose,
+}: {
+  needsYou: NeedsYouAggregate | null;
+  brief: { itemCount: number; date: string } | null;
+  onClose: () => void;
+}) {
+  const rooms = needsYou ? groupByRoom(needsYou.items) : [];
+  // The caption count excludes muted Rooms.
+  const activeItems = rooms
+    .filter((r) => !r.muted)
+    .reduce((n, r) => n + r.items.length, 0);
+  const captionCount = countToken(activeItems, "NEEDS YOU", "NEED YOU");
+
+  // Absent when no active items and no brief (rule A.8).
+  if (!captionCount && !brief) return null;
+
+  return (
+    <section
+      className="desk-shade-group"
+      aria-label="Projects"
+      data-testid="shade-projects"
+    >
+      <h4>
+        Projects{captionCount ? <b> &middot; {captionCount}</b> : null}
+      </h4>
+
+      {rooms.map((room) => {
+        const roomCount = countToken(
+          room.muted ? 0 : room.items.length,
+          "NEEDS YOU", "NEED YOU",
+        );
+        const firstWhy = room.items[0]?.why || "";
+        return (
+          <div
+            className={`desk-shade-item${room.muted ? " is-muted" : ""}`}
+            key={room.projectId}
+            data-testid="shade-project-row"
+          >
+            <span className="desk-shade-glyph" aria-hidden="true">
+              {"|}"}
+            </span>
+            <div className="desk-shade-what">
+              <strong>{room.projectName}</strong>
+              <small>
+                {room.muted ? (
+                  <span className="desk-shade-project-tokens">
+                    <span
+                      className="surface-token"
+                      data-chip
+                      data-tone="muted"
+                    >
+                      MUTED
+                    </span>
+                  </span>
+                ) : (
+                  <span className="desk-shade-project-tokens">
+                    {roomCount ? (
+                      <span
+                        className="surface-token"
+                        data-chip
+                        data-tone={roomTone(room.items)}
+                      >
+                        {roomCount}
+                      </span>
+                    ) : null}
+                    {firstWhy ? (
+                      <span className="desk-shade-why">
+                        {firstWhy.length > 40 ? firstWhy.slice(0, 40) : firstWhy}
+                      </span>
+                    ) : null}
+                  </span>
+                )}
+              </small>
+              <span className="desk-shade-do">
+                <Button
+                  dense
+                  variant="ghost"
+                  onClick={() => {
+                    onClose();
+                    openSurfaceOr("project-room", "/projects", room.projectId);
+                  }}
+                >
+                  Open
+                </Button>
+              </span>
+            </div>
+          </div>
+        );
+      })}
+
+      {brief ? (
+        <div className="desk-shade-item" data-testid="shade-brief-row">
+          <span className="desk-shade-glyph" aria-hidden="true">
+            {"="}
+          </span>
+          <div className="desk-shade-what">
+            <strong>Monday brief</strong>
+            <small>
+              <span className="desk-shade-project-tokens">
+                <span className="surface-token" data-chip>
+                  {countToken(brief.itemCount, "THING") ?? ""}
+                </span>
+                {brief.date ? (
+                  <span className="desk-shade-why">{brief.date}</span>
+                ) : null}
+              </span>
+            </small>
+            <span className="desk-shade-do">
+              <Button
+                dense
+                variant="ghost"
+                onClick={() => {
+                  onClose();
+                  openSurfaceOr("open-intelligence", "/");
+                }}
+              >
+                Open
+              </Button>
+            </span>
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 }

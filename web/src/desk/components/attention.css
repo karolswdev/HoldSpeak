@@ -528,6 +528,28 @@
   min-width: 0;
 }
 
+/* HS-171-04 — PROJECTS section: muted rows dimmed; project tokens
+   inline; the WHY token is muted secondary text. */
+.desk-next .desk-shade-item.is-muted {
+  opacity: 0.45;
+}
+.desk-next .desk-shade-project-tokens {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.desk-next .desk-shade-why {
+  color: var(--text-faint);
+  font-size: var(--desk-surface-detail-size);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 24ch;
+}
+
 /* HS-104-05 — the session receipt line: one line, minimal ink. */
 .desk-next .desk-receipt-line {
   margin: 4px 0 0;
