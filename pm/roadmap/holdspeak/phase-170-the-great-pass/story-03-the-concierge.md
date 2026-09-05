@@ -18,7 +18,7 @@ The owner got lost in Settings → Models ("he doesn't know how to use this prod
 
 ## Acceptance criteria
 
-- [ ] The owner's word on the canvas; the build matches the artboards at both widths (probes).
+- [ ] The owner's word on the canvas; (canvas: https://claude.ai/code/artifact/3fc26e25-1d5f-4796-b2e9-0d4bae9bff20) the build matches the artboards at both widths (probes).
 - [ ] One screen: found → proposed → `Use these`; zero sentences; every host named.
 - [ ] His walk on his desk; his word.
 

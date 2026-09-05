@@ -18,7 +18,7 @@ After the sweep, the faces he meets on a Tuesday get the 169 treatment: designed
 
 ## Acceptance criteria
 
-- [ ] Each face: his word on the canvas; the rig asserts the artboard at both widths; the orchestrator read every PNG.
+- [ ] Each face: his word on the canvas; (canvas: https://claude.ai/code/artifact/3fc26e25-1d5f-4796-b2e9-0d4bae9bff20) the rig asserts the artboard at both widths; the orchestrator read every PNG.
 - [ ] Zero canon violations on the rebuilt faces (the guards).
 
 ## Test plan

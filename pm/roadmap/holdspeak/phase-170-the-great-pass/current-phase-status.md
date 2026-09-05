@@ -44,11 +44,19 @@ desk we are both proud of.
 
 **ACTIVE 1/7.** Branch `feat/the-great-pass` off main `f8e2739d`.
 **01 DONE:** UX-CANON.md; 17 surfaces × 2 widths shot; 671 canon
-violations located and ranked; the orchestrator's read names the four
-faces for the canvas (the arrival, Speak, the Settings hub, Meetings) —
-his word on that N is the ask. **02 in flight:** three Fable lanes sweep
-the species by file ownership (pages/cores · desk chrome · thought/
-threads/project-room + parking the retired setup); `countToken` in the
-library. **03 in flight:** the Concierge settled design written; its
-five artboards being drawn for his word. Recon for the four faces of 04
-running.
+violations located and ranked; the rig re-captured green after the
+sweep (the after-census). **02 nearly paid:** all three sweep lanes
+landed (P @3dbe8a82, T @b540dd3a, D @bd47897e) — tree 671 → 222 hits;
+raw `<button>` 147 → 6, accent rails 8 → 0, egress misses 1 → 0; vitest
+2184 green, zero branch-new; the retired setup wizard parked under
+`_parked/`. The ratchet guards are being written (ceiling file + hard
+zeros) — 02 flips when they land. **03 designed:** the Concierge on six
+boards, counsel RATIFY-W-C paid (Use these disabled beside WAITING;
+Anthropic in FOUND; the cloud `Check` with its cost chip; Adjust under
+the set with hosts; the downloading board). **04 designed:** the four
+faces on twelve boards (arrival needs-you/quiet/393 · Settings hub
+640/393 · Speak idle/landed/unset/393 · Meetings list/detail/393);
+counsel reading. **The canvas** (18 boards):
+https://claude.ai/code/artifact/3fc26e25-1d5f-4796-b2e9-0d4bae9bff20 —
+his word on the Concierge unblocks the 03 build; his word on the four
+faces (and the N) unblocks 04.
