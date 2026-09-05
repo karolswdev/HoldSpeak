@@ -52,7 +52,13 @@
   written to the ratified designs, then every build-dependent sentence
   re-verified against the built faces.
 - **The walk (05):** `tests/e2e/live170_walk.py` pre-walked the owner's
-  real desk twice (ten shots, a facts ledger, a Defects section). His
+  real desk SEVEN times (five faces × two widths, twelve shots, a facts
+  ledger with a Defects section) until it read ZERO defects: the arrival
+  with his real NEXT (`SCHEDULED RECORDING · 15:34`) and four capture
+  verbs; the Settings hub `All set · 8 ENGINES`; Meetings with his eight
+  records honest (`INTERRUPTED`, `QUEUED`, `NO TRANSCRIPT`); Speak's
+  ENGINE row `GPT 5 mini · API.OPENAI.COM · KEY NOT SET · Choose`; the
+  Concierge `8 engines found` with his .43 as LAN and clean names. His
   own walk and his word: OWED (below).
 
 ## Found live, paid in the phase
@@ -119,8 +125,9 @@ AGENTS section when sessions exist · S-1 partial apply on the face ·
 S-2/S-3 the host on `Run intelligence` (Article III) · S-4 sleep waits in
 rigs · S-5 `Decide`/`Dismiss` per the board · N-1/N-2/N-3 code-to-board
 fidelity and two dead-end navigations · the Concierge's Cancel closing
-the wrong window. **Status: being paid** (this section flips to PAID
-with the commit list before the PR).
+the wrong window. **Status: PAID** — M-1 `72f357a8`; M-2/M-3/S-2 `2608d3b1`;
+S-1/N-2/cancel `72f357a8`; S-3/S-5/S-4 `7a5fcba0`; N-1/N-3/S-4
+`04be6612`; S-4 (Settings rig) `b03db32c`; the lost doors `4b181e44`.
 
 ## The suite
 
