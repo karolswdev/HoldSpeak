@@ -185,6 +185,8 @@ def iter_surface_paths(
                     if (
                         path.is_file()
                         and ".test." not in path.name
+                        # Parked faces are not primary UI (HS-170: park, never delete).
+                        and "_parked" not in path.parts
                         and key not in seen
                     ):
                         seen.add(key)
