@@ -266,6 +266,7 @@ export function CadenceCore({ hero }: CoreProps) {
       </span>
 
       {/* ── SWEEP row ──────────────────────────────────────────── */}
+      <div className="rhythm-section">
       <SurfaceLedger count="" cols="hub">
         <SurfaceLedgerRow
           primary="Sweep"
@@ -292,8 +293,6 @@ export function CadenceCore({ hero }: CoreProps) {
           }
         />
       </SurfaceLedger>
-
-      {/* Sweep fact tokens */}
       <div className="rhythm-facts" data-testid="rhythm-sweep-facts">
         {sweeping ? (
           <StateChip state="active" label="RUNNING" />
@@ -336,8 +335,10 @@ export function CadenceCore({ hero }: CoreProps) {
           </>
         )}
       </div>
+      </div>{/* /rhythm-section sweep */}
 
       {/* ── MONDAY BRIEF row ───────────────────────────────────── */}
+      <div className="rhythm-section">
       <SurfaceLedger count="" cols="hub">
         <SurfaceLedgerRow
           primary="Monday brief"
@@ -386,8 +387,10 @@ export function CadenceCore({ hero }: CoreProps) {
           </>
         )}
       </div>
+      </div>{/* /rhythm-section brief */}
 
       {/* ── NOTIFY row ─────────────────────────────────────────── */}
+      <div className="rhythm-section">
       <SurfaceLedger count="" cols="hub">
         <SurfaceLedgerRow
           primary="Notify"
@@ -416,7 +419,6 @@ export function CadenceCore({ hero }: CoreProps) {
           }
         />
       </SurfaceLedger>
-
       {/* Project mute toggles */}
       {projects.length > 0 ? (
         <div className="rhythm-mutes" data-testid="rhythm-mute-toggles">
@@ -439,6 +441,7 @@ export function CadenceCore({ hero }: CoreProps) {
           })}
         </div>
       ) : null}
+      </div>{/* /rhythm-section notify */}
 
       {/* ── NOW N: existing cadence loops (kept from the old face) ── */}
       {action.message ? <SurfaceState error={action.message} /> : null}
