@@ -691,6 +691,39 @@ class ProjectService:
             except Exception:
                 pass
 
+        # HS-172-03: follow-through proposals (intel-extracted decisions/actions).
+        try:
+            proposals = self._db.proposals.list_proposals(
+                project_id=project_id, state="proposed",
+            )
+            for prop in proposals:
+                # Resolve meeting title for provenance.
+                meeting_title = ""
+                try:
+                    mtg = self._db.meetings.get_meeting(prop.meeting_id)
+                    meeting_title = (mtg.title or "") if mtg else ""
+                except Exception:
+                    pass
+                why_parts = ["PROPOSED"]
+                if meeting_title:
+                    why_parts.append(meeting_title)
+                needs.append({
+                    "source": "proposal",
+                    "kind": "proposal",
+                    "title": prop.text,
+                    "why": " · ".join(why_parts),
+                    "since": prop.created_at,
+                    "url": None,
+                    "verb": "confirm",
+                    "verbHref": f"/api/proposals/{prop.id}/confirm",
+                    "severity": "info",
+                    "proposal_id": prop.id,
+                    "proposal_kind": prop.kind,
+                    "host": prop.model_host,
+                })
+        except Exception:
+            pass
+
         # Sort: danger > warning > info, then by age (oldest first = most urgent)
         needs.sort(key=lambda r: (
             self._SEVERITY_ORDER.get(r.get("severity", "info"), 2),

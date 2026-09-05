@@ -8,7 +8,7 @@ independently of the Database container.
 # missing tables and columns by comparing the live database against this
 # SCHEMA_SQL shape directly, so you do NOT need to bump this to have a shape
 # change take effect. Just edit SCHEMA_SQL; the reconcile applies it on open.
-SCHEMA_VERSION = 72  # informational; 71→72: unattended bookkeeping (HS-164-01)
+SCHEMA_VERSION = 73  # informational; 72→73: follow_through_proposals (HS-172-03)
 
 # SQL Schema
 SCHEMA_SQL = """
@@ -3984,4 +3984,54 @@ CREATE TABLE IF NOT EXISTS steward_commands (
 );
 CREATE INDEX IF NOT EXISTS idx_steward_commands_run
     ON steward_commands(run_id);
+
+-- HS-172-06: Suggested sources — transcript-derived source proposals for Rooms.
+-- Each row is a suggestion (pending / accepted / dismissed); dismissed
+-- suggestions never recur for the same (project_id, reference) pair.
+CREATE TABLE IF NOT EXISTS source_suggestions (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    meeting_id TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    reference TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_source_suggestions_project
+    ON source_suggestions(project_id, status);
+CREATE INDEX IF NOT EXISTS idx_source_suggestions_dedup
+    ON source_suggestions(project_id, reference);
+
+-- HS-172-03: Follow-through proposals — intel-extracted decisions and action
+-- items that arrive as PROPOSALS in NEEDS YOU.  Lifecycle: proposed ->
+-- confirmed | dismissed.  Confirmed proposals create real decision_records /
+-- action_items through the kernel; dismissed ones disappear.  Dedup by
+-- (meeting_id, fingerprint) so a re-run never duplicates.
+CREATE TABLE IF NOT EXISTS follow_through_proposals (
+    id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL,
+    project_id TEXT,
+    kind TEXT NOT NULL CHECK (kind IN ('decision', 'action')),
+    text TEXT NOT NULL,
+    owner_hint TEXT,
+    due_hint TEXT,
+    source_artifact_id TEXT,
+    source_plugin TEXT NOT NULL,
+    segment_timestamp REAL,
+    speaker_label TEXT,
+    model_host TEXT,
+    fingerprint TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'proposed'
+        CHECK (state IN ('proposed', 'confirmed', 'dismissed')),
+    original_text TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    decided_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_ftp_meeting
+    ON follow_through_proposals(meeting_id, state);
+CREATE INDEX IF NOT EXISTS idx_ftp_project
+    ON follow_through_proposals(project_id, state);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ftp_dedup
+    ON follow_through_proposals(meeting_id, fingerprint)
+    WHERE state = 'proposed';
 """

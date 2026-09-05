@@ -170,7 +170,11 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 },
                 "connections": {"connected": connected},
                 "voice": {"live": voice_live, "target": voice_target},
-                "meetings": {"intelligence": intel_on},
+                "meetings": {
+                    "intelligence": intel_on,
+                    "auto": config.meeting.intelligence_auto,
+                    "host": "THIS DEVICE",
+                },
                 "rhythm": heartbeat_rhythm,
                 "sounds": {"on": sounds_on},
                 "system": {"host": "THIS DEVICE", "mesh": mesh_on},

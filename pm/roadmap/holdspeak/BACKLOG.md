@@ -1037,3 +1037,6 @@ revolution?" — the backend still owes him that revolution.
 - **Notification click target needs the app bundle** (HS-171-05, 2026-09-05): `osascript display notification` cannot carry a click action; `UNUserNotificationCenter` requires a bundled app identity. When HoldSpeak ships as a .app (174/179 packaging), route the banner through the bundle so one click opens the shade.
 
 - **The dock status rail truncates** (`RAILS NEEDS Y… 8 RUNS 200` on the owner's desk, seen by live171_walk.py 2026-09-05) — a pre-170 surface the census did not rank; a face with a truncated label and bare numbers. Fold into the next pass (171-10 close notes it; 178 The Portfolio touches the rail).
+
+- **HS-172 auto-run on import.** The auto-intel trigger (routing_glue.py `_maybe_auto_enqueue_intel`) fires only on capture stop; imported transcripts (meeting_import.py) do not pass the same save flow. Wire the same setting there when import earns a Tuesday.
+- **HS-172 two "proposals" vocabularies on the meeting.** `GET /api/meetings/{id}/proposals` is the aftercare ACTUATOR proposals (Slack/GitHub/webhook effects); follow-through proposals live at `/api/meetings/{id}/follow-through-proposals`. One word, two tables; rename the actuator route when the actuator era is revisited.

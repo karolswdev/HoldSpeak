@@ -409,6 +409,25 @@ class PeopleService:
                 db, calendar_links, limit=N,
             )
 
+        # HS-172-05: Watch-derived summary from persisted snapshots.
+        # Reads are free (Article V.5); never triggers an evaluation.
+        watch_summary = self._brief_watch_summary(db, relationship)
+
+        # HS-172-05: last meeting (most recent linked meeting summary).
+        last_meeting: dict[str, Any] | None = None
+        if linked_meetings:
+            lm = linked_meetings[0]
+            item_count = len(lm.get("open_action_items") or []) + len(
+                [1 for _ in (lm.get("decisions") or [])]
+            )
+            open_count = len(lm.get("open_action_items") or [])
+            last_meeting = {
+                "meeting_id": lm.get("meeting_id"),
+                "title": lm.get("title"),
+                "item_count": item_count,
+                "open_count": open_count,
+            }
+
         return {
             "relationship_id": relationship_id,
             "display_name": relationship.get("display_name"),
@@ -417,6 +436,205 @@ class PeopleService:
             "grounding_note_count": grounding_note_count,
             "linked_meetings": linked_meetings,
             "unlinked_meeting_count": unlinked_meeting_count,
+            "watch_summary": watch_summary,
+            "last_meeting": last_meeting,
+        }
+
+    def _brief_watch_summary(
+        self, db: Any, relationship: dict[str, Any],
+    ) -> dict[str, Any]:
+        """HS-172-05: Watch-derived summary from persisted snapshots.
+
+        Scans the active Rooms' watch snapshots for entities matching the
+        person's aliases/display_name.  Returns counts and lists for PRs
+        waiting on them, PRs they own waiting on others, and Jira
+        assignments.  NEVER writes; NEVER triggers a new evaluation.
+        """
+        empty: dict[str, Any] = {
+            "prs_waiting": [],
+            "oldest_waiting_days": 0,
+            "open_assignments": [],
+        }
+        if db is None:
+            return empty
+
+        # Collect identity strings for matching (case-insensitive).
+        display_name = str(relationship.get("display_name") or "")
+        aliases: list[str] = [
+            str(a) for a in (relationship.get("owner_aliases") or [])
+            if isinstance(a, str) and str(a).strip()
+        ]
+        identities = set()
+        if display_name.strip():
+            identities.add(display_name.strip().casefold())
+        for a in aliases:
+            identities.add(a.strip().casefold())
+        if not identities:
+            return empty
+
+        # Find linked projects from the relationship.
+        project_refs: list[str] = relationship.get("project_refs") or []
+        if not project_refs:
+            return empty
+
+        prs_waiting: list[dict[str, Any]] = []
+        open_assignments: list[dict[str, Any]] = []
+        now = datetime.now()
+
+        try:
+            conn = db._connection()
+        except Exception:
+            return empty
+
+        for project_id in project_refs:
+            try:
+                watches = conn.execute(
+                    "SELECT * FROM connector_watches WHERE project_id=? "
+                    "ORDER BY created_at,id",
+                    (project_id,),
+                ).fetchall()
+            except Exception:
+                continue
+
+            # Get project name for host context.
+            try:
+                proj_row = conn.execute(
+                    "SELECT name FROM projects WHERE id=?", (project_id,),
+                ).fetchone()
+                project_name = proj_row["name"] if proj_row else project_id
+            except Exception:
+                project_name = project_id
+
+            for watch in watches:
+                connector_id = watch["connector_id"] if isinstance(watch, dict) else (watch[2] if len(watch) > 2 else "")
+                try:
+                    connector_id = watch["connector_id"]
+                except (KeyError, TypeError):
+                    continue
+                try:
+                    import json as _json
+                    snapshot_raw = watch["snapshot"]
+                    if isinstance(snapshot_raw, str):
+                        snapshot = _json.loads(snapshot_raw)
+                    elif isinstance(snapshot_raw, dict):
+                        snapshot = snapshot_raw
+                    else:
+                        continue
+                except Exception:
+                    continue
+
+                query_kind_raw = ""
+                try:
+                    query_kind_raw = watch["query_kind"]
+                except (KeyError, TypeError):
+                    pass
+
+                # Extract entities from the persisted snapshot shape.
+                entities_raw = snapshot.get("entities") if isinstance(snapshot, dict) else None
+                if isinstance(entities_raw, dict):
+                    entities = list(entities_raw.values())
+                elif isinstance(entities_raw, list):
+                    entities = entities_raw
+                else:
+                    entities = []
+
+                if connector_id == "gh" and query_kind_raw == "pull_requests":
+                    for entity in entities:
+                        if not isinstance(entity, dict):
+                            continue
+                        review_requests = (
+                            entity.get("review_requests")
+                            or entity.get("reviewRequests")
+                            or []
+                        )
+                        state = str(entity.get("state") or "").lower()
+                        if state != "open":
+                            continue
+                        # Check if any identity matches a reviewer.
+                        matched = any(
+                            str(r).casefold() in identities
+                            for r in review_requests
+                        )
+                        if matched:
+                            updated_at_str = (
+                                entity.get("updated_at")
+                                or entity.get("updatedAt")
+                                or ""
+                            )
+                            days_waiting = 0
+                            if updated_at_str:
+                                try:
+                                    updated_dt = datetime.fromisoformat(
+                                        str(updated_at_str).replace("Z", "+00:00")
+                                    )
+                                    days_waiting = max(
+                                        0,
+                                        (now.replace(tzinfo=None)
+                                         - updated_dt.replace(tzinfo=None)).days,
+                                    )
+                                except (ValueError, TypeError):
+                                    pass
+                            pr_number = entity.get("number")
+                            repo = ""
+                            url = entity.get("url") or ""
+                            # Extract repo from URL if available.
+                            if url and "github.com/" in url:
+                                parts = url.split("github.com/")[1].split("/")
+                                if len(parts) >= 2:
+                                    repo = f"{parts[0]}/{parts[1]}"
+                            prs_waiting.append({
+                                "title": entity.get("title") or "",
+                                "repo": repo,
+                                "pr_number": pr_number,
+                                "days_waiting": days_waiting,
+                                "url": url,
+                                "room_id": project_id,
+                                "room_name": project_name,
+                            })
+
+                elif connector_id == "jira" and query_kind_raw == "issues":
+                    for entity in entities:
+                        if not isinstance(entity, dict):
+                            continue
+                        assignee = str(entity.get("assignee") or "")
+                        if not assignee.strip():
+                            continue
+                        if assignee.strip().casefold() not in identities:
+                            continue
+                        status_cat = str(
+                            entity.get("status_category") or ""
+                        ).lower()
+                        if status_cat == "done":
+                            continue
+                        due_at = entity.get("due_at") or entity.get("dueDate") or ""
+                        overdue = False
+                        if due_at:
+                            try:
+                                due_dt = datetime.fromisoformat(
+                                    str(due_at).replace("Z", "+00:00").split("T")[0]
+                                )
+                                overdue = (
+                                    now.replace(tzinfo=None)
+                                    - due_dt.replace(tzinfo=None)
+                                ).days > 0
+                            except (ValueError, TypeError):
+                                pass
+                        open_assignments.append({
+                            "summary": entity.get("summary")
+                                       or entity.get("title") or "",
+                            "key": entity.get("key") or "",
+                            "status": entity.get("status") or "",
+                            "url": entity.get("url") or "",
+                            "overdue": overdue,
+                            "room_id": project_id,
+                            "room_name": project_name,
+                        })
+
+        oldest = max((p["days_waiting"] for p in prs_waiting), default=0)
+        return {
+            "prs_waiting": prs_waiting,
+            "oldest_waiting_days": oldest,
+            "open_assignments": open_assignments,
         }
 
     @staticmethod
@@ -737,6 +955,63 @@ class PeopleService:
             for alias in record.get("owner_aliases") or []:
                 if isinstance(alias, str) and alias.casefold() == folded:
                     return {"state": "ready", "relationship": self._relationship_view(record)}
+        return {"state": "ready", "relationship": None}
+
+    def resolve_relationship_by_watch_identity(
+        self, identity_string: str,
+    ) -> dict[str, Any]:
+        """Find the relationship whose owner_aliases or display_name match.
+
+        HS-172-04: maps a Watch entity's assignee or reviewer string to a
+        People relationship.  The match is case-insensitive, in-memory,
+        and NEVER egressed or persisted as a comparison (Article III).
+
+        Order: owner_aliases first (exact alias match), then display_name.
+        Returns ``{state, relationship}`` -- same shape as
+        :meth:`resolve_relationship_by_owner`.
+
+        Readiness-guarded: a locked/absent store returns
+        ``{"state": "unavailable"}``, NEVER a bare no-match.  A ready store
+        with no matching identity returns ``{"state": "ready", "relationship": None}``.
+        """
+        try:
+            state = self._store.readiness()
+            if str(getattr(state, "value", state)) != "ready":
+                return {"state": "unavailable"}
+        except Exception:
+            return {"state": "unavailable"}
+
+        clean = str(identity_string or "").strip()
+        if not clean:
+            return {"state": "ready", "relationship": None}
+
+        try:
+            relationships = self._store.list(kind="relationship")
+        except Exception:
+            return {"state": "unavailable"}
+
+        folded = clean.casefold()
+
+        # Pass 1: owner_aliases (exact case-insensitive match).
+        for record in relationships:
+            if not isinstance(record, dict):
+                continue
+            if str(record.get("state") or "") == "archived":
+                continue
+            for alias in record.get("owner_aliases") or []:
+                if isinstance(alias, str) and alias.casefold() == folded:
+                    return {"state": "ready", "relationship": self._relationship_view(record)}
+
+        # Pass 2: display_name (case-insensitive).
+        for record in relationships:
+            if not isinstance(record, dict):
+                continue
+            if str(record.get("state") or "") == "archived":
+                continue
+            display = str(record.get("display_name") or "")
+            if display and display.casefold() == folded:
+                return {"state": "ready", "relationship": self._relationship_view(record)}
+
         return {"state": "ready", "relationship": None}
 
     def resolve_relationship_by_series(self, uid: str, source_id: str) -> dict[str, Any]:

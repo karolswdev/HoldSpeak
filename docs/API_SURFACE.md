@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 642 (plus static mounts). iOS-consumed: 89. Web-consumed: 489.
+Routes: 650 (plus static mounts). iOS-consumed: 89. Web-consumed: 490.
 
 ## device_audio_ws
 
@@ -596,6 +596,7 @@ Routes: 642 (plus static mounts). iOS-consumed: 89. Web-consumed: 489.
 | POST | `/api/people/relationships/{relationship_id}/projects/{project_id}` | web |
 | POST | `/api/people/relationships/{relationship_id}/requests` | web |
 | POST | `/api/people/requests/{request_id}/accept` | web |
+| POST | `/api/people/resolve` | web |
 | POST | `/api/people/setup` | web |
 
 ## web.routes.primitives.ask
@@ -864,7 +865,19 @@ Routes: 642 (plus static mounts). iOS-consumed: 89. Web-consumed: 489.
 | GET | `/api/projects/{project_id}/room` | web |
 | POST | `/api/projects/{project_id}/room/read` | web |
 | GET | `/api/projects/{project_id}/since-last-meeting` | web |
+| GET | `/api/projects/{project_id}/suggested-sources` | server only |
+| POST | `/api/projects/{project_id}/suggested-sources/{ref}/add` | server only |
+| POST | `/api/projects/{project_id}/suggested-sources/{ref}/dismiss` | server only |
 | GET | `/api/projects/{project_id}/summary` | server only |
+
+## web.routes.proposals
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/meetings/{meeting_id}/follow-through-proposals` | server only |
+| GET | `/api/projects/{project_id}/proposals` | server only |
+| POST | `/api/proposals/{proposal_id}/confirm` | server only |
+| POST | `/api/proposals/{proposal_id}/dismiss` | server only |
 
 ## web.routes.providers
 

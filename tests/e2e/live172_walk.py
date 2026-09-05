@@ -270,7 +270,7 @@ def _step_meetings_intel(page: Any, token: str, report: WalkReport,
 
     # Read proposals for this meeting
     prop_result = _api(page, "GET",
-                       f"/api/meetings/{meeting_id}/proposals", None, token)
+                       f"/api/meetings/{meeting_id}/follow-through-proposals", None, token)
     if prop_result["status"] == 200:
         proposals = prop_result["payload"]
         prop_list = proposals if isinstance(proposals, list) else proposals.get("proposals", [])
@@ -336,7 +336,7 @@ def _step_meetings_intel(page: Any, token: str, report: WalkReport,
     if run_result["status"] < 300:
         time.sleep(5)  # Give intel time to process (2-word meeting is fast)
         prop_result2 = _api(page, "GET",
-                            f"/api/meetings/{meeting_id}/proposals", None, token)
+                            f"/api/meetings/{meeting_id}/follow-through-proposals", None, token)
         if prop_result2["status"] == 200:
             props2 = prop_result2["payload"]
             prop_list2 = props2 if isinstance(props2, list) else props2.get("proposals", [])

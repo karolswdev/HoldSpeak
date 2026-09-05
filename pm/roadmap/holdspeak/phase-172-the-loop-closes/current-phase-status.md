@@ -101,11 +101,11 @@ between a person's name and a Watch entity's assignee/reviewer.
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-172-01 | The design (the Loop's faces on the canvas before build) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
-| HS-172-02 | The auto-intel trigger (intelligence by default after every linked meeting) | backlog | [story-02-the-auto-intel-trigger](./story-02-the-auto-intel-trigger.md) | -- |
-| HS-172-03 | The proposal bridge (extracted items as PROPOSALS in NEEDS YOU; Confirm writes through the kernel) | backlog | [story-03-the-proposal-bridge](./story-03-the-proposal-bridge.md) | -- |
-| HS-172-04 | The People resolver (display name / alias to Watch assignee / reviewer; encrypted boundary) | backlog | [story-04-the-people-resolver](./story-04-the-people-resolver.md) | -- |
-| HS-172-05 | The 1:1 brief enrichment (Watches + commitments + meetings in the People card) | backlog | [story-05-the-brief-enrichment](./story-05-the-brief-enrichment.md) | -- |
-| HS-172-06 | The suggested source (meeting mention of a repo/issue as a suggested source row) | backlog | [story-06-the-suggested-source](./story-06-the-suggested-source.md) | -- |
+| HS-172-02 | The auto-intel trigger (intelligence by default after every linked meeting) | in-progress | [story-02-the-auto-intel-trigger](./story-02-the-auto-intel-trigger.md) | -- |
+| HS-172-03 | The proposal bridge (extracted items as PROPOSALS in NEEDS YOU; Confirm writes through the kernel) | in-progress | [story-03-the-proposal-bridge](./story-03-the-proposal-bridge.md) | -- |
+| HS-172-04 | The People resolver (display name / alias to Watch assignee / reviewer; encrypted boundary) | in-progress | [story-04-the-people-resolver](./story-04-the-people-resolver.md) | -- |
+| HS-172-05 | The 1:1 brief enrichment (Watches + commitments + meetings in the People card) | in-progress | [story-05-the-brief-enrichment](./story-05-the-brief-enrichment.md) | -- |
+| HS-172-06 | The suggested source (meeting mention of a repo/issue as a suggested source row) | in-progress | [story-06-the-suggested-source](./story-06-the-suggested-source.md) | -- |
 | HS-172-07 | People in the Room and the shade (the 393 gap; the face at both widths) | backlog | [story-07-people-in-the-room](./story-07-people-in-the-room.md) | -- |
 | HS-172-08 | The walk (his desk: a meeting that closes its loop) | in-progress | [story-08-the-walk](./story-08-the-walk.md) | -- |
 | HS-172-09 | The docs (the loop in the architecture; the People card in the guide) | in-progress | [story-09-the-docs](./story-09-the-docs.md) | -- |
