@@ -128,6 +128,14 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 
 ## Where we are
 
+**2026-09-05 20:45 — 7/11 DONE (01 · 02 · 03 · 05 · 06 · 08 · 09); PR #557.**
+The receipts/Door/Rhythm faces are built but their rigs were hollow
+(no shade open; no Confluence seeded) — being redone on the wire that
+carries origin on projection rows, a Room RECEIPTS section, and
+`runs_on` on the heartbeat settings (landing). Then 04/07 flip →
+counsel-on-built → docs verify → the runner fill + his-desk walk →
+suite → 11 close.
+
 **2026-09-05 20:40 — 6/11 DONE; PR #557 OPEN** (`--base feat/the-stewards-hand`).
 
 **2026-09-05 20:35 — 4/11 DONE (01 · 06 · 08 · 09).** The runner is proven
