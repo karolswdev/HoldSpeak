@@ -34,8 +34,9 @@ Monday brief is the kernel ledger (`1839 THINGS · AUG 19` — 06 pays the
 source now), a `PROJECTS` caption over nothing but the brief row (fixed
 to its own `BRIEF` caption). **02, 03, 04, 07 and 09 DONE** on evidence; 06 DONE (the brief counts human items only; the kernel ledger a
 summary); 05 keeps its click-to-open box open (the bundle);
-01/08/10 wait for his word. Then the re-walk, the full suite, the PR
-stacked on #553.
+01/08/10 wait for his word. The re-walk: zero defects. The full suite: 9501 green, 6 inherited, 4
+xdist-only, 4 branch-new paid. **PR #554 is OPEN** (https://github.com/karolswdev/HoldSpeak/pull/554) — stacked on
+#553; his word gates both merges; 01/08/10 flip on it.
 
 ## Goal
 

@@ -153,6 +153,11 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
 
 - **174's design ground is DRAFTED** (phase-174-reach/assets/settled-design-reach.md). Recon that changes the charter's assumptions: `acli confluence page` exposes only `view --id` — NO page list/search (only `blog list` and `space list` paginate) — so a Confluence WatchSource in V0 watches blog posts, not pages; the .43 is the CLIENT and the Mac the hub (.43 → hub → .43's llama.cpp → hub → receipt); `_web_auth_gate` (web_server.py:561-591) does not yet refuse OWNER derivation off-loopback — new code; AgentCredential has no palette field (principals.py:83-113) and the store is in-memory (dies with the hub); EgressChip has three scopes (`remote` is the fourth). His questions: Confluence still the third connector knowing V0 watches blogs only, or Linear; persist credentials or re-issue after restart; `caffeinate` for the lid-closed night or fail gracefully.
 
+- **PR #554 is OPEN for 171** (https://github.com/karolswdev/HoldSpeak/pull/554), stacked on #553 (base
+  `feat/the-great-pass`). 6/10 done on evidence; 05 keeps its click box;
+  01/08/10 flip on his word. Design grounds for 172–176 are drafted
+  under their phase assets. Merge order: #553 → #554.
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on
