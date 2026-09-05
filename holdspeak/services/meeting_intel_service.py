@@ -65,16 +65,21 @@ class MeetingIntelService:
                 raise NotFound("meeting", meeting_id)
             raise ConflictError(errors[outcome], code=outcome)
         self._broadcast_queue()
-        # Resolve the model placement at the point of decision (Article III).
+        # Resolve the model host at the point of decision (Article III).
+        # The value is the HOST the run egresses to, never a profile label.
         from ..config import Config
-        from ..intel.providers import resolve_meeting_placement
+        from ..intel.providers import resolve_meeting_placement, endpoint_host
         try:
             placement = resolve_meeting_placement(Config.load().meeting)
-            host = placement.boundary if placement.boundary == "local" else (
-                placement.profile_name or placement.boundary or "local"
-            )
+            if placement.node:
+                host = str(placement.node)
+            else:
+                _h = endpoint_host(placement.base_url)
+                host = _h if _h else (placement.boundary or "local")
         except Exception:
             host = "local"
+        # HS-172-02: record the host on the job row at enqueue time.
+        self._db.intel.set_intel_job_model_host(meeting_id, host)
         job = self._db.intel.get_intel_job(meeting_id)
         return {
             "jobId": job.job_id if job else meeting_id,

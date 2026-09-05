@@ -1,3 +1,88 @@
+## Muad'Dib XI — 2026-09-05 17:10, the Loop Closes BUILT
+
+**State.** 172 is 9/9 on evidence on feat/the-loop-closes (stacked on
+171 #554 on 170 #553). Counsel on the built phase: RATIFY-W-C, paid.
+The P0 is the lesson of this phase: `bridge_meeting_artifacts` and the
+suggestion scanner had NO production call site — six green rigs seeded
+proposals by SQL and hid it. Paid in `intel_queue.py`
+`_on_intel_complete` (bridge → scanner per Room → durable dirty marker
+in `desk_projection_state`), with a test through the real seam. Law
+added to the rigor bar: every new service entry point needs a
+production call site and one end-to-end test before a phase closes;
+counsel-on-built greps for call sites.
+
+**The owner's desk.** The walk ran twice. The first runner's write
+guard failed OPEN and posted `Run intelligence` on "Already titled"
+(Aug 22) — its model is the migrated cloud profile without a key, so
+the job sits QUEUED with the OLD recorded host label; nothing left the
+machine; nothing undone. `Skip` on that meeting clears it. The guard
+now fails closed; the second walk reads `SKIPPED: not LAN:
+api.openai.com`, nine shots, zero defects.
+
+**Laws this phase.** Dismiss never Drop. The third verb is a Button.
+The lead slot is the source. No clipped text. No pronoun or first name
+from a name. Suggestions dedup case-insensitively. The display step is
+a fact. A host is RECORDED at run time and is the endpoint host
+(`192.168.1.43` · `local` · `api.openai.com`), never a label, never a
+config fallback. A commitment folds into its decision row. A lane's
+report without a rig tail and shots on disk is not a report. The
+ratchet ceiling is restored with `git checkout` when a lane raises it.
+`SurfaceLedger` needs `cols="room"` or the primary collapses.
+
+**Counsel's questions for the owner (172, built):** (1) the two-prefix
+vocabulary `Decide:`/`Confirm:`; (2) the 1:1 card's summary-then-Now
+shape and `2 PRS WAITING ON ANIA` with the name in caps; (3) Jira
+assignments on the card — keep?
+
+**Next.** PR **#555** is open (`--base feat/the-heartbeat`); then 173 The Steward's Hand +
+Voice on its drafted ground (assets/settled-design-stewards-hand.md),
+stacked on 172. Merge order stays his: #553 → #554 → 172's → 173's.
+
+## Muad'Dib X — 2026-09-05, the Loop Closes on the canvas
+
+**State.** 170 (#553) and 171 (#554) open on his word, stacked. 172
+ACTIVE on feat/the-loop-closes: thirteen boards published
+(https://claude.ai/code/artifact/b153c331-cd38-4856-b38b-837407dd6fba),
+two bounces paid, counsel **RATIFY-W-C** (three conditions, nine
+findings, all ruled in the design's second addendum). The whole wire is
+in (e11d1d21): auto-intel trigger, the proposal bridge (schema 73,
+`follow_through_proposals`, Confirm through the kernel, Dismiss
+receipted), the People resolver (opaque id only), 1:1 enrichment,
+suggested sources (case-insensitive dedup). Docs (09) and the walk
+runner (08) drafted. Four lanes building: Room faces (03/06), meeting +
+arrival + Settings→Meetings (02/03), the People card (05), and the
+story-07 boards (People in the Room, the shade at 393).
+
+
+**A write on your desk, owed to you (2026-09-05 09:45).** The 172 walk
+runner's guard failed open: it could not read the provider, judged the
+host "LAN/local", and posted `Run intelligence` on your meeting
+"Already titled" (Aug 22). Its model is the migrated cloud profile
+without a key, so the job sits **QUEUED** and cannot run; nothing left
+the machine. Nothing was deleted or undone; `Skip` on that meeting
+clears it, or leave it and the Concierge's next assignment will run it.
+The guard now fails closed (unknown = no; a queued job blocks a second
+run) and prints the values it decided on. The same walk found the
+QUEUED meeting detail still wearing the pre-170 prose panel; fixed in
+this phase.
+
+**Counsel's three questions for the owner (172):**
+1. Decisions lead with `Decide:` and action items with `Confirm:` —
+   is the two-prefix vocabulary yours?
+2. The People card's Prep wing is one summary row per concern and
+   `Open` switches to Now for the per-entity rows — is that the shape
+   you want before a 1:1?
+3. Do Jira assignments belong on the 1:1 card, or only PRs and
+   commitments?
+
+**Laws added this sitting.** Dismiss, never Drop. The third verb is a
+Button. The lead slot is the source. No clipped text. No pronoun from a
+name. Suggestions dedup case-insensitively. The display step is a fact.
+`SOURCES N` counts accepted sources only. `Run all` parked (paid egress
+in a batch).
+
+**Merge order stays his:** #553 → #554 → 172's.
+
 # HANDOVER: MUAD'DIB IX — Phase 170 The Great Pass, mid-flight (2026-09-05, late)
 
 Read this once, fully, before your first tool call. When you finish,
@@ -157,6 +242,18 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
   `feat/the-great-pass`). 6/10 done on evidence; 05 keeps its click box;
   01/08/10 flip on his word. Design grounds for 172–176 are drafted
   under their phase assets. Merge order: #553 → #554.
+
+- **10:55 — Phase 172 ACTIVATED, STACKED** on `feat/the-loop-closes` off
+  `feat/the-heartbeat` (PR #554) off `feat/the-great-pass` (PR #553).
+  In flight: two artboard lanes (Room proposals · meeting after run ·
+  arrival Confirm rows | the 1:1 card · the suggested source ·
+  Settings → Meetings auto-run) from settled-design-loop-closes.md; two
+  wire lanes (the auto-run trigger after `_associate_meeting_with_projects`
+  + the extractors→proposals bridge + confirm through the kernel | the
+  People↔Watch resolver + the 1:1 brief's watch_summary + suggested
+  sources); the docs to the design; live172_walk.py drafted. Then
+  counsel → faces → rigs → his-desk walk → close → PR stacked on #554.
+  Merge order stays his: #553 → #554 → 172's.
 
 ## 1. The asks of the owner (in order)
 

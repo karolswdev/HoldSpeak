@@ -6,7 +6,7 @@ import hashlib
 import json
 import threading
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Optional
 from urllib import request as urlrequest
 from urllib.parse import urlsplit
 
@@ -294,6 +294,61 @@ class _BoundExecutorLease:
         self._db.intel.release_bound_executor_lease(self._job)
 
 
+def _on_intel_complete(db: Any, meeting_id: str) -> None:
+    """HS-172-03: post-completion hooks, each in its own failure boundary.
+
+    (a) Bridge extractor artifacts to follow-through proposals.
+    (b) Scan transcript for source suggestions.
+    (c) Invalidate the needs-you aggregate cache.
+    """
+    # (a) Proposal bridge.
+    try:
+        from .services.proposal_bridge_service import ProposalBridgeService
+        bridge = ProposalBridgeService(db)
+        created = bridge.bridge_meeting_artifacts(meeting_id)
+        if created:
+            log.info("HS-172-03: bridged %d proposals for meeting %s", len(created), meeting_id)
+    except Exception as exc:
+        log.warning("HS-172-03: proposal bridge failed for meeting %s: %s", meeting_id, exc)
+
+    # (b) Source suggestions for each linked Room.
+    try:
+        projects = db.projects.get_meeting_projects(meeting_id)
+        if projects:
+            from .services.suggested_source_service import SuggestedSourceService
+            svc = SuggestedSourceService(db)
+            meeting = db.meetings.get_meeting(meeting_id)
+            if meeting and meeting.segments:
+                transcript = "\n".join(
+                    str(getattr(s, "text", s)) for s in meeting.segments
+                )
+                for mp in projects:
+                    pid = mp["project_id"] if isinstance(mp, dict) else str(mp)
+                    try:
+                        found = svc.scan_transcript(transcript, pid, meeting_id)
+                        if found:
+                            svc.create_suggestions(pid, meeting_id, found)
+                            log.info(
+                                "HS-172-03: created %d source suggestions for project %s",
+                                len(found), pid,
+                            )
+                    except Exception as exc:
+                        log.warning(
+                            "HS-172-03: source suggestions failed for project %s: %s",
+                            pid, exc,
+                        )
+    except Exception as exc:
+        log.warning("HS-172-03: source suggestion scan failed for meeting %s: %s", meeting_id, exc)
+
+    # (c) Write the durable dirty marker so the cache refreshes on next read.
+    try:
+        from .services.needs_you_aggregate import mark_needs_you_dirty
+        mark_needs_you_dirty(db)
+        log.debug("HS-172-03: dirty marker set after intel complete for %s", meeting_id)
+    except Exception as exc:
+        log.debug("HS-172-03: dirty marker write failed for %s: %s", meeting_id, exc)
+
+
 def _process_bound_intel_job(
     db, job, broker, *, on_meeting_ready, retry_base_seconds: int,
     retry_max_seconds: int, retry_max_attempts: int,
@@ -451,6 +506,8 @@ def _process_bound_intel_job(
                 on_meeting_ready(job.meeting_id)
             except Exception as exc:
                 log.debug("on_meeting_ready observer failed: %s", type(exc).__name__)
+        # HS-172-03: bridge artifacts to proposals + suggest sources.
+        _on_intel_complete(db, job.meeting_id)
         return True
     except KernelRefused as exc:
         # The provider's typed refusal is terminal, not a fallback/retry signal.

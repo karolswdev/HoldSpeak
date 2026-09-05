@@ -219,6 +219,16 @@ from MCP projections. The owner can set `HOLDSPEAK_MCP_PEOPLE_ACCESS=off` or
 policy refusal matrix) does not loosen regardless of the access mode.
 See [People security boundary](PEOPLE_SECURITY.md).
 
+**The People resolver boundary.** Meeting intelligence can match extracted
+owner names and speaker labels to People relationships so the 1:1 brief
+shows Watch data (PRs waiting, open assignments). The resolver
+(`people_service.resolve_relationship_by_watch_identity`) runs the match
+inside the encrypted People store, in memory, at read time. Only an opaque
+relationship id crosses into the Watch projection; no alias string, display
+name, or relationship detail appears in plaintext outside the People store.
+Intelligence runs on the model's assigned host, named at the point of
+decision by the egress chip.
+
 **Residual risk:** if the machine is compromised at the file level and full-disk
 encryption is off, transcripts, voice embeddings, and the activity ledger are
 readable. We accept this for the local-first, single-user model and **recommend

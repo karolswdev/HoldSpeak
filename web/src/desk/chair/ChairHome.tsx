@@ -19,6 +19,7 @@ import {
   SurfaceLedger,
   SurfaceLedgerRow,
   EgressChip,
+  StateChip,
   countLabel,
   countToken,
 } from "../surface";
@@ -40,6 +41,12 @@ interface NeedsYouItem {
   severity: string;
   /** HS-171: true when the item's Room is muted. */
   muted?: boolean;
+  /** HS-172-03: proposal fields from the aggregate. */
+  proposalId?: string;
+  proposalKind?: string;
+  proposalHost?: string;
+  proposalDue?: string;
+  meetingTitle?: string;
 }
 
 interface NeedsYouPayload {
@@ -106,12 +113,13 @@ function durationMin(seconds: number | null | undefined): string {
   return `${Math.round(seconds / 60)} MIN`;
 }
 
-/** Source emblem token: GH for github, J for jira, etc. */
+/** Source emblem token: GH for github, J for jira, MTG for proposals, etc. */
 function sourceEmblem(source: string): string {
   const s = source.toLowerCase();
   if (s === "github") return "GH";
   if (s === "jira") return "J";
   if (s === "delta") return "D";
+  if (s === "proposal") return "MTG";
   return s.slice(0, 2).toUpperCase();
 }
 
@@ -179,10 +187,12 @@ function whySeverityTone(severity: string): string {
 /** Headline for the arrival — zero = "Nothing needs you" (UX-CANON A8). */
 function headlineFor(count: number, projectCount: number): string {
   if (count <= 0) return "Nothing needs you";
+  const n = String(count);
   if (projectCount > 0) {
-    return `${count} need you across ${projectCount} ${projectCount === 1 ? "project" : "projects"}`;
+    const p = projectCount === 1 ? "project" : "projects";
+    return n + " need you across " + String(projectCount) + " " + p;
   }
-  return `${count} need you`;
+  return n + " need you";
 }
 
 /** Format NEXT line from the payload. */
@@ -330,6 +340,7 @@ function Arrival() {
   const hasProjects = projectCount > 0;
   const headline = headlineFor(count, projectCount);
   const headlineAccent = count > 0;
+  const mutedCount = mutedItems.length > 0 ? mutedItems.length : 0;
 
   // ── NEXT line: prefer door upcoming (schedule/calendar), fall back to rooms ──
   const doorNext = door?.upcoming?.[0];
@@ -386,6 +397,17 @@ function Arrival() {
     } catch { /* receipt stays */ }
     finally { setRunningIntel(null); }
   };
+
+  // ── proposal confirm: optimistically remove from needs-you ──
+  const handleProposalConfirm = useCallback((proposalId: string) => {
+    setNeedsYou((prev) => {
+      if (!prev) return prev;
+      const remaining = prev.items.filter((it) => it.proposalId !== proposalId);
+      // UX-CANON A8: the headline guards zero; this is state, not display.
+      const nextCount = remaining.reduce((n) => n + 1, 0);
+      return { ...prev, items: remaining, count: nextCount };
+    });
+  }, []);
 
   // ── arming countdown (lost door 2) ──
   const arming = useDesk((s) => s.scheduledArming);
@@ -458,18 +480,20 @@ function Arrival() {
             items={unmutedItems}
             count={count}
             multipleProjects={hasProjects}
+            onProposalConfirm={handleProposalConfirm}
           />
         </div>
       ) : null}
 
-      {/* ── Muted (dimmed, under a MUTED caption) ── */}
-      {mutedItems.length > 0 ? (
+      {/* ── Muted (dimmed, under a MUTED caption; A8: count pre-extracted) ── */}
+      {mutedCount > 0 ? (
         <div data-testid="arrival-muted" className="arrival-muted-section">
           <NeedsYouSection
             items={mutedItems}
-            count={mutedItems.length}
+            count={mutedCount}
             multipleProjects={hasProjects}
             muted
+            onProposalConfirm={handleProposalConfirm}
           />
         </div>
       ) : null}
@@ -543,11 +567,13 @@ function NeedsYouSection({
   count,
   multipleProjects,
   muted = false,
+  onProposalConfirm,
 }: {
   items: NeedsYouItem[];
   count: number;
   multipleProjects: boolean;
   muted?: boolean;
+  onProposalConfirm?: (proposalId: string) => void;
 }) {
   return (
     <SurfaceSection label={countLabel(muted ? "MUTED" : "NEEDS YOU", count)}>
@@ -556,21 +582,35 @@ function NeedsYouSection({
           const ext = item as NeedsYouItem & { _isDoor?: boolean; _isUnassigned?: boolean; _doorCard?: DoorCard };
           const isDoor = ext._isDoor === true;
           const isUnassigned = ext._isUnassigned === true;
+          const isProposal = Boolean(item.proposalId);
           const emblem = isDoor ? doorEmblem(item.source) : sourceEmblem(item.source);
+          const proposalPrefix = isProposal
+            ? (item.proposalKind === "decision" ? "Decide:" : "Confirm:")
+            : null;
           return (
             <SurfaceLedgerRow
-              key={`${item.projectId || "door"}-${item.ref}-${i}`}
+              key={`${item.projectId || "door"}-${item.ref || item.proposalId}-${i}`}
               lead={
                 <span className="arrival-source-emblem" data-testid="arrival-source-emblem">
                   {emblem}
                 </span>
               }
-              primary={item.title}
+              primary={
+                isProposal ? (
+                  <span data-testid="arrival-proposal-text">
+                    <span className="arrival-proposal-prefix" data-testid="arrival-proposal-prefix">
+                      {proposalPrefix}
+                    </span>{" "}
+                    {item.title}
+                    {item.proposalDue ? ` · by ${item.proposalDue}` : null}
+                  </span>
+                ) : item.title
+              }
               cells={
                 <span className="arrival-needs-you-meta">
                   <span
                     className="arrival-why-token"
-                    data-tone={whySeverityTone(item.severity)}
+                    data-tone={isProposal ? undefined : whySeverityTone(item.severity)}
                     data-testid="arrival-why"
                   >
                     {item.why}
@@ -584,11 +624,17 @@ function NeedsYouSection({
                 </span>
               }
               trailing={
-                <NeedsYouRowVerbs item={item} isDoor={isDoor} isUnassigned={isUnassigned} doorCard={ext._doorCard} />
+                <NeedsYouRowVerbs
+                  item={item}
+                  isDoor={isDoor}
+                  isUnassigned={isUnassigned}
+                  doorCard={ext._doorCard}
+                  onProposalConfirm={onProposalConfirm}
+                />
               }
               wrap
               expands={false}
-              data-testid="arrival-needs-you-row"
+              data-testid={isProposal ? "arrival-proposal-row" : "arrival-needs-you-row"}
             />
           );
         })}
@@ -598,17 +644,19 @@ function NeedsYouSection({
 }
 
 /** Verb buttons for a NEEDS YOU row: door lawful verb (primary dense) + Open (ghost),
- *  or "Name an owner" for unassigned, or external Open for room items. */
+ *  or proposal Confirm + Open, or "Name an owner" for unassigned, or external Open. */
 function NeedsYouRowVerbs({
   item,
   isDoor,
   isUnassigned,
   doorCard,
+  onProposalConfirm,
 }: {
   item: NeedsYouItem;
   isDoor: boolean;
   isUnassigned: boolean;
   doorCard?: DoorCard;
+  onProposalConfirm?: (proposalId: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -625,6 +673,50 @@ function NeedsYouRowVerbs({
       >
         Name an owner
       </Button>
+    );
+  }
+
+  if (item.proposalId) {
+    const confirmProposal = async () => {
+      if (busy) return;
+      setBusy(true);
+      try {
+        await apiFetch(
+          `/api/proposals/${encodeURIComponent(item.proposalId!)}/confirm`,
+          { method: "POST" },
+        );
+        setDone(true);
+        onProposalConfirm?.(item.proposalId!);
+      } catch { /* row stays */ }
+      finally { setBusy(false); }
+    };
+    if (done) return null;
+    return (
+      <>
+        <Button
+          variant="primary"
+          dense
+          disabled={busy}
+          onClick={() => void confirmProposal()}
+          data-testid="arrival-proposal-confirm"
+        >
+          {busy ? "..." : "Confirm"}
+        </Button>
+        <Button
+          variant="ghost"
+          dense
+          onClick={() =>
+            openSurfaceOr(
+              "project-room",
+              "/projects",
+              `${item.projectId}?focus=proposal:${item.proposalId}`,
+            )
+          }
+          data-testid="arrival-proposal-open"
+        >
+          Open
+        </Button>
+      </>
     );
   }
 
@@ -822,7 +914,7 @@ function MeetingsSection({
           const badge = receipt ? "QUEUED" : intelBadge(m.intelStatus);
           const hasTranscript = m.transcriptWords != null && m.transcriptWords > 0;
           const isOff = badge === "OFF";
-          const isSaved = badge === "SAVED";
+          const isComplete = badge === "RAN" || badge === "SAVED";
           return (
             <SurfaceLedgerRow
               key={m.id}
@@ -835,13 +927,17 @@ function MeetingsSection({
                       {durationMin(m.durationSeconds)}
                     </span>
                   ) : null}
-                  <span
-                    className="arrival-meeting-badge"
-                    data-badge={badge.toLowerCase()}
-                    data-testid="arrival-meeting-badge"
-                  >
-                    {badge}
-                  </span>
+                  {badge === "RAN" ? (
+                    <StateChip state="success" label="RAN" icon="●" />
+                  ) : (
+                    <span
+                      className="arrival-meeting-badge"
+                      data-badge={badge.toLowerCase()}
+                      data-testid="arrival-meeting-badge"
+                    >
+                      {badge}
+                    </span>
+                  )}
                   {receipt ? (
                     <EgressChip
                       label={receipt.host === "local" ? "THIS DEVICE" : receipt.host}
@@ -861,7 +957,7 @@ function MeetingsSection({
                   >
                     {runningIntel === m.id ? "Running..." : "Run intelligence"}
                   </Button>
-                ) : isSaved ? (
+                ) : isComplete ? (
                   <Button
                     variant="ghost"
                     dense

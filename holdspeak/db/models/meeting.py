@@ -30,6 +30,11 @@ class MeetingSummary(Serializable):
     calendar_event_id: Optional[str] = None
     # HS-170-04: transcript word count for the face (omitted/None = no transcript).
     transcript_words: Optional[int] = None
+    # HS-172-02: intel timing for the RAN chip.
+    intel_requested_at: Optional[datetime] = None
+    intel_completed_at: Optional[datetime] = None
+    # HS-172-02: enriched at the service layer.
+    intel_model_host: Optional[str] = None
 
 
 @dataclass

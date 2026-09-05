@@ -61,6 +61,7 @@ from .project_updates import build_project_updates_router
 from .providers import build_providers_router
 from .connections import build_connections_router
 from .steward import build_steward_router
+from .proposals import build_proposal_router
 from .watches import build_watches_router
 
 __all__ = [
@@ -115,5 +116,6 @@ __all__ = [
     "build_providers_router",
     "build_connections_router",
     "build_steward_router",
+    "build_proposal_router",
     "build_watches_router",
 ]

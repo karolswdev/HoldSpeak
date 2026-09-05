@@ -162,14 +162,17 @@ describe("useProjectRoomController — /room first render (HS-158-05)", () => {
     const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
     await waitFor(() => expect(result.current.detailStatus).toBe("ready"));
 
-    // After everything completes, we should have /room + 4 detail calls = 5 total
-    expect(apiFetchMock).toHaveBeenCalledTimes(5);
+    // After everything completes: /room + 4 detail + 2 HS-172 calls = 7 total
+    // HS-172-03/06: proposals (proposed) + suggested-sources
+    expect(apiFetchMock).toHaveBeenCalledTimes(7);
     const urls = apiFetchMock.mock.calls.map((c: unknown[]) => c[0] as string);
     expect(urls).toContainEqual(expect.stringContaining("/room"));
     expect(urls).toContainEqual(expect.stringContaining("/meetings"));
     expect(urls).toContainEqual(expect.stringContaining("/decisions"));
     expect(urls).toContainEqual(expect.stringContaining("/artifacts"));
     expect(urls).toContainEqual(expect.stringContaining("/since-last-meeting"));
+    expect(urls).toContainEqual(expect.stringContaining("/proposals"));
+    expect(urls).toContainEqual(expect.stringContaining("/suggested-sources"));
   });
 
   it("initial paint is ready before detail fetches complete", async () => {

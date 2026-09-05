@@ -422,7 +422,13 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             )
         return aggregate
 
-    _needs_you_cache = NeedsYouCache(_build_needs_you, max_age_s=900.0)
+    def _get_db():
+        from ...db import get_database
+        return get_database()
+
+    _needs_you_cache = NeedsYouCache(
+        _build_needs_you, max_age_s=900.0, db_factory=_get_db,
+    )
 
     # Expose the cache on the context so the cadence tick can invalidate it.
     ctx._needs_you_cache = _needs_you_cache  # type: ignore[attr-defined]
@@ -442,5 +448,98 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
             return JSONResponse(data)
         except Exception as exc:
             return error_500(exc, log, "Failed to build desk needs-you")
+
+    # ── HS-172-06: suggested sources ────────────────────────────────
+
+    @router.get("/api/projects/{project_id}/suggested-sources")
+    async def api_suggested_sources(project_id: str, request: Request) -> Any:
+        """List pending suggested sources for a Room."""
+        try:
+            service.get_project(principal(request), project_id)
+            from ...services.suggested_source_service import SuggestedSourceService
+            sug = SuggestedSourceService(service._db)
+            rows = sug.list_suggestions(project_id, status="pending")
+            return JSONResponse({"suggestions": rows})
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to list suggested sources")
+
+    @router.post("/api/projects/{project_id}/suggested-sources/{ref}/add")
+    async def api_add_suggested_source(project_id: str, ref: str, request: Request) -> Any:
+        """Accept a suggested source -- creates a Watch source via the existing path."""
+        try:
+            p = principal(request)
+            service.get_project(p, project_id)
+            from ...services.suggested_source_service import SuggestedSourceService
+            sug = SuggestedSourceService(service._db)
+
+            # Find the suggestion by reference.
+            with service._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
+                    (project_id, ref),
+                ).fetchone()
+            if row is None:
+                return JSONResponse({"error": "Suggestion not found or already resolved"}, status_code=404)
+
+            suggestion = dict(row)
+            # Accept: mark as accepted and create the source.
+            sug.accept_suggestion(suggestion["id"])
+
+            # Create the Watch source through add_resource.
+            resource_ref = f"{suggestion['provider']}:{suggestion['reference']}"
+            try:
+                result = service.add_resource(
+                    p, project_id, resource_ref,
+                    {"relationship": "source", "provider": suggestion["provider"]},
+                )
+            except Exception:
+                # Resource add failed but suggestion is already accepted -- still report.
+                result = {"resource_ref": resource_ref, "state": "accepted_no_watch"}
+
+            return JSONResponse({"suggestion": suggestion, "resource": result})
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to add suggested source")
+
+    @router.post("/api/projects/{project_id}/suggested-sources/{ref}/dismiss")
+    async def api_dismiss_suggested_source(project_id: str, ref: str, request: Request) -> Any:
+        """Dismiss a suggested source -- never suggest again for this Room."""
+        try:
+            service.get_project(principal(request), project_id)
+            from ...services.suggested_source_service import SuggestedSourceService
+            sug = SuggestedSourceService(service._db)
+
+            with service._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT * FROM source_suggestions WHERE project_id=? AND reference=? AND status='pending'",
+                    (project_id, ref),
+                ).fetchone()
+            if row is None:
+                return JSONResponse({"error": "Suggestion not found or already resolved"}, status_code=404)
+
+            suggestion = sug.dismiss_suggestion(dict(row)["id"])
+            return JSONResponse({"suggestion": suggestion})
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to dismiss suggested source")
+
+    # ── HS-172-07: Room people ──────────────────────────────────────
+
+    @router.get("/api/projects/{project_id}/people")
+    async def api_project_people(project_id: str, request: Request) -> Any:
+        """Resolved people from a Room's Watch entities (read-only)."""
+        try:
+            from ...services.room_people_service import room_people
+            people_svc = ctx.people_service
+            result = room_people(service, people_svc, project_id)
+            return JSONResponse({"people": result})
+        except NotFound as exc:
+            return not_found(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to get project people")
 
     return router

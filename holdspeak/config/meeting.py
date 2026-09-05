@@ -37,6 +37,11 @@ class MeetingConfig:
     intel_temperature: float = 0.2
     intel_summary_model: Optional[str] = None  # Falls back to realtime if None
     intel_deferred_enabled: bool = True  # Queue intel when no suitable local model is available
+    # HS-172-02: auto-intel trigger after capture stops.
+    # "off" = manual only (existing behaviour);
+    # "room_linked" = auto-enqueue for meetings linked to a Room (default);
+    # "every" = auto-enqueue for every meeting with a transcript.
+    intelligence_auto: str = "room_linked"
     # HS-139-01: intel_queue_poll_seconds deleted — dead setting (never
     # threaded to IntelQueue; queue uses hardcoded 120.0 default).
     intel_retry_base_seconds: int = 30  # Initial deferred-intel retry delay
@@ -140,6 +145,13 @@ class MeetingConfig:
     similarity_threshold: float = 0.75  # Cosine similarity for speaker matching
 
     def __post_init__(self) -> None:
+        # HS-172-02: normalize and validate intelligence_auto.
+        _auto = str(self.intelligence_auto or "room_linked").strip().lower()
+        if _auto not in ("off", "room_linked", "every"):
+            raise ValueError(
+                f"intelligence_auto must be off, room_linked, or every; got {_auto!r}"
+            )
+        self.intelligence_auto = _auto
         # HS-112-01: one pointer sentinel -- None means hub default.
         self.intel_profile_id = (
             str(self.intel_profile_id or "").strip() or None

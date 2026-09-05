@@ -7,7 +7,7 @@ export function intelBadge(status: string | null | undefined): string {
   if (!status) return "SAVED";
   const s = String(status).toLowerCase();
   const map: Record<string, string> = {
-    complete: "SAVED",
+    complete: "RAN",
     running: "RUNNING",
     queued: "QUEUED",
     pending: "QUEUED",

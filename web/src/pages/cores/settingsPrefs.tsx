@@ -336,7 +336,7 @@ export type SettingsHubWire = {
   models: { engines: number; groupsSet: number; defaultSet: boolean };
   connections: { connected: number };
   voice: { live: boolean; target: string };
-  meetings: { intelligence: boolean };
+  meetings: { intelligence: boolean; auto?: string; host?: string; lastRunAt?: string | null; lastRunS?: number | null };
   rhythm: {
     loops: number;
     sweepEveryMinutes?: number;
@@ -351,6 +351,33 @@ export type SettingsHubWire = {
 };
 
 export type DeepHit = { module: string; label: string; path: string[] };
+
+/* ── HS-172-02: auto-run label helpers ── */
+
+const AUTO_LABELS: Record<string, string> = {
+  room_linked: "AFTER ROOM MEETINGS",
+  every: "AFTER EVERY MEETING",
+  off: "OFF",
+};
+
+function autoLabel(auto: string | undefined): string {
+  return AUTO_LABELS[auto ?? "off"] ?? "OFF";
+}
+
+export function autoDisplayFact(auto: string | undefined): string {
+  const map: Record<string, string> = {
+    room_linked: "After room meetings",
+    every: "After every meeting",
+    off: "Off",
+  };
+  return map[auto ?? "off"] ?? "Off";
+}
+
+export const INTELLIGENCE_AUTO_OPTIONS = [
+  { value: "off", label: "OFF" },
+  { value: "room_linked", label: "AFTER ROOM MEETINGS" },
+  { value: "every", label: "AFTER EVERY MEETING" },
+];
 
 /* ── the drawer face ── */
 
@@ -454,7 +481,7 @@ export function PrefsFace({
               : null}
           </>}
         />
-        {/* Meetings: INTELLIGENCE OFF warning or INTELLIGENCE ON */}
+        {/* Meetings: INTELLIGENCE ON · AFTER ROOM MEETINGS / OFF */}
         <SurfaceLedgerRow
           primary="Meetings"
           expands={false}
@@ -462,7 +489,7 @@ export function PrefsFace({
           trailing={openVerb("meetings")}
           cells={<>
             {hub.meetings.intelligence
-              ? <StateChip state="success" label="INTELLIGENCE ON" />
+              ? <StateChip state="success" label={`INTELLIGENCE ON${hub.meetings.auto && hub.meetings.auto !== "off" ? ` · ${autoLabel(hub.meetings.auto)}` : ""}`} />
               : <StateChip state="warning" label="INTELLIGENCE OFF" />}
           </>}
         />

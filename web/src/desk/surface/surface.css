@@ -3621,6 +3621,9 @@ button.surface-edit-in-place:hover {
   align-items: center;
   gap: 6px;
 }
+.meetings-detail-facts [data-tone="success"] { color: var(--success); }
+.meetings-detail-facts [data-tone="warn"] { color: var(--warning); }
+.meetings-detail-facts [data-tone="danger"] { color: var(--danger); }
 
 /* HS-170-04 — NEEDS YOU section in detail */
 .meetings-detail-needs {
@@ -3665,6 +3668,25 @@ button.surface-edit-in-place:hover {
 }
 .meetings-detail-outcome-verb {
   flex-shrink: 0;
+}
+
+/* HS-172 — proposal prefix accent in meeting detail */
+.meetings-proposal-prefix {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* HS-172 — 393 responsive: proposal rows stack verbs under text */
+@container surface (max-width: 559.9px) {
+  .meetings-detail-outcome-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .meetings-detail-outcome-verb {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+  }
 }
 
 /* HS-170-04 — 393 responsive layout */

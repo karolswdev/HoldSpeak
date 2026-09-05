@@ -57,7 +57,7 @@ def build_aggregate(
         if needs.get("state") != "ok":
             continue
         for item in needs.get("items") or []:
-            items.append({
+            row: dict[str, Any] = {
                 "projectId": pid,
                 "projectName": proj.get("name") or proj.get("title") or "",
                 "ref": item.get("title", ""),
@@ -65,9 +65,16 @@ def build_aggregate(
                 "why": item.get("why", ""),
                 "ageToken": item.get("since", ""),
                 "source": item.get("source", ""),
-                "verbHref": item.get("url"),
+                "verbHref": item.get("url") or item.get("verbHref"),
                 "severity": item.get("severity", "info"),
-            })
+            }
+            if item.get("proposal_id"):
+                row["proposalId"] = item["proposal_id"]
+                row["proposalKind"] = item.get("proposal_kind", "action")
+                row["proposalHost"] = item.get("host")
+                row["proposalDue"] = item.get("due_hint")
+                row["meetingTitle"] = item.get("meeting_title")
+            items.append(row)
             project_ids.add(pid)
 
     items.sort(key=lambda r: (
@@ -100,6 +107,37 @@ def build_aggregate(
     }
 
 
+# ── Dirty marker (durable, cross-thread) ────────────────────────────
+
+_DIRTY_MARKER_ID = "needs_you_aggregate"
+
+
+def mark_needs_you_dirty(db: Any) -> None:
+    """HS-172-03: write a dirty marker so the cache refreshes on next read.
+
+    Uses ``desk_projection_state`` with a well-known projection_id.
+    Thread-safe (INSERT OR REPLACE is atomic in SQLite WAL mode).
+    """
+    now = datetime.now().isoformat()
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT OR REPLACE INTO desk_projection_state
+               (projection_id, attention_state, updated_at)
+               VALUES (?, 'unseen', ?)""",
+            (_DIRTY_MARKER_ID, now),
+        )
+
+
+def _read_dirty_at(db: Any) -> str | None:
+    """Read the dirty marker's timestamp (None when no marker exists)."""
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT updated_at FROM desk_projection_state WHERE projection_id = ?",
+            (_DIRTY_MARKER_ID,),
+        ).fetchone()
+    return str(row["updated_at"]) if row else None
+
+
 # ── Stale-while-refresh cache ────────────────────────────────────────
 
 
@@ -110,6 +148,12 @@ class NeedsYouCache:
     interval).  A call to ``invalidate()`` marks the cache stale
     immediately; the next ``get()`` triggers a rebuild via the
     ``builder`` callback.
+
+    HS-172-03: on every ``get()``, the cache also checks the durable
+    dirty marker in ``desk_projection_state``. A marker newer than the
+    cached ``computedAt`` forces a rebuild, so proposals/confirm/dismiss
+    are visible within the 60 s arrival poll without cross-thread singleton
+    hunts.
     """
 
     def __init__(
@@ -117,28 +161,50 @@ class NeedsYouCache:
         builder: Callable[[], dict[str, Any]],
         *,
         max_age_s: float = 900.0,
+        db_factory: Callable[[], Any] | None = None,
     ) -> None:
         self._builder = builder
         self._max_age_s = max_age_s
+        self._db_factory = db_factory
         self._lock = threading.Lock()
         self._data: dict[str, Any] | None = None
         self._computed_at: float = 0.0
+        self._computed_wall: str = ""  # ISO wall-clock at last rebuild
         self._sweep_id: str | None = None
 
     def get(self, *, force: bool = False) -> dict[str, Any]:
-        """Return the cached aggregate; rebuild on miss or force."""
+        """Return the cached aggregate; rebuild on miss, force, or dirty marker."""
         now = time.monotonic()
+        stale = force
         with self._lock:
-            if not force and self._data is not None and (now - self._computed_at) < self._max_age_s:
-                return self._data
+            if self._data is None:
+                stale = True
+            elif (now - self._computed_at) >= self._max_age_s:
+                stale = True
+
+        # HS-172-03: check durable dirty marker.
+        if not stale and self._db_factory is not None:
+            try:
+                dirty_at = _read_dirty_at(self._db_factory())
+                if dirty_at and dirty_at > self._computed_wall:
+                    stale = True
+            except Exception:
+                pass
+
+        if not stale:
+            with self._lock:
+                if self._data is not None:
+                    return self._data
 
         # Build outside the lock (the N+1 is slow).
         data = self._builder()
+        wall = datetime.now().isoformat()
         with self._lock:
             data["stale"] = False
             data["sweepId"] = self._sweep_id
             self._data = data
             self._computed_at = time.monotonic()
+            self._computed_wall = wall
         return data
 
     def invalidate(self, *, sweep_id: str | None = None) -> None:
@@ -146,6 +212,7 @@ class NeedsYouCache:
         with self._lock:
             self._data = None
             self._computed_at = 0.0
+            self._computed_wall = ""
             if sweep_id is not None:
                 self._sweep_id = sweep_id
 
@@ -177,5 +244,6 @@ def cached_aggregate(
 __all__ = [
     "build_aggregate",
     "cached_aggregate",
+    "mark_needs_you_dirty",
     "NeedsYouCache",
 ]

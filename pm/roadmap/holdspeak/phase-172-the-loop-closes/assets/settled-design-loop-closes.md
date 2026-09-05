@@ -1,12 +1,15 @@
 # The Loop Closes -- the settled design (Phase 172, story 01)
 
-> **DRAFT -- pending 170's merge and his word.**
+> **ON THE CANVAS (2026-09-05)** -- thirteen boards published at
+> https://claude.ai/code/artifact/b153c331-cd38-4856-b38b-837407dd6fba ;
+> counsel reading; faces build to the ratified boards under the standing
+> goal; **his word gates the merge** (stacked on 171's #554 on 170's #553).
 
 The owner's Tuesday moment (THE-TUESDAY-ARC.md section 2, "Phase 172"):
 the standup ends; within a minute the Room reads "Standup -- 2 decisions
 -- 3 action items"; NEEDS YOU gains "Confirm: Marek owns the PostgreSQL
 migration -- by Fri"; before the 1:1 with Ania her card reads "2 PRs
-waiting on her 3+ days -- 1 commitment overdue -- last meeting 5 items,
+waiting on Ania 3+ days -- 1 commitment overdue -- last meeting 5 items,
 2 open." The face canon binds (docs/internal/UX-CANON.md); the Door's,
 the Arrival's, and the Heartbeat's grammar (Phases 169-171) are the
 ratified precedent.
@@ -18,7 +21,7 @@ Room's SINCE YOU LOOKED gains a new line: `Standup -- 2 decisions -- 3
 action items`. NEEDS YOU grows by five rows: two decisions as PROPOSALS
 (`Confirm: adopt PostgreSQL 17 for the data layer`) and three action
 items (`Confirm: Marek owns the PostgreSQL migration -- by Fri`), each
-with `Confirm` / `Edit` / `Drop`. He confirms one decision -- the
+with `Confirm` / `Edit` / `Dismiss`. He confirms one decision -- the
 decision_record and the commitment appear in DECISIONS & COMMITMENTS.
 He drops a duplicate. He edits the third to fix the due date, then
 confirms.
@@ -46,12 +49,12 @@ AFTER EVERY MEETING` with a CycleGadget and the model host chip.
 | People stays encrypted -- the join never leaks a name | Constitution Article III | The People-to-Watch resolver matches display_name / owner_alias to Watch assignee/reviewer strings inside the encrypted People boundary; no alias string appears in plaintext outside the People store; the match runs in memory at read time |
 | The model's host named where intelligence runs | Constitution Article III | The auto-run status token names the model's host: `RAN -- 41 S -- 192.168.1.43 -- LAN` (the egress chip at the point of decision); the Settings row shows the model host chip |
 | No counters of zero | UX-CANON.md rule A.8 | PROPOSALS section absent when no proposals exist; People section absent when no aliases resolve; the brief's Watch sections absent when no match; SUGGESTED absent when no mentions detected |
-| Every verb the library Button | UX-CANON.md rule A.1 | `Confirm` / `Edit` / `Drop` on PROPOSAL cards; `Add` / `Dismiss` on suggested sources; `Open` on People cards; `Run intelligence` on meeting rows |
+| Every verb the library Button | UX-CANON.md rule A.1 | `Confirm` / `Edit` / `Dismiss` on PROPOSAL cards; `Add` / `Dismiss` on suggested sources; `Open` on People cards; `Run intelligence` on meeting rows |
 | One egress vocabulary | UX-CANON.md, 170 settled counsel M1 | `THIS DEVICE` / `192.168.1.43 -- LAN` / the cloud key name -- the same vocabulary 170 settles; the egress chip on the intel status token and the Settings row |
 | No prose | UX-CANON.md rule A.3 | Tokens, verbs, counts, names. The PROPOSAL card is a row, not a paragraph; the brief is rows not sentences |
 | No modals | UX-CANON.md rule A.4 | `Edit` unfolds inline (EditInPlace on the proposal text); the People card opens in the split or a well, never a modal |
 | Design before build | UX-CANON.md rule A.2 | This document is the design; artboards at 1440 + 393 drawn from it; his word before any code |
-| Ledger not gate | Owner ruling | Every intel run, every Confirm/Drop, every proposal arrival -- receipted via the service event ledger; no ceremony beyond the receipt |
+| Ledger not gate | Owner ruling | Every intel run, every Confirm/Dismiss, every proposal arrival -- receipted via the service event ledger; no ceremony beyond the receipt |
 
 
 ## D2 -- the faces (element by element, species named)
@@ -87,8 +90,8 @@ proposals exist (rule A.8).
     a StringGadget with the extracted text (editable), the owner field,
     the due field, and a `Save & confirm` (primary dense) + `Cancel`
     (ghost dense) pair. The edited text is what gets persisted.
-  - `Drop` (Button ghost dense) -- dismisses the proposal; no record
-    created; the row disappears; a `proposal.dropped` receipt written.
+  - `Dismiss` (Button ghost dense) -- dismisses the proposal; no record
+    created; the row disappears; a `proposal.dismissed` receipt written.
 
 **Empty state:** the section shows no PROPOSAL rows (the existing
 needs-you items may still appear). When the entire NEEDS YOU section
@@ -127,7 +130,7 @@ secondary step):
 **Rows in the detail's NEEDS YOU** (after intel completes): the same
 PROPOSAL rows as in the Room's NEEDS YOU (decisions and action items
 from the intel plugins), scoped to this meeting. The `Confirm` /
-`Edit` / `Drop` verbs work identically.
+`Edit` / `Dismiss` verbs work identically.
 
 **Species used:** StateChip (success, idle, failure, warning),
 EgressChip, surface-token[data-chip], SurfaceLedgerRow (wrap), Button
@@ -140,7 +143,7 @@ where the 170 design already merges Room items and Door items.
 
 **New row type:** PROPOSAL rows from all active Rooms, interleaved by
 recency. Same grammar as (a): lead emblem `MTG`, primary `Confirm:
-...`, provenance token, `Confirm` / `Edit` / `Drop`. The source emblem
+...`, provenance token, `Confirm` / `Edit` / `Dismiss`. The source emblem
 carries the project name as a faint token when more than one Room
 contributes (the 170 design's existing rule).
 
@@ -205,7 +208,7 @@ StateChip (warning for overdue).
 ### (e) The suggested source row in the Room's SOURCES
 
 **Position:** inside the Room's SOURCES section (ProjectRoomCore.tsx),
-BELOW the existing Watch source rows. Absent when no suggestions exist
+ABOVE the existing Watch source rows (a suggestion needs you, so it leads). Absent when no suggestions exist
 (rule A.8).
 
 **Each suggested source row** (SurfaceLedgerRow):
@@ -242,8 +245,8 @@ Settings hub's `MEETINGS` row; the 170 design's hub grammar).
 
 - Primary (15/600): `Intelligence`.
 - Cells:
-  - CycleGadget: `AFTER EVERY MEETING` / `OFF` / `ROOM-LINKED ONLY`.
-    Default: `ROOM-LINKED ONLY` (intelligence runs automatically only
+  - CycleGadget: `AFTER EVERY MEETING` / `OFF` / `AFTER ROOM MEETINGS`.
+    Default: `AFTER ROOM MEETINGS` (intelligence runs automatically only
     for meetings linked to a Room; the Room link is the consent act --
     Article V). `AFTER EVERY MEETING` enables auto-intel for all
     meetings. `OFF` disables auto-intel (the existing manual-only
@@ -292,7 +295,7 @@ state.intel_status == "queued" AND state.segments`. The per-meeting
 - Check if the saved meeting is linked to a Room via
   `meeting_projects` (project_service.py:262, via
   `db.projects.get_meeting_projects(meeting_id)`).
-- If linked AND the global auto-intel setting is `ROOM-LINKED ONLY` or
+- If linked AND the global auto-intel setting is `AFTER ROOM MEETINGS` or
   `AFTER EVERY MEETING`, AND no intel job already exists for this
   meeting's transcript hash (dedup via
   `db.intel.get_intel_job(meeting_id)` checking transcript_hash):
@@ -355,7 +358,7 @@ bridge service) that runs after an intel job completes:
    `source="intel_proposal"`, `lane="unassigned"`, provenance from the
    plugin artifact (meeting_id, source_timestamp, speaker label).
    The card carries a `proposal_status` field: `pending` / `confirmed` /
-   `dropped`.
+   `dismissed`.
 3. For each extracted action item: create a FollowThroughCard with
    `source="intel_proposal"`, `lane` derived from owner/due
    (unassigned when no owner, now when owner+due, waiting when
@@ -370,7 +373,7 @@ bridge service) that runs after an intel job completes:
    from NEEDS YOU to DECISIONS & COMMITMENTS.
 6. `Confirm` on an action item card: similar -- creates an `action_item`
    row directly (the action_owner_enforcer already has owner/due).
-7. `Drop`: marks the card as `dropped` (a new status on the proposal
+7. `Dismiss`: marks the card as `dismissed` (a new status on the proposal
    row or the FollowThroughCard); the card disappears from NEEDS YOU.
 8. `Edit`: allows amending text/owner/due inline before Confirm.
 
@@ -387,7 +390,7 @@ follow_through_proposals (
   extracted_text TEXT NOT NULL,
   extracted_owner TEXT,
   extracted_due TEXT,
-  proposal_status TEXT NOT NULL DEFAULT 'pending',  -- pending | confirmed | dropped
+  proposal_status TEXT NOT NULL DEFAULT 'pending',  -- pending | confirmed | dismissed
   segment_timestamp TEXT,
   speaker_label TEXT,
   model_host TEXT,                   -- the egress host at extraction time
@@ -400,7 +403,7 @@ The FollowThroughService.board() gains a fourth source: these proposal
 rows (status=pending) mapped to FollowThroughCards with
 `source="intel_proposal"`. Confirmed proposals create real action_items
 / decision_records and the proposal row flips to `confirmed`. Dropped
-rows flip to `dropped`.
+rows flip to `dismissed`.
 
 **Dedup:** a proposal is unique by (meeting_id, source_plugin,
 extracted_text hash). Re-running intel on the same meeting with the
@@ -611,7 +614,7 @@ intelligence, every meeting auto-triggers a cloud call. Hunts:
 
 ### H5: The Room's zero states
 
-When proposals exist but all are dropped/confirmed, the NEEDS YOU
+When proposals exist but all are dismissed/confirmed, the NEEDS YOU
 section may show zero items. Hunts:
 - Dropped and confirmed proposals are excluded from the board query.
 - The NEEDS YOU section is absent when zero (rule A.8).
@@ -639,7 +642,7 @@ proposals show the extracted text, the meeting title, the speaker (when
 available), and the model host. He counts them; they match the meeting's
 content.
 
-### Beat 3: Confirm and Drop
+### Beat 3: Confirm and Dismiss
 
 He confirms one decision. The decision_record and commitment appear in
 DECISIONS & COMMITMENTS. He drops one duplicate. No record created.
@@ -677,7 +680,7 @@ verbatim. His verdict.
 |---|---|---|
 | 01 The design | S | Artboards from this doc; no code |
 | 02 The auto-intel trigger | M | A conditional block after session.save + the Settings CycleGadget + the per-meeting intel_status migration for Room-linked meetings; the deferred queue already exists |
-| 03 The proposal bridge | L | The new `follow_through_proposals` table + the bridge from plugin artifacts to FollowThroughCards + the Confirm/Edit/Drop verbs on the Room face + the dedup logic; the first time extracted intelligence becomes actionable |
+| 03 The proposal bridge | L | The new `follow_through_proposals` table + the bridge from plugin artifacts to FollowThroughCards + the Confirm/Edit/Dismiss verbs on the Room face + the dedup logic; the first time extracted intelligence becomes actionable |
 | 04 The People resolver | S | One new method on PeopleService wrapping the existing `resolve_relationship_by_owner` + display_name check |
 | 05 The brief enrichment | M | The `watch_summary` section on `one_on_one_brief` + the Watch entity reads through the resolver + the Prep lens face update |
 | 06 The suggested source | M | The transcript scan (regex, not LLM) + the `source_suggestions` table + the Room face rows + the Add/Dismiss verbs |
@@ -685,3 +688,136 @@ verbatim. His verdict.
 | 08 The walk | S | His desk, seven beats; no code |
 | 09 The docs | S | Re-shot for the new faces + the loop-closes Mermaid diagram |
 | 10 The close | S | Gates, sweep, the PR |
+
+
+## Addendum — the orchestrator's rulings on the boards (2026-09-05)
+
+Read beside the thirteen story-01 shots; each ruling binds the build.
+
+- **One verb word.** `Dismiss` everywhere a proposal or a suggestion is
+  declined; `Drop` is retired from this design. `Dismiss` writes no
+  record beyond the receipt.
+- **The third verb is a Button.** A collapsed PROPOSAL row carries
+  `Confirm` (primary dense) · `Edit` (ghost dense) · `Dismiss` (ghost
+  dense). Row text is never a trigger (UX-CANON A.1).
+- **The lead slot is the source.** Every ledger row's 52px lead slot
+  carries the source emblem (`MTG`, `GH`, `J`); state lives in the
+  caption (`CONFIRMED 09:41` in success color; `SUGGESTED` as a token).
+  No checkmarks, no words in the emblem slot.
+- **No clipped text.** Proposal text wraps to two lines at 640 with
+  the verbs top-aligned; the phone stacks verbs under the caption.
+- **`was:` lists only what changed.** After `Edit` → `Save & confirm`,
+  the confirmed row's `was:` caption names only the fields the owner
+  changed (text, owner, due), never the whole original when one field
+  moved.
+- **The arrival's `Open`** opens the Room scrolled to that proposal;
+  `Confirm` on the arrival commits through the kernel exactly as in
+  the Room (one path, one receipt).
+- **Speaker token** appears only on the Room's two-line rows and only
+  when known; compact meeting-detail rows carry none.
+- **No pronoun from a name.** The 1:1 card reads `N PRS WAITING ON
+  {display name}`; if the name will not fit, `N PRS WAITING`. The
+  product never infers she/he from a name.
+- **Suggestions dedup case-insensitively** against existing sources of
+  the same provider (GitHub owner/repo is case-insensitive; Jira keys
+  are upper-cased before compare). A suggestion that matches an
+  existing source is never raised; the sample on the board must obey
+  the same law.
+- **The Meetings settings module's display step** is the auto-run
+  state as a sentence-case fact (`After room meetings` · `Off` · `After
+  every meeting`), never the word `Meetings` (UX-CANON A.7); the
+  Intelligence row keeps the CycleGadget with `OFF` · `AFTER ROOM
+  MEETINGS` · `AFTER EVERY MEETING`.
+- **The People card display** is the person's name in the display
+  step's normal color (no problem state on the card); wings Prep ·
+  Now · History at 640, Prep · Now at 393.
+
+
+## Addendum — counsel RATIFY-W-C (2026-09-05) and the orchestrator's rulings
+
+Counsel read the thirteen boards, the doc, and the wire: **RATIFY-W-C**,
+three conditions, nine findings. Each is ruled here; the boards win
+where text and board disagreed, except where a board broke a law.
+
+**C1 — two prefixes.** Decision-kind proposals lead with `Decide:`;
+action-kind proposals lead with `Confirm:` (both accent, the rest of
+the text primary). D2.a's single `Confirm:` is superseded. The prefix
+is the kind; nothing else announces it.
+
+**C2 — the verb set per face.** Room proposal rows: `Confirm` · `Edit`
+· `Dismiss`. Meeting-detail NEEDS YOU rows: `Confirm` · `Dismiss`
+(Edit lives in the Room; the meeting is where you read, the Room is
+where you shape). Arrival rows: `Confirm` · `Open` (triage; Open lands
+in the Room scrolled to the proposal). D2.b and D2.c read accordingly.
+
+**C3 — the People card.** The Prep wing is the summary: one row per
+concern (`N PRS WAITING ON {name}` · `N ASSIGNMENTS OPEN` · `N
+COMMITMENTS OVERDUE` · `LAST MEETING`), each with its tokens and one
+`Open`. `Open` on a summary row switches to the **Now** wing, which
+lists the per-entity SurfaceLedgerRows (one per PR, one per issue,
+one per commitment) each with its own `Open` to the source URL. Inline
+reference tokens on a summary row cap at three, then `+N`. D2.d's
+per-entity rows live in Now, not Prep. Rows absent at zero.
+
+**F5 — after an edit.** The confirmed row's caption carries the changed
+fields as `WAS …` tokens after the state: `BY WED · CONFIRMED 09:41 ·
+WAS BY FRI`; text edits read `WAS "…"` truncated to 40 chars. Nothing
+when nothing changed.
+
+**F6 — OPEN ASSIGNMENTS** is a fourth Prep summary row of the same
+species (`1 ASSIGNMENT OPEN · KAN-7 · OVERDUE`), absent at zero. The
+board omitted it; the builder ships it and shoots it.
+
+**F7 — `Run all`** is cut from this phase (a batch effect that may
+egress to a paid host; the per-meeting `Run intelligence` stands).
+D2.f loses the verb; parked in BACKLOG.
+
+**F8 — speaker token.** On the Room's two-line proposal rows the
+caption reads `from Standup 09-05 · MAREK` when the speaker is known;
+nothing when unknown (no UNKNOWN). Same species as the provenance
+token.
+
+**F9 — SOURCES counts sources.** The `SOURCES N` caption counts
+accepted sources only; a SUGGESTED row sits above the count's rows
+and is not counted (UX-CANON A.8). Board corrected.
+
+Counsel's three questions for the owner are carried to the handover
+(prefix vocabulary; the People card's summary-then-Now shape; whether
+assignments belong on the card). The faces build to these rulings; his
+word gates the merge.
+
+**Story 07 boards (RoomPeople, RoomPeoplePhone, ShadePeople) — rulings.**
+The display name is shown as stored, in the Room and in the shade;
+no first name is derived from it (a derivation is an inference, like a
+pronoun). The shade's PEOPLE lane is scoped by caption (`PEOPLE · Q4
+PLATFORM`) and its tokens are terse (`1 OVERDUE`); the Room's are full
+(`1 ASSIGNMENT OVERDUE`). A person lists only with at least one
+non-zero token; the section is absent at zero.
+
+
+## Addendum — counsel on the BUILT phase (2026-09-05): RATIFY-W-C, paid
+
+Two conditions, eight findings; every design-stage ruling (C1–C3,
+F5–F9) verified PAID in the build. The build-stage conditions:
+
+- **C1 (P0) — the bridge was never called.** `bridge_meeting_artifacts`
+  and the suggestion scanner had no production call site; six green
+  rigs had seeded proposals by SQL. Paid: the intel completion seam
+  (`intel_queue.py` `_on_intel_complete`) runs the bridge, then the
+  scanner per linked Room, then marks the needs-you aggregate dirty —
+  each in its own failure boundary, idempotent on the fingerprint; an
+  end-to-end test drives job → rows → route → arrival count, twice.
+  **Law:** a new service entry point needs a production CALL SITE and
+  one test through the real seam before a phase closes.
+- **C2 — the RAN header proved from a recorded job** (`RAN · 41 S ·
+  192.168.1.43 · LAN`); the rig seeds the `intel_jobs` row.
+- **F-P2s paid:** the `LAST RAN hh:mm · N S` receipt on the Intelligence
+  row (the board rules); `<ul>` children are `<li>`; one `egressFor`
+  helper; the 393 People shot scrolls to its section; the arrival
+  Confirm rig; the auto-trigger exercised with seeded Rooms.
+- **The arrival's freshness:** a durable dirty marker
+  (`desk_projection_state` · `needs_you_aggregate`) written on
+  completion / Confirm / Dismiss; the cache compares it on every read.
+  No cross-thread singleton, no 15-minute fallback.
+
+Counsel's three questions for the owner are in the handover.

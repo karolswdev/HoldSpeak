@@ -283,6 +283,32 @@ TOOLS.extend([
         ["meeting_id"],
     ),
     _mcp_tool(
+        "meeting.proposals",
+        "List follow-through proposals extracted from a meeting's intelligence run. Each proposal is a decision or action item waiting for Confirm or Drop.",
+        {
+            "meeting_id": {"type": "string", "description": "Meeting identifier."},
+            "state": {"type": "string", "enum": ["proposed", "confirmed", "dismissed"], "description": "Optional state filter."},
+        },
+        ["meeting_id"],
+    ),
+    _mcp_tool(
+        "proposal.confirm",
+        "Confirm a follow-through proposal, writing the decision record or action item through the kernel. Optionally amend text, owner, or due before confirming.",
+        {
+            "proposal_id": {"type": "string", "description": "Proposal identifier."},
+            "text": {"type": "string", "description": "Amended text (optional; original kept when omitted)."},
+            "owner": {"type": "string", "description": "Accountable owner (optional)."},
+            "due": {"type": "string", "description": "ISO-8601 due date (optional)."},
+        },
+        ["proposal_id"],
+    ),
+    _mcp_tool(
+        "proposal.dismiss",
+        "Dismiss a follow-through proposal without creating any record.",
+        {"proposal_id": {"type": "string", "description": "Proposal identifier."}},
+        ["proposal_id"],
+    ),
+    _mcp_tool(
         "dictation.list",
         "Read the retained dictation journal, optionally paged and filtered by source.",
         {
@@ -779,11 +805,36 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
             heartbeat_rhythm["nextSweepAt"] = None
             heartbeat_rhythm["lastSweepAt"] = None
             heartbeat_rhythm["quiet"] = {"start": 22, "end": 8, "held": False}
-        return {"models": {"engines": engines, "groupsSet": groups_set, "defaultSet": default_set}, "connections": {"connected": connected}, "voice": {"live": config.dictation.pipeline.enabled, "target": config.dictation.pipeline.target_profile_override or "auto"}, "meetings": {"intelligence": config.meeting.intel_enabled}, "rhythm": heartbeat_rhythm, "sounds": {"on": config.ui.desk_sounds}, "system": {"host": "THIS DEVICE", "mesh": bool(getattr(config.mesh, "device_name", ""))}, "posture": config.control_mode, "writtenAt": written_at}
+        meetings_host = None
+        try:
+            if config.meeting.intel_profile_id:
+                from holdspeak.intel.providers import resolve_meeting_placement as _rmp, endpoint_host as _eh
+                _pl = _rmp(config.meeting)
+                if _pl.profile_id:
+                    if _pl.node:
+                        meetings_host = str(_pl.node)
+                    else:
+                        _h = _eh(_pl.base_url)
+                        meetings_host = _h if _h else (_pl.boundary or "local")
+        except Exception:
+            pass
+        return {"models": {"engines": engines, "groupsSet": groups_set, "defaultSet": default_set}, "connections": {"connected": connected}, "voice": {"live": config.dictation.pipeline.enabled, "target": config.dictation.pipeline.target_profile_override or "auto"}, "meetings": {"intelligence": config.meeting.intel_enabled, "auto": config.meeting.intelligence_auto, "host": meetings_host}, "rhythm": heartbeat_rhythm, "sounds": {"on": config.ui.desk_sounds}, "system": {"host": "THIS DEVICE", "mesh": bool(getattr(config.mesh, "device_name", ""))}, "posture": config.control_mode, "writtenAt": written_at}
     if name == "meeting.run_intelligence":
         from holdspeak.services.meeting_intel_service import MeetingIntelService as _MIS
         intel_svc = _MIS(db, observer=obs)
         return intel_svc.run_intelligence(principal, str(args.get("meeting_id") or ""))
+    if name == "meeting.proposals":
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS
+        pbs = _PBS(db)
+        return {"proposals": pbs.list_meeting_proposals(str(args.get("meeting_id") or ""), state=args.get("state"))}
+    if name == "proposal.confirm":
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS2
+        pbs = _PBS2(db)
+        return pbs.confirm_proposal(principal, str(args.get("proposal_id") or ""), text=args.get("text"), owner=args.get("owner"), due=args.get("due"))
+    if name == "proposal.dismiss":
+        from holdspeak.services.proposal_bridge_service import ProposalBridgeService as _PBS3
+        pbs = _PBS3(db)
+        return pbs.dismiss_proposal(principal, str(args.get("proposal_id") or ""))
     if name == "decision_record.list":
         allowed = ("limit", "offset")
         return records.list_records(principal, **{key: args[key] for key in allowed if key in args})

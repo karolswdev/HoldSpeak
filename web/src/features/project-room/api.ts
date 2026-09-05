@@ -14,8 +14,8 @@ import type {
   DecisionPromoteResponse,
   MemorySearchResponse,
 } from "./model";
-import type { RoomSnapshot } from "./model";
-import { decodeRoomSnapshot } from "./model";
+import type { RoomSnapshot, RoomProposalItem, RoomSuggestedSourceItem } from "./model";
+import { decodeRoomSnapshot, decodeProposal, decodeSuggestedSource } from "./model";
 
 /* ── room projection (HS-158-05 adoption: the first render) ── */
 
@@ -128,4 +128,86 @@ export function retireWatch(watchId: string) {
 export function searchProjectMemory(query: string, projectId: string) {
   const params = new URLSearchParams({ query, project_id: projectId });
   return apiFetch<MemorySearchResponse>(`/api/memory/search?${params}`);
+}
+
+/* ── HS-172-03: proposals ── */
+
+export async function fetchProjectProposals(
+  projectId: string,
+  state?: string,
+): Promise<RoomProposalItem[]> {
+  const qs = state ? `?state=${encodeURIComponent(state)}` : "";
+  const raw = await apiFetch<{ proposals: Record<string, unknown>[] }>(
+    `/api/projects/${encodeURIComponent(projectId)}/proposals${qs}`,
+  );
+  return (raw.proposals || []).map(decodeProposal);
+}
+
+export async function confirmProposal(
+  proposalId: string,
+  body?: { text?: string; owner?: string; due?: string },
+): Promise<Record<string, unknown>> {
+  return apiFetch<Record<string, unknown>>(
+    `/api/proposals/${encodeURIComponent(proposalId)}/confirm`,
+    { method: "POST", json: body || {} },
+  );
+}
+
+export async function dismissProposal(
+  proposalId: string,
+): Promise<Record<string, unknown>> {
+  return apiFetch<Record<string, unknown>>(
+    `/api/proposals/${encodeURIComponent(proposalId)}/dismiss`,
+    { method: "POST" },
+  );
+}
+
+/* ── HS-172-06: suggested sources ── */
+
+export async function fetchSuggestedSources(
+  projectId: string,
+): Promise<RoomSuggestedSourceItem[]> {
+  const raw = await apiFetch<{ suggestions: Record<string, unknown>[] }>(
+    `/api/projects/${encodeURIComponent(projectId)}/suggested-sources`,
+  );
+  return (raw.suggestions || []).map(decodeSuggestedSource);
+}
+
+export async function addSuggestedSource(
+  projectId: string,
+  ref: string,
+): Promise<Record<string, unknown>> {
+  return apiFetch<Record<string, unknown>>(
+    `/api/projects/${encodeURIComponent(projectId)}/suggested-sources/${encodeURIComponent(ref)}/add`,
+    { method: "POST" },
+  );
+}
+
+export async function dismissSuggestedSource(
+  projectId: string,
+  ref: string,
+): Promise<Record<string, unknown>> {
+  return apiFetch<Record<string, unknown>>(
+    `/api/projects/${encodeURIComponent(projectId)}/suggested-sources/${encodeURIComponent(ref)}/dismiss`,
+    { method: "POST" },
+  );
+}
+
+/* ── HS-172-07: Room people ── */
+
+export type RoomPersonItem = {
+  relationship_id: string;
+  display_name: string;
+  prs_waiting?: number;
+  assignments_open?: number;
+  assignments_overdue?: number;
+};
+
+export async function fetchRoomPeople(
+  projectId: string,
+): Promise<RoomPersonItem[]> {
+  const raw = await apiFetch<{ people: RoomPersonItem[] }>(
+    `/api/projects/${encodeURIComponent(projectId)}/people`,
+  );
+  return raw.people || [];
 }

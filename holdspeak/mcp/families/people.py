@@ -203,6 +203,18 @@ TOOLS: list[dict[str, Any]] = [
         },
         ["relationship_id", "alias"],
     ),
+    # HS-172-04: resolve a Watch identity to a People relationship.
+    _tool(
+        "people.resolve",
+        _BOUNDARY
+        + "Resolve a Watch identity string (GitHub login, Jira display name) to a People "
+        "relationship. Returns ONLY the opaque relationship id -- never the name or alias "
+        "(Article III). Returns null when no match.",
+        {
+            "identity": {"type": "string", "description": "The identity string to resolve (e.g. a GitHub login or Jira display name)."},
+        },
+        ["identity"],
+    ),
 ]
 
 
@@ -342,6 +354,14 @@ def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
             _required_id(arguments, "relationship_id"),
             str(arguments.get("alias") or ""),
         )
+    if name == "people.resolve":
+        identity = str(arguments.get("identity") or "").strip()
+        if not identity:
+            return {"relationship_id": None}
+        result = service.resolve_relationship_by_watch_identity(identity)
+        rel = result.get("relationship")
+        # Return ONLY the id -- never the name or alias (Article III).
+        return {"relationship_id": rel.get("id") if rel else None}
     raise LookupError(name)
 
 
