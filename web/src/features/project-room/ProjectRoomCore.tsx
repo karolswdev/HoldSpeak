@@ -48,7 +48,7 @@ import type {
 } from "./model";
 import { lifecycleLabel, resolveHealthRows, nudgeCardReducer, formatDays } from "./model";
 import { StringGadget } from "../../desk/surface/gadgets";
-import { egressFor, egressForEvent } from "../../desk/surface/egress";
+import { egressFor, egressForEvent, receiptLabel } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
 import { useReviewController } from "./review/useReviewController";
 import { ReviewPosture } from "./review/ReviewPosture";
@@ -1081,18 +1081,19 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
         <ul className="surface-ledger-rows">
           {items.map((item) => {
             const egress = egressForEvent({ origin: item.origin, caller: item.caller });
+            const label = receiptLabel({ op: item.op, title: item.title, outcome: item.outcome });
             return (
               <SurfaceLedgerRow
                 key={item.id}
                 lead={<StateChip state="success" label="" icon={"●"} />}
-                primary={<span className="surface-primary">{item.title}</span>}
+                primary={<span className="surface-primary">{label}</span>}
                 wrap
                 expands={false}
                 data-testid="receipt-row"
                 cells={
                   <>
-                    {item.outcome ? (
-                      <span className="surface-token">{item.outcome}</span>
+                    {item.outcome && item.outcome !== "ok" ? (
+                      <span className="surface-token">{item.outcome.toUpperCase()}</span>
                     ) : null}
                     {egress.label ? (
                       <EgressChip label={egress.label} scope={egress.scope} data-testid="receipt-egress" />

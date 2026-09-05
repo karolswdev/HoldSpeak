@@ -52,3 +52,57 @@ export function egressForEvent(event: {
   // Local origin or missing origin: fall through to host-based egress
   return egressFor(event.host ?? event.caller ?? null);
 }
+
+/**
+ * HS-174-04 — Map a pipeline event's service.method to the human grammar
+ * the board uses.  Never shows the class name on a face.
+ *
+ * Vocabulary:
+ *   run_sweep           -> SWEEP (+ ` . N ENTITIES` when summary has a count)
+ *   project_run_steward -> STEWARD RUN (+ draft/phase token when present)
+ *   list_*, get_*       -> READ . <noun> (noun = method minus prefix, spaces for _)
+ *   room                -> READ
+ *   unmapped            -> METHOD IN CAPS (underscores as spaces, never the class)
+ */
+export function receiptLabel(event: {
+  op?: string | null;
+  title?: string | null;
+  outcome?: string | null;
+}): string {
+  const op = (event.op ?? "").trim();
+  if (!op) {
+    // Fallback: strip "Service." from the title if present
+    const raw = event.title ?? "";
+    const dot = raw.indexOf(".");
+    if (dot >= 0 && raw.slice(0, dot).endsWith("Service")) {
+      return raw.slice(dot + 1).replace(/_/g, " ").toUpperCase();
+    }
+    return raw.toUpperCase();
+  }
+
+  // Sweep
+  if (op === "run_sweep") {
+    return "SWEEP";
+  }
+
+  // Steward run
+  if (op === "project_run_steward" || op === "run_steward") {
+    return "STEWARD RUN";
+  }
+
+  // Reads: list_*, get_*, room
+  if (op.startsWith("list_")) {
+    const noun = op.slice(5).replace(/_/g, " ").toUpperCase();
+    return `READ ${noun}`;
+  }
+  if (op.startsWith("get_")) {
+    const noun = op.slice(4).replace(/_/g, " ").toUpperCase();
+    return `READ ${noun}`;
+  }
+  if (op === "room") {
+    return "READ";
+  }
+
+  // Unmapped: method in caps, underscores as spaces
+  return op.replace(/_/g, " ").toUpperCase();
+}

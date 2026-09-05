@@ -324,6 +324,13 @@ def test_room_receipts_1440(
                 )
                 assert "REMOTE" in all_text, f"REMOTE badge missing: {all_text}"
 
+            # No row text should contain "Service." (UX-CANON: no machine tokens)
+            for i in range(receipts.count()):
+                row_text = receipts.nth(i).text_content() or ""
+                assert "Service." not in row_text, (
+                    f"Raw class.method on a face (row {i}): {row_text}"
+                )
+
         _room_shot(page, "build-room-receipts-1440", 1440)
         _assert_clean(page, errors)
         browser.close()
