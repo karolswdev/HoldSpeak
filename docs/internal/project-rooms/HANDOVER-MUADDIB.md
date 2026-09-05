@@ -147,6 +147,8 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
 
 - **173's design ground is DRAFTED** (pm/roadmap/holdspeak/phase-173-the-stewards-hand-and-voice/assets/settled-design-stewards-hand.md, pending 172). Recon: the snapshots lack review-request timestamps (add `createdAt` to `GH_WATCH_FIELDS`, watch_sources.py:35 — a read field, not a CLI verb); `gh` writes are gated by `WriteConnectorManifest` (gated_connector.py:128) and the PR-comment actuator already exists (github_pr_actuator.py:86) — the steward has never called it; the sixth effect kind is one `elif` in `_apply_effect` (project_steward_service.py:1094) behind the existing gate; flaky CI needs `run list --limit 10` (allow-listed). His three new questions: the nudge's wording (it goes out under his name); the health thresholds (24/48 h, 14 d, 3 failures); the nudge cooldown (7 d).
 
+- **176's design ground is DRAFTED** (phase-176-the-speak-loop/assets/settled-design-speak-loop.md). Recon: Teach's corrections ARE applied on the next dictation today (dictation_runner.py:335 snapshots the store per run; intent_router.py:206 + target_profile.py:126 apply them) and persist durably (ring of 20 in memory, the DB uncapped) — the loop exists and has never been taught (0 corrections on his desk); the mic gap is 31 raw inputs/textareas outside the gadget system (the gadgets default mic=true), not ~85. His questions: LEARNED as a wing or under Configure; the teach chip tap-to-detail or always visible; the raw-input allowlist.
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on
