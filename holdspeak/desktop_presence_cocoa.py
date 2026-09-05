@@ -245,6 +245,26 @@ def _ns_color(AppKit: Any, hex_str: str):
 # ── The child process entrypoint ──────────────────────────────────────
 
 
+def _cocoa_notify(payload: dict) -> None:
+    """HS-171-05: post a desktop notification via osascript.
+
+    Called inside the AppKit child process.  UNUserNotificationCenter is
+    NOT importable (the PyObjC ``UserNotifications`` bridge is missing),
+    so the design's osascript fallback is used.
+    """
+    import subprocess as _sp
+
+    title = str(payload.get("title", "HoldSpeak"))
+    body = str(payload.get("body", ""))
+    safe_title = title.replace("\\", "\\\\").replace('"', '\\"')
+    safe_body = body.replace("\\", "\\\\").replace('"', '\\"')
+    script = f'display notification "{safe_body}" with title "{safe_title}"'
+    try:
+        _sp.run(["osascript", "-e", script], timeout=5, capture_output=True, check=False)
+    except Exception as exc:
+        log.debug("cocoa child osascript notify failed: %s", exc)
+
+
 def _cocoa_child_main(commands, ready, closed, errors, url: str) -> None:
     try:
         ui = _CocoaPresenceUI(url)
@@ -276,6 +296,10 @@ def _cocoa_child_main(commands, ready, closed, errors, url: str) -> None:
                 ui.update(payload)
             elif command == "hide":
                 ui.hide()
+            elif command == "notify" and isinstance(payload, dict):
+                # HS-171-05: post a desktop notification from the AppKit child.
+                # UNUserNotificationCenter is unavailable; use osascript.
+                _cocoa_notify(payload)
             elif command == "close":
                 ui.hide()
                 running = False
