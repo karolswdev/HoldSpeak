@@ -13,6 +13,7 @@ import { apiFetch } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { intelBadge } from "./intelBadge";
+import { labelFor, supportsDoorVerb, commandForDoorVerb } from "./doorVerbs";
 import {
   SurfaceSection,
   SurfaceLedger,
@@ -63,6 +64,27 @@ interface MondayBrief {
   shelf?: Record<string, string>;
 }
 
+/** Door card (from GET /api/door .board columns). */
+interface DoorCard {
+  id: string;
+  source: string;
+  target_ref: string;
+  open_ref?: string;
+  title?: string;
+  text?: string;
+  owner?: string | null;
+  due?: string | null;
+  continuity_state?: string;
+  lawful_verbs?: Array<{ name: string; arguments: Record<string, string | number | null | undefined>; required_arguments?: string[] }>;
+}
+
+interface DoorProjection {
+  board: Record<string, DoorCard[]>;
+  counts: Record<string, number>;
+  upcoming: Array<{ id: string; source: string; title: string; starts_at: string }>;
+  calendar_configured: boolean;
+}
+
 // ── Helpers ────────────────────────────────────────────────────────
 
 const MONTHS = [
@@ -88,6 +110,52 @@ function sourceEmblem(source: string): string {
   if (s === "jira") return "J";
   if (s === "delta") return "D";
   return s.slice(0, 2).toUpperCase();
+}
+
+/** Door source emblem: MTG for meetings, TH for thoughts, DOOR for unknown. */
+function doorEmblem(source: string): string {
+  if (source === "meeting" || source === "action_item") return "MTG";
+  if (source === "thought") return "TH";
+  return "DOOR";
+}
+
+/** Convert door cards to NeedsYouItem-compatible rows for the arrival. */
+function doorCardsToItems(
+  column: string,
+  cards: DoorCard[],
+): NeedsYouItem[] {
+  return cards.map((card) => {
+    let why = "";
+    let severity = "info";
+    if (column === "overdue") {
+      const days = card.due ? Math.max(1, Math.floor((Date.now() - new Date(card.due).getTime()) / 86400000)) : 0;
+      why = days > 0 ? `OVERDUE · ${days}D` : "OVERDUE";
+      severity = "danger";
+    } else if (column === "now") {
+      why = "NOW";
+      severity = "warning";
+    } else if (column === "waiting") {
+      why = card.owner ? `WAITING ON ${card.owner.toUpperCase()}` : "WAITING";
+      severity = "info";
+    } else if (column === "unassigned") {
+      why = "UNASSIGNED";
+      severity = "warning";
+    }
+    return {
+      projectId: "",
+      projectName: "",
+      ref: card.id,
+      title: card.title || card.text || "Untitled",
+      why,
+      ageToken: "",
+      source: card.source,
+      verbHref: null,
+      severity,
+      _doorCard: card,
+      _isDoor: true,
+      _isUnassigned: column === "unassigned",
+    } as NeedsYouItem & { _doorCard: DoorCard; _isDoor: boolean; _isUnassigned: boolean };
+  });
 }
 
 /** A brief item whose text is a raw Service.method / dotted-id / snake_case
@@ -156,10 +224,16 @@ export function ChairHome({ arrivalRequired = false }: { arrivalRequired?: boole
 // ── The Arrival face ───────────────────────────────────────────────
 
 function Arrival() {
-  // ── needs-you wire ──
+  // ── needs-you wire (rooms) ──
   const [needsYou, setNeedsYou] = useState<NeedsYouPayload | null>(null);
   useEffect(() => {
     void apiFetch<NeedsYouPayload>("/api/desk/needs-you").then(setNeedsYou).catch(() => null);
+  }, []);
+
+  // ── door wire (owner's action items) ──
+  const [door, setDoor] = useState<DoorProjection | null>(null);
+  useEffect(() => {
+    void apiFetch<DoorProjection>("/api/door").then(setDoor).catch(() => null);
   }, []);
 
   // ── thoughts ──
@@ -209,15 +283,47 @@ function Arrival() {
     finally { setGenerating(false); }
   };
 
+  // ── merge door items into needs-you ──
+  const doorItems = useMemo(() => {
+    if (!door) return [];
+    const board = door.board ?? {};
+    // Order: overdue first, then now, then waiting, then unassigned.
+    // Active items do not appear.
+    return [
+      ...doorCardsToItems("overdue", board.overdue ?? []),
+      ...doorCardsToItems("now", board.now ?? []),
+      ...doorCardsToItems("waiting", board.waiting ?? []),
+      ...doorCardsToItems("unassigned", board.unassigned ?? []),
+    ];
+  }, [door]);
+
+  const roomItems = needsYou?.items ?? [];
+  const allNeedsYouItems = useMemo(() => {
+    // Severity sort: danger first, then warning, then info.
+    const SEV: Record<string, number> = { danger: 0, warning: 1, info: 2 };
+    const merged = [...doorItems, ...roomItems];
+    merged.sort((a, b) => (SEV[a.severity] ?? 2) - (SEV[b.severity] ?? 2));
+    return merged;
+  }, [doorItems, roomItems]);
+
   // ── headline ──
-  const count = needsYou?.count ?? 0;
+  const count = allNeedsYouItems.length;
   const projectCount = needsYou?.projects?.length ?? 0;
+  const hasProjects = projectCount > 0;
   const headline =
     count > 0
-      ? `${count} need you across ${projectCount} ${projectCount === 1 ? "project" : "projects"}`
+      ? hasProjects
+        ? `${count} need you across ${projectCount} ${projectCount === 1 ? "project" : "projects"}`
+        : `${count} need you`
       : "Nothing needs you";
   const headlineAccent = count > 0;
-  const next = needsYou ? nextLine(needsYou.next) : null;
+
+  // ── NEXT line: prefer door upcoming (schedule/calendar), fall back to rooms ──
+  const doorNext = door?.upcoming?.[0];
+  const nextPayload = doorNext
+    ? { label: doorNext.title, at: doorNext.starts_at }
+    : needsYou?.next ?? null;
+  const next = nextLine(nextPayload);
 
   // ── brief items (untriaged only) ──
   const briefSections = ["changed", "broke", "waiting", "decisions"] as const;
@@ -268,7 +374,23 @@ function Arrival() {
     finally { setRunningIntel(null); }
   };
 
-  const multipleProjects = projectCount > 1;
+  // ── arming countdown (lost door 2) ──
+  const arming = useDesk((s) => s.scheduledArming);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  useEffect(() => {
+    if (!arming || arming.outcome) { setCountdown(null); return; }
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((arming.fireAt - Date.now()) / 1000));
+      setCountdown(remaining);
+    };
+    tick();
+    const t = window.setInterval(tick, 250);
+    return () => window.clearInterval(t);
+  }, [arming]);
+  const isArming = arming && !arming.outcome && countdown !== null;
+
+  // ── connect calendar (lost door 4) ──
+  const calendarConfigured = door?.calendar_configured ?? true;
 
   return (
     <>
@@ -282,16 +404,47 @@ function Arrival() {
         </h1>
         {next ? (
           <p className="arrival-next" data-testid="arrival-next">{next}</p>
+        ) : !calendarConfigured ? (
+          <p className="arrival-next" data-testid="arrival-no-calendar">
+            <span className="arrival-no-calendar-token">NO CALENDAR</span>
+            {" "}
+            <Button
+              variant="ghost"
+              dense
+              onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}
+              data-testid="arrival-connect-calendar"
+            >
+              Connect calendar
+            </Button>
+          </p>
+        ) : null}
+        {isArming ? (
+          <p className="arrival-arming" data-testid="arrival-arming">
+            <span className="arrival-arming-token">ARMED</span>
+            {" "}
+            <span>{arming.title || "Scheduled recording"}</span>
+            {" "}
+            <span className="arrival-arming-countdown">IN {Math.floor(countdown! / 60)}:{String(countdown! % 60).padStart(2, "0")}</span>
+            {" "}
+            <Button
+              variant="danger"
+              dense
+              onClick={() => void useDesk.getState().cancelArmedSchedule(arming.scheduleId)}
+              data-testid="arrival-cancel-armed"
+            >
+              Cancel
+            </Button>
+          </p>
         ) : null}
       </div>
 
       {/* ── Needs You ── */}
-      {count > 0 && needsYou ? (
+      {count > 0 ? (
         <div data-testid="arrival-needs-you">
           <NeedsYouSection
-            items={needsYou.items}
+            items={allNeedsYouItems}
             count={count}
-            multipleProjects={multipleProjects}
+            multipleProjects={hasProjects}
           />
         </div>
       ) : null}
@@ -372,50 +525,136 @@ function NeedsYouSection({
   return (
     <SurfaceSection label={countLabel("NEEDS YOU", count)}>
       <SurfaceLedger count={null} cols="room">
-        {items.map((item, i) => (
-          <SurfaceLedgerRow
-            key={`${item.projectId}-${item.ref}-${i}`}
-            lead={
-              <span className="arrival-source-emblem" data-testid="arrival-source-emblem">
-                {sourceEmblem(item.source)}
-              </span>
-            }
-            primary={item.title}
-            cells={
-              <span className="arrival-needs-you-meta">
-                <span
-                  className="arrival-why-token"
-                  data-tone={whySeverityTone(item.severity)}
-                  data-testid="arrival-why"
-                >
-                  {item.why}
+        {items.map((item, i) => {
+          const ext = item as NeedsYouItem & { _isDoor?: boolean; _isUnassigned?: boolean; _doorCard?: DoorCard };
+          const isDoor = ext._isDoor === true;
+          const isUnassigned = ext._isUnassigned === true;
+          const emblem = isDoor ? doorEmblem(item.source) : sourceEmblem(item.source);
+          return (
+            <SurfaceLedgerRow
+              key={`${item.projectId || "door"}-${item.ref}-${i}`}
+              lead={
+                <span className="arrival-source-emblem" data-testid="arrival-source-emblem">
+                  {emblem}
                 </span>
-                {multipleProjects ? (
-                  <span className="arrival-project-token">{item.projectName}</span>
-                ) : null}
-              </span>
-            }
-            trailing={
-              item.verbHref ? (
-                <Button
-                  variant="ghost"
-                  dense
-                  onClick={() => {
-                    if (item.verbHref) window.open(item.verbHref, "_blank", "noopener");
-                  }}
-                >
-                  Open
-                </Button>
-              ) : null
-            }
-            wrap
-            expands={false}
-            data-testid="arrival-needs-you-row"
-          />
-        ))}
+              }
+              primary={item.title}
+              cells={
+                <span className="arrival-needs-you-meta">
+                  <span
+                    className="arrival-why-token"
+                    data-tone={whySeverityTone(item.severity)}
+                    data-testid="arrival-why"
+                  >
+                    {item.why}
+                  </span>
+                  {multipleProjects && item.projectName ? (
+                    <span className="arrival-project-token">{item.projectName}</span>
+                  ) : null}
+                </span>
+              }
+              trailing={
+                <NeedsYouRowVerbs item={item} isDoor={isDoor} isUnassigned={isUnassigned} doorCard={ext._doorCard} />
+              }
+              wrap
+              expands={false}
+              data-testid="arrival-needs-you-row"
+            />
+          );
+        })}
       </SurfaceLedger>
     </SurfaceSection>
   );
+}
+
+/** Verb buttons for a NEEDS YOU row: door lawful verb (primary dense) + Open (ghost),
+ *  or "Name an owner" for unassigned, or external Open for room items. */
+function NeedsYouRowVerbs({
+  item,
+  isDoor,
+  isUnassigned,
+  doorCard,
+}: {
+  item: NeedsYouItem;
+  isDoor: boolean;
+  isUnassigned: boolean;
+  doorCard?: DoorCard;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  if (isUnassigned) {
+    return (
+      <Button
+        variant="ghost"
+        dense
+        onClick={() => {
+          if (doorCard?.open_ref) useDesk.getState().openPullout(doorCard.open_ref);
+        }}
+        data-testid="arrival-name-owner"
+      >
+        Name an owner
+      </Button>
+    );
+  }
+
+  if (isDoor && doorCard) {
+    const verbs = (doorCard.lawful_verbs ?? []).filter(supportsDoorVerb);
+    const firstVerb = verbs[0];
+    const openRef = doorCard.open_ref;
+
+    const fireVerb = async () => {
+      if (!firstVerb || busy) return;
+      const cmd = commandForDoorVerb(firstVerb);
+      if (!cmd) return;
+      setBusy(true);
+      try {
+        await apiFetch(cmd.endpoint, { method: "POST", json: cmd.body });
+        setDone(true);
+      } catch { /* receipt stays */ }
+      finally { setBusy(false); }
+    };
+
+    if (done) return null;
+    return (
+      <>
+        {firstVerb ? (
+          <Button
+            variant="primary"
+            dense
+            disabled={busy}
+            onClick={() => void fireVerb()}
+            data-testid="arrival-door-verb"
+          >
+            {busy ? "..." : labelFor(firstVerb)}
+          </Button>
+        ) : null}
+        {openRef ? (
+          <Button
+            variant="ghost"
+            dense
+            onClick={() => useDesk.getState().openPullout(openRef)}
+          >
+            Open
+          </Button>
+        ) : null}
+      </>
+    );
+  }
+
+  if (item.verbHref) {
+    return (
+      <Button
+        variant="ghost"
+        dense
+        onClick={() => window.open(item.verbHref!, "_blank", "noopener")}
+      >
+        Open
+      </Button>
+    );
+  }
+
+  return null;
 }
 
 function ThoughtsSection({ thoughts }: { thoughts: UnfinishedThought[] }) {
@@ -724,6 +963,13 @@ function CaptureBar() {
         data-testid="arrival-record-meeting"
       >
         Record meeting
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={() => useDesk.getState().openScheduleCreate()}
+        data-testid="arrival-schedule"
+      >
+        Schedule
       </Button>
     </footer>
   );
