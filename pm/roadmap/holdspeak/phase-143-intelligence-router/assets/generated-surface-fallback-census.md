@@ -116,6 +116,8 @@ first category may participate in a future assignment migration.
 | display-transport | `web/src/pages/cores/ModelLibraryCore.tsx`, `web/src/pages/cores/modelLibrary.ts` | 143-12 availability transport; selection never writes an assignment pointer |
 | display-transport | `web/src/pages/cores/TopologyMapView.tsx` | 156-04 topology graph reads profile_id for node display; never writes an assignment pointer |
 | display-transport | `web/src/features/project-room/ProjectRoomCore.tsx` | 169-07 project room reads assignment state for display; never writes a placement pointer |
+| display-transport | `web/src/features/concierge/api.ts` | 170-03 concierge engine type carries profileId for display; never writes an assignment pointer |
+| display-transport | `web/src/pages/cores/dictation/SpeakFace.tsx` | 170-04 speak face reads profileId for engine resolution display; never writes a placement pointer |
 | unrelated | `web/src/desk/components/DeliveryBoard.tsx`, `web/src/desk/deliveryFactory.ts` | 143-01 |
 
 Adding another production routing consumer—or a private selector/recovery
