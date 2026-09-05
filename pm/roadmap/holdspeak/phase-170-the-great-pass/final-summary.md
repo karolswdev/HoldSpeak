@@ -68,6 +68,11 @@
   label) with a `THIS DEVICE`, then `CLOUD`, chip on a LAN host —
   detect names engines by served model and classifies private hosts as
   LAN; Speak's ENGINE row uses the same resolver.
+- Parking the Chair board left the 144 Door's action items (`/api/door`:
+  overdue · now · waiting · unassigned) with no face — found by the old
+  144 rig failing, not by the new rigs passing. They join the arrival's
+  NEEDS YOU by addendum; a lost-doors audit of every parked component
+  follows.
 - Fourteen glass rigs never rebuilt the web bundle (the 163 law reached
   19 of 33) — `tests/e2e/conftest.py` makes build-first universal.
 - The Room rig's history seeds landed on yesterday between 00:00 and
