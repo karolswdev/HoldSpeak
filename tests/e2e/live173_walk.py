@@ -1391,6 +1391,8 @@ def main() -> int:
             page.on("pageerror", lambda e: page_errors.append(str(e)))
 
             page.goto(f"{base_url}/?token={token}", wait_until="load")
+            if "React Web build is missing" in page.content():
+                raise RuntimeError("HUB SERVES NO BUNDLE: the web build is missing; every face step would be hollow")
             page.wait_for_timeout(2000)
             try:
                 chair = page.locator(".chair")

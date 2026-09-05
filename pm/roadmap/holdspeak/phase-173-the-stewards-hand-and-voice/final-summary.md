@@ -1,4 +1,4 @@
-# Phase 173 — The Steward's Hand and Voice: final summary (DRAFT — stacked on 172 (#555) on 171 (#554) on 170 (#553); closes on his word)
+# Phase 173 — The Steward's Hand and Voice: final summary (BUILT 9/9 — stacked on 172 (#555) on 171 (#554) on 170 (#553); the merge is his)
 
 ## What shipped
 
@@ -46,8 +46,13 @@
   MCP_SIDECAR, POSITIONING names — verified against the built faces
   (seven markers cleared; Dismiss also starts the 7-day cooldown; four
   update verbs incl. Regenerate; `CHECKED <age>` as built).
-- **The walk (06):** live173_walk.py drafted with every write denied;
-  the owner's-desk run PENDING.
+- **The walk (06):** live173_walk.py on the owner's desk, five steps at
+  1440 + 393, every write denied (no Send, no Publish, no steward run,
+  no effect enable), six shots, zero defects: HEALTH shows the one
+  signal his sources carry (`ISSUE AGING · CLEAR`, `CHECKED 12H AGO`),
+  the policy row `Reviewer nudge` unarmed with `GITHUB.COM`. A first run
+  against a hub with no bundle had passed hollow; the runner now refuses
+  a hub that serves the build-missing page.
 - **The hygiene lane (08):** 158 S-1 paid (add/remove resource,
   associate/disassociate meeting each one atomic transaction);
   steward/update tsc clear; the 165 sidecar seam already fixed in the
@@ -74,7 +79,12 @@
   RATIFY-W-C — C1 (story 05's vacuous capture) and C2 (`NUDGED 0 D AGO`)
   PAID, F2/F3 paid, every design-stage ruling verified paid, every new
   entry point's production call site named (design addendum three).
-- Suite (CI shape): PENDING.
+- Suite (CI shape, -n auto, the built tree): **9694 passed · 98 skipped ·
+  22 failed** = 6 inherited (zero diff vs main) + xdist-only (the 152/
+  153 rigs, a workbench deadline; green serially) + 3 real, paid in
+  this branch (the 162 update rig follows the inline claims; the API
+  manifest's consumer map; the 143 runner census at the drafter's
+  line).
 - Web: baseline zero branch-new; ratchet at its (lowered) floor.
 
 ## The owner's questions (from counsel, in the handover)
