@@ -168,7 +168,18 @@ def _seed_populated_door(page: Any) -> None:
 def test_hs145_scroll_hint_gradient_393_and_1440(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Populated board: gradient overlays clipped columns at 393, absent at 1440."""
+    """Populated board: gradient overlays clipped columns at 393, absent at 1440.
+
+    HS-170: RETIRED -- the door-board-section (horizontal scroll viewport with
+    scroll-hint gradient) is PARKED (HS-170-04, settled-design-four-faces.md
+    Face 1 Addendum). The arrival has no horizontal-scroll viewport; the Door
+    items appear as vertical NEEDS YOU rows. The scroll-hint gradient capability
+    is intentionally not carried forward.
+    """
+    pytest.skip(
+        "HS-170: door-board scroll-hint PARKED (HS-170-04); "
+        "the arrival has no horizontal-scroll viewport -- capability intentionally gone"
+    )
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -290,7 +301,12 @@ def test_hs145_scroll_hint_gradient_393_and_1440(
 def test_hs145_connect_calendar_affordance_and_quiet_state(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Empty rail without calendar shows the connect affordance; with calendar shows quiet."""
+    """HS-170-04 re-point: connect-calendar affordance on the arrival's NEXT slot.
+
+    No calendar: the arrival shows NO CALENDAR token + Connect calendar ghost.
+    Configured but quiet (past-only events): NO CALENDAR is absent, Connect
+    calendar is absent, NEXT line is absent, headline reads Nothing needs you.
+    """
     from playwright.sync_api import sync_playwright
     from holdspeak.db import reset_database
 
@@ -310,20 +326,19 @@ def test_hs145_connect_calendar_affordance_and_quiet_state(
             door_data = _api(page, "GET", "/api/door")
             assert door_data["calendar_configured"] is False
 
-            door = page.locator(".door-board-section")
-            rail = door.locator(".door-upcoming-rail")
-
             # --- LEG 3: No calendar → connect affordance at 1440 ---
-            rail.get_by_text("No calendar connected.", exact=True).wait_for()
-            connect_btn = rail.get_by_role("button", name="Connect calendar", exact=True)
+            # HS-170-04: the arrival's NEXT slot shows NO CALENDAR + Connect calendar.
+            no_cal = page.get_by_test_id("arrival-no-calendar")
+            no_cal.wait_for(timeout=10_000)
+            assert "NO CALENDAR" in (no_cal.text_content() or "")
+            connect_btn = page.get_by_test_id("arrival-connect-calendar")
             assert connect_btn.is_visible()
-            assert rail.get_by_text("No future time scheduled.", exact=True).count() == 0
             _assert_clean(page, errors)
             page.screenshot(path=str(SHOT_DIR / "rail-connect-1440.png"), full_page=False)
 
             # At 393
             page.set_viewport_size({"width": 393, "height": 900})
-            rail.get_by_text("No calendar connected.", exact=True).wait_for()
+            no_cal.wait_for()
             assert connect_btn.is_visible()
             _assert_clean(page, errors)
             page.screenshot(path=str(SHOT_DIR / "rail-connect-393.png"), full_page=False)
@@ -333,9 +348,6 @@ def test_hs145_connect_calendar_affordance_and_quiet_state(
             connect_btn.click()
             settings = page.locator("#surface-settings")
             settings.wait_for()
-            # TODO(HS-146-05): story 03 replaces the single textbox with a
-            # GadgetTable list editor. Assert the list editor glass here once
-            # story 03 lands. For now verify Settings opens.
             _assert_clean(page, errors)
             page.screenshot(path=str(SHOT_DIR / "rail-connect-settings-open-1440.png"), full_page=False)
 
@@ -383,11 +395,16 @@ def test_hs145_connect_calendar_affordance_and_quiet_state(
 
             page.reload(wait_until="load")
             _normal_chair(page)
-            door = page.locator(".door-board-section")
-            rail = door.locator(".door-upcoming-rail")
-            rail.get_by_text("No future time scheduled.", exact=True).wait_for()
-            assert rail.get_by_text("No calendar connected.", exact=True).count() == 0
-            assert rail.get_by_role("button", name="Connect calendar").count() == 0
+            # HS-170-04: quiet state = NO CALENDAR absent, Connect calendar absent,
+            # NEXT line absent, headline reads "Nothing needs you".
+            page.get_by_test_id("arrival-headline").wait_for(timeout=10_000)
+            page.wait_for_timeout(500)
+            headline = page.get_by_test_id("arrival-display").text_content() or ""
+            assert "nothing needs you" in headline.lower(), \
+                f"Headline should read 'Nothing needs you' on quiet calendar: {headline}"
+            assert page.get_by_test_id("arrival-no-calendar").count() == 0
+            assert page.get_by_test_id("arrival-connect-calendar").count() == 0
+            assert page.get_by_test_id("arrival-next").count() == 0
             _assert_clean(page, errors)
             page.screenshot(path=str(SHOT_DIR / "rail-quiet-1440.png"), full_page=False)
 
