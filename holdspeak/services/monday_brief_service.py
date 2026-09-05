@@ -134,7 +134,15 @@ class MondayBriefService:
     def compute_window(
         self, now: datetime.datetime | None = None
     ) -> tuple[datetime.datetime, datetime.datetime]:
-        """Compute the local brief window, from the preceding close to *now*."""
+        """Compute the local brief window, from the preceding close to *now*.
+
+        The "what happened" lookback is UNCHANGED from Phase 132:
+        Monday looks back to Friday 17:00, other weekdays to the
+        preceding business day 17:00, weekends to Friday 17:00.
+
+        HS-175-05: the forward-looking "THIS WEEK" section uses
+        ``compute_lookahead`` separately; this function is not widened.
+        """
         period_end = now or datetime.datetime.now()
         weekday = period_end.weekday()
         if weekday == 0:  # Monday starts from the preceding Friday close.
@@ -149,6 +157,25 @@ class MondayBriefService:
             start_date,
             datetime.time(hour=_CLOSE_HOUR),
             tzinfo=period_end.tzinfo,
+        )
+        return period_start, period_end
+
+    def compute_lookahead(
+        self, now: datetime.datetime | None = None
+    ) -> tuple[datetime.datetime, datetime.datetime]:
+        """Compute the look-ahead window: *now* to Sunday 23:59.
+
+        HS-175-05: used by the calendar-events and meeting-watch
+        collectors for the "what is coming" half of the brief.
+        """
+        period_start = now or datetime.datetime.now()
+        days_since_monday = period_start.weekday()
+        days_to_sunday = 6 - days_since_monday
+        sunday = (period_start + datetime.timedelta(days=days_to_sunday)).date()
+        period_end = datetime.datetime.combine(
+            sunday,
+            datetime.time(23, 59, 59),
+            tzinfo=period_start.tzinfo,
         )
         return period_start, period_end
 
@@ -173,11 +200,44 @@ class MondayBriefService:
             human_changes, ledger = self._collect_changes(
                 period_start.isoformat(), period_end.isoformat()
             )
+
+            # HS-175-05: the THIS WEEK section uses a full-week window
+            # (Monday 00:00 to Sunday 23:59) independent of the lookback.
+            days_since_monday = period_end.weekday()
+            week_monday = (
+                period_end - datetime.timedelta(days=days_since_monday)
+            ).date()
+            week_start_dt = datetime.datetime.combine(
+                week_monday, datetime.time(0, 0), tzinfo=period_end.tzinfo,
+            )
+            _, lookahead_end = self.compute_lookahead(period_end)
+            week_start_iso = week_start_dt.isoformat()
+            week_end_iso = lookahead_end.isoformat()
+            now_iso = period_end.isoformat()
+
+            # Last brief generated_at for "since last brief" filtering
+            last_brief_row = conn.execute(
+                "SELECT MAX(generated_at) AS latest FROM monday_briefs"
+            ).fetchone()
+            last_brief_at = str(last_brief_row["latest"]) if (
+                last_brief_row and last_brief_row["latest"]
+            ) else None
+
+            # HS-175-05: new collectors (THIS WEEK section, forward-looking)
+            calendar_items = self._collect_calendar_events(
+                week_start_iso, week_end_iso, now_iso,
+            )
+            meeting_watch_items = self._collect_meeting_watch(
+                week_start_iso, week_end_iso, last_brief_at,
+            )
+
             sections = {
                 "changed": human_changes
                 + self._collect_meetings(
                     period_start.isoformat(), period_end.isoformat()
-                ),
+                )
+                + calendar_items
+                + meeting_watch_items,
                 "broke": self._collect_breakage(
                     period_start.isoformat(), period_end.isoformat()
                 ),
@@ -613,6 +673,179 @@ class MondayBriefService:
             )
 
         return sorted(items, key=lambda item: (-item.priority, item.source_ref or ""))
+
+    # ── HS-175-05: calendar events + meeting watch collectors ─────────
+
+    def _collect_calendar_events(
+        self, week_start: str, week_end: str, now_iso: str,
+    ) -> list[BriefItem]:
+        """Calendar events in the week range.
+
+        HS-175-05: produces items for the ``this_week`` conceptual
+        section (they land in the ``changed`` section to keep the
+        closed section vocabulary):
+        - ``N meetings`` (count of events in the week).
+        - ``Next: [title] at [time]`` (next event after now).
+        - ``N armed`` (events with linked armed recordings).
+
+        Returns an empty list when no calendar events exist (no
+        calendar configured or no events in range).
+        """
+        items: list[BriefItem] = []
+        with self._db._connection() as conn:
+            # Check that calendar_events table exists (belt -- fresh DBs)
+            table_check = conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='calendar_events'"
+            ).fetchone()
+            if table_check is None:
+                return items
+
+            event_rows = conn.execute(
+                """SELECT id, uid, title, starts_at, meeting_url
+                   FROM calendar_events
+                   WHERE starts_at >= ? AND starts_at < ?
+                   ORDER BY starts_at ASC, id ASC""",
+                (week_start, week_end),
+            ).fetchall()
+            if not event_rows:
+                return items
+
+            total = len(event_rows)
+            items.append(
+                BriefItem(
+                    id=f"brief-cal-total-{uuid.uuid4().hex}",
+                    section="changed",
+                    text=f"{total} meeting{'s' if total != 1 else ''} this week",
+                    source_ref="calendar:week",
+                    priority=_MEETING_PRIORITY + 10,
+                )
+            )
+
+            # Next event after now
+            for row in event_rows:
+                if str(row["starts_at"]) > now_iso:
+                    try:
+                        next_dt = datetime.datetime.fromisoformat(
+                            str(row["starts_at"]).replace("Z", "+00:00")
+                        )
+                        time_str = next_dt.strftime("%H:%M")
+                    except (ValueError, TypeError):
+                        time_str = ""
+                    title = str(row["title"] or "").strip() or "Untitled"
+                    items.append(
+                        BriefItem(
+                            id=f"brief-cal-next-{uuid.uuid4().hex}",
+                            section="changed",
+                            text=f"Next: {title} at {time_str}",
+                            source_ref=f"calendar_event:{row['id']}",
+                            priority=_MEETING_PRIORITY + 5,
+                        )
+                    )
+                    break
+
+            # Armed recordings count
+            sched_table = conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='scheduled_recordings'"
+            ).fetchone()
+            if sched_table is not None:
+                event_ids = [str(r["id"]) for r in event_rows]
+                placeholders = ",".join("?" * len(event_ids))
+                armed_row = conn.execute(
+                    f"""SELECT COUNT(*) AS cnt FROM scheduled_recordings
+                        WHERE calendar_event_id IN ({placeholders})
+                          AND enabled = 1""",
+                    event_ids,
+                ).fetchone()
+                armed = int(armed_row["cnt"]) if armed_row else 0
+                if armed:
+                    items.append(
+                        BriefItem(
+                            id=f"brief-cal-armed-{uuid.uuid4().hex}",
+                            section="changed",
+                            text=f"{armed} armed",
+                            source_ref="calendar:armed",
+                            priority=_MEETING_PRIORITY + 3,
+                        )
+                    )
+
+        return items
+
+    def _collect_meeting_watch(
+        self, week_start: str, week_end: str, last_brief_at: str | None,
+    ) -> list[BriefItem]:
+        """Meeting watch items: new decisions and commitments.
+
+        HS-175-05: reads decisions and commitments from meetings linked
+        to any Room, filtered to the week window.
+
+        - Meetings with new decisions since the last brief.
+        - Meetings with new commitments.
+        - Commitments due this week.
+
+        Dedup by calendar_uid is not needed here because these items
+        come from meeting data (not calendar_events); the calendar
+        collector handles calendar_events.
+        """
+        items: list[BriefItem] = []
+        since = last_brief_at or week_start
+
+        with self._db._connection() as conn:
+            # Check tables exist
+            for table in ("decision_records", "decision_record_sources",
+                          "decision_commitments"):
+                if conn.execute(
+                    f"SELECT 1 FROM sqlite_master WHERE type='table' AND name='{table}'"
+                ).fetchone() is None:
+                    return items
+
+            # New decisions since last brief
+            decision_rows = conn.execute(
+                """SELECT r.id, r.decision_text, r.created_at,
+                          s.source_ref AS meeting_id
+                   FROM decision_records r
+                   JOIN decision_record_sources s ON s.record_id = r.id
+                   WHERE s.source_type = 'meeting'
+                     AND r.created_at >= ? AND r.created_at < ?
+                     AND r.deleted = 0
+                   ORDER BY r.created_at DESC""",
+                (since, week_end),
+            ).fetchall()
+
+            if decision_rows:
+                count = len(decision_rows)
+                items.append(
+                    BriefItem(
+                        id=f"brief-mtgwatch-decisions-{uuid.uuid4().hex}",
+                        section="changed",
+                        text=f"{count} new decision{'s' if count != 1 else ''} from meetings",
+                        source_ref="meeting_watch:decisions",
+                        priority=_MEETING_PRIORITY + 2,
+                    )
+                )
+
+            # Commitments due this week
+            commitment_rows = conn.execute(
+                """SELECT dc.id, dc.due_at, dc.status, dc.owner
+                   FROM decision_commitments dc
+                   WHERE dc.status = 'open'
+                     AND dc.due_at >= ? AND dc.due_at < ?
+                   ORDER BY dc.due_at ASC""",
+                (week_start, week_end),
+            ).fetchall()
+
+            if commitment_rows:
+                count = len(commitment_rows)
+                items.append(
+                    BriefItem(
+                        id=f"brief-mtgwatch-commitments-{uuid.uuid4().hex}",
+                        section="changed",
+                        text=f"{count} commitment{'s' if count != 1 else ''} due this week",
+                        source_ref="meeting_watch:commitments_due",
+                        priority=_MEETING_PRIORITY + 1,
+                    )
+                )
+
+        return items
 
     @staticmethod
     def _window_timestamp(value: str) -> float:
