@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 169
-- **Status:** backlog
+- **Status:** done
 - **Depends on:** HS-169-01, HS-169-04
 - **Unblocks:** HS-169-05, HS-169-06
 - **Owner:** unassigned
@@ -28,6 +28,44 @@ The Room showed counters of zero, raw field names, and four wings the owner did 
 
 `cd web && npx vitest run src/features/project-room`; tests/e2e/test_hs169_room_glass.py (both widths, three states); the web baseline; the Room copy guard under tests/unit/test_hs169_room_copy.py.
 
-## Delivered
+## Delivered (2026-09-05)
 
-_(pending)_
+- ProjectRoomCore recomposed to the canvas over five rounds against
+  the artboards: two wings ROOM · HISTORY; the head with ONE
+  display-step headline (`N need you` / `Nothing needs you`), the
+  health chip `● AT RISK` / `● ON TRACK` with its reason, the target
+  token, `CHECKED <age>`, one primary verb `Draft update` (the 162
+  composer's opener); the outcome line only when the title bar
+  truncates; NEEDS YOU rows at the primary step with severity-toned
+  WHY tokens and `Open` / `Decide` (+ a section-level `Review N` when
+  proposals are pending); SOURCES rows in the two-line grammar (scope
+  + count tokens · checked + host; `Pause`/`Resume`, `Remove` on
+  cant_check with the plain reason; a section-level `Steward` verb as
+  the honest interim entry to the 167 steward face); SINCE YOU LOOKED
+  / SINCE CREATED in phrases; DECISIONS & COMMITMENTS hidden when
+  empty; the ask well pinned to the body's foot (mic right; the model
+  host chip, `MODEL · NOT SET` + `Choose` when unassigned; answers as
+  an aerogel inset; `runAsk` with the project grounding); HISTORY as a
+  SurfaceStream with flat filter tokens, a search typeahead and the
+  footer receipt `N TODAY · M THIS WEEK`; the read marker posted after
+  first paint and on Refresh; `READ · NEXT CHECK` from the wire (NEXT
+  CHECK omitted when null); the window 800 wide; 393 stacks under a
+  560px container query; motion moments 3 and 4.
+- Selector edits (never skips) across the existing Room, controller,
+  manifest, posture and core tests; web baseline zero branch-new
+  (2423 passed); vitest project-room 19 files / 564.
+- The glass rig tests/e2e/test_hs169_room_glass.py at 1440 + 393 with
+  probes for the artboard, not just presence: one display element,
+  primary-step titles in the sans face, tokens within 24px of their
+  scope, no intersecting row children, the ask well inside the body,
+  the read route called once after paint, HISTORY's count equal to
+  the entries under TODAY, the window ≥ 800 wide. Shots in
+  assets/story-03-shots/ read beside the artboards.
+- tests/unit/test_hs169_room_copy.py: no `REV`, no PROJECT footer
+  token, no zero counters, no raw kinds.
+- Debts (07 ledger): the per-source `Adjust` well (the route
+  `PUT /api/watches/{id}/rules` exists; the Door's AdjustWell must be
+  extracted into a shared component first) — the verb is withheld, not
+  dead; the steward's settings under the source rows (today the
+  section-level `Steward` verb); the 167 TIMELINE/DECISIONS/SEARCH/ASK
+  faces to park.

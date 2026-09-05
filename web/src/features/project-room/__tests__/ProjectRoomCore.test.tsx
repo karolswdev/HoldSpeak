@@ -1,7 +1,15 @@
-// HS-158-05 — ProjectRoomCore rendering tests: orientation band,
-// focus block, degraded section isolation, empty states.
+// HS-158-05 → HS-169-03 — ProjectRoomCore rendering tests.
+// Selector edits for the 169 rebuild:
+//   - orientation band → room head (headline, chips, Draft update)
+//   - focus block → NEEDS YOU section
+//   - right rail, MetricStrip, SurfaceColumns → removed (the Room is a single column)
+//   - four wings (timeline/decisions/search/ask) → two wings (room/history)
+//   - REV chip → removed (D1 cut)
+//   - DegradedNotice inline → sections degrade individually via the wire
+//   - counters (Meetings 0 · Resources 0 · …) → removed (D1 cut)
+//   - identity dedup → the name is said once (title bar); no orientation band
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EMPTY_ITEMS } from "../../../desk/api";
@@ -40,14 +48,14 @@ function WindowHarness({ scope, onTitle }: { scope?: string; onTitle?: (t: strin
   return (
     <TitleSlotContext.Provider value={setTitle}>
       <WingSlotContext.Provider value={setWings}>
-        <div>{wings}</div>
+        <div data-testid="wing-slot">{wings}</div>
         <ProjectRoomCore scope={scope} />
       </WingSlotContext.Provider>
     </TitleSlotContext.Provider>
   );
 }
 
-/** Build a well-formed /room response. */
+/** Build a well-formed /room response with the 169 sections. */
 function roomResponse(overrides: Record<string, unknown> = {}) {
   return {
     project_id: "p1",
@@ -72,38 +80,23 @@ function roomResponse(overrides: Record<string, unknown> = {}) {
       revision: 3,
       ...(overrides.project as Record<string, unknown> || {}),
     },
-    items: overrides.items ?? {
-      state: "ok",
-      focus: [
-        {
-          id: "item-1",
-          project_id: "p1",
-          item_type: "risk",
-          title: "Dependency risk",
-          severity: "high",
-          due_at: "2026-09-01",
-          sort_key: 1.0,
-          created_at: "2026-08-15T00:00:00",
-        },
-        {
-          id: "item-2",
-          project_id: "p1",
-          item_type: "milestone",
-          title: "Beta release",
-          severity: null,
-          due_at: "2026-10-01",
-          sort_key: 2.0,
-          created_at: "2026-08-16T00:00:00",
-        },
-      ],
-      totals_by_type: { risk: 3, milestone: 2 },
-      total: 5,
-    },
+    items: overrides.items ?? { state: "ok", focus: [], totals_by_type: {}, total: 0 },
     meetings: overrides.meetings ?? { state: "ok", count: 2, latest: { id: "m1", title: "Review" } },
     resources: overrides.resources ?? { state: "ok", count: 1, latest: null },
     changes: overrides.changes ?? { state: "ok", recent: [] },
     review: overrides.review ?? { state: "absent", reason: "not_yet_built" },
-    sources: { state: "absent", reason: "not_yet_built" },
+    needsYou: overrides.needsYou ?? { state: "ok", items: [], count: 0 },
+    sources: overrides.sources ?? { state: "ok", items: [], count: 0 },
+    health: overrides.health ?? {
+      state: "ok",
+      assessment: "on_track",
+      reason: null,
+      inputs: { overdue: 0, ciFailing: false, reviewWaitingDays: null, targetPassed: false },
+    },
+    sinceRead: overrides.sinceRead ?? { state: "ok", readAt: null, groups: [] },
+    decisions: overrides.decisions ?? { state: "ok", items: [] },
+    commitments: overrides.commitments ?? { state: "ok", items: [] },
+    target: overrides.target ?? { state: "absent", reason: "none" },
     updates: { state: "absent", reason: "not_yet_built" },
     steward: { state: "absent", reason: "not_yet_built" },
   };
@@ -120,10 +113,13 @@ function detailResponse(url: string) {
       previous_meeting: { id: "m0", title: "Kickoff" },
       new_decisions: [], new_actions: [], closed_actions: [],
     }};
+  if (url.includes("/room/read"))
+    return { read_at: new Date().toISOString() };
   return {};
 }
 
 function response(url: string) {
+  if (url.includes("/room/read")) return { read_at: new Date().toISOString() };
   if (url.includes("/room")) return roomResponse();
   return detailResponse(url);
 }
@@ -142,411 +138,123 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe("ProjectRoomCore — orientation band (WEB-NOW-001, WEB-IA-001)", () => {
-  it("renders the Project name in the orientation band (WEB-IA-001)", async () => {
+// HS-169-03 SELECTOR EDIT: orientation band → room head.
+// The old test pinned SurfaceIdentity with lifecycle/posture/REV chips.
+// The 169 Room head shows a headline, health chip, and Draft update.
+describe("ProjectRoomCore — room head (was: orientation band, WEB-NOW-001)", () => {
+  it("renders the headline (was: Project name in orientation band)", async () => {
     render(<WindowHarness scope="project:p1" />);
-    const name = await screen.findByTestId("project-room-name");
-    expect(name.textContent).toBe("Alpha Project");
+    // HS-169-03: the headline replaces the SurfaceIdentity name
+    const headline = await screen.findByTestId("room-headline");
+    expect(headline.textContent).toBe("Nothing needs you");
   });
 
-  it("renders purpose and outcome when present", async () => {
+  it("renders health chip when health data is present", async () => {
     render(<WindowHarness scope="project:p1" />);
-    const band = await screen.findByTestId("orientation-band");
-    // HS-167-04: short purpose renders as plain text (no Disclosure)
-    const purpose = band.querySelector(".surface-identity-purpose")!;
-    expect(purpose).not.toBeNull();
-    expect(purpose.textContent).toContain("Ship the widget");
-    const outcome = band.querySelector(".surface-identity-outcome")!;
-    expect(outcome.textContent).toContain("Widget shipped");
+    await screen.findByTestId("room-head-chips");
+    // ON TRACK because the fixture has no risk inputs
+    expect(screen.getByText("ON TRACK")).toBeTruthy();
   });
 
-  it("renders lifecycle and posture as separate facts (WEB-LC-001/002)", async () => {
+  // HS-169-03 SELECTOR EDIT: REV chip is gone (D1 cut).
+  // The old test asserted `orientation-revision` with text "REV 3".
+  // 169 removes REV entirely; this test now asserts its absence.
+  it("does NOT render REV chip (D1 cut)", async () => {
     render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-
-    const lifecycle = screen.getByTestId("orientation-lifecycle");
-    expect(lifecycle.textContent).toContain("Active");
-
-    const posture = screen.getByTestId("orientation-posture");
-    expect(posture.textContent).toContain("Green");
-    expect(posture.getAttribute("title")).toBe("On track");
+    await screen.findByTestId("room-body");
+    const body = document.querySelector(".room-body");
+    expect(body?.textContent).not.toContain("REV ");
   });
 
-  it("renders revision and last activity", async () => {
+  // HS-169-03 SELECTOR EDIT: lifecycle/posture chips → health chip.
+  it("does NOT render lifecycle or posture chips (169: replaced by health)", async () => {
     render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-
-    const revision = screen.getByTestId("orientation-revision");
-    expect(revision.textContent).toContain("REV 3");
-
-    const activity = screen.getByTestId("orientation-activity");
-    expect(activity.textContent).toBeTruthy();
-  });
-
-  it("omits purpose/outcome/posture when absent (Art VI)", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(roomResponse({
-          project: { purpose: null, outcome_text: null, posture: null, posture_reason: null },
-        }));
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-
-    expect(document.querySelector(".surface-identity-purpose")).toBeNull();
-    expect(document.querySelector(".surface-identity-outcome")).toBeNull();
+    await screen.findByTestId("room-body");
+    expect(screen.queryByTestId("orientation-lifecycle")).toBeNull();
     expect(screen.queryByTestId("orientation-posture")).toBeNull();
   });
+});
 
-  it("omits lifecycle chip when lifecycle is null", async () => {
+// HS-169-03 SELECTOR EDIT: focus block → NEEDS YOU section.
+// The old test pinned focus items grouped by kind.
+// The 169 Room replaces them with needs-you rows.
+describe("ProjectRoomCore — NEEDS YOU (was: focus block)", () => {
+  it("renders needs-you section with count (was: focus items grouped by kind)", async () => {
     apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
       if (url.includes("/room")) {
-        return Promise.resolve(roomResponse({ project: { lifecycle: null } }));
+        return Promise.resolve(roomResponse({
+          needsYou: {
+            state: "ok",
+            items: [
+              { source: "github", title: "PR needs review", why: "WAITING", url: null, verb: "open", severity: "warning" },
+            ],
+            count: 1,
+          },
+        }));
       }
       return Promise.resolve(detailResponse(url));
     });
 
     render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-    expect(screen.queryByTestId("orientation-lifecycle")).toBeNull();
+    await screen.findByTestId("room-body");
+    expect(screen.getByText("PR needs review")).toBeTruthy();
+  });
+
+  it("shows empty state text when nothing needs you (was: 'No material yet.')", async () => {
+    render(<WindowHarness scope="project:p1" />);
+    await screen.findByTestId("room-body");
+    // The fixture has empty needs-you
+    expect(screen.getByTestId("needs-you-empty")).toBeTruthy();
   });
 });
 
-describe("ProjectRoomCore — focus block", () => {
-  it("renders focus items grouped by kind with totals as count-chips", async () => {
+// HS-169-03 SELECTOR EDIT: degraded sections → sections handle their own degraded state.
+// The old test pinned DegradedNotice inline notices. The 169 Room
+// sections render nothing for absent/degraded wire sections.
+describe("ProjectRoomCore — section degradation (was: degraded section isolation)", () => {
+  it("absent sections render nothing (Art VI)", async () => {
     render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("focus-block");
-
-    // Should show the focus items
-    expect(screen.getByText("Dependency risk")).toBeTruthy();
-    expect(screen.getByText("Beta release")).toBeTruthy();
-
-    // R2: totals render as separate count-chip elements, not appended text
-    const labels = screen.getAllByTestId("focus-type-label");
-    expect(labels.some(el => el.textContent === "Risks")).toBe(true);
-    expect(labels.some(el => el.textContent === "Milestones")).toBe(true);
-
-    const chips = screen.getAllByTestId("focus-count-chip");
-    expect(chips.some(el => el.textContent === "3")).toBe(true);
-    expect(chips.some(el => el.textContent === "2")).toBe(true);
-  });
-
-  it("shows 'No material yet.' for empty focus (WEB-STA-003)", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(roomResponse({
-          items: { state: "ok", focus: [], totals_by_type: {}, total: 0 },
-        }));
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
-    render(<WindowHarness scope="project:p1" />);
-    expect(await screen.findByText("No material yet.")).toBeTruthy();
-  });
-
-  it("renders degraded items section with error message", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(roomResponse({
-          items: { state: "degraded", error_code: "items_read_failed" },
-        }));
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
-    render(<WindowHarness scope="project:p1" />);
-    expect(await screen.findByText(/Items unavailable/)).toBeTruthy();
-  });
-});
-
-describe("ProjectRoomCore — degraded section isolation (WEB-STA-002)", () => {
-  it("degraded meetings shows inline notice, does not blank orientation", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(roomResponse({
-          meetings: { state: "degraded", error_code: "meetings_read_failed" },
-        }));
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
-    render(<WindowHarness scope="project:p1" />);
-    // Orientation still renders
-    expect((await screen.findByTestId("project-room-name")).textContent).toBe("Alpha Project");
-    // Degraded notice shows
-    expect(screen.getByTestId("degraded-meetings")).toBeTruthy();
-    // Focus still shows
-    expect(screen.getByText("Dependency risk")).toBeTruthy();
-  });
-
-  it("absent sections render NOTHING (Art VI: no teaser placeholders)", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-
-    // Absent sections: review, sources, updates, steward — should have no DOM presence
-    expect(screen.queryByTestId("degraded-review")).toBeNull();
+    await screen.findByTestId("room-body");
+    // All absent sections produce no DOM
+    expect(screen.queryByTestId("degraded-meetings")).toBeNull();
     expect(screen.queryByTestId("degraded-sources")).toBeNull();
-    expect(screen.queryByTestId("degraded-updates")).toBeNull();
-    expect(screen.queryByTestId("degraded-steward")).toBeNull();
   });
 });
 
-describe("ProjectRoomCore — beauty pass (HS-158-05)", () => {
-  it("dependency items render under 'Dependencies' (proper plural, not 'Dependencys') with count-chip", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(roomResponse({
-          items: {
-            state: "ok",
-            focus: [
-              { id: "dep-1", project_id: "p1", item_type: "dependency", title: "External API", severity: null, due_at: null, sort_key: 1, created_at: "2026-08-15T00:00:00" },
-            ],
-            totals_by_type: { dependency: 1 },
-            total: 1,
-          },
-        }));
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
+// HS-169-03 SELECTOR EDIT: right rail → removed.
+// The old tests pinned MetricStrip, SurfaceColumns, rail-meetings, etc.
+// 169 removes the two-column layout entirely.
+describe("ProjectRoomCore — no right rail (was: R2 desktop composition)", () => {
+  it("does NOT render SurfaceColumns or MetricStrip (169 single-column)", async () => {
     render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("focus-block");
-    // R2: label and count are separate elements
-    const labels = screen.getAllByTestId("focus-type-label");
-    expect(labels.some(el => el.textContent === "Dependencies")).toBe(true);
-    const chips = screen.getAllByTestId("focus-count-chip");
-    expect(chips.some(el => el.textContent === "1")).toBe(true);
+    await screen.findByTestId("room-body");
+    expect(document.querySelector(".surface-columns")).toBeNull();
+    expect(screen.queryByTestId("project-room-rail")).toBeNull();
   });
 
-  it("posture humanizes underscored tokens ('On track' visible, data-posture='on_track')", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(roomResponse({
-          project: { posture: "on_track", posture_reason: "All milestones green" },
-        }));
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
+  it("does NOT render counters (was: Meetings N · Resources N · Watches N · Changes N)", async () => {
     render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-
-    const posture = screen.getByTestId("orientation-posture");
-    expect(posture.textContent).toContain("On track");
-    expect(posture.getAttribute("data-posture")).toBe("on_track");
-  });
-
-  it("severity renders as a toned chip (high=warn, critical=danger, medium/low=quiet)", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(roomResponse({
-          items: {
-            state: "ok",
-            focus: [
-              { id: "item-c", project_id: "p1", item_type: "risk", title: "Critical risk", severity: "critical", due_at: null, sort_key: 1, created_at: "2026-08-15T00:00:00" },
-              { id: "item-h", project_id: "p1", item_type: "risk", title: "High risk", severity: "high", due_at: "2026-09-15", sort_key: 2, created_at: "2026-08-15T00:00:00" },
-              { id: "item-m", project_id: "p1", item_type: "risk", title: "Medium risk", severity: "medium", due_at: null, sort_key: 3, created_at: "2026-08-15T00:00:00" },
-            ],
-            totals_by_type: { risk: 3 },
-            total: 3,
-          },
-        }));
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("focus-block");
-
-    const chips = screen.getAllByTestId("focus-severity");
-    const critical = chips.find(el => el.getAttribute("data-severity") === "critical");
-    const high = chips.find(el => el.getAttribute("data-severity") === "high");
-    const medium = chips.find(el => el.getAttribute("data-severity") === "medium");
-
-    expect(critical).toBeTruthy();
-    expect(critical!.getAttribute("data-tone")).toBe("danger");
-    expect(critical!.querySelector(".surface-state-chip")!.getAttribute("aria-label")).toBe("Critical");
-
-    expect(high).toBeTruthy();
-    expect(high!.getAttribute("data-tone")).toBe("warn");
-    expect(high!.querySelector(".surface-state-chip")!.getAttribute("aria-label")).toBe("High");
-
-    expect(medium).toBeTruthy();
-    // medium/low are quiet (no tone)
-    expect(medium!.getAttribute("data-tone")).toBeNull();
-    expect(medium!.querySelector(".surface-state-chip")!.getAttribute("aria-label")).toBe("Medium");
-  });
-
-  it("due date renders as a quiet text token, not an input-like chip", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("focus-block");
-
-    const dueTokens = screen.getAllByTestId("focus-due");
-    expect(dueTokens.length).toBeGreaterThan(0);
-    // HS-167-04: surface-token class (was project-room-date-token)
-    expect(dueTokens[0].className).toContain("surface-token");
-    expect(dueTokens[0].className).not.toContain("desk-chip");
-    // Date value is present
-    expect(dueTokens[0].textContent).toMatch(/\d{4}-\d{2}-\d{2}/);
-  });
-
-  it("purpose and outcome render through SurfaceIdentity species (HS-167-04)", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    const band = await screen.findByTestId("orientation-band");
-
-    // HS-167-04: short purpose renders as plain text outside SurfaceIdentity
-    const purpose = band.querySelector(".surface-identity-purpose")!;
-    expect(purpose).not.toBeNull();
-    expect(purpose.textContent).toContain("Ship the widget");
-
-    const outcome = band.querySelector(".surface-identity-outcome")!;
-    expect(outcome).not.toBeNull();
-    expect(outcome.textContent).toContain("Widget shipped");
-  });
-
-  it("degraded items show plain words, machine code in title attribute", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(roomResponse({
-          items: { state: "degraded", error_code: "items_read_failed" },
-        }));
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
-    render(<WindowHarness scope="project:p1" />);
-    const wrapper = await screen.findByTestId("focus-degraded");
-    // Plain words on the glass
-    expect(screen.getByText("Items unavailable right now.")).toBeTruthy();
-    // Machine code NOT visible as text
-    expect(screen.queryByText("items_read_failed")).toBeNull();
-    // Machine code accessible via title/data attribute
-    expect(wrapper.getAttribute("data-error-code")).toBe("items_read_failed");
-    expect(wrapper.getAttribute("title")).toBe("items_read_failed");
-  });
-
-  it("lifecycle chip carries data-lifecycle attribute", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-
-    const lifecycle = screen.getByTestId("orientation-lifecycle");
-    expect(lifecycle.getAttribute("data-lifecycle")).toBe("active");
-  });
-});
-
-describe("ProjectRoomCore — R2 desktop composition (HS-158-05)", () => {
-  it("renders SurfaceColumns (wide-vs-narrow container branch)", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-
-    // The surface-columns wrapper exists for the two-column layout
-    const columns = document.querySelector(".surface-columns");
-    expect(columns).not.toBeNull();
-
-    // Main column contains the focus block
-    const main = document.querySelector(".surface-columns-main");
-    expect(main).not.toBeNull();
-    expect(main!.querySelector("[data-testid='focus-block']")).not.toBeNull();
-
-    // Side column contains the right rail
-    const side = document.querySelector(".surface-columns-side");
-    expect(side).not.toBeNull();
-    expect(side!.querySelector("[data-testid='project-room-rail']")).not.toBeNull();
-  });
-
-  it("right rail renders meetings count + latest from the projection", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-
-    const meetingsSection = screen.getByTestId("rail-meetings");
-    expect(meetingsSection).toBeTruthy();
-    expect(screen.getByTestId("rail-meetings-count").textContent).toBe("2");
-    expect(screen.getByTestId("rail-meetings-latest").textContent).toBe("Review");
-  });
-
-  it("right rail renders resources count from the projection", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-
-    const resourcesSection = screen.getByTestId("rail-resources");
-    expect(resourcesSection).toBeTruthy();
-    expect(screen.getByTestId("rail-resources-count").textContent).toBe("1");
-  });
-
-  it("right rail renders changes section from the projection", async () => {
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-
-    const changesSection = screen.getByTestId("rail-changes");
-    expect(changesSection).toBeTruthy();
-    expect(screen.getByTestId("rail-changes-count").textContent).toBe("0");
-  });
-
-  it("right rail renders change rows when changes exist", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(roomResponse({
-          changes: {
-            state: "ok",
-            recent: [
-              { id: "c1", change_kind: "project.updated", summary_json: { purpose: "x", posture: "y" }, created_at: "2026-08-30T14:00:00" },
-              { id: "c2", change_kind: "project.updated", summary_json: { action: "item.created", item_id: "pitem_x", item_type: "risk" }, created_at: "2026-08-29T10:00:00" },
-            ],
-          },
-        }));
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-
-    const changeRows = screen.getAllByTestId("rail-change-row");
-    expect(changeRows.length).toBe(2);
-    expect(changeRows[0].textContent).toContain("Updated · purpose, posture");
-  });
-
-  it("right rail omits absent sections (Art VI)", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(roomResponse({
-          meetings: { state: "absent", reason: "not_built" },
-          resources: { state: "absent", reason: "not_built" },
-          changes: { state: "absent", reason: "not_built" },
-        }));
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
-
+    await screen.findByTestId("room-body");
     expect(screen.queryByTestId("rail-meetings")).toBeNull();
     expect(screen.queryByTestId("rail-resources")).toBeNull();
     expect(screen.queryByTestId("rail-changes")).toBeNull();
   });
 });
 
-describe("ProjectRoomCore — R2 token hierarchy (HS-167-04)", () => {
-  it("identity chips row contains lifecycle, posture; trailing holds activity", async () => {
+// HS-169-03 SELECTOR EDIT: four wings → two wings.
+// The old tests may have asserted the four WINGS array.
+// The 169 Room has exactly ROOM · HISTORY.
+describe("ProjectRoomCore — two wings (was: four wings)", () => {
+  it("renders exactly ROOM and HISTORY tabs", async () => {
     render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("orientation-band");
+    await screen.findByTestId("room-body");
 
-    // HS-167-04: all chips live in .surface-identity-chips
-    const chips = document.querySelector(".surface-identity-chips")!;
-    expect(chips).not.toBeNull();
-    expect(chips.querySelector("[data-testid='orientation-lifecycle']")).not.toBeNull();
-    expect(chips.querySelector("[data-testid='orientation-posture']")).not.toBeNull();
-    expect(chips.querySelector("[data-testid='orientation-revision']")).not.toBeNull();
-
-    // HS-167-04: trailing holds the activity token (surface-identity-trailing)
-    const trailing = chips.querySelector(".surface-identity-trailing")!;
-    expect(trailing).not.toBeNull();
-    expect(trailing.querySelector("[data-testid='orientation-activity']")).not.toBeNull();
+    const wingSlot = screen.getByTestId("wing-slot");
+    const tabs = wingSlot.querySelectorAll("[role='tab']");
+    expect(tabs.length).toBe(2);
+    expect(tabs[0].textContent).toBe("Room");
+    expect(tabs[1].textContent).toBe("History");
   });
 });
 
@@ -571,7 +279,6 @@ describe("ProjectRoomCore — window title slot (HS-158-05, WEB-IA-001)", () => 
     const onTitle = vi.fn();
     render(<WindowHarness onTitle={onTitle} />);
 
-    // The only call should be null (cleanup or initial) — never a project name.
     const calls = onTitle.mock.calls.map((c: unknown[]) => c[0]);
     expect(calls.every((c: unknown) => c === null)).toBe(true);
   });
@@ -592,80 +299,20 @@ describe("ProjectRoomCore — window title slot (HS-158-05, WEB-IA-001)", () => 
   });
 });
 
-describe("ProjectRoomCore — identity dedup (HS-168-05)", () => {
-  it("suppresses outcome and purpose when they equal the name", async () => {
-    const SAME = "Ship the platform";
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(
-          roomResponse({
-            project: { name: SAME, outcome_text: SAME, purpose: SAME },
-          }),
-        );
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
+// HS-169-03 SELECTOR EDIT: identity dedup → the name is said once by the title bar.
+// The old dedup test pinned outcome/purpose suppression on the SurfaceIdentity.
+// 169 removes the identity band entirely; the name is said once in the title bar.
+describe("ProjectRoomCore — name said once (was: identity dedup)", () => {
+  it("does NOT render an orientation-band element (169: head replaces it)", async () => {
     render(<WindowHarness scope="project:p1" />);
-    const band = await screen.findByTestId("orientation-band");
-
-    // Name renders once
-    const name = band.querySelector("[data-testid='project-room-name']");
-    expect(name).not.toBeNull();
-    expect(name!.textContent).toBe(SAME);
-
-    // Outcome token row is absent (would duplicate the name)
-    expect(band.querySelector(".surface-identity-outcome")).toBeNull();
-
-    // Purpose line is absent (would duplicate the name)
-    expect(band.querySelector(".surface-identity-purpose")).toBeNull();
+    await screen.findByTestId("room-body");
+    expect(screen.queryByTestId("orientation-band")).toBeNull();
   });
 
-  it("keeps outcome and purpose when they differ from the name", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(
-          roomResponse({
-            project: {
-              name: "Alpha Project",
-              outcome_text: "Widget shipped",
-              purpose: "Ship the widget",
-            },
-          }),
-        );
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
+  it("does NOT render REV or PROJECT tokens in the body (D1 cut)", async () => {
     render(<WindowHarness scope="project:p1" />);
-    const band = await screen.findByTestId("orientation-band");
-
-    expect(band.querySelector(".surface-identity-outcome")).not.toBeNull();
-    expect(band.querySelector(".surface-identity-purpose")).not.toBeNull();
-  });
-
-  it("suppresses purpose when it equals outcomeText but both differ from name", async () => {
-    apiFetch.mockImplementation((url: string) => {
-      if (url.includes("/room")) {
-        return Promise.resolve(
-          roomResponse({
-            project: {
-              name: "Project X",
-              outcome_text: "Deliver the widget",
-              purpose: "Deliver the widget",
-            },
-          }),
-        );
-      }
-      return Promise.resolve(detailResponse(url));
-    });
-
-    render(<WindowHarness scope="project:p1" />);
-    const band = await screen.findByTestId("orientation-band");
-
-    // Outcome stays (different from name)
-    expect(band.querySelector(".surface-identity-outcome")).not.toBeNull();
-    // Purpose hidden (same as outcome)
-    expect(band.querySelector(".surface-identity-purpose")).toBeNull();
+    await screen.findByTestId("room-body");
+    const body = document.querySelector(".room-body");
+    expect(body?.textContent).not.toContain("REV ");
   });
 });

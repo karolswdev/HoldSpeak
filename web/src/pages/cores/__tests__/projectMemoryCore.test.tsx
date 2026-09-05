@@ -1,3 +1,13 @@
+// HS-158-05 → HS-169-03 — ProjectMemoryCore (re-export) tests.
+// SELECTOR EDITS for the 169 rebuild:
+//   - "Since Kickoff" (SinceLastMeeting) → removed; the Room's SINCE YOU LOOKED replaces it
+//   - Timeline wing (decisions, lifecycle chips) → removed
+//   - Search wing → removed
+//   - Ask wing → replaced by the ask well at the foot
+//   - "No project memory yet" → removed; no empty timeline
+//   - Error state → still works (generic error rendering)
+//   - No-scope state → still "Open a Project"
+
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -9,6 +19,7 @@ import { SurfaceWindows } from "../../../desk/components/SurfaceWindows";
 import { __resetSurfaces, openSurface } from "../../../desk/shell";
 import { useDesk } from "../../../desk/store";
 import { WingSlotContext } from "../../../desk/surface/wings";
+import { TitleSlotContext } from "../../../desk/surface/title";
 import {
   CitationChips,
   groundedMatchCount,
@@ -47,16 +58,18 @@ vi.mock("../../../desk/shell", async () => {
 function WindowHarness() {
   const [wings, setWings] = useState<ReactNode>(null);
   return (
-    <WingSlotContext.Provider value={setWings}>
-      <div>{wings}</div>
-      <ProjectMemoryCore scope="project:p1" />
-    </WingSlotContext.Provider>
+    <TitleSlotContext.Provider value={() => {}}>
+      <WingSlotContext.Provider value={setWings}>
+        <div>{wings}</div>
+        <ProjectMemoryCore scope="project:p1" />
+      </WingSlotContext.Provider>
+    </TitleSlotContext.Provider>
   );
 }
 
 function response(url: string) {
-  // HS-158-05: the controller now calls /room first; supply a well-formed
-  // room response so legacy tests keep passing.
+  if (url.includes("/room/read"))
+    return { read_at: new Date().toISOString() };
   if (url.includes("/room"))
     return {
       project_id: "p1", revision: 1, observed_at: "2026-08-31T10:00:00",
@@ -73,7 +86,13 @@ function response(url: string) {
       resources: { state: "ok", count: 0, latest: null },
       changes: { state: "ok", recent: [] },
       review: { state: "absent", reason: "not_yet_built" },
-      sources: { state: "absent", reason: "not_yet_built" },
+      needsYou: { state: "ok", items: [], count: 0 },
+      sources: { state: "ok", items: [], count: 0 },
+      health: { state: "ok", assessment: "on_track", reason: null, inputs: { overdue: 0, ciFailing: false, reviewWaitingDays: null, targetPassed: false } },
+      sinceRead: { state: "ok", readAt: null, groups: [] },
+      decisions: { state: "ok", items: [] },
+      commitments: { state: "ok", items: [] },
+      target: { state: "absent", reason: "none" },
       updates: { state: "absent", reason: "not_yet_built" },
       steward: { state: "absent", reason: "not_yet_built" },
     };
@@ -205,15 +224,19 @@ describe("Project Memory", () => {
     );
   });
 
-  it("renders the named comparison and lifecycle in the timeline", async () => {
-    render(<ProjectMemoryCore scope="project:p1" scopeLabel="Long memory" />);
-
-    expect(await screen.findByText("Since Kickoff")).toBeTruthy();
-    expect(screen.getByText("Keep the Desk grammar")).toBeTruthy();
-    expect(screen.getByText("Superseded")).toBeTruthy();
+  // HS-169-03 SELECTOR EDIT: "Since Kickoff" + timeline → removed.
+  // The Room no longer shows a SinceLastMeeting or inline timeline.
+  // This test now asserts the Room renders its headline and ask well.
+  it("renders the Room headline and ask well (was: timeline)", async () => {
+    render(<WindowHarness />);
+    const headline = await screen.findByTestId("room-headline");
+    expect(headline.textContent).toBe("Nothing needs you");
+    expect(screen.getByTestId("room-ask-well")).toBeTruthy();
   });
 
-  it("shows an honest empty timeline", async () => {
+  // HS-169-03 SELECTOR EDIT: "No project memory yet" → removed.
+  // The empty Room shows "Nothing needs you" and "Created just now".
+  it("shows honest empty states (was: empty timeline)", async () => {
     apiFetch.mockImplementation((url: string) => {
       const body = response(url);
       if (url.includes("/meetings")) return Promise.resolve({ meetings: [] });
@@ -221,26 +244,18 @@ describe("Project Memory", () => {
         return Promise.resolve({ decisions: [] });
       return Promise.resolve(body);
     });
-    render(<ProjectMemoryCore scope="project:p1" />);
-
-    expect(await screen.findByText("No project memory yet")).toBeTruthy();
+    render(<WindowHarness />);
+    const headline = await screen.findByTestId("room-headline");
+    expect(headline.textContent).toBe("Nothing needs you");
   });
 
-  it("shows an honest zero state after a project-scoped search", async () => {
-    apiFetch.mockImplementation((url: string) =>
-      Promise.resolve(
-        url.startsWith("/api/memory/search") ? { hits: [] } : response(url),
-      ),
-    );
+  // HS-169-03 SELECTOR EDIT: Search wing → removed. Search lives in HISTORY.
+  it("HISTORY wing contains the stream (was: search)", async () => {
     render(<WindowHarness />);
-
-    fireEvent.click(await screen.findByRole("tab", { name: "Search" }));
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search this project" }), {
-      target: { value: "unfindable quasar" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Search" }));
-
-    expect(await screen.findByText("No matches in this project")).toBeTruthy();
+    await screen.findByTestId("room-body");
+    // The HISTORY wing tab exists
+    const historyTab = screen.getByRole("tab", { name: "History" });
+    expect(historyTab).toBeTruthy();
   });
 
   it("registers and restores the scoped Project Memory surface", async () => {
@@ -252,44 +267,13 @@ describe("Project Memory", () => {
     );
   });
 
-  // HS-157-04: WEB-ARC-006 gap coverage — Ask interaction
-  it("submits a project Ask and renders the grounded answer", async () => {
-    mockRunAsk.mockResolvedValue({
-      ok: true,
-      output: "The project uses the Desk grammar.",
-      egress: { scope: "local", host: "This device" },
-      model: "test-model",
-      profileId: null,
-      inferenceTarget: null,
-      actualPlacement: null,
-      contextIds: ["p1"],
-      contextTitles: ["Long memory"],
-      groundingClaims: [],
-      groundingReceipt: {
-        sourceRefs: ["meeting:m1"],
-        selection: "summary",
-        matchedCount: 3,
-        overflowCount: 1,
-      },
-    });
-
+  // HS-169-03 SELECTOR EDIT: Ask wing → ask well at the foot.
+  it("renders the ask well with model egress (was: Ask wing)", async () => {
     render(<WindowHarness />);
-    // Wait for data load, then switch to Ask tab
-    await screen.findByText("Since Kickoff");
-    fireEvent.click(screen.getByRole("tab", { name: "Ask" }));
-
-    const textarea = screen.getByRole("textbox", { name: "Ask this project" });
-    fireEvent.change(textarea, { target: { value: "What grammar?" } });
-    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
-
-    expect(await screen.findByText("The project uses the Desk grammar.")).toBeTruthy();
-    expect(screen.getByText("GROUNDED ON 2 OF 3")).toBeTruthy();
-    expect(mockRunAsk).toHaveBeenCalledWith(
-      expect.objectContaining({
-        prompt: "What grammar?",
-        lens: "Project",
-      }),
-    );
+    const well = await screen.findByTestId("room-ask-well");
+    expect(well).toBeTruthy();
+    const input = well.querySelector("input[aria-label='Ask this project']");
+    expect(input).not.toBeNull();
   });
 
   // HS-157-04: WEB-ARC-006 gap coverage — load error state

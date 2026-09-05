@@ -91,6 +91,38 @@ export function promoteDecision(
   });
 }
 
+/* ── room read marker (HS-169-03) ── */
+
+export function markRoomRead(projectId: string) {
+  return apiFetch<{ read_at: string }>(
+    `/api/projects/${encodeURIComponent(projectId)}/room/read`,
+    { method: "POST" },
+  );
+}
+
+/* ── watch operations (HS-169-03) ── */
+
+export function pauseWatch(watchId: string) {
+  return apiFetch<Record<string, unknown>>(
+    `/api/watches/${encodeURIComponent(watchId)}/pause`,
+    { method: "POST" },
+  );
+}
+
+export function resumeWatch(watchId: string) {
+  return apiFetch<Record<string, unknown>>(
+    `/api/watches/${encodeURIComponent(watchId)}/resume`,
+    { method: "POST" },
+  );
+}
+
+export function retireWatch(watchId: string) {
+  return apiFetch<Record<string, unknown>>(
+    `/api/watches/${encodeURIComponent(watchId)}/retire`,
+    { method: "POST" },
+  );
+}
+
 /* ── memory search ── */
 
 export function searchProjectMemory(query: string, projectId: string) {

@@ -1,7 +1,7 @@
 # Phase 169 - The Streamlined Door
 
 - **Project:** holdspeak
-- **Status:** ACTIVE 3/7
+- **Status:** ACTIVE 4/7
 - **Chartered:** 2026-09-04 off feat/connections-door `1f9798f9` (168 The Connections Door at 5/7: both of the owner's bounces paid, the branch green on its gates, its merge and story 05 waiting on his word; this phase supersedes 168's door and the 167 Room face)
 - **Canon:** docs/internal/CONSTITUTION.md (Articles III, VI, VII, VIII); docs/internal/DESIGN_SYSTEM.md (the interior canon: type scale, composition rules, the aerogel receipt, the banned left rail); web/src/desk/surface (the library); assets/settled-design-streamlined-door.md (D0-D6); the owner's laws: face-design-before-build; every verb is the library Button; no prose in the UI; no modals; "will you use this on a Tuesday?"
 
@@ -57,15 +57,15 @@ module we are both proud of.
 | --- | --- | --- | --- | --- |
 | HS-169-01 | The settled design + the canvas (the one-screen door; the Room as four questions; eight artboards at 1440 + 393; counsel first; OWNER RATIFIES) | done | [story-01-the-settled-design](./story-01-the-settled-design.md) | [evidence-story-01](./evidence-story-01.md) |
 | HS-169-02 | The Door built to the canvas (one screen: the outcome line; source rows with in-world pickers and default Watches; the count is the test; Create Project) | done | [story-02-the-door](./story-02-the-door.md) | [evidence-story-02](./evidence-story-02.md) |
-| HS-169-03 | The Room rebuilt to the canvas (the head with the one headline; NEEDS YOU; SOURCES; SINCE YOU LOOKED; DECISIONS & COMMITMENTS; the ask well; two wings ROOM · HISTORY) | backlog | [story-03-the-room](./story-03-the-room.md) | [evidence-story-03](./evidence-story-03.md) |
+| HS-169-03 | The Room rebuilt to the canvas (the head with the one headline; NEEDS YOU; SOURCES; SINCE YOU LOOKED; DECISIONS & COMMITMENTS; the ask well; two wings ROOM · HISTORY) | done | [story-03-the-room](./story-03-the-room.md) | [evidence-story-03](./evidence-story-03.md) |
 | HS-169-04 | The wire for the four questions (needs-you items derived from real Watch entities; the read marker; the health inputs; the meeting Watch never offered until it evaluates; MCP twins) | done | [story-04-the-wire-for-four-questions](./story-04-the-wire-for-four-questions.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-169-05 | The walk on the owner's desk (the door in 5 clicks; the Room's first paint; the stopwatch; OWNER VERDICT — "the first one we are both proud of") | in-progress | [story-05-the-walk](./story-05-the-walk.md) | [evidence-story-05](./evidence-story-05.md) |
-| HS-169-06 | The docs (the guide's New Project + Project Room sections re-shot; MCP_SIDECAR regenerated; the design doc canonized) | backlog | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
+| HS-169-06 | The docs (the guide's New Project + Project Room sections re-shot; MCP_SIDECAR regenerated; the design doc canonized) | in-progress | [story-06-the-docs](./story-06-the-docs.md) | [evidence-story-06](./evidence-story-06.md) |
 | HS-169-07 | The close (gates, the sweep, counsel, the debt ledger, final summary; 168 folded) | backlog | [story-07-the-close](./story-07-the-close.md) | [evidence-story-07](./evidence-story-07.md) |
 
 ## Where we are
 
-**ACTIVE 3/7.** Branch `feat/the-streamlined-door` off
+**ACTIVE 4/7.** Branch `feat/the-streamlined-door` off
 feat/connections-door `1f9798f9`. **01 DONE:** the settled design,
 eleven artboards over three rounds (every PNG read at true width),
 counsel RATIFY-W-C paid before the owner saw it, the canvas published
@@ -79,9 +79,11 @@ MCP parity / model.ts decode) — 152 tests read. **02 DONE** (three rounds agai
 token toggles as a library variant, the stroke chevron, the four-line
 393 grammar with a no-intersection probe, the receipt at the left edge
 through a footer class hook, the window at 580 so the picker fits; the
-rig: 5 clicks, no body scroll at 1440; evidence 15 passed). In flight:
-03 the Room (round 2: the glass rig, zero branch-new,
-no dead verb, NEXT CHECK from the wire). The build opened on his word: 02 the
+rig: 5 clicks, no body scroll at 1440; evidence 15 passed). **03 DONE** (five rounds against the artboards; the rig probes the
+artboard — type steps, token positions, no intersections, the ask
+well in frame, HISTORY's count honest; web baseline zero branch-new).
+In flight: 05 the walk runner (the isolated leg by a worker; the REAL
+leg by the orchestrator, alone; then the owner). The build opened on his word: 02 the
 Door (the face + its two seams: the count through the evaluation
 compile; Create as one service call) in parallel with 04 the wire for
 the four questions (needsYou / sources / health / sinceRead read

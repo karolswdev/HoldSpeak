@@ -88,6 +88,7 @@ function roomResponse(overrides: Record<string, unknown> = {}) {
     project_id: "p1",
     revision: 5,
     observed_at: "2026-09-01T10:00:00",
+    nextCheckAt: null,
     project: {
       id: "p1",
       name: "Steward Project",
@@ -111,7 +112,13 @@ function roomResponse(overrides: Record<string, unknown> = {}) {
     resources: { state: "ok", count: 1, latest: null },
     changes: { state: "ok", recent: [] },
     review: { state: "absent", reason: "not_yet_built" },
-    sources: { state: "absent", reason: "not_yet_built" },
+    needsYou: { state: "ok", items: [], count: 0 },
+    sources: { state: "ok", items: [], count: 0, nextCheckAt: null },
+    health: { state: "ok", assessment: "on_track", reason: null, inputs: { overdue: 0, ciFailing: false, reviewWaitingDays: null, targetPassed: false } },
+    sinceRead: { state: "ok", readAt: null, groups: [] },
+    decisions: { state: "ok", items: [] },
+    commitments: { state: "ok", items: [] },
+    target: { state: "absent", reason: "none" },
     updates: { state: "absent", reason: "not_yet_built" },
     steward: overrides.steward ?? { state: "ok" },
     ...overrides,
@@ -306,6 +313,10 @@ function setupStewardPosture(opts: {
   const watchesVal = opts.watches ?? [watchFixture()];
 
   apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
+    // HS-169-03: room read marker
+    if (url.includes("/room/read")) {
+      return Promise.resolve({ read_at: new Date().toISOString() });
+    }
     // Room
     if (url.includes("/room")) {
       return Promise.resolve(roomResponse());
