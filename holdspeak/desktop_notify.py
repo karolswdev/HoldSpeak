@@ -172,12 +172,18 @@ def heartbeat_notify(
     notify_content: bool = False,
     click_url: str | None = None,
     receipt_writer: Callable[[dict[str, Any]], None] | None = None,
+    mesh_event_writer: Callable[[dict[str, Any]], None] | None = None,
     _notifier: Callable[..., bool] | None = None,
 ) -> dict[str, Any]:
     """Evaluate the edge rule, quiet hours, and fire if appropriate.
 
     Returns a receipt dict (always), with ``fired``, ``held``,
     ``reason``, and the count.
+
+    HS-174-09: when ``mesh_event_writer`` is provided and a notification
+    fires, publish a ``desk.notification`` event on the mesh bus with
+    ``{count, projects, origin}`` for a future LAN companion (Phase 179).
+    The caller gates this on the mesh-on setting.
     """
     from datetime import datetime
 
@@ -244,6 +250,20 @@ def heartbeat_notify(
             "method": "notify",
             "result_summary": f"fired={fired} count={count} projects={project_count}",
         })
+
+    # HS-174-09: publish desk.notification on the mesh bus for a future
+    # LAN companion (Phase 179).  Hub side only -- no new listener, no
+    # new egress.  The caller gates this on the mesh-on setting.
+    if fired and mesh_event_writer is not None:
+        try:
+            mesh_event_writer({
+                "kind": "desk.notification",
+                "count": count,
+                "projects": project_count,
+                "origin": "heartbeat",
+            })
+        except Exception as exc:
+            log.warning("mesh desk.notification event failed: %s", exc)
 
     return result
 
