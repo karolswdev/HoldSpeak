@@ -254,8 +254,8 @@ def _step_rhythm(page: Any, out_dir: Path, w: int, token: str,
                  report: WalkReport) -> None:
     """Open Settings -> Rhythm module, shoot, record rows."""
     face = "rhythm"
-    # Open Settings, then navigate to the Rhythm module
-    _open_surface(page, token, "configure-settings", "rhythm")
+    # Open the Rhythm window directly (configure-cadence, same as the glass test).
+    _open_surface(page, token, "configure-cadence")
     _settle(page)
     page.wait_for_timeout(2000)
     _settle(page)
@@ -263,59 +263,145 @@ def _step_rhythm(page: Any, out_dir: Path, w: int, token: str,
     shot = _shoot(page, out_dir, "walk-rhythm", w, window=True)
     report.shots.append({"face": face, "width": w, "path": str(shot)})
 
-    # Headline (surface-display)
+    # Headline: .surface-display[data-testid="rhythm-headline"]
     headline = page.evaluate("""() => {
-        const el = document.querySelector('.surface-display, .prefs-hub-headline');
+        const el = document.querySelector('[data-testid="rhythm-headline"]');
         return el ? el.textContent.trim() : '---';
     }""")
     report.facts.append(asdict(_fact(
         face, "headline", "Every 15 min", headline,
     )))
 
-    # Sweep row facts: look for tokens in the Rhythm module
-    # TODO: refine selectors once the Rhythm module face lands
-    sweep_text = page.evaluate("""() => {
-        // Look for a ledger row or gadget group containing "Sweep" or "Watch sweep"
-        const rows = document.querySelectorAll('.surface-ledger-row, .gadget-row, .gadget-group');
-        for (const row of rows) {
-            const text = (row.textContent || '').trim();
-            if (text.includes('Sweep') || text.includes('sweep')) return text;
-        }
-        // Fallback: read the full module body
-        const module = document.querySelector('.prefs-module');
-        return module ? module.textContent.trim().substring(0, 300) : '---';
+    # SWEEP row: data-testid="rhythm-sweep-row" (SurfaceLedgerRow)
+    #   CycleGadget inside .cycle-gadget (the interval picker)
+    #   Trailing: "Run now" button data-testid="rhythm-run-now"
+    # Sweep fact tokens: data-testid="rhythm-sweep-facts"
+    #   QUIET HH:00-HH:00, NEXT HH:MM, LAST HH:MM, N ROOMS, NN MS
+    sweep_data = page.evaluate("""() => {
+        const row = document.querySelector('[data-testid="rhythm-sweep-row"]');
+        const facts = document.querySelector('[data-testid="rhythm-sweep-facts"]');
+        return {
+            primary: row ? (row.querySelector('.surface-ledger-primary')?.textContent || '').trim() : '---',
+            interval: row ? (row.querySelector('.cycle-gadget')?.textContent || '').trim() : '---',
+            runNow: row ? (row.querySelector('[data-testid="rhythm-run-now"]')?.textContent || '').trim() : '---',
+            facts: facts ? facts.textContent.trim() : '---',
+        };
     }""")
     report.facts.append(asdict(FaceFact(
-        face=face, field="sweep_row", expected="Sweep EVERY 15 MIN ... QUIET ... NEXT ... Run now",
-        observed=sweep_text[:200], verdict="DATA", why="real desk content",
+        face=face, field="sweep_primary", expected="Sweep",
+        observed=sweep_data["primary"], verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="sweep_interval", expected="EVERY 15 MIN",
+        observed=sweep_data["interval"], verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="sweep_run_now", expected="Run now",
+        observed=sweep_data["runNow"], verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="sweep_facts", expected="QUIET HH:00-HH:00 . NEXT HH:MM . LAST HH:MM",
+        observed=sweep_data["facts"][:200], verdict="DATA", why="real desk content",
     )))
 
-    # Monday brief row
-    brief_text = page.evaluate("""() => {
-        const rows = document.querySelectorAll('.surface-ledger-row, .gadget-row, .gadget-group');
-        for (const row of rows) {
-            const text = (row.textContent || '').trim();
-            if (text.includes('Monday brief') || text.includes('brief')) return text;
-        }
-        return '---';
+    # MONDAY BRIEF row: data-testid="rhythm-brief-row"
+    #   cell: "DAILY HH:00" token
+    #   trailing: "Generate now" data-testid="rhythm-generate-now"
+    # Brief fact tokens: data-testid="rhythm-brief-facts"
+    #   NEXT MON HH:00, LAST MON DD
+    brief_data = page.evaluate("""() => {
+        const row = document.querySelector('[data-testid="rhythm-brief-row"]');
+        const facts = document.querySelector('[data-testid="rhythm-brief-facts"]');
+        return {
+            primary: row ? (row.querySelector('.surface-ledger-primary')?.textContent || '').trim() : '---',
+            daily: row ? (row.querySelector('.surface-token[data-chip]')?.textContent || '').trim() : '---',
+            generateNow: row ? (row.querySelector('[data-testid="rhythm-generate-now"]')?.textContent || '').trim() : '---',
+            facts: facts ? facts.textContent.trim() : '---',
+        };
     }""")
     report.facts.append(asdict(FaceFact(
-        face=face, field="brief_row", expected="Monday brief DAILY 08:00 ... Generate now",
-        observed=brief_text[:200], verdict="DATA", why="real desk content",
+        face=face, field="brief_primary", expected="Monday brief",
+        observed=brief_data["primary"], verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="brief_daily", expected="DAILY 08:00",
+        observed=brief_data["daily"], verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="brief_generate_now", expected="Generate now",
+        observed=brief_data["generateNow"], verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="brief_facts", expected="NEXT MON HH:00 . LAST MON DD",
+        observed=brief_data["facts"][:200], verdict="DATA", why="real desk content",
     )))
 
-    # Notify row
-    notify_text = page.evaluate("""() => {
-        const rows = document.querySelectorAll('.surface-ledger-row, .gadget-row, .gadget-group');
-        for (const row of rows) {
-            const text = (row.textContent || '').trim();
-            if (text.includes('Notify') || text.includes('notify')) return text;
-        }
-        return '---';
+    # NOTIFY row: data-testid="rhythm-notify-row"
+    #   Two CycleGadgets: mode (OFF/ON THE EDGE/EVERY SWEEP), content (COUNT ONLY/ROOM NAMES)
+    #   Trailing: HELD token when in quiet hours
+    notify_data = page.evaluate("""() => {
+        const row = document.querySelector('[data-testid="rhythm-notify-row"]');
+        if (!row) return { primary: '---', gadgets: '---', held: false };
+        const primary = (row.querySelector('.surface-ledger-primary')?.textContent || '').trim();
+        const cycles = row.querySelectorAll('.cycle-gadget');
+        const gadgetTexts = [];
+        for (const c of cycles) gadgetTexts.push(c.textContent.trim());
+        const heldEl = row.querySelector('.surface-token[data-tone="warn"]');
+        return {
+            primary,
+            gadgets: gadgetTexts.join(' | '),
+            held: heldEl ? (heldEl.textContent || '').trim() : '',
+        };
     }""")
     report.facts.append(asdict(FaceFact(
-        face=face, field="notify_row", expected="Notify ON THE EDGE COUNT ONLY ... mute toggles",
-        observed=notify_text[:200], verdict="DATA", why="real desk content",
+        face=face, field="notify_primary", expected="Notify",
+        observed=notify_data["primary"], verdict="DATA", why="real desk content",
+    )))
+    report.facts.append(asdict(FaceFact(
+        face=face, field="notify_gadgets", expected="ON THE EDGE | COUNT ONLY",
+        observed=notify_data["gadgets"], verdict="DATA", why="real desk content",
+    )))
+    if notify_data["held"]:
+        report.facts.append(asdict(FaceFact(
+            face=face, field="notify_held", expected="HELD (quiet hours)",
+            observed=notify_data["held"], verdict="DATA", why="quiet hours active",
+        )))
+
+    # Project mute toggles: data-testid="rhythm-mute-toggles"
+    #   Each: CheckGadget variant="token" with the project name uppercase
+    mute_data = page.evaluate("""() => {
+        const container = document.querySelector('[data-testid="rhythm-mute-toggles"]');
+        if (!container) return [];
+        const gadgets = container.querySelectorAll('.check-gadget');
+        const result = [];
+        for (const g of gadgets) {
+            const label = (g.textContent || '').trim();
+            const input = g.querySelector('input[type="checkbox"]');
+            const checked = input ? input.checked : null;
+            result.push({ label, checked });
+        }
+        return result;
+    }""")
+    for i, toggle in enumerate(mute_data):
+        status = "enabled" if toggle["checked"] else "muted"
+        report.facts.append(asdict(FaceFact(
+            face=face, field=f"mute_toggle:{i}",
+            expected="(project name) enabled/muted",
+            observed=f"{toggle['label']} {status}",
+            verdict="DATA", why="real desk content",
+        )))
+
+    # Footer: EgressChip + WRITTEN HH:MM
+    footer_text = page.evaluate("""() => {
+        const footer = document.querySelector('.surface-footer');
+        return footer ? footer.textContent.trim() : '---';
+    }""")
+    written_match = re.search(r'WRITTEN\s+\d{2}:\d{2}', footer_text.upper())
+    report.facts.append(asdict(FaceFact(
+        face=face, field="footer_written", expected="WRITTEN HH:MM",
+        observed=written_match.group(0) if written_match else footer_text[:60],
+        verdict="MATCH" if written_match else "DATA",
+        why="timestamp found" if written_match else "no WRITTEN timestamp",
     )))
 
     # Overflow + raw-button checks
