@@ -112,7 +112,7 @@ export function SystemShade({
         setCorrections(rows as Correction[]);
       })
       .catch(() => setCorrections([]));
-    // HS-171-04: fetch needs-you aggregate (cached, cheap)
+    // HS-171-04: fetch needs-you aggregate (initial; polling below)
     void apiFetch<NeedsYouAggregate>("/api/desk/needs-you")
       .then((data) => setNeedsYou(data))
       .catch(() => setNeedsYou(null));
@@ -131,6 +131,19 @@ export function SystemShade({
       })
       .catch(() => setBrief(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  // HS-171-04: poll the needs-you aggregate while the shade is open;
+  // stop when closed. The endpoint is cached server-side so the
+  // interval is cheap. 5 000 ms keeps the shade fresh without hammering.
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setInterval(() => {
+      void apiFetch<NeedsYouAggregate>("/api/desk/needs-you")
+        .then((data) => setNeedsYou(data))
+        .catch(() => {});
+    }, 5000);
+    return () => window.clearInterval(timer);
   }, [open]);
 
   useEffect(() => {
