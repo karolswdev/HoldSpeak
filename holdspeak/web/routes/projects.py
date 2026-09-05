@@ -386,12 +386,36 @@ def build_projects_router(ctx: WebContext) -> APIRouter:
     def _build_needs_you() -> dict:
         door = ctx.door_service
         door_upcoming = getattr(door, "_upcoming", None) if door else None
-        return build_aggregate(
+        aggregate = build_aggregate(
             list_projects=service.list_projects,
             room=service.room,
             principal=_owner_principal,
             door_upcoming=door_upcoming,
         )
+        # M1 (counsel): apply the mute list from heartbeat settings so
+        # the route's count matches the notification edge count (one count
+        # everywhere).  Muted items get ``muted: true`` and are excluded
+        # from ``count`` but included in ``mutedCount``.
+        try:
+            from ...services.heartbeat_service import HeartbeatService
+            from ...db import get_database
+            hb = HeartbeatService(get_database())
+            muted_ids = set(hb.get_settings().get("muted_projects", []))
+        except Exception:
+            muted_ids = set()
+        if muted_ids:
+            unmuted = []
+            muted_count = 0
+            for item in aggregate.get("items", []):
+                if item.get("projectId") in muted_ids:
+                    item["muted"] = True
+                    muted_count += 1
+                else:
+                    item["muted"] = False
+                    unmuted.append(item)
+            aggregate["count"] = len(unmuted)
+            aggregate["mutedCount"] = muted_count
+        return aggregate
 
     _needs_you_cache = NeedsYouCache(_build_needs_you, max_age_s=900.0)
 

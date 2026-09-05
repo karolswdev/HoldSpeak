@@ -195,83 +195,85 @@ export function SystemShade({
         onClose={onClose}
       />
 
-      <section className="desk-shade-group" aria-label="Needs you">
-        <h4>
-          Needs you <b>&middot; {needsAttentionCount + gate.held.length}</b>
-        </h4>
-        {gate.held.map((proposal) => (
-          <div className="desk-shade-item desk-gate-item" key={proposal.id}>
-            <span className="desk-shade-glyph" aria-hidden="true">
-              ⊘
-            </span>
-            <div className="desk-shade-what">
-              <strong>
-                {humanizeWireValue(String(proposal.tool))} held
-              </strong>
-              <small>waiting {gateAge(proposal)}</small>
-              {denyingId === proposal.id ? (
-                <span className="desk-shade-do">
-                  <StringGadget
-                    label="Deny reason"
-                    placeholder="Reason for the agent, one line"
-                    value={denyReason}
-                    autoFocus
-                    onChange={setDenyReason}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
+      {/* HS-171-04: sections with zero items are ABSENT (A.8). When
+          every section is empty the shade shows one muted line. */}
+      {(needsAttentionCount + gate.held.length) > 0 ? (
+        <section className="desk-shade-group" aria-label="Needs you">
+          <h4>
+            Needs you <b>&middot; {needsAttentionCount + gate.held.length}</b>
+          </h4>
+          {gate.held.map((proposal) => (
+            <div className="desk-shade-item desk-gate-item" key={proposal.id}>
+              <span className="desk-shade-glyph" aria-hidden="true">
+                ⊘
+              </span>
+              <div className="desk-shade-what">
+                <strong>
+                  {humanizeWireValue(String(proposal.tool))} held
+                </strong>
+                <small>waiting {gateAge(proposal)}</small>
+                {denyingId === proposal.id ? (
+                  <span className="desk-shade-do">
+                    <StringGadget
+                      label="Deny reason"
+                      placeholder="Reason for the agent, one line"
+                      value={denyReason}
+                      autoFocus
+                      onChange={setDenyReason}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          void gate.decide(proposal.id, "denied", denyReason);
+                          setDenyingId(null);
+                          setDenyReason("");
+                        }
+                        if (event.key === "Escape") setDenyingId(null);
+                      }}
+                    />
+                    <MicButton draftScope="shade-deny" onText={(t: string) => setDenyReason(t)} />
+                    <Button
+                      dense
+                      variant="ghost"
+                      onClick={() => {
                         void gate.decide(proposal.id, "denied", denyReason);
                         setDenyingId(null);
                         setDenyReason("");
-                      }
-                      if (event.key === "Escape") setDenyingId(null);
-                    }}
-                  />
-                  <MicButton draftScope="shade-deny" onText={(t: string) => setDenyReason(t)} />
-                  <Button
-                    dense
-                    variant="ghost"
-                    onClick={() => {
-                      void gate.decide(proposal.id, "denied", denyReason);
-                      setDenyingId(null);
-                      setDenyReason("");
-                    }}
-                  >
-                    Send deny
-                  </Button>
-                  <Button
-                    dense
-                    variant="ghost"
-                    onClick={() => setDenyingId(null)}
-                  >
-                    Back
-                  </Button>
-                </span>
-              ) : (
-                <span className="desk-shade-do">
-                  <Button
-                    dense
-                    variant="primary"
-                    onClick={() => void gate.decide(proposal.id, "approved")}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    dense
-                    variant="ghost"
-                    onClick={() => {
-                      setDenyingId(proposal.id);
-                      setDenyReason("");
-                    }}
-                  >
-                    Deny
-                  </Button>
-                </span>
-              )}
+                      }}
+                    >
+                      Send deny
+                    </Button>
+                    <Button
+                      dense
+                      variant="ghost"
+                      onClick={() => setDenyingId(null)}
+                    >
+                      Back
+                    </Button>
+                  </span>
+                ) : (
+                  <span className="desk-shade-do">
+                    <Button
+                      dense
+                      variant="primary"
+                      onClick={() => void gate.decide(proposal.id, "approved")}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      dense
+                      variant="ghost"
+                      onClick={() => {
+                        setDenyingId(proposal.id);
+                        setDenyReason("");
+                      }}
+                    >
+                      Deny
+                    </Button>
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-        {needs.length ? (
-          needs.map((row) => (
+          ))}
+          {needs.map((row) => (
             <div className="desk-shade-item" key={row.id}>
               <span className="desk-shade-glyph" aria-hidden="true">
                 ◎
@@ -302,18 +304,16 @@ export function SystemShade({
                 </span>
               </div>
             </div>
-          ))
-        ) : gate.held.length ? null : (
-          <SurfaceState empty emptyLabel="Clear" />
-        )}
-      </section>
+          ))}
+        </section>
+      ) : null}
 
-      <section className="desk-shade-group" aria-label="Finished">
-        <h4>
-          Finished <b>&middot; {store.counts.receipts || 0}</b>
-        </h4>
-        {finished.length ? (
-          finished.map((row) => (
+      {finished.length > 0 ? (
+        <section className="desk-shade-group" aria-label="Finished">
+          <h4>
+            Finished <b>&middot; {finished.length}</b>
+          </h4>
+          {finished.map((row) => (
             <div className="desk-shade-item" key={row.id}>
               <span className="desk-shade-glyph" aria-hidden="true">
                 ✦
@@ -330,18 +330,16 @@ export function SystemShade({
                 </span>
               </div>
             </div>
-          ))
-        ) : (
-          <SurfaceState empty emptyLabel="No receipts" />
-        )}
-      </section>
+          ))}
+        </section>
+      ) : null}
 
-      <section className="desk-shade-group" aria-label="Learned">
-        <h4>
-          Learned <b>&middot; {(corrections ?? []).length}</b>
-        </h4>
-        {learned.length ? (
-          learned.map((row, index) => {
+      {learned.length > 0 ? (
+        <section className="desk-shade-group" aria-label="Learned">
+          <h4>
+            Learned <b>&middot; {learned.length}</b>
+          </h4>
+          {learned.map((row, index) => {
             const gist = row.gist
               ? String(row.gist)
               : row.kind
@@ -359,11 +357,14 @@ export function SystemShade({
                 </div>
               </div>
             );
-          })
-        ) : (
-          <SurfaceState empty emptyLabel="No corrections" />
-        )}
-      </section>
+          })}
+        </section>
+      ) : null}
+
+      {/* When EVERY section is empty: one muted caption. */}
+      {!needsYou?.items?.length && !brief && !(needsAttentionCount + gate.held.length) && !finished.length && !learned.length ? (
+        <p className="desk-shade-quiet">Nothing missed</p>
+      ) : null}
     </div>
   );
 }
