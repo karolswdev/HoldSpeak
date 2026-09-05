@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 172
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-172-03, HS-172-04
 - **Unblocks:** HS-172-07
 - **Owner:** unassigned
@@ -37,14 +37,14 @@ the chief-of-staff loop closed."
 
 ## Acceptance criteria
 
-- [ ] `one_on_one_brief` returns `watch_summary` with: PRs waiting on
+- [x] `one_on_one_brief` returns `watch_summary` with: PRs waiting on
       the person (list), oldest waiting days (int), open Jira
       assignments (list); verified by a unit test with a seeded
       Watch snapshot and a linked People alias.
-- [ ] The brief is transient: no writes to any store (the 138 law).
-- [ ] Watch data is read from persisted snapshots; no new evaluations
+- [x] The brief is transient: no writes to any store (the 138 law).
+- [x] Watch data is read from persisted snapshots; no new evaluations
       are triggered (verified by asserting no Watch evaluation calls).
-- [ ] When the People resolver finds no match (no alias linked), the
+- [x] When the People resolver finds no match (no alias linked), the
       Watch sections are empty (Article VI: honest at zero).
 
 ## Test plan
