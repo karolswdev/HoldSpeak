@@ -142,6 +142,35 @@ def _seed_meetings() -> None:
              (now - timedelta(days=9) + timedelta(minutes=12)).isoformat(),
              "Vendor call", 720.0),
         )
+
+        # 5. Dead recording — capture_status='recording' but session died
+        conn.execute(
+            "INSERT OR IGNORE INTO meetings "
+            "(id, started_at, ended_at, title, duration_seconds, "
+            " intel_status, capture_status, provenance) "
+            "VALUES (?, ?, ?, ?, ?, 'disabled', 'recording', 'desktop')",
+            ("m-dead-rec", (now - timedelta(days=21)).isoformat(),
+             None, "Standup gone wrong", 0.0),
+        )
+
+        # 6. Intelligence queued — capture finalized, intel queued
+        conn.execute(
+            "INSERT OR IGNORE INTO meetings "
+            "(id, started_at, ended_at, title, duration_seconds, "
+            " intel_status, capture_status, provenance) "
+            "VALUES (?, ?, ?, ?, ?, 'queued', 'finalized', 'desktop')",
+            ("m-queued", (now - timedelta(days=1)).isoformat(),
+             (now - timedelta(days=1) + timedelta(minutes=20)).isoformat(),
+             "Already titled", 1200.0),
+        )
+        for i in range(2):
+            conn.execute(
+                "INSERT INTO segments (meeting_id, text, speaker, start_time, end_time) "
+                "VALUES (?, ?, ?, ?, ?)",
+                ("m-queued", f"Quick word {i}",
+                 "Karol", float(i * 600), float((i + 1) * 600)),
+            )
+
         conn.commit()
 
 
@@ -241,6 +270,21 @@ class TestMeetingsGlass:
                 page_text = win.text_content() or ""
                 assert "0 SEG" not in page_text, (
                     f"'0 SEG' found in page at {width}"
+                )
+
+                # ── Assert: INTERRUPTED renders for dead capture, REC never does ──
+                assert "INTERRUPTED" in page_text, (
+                    f"'INTERRUPTED' not found at {width} for dead capture"
+                )
+                # REC must never appear as a state token (only INTERRUPTED)
+                state_tokens_text = page.evaluate("""() => {
+                    const body = document.querySelector('.desk-surface-body');
+                    if (!body) return '';
+                    const tokens = body.querySelectorAll('[data-testid="state-token"]');
+                    return Array.from(tokens).map(t => t.textContent).join('|');
+                }""")
+                assert "REC" not in state_tokens_text.split("|"), (
+                    f"'REC' state token found at {width}: {state_tokens_text}"
                 )
 
                 # ── Assert: no raw <button> in the face body ──
