@@ -247,7 +247,7 @@ def _seed_steward_ci_history(
             " expected_state_json, observed_state_json, "
             " idempotency_key, receipt_json, created_at, updated_at) "
             "VALUES (?, ?, 'observe', 1, '', 'completed', "
-            " '{}', ?, ?, NULL, ?, ?)",
+            " '{}', ?, ?, '{}', ?, ?)",
             (step_id, run_id, observed,
              f"observe-{run_id}", now_iso, now_iso),
         )

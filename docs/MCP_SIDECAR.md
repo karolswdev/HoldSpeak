@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-208 tools across 37 families. The default non-owner discovery lists 34
+211 tools across 39 families. The default non-owner discovery lists 34
 resources; the owner discovery lists 37 because access filtering admits 16
 static resources and 21 templates. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without touching the web UI.
@@ -57,7 +57,7 @@ default.
 
 ## Tool families
 
-The 208 tools are organized into domain families. Each tool follows the
+The 211 tools are organized into domain families. Each tool follows the
 `domain.verb` naming convention. Tool descriptions are the per-tool
 reference; this page covers the families and the cross-cutting rules.
 
@@ -424,7 +424,7 @@ marks a job done. Both refuse running jobs.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 208 tools across 37 families.
+**Registry totals:** 211 tools across 39 families.
 
 #### ask (4)
 
@@ -564,6 +564,11 @@ marks a job done. Both refuse running jobs.
 - `monday_brief.generate`
 - `monday_brief.get`
 
+#### nudge (2)
+
+- `nudge.dismiss`
+- `nudge.send`
+
 #### people (17)
 
 - `people.agenda.add`
@@ -687,6 +692,10 @@ marks a job done. Both refuse running jobs.
 - `settings.get`
 - `settings.hub`
 - `settings.update`
+
+#### steward (1)
+
+- `steward.nudges`
 
 #### thought (18)
 
@@ -856,7 +865,7 @@ consume it.
 
 `tools_for_palette(palette)` returns only the tools whose names are in
 the palette. A client that lists tools through this filter sees 50 tools
-instead of 208.
+instead of 211.
 
 `dispatch_for_palette(name, arguments, principal, palette)` dispatches
 a tool call only if `name` is in the palette. A name outside the palette
