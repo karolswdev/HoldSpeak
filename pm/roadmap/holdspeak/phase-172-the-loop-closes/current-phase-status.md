@@ -1,6 +1,13 @@
 # Phase 172 - The Loop Closes
 
-**Last updated:** 2026-09-05.
+**Last updated:** 2026-09-05 10:50 — ACTIVATED, stacked.
+
+**Decision (2026-09-05 10:50, under the owner's standing goal):** 172 builds
+NOW on branch `feat/the-loop-closes`, stacked on `feat/the-heartbeat` (PR
+#554) on `feat/the-great-pass` (PR #553). Every merge stays his, in
+order. The design ground is assets/settled-design-loop-closes.md (DRAFT
+until his word); boards from it, counsel, the wire meanwhile, the faces to
+the boards, the walk on his desk (his real meetings), the close.
 
 ## Goal
 
@@ -93,7 +100,7 @@ between a person's name and a Watch entity's assignee/reviewer.
 
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
-| HS-172-01 | The design (the Loop's faces on the canvas before build) | backlog | [story-01-the-design](./story-01-the-design.md) | -- |
+| HS-172-01 | The design (the Loop's faces on the canvas before build) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
 | HS-172-02 | The auto-intel trigger (intelligence by default after every linked meeting) | backlog | [story-02-the-auto-intel-trigger](./story-02-the-auto-intel-trigger.md) | -- |
 | HS-172-03 | The proposal bridge (extracted items as PROPOSALS in NEEDS YOU; Confirm writes through the kernel) | backlog | [story-03-the-proposal-bridge](./story-03-the-proposal-bridge.md) | -- |
 | HS-172-04 | The People resolver (display name / alias to Watch assignee / reviewer; encrypted boundary) | backlog | [story-04-the-people-resolver](./story-04-the-people-resolver.md) | -- |
