@@ -94,7 +94,21 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
    only by default — offer the content opt-in at launch or on ask); the
    Monday brief cadence (daily or every N hours); whether the
    transcription warm-up is one of the conductor's loops; 171 ∥ 172 or
-   strictly sequential. 172 + 173 charters follow the same way.
+   strictly sequential. 172 + 173 are CHARTERED as PLANNED the same way
+   (pm/roadmap/holdspeak/phase-172-the-loop-closes/ 10 stories L;
+   phase-173-the-stewards-hand-and-voice/ 9 stories M–L). Recon facts
+   that bind them: NO People↔Watch join exists today (the owner_alias
+   mechanism at people_service.py:637 is uncalled from the Watch path);
+   intelligence has NO trigger after capture (stop_capture never
+   enqueues; the run verb is manual); the model drafter
+   (_draft_with_model) is real code that has never run for lack of an
+   assignment; steward effects are all internal, `gh` read-only. His
+   questions for 172: trigger on stop_capture only or import too; which
+   plugin extracts decisions/actions or a new extractor; resolver on
+   display_name too; Confirm one-step through the kernel; People as a
+   section or as needs-you rows. For 173: nudge wording (named or
+   steward-anonymous); 48 h latency default; the readiness signal set;
+   nudge per-PR or per-person; `github.comment` as a sixth effect kind.
 
 ## 2. Laws learned this sitting (add to the canon of habit)
 

@@ -1032,6 +1032,8 @@ canon, canon wins.
 | 155 | Subthreads on the conductor's run loop with parent↔child notifications — a Thread that delegates. | not-started | [phase-155-the-crew](./phase-155-the-crew/) |
 | 170 | The Great Pass: the face canon written and mechanical; every surface shot and swept at the species; the Concierge and the top Tuesday faces rebuilt to their artboards; his walk face by face. | in-progress | [phase-170-the-great-pass](./phase-170-the-great-pass/) |
 | 171 | The Heartbeat: the desk reaches him — the sweep runs unattended, needs-you across Rooms in the shade and the dock, macOS notifications on the edge, the Monday brief recurring, PROJECTS in the command deck. | planned | [phase-171-the-heartbeat](./phase-171-the-heartbeat/) |
+| 172 | The Loop Closes: meetings produce decisions and action items as proposals confirmed through the kernel; the People-to-Watch resolver; the 1:1 brief from real signals; suggested sources from meeting mentions. | planned | [phase-172-the-loop-closes](./phase-172-the-loop-closes/) |
+| 173 | The Steward's Hand and Voice: the model drafter with claim refs; reviewer latency and issue aging; the first bounded external effect (the reviewer nudge) behind the policy gate with a receipt; release readiness. | planned | [phase-173-the-stewards-hand-and-voice](./phase-173-the-stewards-hand-and-voice/) |
 
 (Status values: `planning`, `in-progress`, `done`, `paused`, `cancelled`.)
 
