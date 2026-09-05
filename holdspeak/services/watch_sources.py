@@ -403,16 +403,102 @@ def drain_fetch_meta() -> dict[str, Any]:
 # ── Snapshot fetcher factory (rider-a: one shape for all callers) ───
 
 
+class ConfluenceWatchSource:
+    """Snapshot adapter for Confluence Watches via ConfluenceProviderAdapter.
+
+    HS-174-07.  Supports two query kinds:
+    - ``recent_blogs``: ``blog list --space-id S`` entities.
+    - ``pages_by_id``: ``page view --id`` for each configured page ID.
+
+    No ``page list`` or ``page search`` -- a query asking for it gets
+    a typed ``unsupported_by_cli`` error, never a silent empty snapshot.
+    """
+
+    def __init__(self, *, adapter: Any = None) -> None:
+        self._adapter = adapter
+
+    def snapshot(self, principal: Principal, *, query_kind: str,
+                 query: dict[str, Any]) -> list[dict[str, Any]]:
+        # M-1: clear-on-entry
+        drain_fetch_meta()
+
+        if query_kind not in ("recent_blogs", "pages_by_id"):
+            raise ValidationError(
+                f"Confluence Watches support recent_blogs and pages_by_id, "
+                f"not {query_kind!r}"
+            )
+
+        connection_ref_str = str(query.get("connection_ref") or "").strip()
+        if not connection_ref_str or "|" not in connection_ref_str:
+            raise ValidationError(
+                "Confluence Watch requires connection_ref (site|email)"
+            )
+
+        adapter = self._adapter
+        if adapter is None:
+            from holdspeak.db import get_database
+            from holdspeak.services.confluence_provider import ConfluenceProviderAdapter
+            adapter = ConfluenceProviderAdapter(db=get_database())
+
+        if query_kind == "recent_blogs":
+            space_id = str(query.get("space_id") or "").strip()
+            if not space_id:
+                raise ValidationError(
+                    "recent_blogs requires space_id in the query"
+                )
+            limit = max(1, min(int(query.get("limit") or 25), 100))
+            result = adapter.fetch_recent_blogs(
+                principal, connection_ref_str,
+                space_id=space_id, limit=limit,
+            )
+        elif query_kind == "pages_by_id":
+            page_ids = query.get("page_ids") or []
+            if not isinstance(page_ids, list):
+                page_ids = [str(page_ids)]
+            page_ids = [str(pid).strip() for pid in page_ids if str(pid).strip()]
+            if not page_ids:
+                # No page IDs configured -- return empty, not an error
+                return []
+            result = adapter.fetch_pages_by_id(
+                principal, connection_ref_str,
+                page_ids=page_ids,
+            )
+        else:
+            raise ValidationError(f"Unsupported query kind: {query_kind!r}")
+
+        state = result.get("state", "")
+        error_code = result.get("error_code")
+
+        if state != "ready":
+            from holdspeak.services.confluence_provider import CODE_UNSUPPORTED_BY_CLI
+            if error_code == CODE_UNSUPPORTED_BY_CLI:
+                raise ServiceError(
+                    "unsupported_by_cli",
+                    result.get("error_detail") or "Operation not supported by acli confluence",
+                )
+            code_map = {
+                "query_invalid": "connector_query_invalid",
+                "authentication_required": "authentication_required",
+                "unavailable": "connector_unavailable",
+            }
+            se_code = code_map.get(error_code or "", "connector_refresh_failed")
+            detail = result.get("error_detail") or "Confluence query failed"
+            raise ServiceError(se_code, str(detail)[:500])
+
+        return result.get("items", [])
+
+
 def default_snapshot_fetcher(
     *,
     github_runner: Runner | None = None,
     jira_adapter: Any | None = None,
+    confluence_adapter: Any | None = None,
 ) -> Callable[..., list[dict[str, Any]]]:
     """Build the canonical snapshot_fetcher callable.
 
-    HS-166-03 rider-a: ONE helper that web_server's _gh_watch_service_kwargs
-    AND project.py's _watch_service() both use, ensuring the same provider
-    injection shape for gh AND jira.
+    HS-166-03 rider-a / HS-174-07: ONE helper that web_server's
+    _gh_watch_service_kwargs AND project.py's _watch_service() both use,
+    ensuring the same provider injection shape for gh, jira, AND confluence.
     """
     def _fetcher(
         principal: Principal,
@@ -428,6 +514,7 @@ def default_snapshot_fetcher(
             query=query,
             github_runner=github_runner,
             jira_adapter=jira_adapter,
+            confluence_adapter=confluence_adapter,
         )
     return _fetcher
 
@@ -435,13 +522,18 @@ def default_snapshot_fetcher(
 def fetch_watch_snapshot(principal: Principal, *, connector_id: str,
                          query_kind: str, query: dict[str, Any],
                          github_runner: Runner | None = None,
-                         jira_adapter: Any | None = None) -> list[dict[str, Any]]:
+                         jira_adapter: Any | None = None,
+                         confluence_adapter: Any | None = None) -> list[dict[str, Any]]:
     if connector_id == "gh":
         return GitHubWatchSource(runner=github_runner).snapshot(
             principal, query_kind=query_kind, query=query,
         )
     if connector_id == "jira":
         return JiraWatchSource(adapter=jira_adapter).snapshot(
+            principal, query_kind=query_kind, query=query,
+        )
+    if connector_id == "confluence":
+        return ConfluenceWatchSource(adapter=confluence_adapter).snapshot(
             principal, query_kind=query_kind, query=query,
         )
     raise ServiceError(
