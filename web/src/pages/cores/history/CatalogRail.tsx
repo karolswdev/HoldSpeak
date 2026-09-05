@@ -1,272 +1,230 @@
-// HS-117-09 — extracted from HistoryCore (lines 938-1098).
-import { useState } from "react";
+// HS-170-04 — the meetings stream (the board's list face).
+// Each row: title at primary, date/duration/words/state tokens, verb at right.
+// Token separators: middle dot (U+00B7) between EVERY token, muted.
 import { Button } from "../../../components/signal/Signal";
 import {
-  SurfaceLedger,
-  SurfaceLedgerRow,
-  SurfaceSection,
   SurfaceState,
 } from "../../../desk/surface/Surface";
-import {
-  CheckGadget,
-  CycleGadget,
-  GadgetGroup,
-  GadgetRow,
-  StringGadget,
-} from "../../../desk/surface/gadgets";
-import { spriteUrl } from "../../../desk/sprites";
-import { SPARSE_THRESHOLD } from "../../../desk/surface/sparse";
-import { asRows, rowId } from "../../pageSupport";
+import { EgressChip } from "../../../desk/surface/gadgets";
+import { rowId } from "../../pageSupport";
 import { countToken } from "../../../desk/surface";
-import { stateToken, durationToken, ledgerDate } from "./helpers";
-import { StateTokenSpan } from "./StateTokenSpan";
-import type { MeetingsFacetsResponse } from "../core-types";
-import { apiFetch } from "../../../lib/api";
 import {
-  LedgerFilterBar,
-  type LedgerFilterToken,
-} from "../../../desk/surface/LedgerFilter";
+  durationToken, ledgerDate, wordsToken, needsIntelligence,
+  meetingRowState, stateToken,
+} from "./helpers";
+import type { ReactNode } from "react";
+
+/** Render a list of tokens joined by middle dots (U+00B7). */
+function TokenLine({ parts }: { parts: ReactNode[] }) {
+  const filtered = parts.filter(Boolean);
+  return (
+    <>
+      {filtered.map((part, i) => (
+        <span key={i}>
+          {i > 0 ? <span className="meetings-stream-dot" aria-hidden="true">{"·"}</span> : null}
+          {part}
+        </span>
+      ))}
+    </>
+  );
+}
+
+/** HS-170-04 — the stream row: title at primary, tokens under, verb right. */
+function MeetingStreamRow({
+  row,
+  isSelected,
+  onSelect,
+  onRunIntelligence,
+  runningId,
+  runHost,
+}: {
+  row: Record<string, unknown>;
+  isSelected: boolean;
+  onSelect: () => void;
+  onRunIntelligence: (id: string) => void;
+  runningId: string | null;
+  runHost: string | null;
+}) {
+  const state = meetingRowState(row);
+  const words = wordsToken(row.transcriptWords);
+  const noTranscript = row.transcriptWords == null;
+  const isRunning = runningId === String(row.id);
+  const needsYouCount = Number(row.needs_you_count ?? row.needsYouCount ?? 0);
+
+  // The board: NEEDS YOU N (accent) replaces OFF/SAVED for meetings with outcomes
+  const token = stateToken(row);
+  let displayLabel = state.label;
+  let displayTone = state.tone;
+  if (needsYouCount > 0 && token.label === "SAVED") {
+    displayLabel = countToken(needsYouCount, "NEEDS YOU", "NEED YOU") ?? "";
+    displayTone = "accent";
+  } else if (needsYouCount > 0 && token.label !== "OFF") {
+    displayLabel = countToken(needsYouCount, "NEEDS YOU", "NEED YOU") ?? displayLabel;
+    displayTone = "accent";
+  }
+
+  // If the job is running, override the state
+  if (isRunning) {
+    displayLabel = "RUNNING";
+    displayTone = "warn";
+  }
+
+  // Build token parts: SEP 04 · 30 MIN · 1,204 WORDS · OFF
+  const dateStr = ledgerDate(row.started_at ?? row.created_at);
+  const dur = durationToken(row.duration_seconds);
+
+  // Assemble all parts for the token line
+  const tokenParts: ReactNode[] = [];
+  if (dateStr) tokenParts.push(
+    <span className="meetings-stream-fact">{dateStr}</span>
+  );
+  if (dur) tokenParts.push(
+    <span className="meetings-stream-fact">{dur}</span>
+  );
+  if (words) tokenParts.push(
+    <span className="meetings-stream-fact">{words}</span>
+  );
+  // The state token or NO TRANSCRIPT
+  if (noTranscript && token.label === "OFF") {
+    tokenParts.push(
+      <span className="meetings-stream-no-transcript" data-testid="no-transcript-token">
+        NO TRANSCRIPT
+      </span>
+    );
+  } else if (displayLabel) {
+    tokenParts.push(
+      <span
+        className="surface-token"
+        data-chip
+        data-tone={displayTone}
+        data-testid="state-token"
+      >
+        {displayLabel}
+      </span>
+    );
+  }
+
+  // Determine verb
+  let verb = state.verb;
+  let verbVariant = state.verbVariant;
+  if (isRunning) {
+    verb = null;
+    verbVariant = "ghost";
+  }
+  // No transcript row: only ghost Open (no Run intelligence)
+  if (noTranscript && token.label === "OFF") {
+    verb = "Open";
+    verbVariant = "ghost";
+  }
+
+  // Compact line for narrowed mode: "SEP 04 · OFF"
+  const compactParts: string[] = [];
+  if (dateStr) compactParts.push(dateStr);
+  compactParts.push(displayLabel || "");
+
+  return (
+    <div
+      className="meetings-stream-row"
+      data-selected={isSelected || undefined}
+      data-testid={`meeting-row-${String(row.id)}`}
+    >
+      {/* Clickable body: a div with role/tabindex, not a <button> */}
+      <div
+        role="button"
+        tabIndex={0}
+        className="meetings-stream-row-body"
+        onClick={onSelect}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(); } }}
+      >
+        <div className="meetings-stream-row-head">
+          <span className="surface-primary meetings-stream-title">
+            {String(row.title ?? "Meeting")}
+          </span>
+          {/* Compact fact line for narrowed mode */}
+          <span className="meetings-stream-compact-facts">
+            {compactParts.filter(Boolean).join(" · ")}
+          </span>
+        </div>
+        <div className="meetings-stream-tokens">
+          <TokenLine parts={tokenParts} />
+        </div>
+      </div>
+      <div className="meetings-stream-row-verb">
+        {isRunning && runHost ? (
+          <EgressChip label={runHost} />
+        ) : null}
+        {verb ? (
+          <Button
+            dense
+            variant={verbVariant === "primary" ? "primary" : "ghost"}
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              if (verb === "Run intelligence") {
+                onRunIntelligence(String(row.id));
+              } else {
+                onSelect();
+              }
+            }}
+            data-testid={verb === "Run intelligence" ? "run-intelligence-btn" : undefined}
+          >
+            {verb}
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 export function CatalogRail({
   meetingRows,
   meetings,
-  facets,
   selected,
   setSelected,
-  query,
-  setQuery,
-  filterTokens,
-  removeFilterToken,
-  clearFilter,
-  filterActive,
-  filterTotal,
-  filtersOpen,
-  setFiltersOpen,
-  dateFrom,
-  setDateFrom,
-  dateTo,
-  setDateTo,
-  speaker,
-  setSpeaker,
-  tag,
-  setTag,
-  openActions,
-  setOpenActions,
-  needing,
+  onRunIntelligence,
+  runningId,
+  runHost,
+  narrowed,
 }: {
   meetingRows: Record<string, unknown>[];
   meetings: { loading: boolean; error: string; reload(): Promise<unknown> };
-  facets: { data: Record<string, unknown> };
   selected: Record<string, unknown> | null;
   setSelected: (row: Record<string, unknown> | null) => void;
-  query: string;
-  setQuery: (value: string) => void;
-  filterTokens: LedgerFilterToken[];
-  removeFilterToken: (field: string, value: string) => void;
-  clearFilter: () => void;
-  filterActive: boolean;
-  filterTotal: number;
-  filtersOpen: boolean;
-  setFiltersOpen: (fn: (open: boolean) => boolean) => void;
-  dateFrom: string;
-  setDateFrom: (value: string) => void;
-  dateTo: string;
-  setDateTo: (value: string) => void;
-  speaker: string;
-  setSpeaker: (value: string) => void;
-  tag: string;
-  setTag: (value: string) => void;
-  openActions: boolean;
-  setOpenActions: (value: boolean) => void;
-  needing: number;
+  onRunIntelligence: (id: string) => void;
+  runningId: string | null;
+  runHost: string | null;
+  /** When true, shown as the narrowed left side in SurfaceSplit. */
+  narrowed?: boolean;
 }) {
   return (
-    <SurfaceSection label="Meetings">
-      <SurfaceLedger
-        cols="meetings"
-        count={[countToken(meetingRows.length, "RECORD"), countToken(needing, "NEEDS YOU", "NEED YOU")].filter(Boolean).join(" · ") || undefined}
-        controls={
-          <>
-            <LedgerFilterBar
-              query={query}
-              onQueryChange={setQuery}
-              tokens={filterTokens}
-              onRemoveToken={removeFilterToken}
-              onClear={clearFilter}
-              total={filterTotal}
-              matchCount={meetingRows.length}
-              isActive={filterActive}
-              itemCount={filterTotal}
-            />
-            {filterTotal >= SPARSE_THRESHOLD ? (
-              <Button
-                dense
-                variant="ghost"
-                aria-expanded={filtersOpen}
-                onClick={() => setFiltersOpen((open) => !open)}
-              >
-                Filters
-              </Button>
-            ) : null}
-          </>
-        }
+    <div className="meetings-stream" data-narrowed={narrowed || undefined}>
+      <SurfaceState
+        loading={meetings.loading}
+        error={meetings.error}
+        empty={!meetingRows.length}
+        emptyLabel="No meetings yet"
+        onRetry={() => void meetings.reload()}
       >
-        {filtersOpen ? (
-          /* Filters apply on change (the resource re-fetches on param
-             change); one RESET verb, no submit wall. */
-          <GadgetGroup label="Filters">
-            <GadgetRow label="SPEAKER">
-              <CycleGadget
-                label="Speaker"
-                value={speaker}
-                onChange={setSpeaker}
-                options={[
-                  { value: "", label: "ANY" },
-                  ...asRows(facets.data, ["speakers"]).map((row) => ({
-                    value: String(row.id ?? row.name ?? row.value),
-                    label: String(row.name ?? row.label ?? row.value),
-                  })),
-                ]}
-              />
-            </GadgetRow>
-            <GadgetRow label="TAG">
-              <CycleGadget
-                label="Tag"
-                value={tag}
-                onChange={setTag}
-                options={[
-                  { value: "", label: "ANY" },
-                  ...(Array.isArray(facets.data.tags)
-                    ? facets.data.tags
-                    : []
-                  ).map((value) => ({ value: String(value) })),
-                ]}
-              />
-            </GadgetRow>
-            <GadgetRow label="FROM">
-              <StringGadget
-                label="From date"
-                type="date"
-                mic={false}
-                value={dateFrom}
-                onChange={setDateFrom}
-              />
-            </GadgetRow>
-            <GadgetRow label="TO">
-              <StringGadget
-                label="To date"
-                type="date"
-                mic={false}
-                value={dateTo}
-                onChange={setDateTo}
-              />
-            </GadgetRow>
-            <GadgetRow label="OPEN ACTIONS">
-              <CheckGadget
-                label="Only meetings with open actions"
-                checked={openActions}
-                onChange={setOpenActions}
-              />
-            </GadgetRow>
-            <div className="surface-actions">
-              <Button
-                dense
-                variant="ghost"
-                onClick={() => {
-                  clearFilter();
-                  setDateFrom("");
-                  setDateTo("");
-                  setSpeaker("");
-                  setTag("");
-                  setOpenActions(false);
-                }}
-              >
-                Reset
-              </Button>
-            </div>
-          </GadgetGroup>
-        ) : null}
-        <SurfaceState
-          loading={meetings.loading}
-          error={meetings.error}
-          empty={!meetingRows.length}
-          emptyLabel="Nothing here yet"
-          emptyImage={spriteUrl("meeting", "archive-empty")}
-          onRetry={() => void meetings.reload()}
-        >
-          <ul className="surface-ledger-rows">
-            {meetingRows.map((row, index) => {
-              const token = stateToken(row);
-              const isOpen = Boolean(
+        <div className="meetings-stream-rows">
+          {meetingRows.map((row, index) => (
+            <MeetingStreamRow
+              key={rowId(row, index)}
+              row={row}
+              isSelected={Boolean(
                 selected && String(selected.id) === String(row.id),
-              );
-              const recoverable = [
-                "capture_failed",
-                "recoverable",
-                "recording",
-              ].includes(String(row.capture_status ?? ""));
-              const originLine = row.calendar_event_id ? (
-                <span
-                  className="surface-ledger-origin"
-                  data-meeting-origin="calendar-event"
-                >
-                  {`FROM ${String(row.calendar_source_label || "CALENDAR").toUpperCase()}`}
-                  {row.calendar_event_title
-                    ? ` · ${String(row.calendar_event_title).toUpperCase()}`
-                    : ""}
-                </span>
-              ) : null;
-              return (
-                <SurfaceLedgerRow
-                  key={rowId(row, index)}
-                  time={ledgerDate(row.started_at ?? row.created_at)}
-                  primary={
-                    originLine ? (
-                      <>
-                        {String(row.title ?? "Meeting")}
-                        {originLine}
-                      </>
-                    ) : (
-                      String(row.title ?? "Meeting")
-                    )
-                  }
-                  open={isOpen}
-                  onToggle={() => setSelected(isOpen ? null : row)}
-                  cells={
-                    <>
-                      <span className="surface-ledger-cell">
-                        {countToken(Number(row.segment_count ?? 0), "SEG") ?? ""}
-                      </span>
-                      <span className="surface-ledger-cell">
-                        {durationToken(row.duration_seconds)}
-                      </span>
-                      <span className="surface-ledger-cell">
-                        <StateTokenSpan token={token} />
-                      </span>
-                    </>
-                  }
-                >
-                  {recoverable ? (
-                    <div className="surface-row-verbs">
-                      <Button
-                        dense
-                        onClick={() =>
-                          void apiFetch(
-                            `/api/meetings/${encodeURIComponent(String(row.id))}/capture/recover`,
-                            { method: "POST" },
-                          ).then(() => meetings.reload())
-                        }
-                      >
-                        Recover saved work
-                      </Button>
-                    </div>
-                  ) : null}
-                </SurfaceLedgerRow>
-              );
-            })}
-          </ul>
-        </SurfaceState>
-      </SurfaceLedger>
-    </SurfaceSection>
+              )}
+              onSelect={() => {
+                const isOpen = Boolean(
+                  selected && String(selected.id) === String(row.id),
+                );
+                setSelected(isOpen ? null : row);
+              }}
+              onRunIntelligence={onRunIntelligence}
+              runningId={runningId}
+              runHost={runHost}
+            />
+          ))}
+        </div>
+      </SurfaceState>
+    </div>
   );
 }

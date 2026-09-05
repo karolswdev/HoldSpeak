@@ -211,7 +211,7 @@ export function useMeetingData(
         return {
           cells: [
             <span key="what" title={presentValue(row.preview ?? row.body ?? "")}>
-              {String(row.title ?? row.kind ?? "Proposed action")}
+              {String(row.title ?? row.preview ?? row.kind ?? "Proposed action")}
             </span>,
             <span key="facts" title={facts}>
               {facts}

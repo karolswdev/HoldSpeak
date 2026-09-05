@@ -1,35 +1,40 @@
+// HS-170-04 — the Meetings face, rewritten to the settled design.
+// Board: display headline + Record/Import + stream rows + SurfaceSplit detail.
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-// HS-117-09 — decomposed shell: sub-components live in ./history/.
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { openSurfaceOr } from "../../desk/shell";
-import type {
-  CoreProps,
-  MeetingsListResponse,
-  MeetingsFacetsResponse,
-  AllActionItemsResponse,
-  SpeakersResponse,
-  ProjectsListResponse,
-  IntelJobsResponse,
-  PluginJobsResponse,
-  MeetingDetailResponse,
-} from "./core-types";
+import type { CoreProps, MeetingsListResponse, MeetingDetailResponse } from "./core-types";
 import { Button } from "../../components/signal/Signal";
-import { apiBlob, apiFetch, readableError } from "../../lib/api";
-import { asRows, useResource } from "../pageSupport";
-import { ConfirmVerb, SurfaceSplit, SurfaceState } from "../../desk/surface/Surface";
+import { apiFetch, apiBlob, readableError } from "../../lib/api";
+import { asRows } from "../pageSupport";
+import { useResource } from "../pageSupport";
+import { ConfirmVerb, SurfaceSplit } from "../../desk/surface/Surface";
 import { countToken } from "../../desk/surface";
 import { EgressChip } from "../../desk/surface/gadgets";
-import { useLedgerFilter } from "../../desk/surface/LedgerFilter";
 import { useCoreWings } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
 import {
-  WINGS, stateToken, clockTime, download, type Receipt,
-  MeetingDetail, ImportSection, CatalogRail, DoorSection,
+  WINGS, clockTime, download, needsIntelligence, type Receipt,
+  MeetingDetail, ImportSection, CatalogRail,
 } from "./history";
 
+/** HS-170-04 — the display headline: `N meeting(s) need intelligence` (accent)
+ *  or `Nothing needs you` (muted) or `No meetings yet` when empty. */
+function meetingsHeadline(
+  meetingRows: Record<string, unknown>[],
+  loading: boolean,
+): { text: string; accent: boolean } {
+  if (loading) return { text: "", accent: false };
+  if (meetingRows.length === 0) return { text: "No meetings yet", accent: false };
+  const offWithWords = meetingRows.filter(needsIntelligence).length;
+  if (offWithWords > 0) {
+    const noun = offWithWords === 1 ? "meeting needs" : "meetings need";
+    return { text: `${offWithWords} ${noun} intelligence`, accent: true };
+  }
+  return { text: "Nothing needs you", accent: false };
+}
+
 export function HistoryCore({ hero, scope }: CoreProps) {
-  // Scope arrives as a prop (a qualified ref, e.g. "meeting:<id>") — the
-  // flat wrapper decodes the URL; the desk passes it straight.
   const requestedMeetingScope =
     scope && scope.startsWith("meeting:")
       ? scope.slice("meeting:".length)
@@ -40,12 +45,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     ? Number(new URLSearchParams(requestedMeetingQuery).get("segment"))
     : null;
   const wings = useCoreWings(WINGS, "outcomes", "Meeting plumbing");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [speaker, setSpeaker] = useState("");
-  const [tag, setTag] = useState("");
-  const [openActions, setOpenActions] = useState(false);
   const [selected, setSelected] = useState<Record<string, unknown> | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [removing, setRemoving] = useState(false);
@@ -53,55 +52,18 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     string | null
   >(null);
   const [requestedMeetingError, setRequestedMeetingError] = useState("");
-  const [queueStatus, setQueueStatus] = useState("pending");
-  // HS-132-12: archive search rides the backend contract (transcript-aware,
-  // beyond the newest page). The ledger query mirrors into the fetch after a
-  // pause; while a server search is active the client title filter yields.
-  const [query, setBackendQuery] = useState("");
-  const meetingParams = new URLSearchParams({ limit: "100" });
-  if (query) meetingParams.set("search", query);
-  if (dateFrom) meetingParams.set("date_from", dateFrom);
-  if (dateTo) meetingParams.set("date_to", dateTo);
-  if (speaker) meetingParams.set("speaker", speaker);
-  if (tag) meetingParams.set("tag", tag);
-  if (openActions) meetingParams.set("has_open_actions", "true");
-  const meetings = useResource<MeetingsListResponse>(`/api/meetings?${meetingParams}`, {});
-  const facets = useResource<MeetingsFacetsResponse>("/api/meetings/facets", {});
-  const actions = useResource<AllActionItemsResponse>("/api/all-action-items", {});
-  const speakers = useResource<SpeakersResponse>("/api/speakers", {});
-  const projects = useResource<ProjectsListResponse>("/api/projects", {});
-  const intel = useResource<IntelJobsResponse>(
-    `/api/intel/jobs?status=${queueStatus}&limit=50&history_limit=5`,
-    {},
-  );
-  const plugin = useResource<PluginJobsResponse>(
-    `/api/plugin-jobs?status=${queueStatus}&limit=50`,
-    {},
-  );
+
+  // Intelligence run state
+  const [runningId, setRunningId] = useState<string | null>(null);
+  const [runHost, setRunHost] = useState<string | null>(null);
+
+  const meetings = useResource<MeetingsListResponse>("/api/meetings?limit=100", {});
   const meetingRows = useMemo(
     () => asRows(meetings.data, ["meetings"]),
     [meetings.data],
   );
-  const {
-    query: liveQuery,
-    setQuery,
-    tokens,
-    removeToken,
-    clear: clearFilter,
-    filtered: filteredMeetings,
-    isActive: isFilterActive,
-    total: meetingTotal,
-  } = useLedgerFilter(meetingRows, {
-    key: "meetings",
-    match: (meeting, search) =>
-      query.length > 0
-        ? true
-        : String(meeting.title ?? "").toLowerCase().includes(search.toLowerCase()),
-  });
-  useEffect(() => {
-    const settle = setTimeout(() => setBackendQuery(liveQuery.trim()), 350);
-    return () => clearTimeout(settle);
-  }, [liveQuery]);
+
+  // Open requested meeting from scope
   const requestedMeeting = useMemo(
     () =>
       requestedMeetingId
@@ -136,11 +98,76 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     requestedMeeting,
     requestedMeetingId,
   ]);
+
+  // Run intelligence on a meeting
+  const handleRunIntelligence = useCallback(async (meetingId: string) => {
+    setRunningId(meetingId);
+    setRunHost(null);
+    try {
+      const result = await apiFetch<{ jobId: string; state: string; host: string }>(
+        `/api/meetings/${encodeURIComponent(meetingId)}/intelligence/run`,
+        { method: "POST" },
+      );
+      setRunHost(result.host ?? "THIS DEVICE");
+      setReceipt({ text: `QUEUED ${clockTime(new Date().toISOString())}` });
+      // Poll for completion
+      const poll = setInterval(async () => {
+        try {
+          const statusResp = await apiFetch<MeetingDetailResponse>(
+            `/api/meetings/${encodeURIComponent(meetingId)}`,
+          );
+          const intelStatus = statusResp?.intel_status;
+          const state = typeof intelStatus === "object" && intelStatus !== null
+            ? String((intelStatus as Record<string, unknown>).state ?? "")
+            : String(intelStatus ?? "");
+          if (state !== "queued" && state !== "running" && state !== "pending") {
+            clearInterval(poll);
+            setRunningId(null);
+            setRunHost(null);
+            void meetings.reload();
+          }
+        } catch {
+          clearInterval(poll);
+          setRunningId(null);
+          setRunHost(null);
+        }
+      }, 3000);
+      // Safety timeout
+      setTimeout(() => {
+        clearInterval(poll);
+        setRunningId((current) => {
+          if (current === meetingId) {
+            void meetings.reload();
+            return null;
+          }
+          return current;
+        });
+        setRunHost(null);
+      }, 120_000);
+    } catch (reason) {
+      setRunningId(null);
+      setRunHost(null);
+      const msg = readableError(reason);
+      setReceipt({ text: `REFUSED · ${msg}`, tone: "danger" });
+    }
+  }, [meetings]);
+
+  // The headline
+  const headline = meetingsHeadline(meetingRows, meetings.loading);
+
+  // Verbs in the head
   const verbs = (
     <>
       <Button
         variant="primary"
         dense
+        onClick={() => openSurfaceOr("record-live", "/live", scope)}
+      >
+        Record meeting
+      </Button>
+      <Button
+        dense
+        variant="ghost"
         onClick={() => {
           wings.setDoorOpen(false);
           wings.setView("record");
@@ -148,20 +175,10 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       >
         Import
       </Button>
-      <Button
-        dense
-        variant="secondary"
-        onClick={() => openSurfaceOr("record-live", "/live", scope)}
-      >
-        Record meeting
-      </Button>
     </>
   );
-  const filtered = Boolean(
-    isFilterActive || speaker || tag || dateFrom || dateTo || openActions,
-  );
-  /* HS-111-03 — the footer's export/delete verbs act on the OPEN
-     record; receipts land in the same bar's center channel. */
+
+  // Footer export verbs
   const exportMeeting = async (format: string) => {
     if (!selected) return;
     const id = String(selected.id);
@@ -201,47 +218,17 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       setRemoving(false);
     }
   };
-  const needing = filteredMeetings.filter((row) => stateToken(row).tone).length;
 
   const rail = (
     <CatalogRail
-      meetingRows={filteredMeetings}
+      meetingRows={meetingRows}
       meetings={meetings}
-      facets={facets}
       selected={selected}
       setSelected={setSelected}
-      query={liveQuery}
-      setQuery={setQuery}
-      filterTokens={tokens}
-      removeFilterToken={removeToken}
-      clearFilter={clearFilter}
-      filterActive={isFilterActive}
-      filterTotal={meetingTotal}
-      filtersOpen={filtersOpen}
-      setFiltersOpen={setFiltersOpen}
-      dateFrom={dateFrom}
-      setDateFrom={setDateFrom}
-      dateTo={dateTo}
-      setDateTo={setDateTo}
-      speaker={speaker}
-      setSpeaker={setSpeaker}
-      tag={tag}
-      setTag={setTag}
-      openActions={openActions}
-      setOpenActions={setOpenActions}
-      needing={needing}
-    />
-  );
-
-  const door = (
-    <DoorSection
-      actions={actions}
-      speakers={speakers}
-      projects={projects}
-      intel={intel}
-      plugin={plugin}
-      queueStatus={queueStatus}
-      setQueueStatus={setQueueStatus}
+      onRunIntelligence={(id) => void handleRunIntelligence(id)}
+      runningId={runningId}
+      runHost={runHost}
+      narrowed={Boolean(selected)}
     />
   );
 
@@ -253,12 +240,15 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       onClose={() => setSelected(null)}
       onDeleted={() => void meetings.reload()}
       onReceipt={setReceipt}
+      onRunIntelligence={
+        selected && needsIntelligence(selected)
+          ? () => void handleRunIntelligence(String(selected.id))
+          : undefined
+      }
     />
   );
 
-  const face = wings.doorOpen ? (
-    door
-  ) : wings.view === "record" ? (
+  const face = wings.view === "record" ? (
     <ImportSection
       onDone={() => wings.setView("outcomes")}
       onImported={() => void meetings.reload()}
@@ -268,34 +258,48 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     selected ? (
       detailPane("artifacts")
     ) : (
-      /* The wing works from cold: no record open → the catalog, so
-         the hand can pick one. Never a dead-end empty state. */
       rail
     )
   ) : (
-    <div className="surface-split-railed">
-      <SurfaceSplit
-        main={rail}
-        detailOpen={Boolean(selected)}
-        detail={detailPane("outcomes")}
-      />
-    </div>
+    <>
+      {/* HS-170-04: the headline (display step, ONE per face) */}
+      <div className="meetings-headline" data-accent={headline.accent || undefined}>
+        <span className="surface-display" data-testid="meetings-headline">
+          {headline.text}
+        </span>
+      </div>
+
+      {/* Head verbs */}
+      <div className="meetings-head-verbs">
+        {verbs}
+      </div>
+
+      {/* The stream + detail split */}
+      <div className="surface-split-railed">
+        <SurfaceSplit
+          main={rail}
+          detailOpen={Boolean(selected)}
+          detail={detailPane("outcomes")}
+        />
+      </div>
+    </>
   );
 
   return (
     <>
-      {renderHeroSlot(hero, verbs)}
+      {renderHeroSlot(hero, null)}
       {requestedMeetingError ? (
-        <SurfaceState
-          error={requestedMeetingError}
-          onRetry={() => {
+        <div className="surface-state-error">
+          <span>{requestedMeetingError}</span>
+          <Button dense variant="ghost" onClick={() => {
             setRequestedMeetingError("");
             setOpenedRequestedMeetingId(null);
-          }}
-        />
+          }}>
+            Retry
+          </Button>
+        </div>
       ) : null}
       {face}
-      {/* HS-129-05 — receipt and verbs occupy their frame-owned slots. */}
       <SurfaceFooter
         egress={<EgressChip />}
         receipt={
@@ -306,38 +310,16 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           >
             {receipt
               ? receipt.text
-              : [countToken(filteredMeetings.length, "RECORD"), filtered ? "FILTERED" : null].filter(Boolean).join(" · ") || "RECORDS"}
+              : countToken(meetingRows.length, "RECORD") ?? "RECORDS"}
           </span>
         }
         verbs={
-          selected && !wings.doorOpen && wings.view !== "record" ? (
+          selected && wings.view !== "record" ? (
             <span className="surface-footer-verbs-group">
-              <Button
-                dense
-                variant="ghost"
-                onClick={() => void exportMeeting("markdown")}
-              >
+              <Button dense variant="ghost" onClick={() => void exportMeeting("markdown")}>
                 MD
               </Button>
-              <Button
-                dense
-                variant="ghost"
-                onClick={() => void exportMeeting("txt")}
-              >
-                TXT
-              </Button>
-              <Button
-                dense
-                variant="ghost"
-                onClick={() => void exportMeeting("json")}
-              >
-                JSON
-              </Button>
-              <Button
-                dense
-                variant="ghost"
-                onClick={() => void exportMeeting("srt")}
-              >
+              <Button dense variant="ghost" onClick={() => void exportMeeting("srt")}>
                 SRT
               </Button>
               <ConfirmVerb

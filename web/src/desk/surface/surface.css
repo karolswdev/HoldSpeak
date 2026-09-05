@@ -3538,7 +3538,7 @@ button.surface-edit-in-place:hover {
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--text-dimmed);
-  margin: 0 2px;
+  margin: 0 0.5ch;
 }
 .meetings-stream-no-transcript {
   font-family: var(--font-mono);

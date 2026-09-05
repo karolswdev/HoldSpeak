@@ -1,8 +1,6 @@
-// HS-117-09 — extracted from HistoryCore.tsx (lines 317-781).
-// Thin composition shell over useMeetingData + sub-components.
+// HS-170-04 — the meeting detail pane (the board's right side).
+// Display title + tokens, NEEDS YOU section, TRANSCRIPT well, settled list.
 import { SurfaceSection } from "../../../desk/surface/Surface";
-import { SurfaceCode, SurfaceWell } from "../../../desk/surface/Surface";
-import { FoldGadget } from "../../../desk/surface/gadgets";
 import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
 import { apiFetch } from "../../../lib/api";
@@ -14,7 +12,6 @@ import { ArtifactsLibrary } from "./ArtifactsLibrary";
 import { NeedsYouTable } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
 import { SettledList } from "./SettledList";
-import { AftercareGadgets } from "./AftercareGadgets";
 
 export function MeetingDetail({
   meeting,
@@ -23,6 +20,7 @@ export function MeetingDetail({
   onClose,
   onDeleted,
   onReceipt,
+  onRunIntelligence,
 }: {
   meeting: Record<string, unknown> | null;
   /** "outcomes" (the face) or "artifacts" (the wing). */
@@ -33,6 +31,7 @@ export function MeetingDetail({
   onDeleted(): void;
   /** HS-111-03 — outcomes land on the footer receipt bar. */
   onReceipt(receipt: Receipt): void;
+  onRunIntelligence?: () => void;
 }) {
   const id = String(meeting?.id ?? "");
   const data = useMeetingData(meeting, onReceipt);
@@ -41,13 +40,7 @@ export function MeetingDetail({
     setDetail,
     segments,
     artifactRows,
-    timelineRows,
-    aftercare,
-    authority,
-    busy,
-    proposeSlack,
     intelOff,
-    hasOutcomes,
     needsRows,
     needsCount,
     settledActions,
@@ -56,11 +49,13 @@ export function MeetingDetail({
   if (!meeting) return null;
 
   const meetingTitle = String(detail?.title ?? meeting.title ?? "Meeting");
+  const hasTranscript = segments.length > 0 || (
+    meeting.transcriptWords != null && Number(meeting.transcriptWords) > 0
+  );
 
   return (
     <SurfaceSection>
-      <MeetingHeader meeting={meeting} data={data} onClose={onClose} />
-      {/* 1 — attention slabs, only when real. */}
+      <MeetingHeader meeting={meeting} data={data} />
       <CaptureSlab detail={detail} meeting={meeting} />
       <MeetingConflictRecovery
         meetingId={id}
@@ -87,39 +82,19 @@ export function MeetingDetail({
         />
       ) : (
         <>
-          {/* 2 — what needs you: pending receipts in ONE dense table.
-              Intelligence OFF says so as a token, never a sentence. */}
           <NeedsYouTable
             needsRows={needsRows}
             needsCount={needsCount}
             intelOff={intelOff}
-            hasOutcomes={hasOutcomes}
+            hasTranscript={hasTranscript}
+            onRunIntelligence={onRunIntelligence}
           />
-          {/* 3 — THE TRANSCRIPT WELL: always visible, never folded. */}
           <TranscriptWell
             id={id}
             segments={segments}
             momentSegmentIndex={momentSegmentIndex}
           />
-          {/* 4 — settled: quiet ledger lines. */}
           <SettledList settledActions={settledActions} />
-          {/* 5 — the routing receipt stays folded, in its own well. */}
-          {timelineRows.length ? (
-            <FoldGadget title="RAW · ROUTING">
-              <SurfaceWell head={`RAW · ROUTING · ${timelineRows.length}`}>
-                <SurfaceCode>
-                  {JSON.stringify(timelineRows, null, 2)}
-                </SurfaceCode>
-              </SurfaceWell>
-            </FoldGadget>
-          ) : null}
-          {/* 6 — aftercare rides the gadget grammar, only when wired. */}
-          <AftercareGadgets
-            aftercare={aftercare}
-            authority={authority}
-            busy={busy}
-            proposeSlack={proposeSlack}
-          />
         </>
       )}
     </SurfaceSection>
