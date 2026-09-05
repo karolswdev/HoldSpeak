@@ -295,11 +295,11 @@ class TestRecheck:
 
 
 class TestShape:
-    def test_all_four_tools_returned(self) -> None:
+    def test_all_five_tools_returned(self) -> None:
         svc = ConnectionsService()
         result = svc.list_tools(OWNER)
         ids = [t["provider_id"] for t in result["tools"]]
-        assert ids == ["github", "jira", "calendar", "models"]
+        assert ids == ["github", "jira", "confluence", "calendar", "models"]  # HS-174: Confluence is the third source
 
     def test_every_entry_has_required_fields(self) -> None:
         svc = ConnectionsService()

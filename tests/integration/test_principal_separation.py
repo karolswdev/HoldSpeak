@@ -220,6 +220,7 @@ def test_loopback_classifier_has_no_request_authority_callers() -> None:
     assert found == {
         ("web_auth.py", "nonloopback_bind_blocked"),
         ("mesh.py", "should_advertise"),
+        ("web/routes/mcp_http.py", "mcp_http_endpoint"),  # HS-174 C5: the per-route guard refusing OWNER off-loopback (XI:4); classifies, never grants
         ("web_server.py", "__init__"),
         ("web_server.py", "start"),
         ("web_server.py", "_start_mesh_advertising"),
