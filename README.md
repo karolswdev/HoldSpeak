@@ -101,7 +101,6 @@ after quiet hours close. The notification is a local `osascript` banner
 posted through the system's notification center; click-to-open is not
 yet wired (the packaged app bundle is a later phase). Configure the
 interval, quiet hours, and notification mode under **Settings, Rhythm**.
-<!-- verify at build -->
 
 The Desk is where the loops close. Press the orb and the hub records a
 meeting; when it ends, the meeting lands on the stage as an object. Rope a

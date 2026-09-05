@@ -1000,7 +1000,6 @@ Each project Room carries a mute toggle. A muted Room is excluded from
 the notification count and the dock badge count. Muted Rooms still
 appear in the shade's **PROJECTS** section, dimmed, with a `MUTED`
 token, and do not count toward the section caption.
-<!-- verify at build -->
 
 ### The shade's PROJECTS section
 
@@ -1009,7 +1008,6 @@ glyph, the project name, a count token, the first WHY, and an **Open**
 verb. The section caption reads `PROJECTS` with the aggregate count
 (`N NEED YOU`). The dock badge carries the same number. When the
 aggregate is zero, the section is absent.
-<!-- verify at build -->
 
 ### PROJECTS in the command deck
 
@@ -1018,7 +1016,6 @@ as verb entries (sorted by needs-you count, then name), each with the
 project kind glyph, the project name, and a trailing count badge (zero
 badges omitted). Selecting a Room opens it. Additional Rooms are
 reachable through the Projects surface.
-<!-- verify at build -->
 
 ## Models: the Concierge
 
