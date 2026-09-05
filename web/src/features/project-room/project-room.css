@@ -512,8 +512,32 @@
   margin-left: auto;
 }
 
+/* HS-173-04: receipt row — display name as stored, not mono caps */
+.room-nudge-receipt-name {
+  font-family: var(--font-sans, Inter, sans-serif);
+  font-size: var(--desk-type-primary-size);
+  font-weight: var(--desk-type-primary-weight);
+}
+
 /* ── HS-173: 393 stacking for health + nudge ── */
 @container surface (max-width: 559px) {
+  /* HS-173: HEALTH rows keep lead dot on the same line as the primary
+     (board RoomHealthPhone.png); only cells fall under. Override the
+     room cols' flex: 1 1 100% on the primary — match its specificity. */
+  .surface-ledger[data-cols="room"] .room-health-rows .surface-ledger-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .surface-ledger[data-cols="room"] .room-health-rows .surface-ledger-primary {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .surface-ledger[data-cols="room"] .room-health-rows .surface-ledger-line > .surface-ledger-primary ~ .surface-token {
+    flex: 0 0 100%;
+    margin-left: 26px;
+    margin-top: 2px;
+  }
   .room-nudge-card-footer {
     flex-direction: column;
     align-items: flex-start;

@@ -5,6 +5,7 @@ import { describe, it, expect } from "vitest";
 import {
   resolveHealthRows,
   nudgeCardReducer,
+  formatDays,
   type RoomHealthSignals,
   type NudgeCardState,
 } from "./model";
@@ -38,7 +39,7 @@ describe("resolveHealthRows", () => {
     expect(rows[0].key).toBe("review_wait");
     expect(rows[0].label).toBe("REVIEW WAIT");
     expect(rows[0].tone).toBe("red");
-    expect(rows[0].tokens).toEqual(["3 D MEDIAN", "3 WAITING"]);
+    expect(rows[0].tokens).toEqual(["3.2 D MEDIAN", "3 WAITING"]);
   });
 
   it("produces ISSUE AGING CLEAR at zero aged", () => {
@@ -114,6 +115,25 @@ describe("resolveHealthRows", () => {
     const rows = resolveHealthRows(signals, 0);
     expect(rows[0].tokens).toEqual(["2 BLOCKERS"]);
     expect(rows[0].tone).toBe("red");
+  });
+
+  it("produces RELEASE 1 BLOCKER singular", () => {
+    const signals: RoomHealthSignals = {
+      reviewWait: { present: false, tone: "green", medianDays: 0, waitingCount: 0 },
+      issueAging: { present: false, tone: "green", agedCount: 0 },
+      ci: { present: false, tone: "green", flakyCount: 0, failuresLast3: 0 },
+      release: { present: true, tone: "red", composite: "red", blockersCount: 1 },
+    };
+    const rows = resolveHealthRows(signals, 0);
+    expect(rows[0].tokens).toEqual(["1 BLOCKER"]);
+  });
+
+  it("formatDays: integer shows whole, decimal shows one place", () => {
+    expect(formatDays(3)).toBe("3");
+    expect(formatDays(1.5)).toBe("1.5");
+    expect(formatDays(0)).toBe("0");
+    expect(formatDays(2.04)).toBe("2");
+    expect(formatDays(2.05)).toBe("2.1");
   });
 
   it("all-green produces four rows with CLEAR/PASSING/READY", () => {

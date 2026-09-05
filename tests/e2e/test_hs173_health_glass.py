@@ -642,6 +642,11 @@ def _run_nudge_sent_rig(
             assert "GITHUB.COM" in rt, f"Receipt missing egress: {receipt_text}"
             assert "UNDO" not in rt, f"Receipt has Undo (should not): {receipt_text}"
 
+            # After Send, the bottleneck row should show NUDGED JUST NOW
+            cooldown = page.locator('[data-testid="nudge-cooldown"]')
+            if cooldown.count() > 0:
+                assert "NUDGED JUST NOW" in cooldown.inner_text()
+
             _assert_no_raw_button(page)
 
             _shot(page, f"build-room-nudge-sent-{width}", width, SHOTS_04)

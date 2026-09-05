@@ -46,7 +46,7 @@ import type {
   NudgeCardState,
   NudgeCardAction,
 } from "./model";
-import { lifecycleLabel, resolveHealthRows, nudgeCardReducer } from "./model";
+import { lifecycleLabel, resolveHealthRows, nudgeCardReducer, formatDays } from "./model";
 import { StringGadget } from "../../desk/surface/gadgets";
 import { egressFor } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
@@ -357,7 +357,7 @@ function HealthSection({ room }: { room: RoomSnapshot }) {
       ) : undefined}
     >
       <SurfaceLedger count="" cols="room">
-        <ul className="surface-ledger-rows">
+        <ul className="surface-ledger-rows room-health-rows">
           {rows.map((row) => (
             <SurfaceLedgerRow
               key={row.key}
@@ -389,11 +389,13 @@ function NudgeCard({
   needsYouItem,
   nudgeItem,
   onReload,
+  onSent,
 }: {
   person: RoomHealthPerson | undefined;
   needsYouItem: RoomNeedsYouItem;
   nudgeItem: api.NudgeItem | undefined;
   onReload: () => void;
+  onSent?: () => void;
 }) {
   const displayName = person?.displayName || needsYouItem.title;
   // Bind PR from the nudge step (the wire's authoritative source)
@@ -424,8 +426,8 @@ function NudgeCard({
           prNumber,
           sentAt,
         });
-        // Don't call onReload here -- the receipt row stays visible.
-        // The next room load picks up the sent state.
+        // The receipt row stays visible; notify parent for cooldown token.
+        onSent?.();
       } else {
         dispatch({ type: "failed", reason: String(result.message || "Send failed") });
       }
@@ -452,7 +454,7 @@ function NudgeCard({
         wrap
         cells={
           <>
-            <span className="surface-token">{displayName}</span>
+            <span className="room-nudge-receipt-name">{displayName}</span>
             {prNumber ? (
               <span className="surface-token">
                 {prUrl ? (
@@ -721,6 +723,10 @@ function NeedsYouSection({
   // HS-173: track which nudge cards are open (by relationship_id)
   const [openNudge, setOpenNudge] = useState<string | null>(null);
 
+  // HS-173-04: track locally sent nudges so the row shows NUDGED JUST NOW
+  // immediately without waiting for a reload.
+  const [sentNudgeRelIds, setSentNudgeRelIds] = useState<Set<string>>(new Set());
+
   const reviewAction = pendingCount > 0 ? (
     <Button dense variant="ghost" loading={reviewCtrl.loading} onClick={() => void reviewCtrl.enterReview()} data-testid="review-verb" data-verb="review">
       Review {pendingCount}
@@ -770,9 +776,16 @@ function NeedsYouSection({
               const login = person?.login || "";
               const matchedNudge = login ? nudgeMap.get(login.toLowerCase()) : undefined;
               const mono = monogram(item.title);
-              const cooldown = person ? nudgeCooldownToken(person.nudge) : null;
+              const cooldown = sentNudgeRelIds.has(relId)
+                ? "NUDGED JUST NOW"
+                : (person ? nudgeCooldownToken(person.nudge) : null);
               const hasNudgeStep = !!(matchedNudge?.step_id || person?.nudge?.stepId);
               const isNudgeOpen = openNudge === relId;
+
+              // Build why from structured fields (correct plurals + day format)
+              const md = item.medianDays ?? person?.medianDays ?? 0;
+              const pc = item.prCount ?? person?.count ?? 0;
+              const whyText = `REVIEW BOTTLENECK · ${formatDays(md)} D MEDIAN · ${pc} ${pc === 1 ? "PR" : "PRS"} WAITING`;
 
               return (
                 <React.Fragment key={`bottleneck-${relId}-${i}`}>
@@ -786,7 +799,7 @@ function NeedsYouSection({
                         className="surface-token room-why-token"
                         data-testid="bottleneck-why"
                       >
-                        {item.why}
+                        {whyText}
                       </span>
                     }
                     trailing={
@@ -815,6 +828,7 @@ function NeedsYouSection({
                       needsYouItem={item}
                       nudgeItem={matchedNudge}
                       onReload={() => { setOpenNudge(null); void ctrl.load(); }}
+                      onSent={() => setSentNudgeRelIds((prev) => new Set([...prev, relId]))}
                     />
                   ) : null}
                 </React.Fragment>
@@ -1041,7 +1055,7 @@ function SourcesSection({
                   {src.checkedAt ? (
                     <span className="room-source-checked">checked {humanTime(src.checkedAt)}</span>
                   ) : null}
-                  <EgressChip label={src.host} scope="cloud" title={src.host} />
+                  {src.host ? <EgressChip label={src.host} scope="cloud" title={src.host} /> : null}
                 </div>
               </SurfaceLedgerRow>
             );

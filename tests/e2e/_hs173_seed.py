@@ -163,7 +163,9 @@ def seed_health_room(
     _seed_watch(db, pid, f"{pid}-pr", "gh", "pull_requests",
                 {"repository": "org/repo"}, pr_entities)
     _seed_watch(db, pid, f"{pid}-jira", "jira", "issues",
-                {"project_key": "PROJ"}, jira_entities)
+                {"project_key": "PROJ",
+                 "connection_ref": "jira.example.com|team@example.com"},
+                jira_entities)
     _seed_watch(db, pid, f"{pid}-ci", "gh", "branch_ci",
                 {"repository": "org/repo", "base": "main"}, ci_snapshot_entities)
 

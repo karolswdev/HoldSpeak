@@ -903,6 +903,12 @@ export type HealthRowResolved = {
   tokens: string[];
 };
 
+/** Format days: whole when integral, one decimal otherwise (3 D, 1.5 D). */
+export function formatDays(d: number): string {
+  const rounded = Math.round(d * 10) / 10;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
 /**
  * Resolve which HEALTH rows are present and what they show.
  * A row is present when its signal's `present` is true.
@@ -921,7 +927,7 @@ export function resolveHealthRows(
     const rw = signals.reviewWait;
     const tone = rw.tone ?? "green";
     const tokens: string[] = [];
-    tokens.push(`${Math.round(rw.medianDays)} D MEDIAN`);
+    tokens.push(`${formatDays(rw.medianDays)} D MEDIAN`);
     tokens.push(`${rw.waitingCount} WAITING`);
     rows.push({ key: "review_wait", label: "REVIEW WAIT", tone, tokens });
   }
@@ -960,7 +966,7 @@ export function resolveHealthRows(
       tokens.push("READY");
     } else {
       if (rel.blockersCount > 0) {
-        tokens.push(`${rel.blockersCount} BLOCKERS`);
+        tokens.push(rel.blockersCount === 1 ? "1 BLOCKER" : `${rel.blockersCount} BLOCKERS`);
       } else {
         tokens.push(rel.composite === "amber" ? "AT RISK" : "BLOCKED");
       }
