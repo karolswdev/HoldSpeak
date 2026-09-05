@@ -110,6 +110,16 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
   close → stacked PR. If he bounces 170's faces, 171 rebuilds on his
   ruling.
 
+- **171 at 07:20:** boards + canvas
+  https://claude.ai/code/artifact/82c55045-4a19-4990-a8b5-569b91eb8647
+  (counsel reading); the wire built and committed (heartbeat setting in
+  `cadence_policies`, the third conductor loop `HoldSpeakHeartbeat`,
+  `needs_you_aggregate.py` cache, `desktop_notify.py` osascript V0,
+  brief regeneration in runtime/cadence.py). Next: counsel's conditions
+  → faces (shade PROJECTS + dock badge = 04; ⌘K = 07; Rhythm's row = 02's
+  face; the brief row = 06) → rigs → his-desk walk (a real notification
+  at a real edge) → docs → close → stacked PR.
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on

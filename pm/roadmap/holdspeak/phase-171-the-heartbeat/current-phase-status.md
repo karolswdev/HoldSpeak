@@ -11,6 +11,14 @@ The design ground is assets/settled-design-heartbeat.md (DRAFT until his
 word); the boards are drawn from it, counsel reads them, the wire builds
 meanwhile, the faces build to the boards, the walk on his desk closes.
 
+**07:20:** eleven boards drawn and committed; **the canvas**
+https://claude.ai/code/artifact/82c55045-4a19-4990-a8b5-569b91eb8647
+(counsel reading; conditions paid before his word). The wire is BUILT:
+the heartbeat setting + scheduler + a third conductor loop + receipts
+(02), the aggregate cache (03), the notifier with the edge rule and
+quiet hours (05, osascript V0 — the click target waits for the bundle),
+the brief regenerating daily (06); MCP `heartbeat` family; 41 tests.
+
 ## Goal
 
 The desk reaches him. The sweep runs unattended, needs-you aggregates
@@ -99,11 +107,11 @@ brief ran ONCE (1839 items on 2026-08-24) and never again.
 | ID | Story | Status | Story file | Evidence |
 | --- | --- | --- | --- | --- |
 | HS-171-01 | The design (the Heartbeat's faces on the canvas before build) | in-progress | [story-01-the-design](./story-01-the-design.md) | -- |
-| HS-171-02 | The cadence row (the scheduler, the unattended sweep, parallel conductor loops) | backlog | [story-02-the-cadence-row](./story-02-the-cadence-row.md) | -- |
-| HS-171-03 | The needs-you aggregate (cache + cadence-driven refresh; 170's N+1 paid) | backlog | [story-03-the-needs-you-aggregate](./story-03-the-needs-you-aggregate.md) | -- |
+| HS-171-02 | The cadence row (the scheduler, the unattended sweep, parallel conductor loops) | in-progress | [story-02-the-cadence-row](./story-02-the-cadence-row.md) | -- |
+| HS-171-03 | The needs-you aggregate (cache + cadence-driven refresh; 170's N+1 paid) | in-progress | [story-03-the-needs-you-aggregate](./story-03-the-needs-you-aggregate.md) | -- |
 | HS-171-04 | PROJECTS in the shade + the dock badge | backlog | [story-04-projects-in-the-shade](./story-04-projects-in-the-shade.md) | -- |
-| HS-171-05 | macOS notifications on the edge (quiet hours, per-project mute, Article III) | backlog | [story-05-macos-notifications](./story-05-macos-notifications.md) | -- |
-| HS-171-06 | The Monday brief recurring (its own cadence loop, lands in the shade) | backlog | [story-06-monday-brief-recurring](./story-06-monday-brief-recurring.md) | -- |
+| HS-171-05 | macOS notifications on the edge (quiet hours, per-project mute, Article III) | in-progress | [story-05-macos-notifications](./story-05-macos-notifications.md) | -- |
+| HS-171-06 | The Monday brief recurring (its own cadence loop, lands in the shade) | in-progress | [story-06-monday-brief-recurring](./story-06-monday-brief-recurring.md) | -- |
 | HS-171-07 | PROJECTS in command-K (every active Room reachable from the deck) | backlog | [story-07-projects-in-command-k](./story-07-projects-in-command-k.md) | -- |
 | HS-171-08 | The walk (his desk: a notification he actually receives) | backlog | [story-08-the-walk](./story-08-the-walk.md) | -- |
 | HS-171-09 | The docs (guide re-shot for every new face; the heartbeat in the architecture) | backlog | [story-09-the-docs](./story-09-the-docs.md) | -- |
