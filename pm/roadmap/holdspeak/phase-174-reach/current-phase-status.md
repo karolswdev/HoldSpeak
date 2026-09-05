@@ -120,7 +120,7 @@ the .43 box runs llama.cpp (Q6, 24k context) but no HoldSpeak runner.
 | HS-174-04 | Egress badges on remote reads (kernel receipt + badge; local stdio badgeless) | done | [story-04-egress-badges](./story-04-egress-badges.md) | [evidence-story-04](./evidence-story-04.md) |
 | HS-174-05 | The long-running contract (run_id + polling over HTTP) | done | [story-05-the-long-running-contract](./story-05-the-long-running-contract.md) | [evidence-story-05](./evidence-story-05.md) |
 | HS-174-06 | The third connector decision (candidates, CLI-backed, switch-and-verify) | done | [story-06-the-third-connector-decision](./story-06-the-third-connector-decision.md) | [evidence-story-06](./evidence-story-06.md) |
-| HS-174-07 | The third connector (implementation: WatchSource, Door card, templates) | in-progress | [story-07-the-third-connector](./story-07-the-third-connector.md) | -- |
+| HS-174-07 | The third connector (implementation: WatchSource, Door card, templates) | done | [story-07-the-third-connector](./story-07-the-third-connector.md) | [evidence-story-07](./evidence-story-07.md) |
 | HS-174-08 | The .43 runner (the live proof: sweep + drafter overnight, receipts on the desk) | done | [story-08-the-43-runner](./story-08-the-43-runner.md) | [evidence-story-08](./evidence-story-08.md) |
 | HS-174-09 | LAN companion notifications (Bonjour mesh push; CONDITIONAL on the companion track) | done | [story-09-lan-companion-notifications](./story-09-lan-companion-notifications.md) | [evidence-story-09](./evidence-story-09.md) |
 | HS-174-10 | The docs (MCP_SIDECAR.md extended, the guide's companions section, remote in the architecture) | done | [story-10-the-docs](./story-10-the-docs.md) | [evidence-story-10](./evidence-story-10.md) |
