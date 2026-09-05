@@ -264,4 +264,13 @@ describe("resolveEngine (HS-170-04)", () => {
     expect(result.name).toBe("Some Model");
     expect(result.egressLabel).toBe("LAN");
   });
+
+  // Pending/failed: engineState is null — EngineRow uses detectStatus to decide
+  it("returns null engineState when no detect engine matched (for pending/failed)", () => {
+    const assignment = fakeAssignment("p7", "Migrated intel endpoint", "cloud");
+    const result = resolveEngine(assignment, []);
+    // No detect data — engineState is null; the EngineRow uses detectStatus
+    // to show CHECKING (pending) or UNKNOWN (failed), never READY
+    expect(result.engineState).toBeNull();
+  });
 });

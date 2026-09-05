@@ -147,6 +147,16 @@
   color: var(--text);
   white-space: nowrap;
 }
+.desk-next .speak-engine-name[data-muted] {
+  color: var(--text-muted);
+}
+.desk-next .speak-engine-checking {
+  font: 600 10px / 1 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
 
 /* ── 6. Details (fold) content ── */
 .desk-next .speak-details {

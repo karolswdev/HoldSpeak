@@ -236,14 +236,15 @@ export function SpeakFace() {
   const [assignment, setAssignment] = useState<AssignmentEditorProjection | null>(null);
   const [engines, setEngines] = useState<Engine[]>([]);
   const [targets, setTargets] = useState<TargetProfile[]>([]);
+  const [detectStatus, setDetectStatus] = useState<"pending" | "ok" | "failed">("pending");
   useEffect(() => {
     void getAssignmentEditor(
       { kind: "capability", capability_id: "speech.rewrite" },
       "speech.rewrite",
     ).then(setAssignment).catch(() => {});
     void conciergeDetect()
-      .then((r) => setEngines(r.engines))
-      .catch(() => {});
+      .then((r) => { setEngines(r.engines); setDetectStatus("ok"); })
+      .catch(() => { setDetectStatus("failed"); });
     void apiFetch<{ targets?: TargetProfile[] }>("/api/inference-targets")
       .then((r) => setTargets(r.targets ?? []))
       .catch(() => {});
@@ -296,7 +297,7 @@ export function SpeakFace() {
       ) : null}
 
       {/* 5. ENGINE row */}
-      <EngineRow engine={resolved.name} egress={resolved.egressLabel} engineState={resolved.engineState} keySet={resolved.keySet} readiness={deck} />
+      <EngineRow engine={resolved.name} egress={resolved.egressLabel} engineState={resolved.engineState} keySet={resolved.keySet} detectStatus={detectStatus} readiness={deck} />
 
       {/* 6. Details (Disclosure, folded) */}
       <Disclosure label="Details" defaultOpen={false}>
@@ -494,12 +495,14 @@ function EngineRow({
   egress,
   engineState,
   keySet,
+  detectStatus,
   readiness,
 }: {
   engine: string | null;
   egress: string;
   engineState: string | null;
   keySet: boolean | null;
+  detectStatus: "pending" | "ok" | "failed";
   readiness: ReturnType<typeof useSpeakDeck>;
 }) {
   const openConcierge = () => {
@@ -511,7 +514,7 @@ function EngineRow({
   // No engine assigned at all
   if (!engine) {
     return (
-      <div className="speak-engine">
+      <div className="speak-engine" data-engine-state="not-set">
         <span className="speak-engine-caption">DICTATION</span>
         <span className="speak-engine-dot">{"·"}</span>
         <StateChip state="warning" label="NOT SET" />
@@ -523,38 +526,81 @@ function EngineRow({
     );
   }
 
-  // Derive the state chip from the detect engine's state.
-  // When detect provided a state, use it; otherwise fall back to pipeline readiness.
+  // Pending: detect hasn't resolved yet.  Show the assignment name
+  // muted with CHECKING... — no state chip, no host claim beyond the
+  // assignment boundary's base_url LAN rule (already in egress).
+  if (detectStatus === "pending") {
+    return (
+      <div className="speak-engine" data-engine-state="pending">
+        <span className="speak-engine-caption">DICTATION</span>
+        <span className="speak-engine-dot">{"·"}</span>
+        <span className="speak-engine-name" data-muted="">{engine}</span>
+        {egress !== "THIS DEVICE" && egress !== "CLOUD" && egress !== "LAN" ? (
+          <EgressChip label={egress} />
+        ) : null}
+        <span className="speak-transport-spacer" />
+        <span className="speak-engine-checking">CHECKING...</span>
+      </div>
+    );
+  }
+
+  // Failed: detect errored.  State is unknown — never claim READY.
+  if (detectStatus === "failed" && !engineState) {
+    return (
+      <div className="speak-engine" data-engine-state="unknown">
+        <span className="speak-engine-caption">DICTATION</span>
+        <span className="speak-engine-dot">{"·"}</span>
+        <span className="speak-engine-name">{engine}</span>
+        {egress ? <EgressChip label={egress} /> : null}
+        <span className="speak-transport-spacer" />
+        <StateChip state="warning" label="UNKNOWN" />
+        <Button variant="ghost" dense onClick={openConcierge}>
+          Choose
+        </Button>
+      </div>
+    );
+  }
+
+  // Detect resolved — derive the state chip from the engine's state.
+  let dataState: string;
   let chipState: "success" | "warning";
   let chipLabel: string;
   let showChoose = false;
 
   if (engineState === "NOT_SET") {
+    dataState = "not-set";
     chipState = "warning";
     chipLabel = keySet === false ? "KEY NOT SET" : "NOT SET";
     showChoose = true;
   } else if (engineState === "UNREACHABLE") {
+    dataState = "unknown";
     chipState = "warning";
     chipLabel = "UNREACHABLE";
     showChoose = true;
   } else if (engineState === "READY") {
+    dataState = "ready";
     chipState = "success";
     chipLabel = "READY";
+  } else if (engineState === "WAITING" || engineState === "CHECKING") {
+    dataState = "waiting";
+    chipState = "warning";
+    chipLabel = engineState;
+    showChoose = true;
   } else if (engineState) {
-    // WAITING, CHECKING, etc.
+    dataState = "unknown";
     chipState = "warning";
     chipLabel = engineState.replace(/_/g, " ");
     showChoose = true;
   } else {
-    // No detect state — fall back to pipeline readiness
-    const pipelineReady = readiness.pipelineOn && readiness.readinessConfig.pipeline_enabled === true;
-    chipState = pipelineReady ? "success" : "warning";
-    chipLabel = pipelineReady ? "READY" : "NOT READY";
-    showChoose = !pipelineReady;
+    // detectStatus === "ok" but no engine matched — fallback
+    dataState = "unknown";
+    chipState = "warning";
+    chipLabel = "UNKNOWN";
+    showChoose = true;
   }
 
   return (
-    <div className="speak-engine">
+    <div className="speak-engine" data-engine-state={dataState}>
       <span className="speak-engine-caption">DICTATION</span>
       <span className="speak-engine-dot">{"·"}</span>
       <span className="speak-engine-name">{engine}</span>

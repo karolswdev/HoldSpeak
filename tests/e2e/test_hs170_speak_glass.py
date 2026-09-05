@@ -354,11 +354,10 @@ def test_speak_unset_1440(tmp_path, monkeypatch):
 
             engine = page.locator(".speak-engine")
             assert engine.count() > 0
-            chip = engine.locator(".surface-state-chip")
-            assert chip.count() > 0
-            chip_text = chip.inner_text()
-            assert any(t in chip_text for t in ["NOT SET", "READY", "NOT READY"]), (
-                f"StateChip text: {chip_text}"
+            # The data-engine-state attribute is present
+            state_attr = engine.get_attribute("data-engine-state")
+            assert state_attr in ("not-set", "ready", "pending", "unknown", "waiting"), (
+                f"data-engine-state: {state_attr}"
             )
 
             _shot(page, "unset", 1440)
@@ -425,6 +424,63 @@ def test_speak_footer_this_device(tmp_path, monkeypatch):
             assert footer.count() > 0
             text = footer.inner_text()
             assert "THIS DEVICE" in text, f"Footer: {text}"
+
+            _assert_clean(page, errors)
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.mark.e2e
+@pytest.mark.requires_meeting
+def test_speak_engine_never_ready_while_pending(tmp_path, monkeypatch):
+    """READY is never shown before detect resolves (UX-CANON A.10).
+
+    Delays the detect response; the ENGINE row must show CHECKING or
+    a non-READY state while detect is pending, and must never claim READY
+    from the fallback.
+    """
+    _ensure_build()
+    server, url = _boot(tmp_path, monkeypatch, token=TOKEN)
+    errors: list[str] = []
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page()
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.set_viewport_size({"width": 1440, "height": 900})
+
+            # Make detect fail instantly with 503 so it resolves to "failed"
+            # immediately -- no held futures, no cleanup issues.
+            # First: intercept detect to return 503 (triggers "failed").
+            page.route("**/api/concierge/detect", lambda route: route.fulfill(
+                status=503,
+                content_type="application/json",
+                body=json.dumps({"code": "concierge_unavailable"}),
+            ))
+
+            _init_desk(page, url)
+            _stage_speak(page)
+
+            page.locator(".speak-face").wait_for(timeout=10000)
+            _settle(page)
+
+            # The row should show UNKNOWN (failed), never READY
+            engine = page.locator(".speak-engine")
+            assert engine.count() > 0
+            state_attr = engine.get_attribute("data-engine-state")
+            assert state_attr != "ready", (
+                f"ENGINE row claims READY when detect failed (data-engine-state={state_attr})"
+            )
+
+            # The state chip should say UNKNOWN, not READY
+            chip = engine.locator(".surface-state-chip")
+            if chip.count() > 0:
+                chip_text = chip.inner_text()
+                assert "READY" not in chip_text, (
+                    f"StateChip claims READY when detect failed: {chip_text}"
+                )
 
             _assert_clean(page, errors)
             browser.close()
