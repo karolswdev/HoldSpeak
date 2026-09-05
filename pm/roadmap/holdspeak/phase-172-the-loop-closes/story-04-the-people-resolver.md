@@ -2,7 +2,7 @@
 
 - **Project:** holdspeak
 - **Phase:** 172
-- **Status:** in-progress
+- **Status:** done
 - **Depends on:** HS-172-01
 - **Unblocks:** HS-172-05
 - **Owner:** unassigned
@@ -42,16 +42,16 @@ assignee / reviewer; local, never egressed)."
 
 ## Acceptance criteria
 
-- [ ] `resolve_relationship_by_watch_identity(identity_string)` on
+- [x] `resolve_relationship_by_watch_identity(identity_string)` on
       PeopleService returns the matching relationship when an
       owner_alias or display_name matches; returns None when no match
       (Article VI: honest at zero).
-- [ ] The match is case-insensitive and in-memory; no alias string
+- [x] The match is case-insensitive and in-memory; no alias string
       appears in plaintext outside the People store (Article III).
-- [ ] The existing `link_owner_alias` and `unlink_owner_alias` work
+- [x] The existing `link_owner_alias` and `unlink_owner_alias` work
       for GitHub logins and Jira display names (e.g., "karolswdev" or
       "Karol Sane").
-- [ ] The resolver is called only from read paths (1:1 brief, People
+- [x] The resolver is called only from read paths (1:1 brief, People
       card); it never writes (Article V.5).
 
 ## Test plan
