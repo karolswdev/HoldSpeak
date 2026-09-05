@@ -186,6 +186,10 @@ left column is the name; do not alternate with the synonyms.
 | Speak (the voice-typing window) | "DictationCore", "the cockpit", "the voice panel" |
 | Meetings (the meetings window) | "HistoryCore", "the history page" |
 | needs you (the cross-project headline) | "pending items", "action required", "to-do" |
+| the Heartbeat (the unattended sweep) | "the pulse", "the poller", "background sync" |
+| the sweep (one Heartbeat evaluation pass) | "the tick", "the poll", "the check" |
+| Rhythm (the Settings module for the Heartbeat) | "cadence settings", "heartbeat config" |
+| the shade (the system pull-down) | "the tray", "the notification panel", "the dropdown" |
 | Run intelligence (the verb on an OFF meeting) | "process", "analyze", "run AI" |
 
 ## Voice rules (the editing standard for every user-facing doc)

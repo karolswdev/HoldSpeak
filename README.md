@@ -91,6 +91,18 @@ thought**, and **Record meeting**. On a phone, **Go** is the compact
 application menu. The **Floor** button in the dock opens the spatial object
 world. A toggle in Settings, Sounds & Presence controls **Desk Sounds**.
 
+**The desk reaches you.** The Heartbeat runs a sweep every 15 minutes,
+evaluates your project Watches, and caches the needs-you aggregate. When
+the count rises, a macOS notification banner reads the count
+(`3 need you across 2 projects`); the shade's **PROJECTS** section and
+the dock badge carry the same number. Quiet hours (default 22:00 to
+08:00) suppress notifications; the Monday brief regenerates once a day
+after quiet hours close. The notification is a local `osascript` banner
+posted through the system's notification center; click-to-open is not
+yet wired (the packaged app bundle is a later phase). Configure the
+interval, quiet hours, and notification mode under **Settings, Rhythm**.
+<!-- verify at build -->
+
 The Desk is where the loops close. Press the orb and the hub records a
 meeting; when it ends, the meeting lands on the stage as an object. Rope a
 few objects together with the lasso and **Ask AI** about exactly that pile:

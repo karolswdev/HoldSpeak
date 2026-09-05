@@ -950,6 +950,76 @@ The **POSTURE** row carries a cycle control for the security posture
 (`YOLO`, `Normal`, `Secure`), stated once. The footer carries `THIS DEVICE`
 and a receipt (`WRITTEN hh:mm`). Choose a row to open its module.
 
+## Rhythm
+
+Open **Settings, Rhythm**. The Rhythm module controls the Heartbeat: the
+unattended sweep that evaluates project Watches and refreshes the
+needs-you aggregate on a cadence.
+
+### The cadence row
+
+The **Watch sweep** row controls the sweep interval:
+
+| Cell | What it shows |
+|---|---|
+| **Interval** | A cycle control: `EVERY 15 MIN`, `EVERY 30 MIN`, `EVERY 1 HR`, `EVERY 4 HR`. Default: `EVERY 15 MIN`. |
+| **Quiet hours** | `QUIET 22:00--08:00` (read-only on this row; edited in the quiet-hours setting). Notifications are suppressed during this window. |
+| **Next sweep** | `NEXT 08:20` (the earliest `next_evaluation_at` from the graduated Watches, as local time). Absent when no Watches are graduated. |
+| **Run now** | A ghost button that triggers one immediate sweep and refreshes the **NEXT** token. |
+<!-- verify at build -->
+
+### The Monday brief row
+
+| Cell | What it shows |
+|---|---|
+| **Cadence** | `DAILY AFTER 08:00`. The brief regenerates once per day after quiet hours close. |
+| **Last** | `LAST SEP 04` (the most recent brief's date), or `NEVER` when no brief has been generated. |
+| **Generate** | A ghost button that triggers immediate brief regeneration. Disabled while a brief generates (a `GENERATING` token replaces the verb). |
+<!-- verify at build -->
+
+### Notifications
+
+The **NOTIFY** row controls whether the Heartbeat posts a macOS
+notification banner when the needs-you count rises:
+
+| Setting | Behavior |
+|---|---|
+| **off** | No notification fires. |
+| **edge** (the default) | A notification fires when the count crosses from 0 to positive, or when it increases since the last notification. |
+| **every sweep** | A notification fires after every sweep that finds items needing you. |
+
+The body is the count only by default (`3 need you across 2 projects`).
+Room names and item text are omitted unless the content opt-in setting is
+enabled; that setting adds the first WHY per project (at most three
+lines) to the body.
+<!-- verify at build -->
+
+### Per-Room mute
+
+Each project Room carries a mute toggle. A muted Room is excluded from
+the notification count and the dock badge count. Muted Rooms still
+appear in the shade's **PROJECTS** section, dimmed, with a `MUTED`
+token, and do not count toward the section caption.
+<!-- verify at build -->
+
+### The shade's PROJECTS section
+
+The shade lists one row per Room that has needs-you items: the project
+glyph, the project name, a count token, the first WHY, and an **Open**
+verb. The section caption reads `PROJECTS` with the aggregate count
+(`N NEED YOU`). The dock badge carries the same number. When the
+aggregate is zero, the section is absent.
+<!-- verify at build -->
+
+### PROJECTS in the command deck
+
+Type a project name in the command deck (Cmd+K). Up to 10 Rooms appear
+as verb entries (sorted by needs-you count, then name), each with the
+project kind glyph, the project name, and a trailing count badge (zero
+badges omitted). Selecting a Room opens it. Additional Rooms are
+reachable through the Projects surface.
+<!-- verify at build -->
+
 ## Models: the Concierge
 
 Open **Settings, Models**. The Concierge is one screen that answers three

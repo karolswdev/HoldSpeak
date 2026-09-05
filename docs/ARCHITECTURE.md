@@ -467,6 +467,79 @@ expose `GET /api/connections` and
 `connection.list` and `connection.recheck`
 (`holdspeak/mcp/families/project.py:774,785`).
 
+## The conductor loops and the Heartbeat
+
+The runtime starts several daemon threads, each with its own failure
+boundary: an exception in one loop never kills another. The five loops
+and their lifetimes:
+
+| Loop | Thread name | Module | Lifecycle | Failure handling |
+|---|---|---|---|---|
+| Plugin queue | `HoldSpeakMirPluginQueue` | `web_runtime.py` (PluginQueueMixin) | Always on | try/except per dequeue; logs and continues |
+| Cadence engine | `HoldSpeakCadenceEngine` | `runtime/cadence.py` (CadenceMixin) | Conditional on `config.cadence.enabled` | try/except per tick (`cadence.py:61`); logs and continues |
+| Heartbeat | `HoldSpeakHeartbeat` | `runtime/heartbeat.py` (HeartbeatMixin) | Always on | try/except per tick; logs and continues |
+| Recording ticker | (per-meeting thread) | `device_recording_tick.py` via `runtime/meeting_glue.py:346` | Per-meeting lifecycle (start/stop) | Independent; started by `_start_meeting`, stopped by `_stop_active_meeting` |
+| Transcriber warm | (one-shot thread) | `runtime/transcriber_state.py:202` | One-shot at startup | Independent; no restart on failure |
+
+### The Heartbeat sweep
+
+The Heartbeat thread (`runtime/heartbeat.py`) ticks every 60 seconds and
+checks whether a sweep is due. When due, it calls
+`HeartbeatService.run_sweep` (`services/heartbeat_service.py`), which
+performs three steps:
+
+1. **Evaluate due watches** via `WatchService.evaluate_due`. Each
+   graduated Watch with `next_evaluation_at <= now` is evaluated against
+   its sources. Outcomes are collected and summarized for the receipt
+   (N2: counts per state plus failing watch IDs, never the full list).
+2. **Refresh the aggregate** via
+   `needs_you_aggregate.build_aggregate`. The `NeedsYouCache`
+   (`services/needs_you_aggregate.py`) wraps the builder in a
+   stale-while-refresh cache whose lifetime matches the sweep interval.
+   The cache invalidates after each sweep; `GET /api/desk/needs-you`
+   reads from the cache (O(1) on hit, rebuilds on miss). The response
+   carries `computedAt`, `stale`, and `sweepId` fields.
+3. **Write the receipt** as a `heartbeat.sweep` kernel operation
+   (Article XI.2) and a `pipeline_events` entry with the duration,
+   watch count, room count, and the bounded outcome summary.
+
+After the sweep, the Heartbeat evaluates the notification edge and quiet
+hours. The notifier (`desktop_notify.py`) fires a macOS banner via
+`osascript` (the PyObjC `UserNotifications` bridge is not in the venv)
+or a Linux banner via the libnotify seam. Every notification writes a
+`heartbeat.notify` receipt.
+
+The cadence engine's tick also regenerates the Monday brief once per day
+after quiet hours close (`_maybe_regenerate_brief` in
+`runtime/cadence.py`) and invalidates the needs-you cache
+(`_invalidate_needs_you_cache`).
+
+```mermaid
+sequenceDiagram
+  participant HB as Heartbeat thread<br/>(runtime/heartbeat.py)
+  participant HS as HeartbeatService<br/>(services/heartbeat_service.py)
+  participant WS as WatchService<br/>(evaluate_due)
+  participant AGG as NeedsYouCache<br/>(needs_you_aggregate.py)
+  participant DN as desktop_notify<br/>(desktop_notify.py)
+  participant KO as Kernel operations<br/>(SQLite)
+
+  loop Every 60s tick
+    HB->>HS: is sweep due?
+    alt sweep due
+      HS->>WS: evaluate_due(principal)
+      WS-->>HS: outcomes[]
+      HS->>AGG: invalidate + rebuild
+      AGG-->>HS: {count, items, computedAt, stale, sweepId}
+      HS->>KO: write heartbeat.sweep receipt
+      HS->>DN: edge check + quiet hours
+      alt rising edge and not quiet
+        DN->>DN: osascript / libnotify banner
+        DN->>KO: write heartbeat.notify receipt
+      end
+    end
+  end
+```
+
 ## Project memory and the process read model
 
 Meeting plugins still produce ordinary typed artifacts. When the shared

@@ -373,6 +373,14 @@ adds implementation detail but is not a second product inventory.
 | **Browser mic capture** (`lib/speakToFill` → `POST /api/dictation/transcribe`) | The owner holds a mic or the Speak room's TALK key in the browser, **or** an open-mic session segments an utterance (`lib/openMic` posts through the same encoder and route) | Nothing leaves the machine: the WAV is posted to the hub on the same origin the page was served from, the hub's own local Whisper transcribes it, and the audio is never persisted (16 MB cap) | No egress point, held or continuous. Off-loopback the origin is the hub itself, token-gated like every other route; the audio never reaches a third party. Segmentation is decided in the browser (`lib/vad`, energy plus hangover, no model and no network), so continuous listening posts one WAV per detected utterance rather than a stream. |
 | **Paired dictation delivery** (`POST /api/dictation/remote`) | The owner releases the native dictation control, releases TALK in the Speak room, or explicitly sends a preview/recovery draft | Finalized text plus an opaque delivery id to the named desktop; raw audio never crosses | Direct LAN/Tailscale peer, bearer-token gated off-loopback. The hub claims the id before delivery and caches the terminal Receipt; reconnecting with the same request returns that Receipt without typing twice. A different payload under the same id is refused. |
 
+**Notifications** (`desktop_notify.py`) stay on this machine. macOS banners
+post through `osascript` (the system's notification center); Linux banners post
+through libnotify. The body contains the needs-you count only by default
+(`3 need you across 2 projects`). Room names are included only when the
+owner enables the content opt-in setting. Quiet hours (default 22:00 to
+08:00) suppress notifications entirely. No notification payload leaves
+the machine; there is no remote push channel.
+
 Browser history reads (`activity_*`) make **no network calls**; they are
 read-only against local SQLite snapshots. The activity ledger never leaves the
 machine except via the connector CLIs above (entity IDs only).
