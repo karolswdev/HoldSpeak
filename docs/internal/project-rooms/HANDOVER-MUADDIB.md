@@ -34,7 +34,7 @@ vocabulary `Decide:`/`Confirm:`; (2) the 1:1 card's summary-then-Now
 shape and `2 PRS WAITING ON ANIA` with the name in caps; (3) Jira
 assignments on the card — keep?
 
-**Next.** PR `--base feat/the-heartbeat`; then 173 The Steward's Hand +
+**Next.** PR **#555** is open (`--base feat/the-heartbeat`); then 173 The Steward's Hand +
 Voice on its drafted ground (assets/settled-design-stewards-hand.md),
 stacked on 172. Merge order stays his: #553 → #554 → 172's → 173's.
 

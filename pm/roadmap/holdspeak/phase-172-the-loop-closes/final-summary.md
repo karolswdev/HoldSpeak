@@ -122,5 +122,5 @@ Auto-run on imported transcripts; the actuator proposals route rename;
 
 ## His word
 
-Design canvas above; PR stacked on #554 on #553. Merge order stays
+Design canvas above; **PR #555** stacked on #554 on #553. Merge order stays
 his: #553 → #554 → 172's.
