@@ -599,7 +599,7 @@ Room. A suggestion for a reference that already has a Watch source is suppressed
 
 ## The steward's hand
 
-<!-- verify at build --> The steward can draft a weekly project update and
+The steward can draft a weekly project update and
 propose a reviewer nudge. Both are opt-in, receipted, and visible before they
 act.
 
@@ -616,16 +616,18 @@ the footer (for example `Llama 3.3 70B, 192.168.1.43, LAN`).
 When no model is assigned or the model fails, the update falls back to the
 deterministic body (no unverified markers, no egress).
 
-Three verbs on the update: **Save** persists the edit without publishing.
+Four verbs on the update: **Save** persists the edit without publishing.
+**Regenerate** rebuilds the draft from the current inventory (deterministic).
 **Copy** copies the Markdown to the clipboard. **Publish** publishes through the
 project revision law.
 
 ### The health rows
 
-<!-- verify at build --> The Room's **HEALTH** section appears between the
+The Room's **HEALTH** section appears between the
 headline chips and the **NEEDS YOU** section. It is present when at least one
 source has entities and absent when none do. The section caption carries a
-`CHECKED N MIN AGO` token showing the snapshot age.
+`CHECKED <age>` token showing the snapshot age (for example `CHECKED 5m ago`
+or `CHECKED 2h ago`).
 
 Each row is one signal with data:
 
@@ -647,7 +649,7 @@ collects. The face says WAIT, never LATENCY.
 
 ### The reviewer nudge
 
-<!-- verify at build --> A reviewer nudge is a proposed GitHub comment on a PR
+A reviewer nudge is a proposed GitHub comment on a PR
 where a reviewer's median wait exceeds the threshold. It is the first external
 write the steward can perform.
 
@@ -678,13 +680,14 @@ service event ledger with the comment URL, PR number, reviewer name, timestamp,
 and approval principal. No Undo (a posted comment cannot be retracted by
 HoldSpeak).
 
-**The 7-day cooldown.** After a nudge is sent for a PR and reviewer, the
-steward will not propose the same nudge again for 7 days. While cooling, the
-bottleneck row reads `NUDGED 3 D AGO` instead of offering the Nudge verb.
+**The 7-day cooldown.** After a nudge is sent or dismissed for a PR and
+reviewer, the steward will not propose the same nudge again for 7 days. While
+cooling, the bottleneck row reads `NUDGED 3 D AGO` instead of offering the
+Nudge verb.
 
-**Dismiss.** Dismissing a nudge card closes it with no write and no cooldown.
-The steward may re-propose on the next run if the reviewer still exceeds the
-threshold.
+**Dismiss.** Dismissing a nudge card closes it with no write. The 7-day
+cooldown still applies, so the steward will not re-propose the same nudge
+until the cooldown expires.
 
 ## The Arrival
 

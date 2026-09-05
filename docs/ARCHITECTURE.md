@@ -422,7 +422,7 @@ suggestion matching an existing Watch source is suppressed.
 
 ### The steward's hand
 
-<!-- verify at build --> The steward's hand is the path from observed project
+The steward's hand is the path from observed project
 health to a receipted external action. Two flows share the policy gate: the
 drafted update (model rewrite of the deterministic inventory) and the reviewer
 nudge (a proposed `gh pr comment`).

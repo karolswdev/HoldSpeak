@@ -229,7 +229,7 @@ name, or relationship detail appears in plaintext outside the People store.
 Intelligence runs on the model's assigned host, named at the point of
 decision by the egress chip.
 
-<!-- verify at build --> **The reviewer nudge boundary.** The reviewer nudge is
+**The reviewer nudge boundary.** The reviewer nudge is
 the steward's first external write. The only subprocess it may run is
 `gh pr comment` (the `GITHUB_PR_COMMENT_MANIFEST` at
 `github_pr_actuator.py:18` permits exactly one argv prefix:

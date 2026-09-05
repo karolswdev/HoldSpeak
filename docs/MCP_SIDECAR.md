@@ -121,14 +121,14 @@ for STW-002/disabled/cooldown), `project.stop_steward` (durable STW-003),
 run_due NOW through the conductor's scheduler seam; unwired returns a typed
 503 `scheduler_not_wired` refusal; never route-level dedup).
 
-<!-- verify at build --> Three reviewer-nudge tools: `steward.nudges` returns
+Three reviewer-nudge tools: `steward.nudges` returns
 the pending and recent nudge proposals for a project (reviewer name, PR number,
 proposed text, state, cooldown status). `nudge.send` approves and fires one
 pending nudge through the gated connector (`gh pr comment`); the comment posts
 from the owner's `gh` identity, and the terminal receipt names the comment URL,
 PR number, reviewer, timestamp, and host. `nudge.dismiss` closes one pending
-nudge with no write and no cooldown. Both refuse nudges that are not in
-`proposed` state.
+nudge with no write; a 7-day cooldown starts. Both refuse nudges that are not
+in `proposed` state.
 
 Six setup interview drivers: `project.setup.start`, `project.setup.resume`,
 `project.setup.answer`, `project.setup.suggest`, `project.setup.finalize`,

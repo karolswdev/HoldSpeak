@@ -40,7 +40,7 @@ states how many matches fit its prompt. The read-only Process window shows what
 the kernel journal says is running, waiting, unknown, or finished without
 controlling the work.
 
-<!-- verify at build --> The steward drafts the weekly project update with the
+The steward drafts the weekly project update with the
 model you assigned, every sentence grounded in the claim schema (unverified
 claims marked, the model and its host named beside the draft). The Room reads
 its health from what it already watches: review wait, issue aging, CI, release
