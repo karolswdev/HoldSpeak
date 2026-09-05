@@ -288,6 +288,30 @@ def _walk_arrival(page: Any, out_dir: Path, w: int, report: WalkReport) -> None:
         verdict="DATA", why=f"{len(present)} sections visible",
     )))
 
+    # NEXT slot
+    next_el = page.locator('[data-testid="arrival-next"]')
+    next_text = ""
+    if next_el.count() > 0:
+        next_text = (next_el.text_content() or "").strip()
+    report.facts.append(asdict(FaceFact(
+        face=face, field="next_slot",
+        expected="(varies)",
+        observed=next_text if next_text else "---",
+        verdict="DATA", why="real desk content",
+    )))
+
+    # Capture bar verbs
+    capture_bar = page.locator('[data-testid="arrival-capture-bar"]')
+    capture_verbs = ""
+    if capture_bar.count() > 0:
+        capture_verbs = (capture_bar.text_content() or "").strip()
+    report.facts.append(asdict(FaceFact(
+        face=face, field="capture_bar_verbs",
+        expected="(Talk, Develop a thought, Record meeting, ...)",
+        observed=capture_verbs if capture_verbs else "---",
+        verdict="DATA", why="real desk content",
+    )))
+
     # Overflow check at 393
     if w == 393:
         err = _check_overflow(page, w, face)
@@ -635,6 +659,110 @@ def _walk_speak(page: Any, out_dir: Path, w: int, token: str,
     _close_surface(page, token)
 
 
+def _walk_concierge(page: Any, out_dir: Path, w: int, token: str,
+                    report: WalkReport) -> None:
+    """Open the Concierge (Models) window, shoot, record FOUND + SET rows."""
+    face = "concierge"
+    _open_surface(page, token, "open-concierge")
+    _settle(page)
+    page.wait_for_timeout(2000)
+    _settle(page)
+
+    shot = _shoot(page, out_dir, f"walk-concierge", w, window=True)
+    report.shots.append({"face": face, "width": w, "path": str(shot)})
+
+    # Headline
+    headline_el = page.locator('[data-testid="concierge-headline"]')
+    headline = ""
+    if headline_el.count() > 0:
+        headline = (headline_el.text_content() or "").strip()
+    report.facts.append(asdict(FaceFact(
+        face=face, field="headline", expected="N engine(s) found",
+        observed=headline, verdict="DATA", why="real desk content",
+    )))
+
+    # FOUND rows: name + host chip + state
+    # Each row: .concierge-engine-name, .gadget-chip-egress, .surface-state-chip
+    found_rows = page.evaluate("""() => {
+        const list = document.querySelector('[data-testid="concierge-found-list"]');
+        if (!list) return [];
+        const rows = list.querySelectorAll('.surface-ledger-row');
+        const result = [];
+        for (const row of rows) {
+            const name = row.querySelector('.concierge-engine-name');
+            const egress = row.querySelector('.gadget-chip-egress');
+            const state = row.querySelector('.surface-state-chip');
+            result.push({
+                name: (name?.textContent || '').trim(),
+                host: (egress?.textContent || '').trim(),
+                state: (state?.textContent || '').trim(),
+            });
+        }
+        return result;
+    }""")
+
+    for i, row in enumerate(found_rows):
+        report.facts.append(asdict(FaceFact(
+            face=face, field=f"found:{i}:name", expected="(engine name)",
+            observed=row["name"], verdict="DATA", why="real desk content",
+        )))
+        report.facts.append(asdict(FaceFact(
+            face=face, field=f"found:{i}:host", expected="(host chip)",
+            observed=row["host"], verdict="DATA", why="real desk content",
+        )))
+        report.facts.append(asdict(FaceFact(
+            face=face, field=f"found:{i}:state", expected="(state)",
+            observed=row["state"], verdict="DATA", why="real desk content",
+        )))
+
+    if not found_rows:
+        report.surprises.append("CONCIERGE: zero FOUND rows")
+
+    # SET rows: group label + engine name + state
+    set_rows = page.evaluate("""() => {
+        const root = document.querySelector('[data-testid="concierge-root"]');
+        if (!root) return [];
+        const rows = root.querySelectorAll('[data-testid^="concierge-set-"]');
+        const result = [];
+        for (const row of rows) {
+            const label = row.querySelector('.concierge-group-name');
+            const trigger = row.querySelector('.concierge-picker-trigger');
+            const state = row.querySelector('.surface-state-chip');
+            result.push({
+                group: (label?.textContent || '').trim(),
+                engine: (trigger?.textContent || '').trim(),
+                state: (state?.textContent || '').trim(),
+            });
+        }
+        return result;
+    }""")
+
+    for i, row in enumerate(set_rows):
+        report.facts.append(asdict(FaceFact(
+            face=face, field=f"set:{i}:group", expected="(group name)",
+            observed=row["group"], verdict="DATA", why="real desk content",
+        )))
+        report.facts.append(asdict(FaceFact(
+            face=face, field=f"set:{i}:engine", expected="(engine name)",
+            observed=row["engine"], verdict="DATA", why="real desk content",
+        )))
+        report.facts.append(asdict(FaceFact(
+            face=face, field=f"set:{i}:state", expected="(state)",
+            observed=row["state"], verdict="DATA", why="real desk content",
+        )))
+
+    # Overflow + raw-button checks
+    if w == 393:
+        err = _check_overflow(page, w, face)
+        if err:
+            report.errors.append(err)
+    btn_err = _check_raw_buttons(page, face)
+    if btn_err:
+        report.errors.append(btn_err)
+
+    _close_surface(page, token)
+
+
 # ── Defect detection ──
 
 def _detect_defects(report: WalkReport) -> None:
@@ -852,7 +980,7 @@ def main() -> int:
             _settle(page)
 
             # 1. Arrival
-            print(f"  [1/4] Arrival...")
+            print(f"  [1/5] Arrival...")
             try:
                 _walk_arrival(page, out_dir, w, report)
                 print(f"        done.")
@@ -862,7 +990,7 @@ def main() -> int:
                 report.errors.append(msg)
 
             # 2. Settings Hub
-            print(f"  [2/4] Settings Hub...")
+            print(f"  [2/5] Settings Hub...")
             try:
                 _walk_settings_hub(page, out_dir, w, token, report)
                 print(f"        done.")
@@ -873,7 +1001,7 @@ def main() -> int:
                 errors_fatal.append(msg)
 
             # 3. Meetings
-            print(f"  [3/4] Meetings...")
+            print(f"  [3/5] Meetings...")
             try:
                 _walk_meetings(page, out_dir, w, token, report)
                 print(f"        done.")
@@ -884,12 +1012,23 @@ def main() -> int:
                 errors_fatal.append(msg)
 
             # 4. Speak
-            print(f"  [4/4] Speak...")
+            print(f"  [4/5] Speak...")
             try:
                 _walk_speak(page, out_dir, w, token, report)
                 print(f"        done.")
             except Exception as exc:
                 msg = f"speak@{w}: {exc}"
+                print(f"        FAILED: {msg}")
+                report.errors.append(msg)
+                errors_fatal.append(msg)
+
+            # 5. Concierge (Models)
+            print(f"  [5/5] Concierge...")
+            try:
+                _walk_concierge(page, out_dir, w, token, report)
+                print(f"        done.")
+            except Exception as exc:
+                msg = f"concierge@{w}: {exc}"
                 print(f"        FAILED: {msg}")
                 report.errors.append(msg)
                 errors_fatal.append(msg)
