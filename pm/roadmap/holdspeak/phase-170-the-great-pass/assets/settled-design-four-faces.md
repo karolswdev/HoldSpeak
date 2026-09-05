@@ -198,3 +198,25 @@ project is involved; `across M projects` only when Rooms contribute).
 The board's five columns retire; the 144 rig re-points to these rows,
 to the NEXT line (the rail), and to Settings → Meetings for the
 calendar glass.
+
+
+## Addendum (2026-09-05 04:10) — the other lost doors (the audit)
+
+Four owner-facing verbs had a face only in the parked Chair; they get
+one on the arrival, in its grammar:
+1. **Schedule** — the capture bar's fourth verb (ghost, after `Record
+   meeting`): opens the existing ScheduleCreate window.
+2. **The armed countdown** — while a scheduled recording is arming, one
+   row under the NEXT line: `ARMED · <title> · IN MM:SS` (warning token)
+   with danger `Cancel`; absent otherwise.
+3. **The Door items' verbs** — a Door item's first lawful verb (Complete
+   / Close / …, from `lawful_verbs` via the parked lane's `labelFor` +
+   `commandForDoorVerb`, lifted into a shared util) is the row's primary
+   dense verb; `Open` stays as the ghost beside it.
+4. **Connect calendar** — when `calendar_configured` is false the NEXT
+   slot reads `NO CALENDAR` (muted token) + ghost `Connect calendar` →
+   Settings → Meetings; never the sentence `No calendar connected.`
+Not restored, by design: inline thought compose (Speak is the compose
+point; `Develop a thought` opens it), the lane pagination (the
+Intelligence brief holds the full list), the setup wizard's JQL editor
+(post-creation Watch configuration).
