@@ -60,4 +60,16 @@ faces on twelve boards (arrival needs-you/quiet/393 · Settings hub
 counsel reading. **The canvas** (18 boards):
 https://claude.ai/code/artifact/3fc26e25-1d5f-4796-b2e9-0d4bae9bff20 —
 his word on the Concierge unblocks the 03 build; his word on the four
-faces (and the N) unblocks 04.
+faces (and the N) unblocks 04. **The wire under both is BUILT and
+committed** (`/api/concierge/*`; the meetings intelligence run, the
+desk needs-you aggregate, the Settings hub read; MCP 197 tools / 35
+families). **Full suite (CI shape, -n auto, 2026-09-05 01:50):** 9392
+passed; 9 failed = 6 inherited/environment-bound (zero diff vs main in
+every file involved: ask grounding ×2 + ask runner need the owner's
+real model file under an isolated HOME; kernel broker fences ×2;
+product-copy drift) + 3 xdist-only (green serially). Every
+branch-new failure of the first run (106 → 9) was paid: the second
+`MeetingSummary`, the archive pause in the sanctioned repo, allow-list
+sizes, the AGENTS zero law, the Room rig's midnight seed, the Phase 143
+censuses, and the 163 stale-bundle law made universal
+(`tests/e2e/conftest.py`).

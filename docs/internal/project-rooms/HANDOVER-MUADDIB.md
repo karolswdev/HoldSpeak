@@ -60,6 +60,14 @@ on its gates. Muad'Dib VIII (below) holds 169 and the arc's birth.
   with `HOME=$(mktemp -d)`), then commit under 03 / 04 (stories stay
   in-progress until the faces are built and rigged).
 
+- **The suite (2026-09-05 01:50, CI shape):** 9392 passed / 9 failed —
+  6 inherited or environment-bound (zero diff vs main in every file
+  involved; three need the owner's real gguf under an isolated HOME),
+  3 xdist-only (green serially). Both wires are committed. Triage law:
+  after any `-n auto` run, re-run the FAILED ids SERIALLY before
+  believing them (106 → 13 real on the same tree), and capture the
+  full list with `-rf > file`, never `| tail`.
+
 ## 1. The asks of the owner (in order)
 
 1. His word on the Concierge page of the canvas → build 03's face on
