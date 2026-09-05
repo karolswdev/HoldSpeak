@@ -793,3 +793,31 @@ pronoun). The shade's PEOPLE lane is scoped by caption (`PEOPLE · Q4
 PLATFORM`) and its tokens are terse (`1 OVERDUE`); the Room's are full
 (`1 ASSIGNMENT OVERDUE`). A person lists only with at least one
 non-zero token; the section is absent at zero.
+
+
+## Addendum — counsel on the BUILT phase (2026-09-05): RATIFY-W-C, paid
+
+Two conditions, eight findings; every design-stage ruling (C1–C3,
+F5–F9) verified PAID in the build. The build-stage conditions:
+
+- **C1 (P0) — the bridge was never called.** `bridge_meeting_artifacts`
+  and the suggestion scanner had no production call site; six green
+  rigs had seeded proposals by SQL. Paid: the intel completion seam
+  (`intel_queue.py` `_on_intel_complete`) runs the bridge, then the
+  scanner per linked Room, then marks the needs-you aggregate dirty —
+  each in its own failure boundary, idempotent on the fingerprint; an
+  end-to-end test drives job → rows → route → arrival count, twice.
+  **Law:** a new service entry point needs a production CALL SITE and
+  one test through the real seam before a phase closes.
+- **C2 — the RAN header proved from a recorded job** (`RAN · 41 S ·
+  192.168.1.43 · LAN`); the rig seeds the `intel_jobs` row.
+- **F-P2s paid:** the `LAST RAN hh:mm · N S` receipt on the Intelligence
+  row (the board rules); `<ul>` children are `<li>`; one `egressFor`
+  helper; the 393 People shot scrolls to its section; the arrival
+  Confirm rig; the auto-trigger exercised with seeded Rooms.
+- **The arrival's freshness:** a durable dirty marker
+  (`desk_projection_state` · `needs_you_aggregate`) written on
+  completion / Confirm / Dismiss; the cache compares it on every read.
+  No cross-thread singleton, no 15-minute fallback.
+
+Counsel's three questions for the owner are in the handover.

@@ -113,6 +113,16 @@ between a person's name and a Watch entity's assignee/reviewer.
 
 ## Where we are
 
+**2026-09-05 17:10 -- 9/9 DONE on evidence. Counsel on the built
+phase RATIFY-W-C, both conditions and the P2s PAID (the P0: the bridge
+had no production call site; now the completion seam runs it, with an
+end-to-end test). Closing gate 331 green serially; web baseline zero
+branch-new; ratchet at its floor; the owner's-desk walk zero defects
+(the first run's failed-open write disclosed). Full suite (CI shape)
+running on the closing tree; final-summary.md carries its line. Next:
+PR stacked on #554 (`--base feat/the-heartbeat`); his word gates the
+merge; merge order #553 -> #554 -> 172's.**
+
 **2026-09-05 15:40 -- 5/9 DONE on evidence (01 design, 04 resolver, 05
 brief, 06 suggested source, 07 people in the Room); 02/03 faces built
 and checkpointed, two last wire/face fixes landing (recorded host, never

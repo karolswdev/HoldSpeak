@@ -1,3 +1,43 @@
+## Muad'Dib XI — 2026-09-05 17:10, the Loop Closes BUILT
+
+**State.** 172 is 9/9 on evidence on feat/the-loop-closes (stacked on
+171 #554 on 170 #553). Counsel on the built phase: RATIFY-W-C, paid.
+The P0 is the lesson of this phase: `bridge_meeting_artifacts` and the
+suggestion scanner had NO production call site — six green rigs seeded
+proposals by SQL and hid it. Paid in `intel_queue.py`
+`_on_intel_complete` (bridge → scanner per Room → durable dirty marker
+in `desk_projection_state`), with a test through the real seam. Law
+added to the rigor bar: every new service entry point needs a
+production call site and one end-to-end test before a phase closes;
+counsel-on-built greps for call sites.
+
+**The owner's desk.** The walk ran twice. The first runner's write
+guard failed OPEN and posted `Run intelligence` on "Already titled"
+(Aug 22) — its model is the migrated cloud profile without a key, so
+the job sits QUEUED with the OLD recorded host label; nothing left the
+machine; nothing undone. `Skip` on that meeting clears it. The guard
+now fails closed; the second walk reads `SKIPPED: not LAN:
+api.openai.com`, nine shots, zero defects.
+
+**Laws this phase.** Dismiss never Drop. The third verb is a Button.
+The lead slot is the source. No clipped text. No pronoun or first name
+from a name. Suggestions dedup case-insensitively. The display step is
+a fact. A host is RECORDED at run time and is the endpoint host
+(`192.168.1.43` · `local` · `api.openai.com`), never a label, never a
+config fallback. A commitment folds into its decision row. A lane's
+report without a rig tail and shots on disk is not a report. The
+ratchet ceiling is restored with `git checkout` when a lane raises it.
+`SurfaceLedger` needs `cols="room"` or the primary collapses.
+
+**Counsel's questions for the owner (172, built):** (1) the two-prefix
+vocabulary `Decide:`/`Confirm:`; (2) the 1:1 card's summary-then-Now
+shape and `2 PRS WAITING ON ANIA` with the name in caps; (3) Jira
+assignments on the card — keep?
+
+**Next.** PR `--base feat/the-heartbeat`; then 173 The Steward's Hand +
+Voice on its drafted ground (assets/settled-design-stewards-hand.md),
+stacked on 172. Merge order stays his: #553 → #554 → 172's → 173's.
+
 ## Muad'Dib X — 2026-09-05, the Loop Closes on the canvas
 
 **State.** 170 (#553) and 171 (#554) open on his word, stacked. 172
