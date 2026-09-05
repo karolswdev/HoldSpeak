@@ -2134,7 +2134,7 @@ button.surface-edit-in-place:hover {
   padding: 16px 12px 12px;
 }
 .prefs-hub-headline[data-warning] {
-  color: var(--warning);
+  color: var(--warn);
 }
 .prefs-hub-headline:not([data-warning]) {
   color: var(--text-muted);
