@@ -211,6 +211,36 @@ def mmproj_base_name(path_or_label: str) -> str | None:
     return base.strip() if base.strip() else None
 
 
+# ---- Profile id resolution --------------------------------------------------
+
+def resolve_profile_id(db: Any, pid: str) -> str:
+    """Resolve a profile id that may carry legacy double-prefixes.
+
+    The Phase 143 migration left some assignment entries with
+    'legacy-legacy-intel' while the actual profile row is 'legacy-intel'.
+    Strip leading 'legacy-' segments until a profile exists or nothing
+    is left.
+    """
+    if not pid:
+        return pid
+    # Fast path: profile exists as-is
+    try:
+        if db.profiles.get(pid) is not None:
+            return pid
+    except Exception:
+        pass
+    # Strip leading legacy- prefixes one at a time
+    candidate = pid
+    while candidate.startswith("legacy-"):
+        candidate = candidate[len("legacy-"):]
+        try:
+            if db.profiles.get(candidate) is not None:
+                return candidate
+        except Exception:
+            pass
+    return pid  # return original if nothing resolved
+
+
 # ---- Host helpers -----------------------------------------------------------
 
 def _host_for_profile(profile: Any) -> str:

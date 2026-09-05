@@ -19,8 +19,10 @@ export interface Engine {
   runtimeToken?: string | null;
   quantToken?: string | null;
   visionToken?: string | null;
+  legacyLabel?: string;
   keySet?: boolean;
   profileId?: string;
+  legacyLabel?: string;
   presetId?: string;
   installed?: boolean;
   path?: string;
@@ -108,6 +110,7 @@ function decodeEngine(raw: Record<string, unknown>): Engine {
     visionToken: typeof raw.visionToken === "string" ? raw.visionToken : null,
     keySet: typeof raw.keySet === "boolean" ? raw.keySet : undefined,
     profileId: typeof raw.profileId === "string" ? raw.profileId : undefined,
+    legacyLabel: typeof raw.legacyLabel === "string" ? raw.legacyLabel : undefined,
     presetId: typeof raw.presetId === "string" ? raw.presetId : undefined,
     installed: typeof raw.installed === "boolean" ? raw.installed : undefined,
     path: typeof raw.path === "string" ? raw.path : undefined,

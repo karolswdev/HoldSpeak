@@ -532,6 +532,65 @@ class TestMmprojFiltering:
         assert mmproj_base_name("Qwythos-9B.gguf") is None
 
 
+# ---- resolve_profile_id tests ------------------------------------------------
+
+
+class TestResolveProfileId:
+    """resolve_profile_id strips legacy- prefixes until a profile exists."""
+
+    def test_double_prefix_resolves(self):
+        """'legacy-legacy-intel' resolves to 'legacy-intel' when that profile exists."""
+        from holdspeak.services.concierge_service import resolve_profile_id
+        profile = _fake_profile(profile_id="legacy-intel", name="Intel endpoint")
+        db = _fake_db(profiles=[profile])
+        assert resolve_profile_id(db, "legacy-legacy-intel") == "legacy-intel"
+
+    def test_exact_match_returns_as_is(self):
+        """An existing profile id returns unchanged."""
+        from holdspeak.services.concierge_service import resolve_profile_id
+        profile = _fake_profile(profile_id="my-profile")
+        db = _fake_db(profiles=[profile])
+        assert resolve_profile_id(db, "my-profile") == "my-profile"
+
+    def test_no_match_returns_original(self):
+        """When nothing resolves, return the original."""
+        from holdspeak.services.concierge_service import resolve_profile_id
+        db = _fake_db(profiles=[])
+        assert resolve_profile_id(db, "legacy-legacy-gone") == "legacy-legacy-gone"
+
+    def test_apply_writes_real_profile_id(self):
+        """apply uses the engine's real profileId, healing double-prefixed entries."""
+        from holdspeak.services.concierge_service import apply
+        from unittest.mock import MagicMock
+
+        assignment_svc = MagicMock()
+        # get_assignment returns a legacy-legacy entry
+        assignment_svc.get_assignment.return_value = {"revision": 1}
+        assignment_svc.set_assignment.return_value = None
+
+        engines = [
+            {"id": "lan:legacy-intel", "kind": "lan", "name": "Qwen3.6 35B",
+             "host": "192.168.1.43", "state": "READY", "profileId": "legacy-intel"},
+        ]
+        rows = [
+            {"group": "thoughts_notes", "engineId": "lan:legacy-intel", "state": "READY"},
+        ]
+
+        result = apply(
+            rows=rows,
+            engines=engines,
+            assignment_service=assignment_svc,
+            principal=MagicMock(),
+            db=FakeDB(),
+        )
+
+        # Verify set_assignment was called with the real profile_id
+        call_args = assignment_svc.set_assignment.call_args[0]
+        body = call_args[1]
+        assert body["entries"][0]["profile_id"] == "legacy-intel"
+        assert result["results"][0]["state"] == "READY"
+
+
 # ---- _is_lan_host tests (kind classification) --------------------------------
 
 
