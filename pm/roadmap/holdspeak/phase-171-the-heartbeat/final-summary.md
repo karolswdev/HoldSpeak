@@ -25,10 +25,26 @@
   target waits for the bundle; Linux via libnotify); the brief regenerates
   once a day before any push; MCP `heartbeat` family (201 tools / 36
   families).
-- **The faces (04 · 07 · 02/06):** _filled at build_ — the shade's PROJECTS
-  section + the dock badge; PROJECTS in ⌘K; Rhythm's cadence row + the
-  brief row + NOTIFY with the mutes; the hub's Rhythm row.
-- **The docs (09):** _filled at build_.
+- **The faces (04 · 07 · 02/06):** the shade's PROJECTS section FIRST
+  (caption `PROJECTS · N NEED YOU`; rows name · count · WHY · `Open`;
+  muted Rooms dimmed with `MUTED` and uncounted; the brief row; the old
+  sections absent at zero — `NOTHING MISSED` when all are; polling only
+  while open) + the dock badge from the cached aggregate; PROJECTS in ⌘K
+  (needs-you desc then name, capped at 10, the chip only above zero,
+  searchable, archived absent); Rhythm (the surface titled `Rhythm`: the
+  SWEEP row with the cadence gadget, facts and `Run now`; the MONDAY
+  BRIEF row — `DAILY 08:00` a fixed token, `Generate now` disabled while
+  `GENERATING`; the NOTIFY row — off / on the edge / every sweep, count
+  only / room names, the per-Room mutes, `HELD` in quiet hours; the loops
+  below; the hub's Rhythm row `EVERY 15 MIN · NEXT hh:mm`); the arrival
+  keeps ONE count with muted items under `MUTED N`. Each bounced once by
+  the orchestrator and paid; each with its glass rig; the acceptance of
+  02/03/04/06/07 proven box by box (the cache read 1.9 ms).
+- **The docs (09, DONE):** README's Heartbeat paragraph; the guide's Rhythm
+  section shot from the built faces; ARCHITECTURE's conductor loops +
+  the sweep's sequence; SECURITY's notification statement; the sidecar
+  prose; POSITIONING's names (the Heartbeat, the sweep, Rhythm, the
+  shade) — every claim re-verified against the code; zero markers.
 - **The walk (08):** `tests/e2e/live171_walk.py` — _filled at the walk_: a
   sweep of his real Rooms receipted; the shade, the badge, ⌘K and Rhythm
   on his desk; a banner at a real edge is his to see.
