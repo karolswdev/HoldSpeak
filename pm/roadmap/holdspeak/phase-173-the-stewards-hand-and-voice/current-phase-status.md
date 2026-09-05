@@ -113,6 +113,11 @@ for reads only.
 
 ## Where we are
 
+**2026-09-05 19:20 — 7/9 DONE on evidence (01 · 02 · 03 · 04 · 05 · 07 ·
+08); **PR #556 OPEN** (`--base feat/the-loop-closes`); counsel on the
+built phase, the runner fill and the full suite in flight; then his-desk
+walk (every write denied) and 09 the close.**
+
 **2026-09-05 19:10 — 4/9 DONE on evidence (01 design · 02 drafter · 07
 docs · 08 hygiene); the wire for 03/04/05 committed; the Room faces
 checkpointed with seven small fixes landing (plurals, number format,

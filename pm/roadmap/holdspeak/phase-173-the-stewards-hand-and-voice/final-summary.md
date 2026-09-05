@@ -28,7 +28,19 @@
   runs only `gh pr comment` through the gated connector, receipts who ·
   where · the exact text), MCP `steward.nudges` · `nudge.send` ·
   `nudge.dismiss` (211 tools / 39 families).
-- **The faces (02 · 03 · 04 · 05):** PENDING THE FACE REPORTS.
+- **The faces (02 · 03 · 04 · 05):** the drafted update (ref chips `PR
+  #612` · `KAN-7` · `MTG 09-05` per sentence under the editable body,
+  `UNVERIFIED` beside its claim, the model named beside its host; the
+  deterministic draft bare); the Room's HEALTH section (four rows with
+  tones; `CLEAR` / `PASSING` / `READY`; `1 BLOCKER`, `1 PR WAITING`; one
+  `CHECKED <age>`); bottleneck rows with `Nudge` (only when a proposal
+  exists) and `Open`; the NUDGE card (who · `#612 · title` · the text in
+  a StringGadget with the mic · `GITHUB.COM` · Send · Dismiss); the
+  receipt `SENT · Ania Kowalska · #612 · hh:mm · GITHUB.COM` with no
+  Undo; `NUDGED JUST NOW` after Send; the policy row `Reviewer nudge` +
+  `GITHUB.COM` + `PER-NUDGE APPROVAL` + `Nudge text` when armed. Rigs:
+  health (4 legs + nudge), update (3), policy (3); 14 green serially
+  with the 172 Room rig.
 - **The docs (07):** README, USER_GUIDE "The steward's hand",
   ARCHITECTURE (two sequences), SECURITY (the nudge boundary),
   MCP_SIDECAR, POSITIONING names — verified against the built faces
@@ -70,5 +82,5 @@
 
 ## His word
 
-Design canvas above; PR stacked on #555. Merge order stays his:
+Design canvas above; **PR #556** stacked on #555. Merge order stays his:
 #553 → #554 → #555 → 173's.

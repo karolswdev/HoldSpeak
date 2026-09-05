@@ -1,3 +1,34 @@
+## Muad'Dib XII — 2026-09-05 19:20, the Steward's Hand BUILT
+
+**State.** 173 is 7/9 on evidence on feat/the-stewards-hand; **PR #556**
+open, stacked on #555 (172) on #554 (171) on #553 (170). Counsel on the
+built phase, the runner fill and the full suite are in flight; then the
+walk on his desk with EVERY write denied (no Send, no Publish, no
+steward run, no effect enable) and 09 the close.
+
+**What the phase is.** The steward drafts the weekly update with the
+model behind the claim schema (refs verbatim, UNVERIFIED never smoothed,
+the model and its host named); the Room reads HEALTH from what it
+already watches (`REVIEW WAIT` in days since the PR was created — the
+honest word — · `ISSUE AGING` · `CI` · `RELEASE`); on a project where he
+armed `Reviewer nudge`, a bottleneck row offers `Nudge`, the card shows
+the exact text and `GITHUB.COM`, Send re-checks the gate, admits through
+the kernel, runs only `gh pr comment`, and the receipt names who, where
+and the text. No Undo. 7-day cooldown after Send or Dismiss.
+
+**Laws this phase.** A host and a model are recorded at draft time. A
+nudge step belongs to a real steward run — never a dummy run, never
+foreign keys off. The scanner knows StringGadget carries the mic; the
+ceiling only lowers; the mic stays on every input. A capture that
+selects nothing exits 0 — read the pass line before a flip. zsh does not
+split `$FILES` — wrap captures in `bash -c`.
+
+**Session note.** The account's session limit killed five lanes mid-edit
+once (reset 12:20pm Denver); every lane was resumed by message and
+finished; the tree compiled throughout.
+
+**Merge order stays his:** #553 → #554 → #555 → #556.
+
 ## Muad'Dib XI — 2026-09-05 17:10, the Loop Closes BUILT
 
 **State.** 172 is 9/9 on evidence on feat/the-loop-closes (stacked on
